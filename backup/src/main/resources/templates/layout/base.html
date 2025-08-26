@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <!-- SEO Meta Tags -->
+    <title th:text="${title} ?: 'MindGarden - 통합 상담관리 시스템'">MindGarden - 통합 상담관리 시스템</title>
+    <meta name="description" th:content="${description} ?: '전문적인 상담 관리와 내담자 관리를 위한 통합 시스템'">
+    <meta name="keywords" th:content="${keywords} ?: '상담관리, 내담자관리, 상담사, 심리상담, 통합시스템'">
+    <meta name="author" content="MindGarden">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" th:content="${title} ?: 'MindGarden - 통합 상담관리 시스템'">
+    <meta property="og:description" th:content="${description} ?: '전문적인 상담 관리와 내담자 관리를 위한 통합 시스템'">
+    <meta property="og:type" content="website">
+    <meta property="og:url" th:content="${currentUrl} ?: 'http://localhost:8080'">
+    <meta property="og:image" th:content="@{/images/og-image.jpg}">
+    
+    <!-- CSS -->
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link th:href="@{/css/common.css}" rel="stylesheet">
+    <link th:href="@{/css/responsive-breakpoints.css}" rel="stylesheet">
+    
+    <!-- Device-specific CSS -->
+    <link th:if="${isTablet}" th:href="@{/css/tablet.css}" rel="stylesheet">
+    <link th:unless="${isTablet}" th:href="@{/css/homepage.css}" rel="stylesheet">
+    
+    <!-- Page-specific CSS -->
+    <th:block th:if="${pageCss}">
+        <link th:each="css : ${pageCss}" th:href="@{${css}}" rel="stylesheet">
+    </th:block>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" th:href="@{/css/common.css}" as="style">
+    
+    <!-- CSRF Token -->
+    <meta name="_csrf" th:content="${_csrf?.token}">
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}">
+</head>
+
+<body th:class="${bodyClass} ?: 'default-body'">
+    
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="loading-spinner d-none">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">로딩 중...</span>
+        </div>
+    </div>
+    
+    <!-- Header -->
+    <header th:replace="~{layout/header :: header}">
+        <!-- Header content will be replaced -->
+    </header>
+    
+    <!-- Navigation -->
+    <nav th:replace="~{layout/navigation :: navigation}">
+        <!-- Navigation content will be replaced -->
+    </nav>
+    
+    <!-- Main Content -->
+    <main id="main-content" class="main-content">
+        <!-- Page-specific content will be inserted here -->
+        <div th:replace="~{::content}">
+            <!-- This will be replaced with the actual page content -->
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer th:replace="~{layout/footer :: footer}">
+        <!-- Footer content will be replaced -->
+    </footer>
+    
+    <!-- Common Notification Toast -->
+    <div id="notification-toast" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+        <!-- Toast notifications will be dynamically added here -->
+    </div>
+    
+    <!-- Common Modal -->
+    <div id="common-modal" class="modal fade" tabindex="-1" aria-labelledby="commonModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="commonModalLabel">알림</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Modal content will be dynamically set -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-primary" id="commonModalConfirm">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Libraries -->
+    <!-- jQuery (for AJAX compatibility) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Common JavaScript -->
+    <script th:src="@{/js/common/utils.js}"></script>
+    <script th:src="@{/js/common/ajax.js}"></script>
+    <script th:src="@{/js/common/components.js}"></script>
+    <script th:src="@{/js/common/router.js}"></script>
+    <script th:src="@{/js/common/main.js}"></script>
+    
+    <!-- Device-specific JavaScript -->
+    <script th:if="${isTablet}" th:src="@{/js/tablet/tablet.js}"></script>
+    <script th:unless="${isTablet}" th:src="@{/js/homepage/homepage.js}"></script>
+    
+    <!-- Page-specific JavaScript -->
+    <th:block th:if="${pageJs}">
+        <script th:each="js : ${pageJs}" th:src="@{${js}}"></script>
+    </th:block>
+    
+    <!-- CSRF Token for AJAX -->
+    <script th:inline="javascript">
+        // CSRF 토큰을 전역 변수로 설정
+        window.csrfToken = /*[[${_csrf.token}]]*/ '';
+        window.csrfHeaderName = /*[[${_csrf.headerName}]]*/ '';
+        
+        // AJAX 요청에 CSRF 토큰 자동 추가
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                if (window.csrfToken && window.csrfHeaderName) {
+                    xhr.setRequestHeader(window.csrfHeaderName, window.csrfToken);
+                }
+            }
+        });
+    </script>
+    
+    <!-- Global Error Handler -->
+    <script th:inline="javascript">
+        // 전역 에러 핸들러
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+            showNotification('오류가 발생했습니다. 페이지를 새로고침해주세요.', 'error');
+        });
+        
+        // AJAX 에러 핸들러
+        $(document).ajaxError(function(event, xhr, settings, error) {
+            console.error('AJAX error:', error);
+            let message = '요청 처리 중 오류가 발생했습니다.';
+            
+            if (xhr.status === 401) {
+                message = '로그인이 필요합니다.';
+                // 로그인 페이지로 리다이렉트
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+            } else if (xhr.status === 403) {
+                message = '접근 권한이 없습니다.';
+            } else if (xhr.status === 404) {
+                message = '요청한 리소스를 찾을 수 없습니다.';
+            } else if (xhr.status === 500) {
+                message = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+            }
+            
+            showNotification(message, 'error');
+        });
+    </script>
+    
+    <!-- Page-specific content template -->
+    <template id="content-template">
+        <!-- This template will be used by child pages -->
+    </template>
+</body>
+</html>

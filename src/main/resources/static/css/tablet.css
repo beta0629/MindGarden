@@ -72,8 +72,8 @@
 /* ===== 테블릿 헤더 ===== */
 .tablet-header {
     height: var(--tablet-header-height);
-    background-color: var(--bg-primary);
-    border-bottom: 1px solid var(--border-color);
+    background: #E0E7FF; /* 부드러운 파스텔 블루 - 그라데이션 없음 */
+    border-bottom: 1px solid #C7D2FE;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -81,12 +81,15 @@
     position: sticky;
     top: 0;
     z-index: var(--z-sticky);
+    width: 100%;
+    max-width: 1600px; /* 더 넓은 최대 너비로 확장 */
+    margin: 0 auto;
 }
 
 .tablet-header-title {
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #4338CA; /* 진한 블루 */
     margin: 0;
 }
 
@@ -101,14 +104,122 @@
     justify-content: center;
     cursor: pointer;
     transition: background-color var(--transition-fast);
+    color: #4338CA; /* 진한 블루 */
 }
 
 .tablet-menu-toggle:hover {
-    background-color: var(--gray-100);
+    background-color: rgba(67, 56, 202, 0.1);
 }
 
 .tablet-menu-toggle:active {
-    background-color: var(--gray-200);
+    background-color: rgba(67, 56, 202, 0.2);
+}
+
+/* ===== 테블릿 햄버거 메뉴 ===== */
+.tablet-hamburger-menu {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 300px;
+    height: 100vh;
+    background: white;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+}
+
+.tablet-hamburger-menu.show {
+    left: 0;
+}
+
+.tablet-hamburger-header {
+    padding: 20px;
+    border-bottom: 1px solid #E5E7EB;
+    background: #F8F9FF;
+}
+
+.tablet-hamburger-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #4338CA;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.tablet-hamburger-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #6B7280;
+    cursor: pointer;
+}
+
+.tablet-hamburger-nav {
+    padding: 20px 0;
+}
+
+.tablet-hamburger-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    color: #374151;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.tablet-hamburger-nav-item:hover {
+    background-color: #F3F4F6;
+}
+
+.tablet-hamburger-nav-item.active {
+    background-color: #E0E7FF;
+    color: #4338CA;
+    border-right: 3px solid #4338CA;
+}
+
+/* ===== 테블릿 하단 네비게이션 ===== */
+.tablet-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #E5E7EB;
+    padding: 10px 0;
+    z-index: 999;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tablet-bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 16px;
+    color: #6B7280;
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: color 0.2s ease;
+    border-radius: 8px;
+}
+
+.tablet-bottom-nav-item:hover,
+.tablet-bottom-nav-item.active {
+    color: #4338CA;
+    background-color: #F3F4F6;
+}
+
+.tablet-bottom-nav-icon {
+    font-size: 1.2rem;
 }
 
 /* ===== 테블릿 네비게이션 ===== */
@@ -790,16 +901,280 @@
 
 /* ===== 태블릿 로그인/회원가입 페이지 스타일 ===== */
 
+/* ===== 태블릿 페이지 공통 스타일 ===== */
 .tablet-login-page,
 .tablet-register-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--tablet-primary) 0%, var(--tablet-secondary) 100%);
+  background: #F8FAFC; /* 단순한 파스텔 블루 배경 (그라데이션 제거) */
   display: flex;
-  align-items: center;
+  align-items: center; /* 기본값: 중앙 정렬 */
   justify-content: center;
   padding: var(--space-6);
   position: relative;
   overflow: hidden;
+}
+
+/* ===== 로그인 페이지 강제 위치 조정 ===== */
+body .tablet-login-page,
+html .tablet-login-page,
+.tablet-login-page,
+.tablet-login-page {
+  /* 로그인은 위쪽에 위치 - 강제 적용 */
+  padding-top: 32px !important; /* 상단 여백 줄여서 위로 올림 (직접 픽셀 값) */
+  margin-top: 0 !important; /* 마진 제거 */
+  transform: none !important; /* 변환 제거 */
+}
+
+/* ===== 회원가입 페이지 강제 위치 조정 ===== */
+body .tablet-register-page,
+html .tablet-register-page,
+.tablet-register-page {
+  /* 회원가입은 더 아래쪽에 위치 - 강제 적용 */
+  align-items: flex-start !important;
+  padding-top: var(--space-56) !important; /* 더 큰 상단 여백 (14rem = 224px) */
+  margin-top: var(--space-48) !important; /* 추가 마진으로 더 아래로 (12rem = 192px) */
+  transform: translateY(var(--space-32)) !important; /* 추가 변환으로 더 아래로 (8rem = 128px) */
+}
+
+/* ===== 내담자 대시보드 스타일 ===== */
+.tablet-dashboard-page {
+  /* 대시보드는 적당한 위치 */
+  padding-top: var(--space-12);
+  background: #F8FAFC;
+  position: relative;
+}
+
+/* 대시보드 헤더 */
+.dashboard-header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+}
+
+.dashboard-title {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
+  color: var(--primary-600);
+  margin-bottom: var(--space-2);
+}
+
+.dashboard-subtitle {
+  font-size: var(--text-lg);
+  color: var(--secondary-600);
+  margin: 0;
+}
+
+/* 대시보드 카드 그리드 */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+  padding: 0 var(--space-6);
+}
+
+/* 대시보드 카드 */
+.dashboard-card {
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--secondary-100);
+  transition: all var(--transition-normal);
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* 카드 아이콘 */
+.card-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+/* 카드별 고유 색상 */
+.dashboard-card:nth-child(1) .card-icon {
+  background: #FEF3C7; /* 파스텔 노랑 */
+}
+
+.dashboard-card:nth-child(2) .card-icon {
+  background: #DBEAFE; /* 파스텔 파랑 */
+}
+
+.dashboard-card:nth-child(3) .card-icon {
+  background: #E0E7FF; /* 파스텔 보라 */
+}
+
+.dashboard-card:nth-child(4) .card-icon {
+  background: #A7F3D0; /* 파스텔 초록 */
+}
+
+.dashboard-card:nth-child(5) .card-icon {
+  background: #FDE68A; /* 파스텔 주황 */
+}
+
+.dashboard-card:nth-child(6) .card-icon {
+  background: #FECACA; /* 파스텔 빨강 */
+}
+
+.card-icon i {
+  font-size: 1.5rem;
+  color: white;
+}
+
+/* 카드 내용 */
+.card-content {
+  flex: 1;
+}
+
+.card-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.card-description {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
+  line-height: 1.5;
+}
+
+/* 카드 버튼 */
+.card-button {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-weight: var(--font-semibold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+/* 카드별 고유 버튼 색상 */
+.dashboard-card:nth-child(1) .card-button {
+  background: #F59E0B; /* 진한 노랑 */
+}
+
+.dashboard-card:nth-child(2) .card-button {
+  background: #3B82F6; /* 진한 파랑 */
+}
+
+.dashboard-card:nth-child(3) .card-button {
+  background: #8B5CF6; /* 진한 보라 */
+}
+
+.dashboard-card:nth-child(4) .card-button {
+  background: #10B981; /* 진한 초록 */
+}
+
+.dashboard-card:nth-child(5) .card-button {
+  background: #F97316; /* 진한 주황 */
+}
+
+.dashboard-card:nth-child(6) .card-button {
+  background: #EF4444; /* 진한 빨강 */
+}
+
+.card-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* 빠른 통계 */
+.quick-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  padding: 0 var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.stat-item {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--secondary-100);
+  transition: all var(--transition-normal);
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 통계별 고유 색상 */
+.stat-item:nth-child(1) {
+  border-left: 4px solid #FEF3C7;
+}
+
+.stat-item:nth-child(2) {
+  border-left: 4px solid #DBEAFE;
+}
+
+.stat-item:nth-child(3) {
+  border-left: 4px solid #E0E7FF;
+}
+
+.stat-item:nth-child(4) {
+  border-left: 4px solid #A7F3D0;
+}
+
+.stat-number {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--primary-600);
+  margin-bottom: var(--space-1);
+}
+
+.stat-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* 애니메이션 */
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 반응형 조정 */
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    padding: 0 var(--space-4);
+  }
+  
+  .quick-stats {
+    grid-template-columns: 1fr;
+    padding: 0 var(--space-4);
+  }
+}
+
+/* ===== 향후 페이지별 위치 조정 예시 ===== */
+.tablet-profile-page {
+  /* 프로필 페이지는 위쪽에 */
+  padding-top: var(--space-8);
 }
 
 .login-container,
@@ -848,19 +1223,62 @@
 }
 
 /* 폼 섹션 */
-.login-form-section,
-.register-form-section {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.login-form-section {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F8F9FF; /* 부드러운 연한 파스텔 블루 */
+  padding: var(--space-6);
 }
 
 .form-container {
-  max-width: 500px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 1600px; /* 폭 확장 */
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: var(--space-6); /* 패딩 줄이기 */
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.08);
+  border: 1px solid #F0F2FF;
+}
+
+/* 테블릿에서 더 넓은 레이아웃 */
+@media (min-width: 768px) {
+  .login-form-section {
+    padding: var(--space-8);
+  }
+  
+  .form-container {
+    max-width: 1800px; /* 폭 확장 */
+    padding: var(--space-8); /* 패딩 줄이기 */
+  }
+  
+  /* 테블릿에서 2열 레이아웃 */
+  .form-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6); /* 열 사이 간격 줄이기 */
+    align-items: center;
+  }
+  
+  /* 왼쪽: 로그인 폼 */
+  .form-container > *:not(.form-side-image) {
+    grid-column: 1;
+  }
+  
+  /* 오른쪽: 이미지나 추가 정보 */
+  .form-side-image {
+    grid-column: 2;
+    display: block;
+    text-align: center;
+    padding: var(--space-6);
+  }
+  
+  .form-side-image img {
+    max-width: 100%;
+    height: auto;
+  }
 }
 
 .form-title {
@@ -1020,8 +1438,8 @@
 .register-button {
   width: 100%;
   padding: var(--space-4) var(--space-6);
-  background: #E8B4F8;
-  color: white;
+  background: #E0E7FF; /* 부드러운 연한 파스텔 블루 */
+  color: #4338CA; /* 진한 블루 텍스트 */
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--text-lg);
@@ -1032,14 +1450,14 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  box-shadow: 0 4px 15px rgba(232, 180, 248, 0.3);
+  box-shadow: 0 4px 15px rgba(224, 231, 255, 0.4);
 }
 
 .login-button:hover,
 .register-button:hover {
-  background: #D8A4F0;
+  background: #C7D2FE; /* 호버 시 약간 진한 파스텔 블루 */
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(232, 180, 248, 0.4);
+  box-shadow: 0 8px 25px rgba(224, 231, 255, 0.5);
 }
 
 .login-button:active,
@@ -1090,8 +1508,8 @@
   padding: var(--space-3) var(--space-4);
   border: none;
   border-radius: var(--radius-md);
-  background: #F0E7FF;
-  color: #7C3AED;
+  background: #FEF3C7; /* 부드러운 연한 파스텔 옐로우 - 그라데이션 없음 */
+  color: #92400E; /* 진한 옐로우 텍스트 */
   font-size: var(--text-base);
   font-weight: var(--font-medium);
   cursor: pointer;
@@ -1103,18 +1521,28 @@
 }
 
 .social-button:hover {
-  background: #E9D5FF;
+  background: #FDE68A; /* 호버 시 약간 진한 파스텔 옐로우 */
   transform: translateY(-1px);
 }
 
+/* 카카오 버튼 특별 스타일 */
+.social-button.kakao {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
 .social-button.kakao:hover {
-  border-color: #FEE500;
-  background: #FEF9E7;
+  background: #FDE68A;
+}
+
+/* 네이버 버튼 특별 스타일 */
+.social-button.naver {
+  background: #D1FAE5; /* 부드러운 연한 파스텔 그린 */
+  color: #065F46;
 }
 
 .social-button.naver:hover {
-  border-color: #03C75A;
-  background: #F0F9F0;
+  background: #A7F3D0;
 }
 
 /* 링크 */
@@ -1272,105 +1700,8 @@
     border-right: 3px solid var(--primary-500);
 }
 
-/* ===== 테블릿 전용 대시보드 스타일 ===== */
-/* 내담자 대시보드 */
-.client-dashboard {
-    background: var(--background-light);
-    min-height: 100vh;
-}
-
-/* 대시보드 헤더 */
-.client-dashboard .tablet-header {
-    background: linear-gradient(135deg, var(--primary-300), var(--primary-400));
-    border-bottom: 2px solid var(--primary-200);
-    box-shadow: 0 2px 10px rgba(147, 197, 253, 0.2);
-}
-
-.client-dashboard .header-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 var(--tablet-content-padding);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 100%;
-}
-
-.client-dashboard .logo h1 {
-    margin: 0;
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: var(--primary-800);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.client-dashboard .logo p {
-    margin: 5px 0 0 0;
-    color: var(--primary-700);
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
-
-.client-dashboard .user-info {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-}
-
-.client-dashboard .user-name {
-    color: var(--primary-800);
-    font-size: 1rem;
-    font-weight: 500;
-}
-
-/* 대시보드 메인 콘텐츠 */
-.client-dashboard .tablet-main-content {
-    padding: var(--space-6) 0;
-    background: var(--background-light);
-}
-
-.client-dashboard .dashboard-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 var(--tablet-content-padding);
-}
-
-.client-dashboard .dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: var(--space-6);
-    margin-top: var(--space-6);
-}
-
-/* 대시보드 카드 */
-.client-dashboard .dashboard-card {
-    background: white;
-    border-radius: 20px;
-    padding: var(--space-6);
-    box-shadow: 0 4px 20px rgba(147, 197, 253, 0.15);
-    border: 1px solid var(--primary-100);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.client-dashboard .dashboard-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary-300), var(--accent-purple), var(--accent-green));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.client-dashboard .dashboard-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 30px rgba(147, 197, 253, 0.25);
-    border-color: var(--primary-200);
-}
+/* ===== 기존 .client-dashboard 스타일 제거됨 ===== */
+/* 새로운 .tablet-dashboard-page 스타일을 사용합니다 */
 
 .client-dashboard .dashboard-card:hover::before {
     opacity: 1;
@@ -1428,7 +1759,7 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    background: linear-gradient(135deg, var(--accent-green), var(--accent-green-dark));
+    background: linear-gradient(135deg, #A7F3D0 0%, #6EE7B7 100%); /* 부드러운 파스텔 그린 그라데이션 */
     color: white;
     padding: var(--space-4) var(--space-5);
     border-radius: 15px;

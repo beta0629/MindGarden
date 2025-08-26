@@ -9,7 +9,13 @@ import com.mindgarden.consultation.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 인증 관련 API 컨트롤러
@@ -98,7 +104,7 @@ public class AuthController {
      * 로그아웃
      */
     @PostMapping("/logout")
-    public ResponseEntity<AuthResponse> logout(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<AuthResponse> logout(@RequestParam String token) {
         try {
             authService.logout(token);
             return ResponseEntity.ok(AuthResponse.builder()
@@ -112,6 +118,64 @@ public class AuthController {
                     .message("로그아웃 실패: " + e.getMessage())
                     .build());
         }
+    }
+    
+    /**
+     * OAuth2 설정 정보 반환
+     */
+    @GetMapping("/oauth2/config")
+    public ResponseEntity<OAuth2Config> getOAuth2Config() {
+        OAuth2Config config = new OAuth2Config();
+        
+        // 카카오 설정
+        OAuth2Provider kakao = new OAuth2Provider();
+        kakao.setClientId("cbb457cfb5f9351fd495be4af2b11a34");
+        kakao.setRedirectUri("http://localhost:8080/api/auth/kakao/callback");
+        kakao.setScope("profile_nickname,profile_image,account_email");
+        config.setKakao(kakao);
+        
+        // 네이버 설정
+        OAuth2Provider naver = new OAuth2Provider();
+        naver.setClientId("vTKNlxYKIfo1uCCXaDfk");
+        naver.setRedirectUri("http://localhost:8080/api/auth/naver/callback");
+        naver.setScope("profile_nickname,profile_image,account_email");
+        config.setNaver(naver);
+        
+        return ResponseEntity.ok(config);
+    }
+    
+    /**
+     * OAuth2 설정 클래스
+     */
+    public static class OAuth2Config {
+        private OAuth2Provider kakao;
+        private OAuth2Provider naver;
+        
+        // Getters and Setters
+        public OAuth2Provider getKakao() { return kakao; }
+        public void setKakao(OAuth2Provider kakao) { this.kakao = kakao; }
+        
+        public OAuth2Provider getNaver() { return naver; }
+        public void setNaver(OAuth2Provider naver) { this.naver = naver; }
+    }
+    
+    /**
+     * OAuth2 제공자 클래스
+     */
+    public static class OAuth2Provider {
+        private String clientId;
+        private String redirectUri;
+        private String scope;
+        
+        // Getters and Setters
+        public String getClientId() { return clientId; }
+        public void setClientId(String clientId) { this.clientId = clientId; }
+        
+        public String getRedirectUri() { return redirectUri; }
+        public void setRedirectUri(String redirectUri) { this.redirectUri = redirectUri; }
+        
+        public String getScope() { return scope; }
+        public void setScope(String scope) { this.scope = scope; }
     }
     
     /**

@@ -1,0 +1,94 @@
+<!-- 소셜 회원가입 모달 -->
+<div class="social-signup-modal" id="socialSignupModal" th:fragment="social-signup-modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeSocialSignupModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>추가 정보 입력</h3>
+            <button class="modal-close" onclick="closeSocialSignupModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="socialSignupForm" class="social-signup-form">
+                <div class="form-group">
+                    <label for="socialName" class="form-label">이름 *</label>
+                    <input type="text" id="socialName" name="name" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="socialPhone" class="form-label">휴대폰 번호</label>
+                    <input type="tel" id="socialPhone" name="phone" class="form-input" placeholder="010-0000-0000">
+                </div>
+                
+                <div class="form-group">
+                    <label for="socialGender" class="form-label">성별</label>
+                    <select id="socialGender" name="gender" class="form-select">
+                        <option value="">성별을 선택하세요</option>
+                        <option value="MALE">남성</option>
+                        <option value="FEMALE">여성</option>
+                        <option value="OTHER">기타</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="socialBirthDate" class="form-label">생년월일</label>
+                    <input type="date" id="socialBirthDate" name="birthDate" class="form-input">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">가입 완료</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeSocialSignupModal()">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openSocialSignupModal() {
+        document.getElementById('socialSignupModal').style.display = 'block';
+    }
+    
+    function closeSocialSignupModal() {
+        document.getElementById('socialSignupModal').style.display = 'none';
+    }
+    
+    // 소셜 회원가입 폼 제출 처리
+    document.getElementById('socialSignupForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const signupData = {
+            name: formData.get('name'),
+            phone: formData.get('phone'),
+            gender: formData.get('gender'),
+            birthDate: formData.get('birthDate')
+        };
+        
+        try {
+            const response = await fetch('/api/auth/social/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(signupData)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    alert('회원가입이 완료되었습니다!');
+                    closeSocialSignupModal();
+                    window.location.href = '/tablet/client/dashboard';
+                } else {
+                    alert('회원가입 실패: ' + result.message);
+                }
+            } else {
+                alert('회원가입에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('회원가입 오류:', error);
+            alert('회원가입 중 오류가 발생했습니다.');
+        }
+    });
+</script>

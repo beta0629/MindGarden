@@ -1,0 +1,523 @@
+/**
+ * MindGarden - 테블릿 전용 공통 CSS
+ * 테블릿 화면에서 일관된 디자인과 분위기를 제공
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2024-12-19
+ */
+
+/* ===== 테블릿 전용 색상 팔레트 ===== */
+:root {
+    /* 메인 브랜드 색상 */
+    --tablet-primary: #8B5CF6;          /* 보라색 (로그인 페이지와 동일) */
+    --tablet-primary-light: #A78BFA;    /* 밝은 보라색 */
+    --tablet-primary-dark: #7C3AED;     /* 어두운 보라색 */
+    
+    /* 보조 색상 */
+    --tablet-secondary: #EC4899;        /* 핑크색 (로그인 페이지와 동일) */
+    --tablet-secondary-light: #F472B6;  /* 밝은 핑크색 */
+    --tablet-secondary-dark: #DB2777;   /* 어두운 핑크색 */
+    
+    /* 그라디언트 */
+    --tablet-gradient-primary: linear-gradient(135deg, var(--tablet-primary), var(--tablet-secondary));
+    --tablet-gradient-secondary: linear-gradient(135deg, var(--tablet-primary-light), var(--tablet-secondary-light));
+    
+    /* 배경 색상 */
+    --tablet-bg-primary: #F8FAFC;       /* 메인 배경 */
+    --tablet-bg-secondary: #F1F5F9;     /* 보조 배경 */
+    --tablet-bg-card: #FFFFFF;          /* 카드 배경 */
+    
+    /* 텍스트 색상 */
+    --tablet-text-primary: #1E293B;     /* 주요 텍스트 */
+    --tablet-text-secondary: #64748B;   /* 보조 텍스트 */
+    --tablet-text-light: #94A3B8;      /* 밝은 텍스트 */
+    
+    /* 테두리 색상 */
+    --tablet-border-primary: #E2E8F0;   /* 주요 테두리 */
+    --tablet-border-secondary: #CBD5E1; /* 보조 테두리 */
+    --tablet-border-accent: #C4B5FD;    /* 강조 테두리 */
+    
+    /* 그림자 */
+    --tablet-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --tablet-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --tablet-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --tablet-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    
+    /* 테두리 반경 */
+    --tablet-radius-sm: 8px;
+    --tablet-radius-md: 12px;
+    --tablet-radius-lg: 16px;
+    --tablet-radius-xl: 20px;
+    
+    /* 간격 */
+    --tablet-space-xs: 8px;
+    --tablet-space-sm: 12px;
+    --tablet-space-md: 16px;
+    --tablet-space-lg: 24px;
+    --tablet-space-xl: 32px;
+    --tablet-space-2xl: 48px;
+    
+    /* 전환 효과 */
+    --tablet-transition-fast: 0.15s ease;
+    --tablet-transition-normal: 0.3s ease;
+    --tablet-transition-slow: 0.5s ease;
+}
+
+/* ===== 테블릿 전용 타이포그래피 ===== */
+.tablet-text {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--tablet-text-primary);
+}
+
+.tablet-heading-1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--tablet-primary);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.tablet-heading-2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--tablet-text-primary);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.tablet-heading-3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--tablet-text-primary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.tablet-body-large {
+    font-size: 1.125rem;
+    font-weight: 400;
+    color: var(--tablet-text-secondary);
+    line-height: 1.6;
+}
+
+.tablet-body {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--tablet-text-secondary);
+    line-height: 1.6;
+}
+
+.tablet-caption {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--tablet-text-light);
+    line-height: 1.5;
+}
+
+/* ===== 테블릿 전용 버튼 시스템 ===== */
+.tablet-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--tablet-space-sm);
+    padding: var(--tablet-space-md) var(--tablet-space-lg);
+    border: none;
+    border-radius: var(--tablet-radius-md);
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--tablet-transition-normal);
+    min-height: 48px; /* 터치 친화적 */
+}
+
+.tablet-btn-primary {
+    background: var(--tablet-gradient-primary);
+    color: white;
+    box-shadow: var(--tablet-shadow-md);
+}
+
+.tablet-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--tablet-shadow-lg);
+}
+
+.tablet-btn-secondary {
+    background: var(--tablet-bg-card);
+    color: var(--tablet-text-primary);
+    border: 2px solid var(--tablet-border-primary);
+}
+
+.tablet-btn-secondary:hover {
+    border-color: var(--tablet-border-accent);
+    background: var(--tablet-bg-secondary);
+}
+
+.tablet-btn-ghost {
+    background: transparent;
+    color: var(--tablet-text-secondary);
+    border: 2px solid transparent;
+}
+
+.tablet-btn-ghost:hover {
+    color: var(--tablet-primary);
+    background: var(--tablet-bg-secondary);
+}
+
+/* ===== 테블릿 전용 카드 시스템 ===== */
+.tablet-card {
+    background: var(--tablet-bg-card);
+    border-radius: var(--tablet-radius-lg);
+    padding: var(--tablet-space-xl);
+    box-shadow: var(--tablet-shadow-md);
+    border: 1px solid var(--tablet-border-primary);
+    transition: all var(--tablet-transition-normal);
+}
+
+.tablet-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--tablet-shadow-xl);
+    border-color: var(--tablet-border-accent);
+}
+
+.tablet-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--tablet-space-md);
+    margin-bottom: var(--tablet-space-lg);
+}
+
+.tablet-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--tablet-radius-md);
+    background: var(--tablet-gradient-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.tablet-card-title {
+    margin: 0;
+    color: var(--tablet-text-primary);
+}
+
+.tablet-card-content {
+    color: var(--tablet-text-secondary);
+    margin-bottom: var(--tablet-space-lg);
+}
+
+/* ===== 테블릿 전용 헤더 시스템 ===== */
+.tablet-header {
+    background: var(--tablet-gradient-primary);
+    color: white;
+    padding: var(--tablet-space-lg) 0;
+    box-shadow: var(--tablet-shadow-lg);
+}
+
+.tablet-header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--tablet-space-xl);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tablet-logo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tablet-space-xs);
+}
+
+.tablet-logo h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: white;
+}
+
+.tablet-logo p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ===== 테블릿 전용 그리드 시스템 ===== */
+.tablet-grid {
+    display: grid;
+    gap: var(--tablet-space-xl);
+}
+
+.tablet-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.tablet-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.tablet-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* ===== 테블릿 전용 컨테이너 ===== */
+.tablet-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--tablet-space-xl);
+}
+
+.tablet-section {
+    padding: var(--tablet-space-2xl) 0;
+}
+
+/* ===== 테블릿 전용 애니메이션 ===== */
+@keyframes tablet-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes tablet-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.tablet-fade-in {
+    animation: tablet-fade-in 0.6s ease-out;
+}
+
+.tablet-slide-in {
+    animation: tablet-slide-in 0.6s ease-out;
+}
+
+/* ===== 테블릿 전용 고정 레이아웃 ===== */
+/* 테블릿은 768px 이상에서 최적화된 고정 레이아웃 사용 */
+
+/* 테블릿 최소 너비 보장 */
+@media (max-width: 767px) {
+    .tablet-only {
+        display: none !important;
+    }
+    
+    .tablet-fallback {
+        display: block;
+        text-align: center;
+        padding: var(--tablet-space-2xl);
+        color: var(--tablet-text-secondary);
+    }
+}
+
+/* 테블릿 최적화 레이아웃 */
+.tablet-optimized {
+    min-width: 768px;
+    max-width: 1024px;
+    margin: 0 auto;
+}
+
+/* 테블릿 전용 그리드 (고정) */
+.tablet-grid-fixed {
+    display: grid;
+    gap: var(--tablet-space-xl);
+}
+
+.tablet-grid-2-fixed {
+    grid-template-columns: 350px 350px;
+    justify-content: center;
+}
+
+.tablet-grid-3-fixed {
+    grid-template-columns: 300px 300px 300px;
+    justify-content: center;
+}
+
+.tablet-grid-4-fixed {
+    grid-template-columns: 250px 250px 250px 250px;
+    justify-content: center;
+}
+
+/* ===== 테블릿 전용 푸터 ===== */
+.tablet-footer {
+    background: var(--tablet-bg-secondary);
+    border-top: 1px solid var(--tablet-border-primary);
+    padding: var(--tablet-space-xl) 0;
+    margin-top: auto;
+}
+
+.tablet-footer-content {
+    text-align: center;
+    color: var(--tablet-text-secondary);
+}
+
+/* ===== 테블릿 메인 컨텐츠 ===== */
+.tablet-main {
+    flex: 1;
+    min-height: calc(100vh - 200px); /* 헤더와 푸터 높이 제외 */
+}
+
+.tablet-container {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 0 var(--tablet-space-xl);
+}
+
+/* ===== 테블릿 전용 고정 레이아웃 강제 적용 ===== */
+/* 테블릿 페이지에서 반응형을 비활성화하고 고정 레이아웃 적용 */
+body.tablet-page,
+body.tablet-login-page,
+body.tablet-register-page,
+body.tablet-client-dashboard-page {
+    /* 반응형 비활성화 */
+    min-width: 768px !important;
+    max-width: 1024px !important;
+    margin: 0 auto !important;
+    
+    /* 테블릿 전용 폰트 크기 */
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+}
+
+/* 테블릿 컨테이너 고정 크기 */
+.tablet-container {
+    width: 100% !important;
+    max-width: 1024px !important;
+    min-width: 768px !important;
+    margin: 0 auto !important;
+    padding: 0 24px !important;
+    box-sizing: border-box !important;
+}
+
+/* 테블릿 메인 영역 고정 */
+.tablet-main {
+    width: 100% !important;
+    max-width: 1024px !important;
+    min-width: 768px !important;
+    margin: 0 auto !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* 테블릿 그리드 시스템 고정 */
+.tablet-grid-2-fixed {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 24px !important;
+    width: 100% !important;
+}
+
+.tablet-grid-3-fixed {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 24px !important;
+    width: 100% !important;
+}
+
+.tablet-grid-4-fixed {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 24px !important;
+    width: 100% !important;
+}
+
+/* 테블릿 카드 시스템 고정 */
+.tablet-card {
+    background: var(--tablet-bg-card) !important;
+    border-radius: var(--tablet-radius-lg) !important;
+    padding: 24px !important;
+    box-shadow: var(--tablet-shadow-md) !important;
+    border: 1px solid var(--tablet-border-primary) !important;
+    min-height: 200px !important;
+}
+
+/* 테블릿 버튼 시스템 고정 */
+.tablet-btn {
+    padding: 12px 24px !important;
+    border-radius: var(--tablet-radius-md) !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: var(--tablet-transition-normal) !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    min-height: 48px !important;
+}
+
+/* 테블릿 폼 요소 고정 크기 */
+.tablet-page input,
+.tablet-page select,
+.tablet-page textarea {
+    font-size: 16px !important;
+    padding: 12px 16px !important;
+    border-radius: var(--tablet-radius-md) !important;
+    min-height: 48px !important;
+}
+
+/* 테블릿 헤더 고정 */
+.tablet-header {
+    width: 100% !important;
+    max-width: 1024px !important;
+    min-width: 768px !important;
+    margin: 0 auto !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 1000 !important;
+}
+
+/* 반응형 미디어 쿼리 비활성화 */
+@media (max-width: 767px) {
+    body.tablet-page,
+    body.tablet-login-page,
+    body.tablet-register-page,
+    body.tablet-client-dashboard-page {
+        min-width: 768px !important;
+        max-width: 1024px !important;
+        margin: 0 auto !important;
+        overflow-x: auto !important;
+    }
+    
+    .tablet-container,
+    .tablet-main,
+    .tablet-header {
+        min-width: 768px !important;
+        max-width: 1024px !important;
+    }
+}
+
+@media (min-width: 1025px) {
+    body.tablet-page,
+    body.tablet-login-page,
+    body.tablet-register-page,
+    body.tablet-client-dashboard-page {
+        max-width: 1024px !important;
+        margin: 0 auto !important;
+    }
+    
+    .tablet-container,
+    .tablet-main,
+    .tablet-header {
+        max-width: 1024px !important;
+    }
+}

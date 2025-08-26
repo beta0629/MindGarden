@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} ?: 'MindGarden - 테블릿'">MindGarden - 테블릿</title>
+    
+    <!-- 공통 CSS -->
+    <link rel="stylesheet" th:href="@{/css/variables.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/tablet.css}">
+    <link rel="stylesheet" th:href="@{/css/tablet-common.css}">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    
+    <!-- 페이지별 추가 CSS -->
+    <th:block th:fragment="additionalCss">
+        <!-- 페이지별 추가 CSS가 여기에 들어감 -->
+    </th:block>
+    
+    <!-- 공통 JavaScript -->
+    <script th:src="@{/js/common/utils.js}"></script>
+    <script th:src="@{/js/common/ajax.js}"></script>
+    <script th:src="@{/js/common/router.js}"></script>
+    <script th:src="@{/js/common/components.js}"></script>
+    <script th:src="@{/js/tablet/tablet.js}"></script>
+</head>
+<body th:class="${bodyClass} ?: 'tablet-page'" th:style="'display: flex; flex-direction: column; min-height: 100vh; min-width: 768px; max-width: 1024px; margin: 0 auto;'">
+    
+    <!-- 테블릿 헤더 -->
+    <header class="tablet-header">
+        <div class="tablet-header-content">
+            <!-- 로고 - 왼쪽 끝 -->
+            <div class="tablet-logo">
+                <a href="/" class="logo-link">
+                    <i class="bi bi-flower1"></i>
+                    <span class="logo-text">MindGarden</span>
+                </a>
+            </div>
+            
+            <!-- 오른쪽 영역 - 사용자 정보와 햄버거 메뉴 -->
+            <div class="tablet-header-right">
+                <!-- 사용자 프로필 및 로그인 정보 - 로그인 후에만 표시 -->
+                <div class="tablet-user-profile" th:if="${session.user != null}">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <div class="user-details">
+                            <div class="user-name" th:text="${session.user.name}">사용자명</div>
+                            <div class="user-role" th:text="${session.user.role}">역할</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 햄버거 메뉴 토글 - 로그인 후에만 표시 -->
+                <button class="tablet-menu-toggle" type="button" data-tablet-menu-toggle th:if="${session.user != null}">
+                    <i class="bi bi-list"></i>
+                </button>
+                
+                <!-- 로그인 전에는 간단한 로그인 링크만 표시 -->
+                <div class="tablet-login-link" th:if="${session.user == null}">
+                    <a href="/tablet/login" class="login-link-button">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>로그인</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- 태블릿 전용 햄버거 메뉴 -->
+    <div th:replace="~{tablet/components/tablet-hamburger-menu :: tablet-hamburger-menu}">
+        <!-- 햄버거 메뉴 -->
+    </div>
+    
+    <!-- 태블릿 전용 하단 네비게이션 -->
+    <div th:replace="~{tablet/components/tablet-bottom-navigation :: tablet-bottom-navigation}">
+        <!-- 하단 네비게이션 -->
+    </div>
+    
+    <!-- 메인 컨텐츠 -->
+    <main class="tablet-main">
+        <div class="tablet-container">
+            <!-- 페이지별 컨텐츠가 여기에 들어감 -->
+            <div th:replace="~{::content}" />
+        </div>
+    </main>
+    
+    <!-- 태블릿 전용 모달 컴포넌트들 -->
+    <div th:replace="~{common/components/social-signup-modal :: social-signup-modal}">
+        <!-- 소셜 회원가입 모달 -->
+    </div>
+    
+    <div th:replace="~{tablet/components/tablet-notification :: tablet-notification}">
+        <!-- 태블릿 전용 알림 컴포넌트 -->
+    </div>
+    
+    <!-- 페이지별 추가 JavaScript -->
+    <th:block th:replace="~{::additionalScripts}">
+        <!-- 페이지별 추가 JavaScript가 여기에 들어감 -->
+    </th:block>
+    
+    <!-- 태블릿 전용 알림 스크립트 -->
+    <script th:replace="~{tablet/components/tablet-notification :: tablet-notification-script}"></script>
+    
+    <!-- 소셜 회원가입 모달 스크립트 -->
+    <script th:replace="~{common/components/social-signup-modal :: social-signup-modal-script}"></script>
+    
+    <!-- 공통 햄버거 메뉴 스크립트 -->
+    <script>
+    // 햄버거 메뉴 열기
+    function openTabletHamburgerMenu() {
+        const menu = document.getElementById('tabletHamburgerMenu');
+        if (menu) {
+            menu.classList.add('show');
+            document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
+        }
+    }
+    
+    // 햄버거 메뉴 닫기
+    function closeTabletHamburgerMenu() {
+        const menu = document.getElementById('tabletHamburgerMenu');
+        if (menu) {
+            menu.classList.remove('show');
+            document.body.style.overflow = ''; // 배경 스크롤 복원
+        }
+    }
+    
+    // 로그아웃 함수
+    function logout() {
+        if (confirm('로그아웃 하시겠습니까?')) {
+            // 로그아웃 처리
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            }).then(() => {
+                // 로그인 페이지로 리다이렉트
+                window.location.href = '/tablet/login';
+            }).catch(() => {
+                // 에러가 발생해도 로그인 페이지로 이동
+                window.location.href = '/tablet/login';
+            });
+        }
+    }
+    
+    // 햄버거 메뉴 토글 버튼 이벤트
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuToggle = document.querySelector('[data-tablet-menu-toggle]');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', openTabletHamburgerMenu);
+        }
+        
+        // 메뉴 외부 클릭 시 닫기
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('tabletHamburgerMenu');
+            if (menu && !menu.contains(e.target) && !e.target.closest('[data-tablet-menu-toggle]')) {
+                closeTabletHamburgerMenu();
+            }
+        });
+        
+        // ESC 키로 메뉴 닫기
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeTabletHamburgerMenu();
+            }
+        });
+    });
+    </script>
+    
+</body>
+</html>

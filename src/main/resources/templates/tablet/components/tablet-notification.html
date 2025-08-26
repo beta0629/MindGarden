@@ -1,0 +1,65 @@
+<!-- 태블릿 전용 알림 컴포넌트 -->
+<div th:fragment="tablet-notification" class="tablet-notification" id="tabletNotification">
+    <div class="tablet-notification-content">
+        <i class="tablet-notification-icon"></i>
+        <span class="tablet-notification-message"></span>
+        <button class="tablet-notification-close" onclick="closeTabletNotification()">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+</div>
+
+<!-- 태블릿 전용 알림 스크립트 -->
+<script th:fragment="tablet-notification-script">
+// 태블릿 전용 알림 시스템
+class TabletNotification {
+    static show(message, type = 'info', duration = 5000) {
+        const notification = document.getElementById('tabletNotification');
+        if (!notification) return;
+        
+        const messageEl = notification.querySelector('.tablet-notification-message');
+        const iconEl = notification.querySelector('.tablet-notification-icon');
+        
+        // 메시지 설정
+        messageEl.textContent = message;
+        
+        // 타입별 스타일 설정
+        notification.className = `tablet-notification tablet-notification-${type}`;
+        
+        // 아이콘 설정
+        const icons = {
+            success: 'bi-check-circle-fill',
+            error: 'bi-x-circle-fill',
+            warning: 'bi-exclamation-triangle-fill',
+            info: 'bi-info-circle-fill'
+        };
+        iconEl.className = `bi ${icons[type] || icons.info}`;
+        
+        // 표시
+        notification.classList.add('show');
+        
+        // 자동 숨김
+        if (duration > 0) {
+            setTimeout(() => {
+                this.hide();
+            }, duration);
+        }
+    }
+    
+    static hide() {
+        const notification = document.getElementById('tabletNotification');
+        if (notification) {
+            notification.classList.remove('show');
+        }
+    }
+}
+
+// 전역 함수로 노출
+window.showTabletNotification = TabletNotification.show;
+window.hideTabletNotification = TabletNotification.hide;
+
+// 닫기 함수
+function closeTabletNotification() {
+    TabletNotification.hide();
+}
+</script>

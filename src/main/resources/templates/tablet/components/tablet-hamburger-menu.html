@@ -1,0 +1,48 @@
+<!-- 태블릿 전용 햄버거 메뉴 -->
+<div th:fragment="tablet-hamburger-menu" class="tablet-hamburger-menu" id="tabletHamburgerMenu">
+    <div class="tablet-hamburger-header">
+        <div class="tablet-hamburger-logo">
+            <i class="bi bi-flower1"></i>
+            <span>MindGarden</span>
+        </div>
+        <button class="tablet-hamburger-close" onclick="closeTabletHamburgerMenu()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+    
+    <nav class="tablet-hamburger-nav">
+        <a href="/tablet/login" class="tablet-hamburger-nav-item">
+            <i class="bi bi-box-arrow-in-right"></i>
+            <span>로그인</span>
+        </a>
+        <a href="/tablet/register" class="tablet-hamburger-nav-item">
+            <i class="bi bi-person-plus"></i>
+            <span>회원가입</span>
+        </a>
+        <a href="/tablet/client/dashboard" class="tablet-hamburger-nav-item">
+            <i class="bi bi-house"></i>
+            <span>내담자 대시보드</span>
+        </a>
+        <a href="/tablet/consultant/dashboard" class="tablet-hamburger-nav-item">
+            <i class="bi bi-people"></i>
+            <span>상담사 대시보드</span>
+        </a>
+        <a href="/tablet/admin/dashboard" class="tablet-hamburger-nav-item">
+            <i class="bi bi-gear"></i>
+            <span>관리자 대시보드</span>
+        </a>
+        <a href="/" class="tablet-hamburger-nav-item">
+            <i class="bi bi-house-door"></i>
+            <span>홈페이지</span>
+        </a>
+        
+        <!-- 구분선 -->
+        <div class="tablet-hamburger-divider"></div>
+        
+        <!-- 로그아웃 -->
+        <a href="#" class="tablet-hamburger-nav-item logout-item" onclick="logout()">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>로그아웃</span>
+        </a>
+    </nav>
+</div>

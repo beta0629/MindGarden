@@ -1,0 +1,68 @@
+<!-- 알림 컴포넌트 -->
+<div class="notification-container" id="notificationContainer" th:fragment="notification">
+    <!-- 알림이 여기에 동적으로 추가됩니다 -->
+</div>
+
+<script>
+    // 알림 시스템
+    class NotificationSystem {
+        constructor() {
+            this.container = document.getElementById('notificationContainer');
+            this.notifications = [];
+        }
+        
+        show(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="bi bi-${this.getIcon(type)}"></i>
+                    <span class="notification-message">${message}</span>
+                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            `;
+            
+            this.container.appendChild(notification);
+            
+            // 자동 제거
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, duration);
+            
+            return notification;
+        }
+        
+        success(message, duration) {
+            return this.show(message, 'success', duration);
+        }
+        
+        error(message, duration) {
+            return this.show(message, 'error', duration);
+        }
+        
+        warning(message, duration) {
+            return this.show(message, 'warning', duration);
+        }
+        
+        info(message, duration) {
+            return this.show(message, 'info', duration);
+        }
+        
+        getIcon(type) {
+            const icons = {
+                success: 'check-circle-fill',
+                error: 'x-circle-fill',
+                warning: 'exclamation-triangle-fill',
+                info: 'info-circle-fill'
+            };
+            return icons[type] || 'info-circle-fill';
+        }
+    }
+    
+    // 전역 알림 시스템 생성
+    window.notification = new NotificationSystem();
+</script>

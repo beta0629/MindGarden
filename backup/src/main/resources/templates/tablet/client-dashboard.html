@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko" th:replace="~{common/layout/tablet-base}">
+<head>
+    <title>MindGarden - 테블릿 내담자 대시보드</title>
+</head>
+<body th:class="'tablet-client-dashboard-page'" th:style="'display: flex; flex-direction: column; min-height: 100vh;'">
+    
+    <!-- 페이지별 추가 CSS -->
+    <th:block th:fragment="additionalCss">
+        <!-- 내담자 대시보드 전용 CSS -->
+    </th:block>
+    
+    <!-- 페이지별 컨텐츠 -->
+    <th:block th:fragment="content">
+        <!-- 로그인 성공 알림 -->
+        <div th:if="${loginSuccess}" class="login-success-notification" id="loginSuccessNotification">
+            <div class="notification-content">
+                <i class="bi bi-check-circle-fill"></i>
+                <span th:text="${loginMessage}">로그인 성공</span>
+            </div>
+        </div>
+
+        <!-- 대시보드 제목 -->
+        <div class="dashboard-header">
+            <h1 class="tablet-heading-1">내담자 대시보드</h1>
+            <p class="tablet-text">환영합니다! 상담 서비스를 이용해보세요.</p>
+        </div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="tablet-grid-2-fixed">
+            <!-- 상담 예약 카드 -->
+            <div class="tablet-card">
+                <div class="tablet-card-header">
+                    <div class="tablet-card-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <h3 class="tablet-card-title">상담 예약</h3>
+                </div>
+                <div class="tablet-card-content">
+                    <p>새로운 상담을 예약하거나 기존 예약을 관리하세요.</p>
+                    <button class="tablet-btn tablet-btn-primary" onclick="openConsultationBooking()">
+                        상담 예약하기
+                    </button>
+                </div>
+            </div>
+
+            <!-- 상담 기록 카드 -->
+            <div class="tablet-card">
+                <div class="tablet-card-header">
+                    <div class="tablet-card-icon">
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                    <h3 class="tablet-card-title">상담 기록</h3>
+                </div>
+                <div class="tablet-card-content">
+                    <p>이전 상담 기록과 진행 상황을 확인하세요.</p>
+                    <button class="tablet-btn tablet-btn-secondary" onclick="viewConsultationHistory()">
+                        기록 보기
+                    </button>
+                </div>
+            </div>
+
+            <!-- 프로필 관리 카드 -->
+            <div class="tablet-card">
+                <div class="tablet-card-header">
+                    <div class="tablet-card-icon">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <h3 class="tablet-card-title">프로필 관리</h3>
+                </div>
+                <div class="tablet-card-content">
+                    <p>개인 정보와 상담 관련 정보를 관리하세요.</p>
+                    <button class="tablet-btn tablet-btn-secondary" onclick="manageProfile()">
+                        프로필 수정
+                    </button>
+                </div>
+            </div>
+
+            <!-- 상담사 찾기 카드 -->
+            <div class="tablet-card">
+                <div class="tablet-card-header">
+                    <div class="tablet-card-icon">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <h3 class="tablet-card-title">상담사 찾기</h3>
+                </div>
+                <div class="tablet-card-content">
+                    <p>나에게 맞는 상담사를 찾아보세요.</p>
+                    <button class="tablet-btn tablet-btn-secondary" onclick="findConsultant()">
+                        상담사 검색
+                    </button>
+                </div>
+            </div>
+        </div>
+    </th:block>
+    
+    <!-- 페이지별 추가 JavaScript -->
+    <th:block th:fragment="additionalScripts">
+        <script>
+        // 로그인 성공 알림 자동 숨김
+        setTimeout(() => {
+            const notification = document.getElementById('loginSuccessNotification');
+            if (notification) {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 300);
+            }
+        }, 3000);
+
+        // 상담 예약 열기
+        function openConsultationBooking() {
+            // 상담 예약 모달 또는 페이지로 이동
+            console.log('상담 예약 열기');
+        }
+
+        // 상담 기록 보기
+        function viewConsultationHistory() {
+            // 상담 기록 페이지로 이동
+            console.log('상담 기록 보기');
+        }
+
+        // 프로필 관리
+        function manageProfile() {
+            // 프로필 관리 페이지로 이동
+            console.log('프로필 관리');
+        }
+
+        // 상담사 찾기
+        function findConsultant() {
+            // 상담사 검색 페이지로 이동
+            console.log('상담사 찾기');
+        }
+        </script>
+    </th:block>
+</body>
+</html>

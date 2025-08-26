@@ -1,0 +1,173 @@
+package com.mindgarden.consultation.util;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.spec.IvParameterSpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
+
+/**
+ * 개인정보 암호화/복호화 유틸리티
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2024-12-19
+ */
+@Slf4j
+@Component
+public class PersonalDataEncryptionUtil {
+
+    @Value("${encryption.personal-data.key:default-encryption-key-32}")
+    private String encryptionKey;
+    
+    @Value("${encryption.personal-data.iv:default-iv-16-chars}")
+    private String encryptionIv;
+    
+    private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
+    private static final String KEY_ALGORITHM = "AES";
+    
+    /**
+     * 개인정보 암호화
+     * 
+     * @param plainText 암호화할 평문
+     * @return 암호화된 문자열 (Base64 인코딩)
+     */
+    public String encrypt(String plainText) {
+        if (plainText == null || plainText.trim().isEmpty()) {
+            return plainText;
+        }
+        
+        try {
+            // 키와 IV 생성
+            SecretKeySpec secretKey = generateKey();
+            IvParameterSpec iv = generateIv();
+            
+            // 암호화
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv);
+            
+            byte[] encryptedBytes = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(encryptedBytes);
+            
+        } catch (Exception e) {
+            log.error("개인정보 암호화 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("개인정보 암호화에 실패했습니다.", e);
+        }
+    }
+    
+    /**
+     * 개인정보 복호화
+     * 
+     * @param encryptedText 복호화할 암호문 (Base64 인코딩)
+     * @return 복호화된 평문
+     */
+    public String decrypt(String encryptedText) {
+        if (encryptedText == null || encryptedText.trim().isEmpty()) {
+            return encryptedText;
+        }
+        
+        try {
+            // 키와 IV 생성
+            SecretKeySpec secretKey = generateKey();
+            IvParameterSpec iv = generateIv();
+            
+            // 복호화
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
+            
+            byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
+            byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+            
+            return new String(decryptedBytes, StandardCharsets.UTF_8);
+            
+        } catch (Exception e) {
+            log.error("개인정보 복호화 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("개인정보 복호화에 실패했습니다.", e);
+        }
+    }
+    
+    /**
+     * 암호화 키 생성
+     */
+    private SecretKeySpec generateKey() throws Exception {
+        // SHA-256으로 키 해시 생성하여 32바이트 키 생성
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(encryptionKey.getBytes(StandardCharsets.UTF_8));
+        return new SecretKeySpec(hash, KEY_ALGORITHM);
+    }
+    
+    /**
+     * 초기화 벡터(IV) 생성
+     */
+    private IvParameterSpec generateIv() throws Exception {
+        // SHA-256으로 IV 해시 생성하여 16바이트 IV 생성
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(encryptionIv.getBytes(StandardCharsets.UTF_8));
+        byte[] ivBytes = new byte[16];
+        System.arraycopy(hash, 0, ivBytes, 0, 16);
+        return new IvParameterSpec(ivBytes);
+    }
+    
+    /**
+     * 암호화된 데이터인지 확인
+     * 
+     * @param text 확인할 텍스트
+     * @return 암호화된 데이터 여부
+     */
+    public boolean isEncrypted(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return false;
+        }
+        
+        try {
+            // Base64 디코딩 시도
+            Base64.getDecoder().decode(text);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+    
+    /**
+     * 안전한 암호화 (이미 암호화된 경우 재암호화하지 않음)
+     * 
+     * @param text 암호화할 텍스트
+     * @return 암호화된 텍스트
+     */
+    public String safeEncrypt(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return text;
+        }
+        
+        // 이미 암호화된 경우 그대로 반환
+        if (isEncrypted(text)) {
+            return text;
+        }
+        
+        return encrypt(text);
+    }
+    
+    /**
+     * 안전한 복호화 (암호화되지 않은 경우 그대로 반환)
+     * 
+     * @param text 복호화할 텍스트
+     * @return 복호화된 텍스트
+     */
+    public String safeDecrypt(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return text;
+        }
+        
+        // 암호화되지 않은 경우 그대로 반환
+        if (!isEncrypted(text)) {
+            return text;
+        }
+        
+        return decrypt(text);
+    }
+}

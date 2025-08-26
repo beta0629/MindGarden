@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindGarden - 회원가입</title>
+    <link rel="stylesheet" th:href="@{/css/variables.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/tablet.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="tablet-register-page">
+
+    
+    <div class="register-container">
+        <!-- 로고 섹션 -->
+        <div class="logo-section">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                        <circle cx="24" cy="24" r="20" fill="var(--primary-200)" stroke="var(--primary-400)" stroke-width="2"/>
+                        <path d="M16 20C16 17.7909 17.7909 16 20 16H28C30.2091 16 32 17.7909 32 20V28C32 30.2091 30.2091 32 28 32H20C17.7909 32 16 30.2091 16 28V20Z" fill="var(--primary-300)"/>
+                        <circle cx="24" cy="24" r="4" fill="var(--primary-500)"/>
+                    </svg>
+                </div>
+                <h1 class="logo-text">MindGarden</h1>
+                <p class="logo-subtitle">통합 상담관리 시스템</p>
+            </div>
+        </div>
+
+        <!-- 회원가입 폼 섹션 -->
+        <div class="register-form-section">
+            <div class="form-container">
+                <h2 class="form-title">회원가입</h2>
+                <p class="form-subtitle">새로운 계정을 만들어 서비스를 이용하세요</p>
+                
+                <form id="registerForm" class="register-form" th:action="@{/api/auth/register}" method="post">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name" class="form-label">이름 *</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <path d="M20 20C20 15.5817 15.5228 12 10 12C4.47715 12 0 15.5817 0 20" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                    </svg>
+                                </div>
+                                <input type="text" id="name" name="name" class="form-input" placeholder="이름을 입력하세요" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="nickname" class="form-label">닉네임</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <path d="M20 20C20 15.5817 15.5228 12 10 12C4.47715 12 0 15.5817 0 20" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                    </svg>
+                                </div>
+                                <input type="text" id="nickname" name="nickname" class="form-input" placeholder="닉네임을 입력하세요">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email" class="form-label">이메일 *</label>
+                        <div class="input-wrapper">
+                            <div class="input-icon">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M2.5 5.83333C2.5 4.91286 3.24619 4.16667 4.16667 4.16667H15.8333C16.7538 4.16667 17.5 4.91286 17.5 5.83333V14.1667C17.5 15.0871 16.7538 15.8333 15.8333 15.8333H4.16667C3.24619 15.8333 2.5 15.0871 2.5 14.1667V5.83333Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                    <path d="M17.5 5.83333L10 10.8333L2.5 5.83333" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                </svg>
+                            </div>
+                            <input type="email" id="email" name="email" class="form-input" placeholder="이메일을 입력하세요" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password" class="form-label">비밀번호 *</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <path d="M15 8.33333V6.66667C15 4.08934 12.9107 2 10.3333 2C7.756 2 5.66667 4.08934 5.66667 6.66667V8.33333" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <rect x="3.33333" y="8.33333" width="14" height="9.66667" rx="1" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <circle cx="10" cy="13" r="1" fill="var(--secondary-400)"/>
+                                    </svg>
+                                </div>
+                                <input type="password" id="password" name="password" class="form-input" placeholder="8자 이상 입력하세요" required minlength="8">
+                                <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <path d="M10 4.16667C6.25 4.16667 3.33333 6.66667 2.5 10C3.33333 13.3333 6.25 15.8333 10 15.8333C13.75 15.8333 16.6667 13.3333 17.5 10C16.6667 6.66667 13.75 4.16667 10 4.16667Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <circle cx="10" cy="10" r="2.5" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirmPassword" class="form-label">비밀번호 확인 *</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <path d="M15 8.33333V6.66667C15 4.08934 12.9107 2 10.3333 2C7.756 2 5.66667 4.08934 5.66667 6.66667V8.33333" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <rect x="3.33333" y="8.33333" width="14" height="9.66667" rx="1" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <circle cx="10" cy="13" r="1" fill="var(--secondary-400)"/>
+                                    </svg>
+                                </div>
+                                <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="비밀번호를 다시 입력하세요" required minlength="8">
+                                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <path d="M10 4.16667C6.25 4.16667 3.33333 6.66667 2.5 10C3.33333 13.3333 6.25 15.8333 10 15.8333C13.75 15.8333 16.6667 13.3333 17.5 10C16.6667 6.66667 13.75 4.16667 10 4.16667Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <circle cx="10" cy="10" r="2.5" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phone" class="form-label">휴대폰 번호</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <rect x="4.16667" y="2.5" width="11.6667" height="15" rx="2" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <circle cx="10" cy="16.6667" r="1" fill="var(--secondary-400)"/>
+                                    </svg>
+                                </div>
+                                <input type="tel" id="phone" name="phone" class="form-input" placeholder="010-0000-0000" pattern="^01[0-9]-[0-9]{4}-[0-9]{4}$">
+                            </div>
+                        </div>
+                        
+
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="gender" class="form-label">성별</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <circle cx="10" cy="10" r="8" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <path d="M10 2V18M2 10H18" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                    </svg>
+                                </div>
+                                <select id="gender" name="gender" class="form-select">
+                                    <option value="">성별을 선택하세요</option>
+                                    <option value="MALE">남성</option>
+                                    <option value="FEMALE">여성</option>
+                                    <option value="OTHER">기타</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="birthDate" class="form-label">생년월일</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon">
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                        <rect x="2.5" y="4.16667" width="15" height="13.3333" rx="1" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <path d="M2.5 8.33333H17.5" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                        <circle cx="6.66667" cy="6.66667" r="1" fill="var(--secondary-400)"/>
+                                        <circle cx="10" cy="6.66667" r="1" fill="var(--secondary-400)"/>
+                                    </svg>
+                                </div>
+                                <input type="date" id="birthDate" name="birthDate" class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-agreement">
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
+                            <span class="checkmark"></span>
+                            <span class="agreement-text">
+                                <a href="#" class="link">이용약관</a> 및 <a href="#" class="link">개인정보처리방침</a>에 동의합니다 *
+                            </span>
+                        </label>
+                        
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="agreeMarketing" name="agreeMarketing">
+                            <span class="checkmark"></span>
+                            <span class="agreement-text">
+                                마케팅 정보 수신에 동의합니다 (선택)
+                            </span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="register-button">
+                        <span class="button-text">회원가입</span>
+                        <div class="button-icon">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M10 2L18.5 10L10 18M18.5 10H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </button>
+                </form>
+                
+                <div class="login-link">
+                    <p>이미 계정이 있으신가요? <a href="/tablet/login" class="link">로그인</a></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 배경 장식 -->
+        <div class="background-decoration">
+            <div class="floating-shape shape-1"></div>
+            <div class="floating-shape shape-2"></div>
+            <div class="floating-shape shape-3"></div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/common/utils.js}"></script>
+    <script th:src="@{/js/tablet/tablet.js}"></script>
+    
+
+    
+    <script>
+        // 비밀번호 표시/숨김 토글
+        function togglePassword(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleButton = passwordInput.parentNode.querySelector('.password-toggle svg');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleButton.innerHTML = `
+                    <path d="M2.5 5.83333C2.5 4.91286 3.24619 4.16667 4.16667 4.16667H15.8333C16.7538 4.16667 17.5 4.91286 17.5 5.83333V14.1667C17.5 15.0871 16.7538 15.8333 15.8333 15.8333H4.16667C3.24619 15.8333 2.5 15.0871 2.5 14.1667V5.83333Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                    <path d="M17.5 5.83333L10 10.8333L2.5 5.83333" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                    <line x1="2.5" y1="2.5" x2="17.5" y2="17.5" stroke="var(--accent-red)" stroke-width="1.5"/>
+                `;
+            } else {
+                passwordInput.type = 'password';
+                toggleButton.innerHTML = `
+                    <path d="M10 4.16667C6.25 4.16667 3.33333 6.66667 2.5 10C3.33333 13.3333 6.25 15.8333 10 15.8333C13.75 15.8333 16.6667 13.3333 17.5 10C16.6667 6.66667 13.75 4.16667 10 4.16667Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                    <circle cx="10" cy="10" r="2.5" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                `;
+            }
+        }
+
+        // 비밀번호 확인 검증
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            
+            if (password !== confirmPassword) {
+                this.setCustomValidity('비밀번호가 일치하지 않습니다.');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // 회원가입 폼 제출 처리
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const registerData = {
+                name: formData.get('name'),
+                nickname: formData.get('nickname'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                phone: formData.get('phone'),
+                gender: formData.get('gender'),
+                birthDate: formData.get('birthDate'),
+                agreeTerms: formData.get('agreeTerms') === 'on',
+                agreeMarketing: formData.get('agreeMarketing') === 'on'
+            };
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(registerData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');
+                        window.location.href = '/tablet/login';
+                    } else {
+                        alert('회원가입 실패: ' + result.message);
+                    }
+                } else {
+                    alert('회원가입에 실패했습니다. 입력 정보를 확인해주세요.');
+                }
+            } catch (error) {
+                console.error('회원가입 오류:', error);
+                alert('회원가입 중 오류가 발생했습니다.');
+            }
+        });
+    </script>
+</body>
+</html>

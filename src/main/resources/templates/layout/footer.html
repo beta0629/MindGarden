@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Footer</title>
+</head>
+<body>
+    
+    <!-- Footer Fragment -->
+    <footer th:fragment="footer" class="footer">
+        <div class="container-fluid">
+            <div class="row">
+                
+                <!-- Main Footer Content -->
+                <div class="col-12">
+                    <div class="footer-content">
+                        
+                        <!-- Footer Links -->
+                        <div class="footer-links">
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6">
+                                    <h6 class="footer-section-title">시스템</h6>
+                                    <ul class="footer-link-list">
+                                        <li><a th:href="@{/about}">소개</a></li>
+                                        <li><a th:href="@{/features}">주요 기능</a></li>
+                                        <li><a th:href="@{/pricing}">요금제</a></li>
+                                        <li><a th:href="@{/roadmap}">로드맵</a></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <h6 class="footer-section-title">지원</h6>
+                                    <ul class="footer-link-list">
+                                        <li><a th:href="@{/help}">도움말</a></li>
+                                        <li><a th:href="@{/faq}">자주 묻는 질문</a></li>
+                                        <li><a th:href="@{/contact}">문의하기</a></li>
+                                        <li><a th:href="@{/support}">고객지원</a></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <h6 class="footer-section-title">개발자</h6>
+                                    <ul class="footer-link-list">
+                                        <li><a th:href="@{/api}">API 문서</a></li>
+                                        <li><a th:href="@{/sdk}">SDK</a></li>
+                                        <li><a th:href="@{/integrations}">연동 가이드</a></li>
+                                        <li><a th:href="@{/developer}">개발자 센터</a></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-3 col-sm-6">
+                                    <h6 class="footer-section-title">회사</h6>
+                                    <ul class="footer-link-list">
+                                        <li><a th:href="@{/company}">회사 소개</a></li>
+                                        <li><a th:href="@{/careers}">채용</a></li>
+                                        <li><a th:href="@{/press}">보도자료</a></li>
+                                        <li><a th:href="@{/partners}">파트너</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer Divider -->
+                        <hr class="footer-divider">
+                        
+                        <!-- Footer Bottom -->
+                        <div class="footer-bottom">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="footer-copyright">
+                                        <p class="mb-0">
+                                            &copy; <span th:text="${#dates.year(#dates.createNow())}">2024</span> MindGarden. 
+                                            모든 권리 보유.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="footer-legal">
+                                        <ul class="footer-legal-list">
+                                            <li><a th:href="@{/privacy}">개인정보처리방침</a></li>
+                                            <li><a th:href="@{/terms}">이용약관</a></li>
+                                            <li><a th:href="@{/cookies}">쿠키 정책</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer Social -->
+                        <div class="footer-social">
+                            <div class="social-links">
+                                <a href="#" class="social-link" title="Facebook">
+                                    <i class="bi bi-facebook"></i>
+                                </a>
+                                <a href="#" class="social-link" title="Twitter">
+                                    <i class="bi bi-twitter"></i>
+                                </a>
+                                <a href="#" class="social-link" title="LinkedIn">
+                                    <i class="bi bi-linkedin"></i>
+                                </a>
+                                <a href="#" class="social-link" title="YouTube">
+                                    <i class="bi bi-youtube"></i>
+                                </a>
+                                <a href="#" class="social-link" title="GitHub">
+                                    <i class="bi bi-github"></i>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer Status -->
+                        <div class="footer-status">
+                            <div class="status-indicators">
+                                <div class="status-item">
+                                    <span class="status-dot status-online"></span>
+                                    <span class="status-text">시스템 상태: 정상</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-dot status-online"></span>
+                                    <span class="status-text">데이터베이스: 정상</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-dot status-online"></span>
+                                    <span class="status-text">API: 정상</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Back to Top Button -->
+        <button id="back-to-top" class="back-to-top-btn" type="button" title="맨 위로">
+            <i class="bi bi-arrow-up"></i>
+        </button>
+        
+    </footer>
+    
+</body>
+</html>

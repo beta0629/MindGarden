@@ -2,7 +2,6 @@ package com.mindgarden.consultation.config;
 
 import java.util.Arrays;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,11 +10,13 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -32,92 +33,53 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-    
-    @Autowired
-    private CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
-    
-    @Autowired
-    private CustomAccessDeniedHandler customAccessDeniedHandler;
-    
     /**
-     * SecurityFilterChain 설정
+     * SecurityFilterChain 설정 (개발 중 모든 보안 비활성화)
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // CSRF 비활성화 (JWT 사용 시)
+            // 모든 보안 기능 비활성화
             .csrf(AbstractHttpConfigurer::disable)
-            
-            // CORS 설정
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .logout(AbstractHttpConfigurer::disable)
+            .exceptionHandling(AbstractHttpConfigurer::disable)
             
-            // 세션 관리 (JWT 사용으로 STATELESS)
-            .sessionManagement(session -> 
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            
-            // 인증 예외 처리
-            .exceptionHandling(exception -> 
-                exception
-                    .authenticationEntryPoint(customAuthenticationEntryPoint)
-                    .accessDeniedHandler(customAccessDeniedHandler)
-            )
-            
-            // 요청 권한 설정
+            // 모든 요청 허용
             .authorizeHttpRequests(authz -> authz
-                // 공개 접근 가능한 경로
-                .requestMatchers(
-                    "/",
-                    "/home",
-                    "/index",
-                    "/homepage/**",
-                    "/login",
-                    "/register",
-                    "/forgot-password",
-                    "/reset-password",
-                    "/verify-email",
-                    "/tablet/**",
-                    "/api/auth/**",
-                    "/api/public/**",
-                    "/css/**",
-                    "/js/**",
-                    "/images/**",
-                    "/favicon.ico",
-                    "/error",
-                    "/actuator/health",
-                    "/actuator/info"
-                ).permitAll()
-                
-                // 정적 리소스
-                .requestMatchers(
-                    "/static/**",
-                    "/webjars/**",
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**"
-                ).permitAll()
-                
-                // API 문서
-                .requestMatchers(
-                    "/swagger-ui.html",
-                    "/swagger-resources/**",
-                    "/api-docs/**"
-                ).permitAll()
-                
-                // 역할별 접근 제어
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/consultant/**").hasRole("CONSULTANT")
-                .requestMatchers("/api/client/**").hasRole("CLIENT")
-                
-                // 나머지 요청은 인증 필요
-                .anyRequest().authenticated()
-            )
-            
-            // JWT 필터 추가
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .anyRequest().permitAll()
+            );
         
         return http.build();
+    }
+    
+    /**
+     * 세션 인증 전략 설정
+     */
+    @Bean
+    public SessionAuthenticationStrategy sessionAuthenticationStrategy() {
+        ConcurrentSessionControlAuthenticationStrategy concurrentSessionControl = 
+            new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry());
+        concurrentSessionControl.setMaximumSessions(1);
+        concurrentSessionControl.setExceptionIfMaximumExceeded(false);
+        
+        RegisterSessionAuthenticationStrategy registerSession = 
+            new RegisterSessionAuthenticationStrategy(sessionRegistry());
+        
+        return new CompositeSessionAuthenticationStrategy(
+            Arrays.asList(concurrentSessionControl, registerSession)
+        );
+    }
+    
+    /**
+     * 세션 레지스트리
+     */
+    @Bean
+    public org.springframework.security.core.session.SessionRegistry sessionRegistry() {
+        return new org.springframework.security.core.session.SessionRegistryImpl();
     }
     
     /**

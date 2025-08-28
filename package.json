@@ -1,0 +1,19 @@
+{
+  "name": "mindgarden",
+  "version": "1.0.0",
+  "description": "MindGarden Consultation Platform",
+  "scripts": {
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "mvn spring-boot:run -Dspring.profiles.active=dev",
+    "frontend": "cd frontend && npm start",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "build": "cd frontend && npm run build",
+    "install-deps": "npm install && cd frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": ["spring-boot", "react", "consultation"],
+  "author": "MindGarden",
+  "license": "MIT"
+}

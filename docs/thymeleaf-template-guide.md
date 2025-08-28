@@ -4,12 +4,24 @@
 MindGarden 프로젝트는 Thymeleaf 공통 템플릿을 사용하여 일관성 있는 UI/UX를 제공합니다. 
 페이지마다 독립적으로 HTML을 작성하지 말고, 공통 템플릿을 활용하여 효율적으로 개발하세요.
 
+## 📋 최신 업데이트 (2024-12-19)
+- ✅ **헤더 레이아웃 개선**: 로고(왼쪽)와 사용자정보+햄버거(오른쪽) 분리
+- ✅ **세션 기반 사용자 정보**: 로그인 전에는 숨김, 로그인 후에만 표시
+- ✅ **햄버거 메뉴에 로그아웃**: 보안 강화 및 UX 개선
+- ✅ **조건부 렌더링**: `th:if="${session.user != null}"` 사용
+- ✅ **간격 및 행간 조정**: 가독성 향상을 위한 CSS 개선
+
 ## 템플릿 구조
 
 ### 1. 테블릿용 공통 템플릿
 - **파일 위치**: `src/main/resources/templates/common/layout/tablet-base.html`
 - **용도**: 테블릿 전용 페이지들의 공통 레이아웃
-- **특징**: 햄버거 메뉴, 하단 네비게이션, 고정 레이아웃
+- **특징**: 
+  - 햄버거 메뉴 (로그인 후에만 표시)
+  - 하단 네비게이션
+  - 고정 레이아웃 (반응형 아님)
+  - **세션 기반 사용자 정보 표시**
+  - **로고(왼쪽) + 사용자정보+햄버거(오른쪽) 레이아웃**
 
 ### 2. 홈페이지용 공통 템플릿
 - **파일 위치**: `src/main/resources/templates/common/layout/homepage-base.html`
@@ -100,17 +112,78 @@ MindGarden 프로젝트는 Thymeleaf 공통 템플릿을 사용하여 일관성 
 
 ### 🎯 테블릿 템플릿 (`tablet-base.html`)
 - ✅ **CSS**: `tablet-common.css`, `tablet.css` 자동 로드
-- ✅ **네비게이션**: 햄버거 메뉴 + 하단 네비게이션
+- ✅ **네비게이션**: 
+  - **햄버거 메뉴** (로그인 후에만 표시)
+  - **하단 네비게이션** (로그인 후에만 표시)
 - ✅ **컴포넌트**: 소셜 회원가입 모달, 알림 시스템
 - ✅ **레이아웃**: 고정 테블릿 레이아웃 (반응형 아님)
 - ✅ **JavaScript**: 공통 유틸리티 함수들
 - ✅ **아이콘**: Bootstrap Icons 자동 로드
+- ✅ **헤더**: 
+  - **로고** (왼쪽 끝에 배치)
+  - **사용자 정보** (로그인 후에만 표시)
+  - **로그인 링크** (로그인 전에만 표시)
 
 ### 🎯 홈페이지 템플릿 (`homepage-base.html`)
 - ✅ **CSS**: `homepage-common.css` 자동 로드
 - ✅ **레이아웃**: 반응형 디자인 (모바일/태블릿/데스크톱)
 - ✅ **컴포넌트**: 헤더, 푸터, 네비게이션
 - ✅ **JavaScript**: 공통 유틸리티 함수들
+
+## 🔐 세션 기반 사용자 정보 표시
+
+### 📱 헤더 레이아웃 구조
+```
+┌─────────────────────────────────────────────────────────────┐
+│ [로고] MindGarden                    [사용자정보] [햄버거] │
+│                                                             │
+│  ┌─────────┐  ┌─────────────────┐  ┌─────────────────┐    │
+│  │  🌸     │  │   👤 김민수     │  │   ☰ 햄버거      │    │
+│  │         │  │   내담자        │  │                 │    │
+│  └─────────┘  └─────────────────┘  └─────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 🔄 조건부 렌더링
+```html
+<!-- 로그인 후에만 표시 -->
+<div class="tablet-user-profile" th:if="${session.user != null}">
+    <div class="user-info">
+        <div class="user-avatar">
+            <i class="bi bi-person-circle"></i>
+        </div>
+        <div class="user-details">
+            <div class="user-name" th:text="${session.user.name}">사용자명</div>
+            <div class="user-role" th:text="${session.user.role}">역할</div>
+        </div>
+    </div>
+</div>
+
+<!-- 햄버거 메뉴 (로그인 후에만 표시) -->
+<button class="tablet-menu-toggle" th:if="${session.user != null}">
+    <i class="bi bi-list"></i>
+</button>
+
+<!-- 로그인 전에는 로그인 링크만 표시 -->
+<div class="tablet-login-link" th:if="${session.user == null}">
+    <a href="/tablet/login" class="login-link-button">
+        <i class="bi bi-box-arrow-in-right"></i>
+        <span>로그인</span>
+    </a>
+</div>
+```
+
+### 🎨 햄버거 메뉴 구조
+```
+┌─────────────────────────────────────┐
+│ 🌸 MindGarden              [X]     │
+├─────────────────────────────────────┤
+│ 🏠 홈페이지                        │
+│                                     │
+│ ─────────────────────────────────── │
+│ 🚪 로그아웃                        │
+└─────────────────────────────────────┘
+```
 
 ## 페이지별로 작성해야 하는 것
 
@@ -212,19 +285,27 @@ MindGarden 프로젝트는 Thymeleaf 공통 템플릿을 사용하여 일관성 
 ### 🔐 로그인 페이지
 - **파일**: `src/main/resources/templates/tablet/login.html`
 - **클래스**: `tablet-login-page`
-- **특징**: 2열 레이아웃, 소셜 로그인 (카카오/네이버)
+- **특징**: 
+  - 2열 레이아웃 (로그인 폼 + 이미지)
+  - 소셜 로그인 (카카오/네이버)
+  - **로그인 전에는 헤더에 사용자 정보 숨김**
 - **복사해서 사용**: 위의 "빠른 시작" 템플릿 복사 후 수정
 
 ### 📝 회원가입 페이지
 - **파일**: `src/main/resources/templates/tablet/register.html`
 - **클래스**: `tablet-register-page`
-- **특징**: 폼 검증, 전화번호 자동 하이픈
+- **특징**: 
+  - 폼 검증, 전화번호 자동 하이픈
+  - **로그인 전에는 헤더에 사용자 정보 숨김**
 - **복사해서 사용**: 위의 "빠른 시작" 템플릿 복사 후 수정
 
 ### 📊 클라이언트 대시보드
 - **파일**: `src/main/resources/templates/tablet/client-dashboard.html`
 - **클래스**: `tablet-dashboard-page`
-- **특징**: 카드 레이아웃, 통계 정보, 상담 예약
+- **특징**: 
+  - 카드 레이아웃, 통계 정보, 상담 예약
+  - **로그인 후에만 접근 가능 (세션 검증)**
+  - **헤더에 사용자 정보 표시**
 - **복사해서 사용**: 위의 "빠른 시작" 템플릿 복사 후 수정
 
 ### 🏠 홈페이지
@@ -268,9 +349,12 @@ MindGarden 프로젝트는 Thymeleaf 공통 템플릿을 사용하여 일관성 
     --tablet-gradient-secondary: linear-gradient(135deg, #FDE68A 0%, #A7F3D0 100%);
     
     /* 간격 */
-    --space-4: 1rem;
-    --space-6: 1.5rem;
-    --space-8: 2rem;
+    --tablet-space-xs: 8px;
+    --tablet-space-sm: 12px;
+    --tablet-space-md: 16px;
+    --tablet-space-lg: 24px;
+    --tablet-space-xl: 32px;
+    --tablet-space-2xl: 48px;
 }
 ```
 
@@ -279,24 +363,24 @@ MindGarden 프로젝트는 Thymeleaf 공통 템플릿을 사용하여 일관성 
 /* 폼 컨테이너 */
 .form-container {
     max-width: 1400px;
-    padding: var(--space-6);
+    padding: var(--tablet-space-lg);
     background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-radius: var(--tablet-radius-lg);
+    box-shadow: var(--tablet-shadow-lg);
 }
 
 /* 페이지 헤더 */
 .page-header {
     text-align: center;
-    margin-bottom: var(--space-8);
+    margin-bottom: var(--tablet-space-xl);
 }
 
 /* 카드 레이아웃 */
 .dashboard-card {
     background: white;
-    border-radius: 12px;
-    padding: var(--space-6);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border-radius: var(--tablet-radius-md);
+    padding: var(--tablet-space-lg);
+    box-shadow: var(--tablet-shadow-md);
 }
 ```
 
@@ -331,6 +415,19 @@ MindGarden 프로젝트는 Thymeleaf 공통 템플릿을 사용하여 일관성 
 #### 6. 소셜 로그인이 작동하지 않음
 - **🔍 원인**: `th:fragment="additionalScripts"` 누락 또는 잘못된 fragment 이름
 - **✅ 해결**: script 태그에 정확한 fragment 이름 사용
+
+#### 7. 🔐 로그인 후에도 사용자 정보가 표시되지 않음
+- **🔍 원인**: 세션에 사용자 정보가 제대로 저장되지 않음
+- **✅ 해결**: 
+  - 컨트롤러에서 세션에 사용자 정보 저장 확인
+  - `session.setAttribute("user", userInfo)` 확인
+  - 세션 만료 시간 설정 확인
+
+#### 8. 🚪 로그아웃 후에도 사용자 정보가 표시됨
+- **🔍 원인**: 세션 삭제가 제대로 되지 않음
+- **✅ 해결**: 
+  - 로그아웃 컨트롤러에서 `session.invalidate()` 확인
+  - `session.removeAttribute("user")` 확인
 
 ## 🚀 개발 워크플로우
 
@@ -392,11 +489,30 @@ touch src/main/resources/templates/tablet/새페이지명.html
 
 ### 📋 4. 개발 완료 체크리스트
 - [ ] 페이지가 정상적으로 렌더링되는가?
+- [ ] **로그인 전**: 헤더에 사용자 정보가 숨겨져 있는가?
+- [ ] **로그인 후**: 헤더에 사용자 정보가 표시되는가?
 - [ ] 햄버거 메뉴가 작동하는가?
 - [ ] 하단 네비게이션이 보이는가?
 - [ ] CSS 스타일이 적용되는가?
 - [ ] JavaScript 함수가 실행되는가?
 - [ ] 공통 컴포넌트들이 정상 작동하는가?
+
+## 🔐 세션 관리 가이드
+
+### 📱 로그인 플로우
+1. **사용자 로그인** → 세션에 사용자 정보 저장
+2. **헤더 자동 업데이트** → 사용자 정보 표시, 햄버거 메뉴 활성화
+3. **페이지 접근** → 세션 기반 권한 확인
+
+### 🚪 로그아웃 플로우
+1. **햄버거 메뉴에서 로그아웃** → 세션 삭제
+2. **헤더 자동 업데이트** → 사용자 정보 숨김, 로그인 링크 표시
+3. **로그인 페이지로 리다이렉트**
+
+### 🛡️ 보안 고려사항
+- **세션 만료**: 적절한 세션 타임아웃 설정
+- **권한 검증**: 각 페이지에서 세션 상태 확인
+- **CSRF 보호**: 폼 제출 시 CSRF 토큰 사용
 
 ## 🎯 결론
 
@@ -406,6 +522,8 @@ touch src/main/resources/templates/tablet/새페이지명.html
 - ✅ **개발 효율성**: 페이지별로 컨텐츠만 작성
 - ✅ **코드 품질**: 중복 코드 제거, 구조화된 개발
 - ✅ **팀 협업**: 다른 개발자도 쉽게 이해하고 수정 가능
+- ✅ **보안**: 세션 기반 사용자 정보 관리
+- ✅ **UX**: 로그인 상태에 따른 적절한 UI 표시
 
 ### 🚀 빠른 시작 요약
 1. **파일 생성**: `src/main/resources/templates/tablet/새페이지명.html`
@@ -417,6 +535,7 @@ touch src/main/resources/templates/tablet/새페이지명.html
 - **공통 템플릿**: `src/main/resources/templates/common/layout/`
 - **CSS 파일**: `src/main/resources/static/css/`
 - **예시 페이지**: `src/main/resources/templates/tablet/`
+- **컴포넌트**: `src/main/resources/templates/tablet/components/`
 
 ---
 
@@ -427,13 +546,18 @@ touch src/main/resources/templates/tablet/새페이지명.html
 - ❌ 유지보수 어려움
 - ❌ 코드 중복
 - ❌ 개발 시간 증가
+- ❌ 보안 취약점 (세션 관리 부재)
 
 **올바른 방법:**
 - ✅ 공통 템플릿 활용
 - ✅ `th:fragment` 사용
 - ✅ 페이지별 컨텐츠만 작성
+- ✅ 세션 기반 사용자 정보 관리
 - ✅ 체크리스트 확인
 
 ---
 
 **📖 이 문서는 다른 AI나 개발자가 와도 바로 이해하고 개발할 수 있도록 작성되었습니다.**
+
+**🔄 마지막 업데이트: 2024-12-19**
+**📝 주요 변경사항: 헤더 레이아웃 개선, 세션 기반 사용자 정보, 햄버거 메뉴 로그아웃**

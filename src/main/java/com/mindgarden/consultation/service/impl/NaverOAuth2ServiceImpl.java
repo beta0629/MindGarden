@@ -1,7 +1,10 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.util.Map;
 import com.mindgarden.consultation.dto.SocialUserInfo;
-import lombok.extern.slf4j.Slf4j;
+import com.mindgarden.consultation.repository.UserRepository;
+import com.mindgarden.consultation.repository.UserSocialAccountRepository;
+import com.mindgarden.consultation.service.JwtService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -11,11 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import com.mindgarden.consultation.repository.UserRepository;
-import com.mindgarden.consultation.repository.UserSocialAccountRepository;
-import com.mindgarden.consultation.service.JwtService;
-
-import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 네이버 OAuth2 서비스 구현체

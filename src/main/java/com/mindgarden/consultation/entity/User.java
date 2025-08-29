@@ -42,6 +42,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class User extends BaseEntity {
     
+    @NotBlank(message = "사용자명은 필수입니다.")
+    @Size(min = 3, max = 50, message = "사용자명은 3자 이상 50자 이하여야 합니다.")
+    @Column(name = "username", nullable = false, unique = true, length = 50)
+    private String username;
+    
     @NotBlank(message = "이메일은 필수입니다.")
     @Email(message = "올바른 이메일 형식이 아닙니다.")
     @Column(name = "email", nullable = false, unique = true, length = 100)
@@ -93,7 +98,33 @@ public class User extends BaseEntity {
     private LocalDateTime lastLoginAt;
     
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private Boolean isActive = true;
+    
+    /**
+     * 소셜 계정 여부
+     */
+    @Column(name = "is_social_account", nullable = false)
+    @Builder.Default
+    private Boolean isSocialAccount = false;
+    
+    /**
+     * 소셜 계정 제공자 (KAKAO, NAVER 등)
+     */
+    @Column(name = "social_provider", length = 20)
+    private String socialProvider;
+    
+    /**
+     * 소셜 계정 ID
+     */
+    @Column(name = "social_provider_user_id", length = 100)
+    private String socialProviderUserId;
+    
+    /**
+     * 소셜 계정 연동 시간
+     */
+    @Column(name = "social_linked_at")
+    private LocalDateTime socialLinkedAt;
     
     @Column(name = "is_email_verified", nullable = false)
     private Boolean isEmailVerified = false;
@@ -172,6 +203,14 @@ public class User extends BaseEntity {
     }
     
     // Getter & Setter
+    public String getUsername() {
+        return username;
+    }
+    
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
     public String getEmail() {
         return email;
     }

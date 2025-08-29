@@ -62,9 +62,24 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             log.info("사용자 엔티티 생성 시작");
             User user = new User();
             user.setEmail(request.getEmail()); // 이메일은 암호화하지 않음 (로그인용)
-            user.setName(encryptionUtil.encrypt(request.getName())); // 이름 암호화
-            user.setNickname(encryptionUtil.encrypt(request.getNickname() != null ? request.getNickname() : request.getName())); // 닉네임 암호화
-            user.setPhone(encryptionUtil.encrypt(phone)); // 검증된 휴대폰 번호 암호화
+            
+            // username 필수값 설정 (SNS에서 받은 이름 사용)
+            String username = generateUsernameFromName(request.getName(), request.getEmail());
+            user.setUsername(username);
+            
+            // encryptionUtil이 null인 경우를 대비한 안전한 처리
+            if (encryptionUtil != null) {
+                user.setName(encryptionUtil.encrypt(request.getName())); // 이름 암호화
+                user.setNickname(encryptionUtil.encrypt(request.getNickname() != null ? request.getNickname() : request.getName())); // 닉네임 암호화
+                user.setPhone(encryptionUtil.encrypt(phone)); // 검증된 휴대폰 번호 암호화
+            } else {
+                // 암호화 유틸이 없는 경우 평문 저장 (개발용)
+                log.warn("PersonalDataEncryptionUtil이 null입니다. 평문으로 저장합니다.");
+                user.setName(request.getName());
+                user.setNickname(request.getNickname() != null ? request.getNickname() : request.getName());
+                user.setPhone(phone);
+            }
+            
             user.setRole(UserRole.CLIENT); // 기본 역할: 내담자
             user.setIsEmailVerified(true); // 소셜 계정은 이메일 인증 완료로 간주
             user.setIsActive(true);
@@ -127,7 +142,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 .email(user.getEmail())
                 .name(encryptionUtil.safeDecrypt(user.getName()))
                 .nickname(encryptionUtil.safeDecrypt(user.getNickname()))
-                .redirectUrl("/tablet/login?signup=success&email=" + user.getEmail())
+                .redirectUrl("http://localhost:3000/login?signup=success&email=" + user.getEmail())
                 .canApplyConsultant(canApplyConsultant)
                 .consultantApplicationMessage(consultantApplicationMessage)
                 .profileCompletionRate(profileCompletionRate)
@@ -147,6 +162,61 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 .message(errorMessage)
                 .build();
         }
+    }
+    
+    /**
+     * SNS 이름 기반으로 username 생성
+     */
+    private String generateUsernameFromName(String name, String email) {
+        if (name != null && !name.trim().isEmpty()) {
+            // SNS에서 받은 이름 사용
+            String username = name.trim();
+            
+            // 특수문자 제거 및 영문/숫자/언더스코어만 허용
+            username = username.replaceAll("[^a-zA-Z0-9_가-힣]", "");
+            
+            // 길이가 3자 미만이면 보완
+            if (username.length() < 3) {
+                username = "user_" + username;
+            }
+            
+            // 최대 50자로 제한
+            if (username.length() > 50) {
+                username = username.substring(0, 50);
+            }
+            
+            return username;
+        } else {
+            // 이름이 없으면 이메일 기반으로 생성
+            return generateUsernameFromEmail(email);
+        }
+    }
+    
+    /**
+     * 이메일 기반으로 username 생성 (fallback)
+     */
+    private String generateUsernameFromEmail(String email) {
+        if (email == null || email.isEmpty()) {
+            return "user_" + System.currentTimeMillis();
+        }
+        
+        // 이메일에서 @ 앞부분 추출
+        String username = email.split("@")[0];
+        
+        // 특수문자 제거 및 길이 제한
+        username = username.replaceAll("[^a-zA-Z0-9_]", "");
+        
+        // 길이가 3자 미만이면 보완
+        if (username.length() < 3) {
+            username = "user_" + username;
+        }
+        
+        // 최대 50자로 제한
+        if (username.length() > 50) {
+            username = username.substring(0, 50);
+        }
+        
+        return username;
     }
     
     /**

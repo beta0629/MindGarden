@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="마음의 정원을 가꾸는 상담 서비스" />
+    <meta name="keywords" content="상담, 심리상담, 마음치유, 정신건강" />
+    <meta name="author" content="MindGarden" />
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    
+    <!-- 카카오 주소 API -->
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    
+    <!-- 파비콘 -->
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <title>MindGarden - 상담 서비스</title>
+    
+    <!-- 스크립트 로딩 확인 -->
+    <script>
+      console.log('🚀 index.html 스크립트 실행됨');
+      console.log('📅 현재 시간:', new Date().toLocaleString());
+      console.log('🌐 User Agent:', navigator.userAgent);
+      console.log('📱 화면 크기:', window.innerWidth, 'x', window.innerHeight);
+      
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('📄 DOM 로딩 완료');
+      });
+      
+      window.addEventListener('load', function() {
+        console.log('🖼️ 모든 리소스 로딩 완료');
+        console.log('⏱️ 로딩 시간:', performance.now(), 'ms');
+      });
+    </script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

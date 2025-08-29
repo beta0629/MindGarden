@@ -1,15 +1,14 @@
 package com.mindgarden.consultation.util;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-import javax.crypto.spec.IvParameterSpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 개인정보 암호화/복호화 유틸리티
@@ -89,6 +88,55 @@ public class PersonalDataEncryptionUtil {
             log.error("개인정보 복호화 실패: {}", e.getMessage(), e);
             throw new RuntimeException("개인정보 복호화에 실패했습니다.", e);
         }
+    }
+    
+    /**
+     * 이름 마스킹 처리
+     * 
+     * @param name 원본 이름
+     * @return 마스킹된 이름
+     */
+    public String maskName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return name;
+        }
+        
+        if (name.length() <= 1) {
+            return name;
+        }
+        
+        if (name.length() == 2) {
+            return name.charAt(0) + "*";
+        }
+        
+        return name.charAt(0) + "*".repeat(name.length() - 2) + name.charAt(name.length() - 1);
+    }
+    
+    /**
+     * 이메일 마스킹 처리
+     * 
+     * @param email 원본 이메일
+     * @return 마스킹된 이메일
+     */
+    public String maskEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return email;
+        }
+        
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 1) {
+            return email;
+        }
+        
+        String localPart = email.substring(0, atIndex);
+        String domainPart = email.substring(atIndex);
+        
+        if (localPart.length() <= 2) {
+            return email;
+        }
+        
+        String maskedLocalPart = localPart.charAt(0) + "*".repeat(localPart.length() - 2) + localPart.charAt(localPart.length() - 1);
+        return maskedLocalPart + domainPart;
     }
     
     /**

@@ -3,6 +3,7 @@ package com.mindgarden.consultation.service.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.mindgarden.consultation.dto.ProfileImageInfo;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.BaseRepository;
 import com.mindgarden.consultation.repository.UserRepository;
@@ -307,6 +308,72 @@ public class UserServiceImpl implements UserService {
     @Override
     public long countByAgeGroup(String ageGroup) {
         return userRepository.countByAgeGroup(ageGroup);
+    }
+    
+    @Override
+    public ProfileImageInfo getProfileImageInfo(Long userId) {
+        List<Object[]> results = userRepository.findProfileImageInfoByUserId(userId);
+        
+        if (results.isEmpty()) {
+            return ProfileImageInfo.builder()
+                .userId(userId)
+                .finalProfileImageUrl("/images/default-profile-icon.png")
+                .profileImageType("DEFAULT_ICON")
+                .build();
+        }
+        
+        // 첫 번째 결과에서 기본 사용자 정보 추출
+        Object[] firstResult = results.get(0);
+        Long id = (Long) firstResult[0];
+        String name = (String) firstResult[1];
+        String email = (String) firstResult[2];
+        String role = (String) firstResult[3];
+        String userProfileImageUrl = (String) firstResult[4];
+        
+        // 프로필 이미지 우선순위 결정
+        String finalProfileImageUrl;
+        String profileImageType;
+        String socialProfileImageUrl = null;
+        String socialProvider = null;
+        
+        // 1. 사용자 프로필 사진 우선
+        if (userProfileImageUrl != null && !userProfileImageUrl.trim().isEmpty()) {
+            finalProfileImageUrl = userProfileImageUrl;
+            profileImageType = "USER_PROFILE";
+        } else {
+            // 2. SNS 이미지 찾기
+            for (Object[] result : results) {
+                String provider = (String) result[5];
+                String providerImage = (String) result[6];
+                
+                if (provider != null && providerImage != null && !providerImage.trim().isEmpty()) {
+                    socialProfileImageUrl = providerImage;
+                    socialProvider = provider;
+                    break;
+                }
+            }
+            
+            if (socialProfileImageUrl != null && !socialProfileImageUrl.trim().isEmpty()) {
+                finalProfileImageUrl = socialProfileImageUrl;
+                profileImageType = "SOCIAL_IMAGE";
+            } else {
+                // 3. 기본 아이콘
+                finalProfileImageUrl = "/images/default-profile-icon.png";
+                profileImageType = "DEFAULT_ICON";
+            }
+        }
+        
+        return ProfileImageInfo.builder()
+            .userId(id)
+            .userName(name)
+            .userEmail(email)
+            .userRole(role)
+            .userProfileImageUrl(userProfileImageUrl)
+            .socialProvider(socialProvider)
+            .socialProfileImageUrl(socialProfileImageUrl)
+            .finalProfileImageUrl(finalProfileImageUrl)
+            .profileImageType(profileImageType)
+            .build();
     }
     
     @Override

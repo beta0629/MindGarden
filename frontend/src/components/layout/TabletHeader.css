@@ -1,0 +1,130 @@
+/* 프로필 이미지 타입별 스타일 */
+.profile-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.profile-image-custom {
+  border-color: #4CAF50; /* 사용자 지정 이미지 - 초록색 테두리 */
+}
+
+.profile-image-social {
+  border-color: #2196F3; /* 소셜 계정 이미지 - 파란색 테두리 */
+}
+
+.profile-image-default {
+  border-color: #9E9E9E; /* 기본 아이콘 - 회색 테두리 */
+}
+
+/* 프로필 소스 표시 */
+.profile-source {
+  margin-top: 2px;
+  opacity: 0.8;
+}
+
+.profile-source small {
+  font-style: italic;
+  color: #666;
+}
+
+/* 사용자 아바타 컨테이너 */
+.user-avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 프로필 아이콘 (기본) */
+.profile-icon {
+  font-size: 40px;
+  color: #9E9E9E;
+  background: #f5f5f5;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+/* 프로필 이미지 호버 효과 */
+.profile-image:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 사용자 정보 컨테이너 */
+.user-details {
+  margin-left: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* 사용자 프로필 컨테이너 */
+.tablet-user-profile {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.tablet-user-profile:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 사용자 정보 클릭 영역 */
+.user-info {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.user-info:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .profile-image,
+  .profile-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .profile-icon {
+    font-size: 36px;
+  }
+  
+  .user-name {
+    font-size: 13px;
+  }
+  
+  .user-role {
+    font-size: 11px;
+  }
+  
+  .profile-source small {
+    font-size: 10px;
+  }
+}

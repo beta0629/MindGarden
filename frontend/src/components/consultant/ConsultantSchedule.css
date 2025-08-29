@@ -1,0 +1,520 @@
+/* 상담사 일정관리 페이지 스타일 */
+.consultant-schedule {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.schedule-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.schedule-header h1 {
+  color: #333;
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.schedule-header p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.schedule-controls {
+  margin-bottom: 20px;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.add-event-btn {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.add-event-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.add-client-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.add-client-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.view-clients-btn {
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.view-clients-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+}
+
+.calendar-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* FullCalendar 커스텀 스타일 */
+.fc {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* 일정 표시 최적화 */
+.fc-daygrid-event {
+  margin: 1px 0 !important;
+  padding: 2px 4px !important;
+  font-size: 0.8rem !important;
+  line-height: 1.2 !important;
+  border-radius: 4px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.fc-daygrid-event-dot {
+  display: none !important;
+}
+
+.fc-daygrid-event-title {
+  font-weight: 500 !important;
+  color: #fff !important;
+}
+
+/* 더보기 링크 스타일 */
+.fc-daygrid-more-link {
+  background: #f8f9fa !important;
+  color: #007bff !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  border: 1px solid #dee2e6 !important;
+}
+
+.fc-daygrid-more-link:hover {
+  background: #e9ecef !important;
+  color: #0056b3 !important;
+  text-decoration: none !important;
+}
+
+/* 시간별 뷰 최적화 */
+.fc-timegrid-event {
+  margin: 1px 2px !important;
+  padding: 2px 6px !important;
+  font-size: 0.85rem !important;
+  border-radius: 4px !important;
+}
+
+.fc-timegrid-event-title {
+  font-weight: 500 !important;
+  color: #fff !important;
+}
+
+/* 일정 색상별 스타일 강화 */
+.fc-event[data-event-type="초기상담"],
+.fc-event[style*="background-color: rgb(76, 175, 80)"] {
+  background-color: #4CAF50 !important;
+  border-color: #4CAF50 !important;
+}
+
+.fc-event[data-event-type="진행상담"],
+.fc-event[style*="background-color: rgb(33, 150, 243)"] {
+  background-color: #2196F3 !important;
+  border-color: #2196F3 !important;
+}
+
+.fc-event[data-event-type="종결상담"],
+.fc-event[style*="background-color: rgb(255, 152, 0)"] {
+  background-color: #FF9800 !important;
+  border-color: #FF9800 !important;
+}
+
+.fc-event[data-event-type="긴급상담"],
+.fc-event[style*="background-color: rgb(244, 67, 54)"] {
+  background-color: #f44336 !important;
+  border-color: #f44336 !important;
+}
+
+.fc-toolbar-title {
+  font-size: 1.5rem !important;
+  font-weight: 600;
+  color: #333;
+}
+
+.fc-button {
+  background: #f8f9fa !important;
+  border: 1px solid #dee2e6 !important;
+  color: #495057 !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  padding: 8px 16px !important;
+  transition: all 0.2s ease !important;
+}
+
+.fc-button:hover {
+  background: #e9ecef !important;
+  border-color: #adb5bd !important;
+  transform: translateY(-1px);
+}
+
+.fc-button-active {
+  background: #007bff !important;
+  border-color: #007bff !important;
+  color: white !important;
+}
+
+.fc-event {
+  border-radius: 6px !important;
+  border: none !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.fc-event:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.fc-daygrid-day:hover {
+  background-color: #f8f9fa !important;
+}
+
+.fc-timegrid-slot:hover {
+  background-color: #f8f9fa !important;
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 폼 스타일 */
+form {
+  padding: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: #f8f9fa;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* 버튼 스타일 */
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e1e5e9;
+}
+
+.save-btn, .cancel-btn, .delete-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.cancel-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
+  margin-right: auto;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .consultant-schedule {
+    padding: 15px;
+  }
+  
+  .schedule-header h1 {
+    font-size: 2rem;
+  }
+  
+  .control-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .add-event-btn,
+  .add-client-btn,
+  .view-clients-btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  form {
+    padding: 20px;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .delete-btn {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+}
+
+/* FullCalendar 한국어 로케일 스타일 */
+.fc-daygrid-day-number {
+  font-weight: 600;
+  color: #333;
+}
+
+.fc-col-header-cell {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+}
+
+.fc-timegrid-slot-label {
+  font-weight: 500;
+  color: #6c757d;
+}
+
+/* 이벤트 색상별 스타일 */
+.fc-event[data-event-type="초기상담"] {
+  background-color: #4CAF50 !important;
+  border-color: #4CAF50 !important;
+}
+
+.fc-event[data-event-type="진행상담"] {
+  background-color: #2196F3 !important;
+  border-color: #2196F3 !important;
+}
+
+.fc-event[data-event-type="종결상담"] {
+  background-color: #FF9800 !important;
+  border-color: #FF9800 !important;
+}
+
+.fc-event[data-event-type="긴급상담"] {
+  background-color: #f44336 !important;
+  border-color: #f44336 !important;
+}
+
+/* 일정 표시 최적화 추가 */
+.fc-daygrid-day-frame {
+  min-height: 80px !important;
+}
+
+.fc-daygrid-day-events {
+  margin-top: 2px !important;
+}
+
+.fc-daygrid-day-number {
+  padding: 4px !important;
+  font-weight: 600 !important;
+}
+
+/* 일정이 많을 때 스크롤 가능하도록 */
+.fc-daygrid-day-events {
+  max-height: 120px !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+}
+
+.fc-daygrid-day-events::-webkit-scrollbar {
+  width: 4px !important;
+}
+
+.fc-daygrid-day-events::-webkit-scrollbar-track {
+  background: #f1f1f1 !important;
+  border-radius: 2px !important;
+}
+
+.fc-daygrid-day-events::-webkit-scrollbar-thumb {
+  background: #c1c1c1 !important;
+  border-radius: 2px !important;
+}
+
+.fc-daygrid-day-events::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8 !important;
+}

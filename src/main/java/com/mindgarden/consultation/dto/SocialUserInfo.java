@@ -1,11 +1,10 @@
 package com.mindgarden.consultation.dto;
 
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
 
 /**
  * 통합 소셜 사용자 정보 DTO
@@ -45,6 +44,11 @@ public class SocialUserInfo {
      * 소셜 계정 닉네임
      */
     private String nickname;
+    
+    /**
+     * 소셜 계정 프로필 이미지 (base64)
+     */
+    private String profileImage;
     
     /**
      * 소셜 계정 프로필 이미지 URL

@@ -39,19 +39,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // 모든 보안 기능 비활성화
+            // CORS 및 CSRF 설정
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(AbstractHttpConfigurer::disable)
-            .formLogin(AbstractHttpConfigurer::disable)
-            .httpBasic(AbstractHttpConfigurer::disable)
-            .logout(AbstractHttpConfigurer::disable)
-            .exceptionHandling(AbstractHttpConfigurer::disable)
             
-            // 모든 요청 허용
+            // 세션 관리 활성화
+            .sessionManagement(session -> session
+                .sessionAuthenticationStrategy(sessionAuthenticationStrategy())
+            )
+            
+            // 인증 설정 (개발 중에는 모든 요청 허용)
+            // TODO: 운영 환경에서는 아래와 같이 변경해야 함
+            // .authorizeHttpRequests(authz -> authz
+            //     // 공개 API
+            //     .requestMatchers("/api/auth/**", "/oauth2/**").permitAll()
+            //     .requestMatchers("/error").permitAll()
+            //     // 보호된 API는 인증 필요
+            //     .anyRequest().authenticated()
+            // )
             .authorizeHttpRequests(authz -> authz
                 .anyRequest().permitAll()
-            );
+            )
+            
+            // 폼 로그인 비활성화
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable);
+            
+            // TODO: 운영 환경에서는 JWT 필터 활성화 필요
+            // .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
     }
@@ -81,6 +96,15 @@ public class SecurityConfig {
     public org.springframework.security.core.session.SessionRegistry sessionRegistry() {
         return new org.springframework.security.core.session.SessionRegistryImpl();
     }
+    
+    // TODO: 운영 환경에서는 JWT 인증 필터 Bean 활성화 필요
+    // /**
+    //  * JWT 인증 필터
+    //  */
+    // @Bean
+    // public JwtAuthenticationFilter jwtAuthenticationFilter() {
+    //     return new JwtAuthenticationFilter();
+    // }
     
     /**
      * CORS 설정

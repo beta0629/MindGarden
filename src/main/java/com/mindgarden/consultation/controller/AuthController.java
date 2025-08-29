@@ -19,7 +19,7 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/api/auth")
 public class AuthController {
     
-    @Autowired
+    @Autowired(required = false)
     private PersonalDataEncryptionUtil encryptionUtil;
     
     @Value("${development.security.oauth2.kakao.client-id}")
@@ -46,10 +46,19 @@ public class AuthController {
         if (user != null) {
             SessionInfo.UserInfo userInfo = new SessionInfo.UserInfo();
             userInfo.setId(user.getId());
-            userInfo.setUsername(encryptionUtil.decrypt(user.getName()));
+            
+            // encryptionUtil이 null인 경우를 대비한 안전한 처리
+            if (encryptionUtil != null) {
+                userInfo.setUsername(encryptionUtil.decrypt(user.getName()));
+                userInfo.setNickname(encryptionUtil.decrypt(user.getNickname()));
+            } else {
+                // 암호화 유틸이 없는 경우 평문 사용
+                userInfo.setUsername(user.getName());
+                userInfo.setNickname(user.getNickname());
+            }
+            
             userInfo.setEmail(user.getEmail());
             userInfo.setRole(user.getRole());
-            userInfo.setNickname(encryptionUtil.decrypt(user.getNickname()));
             return ResponseEntity.ok(userInfo);
         }
         return ResponseEntity.status(401).build();
@@ -69,10 +78,19 @@ public class AuthController {
             
             SessionInfo.UserInfo userInfo = new SessionInfo.UserInfo();
             userInfo.setId(user.getId());
-            userInfo.setUsername(encryptionUtil.decrypt(user.getName()));
+            
+            // encryptionUtil이 null인 경우를 대비한 안전한 처리
+            if (encryptionUtil != null) {
+                userInfo.setUsername(encryptionUtil.decrypt(user.getName()));
+                userInfo.setNickname(encryptionUtil.decrypt(user.getNickname()));
+            } else {
+                // 암호화 유틸이 없는 경우 평문 사용
+                userInfo.setUsername(user.getName());
+                userInfo.setNickname(user.getNickname());
+            }
+            
             userInfo.setEmail(user.getEmail());
             userInfo.setRole(user.getRole());
-            userInfo.setNickname(encryptionUtil.decrypt(user.getNickname()));
             sessionInfo.setUserInfo(userInfo);
             
             return ResponseEntity.ok(sessionInfo);

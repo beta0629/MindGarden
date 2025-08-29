@@ -2,9 +2,9 @@ package com.mindgarden.consultation.controller;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.mindgarden.consultation.dto.ProfileImageInfo;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 사용자 관리 Controller
@@ -27,13 +29,14 @@ import org.springframework.web.bind.annotation.RestController;
  * @version 1.0.0
  * @since 2024-12-19
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class UserController implements BaseController<User, Long> {
     
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
     
     @Override
     public UserService getService() {
@@ -577,5 +580,17 @@ public class UserController implements BaseController<User, Long> {
     public ResponseEntity<Page<User>> getByConsultationCountPaged(@PathVariable Integer minCount, Pageable pageable) {
         Page<User> users = userService.findByTotalConsultationsGreaterThanEqual(minCount, pageable);
         return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/{userId}/profile-image")
+    public ResponseEntity<ProfileImageInfo> getProfileImage(@PathVariable Long userId) {
+        try {
+            log.info("🖼️ 사용자 프로필 이미지 조회: {}", userId);
+            ProfileImageInfo profileImageInfo = userService.getProfileImageInfo(userId);
+            return ResponseEntity.ok(profileImageInfo);
+        } catch (Exception e) {
+            log.error("❌ 사용자 프로필 이미지 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

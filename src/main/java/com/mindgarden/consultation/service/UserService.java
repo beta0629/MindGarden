@@ -3,6 +3,7 @@ package com.mindgarden.consultation.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.mindgarden.consultation.dto.ProfileImageInfo;
 import com.mindgarden.consultation.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -97,6 +98,12 @@ public interface UserService extends BaseService<User, Long> {
      * 연령대별 사용자 개수 조회
      */
     long countByAgeGroup(String ageGroup);
+    
+    /**
+     * 사용자 ID로 프로필 이미지 우선순위 정보 조회
+     * 1. 사용자 프로필 사진 2. SNS 이미지 3. 기본 아이콘
+     */
+    ProfileImageInfo getProfileImageInfo(Long userId);
     
     // ==================== 기간별 조회 메서드 ====================
     

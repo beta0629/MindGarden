@@ -1,0 +1,331 @@
+/* 태블릿 전용 로그인 페이지 스타일 */
+.tablet-login-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-container {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+
+/* 로고 및 헤더 */
+.login-header {
+  margin-bottom: 40px;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.logo-icon {
+  font-size: 3rem;
+  color: #0ea5e9;
+  margin-right: 15px;
+}
+
+.logo-text {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.welcome-message {
+  font-size: 1.1rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* 로그인 폼 */
+.login-form {
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 25px;
+  text-align: left;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  color: #9ca3af;
+  font-size: 1.1rem;
+  z-index: 1;
+}
+
+.form-input {
+  width: 100%;
+  padding: 15px 15px 15px 50px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 1rem;
+  color: #374151;
+  background: #f9fafb;
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+/* 에러 메시지 */
+.error-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 20px;
+  color: #dc2626;
+  font-size: 0.9rem;
+}
+
+.error-message i {
+  margin-right: 8px;
+  color: #ef4444;
+}
+
+/* 로그인 버튼 */
+.login-btn {
+  width: 100%;
+  padding: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.login-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
+}
+
+.login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.login-btn i {
+  font-size: 1.2rem;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 구분선 */
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 30px 0;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.divider span {
+  background: white;
+  padding: 0 20px;
+  color: #9ca3af;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* 소셜 로그인 */
+.social-login {
+  margin-bottom: 30px;
+}
+
+.social-btn {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.social-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.kakao-btn {
+  background: #fef01b;
+  color: #000;
+  border-color: #fef01b;
+}
+
+.kakao-btn:hover {
+  background: #f4e800;
+  border-color: #f4e800;
+}
+
+.naver-btn {
+  background: #03c75a;
+  color: white;
+  border-color: #03c75a;
+}
+
+.naver-btn:hover {
+  background: #02b351;
+  border-color: #02b351;
+}
+
+.social-btn i {
+  font-size: 1.2rem;
+}
+
+/* 회원가입 링크 */
+.register-link {
+  text-align: center;
+}
+
+.register-link p {
+  color: #6b7280;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+}
+
+.register-btn {
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 2px solid #0ea5e9;
+  background: transparent;
+  color: #0ea5e9;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.register-btn:hover {
+  background: #0ea5e9;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3);
+}
+
+/* 태블릿 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .login-container {
+    padding: 50px;
+    max-width: 520px;
+  }
+  
+  .logo-icon {
+    font-size: 3.5rem;
+  }
+  
+  .logo-text {
+    font-size: 2.8rem;
+  }
+  
+  .welcome-message {
+    font-size: 1.2rem;
+  }
+  
+  .form-input {
+    padding: 18px 18px 18px 55px;
+    font-size: 1.1rem;
+  }
+  
+  .login-btn {
+    padding: 18px;
+    font-size: 1.2rem;
+  }
+  
+  .social-btn {
+    padding: 16px;
+    font-size: 1.1rem;
+  }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+  .tablet-login-page {
+    padding: 15px;
+  }
+  
+  .login-container {
+    padding: 30px 25px;
+  }
+  
+  .logo-icon {
+    font-size: 2.5rem;
+  }
+  
+  .logo-text {
+    font-size: 2rem;
+  }
+  
+  .welcome-message {
+    font-size: 1rem;
+  }
+}

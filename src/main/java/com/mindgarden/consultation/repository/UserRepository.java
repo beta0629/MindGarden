@@ -1,15 +1,14 @@
 package com.mindgarden.consultation.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import com.mindgarden.consultation.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * 사용자 관리 Repository
@@ -20,6 +19,18 @@ import java.util.Optional;
  */
 @Repository
 public interface UserRepository extends BaseRepository<User, Long> {
+    
+    /**
+     * 사용자명으로 사용자 조회 (활성 상태만)
+     */
+    @Query("SELECT u FROM User u WHERE u.username = ?1 AND u.isDeleted = false")
+    Optional<User> findByUsername(String username);
+    
+    /**
+     * 사용자명으로 사용자 존재 여부 확인 (활성 상태만)
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.username = ?1 AND u.isDeleted = false")
+    boolean existsByUsername(String username);
     
     /**
      * 이메일로 사용자 조회 (활성 상태만)
@@ -86,6 +97,16 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.grade = ?1 AND u.isDeleted = false")
     List<User> findByGrade(String grade);
+    
+    /**
+     * 사용자 ID로 프로필 사진 정보 조인 조회 (1. 사용자 프로필 2. SNS 이미지)
+     */
+    @Query("SELECT u.id, u.name, u.email, u.role, u.profileImageUrl, " +
+           "usa.provider, usa.providerProfileImage " +
+           "FROM User u " +
+           "LEFT JOIN UserSocialAccount usa ON u.id = usa.user.id AND usa.isDeleted = false " +
+           "WHERE u.id = ?1 AND u.isDeleted = false")
+    List<Object[]> findProfileImageInfoByUserId(Long userId);
     
     /**
      * 등급별 사용자 페이징 조회 (활성 상태만)

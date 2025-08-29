@@ -19,12 +19,28 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false  # SQL 로그는 별도로 제어
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
         use_sql_comments: true
+        # 로그 레벨 분리 설정
+        logging:
+          level:
+            org.hibernate.SQL: DEBUG          # SQL 쿼리만
+            org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # SQL 파라미터
+            org.hibernate.engine.transaction.internal: DEBUG      # 트랜잭션
+            org.hibernate.resource.transaction: DEBUG             # 트랜잭션 리소스
+            org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR  # SQL 예외만
+        # SQL 예외 상세 로깅
+        jdbc:
+          batch_size: 20
+          batch_versioned_data: true
+        # 스키마 업데이트 로깅
+        hbm2ddl:
+          auto: update
+          import_files: false
     database-platform: org.hibernate.dialect.MySQL8Dialect
   
   # Thymeleaf 설정
@@ -105,6 +121,39 @@ server:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
     min-response-size: 1024
+
+# 로깅 설정
+logging:
+  level:
+    # 애플리케이션 로그 (정상 로그 계속 남기기)
+    com.mindgarden: INFO
+    # Spring 관련 로그
+    org.springframework.transaction: INFO
+    org.springframework.orm.jpa: INFO
+    # 데이터베이스 연결 로그
+    com.zaxxer.hikari: INFO
+    # SQL 관련 로그 (별도 파일로 분리)
+    org.hibernate.SQL: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: INFO
+    org.hibernate.engine.transaction.internal: INFO
+    org.hibernate.resource.transaction: INFO
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
+    # 기타 로그는 INFO 레벨로 (정상 로그 계속 남기기)
+    root: INFO
+  
+  # 로그 파일 설정
+  file:
+    name: logs/mindgarden.log
+    max-size: 100MB
+    max-history: 30
+  
+  # 로그 패턴 설정
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  
+  # SQL/데이터베이스 오류 로그 별도 파일
+  config: classpath:logback-spring.xml
 
 # Actuator 설정
 management:

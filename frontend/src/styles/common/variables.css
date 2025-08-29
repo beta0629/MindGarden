@@ -1,0 +1,89 @@
+/* ========================================
+   MindGarden - 공통 CSS 변수
+   디자인 가이드 기반 색상 및 타이포그래피 시스템
+   ======================================== */
+
+:root {
+  /* 파스텔 톤 메인 컬러 */
+  --color-primary: #B8E6B8;        /* 부드러운 민트 그린 */
+  --color-primary-light: #D4F0D4;  /* 밝은 민트 */
+  --color-primary-dark: #9CD69C;   /* 진한 민트 */
+  
+  /* 파스텔 톤 보조 컬러 */
+  --color-secondary: #FFB3BA;      /* 부드러운 파스텔 핑크 */
+  --color-secondary-light: #FFD1D6; /* 밝은 파스텔 핑크 */
+  --color-secondary-dark: #FF9AA2;  /* 진한 파스텔 핑크 */
+  
+  /* 파스텔 톤 액센트 컬러 */
+  --color-accent: #B8D4FF;         /* 부드러운 파스텔 블루 */
+  --color-accent-light: #D4E6FF;   /* 밝은 파스텔 블루 */
+  --color-accent-dark: #9CC2FF;    /* 진한 파스텔 블루 */
+  
+  /* 파스텔 톤 보조 액센트 */
+  --color-tertiary: #FFE5B3;       /* 부드러운 파스텔 옐로우 */
+  --color-tertiary-light: #FFF0D4; /* 밝은 파스텔 옐로우 */
+  --color-tertiary-dark: #FFD699;  /* 진한 파스텔 옐로우 */
+  
+  /* 파스텔 톤 뉴트럴 */
+  --color-neutral: #F0F0F0;        /* 매우 연한 그레이 */
+  --color-neutral-light: #F8F8F8;  /* 거의 흰색 */
+  --color-neutral-dark: #E0E0E0;   /* 연한 그레이 */
+  
+  /* 파스텔 톤 배경 */
+  --color-background: #FAFAFA;     /* 매우 연한 크림 */
+  --color-surface: #FFFFFF;        /* 순백 */
+  --color-card: #FFFFFF;           /* 카드 배경 */
+  
+  /* 파스텔 톤 텍스트 */
+  --color-text-primary: #4A4A4A;   /* 진한 그레이 */
+  --color-text-secondary: #6B6B6B; /* 중간 그레이 */
+  --color-text-muted: #9B9B9B;     /* 연한 그레이 */
+  --color-text-light: #FFFFFF;     /* 흰색 텍스트 */
+  
+  /* 파스텔 톤 상태 */
+  --color-success: #C8E6C9;        /* 부드러운 그린 */
+  --color-warning: #FFE0B2;        /* 부드러운 오렌지 */
+  --color-error: #FFCDD2;          /* 부드러운 레드 */
+  --color-info: #BBDEFB;           /* 부드러운 블루 */
+  
+  /* 파스텔 톤 그라데이션 */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-light) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 100%);
+  --gradient-warm: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-tertiary) 100%);
+  --gradient-cool: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  
+  /* 파스텔 톤 그림자 */
+  --shadow-soft: 0 2px 8px rgba(184, 230, 184, 0.15);
+  --shadow-medium: 0 4px 16px rgba(184, 230, 184, 0.2);
+  --shadow-large: 0 8px 32px rgba(184, 230, 184, 0.25);
+  --shadow-hover: 0 6px 20px rgba(184, 230, 184, 0.3);
+  
+  /* 파스텔 톤 테두리 */
+  --border-radius-small: 8px;
+  --border-radius-medium: 12px;
+  --border-radius-large: 16px;
+  --border-radius-xl: 24px;
+  
+  /* 파스텔 톤 간격 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  
+  /* 파스텔 톤 폰트 */
+  --font-family-primary: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --font-family-secondary: 'Noto Sans KR', sans-serif;
+  
+  /* 파스텔 톤 전환 */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  
+  /* 파스텔 톤 블러 */
+  --blur-light: blur(4px);
+  --blur-medium: blur(8px);
+  --blur-heavy: blur(16px);
+}

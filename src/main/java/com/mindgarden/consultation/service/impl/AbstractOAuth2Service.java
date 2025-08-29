@@ -95,6 +95,9 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
             String jwtToken = jwtService.generateToken(user.getEmail());
             String refreshToken = jwtService.generateRefreshToken(user.getEmail());
             
+            // 6. 프로필 사진 우선순위 적용 (1. 사용자 프로필 2. SNS 이미지 3. 기본 아이콘)
+            String finalProfileImageUrl = determineProfileImageUrl(user, socialUserInfo);
+            
             // 6. 응답 생성
             return SocialLoginResponse.builder()
                 .success(true)
@@ -107,7 +110,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                     .name(user.getName())
                     .nickname(user.getNickname())
                     .role(user.getRole())
-                    .profileImageUrl(user.getProfileImageUrl())
+                    .profileImageUrl(finalProfileImageUrl)
                     .build())
                 .socialAccountInfo(SocialLoginResponse.SocialAccountInfo.builder()
                     .provider(getProviderName())
@@ -298,6 +301,32 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         }
         
         return password.toString();
+    }
+
+    /**
+     * 프로필 사진 우선순위 결정 (1. 사용자 프로필 2. SNS 이미지 3. 기본 아이콘)
+     * 
+     * @param user 사용자 엔티티
+     * @param socialUserInfo 소셜 사용자 정보
+     * @return 최종 프로필 이미지 URL
+     */
+    protected String determineProfileImageUrl(User user, SocialUserInfo socialUserInfo) {
+        // 1. 사용자 프로필 사진 우선
+        if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().trim().isEmpty()) {
+            log.info("사용자 프로필 사진 사용: {}", user.getProfileImageUrl());
+            return user.getProfileImageUrl();
+        }
+        
+        // 2. SNS 이미지 노출
+        if (socialUserInfo.getProfileImageUrl() != null && !socialUserInfo.getProfileImageUrl().trim().isEmpty()) {
+            log.info("SNS 프로필 이미지 사용: {}", socialUserInfo.getProfileImageUrl());
+            return socialUserInfo.getProfileImageUrl();
+        }
+        
+        // 3. 기본 아이콘
+        String defaultIcon = "/images/default-profile-icon.png";
+        log.info("기본 프로필 아이콘 사용: {}", defaultIcon);
+        return defaultIcon;
     }
 
     /**

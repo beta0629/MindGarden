@@ -291,16 +291,12 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
      * @return 임시 비밀번호
      */
     private String generateTemporaryPassword() {
-        // 16자리 랜덤 문자열 생성 (대문자, 소문자, 숫자 포함)
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder password = new StringBuilder();
-        java.util.Random random = new java.util.Random();
-        
-        for (int i = 0; i < 16; i++) {
-            password.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        
-        return password.toString();
+        return "SOCIAL_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000);
+    }
+    
+    @Override
+    public void linkSocialAccountToUser(Long userId, SocialUserInfo socialUserInfo) {
+        updateOrCreateSocialAccount(userId, socialUserInfo);
     }
 
     /**

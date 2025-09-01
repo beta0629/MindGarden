@@ -45,10 +45,7 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
-        </dependency>
+        <!-- Thymeleaf 제거됨 - React 프론트엔드 사용 -->
         
         <dependency>
             <groupId>org.springframework.boot</groupId>

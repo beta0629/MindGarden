@@ -3,11 +3,43 @@ import './ProfileImageUpload.css';
 
 const ProfileImageUpload = ({ 
   profileImage, 
+  profileImageType,
+  socialProvider,
+  socialProfileImage,
   onImageChange, 
   isEditing 
 }) => {
   const [isCropping, setIsCropping] = useState(false);
   const [cropImage, setCropImage] = useState(null);
+
+  // 프로필 이미지 우선순위 결정
+  const getProfileImageUrl = () => {
+    // 1. 사용자가 등록한 이미지 우선
+    if (profileImage && profileImageType === 'USER_PROFILE') {
+      return profileImage;
+    }
+    
+    // 2. 소셜 이미지
+    if (socialProfileImage && profileImageType === 'SOCIAL_IMAGE') {
+      return socialProfileImage;
+    }
+    
+    // 3. 기본 아이콘
+    return '/default-avatar.png';
+  };
+
+  const getProfileImageTypeText = () => {
+    switch (profileImageType) {
+      case 'USER_PROFILE':
+        return '사용자 등록 이미지';
+      case 'SOCIAL_IMAGE':
+        return `${socialProvider === 'KAKAO' ? '카카오' : socialProvider === 'NAVER' ? '네이버' : socialProvider} 프로필`;
+      case 'DEFAULT_ICON':
+        return '기본 아이콘';
+      default:
+        return '기본 아이콘';
+    }
+  };
 
   // 드래그 앤 드롭 핸들러들
   const handleDragOver = (e) => {
@@ -78,12 +110,15 @@ const ProfileImageUpload = ({
           onDragLeave={isEditing ? handleDragLeave : undefined}
         >
           <img
-            src={profileImage || '/default-avatar.png'}
+            src={getProfileImageUrl()}
             alt="프로필 이미지"
             onError={(e) => {
               e.target.src = '/default-avatar.png';
             }}
           />
+          <div className="profile-image-type">
+            <span className="image-type-badge">{getProfileImageTypeText()}</span>
+          </div>
           {isEditing && (
             <>
               <div className="drag-overlay">

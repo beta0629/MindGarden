@@ -222,6 +222,30 @@ export const consultationAPI = {
   cancelConsultation: (id) => apiPost(`${CONSULTATION_API.CANCEL_CONSULTATION}/${id}`)
 };
 
+// 테스트 로그인 함수 (개발 환경에서만 사용)
+export const testLogin = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/test-login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('테스트 로그인 성공:', data);
+    return data;
+  } catch (error) {
+    console.error('테스트 로그인 실패:', error);
+    throw error;
+  }
+};
+
 export default {
   get: apiGet,
   post: apiPost,

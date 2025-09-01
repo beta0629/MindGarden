@@ -24,7 +24,10 @@ const MyPage = () => {
     postalCode: '',
     address: '',
     addressDetail: '',
-    profileImage: null
+    profileImage: null,
+    profileImageType: 'DEFAULT_ICON',
+    socialProvider: null,
+    socialProfileImage: null
   });
 
   useEffect(() => {
@@ -51,6 +54,23 @@ const MyPage = () => {
       }
     }
   }, []);
+
+  // 소셜 계정 탭이 활성화될 때 데이터 로드
+  useEffect(() => {
+    if (activeTab === 'social') {
+      loadSocialAccounts();
+    }
+  }, [activeTab]);
+
+  // formData 상태 변화 추적
+  useEffect(() => {
+    console.log('🔄 formData 상태 변경:', formData);
+  }, [formData]);
+
+  // formData 상태 변경 디버깅
+  useEffect(() => {
+    console.log('🔄 formData 상태 변경:', formData);
+  }, [formData]);
 
   // 휴대폰 번호 포맷팅 함수
   const formatPhoneNumber = (phone) => {
@@ -84,7 +104,10 @@ const MyPage = () => {
           postalCode: response.postalCode || '',
           address: response.address || '',
           addressDetail: response.addressDetail || '',
-          profileImage: response.profileImage || null
+          profileImage: response.profileImage || null,
+          profileImageType: response.profileImageType || 'DEFAULT_ICON',
+          socialProvider: response.socialProvider || null,
+          socialProfileImage: response.socialProfileImage || null
         });
         
         // 소셜 계정 정보 로드
@@ -101,25 +124,32 @@ const MyPage = () => {
         console.log('  - nickname:', currentUser.nickname);
         console.log('  - email:', currentUser.email);
         console.log('  - phone:', currentUser.phone);
+        console.log('  - phoneNumber:', currentUser.phoneNumber);
         console.log('  - gender:', currentUser.gender);
-        console.log('  - postalCode:', currentUser.postalCode);
-        console.log('  - address:', currentUser.address);
-        console.log('  - addressDetail:', currentUser.addressDetail);
         console.log('  - profileImage:', currentUser.profileImage);
+        console.log('  - profileImageUrl:', currentUser.profileImageUrl);
+        console.log('🔍 모든 필드:', Object.keys(currentUser));
         
-        setUser(currentUser);
-        setFormData({
+        const formDataToSet = {
           username: currentUser.username || currentUser.name || '',
           nickname: currentUser.nickname || '',
           email: currentUser.email || '',
-          phone: currentUser.phone || '',
+          phone: currentUser.phone || currentUser.phoneNumber || '',
           gender: currentUser.gender || '',
-          postalCode: currentUser.postalCode || '',
-          address: currentUser.address || '',
-          addressDetail: currentUser.addressDetail || '',
-          profileImage: currentUser.profileImage || null
-        });
+          profileImage: currentUser.profileImage || currentUser.profileImageUrl || null,
+          profileImageType: currentUser.profileImageType || 'DEFAULT_ICON',
+          socialProvider: currentUser.socialProvider || null,
+          socialProfileImage: currentUser.socialProfileImage || null
+        };
+        
+        console.log('🎯 설정할 formData:', formDataToSet);
+        
+        setUser(currentUser);
+        setFormData(formDataToSet);
       }
+      
+      // 사용자 정보 로드 실패해도 소셜 계정 정보는 로드 시도
+      loadSocialAccounts();
     }
   };
   
@@ -225,9 +255,6 @@ const MyPage = () => {
       console.log('  - nickname:', response.nickname);
       console.log('  - phone:', response.phone);
       console.log('  - gender:', response.gender);
-      console.log('  - postalCode:', response.postalCode);
-      console.log('  - address:', response.address);
-      console.log('  - addressDetail:', response.addressDetail);
       console.log('  - profileImage:', response.profileImage);
       
       // 사용자 정보 업데이트 (모든 필드 포함)
@@ -237,9 +264,6 @@ const MyPage = () => {
         nickname: dataToUpdate.nickname,
         phone: dataToUpdate.phone,
         gender: dataToUpdate.gender,
-        postalCode: dataToUpdate.postalCode,
-        address: dataToUpdate.address,
-        addressDetail: dataToUpdate.addressDetail,
         profileImage: dataToUpdate.profileImage
       }));
       
@@ -254,9 +278,6 @@ const MyPage = () => {
           nickname: dataToUpdate.nickname,
           phone: dataToUpdate.phone,
           gender: dataToUpdate.gender,
-          postalCode: dataToUpdate.postalCode,
-          address: dataToUpdate.address,
-          addressDetail: dataToUpdate.addressDetail,
           profileImage: dataToUpdate.profileImage
         };
         // 즉시 세션 상태 변경 알림
@@ -397,7 +418,7 @@ const MyPage = () => {
       </div>
 
       <div className="mypage-content">
-        <div className="mypage-sidebar">
+        <div className="mypage-top-nav">
           <div className="mypage-nav">
             <button
               className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
@@ -426,7 +447,7 @@ const MyPage = () => {
           </div>
         </div>
 
-        <div className="mypage-main">
+        <div className="mypage-main-content">
           {activeTab === 'profile' && (
             <ProfileSection
               user={user}

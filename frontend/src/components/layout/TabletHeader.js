@@ -1,6 +1,10 @@
 import React from 'react';
+import { useSession } from '../../hooks/useSession';
+import SessionUserProfile from '../common/SessionUserProfile';
 
 const TabletHeader = ({ user, onHamburgerToggle, onProfileClick }) => {
+  const { user: sessionUser } = useSession();
+
   return (
     <header className="tablet-header">
       <div className="tablet-header-content">
@@ -12,33 +16,11 @@ const TabletHeader = ({ user, onHamburgerToggle, onProfileClick }) => {
           </a>
         </div>
         
-        {/* 오른쪽 영역 - 사용자 정보와 햄버거 메뉴 */}
+                {/* 오른쪽 영역 - 사용자 정보와 햄버거 메뉴 */}
         <div className="tablet-header-right">
           {/* 사용자 프로필 및 로그인 정보 - 로그인 후에만 표시 */}
-          {user ? (
-            <div className="tablet-user-profile">
-              <div 
-                className="user-info" 
-                onClick={onProfileClick}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="user-avatar">
-                  {user.profileImageUrl ? (
-                    <img 
-                      src={user.profileImageUrl} 
-                      alt="프로필 이미지" 
-                      className="profile-image"
-                    />
-                  ) : (
-                    <i className="bi bi-person-circle profile-icon"></i>
-                  )}
-                </div>
-                <div className="user-details">
-                  <div className="user-name">{user.username || user.name}</div>
-                  <div className="user-role">{user.role}</div>
-                </div>
-              </div>
-            </div>
+          {sessionUser ? (
+            <SessionUserProfile onProfileClick={onProfileClick} />
           ) : (
             <div className="tablet-login-link">
               <a href="/login" className="login-link-button">
@@ -49,7 +31,7 @@ const TabletHeader = ({ user, onHamburgerToggle, onProfileClick }) => {
           )}
           
           {/* 햄버거 메뉴 토글 - 로그인 후에만 표시 */}
-          {user && (
+          {sessionUser && (
             <button 
               className="tablet-menu-toggle" 
               type="button" 

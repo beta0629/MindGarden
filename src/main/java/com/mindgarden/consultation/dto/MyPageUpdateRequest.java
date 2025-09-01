@@ -19,9 +19,8 @@ import lombok.NoArgsConstructor;
 public class MyPageUpdateRequest {
 
     private String name;
+    private String nickname;
     private String phone;
-    private String address;
-    private String addressDetail;
-    private String postalCode;
+    private String gender;
     private String profileImage;
 }

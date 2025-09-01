@@ -24,16 +24,26 @@ class SessionManager {
                 this.sessionInfo = await sessionResponse.json();
                 console.log('✅ 세션 정보 로드 완료:', { user: this.user, sessionInfo: this.sessionInfo });
             } else {
+                // 401 오류는 정상적인 상황 (로그인되지 않은 상태)
+                if (userResponse.status === 401 || sessionResponse.status === 401) {
+                    console.log('ℹ️ 로그인되지 않은 상태 - 정상적인 상황');
+                } else {
+                    console.log('❌ 세션 정보 로드 실패:', userResponse.status, sessionResponse.status);
+                }
                 this.user = null;
                 this.sessionInfo = null;
-                console.log('❌ 세션 정보 로드 실패');
             }
             
             this.notifyListeners();
             return this.user !== null;
             
         } catch (error) {
-            console.error('❌ 세션 확인 실패:', error);
+            // 네트워크 오류나 기타 예외는 로그에 남기되, 401은 정상으로 처리
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                console.log('ℹ️ 네트워크 연결 실패 - 서버가 실행되지 않았을 수 있습니다');
+            } else {
+                console.error('❌ 세션 확인 중 예외 발생:', error);
+            }
             this.user = null;
             this.sessionInfo = null;
             this.notifyListeners();

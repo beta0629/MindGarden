@@ -51,7 +51,7 @@ const TabletHamburgerMenu = ({ isOpen, onClose, onLogout, userRole }) => {
         <div className="hamburger-header">
           <h3>메뉴</h3>
           <button className="close-btn" onClick={onClose}>
-            <i className="bi bi-x-lg"></i>
+            ✕
           </button>
         </div>
         

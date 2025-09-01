@@ -117,6 +117,11 @@ server:
     encoding:
       charset: UTF-8
       force: true
+    session:
+      cookie:
+        http-only: false
+        secure: false
+        same-site: lax
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json

@@ -82,6 +82,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 .profile-image {
@@ -225,22 +226,25 @@
 }
 
 .close-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: none;
-  background: var(--gray-200);
-  border-radius: 6px;
+  background: var(--gray-300);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--gray-600);
+  color: var(--gray-900);
+  font-size: 1.25rem;
+  font-weight: bold;
 }
 
 .close-btn:hover {
-  background: var(--gray-300);
-  color: var(--gray-800);
+  background: var(--gray-400);
+  color: var(--gray-900);
+  transform: scale(1.05);
 }
 
 .hamburger-nav {

@@ -4,6 +4,7 @@ import CommonPageTemplate from '../common/CommonPageTemplate';
 import TabletHeader from '../layout/TabletHeader';
 import SocialSignupModal from './SocialSignupModal';
 import { authAPI } from '../../utils/ajax';
+import { testLogin } from '../../utils/ajax';
 import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallback } from '../../utils/socialLogin';
 import { setLoginSession, redirectToDashboard, logSessionInfo } from '../../utils/session';
 import { notification } from '../../utils/scripts';
@@ -159,6 +160,39 @@ const TabletLogin = () => {
 
   const handleNaverLogin = async () => {
     await naverLogin();
+  };
+
+  const handleTestLogin = async () => {
+    try {
+      setIsLoading(true);
+      const response = await testLogin();
+      if (response.success) {
+        console.log('테스트 로그인 성공:', response);
+        
+        // 세션 설정
+        const sessionSet = setLoginSession(response.user, {
+          accessToken: 'test-token',
+          refreshToken: 'test-refresh-token'
+        });
+        
+        if (sessionSet) {
+          // 세션 정보 로깅
+          logSessionInfo();
+          
+          // 역할에 따른 대시보드로 리다이렉트
+          redirectToDashboard(response.user);
+        } else {
+          alert('세션 설정에 실패했습니다.');
+        }
+      } else {
+        alert(response.message || '테스트 로그인에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('테스트 로그인 오류:', error);
+      alert('테스트 로그인 처리 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const checkOAuthCallback = async () => {
@@ -556,6 +590,17 @@ const TabletLogin = () => {
                 onClick={() => alert('비밀번호 찾기 기능은 준비 중입니다.')}
               >
                 비밀번호를 잊으셨나요?
+              </button>
+            </p>
+            {/* 테스트 로그인 버튼 (개발 환경에서만 표시) */}
+            <p className="test-login">
+              <button
+                type="button"
+                className="link-button test-button"
+                onClick={handleTestLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? '테스트 로그인 중...' : '테스트 로그인'}
               </button>
             </p>
           </div>

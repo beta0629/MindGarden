@@ -66,6 +66,9 @@ const ProfileSection = ({
       <form onSubmit={handleSubmit} className="profile-form">
         <ProfileImageUpload
           profileImage={formData.profileImage}
+          profileImageType={formData.profileImageType}
+          socialProvider={formData.socialProvider}
+          socialProfileImage={formData.socialProfileImage}
           onImageChange={handleImageChange}
           isEditing={isEditing}
         />

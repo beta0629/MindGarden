@@ -104,9 +104,21 @@ public interface UserRepository extends BaseRepository<User, Long> {
     @Query("SELECT u.id, u.name, u.email, u.role, u.profileImageUrl, " +
            "usa.provider, usa.providerProfileImage " +
            "FROM User u " +
-           "LEFT JOIN UserSocialAccount usa ON u.id = usa.user.id AND usa.isDeleted = false " +
-           "WHERE u.id = ?1 AND u.isDeleted = false")
+           "LEFT JOIN u.userSocialAccounts usa " +
+           "WHERE u.id = ?1 AND u.isDeleted = false AND (usa IS NULL OR usa.isDeleted = false)")
     List<Object[]> findProfileImageInfoByUserId(Long userId);
+
+    /**
+     * 마이페이지 정보 조회 (사용자 + 소셜 계정 조인)
+     */
+    @Query("SELECT u.id, u.username, u.email, u.name, u.nickname, u.phone, u.gender, " +
+           "u.profileImageUrl, u.role, u.grade, u.experiencePoints, u.totalConsultations, " +
+           "u.lastLoginAt, u.isActive, u.isEmailVerified, u.createdAt, u.updatedAt, " +
+           "usa.provider, usa.providerProfileImage, usa.providerUsername " +
+           "FROM User u " +
+           "LEFT JOIN u.userSocialAccounts usa " +
+           "WHERE u.id = ?1 AND u.isDeleted = false AND (usa IS NULL OR usa.isDeleted = false)")
+    List<Object[]> findMyPageInfoByUserId(Long userId);
     
     /**
      * 등급별 사용자 페이징 조회 (활성 상태만)

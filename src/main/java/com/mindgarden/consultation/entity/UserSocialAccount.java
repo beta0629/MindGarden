@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.entity;
 
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
@@ -56,6 +57,7 @@ public class UserSocialAccount extends BaseEntity {
     
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @JoinColumn(name = USER_ID, nullable = false)
+    @JsonBackReference
     private User user;
     
     @NotNull(message = "SNS 제공자는 필수입니다.")
@@ -215,7 +217,7 @@ public class UserSocialAccount extends BaseEntity {
      * 토큰 유효성 확인
      */
     public boolean isTokenValid() {
-        return isTokenValid && (tokenExpiresAt == null || LocalDateTime.now().isBefore(tokenExpiresAt));
+        return Boolean.TRUE.equals(isTokenValid) && (tokenExpiresAt == null || LocalDateTime.now().isBefore(tokenExpiresAt));
     }
     
     /**

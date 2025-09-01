@@ -28,6 +28,24 @@
   object-fit: cover;
 }
 
+.profile-image-type {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.image-type-badge {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  white-space: nowrap;
+  display: inline-block;
+}
+
 .drag-overlay {
   position: absolute;
   top: 0;

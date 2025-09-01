@@ -87,7 +87,10 @@ function App() {
             <Route path="/login" element={<TabletLogin />} />
             <Route path="/register" element={<TabletRegister />} />
             
-            {/* 개발 중: 대시보드 라우트 항상 렌더링 */}
+            {/* 일반 대시보드 라우트 */}
+            <Route path="/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><CommonDashboard user={user} /></TabletLayout>} />
+            
+            {/* 역할별 대시보드 라우트 */}
             <Route path="/client/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><CommonDashboard user={user} /></TabletLayout>} />
             <Route path="/consultant/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><CommonDashboard user={user} /></TabletLayout>} />
             <Route path="/admin/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><CommonDashboard user={user} /></TabletLayout>} />

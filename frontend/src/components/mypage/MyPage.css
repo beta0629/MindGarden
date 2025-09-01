@@ -30,51 +30,53 @@
 
 .mypage-content {
   display: flex;
-  gap: 30px;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.mypage-sidebar {
-  flex: 0 0 250px;
+.mypage-top-nav {
   background: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 20px;
+  overflow: hidden;
 }
 
 .mypage-nav {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  gap: 0;
+  border-bottom: 1px solid #e9ecef;
 }
 
 .nav-item {
-  padding: 15px 20px;
+  padding: 20px 30px;
   border: none;
   background: transparent;
-  border-radius: 8px;
-  text-align: left;
+  border-radius: 0;
+  text-align: center;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
   color: #555;
-}
-
-.nav-item:hover {
-  background: #f0f2f5;
-  color: #333;
-}
-
-.nav-item.active {
-  background: #667eea;
-  color: white;
+  border-bottom: 3px solid transparent;
+  min-width: 120px;
   font-weight: 500;
 }
 
-.mypage-main {
-  flex: 1;
+.nav-item:hover {
+  background: #f8f9fa;
+  color: #333;
+  border-bottom-color: #dee2e6;
+}
+
+.nav-item.active {
+  background: #f8f9fa;
+  color: #667eea;
+  font-weight: 600;
+  border-bottom-color: #667eea;
+}
+
+.mypage-main-content {
   background: white;
   border-radius: 12px;
   padding: 30px;
@@ -531,4 +533,53 @@
 
 .link-btn i {
   font-size: 1.2rem;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .mypage-container {
+    padding: 10px;
+  }
+  
+  .mypage-header {
+    padding: 20px 0;
+  }
+  
+  .mypage-header h1 {
+    font-size: 2rem;
+  }
+  
+  .mypage-nav {
+    flex-wrap: wrap;
+  }
+  
+  .nav-item {
+    padding: 15px 20px;
+    min-width: auto;
+    flex: 1;
+    font-size: 0.9rem;
+  }
+  
+  .mypage-main-content {
+    padding: 20px;
+  }
+  
+  .section-header h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .mypage-nav {
+    flex-direction: column;
+  }
+  
+  .nav-item {
+    border-bottom: 1px solid #e9ecef;
+    border-right: none;
+  }
+  
+  .nav-item.active {
+    border-bottom-color: #667eea;
+  }
 }

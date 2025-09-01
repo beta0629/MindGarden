@@ -621,3 +621,132 @@ com.mindgarden.consultation
 - 페이징 처리 활용 (BaseController 지원)
 - 캐싱 전략 적용
 - REST API 표준 준수
+
+## 최근 업데이트 (2025-09-01)
+
+### OAuth2 소셜 로그인 및 계정 연동 개선
+
+#### 1. OAuth2 콜백 처리 개선
+- **파일**: `OAuth2Controller.java`
+- **변경사항**:
+  - `naverCallback`과 `kakaoCallback` 메서드에 `mode` 파라미터 추가
+  - `mode="link"`일 때 기존 사용자에게 소셜 계정 연동 기능 구현
+  - `SocialUserInfo` 생성 시 `providerUserId` 타입 오류 수정 (`Long` → `String`)
+
+#### 2. OAuth2 서비스 인터페이스 확장
+- **파일**: `OAuth2Service.java`
+- **변경사항**:
+  - `linkSocialAccountToUser` 메서드 추가
+  - 기존 사용자에게 소셜 계정 연동 기능 정의
+
+#### 3. OAuth2 서비스 구현체 업데이트
+- **파일**: `AbstractOAuth2Service.java`
+- **변경사항**:
+  - `linkSocialAccountToUser` 메서드 구현
+  - 기존 `updateOrCreateSocialAccount` 메서드를 래핑하여 공개 인터페이스 제공
+
+### 프로필 이미지 표시 시스템 개선
+
+#### 1. 백엔드 프로필 이미지 우선순위 로직
+- **파일**: `AuthController.java`
+- **변경사항**:
+  - 프로필 이미지 우선순위 구현: 사용자 업로드 > 소셜 > 기본 아이콘
+  - `getCurrentUser` 메서드에서 `UserSocialAccount` 조회 및 이미지 타입 구분
+  - `profileImageUrl`, `socialProfileImage`, `socialProvider` 필드 추가
+
+#### 2. 프론트엔드 프로필 이미지 표시 개선
+- **파일**: `SessionUserProfile.js`
+- **변경사항**:
+  - 이미지 로드 에러 처리 및 디버깅 로그 추가
+  - 이미지 우선순위 로직 구현
+  - 인라인 스타일 추가로 이미지 표시 보장
+  - 이미지 타입 배지 표시 기능
+
+#### 3. CSS 스타일링 개선
+- **파일**: `frontend/src/styles/tablet/index.css`
+- **변경사항**:
+  - `.user-avatar`에 `position: relative` 추가
+  - `.close-btn` 스타일 개선 (가시성 향상)
+  - 햄버거 메뉴 닫기 버튼 스타일 개선
+
+### 햄버거 메뉴 개선
+
+#### 1. 닫기 버튼 가시성 개선
+- **파일**: `TabletHamburgerMenu.js`
+- **변경사항**:
+  - Bootstrap Icons 대신 직접 `✕` 문자 사용
+  - 아이콘 라이브러리 의존성 제거
+
+#### 2. CSS 스타일링 개선
+- **파일**: `frontend/src/styles/tablet/index.css`
+- **변경사항**:
+  - `.close-btn` 스타일 개선:
+    - `width`, `height` 증가 (36px)
+    - `background` 색상 변경 (`var(--gray-300)`)
+    - `color` 변경 (`var(--gray-900)`)
+    - `font-size` 증가 (`1.25rem`)
+    - `font-weight: bold` 추가
+    - 호버 효과 추가 (`transform: scale(1.05)`)
+
+### 세션 관리 개선
+
+#### 1. 프론트엔드 세션 체크 개선
+- **파일**: `sessionManager.js`
+- **변경사항**:
+  - 401 Unauthorized 응답을 정상적인 상황으로 처리
+  - 로그인되지 않은 상태에서의 오류 메시지 개선
+  - 네트워크 오류 처리 개선
+
+### 테스트 데이터 개선
+
+#### 1. 테스트 사용자 프로필 이미지
+- **파일**: `AuthController.java`
+- **변경사항**:
+  - `testLogin` 메서드에서 base64 인코딩된 SVG 이미지 사용
+  - 외부 이미지 URL 대신 안정적인 테스트 이미지 제공
+
+## 기술적 세부사항
+
+### 프로필 이미지 우선순위 시스템
+```javascript
+// 우선순위: 사용자 업로드 > 소셜 > 기본 아이콘
+if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().trim().isEmpty()) {
+    // 사용자가 직접 업로드한 이미지
+    profileImageUrl = user.getProfileImageUrl();
+} else if (!socialAccounts.isEmpty()) {
+    // 소셜 계정 이미지
+    socialProfileImage = primarySocialAccount.getProviderProfileImage();
+    socialProvider = primarySocialAccount.getProvider();
+}
+```
+
+### OAuth2 계정 연동 플로우
+```java
+// 계정 연동 모드 처리
+if ("link".equals(mode)) {
+    SocialUserInfo socialUserInfo = new SocialUserInfo();
+    socialUserInfo.setProviderUserId(String.valueOf(userInfo.getId()));
+    // ... 기타 정보 설정
+    oauth2Service.linkSocialAccountToUser(currentUser.getId(), socialUserInfo);
+}
+```
+
+### 이미지 타입 배지 시스템
+- **사용자**: 사용자가 직접 업로드한 이미지
+- **소셜**: 소셜 계정에서 가져온 이미지 (NAVER, KAKAO 등)
+- **기본**: 기본 아이콘
+
+## 해결된 문제들
+
+1. **OAuth2 계정 연동 실패**: `mode` 파라미터와 연동 로직 구현
+2. **프로필 이미지 표시 안됨**: 우선순위 시스템 및 CSS 스타일링 개선
+3. **햄버거 메뉴 닫기 버튼 가시성**: 직접 문자 사용 및 스타일 개선
+4. **세션 체크 오류 메시지**: 401 응답을 정상적인 상황으로 처리
+5. **타입 오류**: `providerUserId` 타입 변환 문제 해결
+
+## 다음 단계
+
+1. 프로필 이미지 업로드 기능 테스트
+2. 소셜 계정 연동 기능 완전 테스트
+3. 햄버거 메뉴 동작 확인
+4. 전체 UI/UX 검증

@@ -1,99 +1,87 @@
 package com.mindgarden.consultation.controller;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import com.mindgarden.consultation.dto.SessionInfo;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.entity.UserSocialAccount;
+import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
     
-    @Autowired(required = false)
-    private PersonalDataEncryptionUtil encryptionUtil;
-    
-    @Value("${development.security.oauth2.kakao.client-id}")
-    private String kakaoClientId;
-    
-    @Value("${development.security.oauth2.kakao.redirect-uri}")
-    private String kakaoRedirectUri;
-    
-    @Value("${development.security.oauth2.kakao.scope}")
-    private String kakaoScope;
-    
-    @Value("${development.security.oauth2.naver.client-id}")
-    private String naverClientId;
-    
-    @Value("${development.security.oauth2.naver.redirect-uri}")
-    private String naverRedirectUri;
-    
-    @Value("${development.security.oauth2.naver.scope}")
-    private String naverScope;
+    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final UserSocialAccountRepository userSocialAccountRepository;
     
     @GetMapping("/current-user")
-    public ResponseEntity<SessionInfo.UserInfo> getCurrentUser(HttpSession session) {
+    public ResponseEntity<?> getCurrentUser(HttpSession session) {
         User user = SessionUtils.getCurrentUser(session);
         if (user != null) {
-            SessionInfo.UserInfo userInfo = new SessionInfo.UserInfo();
-            userInfo.setId(user.getId());
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", user.getId());
+            userInfo.put("email", user.getEmail());
             
-            // encryptionUtil이 null인 경우를 대비한 안전한 처리
-            if (encryptionUtil != null) {
-                userInfo.setUsername(encryptionUtil.decrypt(user.getName()));
-                userInfo.setNickname(encryptionUtil.decrypt(user.getNickname()));
-            } else {
-                // 암호화 유틸이 없는 경우 평문 사용
-                userInfo.setUsername(user.getName());
-                userInfo.setNickname(user.getNickname());
+            // 이름과 닉네임 복호화
+            String decryptedName = null;
+            String decryptedNickname = null;
+            
+            try {
+                if (user.getName() != null && !user.getName().trim().isEmpty()) {
+                    decryptedName = encryptionUtil.safeDecrypt(user.getName());
+                }
+                if (user.getNickname() != null && !user.getNickname().trim().isEmpty()) {
+                    decryptedNickname = encryptionUtil.safeDecrypt(user.getNickname());
+                }
+            } catch (Exception e) {
+                log.warn("사용자 정보 복호화 실패: {}", e.getMessage());
+                decryptedName = user.getName();
+                decryptedNickname = user.getNickname();
             }
             
-            userInfo.setEmail(user.getEmail());
-            userInfo.setRole(user.getRole());
+            userInfo.put("name", decryptedName);
+            userInfo.put("nickname", decryptedNickname);
+            userInfo.put("role", user.getRole());
+            
+            // 소셜 계정 정보 조회하여 이미지 타입 구분
+            List<UserSocialAccount> socialAccounts = userSocialAccountRepository.findByUserIdAndIsDeletedFalse(user.getId());
+            
+            // 프로필 이미지 우선순위: 사용자 업로드 > 소셜 > 기본 아이콘
+            String profileImageUrl = null;
+            String socialProfileImage = null;
+            String socialProvider = null;
+            
+            if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().trim().isEmpty()) {
+                // 사용자가 직접 업로드한 이미지가 있는 경우
+                profileImageUrl = user.getProfileImageUrl();
+            } else if (!socialAccounts.isEmpty()) {
+                // 소셜 계정이 있는 경우, 첫 번째 소셜 계정의 이미지 사용
+                UserSocialAccount primarySocialAccount = socialAccounts.stream()
+                    .filter(account -> account.getIsPrimary() != null && account.getIsPrimary())
+                    .findFirst()
+                    .orElse(socialAccounts.get(0));
+                
+                socialProfileImage = primarySocialAccount.getProviderProfileImage();
+                socialProvider = primarySocialAccount.getProvider();
+            }
+            
+            userInfo.put("profileImageUrl", profileImageUrl);
+            userInfo.put("socialProfileImage", socialProfileImage);
+            userInfo.put("socialProvider", socialProvider);
+            
             return ResponseEntity.ok(userInfo);
-        }
-        return ResponseEntity.status(401).build();
-    }
-    
-    @GetMapping("/session-info")
-    public ResponseEntity<SessionInfo> getSessionInfo(HttpSession session) {
-        User user = SessionUtils.getCurrentUser(session);
-        if (user != null) {
-            SessionInfo sessionInfo = new SessionInfo();
-            sessionInfo.setSessionId(session.getId());
-            sessionInfo.setCreationTime(LocalDateTime.ofInstant(
-                java.time.Instant.ofEpochMilli(session.getCreationTime()), ZoneId.systemDefault()));
-            sessionInfo.setLastAccessedTime(LocalDateTime.ofInstant(
-                java.time.Instant.ofEpochMilli(session.getLastAccessedTime()), ZoneId.systemDefault()));
-            sessionInfo.setMaxInactiveInterval(session.getMaxInactiveInterval());
-            
-            SessionInfo.UserInfo userInfo = new SessionInfo.UserInfo();
-            userInfo.setId(user.getId());
-            
-            // encryptionUtil이 null인 경우를 대비한 안전한 처리
-            if (encryptionUtil != null) {
-                userInfo.setUsername(encryptionUtil.decrypt(user.getName()));
-                userInfo.setNickname(encryptionUtil.decrypt(user.getNickname()));
-            } else {
-                // 암호화 유틸이 없는 경우 평문 사용
-                userInfo.setUsername(user.getName());
-                userInfo.setNickname(user.getNickname());
-            }
-            
-            userInfo.setEmail(user.getEmail());
-            userInfo.setRole(user.getRole());
-            sessionInfo.setUserInfo(userInfo);
-            
-            return ResponseEntity.ok(sessionInfo);
         }
         return ResponseEntity.status(401).build();
     }
@@ -104,58 +92,60 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
     
-    @GetMapping("/oauth2/config")
-    public ResponseEntity<OAuth2Config> getOAuth2Config() {
-        OAuth2Config config = new OAuth2Config();
-        
-        // 카카오 설정
-        OAuth2Provider kakao = new OAuth2Provider();
-        kakao.setClientId(kakaoClientId);
-        kakao.setRedirectUri(kakaoRedirectUri.replace("{baseUrl}", "http://localhost:8080"));
-        kakao.setScope(kakaoScope);
-        config.setKakao(kakao);
-        
-        // 네이버 설정
-        OAuth2Provider naver = new OAuth2Provider();
-        naver.setClientId(naverClientId);
-        naver.setRedirectUri(naverRedirectUri.replace("{baseUrl}", "http://localhost:8080"));
-        naver.setScope(naverScope);
-        config.setNaver(naver);
-        
-        return ResponseEntity.ok(config);
+    @GetMapping("/session-info")
+    public ResponseEntity<?> getSessionInfo(HttpSession session) {
+        User user = SessionUtils.getCurrentUser(session);
+        if (user != null) {
+            Map<String, Object> sessionInfo = new HashMap<>();
+            sessionInfo.put("id", user.getId());
+            sessionInfo.put("email", user.getEmail());
+            sessionInfo.put("name", user.getName());
+            sessionInfo.put("role", user.getRole());
+            sessionInfo.put("sessionId", session.getId());
+            
+            return ResponseEntity.ok(sessionInfo);
+        }
+        return ResponseEntity.status(401).build();
     }
     
-    /**
-     * OAuth2 설정 클래스
-     */
-    public static class OAuth2Config {
-        private OAuth2Provider kakao;
-        private OAuth2Provider naver;
-        
-        // Getters and Setters
-        public OAuth2Provider getKakao() { return kakao; }
-        public void setKakao(OAuth2Provider kakao) { this.kakao = kakao; }
-        
-        public OAuth2Provider getNaver() { return naver; }
-        public void setNaver(OAuth2Provider naver) { this.naver = naver; }
-    }
-    
-    /**
-     * OAuth2 제공자 클래스
-     */
-    public static class OAuth2Provider {
-        private String clientId;
-        private String redirectUri;
-        private String scope;
-        
-        // Getters and Setters
-        public String getClientId() { return clientId; }
-        public void setClientId(String clientId) { this.clientId = clientId; }
-        
-        public String getRedirectUri() { return redirectUri; }
-        public void setRedirectUri(String redirectUri) { this.redirectUri = redirectUri; }
-        
-        public String getScope() { return scope; }
-        public void setScope(String scope) { this.scope = scope; }
+    // 임시 테스트용 로그인 엔드포인트 (개발 환경에서만 사용)
+    @PostMapping("/test-login")
+    public ResponseEntity<?> testLogin(HttpSession session) {
+        try {
+            // 테스트용 사용자 정보 생성
+            User testUser = new User();
+            testUser.setId(1L);
+            testUser.setEmail("test@example.com");
+            testUser.setName("테스트 사용자");
+            testUser.setNickname("테스트");
+            testUser.setRole("CLIENT");
+            testUser.setProfileImageUrl("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9Ijc1IiBjeT0iNjAiIHI9IjIwIiBmaWxsPSIjOUI5QkEwIi8+CjxyZWN0IHg9IjQ1IiB5PSI5MCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjOUI5QkEwIi8+Cjwvc3ZnPgo=");
+            
+            // 세션에 사용자 정보 저장
+            SessionUtils.setCurrentUser(session, testUser);
+            
+            log.info("테스트 로그인 성공: 사용자 ID {}", testUser.getId());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "테스트 로그인 성공");
+            
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", testUser.getId());
+            userInfo.put("email", testUser.getEmail());
+            userInfo.put("name", testUser.getName());
+            userInfo.put("nickname", testUser.getNickname());
+            userInfo.put("role", testUser.getRole());
+            userInfo.put("profileImageUrl", testUser.getProfileImageUrl());
+            response.put("user", userInfo);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("테스트 로그인 실패", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "테스트 로그인 실패: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
     }
 }

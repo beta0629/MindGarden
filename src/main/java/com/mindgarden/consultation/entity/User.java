@@ -3,6 +3,7 @@ package com.mindgarden.consultation.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.mindgarden.consultation.constant.UserRole;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -148,6 +149,7 @@ public class User extends BaseEntity {
     private String memo;
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = jakarta.persistence.FetchType.LAZY)
+    @JsonManagedReference
     private List<UserSocialAccount> userSocialAccounts;
     
 

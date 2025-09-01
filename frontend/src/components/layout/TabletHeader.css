@@ -40,6 +40,25 @@
   justify-content: center;
 }
 
+/* 이미지 타입 배지 */
+.image-type-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 8px;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 8px;
+  border: 1px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 20px;
+  text-align: center;
+}
+
 /* 프로필 아이콘 (기본) */
 .profile-icon {
   font-size: 40px;

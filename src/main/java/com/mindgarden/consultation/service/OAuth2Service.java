@@ -59,4 +59,12 @@ public interface OAuth2Service {
      * @return 액세스 토큰
      */
     String getAccessToken(String code);
+    
+    /**
+     * 기존 사용자에게 소셜 계정 연동
+     * 
+     * @param userId 기존 사용자 ID
+     * @param socialUserInfo 소셜 사용자 정보
+     */
+    void linkSocialAccountToUser(Long userId, SocialUserInfo socialUserInfo);
 }

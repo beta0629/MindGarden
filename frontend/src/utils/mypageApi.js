@@ -146,8 +146,8 @@ const mypageApi = {
   // OAuth2 인증 URL 생성 (계정 연동 모드)
   getOAuth2Url: async (provider) => {
     try {
-      // 계정 연동 모드로 요청 - 올바른 엔드포인트 사용
-      const response = await fetch(`${API_BASE_URL}/api/auth/oauth2/${provider.toLowerCase()}/authorize`, {
+      // 계정 연동 모드로 요청 - mode=link 파라미터 추가
+      const response = await fetch(`${API_BASE_URL}/api/auth/oauth2/${provider.toLowerCase()}/authorize?mode=link`, {
         method: 'GET',
         credentials: 'include',
         headers: {

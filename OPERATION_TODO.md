@@ -1,160 +1,129 @@
-# 🚀 운영 환경 설정 TO-DO 목록
+# 🚀 MindGarden 운영 TODO
 
-## 🔐 Spring Security 설정
+## ✅ 완료된 작업
 
-### 1. 인증 활성화
-- [ ] `SecurityConfig.java`에서 인증 설정 변경
-  ```java
-  // 현재: 모든 요청 허용 (개발용)
-  .anyRequest().permitAll()
-  
-  // 운영용으로 변경:
-  .authorizeHttpRequests(authz -> authz
-      .requestMatchers("/api/auth/**", "/oauth2/**").permitAll()
-      .requestMatchers("/error").permitAll()
-      .anyRequest().authenticated()
-  )
-  ```
+### 🔧 백엔드 시스템
+- [x] **Spring Boot 프로젝트 구조 설정**
+- [x] **Hibernate JPA 엔티티 설계**
+  - [x] User 엔티티 (기본 사용자)
+  - [x] Client 엔티티 (내담자)
+  - [x] Consultant 엔티티 (상담사)
+  - [x] ConsultantClientMapping 엔티티 (매핑)
+- [x] **OAuth2 소셜 로그인 구현**
+  - [x] Kakao 로그인
+  - [x] Naver 로그인
+- [x] **JWT 인증 시스템**
+- [x] **관리자 API 구현**
+  - [x] 상담사 관리 API
+  - [x] 내담자 관리 API
+  - [x] 매핑 관리 API
+  - [x] 사용자 역할 관리 API
+- [x] **UserRole enum 구현**
+  - [x] CLIENT, CONSULTANT, ADMIN, SUPER_ADMIN
+  - [x] 역할 변경 기능
+  - [x] 타입 안전성 보장
+- [x] **결제 승인 및 세션 관리 시스템**
+  - [x] PaymentStatus enum (PENDING, CONFIRMED, APPROVED, REJECTED, REFUNDED)
+  - [x] ConsultantClientMapping에 결제 관련 필드 추가
+  - [x] 세션 패키지 관리 (totalSessions, remainingSessions, usedSessions)
+  - [x] 관리자 승인 워크플로우
+- [x] **스케줄 관리 시스템**
+  - [x] ConsultationType enum (상담 유형별 기본 시간 설정)
+  - [x] Schedule 엔티티 및 Repository
+  - [x] ScheduleService 및 ScheduleServiceImpl
+  - [x] 시간 충돌 검사 및 10분 휴식 시간 적용
+  - [x] 권한 기반 스케줄 조회 (상담사는 자신만, 관리자는 전체)
+- [x] **상수 관리 시스템**
+  - [x] ScheduleConstants 클래스 생성
+  - [x] 하드코딩된 값들을 상수로 통합 관리
+  - [x] 중복 변수 제거 및 유지보수성 향상
 
-### 2. JWT 필터 활성화
-- [ ] `SecurityConfig.java`에서 JWT 필터 Bean 활성화
-  ```java
-  // TODO 주석 해제:
-  @Bean
-  public JwtAuthenticationFilter jwtAuthenticationFilter() {
-      return new JwtAuthenticationFilter();
-  }
-  ```
+### 🎨 프론트엔드 시스템
+- [x] **React 프로젝트 구조 설정**
+- [x] **관리자 대시보드 구현**
+  - [x] 통계 카드 (상담사, 내담자, 매핑 수)
+  - [x] 상담사 관리 컴포넌트
+  - [x] 내담자 관리 컴포넌트
+  - [x] 매핑 관리 컴포넌트
+  - [x] 사용자 관리 컴포넌트
+- [x] **기존 대시보드 디자인 패턴 적용**
+  - [x] summary-panels 구조
+  - [x] panel-header, panel-content 스타일
+  - [x] 통일된 색상 및 레이아웃
+- [x] **컴포넌트 분리 및 재사용성 향상**
+- [x] **개발 모드 기능**
+  - [x] 테스트 데이터 생성
+  - [x] isDev 프로퍼티 활용
 
-- [ ] JWT 필터를 SecurityFilterChain에 추가
-  ```java
-  // TODO 주석 해제:
-  .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-  ```
+### 🗄️ 데이터베이스
+- [x] **MySQL 데이터베이스 설계**
+- [x] **마이그레이션 스크립트 작성**
+- [x] **인덱스 최적화**
 
-### 3. JWT 설정
-- [ ] `application.yml`에 JWT 설정 추가
-  ```yaml
-  jwt:
-    secret: ${JWT_SECRET:your-secure-secret-key}
-    expiration: 86400000  # 24시간
-  ```
+### 📚 문서화
+- [x] **API 문서 작성**
+- [x] **시스템 설계 문서**
+- [x] **개발 가이드 문서**
 
-## 🔗 OAuth2 서비스 설정
+## 🔄 진행 중인 작업
 
-### 1. 개별 OAuth2 서비스 주입
-- [ ] `OAuth2Controller.java`에서 개별 서비스 주입 활성화
-  ```java
-  // TODO 주석 해제:
-  private final KakaoOAuth2Service kakaoOAuth2Service;
-  private final NaverOAuth2Service naverOAuth2Service;
-  ```
+### 🧪 테스트 및 검증
+- [ ] **결제 승인 및 세션 관리 시스템 테스트**
+  - [ ] 결제 승인 워크플로우 테스트
+  - [ ] 세션 사용 및 관리 테스트
+  - [ ] 관리자 승인 권한 검증
+- [ ] **스케줄 관리 시스템 테스트**
+  - [ ] 시간 충돌 검사 테스트
+  - [ ] 권한 기반 스케줄 조회 테스트
+  - [ ] 상담 유형별 시간 설정 테스트
+- [ ] **프론트엔드 컴포넌트 테스트**
+  - [ ] 각 관리 컴포넌트 동작 확인
+  - [ ] 에러 처리 검증
+  - [ ] 사용자 경험 개선
 
-### 2. OAuth2 URL 생성 로직 활성화
-- [ ] `getOAuth2Url` 메서드에서 개별 서비스 사용 로직 활성화
-  ```java
-  // TODO 주석 해제:
-  if ("KAKAO".equalsIgnoreCase(provider)) {
-      authUrl = kakaoOAuth2Service.getAuthorizationUrl(mode);
-  } else if ("NAVER".equalsIgnoreCase(provider)) {
-      authUrl = naverOAuth2Service.getAuthorizationUrl(mode);
-  }
-  ```
+## 📋 남은 작업
 
-## 🗄️ 데이터베이스 설정
+### 🔧 백엔드 개선
+- [ ] **UserService에 getAllUsers 메서드 추가**
+- [ ] **사용자 목록 조회 API 완성**
+- [ ] **역할 변경 권한 검증 강화**
+- [ ] **API 응답 형식 표준화**
+- [ ] **FullCalendar 통합**
+  - [ ] 스케줄 시각화 컴포넌트
+  - [ ] 드래그 앤 드롭 스케줄 관리
+  - [ ] 실시간 업데이트
 
-### 1. Hibernate 설정
-- [ ] `application.yml`에서 `hibernate.ddl-auto` 확인
-  ```yaml
-  spring:
-    jpa:
-      hibernate:
-        ddl-auto: update  # 운영에서는 validate 권장
-  ```
+### 🎨 프론트엔드 개선
+- [ ] **사용자 목록 표시 기능 완성**
+- [ ] **역할 변경 UI/UX 개선**
+- [ ] **실시간 데이터 업데이트**
+- [ ] **페이지네이션 구현**
+- [ ] **스케줄 관리 UI**
+  - [ ] FullCalendar 기반 스케줄 뷰
+  - [ ] 상담사별 스케줄 관리
+  - [ ] 결제 승인 상태 표시
 
-### 2. 데이터베이스 연결
-- [ ] 운영 데이터베이스 연결 정보 설정
-- [ ] 데이터베이스 사용자 권한 확인
-- [ ] 백업 정책 수립
+### 🧪 테스트 및 배포
+- [ ] **전체 시스템 통합 테스트**
+- [ ] **성능 테스트**
+- [ ] **보안 테스트**
+- [ ] **배포 환경 구성**
 
-## 📝 로깅 설정
+## 🎯 다음 우선순위
 
-### 1. 로그 레벨 조정
-- [ ] 운영 환경에 맞는 로그 레벨 설정
-  ```yaml
-  logging:
-    level:
-      com.mindgarden: WARN  # 개발용 INFO에서 WARN으로 변경
-      org.springframework: WARN
-      org.hibernate: WARN
-  ```
+1. **결제 승인 및 세션 관리 시스템 테스트** - 전체 워크플로우 검증
+2. **스케줄 관리 시스템 테스트** - 시간 충돌 검사 및 권한 검증
+3. **FullCalendar 통합** - 스케줄 시각화 및 관리 UI 구현
+4. **UserService getAllUsers 메서드 구현** - 사용자 목록 조회 기능 완성
+5. **관리자 대시보드 통합 테스트** - 전체 기능 동작 확인
 
-### 2. 로그 파일 관리
-- [ ] 로그 로테이션 정책 설정
-- [ ] 로그 보관 기간 설정
-- [ ] 로그 모니터링 설정
+## 📝 참고사항
 
-## 🔒 보안 설정
-
-### 1. CORS 설정
-- [ ] 운영 도메인으로 CORS 제한
-  ```java
-  // 현재: 모든 Origin 허용 (개발용)
-  configuration.setAllowedOriginPatterns(List.of("*"));
-  
-  // 운영용으로 변경:
-  configuration.setAllowedOriginPatterns(List.of("https://yourdomain.com"));
-  ```
-
-### 2. 세션 관리
-- [ ] 세션 타임아웃 설정
-- [ ] 동시 세션 제한 설정
-- [ ] 세션 고정 공격 방지
-
-## 🌐 환경 변수
-
-### 1. 민감 정보 관리
-- [ ] OAuth2 클라이언트 ID/Secret을 환경 변수로 관리
-- [ ] 데이터베이스 연결 정보를 환경 변수로 관리
-- [ ] JWT 시크릿 키를 환경 변수로 관리
-
-### 2. 프로파일 설정
-- [ ] `application-prod.yml` 생성
-- [ ] 운영 환경별 설정 분리
-
-## 📊 모니터링 및 헬스체크
-
-### 1. 애플리케이션 모니터링
-- [ ] Spring Boot Actuator 활성화
-- [ ] 헬스체크 엔드포인트 설정
-- [ ] 메트릭 수집 설정
-
-### 2. 로그 모니터링
-- [ ] 로그 집계 시스템 연동
-- [ ] 에러 알림 설정
-- [ ] 성능 모니터링 설정
-
-## 🚨 테스트 체크리스트
-
-### 1. 보안 테스트
-- [ ] 인증이 필요한 API 접근 테스트
-- [ ] JWT 토큰 유효성 검증 테스트
-- [ ] OAuth2 플로우 보안 테스트
-
-### 2. 기능 테스트
-- [ ] 소셜 로그인 전체 플로우 테스트
-- [ ] 마이페이지 접근 테스트
-- [ ] 소셜 계정 연동 테스트
-
-### 3. 성능 테스트
-- [ ] 동시 사용자 부하 테스트
-- [ ] 데이터베이스 쿼리 성능 테스트
-- [ ] 메모리 사용량 모니터링
-
----
-
-**⚠️ 주의사항:**
-- 개발 환경에서 테스트 완료 후 운영 환경에 적용
-- 단계별로 적용하여 문제 발생 시 롤백 가능하도록 구성
-- 모든 설정 변경 후 충분한 테스트 수행
-- 운영 환경 적용 전 백업 수행
+- **isDev 프로퍼티**: 개발 모드에서만 테스트 기능 활성화
+- **UserRole enum**: 타입 안전성과 관리 편의성 향상
+- **컴포넌트 분리**: 재사용성과 유지보수성 개선
+- **기존 디자인 패턴**: 일관된 UI/UX 제공
+- **PaymentStatus enum**: 결제 승인 워크플로우 관리
+- **ConsultationType enum**: 상담 유형별 기본 시간 설정 (50분, 100분, 60분 등)
+- **ScheduleConstants**: 스케줄 관련 상수 통합 관리, 중복 변수 제거
+- **권한 기반 데이터 접근**: 상담사는 자신의 스케줄만, 관리자는 전체 스케줄 조회

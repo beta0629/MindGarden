@@ -388,6 +388,212 @@ POST /api/v1/auth/refresh
 }
 ```
 
+## OAuth2 API 설계
+
+### 최근 업데이트 (2025-09-01)
+
+#### 1. OAuth2 콜백 API 개선
+
+##### 네이버 OAuth2 콜백
+```http
+GET /api/oauth2/naver/callback?code={authorization_code}&state={state}&mode={login|link}
+```
+
+**파라미터**:
+- `code` (필수): 네이버에서 받은 인증 코드
+- `state` (필수): CSRF 방지를 위한 상태값
+- `mode` (선택): 
+  - `login`: 일반 로그인 (기본값)
+  - `link`: 기존 사용자에게 소셜 계정 연동
+
+**응답**:
+```json
+// 로그인 모드 (기존과 동일)
+{
+  "success": true,
+  "redirectUrl": "http://localhost:3000/dashboard"
+}
+
+// 연동 모드
+{
+  "success": true,
+  "redirectUrl": "http://localhost:3000/mypage?success=연동완료&provider=NAVER"
+}
+```
+
+##### 카카오 OAuth2 콜백
+```http
+GET /api/oauth2/kakao/callback?code={authorization_code}&state={state}&mode={login|link}
+```
+
+**파라미터**: 네이버와 동일
+
+#### 2. 소셜 계정 연동 API
+
+##### 기존 사용자에게 소셜 계정 연동
+```http
+POST /api/oauth2/link-social-account
+```
+
+**요청 본문**:
+```json
+{
+  "userId": 123,
+  "socialUserInfo": {
+    "providerUserId": "123456789",
+    "email": "user@example.com",
+    "name": "홍길동",
+    "nickname": "길동이",
+    "profileImageUrl": "https://example.com/profile.jpg",
+    "provider": "NAVER"
+  }
+}
+```
+
+**응답**:
+```json
+{
+  "success": true,
+  "message": "소셜 계정 연동 완료"
+}
+```
+
+#### 3. 사용자 정보 API 개선
+
+##### 현재 사용자 정보 조회
+```http
+GET /api/auth/current-user
+```
+
+**응답** (프로필 이미지 우선순위 정보 추가):
+```json
+{
+  "id": 23,
+  "username": "user123",
+  "name": "이재학",
+  "nickname": "반짝반짝",
+  "email": "user@example.com",
+  "role": "CLIENT",
+  "profileImageUrl": "https://example.com/user-uploaded.jpg",  // 사용자 업로드 이미지 (최우선)
+  "socialProfileImage": "https://example.com/social-image.jpg", // 소셜 이미지 (2순위)
+  "socialProvider": "NAVER"                                     // 소셜 제공자
+}
+```
+
+**프로필 이미지 우선순위**:
+1. `profileImageUrl`: 사용자가 직접 업로드한 이미지
+2. `socialProfileImage`: 소셜 계정에서 가져온 이미지
+3. 기본 아이콘: 위 두 이미지가 모두 없는 경우
+
+#### 4. 소셜 계정 정보 API
+
+##### 사용자의 소셜 계정 목록 조회
+```http
+GET /api/client/social-accounts
+```
+
+**응답**:
+```json
+{
+  "socialAccounts": [
+    {
+      "id": 1,
+      "provider": "NAVER",
+      "providerUserId": "123456789",
+      "providerProfileImage": "https://example.com/naver-profile.jpg",
+      "isPrimary": true,
+      "createdAt": "2025-09-01T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "provider": "KAKAO",
+      "providerUserId": "987654321",
+      "providerProfileImage": "https://example.com/kakao-profile.jpg",
+      "isPrimary": false,
+      "createdAt": "2025-09-01T11:00:00Z"
+    }
+  ]
+}
+```
+
+### API 변경사항 요약
+
+#### 추가된 기능
+1. **OAuth2 콜백에 `mode` 파라미터 추가**
+   - 기존 로그인 기능 유지
+   - 새로운 계정 연동 기능 추가
+
+2. **프로필 이미지 우선순위 시스템**
+   - 백엔드에서 이미지 타입 구분
+   - 프론트엔드에서 우선순위 적용
+
+3. **소셜 계정 연동 API**
+   - 기존 사용자에게 소셜 계정 추가 기능
+   - 연동 상태 관리
+
+#### 개선된 기능
+1. **사용자 정보 API**
+   - 프로필 이미지 관련 필드 추가
+   - 소셜 계정 정보 포함
+
+2. **에러 처리**
+   - 타입 오류 수정 (`providerUserId` Long → String)
+   - 연동 실패 시 적절한 에러 응답
+
+### API 사용 예시
+
+#### 1. 소셜 로그인 플로우
+```javascript
+// 1. 소셜 로그인 시작
+window.location.href = '/api/oauth2/naver/authorize';
+
+// 2. 콜백 처리 (로그인 모드)
+// GET /api/oauth2/naver/callback?code=xxx&state=xxx&mode=login
+// → 대시보드로 리다이렉트
+```
+
+#### 2. 소셜 계정 연동 플로우
+```javascript
+// 1. 기존 사용자 로그인 상태에서 연동 시작
+window.location.href = '/api/oauth2/naver/authorize?mode=link';
+
+// 2. 콜백 처리 (연동 모드)
+// GET /api/oauth2/naver/callback?code=xxx&state=xxx&mode=link
+// → 마이페이지로 리다이렉트 (연동 완료 메시지)
+```
+
+#### 3. 프로필 이미지 표시
+```javascript
+// 세션에서 사용자 정보 조회
+const { user } = useSession();
+
+// 이미지 우선순위 적용
+const profileImage = user.profileImageUrl || user.socialProfileImage || null;
+
+// 이미지 타입 배지 표시
+const imageType = user.profileImageUrl ? '사용자' : 
+                  user.socialProfileImage ? user.socialProvider : '기본';
+```
+
+### 에러 코드
+
+#### OAuth2 관련 에러
+- `OAUTH2_INVALID_CODE`: 유효하지 않은 인증 코드
+- `OAUTH2_ACCOUNT_LINKING_FAILED`: 계정 연동 실패
+- `OAUTH2_PROVIDER_ERROR`: 소셜 제공자 오류
+
+#### 사용자 관련 에러
+- `USER_NOT_FOUND`: 사용자를 찾을 수 없음
+- `USER_ALREADY_LINKED`: 이미 연동된 소셜 계정
+- `INVALID_SOCIAL_ACCOUNT`: 유효하지 않은 소셜 계정 정보
+
+### 보안 고려사항
+
+1. **CSRF 방지**: `state` 파라미터 사용
+2. **세션 검증**: 연동 모드에서 기존 세션 확인
+3. **권한 검증**: 사용자 본인의 계정만 연동 가능
+4. **데이터 검증**: 소셜 계정 정보 유효성 검사
+
 ## 3. 사용자 관리 API
 
 ### 3.1 사용자 목록 조회

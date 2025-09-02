@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오류 발생</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .error-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #dc3545;
+            color: white;
+            border-radius: 10px;
+        }
+        .error-details {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-header">
+            <h1>⚠️ 오류가 발생했습니다</h1>
+            <p>개발 환경에서 오류가 발생했습니다</p>
+        </div>
+        
+        <div class="error-details">
+            <h3>오류 정보</h3>
+            <p th:text="${error}">오류 메시지</p>
+        </div>
+        
+        <div>
+            <h3>해결 방법</h3>
+            <p>1. 서버 로그를 확인하세요</p>
+            <p>2. 개발자에게 문의하세요</p>
+            <p>3. <a href="/test">테스트 페이지</a>로 이동해서 기본 기능을 확인하세요</p>
+        </div>
+    </div>
+</body>
+</html>

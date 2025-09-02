@@ -4,10 +4,22 @@ class SessionManager {
         this.sessionInfo = null;
         this.isLoading = false;
         this.listeners = [];
+        this.lastCheckTime = 0;
+        this.checkInProgress = false;
+        this.minCheckInterval = 30000; // 최소 30초 간격
     }
     
-    // 세션 상태 확인
+    // 세션 상태 확인 (중복 호출 방지)
     async checkSession() {
+        const now = Date.now();
+        
+        // 이미 체크 중이거나 최근에 체크했으면 스킵
+        if (this.checkInProgress || (now - this.lastCheckTime < this.minCheckInterval)) {
+            console.log('🔄 세션 체크 스킵 (중복 방지)');
+            return this.user !== null;
+        }
+        
+        this.checkInProgress = true;
         this.isLoading = true;
         this.notifyListeners(); // 로딩 시작 알림
         
@@ -15,8 +27,12 @@ class SessionManager {
             console.log('🔍 세션 확인 시작...');
             
             const [userResponse, sessionResponse] = await Promise.all([
-                fetch('http://localhost:8080/api/auth/current-user', { credentials: 'include' }),
-                fetch('http://localhost:8080/api/auth/session-info', { credentials: 'include' })
+                fetch('/api/auth/current-user', { 
+                    credentials: 'include'
+                }),
+                fetch('/api/auth/session-info', { 
+                    credentials: 'include'
+                })
             ]);
             
             if (userResponse.ok && sessionResponse.ok) {
@@ -34,6 +50,7 @@ class SessionManager {
                 this.sessionInfo = null;
             }
             
+            this.lastCheckTime = now;
             this.notifyListeners();
             return this.user !== null;
             
@@ -50,6 +67,7 @@ class SessionManager {
             return false;
         } finally {
             this.isLoading = false;
+            this.checkInProgress = false;
             this.notifyListeners(); // 로딩 완료 알림
         }
     }
@@ -57,7 +75,7 @@ class SessionManager {
     // 로그아웃
     async logout() {
         try {
-            await fetch('http://localhost:8080/api/auth/logout', { 
+            await fetch('/api/auth/logout', { 
                 method: 'POST',
                 credentials: 'include' 
             });

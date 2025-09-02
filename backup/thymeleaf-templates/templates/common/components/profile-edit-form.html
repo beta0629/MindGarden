@@ -1,0 +1,367 @@
+<!-- 프로필 편집 폼 컴포넌트 -->
+<div th:fragment="profile-edit-form" class="profile-edit-form-component">
+    <style>
+        .profile-edit-form-component {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #E5E7EB;
+        }
+        
+        .form-section {
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .form-section h3 {
+            color: #1F2937;
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            border-bottom: 2px solid #E5E7EB;
+            padding-bottom: 0.5rem;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .form-label {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .form-input {
+            padding: 0.75rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+            background: #F9FAFB;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+        
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-select {
+            background: #F9FAFB;
+            cursor: pointer;
+        }
+        
+        /* 이미지 업로드 영역 */
+        .image-upload-section {
+            border: 2px dashed #D1D5DB;
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #F9FAFB;
+            cursor: pointer;
+        }
+        
+        .image-upload-section:hover {
+            border-color: #8B5CF6;
+            background: #F3F4F6;
+        }
+        
+        .image-upload-section.dragover {
+            border-color: #8B5CF6;
+            background: #FEF3C7;
+            transform: scale(1.02);
+        }
+        
+        .image-upload-icon {
+            font-size: 3rem;
+            color: #9CA3AF;
+            margin-bottom: 1rem;
+        }
+        
+        .image-upload-text {
+            color: #6B7280;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .image-upload-hint {
+            color: #9CA3AF;
+            font-size: 0.875rem;
+        }
+        
+        .image-preview {
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .image-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .image-remove {
+            background: #EF4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s ease;
+        }
+        
+        .image-remove:hover {
+            background: #DC2626;
+        }
+        
+        /* 버튼 스타일 */
+        .form-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #E5E7EB;
+        }
+        
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 120px;
+        }
+        
+        .btn-primary {
+            background: #8B5CF6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #7C3AED;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6B7280;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4B5563;
+            transform: translateY(-1px);
+        }
+        
+        .btn-cancel {
+            background: #F3F4F6;
+            color: #374151;
+            border: 1px solid #D1D5DB;
+        }
+        
+        .btn-cancel:hover {
+            background: #E5E7EB;
+        }
+        
+        /* 필수 필드 표시 */
+        .required::after {
+            content: " *";
+            color: #EF4444;
+        }
+        
+        /* 유효성 검사 스타일 */
+        .form-input.error {
+            border-color: #EF4444;
+            background: #FEF2F2;
+        }
+        
+        .error-message {
+            color: #EF4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            text-align: left;
+        }
+        
+        /* 성공 메시지 */
+        .success-message {
+            background: #DCFCE7;
+            color: #16A34A;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #A7F3D0;
+            display: none;
+        }
+    </style>
+    
+    <form id="profileForm" enctype="multipart/form-data">
+        <!-- 기본 정보 섹션 -->
+        <div class="form-section">
+            <h3>기본 정보</h3>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label required" for="name">이름</label>
+                    <input type="text" id="name" name="name" class="form-input" required 
+                           th:value="${user?.name}" placeholder="이름을 입력하세요">
+                    <div class="error-message" id="nameError"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="nickname">닉네임</label>
+                    <input type="text" id="nickname" name="nickname" class="form-input" 
+                           th:value="${user?.nickname}" placeholder="닉네임을 입력하세요">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="phone">연락처</label>
+                    <input type="tel" id="phone" name="phone" class="form-input" 
+                           th:value="${user?.phone}" placeholder="010-0000-0000">
+                    <div class="error-message" id="phoneError"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="birthDate">생년월일</label>
+                    <input type="date" id="birthDate" name="birthDate" class="form-input" 
+                           th:value="${user?.birthDate}">
+                </div>
+            </div>
+            
+            <div class="form-group full-width">
+                <label class="form-label" for="email">이메일</label>
+                <input type="email" id="email" name="email" class="form-input" 
+                       th:value="${user?.email}" readonly>
+                <small style="color: #6B7280; font-size: 0.875rem;">이메일은 변경할 수 없습니다</small>
+            </div>
+        </div>
+        
+        <!-- 프로필 이미지 섹션 -->
+        <div class="form-section">
+            <h3>프로필 이미지</h3>
+            
+            <div class="image-upload-section" id="imageUploadSection">
+                <div class="image-upload-icon">
+                    <i class="bi bi-cloud-upload"></i>
+                </div>
+                <div class="image-upload-text">이미지를 드래그하여 업로드하거나 클릭하여 선택하세요</div>
+                <div class="image-upload-hint">JPG, PNG, GIF 파일 (최대 5MB)</div>
+                <input type="file" id="profileImage" name="profileImage" accept="image/*" style="display: none;">
+            </div>
+            
+            <div class="image-preview" id="imagePreview">
+                <img id="previewImg" src="" alt="프로필 이미지 미리보기">
+                <br>
+                <button type="button" class="image-remove" id="imageRemove">이미지 제거</button>
+            </div>
+        </div>
+        
+        <!-- 추가 정보 섹션 -->
+        <div class="form-section">
+            <h3>추가 정보</h3>
+            
+            <div class="form-group full-width">
+                <label class="form-label" for="bio">자기소개</label>
+                <textarea id="bio" name="bio" class="form-input form-textarea" 
+                          th:text="${user?.bio}" placeholder="자신에 대해 간단히 소개해주세요 (선택사항)"></textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="occupation">직업</label>
+                    <input type="text" id="occupation" name="occupation" class="form-input" 
+                           th:value="${user?.occupation}" placeholder="직업을 입력하세요">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="location">지역</label>
+                    <select id="location" name="location" class="form-input form-select">
+                        <option value="">지역을 선택하세요</option>
+                        <option value="서울" th:selected="${user?.location == '서울'}">서울</option>
+                        <option value="부산" th:selected="${user?.location == '부산'}">부산</option>
+                        <option value="대구" th:selected="${user?.location == '대구'}">대구</option>
+                        <option value="인천" th:selected="${user?.location == '인천'}">인천</option>
+                        <option value="광주" th:selected="${user?.location == '광주'}">광주</option>
+                        <option value="대전" th:selected="${user?.location == '대전'}">대전</option>
+                        <option value="울산" th:selected="${user?.location == '울산'}">울산</option>
+                        <option value="세종" th:selected="${user?.location == '세종'}">세종</option>
+                        <option value="기타" th:selected="${user?.location == '기타'}">기타</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group full-width">
+                <label class="form-label" for="interests">관심사</label>
+                <input type="text" id="interests" name="interests" class="form-input" 
+                       th:value="${user?.interests}" placeholder="관심사나 취미를 입력하세요 (쉼표로 구분)">
+                <small style="color: #6B7280; font-size: 0.875rem;">예: 독서, 영화감상, 등산</small>
+            </div>
+        </div>
+        
+        <!-- 알림 설정 섹션 -->
+        <div class="form-section">
+            <h3>알림 설정</h3>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="emailNotification">이메일 알림</label>
+                    <select id="emailNotification" name="emailNotification" class="form-input form-select">
+                        <option value="true" th:selected="${user?.emailNotification == true}">수신함</option>
+                        <option value="false" th:selected="${user?.emailNotification == false}">수신안함</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="smsNotification">SMS 알림</label>
+                    <select id="smsNotification" name="smsNotification" class="form-input form-select">
+                        <option value="true" th:selected="${user?.smsNotification == true}">수신함</option>
+                        <option value="false" th:selected="${user?.smsNotification == false}">수신안함</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 성공 메시지 -->
+        <div class="success-message" id="successMessage">
+            프로필이 성공적으로 업데이트되었습니다!
+        </div>
+        
+        <!-- 버튼 영역 -->
+        <div class="form-buttons">
+            <button type="submit" class="btn btn-primary">프로필 저장</button>
+            <button type="button" class="btn btn-secondary" onclick="resetForm()">초기화</button>
+            <button type="button" class="btn btn-cancel" onclick="goBack()">취소</button>
+        </div>
+    </form>
+</div>

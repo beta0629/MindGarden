@@ -1,7 +1,7 @@
 package com.mindgarden.consultation.service;
 
-import com.mindgarden.consultation.dto.UserProfileUpdateRequest;
 import com.mindgarden.consultation.dto.UserProfileResponse;
+import com.mindgarden.consultation.dto.UserProfileUpdateRequest;
 
 /**
  * 유저 프로필 관리 서비스 인터페이스
@@ -30,13 +30,13 @@ public interface UserProfileService {
     UserProfileResponse getUserProfile(Long userId);
     
     /**
-     * 유저 역할 변경 (CLIENT → CONSULTANT)
+     * 유저 역할 변경
      * 
      * @param userId 사용자 ID
      * @param newRole 새로운 역할
      * @return 역할 변경 결과
      */
-    boolean changeUserRole(Long userId, String newRole);
+    boolean changeUserRole(Long userId, com.mindgarden.consultation.constant.UserRole newRole);
     
     /**
      * 유저 프로필 완성도 확인

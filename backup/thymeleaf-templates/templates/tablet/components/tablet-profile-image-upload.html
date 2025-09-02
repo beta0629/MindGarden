@@ -1,0 +1,106 @@
+<!-- 테블릿 전용 프로필 이미지 업로드 컴포넌트 -->
+<div th:fragment="tablet-profile-image-upload" class="tablet-profile-image-upload-component">
+    <style>
+        .tablet-profile-image-upload-component .form-section {
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .tablet-profile-image-upload-component .form-section h3 {
+            color: #1F2937;
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            border-bottom: 2px solid #E5E7EB;
+            padding-bottom: 0.5rem;
+        }
+        
+        /* 이미지 업로드 영역 */
+        .tablet-profile-image-upload-component .image-upload-section {
+            border: 2px dashed #D1D5DB;
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #F9FAFB;
+            cursor: pointer;
+            /* 테블릿 전용 고정 레이아웃 */
+            min-width: 400px;
+        }
+        
+        .tablet-profile-image-upload-component .image-upload-section:hover {
+            border-color: #8B5CF6;
+            background: #F3F4F6;
+        }
+        
+        .tablet-profile-image-upload-component .image-upload-section.dragover {
+            border-color: #8B5CF6;
+            background: #FEF3C7;
+            transform: scale(1.02);
+        }
+        
+        .tablet-profile-image-upload-component .image-upload-icon {
+            font-size: 3rem;
+            color: #9CA3AF;
+            margin-bottom: 1rem;
+        }
+        
+        .tablet-profile-image-upload-component .image-upload-text {
+            color: #6B7280;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .tablet-profile-image-upload-component .image-upload-hint {
+            color: #9CA3AF;
+            font-size: 0.875rem;
+        }
+        
+        .tablet-profile-image-upload-component .image-preview {
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .tablet-profile-image-upload-component .image-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .tablet-profile-image-upload-component .image-remove {
+            background: #EF4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s ease;
+        }
+        
+        .tablet-profile-image-upload-component .image-remove:hover {
+            background: #DC2626;
+        }
+    </style>
+    
+    <div class="form-section">
+        <h3>프로필 이미지</h3>
+        
+        <div class="image-upload-section" id="imageUploadSection">
+            <div class="image-upload-icon">
+                <i class="bi bi-cloud-upload"></i>
+            </div>
+            <div class="image-upload-text">이미지를 드래그하여 업로드하거나 클릭하여 선택하세요</div>
+            <div class="image-upload-hint">JPG, PNG, GIF 파일 (최대 5MB)</div>
+            <input type="file" id="profileImage" name="profileImage" accept="image/*" style="display: none;">
+        </div>
+        
+        <div class="image-preview" id="imagePreview">
+            <img id="previewImg" src="" alt="프로필 이미지 미리보기">
+            <br>
+            <button type="button" class="image-remove" id="imageRemove">이미지 제거</button>
+        </div>
+    </div>
+</div>

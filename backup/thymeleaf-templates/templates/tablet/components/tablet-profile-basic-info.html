@@ -1,0 +1,115 @@
+<!-- 테블릿 전용 프로필 기본 정보 컴포넌트 -->
+<div th:fragment="tablet-profile-basic-info" class="tablet-profile-basic-info-component">
+    <style>
+        .tablet-profile-basic-info-component .form-section {
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .tablet-profile-basic-info-component .form-section h3 {
+            color: #1F2937;
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            border-bottom: 2px solid #E5E7EB;
+            padding-bottom: 0.5rem;
+        }
+        
+        .tablet-profile-basic-info-component .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .tablet-profile-basic-info-component .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .tablet-profile-basic-info-component .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .tablet-profile-basic-info-component .form-label {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .tablet-profile-basic-info-component .form-input {
+            padding: 0.75rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+            background: #F9FAFB;
+        }
+        
+        .tablet-profile-basic-info-component .form-input:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+        
+        .tablet-profile-basic-info-component .required::after {
+            content: " *";
+            color: #EF4444;
+        }
+        
+        .tablet-profile-basic-info-component .error-message {
+            color: #EF4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            text-align: left;
+        }
+        
+        .tablet-profile-basic-info-component .form-input.error {
+            border-color: #EF4444;
+            background: #FEF2F2;
+        }
+    </style>
+    
+    <div class="form-section">
+        <h3>기본 정보</h3>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label required" for="name">이름</label>
+                <input type="text" id="name" name="name" class="form-input" required 
+                       th:value="${user?.name}" placeholder="이름을 입력하세요">
+                <div class="error-message" id="nameError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="nickname">닉네임</label>
+                <input type="text" id="nickname" name="nickname" class="form-input" 
+                       th:value="${user?.nickname}" placeholder="닉네임을 입력하세요">
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="phone">연락처</label>
+                <input type="tel" id="phone" name="phone" class="form-input" 
+                       th:value="${user?.phone}" placeholder="010-0000-0000">
+                <div class="error-message" id="phoneError"></div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="birthDate">생년월일</label>
+                <input type="date" id="birthDate" name="birthDate" class="form-input" 
+                       th:value="${user?.birthDate}">
+            </div>
+        </div>
+        
+        <div class="form-group full-width">
+            <label class="form-label" for="email">이메일</label>
+            <input type="email" id="email" name="email" class="form-input" 
+                   th:value="${user?.email}" readonly>
+            <small style="color: #6B7280; font-size: 0.875rem;">이메일은 변경할 수 없습니다</small>
+        </div>
+    </div>
+</div>

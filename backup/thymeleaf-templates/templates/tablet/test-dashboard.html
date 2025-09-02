@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindGarden - 테스트 대시보드</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        .user-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 MindGarden 테스트 대시보드</h1>
+            <p>개발 환경 테스트 모드</p>
+        </div>
+        
+        <div class="user-info">
+            <h3>사용자 정보</h3>
+            <p><strong>이름:</strong> <span th:text="${user.name}">테스트 사용자</span></p>
+            <p><strong>이메일:</strong> <span th:text="${user.email}">test@mindgarden.com</span></p>
+            <p><strong>역할:</strong> <span th:text="${user.role}">CLIENT</span></p>
+            <p><strong>ID:</strong> <span th:text="${user.id}">999</span></p>
+        </div>
+        
+        <div class="message" th:if="${loginSuccess}">
+            <h4>로그인 성공!</h4>
+            <p th:text="${loginMessage}">테스트 모드로 로그인되었습니다.</p>
+        </div>
+        
+        <div>
+            <h3>테스트 기능</h3>
+            <button class="test-button" onclick="alert('테스트 버튼이 작동합니다!')">테스트 버튼</button>
+            <button class="test-button" onclick="console.log('콘솔 로그 테스트')">콘솔 로그</button>
+            <button class="test-button" onclick="location.reload()">페이지 새로고침</button>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 15px; background: #e9ecef; border-radius: 8px;">
+            <h4>디버그 정보</h4>
+            <p><strong>모델 데이터:</strong></p>
+            <pre th:text="${#objects.nullSafe(user, '사용자 정보 없음')}">사용자 정보</pre>
+        </div>
+    </div>
+    
+    <script>
+        console.log('테스트 대시보드 JavaScript 로드됨');
+        console.log('사용자 정보:', {
+            name: '[[${user.name}]]',
+            role: '[[${user.role}]]',
+            email: '[[${user.email}]]'
+        });
+    </script>
+</body>
+</html>

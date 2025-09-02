@@ -2,6 +2,7 @@ package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SocialLoginResponse;
 import com.mindgarden.consultation.dto.SocialUserInfo;
 import com.mindgarden.consultation.entity.User;
@@ -109,7 +110,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                     .email(user.getEmail())
                     .name(user.getName())
                     .nickname(user.getNickname())
-                    .role(user.getRole())
+                    .role(user.getRole().getValue())
                     .profileImageUrl(finalProfileImageUrl)
                     .build())
                 .socialAccountInfo(SocialLoginResponse.SocialAccountInfo.builder()
@@ -201,7 +202,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
             .password(generateTemporaryPassword()) // 임시 비밀번호 생성
             .name(socialUserInfo.getName())
             .nickname(socialUserInfo.getNickname())
-            .role("USER") // 기본 역할
+            .role(UserRole.CLIENT) // 기본 역할
             .profileImageUrl(socialUserInfo.getProfileImageUrl())
             .isEmailVerified(true) // 소셜 계정은 이메일 인증 완료로 간주
             .isActive(true)

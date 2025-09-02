@@ -1,0 +1,21 @@
+<!-- 공통 하단 네비게이션 -->
+<nav class="tablet-bottom-nav" th:fragment="tablet-bottom-navigation">
+    <div class="bottom-nav-content">
+        <a href="/tablet/client/dashboard" class="bottom-nav-item" th:classappend="${#httpServletRequest != null and #httpServletRequest.requestURI == '/tablet/client/dashboard' ? 'active' : ''}">
+            <i class="bi bi-house"></i>
+            <span>홈</span>
+        </a>
+        <a href="/tablet/client/consultations" class="bottom-nav-item" th:classappend="${#httpServletRequest != null and #httpServletRequest.requestURI == '/tablet/client/consultations' ? 'active' : ''}">
+            <i class="bi bi-calendar-check"></i>
+            <span>상담</span>
+        </a>
+        <a href="/tablet/client/tasks" class="bottom-nav-item" th:classappend="${#httpServletRequest != null and #httpServletRequest.requestURI == '/tablet/client/tasks' ? 'active' : ''}">
+            <i class="bi bi-list-task"></i>
+            <span>과제</span>
+        </a>
+        <a href="/tablet/client/profile/edit" class="bottom-nav-item" th:classappend="${#httpServletRequest != null and #httpServletRequest.requestURI == '/tablet/client/profile/edit' ? 'active' : ''}">
+            <i class="bi bi-person"></i>
+            <span>프로필</span>
+        </a>
+    </div>
+</nav>

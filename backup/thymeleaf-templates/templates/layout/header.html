@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header</title>
+</head>
+<body>
+    
+    <!-- Header Fragment -->
+    <header th:fragment="header" class="header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                
+                <!-- Logo Section -->
+                <div class="col-auto">
+                    <div class="header-logo">
+                        <a th:href="@{/}" class="logo-link">
+                            <img th:src="@{/images/logo.png}" alt="MindGarden Logo" class="logo-image">
+                            <span class="logo-text">MindGarden</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Main Navigation (Desktop) -->
+                <div class="col d-none d-lg-block">
+                    <nav class="header-nav">
+                        <ul class="nav-list">
+                            <li class="nav-item">
+                                <a th:href="@{/}" class="nav-link">
+                                    <i class="bi bi-house-door"></i>
+                                    <span>홈</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a th:href="@{/consultation}" class="nav-link">
+                                    <i class="bi bi-calendar-check"></i>
+                                    <span>상담관리</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a th:href="@{/clients}" class="nav-link">
+                                    <i class="bi bi-people"></i>
+                                    <span>내담자관리</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a th:href="@{/consultants}" class="nav-link">
+                                    <i class="bi bi-person-badge"></i>
+                                    <span>상담사관리</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a th:href="@{/reports}" class="nav-link">
+                                    <i class="bi bi-graph-up"></i>
+                                    <span>리포트</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                
+                <!-- Right Section -->
+                <div class="col-auto ms-auto">
+                    <div class="header-actions">
+                        
+                        <!-- Search -->
+                        <div class="header-search d-none d-md-block">
+                            <form class="search-form" th:action="@{/search}" method="get">
+                                <div class="input-group">
+                                    <input type="text" class="form-control search-input" name="q" placeholder="검색..." aria-label="Search">
+                                    <button class="btn btn-outline-primary search-btn" type="submit">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Notifications -->
+                        <div class="header-notifications">
+                            <button class="btn btn-link notification-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-bell"></i>
+                                <span class="notification-badge" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end notification-dropdown">
+                                <div class="dropdown-header">
+                                    <h6 class="mb-0">알림</h6>
+                                    <a href="#" class="text-decoration-none small">모두 읽음</a>
+                                </div>
+                                <div class="notification-list">
+                                    <div th:if="${#lists.isEmpty(notifications)}" class="text-center py-3">
+                                        <span class="text-muted">새로운 알림이 없습니다</span>
+                                    </div>
+                                    <div th:each="notification : ${notifications}" class="notification-item">
+                                        <div class="notification-content">
+                                            <div class="notification-title" th:text="${notification.title}">알림 제목</div>
+                                            <div class="notification-time" th:text="${#temporals.format(notification.createdAt, 'HH:mm')}">시간</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="dropdown-footer">
+                                    <a th:href="@{/notifications}" class="btn btn-outline-primary btn-sm w-100">모든 알림 보기</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- User Menu -->
+                        <div class="header-user">
+                            <div class="dropdown">
+                                <button class="btn btn-link user-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="user-avatar">
+                                        <img th:if="${currentUser != null and currentUser.profileImage}" th:src="${currentUser.profileImage}" alt="프로필" class="avatar-image">
+                                        <div th:unless="${currentUser != null and currentUser.profileImage}" class="avatar-placeholder">
+                                            <i class="bi bi-person"></i>
+                                        </div>
+                                    </div>
+                                    <span class="user-name d-none d-md-inline" th:text="${currentUser != null ? currentUser.name : '게스트'}">사용자명</span>
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end user-dropdown">
+                                    <li>
+                                        <a class="dropdown-item" th:href="@{/profile}">
+                                            <i class="bi bi-person"></i>
+                                            <span>프로필</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" th:href="@{/settings}">
+                                            <i class="bi bi-gear"></i>
+                                            <span>설정</span>
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" th:href="@{/logout}">
+                                            <i class="bi bi-box-arrow-right"></i>
+                                            <span>로그아웃</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- Mobile Menu Toggle -->
+                        <div class="header-mobile-toggle d-lg-none">
+                            <button class="btn btn-link mobile-menu-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+                                <i class="bi bi-list"></i>
+                            </button>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </header>
+    
+</body>
+</html>

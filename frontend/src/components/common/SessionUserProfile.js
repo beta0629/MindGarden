@@ -30,7 +30,7 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
   // 프로필 이미지 타입 텍스트
   const getProfileImageTypeText = () => {
     if (sessionUser?.profileImageUrl && !imageLoadError) {
-      return '사용자';
+      return '프로필';
     }
     if (sessionUser?.socialProfileImage && !imageLoadError) {
       return sessionUser.socialProvider || '소셜';

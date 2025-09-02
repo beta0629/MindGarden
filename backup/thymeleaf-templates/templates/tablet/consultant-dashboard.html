@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindGarden - 상담사 대시보드</title>
+</head>
+<body th:replace="~{common/layout/tablet-base}">
+    
+    <!-- 공통 대시보드 템플릿 사용 -->
+    <div th:replace="~{common/tablet/dashboard :: content}"></div>
+    
+    <!-- 페이지별 JavaScript -->
+    <script th:fragment="additionalScripts">
+        // 현재 시간 표시
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+        
+        // 페이지 로드 시 시간 업데이트
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 60000); // 1분마다 업데이트
+        
+        // 탭 전환
+        function switchTab(tabName) {
+            // 모든 탭 버튼에서 active 클래스 제거
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 클릭된 탭에 active 클래스 추가
+            event.target.classList.add('active');
+            
+            // 탭별 내용 로드 (실제 구현에서는 API 호출)
+            loadScheduleContent(tabName);
+        }
+        
+        // 일정 내용 로드 (상담사용)
+        function loadScheduleContent(tabName) {
+            const contentDiv = document.getElementById('scheduleContent');
+            
+            // 실제 구현에서는 API에서 데이터를 가져와야 함
+            let content = '';
+            switch(tabName) {
+                case 'today':
+                    content = `
+                        <div class="schedule-item">
+                            <div class="schedule-time">14:00 - 15:00</div>
+                            <div class="schedule-info">
+                                <div class="schedule-title">정신건강 상담</div>
+                                <div class="schedule-client">김내담자</div>
+                            </div>
+                        </div>
+                        <div class="schedule-item">
+                            <div class="schedule-time">16:00 - 17:00</div>
+                            <div class="schedule-info">
+                                <div class="schedule-title">스트레스 관리</div>
+                                <div class="schedule-client">이내담자</div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'week':
+                    content = `
+                        <div class="schedule-item">
+                            <div class="schedule-time">월 14:00 - 15:00</div>
+                            <div class="schedule-info">
+                                <div class="schedule-title">정신건강 상담</div>
+                                <div class="schedule-client">김내담자</div>
+                            </div>
+                        </div>
+                        <div class="schedule-item">
+                            <div class="schedule-time">수 10:00 - 11:00</div>
+                            <div class="schedule-info">
+                                <div class="schedule-title">스트레스 관리</div>
+                                <div class="schedule-client">이내담자</div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'month':
+                    content = `
+                        <div class="schedule-item">
+                            <div class="schedule-time">12월 15일 14:00 - 15:00</div>
+                            <div class="schedule-info">
+                                <div class="schedule-title">정신건강 상담</div>
+                                <div class="schedule-client">김내담자</div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                default:
+                    content = `
+                        <div class="no-schedule">
+                            <i class="bi bi-calendar-x"></i>
+                            <p>예정된 상담이 없습니다.</p>
+                        </div>
+                    `;
+            }
+            
+            contentDiv.innerHTML = content;
+        }
+        
+        // 일정 새로고침
+        function refreshSchedule() {
+            const activeTab = document.querySelector('.tab-button.active');
+            if (activeTab) {
+                switchTab(activeTab.textContent.toLowerCase());
+            }
+        }
+        
+        // 빠른 액션 함수들 (상담사용)
+        function goToProfile() {
+            window.location.href = '/tablet/consultant/profile/edit';
+        }
+        
+        function goToSchedule() {
+            // 상담 일정 관리 페이지로 이동
+            console.log('상담 일정 관리 페이지로 이동');
+        }
+        
+        function goToHelp() {
+            // 도움말 페이지로 이동
+            console.log('도움말 페이지로 이동');
+        }
+        
+        function goToSettings() {
+            // 설정 페이지로 이동
+            console.log('설정 페이지로 이동');
+        }
+        
+        // 페이지 로드 시 초기 데이터 로드
+        document.addEventListener('DOMContentLoaded', function() {
+            loadScheduleContent('today');
+        });
+    </script>
+</body>
+</html>

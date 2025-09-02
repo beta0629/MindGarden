@@ -1,7 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import './WelcomeSection.css';
 
 const WelcomeSection = ({ user, currentTime, consultationData }) => {
+  const [imageLoadError, setImageLoadError] = useState(false);
+
+  // 프로필 이미지 URL 가져오기
+  const getProfileImageUrl = () => {
+    if (user?.profileImageUrl && !imageLoadError) {
+      return user.profileImageUrl;
+    }
+    if (user?.socialProfileImage && !imageLoadError) {
+      return user.socialProfileImage;
+    }
+    return null;
+  };
+
+  // 사용자 이름 가져오기
+  const getUserDisplayName = () => {
+    if (user?.name && !user.name.includes('==')) {
+      return user.name;
+    }
+    if (user?.nickname && !user.nickname.includes('==')) {
+      return user.nickname;
+    }
+    if (user?.username) {
+      return user.username;
+    }
+    return '사용자';
+  };
+
   const getWelcomeTitle = () => {
     if (!user?.role) return '안녕하세요!';
     
@@ -18,20 +46,40 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
     }
   };
 
+  const profileImageUrl = getProfileImageUrl();
+  const displayName = getUserDisplayName();
+
   return (
     <div className="welcome-section">
       <div className="welcome-card">
-        <div className="welcome-icon">
-          <i className="bi bi-emoji-smile"></i>
-        </div>
-        <div className="welcome-content">
-          <h2 className="welcome-title">{getWelcomeTitle()}</h2>
-          <p className="welcome-message">
-            {user?.username ? `${user.username}님, 오늘도 좋은 하루 되세요!` : '사용자님, 오늘도 좋은 하루 되세요!'}
-          </p>
-          <div className="welcome-time">
-            <i className="bi bi-clock"></i>
-            <span>{currentTime}</span>
+        <div className="welcome-profile">
+          <div className="profile-avatar">
+            {profileImageUrl ? (
+              <img 
+                src={profileImageUrl} 
+                alt="프로필 이미지" 
+                className="profile-image"
+                onError={() => setImageLoadError(true)}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover',
+                  borderRadius: '50%'
+                }}
+              />
+            ) : (
+              <i className="bi bi-person-circle profile-icon"></i>
+            )}
+          </div>
+          <div className="welcome-content">
+            <h2 className="welcome-title">{getWelcomeTitle()}</h2>
+            <p className="welcome-message">
+              {displayName}님, 오늘도 좋은 하루 되세요!
+            </p>
+            <div className="welcome-time">
+              <i className="bi bi-clock"></i>
+              <span>{currentTime}</span>
+            </div>
           </div>
         </div>
       </div>

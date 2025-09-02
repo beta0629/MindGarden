@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindGarden - 관리자 프로필 편집</title>
+    
+    <!-- 추가 CSS 파일들 -->
+    <link rel="stylesheet" th:href="@{/css/variables.css}">
+    <link rel="stylesheet" th:href="@{/css/common.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/tablet.css}">
+    <link rel="stylesheet" th:href="@{/css/tablet-common.css}">
+</head>
+<body th:replace="~{common/layout/tablet-base}">
+    
+    <!-- 공통 프로필 편집 템플릿 사용 -->
+    <div th:replace="~{common/tablet/profile-edit :: content}"></div>
+    
+    <!-- 페이지별 JavaScript -->
+    <script th:fragment="additionalScripts">
+        // 공통 프로필 편집 스크립트는 common/tablet/profile-edit.html에 있음
+        // 추가적인 관리자 전용 로직이 필요하면 여기에 추가
+    </script>
+</body>
+</html>

@@ -29,6 +29,7 @@ public final class ScheduleConstants {
     
     // 스케줄 상태 문자열 상수
     public static final String STATUS_BOOKED = "BOOKED";
+    public static final String STATUS_CONFIRMED = "CONFIRMED";
     public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
     public static final String STATUS_COMPLETED = "COMPLETED";
     public static final String STATUS_CANCELLED = "CANCELLED";

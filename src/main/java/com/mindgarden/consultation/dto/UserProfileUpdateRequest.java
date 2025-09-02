@@ -1,13 +1,11 @@
 package com.mindgarden.consultation.dto;
 
-import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
 
 /**
  * 유저 프로필 추가 정보 등록 요청 DTO
@@ -85,7 +83,7 @@ public class UserProfileUpdateRequest {
     private String department;
     
     // 역할 변경 요청
-    private String requestedRole;
+    private com.mindgarden.consultation.constant.UserRole requestedRole;
     
     // 추가 정보 등록 단계 (1: 기본정보, 2: 역할별추가정보, 3: 완료)
     private Integer profileStep;

@@ -1,21 +1,18 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.time.LocalDate;
+import java.time.Period;
 import com.mindgarden.consultation.constant.UserRole;
-import com.mindgarden.consultation.dto.UserProfileUpdateRequest;
 import com.mindgarden.consultation.dto.UserProfileResponse;
+import com.mindgarden.consultation.dto.UserProfileUpdateRequest;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.UserProfileService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.Period;
-import java.util.Arrays;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 유저 프로필 관리 서비스 구현체
@@ -104,7 +101,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean changeUserRole(Long userId, String newRole) {
+    public boolean changeUserRole(Long userId, UserRole newRole) {
         try {
             User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
@@ -123,7 +120,7 @@ public class UserProfileServiceImpl implements UserProfileService {
             userRepository.save(user);
             
             log.info("사용자 역할 변경 완료: userId={}, oldRole={}, newRole={}", 
-                    userId, user.getRole(), newRole);
+                    userId, user.getRole(), newRole.getDisplayName());
             
             return true;
             
@@ -273,7 +270,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     /**
      * 유효한 역할 전환인지 확인
      */
-    private boolean isValidRoleTransition(String currentRole, String newRole) {
+    private boolean isValidRoleTransition(UserRole currentRole, UserRole newRole) {
         // 역할 전환 규칙 정의
         if (UserRole.CLIENT.equals(currentRole)) {
             // 내담자 → 상담사/관리자/수퍼관리자 가능

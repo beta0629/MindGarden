@@ -1,29 +1,32 @@
 import React from 'react';
-import { useSession } from '../../hooks/useSession';
 import SessionUserProfile from '../common/SessionUserProfile';
+import { TABLET_HEADER_CSS } from '../../constants/css';
+import './TabletHeader.css';
 
 const TabletHeader = ({ user, onHamburgerToggle, onProfileClick }) => {
-  const { user: sessionUser } = useSession();
+  // 디버깅을 위한 로그
+  console.log('🔍 TabletHeader - user prop:', user);
+  console.log('🔍 TabletHeader - CSS classes:', TABLET_HEADER_CSS);
 
   return (
-    <header className="tablet-header">
-      <div className="tablet-header-content">
+    <header className={TABLET_HEADER_CSS.CONTAINER}>
+      <div className={TABLET_HEADER_CSS.CONTENT}>
         {/* 로고 - 왼쪽 끝 */}
-        <div className="tablet-logo">
-          <a href="/" className="logo-link">
-            <i className="bi bi-flower1"></i>
-            <span className="logo-text">MindGarden</span>
+        <div className={TABLET_HEADER_CSS.LOGO}>
+          <a href="/" className={TABLET_HEADER_CSS.LOGO_LINK}>
+            <i className={`bi bi-flower1 ${TABLET_HEADER_CSS.LOGO_ICON}`}></i>
+            <span className={TABLET_HEADER_CSS.LOGO_TEXT}>MindGarden</span>
           </a>
         </div>
         
-                {/* 오른쪽 영역 - 사용자 정보와 햄버거 메뉴 */}
-        <div className="tablet-header-right">
+        {/* 오른쪽 영역 - 사용자 정보와 햄버거 메뉴 */}
+        <div className={TABLET_HEADER_CSS.RIGHT}>
           {/* 사용자 프로필 및 로그인 정보 - 로그인 후에만 표시 */}
-          {sessionUser ? (
+          {user ? (
             <SessionUserProfile onProfileClick={onProfileClick} />
           ) : (
-            <div className="tablet-login-link">
-              <a href="/login" className="login-link-button">
+            <div className={TABLET_HEADER_CSS.LOGIN_LINK}>
+              <a href="/login" className={TABLET_HEADER_CSS.LOGIN_BUTTON}>
                 <i className="bi bi-box-arrow-in-right"></i>
                 <span>로그인</span>
               </a>
@@ -31,9 +34,9 @@ const TabletHeader = ({ user, onHamburgerToggle, onProfileClick }) => {
           )}
           
           {/* 햄버거 메뉴 토글 - 로그인 후에만 표시 */}
-          {sessionUser && (
+          {user && (
             <button 
-              className="tablet-menu-toggle" 
+              className={TABLET_HEADER_CSS.MENU_TOGGLE} 
               type="button" 
               onClick={onHamburgerToggle}
             >

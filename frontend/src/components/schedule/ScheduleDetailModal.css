@@ -1,0 +1,420 @@
+/* 스케줄 상세 정보 모달 스타일 */
+.schedule-detail-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000; /* 기존 모달보다 높은 z-index */
+    backdrop-filter: blur(2px);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.schedule-detail-modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 600px;
+    width: 95%;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.schedule-detail-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px 16px 0 0;
+}
+
+.schedule-detail-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+}
+
+.schedule-detail-close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: white;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.schedule-detail-close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #f3f4f6;
+}
+
+.schedule-detail-modal-content {
+    padding: 24px;
+    background: #fafafa;
+}
+
+.schedule-info {
+    margin-bottom: 24px;
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.label {
+    font-weight: 700;
+    color: #4b5563;
+    min-width: 100px;
+    margin-right: 16px;
+    font-size: 14px;
+}
+
+.value {
+    color: #1f2937;
+    flex: 1;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.status-예약됨 {
+    color: #3b82f6;
+    font-weight: 700;
+    background: #eff6ff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+.status-확정됨 {
+    color: #ffffff;
+    font-weight: 800;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    padding: 6px 16px;
+    border-radius: 25px;
+    border: 3px solid #f59e0b;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    animation: pulse-confirmed 2s infinite;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+@keyframes pulse-confirmed {
+    0% {
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+        transform: scale(1.02);
+    }
+    100% {
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        transform: scale(1);
+    }
+}
+
+.status-완료됨 {
+    color: #10b981;
+    font-weight: 700;
+    background: #ecfdf5;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+.status-취소됨 {
+    color: #ef4444;
+    font-weight: 700;
+    background: #fef2f2;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+.status-진행중 {
+    color: #f59e0b;
+    font-weight: 700;
+    background: #fffbeb;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.btn-status {
+    padding: 14px 24px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    min-width: 140px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-status:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn-status:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-confirm {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.btn-complete {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.btn-cancel {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.btn-reopen {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+/* 취소 확인 모달 */
+.schedule-detail-confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000; /* 가장 높은 z-index */
+    backdrop-filter: blur(4px);
+}
+
+.schedule-detail-confirm-modal {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    animation: modalSlideIn 0.3s ease-out;
+    margin: 0 auto;
+    position: relative;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.schedule-detail-confirm-modal h4 {
+    margin: 0 0 16px 0;
+    font-size: 20px;
+    color: #1f2937;
+    font-weight: 700;
+}
+
+.schedule-detail-confirm-modal p {
+    margin: 0 0 28px 0;
+    color: #6b7280;
+    line-height: 1.6;
+    font-size: 16px;
+}
+
+.schedule-detail-confirm-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.schedule-detail-confirm-buttons button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.schedule-detail-confirm-buttons .btn-cancel {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.schedule-detail-confirm-buttons .btn-cancel:hover:not(:disabled) {
+    background-color: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+.schedule-detail-confirm-buttons .btn-confirm {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.schedule-detail-confirm-buttons .btn-confirm:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .schedule-detail-modal-overlay {
+        padding: 15px;
+    }
+    
+    .schedule-detail-modal {
+        width: 95%;
+        max-width: 500px;
+        margin: 0 auto;
+        max-height: 90vh;
+    }
+    
+    .schedule-detail-modal-header {
+        padding: 16px 20px;
+    }
+    
+    .schedule-detail-modal-header h3 {
+        font-size: 16px;
+    }
+    
+    .schedule-detail-modal-content {
+        padding: 20px;
+    }
+    
+    .schedule-info {
+        padding: 16px;
+    }
+    
+    .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .label {
+        min-width: auto;
+        margin-right: 0;
+        font-size: 13px;
+    }
+    
+    .value {
+        font-size: 14px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .btn-status {
+        min-width: auto;
+        padding: 12px 20px;
+    }
+    
+    .schedule-detail-confirm-modal {
+        padding: 24px;
+        margin: 0 auto;
+        width: 90%;
+        max-width: 400px;
+    }
+    
+    .schedule-detail-confirm-buttons {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+/* 매우 작은 화면 (480px 이하) */
+@media (max-width: 480px) {
+    .schedule-detail-modal-overlay {
+        padding: 10px;
+    }
+    
+    .schedule-detail-modal {
+        width: 98%;
+        max-width: 400px;
+        margin: 0 auto;
+        max-height: 95vh;
+    }
+    
+    .schedule-detail-modal-content {
+        padding: 16px;
+    }
+    
+    .schedule-info {
+        padding: 12px;
+    }
+    
+    .schedule-detail-confirm-modal {
+        width: 95%;
+        max-width: 350px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .schedule-detail-modal-header {
+        padding: 14px 18px;
+    }
+    
+    .schedule-detail-modal-header h3 {
+        font-size: 15px;
+    }
+}

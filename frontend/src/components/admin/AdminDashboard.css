@@ -1,250 +1,370 @@
-.admin-dashboard {
-    padding: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
+/* 관리자 대시보드 스타일 - CSS 변수 사용 */
+:root {
+    /* 색상 변수 */
+    --admin-bg-color: #f8f9fa;
+    --admin-text-primary: #2c3e50;
+    --admin-text-secondary: #6c757d;
+    --admin-border-color: #e9ecef;
+    --admin-white: #ffffff;
+    
+    /* 간격 변수 */
+    --admin-spacing-xs: 4px;
+    --admin-spacing-sm: 8px;
+    --admin-spacing-md: 12px;
+    --admin-spacing-lg: 16px;
+    --admin-spacing-xl: 20px;
+    --admin-spacing-xxl: 24px;
+    --admin-spacing-xxxl: 32px;
+    
+    /* 폰트 크기 변수 */
+    --admin-font-xs: 0.75rem;
+    --admin-font-sm: 0.875rem;
+    --admin-font-md: 1rem;
+    --admin-font-lg: 1.1rem;
+    --admin-font-xl: 1.2rem;
+    --admin-font-xxl: 1.3rem;
+    --admin-font-xxxl: 1.5rem;
+    --admin-font-huge: 1.8rem;
+    --admin-font-giant: 2rem;
+    
+    /* 폰트 두께 변수 */
+    --admin-font-weight-normal: 400;
+    --admin-font-weight-medium: 500;
+    --admin-font-weight-semibold: 600;
+    --admin-font-weight-bold: 700;
+    
+    /* 보더 반경 변수 */
+    --admin-radius-sm: 6px;
+    --admin-radius-md: 8px;
+    --admin-radius-lg: 12px;
+    --admin-radius-xl: 16px;
+    --admin-radius-round: 50%;
+    
+    /* 그림자 변수 */
+    --admin-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --admin-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --admin-shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --admin-shadow-xl: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --admin-shadow-xxl: 0 8px 32px rgba(0, 0, 0, 0.15);
+    
+    /* 전환 효과 변수 */
+    --admin-transition-fast: 0.2s ease;
+    --admin-transition-normal: 0.3s ease;
+    --admin-transition-slow: 0.5s ease;
+    
+    /* 그라데이션 변수 */
+    --admin-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --admin-gradient-consultants: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --admin-gradient-clients: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --admin-gradient-mappings: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --admin-gradient-active: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    --admin-gradient-schedule: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    --admin-gradient-sessions: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    --admin-gradient-consultant-mgmt: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+    --admin-gradient-client-mgmt: linear-gradient(135deg, #00b894 0%, #00a085 100%);
 }
 
-.dashboard-header {
-    text-align: center;
-    margin-bottom: 3rem;
+.admin-dashboard-content {
+    padding: var(--admin-spacing-xxl);
+    background-color: var(--admin-bg-color);
+    min-height: 100vh;
 }
 
-.dashboard-header h1 {
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
-    font-weight: 700;
+/* 섹션 제목 */
+.dashboard-section {
+    margin-bottom: var(--admin-spacing-xxxl);
 }
 
-.dashboard-header p {
-    color: #7f8c8d;
-    font-size: 1.1rem;
-}
-
-/* 통계 카드 */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
-}
-
-.stat-card {
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
-}
-
-.stat-content {
+.section-title {
+    font-size: var(--admin-font-xxxl);
+    font-weight: var(--admin-font-weight-semibold);
+    color: var(--admin-text-primary);
+    margin-bottom: var(--admin-spacing-xl);
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--admin-spacing-md);
+    padding-bottom: var(--admin-spacing-md);
+    border-bottom: 2px solid var(--admin-border-color);
 }
 
-.stat-icon {
-    font-size: 2.5rem;
-    color: #3498db;
+.section-title i {
+    color: #667eea;
+    font-size: var(--admin-font-xxl);
 }
 
-.stat-content h3 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0;
+/* 시스템 개요 카드 */
+.overview-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--admin-spacing-xl);
+    margin-bottom: var(--admin-spacing-xxl);
 }
 
-.stat-content p {
-    color: #7f8c8d;
-    margin: 0;
-    font-size: 0.9rem;
-}
-
-/* 액션 버튼 */
-.action-buttons {
+.overview-card {
+    background: var(--admin-white);
+    border-radius: var(--admin-radius-xl);
+    padding: var(--admin-spacing-xxl);
+    box-shadow: var(--admin-shadow-lg);
+    border: 1px solid var(--admin-border-color);
+    transition: var(--admin-transition-normal);
     display: flex;
-    gap: 1rem;
-    margin-bottom: 3rem;
+    align-items: center;
+    gap: var(--admin-spacing-xl);
+}
+
+.overview-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--admin-shadow-xl);
+}
+
+.card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--admin-radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--admin-font-xxxl);
+    color: var(--admin-white);
+    flex-shrink: 0;
+}
+
+.card-icon.consultants {
+    background: var(--admin-gradient-consultants);
+}
+
+.card-icon.clients {
+    background: var(--admin-gradient-clients);
+}
+
+.card-icon.mappings {
+    background: var(--admin-gradient-mappings);
+}
+
+.card-icon.active {
+    background: var(--admin-gradient-active);
+}
+
+.card-content h3 {
+    font-size: var(--admin-font-lg);
+    font-weight: var(--admin-font-weight-semibold);
+    color: var(--admin-text-primary);
+    margin: 0 0 var(--admin-spacing-sm) 0;
+}
+
+.card-value {
+    font-size: var(--admin-font-giant);
+    font-weight: var(--admin-font-weight-bold);
+    color: var(--admin-text-primary);
+    margin: 0 0 var(--admin-spacing-xs) 0;
+}
+
+.card-description {
+    font-size: var(--admin-font-sm);
+    color: var(--admin-text-secondary);
+    margin: 0;
+}
+
+/* 관리 기능 그리드 */
+.management-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--admin-spacing-xl);
+}
+
+.management-card {
+    background: var(--admin-white);
+    border-radius: var(--admin-radius-xl);
+    padding: var(--admin-spacing-xxl);
+    box-shadow: var(--admin-shadow-lg);
+    border: 1px solid var(--admin-border-color);
+    transition: var(--admin-transition-normal);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--admin-spacing-xl);
+}
+
+.management-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--admin-shadow-xl);
+    border-color: #667eea;
+}
+
+.management-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--admin-radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--admin-font-xxxl);
+    color: var(--admin-white);
+    flex-shrink: 0;
+}
+
+.management-icon.schedule {
+    background: var(--admin-gradient-schedule);
+}
+
+.management-icon.sessions {
+    background: var(--admin-gradient-sessions);
+}
+
+.management-icon.consultants {
+    background: var(--admin-gradient-consultant-mgmt);
+}
+
+.management-icon.clients {
+    background: var(--admin-gradient-client-mgmt);
+}
+
+.management-content h3 {
+    font-size: var(--admin-font-xl);
+    font-weight: var(--admin-font-weight-semibold);
+    color: var(--admin-text-primary);
+    margin: 0 0 var(--admin-spacing-sm) 0;
+}
+
+.management-content p {
+    font-size: var(--admin-font-sm);
+    color: var(--admin-text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* 시스템 도구 */
+.tool-buttons {
+    display: flex;
+    gap: var(--admin-spacing-md);
     flex-wrap: wrap;
 }
 
-.action-buttons .btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s ease;
+.tool-buttons .btn {
+    padding: var(--admin-spacing-md) var(--admin-spacing-xxl);
+    font-weight: var(--admin-font-weight-medium);
+    border-radius: var(--admin-radius-lg);
+    transition: var(--admin-transition-normal);
+    border: 2px solid var(--admin-border-color);
+    background: var(--admin-white);
+    color: var(--admin-text-secondary);
 }
 
-.action-buttons .btn:hover {
+.tool-buttons .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--admin-shadow-md);
+    border-color: #667eea;
+    color: #667eea;
 }
 
-/* 매핑 카드 */
-.mappings-card {
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.mappings-card .card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 15px 15px 0 0;
-    border: none;
-    padding: 1.5rem;
-}
-
-.mappings-card .card-header h5 {
-    margin: 0;
-    font-weight: 600;
-}
-
-.mappings-card .card-body {
-    padding: 1.5rem;
-}
-
-/* 테이블 스타일 */
-.table {
-    margin: 0;
-}
-
-.table th {
-    border-top: none;
-    border-bottom: 2px solid #e9ecef;
-    font-weight: 600;
-    color: #495057;
-    padding: 1rem 0.75rem;
-}
-
-.table td {
-    padding: 1rem 0.75rem;
-    vertical-align: middle;
-    border-top: 1px solid #f8f9fa;
-}
-
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-/* 배지 스타일 */
-.badge {
-    padding: 0.5rem 0.75rem;
-    border-radius: 20px;
-    font-weight: 500;
-}
-
-/* 모달 스타일 */
-.modal-content {
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.modal-header {
-    border-bottom: 1px solid #e9ecef;
-    padding: 1.5rem;
-}
-
-.modal-title {
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-.modal-body {
-    padding: 1.5rem;
-}
-
-/* 폼 스타일 */
-.form-label {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-}
-
-.form-control, .form-select {
-    border-radius: 10px;
-    border: 2px solid #e9ecef;
-    padding: 0.75rem;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+.tool-buttons .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* 토스트 스타일 */
 .toast {
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-shadow-xxl);
     border: none;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toast-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding: var(--admin-spacing-md) var(--admin-spacing-lg);
+}
+
+.toast-body {
+    padding: var(--admin-spacing-md) var(--admin-spacing-lg);
 }
 
 .toast-success {
-    background-color: #d4edda;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
     color: #155724;
 }
 
 .toast-danger {
-    background-color: #f8d7da;
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
     color: #721c24;
 }
 
-.toast-warning {
-    background-color: #fff3cd;
-    color: #856404;
-}
-
 .toast-info {
-    background-color: #d1ecf1;
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
     color: #0c5460;
 }
 
 /* 반응형 디자인 */
-@media (max-width: 768px) {
-    .admin-dashboard {
-        padding: 1rem;
+@media (max-width: 1200px) {
+    .overview-cards {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
     
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-    }
-    
-    .action-buttons {
-        flex-direction: column;
-    }
-    
-    .action-buttons .btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .table-responsive {
-        font-size: 0.9rem;
+    .management-grid {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
 }
 
-@media (max-width: 576px) {
-    .stats-grid {
+@media (max-width: 768px) {
+    .admin-dashboard-content {
+        padding: var(--admin-spacing-lg);
+    }
+    
+    .overview-cards {
         grid-template-columns: 1fr;
+        gap: var(--admin-spacing-lg);
     }
     
-    .stat-content {
-        justify-content: center;
-        text-align: center;
+    .management-grid {
+        grid-template-columns: 1fr;
+        gap: var(--admin-spacing-lg);
+    }
+    
+    .overview-card,
+    .management-card {
+        padding: var(--admin-spacing-xl);
         flex-direction: column;
+        text-align: center;
+        gap: var(--admin-spacing-lg);
     }
     
-    .dashboard-header h1 {
-        font-size: 1.8rem;
+    .card-icon,
+    .management-icon {
+        width: 50px;
+        height: 50px;
+        font-size: var(--admin-font-xxl);
+    }
+    
+    .card-value {
+        font-size: var(--admin-font-huge);
+    }
+    
+    .section-title {
+        font-size: var(--admin-font-xxl);
+        margin-bottom: var(--admin-spacing-lg);
+    }
+    
+    .tool-buttons {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-dashboard-content {
+        padding: var(--admin-spacing-md);
+    }
+    
+    .overview-card,
+    .management-card {
+        padding: var(--admin-spacing-lg);
+    }
+    
+    .card-value {
+        font-size: var(--admin-font-huge);
+    }
+    
+    .section-title {
+        font-size: var(--admin-font-xl);
     }
 }

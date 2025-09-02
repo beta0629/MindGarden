@@ -3,14 +3,19 @@ package com.mindgarden.consultation.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.dto.AuthRequest;
+import com.mindgarden.consultation.dto.AuthResponse;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.UserSocialAccount;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
+import com.mindgarden.consultation.service.AuthService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpSession;
@@ -25,6 +30,7 @@ public class AuthController {
     
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserSocialAccountRepository userSocialAccountRepository;
+    private final AuthService authService;
     
     @GetMapping("/current-user")
     public ResponseEntity<?> getCurrentUser(HttpSession session) {
@@ -108,6 +114,51 @@ public class AuthController {
         return ResponseEntity.status(401).build();
     }
     
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody AuthRequest request, HttpSession session) {
+        try {
+            log.info("🔐 로그인 시도: {}", request.getEmail());
+            
+            // AuthService를 통한 인증
+            AuthResponse authResponse = authService.authenticate(request.getEmail(), request.getPassword());
+            
+            if (authResponse.isSuccess()) {
+                // JWT 대신 세션 기반 로그인으로 변경
+                // 사용자 정보 세션에 저장 (UserDto -> User 변환)
+                // authResponse.getUser()는 UserDto이므로 실제 User 엔티티로 변환 필요
+                User sessionUser = new User();
+                sessionUser.setId(authResponse.getUser().getId());
+                sessionUser.setEmail(authResponse.getUser().getEmail());
+                sessionUser.setName(authResponse.getUser().getName());
+                sessionUser.setRole(UserRole.fromString(authResponse.getUser().getRole()));
+                
+                SessionUtils.setCurrentUser(session, sessionUser);
+                
+                log.info("✅ 로그인 성공: {}", request.getEmail());
+                
+                // 응답 데이터 구성
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", authResponse.getMessage());
+                response.put("user", authResponse.getUser());
+                
+                return ResponseEntity.ok(response);
+            } else {
+                log.warn("❌ 로그인 실패: {}", authResponse.getMessage());
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", authResponse.getMessage()
+                ));
+            }
+        } catch (Exception e) {
+            log.error("❌ 로그인 에러: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "로그인 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
     // 임시 테스트용 로그인 엔드포인트 (개발 환경에서만 사용)
     @PostMapping("/test-login")
     public ResponseEntity<?> testLogin(HttpSession session) {
@@ -118,7 +169,7 @@ public class AuthController {
             testUser.setEmail("test@example.com");
             testUser.setName("테스트 사용자");
             testUser.setNickname("테스트");
-            testUser.setRole("CLIENT");
+            testUser.setRole(UserRole.CLIENT);
             testUser.setProfileImageUrl("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNTAiIGhlaWdodD0iMTUwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9Ijc1IiBjeT0iNjAiIHI9IjIwIiBmaWxsPSIjOUI5QkEwIi8+CjxyZWN0IHg9IjQ1IiB5PSI5MCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjOUI5QkEwIi8+Cjwvc3ZnPgo=");
             
             // 세션에 사용자 정보 저장

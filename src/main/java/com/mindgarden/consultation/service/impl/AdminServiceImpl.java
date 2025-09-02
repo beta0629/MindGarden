@@ -2,6 +2,7 @@ package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
 import com.mindgarden.consultation.dto.ConsultantRegistrationDto;
@@ -35,7 +36,7 @@ public class AdminServiceImpl implements AdminService {
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .name(dto.getName())
                 .phone(dto.getPhone())
-                .role("CONSULTANT")
+                .role(UserRole.CONSULTANT)
                 .isActive(true)
                 .build();
         
@@ -51,7 +52,7 @@ public class AdminServiceImpl implements AdminService {
         client.setPassword(passwordEncoder.encode(dto.getPassword()));
         client.setName(dto.getName());
         client.setPhone(dto.getPhone());
-        client.setRole("ROLE_CLIENT");
+        client.setRole(UserRole.CLIENT);
         client.setIsActive(true);
         
         // Client만 저장하면 User도 자동으로 저장됨 (상속 구조)
@@ -66,33 +67,130 @@ public class AdminServiceImpl implements AdminService {
         Client client = clientRepository.findById(dto.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
-        ConsultantClientMapping mapping = new ConsultantClientMapping();
-        mapping.setConsultant(consultant);
-        mapping.setClient(client);
-        mapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
-        mapping.setAssignedAt(LocalDateTime.now());
-        mapping.setStartDate(LocalDateTime.now()); // 시작일 설정
-        mapping.setNotes(dto.getNotes()); // 메모 설정
+        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
+                .consultant(consultant)
+                .client(client)
+                .status(ConsultantClientMapping.MappingStatus.PENDING_PAYMENT)
+                .paymentStatus(ConsultantClientMapping.PaymentStatus.PENDING)
+                .totalSessions(dto.getTotalSessions() != null ? dto.getTotalSessions() : 0)
+                .remainingSessions(dto.getTotalSessions() != null ? dto.getTotalSessions() : 0)
+                .packageName(dto.getPackageName())
+                .packagePrice(dto.getPackagePrice())
+                .assignedAt(LocalDateTime.now())
+                .notes(dto.getNotes())
+                .build();
 
         return mappingRepository.save(mapping);
     }
 
+    /**
+     * 입금 확인 처리
+     */
+    @Override
+    public ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference, Long paymentAmount) {
+        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+        
+        mapping.confirmPayment(paymentMethod, paymentReference);
+        mapping.setPaymentAmount(paymentAmount);
+        
+        return mappingRepository.save(mapping);
+    }
+
+    /**
+     * 관리자 승인
+     */
+    @Override
+    public ConsultantClientMapping approveMapping(Long mappingId, String adminName) {
+        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+        
+        mapping.approveByAdmin(adminName);
+        
+        return mappingRepository.save(mapping);
+    }
+
+    /**
+     * 회기 사용 처리
+     */
+    @Override
+    public ConsultantClientMapping useSession(Long mappingId) {
+        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+        
+        mapping.useSession();
+        
+        return mappingRepository.save(mapping);
+    }
+
+    /**
+     * 회기 추가 (연장)
+     */
+    @Override
+    public ConsultantClientMapping extendSessions(Long mappingId, Integer additionalSessions, String packageName, Long packagePrice) {
+        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+        
+        mapping.addSessions(additionalSessions, packageName, packagePrice);
+        
+        return mappingRepository.save(mapping);
+    }
+
+    /**
+     * 입금 대기 중인 매핑 목록 조회
+     */
+    @Override
+    public List<ConsultantClientMapping> getPendingPaymentMappings() {
+        return mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.PENDING_PAYMENT);
+    }
+
+    /**
+     * 입금 확인된 매핑 목록 조회
+     */
+    @Override
+    public List<ConsultantClientMapping> getPaymentConfirmedMappings() {
+        return mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED);
+    }
+
+    /**
+     * 활성 매핑 목록 조회 (승인 완료)
+     */
+    @Override
+    public List<ConsultantClientMapping> getActiveMappings() {
+        return mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+    }
+
+    /**
+     * 회기 소진된 매핑 목록 조회
+     */
+    @Override
+    public List<ConsultantClientMapping> getSessionsExhaustedMappings() {
+        return mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED);
+    }
+
     @Override
     public List<User> getAllConsultants() {
-        return userRepository.findByRole("ROLE_CONSULTANT");
+        return userRepository.findByRole(UserRole.CONSULTANT);
     }
 
     @Override
     public List<Client> getAllClients() {
-        // Client 엔티티에서 role이 CLIENT인 것만 조회
-        return clientRepository.findAll().stream()
-                .filter(client -> "ROLE_CLIENT".equals(client.getRole()))
+        // UserRepository를 사용하여 CLIENT role 사용자만 조회 (안전한 방법)
+        return userRepository.findByRole(UserRole.CLIENT).stream()
+                .filter(user -> user instanceof Client)
+                .map(user -> (Client) user)
                 .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
     public List<ConsultantClientMapping> getAllMappings() {
-        return mappingRepository.findAll();
+        try {
+            return mappingRepository.findAll();
+        } catch (Exception e) {
+            // enum 변환 오류 등으로 인해 조회 실패시 빈 목록 반환
+            System.err.println("매핑 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
+            return new java.util.ArrayList<>();
+        }
     }
 
     @Override

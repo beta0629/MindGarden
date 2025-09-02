@@ -4,6 +4,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
+import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SocialLoginResponse;
 import com.mindgarden.consultation.dto.SocialUserInfo;
 import com.mindgarden.consultation.entity.User;
@@ -219,7 +220,7 @@ public class OAuth2Controller {
                     
                     user.setName(decryptedName);
                     user.setNickname(decryptedNickname);
-                    user.setRole(userInfo.getRole());
+                    user.setRole(UserRole.fromString(userInfo.getRole()));
                     user.setProfileImageUrl(userInfo.getProfileImageUrl());
                     
                     SessionUtils.setCurrentUser(session, user);
@@ -230,14 +231,14 @@ public class OAuth2Controller {
                     // 사용자 역할에 따른 리다이렉트
                     String redirectUrl;
                     switch (user.getRole()) {
-                        case "CLIENT":
+                        case CLIENT:
                             redirectUrl = "http://localhost:3000/client/dashboard";
                             break;
-                        case "CONSULTANT":
+                        case CONSULTANT:
                             redirectUrl = "http://localhost:3000/consultant/dashboard";
                             break;
-                        case "ADMIN":
-                        case "SUPER_ADMIN":
+                        case ADMIN:
+                        case SUPER_ADMIN:
                             redirectUrl = "http://localhost:3000/admin/dashboard";
                             break;
                         default:
@@ -379,7 +380,7 @@ public class OAuth2Controller {
                     
                     user.setName(decryptedName);
                     user.setNickname(decryptedNickname);
-                    user.setRole(userInfo.getRole());
+                    user.setRole(UserRole.fromString(userInfo.getRole()));
                     user.setProfileImageUrl(userInfo.getProfileImageUrl());
                     
                     SessionUtils.setCurrentUser(session, user);
@@ -390,14 +391,14 @@ public class OAuth2Controller {
                     // 사용자 역할에 따른 리다이렉트 (문서 기준)
                     String redirectUrl;
                     switch (user.getRole()) {
-                        case "CLIENT":
+                        case CLIENT:
                             redirectUrl = "http://localhost:3000/client/dashboard";
                             break;
-                        case "CONSULTANT":
+                        case CONSULTANT:
                             redirectUrl = "http://localhost:3000/consultant/dashboard";
                             break;
-                        case "ADMIN":
-                        case "SUPER_ADMIN":
+                        case ADMIN:
+                        case SUPER_ADMIN:
                             redirectUrl = "http://localhost:3000/admin/dashboard";
                             break;
                         default:

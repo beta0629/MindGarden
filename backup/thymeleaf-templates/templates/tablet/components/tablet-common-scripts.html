@@ -1,0 +1,60 @@
+<!-- 공통 태블릿 JavaScript 함수들 -->
+<script th:fragment="tablet-common-scripts">
+    // 프로필 편집 페이지로 이동
+    function goToProfile() {
+        window.location.href = '/tablet/client/profile/edit';
+    }
+    
+    // 햄버거 메뉴 토글
+    function toggleHamburgerMenu() {
+        const menu = document.getElementById('hamburgerMenu');
+        if (menu) {
+            menu.classList.toggle('active');
+        }
+    }
+    
+    // 로그아웃
+    function logout() {
+        if (confirm('로그아웃하시겠습니까?')) {
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/tablet/login';
+                } else {
+                    // 공통 알림 시스템 사용
+                    if (window.notification) {
+                        window.notification.error('오류', '로그아웃 중 오류가 발생했습니다.');
+                    } else {
+                        alert('로그아웃 중 오류가 발생했습니다.');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('로그아웃 오류:', error);
+                if (window.notification) {
+                    window.notification.error('오류', '로그아웃 중 오류가 발생했습니다.');
+                } else {
+                    alert('로그아웃 중 오류가 발생했습니다.');
+                }
+            });
+        }
+    }
+    
+    // 페이지 로드 시 햄버거 메뉴 초기화
+    document.addEventListener('DOMContentLoaded', function() {
+        // 햄버거 메뉴 외부 클릭 시 닫기
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('hamburgerMenu');
+            const toggle = document.querySelector('.tablet-menu-toggle');
+            
+            if (menu && menu.classList.contains('active') && 
+                !menu.contains(event.target) && 
+                !toggle.contains(event.target)) {
+                menu.classList.remove('active');
+            }
+        });
+    });
+</script>

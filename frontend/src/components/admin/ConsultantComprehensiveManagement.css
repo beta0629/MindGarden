@@ -1,0 +1,673 @@
+/* 상담사 종합관리 스타일 */
+.consultant-comp-container {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.consultant-comp-header {
+    margin-bottom: 30px;
+}
+
+.consultant-comp-header h2 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.consultant-comp-header p {
+    color: #7f8c8d;
+    font-size: 16px;
+    margin: 0 0 20px 0;
+}
+
+/* 메인 탭 버튼 */
+.consultant-comp-main-tab-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.consultant-comp-main-tab-btn {
+    padding: 12px 24px;
+    border: 2px solid #e1e8ed;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    color: #7f8c8d;
+}
+
+.consultant-comp-main-tab-btn:hover {
+    border-color: #3498db;
+    color: #3498db;
+}
+
+.consultant-comp-main-tab-btn.active {
+    background: #3498db;
+    border-color: #3498db;
+    color: white;
+}
+
+/* 통계 카드 */
+.consultant-comp-stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.consultant-comp-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.3s ease;
+}
+
+.consultant-comp-stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.consultant-comp-stat-icon {
+    font-size: 32px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    border-radius: 12px;
+    color: white;
+}
+
+.consultant-comp-stat-content {
+    flex: 1;
+}
+
+.consultant-comp-stat-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.consultant-comp-stat-label {
+    font-size: 14px;
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+/* 콘텐츠 영역 */
+.consultant-comp-comprehensive-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+/* 상담사 목록 섹션 */
+.consultant-comp-consultant-list-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.consultant-comp-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.consultant-comp-section-header h3 {
+    color: #2c3e50;
+    margin: 0;
+    font-size: 20px;
+}
+
+.consultant-comp-filters {
+    display: flex;
+    gap: 10px;
+}
+
+.consultant-comp-search-input {
+    padding: 8px 12px;
+    border: 2px solid #e1e8ed;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 200px;
+}
+
+.consultant-comp-search-input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+/* 상담사 그리드 */
+.consultant-comp-consultant-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.consultant-comp-consultant-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.consultant-comp-consultant-card:hover {
+    border-color: #3498db;
+    transform: translateY(-1px);
+}
+
+.consultant-comp-consultant-card.selected {
+    border-color: #3498db;
+    background: #f8f9ff;
+}
+
+.consultant-comp-consultant-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.consultant-comp-consultant-info {
+    flex: 1;
+}
+
+.consultant-comp-consultant-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.consultant-comp-consultant-email {
+    font-size: 14px;
+    color: #7f8c8d;
+    margin-bottom: 3px;
+}
+
+.consultant-comp-consultant-specialty {
+    font-size: 12px;
+    color: #95a5a6;
+}
+
+/* 상담사 목록 섹션 */
+.consultant-list-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h3 {
+    color: #2c3e50;
+    margin: 0;
+    font-size: 20px;
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+}
+
+.search-input {
+    padding: 8px 12px;
+    border: 2px solid #e1e8ed;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 200px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+/* 상담사 그리드 */
+.consultant-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.consultant-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.consultant-card:hover {
+    border-color: #3498db;
+    transform: translateY(-1px);
+}
+
+.consultant-card.selected {
+    border-color: #3498db;
+    background: #f8f9ff;
+}
+
+.consultant-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.consultant-info {
+    flex: 1;
+}
+
+.consultant-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.consultant-email {
+    font-size: 14px;
+    color: #7f8c8d;
+    margin-bottom: 3px;
+}
+
+.consultant-specialty {
+    font-size: 12px;
+    color: #95a5a6;
+}
+
+/* 상담사 상세 정보 섹션 */
+.consultant-detail-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.detail-header {
+    margin-bottom: 20px;
+}
+
+.detail-header h3 {
+    color: #2c3e50;
+    margin: 0 0 15px 0;
+    font-size: 20px;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.tab-btn {
+    padding: 8px 16px;
+    border: 1px solid #e1e8ed;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    color: #7f8c8d;
+}
+
+.tab-btn:hover {
+    border-color: #3498db;
+    color: #3498db;
+}
+
+.tab-btn.active {
+    background: #3498db;
+    border-color: #3498db;
+    color: white;
+}
+
+/* 상세 콘텐츠 */
+.detail-content {
+    margin-top: 20px;
+}
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.overview-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.overview-card h4 {
+    color: #2c3e50;
+    margin: 0 0 15px 0;
+    font-size: 16px;
+}
+
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-item .label {
+    font-weight: 500;
+    color: #7f8c8d;
+}
+
+.info-item .value {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+/* 상태 배지 */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 매핑, 스케줄, 내담자 목록 */
+.mappings-list,
+.schedules-list,
+.clients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mapping-item,
+.schedule-item,
+.client-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.client-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.client-info {
+    flex: 1;
+}
+
+.client-name {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 3px;
+}
+
+.client-email {
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.client-sessions {
+    font-size: 12px;
+    color: #95a5a6;
+}
+
+/* 기본관리 탭 */
+.basic-management-tab {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.basic-management-content h3 {
+    color: #2c3e50;
+    margin: 0 0 10px 0;
+    font-size: 20px;
+}
+
+.basic-management-content p {
+    color: #7f8c8d;
+    margin: 0 0 20px 0;
+}
+
+.basic-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+    transform: translateY(-2px);
+}
+
+/* 기본 테이블 */
+.basic-consultants-table {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e1e8ed;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1.5fr 1fr 1.5fr;
+    background: #f8f9fa;
+    padding: 15px 20px;
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #e1e8ed;
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1.5fr 1fr 1.5fr;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e1e8ed;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.table-row:hover {
+    background-color: #f8f9fa;
+}
+
+.table-cell {
+    display: flex;
+    align-items: center;
+}
+
+.consultant-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.consultant-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.action-buttons-cell {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+}
+
+/* 데이터 없음 */
+.no-mappings,
+.no-schedules,
+.no-clients,
+.no-data {
+    text-align: center;
+    padding: 40px 20px;
+    color: #95a5a6;
+}
+
+/* 로딩 오버레이 */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.loading-spinner {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1024px) {
+    .comprehensive-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .table-header,
+    .table-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .header-cell,
+    .table-cell {
+        padding: 5px 0;
+    }
+    
+    .header-cell:before {
+        content: attr(data-label) ": ";
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .main-tab-buttons {
+        flex-direction: column;
+    }
+    
+    .tab-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .basic-actions {
+        flex-direction: column;
+    }
+}

@@ -130,7 +130,7 @@ const ProfileEdit = () => {
     <div className="profile-edit-page">
       <div className="profile-edit-container">
         <div className="profile-header">
-          <h1>프로필 편집</h1>
+          <h1>마이페이지</h1>
           <p>개인 정보를 수정하고 관리하세요</p>
         </div>
 

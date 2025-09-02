@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.controller;
 
 import java.util.List;
+import java.util.Map;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.UserProfileResponse;
 import com.mindgarden.consultation.service.UserProfileService;
@@ -28,6 +29,31 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminUserController {
     
     private final UserProfileService userProfileService;
+    private final com.mindgarden.consultation.service.UserService userService;
+    
+    /**
+     * 전체 사용자 목록 조회 (관리자 전용)
+     */
+    @GetMapping("")
+    public ResponseEntity<Map<String, Object>> getAllUsers() {
+        try {
+            log.info("전체 사용자 목록 조회 요청");
+            
+            // TODO: UserRepository를 직접 주입받아 사용하거나 UserService에 getAllUsers 메서드 추가 필요
+            // 현재는 임시로 빈 리스트 반환
+            List<Map<String, Object>> userList = List.of();
+            
+            Map<String, Object> response = Map.of(
+                "count", 0,
+                "data", userList
+            );
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("사용자 목록 조회 중 오류 발생: error={}", e.getMessage(), e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
     
     /**
      * 상담사 신청자 목록 조회 (역할이 CLIENT인 사용자 중 상담사 자격 요건 충족자)
@@ -111,14 +137,15 @@ public class AdminUserController {
         try {
             log.info("관리자 권한으로 유저 역할 변경: userId={}, newRole={}", userId, newRole);
             
-            // 유효한 역할인지 확인
-            if (!isValidRole(newRole)) {
+            // 문자열을 UserRole enum으로 변환
+            UserRole role = UserRole.fromString(newRole);
+            if (role == null) {
                 return ResponseEntity.badRequest().body(false);
             }
             
-            boolean success = userProfileService.changeUserRole(userId, newRole);
+            boolean success = userProfileService.changeUserRole(userId, role);
             if (success) {
-                log.info("유저 역할 변경 완료: userId={}, newRole={}", userId, newRole);
+                log.info("유저 역할 변경 완료: userId={}, newRole={}", userId, role.getDisplayName());
                 return ResponseEntity.ok(true);
             } else {
                 return ResponseEntity.badRequest().body(false);
@@ -131,12 +158,16 @@ public class AdminUserController {
     }
     
     /**
-     * 유효한 역할인지 확인
+     * 사용 가능한 역할 목록 조회
      */
-    private boolean isValidRole(String role) {
-        return UserRole.CLIENT.equals(role) || 
-               UserRole.CONSULTANT.equals(role) || 
-               UserRole.ADMIN.equals(role) || 
-               UserRole.SUPER_ADMIN.equals(role);
+    @GetMapping("/roles")
+    public ResponseEntity<UserRole[]> getAvailableRoles() {
+        try {
+            log.info("사용 가능한 역할 목록 조회");
+            return ResponseEntity.ok(UserRole.getAllRoles());
+        } catch (Exception e) {
+            log.error("역할 목록 조회 중 오류 발생: error={}", e.getMessage(), e);
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

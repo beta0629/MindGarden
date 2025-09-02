@@ -79,6 +79,11 @@ public interface ConsultationService extends BaseService<Consultation, Long> {
                                            Boolean isEmergency, Boolean isFirstSession, 
                                            LocalDate startDate, LocalDate endDate);
     
+    /**
+     * 내담자별 상담 히스토리 조회 (상담사 정보 포함)
+     */
+    List<Map<String, Object>> getClientConsultationHistory(Long clientId);
+    
     // ==================== 상담 예약 및 관리 ====================
     
     /**

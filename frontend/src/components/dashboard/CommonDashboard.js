@@ -223,12 +223,7 @@ const CommonDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <div className="tablet-dashboard-page">
-      {/* 페이지 헤더 */}
-      <div className="dashboard-header">
-        <h1 className="dashboard-title">{getDashboardTitle()}</h1>
-        <p className="dashboard-subtitle">{getDashboardSubtitle()}</p>
-      </div>
+    <div className="common-dashboard-content">
       
       {/* 웰컴 섹션 */}
       <WelcomeSection 

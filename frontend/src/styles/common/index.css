@@ -250,9 +250,7 @@ body {
     padding: 0 0.875rem;
   }
   
-  .tablet-header-content {
-    padding: 1rem 1.25rem;
-  }
+
   
   .action-cards {
     gap: 1.75rem;
@@ -280,9 +278,7 @@ body {
     padding: 0 0.75rem;
   }
   
-  .tablet-header-content {
-    padding: 1rem;
-  }
+
   
   .action-cards {
     gap: 1.5rem;
@@ -314,9 +310,7 @@ body {
     padding: 0 0.625rem;
   }
   
-  .tablet-header-content {
-    padding: 0.875rem;
-  }
+
   
   .action-cards {
     grid-template-columns: 1fr;
@@ -361,9 +355,7 @@ body {
     padding: 0 0.5rem;
   }
   
-  .tablet-header-content {
-    padding: 0.75rem;
-  }
+
   
   .tablet-homepage .welcome-section {
     margin: 1.5rem;
@@ -413,9 +405,7 @@ body {
     padding: 0 0.375rem;
   }
   
-  .tablet-header-content {
-    padding: 0.625rem;
-  }
+
   
   .tablet-homepage .welcome-section {
     margin: 1.25rem;

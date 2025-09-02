@@ -4,7 +4,7 @@
  */
 
 /* 대시보드 페이지 컨테이너 */
-.tablet-dashboard-page {
+.common-dashboard-content {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
@@ -43,38 +43,15 @@
   100% { transform: rotate(360deg); }
 }
 
-/* 페이지 헤더 */
-.dashboard-header {
-  text-align: center;
-  margin-bottom: 30px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
-  backdrop-filter: blur(4px);
-}
 
-.dashboard-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #6c5ce7;
-  margin: 0 0 10px 0;
-}
-
-.dashboard-subtitle {
-  font-size: 1.2rem;
-  color: #7f8c8d;
-  margin: 0;
-  font-weight: 400;
-}
 
 /* 웰컴 섹션 스타일 - 높은 우선순위 */
-.tablet-dashboard-page .welcome-section {
+.common-dashboard-content .welcome-section {
   margin: 20px 0 !important;
   padding: 0 15px !important;
 }
 
-.tablet-dashboard-page .welcome-card {
+.common-dashboard-content .welcome-card {
   background: #667eea !important;
   border-radius: 20px !important;
   padding: 30px !important;

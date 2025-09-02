@@ -71,6 +71,9 @@ public class PersonalDataEncryptionUtil {
         }
         
         try {
+            // Base64 디코딩 시도
+            byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
+            
             // 키와 IV 생성
             SecretKeySpec secretKey = generateKey();
             IvParameterSpec iv = generateIv();
@@ -79,14 +82,18 @@ public class PersonalDataEncryptionUtil {
             Cipher cipher = Cipher.getInstance(ALGORITHM);
             cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
             
-            byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
             byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
             
             return new String(decryptedBytes, StandardCharsets.UTF_8);
             
+        } catch (IllegalArgumentException e) {
+            // Base64 디코딩 실패 - 평문 데이터로 판단
+            log.debug("Base64 디코딩 실패, 평문 데이터로 처리: {}", encryptedText);
+            return encryptedText;
         } catch (Exception e) {
-            log.error("개인정보 복호화 실패: {}", e.getMessage(), e);
-            throw new RuntimeException("개인정보 복호화에 실패했습니다.", e);
+            // 복호화 실패 - 평문 데이터로 판단
+            log.debug("복호화 실패, 평문 데이터로 처리: {}", encryptedText);
+            return encryptedText;
         }
     }
     

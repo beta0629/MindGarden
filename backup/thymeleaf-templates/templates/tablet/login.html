@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindGarden - 테블릿 로그인</title>
+</head>
+<body th:replace="~{common/layout/tablet-base}">
+    
+    <!-- 페이지별 컨텐츠 -->
+    <div th:fragment="content" class="tablet-login-page" style="padding-top: 15px !important; margin-top: 0 !important; transform: none !important;">
+        <!-- 로그인 폼 섹션 -->
+        <div class="login-form-section">
+            <div class="form-container">
+                <!-- 왼쪽: 로그인 폼 -->
+                <div class="login-form-content">
+                    <h2 class="form-title">로그인</h2>
+                    <p class="form-subtitle">계정에 로그인하여 서비스를 이용하세요</p>
+                    
+                    <form id="loginForm" class="login-form" th:action="@{/api/auth/login}" method="post">
+                        <div class="form-group">
+                            <label for="email" class="form-label">이메일</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon">
+                                    <i class="bi bi-envelope"></i>
+                                </div>
+                                <input type="email" id="email" name="email" class="form-input" placeholder="이메일을 입력하세요" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password" class="form-label">비밀번호</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon">
+                                    <i class="bi bi-lock"></i>
+                                </div>
+                                <input type="password" id="password" name="password" class="form-input" placeholder="비밀번호를 입력하세요" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword()">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-options">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="rememberMe" name="rememberMe">
+                                <span class="checkmark"></span>
+                                로그인 상태 유지
+                            </label>
+                            <a href="#" class="forgot-password">비밀번호 찾기</a>
+                        </div>
+                        
+                        <button type="submit" class="login-button">
+                            <span class="button-text">로그인</span>
+                            <div class="button-icon">
+                                <i class="bi bi-arrow-right"></i>
+                            </div>
+                        </button>
+                    </form>
+                    
+                    <div class="divider">
+                        <span>또는</span>
+                    </div>
+                    
+                    <div class="social-login">
+                        <button class="social-button kakao" onclick="kakaoLogin()">
+                            <i class="bi bi-chat-dots"></i>
+                            <span>카카오로 로그인</span>
+                        </button>
+                        
+                        <button class="social-button naver" onclick="naverLogin()">
+                            <i class="bi bi-person-plus"></i>
+                            <span>네이버로 로그인</span>
+                        </button>
+                    </div>
+                    
+                    <div class="signup-link">
+                        <p>계정이 없으신가요? <a href="/tablet/register" class="link">회원가입</a></p>
+                    </div>
+                </div>
+                
+                <!-- 오른쪽: 이미지 영역 -->
+                <div class="form-side-image">
+                    <div class="welcome-illustration">
+                        <i class="bi bi-flower1"></i>
+                        <h3>마음정원에 오신 것을 환영합니다</h3>
+                        <p>상담사와 함께 마음의 평화를 찾아보세요.<br>언제든지 편안하게 이야기할 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 페이지별 JavaScript -->
+    <script th:fragment="additionalScripts">
+    // 비밀번호 표시/숨김 토글
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const passwordToggle = document.querySelector('.password-toggle i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            passwordToggle.className = 'bi bi-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            passwordToggle.className = 'bi bi-eye';
+        }
+    }
+    
+    // OAuth2 설정 가져오기
+    async function getOAuth2Config() {
+        try {
+            const response = await fetch('/api/auth/oauth2/config');
+            if (response.ok) {
+                const config = await response.json();
+                window.oauth2Config = config;
+            }
+        } catch (error) {
+            console.error('OAuth2 설정을 가져오는데 실패했습니다:', error);
+        }
+    }
+    
+    // 카카오 로그인
+    async function kakaoLogin() {
+        if (!window.oauth2Config?.kakao?.clientId) {
+            console.error('카카오 OAuth2 설정이 없습니다.');
+            return;
+        }
+        
+        const clientId = window.oauth2Config.kakao.clientId;
+        const redirectUri = encodeURIComponent(window.oauth2Config.kakao.redirectUri);
+        const scope = window.oauth2Config.kakao.scope;
+        
+        const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}`;
+        
+        window.location.href = kakaoAuthUrl;
+    }
+    
+    // 네이버 로그인
+    async function naverLogin() {
+        if (!window.oauth2Config?.naver?.clientId) {
+            console.error('네이버 OAuth2 설정이 없습니다.');
+            return;
+        }
+        
+        const clientId = window.oauth2Config.naver.clientId;
+        const redirectUri = encodeURIComponent(window.oauth2Config.naver.redirectUri);
+        const state = Math.random().toString(36).substring(2, 15);
+        
+        sessionStorage.setItem('naver_oauth_state', state);
+        
+        const naverAuthUrl = `https://nid.naver.com/oauth2.0/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&state=${state}`;
+        
+        window.location.href = naverAuthUrl;
+    }
+    
+    // 페이지 로드 시 OAuth2 설정 가져오기
+    document.addEventListener('DOMContentLoaded', function() {
+        getOAuth2Config();
+    });
+    </script>
+</body>
+</html>

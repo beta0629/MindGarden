@@ -1,0 +1,344 @@
+/* ConsultantCard.css */
+
+.consultant-card {
+    background: #fff;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-width: 280px;
+    max-width: 320px;
+}
+
+.consultant-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.consultant-card.selected {
+    border-color: #28a745;
+    background-color: #f8fff9;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
+}
+
+.consultant-card[draggable="true"] {
+    cursor: grab;
+}
+
+.consultant-card[draggable="true"]:active {
+    cursor: grabbing;
+    opacity: 0.8;
+}
+
+/* 카드 헤더 */
+.card-header {
+    margin-bottom: 12px;
+}
+
+.profile-section {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.profile-image-container {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #e9ecef;
+    transition: border-color 0.3s ease;
+}
+
+.consultant-card:hover .profile-image {
+    border-color: #007bff;
+}
+
+.consultant-card.selected .profile-image {
+    border-color: #28a745;
+}
+
+.availability-indicator {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background: #fff;
+    border-radius: 50%;
+    padding: 2px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.availability-icon {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.availability-icon.available {
+    color: #28a745;
+}
+
+.availability-icon.busy {
+    color: #ffc107;
+}
+
+.availability-icon.unavailable {
+    color: #dc3545;
+}
+
+/* 상담사 정보 */
+.consultant-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.consultant-card .consultant-name {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    line-height: 1.2;
+}
+
+.consultant-title {
+    margin: 0 0 4px 0;
+    font-size: 12px;
+    color: #6c757d;
+    line-height: 1.2;
+}
+
+.availability-status {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    font-weight: 500;
+}
+
+.availability-status {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+/* 카드 본문 */
+.card-body {
+    space-y: 8px;
+}
+
+/* 전문분야 배지 */
+.specialties {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.specialty-badge {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* 경력 정보 */
+.experience {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.experience-label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.experience-value {
+    color: #495057;
+    font-weight: 600;
+}
+
+/* 평점 */
+.rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.rating-stars {
+    color: #ffc107;
+    line-height: 1;
+}
+
+.rating-value {
+    color: #6c757d;
+    font-size: 10px;
+}
+
+/* 오늘 스케줄 */
+.today-schedule {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.schedule-label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.schedule-count {
+    color: #495057;
+    font-weight: 600;
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* 드래그 핸들 */
+.drag-handle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #adb5bd;
+    font-size: 12px;
+    cursor: grab;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.drag-handle:hover {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.drag-icon {
+    font-weight: bold;
+    letter-spacing: -1px;
+}
+
+/* 선택 표시 */
+.selected-indicator {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background-color: #28a745;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.check-icon {
+    line-height: 1;
+}
+
+/* 가용성별 카드 스타일 */
+.consultant-card[data-availability="unavailable"] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.consultant-card[data-availability="unavailable"]:hover {
+    transform: none;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.consultant-card[data-availability="busy"] {
+    border-color: #ffc107;
+}
+
+.consultant-card[data-availability="busy"]:hover {
+    border-color: #e0a800;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
+}
+
+/* 애니메이션 */
+@keyframes cardSelect {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.consultant-card.selected {
+    animation: cardSelect 0.3s ease;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .consultant-card {
+        min-width: 260px;
+        max-width: 100%;
+        margin: 4px;
+        padding: 12px;
+    }
+    
+    .profile-image {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .consultant-card .consultant-name {
+        font-size: 14px;
+    }
+    
+    .consultant-title {
+        font-size: 11px;
+    }
+    
+    .specialty-badge {
+        font-size: 9px;
+        padding: 1px 4px;
+    }
+}
+
+/* 드래그 중 스타일 */
+.consultant-card.sortable-ghost {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.consultant-card.sortable-chosen {
+    box-shadow: 0 8px 16px rgba(0, 123, 255, 0.3);
+}
+
+.consultant-card.sortable-drag {
+    transform: rotate(5deg);
+    box-shadow: 0 8px 16px rgba(0, 123, 255, 0.3);
+}
+
+/* 포커스 스타일 (접근성) */
+.consultant-card:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}

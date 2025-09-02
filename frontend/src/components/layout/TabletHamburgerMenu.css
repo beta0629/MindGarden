@@ -1,0 +1,171 @@
+/* 햄버거 메뉴 스타일 - 상수 기반 고유 클래스명으로 충돌 방지 */
+.tablet-hamburger-menu-component {
+  position: fixed;
+  top: 0;
+  left: -300px;
+  width: 300px;
+  height: 100vh;
+  background: white;
+  z-index: 9999;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.tablet-hamburger-menu-component.show {
+  left: 0;
+}
+
+.tablet-hamburger-menu-component-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.tablet-hamburger-menu-component-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8f9fa;
+}
+
+.tablet-hamburger-menu-component-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.tablet-hamburger-menu-component-close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.tablet-hamburger-menu-component-close-button:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.tablet-hamburger-menu-component-close-button:active {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.tablet-hamburger-menu-component-nav {
+  flex: 1;
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
+.tablet-hamburger-menu-component-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tablet-hamburger-menu-component-nav li {
+  margin: 0;
+}
+
+.tablet-hamburger-menu-component-nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: #374151;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.tablet-hamburger-menu-component-nav a:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+  border-left-color: #667eea;
+}
+
+.tablet-hamburger-menu-component-nav a i {
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+}
+
+.tablet-hamburger-menu-component-nav a.active {
+  background: #667eea;
+  color: white;
+  border-left-color: #5a6fd8;
+}
+
+.tablet-hamburger-menu-component-nav a.active:hover {
+  background: #5a6fd8;
+  color: white;
+}
+
+/* 로그아웃 버튼 스타일 */
+.tablet-hamburger-menu-component-nav a.logout-btn {
+  color: #dc2626;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 20px;
+}
+
+.tablet-hamburger-menu-component-nav a.logout-btn:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-left-color: #dc2626;
+}
+
+.tablet-hamburger-menu-component-nav a.logout-btn i {
+  color: #dc2626;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .tablet-hamburger-menu-component-content {
+    width: 280px;
+  }
+  
+  .tablet-hamburger-menu-component-header {
+    padding: 16px;
+  }
+  
+  .tablet-hamburger-menu-component-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .tablet-hamburger-menu-component-close-button {
+    font-size: 20px;
+    width: 28px;
+    height: 28px;
+  }
+  
+  .tablet-hamburger-menu-component-nav a {
+    padding: 10px 16px;
+    gap: 10px;
+  }
+  
+  .tablet-hamburger-menu-component-nav a i {
+    font-size: 16px;
+    width: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tablet-hamburger-menu-component-content {
+    width: 100%;
+  }
+}

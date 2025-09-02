@@ -1,9 +1,12 @@
 package com.mindgarden.consultation.service.impl;
 
 import java.util.List;
+import java.util.Optional;
 import com.mindgarden.consultation.dto.MyPageResponse;
 import com.mindgarden.consultation.dto.MyPageUpdateRequest;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.entity.UserAddress;
+import com.mindgarden.consultation.repository.UserAddressRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.MyPageService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
@@ -22,6 +25,7 @@ public class MyPageServiceImpl implements MyPageService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final UserAddressRepository userAddressRepository;
 
     @Override
     public MyPageResponse getMyPageInfo(Long userId) {
@@ -88,6 +92,18 @@ public class MyPageServiceImpl implements MyPageService {
             decryptedGender = user.getGender();
         }
         
+        // 기본 주소 조회
+        String mpPostalCode = null;
+        String mpAddress = null;
+        String mpAddressDetail = null;
+        Optional<UserAddress> primaryAddressOpt = userAddressRepository.findByUserIdAndIsPrimaryTrueAndIsDeletedFalse(userId);
+        if (primaryAddressOpt.isPresent()) {
+            UserAddress addr = primaryAddressOpt.get();
+            mpPostalCode = addr.getPostalCode();
+            mpAddress = addr.getFullAddress();
+            mpAddressDetail = addr.getDetailAddress();
+        }
+
         return MyPageResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -96,11 +112,14 @@ public class MyPageServiceImpl implements MyPageService {
                 .nickname(decryptedNickname)
                 .phone(decryptedPhone)
                 .gender(decryptedGender)
+                .postalCode(mpPostalCode)
+                .address(mpAddress)
+                .addressDetail(mpAddressDetail)
                 .profileImage(finalProfileImageUrl)
                 .profileImageType(profileImageType)
                 .socialProvider(socialProvider)
                 .socialProfileImage(socialProfileImage)
-                .role(user.getRole())
+                .role(user.getRole().getValue())
                 .grade(user.getGrade())
                 .experiencePoints(user.getExperiencePoints())
                 .totalConsultations(user.getTotalConsultations())
@@ -169,9 +188,81 @@ public class MyPageServiceImpl implements MyPageService {
         }
         
         User updatedUser = userRepository.save(user);
+
+        // 주소 upsert: 기본 주소 기준
+        final String reqAddress = request.getAddress();
+        final boolean hasAnyAddressField =
+                (reqAddress != null && !reqAddress.trim().isEmpty())
+                || (request.getAddressDetail() != null && !request.getAddressDetail().trim().isEmpty())
+                || (request.getPostalCode() != null && !request.getPostalCode().trim().isEmpty());
+
+        if (hasAnyAddressField) {
+            Optional<UserAddress> primaryOpt = userAddressRepository.findByUserIdAndIsPrimaryTrueAndIsDeletedFalse(userId);
+
+            // 신규 생성이 필요한데 기본 주소 문자열이 없다면 저장을 시도하지 않음 (필수 컬럼 제약 회피)
+            if (primaryOpt.isEmpty() && (reqAddress == null || reqAddress.trim().isEmpty())) {
+                log.warn("주소 상세/우편번호만 전달되어 기본 주소 생성을 건너뜁니다. userId={}", userId);
+            } else {
+                UserAddress address = primaryOpt.orElseGet(UserAddress::new);
+                address.setUserId(userId);
+                // 타입
+                if (request.getAddressType() != null && !request.getAddressType().trim().isEmpty()) {
+                    address.setAddressType(request.getAddressType());
+                } else if (address.getAddressType() == null) {
+                    address.setAddressType("HOME");
+                }
+                // 기본 여부
+                if (primaryOpt.isEmpty() || Boolean.TRUE.equals(request.getIsPrimary())) {
+                    address.setIsPrimary(true);
+                }
+                // 전체 주소 문자열을 시/도, 구/군, 동/읍/면으로 분해
+                if (reqAddress != null && !reqAddress.trim().isEmpty()) {
+                    String[] parsed = parseKoreanAddress(reqAddress.trim());
+                    address.setProvince(parsed[0]);
+                    address.setCity(parsed[1]);
+                    address.setDistrict(parsed[2]);
+                }
+                if (request.getAddressDetail() != null) {
+                    address.setDetailAddress(request.getAddressDetail());
+                }
+                if (request.getPostalCode() != null) {
+                    address.setPostalCode(request.getPostalCode());
+                }
+                userAddressRepository.save(address);
+            }
+        }
         log.info("마이페이지 정보 수정 완료: userId={}", userId);
         
         return getMyPageInfo(userId);
+    }
+
+    /**
+     * 한국 주소 문자열을 [시/도, 구/군, 동/읍/면 이하] 3부분으로 단순 분해합니다.
+     * 예) "서울특별시 강남구 역삼동" → [서울특별시, 강남구, 역삼동]
+     *     "경기도 성남시 분당구 정자동 정자역로 10" → [경기도, 성남시, 분당구 정자동 정자역로 10]
+     * 규칙이 불확실한 경우에도 DB 제약을 피하기 위해 최소한의 기본값을 채웁니다.
+     */
+    private String[] parseKoreanAddress(String fullAddress) {
+        if (fullAddress == null) {
+            return new String[] {"기타", "기타", "기타"};
+        }
+        String normalized = fullAddress.replaceAll("\\s+", " ").trim();
+        String[] tokens = normalized.split(" ");
+        if (tokens.length >= 3) {
+            String province = tokens[0];
+            String city = tokens[1];
+            StringBuilder district = new StringBuilder();
+            for (int i = 2; i < tokens.length; i++) {
+                if (district.length() > 0) district.append(' ');
+                district.append(tokens[i]);
+            }
+            return new String[] { province, city, district.toString() };
+        } else if (tokens.length == 2) {
+            return new String[] { tokens[0], tokens[1], "기타" };
+        } else if (tokens.length == 1) {
+            return new String[] { tokens[0], "기타", "기타" };
+        }
+        return new String[] {"기타", "기타", "기타"};
     }
 
     @Override

@@ -6,7 +6,7 @@ const QuickActions = ({ user }) => {
   const navigate = useNavigate();
 
   const goToProfile = () => {
-    navigate(`/${user?.role?.toLowerCase()}/profile`);
+    navigate(`/${user?.role?.toLowerCase()}/mypage`);
   };
 
   const goToSchedule = () => {
@@ -34,7 +34,7 @@ const QuickActions = ({ user }) => {
       <div className="action-buttons">
         <button className="action-btn" onClick={goToProfile}>
           <i className="bi bi-person-circle"></i>
-          <span>프로필 편집</span>
+          <span>마이페이지</span>
         </button>
         <button className="action-btn" onClick={goToSchedule}>
           <i className="bi bi-calendar-check"></i>

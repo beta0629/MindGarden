@@ -83,23 +83,63 @@ public class AdminController {
         try {
             log.info("🔍 매핑 목록 조회");
             List<ConsultantClientMapping> mappings = adminService.getAllMappings();
-            
-            // 직렬화 문제를 피하기 위해 필요한 정보만 추출
+
+            // 직렬화 문제를 피하기 위해 필요한 정보만 추출 (안전한 방식)
             List<Map<String, Object>> mappingData = mappings.stream()
                 .map(mapping -> {
                     Map<String, Object> data = new java.util.HashMap<>();
-                    data.put("id", mapping.getId());
-                    data.put("consultantId", mapping.getConsultant().getId());
-                    data.put("consultantName", mapping.getConsultant().getName());
-                    data.put("clientId", mapping.getClient().getId());
-                    data.put("clientName", mapping.getClient().getName());
-                    data.put("status", mapping.getStatus());
-                    data.put("assignedAt", mapping.getAssignedAt());
-                    data.put("createdAt", mapping.getCreatedAt());
+                    try {
+                        data.put("id", mapping.getId());
+
+                        // Consultant 정보 안전하게 추출
+                        if (mapping.getConsultant() != null) {
+                            data.put("consultantId", mapping.getConsultant().getId());
+                            data.put("consultantName", mapping.getConsultant().getName());
+                        } else {
+                            data.put("consultantId", null);
+                            data.put("consultantName", "알 수 없음");
+                        }
+
+                        // Client 정보 안전하게 추출
+                        if (mapping.getClient() != null) {
+                            data.put("clientId", mapping.getClient().getId());
+                            data.put("clientName", mapping.getClient().getName());
+                        } else {
+                            data.put("clientId", null);
+                            data.put("clientName", "알 수 없음");
+                        }
+
+                        data.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "UNKNOWN");
+                        data.put("paymentStatus", mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().toString() : "UNKNOWN");
+                        data.put("totalSessions", mapping.getTotalSessions());
+                        data.put("remainingSessions", mapping.getRemainingSessions());
+                        data.put("usedSessions", mapping.getUsedSessions());
+                        data.put("packageName", mapping.getPackageName());
+                        data.put("packagePrice", mapping.getPackagePrice());
+                        data.put("paymentAmount", mapping.getPaymentAmount());
+                        data.put("paymentMethod", mapping.getPaymentMethod());
+                        data.put("paymentReference", mapping.getPaymentReference());
+                        data.put("paymentDate", mapping.getPaymentDate());
+                        data.put("adminApprovalDate", mapping.getAdminApprovalDate());
+                        data.put("approvedBy", mapping.getApprovedBy());
+                        data.put("assignedAt", mapping.getAssignedAt());
+                        data.put("createdAt", mapping.getCreatedAt());
+                    } catch (Exception e) {
+                        log.warn("매핑 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());
+                        data.put("id", mapping.getId());
+                        data.put("consultantId", null);
+                        data.put("consultantName", "오류");
+                        data.put("clientId", null);
+                        data.put("clientName", "오류");
+                        data.put("status", "ERROR");
+                        data.put("paymentStatus", "ERROR");
+                        data.put("assignedAt", null);
+                        data.put("createdAt", mapping.getCreatedAt());
+                    }
                     return data;
                 })
                 .collect(java.util.stream.Collectors.toList());
-            
+
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "data", mappingData,
@@ -110,6 +150,275 @@ public class AdminController {
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "매핑 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    // ==================== 입금 승인 시스템 ====================
+
+    /**
+     * 입금 대기 중인 매핑 목록 조회
+     */
+    @GetMapping("/mappings/pending-payment")
+    public ResponseEntity<?> getPendingPaymentMappings() {
+        try {
+            log.info("🔍 입금 대기 중인 매핑 목록 조회");
+            List<ConsultantClientMapping> mappings = adminService.getPendingPaymentMappings();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", mappings,
+                "count", mappings.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 입금 대기 매핑 목록 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "입금 대기 매핑 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 입금 확인된 매핑 목록 조회
+     */
+    @GetMapping("/mappings/payment-confirmed")
+    public ResponseEntity<?> getPaymentConfirmedMappings() {
+        try {
+            log.info("🔍 입금 확인된 매핑 목록 조회");
+            List<ConsultantClientMapping> mappings = adminService.getPaymentConfirmedMappings();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", mappings,
+                "count", mappings.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 입금 확인 매핑 목록 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "입금 확인 매핑 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 활성 매핑 목록 조회 (승인 완료)
+     */
+    @GetMapping("/mappings/active")
+    public ResponseEntity<?> getActiveMappings() {
+        try {
+            log.info("🔍 활성 매핑 목록 조회");
+            List<ConsultantClientMapping> mappings = adminService.getActiveMappings();
+            
+            // 직렬화 문제를 피하기 위해 필요한 정보만 추출 (안전한 방식)
+            List<Map<String, Object>> mappingData = mappings.stream()
+                .map(mapping -> {
+                    Map<String, Object> data = new java.util.HashMap<>();
+                    try {
+                        data.put("id", mapping.getId());
+
+                        // Consultant 정보 안전하게 추출
+                        if (mapping.getConsultant() != null) {
+                            data.put("consultantId", mapping.getConsultant().getId());
+                            data.put("consultantName", mapping.getConsultant().getName());
+                        } else {
+                            data.put("consultantId", null);
+                            data.put("consultantName", "알 수 없음");
+                        }
+
+                        // Client 정보 안전하게 추출
+                        if (mapping.getClient() != null) {
+                            data.put("clientId", mapping.getClient().getId());
+                            data.put("clientName", mapping.getClient().getName());
+                            
+                            // Client 정보를 안전하게 추출
+                            Map<String, Object> clientInfo = new java.util.HashMap<>();
+                            clientInfo.put("id", mapping.getClient().getId());
+                            clientInfo.put("name", mapping.getClient().getName());
+                            clientInfo.put("email", mapping.getClient().getEmail());
+                            clientInfo.put("phone", mapping.getClient().getPhone());
+                            clientInfo.put("role", mapping.getClient().getRole() != null ? mapping.getClient().getRole().toString() : "CLIENT");
+                            data.put("client", clientInfo);
+                        } else {
+                            data.put("clientId", null);
+                            data.put("clientName", "알 수 없음");
+                            data.put("client", null);
+                        }
+
+                        data.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "UNKNOWN");
+                        data.put("paymentStatus", mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().toString() : "UNKNOWN");
+                        data.put("totalSessions", mapping.getTotalSessions());
+                        data.put("remainingSessions", mapping.getRemainingSessions());
+                        data.put("usedSessions", mapping.getUsedSessions());
+                        data.put("packageName", mapping.getPackageName());
+                        data.put("packagePrice", mapping.getPackagePrice());
+                        data.put("startDate", mapping.getStartDate());
+                        data.put("endDate", mapping.getEndDate());
+                        data.put("paymentDate", mapping.getPaymentDate());
+                        data.put("paymentMethod", mapping.getPaymentMethod());
+                        data.put("adminApprovalDate", mapping.getAdminApprovalDate());
+                        data.put("approvedBy", mapping.getApprovedBy());
+                        data.put("notes", mapping.getNotes());
+                        
+                        return data;
+                    } catch (Exception e) {
+                        log.warn("매핑 데이터 추출 중 오류 (ID: {}): {}", mapping.getId(), e.getMessage());
+                        Map<String, Object> errorData = new java.util.HashMap<>();
+                        errorData.put("id", mapping.getId());
+                        errorData.put("error", "데이터 추출 실패: " + e.getMessage());
+                        return errorData;
+                    }
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", mappingData,
+                "count", mappingData.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 활성 매핑 목록 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "활성 매핑 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 회기 소진된 매핑 목록 조회
+     */
+    @GetMapping("/mappings/sessions-exhausted")
+    public ResponseEntity<?> getSessionsExhaustedMappings() {
+        try {
+            log.info("🔍 회기 소진된 매핑 목록 조회");
+            List<ConsultantClientMapping> mappings = adminService.getSessionsExhaustedMappings();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", mappings,
+                "count", mappings.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 회기 소진 매핑 목록 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "회기 소진 매핑 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 입금 확인 처리
+     */
+    @PostMapping("/mappings/{mappingId}/confirm-payment")
+    public ResponseEntity<?> confirmPayment(
+            @PathVariable Long mappingId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            log.info("💰 매핑 ID {} 입금 확인 처리", mappingId);
+            
+            String paymentMethod = (String) request.get("paymentMethod");
+            String paymentReference = (String) request.get("paymentReference");
+            Long paymentAmount = Long.valueOf(request.get("paymentAmount").toString());
+            
+            ConsultantClientMapping mapping = adminService.confirmPayment(
+                mappingId, paymentMethod, paymentReference, paymentAmount);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "입금 확인이 완료되었습니다.",
+                "data", mapping
+            ));
+        } catch (Exception e) {
+            log.error("❌ 입금 확인 처리 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "입금 확인 처리에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 관리자 승인
+     */
+    @PostMapping("/mappings/{mappingId}/approve")
+    public ResponseEntity<?> approveMapping(
+            @PathVariable Long mappingId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            log.info("✅ 매핑 ID {} 관리자 승인", mappingId);
+            
+            String adminName = (String) request.get("adminName");
+            
+            ConsultantClientMapping mapping = adminService.approveMapping(mappingId, adminName);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "매핑이 승인되었습니다. 이제 스케줄을 작성할 수 있습니다.",
+                "data", mapping
+            ));
+        } catch (Exception e) {
+            log.error("❌ 매핑 승인 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "매핑 승인에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 회기 사용 처리
+     */
+    @PostMapping("/mappings/{mappingId}/use-session")
+    public ResponseEntity<?> useSession(@PathVariable Long mappingId) {
+        try {
+            log.info("📅 매핑 ID {} 회기 사용 처리", mappingId);
+            
+            ConsultantClientMapping mapping = adminService.useSession(mappingId);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "회기가 사용되었습니다.",
+                "data", mapping
+            ));
+        } catch (Exception e) {
+            log.error("❌ 회기 사용 처리 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "회기 사용 처리에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 회기 추가 (연장)
+     */
+    @PostMapping("/mappings/{mappingId}/extend-sessions")
+    public ResponseEntity<?> extendSessions(
+            @PathVariable Long mappingId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            log.info("🔄 매핑 ID {} 회기 추가 (연장)", mappingId);
+            
+            Integer additionalSessions = (Integer) request.get("additionalSessions");
+            String packageName = (String) request.get("packageName");
+            Long packagePrice = Long.valueOf(request.get("packagePrice").toString());
+            
+            ConsultantClientMapping mapping = adminService.extendSessions(
+                mappingId, additionalSessions, packageName, packagePrice);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "회기가 추가되었습니다.",
+                "data", mapping
+            ));
+        } catch (Exception e) {
+            log.error("❌ 회기 추가 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "회기 추가에 실패했습니다: " + e.getMessage()
             ));
         }
     }

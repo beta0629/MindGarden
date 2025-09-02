@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.converter.UserRoleConverter;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -79,9 +80,9 @@ public class User extends BaseEntity {
     @Column(name = "age_group", length = 20)
     private String ageGroup;
     
-    @NotBlank(message = "사용자 역할은 필수입니다.")
+    @jakarta.persistence.Convert(converter = UserRoleConverter.class)
     @Column(name = "role", nullable = false, length = 20)
-    private String role = UserRole.CLIENT;
+    private UserRole role = UserRole.CLIENT;
     
     @Column(name = "grade", length = 30)
     private String grade;
@@ -128,6 +129,7 @@ public class User extends BaseEntity {
     private LocalDateTime socialLinkedAt;
     
     @Column(name = "is_email_verified", nullable = false)
+    @Builder.Default
     private Boolean isEmailVerified = false;
     
     @Column(name = "email_verification_token", length = 100)
@@ -277,11 +279,11 @@ public class User extends BaseEntity {
         this.ageGroup = ageGroup;
     }
     
-    public String getRole() {
+    public UserRole getRole() {
         return role;
     }
     
-    public void setRole(String role) {
+    public void setRole(UserRole role) {
         this.role = role;
     }
     

@@ -1,8 +1,11 @@
 package com.mindgarden.consultation.controller;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import com.mindgarden.consultation.dto.ScheduleCreateDto;
+import com.mindgarden.consultation.dto.ScheduleDto;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.service.ScheduleService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -10,6 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,18 +41,18 @@ public class ScheduleController {
     // ==================== 권한 기반 스케줄 조회 ====================
 
     /**
-     * 권한 기반 전체 스케줄 조회
+     * 권한 기반 전체 스케줄 조회 (상담사 이름 포함)
      * 상담사: 자신의 일정만, 관리자: 모든 일정
      */
     @GetMapping
-    public ResponseEntity<List<Schedule>> getSchedulesByUserRole(
+    public ResponseEntity<List<ScheduleDto>> getSchedulesByUserRole(
             @RequestParam Long userId,
             @RequestParam String userRole) {
         
         log.info("🔐 권한 기반 스케줄 조회 요청: 사용자 {}, 역할 {}", userId, userRole);
         
         try {
-            List<Schedule> schedules = scheduleService.findSchedulesByUserRole(userId, userRole);
+            List<ScheduleDto> schedules = scheduleService.findSchedulesWithNamesByUserRole(userId, userRole);
             log.info("✅ 스케줄 조회 완료: {}개", schedules.size());
             return ResponseEntity.ok(schedules);
         } catch (Exception e) {
@@ -98,6 +104,142 @@ public class ScheduleController {
         }
     }
 
+    // ==================== 상담사별 스케줄 조회 ====================
+
+    /**
+     * 특정 상담사의 특정 날짜 스케줄 조회
+     * GET /api/schedules/consultant/{consultantId}/date?date=2025-09-02
+     */
+    @GetMapping("/consultant/{consultantId}/date")
+    public ResponseEntity<List<Schedule>> getConsultantSchedulesByDate(
+            @PathVariable Long consultantId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        
+        log.info("📅 상담사별 특정 날짜 스케줄 조회: 상담사 {}, 날짜 {}", consultantId, date);
+        
+        try {
+            List<Schedule> schedules = scheduleService.findByConsultantIdAndDate(consultantId, date);
+            log.info("✅ 상담사별 스케줄 조회 완료: {}개", schedules.size());
+            return ResponseEntity.ok(schedules);
+        } catch (Exception e) {
+            log.error("❌ 상담사별 스케줄 조회 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // ==================== 스케줄 생성 ====================
+
+    /**
+     * 상담사 스케줄 생성
+     * POST /api/schedules/consultant
+     */
+    @PostMapping("/consultant")
+    public ResponseEntity<Map<String, Object>> createConsultantSchedule(
+            @RequestBody ScheduleCreateDto scheduleDto) {
+        
+        log.info("📅 상담사 스케줄 생성 요청: 상담사 {}, 내담자 {}, 날짜 {}, 시간 {} - {}, 상담유형 {}", 
+                scheduleDto.getConsultantId(), scheduleDto.getClientId(), 
+                scheduleDto.getDate(), scheduleDto.getStartTime(), scheduleDto.getEndTime(),
+                scheduleDto.getConsultationType());
+        
+        try {
+            // 날짜와 시간 파싱
+            LocalDate date = LocalDate.parse(scheduleDto.getDate());
+            LocalTime startTime = LocalTime.parse(scheduleDto.getStartTime());
+            LocalTime endTime = LocalTime.parse(scheduleDto.getEndTime());
+            
+            Schedule schedule = scheduleService.createConsultantSchedule(
+                scheduleDto.getConsultantId(),
+                scheduleDto.getClientId(),
+                date,
+                startTime,
+                endTime,
+                scheduleDto.getTitle(),
+                scheduleDto.getDescription(),
+                scheduleDto.getConsultationType()
+            );
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "message", "스케줄이 성공적으로 생성되었습니다.",
+                "scheduleId", schedule.getId()
+            );
+            
+            log.info("✅ 스케줄 생성 완료: ID {}", schedule.getId());
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 스케줄 생성 실패: {}", e.getMessage());
+            
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "스케줄 생성에 실패했습니다: " + e.getMessage()
+            );
+            
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // ==================== 스케줄 수정 ====================
+
+    /**
+     * 스케줄 수정
+     * PUT /api/schedules/{id}
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> updateSchedule(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> updateData) {
+        
+        log.info("📝 스케줄 수정 요청: ID {}, 데이터 {}", id, updateData);
+        
+        try {
+            Schedule existingSchedule = scheduleService.findById(id);
+            
+            // 상태 업데이트
+            if (updateData.containsKey("status")) {
+                String newStatus = (String) updateData.get("status");
+                existingSchedule.setStatus(newStatus);
+                existingSchedule.setUpdatedAt(java.time.LocalDateTime.now());
+                log.info("📝 스케줄 상태 변경: {} -> {}", existingSchedule.getStatus(), newStatus);
+            }
+            
+            // 상담 유형 업데이트
+            if (updateData.containsKey("consultationType")) {
+                existingSchedule.setConsultationType((String) updateData.get("consultationType"));
+            }
+            
+            // 기타 필드 업데이트
+            if (updateData.containsKey("title")) {
+                existingSchedule.setTitle((String) updateData.get("title"));
+            }
+            if (updateData.containsKey("description")) {
+                existingSchedule.setDescription((String) updateData.get("description"));
+            }
+            
+            Schedule updatedSchedule = scheduleService.updateSchedule(id, existingSchedule);
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "message", "스케줄이 성공적으로 수정되었습니다.",
+                "scheduleId", updatedSchedule.getId()
+            );
+            
+            log.info("✅ 스케줄 수정 완료: ID {}", updatedSchedule.getId());
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 스케줄 수정 실패: {}", e.getMessage());
+            
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "스케줄 수정에 실패했습니다: " + e.getMessage()
+            );
+            
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     // ==================== 관리자 전용 ====================
 
     /**
@@ -121,6 +263,31 @@ public class ScheduleController {
             return ResponseEntity.ok(statistics);
         } catch (Exception e) {
             log.error("❌ 관리자용 스케줄 통계 조회 실패: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 오늘의 스케줄 통계 조회
+     */
+    @GetMapping("/today/statistics")
+    public ResponseEntity<Map<String, Object>> getTodayScheduleStatistics(
+            @RequestParam String userRole) {
+        
+        log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}", userRole);
+        
+        // 관리자 권한 확인
+        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
+            log.warn("❌ 관리자 권한 없음: {}", userRole);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        
+        try {
+            Map<String, Object> statistics = scheduleService.getTodayScheduleStatistics();
+            log.info("✅ 오늘의 스케줄 통계 조회 완료");
+            return ResponseEntity.ok(statistics);
+        } catch (Exception e) {
+            log.error("❌ 오늘의 스케줄 통계 조회 실패: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -178,6 +345,158 @@ public class ScheduleController {
         } catch (Exception e) {
             log.error("❌ 내담자별 스케줄 조회 실패: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // ==================== 예약 확정 관리 ====================
+
+    /**
+     * 예약 확정 (관리자 전용)
+     * 내담자 입금 확인 후 관리자가 예약을 확정합니다.
+     */
+    @PutMapping("/{id}/confirm")
+    public ResponseEntity<Map<String, Object>> confirmSchedule(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> confirmData,
+            @RequestParam String userRole) {
+        
+        log.info("✅ 예약 확정 요청: ID {}, 관리자 역할 {}", id, userRole);
+        
+        // 관리자 권한 확인
+        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
+            log.warn("❌ 관리자 권한 없음: {}", userRole);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+        }
+        
+        try {
+            String adminNote = (String) confirmData.getOrDefault("adminNote", "입금 확인 완료");
+            
+            Schedule confirmedSchedule = scheduleService.confirmSchedule(id, adminNote);
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "message", "예약이 성공적으로 확정되었습니다.",
+                "scheduleId", confirmedSchedule.getId(),
+                "status", confirmedSchedule.getStatus()
+            );
+            
+            log.info("✅ 예약 확정 완료: ID {}, 상태 {}", confirmedSchedule.getId(), confirmedSchedule.getStatus());
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 예약 확정 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "예약 확정에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    // ==================== 자동 완료 처리 ====================
+
+    /**
+     * 시간이 지난 확정된 스케줄을 자동으로 완료 처리
+     * 관리자만 호출 가능
+     */
+    @PostMapping("/auto-complete")
+    public ResponseEntity<Map<String, Object>> autoCompleteExpiredSchedules(
+            @RequestParam String userRole) {
+        log.info("🔄 자동 완료 처리 요청: 사용자 역할 {}", userRole);
+        
+        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
+            log.warn("❌ 관리자 권한 없음: {}", userRole);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+        }
+        
+        try {
+            scheduleService.autoCompleteExpiredSchedules();
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "message", "시간이 지난 스케줄이 자동으로 완료 처리되었습니다."
+            );
+            
+            log.info("✅ 자동 완료 처리 완료");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 자동 완료 처리 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "자동 완료 처리에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    // ==================== 한글 변환 API ====================
+
+    /**
+     * 스케줄 상태를 한글로 변환
+     */
+    @GetMapping("/status-korean")
+    public ResponseEntity<Map<String, Object>> getStatusInKorean(
+            @RequestParam String status) {
+        try {
+            String koreanStatus = scheduleService.getStatusInKorean(status);
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "originalStatus", status,
+                "koreanStatus", koreanStatus
+            );
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 상태 한글 변환 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "상태 한글 변환에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 스케줄 타입을 한글로 변환
+     */
+    @GetMapping("/type-korean")
+    public ResponseEntity<Map<String, Object>> getScheduleTypeInKorean(
+            @RequestParam String scheduleType) {
+        try {
+            String koreanType = scheduleService.getScheduleTypeInKorean(scheduleType);
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "originalType", scheduleType,
+                "koreanType", koreanType
+            );
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 스케줄 타입 한글 변환 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "스케줄 타입 한글 변환에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 상담 유형을 한글로 변환
+     */
+    @GetMapping("/consultation-type-korean")
+    public ResponseEntity<Map<String, Object>> getConsultationTypeInKorean(
+            @RequestParam String consultationType) {
+        try {
+            String koreanType = scheduleService.getConsultationTypeInKorean(consultationType);
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "originalType", consultationType,
+                "koreanType", koreanType
+            );
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 상담 유형 한글 변환 실패: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "상담 유형 한글 변환에 실패했습니다: " + e.getMessage()));
         }
     }
 }

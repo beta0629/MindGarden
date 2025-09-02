@@ -8,10 +8,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.entity.Consultation;
 import com.mindgarden.consultation.repository.BaseRepository;
+import com.mindgarden.consultation.repository.ConsultantRepository;
 import com.mindgarden.consultation.repository.ConsultationRepository;
 import com.mindgarden.consultation.service.ConsultationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,8 +34,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ConsultationServiceImpl implements ConsultationService {
     
+    private static final Logger log = LoggerFactory.getLogger(ConsultationServiceImpl.class);
+    
     @Autowired
     private ConsultationRepository consultationRepository;
+    
+    @Autowired
+    private ConsultantRepository consultantRepository;
     
     // === BaseService 구현 메서드들 ===
     
@@ -469,6 +478,56 @@ public class ConsultationServiceImpl implements ConsultationService {
         }
         
         return schedule;
+    }
+    
+    @Override
+    public List<Map<String, Object>> getClientConsultationHistory(Long clientId) {
+        log.info("내담자 상담 히스토리 조회 - clientId: {}", clientId);
+        
+        List<Consultation> consultations = findByClientId(clientId);
+        List<Map<String, Object>> history = new ArrayList<>();
+        
+        for (Consultation consultation : consultations) {
+            Map<String, Object> historyItem = new HashMap<>();
+            historyItem.put("id", consultation.getId());
+            historyItem.put("consultationDate", consultation.getConsultationDate());
+            historyItem.put("startTime", consultation.getStartTime());
+            historyItem.put("endTime", consultation.getEndTime());
+            historyItem.put("status", consultation.getStatus());
+            historyItem.put("consultationType", "INDIVIDUAL"); // 기본값으로 설정
+            historyItem.put("consultantId", consultation.getConsultantId());
+            
+            // 상담사 정보 조회
+            if (consultation.getConsultantId() != null) {
+                try {
+                    Optional<Consultant> consultantOpt = consultantRepository.findById(consultation.getConsultantId());
+                    if (consultantOpt.isPresent()) {
+                        Consultant consultant = consultantOpt.get();
+                        Map<String, Object> consultantInfo = new HashMap<>();
+                        consultantInfo.put("id", consultant.getId());
+                        consultantInfo.put("name", consultant.getName());
+                        consultantInfo.put("specialty", consultant.getSpecialty());
+                        consultantInfo.put("profileImage", null); // 기본값으로 설정
+                        historyItem.put("consultant", consultantInfo);
+                    }
+                } catch (Exception e) {
+                    log.warn("상담사 정보 조회 실패 - consultantId: {}, error: {}", 
+                            consultation.getConsultantId(), e.getMessage());
+                }
+            }
+            
+            history.add(historyItem);
+        }
+        
+        // 최신 순으로 정렬
+        history.sort((a, b) -> {
+            LocalDate dateA = (LocalDate) a.get("consultationDate");
+            LocalDate dateB = (LocalDate) b.get("consultationDate");
+            if (dateA == null || dateB == null) return 0;
+            return dateB.compareTo(dateA); // 최신 순
+        });
+        
+        return history;
     }
     
     @Override

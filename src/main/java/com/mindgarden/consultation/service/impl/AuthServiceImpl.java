@@ -132,7 +132,7 @@ public class AuthServiceImpl implements AuthService {
             .id(user.getId())
             .email(user.getEmail())
             .name(user.getName())
-            .role(user.getRole())
+            .role(user.getRole().getValue())
             .grade(user.getGrade())
             .isActive(user.getIsActive())
             .isEmailVerified(user.getIsEmailVerified())

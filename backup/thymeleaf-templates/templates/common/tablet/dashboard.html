@@ -1,0 +1,238 @@
+<!-- 공통 대시보드 컨텐츠 -->
+<div th:fragment="content" class="tablet-dashboard-page">
+    <!-- 페이지 헤더 -->
+    <div class="dashboard-header">
+        <h1 class="dashboard-title" th:text="${user != null and user.role == 'CLIENT' ? '내담자 대시보드' : 
+                                                   user != null and user.role == 'CONSULTANT' ? '상담사 대시보드' : 
+                                                   '관리자 대시보드'}">
+            대시보드
+        </h1>
+        <p class="dashboard-subtitle" th:text="${user != null and user.role == 'CLIENT' ? '내담자님의 상담 현황을 확인하세요' : 
+                                                      user != null and user.role == 'CONSULTANT' ? '상담사님의 상담 일정을 관리하세요' : 
+                                                      '관리자님의 시스템 현황을 확인하세요'}">
+            대시보드에 오신 것을 환영합니다
+        </p>
+    </div>
+    
+    <!-- 환영 섹션 -->
+    <div class="welcome-section">
+        <div class="welcome-card">
+            <div class="welcome-icon">
+                <i class="bi bi-emoji-smile"></i>
+            </div>
+            <div class="welcome-content">
+                <h2 class="welcome-title" th:text="${user != null and user.role == 'CLIENT' ? '안녕하세요, 내담자님!' : 
+                                                           user != null and user.role == 'CONSULTANT' ? '안녕하세요, 상담사님!' : 
+                                                           '안녕하세요, 관리자님!'}">
+                    안녕하세요!
+                </h2>
+                <p class="welcome-message" th:text="${user != null ? user.name + '님, 오늘도 좋은 하루 되세요!' : '사용자님, 오늘도 좋은 하루 되세요!'}">
+                    사용자님, 오늘도 좋은 하루 되세요!
+                </p>
+                <div class="welcome-time">
+                    <i class="bi bi-clock"></i>
+                    <span id="currentTime"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 요약 패널 섹션 -->
+    <div class="summary-panels">
+        <!-- 상담 일정 요약 -->
+        <div class="summary-panel consultation-summary">
+            <div class="panel-header">
+                <h3 class="panel-title">
+                    <i class="bi bi-calendar-event"></i>
+                    상담 일정
+                </h3>
+            </div>
+            <div class="panel-content">
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="summary-info">
+                        <div class="summary-label">다가오는 상담</div>
+                        <div class="summary-value" id="upcomingConsultation">없음</div>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div class="summary-info">
+                        <div class="summary-label">이번 주 상담</div>
+                        <div class="summary-value" id="weeklyConsultation">0건</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 상담사 정보 (내담자 전용) -->
+        <div class="summary-panel consultant-info" th:if="${user != null and user.role == 'CLIENT'}">
+            <div class="panel-header">
+                <h3 class="panel-title">
+                    <i class="bi bi-person-badge"></i>
+                    담당 상담사
+                </h3>
+            </div>
+            <div class="panel-content">
+                <div class="consultant-profile">
+                    <div class="consultant-avatar">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <div class="consultant-details">
+                        <div class="consultant-name">김상담</div>
+                        <div class="consultant-specialty">상담 심리학</div>
+                        <div class="consultant-intro">전문적이고 따뜻한 상담을 제공합니다.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 상담 통계 (상담사 전용) -->
+        <div class="summary-panel consultation-stats" th:if="${user != null and user.role == 'CONSULTANT'}">
+            <div class="panel-header">
+                <h3 class="panel-title">
+                    <i class="bi bi-graph-up"></i>
+                    상담 통계
+                </h3>
+            </div>
+            <div class="panel-content">
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="summary-info">
+                        <div class="summary-label">이번 달 상담</div>
+                        <div class="summary-value">12건</div>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="bi bi-star"></i>
+                    </div>
+                    <div class="summary-info">
+                        <div class="summary-label">평점</div>
+                        <div class="summary-value">4.8/5.0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 시스템 현황 (관리자 전용) -->
+        <div class="summary-panel system-status" th:if="${user?.role == 'ADMIN' || user?.role == 'SUPER_ADMIN'}">
+            <div class="panel-header">
+                <h3 class="panel-title">
+                    <i class="bi bi-gear"></i>
+                    시스템 현황
+                </h3>
+            </div>
+            <div class="panel-content">
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="summary-info">
+                        <div class="summary-label">전체 사용자</div>
+                        <div class="summary-value">156명</div>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-icon">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    <div class="summary-info">
+                        <div class="summary-label">오늘 상담</div>
+                        <div class="summary-value">8건</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 상담 일정 모듈 -->
+    <div class="consultation-module">
+        <div class="module-header">
+            <h3 class="module-title">
+                <i class="bi bi-calendar-week"></i>
+                상담 일정
+            </h3>
+            <div class="module-actions">
+                <button class="btn btn-outline" onclick="refreshSchedule()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    새로고침
+                </button>
+            </div>
+        </div>
+        <div class="module-content">
+            <div class="schedule-tabs">
+                <button class="tab-button active" onclick="switchTab('today')">오늘</button>
+                <button class="tab-button" onclick="switchTab('week')">이번 주</button>
+                <button class="tab-button" onclick="switchTab('month')">이번 달</button>
+            </div>
+            <div class="schedule-content" id="scheduleContent">
+                <!-- 일정 내용이 여기에 동적으로 로드됩니다 -->
+                <div class="no-schedule">
+                    <i class="bi bi-calendar-x"></i>
+                    <p>예정된 상담이 없습니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 빠른 액션 섹션 -->
+    <div class="quick-actions">
+        <h3 class="section-title">
+            <i class="bi bi-lightning"></i>
+            빠른 액션
+        </h3>
+        <div class="action-buttons">
+            <button class="action-btn" onclick="goToProfile()">
+                <i class="bi bi-person-circle"></i>
+                <span>프로필 편집</span>
+            </button>
+            <button class="action-btn" onclick="goToSchedule()">
+                <i class="bi bi-calendar-plus"></i>
+                <span>일정 확인</span>
+            </button>
+            <button class="action-btn" onclick="goToHelp()">
+                <i class="bi bi-question-circle"></i>
+                <span>도움말</span>
+            </button>
+            <button class="action-btn" onclick="goToSettings()">
+                <i class="bi bi-gear"></i>
+                <span>설정</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- 최근 활동 섹션 -->
+    <div class="recent-activities">
+        <h3 class="section-title">
+            <i class="bi bi-activity"></i>
+            최근 활동
+        </h3>
+        <div class="activity-list" id="activityList">
+            <div class="activity-item">
+                <div class="activity-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-title">프로필 업데이트</div>
+                    <div class="activity-time">2시간 전</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-title">상담 일정 확인</div>
+                    <div class="activity-time">1일 전</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

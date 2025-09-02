@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,4 +21,21 @@ public class ConsultantClientMappingDto {
     private String responsibility;
     private String specialConsiderations;
     private String assignedBy;
+    
+    // 입금 승인 시스템 관련 필드
+    private String paymentStatus;
+    private Integer totalSessions;
+    private Integer remainingSessions;
+    private String packageName;
+    private Long packagePrice;
+    private Long paymentAmount;
+    private String paymentMethod;
+    private String paymentReference;
+    private LocalDateTime paymentDate;
+    private LocalDateTime adminApprovalDate;
+    private String approvedBy;
+    
+    // 매핑 생성 시 필요한 정보
+    private String mappingType; // "NEW", "EXTENSION", "TRANSFER"
+    private String paymentConfirmationNote; // 입금 확인 메모
 }

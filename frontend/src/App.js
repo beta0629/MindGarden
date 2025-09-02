@@ -6,9 +6,15 @@ import TabletLogin from './components/auth/TabletLogin';
 import TabletRegister from './components/auth/TabletRegister';
 import OAuth2Callback from './components/auth/OAuth2Callback';
 import CommonDashboard from './components/dashboard/CommonDashboard';
+import AdminDashboard from './components/admin/AdminDashboard';
 import MyPage from './components/mypage/MyPage';
 import ConsultantSchedule from './components/consultant/ConsultantSchedule';
+import SchedulePage from './components/schedule/SchedulePage';
+import ConsultantComprehensiveManagement from './components/admin/ConsultantComprehensiveManagement';
+import ClientComprehensiveManagement from './components/admin/ClientComprehensiveManagement';
+import SessionManagement from './components/admin/SessionManagement';
 import TabletLayout from './components/layout/TabletLayout';
+import Toast from './components/common/Toast';
 import { useSession } from './hooks/useSession';
 
 // URL 쿼리 파라미터 처리 컴포넌트
@@ -82,6 +88,7 @@ function App() {
     <Router>
       <QueryParamHandler onLoginSuccess={handleLoginSuccess}>
         <div className="App">
+          <Toast />
           <Routes>
             <Route path="/" element={<TabletHomepage />} />
             <Route path="/login" element={<TabletLogin />} />
@@ -93,13 +100,23 @@ function App() {
             {/* 역할별 대시보드 라우트 */}
             <Route path="/client/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><CommonDashboard user={user} /></TabletLayout>} />
             <Route path="/consultant/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><CommonDashboard user={user} /></TabletLayout>} />
-            <Route path="/admin/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><CommonDashboard user={user} /></TabletLayout>} />
+            <Route path="/admin/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><AdminDashboard user={user} /></TabletLayout>} />
             <Route path="/client/mypage" element={<TabletLayout user={user} onLogout={handleLogout}><MyPage /></TabletLayout>} />
             <Route path="/consultant/mypage" element={<TabletLayout user={user} onLogout={handleLogout}><MyPage /></TabletLayout>} />
             <Route path="/admin/mypage" element={<TabletLayout user={user} onLogout={handleLogout}><MyPage /></TabletLayout>} />
             
             {/* 상담사 전용 라우트 */}
             <Route path="/consultant/schedule" element={<TabletLayout user={user} onLogout={handleLogout}><ConsultantSchedule /></TabletLayout>} />
+            
+            {/* 통합 스케줄 관리 라우트 */}
+            <Route path="/schedule" element={<TabletLayout user={user} onLogout={handleLogout}><SchedulePage user={user} /></TabletLayout>} />
+            <Route path="/admin/schedule" element={<TabletLayout user={user} onLogout={handleLogout}><SchedulePage user={user} /></TabletLayout>} />
+            <Route path="/consultant/schedule-new" element={<TabletLayout user={user} onLogout={handleLogout}><SchedulePage user={user} /></TabletLayout>} />
+            
+            {/* 관리자 전용 라우트 */}
+            <Route path="/admin/consultant-comprehensive" element={<TabletLayout user={user} onLogout={handleLogout}><ConsultantComprehensiveManagement /></TabletLayout>} />
+            <Route path="/admin/client-comprehensive" element={<TabletLayout user={user} onLogout={handleLogout}><ClientComprehensiveManagement /></TabletLayout>} />
+            <Route path="/admin/sessions" element={<TabletLayout user={user} onLogout={handleLogout}><SessionManagement /></TabletLayout>} />
             
             {/* OAuth2 콜백 처리 라우트 */}
             <Route path="/oauth2/callback" element={<OAuth2Callback />} />

@@ -80,7 +80,7 @@ const TabletLogin = () => {
         console.log('로그인 성공:', response);
         
         // 세션 설정
-        const sessionSet = setLoginSession(response.userInfo, {
+        const sessionSet = setLoginSession(response.user, {
           accessToken: response.accessToken,
           refreshToken: response.refreshToken
         });
@@ -90,7 +90,7 @@ const TabletLogin = () => {
           logSessionInfo();
           
           // 역할에 따른 대시보드로 리다이렉트
-          redirectToDashboard(response.userInfo);
+          redirectToDashboard(response.user);
         } else {
           alert('세션 설정에 실패했습니다.');
         }

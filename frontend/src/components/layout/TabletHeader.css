@@ -1,3 +1,94 @@
+/* 태블릿 헤더 스타일 - 상수 기반 고유 클래스명으로 충돌 방지 */
+.tablet-header-component {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 20px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.tablet-header-component-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.tablet-header-component-logo {
+  display: flex;
+  align-items: center;
+}
+
+.tablet-header-component-logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #2c3e50;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.tablet-header-component-logo-link i {
+  font-size: 1.5rem;
+  margin-right: 8px;
+  color: #667eea;
+}
+
+.tablet-header-component-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tablet-header-component-login-link {
+  display: flex;
+  align-items: center;
+}
+
+.tablet-header-component-login-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.login-link-button:hover {
+  background: #5a6fd8;
+  color: white;
+  text-decoration: none;
+}
+
+.tablet-header-component-menu-toggle {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #2c3e50;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tablet-menu-toggle:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
 /* 프로필 이미지 타입별 스타일 */
 .profile-image {
   width: 40px;
@@ -125,6 +216,24 @@
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
+  .tablet-header-component {
+    padding: 0 15px;
+    height: 56px;
+  }
+  
+  .tablet-header-component-menu-toggle {
+    font-size: 20px;
+    padding: 6px;
+  }
+  
+  .tablet-header-component-logo-link {
+    font-size: 1.1rem;
+  }
+  
+  .tablet-header-component-logo-link i {
+    font-size: 1.3rem;
+  }
+  
   .profile-image,
   .profile-icon {
     width: 36px;

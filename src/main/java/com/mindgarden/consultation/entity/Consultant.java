@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.entity;
 
 import java.time.LocalDate;
+import com.mindgarden.consultation.constant.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
@@ -115,7 +116,7 @@ public class Consultant extends User {
     // 생성자
     public Consultant() {
         super();
-        setRole("CONSULTANT");
+        setRole(UserRole.CONSULTANT);
         setGrade("CONSULTANT_JUNIOR");
         this.yearsOfExperience = 0;
         this.totalClients = 0;

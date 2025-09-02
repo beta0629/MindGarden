@@ -3,11 +3,13 @@ package com.mindgarden.consultation.service.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ProfileImageInfo;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.BaseRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.UserService;
+import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +33,9 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private PersonalDataEncryptionUtil encryptionUtil;
     
     // ==================== BaseService 구현 ====================
     
@@ -144,18 +149,24 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public List<User> findAllActive() {
-        return userRepository.findAllActive();
+        List<User> users = userRepository.findAllActive();
+        return decryptUserListPersonalData(users);
     }
     
     @Override
     public Optional<User> findActiveById(Long id) {
-        return userRepository.findActiveById(id);
+        Optional<User> userOpt = userRepository.findActiveById(id);
+        if (userOpt.isPresent()) {
+            return Optional.of(decryptUserPersonalData(userOpt.get()));
+        }
+        return userOpt;
     }
     
     @Override
     public User findActiveByIdOrThrow(Long id) {
-        return userRepository.findActiveById(id)
+        User user = userRepository.findActiveById(id)
                 .orElseThrow(() -> new RuntimeException("활성 사용자를 찾을 수 없습니다: " + id));
+        return decryptUserPersonalData(user);
     }
     
     @Override
@@ -247,17 +258,19 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public List<User> findByRole(String role) {
-        return userRepository.findByRole(role);
+        List<User> users = userRepository.findByRole(UserRole.fromString(role));
+        return decryptUserListPersonalData(users);
     }
     
     @Override
     public Page<User> findByRole(String role, Pageable pageable) {
-        return userRepository.findByRole(role, pageable);
+        Page<User> userPage = userRepository.findByRole(UserRole.fromString(role), pageable);
+        return decryptUserPagePersonalData(userPage);
     }
     
     @Override
     public long countByRole(String role) {
-        return userRepository.countByRole(role);
+        return userRepository.countByRole(UserRole.fromString(role));
     }
     
     @Override
@@ -429,7 +442,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public Page<User> findByComplexCriteria(String name, String email, String role, String grade, 
                                           Boolean isActive, String gender, String ageGroup, Pageable pageable) {
-        return userRepository.findByComplexCriteria(name, email, role, grade, isActive, gender, ageGroup, pageable);
+        UserRole userRole = role != null ? UserRole.fromString(role) : null;
+        return userRepository.findByComplexCriteria(name, email, userRole, grade, isActive, gender, ageGroup, pageable);
     }
     
     @Override
@@ -509,7 +523,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void changeUserRole(Long id, String newRole) {
         User user = findActiveByIdOrThrow(id);
-        user.setRole(newRole);
+        user.setRole(UserRole.fromString(newRole));
         user.setUpdatedAt(LocalDateTime.now());
         user.setVersion(user.getVersion() + 1);
         
@@ -643,5 +657,102 @@ public class UserServiceImpl implements UserService {
      */
     private String generateTempPassword() {
         return "Temp" + System.currentTimeMillis() % 10000;
+    }
+    
+    /**
+     * 사용자 개인정보 복호화
+     */
+    private User decryptUserPersonalData(User user) {
+        if (user == null || encryptionUtil == null) {
+            return user;
+        }
+        
+        try {
+            // 이름 복호화 (암호화된 데이터인지 확인)
+            if (user.getName() != null && !user.getName().trim().isEmpty()) {
+                if (isEncryptedData(user.getName())) {
+                    user.setName(encryptionUtil.decrypt(user.getName()));
+                }
+                // 암호화되지 않은 데이터는 그대로 유지
+            }
+            
+            // 닉네임 복호화
+            if (user.getNickname() != null && !user.getNickname().trim().isEmpty()) {
+                if (isEncryptedData(user.getNickname())) {
+                    user.setNickname(encryptionUtil.decrypt(user.getNickname()));
+                }
+            }
+            
+            // 전화번호 복호화
+            if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
+                if (isEncryptedData(user.getPhone())) {
+                    user.setPhone(encryptionUtil.decrypt(user.getPhone()));
+                }
+            }
+            
+            // 성별 복호화
+            if (user.getGender() != null && !user.getGender().trim().isEmpty()) {
+                if (isEncryptedData(user.getGender())) {
+                    user.setGender(encryptionUtil.decrypt(user.getGender()));
+                }
+            }
+            
+        } catch (Exception e) {
+            // 복호화 실패 시 원본 데이터 유지
+            System.err.println("사용자 개인정보 복호화 실패: " + e.getMessage());
+        }
+        
+        return user;
+    }
+    
+    /**
+     * 데이터가 암호화된 데이터인지 확인
+     * Base64 패턴과 길이로 판단
+     */
+    private boolean isEncryptedData(String data) {
+        if (data == null || data.trim().isEmpty()) {
+            return false;
+        }
+        
+        // Base64 패턴 확인 (A-Z, a-z, 0-9, +, /, =)
+        if (!data.matches("^[A-Za-z0-9+/]*={0,2}$")) {
+            return false;
+        }
+        
+        // 암호화된 데이터는 일반적으로 20자 이상
+        if (data.length() < 20) {
+            return false;
+        }
+        
+        // 한글이나 특수문자가 포함된 경우 평문으로 판단
+        if (data.matches(".*[가-힣].*") || data.matches(".*[^A-Za-z0-9+/=].*")) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * 사용자 목록 개인정보 복호화
+     */
+    private List<User> decryptUserListPersonalData(List<User> users) {
+        if (users == null || encryptionUtil == null) {
+            return users;
+        }
+        
+        users.forEach(this::decryptUserPersonalData);
+        return users;
+    }
+    
+    /**
+     * 사용자 페이지 개인정보 복호화
+     */
+    private Page<User> decryptUserPagePersonalData(Page<User> userPage) {
+        if (userPage == null || encryptionUtil == null) {
+            return userPage;
+        }
+        
+        userPage.getContent().forEach(this::decryptUserPersonalData);
+        return userPage;
     }
 }

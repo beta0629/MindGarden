@@ -9,6 +9,22 @@ import ClientInfoModal from './ClientInfoModal';
 import ConsultationLogModal from './ConsultationLogModal';
 import './ConsultantSchedule.css';
 
+// 상담 타입별 기본 시간 설정 (분)
+const CONSULTATION_DURATIONS = {
+  '초기상담': 60,
+  '진행상담': 50,
+  '종결상담': 50,
+  '가족상담': 100,
+  '부부상담': 80,
+  '그룹상담': 90,
+  '긴급상담': 30,
+  '사후관리': 40,
+  '평가상담': 120
+};
+
+// 휴식시간 (분)
+const BREAK_TIME_MINUTES = 10;
+
 const ConsultantSchedule = () => {
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -443,6 +459,48 @@ const ConsultantSchedule = () => {
       setIsModalOpen(false);
       setSelectedEvent(null);
     }
+  };
+
+  // 상담 타입별 시간 자동 설정, 휴식시간 적용, 시간 충돌 검사 기능을 추가하여 더 직관적인 일정관리를 구현합니다.
+  const handleConsultationTypeChange = (startTime, consultationType, setFormData) => {
+    if (startTime && consultationType) {
+      const endTime = calculateEndTime(startTime, consultationType);
+      setFormData(prev => ({ ...prev, end: endTime }));
+    }
+  };
+
+  // 시작 시간 변경 시 종료 시간 자동 업데이트
+  const handleStartTimeChange = (startTime, consultationType, setFormData) => {
+    if (startTime && consultationType) {
+      const endTime = calculateEndTime(startTime, consultationType);
+      setFormData(prev => ({ ...prev, end: endTime }));
+    }
+  };
+
+  // 시간 충돌 검사
+  const hasTimeConflict = (startTime, endTime, excludeEventId = null) => {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    
+    return events.some(event => {
+      if (excludeEventId && event.id === excludeEventId) return false;
+      
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
+      
+      // 시간이 겹치는지 확인 (휴식시간 포함)
+      return (start < eventEnd && end > eventStart);
+    });
+  };
+
+  // 상담 타입에 따른 종료 시간 자동 계산
+  const calculateEndTime = (startTime, consultationType) => {
+    const start = new Date(startTime);
+    const duration = CONSULTATION_DURATIONS[consultationType] || 50;
+    
+    // 상담 시간 + 휴식시간
+    const end = new Date(start.getTime() + (duration + BREAK_TIME_MINUTES) * 60000);
+    return end.toISOString().slice(0, 16);
   };
 
   return (

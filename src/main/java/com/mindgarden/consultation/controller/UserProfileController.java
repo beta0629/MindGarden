@@ -1,5 +1,6 @@
 package com.mindgarden.consultation.controller;
 
+import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.UserProfileResponse;
 import com.mindgarden.consultation.dto.UserProfileUpdateRequest;
 import com.mindgarden.consultation.service.UserProfileService;
@@ -69,7 +70,7 @@ public class UserProfileController {
             @RequestParam String newRole) {
         try {
             log.info("유저 역할 변경 요청: userId={}, newRole={}", userId, newRole);
-            boolean success = userProfileService.changeUserRole(userId, newRole);
+            boolean success = userProfileService.changeUserRole(userId, UserRole.fromString(newRole));
             if (success) {
                 return ResponseEntity.ok(true);
             } else {

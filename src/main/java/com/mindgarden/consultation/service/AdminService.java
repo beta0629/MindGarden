@@ -76,4 +76,48 @@ public interface AdminService {
      * 매핑 삭제
      */
     void deleteMapping(Long id);
+
+    // ==================== 입금 승인 시스템 ====================
+
+    /**
+     * 입금 확인 처리
+     */
+    ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference, Long paymentAmount);
+
+    /**
+     * 관리자 승인
+     */
+    ConsultantClientMapping approveMapping(Long mappingId, String adminName);
+
+    /**
+     * 회기 사용 처리
+     */
+    ConsultantClientMapping useSession(Long mappingId);
+
+    /**
+     * 회기 추가 (연장)
+     */
+    ConsultantClientMapping extendSessions(Long mappingId, Integer additionalSessions, String packageName, Long packagePrice);
+
+    // ==================== 매핑 상태별 조회 ====================
+
+    /**
+     * 입금 대기 중인 매핑 목록 조회
+     */
+    List<ConsultantClientMapping> getPendingPaymentMappings();
+
+    /**
+     * 입금 확인된 매핑 목록 조회
+     */
+    List<ConsultantClientMapping> getPaymentConfirmedMappings();
+
+    /**
+     * 활성 매핑 목록 조회 (승인 완료)
+     */
+    List<ConsultantClientMapping> getActiveMappings();
+
+    /**
+     * 회기 소진된 매핑 목록 조회
+     */
+    List<ConsultantClientMapping> getSessionsExhaustedMappings();
 }

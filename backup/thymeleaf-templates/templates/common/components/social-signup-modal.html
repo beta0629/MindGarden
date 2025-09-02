@@ -1,0 +1,396 @@
+<!-- 소셜 로그인 간편 회원가입 모달 -->
+<div class="social-signup-modal" id="socialSignupModal" th:fragment="social-signup-modal">
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 class="modal-title">간편 회원가입</h3>
+            <button class="modal-close" id="modalClose">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="social-info">
+                <div class="social-provider">
+                    <span class="provider-icon" id="providerIcon"></span>
+                    <span class="provider-name" id="providerName"></span>
+                </div>
+                <p class="social-description">소셜 계정 정보로 간편하게 가입하세요</p>
+            </div>
+            
+            <form id="socialSignupForm" class="social-signup-form">
+                <div class="form-group">
+                    <label for="socialName" class="form-label">이름 *</label>
+                    <input type="text" id="socialName" name="name" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="socialNickname" class="form-label">닉네임</label>
+                    <input type="text" id="socialNickname" name="nickname" class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label for="socialEmail" class="form-label">이메일 *</label>
+                    <input type="email" id="socialEmail" name="email" class="form-input" readonly>
+                    <small class="form-help">소셜 계정의 이메일이 자동으로 입력됩니다</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="socialPassword" class="form-label">비밀번호 *</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="socialPassword" name="password" class="form-input" required minlength="8">
+                        <button type="button" class="password-toggle" onclick="toggleSocialPassword()">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M10 4.16667C6.25 4.16667 3.33333 6.66667 2.5 10C3.33333 13.3333 6.25 15.8333 10 15.8333C13.75 15.8333 16.6667 13.3333 17.5 10C16.6667 6.66667 13.75 4.16667 10 4.16667Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                <circle cx="10" cy="10" r="2.5" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <small class="form-help">8자 이상의 안전한 비밀번호를 입력하세요</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="socialPasswordConfirm" class="form-label">비밀번호 확인 *</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="socialPasswordConfirm" name="passwordConfirm" class="form-input" required minlength="8">
+                        <button type="button" class="password-toggle" onclick="toggleSocialPasswordConfirm()">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M10 4.16667C6.25 4.16667 3.33333 6.66667 2.5 10C3.33333 13.3333 6.25 15.8333 10 15.8333C13.75 15.8333 16.6667 13.3333 17.5 10C16.6667 6.66667 13.75 4.16667 10 4.16667Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                                <circle cx="10" cy="10" r="2.5" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <small class="form-help">비밀번호를 한 번 더 입력하세요</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="socialPhone" class="form-label">휴대폰 번호 *</label>
+                    <input type="tel" id="socialPhone" name="phone" class="form-input" required placeholder="010-0000-0000" maxlength="13">
+                    <small class="form-help">숫자만 입력하면 자동으로 하이픈이 추가됩니다 (예: 010-0000-0000)</small>
+                </div>
+                
+                <div class="form-agreement">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
+                        <span class="checkmark"></span>
+                        <span class="agreement-text">
+                            <a href="/terms" target="_blank">이용약관</a> 및 
+                            <a href="/privacy" target="_blank">개인정보처리방침</a>에 동의합니다 *
+                        </span>
+                    </label>
+                    
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="agreeMarketing" name="agreeMarketing">
+                        <span class="checkmark"></span>
+                        <span class="agreement-text">
+                            마케팅 정보 수신에 동의합니다 (선택)
+                        </span>
+                    </label>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelSignup">취소</button>
+                    <button type="submit" class="btn btn-primary" id="completeSignup">회원가입 완료</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 소셜 회원가입 모달 스크립트 -->
+<script th:fragment="social-signup-modal-script">
+// 소셜 회원가입 모달 관리
+class SocialSignupModal {
+    constructor() {
+        this.modal = document.getElementById('socialSignupModal');
+        this.overlay = document.getElementById('modalOverlay');
+        this.closeBtn = document.getElementById('modalClose');
+        this.cancelBtn = document.getElementById('cancelSignup');
+        this.form = document.getElementById('socialSignupForm');
+        this.providerIcon = document.getElementById('providerIcon');
+        this.providerName = document.getElementById('providerName');
+        this.emailInput = document.getElementById('socialEmail');
+        
+        this.initEventListeners();
+    }
+    
+    initEventListeners() {
+        // 모달 닫기
+        this.closeBtn.addEventListener('click', () => this.hide());
+        this.cancelBtn.addEventListener('click', () => this.hide());
+        this.overlay.addEventListener('click', () => this.hide());
+        
+        // 폼 제출
+        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        
+        // 휴대폰 번호 자동 하이픈
+        const phoneInput = document.getElementById('socialPhone');
+        phoneInput.addEventListener('input', (e) => this.formatPhoneNumber(e.target));
+        
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isVisible()) {
+                this.hide();
+            }
+        });
+        
+        // 페이지 로드 시 URL 파라미터 확인하여 모달 표시
+        this.checkUrlParameters();
+    }
+    
+    /**
+     * 휴대폰 번호 자동 하이픈 포맷팅
+     * @param {HTMLInputElement} input 휴대폰 번호 입력 필드
+     */
+    formatPhoneNumber(input) {
+        // 숫자만 추출
+        let value = input.value.replace(/[^0-9]/g, '');
+        
+        // 11자리 제한
+        if (value.length > 11) {
+            value = value.slice(0, 11);
+        }
+        
+        // 하이픈 추가
+        if (value.length >= 3 && value.length <= 7) {
+            value = value.slice(0, 3) + '-' + value.slice(3);
+        } else if (value.length >= 8) {
+            value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7);
+        }
+        
+        input.value = value;
+    }
+    
+    /**
+     * URL 파라미터 확인하여 간편 회원가입 모달 표시
+     */
+    checkUrlParameters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const signupRequired = urlParams.get('signup');
+        const provider = urlParams.get('provider');
+        const email = urlParams.get('email');
+        const name = urlParams.get('name');
+        const nickname = urlParams.get('nickname');
+        
+        if (signupRequired === 'required' && provider && email) {
+            // 간편 회원가입 모달 표시
+            const userInfo = {
+                provider: provider,
+                email: email,
+                name: name || '',
+                nickname: nickname || '',
+                providerUserId: '', // URL에서 전달할 수 없으므로 빈 값
+                profileImageUrl: ''
+            };
+            
+            // 모달 표시
+            this.show(provider, userInfo);
+            
+            // URL에서 파라미터 제거 (브라우저 히스토리 정리)
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+    }
+    
+    show(provider, userInfo) {
+        // 제공자 정보 설정
+        this.setProviderInfo(provider, userInfo);
+        
+        // 폼 데이터 설정
+        this.setFormData(userInfo);
+        
+        // 소셜 사용자 정보 저장 (회원가입 시 사용)
+        this.socialUserInfo = userInfo;
+        
+        // 모달 표시
+        this.modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+        
+        // 포커스 설정
+        this.emailInput.focus();
+    }
+    
+    hide() {
+        this.modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        
+        // 폼 초기화
+        this.form.reset();
+        
+        // 비밀번호 필드 타입 초기화
+        const passwordInput = document.getElementById('socialPassword');
+        const passwordConfirmInput = document.getElementById('socialPasswordConfirm');
+        if (passwordInput) passwordInput.type = 'password';
+        if (passwordConfirmInput) passwordConfirmInput.type = 'password';
+    }
+    
+    isVisible() {
+        return this.modal.style.display === 'flex';
+    }
+    
+    setProviderInfo(provider, userInfo) {
+        const providerConfig = {
+            'KAKAO': {
+                icon: '<i class="bi bi-chat-dots-fill" style="color: #FEE500;"></i>',
+                name: '카카오'
+            },
+            'NAVER': {
+                icon: '<i class="bi bi-chat-square-fill" style="color: #03C75A;"></i>',
+                name: '네이버'
+            }
+        };
+        
+        const config = providerConfig[provider] || { icon: '', name: provider };
+        this.providerIcon.innerHTML = config.icon;
+        this.providerName.textContent = config.name;
+    }
+    
+    setFormData(userInfo) {
+        // 소셜 계정에서 받은 정보로 폼 초기화
+        if (userInfo.name) {
+            document.getElementById('socialName').value = userInfo.name;
+        }
+        if (userInfo.nickname) {
+            document.getElementById('socialNickname').value = userInfo.nickname;
+        }
+        if (userInfo.email) {
+            document.getElementById('socialEmail').value = userInfo.email;
+        }
+        if (userInfo.profileImageUrl) {
+            // 프로필 이미지가 있다면 표시
+            this.showProfileImage(userInfo.profileImageUrl);
+        }
+    }
+    
+    showProfileImage(imageUrl) {
+        // 프로필 이미지 표시 로직 (선택사항)
+        const profileSection = document.createElement('div');
+        profileSection.className = 'profile-image-section';
+        profileSection.innerHTML = `
+            <img src="${imageUrl}" alt="프로필 이미지" class="profile-image">
+        `;
+        
+        const socialInfo = this.modal.querySelector('.social-info');
+        socialInfo.appendChild(profileSection);
+    }
+    
+    async handleSubmit(e) {
+        e.preventDefault();
+        
+        // 비밀번호 검증
+        const password = document.getElementById('socialPassword').value;
+        const passwordConfirm = document.getElementById('socialPasswordConfirm').value;
+        
+        if (password.length < 8) {
+            window.notification.error('비밀번호 오류', '비밀번호는 8자 이상이어야 합니다.', 5000);
+            return;
+        }
+        
+        if (password !== passwordConfirm) {
+            window.notification.error('비밀번호 오류', '비밀번호와 비밀번호 확인이 일치하지 않습니다.', 5000);
+            return;
+        }
+        
+        const formData = new FormData(this.form);
+        const signupData = {
+            // 사용자 입력 정보 (필수값만)
+            name: formData.get('name'),
+            nickname: formData.get('nickname'),
+            email: formData.get('email'),
+            password: formData.get('password'),
+            phone: formData.get('phone').replace(/-/g, ''), // 하이픈 제거
+            agreeTerms: formData.get('agreeTerms') === 'on',
+            agreeMarketing: formData.get('agreeMarketing') === 'on',
+            
+            // 소셜 계정 정보
+            provider: this.socialUserInfo.provider,
+            providerUserId: this.socialUserInfo.providerUserId,
+            providerUsername: this.socialUserInfo.nickname,
+            providerProfileImage: this.socialUserInfo.profileImageUrl
+        };
+        
+        try {
+            // 회원가입 API 호출
+            const response = await fetch('/api/auth/social/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(signupData)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 회원가입 성공
+                    window.notification.success('🎉 회원가입 완료!', '소셜 계정으로 간편하게 가입되었습니다. 이제 다시 로그인해주세요.', 5000);
+                    this.hide();
+                    
+                    // 3초 후 로그인 페이지로 이동
+                    setTimeout(() => {
+                        window.location.href = '/tablet/login';
+                    }, 3000);
+                } else {
+                    window.notification.error('회원가입 실패', result.message, 5000);
+                }
+            } else {
+                window.notification.error('회원가입 실패', '회원가입에 실패했습니다. 다시 시도해주세요.', 5000);
+            }
+        } catch (error) {
+            console.error('회원가입 오류:', error);
+            window.notification.error('오류 발생', '회원가입 중 오류가 발생했습니다.', 5000);
+        }
+    }
+}
+
+// 전역 변수로 모달 인스턴스 생성
+window.socialSignupModal = new SocialSignupModal();
+
+// 비밀번호 토글 함수들
+function toggleSocialPassword() {
+    const passwordInput = document.getElementById('socialPassword');
+    const toggleButton = event.target.closest('button');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleButton.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M2.5 5.83333C2.5 4.91286 3.24619 4.16667 4.16667 4.16667H15.8333C16.7538 4.16667 17.5 4.91286 17.5 5.83333V14.1667C17.5 15.0871 16.7538 15.8333 15.8333 15.8333H4.16667C3.24619 15.8333 2.5 15.0871 2.5 14.1667V5.83333Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                <path d="M17.5 5.83333L10 10.8333L2.5 5.83333" stroke="var(--secondary-400)" stroke-width="1.5"/>
+            </svg>
+        `;
+    } else {
+        passwordInput.type = 'password';
+        toggleButton.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 4.16667C6.25 4.16667 3.33333 6.66667 2.5 10C3.33333 13.3333 6.25 15.8333 10 15.8333C13.75 15.8333 16.6667 13.3333 17.5 10C16.6667 6.66667 13.75 4.16667 10 4.16667Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                <circle cx="10" cy="10" r="2.5" stroke="var(--secondary-400)" stroke-width="1.5"/>
+            </svg>
+        `;
+    }
+}
+
+function toggleSocialPasswordConfirm() {
+    const passwordInput = document.getElementById('socialPasswordConfirm');
+    const toggleButton = event.target.closest('button');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleButton.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M2.5 5.83333C2.5 4.91286 3.24619 4.16667 4.16667 4.16667H15.8333C16.7538 4.16667 17.5 4.91286 17.5 5.83333V14.1667C17.5 15.0871 16.7538 15.8333 15.8333 15.8333H4.16667C3.24619 15.8333 2.5 15.0871 2.5 14.1667V5.83333Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                <path d="M17.5 5.83333L10 10.8333L2.5 5.83333" stroke="var(--secondary-400)" stroke-width="1.5"/>
+            </svg>
+        `;
+    } else {
+        passwordInput.type = 'password';
+        toggleButton.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 4.16667C6.25 4.16667 3.33333 6.66667 2.5 10C3.33333 13.3333 6.25 15.8333 10 15.8333C13.75 15.8333 16.6667 13.3333 17.5 10C16.6667 6.66667 13.75 4.16667 10 4.16667Z" stroke="var(--secondary-400)" stroke-width="1.5"/>
+                <circle cx="10" cy="10" r="2.5" stroke="var(--secondary-400)" stroke-width="1.5"/>
+            </svg>
+        `;
+    }
+}
+</script>

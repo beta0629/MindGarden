@@ -1,0 +1,24 @@
+<!-- 공통 태블릿 헤더 -->
+<header class="tablet-header" th:fragment="tablet-header">
+    <div class="tablet-header-content">
+        <div class="tablet-logo">
+            <h2>🧠 MindGarden</h2>
+        </div>
+        <div class="tablet-header-right">
+            <div class="tablet-user-profile">
+                <div class="user-info" onclick="goToProfile()" style="cursor: pointer;">
+                    <div class="user-avatar">
+                        <i class="bi bi-person-circle profile-icon"></i>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name" th:text="${user?.name}">사용자</div>
+                        <div class="user-role" th:text="${user?.role}">CLIENT</div>
+                    </div>
+                </div>
+                <div class="tablet-menu-toggle" onclick="toggleHamburgerMenu()">
+                    <i class="bi bi-list"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

@@ -11,48 +11,7 @@
   flex-direction: column;
 }
 
-/* 테블릿 헤더 */
-.tablet-header {
-  background: white;
-  border-bottom: 1px solid var(--gray-200);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-}
-
-.tablet-header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  max-width: 1024px;
-  margin: 0 auto;
-}
-
-.tablet-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.logo-link {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  color: var(--primary-600);
-  font-weight: 700;
-  font-size: 1.25rem;
-}
-
-.logo-link:hover {
-  color: var(--primary-700);
-}
-
-.tablet-header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
+/* 테블릿 헤더 - 컴포넌트별 CSS로 이동됨 */
 
 .tablet-user-profile {
   display: flex;
@@ -173,129 +132,7 @@
   overflow: hidden;
 }
 
-/* 테블릿 햄버거 메뉴 */
-.tablet-hamburger-menu {
-  position: fixed;
-  top: 0;
-  right: -320px;
-  width: 320px;
-  height: 100vh;
-  background: white;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-  transition: right 0.3s ease;
-  z-index: 2000;
-  overflow-y: auto;
-}
-
-.tablet-hamburger-menu.show {
-  right: 0;
-}
-
-.hamburger-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1999;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-}
-
-.tablet-hamburger-menu.show + .hamburger-overlay {
-  opacity: 1;
-  visibility: visible;
-}
-
-.hamburger-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--gray-200);
-  background: var(--gray-50);
-}
-
-.hamburger-header h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--gray-900);
-  margin: 0;
-}
-
-.close-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: var(--gray-300);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: var(--gray-900);
-  font-size: 1.25rem;
-  font-weight: bold;
-}
-
-.close-btn:hover {
-  background: var(--gray-400);
-  color: var(--gray-900);
-  transform: scale(1.05);
-}
-
-.hamburger-nav {
-  padding: 1rem 0;
-}
-
-.hamburger-nav ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.hamburger-nav li {
-  margin: 0;
-}
-
-.hamburger-nav a {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1.5rem;
-  color: var(--gray-700);
-  text-decoration: none;
-  transition: all 0.2s ease;
-  font-weight: 500;
-}
-
-.hamburger-nav a:hover {
-  background: var(--gray-100);
-  color: var(--primary-600);
-}
-
-.hamburger-nav a i {
-  font-size: 1.125rem;
-  width: 20px;
-  text-align: center;
-}
-
-.logout-item {
-  border-top: 1px solid var(--gray-200);
-  margin-top: 0.5rem;
-}
-
-.logout-item a {
-  color: var(--red-600);
-}
-
-.logout-item a:hover {
-  background: var(--red-50);
-  color: var(--red-700);
-}
+/* 테블릿 햄버거 메뉴 - 컴포넌트별 CSS로 이동됨 */
 
 /* 테블릿 하단 네비게이션 */
 .tablet-bottom-navigation {
@@ -1081,9 +918,7 @@
 /* 1024px 기준 테블릿 사이즈에서 점진적으로 조정 */
 
 @media (max-width: 1024px) {
-  .tablet-header-content {
-    padding: 1rem 1.25rem;
-  }
+
   
   .action-cards {
     gap: 1.75rem;
@@ -1107,9 +942,7 @@
 }
 
 @media (max-width: 900px) {
-  .tablet-header-content {
-    padding: 1rem;
-  }
+
   
   .action-cards {
     gap: 1.5rem;
@@ -1137,9 +970,7 @@
 }
 
 @media (max-width: 768px) {
-  .tablet-header-content {
-    padding: 0.875rem;
-  }
+
   
   .action-cards {
     grid-template-columns: 1fr;
@@ -1175,9 +1006,7 @@
 }
 
 @media (max-width: 640px) {
-  .tablet-header-content {
-    padding: 0.75rem;
-  }
+
   
   .tablet-homepage .welcome-section {
     margin: 1.5rem;
@@ -1218,9 +1047,7 @@
 }
 
 @media (max-width: 480px) {
-  .tablet-header-content {
-    padding: 0.625rem;
-  }
+
   
   .tablet-homepage .welcome-section {
     margin: 1.25rem;

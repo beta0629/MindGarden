@@ -1,0 +1,108 @@
+<!-- 테블릿 전용 프로필 추가 정보 컴포넌트 -->
+<div th:fragment="tablet-profile-additional-info" class="tablet-profile-additional-info-component">
+    <style>
+        .tablet-profile-additional-info-component .form-section {
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+        
+        .tablet-profile-additional-info-component .form-section h3 {
+            color: #1F2937;
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            border-bottom: 2px solid #E5E7EB;
+            padding-bottom: 0.5rem;
+        }
+        
+        .tablet-profile-additional-info-component .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .tablet-profile-additional-info-component .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .tablet-profile-additional-info-component .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .tablet-profile-additional-info-component .form-label {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .tablet-profile-additional-info-component .form-input {
+            padding: 0.75rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+            background: #F9FAFB;
+        }
+        
+        .tablet-profile-additional-info-component .form-input:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+        
+        .tablet-profile-additional-info-component .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .tablet-profile-additional-info-component .form-select {
+            background: #F9FAFB;
+            cursor: pointer;
+        }
+    </style>
+    
+    <div class="form-section">
+        <h3>추가 정보</h3>
+        
+        <div class="form-group full-width">
+            <label class="form-label" for="bio">자기소개</label>
+            <textarea id="bio" name="bio" class="form-input form-textarea" 
+                      th:text="${user?.bio}" placeholder="자신에 대해 간단히 소개해주세요 (선택사항)"></textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="occupation">직업</label>
+                <input type="text" id="occupation" name="occupation" class="form-input" 
+                       th:value="${user?.occupation}" placeholder="직업을 입력하세요">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="location">지역</label>
+                <select id="location" name="location" class="form-input form-select">
+                    <option value="">지역을 선택하세요</option>
+                    <option value="서울" th:selected="${user?.location == '서울'}">서울</option>
+                    <option value="부산" th:selected="${user?.location == '부산'}">부산</option>
+                    <option value="대구" th:selected="${user?.location == '대구'}">대구</option>
+                    <option value="인천" th:selected="${user?.location == '인천'}">인천</option>
+                    <option value="광주" th:selected="${user?.location == '광주'}">광주</option>
+                    <option value="대전" th:selected="${user?.location == '대전'}">대전</option>
+                    <option value="울산" th:selected="${user?.location == '울산'}">울산</option>
+                    <option value="세종" th:selected="${user?.location == '세종'}">세종</option>
+                    <option value="기타" th:selected="${user?.location == '기타'}">기타</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group full-width">
+            <label class="form-label" for="interests">관심사</label>
+            <input type="text" id="interests" name="interests" class="form-input" 
+                   th:value="${user?.interests}" placeholder="관심사나 취미를 입력하세요 (쉼표로 구분)">
+            <small style="color: #6B7280; font-size: 0.875rem;">예: 독서, 영화감상, 등산</small>
+        </div>
+    </div>
+</div>

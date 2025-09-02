@@ -1,12 +1,11 @@
 package com.mindgarden.consultation.dto;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * 유저 프로필 조회 응답 DTO
@@ -29,7 +28,7 @@ public class UserProfileResponse {
     private String gender;
     private LocalDate birthDate;
     private String ageGroup;
-    private String role;
+    private com.mindgarden.consultation.constant.UserRole role;
     private String grade;
     private Long experiencePoints;
     private Integer totalConsultations;

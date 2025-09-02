@@ -1,0 +1,299 @@
+/* ConsultantFilter.css */
+
+.consultant-filter {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.filter-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.filter-icon {
+    font-size: 16px;
+}
+
+.consultant-count {
+    font-size: 12px;
+    color: #6c757d;
+    background-color: #e9ecef;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.filter-controls {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 16px;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+/* 검색 입력 */
+.search-input-container {
+    position: relative;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background-color: #fff;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+/* 필터 셀렉트 */
+.filter-select {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* 가용성 버튼들 */
+.availability-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.availability-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 50px;
+}
+
+.availability-btn:hover {
+    border-color: #007bff;
+    background-color: #f8f9ff;
+}
+
+.availability-btn.active {
+    border-color: #007bff;
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-icon {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.btn-label {
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+/* 필터 액션 */
+.filter-actions {
+    display: flex;
+    align-items: end;
+}
+
+.reset-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    border: 1px solid #6c757d;
+    border-radius: 6px;
+    background-color: #6c757d;
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reset-btn:hover:not(:disabled) {
+    background-color: #5a6268;
+    border-color: #5a6268;
+}
+
+.reset-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.reset-icon {
+    font-size: 12px;
+}
+
+/* 활성 필터 */
+.active-filters {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e9ecef;
+}
+
+.active-filters-label {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 500;
+    margin-right: 8px;
+}
+
+.active-filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.filter-tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background-color: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.remove-filter {
+    background: none;
+    border: none;
+    color: #1976d2;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 0;
+    margin-left: 2px;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.remove-filter:hover {
+    color: #0d47a1;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .filter-controls {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .availability-buttons {
+        justify-content: space-between;
+    }
+    
+    .availability-btn {
+        flex: 1;
+        min-width: auto;
+    }
+    
+    .filter-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .consultant-count {
+        align-self: flex-end;
+    }
+}
+
+/* 태블릿 */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .filter-controls {
+        grid-template-columns: 2fr 1fr;
+        gap: 12px;
+    }
+    
+    .availability-buttons {
+        grid-column: 1 / -1;
+    }
+    
+    .filter-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+    }
+}
+
+/* 애니메이션 */
+@keyframes filterSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.consultant-filter {
+    animation: filterSlideIn 0.3s ease;
+}
+
+/* 포커스 스타일 */
+.availability-btn:focus,
+.reset-btn:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}

@@ -50,6 +50,10 @@ public class Schedule extends BaseEntity {
     @Column(name = "schedule_type", length = 100)
     private String scheduleType; // CONSULTATION, BREAK, MEETING, TRAINING, OTHER
     
+    @Size(max = 50, message = "상담 유형은 50자 이하여야 합니다.")
+    @Column(name = "consultation_type", length = 50)
+    private String consultationType; // INDIVIDUAL, FAMILY, COUPLE, GROUP, INITIAL, FOLLOW_UP, CRISIS, ASSESSMENT
+    
     @Size(max = 500, message = "일정 제목은 500자 이하여야 합니다.")
     @Column(name = "title", length = 500)
     private String title;
@@ -267,6 +271,14 @@ public class Schedule extends BaseEntity {
     
     public void setScheduleType(String scheduleType) {
         this.scheduleType = scheduleType;
+    }
+    
+    public String getConsultationType() {
+        return consultationType;
+    }
+    
+    public void setConsultationType(String consultationType) {
+        this.consultationType = consultationType;
     }
     
     public String getTitle() {

@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Button, Modal, Form, Table, Toast, Badge } from 'react-bootstrap';
-import { FaUsers, FaUserTie, FaLink, FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Button, Alert } from 'react-bootstrap';
+import { FaUsers, FaUserTie, FaLink, FaSync, FaCalendarAlt, FaCalendarCheck, FaCog } from 'react-icons/fa';
+import TodayStatistics from './TodayStatistics';
+import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
 import './AdminDashboard.css';
 
-const AdminDashboard = () => {
-    const [consultants, setConsultants] = useState([]);
-    const [clients, setClients] = useState([]);
-    const [mappings, setMappings] = useState([]);
+const AdminDashboard = ({ user }) => {
     const [stats, setStats] = useState({
         totalConsultants: 0,
         totalClients: 0,
@@ -14,29 +13,22 @@ const AdminDashboard = () => {
         activeMappings: 0
     });
     
-    const [showConsultantModal, setShowConsultantModal] = useState(false);
-    const [showClientModal, setShowClientModal] = useState(false);
-    const [showMappingModal, setShowMappingModal] = useState(false);
-    const [showToast, setShowToast] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [showToastState, setShowToastState] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
 
-    // 모달 상태
-    const [consultantForm, setConsultantForm] = useState({
-        username: '', email: '', password: '', name: '', phone: '', specialization: ''
-    });
-    const [clientForm, setClientForm] = useState({
-        username: '', email: '', password: '', name: '', phone: '', consultationPurpose: ''
-    });
-    const [mappingForm, setMappingForm] = useState({
-        consultantId: '', clientId: '', notes: ''
-    });
-
-    useEffect(() => {
-        loadDashboardData();
+    const showToast = useCallback((message, type = 'success') => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToastState(true);
+        setTimeout(() => setShowToastState(false), 3000);
     }, []);
 
-    const loadDashboardData = async () => {
+
+
+    const loadStats = useCallback(async () => {
+        setLoading(true);
         try {
             const [consultantsRes, clientsRes, mappingsRes] = await Promise.all([
                 fetch('/api/admin/consultants'),
@@ -44,446 +36,199 @@ const AdminDashboard = () => {
                 fetch('/api/admin/mappings')
             ]);
 
+            let totalConsultants = 0;
+            let totalClients = 0;
+            let totalMappings = 0;
+            let activeMappings = 0;
+
             if (consultantsRes.ok) {
                 const consultantsData = await consultantsRes.json();
-                setConsultants(consultantsData.data || []);
-                setStats(prev => ({ ...prev, totalConsultants: consultantsData.count || 0 }));
+                totalConsultants = consultantsData.count || 0;
             }
 
             if (clientsRes.ok) {
                 const clientsData = await clientsRes.json();
-                setClients(clientsData.data || []);
-                setStats(prev => ({ ...prev, totalClients: clientsData.count || 0 }));
+                totalClients = clientsData.count || 0;
             }
 
             if (mappingsRes.ok) {
                 const mappingsData = await mappingsRes.json();
-                setMappings(mappingsData.data || []);
-                setStats(prev => ({ 
-                    ...prev, 
-                    totalMappings: mappingsData.count || 0,
-                    activeMappings: (mappingsData.data || []).filter(m => m.status === 'ACTIVE').length
-                }));
+                totalMappings = mappingsData.count || 0;
+                activeMappings = (mappingsData.data || []).filter(m => m.status === 'ACTIVE').length;
             }
+
+            setStats({
+                totalConsultants,
+                totalClients,
+                totalMappings,
+                activeMappings
+            });
         } catch (error) {
-            console.error('대시보드 데이터 로드 실패:', error);
-            showToast('데이터 로드에 실패했습니다.', 'danger');
+            console.error('통계 데이터 로드 실패:', error);
+            showToast('통계 데이터 로드에 실패했습니다.', 'danger');
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [showToast]);
 
-    const showToast = (message, type = 'success') => {
-        setToastMessage(message);
-        setToastType(type);
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-    };
+    useEffect(() => {
+        loadStats();
+    }, [loadStats]);
 
-    const handleConsultantSubmit = async (e) => {
-        e.preventDefault();
+    const createTestData = async () => {
         try {
-            const response = await fetch('/api/admin/consultants', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(consultantForm)
+            const response = await fetch('/api/test/create-test-data', {
+                method: 'POST'
             });
 
             if (response.ok) {
-                showToast('상담사가 성공적으로 등록되었습니다.');
-                setShowConsultantModal(false);
-                setConsultantForm({ username: '', email: '', password: '', name: '', phone: '', specialization: '' });
-                loadDashboardData();
+                showToast('테스트 데이터가 성공적으로 생성되었습니다.');
+                loadStats();
             } else {
                 const error = await response.json();
-                showToast(error.message || '상담사 등록에 실패했습니다.', 'danger');
+                showToast(error.message || '테스트 데이터 생성에 실패했습니다.', 'danger');
             }
         } catch (error) {
-            console.error('상담사 등록 실패:', error);
-            showToast('상담사 등록에 실패했습니다.', 'danger');
-        }
-    };
-
-    const handleClientSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await fetch('/api/admin/clients', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(clientForm)
-            });
-
-            if (response.ok) {
-                showToast('내담자가 성공적으로 등록되었습니다.');
-                setShowClientModal(false);
-                setClientForm({ username: '', email: '', password: '', name: '', phone: '', consultationPurpose: '' });
-                loadDashboardData();
-            } else {
-                const error = await response.json();
-                showToast(error.message || '내담자 등록에 실패했습니다.', 'danger');
-            }
-        } catch (error) {
-            console.error('내담자 등록 실패:', error);
-            showToast('내담자 등록에 실패했습니다.', 'danger');
-        }
-    };
-
-    const handleMappingSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await fetch('/api/admin/mappings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(mappingForm)
-            });
-
-            if (response.ok) {
-                showToast('매핑이 성공적으로 생성되었습니다.');
-                setShowMappingModal(false);
-                setMappingForm({ consultantId: '', clientId: '', notes: '' });
-                loadDashboardData();
-            } else {
-                const error = await response.json();
-                showToast(error.message || '매핑 생성에 실패했습니다.', 'danger');
-            }
-        } catch (error) {
-            console.error('매핑 생성 실패:', error);
-            showToast('매핑 생성에 실패했습니다.', 'danger');
+            console.error('테스트 데이터 생성 실패:', error);
+            showToast('테스트 데이터 생성에 실패했습니다.', 'danger');
         }
     };
 
     return (
-        <div className="admin-dashboard">
-            <div className="dashboard-header">
-                <h1>관리자 대시보드</h1>
-                <p>상담사, 내담자, 매핑을 관리하세요</p>
+        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CONTAINER}>
+            {/* 오늘의 통계 */}
+            {user && user.id && user.role && (
+                <TodayStatistics 
+                    userId={user.id} 
+                    userRole={user.role} 
+                />
+            )}
+
+            {/* 시스템 개요 */}
+            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                    <i className={ICONS.BI.SPEEDOMETER}></i>
+                    시스템 개요
+                </h2>
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARDS}>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} consultants`}>
+                            <FaUserTie />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                            <h3>상담사</h3>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{stats.totalConsultants}명</div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>등록된 상담사</div>
+                        </div>
+                    </div>
+                    
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} clients`}>
+                            <FaUsers />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                            <h3>내담자</h3>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{stats.totalClients}명</div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>등록된 내담자</div>
+                        </div>
+                    </div>
+                    
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} mappings`}>
+                            <FaLink />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                            <h3>매핑</h3>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{stats.totalMappings}개</div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>생성된 매핑</div>
+                        </div>
+                    </div>
+                    
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} active`}>
+                            <FaLink />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                            <h3>활성 매핑</h3>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{stats.activeMappings}개</div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>활성 상태</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* 통계 카드 */}
-            <div className="stats-grid">
-                <Card className="stat-card">
-                    <Card.Body>
-                        <div className="stat-content">
-                            <FaUsers className="stat-icon" />
-                            <div>
-                                <h3>{stats.totalConsultants}</h3>
-                                <p>전체 상담사</p>
-                            </div>
+            {/* 관리 기능 */}
+            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                    <i className={ICONS.BI.GEAR}></i>
+                    관리 기능
+                </h2>
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => window.location.href = '/admin/schedule'}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} schedule`}>
+                            <FaCalendarAlt />
                         </div>
-                    </Card.Body>
-                </Card>
-
-                <Card className="stat-card">
-                    <Card.Body>
-                        <div className="stat-content">
-                            <FaUserTie className="stat-icon" />
-                            <div>
-                                <h3>{stats.totalClients}</h3>
-                                <p>전체 내담자</p>
-                            </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>스케줄 관리</h3>
+                            <p>상담 일정을 관리하고 조정합니다</p>
                         </div>
-                    </Card.Body>
-                </Card>
-
-                <Card className="stat-card">
-                    <Card.Body>
-                        <div className="stat-content">
-                            <FaLink className="stat-icon" />
-                            <div>
-                                <h3>{stats.totalMappings}</h3>
-                                <p>전체 매핑</p>
-                            </div>
+                    </div>
+                    
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => window.location.href = '/admin/sessions'}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} sessions`}>
+                            <FaCalendarCheck />
                         </div>
-                    </Card.Body>
-                </Card>
-
-                <Card className="stat-card">
-                    <Card.Body>
-                        <div className="stat-content">
-                            <FaLink className="stat-icon" />
-                            <div>
-                                <h3>{stats.activeMappings}</h3>
-                                <p>활성 매핑</p>
-                            </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>회기 관리</h3>
+                            <p>상담 회기를 등록하고 관리합니다</p>
                         </div>
-                    </Card.Body>
-                </Card>
+                    </div>
+                    
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => window.location.href = '/admin/consultant-comprehensive'}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} consultants`}>
+                            <FaUserTie />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>상담사 관리</h3>
+                            <p>상담사 정보를 관리합니다</p>
+                        </div>
+                    </div>
+                    
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => window.location.href = '/admin/client-comprehensive'}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} clients`}>
+                            <FaUsers />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>내담자 관리</h3>
+                            <p>내담자 정보를 관리합니다</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* 액션 버튼 */}
-            <div className="action-buttons">
-                <Button variant="primary" onClick={() => setShowConsultantModal(true)}>
-                    <FaPlus /> 상담사 등록
-                </Button>
-                <Button variant="success" onClick={() => setShowClientModal(true)}>
-                    <FaPlus /> 내담자 등록
-                </Button>
-                <Button variant="info" onClick={() => setShowMappingModal(true)}>
-                    <FaLink /> 매핑 생성
-                </Button>
+            {/* 시스템 도구 */}
+            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                    <i className={ICONS.BI.TOOLS}></i>
+                    시스템 도구
+                </h2>
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.TOOL_BUTTONS}>
+                    <Button variant="outline-secondary" onClick={loadStats} disabled={loading}>
+                        <FaSync /> 새로고침
+                    </Button>
+                </div>
             </div>
-
-            {/* 매핑 목록 */}
-            <Card className="mappings-card">
-                <Card.Header>
-                    <h5>최근 매핑</h5>
-                </Card.Header>
-                <Card.Body>
-                    <Table responsive>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>상담사</th>
-                                <th>내담자</th>
-                                <th>상태</th>
-                                <th>생성일</th>
-                                <th>액션</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {mappings.slice(0, 5).map((mapping) => (
-                                <tr key={mapping.id}>
-                                    <td>{mapping.id}</td>
-                                    <td>{mapping.consultantName}</td>
-                                    <td>{mapping.clientName}</td>
-                                    <td>
-                                        <Badge bg={mapping.status === 'ACTIVE' ? 'success' : 'secondary'}>
-                                            {mapping.status}
-                                        </Badge>
-                                    </td>
-                                    <td>{new Date(mapping.createdAt).toLocaleDateString()}</td>
-                                    <td>
-                                        <Button size="sm" variant="outline-primary" className="me-2">
-                                            <FaEye />
-                                        </Button>
-                                        <Button size="sm" variant="outline-warning" className="me-2">
-                                            <FaEdit />
-                                        </Button>
-                                        <Button size="sm" variant="outline-danger">
-                                            <FaTrash />
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                </Card.Body>
-            </Card>
-
-            {/* 상담사 등록 모달 */}
-            <Modal show={showConsultantModal} onHide={() => setShowConsultantModal(false)} size="lg">
-                <Modal.Header closeButton>
-                    <Modal.Title>상담사 등록</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handleConsultantSubmit}>
-                        <Form.Group className="mb-3">
-                            <Form.Label>사용자명</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={consultantForm.username}
-                                onChange={(e) => setConsultantForm({...consultantForm, username: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>이메일</Form.Label>
-                            <Form.Control
-                                type="email"
-                                value={consultantForm.email}
-                                onChange={(e) => setConsultantForm({...consultantForm, email: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>비밀번호</Form.Label>
-                            <Form.Control
-                                type="password"
-                                value={consultantForm.password}
-                                onChange={(e) => setConsultantForm({...consultantForm, password: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>이름</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={consultantForm.name}
-                                onChange={(e) => setConsultantForm({...consultantForm, name: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>전화번호</Form.Label>
-                            <Form.Control
-                                type="tel"
-                                value={consultantForm.phone}
-                                onChange={(e) => setConsultantForm({...consultantForm, phone: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>전문분야</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={consultantForm.specialization}
-                                onChange={(e) => setConsultantForm({...consultantForm, specialization: e.target.value})}
-                            />
-                        </Form.Group>
-                        <div className="d-flex justify-content-end gap-2">
-                            <Button variant="secondary" onClick={() => setShowConsultantModal(false)}>
-                                취소
-                            </Button>
-                            <Button variant="primary" type="submit">
-                                등록
-                            </Button>
-                        </div>
-                    </Form>
-                </Modal.Body>
-            </Modal>
-
-            {/* 내담자 등록 모달 */}
-            <Modal show={showClientModal} onHide={() => setShowClientModal(false)} size="lg">
-                <Modal.Header closeButton>
-                    <Modal.Title>내담자 등록</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handleClientSubmit}>
-                        <Form.Group className="mb-3">
-                            <Form.Label>사용자명</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={clientForm.username}
-                                onChange={(e) => setClientForm({...clientForm, username: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>이메일</Form.Label>
-                            <Form.Control
-                                type="email"
-                                value={clientForm.email}
-                                onChange={(e) => setClientForm({...clientForm, email: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>비밀번호</Form.Label>
-                            <Form.Control
-                                type="password"
-                                value={clientForm.password}
-                                onChange={(e) => setClientForm({...clientForm, password: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>이름</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={clientForm.name}
-                                onChange={(e) => setClientForm({...clientForm, name: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>전화번호</Form.Label>
-                            <Form.Control
-                                type="tel"
-                                value={clientForm.phone}
-                                onChange={(e) => setClientForm({...clientForm, phone: e.target.value})}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>상담 목적</Form.Label>
-                            <Form.Control
-                                as="textarea"
-                                rows={3}
-                                value={clientForm.consultationPurpose}
-                                onChange={(e) => setClientForm({...clientForm, consultationPurpose: e.target.value})}
-                            />
-                        </Form.Group>
-                        <div className="d-flex justify-content-end gap-2">
-                            <Button variant="secondary" onClick={() => setShowClientModal(false)}>
-                                취소
-                            </Button>
-                            <Button variant="success" type="submit">
-                                등록
-                            </Button>
-                        </div>
-                    </Form>
-                </Modal.Body>
-            </Modal>
-
-            {/* 매핑 생성 모달 */}
-            <Modal show={showMappingModal} onHide={() => setShowMappingModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>매핑 생성</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handleMappingSubmit}>
-                        <Form.Group className="mb-3">
-                            <Form.Label>상담사</Form.Label>
-                            <Form.Select
-                                value={mappingForm.consultantId}
-                                onChange={(e) => setMappingForm({...mappingForm, consultantId: e.target.value})}
-                                required
-                            >
-                                <option value="">상담사를 선택하세요</option>
-                                {consultants.map(consultant => (
-                                    <option key={consultant.id} value={consultant.id}>
-                                        {consultant.name} ({consultant.email})
-                                    </option>
-                                ))}
-                            </Form.Select>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>내담자</Form.Label>
-                            <Form.Select
-                                value={mappingForm.clientId}
-                                onChange={(e) => setMappingForm({...mappingForm, clientId: e.target.value})}
-                                required
-                            >
-                                <option value="">내담자를 선택하세요</option>
-                                {clients.map(client => (
-                                    <option key={client.id} value={client.id}>
-                                        {client.name} ({client.email})
-                                    </option>
-                                ))}
-                            </Form.Select>
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>메모</Form.Label>
-                            <Form.Control
-                                as="textarea"
-                                rows={3}
-                                value={mappingForm.notes}
-                                onChange={(e) => setMappingForm({...mappingForm, notes: e.target.value})}
-                                placeholder="매핑에 대한 메모를 입력하세요"
-                            />
-                        </Form.Group>
-                        <div className="d-flex justify-content-end gap-2">
-                            <Button variant="secondary" onClick={() => setShowMappingModal(false)}>
-                                취소
-                            </Button>
-                            <Button variant="info" type="submit">
-                                생성
-                            </Button>
-                        </div>
-                    </Form>
-                </Modal.Body>
-            </Modal>
 
             {/* 토스트 알림 */}
-            <Toast 
-                show={showToast} 
-                onClose={() => setShowToast(false)}
-                className={`toast-${toastType}`}
-                style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999 }}
-            >
-                <Toast.Header>
-                    <strong className="me-auto">알림</strong>
-                </Toast.Header>
-                <Toast.Body>{toastMessage}</Toast.Body>
-            </Toast>
+            {showToastState && (
+                <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.TOAST} toast-${toastType}`} style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999 }}>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.TOAST_HEADER}>
+                        <strong className="me-auto">알림</strong>
+                        <button type="button" className="btn-close" onClick={() => setShowToastState(false)}></button>
+                    </div>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.TOAST_BODY}>{toastMessage}</div>
+                </div>
+            )}
         </div>
     );
 };

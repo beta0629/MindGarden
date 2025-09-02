@@ -3,6 +3,7 @@ package com.mindgarden.consultation.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -78,19 +79,19 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * 역할별 사용자 조회 (활성 상태만)
      */
     @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isDeleted = false")
-    List<User> findByRole(String role);
+    List<User> findByRole(UserRole role);
     
     /**
      * 역할별 사용자 페이징 조회 (활성 상태만)
      */
     @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isDeleted = false")
-    Page<User> findByRole(String role, Pageable pageable);
+    Page<User> findByRole(UserRole role, Pageable pageable);
     
     /**
      * 역할별 사용자 개수 조회 (활성 상태만)
      */
     @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.isDeleted = false")
-    long countByRole(String role);
+    long countByRole(UserRole role);
     
     /**
      * 등급별 사용자 조회 (활성 상태만)
@@ -304,7 +305,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
            "u.isDeleted = false")
     Page<User> findByComplexCriteria(@Param("name") String name,
                                    @Param("email") String email,
-                                   @Param("role") String role,
+                                   @Param("role") UserRole role,
                                    @Param("grade") String grade,
                                    @Param("isActive") Boolean isActive,
                                    @Param("gender") String gender,

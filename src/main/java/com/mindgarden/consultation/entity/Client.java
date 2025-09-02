@@ -2,6 +2,7 @@ package com.mindgarden.consultation.entity;
 
 import java.time.LocalDate;
 import com.mindgarden.consultation.constant.UserGrade;
+import com.mindgarden.consultation.constant.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
@@ -113,7 +114,7 @@ public class Client extends User {
     // 생성자
     public Client() {
         super();
-        setRole("CLIENT");
+        setRole(UserRole.CLIENT);
         setGrade(UserGrade.CLIENT_BRONZE);
         this.riskLevel = "LOW";
         this.consultationPriority = "NORMAL";

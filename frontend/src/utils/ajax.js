@@ -59,6 +59,7 @@ export const apiGet = async (endpoint, options = {}) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'GET',
       headers: { ...getDefaultHeaders(), ...options.headers },
+      credentials: 'include', // 세션 쿠키 포함
       ...options
     });
 
@@ -80,6 +81,7 @@ export const apiPost = async (endpoint, data = {}, options = {}) => {
       method: 'POST',
       headers: { ...getDefaultHeaders(), ...options.headers },
       body: JSON.stringify(data),
+      credentials: 'include', // 세션 쿠키 포함
       ...options
     });
 

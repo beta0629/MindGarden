@@ -1,0 +1,378 @@
+/**
+ * MindGarden - 홈페이지 전용 공통 CSS
+ * 홈페이지 화면에서 일관된 디자인과 분위기를 제공
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2024-12-19
+ */
+
+/* ===== 홈페이지 전용 색상 팔레트 ===== */
+:root {
+    /* 홈페이지 메인 색상 */
+    --homepage-primary: #3B82F6;          /* 파란색 계열 */
+    --homepage-primary-light: #60A5FA;    /* 밝은 파란색 */
+    --homepage-primary-dark: #2563EB;     /* 어두운 파란색 */
+    
+    /* 홈페이지 보조 색상 */
+    --homepage-secondary: #10B981;        /* 초록색 계열 */
+    --homepage-secondary-light: #34D399;  /* 밝은 초록색 */
+    --homepage-secondary-dark: #059669;   /* 어두운 초록색 */
+    
+    /* 그라디언트 */
+    --homepage-gradient-primary: linear-gradient(135deg, var(--homepage-primary), var(--homepage-secondary));
+    --homepage-gradient-secondary: linear-gradient(135deg, var(--homepage-primary-light), var(--homepage-secondary-light));
+    
+    /* 배경 색상 */
+    --homepage-bg-primary: #FFFFFF;       /* 메인 배경 */
+    --homepage-bg-secondary: #F8FAFC;     /* 보조 배경 */
+    --homepage-bg-accent: #EFF6FF;        /* 강조 배경 */
+    
+    /* 텍스트 색상 */
+    --homepage-text-primary: #1F2937;     /* 주요 텍스트 */
+    --homepage-text-secondary: #6B7280;   /* 보조 텍스트 */
+    --homepage-text-light: #9CA3AF;       /* 밝은 텍스트 */
+    
+    /* 테두리 색상 */
+    --homepage-border-primary: #E5E7EB;   /* 주요 테두리 */
+    --homepage-border-secondary: #D1D5DB; /* 보조 테두리 */
+    --homepage-border-accent: #BFDBFE;    /* 강조 테두리 */
+    
+    /* 그림자 */
+    --homepage-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --homepage-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --homepage-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --homepage-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    
+    /* 테두리 반경 */
+    --homepage-radius-sm: 6px;
+    --homepage-radius-md: 8px;
+    --homepage-radius-lg: 12px;
+    --homepage-radius-xl: 16px;
+    
+    /* 간격 */
+    --homepage-space-xs: 6px;
+    --homepage-space-sm: 10px;
+    --homepage-space-md: 14px;
+    --homepage-space-lg: 20px;
+    --homepage-space-xl: 28px;
+    --homepage-space-2xl: 40px;
+    
+    /* 전환 효과 */
+    --homepage-transition-fast: 0.2s ease;
+    --homepage-transition-normal: 0.3s ease;
+    --homepage-transition-slow: 0.5s ease;
+}
+
+/* ===== 홈페이지 전용 타이포그래피 ===== */
+.homepage-text {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--homepage-text-primary);
+}
+
+.homepage-heading-1 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--homepage-primary);
+    margin: 0;
+    line-height: 1.1;
+}
+
+.homepage-heading-2 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--homepage-text-primary);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.homepage-heading-3 {
+    font-size: 1.875rem;
+    font-weight: 600;
+    color: var(--homepage-text-primary);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.homepage-body-large {
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: var(--homepage-text-secondary);
+    line-height: 1.7;
+}
+
+.homepage-body {
+    font-size: 1.125rem;
+    font-weight: 400;
+    color: var(--homepage-text-secondary);
+    line-height: 1.7;
+}
+
+.homepage-caption {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--homepage-text-light);
+    line-height: 1.6;
+}
+
+/* ===== 홈페이지 전용 버튼 시스템 ===== */
+.homepage-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--homepage-space-sm);
+    padding: var(--homepage-space-md) var(--homepage-space-xl);
+    border: none;
+    border-radius: var(--homepage-radius-md);
+    font-size: 1.125rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--homepage-transition-normal);
+    min-height: 52px;
+}
+
+.homepage-btn-primary {
+    background: var(--homepage-gradient-primary);
+    color: white;
+    box-shadow: var(--homepage-shadow-md);
+}
+
+.homepage-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--homepage-shadow-lg);
+}
+
+.homepage-btn-secondary {
+    background: var(--homepage-bg-primary);
+    color: var(--homepage-text-primary);
+    border: 2px solid var(--homepage-border-primary);
+}
+
+.homepage-btn-secondary:hover {
+    border-color: var(--homepage-border-accent);
+    background: var(--homepage-bg-accent);
+}
+
+.homepage-btn-ghost {
+    background: transparent;
+    color: var(--homepage-text-secondary);
+    border: 2px solid transparent;
+}
+
+.homepage-btn-ghost:hover {
+    color: var(--homepage-primary);
+    background: var(--homepage-bg-accent);
+}
+
+/* ===== 홈페이지 전용 카드 시스템 ===== */
+.homepage-card {
+    background: var(--homepage-bg-primary);
+    border-radius: var(--homepage-radius-lg);
+    padding: var(--homepage-space-2xl);
+    box-shadow: var(--homepage-shadow-md);
+    border: 1px solid var(--homepage-border-primary);
+    transition: all var(--homepage-transition-normal);
+}
+
+.homepage-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--homepage-shadow-xl);
+    border-color: var(--homepage-border-accent);
+}
+
+.homepage-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--homepage-space-lg);
+    margin-bottom: var(--homepage-space-xl);
+}
+
+.homepage-card-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--homepage-radius-md);
+    background: var(--homepage-gradient-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.75rem;
+}
+
+.homepage-card-title {
+    margin: 0;
+    color: var(--homepage-text-primary);
+}
+
+.homepage-card-content {
+    color: var(--homepage-text-secondary);
+    margin-bottom: var(--homepage-space-xl);
+}
+
+/* ===== 홈페이지 전용 헤더 시스템 ===== */
+.homepage-header {
+    background: var(--homepage-gradient-primary);
+    color: white;
+    padding: var(--homepage-space-xl) 0;
+    box-shadow: var(--homepage-shadow-lg);
+}
+
+.homepage-header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--homepage-space-2xl);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.homepage-logo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--homepage-space-xs);
+}
+
+.homepage-logo h1 {
+    margin: 0;
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: white;
+}
+
+.homepage-logo p {
+    margin: 0;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ===== 홈페이지 전용 그리드 시스템 ===== */
+.homepage-grid {
+    display: grid;
+    gap: var(--homepage-space-2xl);
+}
+
+.homepage-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+}
+
+.homepage-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.homepage-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* ===== 홈페이지 전용 컨테이너 ===== */
+.homepage-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--homepage-space-2xl);
+}
+
+.homepage-section {
+    padding: var(--homepage-space-2xl) 0;
+}
+
+/* ===== 홈페이지 전용 애니메이션 ===== */
+@keyframes homepage-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes homepage-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.homepage-fade-in {
+    animation: homepage-fade-in 0.8s ease-out;
+}
+
+.homepage-slide-in {
+    animation: homepage-slide-in 0.8s ease-out;
+}
+
+/* ===== 홈페이지 전용 반응형 ===== */
+/* 홈페이지는 모든 화면 크기에서 반응형 지원 */
+@media (max-width: 1024px) {
+    .homepage-container {
+        padding: 0 var(--homepage-space-xl);
+    }
+    
+    .homepage-header-content {
+        padding: 0 var(--homepage-space-xl);
+    }
+    
+    .homepage-grid-2 {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .homepage-container {
+        padding: 0 var(--homepage-space-lg);
+    }
+    
+    .homepage-header-content {
+        flex-direction: column;
+        gap: var(--homepage-space-lg);
+        text-align: center;
+    }
+    
+    .homepage-grid-2,
+    .homepage-grid-3,
+    .homepage-grid-4 {
+        grid-template-columns: 1fr;
+    }
+    
+    .homepage-card {
+        padding: var(--homepage-space-xl);
+    }
+    
+    .homepage-heading-1 {
+        font-size: 2.5rem;
+    }
+    
+    .homepage-heading-2 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .homepage-container {
+        padding: 0 var(--homepage-space-md);
+    }
+    
+    .homepage-card {
+        padding: var(--homepage-space-lg);
+    }
+    
+    .homepage-btn {
+        padding: var(--homepage-space-sm) var(--homepage-space-lg);
+        min-height: 48px;
+        font-size: 1rem;
+    }
+    
+    .homepage-heading-1 {
+        font-size: 2rem;
+    }
+    
+    .homepage-heading-2 {
+        font-size: 1.75rem;
+    }
+}

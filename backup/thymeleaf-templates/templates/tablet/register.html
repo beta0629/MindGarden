@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindGarden - 테블릿 회원가입</title>
+</head>
+<body th:replace="~{common/layout/tablet-base}">
+    
+    <!-- 페이지별 컨텐츠 -->
+    <div th:fragment="content" class="tablet-register-page" style="padding-top: 200px !important; margin-top: 0 !important; transform: none !important;">
+        <!-- 회원가입 폼 섹션 -->
+        <div class="register-form-section">
+            <div class="form-container">
+                <!-- 왼쪽: 회원가입 폼 -->
+                <div class="register-form-content">
+                    <h2 class="form-title">회원가입</h2>
+                    <p class="form-subtitle">새로운 계정을 만들어 서비스를 이용하세요</p>
+                    
+                    <form id="registerForm" class="register-form" th:action="@{/api/auth/register}" method="post">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name" class="form-label">이름 *</label>
+                                <div class="input-wrapper">
+                                    <div class="input-icon">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                    <input type="text" id="name" name="name" class="form-input" placeholder="이름을 입력하세요" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="nickname" class="form-label">닉네임</label>
+                                <div class="input-wrapper">
+                                    <div class="input-icon">
+                                        <i class="bi bi-person-badge"></i>
+                                    </div>
+                                    <input type="text" id="nickname" name="nickname" class="form-input" placeholder="닉네임을 입력하세요">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email" class="form-label">이메일 *</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon">
+                                    <i class="bi bi-envelope"></i>
+                                </div>
+                                <input type="email" id="email" name="email" class="form-input" placeholder="이메일을 입력하세요" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="password" class="form-label">비밀번호 *</label>
+                                <div class="input-wrapper">
+                                    <div class="input-icon">
+                                        <i class="bi bi-lock"></i>
+                                    </div>
+                                    <input type="password" id="password" name="password" class="form-input" placeholder="8자 이상 입력하세요" required minlength="8">
+                                    <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="passwordConfirm" class="form-label">비밀번호 확인 *</label>
+                                <div class="input-wrapper">
+                                    <div class="input-icon">
+                                        <i class="bi bi-lock-fill"></i>
+                                    </div>
+                                    <input type="password" id="passwordConfirm" name="passwordConfirm" class="form-input" placeholder="비밀번호를 한 번 더 입력하세요" required minlength="8">
+                                    <button type="button" class="password-toggle" onclick="togglePassword('passwordConfirm')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone" class="form-label">휴대폰 번호 *</label>
+                            <div class="input-wrapper">
+                                <div class="input-icon">
+                                    <i class="bi bi-phone"></i>
+                                </div>
+                                <input type="tel" id="phone" name="phone" class="form-input" placeholder="010-0000-0000" required maxlength="13">
+                            </div>
+                            <small class="form-help">숫자만 입력하면 자동으로 하이픈이 추가됩니다</small>
+                        </div>
+                        
+                        <div class="form-agreement">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="register-agreeTerms" name="agreeTerms" required>
+                                <span class="checkmark"></span>
+                                <span class="agreement-text">
+                                    <a href="/terms" target="_blank">이용약관</a> 및 
+                                    <a href="/privacy" target="_blank">개인정보처리방침</a>에 동의합니다 *
+                                </span>
+                            </label>
+                            
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="register-agreeMarketing" name="agreeMarketing">
+                                <span class="checkmark"></span>
+                                <span class="agreement-text">
+                                    마케팅 정보 수신에 동의합니다 (선택)
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="register-button">
+                            <span class="button-text">회원가입</span>
+                            <div class="button-icon">
+                                <i class="bi bi-arrow-right"></i>
+                            </div>
+                        </button>
+                    </form>
+                    
+                    <div class="login-link">
+                        <p>이미 계정이 있으신가요? <a href="/tablet/login" class="link">로그인</a></p>
+                    </div>
+                </div>
+                
+                <!-- 오른쪽: 이미지 영역 -->
+                <div class="form-side-image">
+                    <div class="welcome-illustration">
+                        <i class="bi bi-person-plus"></i>
+                        <h3>마음정원 가족이 되어보세요</h3>
+                        <p>상담사와 함께 마음의 평화를 찾아보세요.<br>언제든지 편안하게 이야기할 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 페이지별 JavaScript -->
+    <script th:fragment="additionalScripts">
+    // 비밀번호 표시/숨김 토글
+    function togglePassword(fieldId) {
+        const passwordInput = document.getElementById(fieldId);
+        const passwordToggle = passwordInput.nextElementSibling;
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            passwordToggle.innerHTML = '<i class="bi bi-eye-slash"></i>';
+        } else {
+            passwordInput.type = 'password';
+            passwordToggle.innerHTML = '<i class="bi bi-eye"></i>';
+        }
+    }
+    
+    // 휴대폰 번호 자동 하이픈
+    document.addEventListener('DOMContentLoaded', function() {
+        const phoneInput = document.getElementById('phone');
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^0-9]/g, '');
+            
+            if (value.length > 11) {
+                value = value.slice(0, 11);
+            }
+            
+            if (value.length >= 3 && value.length <= 7) {
+                value = value.slice(0, 3) + '-' + value.slice(3);
+            } else if (value.length >= 8) {
+                value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7);
+            }
+            
+            e.target.value = value;
+        });
+    });
+    </script>
+</body>
+</html>

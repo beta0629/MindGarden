@@ -176,6 +176,303 @@ const ClientDashboard = () => {
 - 시스템 현황 (전체 사용자, 활성 상담사)
 - 시스템 관리 빠른 액션
 
+## 🏢 관리자 컴포넌트
+
+### 1. CommonCodeManagement
+
+**파일**: `src/components/admin/CommonCodeManagement.js`
+
+**역할**: 공통코드 관리 메인 컴포넌트
+
+**Props**:
+- 없음 (내부적으로 상태 관리)
+
+**사용법**:
+```jsx
+import CommonCodeManagement from '../components/admin/CommonCodeManagement';
+
+const AdminCommonCodesPage = () => {
+  return (
+    <TabletLayout user={user} onLogout={handleLogout}>
+      <CommonCodeManagement />
+    </TabletLayout>
+  );
+};
+```
+
+**주요 기능**:
+- 공통코드 목록 조회 및 표시
+- 공통코드 생성, 수정, 삭제
+- 코드 그룹별 필터링
+- 검색 기능
+- 통계 정보 표시
+
+### 2. CommonCodeList
+
+**파일**: `src/components/admin/commoncode/CommonCodeList.js`
+
+**역할**: 공통코드 목록을 카드 형태로 표시하는 컴포넌트
+
+**Props**:
+- `commonCodes`: 공통코드 배열
+- `loading`: 로딩 상태
+- `onEdit`: 편집 핸들러
+- `onDelete`: 삭제 핸들러
+- `onToggleStatus`: 상태 토글 핸들러
+
+**사용법**:
+```jsx
+<CommonCodeList 
+  commonCodes={codes}
+  loading={isLoading}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+  onToggleStatus={handleToggleStatus}
+/>
+```
+
+**주요 기능**:
+- 카드 형태의 반응형 레이아웃
+- 상세 정보 표시 (코드 그룹, 값, 라벨, 설명, 정렬 순서, 생성일, 수정일)
+- 계층 구조 정보 (상위 코드 그룹, 상위 코드 값)
+- 확장 데이터 필드
+- 활성/비활성 상태 토글
+- 편집/삭제 액션 버튼
+
+**카드 구조**:
+```
+┌─────────────────────────────────┐
+│ [코드그룹] 코드 라벨    [상태]   │ ← 헤더
+├─────────────────────────────────┤
+│ 코드 값: basic_10               │
+│ 설명: 기본적인 10회기 상담 패키지 │
+│ 정렬순서: 1  생성일: 2025.9.3   │ ← 바디
+│ 수정일: 2025.9.3 (있는 경우)    │
+│ 상위코드: (계층구조 정보)        │
+│ 추가데이터: (확장 필드)         │
+├─────────────────────────────────┤
+│              [편집] [삭제]      │ ← 푸터
+└─────────────────────────────────┘
+```
+
+### 3. CommonCodeStats
+
+**파일**: `src/components/admin/commoncode/CommonCodeStats.js`
+
+**역할**: 공통코드 통계 정보를 표시하는 컴포넌트
+
+**Props**:
+- `stats`: 통계 데이터 객체
+
+**사용법**:
+```jsx
+<CommonCodeStats stats={statistics} />
+```
+
+**주요 기능**:
+- 전체 코드 수
+- 활성/비활성 코드 수
+- 코드 그룹별 분포
+- 최근 생성된 코드 수
+
+### 4. CommonCodeFilters
+
+**파일**: `src/components/admin/commoncode/CommonCodeFilters.js`
+
+**역할**: 공통코드 필터링 및 검색 기능을 제공하는 컴포넌트
+
+**Props**:
+- `filters`: 현재 필터 상태
+- `onFilterChange`: 필터 변경 핸들러
+- `onSearch`: 검색 핸들러
+
+**사용법**:
+```jsx
+<CommonCodeFilters 
+  filters={currentFilters}
+  onFilterChange={handleFilterChange}
+  onSearch={handleSearch}
+/>
+```
+
+**주요 기능**:
+- 코드 그룹별 필터링
+- 활성/비활성 상태 필터링
+- 텍스트 검색 (코드 값, 라벨, 설명)
+- 필터 초기화
+
+### 5. CommonCodeForm
+
+**파일**: `src/components/admin/commoncode/CommonCodeForm.js`
+
+**역할**: 공통코드 생성 및 편집을 위한 폼 컴포넌트
+
+**Props**:
+- `code`: 편집할 코드 데이터 (생성 시 null)
+- `onSubmit`: 폼 제출 핸들러
+- `onCancel`: 취소 핸들러
+
+**사용법**:
+```jsx
+<CommonCodeForm 
+  code={editingCode}
+  onSubmit={handleSubmit}
+  onCancel={handleCancel}
+/>
+```
+
+**주요 기능**:
+- 코드 그룹 선택
+- 코드 값 입력
+- 코드 라벨 입력
+- 설명 입력
+- 정렬 순서 설정
+- 활성/비활성 상태 설정
+- 상위 코드 설정 (계층 구조)
+- 추가 데이터 입력
+
+## 🔗 매핑 관리 컴포넌트
+
+### 1. MappingManagement
+
+**파일**: `src/components/admin/MappingManagement.js`
+
+**역할**: 상담사-내담자 매핑 관리 메인 컴포넌트
+
+**Props**:
+- 없음 (내부적으로 상태 관리)
+
+**사용법**:
+```jsx
+import MappingManagement from '../components/admin/MappingManagement';
+
+const AdminMappingPage = () => {
+  return (
+    <TabletLayout user={user} onLogout={handleLogout}>
+      <MappingManagement />
+    </TabletLayout>
+  );
+};
+```
+
+**주요 기능**:
+- 매핑 목록 조회 및 표시
+- 매핑 생성, 수정, 삭제
+- 매핑 상태 관리 (승인, 거부, 활성화, 비활성화)
+- 통계 정보 표시
+- 필터링 및 검색
+
+### 2. MappingCreationModal
+
+**파일**: `src/components/admin/MappingCreationModal.js`
+
+**역할**: 새로운 매핑 생성을 위한 4단계 모달 컴포넌트
+
+**Props**:
+- `isOpen`: 모달 열림/닫힘 상태
+- `onClose`: 모달 닫기 핸들러
+- `onSuccess`: 매핑 생성 성공 핸들러
+
+**사용법**:
+```jsx
+<MappingCreationModal 
+  isOpen={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  onSuccess={handleMappingCreated}
+/>
+```
+
+**주요 기능**:
+- 4단계 매핑 생성 프로세스
+- 상담사 검색 및 선택
+- 내담자 검색 및 선택
+- 패키지 정보 설정 (공통코드 연동)
+- 결제 방법 및 담당 업무 설정
+- 자동 매핑 (패키지 선택 시 세션 수, 가격 자동 설정)
+
+**단계별 프로세스**:
+1. **상담사 선택**: 검색 기능을 통한 상담사 선택
+2. **내담자 선택**: 검색 기능을 통한 내담자 선택
+3. **패키지 설정**: 공통코드에서 패키지 타입 로드, 자동 매핑
+4. **완료**: 매핑 생성 및 성공 메시지
+
+### 3. MappingCard
+
+**파일**: `src/components/admin/mapping/MappingCard.js`
+
+**역할**: 개별 매핑 정보를 카드 형태로 표시하는 컴포넌트
+
+**Props**:
+- `mapping`: 매핑 데이터 객체
+- `onEdit`: 편집 핸들러
+- `onDelete`: 삭제 핸들러
+- `onStatusChange`: 상태 변경 핸들러
+
+**사용법**:
+```jsx
+<MappingCard 
+  mapping={mappingData}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+  onStatusChange={handleStatusChange}
+/>
+```
+
+**주요 기능**:
+- 매핑 상세 정보 표시
+- 상담사/내담자 정보 (이름, 연락처)
+- 패키지 정보 (타입, 세션 수, 가격)
+- 매핑 상태 및 결제 상태
+- 시작일 및 만료일
+- 편집/삭제 액션 버튼
+
+### 4. MappingStats
+
+**파일**: `src/components/admin/mapping/MappingStats.js`
+
+**역할**: 매핑 통계 정보를 표시하는 컴포넌트
+
+**Props**:
+- `stats`: 통계 데이터 객체
+
+**사용법**:
+```jsx
+<MappingStats stats={mappingStatistics} />
+```
+
+**주요 기능**:
+- 전체 매핑 수
+- 상태별 매핑 수 (대기, 활성, 비활성 등)
+- 결제 상태별 분포
+- 최근 생성된 매핑 수
+
+### 5. MappingFilters
+
+**파일**: `src/components/admin/mapping/MappingFilters.js`
+
+**역할**: 매핑 필터링 및 검색 기능을 제공하는 컴포넌트
+
+**Props**:
+- `filters`: 현재 필터 상태
+- `onFilterChange`: 필터 변경 핸들러
+- `onSearch`: 검색 핸들러
+
+**사용법**:
+```jsx
+<MappingFilters 
+  filters={currentFilters}
+  onFilterChange={handleFilterChange}
+  onSearch={handleSearch}
+/>
+```
+
+**주요 기능**:
+- 매핑 상태별 필터링
+- 결제 상태별 필터링
+- 상담사/내담자 이름 검색
+- 날짜 범위 필터링
+- 필터 초기화
+
 ## 🔌 컴포넌트 사용 패턴
 
 ### 1. 기본 사용법
@@ -382,6 +679,6 @@ const handleClick = (event) => {
 
 ---
 
-**📅 마지막 업데이트**: 2024-12-19  
+**📅 마지막 업데이트**: 2025-01-03  
 **👤 작성자**: MindGarden Team  
 **📧 문의**: 이슈를 통해 연락해주세요

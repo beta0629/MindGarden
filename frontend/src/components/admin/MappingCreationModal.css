@@ -151,7 +151,7 @@
 }
 
 /* 선택 그리드 */
-.selection-grid {
+.mapping-modal .selection-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 16px;
@@ -160,7 +160,7 @@
     padding-right: 8px;
 }
 
-.selection-card {
+.mapping-modal .selection-card {
     border: 2px solid #e1e8ed;
     border-radius: 12px;
     padding: 20px;
@@ -169,19 +169,19 @@
     background: white;
 }
 
-.selection-card:hover {
+.mapping-modal .selection-card:hover {
     border-color: #3b82f6;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
-.selection-card.selected {
+.mapping-modal .selection-card.selected {
     border-color: #3b82f6;
     background-color: #eff6ff;
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
-.card-avatar {
+.mapping-modal .card-avatar {
     width: 50px;
     height: 50px;
     border-radius: 50%;
@@ -195,14 +195,14 @@
     margin-bottom: 12px;
 }
 
-.card-info h4 {
+.mapping-modal .card-info h4 {
     margin: 0 0 4px 0;
     font-size: 16px;
     font-weight: 600;
     color: #1f2937;
 }
 
-.card-info p {
+.mapping-modal .card-info p {
     margin: 0 0 8px 0;
     font-size: 14px;
     color: #6b7280;
@@ -409,7 +409,7 @@
 }
 
 /* 버튼 영역 고정 */
-.step-actions {
+.mapping-modal .step-actions {
     margin-top: auto;
     padding-top: 24px;
     border-top: 1px solid #e1e8ed;
@@ -461,11 +461,11 @@
 }
 
 /* 검색 관련 스타일 */
-.search-container {
+.mapping-modal .search-container {
     margin-bottom: 24px;
 }
 
-.search-input-wrapper {
+.mapping-modal .search-input-wrapper {
     position: relative;
     display: flex;
     align-items: center;
@@ -515,7 +515,7 @@
     color: #374151;
 }
 
-.search-results-info {
+.mapping-modal .search-results-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -523,7 +523,7 @@
     color: #6b7280;
 }
 
-.search-count {
+.mapping-modal .search-count {
     color: #3b82f6;
     font-weight: 500;
 }
@@ -557,29 +557,29 @@
 }
 
 /* 검색 결과 하이라이트 */
-.selection-card.highlighted {
+.mapping-modal .selection-card.highlighted {
     border-color: #3b82f6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 /* 모바일에서 검색 입력 필드 */
 @media (max-width: 768px) {
-    .search-input {
+    .mapping-modal .search-input {
         padding: 10px 14px 10px 44px;
         font-size: 16px; /* iOS 줌 방지 */
     }
     
-    .search-icon {
+    .mapping-modal .search-icon {
         left: 10px;
         font-size: 14px;
     }
     
-    .clear-search-btn {
+    .mapping-modal .clear-search-btn {
         right: 10px;
         font-size: 12px;
     }
     
-    .search-results-info {
+    .mapping-modal .search-results-info {
         font-size: 12px;
     }
 }

@@ -114,7 +114,7 @@ const MappingManagement = () => {
         notificationManager.success('테스트 알림: 매핑 승인 버튼 클릭됨');
         
         try {
-            const response = await apiPut(`/api/admin/mappings/${mappingId}/approve`, {
+            const response = await apiPost(`/api/admin/mappings/${mappingId}/approve`, {
                 adminName: '관리자'
             });
             
@@ -136,7 +136,7 @@ const MappingManagement = () => {
         notificationManager.success('테스트 알림: 매핑 거부 버튼 클릭됨');
         
         try {
-            const response = await apiPut(`/api/admin/mappings/${mappingId}/reject`, {
+            const response = await apiPost(`/api/admin/mappings/${mappingId}/reject`, {
                 reason: '관리자 거부'
             });
             

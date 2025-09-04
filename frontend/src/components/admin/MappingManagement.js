@@ -111,7 +111,9 @@ const MappingManagement = () => {
     // 매핑 승인
     const handleApproveMapping = async (mappingId) => {
         // 테스트용 알림
+        console.log('승인 버튼 클릭됨 - 알림 시도');
         notificationManager.success('테스트 알림: 매핑 승인 버튼 클릭됨');
+        console.log('알림 호출 완료');
         
         try {
             const response = await apiPost(`/api/admin/mappings/${mappingId}/approve`, {

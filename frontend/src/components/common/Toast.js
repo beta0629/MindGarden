@@ -13,7 +13,9 @@ const Toast = () => {
     const [notifications, setNotifications] = useState([]);
 
     useEffect(() => {
+        console.log('Toast 컴포넌트 마운트됨 - 리스너 등록');
         const unsubscribe = notificationManager.addListener((notification) => {
+            console.log('알림 수신됨:', notification);
             setNotifications(prev => [...prev, notification]);
 
             // 자동 제거

@@ -27,6 +27,9 @@ class NotificationManager {
      * 알림 표시
      */
     show(message, type = 'success', duration = 3000) {
+        console.log('notificationManager.show 호출됨:', { message, type, duration });
+        console.log('현재 리스너 수:', this.listeners.length);
+        
         const notification = {
             id: ++this.notificationId,
             message,
@@ -35,8 +38,9 @@ class NotificationManager {
             timestamp: Date.now()
         };
 
-        this.listeners.forEach(listener => {
+        this.listeners.forEach((listener, index) => {
             try {
+                console.log(`리스너 ${index} 호출 중:`, notification);
                 listener(notification);
             } catch (error) {
                 console.error('알림 리스너 오류:', error);

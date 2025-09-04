@@ -135,7 +135,8 @@ const MappingManagement = () => {
         try {
             const response = await apiPost(`/api/admin/mappings/${mappingId}/confirm-payment`, {
                 paymentMethod: '신용카드',
-                paymentReference: `PAY-${Date.now()}`
+                paymentReference: `PAY-${Date.now()}`,
+                paymentAmount: 300000 // 기본 패키지 가격
             });
             
             if (response.success) {

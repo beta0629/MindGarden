@@ -69,4 +69,23 @@ public interface UserSocialAccountRepository extends JpaRepository<UserSocialAcc
            "JOIN usa.user u " +
            "WHERE u.email = :email AND usa.isDeleted = false")
     List<UserSocialAccount> findByUserEmail(@Param("email") String email);
+    
+    /**
+     * 사용자와 제공자로 소셜 계정 조회
+     * 
+     * @param user 사용자
+     * @param provider 소셜 제공자
+     * @return 소셜 계정
+     */
+    Optional<UserSocialAccount> findByUserAndProviderAndIsDeletedFalse(
+        com.mindgarden.consultation.entity.User user, String provider);
+    
+    /**
+     * 사용자로 소셜 계정 목록 조회
+     * 
+     * @param user 사용자
+     * @return 소셜 계정 목록
+     */
+    List<UserSocialAccount> findByUserAndIsDeletedFalse(
+        com.mindgarden.consultation.entity.User user);
 }

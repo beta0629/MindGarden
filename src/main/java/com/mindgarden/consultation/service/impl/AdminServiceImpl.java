@@ -7,6 +7,7 @@ import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
 import com.mindgarden.consultation.dto.ConsultantRegistrationDto;
 import com.mindgarden.consultation.entity.Client;
+import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.ClientRepository;
@@ -30,15 +31,19 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
-        User consultant = User.builder()
-                .username(dto.getUsername())
-                .email(dto.getEmail())
-                .password(passwordEncoder.encode(dto.getPassword()))
-                .name(dto.getName())
-                .phone(dto.getPhone())
-                .role(UserRole.CONSULTANT)
-                .isActive(true)
-                .build();
+        // Consultant 엔티티 생성 (User를 상속받음)
+        Consultant consultant = new Consultant();
+        consultant.setUsername(dto.getUsername());
+        consultant.setEmail(dto.getEmail());
+        consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
+        consultant.setName(dto.getName());
+        consultant.setPhone(dto.getPhone());
+        consultant.setRole(UserRole.CONSULTANT);
+        consultant.setIsActive(true);
+        
+        // 상담사 전용 정보 설정
+        consultant.setSpecialty(dto.getSpecialization());
+        consultant.setCertification(dto.getQualifications());
         
         return userRepository.save(consultant);
     }
@@ -70,14 +75,27 @@ public class AdminServiceImpl implements AdminService {
         ConsultantClientMapping mapping = ConsultantClientMapping.builder()
                 .consultant(consultant)
                 .client(client)
-                .status(ConsultantClientMapping.MappingStatus.PENDING_PAYMENT)
-                .paymentStatus(ConsultantClientMapping.PaymentStatus.PENDING)
-                .totalSessions(dto.getTotalSessions() != null ? dto.getTotalSessions() : 0)
-                .remainingSessions(dto.getTotalSessions() != null ? dto.getTotalSessions() : 0)
-                .packageName(dto.getPackageName())
-                .packagePrice(dto.getPackagePrice())
+                .startDate(dto.getStartDate() != null ? 
+                    dto.getStartDate().atStartOfDay() : 
+                    LocalDateTime.now())
+                .status(dto.getStatus() != null ? 
+                    ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus()) : 
+                    ConsultantClientMapping.MappingStatus.ACTIVE)
+                .paymentStatus(dto.getPaymentStatus() != null ? 
+                    ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus()) : 
+                    ConsultantClientMapping.PaymentStatus.PENDING)
+                .totalSessions(dto.getTotalSessions() != null ? dto.getTotalSessions() : 10)
+                .remainingSessions(dto.getRemainingSessions() != null ? dto.getRemainingSessions() : (dto.getTotalSessions() != null ? dto.getTotalSessions() : 10))
+                .usedSessions(0)
+                .packageName(dto.getPackageName() != null ? dto.getPackageName() : "기본 패키지")
+                .packagePrice(dto.getPackagePrice() != null ? dto.getPackagePrice() : 0L)
+                .paymentMethod(dto.getPaymentMethod())
+                .paymentReference(dto.getPaymentReference())
+                .paymentAmount(dto.getPaymentAmount())
                 .assignedAt(LocalDateTime.now())
                 .notes(dto.getNotes())
+                .responsibility(dto.getResponsibility())
+                .specialConsiderations(dto.getSpecialConsiderations())
                 .build();
 
         return mappingRepository.save(mapping);
@@ -157,7 +175,7 @@ public class AdminServiceImpl implements AdminService {
      */
     @Override
     public List<ConsultantClientMapping> getActiveMappings() {
-        return mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+        return mappingRepository.findActiveMappingsWithDetails();
     }
 
     /**
@@ -185,7 +203,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<ConsultantClientMapping> getAllMappings() {
         try {
-            return mappingRepository.findAll();
+            return mappingRepository.findAllWithDetails();
         } catch (Exception e) {
             // enum 변환 오류 등으로 인해 조회 실패시 빈 목록 반환
             System.err.println("매핑 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
@@ -221,6 +239,22 @@ public class AdminServiceImpl implements AdminService {
     public ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingDto dto) {
         ConsultantClientMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
+        
+        // 상태 업데이트
+        if (dto.getStatus() != null) {
+            mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus()));
+        }
+        
+        // 기타 필드들도 업데이트 가능하도록 추가
+        if (dto.getTotalSessions() != null) {
+            mapping.setTotalSessions(dto.getTotalSessions());
+        }
+        if (dto.getRemainingSessions() != null) {
+            mapping.setRemainingSessions(dto.getRemainingSessions());
+        }
+        if (dto.getPaymentStatus() != null) {
+            mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus()));
+        }
         
         return mappingRepository.save(mapping);
     }

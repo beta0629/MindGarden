@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
-import TabletHeader from '../layout/TabletHeader';
+import SimpleHeader from '../layout/SimpleHeader';
 import SocialSignupModal from './SocialSignupModal';
 import { authAPI } from '../../utils/ajax';
 import { testLogin } from '../../utils/ajax';
 import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallback } from '../../utils/socialLogin';
-import { setLoginSession, redirectToDashboard, logSessionInfo } from '../../utils/session';
+// import { setLoginSession, redirectToDashboard, logSessionInfo } from '../../utils/session'; // 제거됨
+import { sessionManager } from '../../utils/sessionManager';
+import { useSession } from '../../contexts/SessionContext';
+import { LOGIN_SESSION_CHECK_DELAY, EXISTING_SESSION_CHECK_DELAY } from '../../constants/session';
 import { notification } from '../../utils/scripts';
 
 const TabletLogin = () => {
   const navigate = useNavigate();
+  const { login, testLogin: centralTestLogin, checkSession } = useSession();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -45,6 +49,37 @@ const TabletLogin = () => {
     };
   }, [countdown]);
 
+  // 세션이 있으면 대시보드로 리다이렉트
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      try {
+        console.log('🔍 로그인 페이지 - 기존 세션 확인 중...');
+        const isLoggedIn = await checkSession();
+        
+        if (isLoggedIn) {
+          const user = sessionManager.getUser();
+          if (user && user.role) {
+            const dashboardPath = `/${user.role.toLowerCase()}/dashboard`;
+            console.log('✅ 기존 세션 발견, 대시보드로 리다이렉트:', dashboardPath);
+            console.log('👤 사용자 정보:', user);
+            navigate(dashboardPath, { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error('❌ 세션 확인 실패:', error);
+      }
+    };
+
+    // 컴포넌트 마운트 완료 후 세션 확인
+    if (EXISTING_SESSION_CHECK_DELAY > 0) {
+      const timer = setTimeout(checkExistingSession, EXISTING_SESSION_CHECK_DELAY);
+      return () => clearTimeout(timer);
+    } else {
+      // 즉시 실행
+      checkExistingSession();
+    }
+  }, [checkSession, navigate]);
+
   const getOAuth2Config = async () => {
     try {
       const config = await authAPI.getOAuth2Config();
@@ -69,37 +104,37 @@ const TabletLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email || !formData.password) {
-      alert('이메일과 비밀번호를 입력해주세요.');
+      notification.warning('이메일과 비밀번호를 입력해주세요.');
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await authAPI.login(formData);
-      if (response.success) {
-        console.log('로그인 성공:', response);
+      console.log('🔐 로그인 요청 데이터:', formData);
+      
+      // 중앙 세션의 로그인 함수 사용 (API 호출 포함)
+      const result = await login(formData);
+      
+      if (result.success) {
+        console.log('✅ 로그인 성공:', result.user);
         
-        // 세션 설정
-        const sessionSet = setLoginSession(response.user, {
-          accessToken: response.accessToken,
-          refreshToken: response.refreshToken
-        });
+        // 세션 설정 완료 후 잠시 대기 (시간 단축)
+        console.log('⏳ 세션 설정 완료, 잠시 대기...');
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        if (sessionSet) {
-          // 세션 정보 로깅
-          logSessionInfo();
-          
-          // 역할에 따른 대시보드로 리다이렉트
-          redirectToDashboard(response.user);
-        } else {
-          alert('세션 설정에 실패했습니다.');
-        }
+        // 역할에 따른 대시보드로 리다이렉트
+        const dashboardPath = `/${result.user.role.toLowerCase()}/dashboard`;
+        console.log('✅ 로그인 성공, 대시보드로 이동:', dashboardPath);
+        navigate(dashboardPath, { replace: true });
       } else {
-        alert(response.message || '로그인에 실패했습니다.');
+        console.log('❌ 로그인 실패:', result.message);
+        notification.error(result.message);
       }
     } catch (error) {
-      console.error('로그인 오류:', error);
-      alert('로그인 처리 중 오류가 발생했습니다.');
+      console.error('❌ 로그인 오류:', error);
+      console.error('❌ 오류 상세:', error.message);
+      // 공통 알림 시스템 사용
+      notification.error(`로그인 처리 중 오류가 발생했습니다: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -169,19 +204,24 @@ const TabletLogin = () => {
       if (response.success) {
         console.log('테스트 로그인 성공:', response);
         
-        // 세션 설정
-        const sessionSet = setLoginSession(response.user, {
+        // 중앙 세션의 테스트 로그인 함수 사용
+        console.log('🔄 테스트 로그인 - 중앙 세션 설정 시작...');
+        const loginSuccess = await centralTestLogin(response.user, {
           accessToken: 'test-token',
           refreshToken: 'test-refresh-token'
         });
         
-        if (sessionSet) {
-          // 세션 정보 로깅
-          logSessionInfo();
+        if (loginSuccess) {
+          // 세션 설정 완료 후 잠시 대기
+          console.log('⏳ 테스트 로그인 - 세션 설정 완료, 잠시 대기...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
           // 역할에 따른 대시보드로 리다이렉트
-          redirectToDashboard(response.user);
+          const dashboardPath = `/${response.user.role.toLowerCase()}/dashboard`;
+          console.log('✅ 테스트 로그인 성공, 대시보드로 이동:', dashboardPath);
+          navigate(dashboardPath, { replace: true });
         } else {
+          console.log('❌ 테스트 로그인 - 세션 설정 실패');
           alert('세션 설정에 실패했습니다.');
         }
       } else {
@@ -339,7 +379,7 @@ const TabletLogin = () => {
     }
   };
 
-  const handleSocialSignupSuccess = (response) => {
+  const handleSocialSignupSuccess = async (response) => {
     setShowSocialSignupModal(false);
     setSocialUserInfo(null);
     console.log('간편 회원가입 성공:', response.message);
@@ -347,18 +387,24 @@ const TabletLogin = () => {
     // 회원가입 성공 후 대시보드로 리다이렉트
     if (response.userInfo) {
       // 세션 설정
-      const sessionSet = setLoginSession(response.userInfo, {
+      // 중앙 세션에 사용자 정보 설정
+      console.log('🔄 간편 회원가입 - 중앙 세션 설정 시작...');
+      const loginSuccess = await login(response.userInfo, {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken
       });
       
-      if (sessionSet) {
-        // 세션 정보 로깅
-        logSessionInfo();
+      if (loginSuccess) {
+        // 세션 설정 완료 후 잠시 대기
+        console.log('⏳ 간편 회원가입 - 세션 설정 완료, 잠시 대기...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         // 역할에 따른 대시보드로 리다이렉트
-        redirectToDashboard(response.userInfo);
+        const dashboardPath = `/${response.userInfo.role.toLowerCase()}/dashboard`;
+        console.log('✅ 간편 회원가입 성공, 대시보드로 이동:', dashboardPath);
+        navigate(dashboardPath, { replace: true });
       } else {
+        console.log('❌ 간편 회원가입 - 세션 설정 실패');
         alert('세션 설정에 실패했습니다.');
       }
     } else {
@@ -394,11 +440,7 @@ const TabletLogin = () => {
     >
       <div className="tablet-login-page tablet-page">
         {/* 공통 헤더 */}
-        <TabletHeader 
-          user={null} 
-          onHamburgerToggle={handleHamburgerToggle}
-          onProfileClick={handleProfileClick}
-        />
+        <SimpleHeader />
         
         <div className="login-container">
           <div className="login-header">

@@ -1,0 +1,29 @@
+/* 간단한 레이아웃 스타일 */
+.simple-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.simple-main {
+  flex: 1;
+  padding: 20px 0;
+}
+
+.simple-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .simple-main {
+    padding: 15px 0;
+  }
+  
+  .simple-container {
+    padding: 0 15px;
+  }
+}

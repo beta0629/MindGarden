@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
         if (user.getId() == null) {
             user.setCreatedAt(LocalDateTime.now());
             user.setVersion(1L);
-            if (user.getPassword() != null) {
+            if (user.getPassword() != null && !isPasswordEncoded(user.getPassword())) {
                 user.setPassword(passwordEncoder.encode(user.getPassword()));
             }
         }
@@ -60,7 +60,7 @@ public class UserServiceImpl implements UserService {
             if (user.getId() == null) {
                 user.setCreatedAt(LocalDateTime.now());
                 user.setVersion(1L);
-                if (user.getPassword() != null) {
+                if (user.getPassword() != null && !isPasswordEncoded(user.getPassword())) {
                     user.setPassword(passwordEncoder.encode(user.getPassword()));
                 }
             }
@@ -77,7 +77,9 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + user.getId()));
         
         if (user.getPassword() != null && !user.getPassword().equals(existingUser.getPassword())) {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            if (!isPasswordEncoded(user.getPassword())) {
+                user.setPassword(passwordEncoder.encode(user.getPassword()));
+            }
         }
         
         user.setUpdatedAt(LocalDateTime.now());
@@ -754,5 +756,19 @@ public class UserServiceImpl implements UserService {
         
         userPage.getContent().forEach(this::decryptUserPersonalData);
         return userPage;
+    }
+    
+    /**
+     * 비밀번호가 이미 인코딩되었는지 확인
+     * BCrypt 해시는 $2a$, $2b$, $2y$ 등으로 시작하고 길이가 60자
+     */
+    private boolean isPasswordEncoded(String password) {
+        if (password == null || password.isEmpty()) {
+            return false;
+        }
+        
+        // BCrypt 해시 패턴 확인: $2a$, $2b$, $2y$ 등으로 시작하고 길이가 60자
+        return password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$") 
+               && password.length() == 60;
     }
 }

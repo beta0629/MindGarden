@@ -113,8 +113,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // 허용할 Origin 설정
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        // 허용할 Origin 설정 (개발 환경)
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3001",
+            "http://localhost:8080",
+            "http://127.0.0.1:8080"
+        ));
         
         // 허용할 HTTP 메서드 설정
         configuration.setAllowedMethods(Arrays.asList(
@@ -129,7 +136,8 @@ public class SecurityConfig {
             "Accept",
             "Origin",
             "Access-Control-Request-Method",
-            "Access-Control-Request-Headers"
+            "Access-Control-Request-Headers",
+            "Cache-Control"
         ));
         
         // 인증 정보 포함 허용

@@ -89,7 +89,7 @@
     border-bottom: none;
 }
 
-.label {
+.schedule-detail-modal .label {
     font-weight: 700;
     color: #4b5563;
     min-width: 100px;

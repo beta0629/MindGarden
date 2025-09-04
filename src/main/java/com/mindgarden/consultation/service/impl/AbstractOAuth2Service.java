@@ -63,6 +63,15 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                     log.info("이메일로 기존 사용자 발견: userId={}", existingUserId);
                     // 기존 사용자의 소셜 계정 정보 업데이트 또는 새로 생성
                     updateOrCreateSocialAccount(existingUserId, socialUserInfo);
+                } else {
+                    // 3. 이메일이 다른 경우, 계정 통합 제안
+                    log.info("이메일로도 사용자를 찾지 못함. 계정 통합 제안 필요");
+                    return SocialLoginResponse.builder()
+                        .success(false)
+                        .message("기존 계정과 연결하거나 새 계정을 생성해주세요.")
+                        .requiresAccountIntegration(true) // 계정 통합 필요 플래그
+                        .socialUserInfo(socialUserInfo) // 소셜 사용자 정보 포함
+                        .build();
                 }
             }
             

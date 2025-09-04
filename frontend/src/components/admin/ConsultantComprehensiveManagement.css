@@ -1,8 +1,8 @@
 /* 상담사 종합관리 스타일 */
 .consultant-comp-container {
     padding: 20px;
-    max-width: 1400px;
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
 }
 
 .consultant-comp-header {
@@ -42,13 +42,13 @@
 }
 
 .consultant-comp-main-tab-btn:hover {
-    border-color: #3498db;
-    color: #3498db;
+    border-color: #ffb366;
+    color: #ffb366;
 }
 
 .consultant-comp-main-tab-btn.active {
-    background: #3498db;
-    border-color: #3498db;
+    background: #ffb366;
+    border-color: #ffb366;
     color: white;
 }
 
@@ -82,7 +82,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    background: linear-gradient(135deg, #ffb366 0%, #ff8c42 100%);
     border-radius: 12px;
     color: white;
 }
@@ -106,9 +106,8 @@
 
 /* 콘텐츠 영역 */
 .consultant-comp-comprehensive-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
+    display: block;
+    width: 100%;
 }
 
 /* 상담사 목록 섹션 */
@@ -117,6 +116,8 @@
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: none;
 }
 
 .consultant-comp-section-header {
@@ -147,51 +148,63 @@
 
 .consultant-comp-search-input:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: #ffb366;
 }
 
 /* 상담사 그리드 */
 .consultant-comp-consultant-grid {
     display: grid;
-    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
 }
 
 .consultant-comp-consultant-card {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 15px;
-    padding: 15px;
+    padding: 20px;
     border: 2px solid #e1e8ed;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
+    min-height: 120px;
 }
 
 .consultant-comp-consultant-card:hover {
-    border-color: #3498db;
-    transform: translateY(-1px);
+    border-color: #ffb366;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 179, 102, 0.2);
 }
 
 .consultant-comp-consultant-card.selected {
-    border-color: #3498db;
-    background: #f8f9ff;
+    border-color: #ffb366;
+    background: #fff5f0;
+    box-shadow: 0 4px 15px rgba(255, 179, 102, 0.2);
 }
 
 .consultant-comp-consultant-avatar {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    background: linear-gradient(135deg, #ffb366 0%, #ff8c42 100%);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 18px;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.consultant-comp-consultant-avatar svg {
+    font-size: 24px;
 }
 
 .consultant-comp-consultant-info {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .consultant-comp-consultant-name {
@@ -237,7 +250,7 @@
     gap: 10px;
 }
 
-.search-input {
+.consultant-comp-container .search-input {
     padding: 8px 12px;
     border: 2px solid #e1e8ed;
     border-radius: 6px;
@@ -245,18 +258,18 @@
     width: 200px;
 }
 
-.search-input:focus {
+.consultant-comp-container .search-input:focus {
     outline: none;
     border-color: #3498db;
 }
 
 /* 상담사 그리드 */
-.consultant-grid {
+.consultant-comp-container .consultant-grid {
     display: grid;
     gap: 15px;
 }
 
-.consultant-card {
+.consultant-comp-container .consultant-card {
     display: flex;
     align-items: center;
     gap: 15px;
@@ -488,7 +501,7 @@
     margin-bottom: 25px;
 }
 
-.btn {
+.consultant-comp-container .btn {
     padding: 10px 20px;
     border: none;
     border-radius: 8px;
@@ -669,5 +682,67 @@
     
     .basic-actions {
         flex-direction: column;
+    }
+    
+    .consultant-comp-consultant-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .consultant-comp-consultant-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 추가된 상담사 정보 스타일 */
+.consultant-comp-consultant-phone {
+    font-size: 13px;
+    color: #7f8c8d;
+    margin-bottom: 2px;
+}
+
+.consultant-comp-consultant-status {
+    margin-bottom: 2px;
+}
+
+.consultant-comp-status-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.consultant-comp-status-badge.active {
+    background: #ffe4b5;
+    color: #8b4513;
+}
+
+.consultant-comp-status-badge.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.consultant-comp-consultant-date {
+    font-size: 11px;
+    color: #95a5a6;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .consultant-comp-consultant-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+    .consultant-comp-consultant-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (min-width: 1201px) {
+    .consultant-comp-consultant-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     }
 }

@@ -65,6 +65,10 @@ public class AuthServiceImpl implements AuthService {
                 return AuthResponse.failure("인증에 실패했습니다.");
             }
         } catch (Exception e) {
+            // 자격 증명 실패인 경우 사용자 친화적인 메시지 반환
+            if (e.getMessage() != null && e.getMessage().contains("자격 증명에 실패하였습니다")) {
+                return AuthResponse.failure("아이디 또는 비밀번호가 올바르지 않습니다.");
+            }
             return AuthResponse.failure("로그인 실패: " + e.getMessage());
         }
     }

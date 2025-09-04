@@ -1,21 +1,24 @@
 /* ConsultantFilter.css */
 
-.consultant-filter {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 20px;
+.schedule-modal .consultant-filter {
+    background: #f8f9fa !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin-bottom: 0 !important;
+    height: 200px !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
 }
 
-.filter-header {
+.schedule-modal .filter-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
 }
 
-.filter-title {
+.schedule-modal .filter-title {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -24,7 +27,7 @@
     color: #495057;
 }
 
-.filter-icon {
+.schedule-modal .filter-icon {
     font-size: 16px;
 }
 
@@ -37,20 +40,20 @@
     font-weight: 500;
 }
 
-.filter-controls {
+.schedule-modal .filter-controls {
     display: grid;
     grid-template-columns: 2fr 1fr 1fr auto;
     gap: 16px;
     align-items: end;
 }
 
-.filter-group {
+.schedule-modal .filter-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
-.filter-label {
+.schedule-modal .filter-label {
     font-size: 12px;
     font-weight: 600;
     color: #495057;
@@ -58,11 +61,11 @@
 }
 
 /* 검색 입력 */
-.search-input-container {
+.schedule-modal .search-input-container {
     position: relative;
 }
 
-.search-input {
+.schedule-modal .search-input {
     width: 100%;
     padding: 8px 12px 8px 36px;
     border: 1px solid #ced4da;
@@ -72,13 +75,13 @@
     background-color: #fff;
 }
 
-.search-input:focus {
+.schedule-modal .search-input:focus {
     outline: none;
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.search-icon {
+.schedule-modal .search-icon {
     position: absolute;
     left: 12px;
     top: 50%;
@@ -89,7 +92,7 @@
 }
 
 /* 필터 셀렉트 */
-.filter-select {
+.schedule-modal .filter-select {
     padding: 8px 12px;
     border: 1px solid #ced4da;
     border-radius: 6px;
@@ -99,14 +102,14 @@
     transition: all 0.2s ease;
 }
 
-.filter-select:focus {
+.schedule-modal .filter-select:focus {
     outline: none;
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
 /* 가용성 버튼들 */
-.availability-buttons {
+.schedule-modal .availability-buttons {
     display: flex;
     gap: 4px;
 }
@@ -148,7 +151,7 @@
 }
 
 /* 필터 액션 */
-.filter-actions {
+.schedule-modal .filter-actions {
     display: flex;
     align-items: end;
 }
@@ -287,7 +290,7 @@
     }
 }
 
-.consultant-filter {
+.schedule-modal .consultant-filter {
     animation: filterSlideIn 0.3s ease;
 }
 

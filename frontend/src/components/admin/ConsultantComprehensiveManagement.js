@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import SimpleLayout from '../layout/SimpleLayout';
+import { FaUser } from 'react-icons/fa';
 import './ConsultantComprehensiveManagement.css';
 
 /**
@@ -56,7 +58,7 @@ const ConsultantComprehensiveManagement = () => {
      */
     const loadConsultants = async () => {
         try {
-            const response = await apiGet('/api/users?role=CONSULTANT');
+            const response = await apiGet('/api/admin/consultants');
             if (response.success) {
                 setConsultants(response.data || []);
             }
@@ -70,7 +72,7 @@ const ConsultantComprehensiveManagement = () => {
      */
     const loadClients = async () => {
         try {
-            const response = await apiGet('/api/users?role=CLIENT');
+            const response = await apiGet('/api/admin/clients');
             if (response.success) {
                 setClients(response.data || []);
             }
@@ -84,7 +86,7 @@ const ConsultantComprehensiveManagement = () => {
      */
     const loadMappings = async () => {
         try {
-            const response = await apiGet('/api/mappings');
+            const response = await apiGet('/api/admin/mappings');
             if (response.success) {
                 setMappings(response.data || []);
             }
@@ -198,7 +200,8 @@ const ConsultantComprehensiveManagement = () => {
     const stats = getOverallStats();
 
     return (
-        <div className="consultant-comp-container">
+        <SimpleLayout>
+            <div className="consultant-comp-container">
             <div className="consultant-comp-header">
                 <h2>👨‍⚕️ 상담사 관리</h2>
                 <p>상담사의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다.</p>
@@ -279,12 +282,21 @@ const ConsultantComprehensiveManagement = () => {
                                         onClick={() => handleConsultantSelect(consultant)}
                                     >
                                         <div className="consultant-comp-consultant-avatar">
-                                            {consultant.name?.charAt(0) || '?'}
+                                            <FaUser />
                                         </div>
                                         <div className="consultant-comp-consultant-info">
                                             <div className="consultant-comp-consultant-name">{consultant.name || '이름 없음'}</div>
                                             <div className="consultant-comp-consultant-email">{consultant.email}</div>
+                                            <div className="consultant-comp-consultant-phone">{consultant.phone || '전화번호 없음'}</div>
                                             <div className="consultant-comp-consultant-specialty">{consultant.specialty || '전문분야 미설정'}</div>
+                                            <div className="consultant-comp-consultant-status">
+                                                <span className={`consultant-comp-status-badge ${consultant.isActive ? 'active' : 'inactive'}`}>
+                                                    {consultant.isActive ? '활성' : '비활성'}
+                                                </span>
+                                            </div>
+                                            <div className="consultant-comp-consultant-date">
+                                                등록일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -561,7 +573,8 @@ const ConsultantComprehensiveManagement = () => {
                     <div className="loading-spinner">로딩 중...</div>
                 </div>
             )}
-        </div>
+            </div>
+        </SimpleLayout>
     );
 };
 

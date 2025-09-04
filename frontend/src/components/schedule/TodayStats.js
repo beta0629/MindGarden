@@ -33,7 +33,7 @@ const TodayStats = () => {
             const today = new Date().toISOString().split('T')[0];
             
             // 관리자 권한으로 모든 스케줄 조회
-            const response = await apiGet(`/api/schedules?userId=24&userRole=ADMIN`);
+            const response = await apiGet(`/api/schedules?userId=0&userRole=ADMIN`);
             
             if (response && Array.isArray(response)) {
                 // 오늘의 스케줄 필터링
@@ -43,12 +43,12 @@ const TodayStats = () => {
                 
                 console.log('📅 오늘의 스케줄:', todaySchedules);
                 
-                // 통계 계산
+                // 통계 계산 (영어 상태값으로 필터링)
                 const statsData = {
                     total: todaySchedules.length,
-                    completed: todaySchedules.filter(s => s.status === '완료됨').length,
-                    inProgress: todaySchedules.filter(s => s.status === '진행중').length,
-                    cancelled: todaySchedules.filter(s => s.status === '취소됨').length
+                    completed: todaySchedules.filter(s => s.status === 'COMPLETED' || s.status === '완료됨').length,
+                    inProgress: todaySchedules.filter(s => s.status === 'IN_PROGRESS' || s.status === '진행중').length,
+                    cancelled: todaySchedules.filter(s => s.status === 'CANCELLED' || s.status === '취소됨').length
                 };
                 
                 setStats(statsData);
@@ -66,6 +66,13 @@ const TodayStats = () => {
 
     useEffect(() => {
         loadTodayStats();
+        
+        // 30초마다 자동 새로고침
+        const interval = setInterval(() => {
+            loadTodayStats();
+        }, 30000);
+        
+        return () => clearInterval(interval);
     }, []);
 
     if (loading) {
@@ -91,22 +98,34 @@ const TodayStats = () => {
     }
 
     return (
-        <div className="stats-grid">
-            <div className="stat-item">
-                <div className="stat-value">{stats.total}</div>
-                <div className="stat-label">총 상담</div>
+        <div className="today-stats-container">
+            <div className="stats-header">
+                <span>오늘의 통계</span>
+                <button 
+                    className="refresh-btn" 
+                    onClick={loadTodayStats}
+                    title="새로고침"
+                >
+                    🔄
+                </button>
             </div>
-            <div className="stat-item">
-                <div className="stat-value">{stats.completed}</div>
-                <div className="stat-label">완료</div>
-            </div>
-            <div className="stat-item">
-                <div className="stat-value">{stats.inProgress}</div>
-                <div className="stat-label">진행중</div>
-            </div>
-            <div className="stat-item">
-                <div className="stat-value">{stats.cancelled}</div>
-                <div className="stat-label">취소</div>
+            <div className="stats-grid">
+                <div className="stat-item">
+                    <div className="stat-value">{stats.total}</div>
+                    <div className="stat-label">총 상담</div>
+                </div>
+                <div className="stat-item">
+                    <div className="stat-value">{stats.completed}</div>
+                    <div className="stat-label">완료</div>
+                </div>
+                <div className="stat-item">
+                    <div className="stat-value">{stats.inProgress}</div>
+                    <div className="stat-label">진행중</div>
+                </div>
+                <div className="stat-item">
+                    <div className="stat-value">{stats.cancelled}</div>
+                    <div className="stat-label">취소</div>
+                </div>
             </div>
         </div>
     );

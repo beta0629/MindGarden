@@ -31,7 +31,13 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
   };
 
   const getWelcomeTitle = () => {
-    if (!user?.role) return '안녕하세요!';
+    console.log('🎭 WelcomeSection - 사용자 정보:', user);
+    console.log('🎭 WelcomeSection - role:', user?.role);
+    
+    if (!user?.role) {
+      console.log('⚠️ role 정보 없음, 기본 인사말 사용');
+      return '안녕하세요!';
+    }
     
     switch (user.role) {
       case 'CLIENT':
@@ -42,6 +48,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
       case 'SUPER_ADMIN':
         return '안녕하세요, 관리자님!';
       default:
+        console.log('⚠️ 알 수 없는 role:', user.role);
         return '안녕하세요!';
     }
   };

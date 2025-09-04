@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { FaUser } from 'react-icons/fa';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import SimpleLayout from '../layout/SimpleLayout';
 import './ClientComprehensiveManagement.css';
 
 /**
@@ -26,15 +28,39 @@ const ClientComprehensiveManagement = () => {
     const [mainTab, setMainTab] = useState('comprehensive');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    
+    // 모달 상태
+    const [showModal, setShowModal] = useState(false);
+    const [modalType, setModalType] = useState(''); // 'create', 'edit', 'delete'
+    const [editingClient, setEditingClient] = useState(null);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        password: ''
+    });
 
     useEffect(() => {
         loadAllData();
     }, []);
 
+    // 디버깅을 위한 로딩 상태 강제 해제
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (loading) {
+                console.log('로딩 상태가 너무 오래 지속됨, 강제 해제');
+                setLoading(false);
+            }
+        }, 5000); // 5초 후 강제 해제
+
+        return () => clearTimeout(timer);
+    }, [loading]);
+
     /**
      * 모든 데이터 로드
      */
     const loadAllData = async () => {
+        console.log('🔄 데이터 로드 시작');
         setLoading(true);
         try {
             await Promise.all([
@@ -43,10 +69,12 @@ const ClientComprehensiveManagement = () => {
                 loadMappings(),
                 loadConsultations()
             ]);
+            console.log('✅ 데이터 로드 완료');
         } catch (error) {
-            console.error('데이터 로드 실패:', error);
+            console.error('❌ 데이터 로드 실패:', error);
             notificationManager.error('데이터 로드에 실패했습니다.');
         } finally {
+            console.log('🏁 로딩 상태 해제');
             setLoading(false);
         }
     };
@@ -56,7 +84,7 @@ const ClientComprehensiveManagement = () => {
      */
     const loadClients = async () => {
         try {
-            const response = await apiGet('/api/users?role=CLIENT');
+            const response = await apiGet('/api/admin/clients');
             if (response.success) {
                 setClients(response.data || []);
             }
@@ -84,7 +112,7 @@ const ClientComprehensiveManagement = () => {
      */
     const loadMappings = async () => {
         try {
-            const response = await apiGet('/api/mappings');
+            const response = await apiGet('/api/admin/mappings');
             if (response.success) {
                 setMappings(response.data || []);
             }
@@ -98,7 +126,7 @@ const ClientComprehensiveManagement = () => {
      */
     const loadConsultations = async () => {
         try {
-            const response = await apiGet('/api/consultations');
+            const response = await apiGet('/api/v1/consultations');
             if (response.success) {
                 setConsultations(response.data || []);
             }
@@ -132,7 +160,7 @@ const ClientComprehensiveManagement = () => {
         // 상태 필터링
         if (filterStatus !== 'all') {
             filtered = filtered.filter(client => {
-                const mapping = mappings.find(m => m.client?.id === client.id);
+                const mapping = mappings.find(m => m.clientId === client.id);
                 return mapping?.status === filterStatus;
             });
         }
@@ -145,7 +173,7 @@ const ClientComprehensiveManagement = () => {
      */
     const getClientMapping = () => {
         if (!selectedClient) return null;
-        return mappings.find(mapping => mapping.client?.id === selectedClient.id);
+        return mappings.find(mapping => mapping.clientId === selectedClient.id);
     };
 
     /**
@@ -174,12 +202,12 @@ const ClientComprehensiveManagement = () => {
      */
     const getStatusColor = (status) => {
         const colorMap = {
-            'ACTIVE': '#10b981',
-            'INACTIVE': '#6b7280',
+            'ACTIVE': '#7bc87b',
+            'INACTIVE': '#a8e6a3',
             'SUSPENDED': '#f59e0b',
-            'COMPLETED': '#3b82f6'
+            'COMPLETED': '#7bc87b'
         };
-        return colorMap[status] || '#6b7280';
+        return colorMap[status] || '#a8e6a3';
     };
 
     /**
@@ -202,8 +230,194 @@ const ClientComprehensiveManagement = () => {
 
     const stats = getOverallStats();
 
+    // ==================== CRUD 함수들 ====================
+
+    /**
+     * 새 내담자 등록 모달 열기
+     */
+    const handleCreateClient = () => {
+        setModalType('create');
+        setEditingClient(null);
+        setFormData({
+            name: '',
+            email: '',
+            phone: '',
+            password: ''
+        });
+        setShowModal(true);
+    };
+
+    /**
+     * 내담자 수정 모달 열기
+     */
+    const handleEditClient = (client) => {
+        setModalType('edit');
+        setEditingClient(client);
+        setFormData({
+            name: client.name || '',
+            email: client.email || '',
+            phone: client.phone || '',
+            password: '' // 수정 시에는 비밀번호를 비워둠
+        });
+        setShowModal(true);
+    };
+
+    /**
+     * 내담자 삭제 확인 모달 열기
+     */
+    const handleDeleteClient = (client) => {
+        setModalType('delete');
+        setEditingClient(client);
+        setShowModal(true);
+    };
+
+    /**
+     * 모달 닫기
+     */
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setModalType('');
+        setEditingClient(null);
+        setFormData({
+            name: '',
+            email: '',
+            phone: '',
+            password: ''
+        });
+    };
+
+    /**
+     * 폼 데이터 변경
+     */
+    const handleFormChange = (e) => {
+        const { name, value } = e.target;
+        
+        // 전화번호 자동 하이픈 처리
+        if (name === 'phone') {
+            const formattedPhone = formatPhoneNumber(value);
+            setFormData(prev => ({
+                ...prev,
+                [name]: formattedPhone
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
+    };
+
+    // 전화번호 자동 하이픈 포맷팅 함수
+    const formatPhoneNumber = (value) => {
+        // 숫자만 추출
+        const numbers = value.replace(/[^\d]/g, '');
+        
+        // 길이에 따라 하이픈 추가
+        if (numbers.length <= 3) {
+            return numbers;
+        } else if (numbers.length <= 7) {
+            return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+        } else if (numbers.length <= 11) {
+            return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
+        } else {
+            // 11자리 초과시 11자리까지만
+            return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+        }
+    };
+
+    /**
+     * 내담자 등록
+     */
+    const createClient = async () => {
+        try {
+            const response = await apiPost('/api/admin/clients', {
+                username: formData.email,
+                email: formData.email,
+                password: formData.password,
+                name: formData.name,
+                phone: formData.phone
+            });
+
+            if (response.success) {
+                notificationManager.success('내담자가 성공적으로 등록되었습니다.');
+                handleCloseModal();
+                loadAllData(); // 데이터 새로고침
+            } else {
+                notificationManager.error(response.message || '내담자 등록에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('내담자 등록 실패:', error);
+            notificationManager.error('내담자 등록에 실패했습니다.');
+        }
+    };
+
+    /**
+     * 내담자 수정
+     */
+    const updateClient = async () => {
+        try {
+            const updateData = {
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone
+            };
+
+            // 비밀번호가 입력된 경우에만 포함
+            if (formData.password) {
+                updateData.password = formData.password;
+            }
+
+            const response = await apiPut(`/api/admin/clients/${editingClient.id}`, updateData);
+
+            if (response.success) {
+                notificationManager.success('내담자 정보가 성공적으로 수정되었습니다.');
+                handleCloseModal();
+                loadAllData(); // 데이터 새로고침
+            } else {
+                notificationManager.error(response.message || '내담자 수정에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('내담자 수정 실패:', error);
+            notificationManager.error('내담자 수정에 실패했습니다.');
+        }
+    };
+
+    /**
+     * 내담자 삭제
+     */
+    const deleteClient = async () => {
+        try {
+            const response = await apiPost(`/api/admin/clients/${editingClient.id}/delete`);
+
+            if (response.success) {
+                notificationManager.success('내담자가 성공적으로 삭제되었습니다.');
+                handleCloseModal();
+                loadAllData(); // 데이터 새로고침
+            } else {
+                notificationManager.error(response.message || '내담자 삭제에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('내담자 삭제 실패:', error);
+            notificationManager.error('내담자 삭제에 실패했습니다.');
+        }
+    };
+
+    /**
+     * 모달 제출 처리
+     */
+    const handleModalSubmit = () => {
+        if (modalType === 'create') {
+            createClient();
+        } else if (modalType === 'edit') {
+            updateClient();
+        } else if (modalType === 'delete') {
+            deleteClient();
+        }
+    };
+
     return (
-        <div className="client-comp-container">
+        <SimpleLayout>
+            <div className="client-comp-container">
             <div className="client-comp-header">
                 <h2>👥 내담자 관리</h2>
                 <p>내담자의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다.</p>
@@ -289,7 +503,7 @@ const ClientComprehensiveManagement = () => {
 
                     <div className="client-grid">
                         {getFilteredClients().map(client => {
-                            const mapping = mappings.find(m => m.client?.id === client.id);
+                            const mapping = mappings.find(m => m.clientId === client.id);
                             return (
                                 <div
                                     key={client.id}
@@ -297,11 +511,15 @@ const ClientComprehensiveManagement = () => {
                                     onClick={() => handleClientSelect(client)}
                                 >
                                     <div className="client-avatar">
-                                        {client.name?.charAt(0) || '?'}
+                                        <FaUser />
                                     </div>
                                     <div className="client-info">
                                         <div className="client-name">{client.name || '이름 없음'}</div>
                                         <div className="client-email">{client.email}</div>
+                                        <div className="client-phone">{client.phone || '전화번호 없음'}</div>
+                                        <div className="client-grade">
+                                            등급: {client.grade || 'CLIENT_BRONZE'}
+                                        </div>
                                         <div className="client-status">
                                             {mapping ? (
                                                 <span
@@ -313,6 +531,12 @@ const ClientComprehensiveManagement = () => {
                                             ) : (
                                                 <span className="status-badge no-mapping">매핑 없음</span>
                                             )}
+                                        </div>
+                                        <div className="client-date">
+                                            등록일: {client.createdAt ? new Date(client.createdAt).toLocaleDateString('ko-KR') : '-'}
+                                        </div>
+                                        <div className="client-sessions">
+                                            총 상담: {client.totalConsultations || 0}회
                                         </div>
                                     </div>
                                 </div>
@@ -413,7 +637,7 @@ const ClientComprehensiveManagement = () => {
                                             <div className="mapping-info">
                                                 <div className="info-item">
                                                     <span className="label">상담사:</span>
-                                                    <span className="value">{getClientMapping().consultant?.name || '알 수 없음'}</span>
+                                                    <span className="value">{getClientMapping().consultantName || '알 수 없음'}</span>
                                                 </div>
                                                 <div className="info-item">
                                                     <span className="label">매핑 상태:</span>
@@ -527,14 +751,14 @@ const ClientComprehensiveManagement = () => {
                 <div className="basic-management-tab">
                     <div className="basic-management-content">
                         <h3>내담자 기본 정보 관리</h3>
-                        <p>내담자의 기본 정보를 등록, 수정, 삭제할 수 있습니다.</p>
+                        <p>내담자가 직접 가입하지 않은 경우, 관리자가 내담자 계정을 생성하고 기본 정보를 관리할 수 있습니다.</p>
                         
                         {/* 기본관리 기능들 */}
                         <div className="basic-actions">
-                            <button className="btn btn-primary">
+                            <button className="btn btn-primary" onClick={handleCreateClient}>
                                 ➕ 새 내담자 등록
                             </button>
-                            <button className="btn btn-secondary">
+                            <button className="btn btn-secondary" onClick={loadAllData}>
                                 🔄 새로고침
                             </button>
                         </div>
@@ -555,7 +779,7 @@ const ClientComprehensiveManagement = () => {
                                         <div className="table-cell">
                                             <div className="client-name">
                                                 <div className="client-avatar">
-                                                    {client.name?.charAt(0) || '?'}
+                                                    <FaUser />
                                                 </div>
                                                 <span>{client.name || '이름 없음'}</span>
                                             </div>
@@ -570,10 +794,16 @@ const ClientComprehensiveManagement = () => {
                                         </div>
                                         <div className="table-cell">
                                             <div className="action-buttons-cell">
-                                                <button className="btn btn-sm btn-primary">
+                                                <button 
+                                                    className="btn btn-sm btn-primary"
+                                                    onClick={() => handleEditClient(client)}
+                                                >
                                                     ✏️ 수정
                                                 </button>
-                                                <button className="btn btn-sm btn-danger">
+                                                <button 
+                                                    className="btn btn-sm btn-danger"
+                                                    onClick={() => handleDeleteClient(client)}
+                                                >
                                                     🗑️ 삭제
                                                 </button>
                                             </div>
@@ -595,7 +825,127 @@ const ClientComprehensiveManagement = () => {
                     <div className="loading-spinner">로딩 중...</div>
                 </div>
             )}
-        </div>
+
+            {/* CRUD 모달 */}
+            {showModal && (
+                <div className="client-modal-overlay" onClick={handleCloseModal}>
+                    <div className="client-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="client-modal-header">
+                            <div>
+                                <h3>
+                                    {modalType === 'create' && '➕ 새 내담자 등록'}
+                                    {modalType === 'edit' && '✏️ 내담자 정보 수정'}
+                                    {modalType === 'delete' && '🗑️ 내담자 삭제'}
+                                </h3>
+                                {modalType === 'create' && (
+                                    <p className="modal-description">
+                                        내담자가 직접 가입하지 않은 경우, 관리자가 내담자 계정을 생성하고 초기 로그인 정보를 설정합니다.
+                                    </p>
+                                )}
+                                {modalType === 'edit' && (
+                                    <p className="modal-description">
+                                        내담자의 기본 정보를 수정합니다.
+                                    </p>
+                                )}
+                            </div>
+                            <button className="client-modal-close" onClick={handleCloseModal}>
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <div className="client-modal-body">
+                            {modalType === 'delete' ? (
+                                <div className="delete-confirmation">
+                                    <p>정말로 <strong>{editingClient?.name}</strong> 내담자를 삭제하시겠습니까?</p>
+                                    <p className="warning-text">⚠️ 이 작업은 되돌릴 수 없습니다.</p>
+                                </div>
+                            ) : (
+                                <div className="client-form">
+                                    <div className="form-group">
+                                        <label htmlFor="name">이름 *</label>
+                                        <input
+                                            type="text"
+                                            id="name"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleFormChange}
+                                            placeholder="내담자 이름을 입력하세요"
+                                            required
+                                        />
+                                    </div>
+                                    
+                                    <div className="form-group">
+                                        <label htmlFor="email">이메일 *</label>
+                                        <input
+                                            type="email"
+                                            id="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleFormChange}
+                                            placeholder="이메일을 입력하세요"
+                                            required
+                                        />
+                                    </div>
+                                    
+                                    <div className="form-group">
+                                        <label htmlFor="phone">전화번호</label>
+                                        <input
+                                            type="tel"
+                                            id="phone"
+                                            name="phone"
+                                            value={formData.phone}
+                                            onChange={handleFormChange}
+                                            placeholder="010-1234-5678"
+                                            maxLength="13"
+                                        />
+                                    </div>
+                                    
+                                    <div className="form-group">
+                                        <label htmlFor="password">
+                                            {modalType === 'create' ? '초기 비밀번호 *' : '새 비밀번호 (선택사항)'}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            id="password"
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleFormChange}
+                                            placeholder={modalType === 'create' ? '내담자 로그인용 초기 비밀번호를 입력하세요' : '새 비밀번호를 입력하세요 (비워두면 기존 비밀번호 유지)'}
+                                            required={modalType === 'create'}
+                                        />
+                                        {modalType === 'create' && (
+                                            <small className="form-help">
+                                                💡 관리자가 생성한 계정이므로, 내담자에게 이 초기 비밀번호를 전달해주세요. 첫 로그인 후 비밀번호 변경이 가능합니다.
+                                            </small>
+                                        )}
+                                        {modalType === 'edit' && (
+                                            <small className="form-help">
+                                                💡 비밀번호를 변경하지 않으려면 비워두세요.
+                                            </small>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="client-modal-footer">
+                            <button className="btn btn-secondary" onClick={handleCloseModal}>
+                                취소
+                            </button>
+                            <button 
+                                className={`btn ${modalType === 'delete' ? 'btn-danger' : 'btn-primary'}`}
+                                onClick={handleModalSubmit}
+                            >
+                                {modalType === 'create' && '등록'}
+                                {modalType === 'edit' && '수정'}
+                                {modalType === 'delete' && '삭제'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            </div>
+        </SimpleLayout>
     );
 };
 

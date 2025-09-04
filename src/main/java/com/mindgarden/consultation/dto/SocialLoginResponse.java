@@ -59,6 +59,11 @@ public class SocialLoginResponse {
     private SocialUserInfo socialUserInfo;
     
     /**
+     * 계정 통합 필요 여부
+     */
+    private boolean requiresAccountIntegration;
+    
+    /**
      * 사용자 정보 DTO
      */
     @Data

@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './TimeSlotGrid.css';
+import { 
+  BUSINESS_HOURS, 
+  TIME_SLOT_INTERVAL, 
+  DEFAULT_CONSULTATION_DURATION 
+} from '../../constants/schedule';
 
 /**
  * 시간 슬롯 그리드 컴포넌트
@@ -14,7 +19,7 @@ import './TimeSlotGrid.css';
 const TimeSlotGrid = ({ 
     date, 
     consultantId, 
-    duration = 50, 
+    duration = DEFAULT_CONSULTATION_DURATION, 
     onTimeSlotSelect, 
     selectedTimeSlot 
 }) => {
@@ -34,11 +39,11 @@ const TimeSlotGrid = ({
      */
     const generateTimeSlots = () => {
         const slots = [];
-        const startHour = 9;
-        const endHour = 18;
+        const startHour = BUSINESS_HOURS.START_HOUR;
+        const endHour = BUSINESS_HOURS.END_HOUR;
         
         for (let hour = startHour; hour < endHour; hour++) {
-            for (let minute = 0; minute < 60; minute += 30) {
+            for (let minute = 0; minute < 60; minute += TIME_SLOT_INTERVAL) {
                 const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
                 const endTime = calculateEndTime(timeString, duration);
                 

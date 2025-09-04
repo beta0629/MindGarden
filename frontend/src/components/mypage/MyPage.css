@@ -166,19 +166,19 @@
   background: #5a6fd8;
 }
 
-.form-group {
+.mypage .form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.form-group label {
+.mypage .form-group label {
   font-weight: 500;
   color: #333;
   font-size: 0.95rem;
 }
 
-.form-group input {
+.mypage .form-group input {
   padding: 12px 16px;
   border: 2px solid #e1e5e9;
   border-radius: 8px;
@@ -187,13 +187,13 @@
   background: #fafbfc;
 }
 
-.form-group input:focus {
+.mypage .form-group input:focus {
   outline: none;
   border-color: #667eea;
   background: white;
 }
 
-.form-group input:disabled {
+.mypage .form-group input:disabled {
   background: #f5f5f5;
   color: #666;
   cursor: not-allowed;

@@ -1,0 +1,135 @@
+/* 시스템 상태 컴포넌트 스타일 */
+.system-status-display {
+    background: var(--admin-white);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-radius-lg);
+    padding: var(--admin-spacing-lg);
+    margin-bottom: var(--admin-spacing-lg);
+    box-shadow: var(--admin-shadow-sm);
+    transition: var(--admin-transition-normal);
+}
+
+.system-status-display:hover {
+    box-shadow: var(--admin-shadow-md);
+}
+
+.system-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--admin-spacing-md);
+}
+
+.system-status-header h4 {
+    font-size: var(--admin-font-lg);
+    font-weight: var(--admin-font-weight-semibold);
+    color: var(--admin-text-primary);
+    margin: 0;
+}
+
+.system-status-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-spacing-md);
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: var(--admin-spacing-md);
+    padding: var(--admin-spacing-sm);
+    background: var(--admin-bg-color);
+    border-radius: var(--admin-radius-md);
+    transition: var(--admin-transition-fast);
+}
+
+.status-item:hover {
+    background: var(--gray-100);
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--admin-spacing-sm);
+    position: relative;
+}
+
+.status-indicator svg {
+    font-size: var(--admin-font-lg);
+    color: var(--admin-text-secondary);
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    border: 2px solid var(--admin-white);
+    box-shadow: 0 0 0 1px var(--admin-border-color);
+}
+
+.status-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.status-label {
+    font-size: var(--admin-font-sm);
+    color: var(--admin-text-secondary);
+    font-weight: var(--admin-font-weight-medium);
+}
+
+.status-value {
+    font-size: var(--admin-font-md);
+    color: var(--admin-text-primary);
+    font-weight: var(--admin-font-weight-semibold);
+}
+
+.status-timestamp {
+    font-size: var(--admin-font-xs);
+    color: var(--admin-text-tertiary);
+    text-align: center;
+    padding: var(--admin-spacing-sm);
+    background: var(--gray-50);
+    border-radius: var(--admin-radius-sm);
+    border: 1px solid var(--admin-border-color);
+}
+
+/* 로딩 애니메이션 */
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .system-status-header {
+        flex-direction: column;
+        gap: var(--admin-spacing-sm);
+        align-items: flex-start;
+    }
+    
+    .system-status-content {
+        gap: var(--admin-spacing-sm);
+    }
+    
+    .status-item {
+        padding: var(--admin-spacing-xs);
+    }
+    
+    .status-indicator svg {
+        font-size: var(--admin-font-md);
+    }
+    
+    .status-dot {
+        width: 10px;
+        height: 10px;
+    }
+}

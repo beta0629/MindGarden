@@ -121,6 +121,46 @@ const SummaryPanels = ({ user, consultationData }) => {
           </div>
         </div>
       )}
+
+      {/* 매핑 관리 (관리자 전용) */}
+      {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+        <div className="summary-panel mapping-management">
+          <div className="panel-header">
+            <h3 className="panel-title">
+              <i className="bi bi-link-45deg"></i>
+              매핑 관리
+            </h3>
+          </div>
+          <div className="panel-content">
+            <div className="summary-item">
+              <div className="summary-icon">
+                <i className="bi bi-clock-history"></i>
+              </div>
+              <div className="summary-info">
+                <div className="summary-label">승인 대기</div>
+                <div className="summary-value">{consultationData.pendingMappings || 0}건</div>
+              </div>
+            </div>
+            <div className="summary-item">
+              <div className="summary-icon">
+                <i className="bi bi-check-circle"></i>
+              </div>
+              <div className="summary-info">
+                <div className="summary-label">활성 매핑</div>
+                <div className="summary-value">{consultationData.activeMappings || 0}건</div>
+              </div>
+            </div>
+            <div className="mapping-actions">
+              <button 
+                className="btn btn-primary btn-sm"
+                onClick={() => window.location.href = '/admin/mapping-management'}
+              >
+                <i className="bi bi-gear"></i> 매핑 관리
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

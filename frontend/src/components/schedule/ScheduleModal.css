@@ -25,8 +25,8 @@
     border-radius: 16px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     width: 100%;
-    max-width: 900px;
-    max-height: 90vh;
+    max-width: 1200px;
+    max-height: 98vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -109,17 +109,13 @@
     transform: scale(1.1);
 }
 
-.modal-progress {
-    padding: 16px 24px;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
-}
+/* modal-progress 스타일 제거 - schedule-modal-content로 통합됨 */
 
 .schedule-modal-content {
     flex: 1;
     padding: 24px;
     overflow-y: auto;
-    min-height: 400px;
+    min-height: 500px;
 }
 
 .modal-footer {
@@ -133,7 +129,7 @@
 }
 
 /* 버튼 스타일 */
-.btn {
+.schedule-modal .btn {
     padding: 10px 20px;
     border: none;
     border-radius: 6px;
@@ -148,50 +144,50 @@
     justify-content: center;
 }
 
-.btn:disabled {
+.schedule-modal .btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
-.btn-primary {
+.schedule-modal .btn-primary {
     background-color: #007bff;
     color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
+.schedule-modal .btn-primary:hover:not(:disabled) {
     background-color: #0056b3;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
 }
 
-.btn-secondary {
+.schedule-modal .btn-secondary {
     background-color: #6c757d;
     color: white;
 }
 
-.btn-secondary:hover:not(:disabled) {
+.schedule-modal .btn-secondary:hover:not(:disabled) {
     background-color: #545b62;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
 }
 
-.btn-success {
+.schedule-modal .btn-success {
     background-color: #28a745;
     color: white;
 }
 
-.btn-success:hover:not(:disabled) {
+.schedule-modal .btn-success:hover:not(:disabled) {
     background-color: #1e7e34;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
 }
 
 /* 폼 그룹 */
-.form-group {
+.schedule-modal .form-group {
     margin-bottom: 16px;
 }
 
-.form-group label {
+.schedule-modal .form-group label {
     display: block;
     margin-bottom: 6px;
     font-size: 14px;
@@ -199,9 +195,9 @@
     color: #495057;
 }
 
-.form-group input,
-.form-group textarea,
-.form-group select {
+.schedule-modal .form-group input,
+.schedule-modal .form-group textarea,
+.schedule-modal .form-group select {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #ced4da;
@@ -211,15 +207,15 @@
     background-color: #fff;
 }
 
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+.schedule-modal .form-group input:focus,
+.schedule-modal .form-group textarea:focus,
+.schedule-modal .form-group select:focus {
     outline: none;
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.form-group textarea {
+.schedule-modal .form-group textarea {
     resize: vertical;
     min-height: 80px;
 }
@@ -404,6 +400,38 @@
 .btn:focus {
     outline: 2px solid #007bff;
     outline-offset: 2px;
+}
+
+/* 상담사 선택 단계 레이아웃 상수 고정 */
+.schedule-modal-content .consultant-selection-step {
+    height: 600px !important;
+    max-height: 600px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+.schedule-modal-content .consultant-selection-step .step-header {
+    height: 80px !important;
+    flex-shrink: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 16px 0 !important;
+}
+
+.schedule-modal-content .consultant-selection-step .consultant-filter {
+    height: 200px !important;
+    flex-shrink: 0 !important;
+    margin-bottom: 0 !important;
+    padding: 16px 0 !important;
+}
+
+.schedule-modal-content .consultant-selection-step .consultant-grid {
+    height: 350px !important;
+    flex-shrink: 0 !important;
+    overflow-y: auto !important;
+    padding: 16px 0 !important;
+    background-color: #f8f9fa !important;
+    border-radius: 8px !important;
 }
 
 /* 매우 작은 화면 (480px 이하) */

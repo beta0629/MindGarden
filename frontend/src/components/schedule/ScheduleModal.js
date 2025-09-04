@@ -4,6 +4,8 @@ import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
 import notificationManager from '../../utils/notification';
+import { CSS_VARIABLES } from '../../constants/css-variables';
+import { useSession } from '../../contexts/SessionContext';
 import './ScheduleModal.css';
 
 /**
@@ -34,11 +36,26 @@ const ScheduleModal = ({
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1); // 1: 상담사 선택, 2: 내담자 선택, 3: 시간 선택, 4: 세부사항
 
+    // 세션 컨텍스트에서 모달 상태 관리 함수 가져오기
+    const { setModalOpen } = useSession();
+
     useEffect(() => {
         if (isOpen) {
-            // 모달이 열릴 때 필요한 초기화 작업
+            // 모달이 열릴 때 세션 컨텍스트에 알림 (세션 체크 중단)
+            setModalOpen(true);
+            console.log('📱 스케줄 모달 열림 - 세션 체크 일시 중단');
+        } else {
+            // 모달이 닫힐 때 세션 컨텍스트에 알림 (세션 체크 재개)
+            setModalOpen(false);
+            console.log('📱 스케줄 모달 닫힘 - 세션 체크 재개');
         }
-    }, [isOpen, selectedDate]);
+
+        // 컴포넌트 언마운트 시에도 모달 상태 해제
+        return () => {
+            setModalOpen(false);
+            console.log('📱 스케줄 모달 언마운트 - 세션 체크 재개');
+        };
+    }, [isOpen]); // setModalOpen 제거하여 무한 리렌더링 방지
 
 
 
@@ -220,7 +237,7 @@ const ScheduleModal = ({
                     </div>
                 </div>
 
-                <div className="modal-progress">
+                <div className="schedule-modal-content">
                     <StepIndicator 
                         currentStep={step} 
                         totalSteps={4}
@@ -231,9 +248,6 @@ const ScheduleModal = ({
                             { id: 4, title: '세부사항', icon: '📝' }
                         ]}
                     />
-                </div>
-
-                <div className="schedule-modal-content">
                     {step === 1 && (
                         <ConsultantSelectionStep
                             onConsultantSelect={handleConsultantDrop}

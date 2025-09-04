@@ -1,11 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaUserTie, FaLink, FaSync, FaCalendarAlt, FaCalendarCheck, FaCog } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog } from 'react-icons/fa';
+import SimpleLayout from '../layout/SimpleLayout';
 import TodayStatistics from './TodayStatistics';
+import SystemStatus from './system/SystemStatus';
+import SystemTools from './system/SystemTools';
+import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
 import './AdminDashboard.css';
+import './system/SystemStatus.css';
+import './system/SystemTools.css';
 
-const AdminDashboard = ({ user }) => {
+const AdminDashboard = ({ user: propUser }) => {
+    const navigate = useNavigate();
+    const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
     const [stats, setStats] = useState({
         totalConsultants: 0,
         totalClients: 0,
@@ -17,6 +26,32 @@ const AdminDashboard = ({ user }) => {
     const [showToastState, setShowToastState] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
+    const [systemStatus, setSystemStatus] = useState({
+        server: 'unknown',
+        database: 'unknown',
+        lastChecked: null
+    });
+
+    // 세션 체크 및 권한 확인
+    useEffect(() => {
+        if (sessionLoading) {
+            console.log('⏳ 세션 로딩 중...');
+            return;
+        }
+
+        if (!isLoggedIn) {
+            console.log('❌ 로그인되지 않음, 로그인 페이지로 이동');
+            navigate('/login', { replace: true });
+            return;
+        }
+
+        const currentUser = propUser || sessionUser;
+        if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'SUPER_ADMIN') {
+            console.log('❌ 관리자 권한 없음, 대시보드로 이동');
+            navigate('/dashboard', { replace: true });
+            return;
+        }
+    }, [isLoggedIn, sessionLoading, propUser, sessionUser, navigate]);
 
     const showToast = useCallback((message, type = 'success') => {
         setToastMessage(message);
@@ -94,13 +129,128 @@ const AdminDashboard = ({ user }) => {
         }
     };
 
+    // 시스템 상태 체크
+    const checkSystemStatus = async () => {
+        setLoading(true);
+        try {
+            const [serverRes, dbRes] = await Promise.all([
+                fetch('/api/health/server'),
+                fetch('/api/health/database')
+            ]);
+
+            const serverStatus = serverRes.ok ? 'healthy' : 'error';
+            const dbStatus = dbRes.ok ? 'healthy' : 'error';
+
+            setSystemStatus({
+                server: serverStatus,
+                database: dbStatus,
+                lastChecked: new Date().toLocaleTimeString('ko-KR')
+            });
+
+            if (serverStatus === 'healthy' && dbStatus === 'healthy') {
+                showToast('시스템 상태가 정상입니다.', 'success');
+            } else {
+                showToast('시스템 상태에 문제가 있습니다.', 'warning');
+            }
+        } catch (error) {
+            console.error('시스템 상태 체크 실패:', error);
+            setSystemStatus({
+                server: 'error',
+                database: 'error',
+                lastChecked: new Date().toLocaleTimeString('ko-KR')
+            });
+            showToast('시스템 상태 체크에 실패했습니다.', 'danger');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 로그 보기
+    const viewLogs = async () => {
+        try {
+            const response = await fetch('/api/admin/logs/recent');
+            if (response.ok) {
+                const logs = await response.json();
+                // 로그를 새 창에서 표시
+                const logWindow = window.open('', '_blank');
+                logWindow.document.write(`
+                    <html>
+                        <head><title>시스템 로그</title></head>
+                        <body>
+                            <h2>최근 시스템 로그</h2>
+                            <pre style="white-space: pre-wrap; font-family: monospace;">${JSON.stringify(logs, null, 2)}</pre>
+                        </body>
+                    </html>
+                `);
+                showToast('로그를 새 창에서 열었습니다.', 'info');
+            } else {
+                showToast('로그 조회에 실패했습니다.', 'danger');
+            }
+        } catch (error) {
+            console.error('로그 조회 실패:', error);
+            showToast('로그 조회에 실패했습니다.', 'danger');
+        }
+    };
+
+    // 캐시 초기화
+    const clearCache = async () => {
+        try {
+            const response = await fetch('/api/admin/cache/clear', {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                showToast('캐시가 성공적으로 초기화되었습니다.', 'success');
+                // 통계도 새로고침
+                loadStats();
+            } else {
+                showToast('캐시 초기화에 실패했습니다.', 'danger');
+            }
+        } catch (error) {
+            console.error('캐시 초기화 실패:', error);
+            showToast('캐시 초기화에 실패했습니다.', 'danger');
+        }
+    };
+
+    // 백업 생성
+    const createBackup = async () => {
+        try {
+            const response = await fetch('/api/admin/backup/create', {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                const backupData = await response.json();
+                showToast(`백업이 생성되었습니다: ${backupData.filename}`, 'success');
+            } else {
+                showToast('백업 생성에 실패했습니다.', 'danger');
+            }
+        } catch (error) {
+            console.error('백업 생성 실패:', error);
+            showToast('백업 생성에 실패했습니다.', 'danger');
+        }
+    };
+
+    // 로딩 상태 처리
+    if (sessionLoading) {
+        return (
+            <div className="admin-dashboard">
+                <div className="loading-container">
+                    <div className="loading-spinner"></div>
+                    <p>세션 확인 중...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CONTAINER}>
+        <SimpleLayout>
+            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CONTAINER}>
             {/* 오늘의 통계 */}
-            {user && user.id && user.role && (
+            {(propUser || sessionUser) && (propUser || sessionUser)?.id && (propUser || sessionUser)?.role && (
                 <TodayStatistics 
-                    userId={user.id} 
-                    userRole={user.role} 
+                    userId={(propUser || sessionUser)?.id} 
+                    userRole={(propUser || sessionUser)?.role} 
                 />
             )}
 
@@ -164,7 +314,7 @@ const AdminDashboard = ({ user }) => {
                     관리 기능
                 </h2>
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => window.location.href = '/admin/schedule'}>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/schedule')}>
                         <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} schedule`}>
                             <FaCalendarAlt />
                         </div>
@@ -174,7 +324,7 @@ const AdminDashboard = ({ user }) => {
                         </div>
                     </div>
                     
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => window.location.href = '/admin/sessions'}>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/sessions')}>
                         <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} sessions`}>
                             <FaCalendarCheck />
                         </div>
@@ -184,7 +334,7 @@ const AdminDashboard = ({ user }) => {
                         </div>
                     </div>
                     
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => window.location.href = '/admin/consultant-comprehensive'}>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/consultant-comprehensive')}>
                         <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} consultants`}>
                             <FaUserTie />
                         </div>
@@ -194,13 +344,33 @@ const AdminDashboard = ({ user }) => {
                         </div>
                     </div>
                     
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => window.location.href = '/admin/client-comprehensive'}>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/client-comprehensive')}>
                         <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} clients`}>
                             <FaUsers />
                         </div>
                         <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
                             <h3>내담자 관리</h3>
                             <p>내담자 정보를 관리합니다</p>
+                        </div>
+                    </div>
+                    
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/mapping-management')}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} mappings`}>
+                            <FaLink />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>매핑 관리</h3>
+                            <p>상담사와 내담자 매핑을 관리합니다</p>
+                        </div>
+                    </div>
+                    
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/common-codes')}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} consultants`}>
+                            <FaCog />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>공통코드 관리</h3>
+                            <p>시스템 공통코드를 관리합니다</p>
                         </div>
                     </div>
                 </div>
@@ -212,11 +382,22 @@ const AdminDashboard = ({ user }) => {
                     <i className={ICONS.BI.TOOLS}></i>
                     시스템 도구
                 </h2>
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.TOOL_BUTTONS}>
-                    <Button variant="outline-secondary" onClick={loadStats} disabled={loading}>
-                        <FaSync /> 새로고침
-                    </Button>
-                </div>
+                
+                {/* 시스템 상태 컴포넌트 */}
+                <SystemStatus 
+                    systemStatus={systemStatus}
+                    onStatusCheck={checkSystemStatus}
+                    loading={loading}
+                />
+                
+                {/* 시스템 도구 컴포넌트 */}
+                <SystemTools 
+                    onRefresh={loadStats}
+                    onViewLogs={viewLogs}
+                    onClearCache={clearCache}
+                    onCreateBackup={createBackup}
+                    loading={loading}
+                />
             </div>
 
             {/* 토스트 알림 */}
@@ -229,7 +410,8 @@ const AdminDashboard = ({ user }) => {
                     <div className={COMPONENT_CSS.ADMIN_DASHBOARD.TOAST_BODY}>{toastMessage}</div>
                 </div>
             )}
-        </div>
+            </div>
+        </SimpleLayout>
     );
 };
 

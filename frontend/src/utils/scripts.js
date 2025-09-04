@@ -343,6 +343,13 @@ export const notification = {
     }, duration);
   },
   
+  // 편의 메서드들
+  success: (message, duration = 3000) => notification.showToast(message, 'success', duration),
+  error: (message, duration = 5000) => notification.showToast(message, 'error', duration),
+  warning: (message, duration = 4000) => notification.showToast(message, 'warning', duration),
+  info: (message, duration = 3000) => notification.showToast(message, 'info', duration),
+  system: (message, duration = 3000) => notification.showToast(message, 'system', duration),
+  
   // 확인 다이얼로그
   confirm: (message, title = '확인') => {
     return new Promise((resolve) => {

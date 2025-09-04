@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import SimpleLayout from '../layout/SimpleLayout';
 import './SessionManagement.css';
 
 /**
@@ -21,6 +22,8 @@ const SessionManagement = () => {
     const [selectedClient, setSelectedClient] = useState(null);
     const [selectedMapping, setSelectedMapping] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [clientSearchTerm, setClientSearchTerm] = useState('');
+    const [clientFilterStatus, setClientFilterStatus] = useState('ALL');
     const [newSessionData, setNewSessionData] = useState({
         consultantId: '',
         clientId: '',
@@ -59,7 +62,7 @@ const SessionManagement = () => {
      */
     const loadClients = async () => {
         try {
-            const response = await apiGet('/api/users?role=CLIENT');
+            const response = await apiGet('/api/admin/clients');
             if (response.success) {
                 setClients(response.data || []);
             }
@@ -73,7 +76,7 @@ const SessionManagement = () => {
      */
     const loadConsultants = async () => {
         try {
-            const response = await apiGet('/api/users?role=CONSULTANT');
+            const response = await apiGet('/api/admin/consultants');
             if (response.success) {
                 setConsultants(response.data || []);
             }
@@ -87,7 +90,7 @@ const SessionManagement = () => {
      */
     const loadMappings = async () => {
         try {
-            const response = await apiGet('/api/mappings');
+            const response = await apiGet('/api/admin/mappings');
             if (response.success) {
                 setMappings(response.data || []);
             }
@@ -103,13 +106,59 @@ const SessionManagement = () => {
         setSelectedClient(client);
         // 해당 내담자의 매핑 정보 찾기
         const clientMappings = mappings.filter(mapping => 
-            mapping.client && mapping.client.id === client.id
+            mapping.clientId === client.id
         );
         if (clientMappings.length > 0) {
             setSelectedMapping(clientMappings[0]);
         } else {
             setSelectedMapping(null);
         }
+    };
+
+    /**
+     * 필터링된 매핑 목록 반환
+     */
+    const getFilteredMappings = () => {
+        if (!selectedClient) {
+            return mappings; // 내담자가 선택되지 않으면 모든 매핑 표시
+        }
+        return mappings.filter(mapping => mapping.clientId === selectedClient.id);
+    };
+
+    /**
+     * 필터링된 내담자 목록 반환
+     */
+    const getFilteredClients = () => {
+        let filtered = clients;
+
+        // 검색어 필터링
+        if (clientSearchTerm) {
+            filtered = filtered.filter(client => 
+                client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+                client.email.toLowerCase().includes(clientSearchTerm.toLowerCase())
+            );
+        }
+
+        // 상태별 필터링
+        if (clientFilterStatus !== 'ALL') {
+            filtered = filtered.filter(client => {
+                const clientMappings = mappings.filter(mapping => mapping.clientId === client.id);
+                const activeMappings = clientMappings.filter(mapping => mapping.status === 'ACTIVE');
+                
+                switch (clientFilterStatus) {
+                    case 'HAS_MAPPING':
+                        return clientMappings.length > 0;
+                    case 'ACTIVE_MAPPING':
+                        return activeMappings.length > 0;
+                    case 'NO_MAPPING':
+                        return clientMappings.length === 0;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        return filtered;
     };
 
     /**
@@ -143,7 +192,7 @@ const SessionManagement = () => {
 
         setLoading(true);
         try {
-            const response = await apiPost('/api/mappings', {
+            const response = await apiPost('/api/admin/mappings', {
                 consultantId: newSessionData.consultantId,
                 clientId: newSessionData.clientId,
                 totalSessions: newSessionData.totalSessions,
@@ -183,7 +232,7 @@ const SessionManagement = () => {
     const handleStatusChange = async (mappingId, newStatus) => {
         setLoading(true);
         try {
-            const response = await apiPut(`/api/mappings/${mappingId}`, {
+            const response = await apiPut(`/api/admin/mappings/${mappingId}`, {
                 status: newStatus
             });
 
@@ -209,7 +258,11 @@ const SessionManagement = () => {
             'ACTIVE': '활성',
             'INACTIVE': '비활성',
             'SUSPENDED': '일시정지',
-            'COMPLETED': '완료'
+            'TERMINATED': '종료',
+            'COMPLETED': '완료',
+            'PENDING_PAYMENT': '입금 대기',
+            'PAYMENT_CONFIRMED': '입금 확인됨',
+            'SESSIONS_EXHAUSTED': '회기 소진'
         };
         return statusMap[status] || status;
     };
@@ -222,13 +275,18 @@ const SessionManagement = () => {
             'ACTIVE': '#10b981',
             'INACTIVE': '#6b7280',
             'SUSPENDED': '#f59e0b',
-            'COMPLETED': '#3b82f6'
+            'TERMINATED': '#ef4444',
+            'COMPLETED': '#3b82f6',
+            'PENDING_PAYMENT': '#f97316',
+            'PAYMENT_CONFIRMED': '#22c55e',
+            'SESSIONS_EXHAUSTED': '#8b5cf6'
         };
         return colorMap[status] || '#6b7280';
     };
 
     return (
-        <div className="session-mgmt-container">
+        <SimpleLayout>
+            <div className="session-mgmt-container">
             <div className="session-mgmt-header">
                 <h2>📋 내담자 회기 관리</h2>
                 <p>내담자의 상담 회기를 등록하고 관리할 수 있습니다.</p>
@@ -236,24 +294,67 @@ const SessionManagement = () => {
 
             {/* 내담자 선택 섹션 */}
             <div className="session-mgmt-client-selection-section">
-                <h3>내담자 선택</h3>
-                <div className="session-mgmt-client-list">
-                    {clients.map(client => (
-                        <div 
-                            key={client.id}
-                            className={`session-mgmt-client-card ${selectedClient?.id === client.id ? 'selected' : ''}`}
-                            onClick={() => handleClientSelect(client)}
-                        >
-                            <div className="session-mgmt-client-info">
-                                <div className="session-mgmt-client-name">{client.name}</div>
-                                <div className="session-mgmt-client-email">{client.email}</div>
-                            </div>
-                            <div className="session-mgmt-client-status">
-                                {selectedClient?.id === client.id && <span className="session-mgmt-selected-indicator">✓</span>}
-                            </div>
+                <div className="session-mgmt-client-selection-header">
+                    <h3>내담자 선택</h3>
+                    <div className="session-mgmt-client-filters">
+                        <div className="session-mgmt-search-box">
+                            <input
+                                type="text"
+                                placeholder="내담자 이름 또는 이메일 검색..."
+                                value={clientSearchTerm}
+                                onChange={(e) => setClientSearchTerm(e.target.value)}
+                                className="session-mgmt-search-input"
+                            />
                         </div>
-                    ))}
+                        <select
+                            value={clientFilterStatus}
+                            onChange={(e) => setClientFilterStatus(e.target.value)}
+                            className="session-mgmt-filter-select"
+                        >
+                            <option value="ALL">전체</option>
+                            <option value="HAS_MAPPING">매핑 있음</option>
+                            <option value="ACTIVE_MAPPING">활성 매핑</option>
+                            <option value="NO_MAPPING">매핑 없음</option>
+                        </select>
+                    </div>
                 </div>
+                <div className="session-mgmt-client-list">
+                    {getFilteredClients().map(client => {
+                        const clientMappings = mappings.filter(mapping => mapping.clientId === client.id);
+                        const activeMappings = clientMappings.filter(mapping => mapping.status === 'ACTIVE');
+                        
+                        return (
+                            <div 
+                                key={client.id}
+                                className={`session-mgmt-client-card ${selectedClient?.id === client.id ? 'selected' : ''}`}
+                                onClick={() => handleClientSelect(client)}
+                            >
+                                <div className="session-mgmt-client-info">
+                                    <div className="session-mgmt-client-name">{client.name}</div>
+                                    <div className="session-mgmt-client-email">{client.email}</div>
+                                    <div className="session-mgmt-client-mapping-info">
+                                        <span className="session-mgmt-mapping-count">
+                                            매핑 {clientMappings.length}개
+                                        </span>
+                                        {activeMappings.length > 0 && (
+                                            <span className="session-mgmt-active-count">
+                                                (활성 {activeMappings.length}개)
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="session-mgmt-client-status">
+                                    {selectedClient?.id === client.id && <span className="session-mgmt-selected-indicator">✓</span>}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                {getFilteredClients().length === 0 && (
+                    <div className="session-mgmt-no-results">
+                        <p>검색 조건에 맞는 내담자가 없습니다.</p>
+                    </div>
+                )}
             </div>
 
             {/* 선택된 내담자 정보 */}
@@ -328,27 +429,28 @@ const SessionManagement = () => {
                 </div>
             )}
 
-            {/* 전체 매핑 목록 */}
+            {/* 매핑 목록 */}
             <div className="session-mgmt-all-mappings-section">
-                <h3>전체 회기 관리 현황</h3>
-                <div className="session-mgmt-mappings-table">
-                    <div className="session-mgmt-table-header">
-                        <div className="session-mgmt-header-cell">내담자</div>
-                        <div className="session-mgmt-header-cell">상담사</div>
-                        <div className="session-mgmt-header-cell">총 회기</div>
-                        <div className="session-mgmt-header-cell">사용</div>
-                        <div className="session-mgmt-header-cell">남은</div>
-                        <div className="session-mgmt-header-cell">상태</div>
-                        <div className="session-mgmt-header-cell">액션</div>
-                    </div>
-                    {mappings.map(mapping => (
-                        <div key={mapping.id} className="session-mgmt-table-row">
-                            <div className="session-mgmt-table-cell">{mapping.client?.name || '알 수 없음'}</div>
-                            <div className="session-mgmt-table-cell">{mapping.consultant?.name || '알 수 없음'}</div>
-                            <div className="session-mgmt-table-cell">{mapping.totalSessions || 0}</div>
-                            <div className="session-mgmt-table-cell">{mapping.usedSessions || 0}</div>
-                            <div className="session-mgmt-table-cell">{mapping.remainingSessions || 0}</div>
-                            <div className="session-mgmt-table-cell">
+                <h3>
+                    {selectedClient ? `${selectedClient.name} 회기 관리 현황` : '전체 회기 관리 현황'}
+                    {selectedClient && (
+                        <button 
+                            className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-secondary"
+                            onClick={() => setSelectedClient(null)}
+                            style={{ marginLeft: '15px' }}
+                        >
+                            전체 보기
+                        </button>
+                    )}
+                </h3>
+                <div className="session-mgmt-mappings-grid">
+                    {getFilteredMappings().map(mapping => (
+                        <div key={mapping.id} className="session-mgmt-mapping-card">
+                            <div className="session-mgmt-card-header">
+                                <div className="session-mgmt-card-title">
+                                    <h4>{mapping.clientName || '알 수 없음'}</h4>
+                                    <span className="session-mgmt-card-subtitle">내담자</span>
+                                </div>
                                 <span 
                                     className="session-mgmt-status-badge"
                                     style={{ backgroundColor: getStatusColor(mapping.status) }}
@@ -356,13 +458,86 @@ const SessionManagement = () => {
                                     {getStatusText(mapping.status)}
                                 </span>
                             </div>
-                            <div className="session-mgmt-table-cell">
+                            
+                            <div className="session-mgmt-card-content">
+                                <div className="session-mgmt-info-row">
+                                    <span className="session-mgmt-info-label">상담사:</span>
+                                    <span className="session-mgmt-info-value">{mapping.consultantName || '알 수 없음'}</span>
+                                </div>
+                                
+                                <div className="session-mgmt-sessions-info">
+                                    <div className="session-mgmt-session-item">
+                                        <span className="session-mgmt-session-label">총 회기</span>
+                                        <span className="session-mgmt-session-value total">{mapping.totalSessions || 0}회</span>
+                                    </div>
+                                    <div className="session-mgmt-session-item">
+                                        <span className="session-mgmt-session-label">사용</span>
+                                        <span className="session-mgmt-session-value used">{mapping.usedSessions || 0}회</span>
+                                    </div>
+                                    <div className="session-mgmt-session-item">
+                                        <span className="session-mgmt-session-label">남은</span>
+                                        <span className="session-mgmt-session-value remaining">{mapping.remainingSessions || 0}회</span>
+                                    </div>
+                                </div>
+                                
+                                {mapping.packageName && (
+                                    <div className="session-mgmt-info-row">
+                                        <span className="session-mgmt-info-label">패키지:</span>
+                                        <span className="session-mgmt-info-value">{mapping.packageName}</span>
+                                    </div>
+                                )}
+                                
+                                {mapping.paymentAmount && (
+                                    <div className="session-mgmt-info-row">
+                                        <span className="session-mgmt-info-label">결제금액:</span>
+                                        <span className="session-mgmt-info-value">{mapping.paymentAmount.toLocaleString()}원</span>
+                                    </div>
+                                )}
+                                
+                                {mapping.createdAt && (
+                                    <div className="session-mgmt-info-row">
+                                        <span className="session-mgmt-info-label">등록일:</span>
+                                        <span className="session-mgmt-info-value">
+                                            {new Date(mapping.createdAt).toLocaleDateString('ko-KR')}
+                                        </span>
+                                    </div>
+                                )}
+                                
+                                {mapping.adminApprovalDate && (
+                                    <div className="session-mgmt-info-row">
+                                        <span className="session-mgmt-info-label">승인일:</span>
+                                        <span className="session-mgmt-info-value">
+                                            {new Date(mapping.adminApprovalDate).toLocaleDateString('ko-KR')}
+                                        </span>
+                                    </div>
+                                )}
+                                
+                                {mapping.paymentDate && (
+                                    <div className="session-mgmt-info-row">
+                                        <span className="session-mgmt-info-label">결제일:</span>
+                                        <span className="session-mgmt-info-value">
+                                            {new Date(mapping.paymentDate).toLocaleDateString('ko-KR')}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="session-mgmt-card-actions">
                                 <button 
                                     className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-secondary"
                                     onClick={() => handleStatusChange(mapping.id, 'INACTIVE')}
                                     disabled={mapping.status === 'INACTIVE'}
                                 >
                                     비활성
+                                </button>
+                                <button 
+                                    className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-primary"
+                                    onClick={() => {
+                                        setSelectedMapping(mapping);
+                                        setShowAddModal(true);
+                                    }}
+                                >
+                                    회기 등록
                                 </button>
                             </div>
                         </div>
@@ -480,7 +655,8 @@ const SessionManagement = () => {
                     <div className="session-mgmt-loading-spinner">로딩 중...</div>
                 </div>
             )}
-        </div>
+            </div>
+        </SimpleLayout>
     );
 };
 

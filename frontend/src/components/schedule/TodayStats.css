@@ -1,9 +1,37 @@
 /* 오늘의 통계 컴포넌트 스타일 */
+.today-stats-container {
+    width: 100%;
+}
+
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.refresh-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+    background-color: #f3f4f6;
+    transform: rotate(180deg);
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    margin-top: 8px;
 }
 
 .stat-item {
@@ -40,6 +68,21 @@
 .stat-item.loading .stat-value {
     color: #94a3b8;
     animation: pulse 1.5s ease-in-out infinite;
+    position: relative;
+}
+
+.stat-item.loading .stat-value::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
 .stat-item.error .stat-value {
@@ -57,6 +100,11 @@
     50% {
         opacity: 0.5;
     }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* 반응형 디자인 */

@@ -32,6 +32,24 @@ public class AuthController {
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final AuthService authService;
     
+    @PostMapping("/clear-session")
+    public ResponseEntity<?> clearSession(HttpSession session) {
+        try {
+            log.info("세션 강제 초기화 요청");
+            SessionUtils.clearSession(session);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "세션이 초기화되었습니다."
+            ));
+        } catch (Exception e) {
+            log.error("세션 초기화 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "세션 초기화에 실패했습니다."
+            ));
+        }
+    }
+
     @GetMapping("/current-user")
     public ResponseEntity<?> getCurrentUser(HttpSession session) {
         User user = SessionUtils.getCurrentUser(session);
@@ -117,7 +135,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request, HttpSession session) {
         try {
-            log.info("🔐 로그인 시도: {}", request.getEmail());
+            log.info("🔐 로그인 시도: email={}, password={}, request={}", 
+                request.getEmail(), 
+                request.getPassword() != null ? "***" : "null",
+                request);
             
             // AuthService를 통한 인증
             AuthResponse authResponse = authService.authenticate(request.getEmail(), request.getPassword());

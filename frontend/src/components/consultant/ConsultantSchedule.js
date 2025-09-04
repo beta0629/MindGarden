@@ -1,31 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import koLocale from '@fullcalendar/core/locales/ko.js';
+import SimpleLayout from '../layout/SimpleLayout';
 import ClientInfoModal from './ClientInfoModal';
 import ConsultationLogModal from './ConsultationLogModal';
+import EventModal from './EventModal';
+import { CONSULTATION_DURATIONS, BREAK_TIME_MINUTES } from '../../constants/schedule';
+import { useSession } from '../../contexts/SessionContext';
 import './ConsultantSchedule.css';
 
-// 상담 타입별 기본 시간 설정 (분)
-const CONSULTATION_DURATIONS = {
-  '초기상담': 60,
-  '진행상담': 50,
-  '종결상담': 50,
-  '가족상담': 100,
-  '부부상담': 80,
-  '그룹상담': 90,
-  '긴급상담': 30,
-  '사후관리': 40,
-  '평가상담': 120
-};
 
-// 휴식시간 (분)
-const BREAK_TIME_MINUTES = 10;
 
 const ConsultantSchedule = () => {
+  const navigate = useNavigate();
+  const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,15 +36,35 @@ const ConsultantSchedule = () => {
   
   const calendarRef = useRef(null);
 
-  // 사용자 권한 확인 (실제로는 세션에서 가져와야 함)
-  const userRole = 'CONSULTANT'; // 상담사로 고정
+  // 세션 체크 및 권한 확인
+  useEffect(() => {
+    if (sessionLoading) {
+      console.log('⏳ 세션 로딩 중...');
+      return;
+    }
+
+    if (!isLoggedIn) {
+      console.log('❌ 로그인되지 않음, 로그인 페이지로 이동');
+      navigate('/login', { replace: true });
+      return;
+    }
+
+    if (user?.role !== 'CONSULTANT' && user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN') {
+      console.log('❌ 상담사 권한 없음, 대시보드로 이동');
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+  }, [isLoggedIn, sessionLoading, user, navigate]);
+
+  // 사용자 권한 확인
+  const userRole = user?.role || 'CONSULTANT';
   const isConsultant = userRole === 'CONSULTANT';
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
 
   // 샘플 데이터 로드
   useEffect(() => {
     // 현재 상담사 ID (실제로는 세션에서 가져와야 함)
-    const currentConsultantId = '1'; // 상담사 ID 1번으로 가정
+    const currentConsultantId = user?.id || '1'; // 세션에서 가져온 상담사 ID 사용
     
     // 상담사-내담자 매핑 데이터 (관리자가 설정)
     const consultantClientMappings = [
@@ -504,7 +517,8 @@ const ConsultantSchedule = () => {
   };
 
   return (
-    <div className="consultant-schedule">
+    <SimpleLayout>
+      <div className="consultant-schedule">
       <div className="schedule-header">
         <h1>📅 상담 일정 관리</h1>
         <p>상담 일정을 관리하고 조회할 수 있습니다.</p>
@@ -655,123 +669,29 @@ const ConsultantSchedule = () => {
           mode={consultationLogModalMode}
         />
       )}
-    </div>
-  );
-};
-
-// 일정 모달 컴포넌트
-const EventModal = ({ event, mode, onSave, onDelete, onClose }) => {
-  const [formData, setFormData] = useState({
-    title: event?.title || '',
-    start: event?.start || '',
-    end: event?.end || '',
-    clientName: event?.extendedProps?.clientName || '',
-    consultationType: event?.extendedProps?.consultationType || '',
-    notes: event?.extendedProps?.notes || ''
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2>{mode === 'add' ? '새 일정 추가' : '일정 수정'}</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>일정 제목 *</label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-              required
-              placeholder="상담 일정 제목"
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>시작 시간 *</label>
-              <input
-                type="datetime-local"
-                value={formData.start}
-                onChange={(e) => setFormData({...formData, start: e.target.value})}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>종료 시간 *</label>
-              <input
-                type="datetime-local"
-                value={formData.end}
-                onChange={(e) => setFormData({...formData, end: e.target.value})}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>내담자 이름</label>
-            <input
-              type="text"
-              value={formData.clientName}
-              onChange={(e) => setFormData({...formData, clientName: e.target.value})}
-              placeholder="내담자 이름"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>상담 유형</label>
-            <select
-              value={formData.consultationType}
-              onChange={(e) => setFormData({...formData, consultationType: e.target.value})}
-            >
-              <option value="">선택하세요</option>
-              <option value="초기상담">초기상담</option>
-              <option value="진행상담">진행상담</option>
-              <option value="종결상담">종결상담</option>
-              <option value="긴급상담">긴급상담</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>메모</label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({...formData, notes: e.target.value})}
-              placeholder="상담 관련 메모"
-              rows="3"
-            />
-          </div>
-
-          <div className="modal-actions">
-            {mode === 'edit' && (
-              <button 
-                type="button" 
-                className="delete-btn"
-                onClick={onDelete}
-              >
-                삭제
-              </button>
-            )}
-            <button type="submit" className="save-btn">
-              {mode === 'add' ? '추가' : '수정'}
-            </button>
-            <button type="button" className="cancel-btn" onClick={onClose}>
-              취소
-            </button>
-          </div>
-        </form>
       </div>
-    </div>
+    </SimpleLayout>
   );
 };
 
-export default ConsultantSchedule;
+// 로딩 상태 처리 (컴포넌트 외부로 이동)
+const ConsultantScheduleWithLoading = () => {
+  const { isLoading: sessionLoading } = useSession();
+  
+  if (sessionLoading) {
+    return (
+      <div className="tablet-schedule-page">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>세션 확인 중...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return <ConsultantSchedule />;
+};
+
+
+
+export default ConsultantScheduleWithLoading;

@@ -111,10 +111,11 @@ const ProfileSection = ({
           <input
             type="tel"
             name="phone"
-            value={formatPhoneNumber(formData.phone)}
+            value={formData.phone}
             onChange={handleInputChange}
             disabled={!isEditing}
             placeholder="010-0000-0000"
+            maxLength="13"
           />
         </div>
 

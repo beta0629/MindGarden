@@ -1,0 +1,208 @@
+/* 간단한 헤더 스타일 */
+.simple-header {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.simple-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 로고 스타일 */
+.simple-header-logo {
+  display: flex;
+  align-items: center;
+}
+
+.simple-header-logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #333;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.simple-header-logo-link i {
+  font-size: 1.5rem;
+  color: #6c5ce7;
+  margin-right: 8px;
+}
+
+/* 오른쪽 영역 */
+.simple-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 로딩 상태 */
+.simple-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  color: #666;
+  font-size: 14px;
+}
+
+.simple-loading i {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 사용자 정보 */
+.simple-user-info {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.simple-user-info:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.simple-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+}
+
+.simple-profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.simple-user-avatar i {
+  font-size: 24px;
+  color: #9e9e9e;
+}
+
+.simple-user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.simple-user-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.simple-user-role {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 버튼 스타일 */
+.simple-menu-toggle,
+.simple-session-refresh,
+.simple-login-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.simple-menu-toggle {
+  background: #f8f9fa;
+  color: #333;
+  border: 1px solid #dee2e6;
+}
+
+.simple-menu-toggle:hover {
+  background: #e9ecef;
+}
+
+.simple-session-refresh {
+  background: #007bff;
+  color: white;
+}
+
+.simple-session-refresh:hover {
+  background: #0056b3;
+}
+
+.simple-login-button {
+  background: #6c5ce7;
+  color: white;
+}
+
+.simple-login-button:hover {
+  background: #5a4fcf;
+  color: white;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .simple-header-content {
+    padding: 0 15px;
+    height: 56px;
+  }
+  
+  .simple-header-logo-link {
+    font-size: 1.1rem;
+  }
+  
+  .simple-header-logo-link i {
+    font-size: 1.3rem;
+  }
+  
+  .simple-user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .simple-user-avatar i {
+    font-size: 20px;
+  }
+  
+  .simple-user-name {
+    font-size: 13px;
+  }
+  
+  .simple-user-role {
+    font-size: 11px;
+  }
+  
+  .simple-menu-toggle,
+  .simple-session-refresh,
+  .simple-login-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}

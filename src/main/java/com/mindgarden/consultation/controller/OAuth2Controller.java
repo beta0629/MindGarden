@@ -4,6 +4,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
+import com.mindgarden.consultation.constant.OAuth2Constants;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SocialLoginResponse;
 import com.mindgarden.consultation.dto.SocialUserInfo;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +52,26 @@ public class OAuth2Controller {
     
     @Value("${development.security.oauth2.naver.scope}")
     private String naverScope;
+    
+    /**
+     * 프론트엔드 URL 동적 감지
+     * Referer 헤더에서 프론트엔드 URL을 추출
+     */
+    private String getFrontendBaseUrl(HttpServletRequest request) {
+        String referer = request.getHeader("Referer");
+        if (referer != null && !referer.isEmpty()) {
+            try {
+                // Referer에서 프로토콜과 호스트 부분만 추출
+                java.net.URL url = new java.net.URL(referer);
+                return url.getProtocol() + "://" + url.getAuthority();
+            } catch (Exception e) {
+                log.warn("Referer URL 파싱 실패: {}", referer, e);
+            }
+        }
+        
+        // Referer가 없거나 파싱 실패 시 기본값 사용
+        return OAuth2Constants.FRONTEND_BASE_URL;
+    }
 
     @GetMapping("/oauth2/kakao/authorize")
     public ResponseEntity<?> kakaoAuthorize(
@@ -123,25 +145,29 @@ public class OAuth2Controller {
             @RequestParam(required = false) String state,
             @RequestParam(required = false) String error,
             @RequestParam(required = false) String mode, // 'login' 또는 'link'
+            HttpServletRequest request,
             HttpSession session) {
         
         if (error != null) {
+            String frontendUrl = getFrontendBaseUrl(request);
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=" + error + "&provider=NAVER")
+                .header("Location", frontendUrl + "/login?error=" + URLEncoder.encode(error, StandardCharsets.UTF_8) + "&provider=NAVER")
                 .build();
         }
         
         if (code == null) {
+            String frontendUrl = getFrontendBaseUrl(request);
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=인증코드없음&provider=NAVER")
+                .header("Location", frontendUrl + "/login?error=" + URLEncoder.encode("인증코드없음", StandardCharsets.UTF_8) + "&provider=NAVER")
                 .build();
         }
         
         String savedState = (String) session.getAttribute("oauth2_naver_state");
         if (savedState != null && !savedState.equals(state)) {
             session.removeAttribute("oauth2_naver_state");
+            String frontendUrl = getFrontendBaseUrl(request);
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=보안검증실패&provider=NAVER")
+                .header("Location", frontendUrl + "/login?error=" + URLEncoder.encode("보안검증실패", StandardCharsets.UTF_8) + "&provider=NAVER")
                 .build();
         }
         
@@ -163,7 +189,7 @@ public class OAuth2Controller {
                     if (currentUser == null) {
                         log.error("계정 연동 모드에서 세션 사용자를 찾을 수 없음");
                         return ResponseEntity.status(302)
-                            .header("Location", "http://localhost:3000/mypage?error=세션만료&provider=NAVER")
+                            .header("Location", OAuth2Constants.FRONTEND_BASE_URL + "/mypage?error=" + URLEncoder.encode("세션만료", StandardCharsets.UTF_8) + "&provider=NAVER")
                             .build();
                     }
                     
@@ -186,16 +212,22 @@ public class OAuth2Controller {
                                 currentUser.getId(), userInfo.getId());
                         
                         return ResponseEntity.status(302)
-                            .header("Location", "http://localhost:3000/mypage?success=연동완료&provider=NAVER")
+                            .header("Location", OAuth2Constants.FRONTEND_BASE_URL + "/mypage?success=" + URLEncoder.encode("연동완료", StandardCharsets.UTF_8) + "&provider=NAVER")
                             .build();
                     } catch (Exception e) {
                         log.error("네이버 계정 연동 실패", e);
                         return ResponseEntity.status(302)
-                            .header("Location", "http://localhost:3000/mypage?error=연동실패&provider=NAVER")
+                            .header("Location", OAuth2Constants.FRONTEND_BASE_URL + "/mypage?error=" + URLEncoder.encode("연동실패", StandardCharsets.UTF_8) + "&provider=NAVER")
                             .build();
                     }
                 } else {
                     // 로그인 모드 (기존 로직)
+                    // OAuth2 로그인 시 기존 세션 완전 초기화
+                    SessionUtils.clearSession(session);
+                    
+                    // 새로운 세션 생성
+                    session = request.getSession(true);
+                    
                     // 세션에 사용자 정보 저장 (UserInfo를 User 엔티티로 변환, 복호화된 데이터 사용)
                     User user = new User();
                     user.setId(userInfo.getId());
@@ -228,21 +260,22 @@ public class OAuth2Controller {
                     log.info("네이버 OAuth2 로그인 성공: userId={}, role={}, profileImage={}", 
                             user.getId(), user.getRole(), user.getProfileImageUrl());
                     
-                    // 사용자 역할에 따른 리다이렉트
+                    // 사용자 역할에 따른 리다이렉트 (동적 URL 사용)
+                    String frontendUrl = getFrontendBaseUrl(request);
                     String redirectUrl;
                     switch (user.getRole()) {
                         case CLIENT:
-                            redirectUrl = "http://localhost:3000/client/dashboard";
+                            redirectUrl = frontendUrl + "/client/dashboard";
                             break;
                         case CONSULTANT:
-                            redirectUrl = "http://localhost:3000/consultant/dashboard";
+                            redirectUrl = frontendUrl + "/consultant/dashboard";
                             break;
                         case ADMIN:
                         case SUPER_ADMIN:
-                            redirectUrl = "http://localhost:3000/admin/dashboard";
+                            redirectUrl = frontendUrl + "/admin/dashboard";
                             break;
                         default:
-                            redirectUrl = "http://localhost:3000/client/dashboard";
+                            redirectUrl = frontendUrl + "/client/dashboard";
                             break;
                     }
                     
@@ -255,7 +288,8 @@ public class OAuth2Controller {
                 log.info("네이버 OAuth2 간편 회원가입 필요: {}", response.getSocialUserInfo());
                 
                 // 소셜 사용자 정보를 URL 파라미터로 전달
-                String signupUrl = "http://localhost:3000/login?" +
+                String frontendUrl = getFrontendBaseUrl(request);
+                String signupUrl = frontendUrl + "/login?" +
                     "signup=required" +
                     "&provider=naver" +
                     "&email=" + (response.getSocialUserInfo() != null ? response.getSocialUserInfo().getEmail() : "") +
@@ -267,13 +301,13 @@ public class OAuth2Controller {
                     .build();
             } else {
                 return ResponseEntity.status(302)
-                    .header("Location", "http://localhost:3000/login?error=" + response.getMessage() + "&provider=NAVER")
+                    .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode(response.getMessage(), StandardCharsets.UTF_8) + "&provider=NAVER")
                     .build();
             }
         } catch (Exception e) {
             log.error("네이버 OAuth2 콜백 처리 실패", e);
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=처리실패&provider=NAVER")
+                .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=NAVER")
                 .build();
         }
     }
@@ -284,17 +318,18 @@ public class OAuth2Controller {
             @RequestParam(required = false) String state,
             @RequestParam(required = false) String error,
             @RequestParam(required = false) String mode, // 'login' 또는 'link'
+            HttpServletRequest request,
             HttpSession session) {
         
         if (error != null) {
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=" + error + "&provider=KAKAO")
+                .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode(error, StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
         
         if (code == null) {
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=인증코드없음&provider=KAKAO")
+                .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode("인증코드없음", StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
         
@@ -302,7 +337,7 @@ public class OAuth2Controller {
         if (savedState != null && !savedState.equals(state)) {
             session.removeAttribute("oauth2_kakao_state");
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=보안검증실패&provider=KAKAO")
+                .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode("보안검증실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
         
@@ -324,7 +359,7 @@ public class OAuth2Controller {
                     if (currentUser == null) {
                         log.error("계정 연동 모드에서 세션 사용자를 찾을 수 없음");
                         return ResponseEntity.status(302)
-                            .header("Location", "http://localhost:3000/mypage?error=세션만료&provider=KAKAO")
+                            .header("Location", "http://localhost:3000/mypage?error=" + URLEncoder.encode("세션만료", StandardCharsets.UTF_8) + "&provider=KAKAO")
                             .build();
                     }
                     
@@ -346,16 +381,22 @@ public class OAuth2Controller {
                                 currentUser.getId(), userInfo.getId());
                         
                         return ResponseEntity.status(302)
-                            .header("Location", "http://localhost:3000/mypage?success=연동완료&provider=KAKAO")
+                            .header("Location", "http://localhost:3000/mypage?success=" + URLEncoder.encode("연동완료", StandardCharsets.UTF_8) + "&provider=KAKAO")
                             .build();
                     } catch (Exception e) {
                         log.error("카카오 계정 연동 실패", e);
                         return ResponseEntity.status(302)
-                            .header("Location", "http://localhost:3000/mypage?error=연동실패&provider=KAKAO")
+                            .header("Location", "http://localhost:3000/mypage?error=" + URLEncoder.encode("연동실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
                             .build();
                     }
                 } else {
                     // 로그인 모드 (기존 로직)
+                    // OAuth2 로그인 시 기존 세션 완전 초기화
+                    SessionUtils.clearSession(session);
+                    
+                    // 새로운 세션 생성
+                    session = request.getSession(true);
+                    
                     // 세션에 사용자 정보 저장 (UserInfo를 User 엔티티로 변환, 복호화된 데이터 사용)
                     User user = new User();
                     user.setId(userInfo.getId());
@@ -388,21 +429,22 @@ public class OAuth2Controller {
                     log.info("카카오 OAuth2 로그인 성공: userId={}, role={}, profileImage={}", 
                             user.getId(), user.getRole(), user.getProfileImageUrl());
                     
-                    // 사용자 역할에 따른 리다이렉트 (문서 기준)
+                    // 사용자 역할에 따른 리다이렉트 (동적 URL 사용)
+                    String frontendUrl = getFrontendBaseUrl(request);
                     String redirectUrl;
                     switch (user.getRole()) {
                         case CLIENT:
-                            redirectUrl = "http://localhost:3000/client/dashboard";
+                            redirectUrl = frontendUrl + "/client/dashboard";
                             break;
                         case CONSULTANT:
-                            redirectUrl = "http://localhost:3000/consultant/dashboard";
+                            redirectUrl = frontendUrl + "/consultant/dashboard";
                             break;
                         case ADMIN:
                         case SUPER_ADMIN:
-                            redirectUrl = "http://localhost:3000/admin/dashboard";
+                            redirectUrl = frontendUrl + "/admin/dashboard";
                             break;
                         default:
-                            redirectUrl = "http://localhost:3000/client/dashboard";
+                            redirectUrl = frontendUrl + "/client/dashboard";
                             break;
                     }
                     
@@ -427,13 +469,13 @@ public class OAuth2Controller {
                     .build();
             } else {
                 return ResponseEntity.status(302)
-                    .header("Location", "http://localhost:3000/login?error=" + response.getMessage() + "&provider=KAKAO")
+                    .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode(response.getMessage(), StandardCharsets.UTF_8) + "&provider=KAKAO")
                     .build();
             }
         } catch (Exception e) {
             log.error("카카오 OAuth2 콜백 처리 실패", e);
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=처리실패&provider=KAKAO")
+                .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
     }

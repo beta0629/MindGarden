@@ -25,13 +25,21 @@ const QuickActions = ({ user }) => {
     navigate(`/${user?.role?.toLowerCase()}/settings`);
   };
 
+  const goToMappingManagement = () => {
+    navigate('/admin/mapping-management');
+  };
+
+  const goToCommonCodeManagement = () => {
+    navigate('/admin/common-codes');
+  };
+
   return (
     <div className="quick-actions">
       <h3 className="section-title">
         <i className="bi bi-lightning"></i>
         빠른 액션
       </h3>
-      <div className="action-buttons">
+      <div className={`action-buttons ${(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? 'admin-layout' : ''}`}>
         <button className="action-btn" onClick={goToProfile}>
           <i className="bi bi-person-circle"></i>
           <span>마이페이지</span>
@@ -40,6 +48,21 @@ const QuickActions = ({ user }) => {
           <i className="bi bi-calendar-check"></i>
           <span>일정 관리</span>
         </button>
+        
+        {/* 관리자 전용 액션 */}
+        {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+          <>
+            <button className="action-btn" onClick={goToMappingManagement}>
+              <i className="bi bi-link-45deg"></i>
+              <span>매핑 관리</span>
+            </button>
+            <button className="action-btn" onClick={goToCommonCodeManagement}>
+              <i className="bi bi-code-square"></i>
+              <span>공통코드 관리</span>
+            </button>
+          </>
+        )}
+        
         <button className="action-btn" onClick={goToHelp}>
           <i className="bi bi-question-circle"></i>
           <span>도움말</span>

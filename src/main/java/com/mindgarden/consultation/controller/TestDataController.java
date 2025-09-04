@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -506,6 +508,111 @@ public class TestDataController {
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", "상담사 생성 실패: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 테스트 사용자 삭제
+     * POST /api/test/delete-user
+     */
+    @PostMapping("/delete-user")
+    public ResponseEntity<Map<String, Object>> deleteTestUser(@RequestParam String email) {
+        if (!isDev && !"local".equals(activeProfile)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "개발 환경에서만 사용 가능합니다."
+            ));
+        }
+
+        try {
+            log.info("🗑️ 테스트 사용자 삭제: {}", email);
+
+            // 사용자 조회
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "사용자를 찾을 수 없습니다: " + email
+                ));
+            }
+
+            User user = userOpt.get();
+            
+            // 사용자 삭제 (소프트 삭제)
+            user.setIsDeleted(true);
+            user.setDeletedAt(LocalDateTime.now());
+            user.setUpdatedAt(LocalDateTime.now());
+            user.setVersion(user.getVersion() + 1);
+            
+            userRepository.save(user);
+            
+            log.info("✅ 테스트 사용자 삭제 완료: {}", email);
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "사용자가 성공적으로 삭제되었습니다.",
+                "email", user.getEmail(),
+                "name", user.getName()
+            ));
+
+        } catch (Exception e) {
+            log.error("❌ 테스트 사용자 삭제 실패: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "사용자 삭제 실패: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 테스트 사용자 비밀번호 재설정
+     * POST /api/test/reset-password
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, Object>> resetTestUserPassword(@RequestParam String email, @RequestParam String newPassword) {
+        if (!isDev && !"local".equals(activeProfile)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "개발 환경에서만 사용 가능합니다."
+            ));
+        }
+
+        try {
+            log.info("🔑 테스트 사용자 비밀번호 재설정: {}", email);
+
+            // 사용자 조회
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "사용자를 찾을 수 없습니다: " + email
+                ));
+            }
+
+            User user = userOpt.get();
+            
+            // 비밀번호 재설정 (단일 인코딩만 적용)
+            user.setPassword(passwordEncoder.encode(newPassword));
+            user.setUpdatedAt(LocalDateTime.now());
+            user.setVersion(user.getVersion() + 1);
+            
+            User updatedUser = userRepository.save(user);
+            
+            log.info("✅ 테스트 사용자 비밀번호 재설정 완료: {}", email);
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "비밀번호가 성공적으로 재설정되었습니다.",
+                "email", updatedUser.getEmail(),
+                "name", updatedUser.getName()
+            ));
+
+        } catch (Exception e) {
+            log.error("❌ 테스트 사용자 비밀번호 재설정 실패: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "비밀번호 재설정 실패: " + e.getMessage()
             ));
         }
     }

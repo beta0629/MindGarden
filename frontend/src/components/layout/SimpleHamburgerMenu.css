@@ -1,0 +1,215 @@
+/* SimpleHamburgerMenu.css */
+.simple-hamburger-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding-top: 60px;
+}
+
+.simple-hamburger-menu {
+  background: #ffffff;
+  width: 320px;
+  height: 100vh;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.3s ease-out;
+  border-radius: 12px 0 0 12px;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.simple-hamburger-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 20px;
+  border-bottom: 2px solid #e9ecef;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.simple-hamburger-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.simple-hamburger-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  font-size: 20px;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.simple-hamburger-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.simple-hamburger-content {
+  flex: 1;
+  padding: 20px 0;
+  overflow-y: auto;
+  background: #f8f9fa;
+}
+
+.simple-hamburger-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 18px 24px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #2c3e50;
+  font-size: 15px;
+  font-weight: 500;
+  position: relative;
+}
+
+/* 메인메뉴 스타일 */
+.simple-hamburger-main-item {
+  font-weight: 600;
+  background: white;
+  border-bottom: 1px solid #e9ecef;
+  margin: 0 16px 16px 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 18px 24px;
+}
+
+.simple-hamburger-main-item:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.simple-hamburger-main-item:hover i {
+  color: white;
+}
+
+/* 서브메뉴 스타일 */
+.simple-hamburger-submenu {
+  background: transparent;
+  margin: 0 16px 16px 16px;
+  padding-top: 8px;
+}
+
+.simple-hamburger-sub-item {
+  padding: 14px 24px 14px 48px !important;
+  font-size: 14px;
+  color: #6c757d;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  border-left: 3px solid #e9ecef;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.simple-hamburger-sub-item:hover {
+  background: #f8f9fa;
+  color: #495057;
+  border-left-color: #667eea;
+  transform: translateX(4px);
+}
+
+.simple-hamburger-item:hover {
+  background-color: #f8f9fa;
+}
+
+.simple-hamburger-item i {
+  margin-right: 18px;
+  width: 22px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 18px;
+}
+
+.simple-hamburger-item span {
+  flex: 1;
+  font-weight: inherit;
+}
+
+.simple-hamburger-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #e9ecef, transparent);
+  margin: 24px 16px;
+  border-radius: 1px;
+}
+
+.simple-hamburger-logout {
+  color: #dc3545;
+  background: white;
+  margin: 0 16px 16px 16px;
+  border-radius: 12px;
+  border: 1px solid #f8d7da;
+  font-weight: 600;
+  padding: 18px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.simple-hamburger-logout:hover {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+  border-color: transparent;
+}
+
+.simple-hamburger-logout:hover i {
+  color: white;
+}
+
+/* 화살표 스타일 */
+.simple-hamburger-arrow {
+  margin-left: auto;
+  margin-right: 0;
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.simple-hamburger-main-item:hover .simple-hamburger-arrow {
+  color: white;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .simple-hamburger-menu {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .simple-hamburger-overlay {
+    padding-top: 0;
+    justify-content: flex-end;
+  }
+}

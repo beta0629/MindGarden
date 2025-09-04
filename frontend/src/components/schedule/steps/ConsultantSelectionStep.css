@@ -1,33 +1,33 @@
 /* ConsultantSelectionStep.css */
 
-.consultant-selection-step {
+.schedule-modal .consultant-selection-step {
     width: 100%;
     max-height: 600px;
     overflow-y: auto;
 }
 
-.step-header {
-    margin-bottom: 20px;
+.schedule-modal .step-header {
     text-align: center;
+    flex-shrink: 0;
 }
 
-.step-header h4 {
+.schedule-modal .step-header h4 {
     margin: 0 0 8px 0;
     color: #2c3e50;
     font-size: 20px;
     font-weight: 600;
 }
 
-.step-description {
+.schedule-modal .step-description {
     margin: 0;
     color: #6c757d;
     font-size: 14px;
     line-height: 1.4;
 }
 
-.consultant-grid {
+.schedule-modal .consultant-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 16px;
     padding: 16px 0;
 }
@@ -63,6 +63,7 @@
     border-radius: 8px;
     border: 2px solid #2196f3;
     animation: slideInUp 0.3s ease;
+    flex-shrink: 0;
 }
 
 .selection-summary {
@@ -114,7 +115,7 @@
 
 /* 반응형 */
 @media (max-width: 768px) {
-    .consultant-grid {
+    .schedule-modal .consultant-grid {
         grid-template-columns: 1fr;
         gap: 12px;
         padding: 12px 0;
@@ -145,20 +146,20 @@
 }
 
 /* 스크롤바 스타일 */
-.consultant-selection-step::-webkit-scrollbar {
+.schedule-modal .consultant-selection-step::-webkit-scrollbar {
     width: 6px;
 }
 
-.consultant-selection-step::-webkit-scrollbar-track {
+.schedule-modal .consultant-selection-step::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 3px;
 }
 
-.consultant-selection-step::-webkit-scrollbar-thumb {
+.schedule-modal .consultant-selection-step::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 3px;
 }
 
-.consultant-selection-step::-webkit-scrollbar-thumb:hover {
+.schedule-modal .consultant-selection-step::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }

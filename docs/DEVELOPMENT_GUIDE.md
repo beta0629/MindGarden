@@ -2,29 +2,37 @@
 
 ## 📋 개발 원칙
 
-### **1. 상수 정의 원칙**
-- 모든 비즈니스 로직 값은 상수 클래스에 정의
-- 하드코딩 금지
-- 상수 클래스는 `constant` 패키지에 위치
+### **1. 상수 정의 원칙** ⚠️ **필수**
+- **모든 비즈니스 로직 값은 상수 클래스에 정의**
+- **하드코딩 절대 금지**
+- **상수 클래스는 `constant` 패키지에 위치**
+- **CSS 변수, JavaScript 상수, API 엔드포인트 모두 상수화 필수**
 
-### **2. 공통화 및 캡슐화 원칙**
+### **2. 컴포넌트화 원칙** ⚠️ **필수**
+- **모든 UI 요소는 재사용 가능한 컴포넌트로 구현**
+- **단일 책임 원칙 준수**
+- **Props 기반 설계**
+- **독립적인 CSS 파일 분리**
+- **컴포넌트별 테스트 가능한 구조**
+
+### **3. 공통화 및 캡슐화 원칙**
 - 공통 기능은 Base 클래스에 구현
 - 중복 코드 제거
 - 일관된 인터페이스 제공
 
-### **3. Hibernate 설정 원칙**
+### **4. Hibernate 설정 원칙**
 - **로컬 환경**: `ddl-auto: update` 사용으로 개발용 테이블 스키마 업데이트 ✅
 - **운영 환경**: `ddl-auto: validate` 사용으로 스키마 검증만 수행
 - 엔티티 변경 시 환경에 따라 적절한 DDL 정책 적용 ✅
 - **스키마 생성 오류 해결 완료**: 모든 엔티티가 정상적으로 테이블 생성됨 ✅
 
-### **4. 개발 환경 설정 원칙**
+### **5. 개발 환경 설정 원칙**
 - **isDev 프로퍼티**: 로컬 개발 환경에서만 `true`로 설정
 - **보안 완화**: 개발 환경에서만 보안 설정 완화 허용
 - **CORS 설정**: 개발 환경에서 모든 도메인 허용
 - **순환 참조**: 개발 환경에서만 `allow-circular-references: true` 허용
 
-### **5. 소셜 로그인 구현 원칙**
+### **6. 소셜 로그인 구현 원칙**
 - **OAuth2 통합 아키텍처**: `AbstractOAuth2Service` 기반 확장 가능한 구조 ✅
 - **다중 소셜 계정 지원**: 하나의 사용자에게 여러 소셜 계정 연결 가능 ✅
 - **암호화 보안**: 개인정보는 AES 암호화로 저장, `providerUserId`는 평문 저장 ✅
@@ -516,12 +524,262 @@ class UserServiceTest {
 - Base 클래스: `Base` + 역할 (예: `BaseEntity`, `BaseService`)
 - 구현체: 인터페이스명 + `Impl` (예: `UserServiceImpl`)
 - 상수 클래스: 명사 + `s` (예: `UserRoles`, `UserGrades`)
+- **컴포넌트 클래스**: 기능명 + `Component` (예: `SystemStatus`, `SystemTools`)
 
 ### **메서드 명명 규칙**
 - 조회: `findBy`, `findAll`, `getBy`
 - 저장/수정: `save`, `update`, `create`
 - 삭제: `delete`, `remove`, `softDelete`
 - 검증: `validate`, `check`, `isValid`
+
+## 🧩 컴포넌트화 가이드
+
+### **컴포넌트 생성 원칙** ⚠️ **필수**
+
+#### **1. 컴포넌트 구조**
+```
+frontend/src/components/
+├── admin/
+│   ├── AdminDashboard.js
+│   ├── AdminDashboard.css
+│   └── system/                    # 기능별 컴포넌트 폴더
+│       ├── SystemStatus.js        # 시스템 상태 컴포넌트
+│       ├── SystemStatus.css       # 독립적인 스타일
+│       ├── SystemTools.js         # 시스템 도구 컴포넌트
+│       ├── SystemTools.css        # 독립적인 스타일
+│       └── index.js               # 컴포넌트 내보내기
+```
+
+#### **2. 컴포넌트 Props 설계**
+```javascript
+// ✅ 올바른 Props 설계
+const SystemStatus = ({ 
+    systemStatus,      // 상태 데이터
+    onStatusCheck,     // 이벤트 핸들러
+    loading           // 로딩 상태
+}) => {
+    // 컴포넌트 로직
+};
+
+// ❌ 잘못된 Props 설계 (하드코딩)
+const SystemStatus = () => {
+    const systemStatus = { server: 'healthy', database: 'error' }; // 하드코딩 금지
+    // ...
+};
+```
+
+#### **3. 컴포넌트 사용법**
+```javascript
+// ✅ 올바른 컴포넌트 사용
+import { SystemStatus, SystemTools } from './system';
+
+const AdminDashboard = () => {
+    const [systemStatus, setSystemStatus] = useState({});
+    const [loading, setLoading] = useState(false);
+    
+    return (
+        <div>
+            <SystemStatus 
+                systemStatus={systemStatus}
+                onStatusCheck={handleStatusCheck}
+                loading={loading}
+            />
+            <SystemTools 
+                onRefresh={handleRefresh}
+                onViewLogs={handleViewLogs}
+                onClearCache={handleClearCache}
+                onCreateBackup={handleCreateBackup}
+                loading={loading}
+            />
+        </div>
+    );
+};
+```
+
+### **상수 사용 가이드** ⚠️ **필수**
+
+#### **1. JavaScript 상수**
+```javascript
+// ✅ 올바른 상수 사용
+// frontend/src/constants/system.js
+export const SYSTEM_API_ENDPOINTS = {
+    HEALTH_SERVER: '/api/health/server',
+    HEALTH_DATABASE: '/api/health/database',
+    LOGS_RECENT: '/api/admin/logs/recent',
+    CACHE_CLEAR: '/api/admin/cache/clear',
+    BACKUP_CREATE: '/api/admin/backup/create'
+};
+
+export const SYSTEM_STATUS = {
+    HEALTHY: 'healthy',
+    ERROR: 'error',
+    UNKNOWN: 'unknown'
+};
+
+// 컴포넌트에서 사용
+import { SYSTEM_API_ENDPOINTS, SYSTEM_STATUS } from '../../constants/system';
+
+const SystemStatus = () => {
+    const checkStatus = async () => {
+        const response = await fetch(SYSTEM_API_ENDPOINTS.HEALTH_SERVER);
+        // ...
+    };
+};
+
+// ❌ 잘못된 하드코딩
+const SystemStatus = () => {
+    const checkStatus = async () => {
+        const response = await fetch('/api/health/server'); // 하드코딩 금지
+        // ...
+    };
+};
+```
+
+#### **2. CSS 상수**
+```css
+/* ✅ 올바른 CSS 변수 사용 */
+/* frontend/src/constants/css-variables.js */
+export const CSS_VARIABLES = {
+    COLORS: {
+        PRIMARY: '#4A90E2',
+        SUCCESS: '#28a745',
+        ERROR: '#dc3545',
+        WARNING: '#ffc107'
+    },
+    SPACING: {
+        XS: '4px',
+        SM: '8px',
+        MD: '16px',
+        LG: '24px',
+        XL: '32px'
+    }
+};
+
+/* CSS에서 사용 */
+.system-status-display {
+    background: var(--admin-white);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-radius-lg);
+    padding: var(--admin-spacing-lg);
+}
+
+/* ❌ 잘못된 하드코딩 */
+.system-status-display {
+    background: #ffffff;        /* 하드코딩 금지 */
+    border: 1px solid #e5e7eb; /* 하드코딩 금지 */
+    border-radius: 8px;        /* 하드코딩 금지 */
+    padding: 24px;             /* 하드코딩 금지 */
+}
+```
+
+#### **3. API 엔드포인트 상수**
+```javascript
+// ✅ 올바른 API 상수 사용
+// frontend/src/constants/api.js
+export const API_ENDPOINTS = {
+    ADMIN: {
+        MAPPINGS: '/api/admin/mappings',
+        CONSULTANTS: '/api/admin/consultants',
+        CLIENTS: '/api/admin/clients',
+        COMMON_CODES: '/api/admin/common-codes'
+    },
+    HEALTH: {
+        SERVER: '/api/health/server',
+        DATABASE: '/api/health/database'
+    }
+};
+
+// 컴포넌트에서 사용
+import { API_ENDPOINTS } from '../../constants/api';
+
+const AdminDashboard = () => {
+    const loadStats = async () => {
+        const [consultantsRes, clientsRes, mappingsRes] = await Promise.all([
+            fetch(API_ENDPOINTS.ADMIN.CONSULTANTS),
+            fetch(API_ENDPOINTS.ADMIN.CLIENTS),
+            fetch(API_ENDPOINTS.ADMIN.MAPPINGS)
+        ]);
+        // ...
+    };
+};
+```
+
+### **컴포넌트 테스트 가이드**
+
+#### **1. 단위 테스트**
+```javascript
+// SystemStatus.test.js
+import { render, screen, fireEvent } from '@testing-library/react';
+import SystemStatus from './SystemStatus';
+
+describe('SystemStatus', () => {
+    const mockProps = {
+        systemStatus: {
+            server: 'healthy',
+            database: 'error',
+            lastChecked: '2025-01-03 14:30:00'
+        },
+        onStatusCheck: jest.fn(),
+        loading: false
+    };
+
+    test('시스템 상태를 올바르게 표시한다', () => {
+        render(<SystemStatus {...mockProps} />);
+        
+        expect(screen.getByText('서버')).toBeInTheDocument();
+        expect(screen.getByText('정상')).toBeInTheDocument();
+        expect(screen.getByText('데이터베이스')).toBeInTheDocument();
+        expect(screen.getByText('오류')).toBeInTheDocument();
+    });
+
+    test('상태 체크 버튼 클릭 시 핸들러가 호출된다', () => {
+        render(<SystemStatus {...mockProps} />);
+        
+        const checkButton = screen.getByText('상태 체크');
+        fireEvent.click(checkButton);
+        
+        expect(mockProps.onStatusCheck).toHaveBeenCalledTimes(1);
+    });
+});
+```
+
+### **컴포넌트 문서화**
+
+#### **1. 컴포넌트 주석**
+```javascript
+/**
+ * 시스템 상태 표시 컴포넌트
+ * 
+ * @param {Object} systemStatus - 시스템 상태 정보
+ * @param {string} systemStatus.server - 서버 상태 (healthy/error/unknown)
+ * @param {string} systemStatus.database - 데이터베이스 상태 (healthy/error/unknown)
+ * @param {string} systemStatus.lastChecked - 마지막 확인 시간
+ * @param {Function} onStatusCheck - 상태 체크 버튼 클릭 핸들러
+ * @param {boolean} loading - 로딩 상태
+ * 
+ * @example
+ * <SystemStatus 
+ *   systemStatus={status}
+ *   onStatusCheck={handleStatusCheck}
+ *   loading={isLoading}
+ * />
+ */
+const SystemStatus = ({ systemStatus, onStatusCheck, loading }) => {
+    // 컴포넌트 구현
+};
+```
+
+### **컴포넌트 재사용성 체크리스트**
+
+#### **✅ 컴포넌트화 완료 체크리스트**
+- [ ] **단일 책임**: 컴포넌트가 하나의 명확한 역할을 가짐
+- [ ] **Props 기반**: 모든 데이터와 이벤트가 Props로 전달됨
+- [ ] **하드코딩 없음**: 모든 값이 상수로 정의됨
+- [ ] **독립적 CSS**: 컴포넌트별 CSS 파일 분리
+- [ ] **재사용 가능**: 다른 페이지에서도 사용 가능
+- [ ] **테스트 가능**: 단위 테스트 작성 가능
+- [ ] **문서화**: Props와 사용법이 명확히 문서화됨
+- [ ] **타입 안전**: TypeScript 사용 시 타입 정의 완료
 
 ### **현재 구현된 패키지 구조** ✅
 ```

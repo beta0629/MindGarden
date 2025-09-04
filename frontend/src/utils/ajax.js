@@ -77,11 +77,17 @@ export const apiGet = async (endpoint, options = {}) => {
 // POST 요청
 export const apiPost = async (endpoint, data = {}, options = {}) => {
   try {
+    console.log('📤 POST 요청:', {
+      url: `${API_BASE_URL}${endpoint}`,
+      data: data,
+      headers: { ...getDefaultHeaders(), ...options.headers }
+    });
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: { ...getDefaultHeaders(), ...options.headers },
       body: JSON.stringify(data),
-      credentials: 'include', // 세션 쿠키 포함
+      // credentials 제거 - 세션 쿠키 없이 요청
       ...options
     });
 
@@ -188,7 +194,30 @@ export const apiUpload = async (endpoint, formData, options = {}) => {
 
 // 인증 관련 API
 export const authAPI = {
-  login: (data) => apiPost(AUTH_API.LOGIN, data),
+  login: async (data) => {
+    // curl과 동일한 방식으로 직접 요청
+    try {
+      console.log('🔐 직접 fetch 로그인 시도:', data);
+      const response = await fetch(`${API_BASE_URL}${AUTH_API.LOGIN}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('로그인 실패 응답:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('로그인 요청 오류:', error);
+      throw error;
+    }
+  },
   register: (data) => apiPost(AUTH_API.REGISTER, data),
   logout: () => apiPost(AUTH_API.LOGOUT),
   getOAuth2Config: () => apiGet(AUTH_API.GET_OAUTH2_CONFIG),

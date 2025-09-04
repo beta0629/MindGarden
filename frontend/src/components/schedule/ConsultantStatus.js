@@ -193,42 +193,42 @@ const ConsultantStatus = () => {
                     <span>등록된 상담사가 없습니다.</span>
                 </div>
             ) : (
-                consultants.map((consultant) => {
-                    const status = consultant.status;
-                    return (
-                        <div key={consultant.id} className="consultant-status-item">
-                            <div className="consultant-status-info">
-                                <div className="consultant-status-profile">
+                <div className="consultant-status-grid">
+                    {consultants.map((consultant) => {
+                        const status = consultant.status;
+                        return (
+                            <div key={consultant.id} className="consultant-status-card">
+                                <div className="consultant-status-avatar">
                                     <img 
                                         src={getProfileImageUrl(consultant)} 
                                         alt={consultant.name}
                                         className="consultant-status-profile-image"
-                                        width="32"
-                                        height="32"
-                                        style={{
-                                            width: '32px',
-                                            height: '32px',
-                                            minWidth: '32px',
-                                            minHeight: '32px',
-                                            maxWidth: '32px',
-                                            maxHeight: '32px'
-                                        }}
                                         onError={(e) => {
                                             // 이미지 로드 실패 시 기본 아이콘으로 대체
                                             e.target.style.display = 'none';
-                                            e.target.nextSibling.style.display = 'inline-block';
+                                            e.target.nextSibling.style.display = 'flex';
                                         }}
                                     />
-                                    <span className="consultant-status-default-icon" style={{display: 'none'}}>👨‍⚕️</span>
+                                    <div className="consultant-status-default-icon" style={{display: 'none'}}>👨‍⚕️</div>
                                 </div>
-                                <span className="consultant-status-name">{consultant.name} ({status.text})</span>
+                                <div className="consultant-status-info">
+                                    <div className="consultant-status-name">{consultant.name}</div>
+                                    <div className="consultant-status-email">{consultant.email}</div>
+                                    <div className="consultant-status-phone">{consultant.phone || '전화번호 없음'}</div>
+                                    <div className="consultant-status-specialty">{consultant.specialty || '전문분야 미설정'}</div>
+                                    <div className="consultant-status-status">
+                                        <span className="consultant-status-badge" data-status={status.color}>
+                                            {status.text}
+                                        </span>
+                                    </div>
+                                    <div className="consultant-status-date">
+                                        등록일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}
+                                    </div>
+                                </div>
                             </div>
-                            <span className="consultant-status-dot" data-status={status.color}>
-                                {getStatusIcon(status)}
-                            </span>
-                        </div>
-                    );
-                })
+                        );
+                    })}
+                </div>
             )}
         </div>
     );

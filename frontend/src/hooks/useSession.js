@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { sessionManager } from '../utils/sessionManager';
+import { PERIODIC_SESSION_CHECK_INTERVAL } from '../constants/session';
 
 export const useSession = () => {
     const [sessionState, setSessionState] = useState({
         user: null,
         sessionInfo: null,
-        isLoading: true
+        isLoading: false  // 초기값을 false로 변경
     });
     
     const initializedRef = useRef(false);
@@ -21,7 +22,9 @@ export const useSession = () => {
             console.log('🔄 세션 상태 변경:', newState);
             setSessionState(prevState => {
                 // 상태가 실제로 변경된 경우만 업데이트
-                if (JSON.stringify(prevState) !== JSON.stringify(newState)) {
+                if (prevState.user?.id !== newState.user?.id || 
+                    prevState.sessionInfo?.sessionId !== newState.sessionInfo?.sessionId ||
+                    prevState.isLoading !== newState.isLoading) {
                     return newState;
                 }
                 return prevState;
@@ -32,10 +35,18 @@ export const useSession = () => {
         const initializeSession = async () => {
             try {
                 console.log('🔍 초기 세션 체크...');
+                
+                // 로딩 상태 설정
+                setSessionState(prev => ({ ...prev, isLoading: true }));
+                
+                // 서버에서만 세션 확인 (localStorage 백업 제거)
                 await sessionManager.checkSession();
                 console.log('✅ 초기 세션 체크 완료');
             } catch (error) {
                 console.error('❌ 초기 세션 체크 실패:', error);
+            } finally {
+                // 로딩 상태 해제
+                setSessionState(prev => ({ ...prev, isLoading: false }));
             }
         };
         
@@ -45,11 +56,11 @@ export const useSession = () => {
         // 초기 세션 확인
         initializeSession();
         
-        // 정기적인 세션 확인 (15분마다로 늘림)
+        // 정기적인 세션 확인
         const interval = setInterval(() => {
             console.log('⏰ 정기 세션 체크...');
             sessionManager.checkSession();
-        }, 15 * 60 * 1000);
+        }, PERIODIC_SESSION_CHECK_INTERVAL);
         
         return () => {
             console.log('🧹 useSession 정리...');

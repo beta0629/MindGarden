@@ -55,7 +55,7 @@
   margin-bottom: 30px;
 }
 
-.form-group {
+.tablet-login .form-group {
   margin-bottom: 25px;
   text-align: left;
 }
@@ -82,7 +82,7 @@
   z-index: 1;
 }
 
-.form-input {
+.tablet-login .form-input {
   width: 100%;
   padding: 15px 15px 15px 50px;
   border: 2px solid #e5e7eb;
@@ -93,14 +93,14 @@
   transition: all 0.3s ease;
 }
 
-.form-input:focus {
+.tablet-login .form-input:focus {
   outline: none;
   border-color: #0ea5e9;
   background: white;
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
 
-.form-input::placeholder {
+.tablet-login .form-input::placeholder {
   color: #9ca3af;
 }
 

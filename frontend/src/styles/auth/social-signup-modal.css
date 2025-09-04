@@ -121,7 +121,7 @@
   gap: 20px;
 }
 
-.form-group {
+.social-signup-modal .form-group {
   display: flex;
   flex-direction: column;
 }
@@ -134,7 +134,7 @@
   margin-bottom: 8px;
 }
 
-.form-input {
+.social-signup-modal .form-input {
   width: 100%;
   padding: 16px;
   border: 1px solid #e5e7eb;
@@ -145,19 +145,19 @@
   transition: all 0.2s ease;
 }
 
-.form-input:focus {
+.social-signup-modal .form-input:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.form-input:disabled {
+.social-signup-modal .form-input:disabled {
   background-color: #f9fafb;
   color: #6b7280;
   cursor: not-allowed;
 }
 
-.form-input.error {
+.social-signup-modal .form-input.error {
   border-color: #ef4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
@@ -219,7 +219,7 @@
   margin-top: 8px;
 }
 
-.btn {
+.social-signup-modal .btn {
   flex: 1;
   padding: 16px 24px;
   border: none;

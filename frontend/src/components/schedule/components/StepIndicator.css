@@ -1,33 +1,33 @@
 /* StepIndicator.css */
 
-.step-indicator {
-    margin-bottom: 24px;
+.schedule-modal .step-indicator {
+    margin-bottom: 16px;
 }
 
-.progress-bar {
+.schedule-modal .progress-bar {
     width: 100%;
     height: 4px;
     background-color: #e9ecef;
     border-radius: 2px;
     overflow: hidden;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
 }
 
-.progress-fill {
+.schedule-modal .progress-fill {
     height: 100%;
     background: linear-gradient(90deg, #007bff, #28a745);
     border-radius: 2px;
     transition: width 0.3s ease;
 }
 
-.steps-container {
+.schedule-modal .steps-container {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     position: relative;
 }
 
-.step-item {
+.schedule-modal .step-item {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -37,16 +37,16 @@
     transition: all 0.3s ease;
 }
 
-.step-item.active {
+.schedule-modal .step-item.active {
     opacity: 1;
 }
 
-.step-item.current {
+.schedule-modal .step-item.current {
     opacity: 1;
     transform: scale(1.05);
 }
 
-.step-icon {
+.schedule-modal .step-icon {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -60,56 +60,56 @@
     border: 3px solid transparent;
 }
 
-.step-item.active .step-icon {
+.schedule-modal .step-item.active .step-icon {
     background-color: #007bff;
     color: white;
     border-color: #007bff;
 }
 
-.step-item.current .step-icon {
+.schedule-modal .step-item.current .step-icon {
     background-color: #28a745;
     color: white;
     border-color: #28a745;
     box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.2);
 }
 
-.step-content {
+.schedule-modal .step-content {
     text-align: center;
 }
 
-.step-number {
+.schedule-modal .step-number {
     font-size: 12px;
     font-weight: 600;
     color: #6c757d;
     margin-bottom: 2px;
 }
 
-.step-item.active .step-number {
+.schedule-modal .step-item.active .step-number {
     color: #007bff;
 }
 
-.step-item.current .step-number {
+.schedule-modal .step-item.current .step-number {
     color: #28a745;
 }
 
-.step-title {
+.schedule-modal .step-title {
     font-size: 11px;
     color: #6c757d;
     font-weight: 500;
     line-height: 1.2;
 }
 
-.step-item.active .step-title {
+.schedule-modal .step-item.active .step-title {
     color: #495057;
 }
 
-.step-item.current .step-title {
+.schedule-modal .step-item.current .step-title {
     color: #28a745;
     font-weight: 600;
 }
 
 /* 연결선 */
-.step-item:not(:last-child)::after {
+.schedule-modal .step-item:not(:last-child)::after {
     content: '';
     position: absolute;
     top: 20px;
@@ -121,27 +121,27 @@
     transform: translateX(50%);
 }
 
-.step-item.active:not(:last-child)::after {
+.schedule-modal .step-item.active:not(:last-child)::after {
     background-color: #007bff;
 }
 
 /* 모바일 반응형 */
 @media (max-width: 768px) {
-    .step-icon {
+    .schedule-modal .step-icon {
         width: 32px;
         height: 32px;
         font-size: 14px;
     }
     
-    .step-title {
+    .schedule-modal .step-title {
         font-size: 10px;
     }
     
-    .step-number {
+    .schedule-modal .step-number {
         font-size: 10px;
     }
     
-    .step-item:not(:last-child)::after {
+    .schedule-modal .step-item:not(:last-child)::after {
         top: 16px;
     }
 }
@@ -159,6 +159,6 @@
     }
 }
 
-.step-item.current .step-icon {
+.schedule-modal .step-item.current .step-icon {
     animation: stepPulse 2s infinite;
 }

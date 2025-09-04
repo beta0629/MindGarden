@@ -7,34 +7,8 @@
  * @since 2024-12-19
  */
 
-// TabletHeader 컴포넌트 CSS 클래스명
-export const TABLET_HEADER_CSS = {
-  CONTAINER: 'tablet-header-component',
-  CONTENT: 'tablet-header-component-content',
-  RIGHT: 'tablet-header-component-right',
-  LOGO: 'tablet-header-component-logo',
-  LOGO_LINK: 'tablet-header-component-logo-link',
-  LOGO_ICON: 'tablet-header-component-logo-icon',
-  LOGO_TEXT: 'tablet-header-component-logo-text',
-  LOGIN_LINK: 'tablet-header-component-login-link',
-  LOGIN_BUTTON: 'tablet-header-component-login-button',
-  MENU_TOGGLE: 'tablet-header-component-menu-toggle'
-};
-
-// TabletHamburgerMenu 컴포넌트 CSS 클래스명
-export const TABLET_HAMBURGER_MENU_CSS = {
-  CONTAINER: 'tablet-hamburger-menu-component',
-  CONTENT: 'tablet-hamburger-menu-component-content',
-  HEADER: 'tablet-hamburger-menu-component-header',
-  TITLE: 'tablet-hamburger-menu-component-title',
-  CLOSE_BUTTON: 'tablet-hamburger-menu-component-close-button',
-  NAV: 'tablet-hamburger-menu-component-nav',
-  NAV_LIST: 'tablet-hamburger-menu-component-nav-list',
-  NAV_ITEM: 'tablet-hamburger-menu-component-nav-item',
-  NAV_LINK: 'tablet-hamburger-menu-component-nav-link',
-  NAV_ICON: 'tablet-hamburger-menu-component-nav-icon',
-  LOGOUT_BUTTON: 'tablet-hamburger-menu-component-logout-button'
-};
+// DEPRECATED: TabletHeader와 TabletHamburgerMenu는 더 이상 사용되지 않습니다.
+// SimpleHeader와 SimpleLayout을 사용하세요.
 
 // AdminDashboard 컴포넌트 CSS 클래스명
 export const ADMIN_DASHBOARD_CSS = {
@@ -145,8 +119,6 @@ export const TODAY_STATISTICS_CSS = {
 
 // 전체 CSS 클래스명 객체
 export const CSS_CLASSES = {
-  TABLET_HEADER: TABLET_HEADER_CSS,
-  TABLET_HAMBURGER_MENU: TABLET_HAMBURGER_MENU_CSS,
   ADMIN_DASHBOARD: ADMIN_DASHBOARD_CSS,
   COMMON_DASHBOARD: COMMON_DASHBOARD_CSS,
   SESSION_MANAGEMENT: SESSION_MANAGEMENT_CSS,

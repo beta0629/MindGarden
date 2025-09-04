@@ -219,6 +219,10 @@
     background: var(--admin-gradient-client-mgmt);
 }
 
+.management-icon.mappings {
+    background: var(--admin-gradient-mappings);
+}
+
 .management-content h3 {
     font-size: var(--admin-font-xl);
     font-weight: var(--admin-font-weight-semibold);
@@ -233,7 +237,7 @@
     line-height: 1.4;
 }
 
-/* 시스템 도구 */
+/* 시스템 도구 섹션 */
 .tool-buttons {
     display: flex;
     gap: var(--admin-spacing-md);

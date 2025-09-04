@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { sessionManager } from '../../utils/sessionManager';
 import mypageApi from '../../utils/mypageApi';
 import { notification } from '../../utils/scripts';
+import SimpleLayout from '../layout/SimpleLayout';
 import ProfileSection from './components/ProfileSection';
 import SettingsSection from './components/SettingsSection';
 import SecuritySection from './components/SecuritySection';
@@ -10,6 +11,7 @@ import './MyPage.css';
 
 const MyPage = () => {
   const [user, setUser] = useState(null);
+  const [localUser, setLocalUser] = useState(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [socialAccounts, setSocialAccounts] = useState([]);
@@ -30,48 +32,6 @@ const MyPage = () => {
     socialProfileImage: null
   });
 
-  useEffect(() => {
-    loadUserInfo();
-    
-    // URL 파라미터에서 연동 결과 확인
-    const urlParams = new URLSearchParams(window.location.search);
-    const linkStatus = urlParams.get('link');
-    const provider = urlParams.get('provider');
-    const message = urlParams.get('message');
-    
-    if (linkStatus && provider && message) {
-      // 연동 결과에 따른 알림 표시
-      if (linkStatus === 'success') {
-        notification.showToast(`✅ ${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동 완료!`, 'success');
-        // 소셜 계정 목록 새로고침
-        loadSocialAccounts();
-        // URL 파라미터 정리
-        window.history.replaceState({}, document.title, window.location.pathname);
-      } else if (linkStatus === 'error') {
-        notification.showToast(`❌ ${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동 실패: ${message}`, 'error');
-        // URL 파라미터 정리
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    }
-  }, []);
-
-  // 소셜 계정 탭이 활성화될 때 데이터 로드
-  useEffect(() => {
-    if (activeTab === 'social') {
-      loadSocialAccounts();
-    }
-  }, [activeTab]);
-
-  // formData 상태 변화 추적
-  useEffect(() => {
-    console.log('🔄 formData 상태 변경:', formData);
-  }, [formData]);
-
-  // formData 상태 변경 디버깅
-  useEffect(() => {
-    console.log('🔄 formData 상태 변경:', formData);
-  }, [formData]);
-
   // 휴대폰 번호 포맷팅 함수
   const formatPhoneNumber = (phone) => {
     if (!phone) return '';
@@ -90,7 +50,7 @@ const MyPage = () => {
   };
 
   // 사용자 정보 로드
-  const loadUserInfo = async () => {
+  const loadUserInfo = useCallback(async () => {
     try {
       const response = await mypageApi.getMyPageInfo();
       if (response) {
@@ -109,9 +69,6 @@ const MyPage = () => {
           socialProvider: response.socialProvider || null,
           socialProfileImage: response.socialProfileImage || null
         });
-        
-        // 소셜 계정 정보 로드
-        loadSocialAccounts();
       }
     } catch (error) {
       console.error('사용자 정보 로드 실패:', error);
@@ -147,13 +104,10 @@ const MyPage = () => {
         setUser(currentUser);
         setFormData(formDataToSet);
       }
-      
-      // 사용자 정보 로드 실패해도 소셜 계정 정보는 로드 시도
-      loadSocialAccounts();
     }
-  };
+  }, []); // 의존성 배열을 비워서 한 번만 생성
   
-  const loadSocialAccounts = async () => {
+  const loadSocialAccounts = useCallback(async () => {
     try {
       const response = await mypageApi.getSocialAccounts();
       setSocialAccounts(response || []);
@@ -162,7 +116,62 @@ const MyPage = () => {
       // 에러가 발생해도 빈 배열로 설정하여 UI가 깨지지 않도록 함
       setSocialAccounts([]);
     }
-  };
+  }, []);
+
+  // localStorage에서 사용자 정보 확인 (백업)
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setLocalUser(parsedUser);
+        console.log('🔍 MyPage - localStorage 사용자:', parsedUser);
+      } catch (error) {
+        console.error('사용자 정보 파싱 오류:', error);
+      }
+    }
+  }, []);
+
+  // user prop이 없으면 localStorage에서 가져온 사용자 정보 사용
+  const displayUser = user || localUser;
+
+  useEffect(() => {
+    loadUserInfo();
+    loadSocialAccounts();
+    
+    // URL 파라미터에서 연동 결과 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const linkStatus = urlParams.get('link');
+    const provider = urlParams.get('provider');
+    const message = urlParams.get('message');
+    
+    if (linkStatus && provider && message) {
+      // 연동 결과에 따른 알림 표시
+      if (linkStatus === 'success') {
+        notification.showToast(`✅ ${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동 완료!`, 'success');
+        // 소셜 계정 목록 새로고침
+        loadSocialAccounts();
+        // URL 파라미터 정리
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (linkStatus === 'error') {
+        notification.showToast(`❌ ${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동 실패: ${message}`, 'error');
+        // URL 파라미터 정리
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [loadUserInfo, loadSocialAccounts]);
+
+  // 소셜 계정 탭이 활성화될 때 데이터 로드
+  useEffect(() => {
+    if (activeTab === 'social') {
+      loadSocialAccounts();
+    }
+  }, [activeTab, loadSocialAccounts]);
+
+  // formData 상태 변화 추적
+  useEffect(() => {
+    console.log('🔄 formData 상태 변경:', formData);
+  }, [formData]);
 
 
 
@@ -316,7 +325,7 @@ const MyPage = () => {
 
   const handlePasswordReset = async () => {
     try {
-      const email = user.email;
+      const email = displayUser?.email;
       if (!email) {
         notification.showToast('이메일 정보가 없습니다.', 'warning');
         return;
@@ -377,44 +386,33 @@ const MyPage = () => {
     }
   };
 
-  if (!user) {
+
+
+  // displayUser가 null이면 로딩 상태로 처리
+  if (!displayUser) {
     return (
-      <div className="mypage-container">
-        <div className="mypage-header">
-          <h1>마이페이지</h1>
-          <p>로그인이 필요합니다</p>
-        </div>
-        <div className="mypage-content">
-          <div className="login-required">
-            <div className="login-message">
-              <h2>🔐 로그인이 필요합니다</h2>
-              <p>마이페이지를 이용하려면 먼저 로그인해주세요.</p>
-              <div className="login-actions">
-                <button 
-                  className="login-btn"
-                  onClick={() => window.location.href = '/login'}
-                >
-                  로그인하기
-                </button>
-                <button 
-                  className="register-btn"
-                  onClick={() => window.location.href = '/register'}
-                >
-                  회원가입하기
-                </button>
-              </div>
+      <SimpleLayout>
+        <div className="mypage-container">
+          <div className="mypage-header">
+            <h1>마이페이지</h1>
+          </div>
+          <div className="mypage-content">
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>사용자 정보를 불러오는 중...</p>
             </div>
           </div>
         </div>
-      </div>
+      </SimpleLayout>
     );
   }
 
   return (
-    <div className="mypage-container">
+    <SimpleLayout>
+      <div className="mypage-container">
       <div className="mypage-header">
         <h1>마이페이지</h1>
-        <p>{user.username || user.name}님의 정보를 관리하세요</p>
+        <p>{displayUser?.username || displayUser?.name || displayUser?.nickname || '사용자'}님의 정보를 관리하세요</p>
       </div>
 
       <div className="mypage-content">
@@ -591,7 +589,8 @@ const MyPage = () => {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </SimpleLayout>
   );
 };
 

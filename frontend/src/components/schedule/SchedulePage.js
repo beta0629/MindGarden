@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import SimpleLayout from '../layout/SimpleLayout';
 import ScheduleCalendar from './ScheduleCalendar';
 import ConsultantStatus from './ConsultantStatus';
 import TodayStats from './TodayStats';
+import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import './SchedulePage.css';
 
@@ -15,23 +17,31 @@ import './SchedulePage.css';
  * @version 1.0.0
  * @since 2024-12-19
  */
-const SchedulePage = ({ user }) => {
+const SchedulePage = ({ user: propUser }) => {
+    const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
     const [userRole, setUserRole] = useState('CLIENT');
     const [userId, setUserId] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // 사용자 정보 결정 (prop > session > null)
+    const displayUser = propUser || sessionUser;
 
     useEffect(() => {
-        if (user) {
-            console.log('👤 사용자 정보:', user);
-            setUserRole(user.role || 'CLIENT');
-            setUserId(user.id);
+        if (sessionLoading) {
+            console.log('⏳ 세션 로딩 중...');
+            return;
+        }
+
+        if (displayUser) {
+            console.log('👤 SchedulePage 사용자 정보:', displayUser);
+            setUserRole(displayUser.role || 'CLIENT');
+            setUserId(displayUser.id);
             setLoading(false);
         } else {
-            console.log('👤 사용자 정보 없음');
+            console.log('👤 SchedulePage 사용자 정보 없음');
             setLoading(false);
         }
-    }, [user]);
+    }, [displayUser, sessionLoading]);
 
 
 
@@ -49,56 +59,66 @@ const SchedulePage = ({ user }) => {
         return userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
     };
 
-    if (loading) {
+    if (loading || sessionLoading) {
         return (
-            <div className="schedule-page">
-                <div className="loading-container">
-                    <div className="loading-spinner">스케줄 정보를 불러오는 중...</div>
+            <SimpleLayout>
+                <div className="schedule-page">
+                    <div className="loading-container">
+                        <div className="loading-spinner">
+                            <div className="loading-spinner-icon"></div>
+                            <p className="loading-spinner-text">스케줄 정보를 불러오는 중...</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </SimpleLayout>
         );
     }
 
-    if (!user) {
+    if (!displayUser) {
         return (
-            <div className="schedule-page">
-                <div className="access-denied">
-                    <div className="access-denied-icon">🔐</div>
-                    <h2>로그인이 필요합니다</h2>
-                    <p>스케줄 관리 기능을 사용하려면 로그인해주세요.</p>
-                    <button 
-                        className="btn schedule-page-btn-primary"
-                        onClick={() => window.location.href = '/login'}
-                    >
-                        로그인하기
-                    </button>
+            <SimpleLayout>
+                <div className="schedule-page">
+                    <div className="access-denied">
+                        <div className="access-denied-icon">🔐</div>
+                        <h2>로그인이 필요합니다</h2>
+                        <p>스케줄 관리 기능을 사용하려면 로그인해주세요.</p>
+                        <button 
+                            className="btn schedule-page-btn-primary"
+                            onClick={() => window.location.href = '/login'}
+                        >
+                            로그인하기
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </SimpleLayout>
         );
     }
 
     if (!hasSchedulePermission()) {
         return (
-            <div className="schedule-page">
-                <div className="access-denied">
-                    <div className="access-denied-icon">🚫</div>
-                    <h2>접근 권한이 없습니다</h2>
-                    <p>스케줄 관리 기능은 상담사 이상의 권한이 필요합니다.</p>
-                    <div className="current-role">
-                        현재 역할: <span className="role-badge">{userRole}</span>
+            <SimpleLayout>
+                <div className="schedule-page">
+                    <div className="access-denied">
+                        <div className="access-denied-icon">🚫</div>
+                        <h2>접근 권한이 없습니다</h2>
+                        <p>스케줄 관리 기능은 상담사 이상의 권한이 필요합니다.</p>
+                        <div className="current-role">
+                            현재 역할: <span className="role-badge">{userRole}</span>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </SimpleLayout>
         );
     }
 
     return (
-        <div className="schedule-page">
+        <SimpleLayout>
+            <div className="schedule-page">
             <div className="page-header">
                 <div className="header-content">
                     <h1>📅 스케줄 관리</h1>
                     <div className="user-info">
-                        <span className="user-name">{user?.name}</span>
+                        <span className="user-name">{displayUser?.name}</span>
                         <span className="user-role">{userRole}</span>
                     </div>
                 </div>
@@ -127,7 +147,7 @@ const SchedulePage = ({ user }) => {
                 <div className="schedule-main">
                     <ScheduleCalendar 
                         userRole={userRole}
-                        userId={userId}
+                        userId={isAdmin() ? 0 : userId}
                     />
                 </div>
                 
@@ -145,7 +165,8 @@ const SchedulePage = ({ user }) => {
                     </div>
                 )}
             </div>
-        </div>
+            </div>
+        </SimpleLayout>
     );
 };
 

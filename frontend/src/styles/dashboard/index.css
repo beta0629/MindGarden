@@ -422,10 +422,19 @@
   color: #f39c12;
 }
 
-.action-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
+.common-dashboard-content .quick-actions .action-buttons {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 15px !important;
+  justify-items: center !important;
+  max-width: 800px !important;
+  margin: 0 auto !important;
+}
+
+/* 관리자용 6개 버튼일 때 (3x2 레이아웃) */
+.common-dashboard-content .quick-actions .action-buttons.admin-layout {
+  grid-template-columns: repeat(3, 1fr) !important;
+  max-width: 900px !important;
 }
 
 .action-btn {
@@ -510,6 +519,39 @@
   color: #7f8c8d;
 }
 
+/* 매핑 관리 패널 스타일 */
+.mapping-management .mapping-actions {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(236, 240, 241, 0.8);
+}
+
+.mapping-management .mapping-actions .btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mapping-management .mapping-actions .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+}
+
+.mapping-management .mapping-actions .btn i {
+  font-size: 1rem;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .tablet-dashboard-page {
@@ -529,8 +571,9 @@
     grid-template-columns: 1fr;
   }
   
-  .action-buttons {
-    grid-template-columns: repeat(2, 1fr);
+  .common-dashboard-content .quick-actions .action-buttons {
+    grid-template-columns: repeat(2, 1fr) !important;
+    max-width: 600px !important;
   }
   
   .module-header {
@@ -553,8 +596,8 @@
 }
 
 @media (max-width: 480px) {
-  .action-buttons {
-    grid-template-columns: 1fr;
+  .common-dashboard-content .quick-actions .action-buttons {
+    grid-template-columns: 1fr !important;
   }
   
   .schedule-tabs {

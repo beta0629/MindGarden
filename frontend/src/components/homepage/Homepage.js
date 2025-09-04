@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
-import TabletHeader from '../layout/TabletHeader';
+import SimpleHeader from '../layout/SimpleHeader';
 import TabletBottomNavigation from '../layout/TabletBottomNavigation';
 
 const TabletHomepage = () => {
@@ -53,8 +53,7 @@ const TabletHomepage = () => {
     >
       <div className="tablet-homepage tablet-page">
         {/* 공통 헤더 */}
-        <TabletHeader 
-          user={null} 
+        <SimpleHeader 
           onHamburgerToggle={handleHamburgerToggle}
           onProfileClick={handleProfileClick}
         />

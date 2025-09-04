@@ -13,9 +13,13 @@ import SchedulePage from './components/schedule/SchedulePage';
 import ConsultantComprehensiveManagement from './components/admin/ConsultantComprehensiveManagement';
 import ClientComprehensiveManagement from './components/admin/ClientComprehensiveManagement';
 import SessionManagement from './components/admin/SessionManagement';
-import TabletLayout from './components/layout/TabletLayout';
+import MappingManagement from './components/admin/MappingManagement';
+import CommonCodeManagement from './components/admin/CommonCodeManagement';
+import SimpleLayout from './components/layout/SimpleLayout';
 import Toast from './components/common/Toast';
-import { useSession } from './hooks/useSession';
+import { SessionProvider } from './contexts/SessionContext';
+import { useSession } from './contexts/SessionContext';
+import { sessionManager } from './utils/sessionManager';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -45,7 +49,8 @@ function QueryParamHandler({ children, onLoginSuccess }) {
   return children;
 }
 
-function App() {
+// 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
+function AppContent() {
   const { user, sessionInfo, isLoading, checkSession, logout } = useSession();
 
   // 콜백 함수로 메모이제이션
@@ -64,7 +69,7 @@ function App() {
   useEffect(() => {
     logMount();
     return logUnmount;
-  }, [logMount, logUnmount]);
+  }, []); // 의존성 배열을 비워서 한 번만 실행
 
   const handleLogout = useCallback(() => {
     console.log('🚪 로그아웃 처리됨');
@@ -95,28 +100,30 @@ function App() {
             <Route path="/register" element={<TabletRegister />} />
             
             {/* 일반 대시보드 라우트 */}
-            <Route path="/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><CommonDashboard user={user} /></TabletLayout>} />
+            <Route path="/dashboard" element={<CommonDashboard user={user} />} />
             
             {/* 역할별 대시보드 라우트 */}
-            <Route path="/client/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><CommonDashboard user={user} /></TabletLayout>} />
-            <Route path="/consultant/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><CommonDashboard user={user} /></TabletLayout>} />
-            <Route path="/admin/dashboard" element={<TabletLayout user={user} onLogout={handleLogout}><AdminDashboard user={user} /></TabletLayout>} />
-            <Route path="/client/mypage" element={<TabletLayout user={user} onLogout={handleLogout}><MyPage /></TabletLayout>} />
-            <Route path="/consultant/mypage" element={<TabletLayout user={user} onLogout={handleLogout}><MyPage /></TabletLayout>} />
-            <Route path="/admin/mypage" element={<TabletLayout user={user} onLogout={handleLogout}><MyPage /></TabletLayout>} />
+            <Route path="/client/dashboard" element={<CommonDashboard user={user} />} />
+            <Route path="/consultant/dashboard" element={<CommonDashboard user={user} />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard user={user} />} />
+            <Route path="/client/mypage" element={<MyPage />} />
+            <Route path="/consultant/mypage" element={<MyPage />} />
+            <Route path="/admin/mypage" element={<MyPage />} />
             
             {/* 상담사 전용 라우트 */}
-            <Route path="/consultant/schedule" element={<TabletLayout user={user} onLogout={handleLogout}><ConsultantSchedule /></TabletLayout>} />
+            <Route path="/consultant/schedule" element={<ConsultantSchedule />} />
             
             {/* 통합 스케줄 관리 라우트 */}
-            <Route path="/schedule" element={<TabletLayout user={user} onLogout={handleLogout}><SchedulePage user={user} /></TabletLayout>} />
-            <Route path="/admin/schedule" element={<TabletLayout user={user} onLogout={handleLogout}><SchedulePage user={user} /></TabletLayout>} />
-            <Route path="/consultant/schedule-new" element={<TabletLayout user={user} onLogout={handleLogout}><SchedulePage user={user} /></TabletLayout>} />
+            <Route path="/schedule" element={<SchedulePage user={user} />} />
+            <Route path="/admin/schedule" element={<SchedulePage user={user} />} />
+            <Route path="/consultant/schedule-new" element={<SchedulePage user={user} />} />
             
             {/* 관리자 전용 라우트 */}
-            <Route path="/admin/consultant-comprehensive" element={<TabletLayout user={user} onLogout={handleLogout}><ConsultantComprehensiveManagement /></TabletLayout>} />
-            <Route path="/admin/client-comprehensive" element={<TabletLayout user={user} onLogout={handleLogout}><ClientComprehensiveManagement /></TabletLayout>} />
-            <Route path="/admin/sessions" element={<TabletLayout user={user} onLogout={handleLogout}><SessionManagement /></TabletLayout>} />
+            <Route path="/admin/consultant-comprehensive" element={<ConsultantComprehensiveManagement />} />
+            <Route path="/admin/client-comprehensive" element={<ClientComprehensiveManagement />} />
+            <Route path="/admin/mapping-management" element={<MappingManagement />} />
+            <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
+            <Route path="/admin/sessions" element={<SessionManagement />} />
             
             {/* OAuth2 콜백 처리 라우트 */}
             <Route path="/oauth2/callback" element={<OAuth2Callback />} />
@@ -131,6 +138,45 @@ function App() {
       </QueryParamHandler>
     </Router>
   );
+}
+
+// 최상위 App 컴포넌트 (SessionProvider 제공)
+function App() {
+  return (
+    <SessionProvider>
+      <AppContent />
+    </SessionProvider>
+  );
+}
+
+// 개발자 도구용 전역 함수들
+if (process.env.NODE_ENV === 'development') {
+  window.clearSession = () => {
+    sessionManager.forceClearSession();
+    console.log('🧹 세션 강제 초기화 완료! 페이지를 새로고침하세요.');
+  };
+  
+  window.clearLocalStorage = () => {
+    sessionManager.clearLocalStorage();
+    console.log('🧹 localStorage 정리 완료! 페이지를 새로고침하세요.');
+  };
+  
+  window.getSessionInfo = () => {
+    console.log('현재 세션 정보:', {
+      user: sessionManager.getUser(),
+      sessionInfo: sessionManager.getSessionInfo(),
+      isLoggedIn: sessionManager.isLoggedIn(),
+      localStorage: {
+        user: localStorage.getItem('user'),
+        sessionInfo: localStorage.getItem('sessionInfo')
+      }
+    });
+  };
+  
+  console.log('🔧 개발자 도구 함수 사용 가능:');
+  console.log('  - clearSession(): 세션 강제 초기화 (서버+클라이언트)');
+  console.log('  - clearLocalStorage(): localStorage만 정리');
+  console.log('  - getSessionInfo(): 현재 세션 정보 확인');
 }
 
 export default App;

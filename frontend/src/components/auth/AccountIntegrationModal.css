@@ -1,0 +1,286 @@
+/* 계정 통합 모달 스타일 */
+.account-integration-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.account-integration-modal {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.account-integration-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.account-integration-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.account-integration-modal-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.account-integration-modal-close:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.account-integration-modal-body {
+    padding: 24px;
+}
+
+.integration-step {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.account-integration-modal .step-description {
+    text-align: center;
+    padding: 20px;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.account-integration-modal .step-description p {
+    margin: 8px 0;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.account-integration-modal .step-description .sub-description {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.warning-icon {
+    color: #f59e0b;
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+
+.account-integration-modal .step-icon {
+    color: #3b82f6;
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+
+.social-info {
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.social-info h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: #0369a1;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.info-item .label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.info-item .value {
+    color: #6b7280;
+}
+
+.account-integration-modal .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.account-integration-modal .form-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: #374151;
+    font-size: 14px;
+}
+
+.account-integration-modal .form-group input {
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.account-integration-modal .form-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.account-integration-modal .form-group small {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.countdown {
+    color: #dc2626 !important;
+    font-weight: 500;
+}
+
+.final-info {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.final-info h4 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    color: #166534;
+}
+
+.success-step {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.success-icon {
+    width: 64px;
+    height: 64px;
+    background-color: #dcfce7;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.success-icon svg {
+    color: #16a34a;
+    font-size: 32px;
+}
+
+.success-message h4 {
+    margin: 0 0 12px 0;
+    font-size: 20px;
+    color: #16a34a;
+}
+
+.success-message p {
+    margin: 0;
+    color: #374151;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.account-integration-modal .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.account-integration-modal .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.account-integration-modal .btn-primary {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.account-integration-modal .btn-primary:hover:not(:disabled) {
+    background-color: #2563eb;
+}
+
+.account-integration-modal .btn-secondary {
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.account-integration-modal .btn-secondary:hover:not(:disabled) {
+    background-color: #e5e7eb;
+}
+
+.account-integration-modal .btn-link {
+    background: none;
+    color: #3b82f6;
+    text-decoration: underline;
+    padding: 8px 16px;
+}
+
+.account-integration-modal .btn-link:hover:not(:disabled) {
+    color: #2563eb;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 640px) {
+    .account-integration-modal {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .account-integration-modal-header,
+    .account-integration-modal-body {
+        padding: 16px;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+    
+    .account-integration-modal .btn {
+        width: 100%;
+    }
+}

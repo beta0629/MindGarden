@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ClientSelector from '../ClientSelector';
+import MappingCreationModal from '../../admin/MappingCreationModal';
 import './ClientSelectionStep.css';
 
 /**
@@ -19,6 +20,7 @@ const ClientSelectionStep = ({
 }) => {
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [showMappingModal, setShowMappingModal] = useState(false);
 
     useEffect(() => {
         loadClients();
@@ -88,6 +90,14 @@ const ClientSelectionStep = ({
         onClientSelect(client);
     };
 
+    /**
+     * 매핑 생성 완료 핸들러
+     */
+    const handleMappingCreated = () => {
+        setShowMappingModal(false);
+        loadClients(); // 내담자 목록 새로고침
+    };
+
     if (loading) {
         return (
             <div className="client-selection-step">
@@ -116,23 +126,51 @@ const ClientSelectionStep = ({
                 </div>
             </div>
 
-            <ClientSelector
-                clients={clients}
-                selectedConsultant={selectedConsultant}
-                onClientSelect={handleClientSelect}
-                selectedClient={selectedClient}
-            />
-
-            {selectedClient && (
-                <div className="selected-client-info">
-                    <div className="selection-summary">
-                        <strong>선택된 내담자:</strong> {selectedClient.name}
-                        <span className="client-sessions">
-                            (남은 세션: {selectedClient.remainingSessions}회)
-                        </span>
+            {clients.length === 0 ? (
+                <div className="no-clients-message">
+                    <div className="no-clients-icon">🔗</div>
+                    <h4>매핑된 내담자가 없습니다</h4>
+                    <p>
+                        스케줄을 생성하려면 먼저 상담사와 내담자 간의 매핑을 생성해야 합니다.
+                        매핑 생성 후 결제 승인을 받으면 스케줄을 등록할 수 있습니다.
+                    </p>
+                    <div className="mapping-actions">
+                        <button 
+                            className="btn btn-primary"
+                            onClick={() => setShowMappingModal(true)}
+                        >
+                            🔗 매핑 생성하기
+                        </button>
                     </div>
                 </div>
+            ) : (
+                <>
+                    <ClientSelector
+                        clients={clients}
+                        selectedConsultant={selectedConsultant}
+                        onClientSelect={handleClientSelect}
+                        selectedClient={selectedClient}
+                    />
+
+                    {selectedClient && (
+                        <div className="selected-client-info">
+                            <div className="selection-summary">
+                                <strong>선택된 내담자:</strong> {selectedClient.name}
+                                <span className="client-sessions">
+                                    (남은 세션: {selectedClient.remainingSessions}회)
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
+
+            {/* 매핑 생성 모달 */}
+            <MappingCreationModal
+                isOpen={showMappingModal}
+                onClose={() => setShowMappingModal(false)}
+                onMappingCreated={handleMappingCreated}
+            />
         </div>
     );
 };

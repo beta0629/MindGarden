@@ -1,0 +1,166 @@
+/* 시스템 도구 컴포넌트 스타일 */
+.system-tools-container {
+    margin-top: var(--admin-spacing-lg);
+}
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--admin-spacing-lg);
+}
+
+.tool-card {
+    background: var(--admin-white);
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-radius-lg);
+    padding: var(--admin-spacing-lg);
+    box-shadow: var(--admin-shadow-sm);
+    transition: var(--admin-transition-normal);
+    text-align: center;
+}
+
+.tool-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--admin-shadow-md);
+    border-color: var(--primary-color);
+}
+
+.tool-button {
+    width: 100%;
+    padding: var(--admin-spacing-md) var(--admin-spacing-lg);
+    font-weight: var(--admin-font-weight-medium);
+    border-radius: var(--admin-radius-md);
+    transition: var(--admin-transition-normal);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--admin-spacing-sm);
+    border: 2px solid;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.tool-button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--admin-shadow-sm);
+}
+
+.tool-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.tool-button svg {
+    font-size: var(--admin-font-xl);
+    transition: var(--admin-transition-fast);
+}
+
+.tool-button:hover svg {
+    transform: scale(1.1);
+}
+
+.tool-button span {
+    font-size: var(--admin-font-sm);
+    font-weight: var(--admin-font-weight-semibold);
+}
+
+.tool-description {
+    margin-top: var(--admin-spacing-sm);
+    font-size: var(--admin-font-xs);
+    color: var(--admin-text-tertiary);
+    line-height: 1.4;
+    text-align: center;
+}
+
+/* 버튼 변형별 스타일 */
+.tool-button.btn-outline-secondary {
+    color: var(--admin-text-secondary);
+    border-color: var(--admin-text-secondary);
+}
+
+.tool-button.btn-outline-secondary:hover {
+    background: var(--admin-text-secondary);
+    color: var(--admin-white);
+}
+
+.tool-button.btn-outline-warning {
+    color: var(--warning-color);
+    border-color: var(--warning-color);
+}
+
+.tool-button.btn-outline-warning:hover {
+    background: var(--warning-color);
+    color: var(--admin-white);
+}
+
+.tool-button.btn-outline-danger {
+    color: var(--error-color);
+    border-color: var(--error-color);
+}
+
+.tool-button.btn-outline-danger:hover {
+    background: var(--error-color);
+    color: var(--admin-white);
+}
+
+.tool-button.btn-outline-success {
+    color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.tool-button.btn-outline-success:hover {
+    background: var(--success-color);
+    color: var(--admin-white);
+}
+
+/* 로딩 애니메이션 */
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .tools-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--admin-spacing-md);
+    }
+    
+    .tool-card {
+        padding: var(--admin-spacing-md);
+    }
+    
+    .tool-button {
+        padding: var(--admin-spacing-sm) var(--admin-spacing-md);
+    }
+    
+    .tool-button svg {
+        font-size: var(--admin-font-lg);
+    }
+    
+    .tool-button span {
+        font-size: var(--admin-font-xs);
+    }
+}
+
+@media (max-width: 480px) {
+    .tools-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tool-button {
+        flex-direction: row;
+        justify-content: center;
+    }
+    
+    .tool-button svg {
+        font-size: var(--admin-font-md);
+    }
+}

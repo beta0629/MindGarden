@@ -76,6 +76,63 @@ public class AdminController {
     }
 
     /**
+     * 상담사별 매핑된 내담자 목록 조회 (스케줄 등록용)
+     */
+    @GetMapping("/mappings/consultant/{consultantId}/clients")
+    public ResponseEntity<?> getClientsByConsultantMapping(@PathVariable Long consultantId) {
+        try {
+            log.info("🔍 상담사별 매핑된 내담자 목록 조회 - 상담사 ID: {}", consultantId);
+            List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantId(consultantId);
+            
+            // 결제 승인되고 세션이 남은 매핑만 필터링 (PENDING도 포함)
+            List<Map<String, Object>> activeMappings = mappings.stream()
+                .filter(mapping -> 
+                    mapping.getPaymentStatus() != null && 
+                    (mapping.getPaymentStatus().toString().equals("APPROVED") || 
+                     mapping.getPaymentStatus().toString().equals("PENDING")) &&
+                    mapping.getRemainingSessions() > 0
+                )
+                .map(mapping -> {
+                    Map<String, Object> data = new java.util.HashMap<>();
+                    try {
+                        data.put("id", mapping.getId());
+                        
+                        // Client 정보 안전하게 추출
+                        if (mapping.getClient() != null) {
+                            data.put("client", Map.of(
+                                "id", mapping.getClient().getId(),
+                                "name", mapping.getClient().getName(),
+                                "email", mapping.getClient().getEmail() != null ? mapping.getClient().getEmail() : "",
+                                "phone", mapping.getClient().getPhone() != null ? mapping.getClient().getPhone() : ""
+                            ));
+                        }
+                        
+                        data.put("remainingSessions", mapping.getRemainingSessions());
+                        data.put("packageName", mapping.getPackageName());
+                        data.put("paymentStatus", mapping.getPaymentStatus().toString());
+                        data.put("mappingId", mapping.getId());
+                    } catch (Exception e) {
+                        log.warn("매핑 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());
+                    }
+                    return data;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", activeMappings,
+                "count", activeMappings.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 상담사별 매핑된 내담자 목록 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "상담사별 내담자 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 매핑 목록 조회
      */
     @GetMapping("/mappings")

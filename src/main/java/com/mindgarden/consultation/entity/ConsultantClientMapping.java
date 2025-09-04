@@ -53,11 +53,11 @@ public class ConsultantClientMapping extends BaseEntity {
     private LocalDateTime endDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20, nullable = false)
+    @Column(name = "status", length = 50, nullable = false)
     private MappingStatus status = MappingStatus.PENDING_PAYMENT;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status", length = 20, nullable = false)
+    @Column(name = "payment_status", length = 50, nullable = false)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     @Column(name = "total_sessions", nullable = false)

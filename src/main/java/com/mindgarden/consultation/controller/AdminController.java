@@ -398,6 +398,35 @@ public class AdminController {
     }
 
     /**
+     * 입금 확인
+     */
+    @PostMapping("/mappings/{mappingId}/confirm-payment")
+    public ResponseEntity<?> confirmPayment(
+            @PathVariable Long mappingId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            log.info("💰 매핑 ID {} 입금 확인", mappingId);
+            
+            String paymentMethod = (String) request.get("paymentMethod");
+            String paymentReference = (String) request.get("paymentReference");
+            
+            ConsultantClientMapping mapping = adminService.confirmPayment(mappingId, paymentMethod, paymentReference);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "입금이 확인되었습니다. 이제 관리자 승인을 기다려주세요.",
+                "data", mapping
+            ));
+        } catch (Exception e) {
+            log.error("❌ 입금 확인 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "입금 확인에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 관리자 승인
      */
     @PostMapping("/mappings/{mappingId}/approve")

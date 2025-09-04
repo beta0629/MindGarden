@@ -156,9 +156,8 @@ public class ConsultantClientMapping extends BaseEntity {
      * 관리자 승인
      */
     public void approveByAdmin(String adminName) {
-        // PENDING 상태에서도 바로 승인 가능하도록 수정 (테스트용)
-        if (this.paymentStatus == PaymentStatus.REJECTED || this.paymentStatus == PaymentStatus.REFUNDED) {
-            throw new IllegalStateException("거부되거나 환불된 매핑은 승인할 수 없습니다.");
+        if (this.paymentStatus != PaymentStatus.CONFIRMED) {
+            throw new IllegalStateException("입금 확인이 완료되지 않았습니다.");
         }
         this.paymentStatus = PaymentStatus.APPROVED;
         this.status = MappingStatus.ACTIVE;

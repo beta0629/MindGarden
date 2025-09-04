@@ -85,6 +85,11 @@ public interface AdminService {
     ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference, Long paymentAmount);
 
     /**
+     * 입금 확인 처리 (간단 버전)
+     */
+    ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference);
+
+    /**
      * 관리자 승인
      */
     ConsultantClientMapping approveMapping(Long mappingId, String adminName);

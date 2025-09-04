@@ -130,6 +130,26 @@ const MappingManagement = () => {
         }
     };
 
+    // 입금 확인
+    const handleConfirmPayment = async (mappingId) => {
+        try {
+            const response = await apiPost(`/api/admin/mappings/${mappingId}/confirm-payment`, {
+                paymentMethod: '신용카드',
+                paymentReference: `PAY-${Date.now()}`
+            });
+            
+            if (response.success) {
+                notificationManager.success('입금이 확인되었습니다.');
+                loadMappings();
+            } else {
+                notificationManager.error('입금 확인에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('입금 확인 실패:', error);
+            notificationManager.error('입금 확인에 실패했습니다.');
+        }
+    };
+
     // 매핑 거부
     const handleRejectMapping = async (mappingId) => {
         // 테스트용 알림
@@ -272,6 +292,7 @@ const MappingManagement = () => {
                                 mapping={mapping}
                                 onApprove={handleApproveMapping}
                                 onReject={handleRejectMapping}
+                                onConfirmPayment={handleConfirmPayment}
                                 onEdit={(mapping) => {
                                     notificationManager.info('매핑 수정 기능은 준비 중입니다.');
                                 }}

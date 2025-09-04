@@ -118,8 +118,18 @@ const MappingCard = ({
                     clientName: mapping.clientName
                 })}
                 
-                {/* 승인/거부 버튼 - 승인된 매핑에는 표시하지 않음 */}
-                {mapping.paymentStatus !== 'APPROVED' && (
+                {/* 입금 확인 버튼 - PENDING 상태일 때만 표시 */}
+                {mapping.paymentStatus === 'PENDING' && (
+                    <button 
+                        className="btn btn-primary btn-sm"
+                        onClick={() => onConfirmPayment?.(mapping.id)}
+                    >
+                        <i className="bi bi-credit-card"></i> 입금 확인
+                    </button>
+                )}
+                
+                {/* 승인/거부 버튼 - CONFIRMED 상태일 때만 표시 */}
+                {mapping.paymentStatus === 'CONFIRMED' && (
                     <>
                         <button 
                             className="btn btn-success btn-sm"

@@ -116,6 +116,19 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
+     * 입금 확인 처리 (간단 버전)
+     */
+    @Override
+    public ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference) {
+        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+        
+        mapping.confirmPayment(paymentMethod, paymentReference);
+        
+        return mappingRepository.save(mapping);
+    }
+
+    /**
      * 관리자 승인
      */
     @Override

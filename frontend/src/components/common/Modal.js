@@ -10,6 +10,7 @@ const Modal = ({
   onClose, 
   title, 
   children, 
+  actions, // 버튼 영역을 위한 props
   size = 'medium', // small, medium, large, fullscreen
   showCloseButton = true,
   closeOnOverlayClick = true,
@@ -49,6 +50,12 @@ const Modal = ({
         <div className="modal-body">
           {children}
         </div>
+        
+        {actions && (
+          <div className="modal-actions">
+            {actions}
+          </div>
+        )}
       </div>
     </div>
   );

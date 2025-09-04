@@ -16,9 +16,11 @@
     background: white;
     border-radius: 12px;
     width: 90%;
-    max-width: 800px;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-width: 1000px;
+    max-height: 95vh;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -61,6 +63,10 @@
 
 .mapping-modal-content {
     padding: 24px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 /* 단계 표시기 */
@@ -124,7 +130,10 @@
 
 /* 단계 내용 */
 .mapping-modal .step-content {
-    min-height: 400px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .mapping-modal .step-content h3 {
@@ -139,6 +148,9 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 16px;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
 }
 
 .selection-card {
@@ -260,6 +272,13 @@
     min-height: 80px;
 }
 
+/* 폼 영역 스크롤 */
+.payment-form {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
 /* 완료 메시지 */
 .completion-message {
     text-align: center;
@@ -326,6 +345,7 @@
     border-top: 1px solid #e1e8ed;
     background-color: #f9fafb;
     border-radius: 0 0 12px 12px;
+    flex-shrink: 0;
 }
 
 /* 버튼 스타일 */
@@ -379,11 +399,23 @@
     transform: translateY(-1px);
 }
 
+/* 버튼 영역 고정 */
+.step-actions {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px solid #e1e8ed;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .mapping-modal {
         width: 95%;
         margin: 20px;
+        max-height: 98vh;
+        min-height: 500px;
     }
     
     .mapping-modal-header {
@@ -408,6 +440,14 @@
     
     .mapping-modal .step-label {
         font-size: 11px;
+    }
+    
+    .step-actions {
+        flex-direction: column;
+    }
+    
+    .step-actions .btn {
+        width: 100%;
     }
 }
 

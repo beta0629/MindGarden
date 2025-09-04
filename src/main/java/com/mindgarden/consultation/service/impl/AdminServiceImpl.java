@@ -129,6 +129,21 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
+     * 관리자 거부
+     */
+    @Override
+    public ConsultantClientMapping rejectMapping(Long mappingId, String reason) {
+        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+        
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
+        mapping.setNotes(reason);
+        mapping.setTerminatedAt(LocalDateTime.now());
+        
+        return mappingRepository.save(mapping);
+    }
+
+    /**
      * 회기 사용 처리
      */
     @Override
@@ -282,5 +297,10 @@ public class AdminServiceImpl implements AdminService {
         mapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
         mapping.setTerminatedAt(LocalDateTime.now());
         mappingRepository.save(mapping);
+    }
+
+    @Override
+    public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId) {
+        return mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
     }
 }

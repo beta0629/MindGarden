@@ -48,4 +48,8 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     // 활성 매핑을 관련 엔티티와 함께 조회
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.status = 'ACTIVE'")
     List<ConsultantClientMapping> findActiveMappingsWithDetails();
+    
+    // 상담사 ID로 매핑 조회 (특정 상태 제외)
+    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.consultant.id = :consultantId AND m.status != :status")
+    List<ConsultantClientMapping> findByConsultantIdAndStatusNot(@Param("consultantId") Long consultantId, @Param("status") ConsultantClientMapping.MappingStatus status);
 }

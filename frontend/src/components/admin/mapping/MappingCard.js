@@ -109,7 +109,7 @@ const MappingCard = ({
             </div>
 
             <div className="mapping-card-actions">
-                {mapping.status === 'PENDING_PAYMENT' && (
+                {(mapping.status === 'PENDING_PAYMENT' || mapping.paymentStatus === 'PENDING') && (
                     <>
                         <button 
                             className="btn btn-success btn-sm"
@@ -125,7 +125,7 @@ const MappingCard = ({
                         </button>
                     </>
                 )}
-                {mapping.status === 'ACTIVE' && (
+                {mapping.status === 'ACTIVE' && mapping.paymentStatus === 'APPROVED' && (
                     <button 
                         className="btn btn-warning btn-sm"
                         onClick={() => onEdit?.(mapping)}

@@ -426,6 +426,34 @@ public class AdminController {
     }
 
     /**
+     * 관리자 거부
+     */
+    @PostMapping("/mappings/{mappingId}/reject")
+    public ResponseEntity<?> rejectMapping(
+            @PathVariable Long mappingId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            log.info("❌ 매핑 ID {} 관리자 거부", mappingId);
+            
+            String reason = (String) request.get("reason");
+            
+            ConsultantClientMapping mapping = adminService.rejectMapping(mappingId, reason);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "매핑이 거부되었습니다.",
+                "data", mapping
+            ));
+        } catch (Exception e) {
+            log.error("❌ 매핑 거부 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "매핑 거부에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 회기 사용 처리
      */
     @PostMapping("/mappings/{mappingId}/use-session")

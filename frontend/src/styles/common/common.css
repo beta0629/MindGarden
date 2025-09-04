@@ -281,6 +281,41 @@ img {
     display: none !important;
 }
 
+/* 로딩 스피너 컨테이너 - 글자 고정 */
+.loading-spinner-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* 로딩 스피너 아이콘 - 타원형 배경만 회전 */
+.loading-spinner-icon {
+    width: 60px;
+    height: 40px;
+    border: 4px solid #f3f4f6;
+    border-top: 4px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+/* 로딩 텍스트 - 고정 */
+.loading-spinner-text {
+    font-size: 16px;
+    color: #6b7280;
+    font-weight: 500;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* ===== 디바이스별 클래스 ===== */
 .device-mobile .mobile-only { display: block; }
 .device-mobile .tablet-only,

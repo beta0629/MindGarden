@@ -90,6 +90,11 @@ public interface AdminService {
     ConsultantClientMapping approveMapping(Long mappingId, String adminName);
 
     /**
+     * 관리자 거부
+     */
+    ConsultantClientMapping rejectMapping(Long mappingId, String reason);
+
+    /**
      * 회기 사용 처리
      */
     ConsultantClientMapping useSession(Long mappingId);
@@ -120,4 +125,9 @@ public interface AdminService {
      * 회기 소진된 매핑 목록 조회
      */
     List<ConsultantClientMapping> getSessionsExhaustedMappings();
+
+    /**
+     * 상담사별 매핑 목록 조회
+     */
+    List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId);
 }

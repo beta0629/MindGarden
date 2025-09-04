@@ -8,6 +8,7 @@ import listPlugin from '@fullcalendar/list';
 import koLocale from '@fullcalendar/core/locales/ko.js';
 import SimpleLayout from '../layout/SimpleLayout';
 import ClientInfoModal from './ClientInfoModal';
+import LoadingSpinner from '../common/LoadingSpinner';
 import ConsultationLogModal from './ConsultationLogModal';
 import EventModal from './EventModal';
 import { CONSULTATION_DURATIONS, BREAK_TIME_MINUTES } from '../../constants/schedule';
@@ -682,8 +683,11 @@ const ConsultantScheduleWithLoading = () => {
     return (
       <div className="tablet-schedule-page">
         <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>세션 확인 중...</p>
+          <LoadingSpinner 
+            text="세션 확인 중..." 
+            size="medium"
+            className="loading-spinner-inline"
+          />
         </div>
       </div>
     );

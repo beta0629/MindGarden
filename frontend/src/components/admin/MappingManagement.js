@@ -111,7 +111,7 @@ const MappingManagement = () => {
     // 매핑 승인
     const handleApproveMapping = async (mappingId) => {
         try {
-            const response = await apiPut(`/api/admin/consultant-client-mappings/${mappingId}/approve`, {
+            const response = await apiPut(`/api/admin/mappings/${mappingId}/approve`, {
                 adminName: '관리자'
             });
             
@@ -130,7 +130,7 @@ const MappingManagement = () => {
     // 매핑 거부
     const handleRejectMapping = async (mappingId) => {
         try {
-            const response = await apiPut(`/api/admin/consultant-client-mappings/${mappingId}/reject`, {
+            const response = await apiPut(`/api/admin/mappings/${mappingId}/reject`, {
                 reason: '관리자 거부'
             });
             

@@ -8,6 +8,7 @@ import WelcomeSection from './WelcomeSection';
 import SummaryPanels from './SummaryPanels';
 import QuickActions from './QuickActions';
 import RecentActivities from './RecentActivities';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 const CommonDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
@@ -294,8 +295,11 @@ const CommonDashboard = ({ user: propUser }) => {
     return (
       <div className="tablet-dashboard-page">
         <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>세션 확인 중...</p>
+          <LoadingSpinner 
+            text="세션 확인 중..." 
+            size="medium"
+            className="loading-spinner-inline"
+          />
         </div>
       </div>
     );

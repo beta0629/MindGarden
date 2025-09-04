@@ -27,15 +27,21 @@ const ClientSelectionStep = ({
     }, [selectedConsultant]);
 
     /**
-     * 내담자 목록 로드 (결제 승인된 내담자만)
+     * 내담자 목록 로드 (선택된 상담사와 매핑된 결제 승인된 내담자만)
      */
     const loadClients = async () => {
+        if (!selectedConsultant) {
+            console.log('👤 상담사가 선택되지 않았습니다.');
+            setClients([]);
+            return;
+        }
+
         setLoading(true);
         try {
-            console.log('👤 내담자 목록 로드 시작');
+            console.log('👤 내담자 목록 로드 시작 - 상담사:', selectedConsultant.name);
             
-            // 실제 API 호출
-            const response = await fetch('/api/admin/mappings/active', {
+            // 선택된 상담사와 매핑된 내담자만 조회
+            const response = await fetch(`/api/admin/mappings/consultant/${selectedConsultant.originalId || selectedConsultant.id}/clients`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -47,39 +53,86 @@ const ClientSelectionStep = ({
                 const responseData = await response.json();
                 console.log('👤 API 응답 데이터:', responseData);
                 
-                // API 응답 구조에 따라 데이터 추출
-                const mappings = responseData.data || responseData;
+                // 백엔드 API 응답 구조: { success: true, data: [...], count: ... }
+                const mappingsData = responseData.data || [];
                 
-                if (!Array.isArray(mappings)) {
-                    console.error('매핑 데이터가 배열이 아닙니다:', mappings);
+                if (!Array.isArray(mappingsData)) {
+                    console.error('매핑 데이터가 배열이 아닙니다:', mappingsData);
                     setClients([]);
                     return;
                 }
                 
-                // 결제 승인되고 세션이 남은 내담자만 필터링
-                const availableClients = mappings
-                    .filter(mapping => 
-                        mapping.paymentStatus === 'APPROVED' && 
-                        mapping.remainingSessions > 0
-                    )
-                    .map((mapping, index) => ({
-                        ...mapping.client,
-                        id: `client-${mapping.client.id}-${mapping.id}`, // 매핑 ID도 포함하여 고유성 보장
-                        originalId: mapping.client.id,
-                        type: 'client',
-                        mappingId: mapping.id,
-                        remainingSessions: mapping.remainingSessions,
-                        packageName: mapping.packageName
-                    }));
+                // 매핑 데이터에서 내담자 정보 추출
+                const availableClients = mappingsData.map((mapping, index) => ({
+                    ...mapping.client,
+                    id: `client-${mapping.client.id}-${mapping.id}`, // 매핑 ID 포함하여 고유성 보장
+                    originalId: mapping.client.id,
+                    type: 'client',
+                    mappingId: mapping.id,
+                    remainingSessions: mapping.remainingSessions,
+                    packageName: mapping.packageName,
+                    paymentStatus: mapping.paymentStatus
+                }));
+                
                 setClients(availableClients);
-                console.log('👤 내담자 목록 로드 완료 (실제 API)');
+                console.log('👤 내담자 목록 로드 완료 - 상담사별 필터링:', availableClients.length, '명');
             } else {
                 console.error('내담자 목록 로드 실패:', response.status);
+                // API가 없으면 전체 매핑에서 필터링
+                await loadClientsFromAllMappings();
             }
         } catch (error) {
             console.error('내담자 목록 로드 실패:', error);
+            // API 오류 시 전체 매핑에서 필터링
+            await loadClientsFromAllMappings();
         } finally {
             setLoading(false);
+        }
+    };
+
+    /**
+     * 전체 매핑에서 상담사별 필터링 (백업 방법)
+     */
+    const loadClientsFromAllMappings = async () => {
+        try {
+            console.log('👤 전체 매핑에서 상담사별 필터링 시작');
+            
+            const response = await fetch('/api/admin/mappings/active', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const responseData = await response.json();
+                const mappings = responseData.data || responseData;
+                
+                if (Array.isArray(mappings)) {
+                    // 선택된 상담사와 매핑된 내담자만 필터링
+                    const availableClients = mappings
+                        .filter(mapping => 
+                            mapping.consultant.id === (selectedConsultant.originalId || selectedConsultant.id) &&
+                            mapping.paymentStatus === 'APPROVED' && 
+                            mapping.remainingSessions > 0
+                        )
+                        .map((mapping, index) => ({
+                            ...mapping.client,
+                            id: `client-${mapping.client.id}-${mapping.id}`,
+                            originalId: mapping.client.id,
+                            type: 'client',
+                            mappingId: mapping.id,
+                            remainingSessions: mapping.remainingSessions,
+                            packageName: mapping.packageName
+                        }));
+                    setClients(availableClients);
+                    console.log('👤 전체 매핑에서 필터링 완료:', availableClients.length, '명');
+                }
+            }
+        } catch (error) {
+            console.error('전체 매핑에서 필터링 실패:', error);
+            setClients([]);
         }
     };
 

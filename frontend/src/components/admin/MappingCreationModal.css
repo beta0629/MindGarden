@@ -17,8 +17,8 @@
     border-radius: 12px;
     width: 90%;
     max-width: 1200px;
-    max-height: 95vh;
-    min-height: 700px;
+    max-height: 98vh;
+    min-height: 800px;
     display: flex;
     flex-direction: column;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -219,10 +219,13 @@
 }
 
 /* 결제 폼 */
-.payment-form {
+.mapping-modal .payment-form {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
 }
 
 .form-row {
@@ -424,7 +427,7 @@
         width: 95%;
         margin: 20px;
         max-height: 98vh;
-        min-height: 500px;
+        min-height: 600px;
     }
     
     .mapping-modal-header {

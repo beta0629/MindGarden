@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { notification } from '../../utils/scripts';
+import { API_BASE_URL } from '../../constants/api';
 import { 
     MAPPING_CREATION_STEPS, 
     MAPPING_CREATION_STEP_LABELS,
@@ -258,7 +259,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
             // 실제 매핑 생성 API 사용
             try {
-                const response = await fetch('http://localhost:8080/api/admin/mappings', {
+                const response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

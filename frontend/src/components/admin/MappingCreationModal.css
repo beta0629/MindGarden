@@ -435,7 +435,7 @@
         padding: 20px;
     }
     
-    .selection-grid {
+    .mapping-modal .selection-grid {
         grid-template-columns: 1fr;
     }
     

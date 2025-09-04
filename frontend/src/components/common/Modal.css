@@ -18,7 +18,7 @@
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   max-height: 95vh;
-  min-height: 200px;
+  min-height: 400px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -45,12 +45,12 @@
 }
 
 .modal-medium {
-  max-width: 600px;
+  max-width: 800px;
   width: 90%;
 }
 
 .modal-large {
-  max-width: 800px;
+  max-width: 1200px;
   width: 90%;
 }
 
@@ -118,6 +118,12 @@
     width: 95%;
     margin: 20px;
     max-height: 98vh;
+    min-height: 300px;
+  }
+  
+  .modal-medium {
+    max-width: 95vw;
+    width: 95vw;
   }
   
   .modal-large {

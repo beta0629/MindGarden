@@ -109,7 +109,17 @@ const MappingCard = ({
             </div>
 
             <div className="mapping-card-actions">
-                {(mapping.status === 'PENDING_PAYMENT' || mapping.paymentStatus === 'PENDING') && (
+                {/* 디버깅용 로그 */}
+                {console.log('MappingCard Debug:', {
+                    id: mapping.id,
+                    status: mapping.status,
+                    paymentStatus: mapping.paymentStatus,
+                    consultantName: mapping.consultantName,
+                    clientName: mapping.clientName
+                })}
+                
+                {/* 승인/거부 버튼 - 승인된 매핑에는 표시하지 않음 */}
+                {mapping.paymentStatus !== 'APPROVED' && (
                     <>
                         <button 
                             className="btn btn-success btn-sm"

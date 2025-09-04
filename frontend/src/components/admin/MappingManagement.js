@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
-import { notification } from '../../utils/scripts';
+import notificationManager from '../../utils/notification';
 import { 
     MAPPING_API_ENDPOINTS, 
     MAPPING_MESSAGES,
@@ -110,39 +110,45 @@ const MappingManagement = () => {
 
     // 매핑 승인
     const handleApproveMapping = async (mappingId) => {
+        // 테스트용 알림
+        notificationManager.success('테스트 알림: 매핑 승인 버튼 클릭됨');
+        
         try {
             const response = await apiPut(`/api/admin/mappings/${mappingId}/approve`, {
                 adminName: '관리자'
             });
             
             if (response.success) {
-                notification.success('매핑이 승인되었습니다.');
+                notificationManager.success('매핑이 승인되었습니다.');
                 loadMappings();
             } else {
-                notification.error('매핑 승인에 실패했습니다.');
+                notificationManager.error('매핑 승인에 실패했습니다.');
             }
         } catch (error) {
             console.error('매핑 승인 실패:', error);
-            notification.error('매핑 승인에 실패했습니다.');
+            notificationManager.error('매핑 승인에 실패했습니다.');
         }
     };
 
     // 매핑 거부
     const handleRejectMapping = async (mappingId) => {
+        // 테스트용 알림
+        notificationManager.success('테스트 알림: 매핑 거부 버튼 클릭됨');
+        
         try {
             const response = await apiPut(`/api/admin/mappings/${mappingId}/reject`, {
                 reason: '관리자 거부'
             });
             
             if (response.success) {
-                notification.success('매핑이 거부되었습니다.');
+                notificationManager.success('매핑이 거부되었습니다.');
                 loadMappings();
             } else {
-                notification.error('매핑 거부에 실패했습니다.');
+                notificationManager.error('매핑 거부에 실패했습니다.');
             }
         } catch (error) {
             console.error('매핑 거부 실패:', error);
-            notification.error('매핑 거부에 실패했습니다.');
+            notificationManager.error('매핑 거부에 실패했습니다.');
         }
     };
 

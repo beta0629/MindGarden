@@ -150,6 +150,24 @@ public class User extends BaseEntity {
     @Column(name = "memo", columnDefinition = "TEXT")
     private String memo;
     
+    @Column(name = "address", length = 500)
+    private String address;
+    
+    @Column(name = "address_detail", length = 500)
+    private String addressDetail;
+    
+    @Column(name = "postal_code", length = 20)
+    private String postalCode;
+    
+    @Column(name = "age")
+    private Integer age;
+    
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+    
+    @Column(name = "specialization", columnDefinition = "TEXT")
+    private String specialization;
+    
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = jakarta.persistence.FetchType.LAZY)
     @JsonManagedReference
     private List<UserSocialAccount> userSocialAccounts;
@@ -389,6 +407,46 @@ public class User extends BaseEntity {
     
     public void setMemo(String memo) {
         this.memo = memo;
+    }
+    
+    public String getAddress() {
+        return address;
+    }
+    
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    
+    public String getAddressDetail() {
+        return addressDetail;
+    }
+    
+    public void setAddressDetail(String addressDetail) {
+        this.addressDetail = addressDetail;
+    }
+    
+    public String getPostalCode() {
+        return postalCode;
+    }
+    
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
+    
+    public Integer getAge() {
+        return age;
+    }
+    
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+    
+    public String getNotes() {
+        return notes;
+    }
+    
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
     
     // toString

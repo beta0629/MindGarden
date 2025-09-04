@@ -85,7 +85,7 @@
 .tablet-login .form-input {
   width: 100%;
   padding: 15px 15px 15px 50px;
-  border: 2px solid #e5e7eb;
+  border: none !important;
   border-radius: 12px;
   font-size: 1rem;
   color: #374151;
@@ -95,7 +95,7 @@
 
 .tablet-login .form-input:focus {
   outline: none;
-  border-color: #0ea5e9;
+  border: none !important;
   background: white;
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }

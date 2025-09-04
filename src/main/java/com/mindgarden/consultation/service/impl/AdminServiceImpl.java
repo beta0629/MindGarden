@@ -1,7 +1,12 @@
 package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
@@ -31,21 +36,42 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
-        // Consultant 엔티티 생성 (User를 상속받음)
-        Consultant consultant = new Consultant();
-        consultant.setUsername(dto.getUsername());
-        consultant.setEmail(dto.getEmail());
-        consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
-        consultant.setName(dto.getName());
-        consultant.setPhone(dto.getPhone());
-        consultant.setRole(UserRole.CONSULTANT);
-        consultant.setIsActive(true);
+        // 같은 username을 가진 삭제된 상담사가 있는지 확인
+        Optional<User> existingConsultant = userRepository.findByUsernameAndIsActive(dto.getUsername(), false);
         
-        // 상담사 전용 정보 설정
-        consultant.setSpecialty(dto.getSpecialization());
-        consultant.setCertification(dto.getQualifications());
-        
-        return userRepository.save(consultant);
+        if (existingConsultant.isPresent()) {
+            // 삭제된 상담사가 있으면 기존 데이터를 업데이트
+            User consultant = existingConsultant.get();
+            consultant.setEmail(dto.getEmail());
+            consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
+            consultant.setName(dto.getName());
+            consultant.setPhone(dto.getPhone());
+            consultant.setIsActive(true); // 활성화
+            consultant.setSpecialization(dto.getSpecialization());
+            
+            // Consultant로 캐스팅하여 certification 설정
+            if (consultant instanceof Consultant) {
+                ((Consultant) consultant).setCertification(dto.getQualifications());
+            }
+            
+            return userRepository.save(consultant);
+        } else {
+            // 새로운 상담사 생성
+            Consultant consultant = new Consultant();
+            consultant.setUsername(dto.getUsername());
+            consultant.setEmail(dto.getEmail());
+            consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
+            consultant.setName(dto.getName());
+            consultant.setPhone(dto.getPhone());
+            consultant.setRole(UserRole.CONSULTANT);
+            consultant.setIsActive(true);
+            
+            // 상담사 전용 정보 설정
+            consultant.setSpecialty(dto.getSpecialization());
+            consultant.setCertification(dto.getQualifications());
+            
+            return userRepository.save(consultant);
+        }
     }
 
     @Override
@@ -69,34 +95,35 @@ public class AdminServiceImpl implements AdminService {
         User consultant = userRepository.findById(dto.getConsultantId())
                 .orElseThrow(() -> new RuntimeException("Consultant not found"));
         
-        Client client = clientRepository.findById(dto.getClientId())
+        // Client는 User를 상속받으므로 userRepository로 조회
+        User clientUser = userRepository.findById(dto.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
-        ConsultantClientMapping mapping = ConsultantClientMapping.builder()
-                .consultant(consultant)
-                .client(client)
-                .startDate(dto.getStartDate() != null ? 
-                    dto.getStartDate().atStartOfDay() : 
-                    LocalDateTime.now())
-                .status(dto.getStatus() != null ? 
-                    ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus()) : 
-                    ConsultantClientMapping.MappingStatus.ACTIVE)
-                .paymentStatus(dto.getPaymentStatus() != null ? 
-                    ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus()) : 
-                    ConsultantClientMapping.PaymentStatus.PENDING)
-                .totalSessions(dto.getTotalSessions() != null ? dto.getTotalSessions() : 10)
-                .remainingSessions(dto.getRemainingSessions() != null ? dto.getRemainingSessions() : (dto.getTotalSessions() != null ? dto.getTotalSessions() : 10))
-                .usedSessions(0)
-                .packageName(dto.getPackageName() != null ? dto.getPackageName() : "기본 패키지")
-                .packagePrice(dto.getPackagePrice() != null ? dto.getPackagePrice() : 0L)
-                .paymentMethod(dto.getPaymentMethod())
-                .paymentReference(dto.getPaymentReference())
-                .paymentAmount(dto.getPaymentAmount())
-                .assignedAt(LocalDateTime.now())
-                .notes(dto.getNotes())
-                .responsibility(dto.getResponsibility())
-                .specialConsiderations(dto.getSpecialConsiderations())
-                .build();
+        // 매핑 객체를 직접 생성하여 저장
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setConsultant(consultant);
+        mapping.setClient(clientUser); // User 객체를 직접 사용
+        mapping.setStartDate(dto.getStartDate() != null ? 
+            dto.getStartDate().atStartOfDay() : 
+            LocalDateTime.now());
+        mapping.setStatus(dto.getStatus() != null ? 
+            ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus()) : 
+            ConsultantClientMapping.MappingStatus.ACTIVE);
+        mapping.setPaymentStatus(dto.getPaymentStatus() != null ? 
+            ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus()) : 
+            ConsultantClientMapping.PaymentStatus.PENDING);
+        mapping.setTotalSessions(dto.getTotalSessions() != null ? dto.getTotalSessions() : 10);
+        mapping.setRemainingSessions(dto.getRemainingSessions() != null ? dto.getRemainingSessions() : (dto.getTotalSessions() != null ? dto.getTotalSessions() : 10));
+        mapping.setUsedSessions(0);
+        mapping.setPackageName(dto.getPackageName() != null ? dto.getPackageName() : "기본 패키지");
+        mapping.setPackagePrice(dto.getPackagePrice() != null ? dto.getPackagePrice() : 0L);
+        mapping.setPaymentMethod(dto.getPaymentMethod());
+        mapping.setPaymentReference(dto.getPaymentReference());
+        mapping.setPaymentAmount(dto.getPaymentAmount());
+        mapping.setAssignedAt(LocalDateTime.now());
+        mapping.setNotes(dto.getNotes());
+        mapping.setResponsibility(dto.getResponsibility());
+        mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
 
         return mappingRepository.save(mapping);
     }
@@ -218,14 +245,126 @@ public class AdminServiceImpl implements AdminService {
     public List<User> getAllConsultants() {
         return userRepository.findByRole(UserRole.CONSULTANT);
     }
+    
+    @Override
+    public List<Map<String, Object>> getAllConsultantsWithSpecialty() {
+        List<User> consultants = userRepository.findByRole(UserRole.CONSULTANT);
+        
+        return consultants.stream()
+            .map(consultant -> {
+                Map<String, Object> consultantData = new HashMap<>();
+                consultantData.put("id", consultant.getId());
+                consultantData.put("name", consultant.getName());
+                consultantData.put("email", consultant.getEmail());
+                consultantData.put("phone", consultant.getPhone());
+                consultantData.put("role", consultant.getRole());
+                consultantData.put("isActive", consultant.getIsActive());
+                consultantData.put("createdAt", consultant.getCreatedAt());
+                consultantData.put("updatedAt", consultant.getUpdatedAt());
+                
+                // 전문분야 정보 처리
+                String specialization = consultant.getSpecialization();
+                if (specialization != null && !specialization.trim().isEmpty()) {
+                    consultantData.put("specialization", specialization);
+                    consultantData.put("specializationDetails", getSpecializationDetailsFromDB(specialization));
+                } else {
+                    consultantData.put("specialization", null);
+                    consultantData.put("specializationDetails", new ArrayList<>());
+                }
+                
+                return consultantData;
+            })
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * 데이터베이스에서 전문분야 상세 정보 조회
+     */
+    private List<Map<String, String>> getSpecializationDetailsFromDB(String specialization) {
+        if (specialization == null || specialization.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // 전문분야 코드들을 배열로 분리
+        String[] codes = specialization.split(",");
+        List<Map<String, String>> details = new ArrayList<>();
+        
+        for (String code : codes) {
+            code = code.trim();
+            if (!code.isEmpty()) {
+                // 실제로는 CodeValueRepository를 사용해서 조회해야 함
+                // 여기서는 임시로 하드코딩된 매핑 사용
+                Map<String, String> detail = new HashMap<>();
+                detail.put("code", code);
+                detail.put("name", getSpecialtyNameByCode(code));
+                details.add(detail);
+            }
+        }
+        
+        return details;
+    }
+    
+    /**
+     * 코드로 전문분야 이름 조회 (임시 구현)
+     */
+    private String getSpecialtyNameByCode(String code) {
+        Map<String, String> specialtyMap = new HashMap<>();
+        specialtyMap.put("DEPRESSION", "우울증");
+        specialtyMap.put("ANXIETY", "불안장애");
+        specialtyMap.put("TRAUMA", "트라우마");
+        specialtyMap.put("STRESS", "스트레스");
+        specialtyMap.put("RELATIONSHIP", "관계상담");
+        specialtyMap.put("FAMILY", "가족상담");
+        specialtyMap.put("COUPLE", "부부상담");
+        specialtyMap.put("CHILD", "아동상담");
+        specialtyMap.put("TEEN", "청소년상담");
+        specialtyMap.put("ADDICTION", "중독");
+        specialtyMap.put("EATING", "섭식장애");
+        specialtyMap.put("SLEEP", "수면장애");
+        specialtyMap.put("ANGER", "분노조절");
+        specialtyMap.put("GRIEF", "상실");
+        specialtyMap.put("SELF_ESTEEM", "자존감");
+        
+        return specialtyMap.getOrDefault(code, code);
+    }
 
     @Override
     public List<Client> getAllClients() {
-        // UserRepository를 사용하여 CLIENT role 사용자만 조회 (안전한 방법)
+        // UserRepository를 사용하여 CLIENT role 사용자만 조회
+        // User 엔티티를 Client로 변환하여 반환
         return userRepository.findByRole(UserRole.CLIENT).stream()
-                .filter(user -> user instanceof Client)
-                .map(user -> (Client) user)
-                .collect(java.util.stream.Collectors.toList());
+                .map(user -> {
+                    // User를 Client로 변환
+                    Client client = new Client();
+                    client.setId(user.getId());
+                    client.setUsername(user.getUsername());
+                    client.setEmail(user.getEmail());
+                    client.setName(user.getName());
+                    client.setPhone(user.getPhone());
+                    client.setRole(user.getRole());
+                    client.setIsActive(user.getIsActive());
+                    client.setGrade(user.getGrade());
+                    client.setCreatedAt(user.getCreatedAt());
+                    client.setUpdatedAt(user.getUpdatedAt());
+                    client.setAddress(user.getAddress());
+                    client.setAddressDetail(user.getAddressDetail());
+                    client.setPostalCode(user.getPostalCode());
+                    client.setAge(user.getAge());
+                    client.setGender(user.getGender());
+                    client.setBirthDate(user.getBirthDate());
+                    client.setProfileImageUrl(user.getProfileImageUrl());
+                    client.setIsEmailVerified(user.getIsEmailVerified());
+                    client.setTotalConsultations(user.getTotalConsultations());
+                    client.setExperiencePoints(user.getExperiencePoints());
+                    client.setLastLoginAt(user.getLastLoginAt());
+                    client.setMemo(user.getMemo());
+                    client.setNotes(user.getNotes());
+                    client.setIsDeleted(user.getIsDeleted());
+                    client.setDeletedAt(user.getDeletedAt());
+                    client.setVersion(user.getVersion());
+                    return client;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -247,6 +386,11 @@ public class AdminServiceImpl implements AdminService {
         consultant.setName(dto.getName());
         consultant.setEmail(dto.getEmail());
         consultant.setPhone(dto.getPhone());
+        
+        // 전문분야 필드 처리 추가
+        if (dto.getSpecialization() != null) {
+            consultant.setSpecialization(dto.getSpecialization());
+        }
         
         return userRepository.save(consultant);
     }
@@ -315,5 +459,10 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId) {
         return mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
+    }
+
+    @Override
+    public ConsultantClientMapping getMappingById(Long mappingId) {
+        return mappingRepository.findById(mappingId).orElse(null);
     }
 }

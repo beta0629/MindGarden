@@ -46,6 +46,9 @@ public class CodeInitializationServiceImpl implements CodeInitializationService,
             // 3. 상담 유형 코드 그룹
             initializeConsultationTypeCodes();
             
+            // 4. 전문분야 코드 그룹
+            initializeSpecialtyCodes();
+            
             log.info("✅ 기본 코드 초기화 완료");
         } catch (Exception e) {
             log.error("❌ 기본 코드 초기화 실패", e);
@@ -55,9 +58,10 @@ public class CodeInitializationServiceImpl implements CodeInitializationService,
     @Override
     public boolean isCodeGroupExists(String groupCode) {
         try {
-            codeManagementService.getCodeValuesByGroup(groupCode);
-            return true;
+            List<CodeValueDto> codeValues = codeManagementService.getCodeValuesByGroup(groupCode);
+            return codeValues != null && !codeValues.isEmpty();
         } catch (Exception e) {
+            log.debug("코드 그룹 존재 확인 실패: {} - {}", groupCode, e.getMessage());
             return false;
         }
     }
@@ -384,5 +388,190 @@ public class CodeInitializationServiceImpl implements CodeInitializationService,
         }
         
         log.info("✅ 상담 유형 코드 초기화 완료: {}개", consultationTypes.size());
+    }
+    
+    /**
+     * 전문분야 코드 초기화
+     */
+    private void initializeSpecialtyCodes() {
+        String groupCode = "SPECIALTY";
+        
+        if (isCodeGroupExists(groupCode)) {
+            log.info("⏭️ 전문분야 코드 그룹이 이미 존재합니다: {}", groupCode);
+            return;
+        }
+        
+        log.info("➕ 전문분야 코드 그룹 생성: {}", groupCode);
+        
+        // 코드 그룹 생성
+        CodeGroupDto groupDto = CodeGroupDto.builder()
+            .code(groupCode)
+            .name("전문분야")
+            .description("심리상담사의 전문분야를 나타내는 코드")
+            .sortOrder(4)
+            .isActive(true)
+            .build();
+        
+        codeManagementService.createCodeGroup(groupDto);
+        
+        // 코드 값들 생성
+        List<CodeValueDto> specialtyCodes = Arrays.asList(
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("DEPRESSION")
+                .name("우울증")
+                .description("우울증 상담 및 치료")
+                .sortOrder(1)
+                .isActive(true)
+                .colorCode("#3b82f6")
+                .icon("😔")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("ANXIETY")
+                .name("불안장애")
+                .description("불안장애 상담 및 치료")
+                .sortOrder(2)
+                .isActive(true)
+                .colorCode("#f59e0b")
+                .icon("😰")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("TRAUMA")
+                .name("트라우마")
+                .description("외상 후 스트레스 장애 상담")
+                .sortOrder(3)
+                .isActive(true)
+                .colorCode("#ef4444")
+                .icon("💔")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("RELATIONSHIP")
+                .name("인간관계")
+                .description("인간관계 및 대인관계 상담")
+                .sortOrder(4)
+                .isActive(true)
+                .colorCode("#10b981")
+                .icon("🤝")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("FAMILY")
+                .name("가족상담")
+                .description("가족 문제 및 가족 상담")
+                .sortOrder(5)
+                .isActive(true)
+                .colorCode("#8b5cf6")
+                .icon("👨‍👩‍👧‍👦")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("COUPLE")
+                .name("부부상담")
+                .description("부부 관계 및 결혼 상담")
+                .sortOrder(6)
+                .isActive(true)
+                .colorCode("#ec4899")
+                .icon("💑")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("CHILD")
+                .name("아동상담")
+                .description("아동 및 청소년 상담")
+                .sortOrder(7)
+                .isActive(true)
+                .colorCode("#06b6d4")
+                .icon("🧒")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("ADOLESCENT")
+                .name("청소년상담")
+                .description("청소년 문제 및 상담")
+                .sortOrder(8)
+                .isActive(true)
+                .colorCode("#84cc16")
+                .icon("👦")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("ADDICTION")
+                .name("중독상담")
+                .description("알코올, 도박 등 중독 상담")
+                .sortOrder(9)
+                .isActive(true)
+                .colorCode("#f97316")
+                .icon("🚫")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("EATING")
+                .name("섭식장애")
+                .description("섭식장애 상담 및 치료")
+                .sortOrder(10)
+                .isActive(true)
+                .colorCode("#a855f7")
+                .icon("🍽️")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("SLEEP")
+                .name("수면장애")
+                .description("수면 문제 및 불면증 상담")
+                .sortOrder(11)
+                .isActive(true)
+                .colorCode("#6366f1")
+                .icon("😴")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("GRIEF")
+                .name("상실상담")
+                .description("상실과 슬픔 상담")
+                .sortOrder(12)
+                .isActive(true)
+                .colorCode("#6b7280")
+                .icon("🕊️")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("CAREER")
+                .name("진로상담")
+                .description("진로 및 직업 상담")
+                .sortOrder(13)
+                .isActive(true)
+                .colorCode("#059669")
+                .icon("💼")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("STRESS")
+                .name("스트레스")
+                .description("스트레스 관리 및 상담")
+                .sortOrder(14)
+                .isActive(true)
+                .colorCode("#dc2626")
+                .icon("😤")
+                .build(),
+            CodeValueDto.builder()
+                .codeGroupCode(groupCode)
+                .code("SELF_ESTEEM")
+                .name("자존감")
+                .description("자존감 향상 상담")
+                .sortOrder(15)
+                .isActive(true)
+                .colorCode("#7c3aed")
+                .icon("💪")
+                .build()
+        );
+        
+        for (CodeValueDto codeValue : specialtyCodes) {
+            codeManagementService.createCodeValue(codeValue);
+        }
+        
+        log.info("✅ 전문분야 코드 초기화 완료: {}개", specialtyCodes.size());
     }
 }

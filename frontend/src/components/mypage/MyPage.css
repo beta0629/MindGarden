@@ -1,55 +1,204 @@
 .mypage-container {
-  max-width: 1200px;
+  max-width: var(--mypage-container-max-width);
   margin: 0 auto;
-  padding: 20px;
-  background: #f8f9fa;
+  padding: var(--mypage-container-padding);
+  background: var(--mypage-container-bg);
   min-height: 100vh;
+}
+
+/* MyPage 전용 - 입력 요소만 테두리 제거 */
+.mypage-container input,
+.mypage-container select,
+.mypage-container textarea {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.mypage-container input:focus,
+.mypage-container select:focus,
+.mypage-container textarea:focus {
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
+}
+
+/* MyPage 상수 변수 */
+:root {
+  --mypage-container-max-width: 1200px;
+  --mypage-container-padding: 20px;
+  --mypage-container-bg: #f8f9fa;
+  --mypage-header-padding: 30px 0;
+  --mypage-header-bg: white;
+  --mypage-header-radius: 12px;
+  --mypage-header-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --mypage-title-color: #333;
+  --mypage-title-size: 2.5rem;
+  --mypage-subtitle-color: #666;
+  --mypage-subtitle-size: 1.1rem;
+  --mypage-content-gap: 20px;
+  --mypage-nav-bg: white;
+  --mypage-nav-radius: 12px;
+  --mypage-nav-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --mypage-nav-border: 1px solid #e9ecef;
+  --mypage-nav-item-padding: 20px 30px;
+  --mypage-nav-item-min-width: 120px;
+  --mypage-nav-item-color: #555;
+  --mypage-nav-item-hover-bg: #f8f9fa;
+  --mypage-nav-item-hover-color: #333;
+  --mypage-nav-item-active-bg: #f8f9fa;
+  --mypage-nav-item-active-color: #667eea;
+  --mypage-nav-item-active-border: #667eea;
+  --mypage-main-bg: white;
+  --mypage-main-radius: 12px;
+  --mypage-main-padding: 30px;
+  --mypage-main-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --mypage-section-margin: 30px;
+  --mypage-section-header-border: 2px solid #f0f2f5;
+  --mypage-section-title-color: #333;
+  --mypage-section-title-size: 1.8rem;
+  --mypage-edit-btn-bg: #667eea;
+  --mypage-edit-btn-color: white;
+  --mypage-edit-btn-padding: 10px 20px;
+  --mypage-edit-btn-radius: 6px;
+  --mypage-edit-btn-hover-bg: #5a6fd8;
+  --mypage-form-gap: 25px;
+  --mypage-profile-image-size: 200px;
+  --mypage-profile-image-border: 4px solid #f0f2f5;
+  --mypage-profile-image-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --mypage-upload-btn-size: 35px;
+  --mypage-upload-btn-bg: #667eea;
+  --mypage-upload-btn-color: white;
+  --mypage-upload-btn-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --mypage-upload-btn-hover-bg: #5a6fd8;
+  --mypage-input-padding: 12px 16px;
+  --mypage-input-radius: 8px;
+  --mypage-input-bg: #fafbfc;
+  --mypage-input-focus-bg: white;
+  --mypage-input-focus-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+  --mypage-input-disabled-bg: #f5f5f5;
+  --mypage-input-disabled-color: #666;
+  --mypage-actions-gap: 15px;
+  --mypage-actions-border: 1px solid #f0f2f5;
+  --mypage-save-btn-bg: #28a745;
+  --mypage-save-btn-color: white;
+  --mypage-save-btn-padding: 12px 30px;
+  --mypage-save-btn-radius: 8px;
+  --mypage-save-btn-hover-bg: #218838;
+  --mypage-list-gap: 20px;
+  --mypage-item-bg: #f8f9fa;
+  --mypage-item-radius: 10px;
+  --mypage-item-border: 1px solid #e9ecef;
+  --mypage-item-padding: 20px;
+  --mypage-item-title-color: #333;
+  --mypage-item-title-size: 1.1rem;
+  --mypage-item-text-color: #666;
+  --mypage-item-text-size: 0.9rem;
+  --mypage-item-btn-bg: #667eea;
+  --mypage-item-btn-color: white;
+  --mypage-item-btn-padding: 8px 20px;
+  --mypage-item-btn-radius: 6px;
+  --mypage-item-btn-hover-bg: #5a6fd8;
+  --mypage-loading-height: 200px;
+  --mypage-loading-font-size: 1.1rem;
+  --mypage-loading-color: #666;
+  --mypage-login-min-height: 400px;
+  --mypage-login-padding: 40px;
+  --mypage-login-message-bg: white;
+  --mypage-login-message-radius: 12px;
+  --mypage-login-message-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --mypage-login-message-max-width: 500px;
+  --mypage-login-title-color: #333;
+  --mypage-login-title-size: 24px;
+  --mypage-login-title-margin: 16px;
+  --mypage-login-text-color: #666;
+  --mypage-login-text-size: 16px;
+  --mypage-login-text-margin: 24px;
+  --mypage-login-actions-gap: 16px;
+  --mypage-login-btn-padding: 12px 24px;
+  --mypage-login-btn-radius: 6px;
+  --mypage-login-btn-size: 16px;
+  --mypage-login-btn-bg: #007bff;
+  --mypage-login-btn-color: white;
+  --mypage-login-btn-hover-bg: #0056b3;
+  --mypage-register-btn-bg: #28a745;
+  --mypage-register-btn-color: white;
+  --mypage-register-btn-hover-bg: #1e7e34;
+  --mypage-social-icon-size: 2rem;
+  --mypage-social-icon-width: 50px;
+  --mypage-social-icon-height: 50px;
+  --mypage-social-icon-bg: white;
+  --mypage-social-icon-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --mypage-social-profile-size: 40px;
+  --mypage-social-profile-border: 2px solid #e9ecef;
+  --mypage-unlink-btn-bg: #dc3545;
+  --mypage-unlink-btn-color: white;
+  --mypage-unlink-btn-padding: 8px 16px;
+  --mypage-unlink-btn-radius: 6px;
+  --mypage-unlink-btn-hover-bg: #c82333;
+  --mypage-no-accounts-padding: 40px 20px;
+  --mypage-no-accounts-color: #666;
+  --mypage-link-bg: #f8f9fa;
+  --mypage-link-radius: 10px;
+  --mypage-link-border: 1px solid #e9ecef;
+  --mypage-link-title-color: #333;
+  --mypage-link-title-size: 1.2rem;
+  --mypage-link-title-margin: 20px;
+  --mypage-link-options-gap: 15px;
+  --mypage-link-btn-padding: 12px 20px;
+  --mypage-link-btn-radius: 8px;
+  --mypage-link-btn-size: 1rem;
+  --mypage-link-btn-gap: 10px;
+  --mypage-kakao-bg: #FEE500;
+  --mypage-kakao-color: #000;
+  --mypage-kakao-hover-bg: #FDD835;
+  --mypage-naver-bg: #03C75A;
+  --mypage-naver-color: white;
+  --mypage-naver-hover-bg: #02B351;
+  --mypage-link-icon-size: 1.2rem;
 }
 
 .mypage-header {
   text-align: center;
   margin-bottom: 30px;
-  padding: 30px 0;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: var(--mypage-header-padding);
+  background: var(--mypage-header-bg);
+  border-radius: var(--mypage-header-radius);
+  box-shadow: var(--mypage-header-shadow);
 }
 
 .mypage-header h1 {
-  color: #333;
+  color: var(--mypage-title-color);
   margin-bottom: 10px;
-  font-size: 2.5rem;
+  font-size: var(--mypage-title-size);
   font-weight: 600;
 }
 
 .mypage-header p {
-  color: #666;
-  font-size: 1.1rem;
+  color: var(--mypage-subtitle-color);
+  font-size: var(--mypage-subtitle-size);
   margin: 0;
 }
 
 .mypage-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--mypage-content-gap);
 }
 
 .mypage-top-nav {
-  background: white;
-  border-radius: 12px;
+  background: var(--mypage-nav-bg);
+  border-radius: var(--mypage-nav-radius);
   padding: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--mypage-nav-shadow);
   overflow: hidden;
 }
 
 .mypage-nav {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: var(--mypage-nav-border);
 }
 
 .nav-item {
-  padding: 20px 30px;
+  padding: var(--mypage-nav-item-padding);
   border: none;
   background: transparent;
   border-radius: 0;
@@ -57,34 +206,34 @@
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  color: #555;
+  color: var(--mypage-nav-item-color);
   border-bottom: 3px solid transparent;
-  min-width: 120px;
+  min-width: var(--mypage-nav-item-min-width);
   font-weight: 500;
 }
 
 .nav-item:hover {
-  background: #f8f9fa;
-  color: #333;
+  background: var(--mypage-nav-item-hover-bg);
+  color: var(--mypage-nav-item-hover-color);
   border-bottom-color: #dee2e6;
 }
 
 .nav-item.active {
-  background: #f8f9fa;
-  color: #667eea;
+  background: var(--mypage-nav-item-active-bg);
+  color: var(--mypage-nav-item-active-color);
   font-weight: 600;
-  border-bottom-color: #667eea;
+  border-bottom-color: var(--mypage-nav-item-active-border);
 }
 
 .mypage-main-content {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--mypage-main-bg);
+  border-radius: var(--mypage-main-radius);
+  padding: var(--mypage-main-padding);
+  box-shadow: var(--mypage-main-shadow);
 }
 
 .mypage-section {
-  margin-bottom: 30px;
+  margin-bottom: var(--mypage-section-margin);
 }
 
 .section-header {
@@ -93,35 +242,35 @@
   align-items: center;
   margin-bottom: 25px;
   padding-bottom: 15px;
-  border-bottom: 2px solid #f0f2f5;
+  border-bottom: var(--mypage-section-header-border);
 }
 
 .section-header h2 {
-  color: #333;
+  color: var(--mypage-section-title-color);
   margin: 0;
-  font-size: 1.8rem;
+  font-size: var(--mypage-section-title-size);
   font-weight: 600;
 }
 
 .edit-btn {
-  padding: 10px 20px;
-  background: #667eea;
-  color: white;
+  padding: var(--mypage-edit-btn-padding);
+  background: var(--mypage-edit-btn-bg);
+  color: var(--mypage-edit-btn-color);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--mypage-edit-btn-radius);
   cursor: pointer;
   font-size: 0.9rem;
   transition: background 0.3s ease;
 }
 
 .edit-btn:hover {
-  background: #5a6fd8;
+  background: var(--mypage-edit-btn-hover-bg);
 }
 
 .profile-form {
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: var(--mypage-form-gap);
 }
 
 .profile-image-section {
@@ -136,34 +285,34 @@
 }
 
 .profile-image img {
-  width: 120px;
-  height: 120px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #f0f2f5;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: var(--mypage-profile-image-border);
+  box-shadow: var(--mypage-profile-image-shadow);
 }
 
 .image-upload {
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 35px;
-  height: 35px;
+  width: var(--mypage-upload-btn-size);
+  height: var(--mypage-upload-btn-size);
   border-radius: 50%;
-  background: #667eea;
-  color: white;
+  background: var(--mypage-upload-btn-bg);
+  color: var(--mypage-upload-btn-color);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--mypage-upload-btn-shadow);
 }
 
 .image-upload:hover {
-  background: #5a6fd8;
+  background: var(--mypage-upload-btn-hover-bg);
 }
 
 .mypage .form-group {
@@ -179,41 +328,41 @@
 }
 
 .mypage .form-group input {
-  padding: 12px 16px;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
+  padding: var(--mypage-input-padding);
+  border: none;
+  border-radius: var(--mypage-input-radius);
   font-size: 1rem;
-  transition: border-color 0.3s ease;
-  background: #fafbfc;
+  transition: all 0.3s ease;
+  background: var(--mypage-input-bg);
 }
 
 .mypage .form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  background: white;
+  background: var(--mypage-input-focus-bg);
+  box-shadow: var(--mypage-input-focus-shadow);
 }
 
 .mypage .form-group input:disabled {
-  background: #f5f5f5;
-  color: #666;
+  background: var(--mypage-input-disabled-bg);
+  color: var(--mypage-input-disabled-color);
   cursor: not-allowed;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 15px;
+  gap: var(--mypage-actions-gap);
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid #f0f2f5;
+  border-top: var(--mypage-actions-border);
 }
 
 .save-btn {
-  padding: 12px 30px;
-  background: #28a745;
-  color: white;
+  padding: var(--mypage-save-btn-padding);
+  background: var(--mypage-save-btn-bg);
+  color: var(--mypage-save-btn-color);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--mypage-save-btn-radius);
   cursor: pointer;
   font-size: 1rem;
   font-weight: 500;
@@ -221,14 +370,14 @@
 }
 
 .save-btn:hover {
-  background: #218838;
+  background: var(--mypage-save-btn-hover-bg);
 }
 
 .settings-list,
 .security-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--mypage-list-gap);
 }
 
 .setting-item,
@@ -236,34 +385,34 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 10px;
-  border: 1px solid #e9ecef;
+  padding: var(--mypage-item-padding);
+  background: var(--mypage-item-bg);
+  border-radius: var(--mypage-item-radius);
+  border: var(--mypage-item-border);
 }
 
 .setting-info h3,
 .security-info h3 {
   margin: 0 0 5px 0;
-  color: #333;
-  font-size: 1.1rem;
+  color: var(--mypage-item-title-color);
+  font-size: var(--mypage-item-title-size);
   font-weight: 600;
 }
 
 .setting-info p,
 .security-info p {
   margin: 0;
-  color: #666;
-  font-size: 0.9rem;
+  color: var(--mypage-item-text-color);
+  font-size: var(--mypage-item-text-size);
 }
 
 .setting-btn,
 .security-btn {
-  padding: 8px 20px;
-  background: #667eea;
-  color: white;
+  padding: var(--mypage-item-btn-padding);
+  background: var(--mypage-item-btn-bg);
+  color: var(--mypage-item-btn-color);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--mypage-item-btn-radius);
   cursor: pointer;
   font-size: 0.9rem;
   transition: background 0.3s ease;
@@ -271,80 +420,80 @@
 
 .setting-btn:hover,
 .security-btn:hover {
-  background: #5a6fd8;
+  background: var(--mypage-item-btn-hover-bg);
 }
 
 .mypage-loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200px;
-  font-size: 1.1rem;
-  color: #666;
+  height: var(--mypage-loading-height);
+  font-size: var(--mypage-loading-font-size);
+  color: var(--mypage-loading-color);
 }
 
 .login-required {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
-  padding: 40px;
+  min-height: var(--mypage-login-min-height);
+  padding: var(--mypage-login-padding);
 }
 
 .login-message {
   text-align: center;
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
+  background: var(--mypage-login-message-bg);
+  padding: var(--mypage-login-padding);
+  border-radius: var(--mypage-login-message-radius);
+  box-shadow: var(--mypage-login-message-shadow);
+  max-width: var(--mypage-login-message-max-width);
 }
 
 .login-message h2 {
-  color: #333;
-  margin-bottom: 16px;
-  font-size: 24px;
+  color: var(--mypage-login-title-color);
+  margin-bottom: var(--mypage-login-title-margin);
+  font-size: var(--mypage-login-title-size);
 }
 
 .login-message p {
-  color: #666;
-  margin-bottom: 24px;
-  font-size: 16px;
+  color: var(--mypage-login-text-color);
+  margin-bottom: var(--mypage-login-text-margin);
+  font-size: var(--mypage-login-text-size);
   line-height: 1.5;
 }
 
 .login-actions {
   display: flex;
-  gap: 16px;
+  gap: var(--mypage-login-actions-gap);
   justify-content: center;
 }
 
 .login-btn, .register-btn {
-  padding: 12px 24px;
+  padding: var(--mypage-login-btn-padding);
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
+  border-radius: var(--mypage-login-btn-radius);
+  font-size: var(--mypage-login-btn-size);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .login-btn {
-  background: #007bff;
-  color: white;
+  background: var(--mypage-login-btn-bg);
+  color: var(--mypage-login-btn-color);
 }
 
 .login-btn:hover {
-  background: #0056b3;
+  background: var(--mypage-login-btn-hover-bg);
 }
 
 .register-btn {
-  background: #28a745;
-  color: white;
+  background: var(--mypage-register-btn-bg);
+  color: var(--mypage-register-btn-color);
 }
 
 .register-btn:hover {
-  background: #1e7e34;
+  background: var(--mypage-register-btn-hover-bg);
 }
 
 /* 반응형 디자인 */
@@ -400,17 +549,17 @@
 .social-accounts-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--mypage-list-gap);
 }
 
 .social-account-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 10px;
-  border: 1px solid #e9ecef;
+  padding: var(--mypage-item-padding);
+  background: var(--mypage-item-bg);
+  border-radius: var(--mypage-item-radius);
+  border: var(--mypage-item-border);
 }
 
 .social-account-info {
@@ -420,28 +569,28 @@
 }
 
 .social-provider-icon {
-  font-size: 2rem;
-  width: 50px;
-  height: 50px;
+  font-size: var(--mypage-social-icon-size);
+  width: var(--mypage-social-icon-width);
+  height: var(--mypage-social-icon-height);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--mypage-social-icon-bg);
+  box-shadow: var(--mypage-social-icon-shadow);
 }
 
 .social-account-details h3 {
   margin: 0 0 5px 0;
-  color: #333;
-  font-size: 1.1rem;
+  color: var(--mypage-item-title-color);
+  font-size: var(--mypage-item-title-size);
   font-weight: 600;
 }
 
 .social-account-details p {
   margin: 0;
-  color: #666;
-  font-size: 0.9rem;
+  color: var(--mypage-item-text-color);
+  font-size: var(--mypage-item-text-size);
 }
 
 .social-profile-image {
@@ -449,90 +598,90 @@
 }
 
 .social-profile-image img {
-  width: 40px;
-  height: 40px;
+  width: var(--mypage-social-profile-size);
+  height: var(--mypage-social-profile-size);
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #e9ecef;
+  border: var(--mypage-social-profile-border);
 }
 
 .unlink-btn {
-  padding: 8px 16px;
-  background: #dc3545;
-  color: white;
+  padding: var(--mypage-unlink-btn-padding);
+  background: var(--mypage-unlink-btn-bg);
+  color: var(--mypage-unlink-btn-color);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--mypage-unlink-btn-radius);
   cursor: pointer;
   font-size: 0.9rem;
   transition: background 0.3s ease;
 }
 
 .unlink-btn:hover {
-  background: #c82333;
+  background: var(--mypage-unlink-btn-hover-bg);
 }
 
 .no-social-accounts {
   text-align: center;
-  padding: 40px 20px;
-  color: #666;
+  padding: var(--mypage-no-accounts-padding);
+  color: var(--mypage-no-accounts-color);
 }
 
 .link-new-account {
   margin-top: 30px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 10px;
-  border: 1px solid #e9ecef;
+  padding: var(--mypage-item-padding);
+  background: var(--mypage-link-bg);
+  border-radius: var(--mypage-link-radius);
+  border: var(--mypage-link-border);
 }
 
 .link-new-account h3 {
-  margin: 0 0 20px 0;
-  color: #333;
-  font-size: 1.2rem;
+  margin: 0 0 var(--mypage-link-title-margin) 0;
+  color: var(--mypage-link-title-color);
+  font-size: var(--mypage-link-title-size);
   font-weight: 600;
 }
 
 .link-options {
   display: flex;
-  gap: 15px;
+  gap: var(--mypage-link-options-gap);
   flex-wrap: wrap;
 }
 
 .link-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
+  gap: var(--mypage-link-btn-gap);
+  padding: var(--mypage-link-btn-padding);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--mypage-link-btn-radius);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: var(--mypage-link-btn-size);
   font-weight: 500;
   transition: all 0.3s ease;
 }
 
 .link-btn.kakao {
-  background: #FEE500;
-  color: #000;
+  background: var(--mypage-kakao-bg);
+  color: var(--mypage-kakao-color);
 }
 
 .link-btn.kakao:hover {
-  background: #FDD835;
+  background: var(--mypage-kakao-hover-bg);
   transform: translateY(-2px);
 }
 
 .link-btn.naver {
-  background: #03C75A;
-  color: white;
+  background: var(--mypage-naver-bg);
+  color: var(--mypage-naver-color);
 }
 
 .link-btn.naver:hover {
-  background: #02B351;
+  background: var(--mypage-naver-hover-bg);
   transform: translateY(-2px);
 }
 
 .link-btn i {
-  font-size: 1.2rem;
+  font-size: var(--mypage-link-icon-size);
 }
 
 /* 반응형 디자인 */

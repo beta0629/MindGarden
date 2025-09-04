@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import SimpleLayout from '../layout/SimpleLayout';
 import './ClientComprehensiveManagement.css';
 
@@ -354,33 +355,28 @@ const ClientComprehensiveManagement = () => {
     /**
      * 내담자 수정
      */
-    const updateClient = async () => {
-        try {
-            const updateData = {
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone
-            };
+    const updateClient = withFormSubmit(async () => {
+        const updateData = {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone
+        };
 
-            // 비밀번호가 입력된 경우에만 포함
-            if (formData.password) {
-                updateData.password = formData.password;
-            }
-
-            const response = await apiPut(`/api/admin/clients/${editingClient.id}`, updateData);
-
-            if (response.success) {
-                notificationManager.success('내담자 정보가 성공적으로 수정되었습니다.');
-                handleCloseModal();
-                loadAllData(); // 데이터 새로고침
-            } else {
-                notificationManager.error(response.message || '내담자 수정에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('내담자 수정 실패:', error);
-            notificationManager.error('내담자 수정에 실패했습니다.');
+        // 비밀번호가 입력된 경우에만 포함
+        if (formData.password) {
+            updateData.password = formData.password;
         }
-    };
+
+        const response = await apiPut(`/api/admin/clients/${editingClient.id}`, updateData);
+
+        if (response.success) {
+            notificationManager.success('내담자 정보가 성공적으로 수정되었습니다.');
+            handleCloseModal();
+            loadAllData(); // 데이터 새로고침
+        } else {
+            notificationManager.error(response.message || '내담자 수정에 실패했습니다.');
+        }
+    });
 
     /**
      * 내담자 삭제
@@ -763,56 +759,109 @@ const ClientComprehensiveManagement = () => {
                             </button>
                         </div>
                         
-                        {/* 내담자 목록 테이블 */}
-                        <div className="basic-clients-table">
-                            <div className="table-header">
-                                <div className="header-cell">이름</div>
-                                <div className="header-cell">이메일</div>
-                                <div className="header-cell">전화번호</div>
-                                <div className="header-cell">가입일</div>
-                                <div className="header-cell">액션</div>
+                        {/* 검색 및 필터 */}
+                        <div className="basic-search-section">
+                            <div className="search-filters">
+                                <input
+                                    type="text"
+                                    placeholder="내담자 검색..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="search-input"
+                                />
+                                <select
+                                    value={filterStatus}
+                                    onChange={(e) => setFilterStatus(e.target.value)}
+                                    className="filter-select"
+                                >
+                                    <option value="all">전체 상태</option>
+                                    <option value="ACTIVE">활성</option>
+                                    <option value="INACTIVE">비활성</option>
+                                    <option value="SUSPENDED">일시정지</option>
+                                    <option value="COMPLETED">완료</option>
+                                </select>
                             </div>
-                            
-                            {clients.length > 0 ? (
-                                clients.map(client => (
-                                    <div key={client.id} className="table-row">
-                                        <div className="table-cell">
-                                            <div className="client-name">
+                        </div>
+                        
+                        {/* 내담자 목록 카드 */}
+                        <div className="basic-clients-cards">
+                            {getFilteredClients().length > 0 ? (
+                                getFilteredClients().map(client => {
+                                    const mapping = mappings.find(m => m.clientId === client.id);
+                                    return (
+                                        <div key={client.id} className="basic-client-card">
+                                            <div className="card-header">
                                                 <div className="client-avatar">
                                                     <FaUser />
                                                 </div>
-                                                <span>{client.name || '이름 없음'}</span>
+                                                <div className="client-basic-info">
+                                                    <h4 className="client-name">{client.name || '이름 없음'}</h4>
+                                                    <p className="client-email">{client.email || '-'}</p>
+                                                </div>
+                                                <div className="client-status">
+                                                    {mapping ? (
+                                                        <span
+                                                            className="status-badge"
+                                                            style={{ backgroundColor: getStatusColor(mapping.status) }}
+                                                        >
+                                                            {getStatusText(mapping.status)}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="status-badge no-mapping">매핑 없음</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="card-body">
+                                                <div className="client-details">
+                                                    <div className="detail-item">
+                                                        <span className="detail-label">전화번호:</span>
+                                                        <span className="detail-value">{client.phone || '-'}</span>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <span className="detail-label">등급:</span>
+                                                        <span className="detail-value">{client.grade || 'CLIENT_BRONZE'}</span>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <span className="detail-label">가입일:</span>
+                                                        <span className="detail-value">
+                                                            {client.createdAt ? 
+                                                                new Date(client.createdAt).toLocaleDateString('ko-KR') : 
+                                                                '-'
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <span className="detail-label">총 상담:</span>
+                                                        <span className="detail-value">{client.totalConsultations || 0}회</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="card-footer">
+                                                <div className="action-buttons">
+                                                    <button 
+                                                        className="btn btn-sm btn-primary"
+                                                        onClick={() => handleEditClient(client)}
+                                                    >
+                                                        ✏️ 수정
+                                                    </button>
+                                                    <button 
+                                                        className="btn btn-sm btn-danger"
+                                                        onClick={() => handleDeleteClient(client)}
+                                                    >
+                                                        🗑️ 삭제
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="table-cell">{client.email || '-'}</div>
-                                        <div className="table-cell">{client.phone || '-'}</div>
-                                        <div className="table-cell">
-                                            {client.createdAt ? 
-                                                new Date(client.createdAt).toLocaleDateString('ko-KR') : 
-                                                '-'
-                                            }
-                                        </div>
-                                        <div className="table-cell">
-                                            <div className="action-buttons-cell">
-                                                <button 
-                                                    className="btn btn-sm btn-primary"
-                                                    onClick={() => handleEditClient(client)}
-                                                >
-                                                    ✏️ 수정
-                                                </button>
-                                                <button 
-                                                    className="btn btn-sm btn-danger"
-                                                    onClick={() => handleDeleteClient(client)}
-                                                >
-                                                    🗑️ 삭제
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             ) : (
                                 <div className="no-data">
+                                    <div className="no-data-icon">👥</div>
                                     <p>등록된 내담자가 없습니다.</p>
+                                    <p className="no-data-sub">새 내담자를 등록해보세요.</p>
                                 </div>
                             )}
                         </div>

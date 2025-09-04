@@ -642,6 +642,228 @@
     margin-bottom: 25px;
 }
 
+/* 검색 및 필터 섹션 */
+.basic-search-section {
+    margin-bottom: 25px;
+}
+
+.search-filters {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.search-filters .search-input {
+    padding: 10px 16px;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    font-size: 14px;
+    width: 300px;
+    transition: border-color 0.3s ease;
+}
+
+.search-filters .search-input:focus {
+    outline: none;
+    border-color: #a8e6a3;
+    box-shadow: 0 0 0 3px rgba(168, 230, 163, 0.1);
+}
+
+.search-filters .filter-select {
+    padding: 10px 16px;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.search-filters .filter-select:focus {
+    outline: none;
+    border-color: #a8e6a3;
+}
+
+/* 내담자 카드 컨테이너 */
+.basic-clients-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+/* 내담자 카드 */
+.basic-client-card {
+    background: white;
+    border: 2px solid #e1e8ed;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.basic-client-card:hover {
+    border-color: #a8e6a3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(168, 230, 163, 0.15);
+}
+
+/* 카드 헤더 */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.card-header .client-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a8e6a3 0%, #7bc87b 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.card-header .client-avatar svg {
+    font-size: 20px;
+}
+
+.client-basic-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.client-basic-info .client-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 5px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.client-basic-info .client-email {
+    font-size: 14px;
+    color: #7f8c8d;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.client-status {
+    flex-shrink: 0;
+}
+
+/* 카드 바디 */
+.card-body {
+    margin-bottom: 15px;
+}
+
+.client-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.detail-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #7f8c8d;
+    min-width: 60px;
+}
+
+.detail-value {
+    font-size: 13px;
+    color: #2c3e50;
+    font-weight: 500;
+    text-align: right;
+    flex: 1;
+    margin-left: 10px;
+}
+
+/* 카드 푸터 */
+.card-footer {
+    padding-top: 15px;
+    border-top: 1px solid #f1f3f4;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.action-buttons .btn {
+    padding: 8px 16px;
+    font-size: 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.action-buttons .btn-primary {
+    background: linear-gradient(135deg, #a8e6a3 0%, #7bc87b 100%);
+    color: white;
+    border: none;
+}
+
+.action-buttons .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(168, 230, 163, 0.3);
+}
+
+.action-buttons .btn-danger {
+    background: #dc3545;
+    color: white;
+    border: none;
+}
+
+.action-buttons .btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* 데이터 없음 스타일 */
+.no-data {
+    text-align: center;
+    padding: 60px 20px;
+    color: #95a5a6;
+    grid-column: 1 / -1;
+}
+
+.no-data-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.no-data p {
+    font-size: 16px;
+    margin: 0 0 8px 0;
+    color: #95a5a6;
+}
+
+.no-data-sub {
+    font-size: 14px;
+    color: #bdc3c7;
+    margin: 0;
+}
+
 .client-comp-container .btn {
     padding: 10px 20px;
     border: none;
@@ -972,6 +1194,10 @@
     .overview-grid {
         grid-template-columns: 1fr;
     }
+    
+    .basic-clients-cards {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
 }
 
 @media (max-width: 768px) {
@@ -1006,5 +1232,75 @@
     
     .session-stats {
         grid-template-columns: 1fr;
+    }
+    
+    /* 카드 반응형 */
+    .basic-clients-cards {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .search-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-filters .search-input {
+        width: 100%;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .client-status {
+        align-self: flex-end;
+    }
+    
+    .action-buttons {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .basic-client-card {
+        padding: 15px;
+    }
+    
+    .card-header .client-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .client-basic-info .client-name {
+        font-size: 16px;
+    }
+    
+    .client-basic-info .client-email {
+        font-size: 13px;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+    
+    .detail-value {
+        text-align: left;
+        margin-left: 0;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+        justify-content: center;
     }
 }

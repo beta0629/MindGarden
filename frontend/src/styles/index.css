@@ -23,53 +23,20 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--gray-100);
+  background: var(--color-neutral-light);
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--gray-400);
+  background: var(--color-text-muted);
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-500);
+  background: var(--color-text-secondary);
 }
 
-/* 토스트 알림 스타일 */
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 12px 20px;
-  border-radius: 8px;
-  color: white;
-  font-weight: 500;
-  z-index: 9999;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateX(100%);
-  transition: transform 0.3s ease-in-out;
-}
-
-.toast.show {
-  transform: translateX(0);
-}
-
-.toast-info {
-  background: var(--primary-500);
-}
-
-.toast-success {
-  background: var(--green-500);
-}
-
-.toast-warning {
-  background: var(--yellow-500);
-}
-
-.toast-error {
-  background: var(--red-500);
-}
+/* 기존 토스트 스타일 제거 - Toast 컴포넌트에서 처리 */
 
 /* 확인 모달 스타일 */
 .confirm-modal {
@@ -97,14 +64,14 @@
 
 .confirm-content h3 {
   margin: 0 0 1rem 0;
-  color: var(--gray-900);
+  color: var(--color-text-primary);
   font-size: 1.25rem;
   font-weight: 600;
 }
 
 .confirm-content p {
   margin: 0 0 2rem 0;
-  color: var(--gray-600);
+  color: var(--color-text-secondary);
   line-height: 1.6;
 }
 

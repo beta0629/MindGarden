@@ -28,6 +28,12 @@ public interface UserRepository extends BaseRepository<User, Long> {
     Optional<User> findByUsername(String username);
     
     /**
+     * 사용자명과 활성 상태로 사용자 조회 (삭제되지 않은 상태)
+     */
+    @Query("SELECT u FROM User u WHERE u.username = ?1 AND u.isActive = ?2 AND u.isDeleted = false")
+    Optional<User> findByUsernameAndIsActive(String username, Boolean isActive);
+    
+    /**
      * 사용자명으로 사용자 존재 여부 확인 (활성 상태만)
      */
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.username = ?1 AND u.isDeleted = false")

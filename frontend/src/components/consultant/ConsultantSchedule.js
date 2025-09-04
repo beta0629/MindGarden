@@ -62,102 +62,85 @@ const ConsultantSchedule = () => {
   const isConsultant = userRole === 'CONSULTANT';
   const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
 
-  // 샘플 데이터 로드
+  // 실제 매핑된 내담자 데이터 로드
   useEffect(() => {
-    // 현재 상담사 ID (실제로는 세션에서 가져와야 함)
-    const currentConsultantId = user?.id || '1'; // 세션에서 가져온 상담사 ID 사용
-    
-    // 상담사-내담자 매핑 데이터 (관리자가 설정)
-    const consultantClientMappings = [
-      {
-        id: '1',
-        consultantId: '1', // 현재 상담사
-        clientId: '1',
-        assignedDate: '2025-08-01',
-        status: 'ACTIVE', // ACTIVE, INACTIVE, COMPLETED
-        notes: '스트레스 관련 상담 담당'
-      },
-      {
-        id: '2',
-        consultantId: '1', // 현재 상담사
-        clientId: '2',
-        assignedDate: '2025-08-05',
-        status: 'ACTIVE',
-        notes: '부부 관계 상담 담당'
-      },
-      {
-        id: '3',
-        consultantId: '1', // 현재 상담사
-        clientId: '3',
-        assignedDate: '2025-08-10',
-        status: 'ACTIVE',
-        notes: '중년기 위기 상담 담당'
-      }
-    ];
+    if (!user?.id) {
+      console.log('❌ 사용자 ID가 없습니다.');
+      return;
+    }
 
-    // 전체 내담자 데이터 (관리자가 등록)
-    const allClients = [
-      {
-        id: '1',
-        name: '김철수',
-        age: '28',
-        phone: '010-1234-5678',
-        email: 'kim@example.com',
-        address: '서울시 강남구',
-        addressDetail: '테헤란로 123',
-        postalCode: '06123',
-        consultationPurpose: '직장 스트레스 및 업무 압박감으로 인한 불안 증상',
-        consultationHistory: '이전 상담 경험 없음',
-        emergencyContact: '김영희',
-        emergencyPhone: '010-8765-4321',
-        notes: 'IT 업계 종사자, 야근이 잦음',
-        registrationDate: '2025-08-01',
-        registeredBy: 'ADMIN_001' // 관리자 ID
-      },
-      {
-        id: '2',
-        name: '이영희',
-        age: '35',
-        phone: '010-2345-6789',
-        email: 'lee@example.com',
-        address: '서울시 서초구',
-        addressDetail: '서초대로 456',
-        postalCode: '06543',
-        consultationPurpose: '부부 관계 개선 및 의사소통 문제',
-        consultationHistory: '1년 전 3회 상담 경험',
-        emergencyContact: '이철수',
-        emergencyPhone: '010-9876-5432',
-        notes: '전업주부, 자녀 2명',
-        registrationDate: '2025-08-05',
-        registeredBy: 'ADMIN_001'
-      },
-      {
-        id: '3',
-        name: '박민수',
-        age: '42',
-        phone: '010-3456-7890',
-        email: 'park@example.com',
-        address: '경기도 성남시',
-        addressDetail: '분당구 정자로 789',
-        postalCode: '13579',
-        consultationPurpose: '중년기 위기 및 자아 정체성 문제',
-        consultationHistory: '6개월 전 5회 상담 경험',
-        emergencyContact: '박지영',
-        emergencyPhone: '010-1111-2222',
-        notes: '중소기업 대표, 경제적 스트레스',
-        registrationDate: '2025-08-10',
-        registeredBy: 'ADMIN_001'
-      }
-    ];
+    const currentConsultantId = user.id;
+    console.log('👤 상담사 ID:', currentConsultantId);
 
-    // 현재 상담사에게 할당된 내담자만 필터링
-    const assignedClientIds = consultantClientMappings
-      .filter(mapping => mapping.consultantId === currentConsultantId && mapping.status === 'ACTIVE')
-      .map(mapping => mapping.clientId);
-    
-    const assignedClients = allClients.filter(client => assignedClientIds.includes(client.id));
-    
-    setClients(assignedClients);
+    // 실제 API에서 매핑된 내담자 데이터 가져오기
+    const loadMappedClients = async () => {
+      try {
+        console.log('👤 매핑된 내담자 목록 로드 시작 - 상담사 ID:', currentConsultantId);
+        
+        const response = await fetch(`/api/admin/mappings/consultant/${currentConsultantId}/clients`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log('👤 API 응답 데이터:', responseData);
+          
+          // 백엔드 API 응답 구조: { success: true, data: [...], count: ... }
+          const mappingsData = responseData.data || [];
+          
+          if (!Array.isArray(mappingsData)) {
+            console.error('매핑 데이터가 배열이 아닙니다:', mappingsData);
+            setClients([]);
+            return [];
+          }
+          
+          // 매핑 데이터에서 내담자 정보 추출
+          const mappedClients = mappingsData.map((mapping, index) => ({
+            id: `client-${mapping.client.id}-${mapping.id}`, // 매핑 ID 포함하여 고유성 보장
+            originalId: mapping.client.id,
+            name: mapping.client.name,
+            email: mapping.client.email,
+            phone: mapping.client.phone,
+            type: 'client',
+            mappingId: mapping.id,
+            remainingSessions: mapping.remainingSessions,
+            packageName: mapping.packageName,
+            paymentStatus: mapping.paymentStatus,
+            // 기본값 설정
+            age: '0',
+            address: '',
+            addressDetail: '',
+            postalCode: '',
+            consultationPurpose: '상담 진행 중',
+            consultationHistory: '이전 상담 경험 없음',
+            emergencyContact: '',
+            emergencyPhone: '',
+            notes: '상담 진행 중',
+            registrationDate: new Date().toISOString().split('T')[0],
+            registeredBy: 'ADMIN_001'
+          }));
+          
+          setClients(mappedClients);
+          console.log('👤 매핑된 내담자 목록 로드 완료:', mappedClients);
+          
+          return mappedClients;
+        } else {
+          console.error('매핑된 내담자 목록 로드 실패:', response.status, response.statusText);
+          setClients([]);
+          return [];
+        }
+      } catch (error) {
+        console.error('매핑된 내담자 목록 로드 오류:', error);
+        setClients([]);
+        return [];
+      }
+    };
+
+    loadMappedClients();
 
     // 샘플 상담 일지 데이터
     const sampleConsultationLogs = [
@@ -181,63 +164,82 @@ const ConsultantSchedule = () => {
     ];
     setConsultationLogs(sampleConsultationLogs);
 
-    // 샘플 일정 데이터 (할당된 내담자만)
-    const sampleEvents = [
-      // 8월 28일 - 할당된 내담자 상담
-      {
-        id: '1',
-        title: '김철수 상담',
-        start: '2025-08-28T09:00:00',
-        end: '2025-08-28T10:00:00',
-        backgroundColor: '#4CAF50',
-        borderColor: '#4CAF50',
-        textColor: '#fff',
-        extendedProps: {
-          clientId: '1',
-          clientName: '김철수',
-          consultationType: '진행상담',
-          notes: '스트레스 관련 상담'
+    // 실제 스케줄 데이터 로드
+    const loadSchedules = async () => {
+      try {
+        console.log('📅 실제 스케줄 데이터 로드 시작 - 상담사 ID:', currentConsultantId);
+        
+        const response = await fetch(`/api/schedules/consultant/${currentConsultantId}/my-schedules`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const schedules = await response.json();
+          console.log('📅 실제 스케줄 데이터:', schedules);
+          
+          if (schedules && schedules.length > 0) {
+            // 실제 스케줄 데이터를 캘린더 이벤트 형식으로 변환
+            const events = schedules.map((schedule, index) => {
+              // 날짜와 시간을 올바르게 파싱
+              const dateStr = schedule.date; // "2025-10-01"
+              const startTimeStr = schedule.startTime; // "17:30:00"
+              const endTimeStr = schedule.endTime; // "18:20:00"
+              
+              // ISO 형식으로 조합하여 파싱 (로컬 시간대 사용)
+              const startDateTime = new Date(`${dateStr}T${startTimeStr}+09:00`);
+              const endDateTime = new Date(`${dateStr}T${endTimeStr}+09:00`);
+              
+              console.log('📅 스케줄 파싱:', {
+                original: { date: dateStr, startTime: startTimeStr, endTime: endTimeStr },
+                parsed: { start: startDateTime, end: endDateTime },
+                iso: { start: startDateTime.toISOString(), end: endDateTime.toISOString() }
+              });
+              
+              return {
+                id: `schedule-${schedule.id}`,
+                title: schedule.title || '상담',
+                start: startDateTime.toISOString(),
+                end: endDateTime.toISOString(),
+                backgroundColor: index === 0 ? '#4CAF50' : index === 1 ? '#2196F3' : '#FF9800',
+                borderColor: index === 0 ? '#4CAF50' : index === 1 ? '#2196F3' : '#FF9800',
+                textColor: '#fff',
+                extendedProps: {
+                  scheduleId: schedule.id,
+                  clientId: schedule.clientId,
+                  consultantId: schedule.consultantId,
+                  title: schedule.title,
+                  description: schedule.description,
+                  consultationType: schedule.consultationType || 'INDIVIDUAL',
+                  status: schedule.status,
+                  scheduleType: schedule.scheduleType
+                }
+              };
+            });
+            
+            setEvents(events);
+            console.log('📅 실제 스케줄 데이터로 캘린더 이벤트 생성 완료:', events);
+          } else {
+            // 실제 스케줄이 없으면 빈 배열
+            setEvents([]);
+            console.log('📅 등록된 스케줄이 없습니다.');
+          }
+        } else {
+          console.error('스케줄 데이터 로드 실패:', response.status, response.statusText);
+          setEvents([]);
         }
-      },
-      {
-        id: '2',
-        title: '이영희 상담',
-        start: '2025-08-28T10:30:00',
-        end: '2025-08-28T11:30:00',
-        backgroundColor: '#2196F3',
-        borderColor: '#2196F3',
-        textColor: '#fff',
-        extendedProps: {
-          clientId: '2',
-          clientName: '이영희',
-          consultationType: '진행상담',
-          notes: '관계 개선 상담'
-        }
-      },
-      {
-        id: '3',
-        title: '박민수 상담',
-        start: '2025-08-28T13:00:00',
-        end: '2025-08-28T14:00:00',
-        backgroundColor: '#FF9800',
-        borderColor: '#FF9800',
-        textColor: '#fff',
-        extendedProps: {
-          clientId: '3',
-          clientName: '박민수',
-          consultationType: '진행상담',
-          notes: '스트레스 관리 기법'
-        }
+      } catch (error) {
+        console.error('스케줄 데이터 로드 오류:', error);
+        setEvents([]);
       }
-    ];
-    
-    // 할당된 내담자만 일정 표시
-    const assignedEvents = sampleEvents.filter(event => 
-      assignedClientIds.includes(event.extendedProps.clientId)
-    );
-    
-    setEvents(assignedEvents);
-  }, []);
+    };
+
+    // 실제 스케줄 데이터 로드
+    loadSchedules();
+  }, [user?.id]);
 
   // 일정 클릭 시 모달 열기 및 팝오버 자동 닫기
   const handleEventClick = (clickInfo) => {
@@ -405,17 +407,13 @@ const ConsultantSchedule = () => {
     alert(`📋 할당된 내담자 목록 (${clients.length}명)\n\n${clientList}`);
   };
 
-  // 날짜 클릭 시 새 일정 추가 모달 열기
+  // 날짜 클릭 시 (상담사는 일정 등록 불가)
   const handleDateClick = (arg) => {
     // 팝오버 자동 닫기
     closeAllPopovers();
     
-    setSelectedEvent({
-      start: arg.dateStr,
-      end: arg.dateStr
-    });
-    setModalMode('add');
-    setIsModalOpen(true);
+    // 상담사는 일정 등록할 수 없으므로 알림만 표시
+    alert('상담사는 일정을 등록할 수 없습니다. 관리자에게 문의하세요.');
   };
 
   // 상담 유형별 색상 매핑
@@ -527,19 +525,6 @@ const ConsultantSchedule = () => {
 
       <div className="schedule-controls">
         <div className="control-buttons">
-          <button 
-            className="add-event-btn"
-            onClick={() => {
-              // 팝오버 자동 닫기
-              closeAllPopovers();
-              
-              setModalMode('add');
-              setSelectedEvent(null);
-              setIsModalOpen(true);
-            }}
-          >
-            ➕ 새 일정 추가
-          </button>
           
           {/* 관리자만 새 내담자 등록 가능 */}
           {isAdmin && (

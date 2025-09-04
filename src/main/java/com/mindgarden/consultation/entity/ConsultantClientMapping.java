@@ -44,7 +44,7 @@ public class ConsultantClientMapping extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false)
-    private Client client;
+    private User client;
 
     @Column(name = "start_date", nullable = false)
     private LocalDateTime startDate;
@@ -156,7 +156,7 @@ public class ConsultantClientMapping extends BaseEntity {
      * 관리자 승인
      */
     public void approveByAdmin(String adminName) {
-        if (this.paymentStatus != PaymentStatus.CONFIRMED) {
+        if (this.paymentStatus != PaymentStatus.CONFIRMED && this.paymentStatus != PaymentStatus.APPROVED) {
             throw new IllegalStateException("입금 확인이 완료되지 않았습니다.");
         }
         this.paymentStatus = PaymentStatus.APPROVED;

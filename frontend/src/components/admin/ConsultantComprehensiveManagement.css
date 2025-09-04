@@ -1,8 +1,576 @@
+/* 상담사 종합관리 상수 변수 */
+:root {
+    --consultant-card-bg: #ffffff;
+    --consultant-card-border: #e5e7eb;
+    --consultant-card-radius: 8px;
+    --consultant-card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --consultant-card-hover-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    --consultant-card-padding: 16px;
+    --consultant-card-gap: 16px;
+    
+    --consultant-avatar-size: 40px;
+    --consultant-avatar-bg: #ff9500;
+    --consultant-avatar-color: #ffffff;
+    --consultant-avatar-font-size: 16px;
+    --consultant-avatar-font-weight: 600;
+    --consultant-avatar-margin: 12px;
+    
+    --consultant-header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --consultant-header-color: #ffffff;
+    --consultant-name-font-size: 16px;
+    --consultant-name-font-weight: 600;
+    --consultant-name-color: #1f2937;
+    --consultant-email-font-size: 14px;
+    --consultant-email-color: #6b7280;
+    --consultant-phone-font-size: 14px;
+    --consultant-phone-color: #6b7280;
+    
+    --consultant-info-label-font-size: 12px;
+    --consultant-info-label-color: #6b7280;
+    --consultant-info-value-font-size: 14px;
+    --consultant-info-value-color: #374151;
+    
+    --consultant-status-active-bg: #fed7aa;
+    --consultant-status-active-color: #9a3412;
+    --consultant-status-inactive-bg: #f8d7da;
+    --consultant-status-inactive-color: #721c24;
+    
+    --consultant-actions-bg: #f8f9fa;
+    --consultant-actions-padding: 15px 20px;
+    --consultant-actions-gap: 10px;
+    
+    --consultant-btn-padding: 8px 16px;
+    --consultant-btn-radius: 6px;
+    --consultant-btn-font-size: 13px;
+    --consultant-btn-font-weight: 500;
+    --consultant-btn-primary-bg: #007bff;
+    --consultant-btn-primary-hover-bg: #0056b3;
+    --consultant-btn-danger-bg: #dc3545;
+    --consultant-btn-danger-hover-bg: #c82333;
+    
+    --consultant-modal-overlay-bg: rgba(0, 0, 0, 0.5);
+    --consultant-modal-content-bg: #ffffff;
+    --consultant-modal-content-radius: 12px;
+    --consultant-modal-content-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    --consultant-modal-content-max-width: 500px;
+    --consultant-modal-padding: 20px;
+    --consultant-modal-border: #e1e8ed;
+    
+    --consultant-form-gap: 15px;
+    --consultant-form-label-color: #374151;
+    --consultant-form-label-font-size: 14px;
+    --consultant-form-input-padding: 10px 12px;
+    --consultant-form-input-border: 1px solid #e5e7eb;
+    --consultant-form-input-bg: #ffffff;
+    --consultant-form-input-color: #374151;
+    --consultant-form-input-radius: 6px;
+    --consultant-form-input-focus-border: 1px solid #3b82f6;
+    --consultant-form-input-focus-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    
+    --consultant-no-data-color: #6c757d;
+    --consultant-no-data-icon-size: 48px;
+    --consultant-no-data-icon-opacity: 0.5;
+    --consultant-no-data-font-size: 16px;
+}
+
 /* 상담사 종합관리 스타일 */
 .consultant-comp-container {
-    padding: 20px;
+    padding: var(--consultant-card-padding);
     width: 100%;
     margin: 0;
+}
+
+/* 상담사 카드 스타일 */
+.consultants-cards-container {
+    margin-top: var(--consultant-card-padding);
+}
+
+.consultants-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.consultant-card {
+    background: var(--consultant-card-bg);
+    border-radius: var(--consultant-card-radius);
+    box-shadow: var(--consultant-card-shadow);
+    border: 1px solid var(--consultant-card-border);
+    overflow: hidden;
+    transition: all 0.2s ease;
+    padding: var(--consultant-card-padding);
+    min-width: 0;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+}
+
+.consultant-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--consultant-card-hover-shadow);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.consultant-avatar {
+    width: var(--consultant-avatar-size);
+    height: var(--consultant-avatar-size);
+    border-radius: 50%;
+    background: var(--consultant-avatar-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--consultant-avatar-font-size);
+    font-weight: var(--consultant-avatar-font-weight);
+    margin-right: var(--consultant-avatar-margin);
+    color: var(--consultant-avatar-color);
+}
+
+.consultant-info {
+    flex: 1;
+}
+
+.consultant-name {
+    margin: 0 0 4px 0;
+    font-size: var(--consultant-name-font-size);
+    font-weight: var(--consultant-name-font-weight);
+    color: var(--consultant-name-color);
+}
+
+.consultant-email {
+    margin: 0 0 4px 0;
+    font-size: var(--consultant-email-font-size);
+    color: var(--consultant-email-color);
+}
+
+.consultant-phone {
+    margin: 0 0 8px 0;
+    font-size: var(--consultant-phone-font-size);
+    color: var(--consultant-phone-color);
+}
+
+.card-body {
+    padding: 0;
+}
+
+.info-item {
+    margin-bottom: 8px;
+}
+
+.info-label {
+    font-size: var(--consultant-info-label-font-size);
+    color: var(--consultant-info-label-color);
+    margin-bottom: 2px;
+    display: block;
+}
+
+.info-value {
+    font-size: var(--consultant-info-value-font-size);
+    color: var(--consultant-info-value-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    line-height: 1.3;
+}
+
+.info-item:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 500;
+    color: var(--consultant-info-label-color);
+    font-size: 14px;
+}
+
+.info-value {
+    color: var(--consultant-info-value-color);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.card-actions {
+    padding: var(--consultant-actions-padding);
+    background: var(--consultant-actions-bg);
+    display: flex;
+    gap: var(--consultant-actions-gap);
+    justify-content: flex-end;
+}
+
+.card-actions .btn {
+    padding: var(--consultant-btn-padding);
+    border-radius: var(--consultant-btn-radius);
+    font-size: var(--consultant-btn-font-size);
+    font-weight: var(--consultant-btn-font-weight);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.card-actions .btn-primary {
+    background: #ffb3d1;
+    color: #8b4a6b;
+    border: 1px solid rgba(255, 179, 209, 0.4);
+    font-weight: 600;
+}
+
+.card-actions .btn-primary:hover {
+    background: #ffa3c7;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 179, 209, 0.3);
+}
+
+.card-actions .btn-danger {
+    background: #ffcccb;
+    color: #8b5a5a;
+    border: 1px solid rgba(255, 204, 203, 0.4);
+    font-weight: 600;
+}
+
+.card-actions .btn-danger:hover {
+    background: #ffbcbb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 204, 203, 0.3);
+}
+
+.no-data {
+    text-align: center;
+    padding: 60px var(--consultant-card-padding);
+    color: var(--consultant-no-data-color);
+}
+
+.no-data-icon {
+    font-size: var(--consultant-no-data-icon-size);
+    margin-bottom: var(--consultant-card-padding);
+    opacity: var(--consultant-no-data-icon-opacity);
+}
+
+.no-data p {
+    font-size: var(--consultant-no-data-font-size);
+    margin: 0;
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--consultant-modal-overlay-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* 모달 내부 select 스타일 강화 */
+.modal-content .specialty-select {
+    padding: 12px 16px !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    color: #374151 !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+    min-height: 150px !important;
+    height: 150px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    resize: vertical !important;
+    font-family: inherit !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #ffb3d1 #f3f4f6 !important;
+}
+
+.modal-content .specialty-select:focus {
+    outline: none !important;
+    border: 2px solid #ffb3d1 !important;
+    box-shadow: 0 0 0 3px rgba(255, 179, 209, 0.2) !important;
+}
+
+.modal-content {
+    background: var(--consultant-modal-content-bg);
+    border-radius: var(--consultant-modal-content-radius);
+    box-shadow: var(--consultant-modal-content-shadow);
+    width: 90%;
+    max-width: var(--consultant-modal-content-max-width);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--consultant-modal-padding);
+    border-bottom: 1px solid var(--consultant-modal-border);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: #dc3545;
+}
+
+.modal-body {
+    padding: var(--consultant-modal-padding);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: var(--consultant-modal-padding);
+    border-top: 1px solid var(--consultant-modal-border);
+}
+
+.consultant-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--consultant-form-gap);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--consultant-form-label-color);
+    margin-bottom: 5px;
+    font-size: var(--consultant-form-label-font-size);
+}
+
+.form-group input {
+    padding: var(--consultant-form-input-padding);
+    border: var(--consultant-form-input-border) !important;
+    border-radius: var(--consultant-form-input-radius);
+    background: var(--consultant-form-input-bg) !important;
+    color: var(--consultant-form-input-color) !important;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border: var(--consultant-form-input-focus-border) !important;
+    box-shadow: var(--consultant-form-input-focus-shadow);
+}
+
+/* 다중 셀렉트 스타일 */
+.specialty-select {
+    padding: 12px 16px !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    color: #374151 !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+    min-height: 150px !important;
+    height: 150px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    resize: vertical !important;
+    font-family: inherit !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #ffb3d1 #f3f4f6 !important;
+}
+
+.specialty-select:focus {
+    outline: none;
+    border: 2px solid #ffb3d1 !important;
+    box-shadow: 0 0 0 3px rgba(255, 179, 209, 0.2);
+}
+
+.form-help-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.delete-confirmation {
+    text-align: center;
+    padding: var(--consultant-card-padding) 0;
+}
+
+.delete-confirmation p {
+    margin: 0 0 10px 0;
+    font-size: var(--consultant-no-data-font-size);
+    color: #374151;
+}
+
+.warning-text {
+    color: #dc2626 !important;
+    font-weight: 500;
+}
+
+/* 기본 액션 버튼 스타일 */
+.basic-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: var(--consultant-card-padding);
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-primary {
+    background: #ffb3d1;
+    color: #8b4a6b;
+    border: 1px solid rgba(255, 179, 209, 0.4);
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background: #ffa3c7;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 179, 209, 0.3);
+}
+
+.btn-secondary {
+    background: #b8e6b8;
+    color: #5a7a5a;
+    border: 1px solid rgba(184, 230, 184, 0.4);
+    font-weight: 600;
+}
+
+.btn-secondary:hover {
+    background: #a8d6a8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(184, 230, 184, 0.3);
+}
+
+.btn-danger {
+    background: #ffcccb;
+    color: #8b5a5a;
+    border: 1px solid rgba(255, 204, 203, 0.4);
+    font-weight: 600;
+}
+
+.btn-danger:hover {
+    background: #ffbcbb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 204, 203, 0.3);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .consultants-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        max-width: 100%;
+        margin: 0;
+    }
+    
+    .consultant-card {
+        margin: 0 10px;
+        min-height: 120px;
+    }
+    
+    .card-header {
+        padding: 15px;
+    }
+    
+    .consultant-name {
+        font-size: 16px;
+    }
+    
+    .consultant-email {
+        font-size: 13px;
+    }
+    
+    .card-body {
+        padding: 15px;
+    }
+    
+    .card-actions {
+        padding: 12px 15px;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .card-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .info-value {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+    }
+}
+
+@media (max-width: 480px) {
+    .consultants-cards-container {
+        margin-top: 15px;
+    }
+    
+    .consultant-card {
+        margin: 0 5px;
+    }
+    
+    .card-header {
+        padding: 12px;
+    }
+    
+    .card-body {
+        padding: 12px;
+    }
+    
+    .card-actions {
+        padding: 10px 12px;
+    }
 }
 
 .consultant-comp-header {
@@ -154,37 +722,42 @@
 /* 상담사 그리드 */
 .consultant-comp-consultant-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .consultant-comp-consultant-card {
-    display: flex;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 20px;
-    border: 2px solid #e1e8ed;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-height: 120px;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    min-height: 160px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 
 .consultant-comp-consultant-card:hover {
     border-color: #ffb366;
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(255, 179, 102, 0.2);
+    box-shadow: 0 8px 25px rgba(255, 179, 102, 0.15);
 }
 
 .consultant-comp-consultant-card.selected {
     border-color: #ffb366;
     background: #fff5f0;
-    box-shadow: 0 4px 15px rgba(255, 179, 102, 0.2);
+    box-shadow: 0 8px 25px rgba(255, 179, 102, 0.15);
 }
 
 .consultant-comp-consultant-avatar {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background: linear-gradient(135deg, #ffb366 0%, #ff8c42 100%);
     color: white;
@@ -192,12 +765,10 @@
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 20px;
+    font-size: 18px;
     flex-shrink: 0;
-}
-
-.consultant-comp-consultant-avatar svg {
-    font-size: 24px;
+    margin-bottom: 15px;
+    align-self: flex-start;
 }
 
 .consultant-comp-consultant-info {
@@ -205,23 +776,57 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-height: 0;
 }
 
 .consultant-comp-consultant-name {
     font-weight: 600;
     color: #2c3e50;
-    margin-bottom: 5px;
+    font-size: 16px;
+    margin-bottom: 6px;
+    line-height: 1.2;
 }
 
 .consultant-comp-consultant-email {
-    font-size: 14px;
-    color: #7f8c8d;
+    font-size: 13px;
+    color: #6b7280;
     margin-bottom: 3px;
+    line-height: 1.2;
+    word-break: break-all;
 }
 
-.consultant-comp-consultant-specialty {
-    font-size: 12px;
-    color: #95a5a6;
+.consultant-comp-consultant-phone {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 6px;
+    line-height: 1.2;
+}
+
+.consultant-comp-consultant-card .consultant-comp-consultant-specialty {
+    font-size: 12px !important;
+    color: #374151 !important;
+    margin-bottom: 8px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.3 !important;
+    max-width: 100% !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+.consultant-comp-consultant-card .consultant-comp-consultant-specialty.no-specialty {
+    color: #9ca3af !important;
+    font-style: italic !important;
+}
+
+.consultant-comp-consultant-date {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid #f3f4f6;
+    line-height: 1.2;
 }
 
 /* 상담사 목록 섹션 */
@@ -290,18 +895,6 @@
     background: #f8f9ff;
 }
 
-.consultant-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 18px;
-}
 
 .consultant-info {
     flex: 1;
@@ -503,11 +1096,11 @@
 
 .consultant-comp-container .btn {
     padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
+    border: 1px solid rgba(255, 179, 209, 0.4);
+    border-radius: 12px;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     transition: all 0.3s ease;
     text-decoration: none;
     display: inline-flex;
@@ -516,23 +1109,27 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-    color: white;
+    background: #ffb3d1;
+    color: #8b4a6b;
+    border: 1px solid rgba(255, 179, 209, 0.4);
 }
 
 .btn-primary:hover {
+    background: #ffa3c7;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 6px 16px rgba(255, 179, 209, 0.4);
 }
 
 .btn-secondary {
-    background: #95a5a6;
-    color: white;
+    background: #b8e6b8;
+    color: #5a7a5a;
+    border: 1px solid rgba(184, 230, 184, 0.4);
 }
 
 .btn-secondary:hover {
-    background: #7f8c8d;
+    background: #a8d6a8;
     transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(184, 230, 184, 0.4);
 }
 
 /* 기본 테이블 */
@@ -577,18 +1174,6 @@
     gap: 10px;
 }
 
-.consultant-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 14px;
-}
 
 .action-buttons-cell {
     display: flex;
@@ -714,35 +1299,211 @@
 }
 
 .consultant-comp-status-badge.active {
-    background: #ffe4b5;
-    color: #8b4513;
+    background: var(--consultant-status-active-bg);
+    color: var(--consultant-status-active-color);
 }
 
 .consultant-comp-status-badge.inactive {
-    background: #f8d7da;
-    color: #721c24;
+    background: var(--consultant-status-inactive-bg);
+    color: var(--consultant-status-inactive-color);
 }
 
 .consultant-comp-consultant-date {
-    font-size: 11px;
-    color: #95a5a6;
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 8px;
 }
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .consultant-comp-consultant-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
+        max-width: 100%;
+        margin: 0;
+    }
+    
+    .consultant-comp-consultant-card {
+        min-height: 140px;
+        padding: 15px;
+    }
+    
+    .consultant-comp-consultant-avatar {
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .consultant-comp-consultant-name {
+        font-size: 15px;
+        margin-bottom: 6px;
+    }
+    
+    .consultant-comp-consultant-email,
+    .consultant-comp-consultant-phone {
+        font-size: 12px;
+        margin-bottom: 3px;
+    }
+    
+    .consultant-comp-consultant-card .consultant-comp-consultant-specialty {
+        font-size: 11px !important;
+        margin-bottom: 6px !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+    }
+    
+    .consultant-comp-consultant-date {
+        font-size: 10px;
+        padding-top: 6px;
     }
 }
 
-@media (min-width: 769px) and (max-width: 1200px) {
+@media (min-width: 769px) and (max-width: 1024px) {
     .consultant-comp-consultant-grid {
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+        max-width: 900px;
     }
 }
 
-@media (min-width: 1201px) {
+@media (min-width: 1025px) {
     .consultant-comp-consultant-grid {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        max-width: 1000px;
+    }
+}
+
+/* 전문분야 태그 스타일 */
+.specialty-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.specialty-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.no-specialty {
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* 다중선택 필드 스타일 개선 */
+.specialty-select option {
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin: 3px 0;
+    font-size: 14px;
+    background: #ffffff;
+    color: #374151;
+    line-height: 1.4;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+}
+
+.specialty-select option:hover {
+    background: #f8f9fa !important;
+    color: #1f2937 !important;
+}
+
+/* 선택된 옵션은 파스텔 핑크 색으로 표시 */
+.specialty-select option:checked {
+    background: #ffb3d1 !important;
+    color: #8b4a6b !important;
+    font-weight: 600;
+}
+
+.specialty-select option:checked:hover {
+    background: #ffa3c7 !important;
+    color: #7a3a5b !important;
+}
+
+/* 웹킷 브라우저용 스크롤바 스타일 */
+.specialty-select::-webkit-scrollbar {
+    width: 8px;
+}
+
+.specialty-select::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+}
+
+.specialty-select::-webkit-scrollbar-thumb {
+    background: #ffb3d1;
+    border-radius: 4px;
+}
+
+.specialty-select::-webkit-scrollbar-thumb:hover {
+    background: #ffa3c7;
+}
+
+/* CSS 충돌 해결을 위한 최강 규칙 - 모든 가능한 선택자 조합 */
+div.consultant-comp-container div.consultant-comp-consultant-card div.consultant-comp-consultant-specialty {
+    font-size: 12px !important;
+    color: #374151 !important;
+    margin-bottom: 8px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.3 !important;
+    max-width: 100% !important;
+    display: block !important;
+    width: 100% !important;
+    word-break: normal !important;
+    word-wrap: normal !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: 20px !important;
+}
+
+div.consultant-comp-container div.consultant-comp-consultant-card div.consultant-comp-consultant-specialty.no-specialty {
+    color: #9ca3af !important;
+    font-style: italic !important;
+}
+
+/* 모든 다른 가능한 선택자들도 덮어쓰기 */
+.consultant-comp-consultant-specialty,
+.consultant-specialty,
+[class*="specialty"] {
+    font-size: 12px !important;
+    color: #374151 !important;
+    margin-bottom: 8px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.3 !important;
+    max-width: 100% !important;
+    display: block !important;
+    width: 100% !important;
+    word-break: normal !important;
+    word-wrap: normal !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: 20px !important;
+}
+
+@media (max-width: 768px) {
+    div.consultant-comp-container div.consultant-comp-consultant-card div.consultant-comp-consultant-specialty,
+    .consultant-comp-consultant-specialty,
+    .consultant-specialty,
+    [class*="specialty"] {
+        font-size: 11px !important;
+        margin-bottom: 6px !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        max-height: none !important;
     }
 }

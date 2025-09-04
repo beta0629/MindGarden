@@ -3,7 +3,7 @@ package com.mindgarden.consultation.service.impl;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SocialSignupRequest;
 import com.mindgarden.consultation.dto.SocialSignupResponse;
-import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.UserSocialAccount;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
@@ -58,51 +58,47 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 }
             }
             
-            // 사용자 생성 (개인정보 암호화) - 필수값만
-            log.info("사용자 엔티티 생성 시작");
-            User user = new User();
-            user.setEmail(request.getEmail()); // 이메일은 암호화하지 않음 (로그인용)
+            // Client 엔티티로 사용자 생성 (개인정보 암호화) - 필수값만
+            log.info("Client 엔티티 생성 시작");
+            Client client = new Client();
+            client.setEmail(request.getEmail()); // 이메일은 암호화하지 않음 (로그인용)
             
             // username 필수값 설정 (SNS에서 받은 이름 사용)
             String username = generateUsernameFromName(request.getName(), request.getEmail());
-            user.setUsername(username);
+            client.setUsername(username);
             
             // encryptionUtil이 null인 경우를 대비한 안전한 처리
             if (encryptionUtil != null) {
-                user.setName(encryptionUtil.encrypt(request.getName())); // 이름 암호화
-                user.setNickname(encryptionUtil.encrypt(request.getNickname() != null ? request.getNickname() : request.getName())); // 닉네임 암호화
-                user.setPhone(encryptionUtil.encrypt(phone)); // 검증된 휴대폰 번호 암호화
+                client.setName(encryptionUtil.encrypt(request.getName())); // 이름 암호화
+                client.setNickname(encryptionUtil.encrypt(request.getNickname() != null ? request.getNickname() : request.getName())); // 닉네임 암호화
+                client.setPhone(encryptionUtil.encrypt(phone)); // 검증된 휴대폰 번호 암호화
             } else {
                 // 암호화 유틸이 없는 경우 평문 저장 (개발용)
                 log.warn("PersonalDataEncryptionUtil이 null입니다. 평문으로 저장합니다.");
-                user.setName(request.getName());
-                user.setNickname(request.getNickname() != null ? request.getNickname() : request.getName());
-                user.setPhone(phone);
+                client.setName(request.getName());
+                client.setNickname(request.getNickname() != null ? request.getNickname() : request.getName());
+                client.setPhone(phone);
             }
             
-            user.setRole(UserRole.CLIENT); // 기본 역할: 내담자
-            user.setIsEmailVerified(true); // 소셜 계정은 이메일 인증 완료로 간주
-            user.setIsActive(true);
-            log.info("사용자 엔티티 생성 완료: email={}, name={}, phone={}", user.getEmail(), request.getName(), request.getPhone());
+            client.setRole(UserRole.CLIENT); // 기본 역할: 내담자
+            client.setIsEmailVerified(true); // 소셜 계정은 이메일 인증 완료로 간주
+            client.setIsActive(true);
+            log.info("Client 엔티티 생성 완료: email={}, name={}, phone={}", client.getEmail(), request.getName(), request.getPhone());
             
             // 사용자가 입력한 비밀번호 사용
             if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
-                user.setPassword(passwordEncoder.encode(request.getPassword()));
+                client.setPassword(passwordEncoder.encode(request.getPassword()));
                 log.info("사용자 비밀번호 설정 완료 (사용자 입력)");
             } else {
                 // 비밀번호가 없으면 임시 비밀번호 생성
                 String tempPassword = generateTempPassword();
-                user.setPassword(passwordEncoder.encode(tempPassword));
+                client.setPassword(passwordEncoder.encode(tempPassword));
                 log.info("사용자 비밀번호 설정 완료 (임시 비밀번호 생성)");
             }
             
-            log.info("User 엔티티 저장 시작");
-            user = userRepository.save(user);
-            log.info("User 엔티티 저장 완료: userId={}", user.getId());
-            
-            // Client 엔티티는 User를 상속받으므로 별도 저장 불필요
-            // 상속 관계에서는 User만 저장하면 됨
-            log.info("Client 엔티티는 User 상속 관계로 자동 처리됨");
+            log.info("Client 엔티티 저장 시작");
+            client = (Client) userRepository.save(client);
+            log.info("Client 엔티티 저장 완료: userId={}", client.getId());
             
             // 소셜 계정 정보 저장 (개인정보 암호화)
             if (request.getProvider() != null && !request.getProvider().trim().isEmpty()) {
@@ -110,7 +106,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                         request.getProvider(), request.getProviderUserId(), request.getProviderUsername());
                 
                 UserSocialAccount socialAccount = UserSocialAccount.builder()
-                    .user(user)
+                    .user(client)
                     .provider(request.getProvider()) // 제공자명은 암호화하지 않음
                     .providerUserId(request.getProviderUserId()) // 소셜 사용자 ID는 암호화하지 않음 (조회용)
                     .providerUsername(encryptionUtil.encrypt(request.getProviderUsername())) // 소셜 사용자명 암호화
@@ -120,29 +116,29 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 
                 userSocialAccountRepository.save(socialAccount);
                 log.info("소셜 계정 정보 저장 완료: userId={}, provider={}, providerUserId={}", 
-                        user.getId(), request.getProvider(), socialAccount.getProviderUserId());
+                        client.getId(), request.getProvider(), socialAccount.getProviderUserId());
                 
-                log.info("소셜 회원가입 완료 (세션 생성 대기): userId={}", user.getId());
+                log.info("소셜 회원가입 완료 (세션 생성 대기): userId={}", client.getId());
             } else {
                 // 소셜 계정 정보가 없는 경우
-                log.info("소셜 회원가입 완료 (소셜 계정 정보 없음, 세션 생성 대기): userId={}", user.getId());
+                log.info("소셜 회원가입 완료 (소셜 계정 정보 없음, 세션 생성 대기): userId={}", client.getId());
             }
             
-            log.info("소셜 회원가입 성공: userId={}, email={}", user.getId(), user.getEmail());
+            log.info("소셜 회원가입 성공: userId={}, email={}", client.getId(), client.getEmail());
             
                         // 상담사 신청 가능 여부 및 안내 메시지 생성
             boolean canApplyConsultant = true; // 기본적으로 상담사 신청 가능
             String consultantApplicationMessage = "상담사로 활동하고 싶으시다면 프로필을 완성한 후 관리자에게 신청해주세요.";
-            int profileCompletionRate = calculateProfileCompletionRate(user);
+            int profileCompletionRate = calculateProfileCompletionRate(client);
             
             return SocialSignupResponse.builder()
                 .success(true)
                 .message("🎉 소셜 계정으로 간편 회원가입이 완료되었습니다! 이제 다시 로그인해주세요.")
-                .userId(user.getId())
-                .email(user.getEmail())
-                .name(encryptionUtil.safeDecrypt(user.getName()))
-                .nickname(encryptionUtil.safeDecrypt(user.getNickname()))
-                .redirectUrl("http://localhost:3000/login?signup=success&email=" + user.getEmail())
+                .userId(client.getId())
+                .email(client.getEmail())
+                .name(encryptionUtil.safeDecrypt(client.getName()))
+                .nickname(encryptionUtil.safeDecrypt(client.getNickname()))
+                .redirectUrl("http://localhost:3000/login?signup=success&email=" + client.getEmail())
                 .canApplyConsultant(canApplyConsultant)
                 .consultantApplicationMessage(consultantApplicationMessage)
                 .profileCompletionRate(profileCompletionRate)
@@ -229,16 +225,16 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     /**
      * 프로필 완성도 계산
      */
-    private int calculateProfileCompletionRate(User user) {
+    private int calculateProfileCompletionRate(Client client) {
         int completedFields = 0;
         int totalFields = 5; // 기본 필드 수 (이메일, 이름, 닉네임, 비밀번호, 휴대폰번호)
         
         // 필수 필드 확인
-        if (user.getEmail() != null) completedFields++;
-        if (user.getName() != null) completedFields++;
-        if (user.getNickname() != null) completedFields++;
-        if (user.getPassword() != null) completedFields++;
-        if (user.getPhone() != null) completedFields++;
+        if (client.getEmail() != null) completedFields++;
+        if (client.getName() != null) completedFields++;
+        if (client.getNickname() != null) completedFields++;
+        if (client.getPassword() != null) completedFields++;
+        if (client.getPhone() != null) completedFields++;
         
         return (int) Math.round((double) completedFields / totalFields * 100);
     }

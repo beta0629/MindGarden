@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.service;
 
 import java.util.List;
+import java.util.Map;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
 import com.mindgarden.consultation.dto.ConsultantRegistrationDto;
@@ -36,6 +37,11 @@ public interface AdminService {
      * 모든 상담사 조회
      */
     List<User> getAllConsultants();
+    
+    /**
+     * 모든 상담사 조회 (전문분야 상세 정보 포함)
+     */
+    List<Map<String, Object>> getAllConsultantsWithSpecialty();
 
     /**
      * 모든 내담자 조회
@@ -135,4 +141,9 @@ public interface AdminService {
      * 상담사별 매핑 목록 조회
      */
     List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId);
+
+    /**
+     * 개별 매핑 조회
+     */
+    ConsultantClientMapping getMappingById(Long mappingId);
 }

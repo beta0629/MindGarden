@@ -48,6 +48,68 @@
   
   /* 파스텔 톤 그라데이션 */
   --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  
+  /* Toast 알림 시스템 */
+  --toast-container-top: 20px;
+  --toast-container-right: 20px;
+  --toast-z-index: 9999;
+  --toast-gap: 10px;
+  --toast-container-max-width: 400px;
+  --toast-bg: #fff;
+  --toast-border-radius: 8px;
+  --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --toast-animation-duration: 0.3s;
+  --toast-border-left-width: 4px;
+  --toast-min-width: 300px;
+  --toast-max-width: 400px;
+  --toast-hover-scale: 1.02;
+  --toast-hover-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  --toast-success-color: #28a745;
+  --toast-error-color: #dc3545;
+  --toast-warning-color: #ffc107;
+  --toast-info-color: #17a2b8;
+  --toast-content-padding: 16px;
+  --toast-content-gap: 12px;
+  --toast-icon-size: 20px;
+  --toast-message-font-size: 14px;
+  --toast-message-line-height: 1.4;
+  --toast-message-color: #333;
+  --toast-message-font-weight: 500;
+  --toast-close-bg: none;
+  --toast-close-border: none;
+  --toast-close-font-size: 18px;
+  --toast-close-color: #999;
+  --toast-close-padding: 0;
+  --toast-close-size: 20px;
+  --toast-close-border-radius: 50%;
+  --toast-close-transition: all 0.2s ease;
+  --toast-close-hover-bg: #f5f5f5;
+  --toast-close-hover-color: #666;
+  --toast-progress-height: 3px;
+  --toast-progress-bg: rgba(0, 0, 0, 0.1);
+  --toast-progress-bar-bg: linear-gradient(90deg, #007bff, #0056b3);
+  --toast-success-progress-bg: linear-gradient(90deg, #28a745, #1e7e34);
+  --toast-error-progress-bg: linear-gradient(90deg, #dc3545, #c82333);
+  --toast-warning-progress-bg: linear-gradient(90deg, #ffc107, #e0a800);
+  --toast-info-progress-bg: linear-gradient(90deg, #17a2b8, #138496);
+  --toast-mobile-top: 10px;
+  --toast-mobile-right: 10px;
+  --toast-mobile-left: 10px;
+  --toast-mobile-max-width: none;
+  --toast-mobile-min-width: auto;
+  --toast-mobile-content-padding: 12px;
+  --toast-mobile-content-gap: 8px;
+  --toast-mobile-icon-size: 18px;
+  --toast-mobile-message-font-size: 13px;
+  --toast-mobile-close-font-size: 16px;
+  --toast-mobile-close-size: 18px;
+  --toast-dark-bg: #2d3748;
+  --toast-dark-color: #e2e8f0;
+  --toast-dark-message-color: #e2e8f0;
+  --toast-dark-close-color: #a0aec0;
+  --toast-dark-close-hover-bg: #4a5568;
+  --toast-dark-close-hover-color: #e2e8f0;
+  --toast-dark-progress-bg: rgba(255, 255, 255, 0.1);
   --gradient-secondary: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-light) 100%);
   --gradient-accent: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 100%);
   --gradient-warm: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-tertiary) 100%);
@@ -86,4 +148,86 @@
   --blur-light: blur(4px);
   --blur-medium: blur(8px);
   --blur-heavy: blur(16px);
+
+  /* ========================================
+     Toast 알림 시스템 변수
+     ======================================== */
+  
+  /* Toast 컨테이너 */
+  --toast-container-top: 20px;
+  --toast-container-right: 20px;
+  --toast-container-max-width: 400px;
+  --toast-z-index: 9999;
+  --toast-gap: 10px;
+  
+  /* Toast 기본 스타일 */
+  --toast-bg: #FFFFFF;
+  --toast-border-radius: 8px;
+  --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --toast-animation-duration: 0.3s;
+  --toast-border-left-width: 4px;
+  --toast-min-width: 300px;
+  --toast-max-width: 400px;
+  
+  /* Toast 호버 효과 */
+  --toast-hover-scale: 1.02;
+  --toast-hover-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  
+  /* Toast 타입별 색상 */
+  --toast-success-color: #28a745;
+  --toast-error-color: #dc3545;
+  --toast-warning-color: #ffc107;
+  --toast-info-color: #17a2b8;
+  
+  /* Toast 콘텐츠 */
+  --toast-content-padding: 16px;
+  --toast-content-gap: 12px;
+  --toast-icon-size: 20px;
+  --toast-message-font-size: 14px;
+  --toast-message-line-height: 1.4;
+  --toast-message-color: #333333;
+  --toast-message-font-weight: 500;
+  
+  /* Toast 닫기 버튼 */
+  --toast-close-bg: none;
+  --toast-close-border: none;
+  --toast-close-font-size: 18px;
+  --toast-close-color: #999999;
+  --toast-close-padding: 0;
+  --toast-close-size: 20px;
+  --toast-close-border-radius: 50%;
+  --toast-close-transition: all 0.2s ease;
+  --toast-close-hover-bg: #f5f5f5;
+  --toast-close-hover-color: #666666;
+  
+  /* Toast 진행바 */
+  --toast-progress-height: 3px;
+  --toast-progress-bg: rgba(0, 0, 0, 0.1);
+  --toast-progress-bar-bg: linear-gradient(90deg, #007bff, #0056b3);
+  --toast-success-progress-bg: linear-gradient(90deg, #28a745, #1e7e34);
+  --toast-error-progress-bg: linear-gradient(90deg, #dc3545, #c82333);
+  --toast-warning-progress-bg: linear-gradient(90deg, #ffc107, #e0a800);
+  --toast-info-progress-bg: linear-gradient(90deg, #17a2b8, #138496);
+  
+  /* Toast 모바일 반응형 */
+  --toast-mobile-top: 10px;
+  --toast-mobile-right: 10px;
+  --toast-mobile-left: 10px;
+  --toast-mobile-max-width: none;
+  --toast-mobile-min-width: auto;
+  --toast-mobile-content-padding: 12px;
+  --toast-mobile-content-gap: 8px;
+  --toast-mobile-icon-size: 18px;
+  --toast-mobile-message-font-size: 13px;
+  --toast-mobile-close-font-size: 16px;
+  --toast-mobile-close-size: 18px;
+  
+  /* Toast 다크 모드 */
+  --toast-dark-bg: #2d3748;
+  --toast-dark-color: #e2e8f0;
+  --toast-dark-message-color: #e2e8f0;
+  --toast-dark-close-color: #a0aec0;
+  --toast-dark-close-hover-bg: #4a5568;
+  --toast-dark-close-hover-color: #e2e8f0;
+  --toast-dark-progress-bg: rgba(255, 255, 255, 0.1);
 }

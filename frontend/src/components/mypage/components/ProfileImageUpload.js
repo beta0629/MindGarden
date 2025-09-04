@@ -24,8 +24,8 @@ const ProfileImageUpload = ({
       return socialProfileImage;
     }
     
-    // 3. 기본 아이콘
-    return '/default-avatar.png';
+            // 3. 기본 아이콘
+        return '/default-avatar.svg';
   };
 
   const getProfileImageTypeText = () => {
@@ -113,7 +113,7 @@ const ProfileImageUpload = ({
             src={getProfileImageUrl()}
             alt="프로필 이미지"
             onError={(e) => {
-              e.target.src = '/default-avatar.png';
+              e.target.src = '/default-avatar.svg';
             }}
           />
           <div className="profile-image-type">

@@ -17,6 +17,7 @@ import MappingManagement from './components/admin/MappingManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import SimpleLayout from './components/layout/SimpleLayout';
 import Toast from './components/common/Toast';
+import NotificationTest from './components/test/NotificationTest';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { sessionManager } from './utils/sessionManager';
@@ -127,6 +128,9 @@ function AppContent() {
             
             {/* OAuth2 콜백 처리 라우트 */}
             <Route path="/oauth2/callback" element={<OAuth2Callback />} />
+            
+            {/* 테스트 페이지 라우트 */}
+            <Route path="/test/notifications" element={<NotificationTest />} />
             
             {/* 추후 홈페이지 추가 시 사용할 경로들 */}
             {/* <Route path="/homepage" element={<Homepage />} /> */}

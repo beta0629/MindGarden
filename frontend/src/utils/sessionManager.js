@@ -14,15 +14,66 @@ class SessionManager {
         this.lastCheckTime = 0;
         this.checkInProgress = false;
         this.minCheckInterval = SESSION_CHECK_INTERVAL;
+        this.isProfileEditing = false; // 프로필 수정 중 플래그
+        this.isFormSubmitting = false; // 폼 제출 중 플래그
+        this.formSubmitCount = 0; // 폼 제출 카운터
+        
+        // 전역 폼 제출 감지 이벤트 리스너 등록
+        this.setupGlobalFormListeners();
+    }
+    
+    // 전역 폼 제출 감지 설정
+    setupGlobalFormListeners() {
+        if (typeof window !== 'undefined') {
+            // 폼 제출 시작 감지
+            document.addEventListener('submit', (e) => {
+                // 폼이 실제로 제출되는 경우에만 감지
+                if (e.target.tagName === 'FORM') {
+                    this.startFormSubmit();
+                }
+            });
+            
+            // fetch 요청 감지 (AJAX 폼 제출)
+            const originalFetch = window.fetch;
+            window.fetch = async (...args) => {
+                // POST, PUT, DELETE 요청인 경우 폼 제출로 간주
+                const method = args[1]?.method || 'GET';
+                if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+                    this.startFormSubmit();
+                }
+                
+                try {
+                    const result = await originalFetch(...args);
+                    return result;
+                } finally {
+                    // 요청 완료 후 폼 제출 종료
+                    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+                        this.endFormSubmit();
+                    }
+                }
+            };
+        }
     }
     
     // 세션 상태 확인 (강제 확인 옵션 추가)
     async checkSession(force = false) {
         const now = Date.now();
         
+        // 프로필 수정 중이면 세션 체크 스킵
+        if (this.isProfileEditing && !force) {
+            console.log('🔄 세션 체크 스킵 (프로필 수정 중)');
+            return this.user !== null;
+        }
+        
         // 강제 확인이 아니고, 이미 체크 중이거나 최근에 체크했으면 스킵
         if (!force && (this.checkInProgress || (now - this.lastCheckTime < this.minCheckInterval))) {
             console.log('🔄 세션 체크 스킵 (중복 방지)');
+            return this.user !== null;
+        }
+        
+        // 폼 제출 중이면 세션 체크 스킵 (자동 감지)
+        if (this.isFormSubmitting && !force) {
+            console.log('🔄 세션 체크 스킵 (폼 제출 중)');
             return this.user !== null;
         }
         
@@ -238,6 +289,40 @@ class SessionManager {
     isLoggedIn() { 
         // sessionManager의 user만 확인 (서버 응답 우선)
         return this.user !== null;
+    }
+    
+    // 프로필 수정 시작 (세션 체크 일시 중지)
+    startProfileEditing() {
+        this.isProfileEditing = true;
+        console.log('📝 프로필 수정 시작 - 세션 체크 일시 중지');
+    }
+    
+    // 프로필 수정 종료 (세션 체크 재개)
+    endProfileEditing() {
+        this.isProfileEditing = false;
+        console.log('✅ 프로필 수정 종료 - 세션 체크 재개');
+        // 프로필 수정 완료 후 즉시 세션 체크
+        this.checkSession(true);
+    }
+    
+    // 폼 제출 시작 (자동 감지)
+    startFormSubmit() {
+        this.formSubmitCount++;
+        this.isFormSubmitting = true;
+        console.log(`📝 폼 제출 시작 (${this.formSubmitCount}번째) - 세션 체크 일시 중지`);
+    }
+    
+    // 폼 제출 종료 (자동 감지)
+    endFormSubmit() {
+        this.formSubmitCount = Math.max(0, this.formSubmitCount - 1);
+        if (this.formSubmitCount === 0) {
+            this.isFormSubmitting = false;
+            console.log('✅ 모든 폼 제출 완료 - 세션 체크 재개');
+            // 폼 제출 완료 후 즉시 세션 체크
+            this.checkSession(true);
+        } else {
+            console.log(`⏳ 폼 제출 진행 중 (${this.formSubmitCount}개 남음)`);
+        }
     }
 }
 

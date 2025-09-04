@@ -3,10 +3,26 @@ import ConfirmModal from '../common/ConfirmModal';
 
 // 일정 모달 컴포넌트
 const EventModal = ({ event, mode, onSave, onDelete, onClose }) => {
+  // Date 객체를 datetime-local 형식으로 변환하는 함수
+  const formatDateForInput = (date) => {
+    if (!date) return '';
+    if (typeof date === 'string') return date;
+    if (date instanceof Date) {
+      // 로컬 시간대로 변환하여 yyyy-MM-ddThh:mm 형식으로 반환
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    return '';
+  };
+
   const [formData, setFormData] = useState({
     title: event?.title || '',
-    start: event?.start || '',
-    end: event?.end || '',
+    start: formatDateForInput(event?.start) || '',
+    end: formatDateForInput(event?.end) || '',
     clientName: event?.extendedProps?.clientName || '',
     consultationType: event?.extendedProps?.consultationType || '',
     notes: event?.extendedProps?.notes || ''

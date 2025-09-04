@@ -8,7 +8,7 @@
  */
 
 // 세션 확인 간격 (밀리초)
-export const SESSION_CHECK_INTERVAL = 30 * 1000; // 30초
+export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5분
 
 // 세션 확인 타임아웃 (밀리초)
 export const SESSION_CHECK_TIMEOUT = 10 * 1000; // 10초
@@ -20,7 +20,7 @@ export const LOGIN_SESSION_CHECK_DELAY = 100; // 100ms
 export const EXISTING_SESSION_CHECK_DELAY = 0; // 즉시 실행
 
 // 정기 세션 확인 간격 (밀리초)
-export const PERIODIC_SESSION_CHECK_INTERVAL = 15 * 60 * 1000; // 15분
+export const PERIODIC_SESSION_CHECK_INTERVAL = 10 * 60 * 1000; // 10분
 
 // 세션 만료 시간 (밀리초)
 export const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24시간

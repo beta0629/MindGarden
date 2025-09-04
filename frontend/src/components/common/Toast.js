@@ -15,14 +15,22 @@ const Toast = () => {
     useEffect(() => {
         console.log('Toast 컴포넌트 마운트됨 - 리스너 등록');
         const unsubscribe = notificationManager.addListener((notification) => {
-            console.log('알림 수신됨:', notification);
-            setNotifications(prev => [...prev, notification]);
+            console.log('Toast 렌더링:', notification);
+            
+            setNotifications(prev => {
+                const newNotifications = [...prev, notification];
+                console.log('Toast - 알림 추가 후 상태:', newNotifications);
+                return newNotifications;
+            });
 
             // 자동 제거
             setTimeout(() => {
-                setNotifications(prev => 
-                    prev.filter(n => n.id !== notification.id)
-                );
+                console.log('Toast - 알림 자동 제거:', notification.id);
+                setNotifications(prev => {
+                    const filtered = prev.filter(n => n.id !== notification.id);
+                    console.log('Toast - 알림 제거 후 상태:', filtered);
+                    return filtered;
+                });
             }, notification.duration);
         });
 
@@ -33,6 +41,8 @@ const Toast = () => {
         setNotifications(prev => prev.filter(n => n.id !== id));
     };
 
+
+    // 알림이 없으면 렌더링하지 않음
     if (notifications.length === 0) {
         return null;
     }

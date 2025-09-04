@@ -65,7 +65,7 @@ public class MyPageServiceImpl implements MyPageService {
                 profileImageType = "SOCIAL_IMAGE";
             } else {
                 // 3. 기본 아이콘
-                finalProfileImageUrl = "/images/default-profile-icon.png";
+                finalProfileImageUrl = "/default-avatar.svg";
                 profileImageType = "DEFAULT_ICON";
             }
         }

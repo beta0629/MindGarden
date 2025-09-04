@@ -1,72 +1,97 @@
 /* AddressInput 컴포넌트 스타일 */
 
+/* AddressInput 상수 변수 */
+:root {
+  --address-container-margin: 20px;
+  --address-select-padding: 10px;
+  --address-select-radius: 4px;
+  --address-select-font-size: 14px;
+  --address-select-bg: white;
+  --address-select-focus-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  --address-select-disabled-bg: #f8f9fa;
+  --address-postal-container-gap: 10px;
+  --address-input-padding: 10px;
+  --address-input-radius: 4px;
+  --address-input-font-size: 14px;
+  --address-input-focus-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  --address-input-disabled-bg: #f8f9fa;
+  --address-search-btn-padding: 10px 16px;
+  --address-search-btn-bg: #007bff;
+  --address-search-btn-color: white;
+  --address-search-btn-radius: 4px;
+  --address-search-btn-font-size: 14px;
+  --address-search-btn-hover-bg: #0056b3;
+  --address-search-btn-disabled-bg: #6c757d;
+  --address-mobile-gap: 8px;
+}
+
 .address-input-container {
-  margin-bottom: 20px;
+  margin-bottom: var(--address-container-margin);
 }
 
 .address-type-select {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  background-color: white;
+  padding: var(--address-select-padding);
+  border: none !important;
+  border-radius: var(--address-select-radius);
+  font-size: var(--address-select-font-size);
+  background-color: var(--address-select-bg);
+  box-shadow: none !important;
 }
 
 .address-type-select:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  box-shadow: var(--address-select-focus-shadow) !important;
 }
 
 .address-type-select:disabled {
-  background-color: #f8f9fa;
+  background-color: var(--address-select-disabled-bg);
   cursor: not-allowed;
 }
 
 .postal-code-container {
   display: flex;
-  gap: 10px;
+  gap: var(--address-postal-container-gap);
   align-items: flex-end;
 }
 
 .postal-code-input {
   flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: var(--address-input-padding);
+  border: none !important;
+  border-radius: var(--address-input-radius);
+  font-size: var(--address-input-font-size);
+  box-shadow: none !important;
 }
 
 .postal-code-input:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  box-shadow: var(--address-input-focus-shadow) !important;
 }
 
 .postal-code-input:disabled {
-  background-color: #f8f9fa;
+  background-color: var(--address-input-disabled-bg);
   cursor: not-allowed;
 }
 
 .address-search-btn {
-  padding: 10px 16px;
-  background: #007bff;
-  color: white;
+  padding: var(--address-search-btn-padding);
+  background: var(--address-search-btn-bg);
+  color: var(--address-search-btn-color);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--address-search-btn-radius);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--address-search-btn-font-size);
   white-space: nowrap;
   transition: background-color 0.3s ease;
 }
 
 .address-search-btn:hover {
-  background: #0056b3;
+  background: var(--address-search-btn-hover-bg);
 }
 
 .address-search-btn:disabled {
-  background: #6c757d;
+  background: var(--address-search-btn-disabled-bg);
   cursor: not-allowed;
 }
 
@@ -74,7 +99,7 @@
 @media (max-width: 768px) {
   .postal-code-container {
     flex-direction: column;
-    gap: 8px;
+    gap: var(--address-mobile-gap);
   }
   
   .address-search-btn {

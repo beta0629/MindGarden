@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { apiGet, apiPost, apiPut } from '../../utils/ajax';
+import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import SimpleLayout from '../layout/SimpleLayout';
 import { FaUser } from 'react-icons/fa';
 import './ConsultantComprehensiveManagement.css';
@@ -28,9 +29,25 @@ const ConsultantComprehensiveManagement = () => {
     const [mainTab, setMainTab] = useState('comprehensive');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    
+    // 모달 상태
+    const [showModal, setShowModal] = useState(false);
+    const [modalType, setModalType] = useState(''); // 'create', 'edit', 'delete'
+    const [editingConsultant, setEditingConsultant] = useState(null);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        specialty: [],
+        password: ''
+    });
+    
+    // 공통 코드 상태
+    const [specialtyCodes, setSpecialtyCodes] = useState([]);
 
     useEffect(() => {
         loadAllData();
+        loadSpecialtyCodes();
     }, []);
 
     /**
@@ -59,8 +76,12 @@ const ConsultantComprehensiveManagement = () => {
     const loadConsultants = async () => {
         try {
             const response = await apiGet('/api/admin/consultants');
+            console.log('🔍 상담사 목록 로드 응답:', response);
             if (response.success) {
-                setConsultants(response.data || []);
+                console.log('📋 상담사 데이터:', response.data);
+                // isActive가 true인 상담사만 표시 (삭제된 상담사 제외)
+                const activeConsultants = (response.data || []).filter(consultant => consultant.isActive !== false);
+                setConsultants(activeConsultants);
             }
         } catch (error) {
             console.error('상담사 목록 로드 실패:', error);
@@ -106,6 +127,261 @@ const ConsultantComprehensiveManagement = () => {
             }
         } catch (error) {
             console.error('스케줄 목록 로드 실패:', error);
+        }
+    };
+
+    /**
+     * 전문분야 공통 코드 로드
+     */
+    const loadSpecialtyCodes = async () => {
+        try {
+            console.log('🔍 전문분야 코드 로드 시작...');
+            console.log('🌐 API URL:', '/api/admin/codes/values?groupCode=SPECIALTY');
+            
+            const response = await apiGet('/api/admin/codes/values?groupCode=SPECIALTY');
+            console.log('📋 새로운 API 응답:', response);
+            console.log('📋 응답 타입:', typeof response);
+            console.log('📋 응답 길이:', response?.length);
+            
+            if (response && Array.isArray(response) && response.length > 0) {
+                console.log('✅ 새로운 API로 전문분야 코드 로드 성공:', response.length, '개');
+                console.log('📋 첫 번째 코드:', response[0]);
+                setSpecialtyCodes(response);
+            } else {
+                console.log('⚠️ 새로운 API 응답이 비어있음, 기존 API 시도...');
+                // 기존 CommonCode API도 시도
+                const fallbackResponse = await apiGet('/api/admin/common-codes/SPECIALTY');
+                console.log('📋 기존 API 응답:', fallbackResponse);
+                if (fallbackResponse.success) {
+                    console.log('✅ 기존 API로 전문분야 코드 로드 성공:', fallbackResponse.data?.length || 0, '개');
+                    setSpecialtyCodes(fallbackResponse.data || []);
+                }
+            }
+        } catch (error) {
+            console.error('❌ 전문분야 코드 로드 실패:', error);
+            console.error('❌ 에러 상세:', error.message);
+            console.error('❌ 에러 스택:', error.stack);
+            
+            // 기존 CommonCode API로 폴백
+            try {
+                console.log('🔄 기존 API로 폴백 시도...');
+                const fallbackResponse = await apiGet('/api/admin/common-codes/SPECIALTY');
+                console.log('📋 폴백 API 응답:', fallbackResponse);
+                if (fallbackResponse.success) {
+                    console.log('✅ 폴백 API로 전문분야 코드 로드 성공:', fallbackResponse.data?.length || 0, '개');
+                    setSpecialtyCodes(fallbackResponse.data || []);
+                }
+            } catch (fallbackError) {
+                console.error('❌ 폴백 API도 실패:', fallbackError);
+            }
+        }
+    };
+
+    /**
+     * 상담사 등록
+     */
+    const createConsultant = withFormSubmit(async () => {
+        try {
+                    const submitData = {
+            username: formData.name, // 이름을 username으로 사용
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            specialization: Array.isArray(formData.specialty) ? formData.specialty.join(',') : formData.specialty
+        };
+            
+            const response = await apiPost('/api/admin/consultants', submitData);
+            if (response.success) {
+                notificationManager.success('상담사가 성공적으로 등록되었습니다.');
+                handleCloseModal();
+                loadConsultants();
+            } else {
+                notificationManager.error(response.message || '상담사 등록에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('상담사 등록 실패:', error);
+            notificationManager.error('상담사 등록에 실패했습니다.');
+        }
+    });
+
+    /**
+     * 상담사 수정
+     */
+    const updateConsultant = withFormSubmit(async () => {
+        try {
+            console.log('🔍 상담사 수정 시작:', {
+                editingConsultant: editingConsultant,
+                formData: formData
+            });
+
+            const updateData = {
+                username: formData.name, // 이름을 username으로 사용
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                specialization: Array.isArray(formData.specialty) ? formData.specialty.join(',') : formData.specialty
+            };
+
+            // 비밀번호가 입력된 경우에만 포함
+            if (formData.password) {
+                updateData.password = formData.password;
+            }
+
+            console.log('📤 전송할 데이터:', updateData);
+            console.log('🌐 API URL:', `/api/admin/consultants/${editingConsultant.id}`);
+
+            const response = await apiPut(`/api/admin/consultants/${editingConsultant.id}`, updateData);
+            console.log('📥 API 응답:', response);
+
+            if (response.success) {
+                notificationManager.success('상담사 정보가 성공적으로 수정되었습니다.');
+                handleCloseModal();
+                loadConsultants();
+            } else {
+                console.error('❌ API 응답 실패:', response);
+                notificationManager.error(response.message || '상담사 수정에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('❌ 상담사 수정 실패:', error);
+            console.error('❌ 에러 상세:', error.message);
+            console.error('❌ 에러 스택:', error.stack);
+            notificationManager.error('상담사 수정에 실패했습니다.');
+        }
+    });
+
+    /**
+     * 상담사 삭제
+     */
+    const deleteConsultant = withFormSubmit(async () => {
+        try {
+            const response = await apiDelete(`/api/admin/consultants/${editingConsultant.id}`);
+            if (response.success) {
+                notificationManager.success('상담사가 성공적으로 삭제되었습니다.');
+                handleCloseModal();
+                loadConsultants();
+            } else {
+                notificationManager.error(response.message || '상담사 삭제에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('상담사 삭제 실패:', error);
+            notificationManager.error('상담사 삭제에 실패했습니다.');
+        }
+    });
+
+    /**
+     * 모달 열기
+     */
+    const handleOpenModal = (type, consultant = null) => {
+        setModalType(type);
+        setEditingConsultant(consultant);
+        
+        if (type === 'edit' && consultant) {
+            const specialtyArray = consultant.specialization ? 
+                (Array.isArray(consultant.specialization) ? consultant.specialization : consultant.specialization.split(',').map(s => s.trim())) : [];
+            
+            console.log('🔍 상담사 수정 모달 열기:', {
+                consultant: consultant,
+                originalSpecialization: consultant.specialization,
+                specialtyArray: specialtyArray
+            });
+            
+            setFormData({
+                name: consultant.name || '',
+                email: consultant.email || '',
+                phone: consultant.phone || '',
+                specialty: specialtyArray,
+                password: ''
+            });
+        } else if (type === 'create') {
+            setFormData({
+                name: '',
+                email: '',
+                phone: '',
+                specialty: [],
+                password: ''
+            });
+        }
+        
+        setShowModal(true);
+    };
+
+    /**
+     * 모달 닫기
+     */
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setModalType('');
+        setEditingConsultant(null);
+        setFormData({
+            name: '',
+            email: '',
+            phone: '',
+            specialty: [],
+            password: ''
+        });
+    };
+
+    /**
+     * 폼 데이터 변경
+     */
+    const handleFormChange = (e) => {
+        const { name, value } = e.target;
+        
+        // 전화번호 자동 하이픈 처리
+        if (name === 'phone') {
+            const formattedPhone = formatPhoneNumber(value);
+            setFormData(prev => ({
+                ...prev,
+                [name]: formattedPhone
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
+    };
+
+    // 전화번호 자동 하이픈 포맷팅 함수
+    const formatPhoneNumber = (value) => {
+        // 숫자만 추출
+        const numbers = value.replace(/[^\d]/g, '');
+        
+        // 길이에 따라 하이픈 추가
+        if (numbers.length <= 3) {
+            return numbers;
+        } else if (numbers.length <= 7) {
+            return numbers.slice(0, 3) + '-' + numbers.slice(3);
+        } else if (numbers.length <= 11) {
+            return numbers.slice(0, 3) + '-' + numbers.slice(3, 7) + '-' + numbers.slice(7);
+        } else {
+            // 11자리 초과시 11자리까지만
+            return numbers.slice(0, 3) + '-' + numbers.slice(3, 7) + '-' + numbers.slice(7, 11);
+        }
+    };
+
+    /**
+     * 다중선택 필드 변경 (전문분야)
+     */
+    const handleSpecialtyChange = (e) => {
+        const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+        setFormData(prev => ({
+            ...prev,
+            specialty: selectedOptions
+        }));
+    };
+
+    /**
+     * 모달 제출 처리
+     */
+    const handleModalSubmit = () => {
+        if (modalType === 'create') {
+            createConsultant();
+        } else if (modalType === 'edit') {
+            updateConsultant();
+        } else if (modalType === 'delete') {
+            deleteConsultant();
         }
     };
 
@@ -162,6 +438,31 @@ const ConsultantComprehensiveManagement = () => {
             'COMPLETED': '완료'
         };
         return statusMap[status] || status;
+    };
+
+    /**
+     * 전문분야 표시 텍스트 생성 (백엔드에서 제공하는 specializationDetails 사용)
+     */
+    const getSpecialtyDisplayText = (consultant) => {
+        if (consultant.specializationDetails && consultant.specializationDetails.length > 0) {
+            return consultant.specializationDetails.map(detail => detail.name).join(', ');
+        }
+        
+        if (consultant.specialization && consultant.specialization.trim() !== '') {
+            return consultant.specialization;
+        }
+        
+        return '전문분야 미설정';
+    };
+    
+    /**
+     * 전문분야 코드 확인 (분기 처리용)
+     */
+    const hasSpecialtyCode = (consultant, code) => {
+        if (consultant.specialization) {
+            return consultant.specialization.includes(code);
+        }
+        return false;
     };
 
     /**
@@ -282,20 +583,37 @@ const ConsultantComprehensiveManagement = () => {
                                         onClick={() => handleConsultantSelect(consultant)}
                                     >
                                         <div className="consultant-comp-consultant-avatar">
-                                            <FaUser />
+                                            {consultant.name ? consultant.name.charAt(0) : '?'}
                                         </div>
                                         <div className="consultant-comp-consultant-info">
                                             <div className="consultant-comp-consultant-name">{consultant.name || '이름 없음'}</div>
                                             <div className="consultant-comp-consultant-email">{consultant.email}</div>
                                             <div className="consultant-comp-consultant-phone">{consultant.phone || '전화번호 없음'}</div>
-                                            <div className="consultant-comp-consultant-specialty">{consultant.specialty || '전문분야 미설정'}</div>
-                                            <div className="consultant-comp-consultant-status">
-                                                <span className={`consultant-comp-status-badge ${consultant.isActive ? 'active' : 'inactive'}`}>
-                                                    {consultant.isActive ? '활성' : '비활성'}
-                                                </span>
+                                            <div 
+                                                className={`consultant-comp-consultant-specialty ${!consultant.specialty || consultant.specialty.trim() === '' ? 'no-specialty' : ''}`}
+                                                title={consultant.specialty || '전문분야 미설정'}
+                                                style={{
+                                                    fontSize: '12px',
+                                                    color: '#374151',
+                                                    marginBottom: '8px',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    lineHeight: '1.3',
+                                                    maxWidth: '100%',
+                                                    display: 'block',
+                                                    width: '100%',
+                                                    wordBreak: 'normal',
+                                                    wordWrap: 'normal',
+                                                    height: 'auto',
+                                                    minHeight: 'auto',
+                                                    maxHeight: '20px'
+                                                }}
+                                            >
+                                                {getSpecialtyDisplayText(consultant)}
                                             </div>
                                             <div className="consultant-comp-consultant-date">
-                                                등록일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}
+                                                가입일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}
                                             </div>
                                         </div>
                                     </div>
@@ -353,7 +671,7 @@ const ConsultantComprehensiveManagement = () => {
                                                         </div>
                                                         <div className="info-item">
                                                             <span className="label">전문분야:</span>
-                                                            <span className="value">{selectedConsultant.specialty || '미설정'}</span>
+                                                            <span className="value">{getSpecialtyDisplayText(selectedConsultant)}</span>
                                                         </div>
                                                         <div className="info-item">
                                                             <span className="label">가입일:</span>
@@ -509,60 +827,247 @@ const ConsultantComprehensiveManagement = () => {
                         
                         {/* 기본관리 기능들 */}
                         <div className="basic-actions">
-                            <button className="btn btn-primary">
+                            <button 
+                                className="btn btn-primary"
+                                onClick={() => handleOpenModal('create')}
+                            >
                                 ➕ 새 상담사 등록
                             </button>
-                            <button className="btn btn-secondary">
+                            <button 
+                                className="btn btn-secondary"
+                                onClick={loadConsultants}
+                            >
                                 🔄 새로고침
                             </button>
                         </div>
                         
-                        {/* 상담사 목록 테이블 */}
-                        <div className="basic-consultants-table">
-                            <div className="table-header">
-                                <div className="header-cell">이름</div>
-                                <div className="header-cell">이메일</div>
-                                <div className="header-cell">전문분야</div>
-                                <div className="header-cell">가입일</div>
-                                <div className="header-cell">액션</div>
-                            </div>
-                            
+                        {/* 상담사 목록 카드 */}
+                        <div className="consultants-cards-container">
                             {consultants.length > 0 ? (
-                                consultants.map(consultant => (
-                                    <div key={consultant.id} className="table-row">
-                                        <div className="table-cell">
-                                            <div className="consultant-name">
+                                <div className="consultants-cards-grid">
+                                    {consultants.map(consultant => (
+                                        <div key={consultant.id} className="consultant-card">
+                                            <div className="card-header">
                                                 <div className="consultant-avatar">
                                                     {consultant.name?.charAt(0) || '?'}
                                                 </div>
-                                                <span>{consultant.name || '이름 없음'}</span>
+                                                <div className="consultant-info">
+                                                    <h4 className="consultant-name">{consultant.name || '이름 없음'}</h4>
+                                                    <p className="consultant-email">{consultant.email || '-'}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="card-body">
+                                                <div className="info-item">
+                                                    <div 
+                                                        className="info-value"
+                                                        style={{
+                                                            fontSize: '14px',
+                                                            color: '#374151',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            maxWidth: '100%',
+                                                            lineHeight: '1.3',
+                                                            marginBottom: '8px'
+                                                        }}
+                                                        title={getSpecialtyDisplayText(consultant)}
+                                                    >
+                                                        {getSpecialtyDisplayText(consultant)}
+                                                    </div>
+                                                </div>
+                                                <div className="info-item" style={{ marginTop: 'auto' }}>
+                                                    <span className="info-label">가입일</span>
+                                                    <span className="info-value">
+                                                        {consultant.createdAt ? 
+                                                            new Date(consultant.createdAt).toLocaleDateString('ko-KR') : 
+                                                            '-'
+                                                        }
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="card-actions">
+                                                <button 
+                                                    className="btn btn-sm btn-primary"
+                                                    onClick={() => handleOpenModal('edit', consultant)}
+                                                >
+                                                    <i className="bi bi-pencil"></i>
+                                                    수정
+                                                </button>
+                                                <button 
+                                                    className="btn btn-sm btn-danger"
+                                                    onClick={() => handleOpenModal('delete', consultant)}
+                                                >
+                                                    <i className="bi bi-trash"></i>
+                                                    삭제
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="table-cell">{consultant.email || '-'}</div>
-                                        <div className="table-cell">{consultant.specialty || '-'}</div>
-                                        <div className="table-cell">
-                                            {consultant.createdAt ? 
-                                                new Date(consultant.createdAt).toLocaleDateString('ko-KR') : 
-                                                '-'
-                                            }
-                                        </div>
-                                        <div className="table-cell">
-                                            <div className="action-buttons-cell">
-                                                <button className="btn btn-sm btn-primary">
-                                                    ✏️ 수정
-                                                </button>
-                                                <button className="btn btn-sm btn-danger">
-                                                    🗑️ 삭제
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
+                                    ))}
+                                </div>
                             ) : (
                                 <div className="no-data">
+                                    <div className="no-data-icon">
+                                        <i className="bi bi-person-x"></i>
+                                    </div>
                                     <p>등록된 상담사가 없습니다.</p>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 모달 */}
+            {showModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h3>
+                                {modalType === 'create' && '새 상담사 등록'}
+                                {modalType === 'edit' && '상담사 정보 수정'}
+                                {modalType === 'delete' && '상담사 삭제'}
+                            </h3>
+                            <button className="modal-close" onClick={handleCloseModal}>
+                                ×
+                            </button>
+                        </div>
+                        
+                        <div className="modal-body">
+                            {modalType === 'delete' ? (
+                                <div className="delete-confirmation">
+                                    <p>정말로 <strong>{editingConsultant?.name}</strong> 상담사를 삭제하시겠습니까?</p>
+                                    <p className="warning-text">이 작업은 되돌릴 수 없습니다.</p>
+                                </div>
+                            ) : (
+                                <form className="consultant-form">
+                                    <div className="form-group">
+                                        <label>이름 *</label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleFormChange}
+                                            placeholder="상담사 이름을 입력하세요"
+                                            required
+                                        />
+                                    </div>
+                                    
+                                    <div className="form-group">
+                                        <label>이메일 *</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleFormChange}
+                                            placeholder="이메일을 입력하세요"
+                                            required
+                                        />
+                                    </div>
+                                    
+                                    <div className="form-group">
+                                        <label>전화번호</label>
+                                        <input
+                                            type="tel"
+                                            name="phone"
+                                            value={formData.phone}
+                                            onChange={handleFormChange}
+                                            placeholder="010-1234-5678"
+                                            maxLength="13"
+                                        />
+                                    </div>
+                                    
+                                    <div className="form-group">
+                                        <label>전문분야</label>
+                                        {console.log('🔍 다중선택 필드 렌더링:', {
+                                            formDataSpecialty: formData.specialty,
+                                            specialtyType: typeof formData.specialty,
+                                            isArray: Array.isArray(formData.specialty),
+                                            specialtyCodes: specialtyCodes.map(c => ({code: c.code || c.codeValue, name: c.name || c.codeLabel}))
+                                        })}
+                                        <select
+                                            name="specialty"
+                                            value={formData.specialty}
+                                            onChange={handleSpecialtyChange}
+                                            multiple
+                                            size="6"
+                                            className="specialty-select"
+                                            style={{
+                                                padding: '12px 16px',
+                                                border: '2px solid #e5e7eb',
+                                                borderRadius: '8px',
+                                                background: '#ffffff',
+                                                color: '#374151',
+                                                fontSize: '14px',
+                                                minHeight: '150px',
+                                                height: '150px',
+                                                width: '100%',
+                                                maxWidth: '100%',
+                                                resize: 'vertical',
+                                                fontFamily: 'inherit',
+                                                boxSizing: 'border-box',
+                                                overflowY: 'auto'
+                                            }}
+                                        >
+                                            {specialtyCodes.length > 0 ? (
+                                                specialtyCodes.map(code => {
+                                                    const isSelected = Array.isArray(formData.specialty) && formData.specialty.includes(code.code || code.codeValue);
+                                                    return (
+                                                        <option 
+                                                            key={code.id || code.codeValue} 
+                                                            value={code.code || code.codeValue}
+                                                            style={{
+                                                                backgroundColor: isSelected ? '#e0e7ff' : '#ffffff',
+                                                                color: isSelected ? '#1e40af' : '#000000',
+                                                                fontWeight: isSelected ? '600' : '400'
+                                                            }}
+                                                        >
+                                                            {code.icon ? `${code.icon} ` : ''}{code.name || code.codeLabel}
+                                                        </option>
+                                                    );
+                                                })
+                                            ) : (
+                                                <option disabled>전문분야 코드를 불러오는 중...</option>
+                                            )}
+                                        </select>
+                                        <small className="form-help-text">
+                                            💡 Ctrl(Windows) 또는 Cmd(Mac)를 누르고 클릭하여 여러 개 선택할 수 있습니다.
+                                        </small>
+                                    </div>
+                                    
+                                    <div className="form-group">
+                                        <label>
+                                            {modalType === 'create' ? '비밀번호 *' : '새 비밀번호'}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleFormChange}
+                                            placeholder={modalType === 'create' ? '비밀번호를 입력하세요' : '새 비밀번호를 입력하세요 (선택사항)'}
+                                            required={modalType === 'create'}
+                                        />
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                        
+                        <div className="modal-footer">
+                            <button 
+                                className="btn btn-secondary"
+                                onClick={handleCloseModal}
+                            >
+                                취소
+                            </button>
+                            <button 
+                                className={`btn ${modalType === 'delete' ? 'btn-danger' : 'btn-primary'}`}
+                                onClick={handleModalSubmit}
+                            >
+                                {modalType === 'create' && '등록'}
+                                {modalType === 'edit' && '수정'}
+                                {modalType === 'delete' && '삭제'}
+                            </button>
                         </div>
                     </div>
                 </div>

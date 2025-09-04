@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { sessionManager } from '../../utils/sessionManager';
+import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
 import { notification } from '../../utils/scripts';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -248,80 +249,75 @@ const MyPage = () => {
     }
   };
 
-  const handleSubmit = async (e, formDataToUpdate) => {
+  const handleSubmit = withFormSubmit(async (e, formDataToUpdate) => {
     if (e && e.preventDefault) {
       e.preventDefault();
     }
     
-    try {
-      const dataToUpdate = formDataToUpdate || formData;
-      console.log('🚀 백엔드로 전송할 데이터:', dataToUpdate);
-      
-      const response = await mypageApi.updateMyPageInfo(dataToUpdate);
-      console.log('✅ 백엔드 응답:', response);
-      console.log('📝 백엔드 응답 필드 확인:');
-      console.log('  - username:', response.username);
-      console.log('  - nickname:', response.nickname);
-      console.log('  - phone:', response.phone);
-      console.log('  - gender:', response.gender);
-      console.log('  - profileImage:', response.profileImage);
-      
-      // 사용자 정보 업데이트 (모든 필드 포함)
-      setUser(prev => ({
-        ...prev,
+    const dataToUpdate = formDataToUpdate || formData;
+    console.log('🚀 백엔드로 전송할 데이터:', dataToUpdate);
+    
+    const response = await mypageApi.updateMyPageInfo(dataToUpdate);
+    console.log('✅ 백엔드 응답:', response);
+    console.log('📝 백엔드 응답 필드 확인:');
+    console.log('  - username:', response.username);
+    console.log('  - nickname:', response.nickname);
+    console.log('  - phone:', response.phone);
+    console.log('  - gender:', response.gender);
+    console.log('  - profileImage:', response.profileImage);
+    
+    // 사용자 정보 업데이트 (모든 필드 포함)
+    setUser(prev => ({
+      ...prev,
+      username: dataToUpdate.username,
+      nickname: dataToUpdate.nickname,
+      phone: dataToUpdate.phone,
+      gender: dataToUpdate.gender,
+      profileImage: dataToUpdate.profileImage
+    }));
+    
+    // formData도 업데이트
+    setFormData(dataToUpdate);
+    
+    // 세션 매니저의 사용자 정보 즉시 업데이트 (모든 필드 포함)
+    if (sessionManager.user) {
+      sessionManager.user = {
+        ...sessionManager.user,
         username: dataToUpdate.username,
         nickname: dataToUpdate.nickname,
         phone: dataToUpdate.phone,
         gender: dataToUpdate.gender,
         profileImage: dataToUpdate.profileImage
-      }));
-      
-      // formData도 업데이트
-      setFormData(dataToUpdate);
-      
-      // 세션 매니저의 사용자 정보 즉시 업데이트 (모든 필드 포함)
-      if (sessionManager.user) {
-        sessionManager.user = {
-          ...sessionManager.user,
-          username: dataToUpdate.username,
-          nickname: dataToUpdate.nickname,
-          phone: dataToUpdate.phone,
-          gender: dataToUpdate.gender,
-          profileImage: dataToUpdate.profileImage
-        };
-        // 즉시 세션 상태 변경 알림
-        sessionManager.notifyListeners();
-      }
-      
-      // 백엔드에서 최신 정보 가져오기
-      await sessionManager.checkSession();
-      
-      // 백엔드 응답이 불완전하므로 원본 데이터로 상태 유지
-      console.log('백엔드 응답이 불완전하여 원본 데이터로 상태 유지');
-      console.log('원본 업데이트 데이터:', dataToUpdate);
-      
-      // 사용자 상태를 원본 데이터로 업데이트 (백엔드 응답 대신)
-      setUser(prev => ({
-        ...prev,
-        ...dataToUpdate
-      }));
-      
-      // formData도 원본 데이터로 유지
-      setFormData(dataToUpdate);
-      
-      console.log('상태 업데이트 완료 - 원본 데이터 사용');
-      
-      notification.showToast('프로필이 성공적으로 업데이트되었습니다.', 'success');
-      
-      // 사용자에게 페이지 새로고침 안내
-      setTimeout(() => {
-        notification.showToast('페이지를 새로고침하여 저장된 데이터를 확인해보세요.', 'info');
-      }, 2000);
-    } catch (error) {
-      console.error('프로필 업데이트 실패:', error);
-      notification.showToast('프로필 업데이트에 실패했습니다: ' + error.message, 'error');
+      };
+      // 즉시 세션 상태 변경 알림
+      sessionManager.notifyListeners();
     }
-  };
+    
+    // 백엔드에서 최신 정보 가져오기
+    await sessionManager.checkSession();
+    
+    // 백엔드 응답이 불완전하므로 원본 데이터로 상태 유지
+    console.log('백엔드 응답이 불완전하여 원본 데이터로 상태 유지');
+    console.log('원본 업데이트 데이터:', dataToUpdate);
+    
+    // 사용자 상태를 원본 데이터로 업데이트 (백엔드 응답 대신)
+    setUser(prev => ({
+      ...prev,
+      ...dataToUpdate
+    }));
+    
+    // formData도 원본 데이터로 유지
+    setFormData(dataToUpdate);
+    
+    console.log('상태 업데이트 완료 - 원본 데이터 사용');
+    
+    notification.showToast('프로필이 성공적으로 업데이트되었습니다.', 'success');
+    
+    // 사용자에게 페이지 새로고침 안내
+    setTimeout(() => {
+      notification.showToast('페이지를 새로고침하여 저장된 데이터를 확인해보세요.', 'info');
+    }, 2000);
+  });
 
   const handlePasswordReset = async () => {
     try {

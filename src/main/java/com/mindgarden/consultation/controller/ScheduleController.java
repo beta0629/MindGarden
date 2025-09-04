@@ -127,6 +127,25 @@ public class ScheduleController {
         }
     }
 
+    /**
+     * 상담사 자신의 전체 스케줄 조회 (상담사 전용)
+     * GET /api/schedules/consultant/{consultantId}/my-schedules
+     */
+    @GetMapping("/consultant/{consultantId}/my-schedules")
+    public ResponseEntity<List<Schedule>> getMySchedules(@PathVariable Long consultantId) {
+        
+        log.info("📅 상담사 자신의 스케줄 조회: 상담사 {}", consultantId);
+        
+        try {
+            List<Schedule> schedules = scheduleService.findByConsultantId(consultantId);
+            log.info("✅ 상담사 스케줄 조회 완료: {}개", schedules.size());
+            return ResponseEntity.ok(schedules);
+        } catch (Exception e) {
+            log.error("❌ 상담사 스케줄 조회 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     // ==================== 스케줄 생성 ====================
 
     /**

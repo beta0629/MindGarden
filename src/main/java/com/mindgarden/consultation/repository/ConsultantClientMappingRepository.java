@@ -2,7 +2,6 @@ package com.mindgarden.consultation.repository;
 
 import java.util.List;
 import java.util.Optional;
-import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,16 +16,16 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     List<ConsultantClientMapping> findByConsultant(User consultant);
     
     // 내담자별 매핑 조회
-    List<ConsultantClientMapping> findByClient(Client client);
+    List<ConsultantClientMapping> findByClient(User client);
     
     // 활성 상태의 매핑만 조회
     List<ConsultantClientMapping> findByStatus(ConsultantClientMapping.MappingStatus status);
     
     // 상담사와 내담자로 특정 매핑 조회
-    Optional<ConsultantClientMapping> findByConsultantAndClient(User consultant, Client client);
+    Optional<ConsultantClientMapping> findByConsultantAndClient(User consultant, User client);
     
     // 상담사와 내담자로 활성 상태의 매핑 존재 여부 확인
-    boolean existsByConsultantAndClientAndStatus(User consultant, Client client, ConsultantClientMapping.MappingStatus status);
+    boolean existsByConsultantAndClientAndStatus(User consultant, User client, ConsultantClientMapping.MappingStatus status);
     
     // 상담사별 활성 매핑 수 조회
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.consultant = :consultant AND m.status = 'ACTIVE'")
@@ -34,7 +33,7 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     
     // 내담자별 활성 매핑 수 조회
     @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.client = :client AND m.status = 'ACTIVE'")
-    long countActiveMappingsByClient(@Param("client") Client client);
+    long countActiveMappingsByClient(@Param("client") User client);
     
     // 날짜 범위로 매핑 조회
     @Query("SELECT m FROM ConsultantClientMapping m WHERE m.startDate >= :startDate AND m.endDate <= :endDate")

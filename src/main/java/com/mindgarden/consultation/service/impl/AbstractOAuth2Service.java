@@ -5,6 +5,7 @@ import java.util.Map;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SocialLoginResponse;
 import com.mindgarden.consultation.dto.SocialUserInfo;
+import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.UserSocialAccount;
 import com.mindgarden.consultation.repository.UserRepository;
@@ -205,23 +206,23 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createUserFromSocial(SocialUserInfo socialUserInfo) {
-        // 1. 사용자 생성 (소셜 로그인용 임시 비밀번호 생성)
-        User user = User.builder()
-            .email(socialUserInfo.getEmail())
-            .password(generateTemporaryPassword()) // 임시 비밀번호 생성
-            .name(socialUserInfo.getName())
-            .nickname(socialUserInfo.getNickname())
-            .role(UserRole.CLIENT) // 기본 역할
-            .profileImageUrl(socialUserInfo.getProfileImageUrl())
-            .isEmailVerified(true) // 소셜 계정은 이메일 인증 완료로 간주
-            .isActive(true)
-            .build();
+        // 1. Client 엔티티로 사용자 생성 (소셜 로그인용 임시 비밀번호 생성)
+        Client client = new Client();
+        client.setEmail(socialUserInfo.getEmail());
+        client.setPassword(generateTemporaryPassword()); // 임시 비밀번호 생성
+        client.setName(socialUserInfo.getName());
+        client.setNickname(socialUserInfo.getNickname());
+        client.setRole(UserRole.CLIENT); // 기본 역할
+        client.setProfileImageUrl(socialUserInfo.getProfileImageUrl());
+        client.setIsEmailVerified(true); // 소셜 계정은 이메일 인증 완료로 간주
+        client.setIsActive(true);
+        client.setUsername(socialUserInfo.getEmail()); // username 설정
         
-        user = userRepository.save(user);
+        client = (Client) userRepository.save(client);
         
         // 2. 소셜 계정 정보 생성
         UserSocialAccount socialAccount = UserSocialAccount.builder()
-            .user(user)
+            .user(client)
             .provider(getProviderName())
             .providerUserId(socialUserInfo.getProviderUserId())
             .providerUsername(socialUserInfo.getNickname())
@@ -234,7 +235,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         
         userSocialAccountRepository.save(socialAccount);
         
-        return user.getId();
+        return client.getId();
     }
 
     /**
@@ -330,7 +331,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         }
         
         // 3. 기본 아이콘
-        String defaultIcon = "/images/default-profile-icon.png";
+        String defaultIcon = "/default-avatar.svg";
         log.info("기본 프로필 아이콘 사용: {}", defaultIcon);
         return defaultIcon;
     }

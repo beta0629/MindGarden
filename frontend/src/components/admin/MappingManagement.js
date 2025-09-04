@@ -180,21 +180,21 @@ const MappingManagement = () => {
             case 'payment':
                 // 결제 확인 모달 열기
                 if (stat.value > 0) {
-                    notification.info(`${stat.label} 매핑의 결제 확인을 진행합니다.`);
+                    notificationManager.info(`${stat.label} 매핑의 결제 확인을 진행합니다.`);
                     // TODO: 결제 확인 모달 구현
                 } else {
-                    notification.info('결제 대기 중인 매핑이 없습니다.');
+                    notificationManager.info('결제 대기 중인 매핑이 없습니다.');
                 }
                 break;
             case 'view':
                 // 해당 상태의 매핑만 필터링
                 setFilterStatus(stat.id);
-                notification.info(`${stat.label} 매핑을 필터링합니다.`);
+                notificationManager.info(`${stat.label} 매핑을 필터링합니다.`);
                 break;
             case 'view_all':
                 // 전체 매핑 표시
                 setFilterStatus('ALL');
-                notification.info('전체 매핑을 표시합니다.');
+                notificationManager.info('전체 매핑을 표시합니다.');
                 break;
             default:
                 console.log('알 수 없는 액션:', stat.action);
@@ -273,10 +273,10 @@ const MappingManagement = () => {
                                 onApprove={handleApproveMapping}
                                 onReject={handleRejectMapping}
                                 onEdit={(mapping) => {
-                                    notification.info('매핑 수정 기능은 준비 중입니다.');
+                                    notificationManager.info('매핑 수정 기능은 준비 중입니다.');
                                 }}
                                 onView={(mapping) => {
-                                    notification.info('매핑 상세보기 기능은 준비 중입니다.');
+                                    notificationManager.info('매핑 상세보기 기능은 준비 중입니다.');
                                 }}
                             />
                         ))}

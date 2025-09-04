@@ -18,6 +18,7 @@ const MappingCard = ({
     mapping, 
     onApprove, 
     onReject, 
+    onConfirmPayment,
     onEdit, 
     onView 
 }) => {

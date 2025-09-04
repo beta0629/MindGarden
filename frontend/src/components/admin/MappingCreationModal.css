@@ -82,15 +82,17 @@
     justify-content: space-between;
     margin-bottom: 32px;
     position: relative;
+    min-height: 60px;
+    padding: 10px 0;
 }
 
 .mapping-modal .step-indicator::before {
     content: '';
     position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    height: 2px;
+    top: 25px;
+    left: 25px;
+    right: 25px;
+    height: 3px;
     background-color: #e1e8ed;
     z-index: 1;
 }
@@ -105,8 +107,8 @@
 }
 
 .mapping-modal .step-number {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background-color: #e1e8ed;
     color: #6b7280;
@@ -114,6 +116,7 @@
     align-items: center;
     justify-content: center;
     font-weight: 600;
+    font-size: 16px;
     margin-bottom: 8px;
     transition: all 0.3s;
 }
@@ -124,7 +127,7 @@
 }
 
 .mapping-modal .step-label {
-    font-size: 12px;
+    font-size: 14px;
     color: #6b7280;
     text-align: center;
     font-weight: 500;

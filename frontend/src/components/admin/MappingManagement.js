@@ -112,7 +112,9 @@ const MappingManagement = () => {
     const handleApproveMapping = async (mappingId) => {
         // 테스트용 알림
         console.log('승인 버튼 클릭됨 - 알림 시도');
-        notificationManager.success('테스트 알림: 매핑 승인 버튼 클릭됨');
+        setTimeout(() => {
+            notificationManager.success('테스트 알림: 매핑 승인 버튼 클릭됨');
+        }, 100);
         console.log('알림 호출 완료');
         
         try {
@@ -121,14 +123,20 @@ const MappingManagement = () => {
             });
             
             if (response.success) {
-                notificationManager.success('매핑이 승인되었습니다.');
+                setTimeout(() => {
+                    notificationManager.success('매핑이 승인되었습니다.');
+                }, 100);
                 loadMappings();
             } else {
-                notificationManager.error('매핑 승인에 실패했습니다.');
+                setTimeout(() => {
+                    notificationManager.error('매핑 승인에 실패했습니다.');
+                }, 100);
             }
         } catch (error) {
             console.error('매핑 승인 실패:', error);
-            notificationManager.error('매핑 승인에 실패했습니다.');
+            setTimeout(() => {
+                notificationManager.error('매핑 승인에 실패했습니다.');
+            }, 100);
         }
     };
 
@@ -142,21 +150,30 @@ const MappingManagement = () => {
             });
             
             if (response.success) {
-                notificationManager.success('입금이 확인되었습니다.');
+                // Toast 컴포넌트가 마운트될 때까지 대기
+                setTimeout(() => {
+                    notificationManager.success('입금이 확인되었습니다.');
+                }, 100);
                 loadMappings();
             } else {
-                notificationManager.error('입금 확인에 실패했습니다.');
+                setTimeout(() => {
+                    notificationManager.error('입금 확인에 실패했습니다.');
+                }, 100);
             }
         } catch (error) {
             console.error('입금 확인 실패:', error);
-            notificationManager.error('입금 확인에 실패했습니다.');
+            setTimeout(() => {
+                notificationManager.error('입금 확인에 실패했습니다.');
+            }, 100);
         }
     };
 
     // 매핑 거부
     const handleRejectMapping = async (mappingId) => {
         // 테스트용 알림
-        notificationManager.success('테스트 알림: 매핑 거부 버튼 클릭됨');
+        setTimeout(() => {
+            notificationManager.success('테스트 알림: 매핑 거부 버튼 클릭됨');
+        }, 100);
         
         try {
             const response = await apiPost(`/api/admin/mappings/${mappingId}/reject`, {
@@ -164,14 +181,20 @@ const MappingManagement = () => {
             });
             
             if (response.success) {
-                notificationManager.success('매핑이 거부되었습니다.');
+                setTimeout(() => {
+                    notificationManager.success('매핑이 거부되었습니다.');
+                }, 100);
                 loadMappings();
             } else {
-                notificationManager.error('매핑 거부에 실패했습니다.');
+                setTimeout(() => {
+                    notificationManager.error('매핑 거부에 실패했습니다.');
+                }, 100);
             }
         } catch (error) {
             console.error('매핑 거부 실패:', error);
-            notificationManager.error('매핑 거부에 실패했습니다.');
+            setTimeout(() => {
+                notificationManager.error('매핑 거부에 실패했습니다.');
+            }, 100);
         }
     };
 

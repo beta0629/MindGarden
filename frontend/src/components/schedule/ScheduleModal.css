@@ -467,10 +467,11 @@
 
 .consultant-status-info {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  gap: 12px;
   margin-top: 8px;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .consultant-bottom {

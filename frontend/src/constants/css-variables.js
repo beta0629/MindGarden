@@ -192,6 +192,35 @@ export const COMPONENT_CSS = {
     TOAST_HEADER: 'toast-header',
     TOAST_BODY: 'toast-body'
   },
+
+  // 스케줄 모달
+  SCHEDULE_MODAL: {
+    OVERLAY: 'schedule-modal-overlay',
+    MODAL: 'schedule-modal',
+    HEADER: 'schedule-modal-header',
+    HEADER_LEFT: 'schedule-modal-header-left',
+    HEADER_CENTER: 'schedule-modal-header-center',
+    HEADER_RIGHT: 'schedule-modal-header-right',
+    TITLE: 'schedule-modal-title',
+    SELECTED_DATE: 'selected-date',
+    CLOSE_BTN: 'schedule-modal-close-btn',
+    CONTENT: 'schedule-modal-content',
+    FOOTER: 'modal-footer',
+    STEP_HEADER: 'step-header',
+    STEP_DESCRIPTION: 'step-description',
+    CONSULTANT_GRID: 'consultant-grid',
+    CONSULTANT_CARD: 'consultant-card',
+    FILTER_SECTION: 'filter-section',
+    SEARCH_INPUT: 'search-input',
+    SPECIALTY_SELECT: 'specialty-select',
+    AVAILABILITY_FILTER: 'availability-filter',
+    FILTER_BUTTON: 'filter-button',
+    RESET_BUTTON: 'reset-button',
+    NO_CONSULTANTS: 'no-consultants',
+    SELECTED_INFO: 'selected-consultant-info',
+    SELECTION_SUMMARY: 'selection-summary',
+    CONSULTANT_SPECIALTY: 'consultant-specialty'
+  },
   
   // 오늘의 통계
   TODAY_STATS: {
@@ -294,4 +323,72 @@ export const GRADIENTS = {
   PAYMENT: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
   REPORT: 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)',
   SETTINGS: 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)'
+};
+
+// 스케줄 모달 상수
+export const SCHEDULE_MODAL_CONSTANTS = {
+  // 모달 크기
+  MODAL_WIDTH: '1200px',
+  MODAL_MAX_HEIGHT: '98vh',
+  MODAL_MIN_HEIGHT: '500px',
+  
+  // 단계별 높이
+  STEP_HEADER_HEIGHT: '80px',
+  FILTER_SECTION_HEIGHT: '200px',
+  CONSULTANT_GRID_HEIGHT: '350px',
+  
+  // 애니메이션
+  ANIMATION_DURATION: '0.3s',
+  ANIMATION_EASING: 'ease',
+  
+  // 색상
+  PRIMARY_COLOR: '#667eea',
+  SUCCESS_COLOR: '#28a745',
+  WARNING_COLOR: '#ffc107',
+  DANGER_COLOR: '#dc3545',
+  INFO_COLOR: '#17a2b8',
+  
+  // 가용성 상태
+  AVAILABILITY: {
+    AVAILABLE: 'available',
+    BUSY: 'busy',
+    UNAVAILABLE: 'unavailable',
+    ALL: 'all'
+  },
+  
+  // 전문분야 옵션
+  SPECIALTIES: [
+    { value: '', label: '전체' },
+    { value: '우울증', label: '우울증' },
+    { value: '불안장애', label: '불안장애' },
+    { value: '가족상담', label: '가족상담' },
+    { value: '부부상담', label: '부부상담' },
+    { value: '트라우마', label: '트라우마' },
+    { value: 'PTSD', label: 'PTSD' },
+    { value: 'ADHD', label: 'ADHD' },
+    { value: '자폐스펙트럼', label: '자폐스펙트럼' }
+  ],
+  
+  // 가용성 필터 옵션
+  AVAILABILITY_OPTIONS: [
+    { value: 'all', label: '전체', color: '#6c757d' },
+    { value: 'available', label: '여유', color: '#28a745' },
+    { value: 'busy', label: '바쁨', color: '#ffc107' },
+    { value: 'unavailable', label: '휴', color: '#dc3545' }
+  ],
+  
+  // 상담사 카드 설정
+  CONSULTANT_CARD: {
+    MIN_HEIGHT: '120px',
+    BORDER_RADIUS: '12px',
+    PADDING: '16px',
+    MARGIN_BOTTOM: '12px'
+  },
+  
+  // 필터 설정
+  FILTER: {
+    SEARCH_PLACEHOLDER: '상담사 이름, 직책, 전문분야로 검색...',
+    RESET_BUTTON_TEXT: '초기화',
+    CONSULTANT_COUNT_TEXT: '명의 상담사'
+  }
 };

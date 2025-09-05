@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import ConsultantCard from '../ConsultantCard';
-import ConsultantFilter from '../components/ConsultantFilter';
-import notificationManager from '../../../utils/notification';
+import ConsultantCardNew from '../ConsultantCardNew';
+import ConsultantFilterNew from '../components/ConsultantFilterNew';
 import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../../constants/css-variables';
 
 /**
@@ -350,7 +349,7 @@ const ConsultantSelectionStepNew = ({
             </div>
 
             {/* 필터 섹션 */}
-            <ConsultantFilter
+            <ConsultantFilterNew
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 onResetFilters={handleResetFilters}
@@ -367,7 +366,7 @@ const ConsultantSelectionStepNew = ({
                     </div>
                 ) : (
                     filteredConsultants.map(consultant => (
-                        <ConsultantCard
+                        <ConsultantCardNew
                             key={consultant.id}
                             consultant={consultant}
                             onClick={() => handleConsultantSelect(consultant)}

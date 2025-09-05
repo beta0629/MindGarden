@@ -1,25 +1,24 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import StepIndicator from './components/StepIndicator';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
 import notificationManager from '../../utils/notification';
-import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../constants/css-variables';
+import { CSS_VARIABLES } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
 import './ScheduleModal.css';
 
 /**
- * 새로운 디자인의 스케줄 생성 모달 컴포넌트
- * - CSS 클래스 상수 사용
- * - JavaScript 상수 사용
- * - 컴포넌트화 적용
- * - 현대적인 디자인
+ * 스케줄 생성 모달 컴포넌트
+ * - 상담사 선택 (드래그 앤 드롭)
+ * - 내담자 선택 (드래그 앤 드롭)
+ * - 시간 슬롯 관리
  * 
  * @author MindGarden
- * @version 2.0.0
- * @since 2025-01-05
+ * @version 1.0.0
+ * @since 2024-12-19
  */
-const ScheduleModalNew = ({ 
+const ScheduleModal = ({ 
     isOpen, 
     onClose, 
     selectedDate, 
@@ -56,20 +55,22 @@ const ScheduleModalNew = ({
             setModalOpen(false);
             console.log('📱 스케줄 모달 언마운트 - 세션 체크 재개');
         };
-    }, [isOpen, setModalOpen]);
+    }, [isOpen]); // setModalOpen 제거하여 무한 리렌더링 방지
+
+
 
     /**
      * 상담 유형별 기본 시간 반환
      */
     const getConsultationDuration = (type) => {
-        const durationMap = {
-            'INDIVIDUAL': 50,
-            'FAMILY': 100,
-            'INITIAL': 60,
-            'COUPLE': 80,
-            'GROUP': 90
-        };
-        return durationMap[type] || 50;
+        switch (type) {
+            case 'INDIVIDUAL': return 50;
+            case 'FAMILY': return 100;
+            case 'INITIAL': return 60;
+            case 'COUPLE': return 80;
+            case 'GROUP': return 90;
+            default: return 50;
+        }
     };
 
     /**
@@ -118,7 +119,7 @@ const ScheduleModalNew = ({
      */
     const handleCreateSchedule = async () => {
         if (!selectedConsultant || !selectedClient || !selectedTimeSlot) {
-            notificationManager.error('모든 항목을 선택해주세요.');
+            alert('모든 항목을 선택해주세요.');
             return;
         }
 
@@ -215,15 +216,14 @@ const ScheduleModalNew = ({
     if (!isOpen) return null;
 
     return (
-        <div className={COMPONENT_CSS.SCHEDULE_MODAL.OVERLAY} onClick={handleClose}>
-            <div className={COMPONENT_CSS.SCHEDULE_MODAL.MODAL} onClick={(e) => e.stopPropagation()}>
-                {/* 모달 헤더 */}
-                <div className={COMPONENT_CSS.SCHEDULE_MODAL.HEADER}>
-                    <div className={COMPONENT_CSS.SCHEDULE_MODAL.HEADER_LEFT}>
-                        <h3 className={COMPONENT_CSS.SCHEDULE_MODAL.TITLE}>📅 스케줄 생성</h3>
+        <div className="schedule-modal-overlay" onClick={handleClose}>
+            <div className="schedule-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="schedule-modal-header">
+                    <div className="schedule-modal-header-left">
+                        <h3>📅 스케줄 생성</h3>
                     </div>
-                    <div className={COMPONENT_CSS.SCHEDULE_MODAL.HEADER_CENTER}>
-                        <div className={COMPONENT_CSS.SCHEDULE_MODAL.SELECTED_DATE}>
+                    <div className="schedule-modal-header-center">
+                        <div className="selected-date">
                             {selectedDate?.toLocaleDateString('ko-KR', {
                                 year: 'numeric',
                                 month: 'long',
@@ -232,19 +232,12 @@ const ScheduleModalNew = ({
                             })}
                         </div>
                     </div>
-                    <div className={COMPONENT_CSS.SCHEDULE_MODAL.HEADER_RIGHT}>
-                        <button 
-                            className={COMPONENT_CSS.SCHEDULE_MODAL.CLOSE_BTN} 
-                            onClick={handleClose}
-                            aria-label="모달 닫기"
-                        >
-                            ✕
-                        </button>
+                    <div className="schedule-modal-header-right">
+                        <button className="schedule-modal-close-btn" onClick={handleClose}>✕</button>
                     </div>
                 </div>
 
-                {/* 모달 콘텐츠 */}
-                <div className={COMPONENT_CSS.SCHEDULE_MODAL.CONTENT}>
+                <div className="schedule-modal-content">
                     <StepIndicator 
                         currentStep={step} 
                         totalSteps={4}
@@ -255,8 +248,6 @@ const ScheduleModalNew = ({
                             { id: 4, title: '세부사항', icon: '📝' }
                         ]}
                     />
-                    
-                    {/* 1단계: 상담사 선택 */}
                     {step === 1 && (
                         <ConsultantSelectionStep
                             onConsultantSelect={handleConsultantDrop}
@@ -265,7 +256,6 @@ const ScheduleModalNew = ({
                         />
                     )}
 
-                    {/* 2단계: 내담자 선택 */}
                     {step === 2 && (
                         <ClientSelectionStep
                             onClientSelect={handleClientDrop}
@@ -274,7 +264,6 @@ const ScheduleModalNew = ({
                         />
                     )}
 
-                    {/* 3단계: 시간 선택 */}
                     {step === 3 && (
                         <div className="time-selection">
                             <h4>⏰ 시간을 선택하세요</h4>
@@ -301,7 +290,6 @@ const ScheduleModalNew = ({
                         </div>
                     )}
 
-                    {/* 4단계: 세부사항 */}
                     {step === 4 && (
                         <div className="schedule-details">
                             <h4>📝 스케줄 세부사항</h4>
@@ -343,8 +331,7 @@ const ScheduleModalNew = ({
                     )}
                 </div>
 
-                {/* 모달 푸터 */}
-                <div className={COMPONENT_CSS.SCHEDULE_MODAL.FOOTER}>
+                <div className="modal-footer">
                     {step > 1 && (
                         <button 
                             className="btn btn-secondary" 
@@ -386,4 +373,4 @@ const ScheduleModalNew = ({
     );
 };
 
-export default ScheduleModalNew;
+export default ScheduleModal;

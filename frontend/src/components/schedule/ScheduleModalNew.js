@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import StepIndicator from './components/StepIndicator';
-import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
+import ConsultantSelectionStepNew from './steps/ConsultantSelectionStepNew';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
 import notificationManager from '../../utils/notification';
 import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
-import './ScheduleModal.css';
+import './ScheduleModalNew.css';
 
 /**
  * 새로운 디자인의 스케줄 생성 모달 컴포넌트
@@ -258,7 +258,7 @@ const ScheduleModalNew = ({
                     
                     {/* 1단계: 상담사 선택 */}
                     {step === 1 && (
-                        <ConsultantSelectionStep
+                        <ConsultantSelectionStepNew
                             onConsultantSelect={handleConsultantDrop}
                             selectedConsultant={selectedConsultant}
                             selectedDate={selectedDate}

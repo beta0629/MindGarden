@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
 import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
@@ -402,6 +402,77 @@ const AdminDashboard = ({ user: propUser }) => {
                     loading={loading}
                 />
             </div>
+
+            {/* 재무 관리 (수퍼어드민 전용) */}
+            {(propUser || sessionUser)?.role === 'SUPER_ADMIN' && (
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                        <i className={ICONS.BI.CURRENCY_DOLLAR}></i>
+                        재무 관리
+                    </h2>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/super-admin/finance')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} finance`}>
+                                <FaDollarSign />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>자금 대시보드</h3>
+                                <p>전체 재무 현황을 한눈에 확인합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/super-admin/revenue')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} revenue`}>
+                                <FaChartLine />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>수익 관리</h3>
+                                <p>수익 현황을 관리하고 분석합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/super-admin/expenses')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} expenses`}>
+                                <FaReceipt />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>지출 관리</h3>
+                                <p>지출 내역을 관리하고 분석합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/super-admin/payments')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} payments`}>
+                                <FaCreditCard />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>결제 관리</h3>
+                                <p>결제 내역을 관리하고 처리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/super-admin/finance-reports')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} reports`}>
+                                <FaFileAlt />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>재무 보고서</h3>
+                                <p>재무 보고서를 생성하고 관리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/super-admin/finance-settings')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} settings`}>
+                                <FaCogs />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>자금 설정</h3>
+                                <p>재무 관련 설정을 관리합니다</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 토스트 알림 */}
             {showToastState && (

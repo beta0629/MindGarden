@@ -45,6 +45,36 @@ export const CSS_VARIABLES = {
     CLIENT_DARK: '#00a085',
     CLIENT_GRADIENT: 'linear-gradient(135deg, #00b894 0%, #00a085 100%)',
     
+    // Finance Colors
+    FINANCE: '#f39c12',
+    FINANCE_DARK: '#e67e22',
+    FINANCE_GRADIENT: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)',
+    
+    // Revenue Colors
+    REVENUE: '#27ae60',
+    REVENUE_DARK: '#229954',
+    REVENUE_GRADIENT: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
+    
+    // Expense Colors
+    EXPENSE: '#e74c3c',
+    EXPENSE_DARK: '#c0392b',
+    EXPENSE_GRADIENT: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
+    
+    // Payment Colors
+    PAYMENT: '#9b59b6',
+    PAYMENT_DARK: '#8e44ad',
+    PAYMENT_GRADIENT: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
+    
+    // Report Colors
+    REPORT: '#34495e',
+    REPORT_DARK: '#2c3e50',
+    REPORT_GRADIENT: 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)',
+    
+    // Settings Colors
+    SETTINGS: '#95a5a6',
+    SETTINGS_DARK: '#7f8c8d',
+    SETTINGS_GRADIENT: 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)',
+    
     // Neutral Colors
     WHITE: '#ffffff',
     BLACK: '#2c3e50',
@@ -220,7 +250,14 @@ export const ICONS = {
     FLOWER: 'bi-flower1',
     LIST: 'bi-list',
     BOX_ARROW_RIGHT: 'bi-box-arrow-right',
-    BOX_ARROW_IN_RIGHT: 'bi-box-arrow-in-right'
+    BOX_ARROW_IN_RIGHT: 'bi-box-arrow-in-right',
+    CURRENCY_DOLLAR: 'bi-currency-dollar',
+    GRAPH_UP_ARROW: 'bi-graph-up-arrow',
+    CASH_STACK: 'bi-cash-stack',
+    RECEIPT: 'bi-receipt',
+    CREDIT_CARD: 'bi-credit-card',
+    FILE_EARMARK_BAR_GRAPH: 'bi-file-earmark-bar-graph',
+    GEAR_FILL: 'bi-gear-fill'
   },
   
   // Font Awesome Icons
@@ -231,7 +268,14 @@ export const ICONS = {
     SYNC: 'FaSync',
     CALENDAR_ALT: 'FaCalendarAlt',
     CALENDAR_CHECK: 'FaCalendarCheck',
-    COG: 'FaCog'
+    COG: 'FaCog',
+    DOLLAR_SIGN: 'FaDollarSign',
+    CHART_LINE: 'FaChartLine',
+    CASH_STACK: 'FaCashStack',
+    RECEIPT: 'FaReceipt',
+    CREDIT_CARD: 'FaCreditCard',
+    FILE_ALT: 'FaFileAlt',
+    COGS: 'FaCogs'
   }
 };
 
@@ -243,5 +287,11 @@ export const GRADIENTS = {
   INFO: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
   WARNING: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
   CONSULTANT: 'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%)',
-  CLIENT: 'linear-gradient(135deg, #00b894 0%, #00a085 100%)'
+  CLIENT: 'linear-gradient(135deg, #00b894 0%, #00a085 100%)',
+  FINANCE: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)',
+  REVENUE: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
+  EXPENSE: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
+  PAYMENT: 'linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%)',
+  REPORT: 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)',
+  SETTINGS: 'linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%)'
 };

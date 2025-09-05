@@ -115,6 +115,7 @@ function AppContent() {
             <Route path="/client/dashboard" element={<CommonDashboard user={user} />} />
             <Route path="/consultant/dashboard" element={<CommonDashboard user={user} />} />
             <Route path="/admin/dashboard" element={<AdminDashboard user={user} />} />
+            <Route path="/super_admin/dashboard" element={<AdminDashboard user={user} />} />
             <Route path="/client/mypage" element={<MyPage />} />
             <Route path="/consultant/mypage" element={<MyPage />} />
             <Route path="/admin/mypage" element={<MyPage />} />

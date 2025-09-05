@@ -379,15 +379,15 @@
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: flex-start;
-  align-items: flex-start;
-  text-align: left;
+  align-items: center;
+  text-align: center;
   position: relative;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin: 0;
-  gap: 16px;
+  gap: 12px;
 }
 
 .consultant-card:hover {
@@ -403,14 +403,14 @@
 }
 
 .consultant-avatar {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: var(--schedule-modal-primary-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--schedule-modal-white);
   flex-shrink: 0;
@@ -424,8 +424,8 @@
   flex-direction: column;
   gap: 4px;
   overflow: hidden;
-  justify-content: space-between;
-  height: 100%;
+  width: 100%;
+  align-items: center;
 }
 
 .consultant-name {
@@ -469,7 +469,8 @@
   flex-direction: column;
   gap: 8px;
   margin-top: auto;
-  align-items: flex-end;
+  align-items: center;
+  width: 100%;
 }
 
 .consultant-availability {

@@ -92,7 +92,6 @@ const ConsultantCardNew = ({
                 <h5 className="consultant-name">{consultant.name}</h5>
                 <p className="consultant-email">{consultant.email || '이메일 없음'}</p>
                 <p className="consultant-phone">{consultant.phone || '전화번호 없음'}</p>
-                <p className="consultant-title">{consultant.title || '상담사'}</p>
                 <p className="consultant-specialty">{getSpecialtyText()}</p>
             </div>
 

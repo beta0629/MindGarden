@@ -458,10 +458,11 @@
 }
 
 .consultant-specialty {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--schedule-modal-text-light);
   font-weight: 400;
   margin: 0;
+  font-style: italic;
 }
 
 .consultant-bottom {

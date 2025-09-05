@@ -465,6 +465,14 @@
   font-style: italic;
 }
 
+.consultant-status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  align-items: flex-end;
+}
+
 .consultant-bottom {
   display: flex;
   flex-direction: column;

@@ -106,6 +106,20 @@ const ConsultantCardNew = ({
                 <p className="consultant-email">{consultant.email || '이메일 없음'}</p>
                 <p className="consultant-phone">{consultant.phone || '전화번호 없음'}</p>
                 <p className="consultant-specialty">{getSpecialtyText()}</p>
+                
+                {/* 상태 및 등록일 */}
+                <div className="consultant-status-info">
+                    <div 
+                        className={`consultant-availability ${getAvailabilityClass()}`}
+                        style={{ '--availability-color': getAvailabilityColor() }}
+                    >
+                        <div className="availability-dot"></div>
+                        {getAvailabilityText()}
+                    </div>
+                    <p className="consultant-registration-date">
+                        등록일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '2025. 1. 5.'}
+                    </p>
+                </div>
             </div>
 
             {/* 선택 표시 */}

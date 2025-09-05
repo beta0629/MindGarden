@@ -470,7 +470,7 @@
   flex-direction: column;
   gap: 6px;
   margin-top: 8px;
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
 .consultant-bottom {

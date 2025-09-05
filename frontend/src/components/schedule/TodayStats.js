@@ -35,9 +35,9 @@ const TodayStats = () => {
             // 관리자 권한으로 모든 스케줄 조회
             const response = await apiGet(`/api/schedules?userId=0&userRole=ADMIN`);
             
-            if (response && Array.isArray(response)) {
+            if (response && response.success && Array.isArray(response.data)) {
                 // 오늘의 스케줄 필터링
-                const todaySchedules = response.filter(schedule => 
+                const todaySchedules = response.data.filter(schedule => 
                     schedule.date === today
                 );
                 

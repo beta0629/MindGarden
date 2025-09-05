@@ -394,7 +394,40 @@ const AdminStatisticsPage = () => {
 
 ## 📅 스케줄 관리 컴포넌트
 
-### 1. ScheduleList
+### 1. TodayStats
+
+**파일**: `src/components/schedule/TodayStats.js`
+
+**역할**: 오늘의 스케줄 통계를 표시하는 컴포넌트 (API 응답 처리 수정)
+
+**Props**:
+- 없음 (내부적으로 상태 관리)
+
+**사용법**:
+```jsx
+import TodayStats from '../components/schedule/TodayStats';
+
+const SchedulePage = () => {
+  return (
+    <div>
+      <TodayStats />
+    </div>
+  );
+};
+```
+
+**주요 기능**:
+- 오늘의 스케줄 통계 계산 (총 상담, 완료, 진행중, 취소)
+- API 응답 형식 `{success, data, message}` 처리
+- 30초마다 자동 새로고침
+- 로딩/에러 상태 처리
+- 새로고침 버튼 제공
+
+**최근 수정사항**:
+- API 응답 형식 처리 수정: `response.success && Array.isArray(response.data)` 확인
+- 실제 데이터는 `response.data`에서 가져오도록 수정
+
+### 2. ScheduleList
 
 **파일**: `src/components/common/ScheduleList.js`
 

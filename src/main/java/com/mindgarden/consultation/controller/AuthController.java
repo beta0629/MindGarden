@@ -8,6 +8,7 @@ import com.mindgarden.consultation.dto.AuthRequest;
 import com.mindgarden.consultation.dto.AuthResponse;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.UserSocialAccount;
+import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AuthService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthController {
     
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final UserRepository userRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final AuthService authService;
     
@@ -52,8 +54,10 @@ public class AuthController {
 
     @GetMapping("/current-user")
     public ResponseEntity<?> getCurrentUser(HttpSession session) {
-        User user = SessionUtils.getCurrentUser(session);
-        if (user != null) {
+        User sessionUser = SessionUtils.getCurrentUser(session);
+        if (sessionUser != null) {
+            // 세션에 저장된 사용자 ID로 데이터베이스에서 최신 정보 조회
+            User user = userRepository.findById(sessionUser.getId()).orElse(sessionUser);
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("id", user.getId());
             userInfo.put("email", user.getEmail());

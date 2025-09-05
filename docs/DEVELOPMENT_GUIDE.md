@@ -1451,6 +1451,181 @@ test('통계 API가 올바른 형식으로 응답한다', async () => {
 });
 ```
 
+## 프로필 이미지 처리 가이드라인 (2025-09-05 업데이트)
+
+### 1. 프로필 이미지 저장 시스템
+
+#### **데이터베이스 스키마**
+```sql
+-- User 테이블의 profile_image_url 컬럼을 TEXT 타입으로 변경
+ALTER TABLE users MODIFY COLUMN profile_image_url TEXT;
+```
+
+#### **엔티티 설정**
+```java
+// User.java
+@Column(name = "profile_image_url", columnDefinition = "TEXT")
+private String profileImageUrl;
+```
+
+### 2. 프로필 이미지 우선순위 시스템
+
+#### **백엔드 우선순위 로직**
+```java
+// AuthController.java - getCurrentUser 메서드
+// 1. 세션 사용자 ID로 최신 정보 조회
+User user = userRepository.findById(sessionUser.getId()).orElse(sessionUser);
+
+// 2. 프로필 이미지 우선순위 적용
+String profileImageUrl = null;
+String socialProfileImage = null;
+String socialProvider = null;
+
+if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().trim().isEmpty()) {
+    // 사용자 업로드 이미지 (최우선)
+    profileImageUrl = user.getProfileImageUrl();
+} else if (!socialAccounts.isEmpty()) {
+    // 소셜 이미지 (2순위)
+    socialProfileImage = primarySocialAccount.getProviderProfileImage();
+    socialProvider = primarySocialAccount.getProvider();
+}
+```
+
+#### **프론트엔드 우선순위 로직**
+```javascript
+// SimpleHeader.js - getProfileImageUrl 함수
+const getProfileImageUrl = () => {
+  if (user?.profileImageUrl && !imageLoadError) {
+    return user.profileImageUrl; // 사용자 업로드 이미지
+  }
+  if (user?.socialProfileImage && !imageLoadError) {
+    return user.socialProfileImage; // 소셜 이미지
+  }
+  return null; // 기본 아이콘 사용
+};
+```
+
+### 3. 이미지 크롭 및 저장 시스템
+
+#### **프론트엔드 크롭 처리**
+```javascript
+// ProfileImageUpload.js - Canvas API를 사용한 이미지 크롭
+const handleCropComplete = (croppedArea, croppedAreaPixels) => {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  canvas.width = croppedAreaPixels.width;
+  canvas.height = croppedAreaPixels.height;
+  
+  ctx.drawImage(
+    imageRef.current,
+    croppedAreaPixels.x,
+    croppedAreaPixels.y,
+    croppedAreaPixels.width,
+    croppedAreaPixels.height,
+    0, 0,
+    croppedAreaPixels.width,
+    croppedAreaPixels.height
+  );
+  
+  const croppedImageData = canvas.toDataURL('image/jpeg', 0.8);
+  setProfileImage(croppedImageData);
+  setProfileImageType('USER_PROFILE');
+};
+```
+
+#### **즉시 적용 시스템**
+```javascript
+// ProfileSection.js - 이미지 변경 시 즉시 적용
+const handleImageChange = (imageData, imageType) => {
+  setProfileImage(imageData);
+  setProfileImageType(imageType);
+  
+  // 100ms 후 자동 저장
+  setTimeout(() => {
+    if (onSave) {
+      onSave({ profileImage: imageData, profileImageType: imageType });
+    }
+  }, 100);
+};
+```
+
+### 4. API 응답 형식 처리
+
+#### **일관된 API 응답 구조**
+```javascript
+// 모든 API 응답은 다음 구조를 따름
+{
+  "success": true,
+  "data": {}, // 실제 데이터
+  "message": "성공 메시지",
+  "totalCount": 30 // 데이터 개수 (선택적)
+}
+```
+
+#### **API 호출 예시**
+```javascript
+// TodayStats.js - API 응답 처리 수정
+const response = await apiGet(`/api/schedules?userId=0&userRole=ADMIN`);
+
+if (response && response.success && Array.isArray(response.data)) {
+  // response.data에서 실제 데이터 추출
+  const todaySchedules = response.data.filter(schedule => 
+    schedule.date === today
+  );
+}
+```
+
+### 5. 에러 처리 및 폴백
+
+#### **이미지 로드 에러 처리**
+```javascript
+// SimpleHeader.js - 이미지 로드 실패 시 폴백
+const handleImageError = () => {
+  console.log('프로필 이미지 로드 실패, 기본 아이콘으로 대체');
+  setImageLoadError(true);
+};
+
+const handleImageLoad = () => {
+  console.log('프로필 이미지 로드 성공');
+};
+```
+
+#### **기본 아바타 처리**
+```javascript
+// ProfileImageUpload.js - 기본 아바타 인라인 SVG
+const DEFAULT_AVATAR_SVG = `data:image/svg+xml;base64,${btoa(`
+  <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="60" cy="60" r="60" fill="#f0f0f0"/>
+    <g fill="#999999">
+      <circle cx="60" cy="45" r="18"/>
+      <path d="M30 100 C30 80, 45 70, 60 70 C75 70, 90 80, 90 100 L90 110 L30 110 Z"/>
+    </g>
+    <circle cx="60" cy="60" r="60" fill="none" stroke="#e0e0e0" stroke-width="2"/>
+  </svg>
+`)}`;
+```
+
+### 6. 성능 최적화
+
+#### **이미지 크기 제한**
+```javascript
+// 이미지 크롭 시 품질 조정
+const croppedImageData = canvas.toDataURL('image/jpeg', 0.8); // 80% 품질
+```
+
+#### **메모리 관리**
+```javascript
+// 컴포넌트 언마운트 시 이미지 정리
+useEffect(() => {
+  return () => {
+    if (imageRef.current) {
+      imageRef.current = null;
+    }
+  };
+}, []);
+```
+
 ## 다음 단계
 
 1. 프로필 이미지 업로드 기능 테스트

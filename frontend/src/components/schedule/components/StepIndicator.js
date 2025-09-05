@@ -21,7 +21,7 @@ const StepIndicator = ({
         { id: 4, title: '세부사항', icon: '📝' }
     ]
 }) => {
-    const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+    const progressPercentage = currentStep === 1 ? 0 : ((currentStep - 1) / (totalSteps - 1)) * 100;
 
     return (
         <div className="step-indicator">
@@ -36,7 +36,7 @@ const StepIndicator = ({
                 {steps.map((step, index) => (
                     <div 
                         key={step.id}
-                        className={`step-item ${currentStep >= step.id ? 'active' : ''} ${currentStep === step.id ? 'current' : ''}`}
+                        className={`step-item ${currentStep > step.id ? 'active' : ''} ${currentStep === step.id ? 'current' : ''}`}
                     >
                         <div className="step-icon">
                             {currentStep > step.id ? '✓' : step.icon}

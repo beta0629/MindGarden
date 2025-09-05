@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import com.mindgarden.consultation.constant.ConsultationStatus;
-import com.mindgarden.consultation.constant.ConsultationType;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
@@ -22,6 +20,7 @@ import com.mindgarden.consultation.entity.Consultation;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
+import com.mindgarden.consultation.repository.ConsultationRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.AdminService;
 import org.springframework.beans.factory.annotation.Value;
@@ -562,9 +561,9 @@ public class TestDataController {
             consultation1.setConsultationDate(LocalDate.now().minusDays(7));
             consultation1.setStartTime(LocalTime.of(14, 0));
             consultation1.setEndTime(LocalTime.of(15, 0));
-            consultation1.setStatus(ConsultationStatus.COMPLETED);
-            consultation1.setConsultationType(ConsultationType.INDIVIDUAL);
-            consultation1.setNotes("첫 번째 상담 - 스트레스 관리에 대해 논의");
+            consultation1.setStatus("COMPLETED");
+            consultation1.setConsultationMethod("FACE_TO_FACE");
+            consultation1.setConsultantNotes("첫 번째 상담 - 스트레스 관리에 대해 논의");
             consultation1.setCreatedAt(LocalDateTime.now().minusDays(7));
             consultations.add(consultation1);
 
@@ -575,9 +574,9 @@ public class TestDataController {
             consultation2.setConsultationDate(LocalDate.now().minusDays(14));
             consultation2.setStartTime(LocalTime.of(10, 0));
             consultation2.setEndTime(LocalTime.of(11, 0));
-            consultation2.setStatus(ConsultationStatus.COMPLETED);
-            consultation2.setConsultationType(ConsultationType.INDIVIDUAL);
-            consultation2.setNotes("두 번째 상담 - 불안 증상에 대한 상담");
+            consultation2.setStatus("COMPLETED");
+            consultation2.setConsultationMethod("FACE_TO_FACE");
+            consultation2.setConsultantNotes("두 번째 상담 - 불안 증상에 대한 상담");
             consultation2.setCreatedAt(LocalDateTime.now().minusDays(14));
             consultations.add(consultation2);
 
@@ -588,9 +587,9 @@ public class TestDataController {
             consultation3.setConsultationDate(LocalDate.now().minusDays(21));
             consultation3.setStartTime(LocalTime.of(16, 0));
             consultation3.setEndTime(LocalTime.of(17, 0));
-            consultation3.setStatus(ConsultationStatus.COMPLETED);
-            consultation3.setConsultationType(ConsultationType.INDIVIDUAL);
-            consultation3.setNotes("세 번째 상담 - 초기 상담 및 문제 파악");
+            consultation3.setStatus("COMPLETED");
+            consultation3.setConsultationMethod("FACE_TO_FACE");
+            consultation3.setConsultantNotes("세 번째 상담 - 초기 상담 및 문제 파악");
             consultation3.setCreatedAt(LocalDateTime.now().minusDays(21));
             consultations.add(consultation3);
 

@@ -5,6 +5,7 @@ import ConfirmModal from '../common/ConfirmModal';
 import { 
   COMMON_MENU_ITEMS, 
   ADMIN_MENU_ITEMS, 
+  SUPER_ADMIN_MENU_ITEMS,
   CONSULTANT_MENU_ITEMS, 
   CLIENT_MENU_ITEMS,
   USER_ROLES 
@@ -67,6 +68,16 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           ADMIN_MENU_ITEMS.MAIN.SYSTEM
         ],
         subMenus: ADMIN_MENU_ITEMS.SUB
+      },
+      [USER_ROLES.SUPER_ADMIN]: {
+        mainMenus: [
+          ...commonMainMenus,
+          SUPER_ADMIN_MENU_ITEMS.MAIN.ADMIN,
+          SUPER_ADMIN_MENU_ITEMS.MAIN.USERS,
+          SUPER_ADMIN_MENU_ITEMS.MAIN.SYSTEM,
+          SUPER_ADMIN_MENU_ITEMS.MAIN.FINANCE
+        ],
+        subMenus: SUPER_ADMIN_MENU_ITEMS.SUB
       },
       [USER_ROLES.CONSULTANT]: {
         mainMenus: [

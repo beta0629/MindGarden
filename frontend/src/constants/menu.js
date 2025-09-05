@@ -59,6 +59,59 @@ export const ADMIN_MENU_ITEMS = {
   }
 };
 
+// 수퍼어드민 메뉴
+export const SUPER_ADMIN_MENU_ITEMS = {
+  MAIN: {
+    ADMIN: {
+      id: 'admin',
+      label: '관리자 기능',
+      icon: 'bi-gear'
+    },
+    USERS: {
+      id: 'users',
+      label: '사용자 관리',
+      icon: 'bi-people'
+    },
+    SYSTEM: {
+      id: 'system',
+      label: '시스템 관리',
+      icon: 'bi-tools'
+    },
+    FINANCE: {
+      id: 'finance',
+      label: '자금 관리',
+      icon: 'bi-currency-dollar'
+    }
+  },
+  SUB: {
+    admin: [
+      { id: 'admin-dashboard', label: '관리자 대시보드', path: '/admin/dashboard', icon: 'bi-speedometer2' },
+      { id: 'admin-statistics', label: '통계 보기', path: '/admin/statistics', icon: 'bi-graph-up' },
+      { id: 'admin-statistics-dashboard', label: '통계 대시보드', path: '/admin/statistics-dashboard', icon: 'bi-bar-chart' },
+      { id: 'admin-schedules', label: '전체 스케줄', path: '/admin/schedules', icon: 'bi-calendar-check' },
+      { id: 'admin-settings', label: '관리자 설정', path: '/admin/settings', icon: 'bi-gear-fill' }
+    ],
+    users: [
+      { id: 'admin-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
+      { id: 'admin-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
+      { id: 'admin-mapping', label: '매핑 관리', path: '/admin/mapping-management', icon: 'bi-link' }
+    ],
+    system: [
+      { id: 'admin-codes', label: '공통코드 관리', path: '/admin/common-codes', icon: 'bi-code' },
+      { id: 'admin-system', label: '시스템 도구', path: '/admin/system', icon: 'bi-tools' },
+      { id: 'admin-logs', label: '시스템 로그', path: '/admin/logs', icon: 'bi-file-text' }
+    ],
+    finance: [
+      { id: 'finance-dashboard', label: '자금 대시보드', path: '/super-admin/finance', icon: 'bi-graph-up-arrow' },
+      { id: 'finance-revenue', label: '수익 관리', path: '/super-admin/revenue', icon: 'bi-cash-stack' },
+      { id: 'finance-expenses', label: '지출 관리', path: '/super-admin/expenses', icon: 'bi-receipt' },
+      { id: 'finance-payments', label: '결제 관리', path: '/super-admin/payments', icon: 'bi-credit-card' },
+      { id: 'finance-reports', label: '재무 보고서', path: '/super-admin/finance-reports', icon: 'bi-file-earmark-bar-graph' },
+      { id: 'finance-settings', label: '자금 설정', path: '/super-admin/finance-settings', icon: 'bi-gear' }
+    ]
+  }
+};
+
 // 상담사 메뉴
 export const CONSULTANT_MENU_ITEMS = {
   MAIN: {

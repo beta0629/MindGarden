@@ -19,6 +19,7 @@ import StatisticsModal from './components/common/StatisticsModal';
 import StatisticsDashboard from './components/admin/StatisticsDashboard';
 import ScheduleList from './components/common/ScheduleList';
 import ComingSoon from './components/common/ComingSoon';
+import FinanceDashboard from './components/super-admin/FinanceDashboard';
 import SimpleLayout from './components/layout/SimpleLayout';
 import Toast from './components/common/Toast';
 import NotificationTest from './components/test/NotificationTest';
@@ -174,6 +175,39 @@ function AppContent() {
               <ComingSoon 
                 title="관리자 설정"
                 description="관리자 설정 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            
+            {/* 수퍼어드민 전용 라우트 */}
+            <Route path="/super-admin/finance" element={<FinanceDashboard />} />
+            <Route path="/super-admin/revenue" element={
+              <ComingSoon 
+                title="수익 관리"
+                description="수익 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/super-admin/expenses" element={
+              <ComingSoon 
+                title="지출 관리"
+                description="지출 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/super-admin/payments" element={
+              <ComingSoon 
+                title="결제 관리"
+                description="결제 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/super-admin/finance-reports" element={
+              <ComingSoon 
+                title="재무 보고서"
+                description="재무 보고서 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/super-admin/finance-settings" element={
+              <ComingSoon 
+                title="자금 설정"
+                description="자금 설정 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
               />
             } />
             

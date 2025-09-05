@@ -40,6 +40,16 @@ public enum UserRole {
         return this == ADMIN || this == SUPER_ADMIN;
     }
     
+    // 수퍼어드민 역할인지 확인
+    public boolean isSuperAdmin() {
+        return this == SUPER_ADMIN;
+    }
+    
+    // 수퍼어드민 또는 일반 관리자인지 확인
+    public boolean isAdminOrSuperAdmin() {
+        return this == ADMIN || this == SUPER_ADMIN;
+    }
+    
     // 상담사 역할인지 확인
     public boolean isConsultant() {
         return this == CONSULTANT;

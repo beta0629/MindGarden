@@ -245,17 +245,6 @@ const ScheduleModalNew = ({
 
                 {/* 모달 콘텐츠 */}
                 <div className={COMPONENT_CSS.SCHEDULE_MODAL.CONTENT}>
-                    <StepIndicator 
-                        currentStep={step} 
-                        totalSteps={4}
-                        steps={[
-                            { id: 1, title: '상담사 선택', icon: '👨‍⚕️' },
-                            { id: 2, title: '내담자 선택', icon: '👤' },
-                            { id: 3, title: '시간 선택', icon: '⏰' },
-                            { id: 4, title: '세부사항', icon: '📝' }
-                        ]}
-                    />
-                    
                     {/* 1단계: 상담사 선택 */}
                     {step === 1 && (
                         <ConsultantSelectionStep

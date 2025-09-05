@@ -851,26 +851,45 @@ public class ScheduleServiceImpl implements ScheduleService {
             }
         }
         
-        // 2. 지난 날짜의 확정된 스케줄 조회 (오늘 이전)
-        List<Schedule> pastSchedules = scheduleRepository.findByDateBeforeAndStatus(today, ScheduleConstants.STATUS_CONFIRMED);
+        // 2. 지난 날짜의 예약된/확정된 스케줄 조회 (오늘 이전)
+        // 예약됨(BOOKED) 상태의 지난 스케줄도 완료 처리
+        List<Schedule> pastBookedSchedules = scheduleRepository.findByDateBeforeAndStatus(today, ScheduleConstants.STATUS_BOOKED);
+        List<Schedule> pastConfirmedSchedules = scheduleRepository.findByDateBeforeAndStatus(today, ScheduleConstants.STATUS_CONFIRMED);
         
-        for (Schedule schedule : pastSchedules) {
+        // 예약됨 상태의 지난 스케줄 처리
+        for (Schedule schedule : pastBookedSchedules) {
             try {
                 schedule.setStatus(ScheduleConstants.STATUS_COMPLETED);
                 schedule.setUpdatedAt(LocalDateTime.now());
                 scheduleRepository.save(schedule);
                 completedCount++;
                 
-                log.info("✅ 지난 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}", 
+                log.info("✅ 지난 예약 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}", 
                     schedule.getId(), schedule.getTitle(), schedule.getDate(), schedule.getStartTime());
                 
             } catch (Exception e) {
-                log.error("❌ 지난 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
+                log.error("❌ 지난 예약 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
             }
         }
         
-        log.info("🔄 자동 완료 처리 완료: {}개 스케줄 처리됨 (오늘: {}, 지난날: {})", 
-            completedCount, todayExpiredSchedules.size(), pastSchedules.size());
+        // 확정됨 상태의 지난 스케줄 처리
+        for (Schedule schedule : pastConfirmedSchedules) {
+            try {
+                schedule.setStatus(ScheduleConstants.STATUS_COMPLETED);
+                schedule.setUpdatedAt(LocalDateTime.now());
+                scheduleRepository.save(schedule);
+                completedCount++;
+                
+                log.info("✅ 지난 확정 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}", 
+                    schedule.getId(), schedule.getTitle(), schedule.getDate(), schedule.getStartTime());
+                
+            } catch (Exception e) {
+                log.error("❌ 지난 확정 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
+            }
+        }
+        
+        log.info("🔄 자동 완료 처리 완료: {}개 스케줄 처리됨 (오늘: {}, 지난예약: {}, 지난확정: {})", 
+            completedCount, todayExpiredSchedules.size(), pastBookedSchedules.size(), pastConfirmedSchedules.size());
     }
 
     /**

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
 import ScheduleCalendar from './ScheduleCalendar';
 import ConsultantStatus from './ConsultantStatus';
@@ -18,6 +19,7 @@ import './SchedulePage.css';
  * @since 2024-12-19
  */
 const SchedulePage = ({ user: propUser }) => {
+    const navigate = useNavigate();
     const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
     const [userRole, setUserRole] = useState('CLIENT');
     const [userId, setUserId] = useState(null);

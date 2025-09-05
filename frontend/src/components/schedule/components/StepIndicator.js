@@ -21,7 +21,7 @@ const StepIndicator = ({
         { id: 4, title: '세부사항', icon: '📝' }
     ]
 }) => {
-    const progressPercentage = currentStep === 1 ? 0 : ((currentStep - 1) / (totalSteps - 1)) * 100;
+    const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
 
     return (
         <div className="step-indicator">
@@ -33,27 +33,20 @@ const StepIndicator = ({
             </div>
             
             <div className="steps-container">
-                {steps.map((step, index) => {
-                    // 1단계일 때는 1단계만 표시
-                    if (currentStep === 1 && step.id > 1) {
-                        return null;
-                    }
-                    
-                    return (
-                        <div 
-                            key={step.id}
-                            className={`step-item ${currentStep > step.id ? 'active' : ''} ${currentStep === step.id ? 'current' : ''}`}
-                        >
-                            <div className="step-icon">
-                                {currentStep > step.id ? '✓' : step.icon}
-                            </div>
-                            <div className="step-content">
-                                <div className="step-number">{step.id}</div>
-                                <div className="step-title">{step.title}</div>
-                            </div>
+                {steps.map((step, index) => (
+                    <div 
+                        key={step.id}
+                        className={`step-item ${currentStep >= step.id ? 'active' : ''} ${currentStep === step.id ? 'current' : ''}`}
+                    >
+                        <div className="step-icon">
+                            {currentStep > step.id ? '✓' : step.icon}
                         </div>
-                    );
-                })}
+                        <div className="step-content">
+                            <div className="step-number">{step.id}</div>
+                            <div className="step-title">{step.title}</div>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

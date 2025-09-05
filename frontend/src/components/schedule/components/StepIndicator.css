@@ -125,11 +125,6 @@
     background-color: #007bff;
 }
 
-/* 현재 단계에서는 연결선 숨김 (완료된 단계만 연결선 표시) */
-.schedule-modal .step-item.current:not(:last-child)::after {
-    display: none;
-}
-
 /* 모바일 반응형 */
 @media (max-width: 768px) {
     .schedule-modal .step-icon {

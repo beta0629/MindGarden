@@ -379,15 +379,15 @@
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: flex-start;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
   position: relative;
   overflow: visible;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin: 0;
-  gap: 12px;
+  gap: 16px;
 }
 
 .consultant-card:hover {

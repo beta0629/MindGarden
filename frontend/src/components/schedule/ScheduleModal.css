@@ -371,7 +371,7 @@
 
 /* 상담사 카드 */
 .consultant-card {
-  height: 200px;
+  min-height: 200px;
   background: var(--schedule-modal-white);
   border-radius: var(--consultant-card-border-radius);
   padding: var(--consultant-card-padding);
@@ -384,7 +384,7 @@
   align-items: flex-start;
   text-align: left;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin: 0;
   gap: 16px;

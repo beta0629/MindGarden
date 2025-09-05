@@ -55,7 +55,20 @@ const ConsultantCardNew = ({
      * 전문분야 텍스트 반환
      */
     const getSpecialtyText = () => {
-        return consultant.specialties?.[0] || consultant.specialty || '전문분야 없음';
+        // 다양한 필드명으로 전문분야 확인
+        if (consultant.specialties && consultant.specialties.length > 0) {
+            return consultant.specialties[0];
+        }
+        if (consultant.specialty) {
+            return consultant.specialty;
+        }
+        if (consultant.specialtyName) {
+            return consultant.specialtyName;
+        }
+        if (consultant.expertise) {
+            return consultant.expertise;
+        }
+        return '전문분야 미설정';
     };
 
     /**

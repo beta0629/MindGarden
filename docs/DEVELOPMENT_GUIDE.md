@@ -1081,9 +1081,382 @@ if ("link".equals(mode)) {
 4. **세션 체크 오류 메시지**: 401 응답을 정상적인 상황으로 처리
 5. **타입 오류**: `providerUserId` 타입 변환 문제 해결
 
+## 📊 통계 및 차트 컴포넌트 개발 가이드 (신규 추가: 2025년 9월)
+
+### 1. Chart.js 기반 차트 컴포넌트 개발
+
+#### **Chart 컴포넌트 사용법**
+```jsx
+import Chart from '../components/common/Chart';
+
+// 기본 사용법
+<Chart 
+  type="bar"
+  data={chartData}
+  options={chartOptions}
+  width={400}
+  height={300}
+/>
+
+// Pie/Doughnut 차트 (자동 중앙 정렬)
+<Chart 
+  type="pie"
+  data={pieChartData}
+  options={pieChartOptions}
+/>
+```
+
+#### **차트 데이터 구조**
+```javascript
+// constants/charts.js에서 정의
+const chartData = {
+  labels: ['예약됨', '완료', '취소', '확정'],
+  datasets: [{
+    data: [8, 17, 5, 0],
+    backgroundColor: ['#ffc107', '#28a745', '#dc3545', '#17a2b8']
+  }]
+};
+```
+
+#### **차트 옵션 설정**
+```javascript
+// constants/charts.js에서 정의
+const CHART_OPTIONS = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'bottom'
+    }
+  }
+};
+
+// Pie/Doughnut 차트 전용 옵션
+const PIE_CHART_OPTIONS = {
+  responsive: true,
+  maintainAspectRatio: true,
+  plugins: {
+    legend: {
+      position: 'bottom',
+      align: 'center'
+    },
+    tooltip: {
+      callbacks: {
+        label: function(context) {
+          const total = context.dataset.data.reduce((a, b) => a + b, 0);
+          const percentage = ((context.parsed / total) * 100).toFixed(1);
+          return `${context.label}: ${context.parsed} (${percentage}%)`;
+        }
+      }
+    }
+  }
+};
+```
+
+### 2. 통계 카드 컴포넌트 개발
+
+#### **StatsCard 컴포넌트 사용법**
+```jsx
+import StatsCard from '../components/common/StatsCard';
+
+<StatsCard 
+  icon="bi bi-calendar-check"
+  title="완료된 상담"
+  value={45}
+  label="건"
+  change={5}
+  changeType="positive"
+  changeLabel="전주 대비"
+  color="success"
+/>
+```
+
+#### **DetailedStatsCard 컴포넌트 사용법**
+```jsx
+import DetailedStatsCard from '../components/common/DetailedStatsCard';
+
+<DetailedStatsCard 
+  icon="bi bi-people"
+  title="내담자 증감"
+  mainValue={150}
+  mainLabel="총 내담자"
+  subValue={25}
+  subLabel="신규 내담자"
+  changeValue={12}
+  changeType="positive"
+  changeLabel="전월 대비"
+  rateValue={8.7}
+  rateLabel="증가율"
+/>
+```
+
+#### **통계 카드 그리드 사용법**
+```jsx
+import StatsCardGrid from '../components/common/StatsCardGrid';
+import DetailedStatsGrid from '../components/common/DetailedStatsGrid';
+
+// 기본 통계 카드 그리드
+<StatsCardGrid statistics={basicStatsData} />
+
+// 상세 통계 카드 그리드
+<DetailedStatsGrid statistics={detailedStatsData} />
+```
+
+### 3. CSS 상수 사용 가이드
+
+#### **카드 컴포넌트 CSS 변수**
+```css
+/* frontend/src/styles/common/variables.css */
+:root {
+  /* 카드 컴포넌트 변수 */
+  --card-bg: #ffffff;
+  --card-border: #e9ecef;
+  --card-radius: 12px;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --card-hover-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --card-transition: all 0.3s ease;
+  
+  /* 카드 색상 변수 */
+  --card-color-primary: #007bff;
+  --card-color-primary-light: #e3f2fd;
+  --card-color-success: #28a745;
+  --card-color-warning: #ffc107;
+  --card-color-danger: #dc3545;
+  --card-color-info: #17a2b8;
+  --card-color-secondary: #6c757d;
+}
+```
+
+#### **CSS 클래스 상수 사용**
+```javascript
+// constants/css.js에서 정의
+export const STATS_CARD_CSS = {
+  container: 'stats-card',
+  header: 'stats-card-header',
+  icon: 'stats-card-icon',
+  title: 'stats-card-title',
+  content: 'stats-card-content',
+  value: 'stats-card-value',
+  label: 'stats-card-label',
+  changeContainer: 'stats-card-change-container',
+  change: 'stats-card-change',
+  positive: 'positive',
+  negative: 'negative'
+};
+```
+
+### 4. API 응답 형식 통일
+
+#### **일관된 응답 구조**
+```javascript
+// 모든 API 응답은 다음 구조를 따름
+{
+  "success": true,
+  "data": {}, // 실제 데이터
+  "message": "성공 메시지",
+  "totalCount": 30 // 데이터 개수 (선택적)
+}
+```
+
+#### **API 호출 예시**
+```javascript
+// utils/ajax.js 사용
+import { apiGet } from '../utils/ajax';
+
+const loadStatistics = async () => {
+  try {
+    const response = await apiGet('/api/schedules/admin/statistics', {
+      userRole: 'ADMIN',
+      startDate: '2025-09-01',
+      endDate: '2025-09-30'
+    });
+    
+    if (response.success) {
+      setStatistics(response.data);
+    }
+  } catch (error) {
+    console.error('통계 로드 실패:', error);
+  }
+};
+```
+
+### 5. 컴포넌트 개발 원칙
+
+#### **재사용 가능한 컴포넌트 설계**
+```jsx
+// ✅ 좋은 예: Props 기반 설계
+const StatsCard = ({ 
+  icon, 
+  title, 
+  value, 
+  label, 
+  change, 
+  changeType, 
+  color = 'primary',
+  loading = false,
+  error = false 
+}) => {
+  // 컴포넌트 로직
+};
+
+// ❌ 나쁜 예: 하드코딩된 값
+const StatsCard = () => {
+  return (
+    <div className="stats-card">
+      <h3>완료된 상담</h3> {/* 하드코딩된 제목 */}
+      <span>45건</span> {/* 하드코딩된 값 */}
+    </div>
+  );
+};
+```
+
+#### **상수 사용 원칙**
+```javascript
+// ✅ 좋은 예: 상수 사용
+import { STATS_CARD_CSS } from '../constants/css';
+import { CHART_TYPES } from '../constants/charts';
+
+const StatsCard = ({ title, value }) => {
+  return (
+    <div className={STATS_CARD_CSS.container}>
+      <h3 className={STATS_CARD_CSS.title}>{title}</h3>
+      <span className={STATS_CARD_CSS.value}>{value}</span>
+    </div>
+  );
+};
+
+// ❌ 나쁜 예: 하드코딩된 클래스명
+const StatsCard = ({ title, value }) => {
+  return (
+    <div className="stats-card">
+      <h3 className="stats-card-title">{title}</h3>
+      <span className="stats-card-value">{value}</span>
+    </div>
+  );
+};
+```
+
+### 6. 반응형 디자인 가이드
+
+#### **그리드 레이아웃 설정**
+```css
+/* 반응형 그리드 */
+.stats-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+/* 태블릿 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .stats-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+/* 모바일 최적화 */
+@media (max-width: 767px) {
+  .stats-card-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+```
+
+#### **차트 반응형 설정**
+```javascript
+// Chart.js 반응형 옵션
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: {
+        boxWidth: 12,
+        padding: 20
+      }
+    }
+  }
+};
+```
+
+### 7. 성능 최적화 가이드
+
+#### **컴포넌트 메모이제이션**
+```jsx
+import React, { memo } from 'react';
+
+const StatsCard = memo(({ icon, title, value, label, change, changeType, color }) => {
+  return (
+    <div className={`${STATS_CARD_CSS.container} ${color}`}>
+      {/* 컴포넌트 내용 */}
+    </div>
+  );
+});
+
+export default StatsCard;
+```
+
+#### **차트 데이터 최적화**
+```javascript
+// 차트 데이터 메모이제이션
+const chartData = useMemo(() => ({
+  labels: statistics.labels,
+  datasets: [{
+    data: statistics.data,
+    backgroundColor: CHART_COLORS
+  }]
+}), [statistics]);
+```
+
+### 8. 테스트 가이드
+
+#### **컴포넌트 테스트**
+```jsx
+import { render, screen } from '@testing-library/react';
+import StatsCard from '../StatsCard';
+
+test('통계 카드가 올바르게 렌더링된다', () => {
+  render(
+    <StatsCard 
+      icon="bi bi-calendar-check"
+      title="완료된 상담"
+      value={45}
+      label="건"
+      color="success"
+    />
+  );
+  
+  expect(screen.getByText('완료된 상담')).toBeInTheDocument();
+  expect(screen.getByText('45')).toBeInTheDocument();
+  expect(screen.getByText('건')).toBeInTheDocument();
+});
+```
+
+#### **API 테스트**
+```javascript
+// API 응답 테스트
+test('통계 API가 올바른 형식으로 응답한다', async () => {
+  const response = await apiGet('/api/schedules/admin/statistics', {
+    userRole: 'ADMIN'
+  });
+  
+  expect(response.success).toBe(true);
+  expect(response.data).toHaveProperty('basicStats');
+  expect(response.data).toHaveProperty('detailedStats');
+  expect(response.data).toHaveProperty('chartData');
+});
+```
+
 ## 다음 단계
 
 1. 프로필 이미지 업로드 기능 테스트
 2. 소셜 계정 연동 기능 완전 테스트
 3. 햄버거 메뉴 동작 확인
 4. 전체 UI/UX 검증
+5. **통계 대시보드 성능 최적화**
+6. **차트 컴포넌트 확장성 개선**
+7. **반응형 디자인 완성도 향상**

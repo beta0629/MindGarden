@@ -1400,9 +1400,382 @@ PUT /api/v1/notifications/settings
 }
 ```
 
-## 12. 현재 구현된 API 상태 (업데이트: 2025년 1월) ✅
+## 12. 통계 및 스케줄 관리 API (신규 추가: 2025년 9월) ✅
 
-### 12.1 구현 완료된 API 엔드포인트
+### 12.1 통계 API
+
+#### **관리자용 전체 스케줄 통계 조회** ✅
+```
+GET /api/schedules/admin/statistics
+```
+
+**Query Parameters:**
+- `userRole` (required): 사용자 역할 (ADMIN, SUPER_ADMIN)
+- `startDate` (optional): 시작일 (YYYY-MM-DD)
+- `endDate` (optional): 종료일 (YYYY-MM-DD)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "basicStats": {
+      "totalSchedules": 30,
+      "bookedSchedules": 8,
+      "completedSchedules": 17,
+      "cancelledSchedules": 5
+    },
+    "detailedStats": {
+      "clientGrowth": {
+        "totalClients": 150,
+        "newClients": 25,
+        "changeValue": 12,
+        "changeType": "positive",
+        "rateValue": 8.7
+      },
+      "consultantGrowth": {
+        "totalConsultants": 45,
+        "newConsultants": 3,
+        "changeValue": 2,
+        "changeType": "positive",
+        "rateValue": 4.7
+      },
+      "completionRate": {
+        "rateValue": 68.0,
+        "changeValue": 5.2,
+        "changeType": "positive"
+      },
+      "cancellationRate": {
+        "rateValue": 16.7,
+        "changeValue": -2.1,
+        "changeType": "negative"
+      },
+      "weeklySummary": {
+        "thisWeek": 12,
+        "lastWeek": 8,
+        "changeValue": 4,
+        "changeType": "positive"
+      },
+      "dailySummary": {
+        "today": 3,
+        "yesterday": 2,
+        "changeValue": 1,
+        "changeType": "positive"
+      }
+    },
+    "chartData": {
+      "labels": ["예약됨", "완료", "취소", "확정"],
+      "data": [8, 17, 5, 0],
+      "backgroundColor": ["#ffc107", "#28a745", "#dc3545", "#17a2b8"]
+    }
+  },
+  "message": "통계 조회 성공",
+  "timestamp": "2025-09-05T11:00:00"
+}
+```
+
+#### **오늘의 스케줄 통계 조회** ✅
+```
+GET /api/schedules/today/statistics
+```
+
+**Query Parameters:**
+- `userRole` (required): 사용자 역할 (ADMIN, SUPER_ADMIN)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "todayStats": {
+      "totalSchedules": 3,
+      "completedSchedules": 2,
+      "upcomingSchedules": 1,
+      "cancelledSchedules": 0
+    },
+    "hourlyDistribution": {
+      "09:00": 1,
+      "14:00": 1,
+      "16:00": 1
+    }
+  },
+  "message": "오늘의 통계 조회 성공"
+}
+```
+
+### 12.2 스케줄 관리 API
+
+#### **권한 기반 전체 스케줄 조회** ✅
+```
+GET /api/schedules
+```
+
+**Query Parameters:**
+- `userId` (required): 사용자 ID
+- `userRole` (required): 사용자 역할 (ADMIN, CONSULTANT, CLIENT)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "consultantId": 25,
+      "consultantName": "김상담",
+      "clientId": 23,
+      "clientName": "이재학",
+      "date": "2025-09-02",
+      "startTime": "17:30:00",
+      "endTime": "18:20:00",
+      "status": "COMPLETED",
+      "scheduleType": "상담",
+      "consultationType": "가족상담",
+      "title": "테스트 상담",
+      "description": "테스트 상담입니다",
+      "notes": null,
+      "createdAt": "2025-09-02T09:36:50.480658",
+      "updatedAt": "2025-09-05T09:27:10.063621"
+    }
+  ],
+  "message": "스케줄 조회 성공",
+  "totalCount": 30
+}
+```
+
+#### **권한 기반 페이지네이션 스케줄 조회** ✅
+```
+GET /api/schedules/paged
+```
+
+**Query Parameters:**
+- `userId` (required): 사용자 ID
+- `userRole` (required): 사용자 역할
+- `page` (optional): 페이지 번호 (기본값: 0)
+- `size` (optional): 페이지 크기 (기본값: 10)
+- `sort` (optional): 정렬 기준 (기본값: date)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "content": [...],
+    "pageable": {
+      "pageNumber": 0,
+      "pageSize": 10,
+      "sort": {
+        "sorted": true,
+        "unsorted": false
+      }
+    },
+    "totalElements": 30,
+    "totalPages": 3,
+    "first": true,
+    "last": false,
+    "numberOfElements": 10
+  }
+}
+```
+
+#### **특정 날짜 스케줄 조회** ✅
+```
+GET /api/schedules/date/{date}
+```
+
+**Path Parameters:**
+- `date`: 날짜 (YYYY-MM-DD)
+
+**Query Parameters:**
+- `userId` (required): 사용자 ID
+- `userRole` (required): 사용자 역할
+
+#### **날짜 범위 스케줄 조회** ✅
+```
+GET /api/schedules/date-range
+```
+
+**Query Parameters:**
+- `userId` (required): 사용자 ID
+- `userRole` (required): 사용자 역할
+- `startDate` (required): 시작일 (YYYY-MM-DD)
+- `endDate` (required): 종료일 (YYYY-MM-DD)
+
+#### **상담사별 스케줄 조회** ✅
+```
+GET /api/schedules/consultant/{consultantId}
+```
+
+**Path Parameters:**
+- `consultantId`: 상담사 ID
+
+**Query Parameters:**
+- `userRole` (required): 사용자 역할 (관리자만 접근 가능)
+
+#### **내담자별 스케줄 조회** ✅
+```
+GET /api/schedules/client/{clientId}
+```
+
+**Path Parameters:**
+- `clientId`: 내담자 ID
+
+**Query Parameters:**
+- `userRole` (required): 사용자 역할 (관리자만 접근 가능)
+
+#### **상담사 스케줄 생성** ✅
+```
+POST /api/schedules/consultant
+```
+
+**Request Body:**
+```json
+{
+  "consultantId": 25,
+  "clientId": 23,
+  "date": "2025-09-10",
+  "startTime": "14:00:00",
+  "endTime": "15:00:00",
+  "title": "정기 상담",
+  "description": "정기 상담 일정",
+  "consultationType": "개인상담"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "스케줄이 성공적으로 생성되었습니다.",
+  "scheduleId": 33
+}
+```
+
+#### **스케줄 수정** ✅
+```
+PUT /api/schedules/{id}
+```
+
+**Path Parameters:**
+- `id`: 스케줄 ID
+
+**Request Body:**
+```json
+{
+  "status": "COMPLETED",
+  "consultationType": "가족상담",
+  "title": "수정된 상담 제목",
+  "description": "수정된 상담 설명"
+}
+```
+
+#### **예약 확정 (관리자 전용)** ✅
+```
+PUT /api/schedules/{id}/confirm
+```
+
+**Path Parameters:**
+- `id`: 스케줄 ID
+
+**Query Parameters:**
+- `userRole` (required): 사용자 역할 (ADMIN, SUPER_ADMIN)
+
+**Request Body:**
+```json
+{
+  "adminNote": "입금 확인 완료"
+}
+```
+
+#### **자동 완료 처리** ✅
+```
+POST /api/schedules/auto-complete
+```
+
+**Query Parameters:**
+- `userRole` (required): 사용자 역할 (ADMIN, SUPER_ADMIN)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "시간이 지난 스케줄이 자동으로 완료 처리되었습니다."
+}
+```
+
+### 12.3 한글 변환 API
+
+#### **스케줄 상태 한글 변환** ✅
+```
+GET /api/schedules/status-korean
+```
+
+**Query Parameters:**
+- `status`: 영문 상태 (BOOKED, COMPLETED, CANCELLED, CONFIRMED)
+
+**Response:**
+```json
+{
+  "success": true,
+  "originalStatus": "BOOKED",
+  "koreanStatus": "예약됨"
+}
+```
+
+#### **스케줄 타입 한글 변환** ✅
+```
+GET /api/schedules/type-korean
+```
+
+**Query Parameters:**
+- `scheduleType`: 영문 타입 (CONSULTATION, MEETING, BREAK)
+
+**Response:**
+```json
+{
+  "success": true,
+  "originalType": "CONSULTATION",
+  "koreanType": "상담"
+}
+```
+
+#### **상담 유형 한글 변환** ✅
+```
+GET /api/schedules/consultation-type-korean
+```
+
+**Query Parameters:**
+- `consultationType`: 영문 유형 (INDIVIDUAL, FAMILY, COUPLE)
+
+**Response:**
+```json
+{
+  "success": true,
+  "originalType": "INDIVIDUAL",
+  "koreanType": "개인상담"
+}
+```
+
+## 13. 현재 구현된 API 상태 (업데이트: 2025년 9월) ✅
+
+### 13.1 구현 완료된 API 엔드포인트
+
+#### **통계 및 스케줄 API** ✅ (`/api/schedules`)
+- `GET /api/schedules/admin/statistics` - 관리자용 전체 스케줄 통계 조회
+- `GET /api/schedules/today/statistics` - 오늘의 스케줄 통계 조회
+- `GET /api/schedules` - 권한 기반 전체 스케줄 조회
+- `GET /api/schedules/paged` - 권한 기반 페이지네이션 스케줄 조회
+- `GET /api/schedules/date/{date}` - 특정 날짜 스케줄 조회
+- `GET /api/schedules/date-range` - 날짜 범위 스케줄 조회
+- `GET /api/schedules/consultant/{consultantId}` - 상담사별 스케줄 조회
+- `GET /api/schedules/client/{clientId}` - 내담자별 스케줄 조회
+- `POST /api/schedules/consultant` - 상담사 스케줄 생성
+- `PUT /api/schedules/{id}` - 스케줄 수정
+- `PUT /api/schedules/{id}/confirm` - 예약 확정 (관리자 전용)
+- `POST /api/schedules/auto-complete` - 자동 완료 처리
+- `GET /api/schedules/status-korean` - 스케줄 상태 한글 변환
+- `GET /api/schedules/type-korean` - 스케줄 타입 한글 변환
+- `GET /api/schedules/consultation-type-korean` - 상담 유형 한글 변환
 
 #### **인증 API** ✅ (`/api/auth`)
 - `POST /api/auth/login` - 이메일 로그인

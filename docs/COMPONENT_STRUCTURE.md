@@ -28,7 +28,25 @@ src/
 │   ├── layout/               # 레이아웃 관련 컴포넌트
 │   ├── dashboard/            # 대시보드 관련 컴포넌트
 │   ├── auth/                 # 인증 관련 컴포넌트
-│   └── profile/              # 프로필 관련 컴포넌트
+│   ├── profile/              # 프로필 관련 컴포넌트
+│   ├── admin/                # 관리자 관련 컴포넌트
+│   │   ├── StatisticsDashboard.js    # 통계 대시보드
+│   │   ├── MappingManagement.js      # 매핑 관리
+│   │   └── CommonCodeManagement.js   # 공통코드 관리
+│   └── common/               # 공통 컴포넌트
+│       ├── Chart.js                  # 차트 컴포넌트
+│       ├── DetailedStatsCard.js      # 상세 통계 카드
+│       ├── DetailedStatsGrid.js      # 상세 통계 그리드
+│       ├── StatsCard.js              # 기본 통계 카드
+│       ├── StatsCardGrid.js          # 기본 통계 그리드
+│       ├── ScheduleCard.js           # 스케줄 카드
+│       ├── ScheduleList.js           # 스케줄 목록
+│       └── StatisticsModal.js        # 통계 모달
+├── constants/                # 상수 정의
+│   ├── api.js               # API 엔드포인트
+│   ├── charts.js            # 차트 관련 상수
+│   ├── css.js               # CSS 클래스 상수
+│   └── menu.js              # 메뉴 상수
 ├── pages/                    # 페이지 컴포넌트
 ├── services/                 # API 서비스
 ├── hooks/                    # 커스텀 훅
@@ -190,6 +208,269 @@ const ClientDashboard = () => {
 - 상담 일정 요약
 - 시스템 현황 (전체 사용자, 활성 상담사)
 - 시스템 관리 빠른 액션
+
+## 📊 통계 및 차트 컴포넌트
+
+### 1. StatisticsDashboard
+
+**파일**: `src/components/admin/StatisticsDashboard.js`
+
+**역할**: 전체 통계 대시보드 메인 컴포넌트
+
+**Props**:
+- 없음 (내부적으로 상태 관리)
+
+**사용법**:
+```jsx
+import StatisticsDashboard from '../components/admin/StatisticsDashboard';
+
+const AdminStatisticsPage = () => {
+  return (
+    <TabletLayout user={user} onLogout={handleLogout}>
+      <StatisticsDashboard />
+    </TabletLayout>
+  );
+};
+```
+
+**주요 기능**:
+- 차트 시각화 (Bar, Line, Pie, Doughnut)
+- 날짜 범위별 필터링 (오늘, 이번 주, 이번 달, 올해)
+- 상세 통계 카드 표시
+- 기본 통계 카드 표시
+- 차트 타입 선택 기능
+
+### 2. Chart
+
+**파일**: `src/components/common/Chart.js`
+
+**역할**: Chart.js 기반 재사용 가능한 차트 컴포넌트
+
+**Props**:
+- `type`: 차트 타입 ('bar', 'line', 'pie', 'doughnut')
+- `data`: 차트 데이터
+- `options`: 차트 옵션
+- `width`: 차트 너비
+- `height`: 차트 높이
+
+**사용법**:
+```jsx
+<Chart 
+  type="bar"
+  data={chartData}
+  options={chartOptions}
+  width={400}
+  height={300}
+/>
+```
+
+**주요 기능**:
+- Chart.js 기반 차트 렌더링
+- Pie/Doughnut 차트 중앙 정렬
+- 반응형 차트 크기 조정
+- 커스텀 옵션 지원
+
+### 3. DetailedStatsCard
+
+**파일**: `src/components/common/DetailedStatsCard.js`
+
+**역할**: 상세 통계 정보를 카드 형태로 표시하는 컴포넌트
+
+**Props**:
+- `icon`: 아이콘 클래스명
+- `title`: 카드 제목
+- `mainValue`: 주요 수치
+- `mainLabel`: 주요 수치 라벨
+- `subValue`: 보조 수치
+- `subLabel`: 보조 수치 라벨
+- `changeValue`: 변화량
+- `changeType`: 변화 타입 ('positive', 'negative')
+- `changeLabel`: 변화 라벨
+- `rateValue`: 비율 값
+- `rateLabel`: 비율 라벨
+- `detailValue`: 상세 값
+- `detailLabel`: 상세 라벨
+- `descValue`: 설명 값
+- `descLabel`: 설명 라벨
+
+**사용법**:
+```jsx
+<DetailedStatsCard 
+  icon="bi bi-people"
+  title="내담자 증감"
+  mainValue={150}
+  mainLabel="총 내담자"
+  subValue={25}
+  subLabel="신규 내담자"
+  changeValue={12}
+  changeType="positive"
+  changeLabel="전월 대비"
+  rateValue={8.7}
+  rateLabel="증가율"
+/>
+```
+
+**주요 기능**:
+- 상세한 통계 정보 표시
+- 변화량 및 비율 표시
+- 아이콘과 색상으로 시각적 구분
+- 반응형 카드 레이아웃
+
+### 4. DetailedStatsGrid
+
+**파일**: `src/components/common/DetailedStatsGrid.js`
+
+**역할**: 상세 통계 카드들을 그리드 형태로 배치하는 컴포넌트
+
+**Props**:
+- `statistics`: 통계 데이터 배열
+
+**사용법**:
+```jsx
+<DetailedStatsGrid statistics={detailedStatsData} />
+```
+
+**주요 기능**:
+- 반응형 그리드 레이아웃
+- 카드 간 일정한 간격 유지
+- 자동 높이 조정
+
+### 5. StatsCard
+
+**파일**: `src/components/common/StatsCard.js`
+
+**역할**: 기본 통계 정보를 카드 형태로 표시하는 컴포넌트
+
+**Props**:
+- `icon`: 아이콘 클래스명
+- `title`: 카드 제목
+- `value`: 수치
+- `label`: 수치 라벨
+- `change`: 변화량
+- `changeType`: 변화 타입 ('positive', 'negative')
+- `changeLabel`: 변화 라벨
+- `color`: 카드 색상 ('primary', 'success', 'warning', 'danger', 'info')
+- `loading`: 로딩 상태
+- `error`: 에러 상태
+
+**사용법**:
+```jsx
+<StatsCard 
+  icon="bi bi-calendar-check"
+  title="완료된 상담"
+  value={45}
+  label="건"
+  change={5}
+  changeType="positive"
+  changeLabel="전주 대비"
+  color="success"
+/>
+```
+
+**주요 기능**:
+- 기본 통계 정보 표시
+- 변화량 표시
+- 색상별 카드 스타일
+- 로딩/에러 상태 처리
+
+### 6. StatsCardGrid
+
+**파일**: `src/components/common/StatsCardGrid.js`
+
+**역할**: 기본 통계 카드들을 그리드 형태로 배치하는 컴포넌트
+
+**Props**:
+- `statistics`: 통계 데이터 배열
+
+**사용법**:
+```jsx
+<StatsCardGrid statistics={basicStatsData} />
+```
+
+**주요 기능**:
+- 반응형 그리드 레이아웃
+- 카드 간 일정한 간격 유지
+- 자동 높이 조정
+
+## 📅 스케줄 관리 컴포넌트
+
+### 1. ScheduleList
+
+**파일**: `src/components/common/ScheduleList.js`
+
+**역할**: 스케줄 목록을 표시하는 컴포넌트
+
+**Props**:
+- `userId`: 사용자 ID
+- `userRole`: 사용자 역할
+
+**사용법**:
+```jsx
+<ScheduleList 
+  userId={user.id}
+  userRole={user.role}
+/>
+```
+
+**주요 기능**:
+- 권한 기반 스케줄 조회
+- 스케줄 카드 목록 표시
+- 로딩/에러 상태 처리
+- 페이지네이션 지원
+
+### 2. ScheduleCard
+
+**파일**: `src/components/common/ScheduleCard.js`
+
+**역할**: 개별 스케줄 정보를 카드 형태로 표시하는 컴포넌트
+
+**Props**:
+- `schedule`: 스케줄 데이터 객체
+- `onEdit`: 편집 핸들러
+- `onDelete`: 삭제 핸들러
+- `onStatusChange`: 상태 변경 핸들러
+
+**사용법**:
+```jsx
+<ScheduleCard 
+  schedule={scheduleData}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+  onStatusChange={handleStatusChange}
+/>
+```
+
+**주요 기능**:
+- 스케줄 상세 정보 표시
+- 상담사/내담자 정보
+- 상담 일시 및 유형
+- 상태별 색상 구분
+- 액션 버튼 제공
+
+### 3. StatisticsModal
+
+**파일**: `src/components/common/StatisticsModal.js`
+
+**역할**: 간단한 통계 정보를 모달로 표시하는 컴포넌트
+
+**Props**:
+- `isOpen`: 모달 열림/닫힘 상태
+- `onClose`: 모달 닫기 핸들러
+- `statistics`: 통계 데이터
+
+**사용법**:
+```jsx
+<StatisticsModal 
+  isOpen={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  statistics={statisticsData}
+/>
+```
+
+**주요 기능**:
+- 기본 통계 정보 모달 표시
+- 간단한 수치 정보 제공
+- 모달 열기/닫기 기능
 
 ## 🏢 관리자 컴포넌트
 

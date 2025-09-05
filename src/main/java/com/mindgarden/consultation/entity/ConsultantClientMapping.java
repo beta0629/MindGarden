@@ -238,6 +238,17 @@ public class ConsultantClientMapping extends BaseEntity {
     }
 
     /**
+     * 상담사 변경 (이전)
+     */
+    public void transferToNewConsultant(String reason, String transferredBy) {
+        this.status = MappingStatus.TERMINATED;
+        this.terminationReason = reason;
+        this.terminatedBy = transferredBy;
+        this.terminatedAt = LocalDateTime.now();
+        this.endDate = LocalDateTime.now();
+    }
+
+    /**
      * 스케줄 작성 가능 여부 확인
      */
     public boolean canCreateSchedule() {

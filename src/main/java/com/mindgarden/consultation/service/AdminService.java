@@ -5,6 +5,7 @@ import java.util.Map;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
 import com.mindgarden.consultation.dto.ConsultantRegistrationDto;
+import com.mindgarden.consultation.dto.ConsultantTransferRequest;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
@@ -146,4 +147,16 @@ public interface AdminService {
      * 개별 매핑 조회
      */
     ConsultantClientMapping getMappingById(Long mappingId);
+
+    // ==================== 상담사 변경 시스템 ====================
+
+    /**
+     * 상담사 변경 처리
+     */
+    ConsultantClientMapping transferConsultant(ConsultantTransferRequest request);
+
+    /**
+     * 내담자별 상담사 변경 이력 조회
+     */
+    List<ConsultantClientMapping> getTransferHistory(Long clientId);
 }

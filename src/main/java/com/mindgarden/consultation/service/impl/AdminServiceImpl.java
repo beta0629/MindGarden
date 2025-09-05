@@ -11,6 +11,7 @@ import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
 import com.mindgarden.consultation.dto.ConsultantRegistrationDto;
+import com.mindgarden.consultation.dto.ConsultantTransferRequest;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
@@ -23,7 +24,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -464,5 +467,83 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public ConsultantClientMapping getMappingById(Long mappingId) {
         return mappingRepository.findById(mappingId).orElse(null);
+    }
+
+    // ==================== 상담사 변경 시스템 ====================
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ConsultantClientMapping transferConsultant(ConsultantTransferRequest request) {
+        log.info("상담사 변경 처리 시작: 기존 매핑 ID={}, 새 상담사 ID={}", 
+                request.getCurrentMappingId(), request.getNewConsultantId());
+        
+        // 1. 기존 매핑 조회 및 검증
+        ConsultantClientMapping currentMapping = mappingRepository.findById(request.getCurrentMappingId())
+                .orElseThrow(() -> new RuntimeException("기존 매핑을 찾을 수 없습니다."));
+        
+        if (currentMapping.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
+            throw new RuntimeException("활성 상태의 매핑만 상담사를 변경할 수 있습니다.");
+        }
+        
+        // 2. 새 상담사 조회 및 검증
+        User newConsultant = userRepository.findById(request.getNewConsultantId())
+                .orElseThrow(() -> new RuntimeException("새 상담사를 찾을 수 없습니다."));
+        
+        if (newConsultant.getRole() != UserRole.CONSULTANT) {
+            throw new RuntimeException("상담사가 아닌 사용자입니다.");
+        }
+        
+        // 3. 기존 매핑 종료 처리
+        String transferReason = String.format("상담사 변경: %s -> %s. 사유: %s", 
+                currentMapping.getConsultant().getName(), 
+                newConsultant.getName(), 
+                request.getTransferReason());
+        
+        currentMapping.transferToNewConsultant(transferReason, request.getTransferredBy());
+        mappingRepository.save(currentMapping);
+        
+        // 4. 새 매핑 생성
+        ConsultantClientMapping newMapping = new ConsultantClientMapping();
+        newMapping.setConsultant(newConsultant);
+        newMapping.setClient(currentMapping.getClient());
+        newMapping.setStartDate(LocalDateTime.now());
+        newMapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+        newMapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED); // 이전 매핑에서 승인된 상태 유지
+        newMapping.setTotalSessions(request.getTotalSessions() != null ? 
+                request.getTotalSessions() : currentMapping.getRemainingSessions());
+        newMapping.setRemainingSessions(request.getRemainingSessions() != null ? 
+                request.getRemainingSessions() : currentMapping.getRemainingSessions());
+        newMapping.setUsedSessions(0); // 새 매핑이므로 사용된 회기수는 0
+        newMapping.setPackageName(request.getPackageName() != null ? 
+                request.getPackageName() : currentMapping.getPackageName());
+        newMapping.setPackagePrice(request.getPackagePrice() != null ? 
+                request.getPackagePrice() : currentMapping.getPackagePrice());
+        newMapping.setPaymentAmount(currentMapping.getPaymentAmount());
+        newMapping.setPaymentMethod(currentMapping.getPaymentMethod());
+        newMapping.setPaymentReference(currentMapping.getPaymentReference());
+        newMapping.setAssignedAt(LocalDateTime.now());
+        newMapping.setNotes(String.format("상담사 변경으로 생성된 매핑. 기존 매핑 ID: %d", currentMapping.getId()));
+        newMapping.setSpecialConsiderations(request.getSpecialConsiderations());
+        
+        ConsultantClientMapping savedMapping = mappingRepository.save(newMapping);
+        
+        log.info("상담사 변경 완료: 새 매핑 ID={}, 내담자={}, 새 상담사={}", 
+                savedMapping.getId(), 
+                currentMapping.getClient().getName(), 
+                newConsultant.getName());
+        
+        return savedMapping;
+    }
+
+    @Override
+    public List<ConsultantClientMapping> getTransferHistory(Long clientId) {
+        User client = userRepository.findById(clientId)
+                .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
+        
+        return mappingRepository.findByClient(client).stream()
+                .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED)
+                .filter(mapping -> mapping.getTerminationReason() != null && 
+                        mapping.getTerminationReason().contains("상담사 변경"))
+                .collect(Collectors.toList());
     }
 }

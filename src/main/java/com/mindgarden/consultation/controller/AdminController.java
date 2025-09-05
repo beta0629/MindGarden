@@ -6,6 +6,7 @@ import java.util.Map;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
 import com.mindgarden.consultation.dto.ConsultantRegistrationDto;
+import com.mindgarden.consultation.dto.ConsultantTransferRequest;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
@@ -833,6 +834,111 @@ public class AdminController {
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", "매핑 삭제에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    // ==================== 상담사 변경 시스템 ====================
+
+    /**
+     * 상담사 변경 처리
+     */
+    @PostMapping("/mappings/transfer")
+    public ResponseEntity<?> transferConsultant(@RequestBody ConsultantTransferRequest request) {
+        try {
+            log.info("🔄 상담사 변경 요청: 기존 매핑 ID={}, 새 상담사 ID={}", 
+                    request.getCurrentMappingId(), request.getNewConsultantId());
+            
+            ConsultantClientMapping newMapping = adminService.transferConsultant(request);
+            
+            // 안전한 데이터 추출 (프록시 객체 직렬화 문제 방지)
+            Map<String, Object> mappingData = new HashMap<>();
+            mappingData.put("id", newMapping.getId());
+            mappingData.put("status", newMapping.getStatus() != null ? newMapping.getStatus().toString() : "UNKNOWN");
+            mappingData.put("paymentStatus", newMapping.getPaymentStatus() != null ? newMapping.getPaymentStatus().toString() : "UNKNOWN");
+            mappingData.put("totalSessions", newMapping.getTotalSessions());
+            mappingData.put("remainingSessions", newMapping.getRemainingSessions());
+            mappingData.put("packageName", newMapping.getPackageName());
+            mappingData.put("packagePrice", newMapping.getPackagePrice());
+            mappingData.put("assignedAt", newMapping.getAssignedAt());
+            mappingData.put("createdAt", newMapping.getCreatedAt());
+            
+            // Consultant 정보 안전하게 추출
+            if (newMapping.getConsultant() != null) {
+                Map<String, Object> consultantData = new HashMap<>();
+                consultantData.put("id", newMapping.getConsultant().getId());
+                consultantData.put("name", newMapping.getConsultant().getName());
+                consultantData.put("email", newMapping.getConsultant().getEmail());
+                mappingData.put("consultant", consultantData);
+            }
+            
+            // Client 정보 안전하게 추출
+            if (newMapping.getClient() != null) {
+                Map<String, Object> clientData = new HashMap<>();
+                clientData.put("id", newMapping.getClient().getId());
+                clientData.put("name", newMapping.getClient().getName());
+                clientData.put("email", newMapping.getClient().getEmail());
+                mappingData.put("client", clientData);
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "상담사가 성공적으로 변경되었습니다.",
+                "data", mappingData
+            ));
+        } catch (Exception e) {
+            log.error("❌ 상담사 변경 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "상담사 변경에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 내담자별 상담사 변경 이력 조회
+     */
+    @GetMapping("/clients/{clientId}/transfer-history")
+    public ResponseEntity<?> getTransferHistory(@PathVariable Long clientId) {
+        try {
+            log.info("🔍 내담자 ID {} 상담사 변경 이력 조회", clientId);
+            List<ConsultantClientMapping> transferHistory = adminService.getTransferHistory(clientId);
+            
+            // 안전한 데이터 추출
+            List<Map<String, Object>> historyData = transferHistory.stream()
+                .map(mapping -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("id", mapping.getId());
+                    data.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "UNKNOWN");
+                    data.put("terminationReason", mapping.getTerminationReason());
+                    data.put("terminatedAt", mapping.getTerminatedAt());
+                    data.put("terminatedBy", mapping.getTerminatedBy());
+                    data.put("startDate", mapping.getStartDate());
+                    data.put("endDate", mapping.getEndDate());
+                    
+                    // Consultant 정보 안전하게 추출
+                    if (mapping.getConsultant() != null) {
+                        Map<String, Object> consultantData = new HashMap<>();
+                        consultantData.put("id", mapping.getConsultant().getId());
+                        consultantData.put("name", mapping.getConsultant().getName());
+                        consultantData.put("email", mapping.getConsultant().getEmail());
+                        data.put("consultant", consultantData);
+                    }
+                    
+                    return data;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", historyData,
+                "count", historyData.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 상담사 변경 이력 조회 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "상담사 변경 이력 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }

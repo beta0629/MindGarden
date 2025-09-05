@@ -230,4 +230,102 @@
   --toast-dark-close-hover-bg: #4a5568;
   --toast-dark-close-hover-color: #e2e8f0;
   --toast-dark-progress-bg: rgba(255, 255, 255, 0.1);
+
+  /* ========================================
+     상담사 변경 시스템 변수
+     ======================================== */
+  
+  /* 상담사 변경 모달 */
+  --transfer-modal-bg: var(--color-surface);
+  --transfer-modal-border-radius: var(--border-radius-large);
+  --transfer-modal-shadow: var(--shadow-large);
+  --transfer-modal-padding: var(--spacing-xl);
+  --transfer-modal-max-width: 600px;
+  --transfer-modal-min-width: 400px;
+  --transfer-modal-z-index: 1000;
+  
+  /* 상담사 변경 카드 */
+  --transfer-card-bg: var(--color-card);
+  --transfer-card-border: 1px solid var(--color-neutral-dark);
+  --transfer-card-border-radius: var(--border-radius-medium);
+  --transfer-card-padding: var(--spacing-lg);
+  --transfer-card-margin: var(--spacing-md);
+  --transfer-card-shadow: var(--shadow-soft);
+  --transfer-card-hover-shadow: var(--shadow-medium);
+  --transfer-card-transition: var(--transition-normal);
+  
+  /* 상담사 변경 버튼 */
+  --transfer-btn-primary-bg: var(--color-primary);
+  --transfer-btn-primary-color: var(--color-text-light);
+  --transfer-btn-primary-hover-bg: var(--color-primary-dark);
+  --transfer-btn-secondary-bg: var(--color-neutral);
+  --transfer-btn-secondary-color: var(--color-text-primary);
+  --transfer-btn-secondary-hover-bg: var(--color-neutral-dark);
+  --transfer-btn-danger-bg: var(--color-error);
+  --transfer-btn-danger-color: var(--color-text-light);
+  --transfer-btn-danger-hover-bg: #ff8a80;
+  --transfer-btn-padding: var(--spacing-sm) var(--spacing-lg);
+  --transfer-btn-border-radius: var(--border-radius-small);
+  --transfer-btn-font-size: 14px;
+  --transfer-btn-font-weight: 500;
+  --transfer-btn-transition: var(--transition-fast);
+  
+  /* 상담사 변경 폼 */
+  --transfer-form-gap: var(--spacing-lg);
+  --transfer-form-label-color: var(--color-text-primary);
+  --transfer-form-label-font-size: 14px;
+  --transfer-form-label-font-weight: 600;
+  --transfer-form-label-margin-bottom: var(--spacing-sm);
+  --transfer-form-input-bg: var(--color-surface);
+  --transfer-form-input-border: 1px solid var(--color-neutral-dark);
+  --transfer-form-input-border-radius: var(--border-radius-small);
+  --transfer-form-input-padding: var(--spacing-sm) var(--spacing-md);
+  --transfer-form-input-font-size: 14px;
+  --transfer-form-input-color: var(--color-text-primary);
+  --transfer-form-input-focus-border: var(--color-primary);
+  --transfer-form-input-focus-shadow: 0 0 0 2px rgba(184, 230, 184, 0.2);
+  --transfer-form-textarea-min-height: 80px;
+  --transfer-form-textarea-resize: vertical;
+  
+  /* 상담사 변경 선택 */
+  --transfer-select-bg: var(--color-surface);
+  --transfer-select-border: 1px solid var(--color-neutral-dark);
+  --transfer-select-border-radius: var(--border-radius-small);
+  --transfer-select-padding: var(--spacing-sm) var(--spacing-md);
+  --transfer-select-font-size: 14px;
+  --transfer-select-color: var(--color-text-primary);
+  --transfer-select-focus-border: var(--color-primary);
+  --transfer-select-focus-shadow: 0 0 0 2px rgba(184, 230, 184, 0.2);
+  --transfer-select-option-bg: var(--color-surface);
+  --transfer-select-option-color: var(--color-text-primary);
+  --transfer-select-option-hover-bg: var(--color-primary-light);
+  
+  /* 상담사 변경 상태 */
+  --transfer-status-active: var(--color-success);
+  --transfer-status-pending: var(--color-warning);
+  --transfer-status-terminated: var(--color-error);
+  --transfer-status-badge-padding: var(--spacing-xs) var(--spacing-sm);
+  --transfer-status-badge-border-radius: var(--border-radius-small);
+  --transfer-status-badge-font-size: 12px;
+  --transfer-status-badge-font-weight: 600;
+  
+  /* 상담사 변경 이력 */
+  --transfer-history-bg: var(--color-neutral-light);
+  --transfer-history-border-radius: var(--border-radius-medium);
+  --transfer-history-padding: var(--spacing-lg);
+  --transfer-history-margin-top: var(--spacing-lg);
+  --transfer-history-item-bg: var(--color-surface);
+  --transfer-history-item-border: 1px solid var(--color-neutral-dark);
+  --transfer-history-item-border-radius: var(--border-radius-small);
+  --transfer-history-item-padding: var(--spacing-md);
+  --transfer-history-item-margin: var(--spacing-sm) 0;
+  --transfer-history-item-shadow: var(--shadow-soft);
+  
+  /* 상담사 변경 반응형 */
+  --transfer-mobile-modal-padding: var(--spacing-md);
+  --transfer-mobile-modal-max-width: 95vw;
+  --transfer-mobile-card-padding: var(--spacing-md);
+  --transfer-mobile-form-gap: var(--spacing-md);
+  --transfer-mobile-btn-padding: var(--spacing-sm) var(--spacing-md);
+  --transfer-mobile-btn-font-size: 13px;
 }

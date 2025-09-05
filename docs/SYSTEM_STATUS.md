@@ -1,8 +1,8 @@
 # 🚀 MindGarden 상담 시스템 - 현재 상태 보고서
 
-**최종 업데이트**: 2025년 9월 4일 21:45  
-**문서 버전**: v3.2.0  
-**상태**: ✅ **SNS 로그인 사용자 매핑 시스템 완성**
+**최종 업데이트**: 2025년 9월 4일 22:00  
+**문서 버전**: v3.3.0  
+**상태**: ✅ **상담사 변경 시스템 완성**
 
 ## ⚠️ **필수 개발 원칙**
 
@@ -89,9 +89,40 @@ Spring Boot 백엔드와 React 프론트엔드로 구성되어 있으며, OAuth2
 - **반응형 디자인**: 모든 화면 크기에서 최적화된 표시
 - **SNS 사용자 지원**: SNS 로그인 사용자도 정상적으로 목록에 표시
 
+### **7. 상담사 변경 시스템** 🔄
+- **활성 매핑 상담사 변경**: 활성 상태의 매핑에서 상담사 변경 가능
+- **변경 이력 추적**: 모든 상담사 변경 이력을 자동으로 기록
+- **회기수 이전**: 기존 매핑의 남은 회기수를 새 매핑으로 이전
+- **패키지 정보 유지**: 패키지명, 가격 등 정보를 새 매핑에 복사
+- **변경 사유 기록**: 상담사 변경 사유를 상세히 기록
+- **특별 고려사항**: 새 상담사에게 전달할 특별 사항 입력 가능
+
+**주요 컴포넌트**:
+- `ConsultantTransferModal.js`: 상담사 변경 모달
+- `ConsultantTransferHistory.js`: 변경 이력 조회 모달
+- `ConsultantTransferRequest.java`: 변경 요청 DTO
+- `AdminService.transferConsultant()`: 변경 비즈니스 로직
+- `AdminController.transferConsultant()`: 변경 API 엔드포인트
+
 ---
 
 ## 🆕 **최신 업데이트 (2025-09-04)**
+
+### **상담사 변경 시스템 완성** 🔄
+- **활성 매핑 상담사 변경**: 활성 상태의 매핑에서 상담사 변경 기능 구현
+- **변경 이력 추적**: 모든 상담사 변경 이력을 자동으로 기록하고 조회 가능
+- **회기수 이전**: 기존 매핑의 남은 회기수를 새 매핑으로 자동 이전
+- **패키지 정보 유지**: 패키지명, 가격 등 정보를 새 매핑에 복사
+- **변경 사유 기록**: 상담사 변경 사유를 상세히 기록하여 추적 가능
+- **특별 고려사항**: 새 상담사에게 전달할 특별 사항 입력 가능
+
+**구현된 기능**:
+- `ConsultantTransferModal.js`: 상담사 변경 모달 (CSS 상수 변수 사용)
+- `ConsultantTransferHistory.js`: 변경 이력 조회 모달
+- `ConsultantTransferRequest.java`: 변경 요청 DTO
+- `AdminService.transferConsultant()`: 변경 비즈니스 로직
+- `AdminController.transferConsultant()`: 변경 API 엔드포인트
+- 매핑 카드에 "상담사 변경" 및 "변경 이력" 버튼 추가
 
 ### **SNS 로그인 사용자 매핑 시스템 완성** 🎯
 - **문제**: SNS 로그인으로 가입한 사용자들이 `User` 엔티티로만 저장되어 매핑 생성 시 "Client not found" 오류 발생
@@ -175,6 +206,8 @@ frontend/src/components/
 - `POST /api/admin/mappings` - 매핑 생성
 - `PUT /api/admin/mappings/{id}` - 매핑 수정
 - `DELETE /api/admin/mappings/{id}` - 매핑 삭제
+- `POST /api/admin/mappings/transfer` - 상담사 변경 처리
+- `GET /api/admin/clients/{clientId}/transfer-history` - 상담사 변경 이력 조회
 
 ### **공통코드 API**
 - `GET /api/admin/codes/groups` - 코드 그룹 목록 조회
@@ -315,7 +348,7 @@ frontend/src/components/
 
 ## 🎉 **결론**
 
-**MindGarden 상담 시스템의 SNS 로그인 사용자 매핑 시스템이 완성되었습니다!**
+**MindGarden 상담 시스템의 상담사 변경 시스템이 완성되었습니다!**
 
 - ✅ **매핑 관리 시스템**: 4단계 모달, 카드 형태 목록, 검색/필터링 완성
 - ✅ **공통코드 관리 시스템**: 카드 형태 UI, 상세 정보 표시, CRUD 기능 완성
@@ -326,8 +359,9 @@ frontend/src/components/
 - ✅ **데이터베이스**: 모든 스키마 및 관계 정상
 - ✅ **내담자 관리**: 카드 형태 UI, 검색/필터링, SNS 사용자 지원 완성
 - ✅ **SNS 사용자 매핑**: SNS 로그인 사용자도 정상적으로 매핑 생성 가능
+- ✅ **상담사 변경 시스템**: 활성 매핑 상담사 변경, 이력 추적, 회기수 이전 완성
 
-**SNS 로그인 사용자 매핑 시스템이 프로덕션 환경 배포 준비가 완료되었습니다!** 🚀
+**상담사 변경 시스템이 프로덕션 환경 배포 준비가 완료되었습니다!** 🚀
 
 ---
 

@@ -20,7 +20,9 @@ const MappingCard = ({
     onReject, 
     onConfirmPayment,
     onEdit, 
-    onView 
+    onView,
+    onTransfer,
+    onViewTransferHistory
 }) => {
     // 상태별 색상
     const getStatusColor = (status) => {
@@ -147,12 +149,20 @@ const MappingCard = ({
                     </>
                 )}
                 {mapping.status === 'ACTIVE' && mapping.paymentStatus === 'APPROVED' && (
-                    <button 
-                        className="btn btn-warning btn-sm"
-                        onClick={() => onEdit?.(mapping)}
-                    >
-                        <i className="bi bi-pencil"></i> 수정
-                    </button>
+                    <>
+                        <button 
+                            className="btn btn-warning btn-sm"
+                            onClick={() => onEdit?.(mapping)}
+                        >
+                            <i className="bi bi-pencil"></i> 수정
+                        </button>
+                        <button 
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => onTransfer?.(mapping)}
+                        >
+                            <i className="bi bi-arrow-left-right"></i> 상담사 변경
+                        </button>
+                    </>
                 )}
                 <button 
                     className="btn btn-info btn-sm"
@@ -160,6 +170,14 @@ const MappingCard = ({
                 >
                     <i className="bi bi-eye"></i> 상세보기
                 </button>
+                {mapping.clientId && (
+                    <button 
+                        className="btn btn-outline-info btn-sm"
+                        onClick={() => onViewTransferHistory?.(mapping.clientId)}
+                    >
+                        <i className="bi bi-clock-history"></i> 변경 이력
+                    </button>
+                )}
             </div>
         </div>
     );

@@ -12,6 +12,8 @@ import MappingCreationModal from './MappingCreationModal';
 import MappingCard from './mapping/MappingCard';
 import MappingFilters from './mapping/MappingFilters';
 import MappingStats from './mapping/MappingStats';
+import ConsultantTransferModal from './mapping/ConsultantTransferModal';
+import ConsultantTransferHistory from './mapping/ConsultantTransferHistory';
 import './MappingManagement.css';
 
 /**
@@ -32,6 +34,9 @@ const MappingManagement = () => {
     const [selectedMapping, setSelectedMapping] = useState(null);
     const [filterStatus, setFilterStatus] = useState('ALL');
     const [searchTerm, setSearchTerm] = useState('');
+    const [showTransferModal, setShowTransferModal] = useState(false);
+    const [showTransferHistory, setShowTransferHistory] = useState(false);
+    const [selectedClientId, setSelectedClientId] = useState(null);
 
     // 데이터 로드
     useEffect(() => {
@@ -67,6 +72,10 @@ const MappingManagement = () => {
                 id: 1,
                 consultant: { id: 1, name: '김상담', email: 'consultant1@mindgarden.com' },
                 client: { id: 1, name: '이내담', email: 'client1@mindgarden.com' },
+                clientId: 1,
+                consultantId: 1,
+                consultantName: '김상담',
+                clientName: '이내담',
                 status: 'ACTIVE',
                 paymentStatus: 'APPROVED',
                 totalSessions: DEFAULT_MAPPING_CONFIG.TOTAL_SESSIONS,
@@ -81,6 +90,10 @@ const MappingManagement = () => {
                 id: 2,
                 consultant: { id: 2, name: '박상담', email: 'consultant2@mindgarden.com' },
                 client: { id: 2, name: '최내담', email: 'client2@mindgarden.com' },
+                clientId: 2,
+                consultantId: 2,
+                consultantName: '박상담',
+                clientName: '최내담',
                 status: 'PENDING_PAYMENT',
                 paymentStatus: 'PENDING',
                 totalSessions: 5,
@@ -95,6 +108,10 @@ const MappingManagement = () => {
                 id: 3,
                 consultant: { id: 1, name: '김상담', email: 'consultant1@mindgarden.com' },
                 client: { id: 3, name: '정내담', email: 'client3@mindgarden.com' },
+                clientId: 3,
+                consultantId: 1,
+                consultantName: '김상담',
+                clientName: '정내담',
                 status: 'SESSIONS_EXHAUSTED',
                 paymentStatus: 'APPROVED',
                 totalSessions: 8,
@@ -202,6 +219,32 @@ const MappingManagement = () => {
     const handleMappingCreated = () => {
         setShowCreateModal(false);
         loadMappings();
+    };
+
+    // 상담사 변경 핸들러
+    const handleTransferConsultant = (mapping) => {
+        setSelectedMapping(mapping);
+        setShowTransferModal(true);
+    };
+
+    // 상담사 변경 완료 핸들러
+    const handleTransferCompleted = (newMapping) => {
+        setShowTransferModal(false);
+        setSelectedMapping(null);
+        loadMappings();
+        notificationManager.success('상담사가 성공적으로 변경되었습니다.');
+    };
+
+    // 상담사 변경 이력 보기 핸들러
+    const handleViewTransferHistory = (clientId) => {
+        setSelectedClientId(clientId);
+        setShowTransferHistory(true);
+    };
+
+    // 상담사 변경 이력 닫기 핸들러
+    const handleCloseTransferHistory = () => {
+        setShowTransferHistory(false);
+        setSelectedClientId(null);
     };
 
     // 필터 핸들러들
@@ -325,6 +368,8 @@ const MappingManagement = () => {
                                 onView={(mapping) => {
                                     notificationManager.info('매핑 상세보기 기능은 준비 중입니다.');
                                 }}
+                                onTransfer={handleTransferConsultant}
+                                onViewTransferHistory={handleViewTransferHistory}
                             />
                         ))}
                     </div>
@@ -336,6 +381,21 @@ const MappingManagement = () => {
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
                 onMappingCreated={handleMappingCreated}
+            />
+
+            {/* 상담사 변경 모달 */}
+            <ConsultantTransferModal
+                isOpen={showTransferModal}
+                onClose={() => setShowTransferModal(false)}
+                currentMapping={selectedMapping}
+                onTransfer={handleTransferCompleted}
+            />
+
+            {/* 상담사 변경 이력 모달 */}
+            <ConsultantTransferHistory
+                isOpen={showTransferHistory}
+                onClose={handleCloseTransferHistory}
+                clientId={selectedClientId}
             />
             </div>
         </SimpleLayout>

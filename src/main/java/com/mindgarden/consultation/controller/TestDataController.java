@@ -2,9 +2,14 @@ package com.mindgarden.consultation.controller;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.mindgarden.consultation.constant.ConsultationStatus;
+import com.mindgarden.consultation.constant.ConsultationType;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
@@ -13,6 +18,7 @@ import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.mindgarden.consultation.entity.ConsultantClientMapping.PaymentStatus;
+import com.mindgarden.consultation.entity.Consultation;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
@@ -47,6 +53,7 @@ public class TestDataController {
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
     private final ConsultantClientMappingRepository mappingRepository;
+    private final ConsultationRepository consultationRepository;
     private final PasswordEncoder passwordEncoder;
     
     @Value("${isDev:false}")
@@ -512,6 +519,103 @@ public class TestDataController {
         }
     }
     
+    /**
+     * 테스트용 상담 데이터 생성
+     * POST /api/test/consultation
+     */
+    @PostMapping("/consultation")
+    public ResponseEntity<Map<String, Object>> createTestConsultation() {
+        if (!isDev && !"local".equals(activeProfile)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "개발 환경에서만 사용 가능합니다."
+            ));
+        }
+
+        try {
+            log.info("📋 테스트용 상담 데이터 생성 시작");
+
+            // 기존 상담사와 내담자 조회
+            var allUsers = userRepository.findAll();
+            var consultants = allUsers.stream()
+                .filter(user -> user.getRole() != null && user.getRole().name().equals("CONSULTANT"))
+                .toList();
+            var clients = clientRepository.findAll();
+            
+            if (consultants.isEmpty() || clients.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "상담사나 내담자가 없습니다. 먼저 테스트 데이터를 생성해주세요."
+                ));
+            }
+
+            User consultant = consultants.get(0);
+            Client client = clients.get(0);
+
+            // 과거 상담 데이터 생성 (히스토리용)
+            List<Consultation> consultations = new ArrayList<>();
+            
+            // 1주일 전 상담
+            Consultation consultation1 = new Consultation();
+            consultation1.setClientId(client.getId());
+            consultation1.setConsultantId(consultant.getId());
+            consultation1.setConsultationDate(LocalDate.now().minusDays(7));
+            consultation1.setStartTime(LocalTime.of(14, 0));
+            consultation1.setEndTime(LocalTime.of(15, 0));
+            consultation1.setStatus(ConsultationStatus.COMPLETED);
+            consultation1.setConsultationType(ConsultationType.INDIVIDUAL);
+            consultation1.setNotes("첫 번째 상담 - 스트레스 관리에 대해 논의");
+            consultation1.setCreatedAt(LocalDateTime.now().minusDays(7));
+            consultations.add(consultation1);
+
+            // 2주일 전 상담
+            Consultation consultation2 = new Consultation();
+            consultation2.setClientId(client.getId());
+            consultation2.setConsultantId(consultant.getId());
+            consultation2.setConsultationDate(LocalDate.now().minusDays(14));
+            consultation2.setStartTime(LocalTime.of(10, 0));
+            consultation2.setEndTime(LocalTime.of(11, 0));
+            consultation2.setStatus(ConsultationStatus.COMPLETED);
+            consultation2.setConsultationType(ConsultationType.INDIVIDUAL);
+            consultation2.setNotes("두 번째 상담 - 불안 증상에 대한 상담");
+            consultation2.setCreatedAt(LocalDateTime.now().minusDays(14));
+            consultations.add(consultation2);
+
+            // 3주일 전 상담
+            Consultation consultation3 = new Consultation();
+            consultation3.setClientId(client.getId());
+            consultation3.setConsultantId(consultant.getId());
+            consultation3.setConsultationDate(LocalDate.now().minusDays(21));
+            consultation3.setStartTime(LocalTime.of(16, 0));
+            consultation3.setEndTime(LocalTime.of(17, 0));
+            consultation3.setStatus(ConsultationStatus.COMPLETED);
+            consultation3.setConsultationType(ConsultationType.INDIVIDUAL);
+            consultation3.setNotes("세 번째 상담 - 초기 상담 및 문제 파악");
+            consultation3.setCreatedAt(LocalDateTime.now().minusDays(21));
+            consultations.add(consultation3);
+
+            // 데이터베이스에 저장
+            List<Consultation> savedConsultations = consultationRepository.saveAll(consultations);
+
+            log.info("✅ 테스트용 상담 데이터 생성 완료: {}건", savedConsultations.size());
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "테스트용 상담 데이터가 성공적으로 생성되었습니다.",
+                "count", savedConsultations.size(),
+                "clientId", client.getId(),
+                "consultantId", consultant.getId()
+            ));
+
+        } catch (Exception e) {
+            log.error("❌ 테스트용 상담 데이터 생성 실패: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "상담 데이터 생성 실패: " + e.getMessage()
+            ));
+        }
+    }
+
     /**
      * 테스트 사용자 삭제
      * POST /api/test/delete-user

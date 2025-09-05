@@ -108,20 +108,6 @@ const ConsultantCardNew = ({
                 <p className="consultant-specialty">{getSpecialtyText()}</p>
             </div>
 
-            {/* 하단 정보 (가용성 상태, 등록일) */}
-            <div className="consultant-bottom">
-                <div 
-                    className={`consultant-availability ${getAvailabilityClass()}`}
-                    style={{ '--availability-color': getAvailabilityColor() }}
-                >
-                    <div className="availability-dot"></div>
-                    {getAvailabilityText()}
-                </div>
-                <p className="consultant-registration-date">
-                    등록일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '2025. 1. 5.'}
-                </p>
-            </div>
-
             {/* 선택 표시 */}
             {selected && (
                 <div className="selection-indicator">

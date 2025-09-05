@@ -422,9 +422,9 @@
   flex: 1 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 2px !important;
+  gap: 4px !important;
   overflow: hidden !important;
-  justify-content: flex-start !important;
+  justify-content: center !important;
   height: 100% !important;
 }
 

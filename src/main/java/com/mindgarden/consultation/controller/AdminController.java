@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -131,6 +132,53 @@ public class AdminController {
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "상담사별 내담자 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 내담자별 매핑 조회
+     */
+    @GetMapping("/mappings/client")
+    public ResponseEntity<?> getMappingsByClient(@RequestParam Long clientId) {
+        try {
+            log.info("🔍 내담자별 매핑 조회: 내담자 ID={}", clientId);
+            List<ConsultantClientMapping> mappings = adminService.getMappingsByClient(clientId);
+            
+            if (mappings.isEmpty()) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "매핑 정보가 없습니다",
+                    "data", null
+                ));
+            }
+            
+            // 가장 최근 활성 매핑 찾기
+            ConsultantClientMapping activeMapping = mappings.stream()
+                .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                .findFirst()
+                .orElse(mappings.get(0));
+            
+            // 상담사 정보 추출
+            Map<String, Object> consultantInfo = new HashMap<>();
+            if (activeMapping.getConsultant() != null) {
+                consultantInfo.put("consultantId", activeMapping.getConsultant().getId());
+                consultantInfo.put("consultantName", activeMapping.getConsultant().getName());
+                consultantInfo.put("specialty", activeMapping.getConsultant().getSpecialization());
+                consultantInfo.put("intro", "전문적이고 따뜻한 상담을 제공합니다.");
+                consultantInfo.put("profileImage", null);
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "내담자별 매핑 조회 성공",
+                "data", consultantInfo
+            ));
+        } catch (Exception e) {
+            log.error("❌ 내담자별 매핑 조회 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "내담자별 매핑 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }

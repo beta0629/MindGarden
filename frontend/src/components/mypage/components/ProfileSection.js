@@ -7,8 +7,9 @@ const ProfileSection = ({
   user, 
   formData, 
   onFormDataChange, 
-  onSave,
-  formatPhoneNumber
+  onUserChange,
+  onSave, // Added back for auto-save
+  formatPhoneNumber 
 }) => {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -33,10 +34,77 @@ const ProfileSection = ({
 
 
   const handleImageChange = (newImage) => {
-    onFormDataChange(prev => ({
-      ...prev,
-      profileImage: newImage
-    }));
+    console.log('🖼️ ProfileSection handleImageChange 호출:', newImage ? newImage.substring(0, 50) + '...' : 'null');
+    
+    // 이미지 삭제 시 기본 아바타로 복원
+    if (newImage === null) {
+      console.log('🗑️ 이미지 삭제 - 기본 아바타로 복원');
+      const imageToSet = '/default-avatar.svg';
+      const imageTypeToSet = 'DEFAULT_ICON';
+      
+      // formData 업데이트 (기본 아바타로 복원)
+      onFormDataChange(prev => {
+        const updatedData = {
+          ...prev,
+          profileImage: imageToSet,
+          profileImageType: imageTypeToSet
+        };
+        console.log('✅ ProfileSection formData 업데이트 완료 (기본 아바타 복원):', updatedData);
+        return updatedData;
+      });
+      
+      // user 상태도 즉시 업데이트하여 UI에 바로 반영 (기본 아바타로 복원)
+      if (onUserChange) {
+        onUserChange(prev => ({
+          ...prev,
+          profileImage: imageToSet,
+          profileImageType: imageTypeToSet
+        }));
+        console.log('✅ user 상태 즉시 업데이트 완료 - 기본 아바타 복원');
+      }
+    } else {
+      // 새 이미지 설정
+      const imageToSet = newImage;
+      
+      // formData 업데이트 (새 이미지 설정)
+      onFormDataChange(prev => {
+        const updatedData = {
+          ...prev,
+          profileImage: imageToSet,
+          profileImageType: 'USER_PROFILE'
+        };
+        console.log('✅ ProfileSection formData 업데이트 완료 (새 이미지 설정):', updatedData);
+        return updatedData;
+      });
+      
+      // user 상태도 즉시 업데이트하여 UI에 바로 반영 (새 이미지 설정)
+      if (onUserChange) {
+        onUserChange(prev => ({
+          ...prev,
+          profileImage: imageToSet,
+          profileImageType: 'USER_PROFILE'
+        }));
+        console.log('✅ user 상태 즉시 업데이트 완료 - 새 이미지 설정');
+      }
+    }
+    
+    // 백엔드 저장 없이 프론트엔드에서만 즉시 적용
+    console.log('🖼️ 이미지 즉시 적용 완료 - 백엔드 저장 없음');
+    
+    // 크롭된 이미지가 있으면 자동으로 백엔드에 저장
+    if (newImage && newImage.startsWith('data:image/')) {
+      console.log('🖼️ 크롭된 이미지 감지 - 자동 저장 시작');
+      setTimeout(() => {
+        if (onSave) {
+          onSave(null, {
+            ...formData,
+            profileImage: newImage,
+            profileImageType: 'USER_PROFILE'
+          });
+          console.log('✅ 크롭된 이미지 자동 저장 완료');
+        }
+      }, 100);
+    }
   };
 
 
@@ -44,7 +112,8 @@ const ProfileSection = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await onSave(e, formData);
+      // onSave 호출 제거 - 크롭된 이미지는 백엔드에 저장하지 않음
+      console.log('프로필 정보 저장 (이미지 제외)');
       setIsEditing(false);
     } catch (error) {
       console.error('프로필 업데이트 실패:', error);

@@ -465,6 +465,11 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    public List<ConsultantClientMapping> getMappingsByClient(Long clientId) {
+        return mappingRepository.findByClientIdAndStatusNot(clientId, ConsultantClientMapping.MappingStatus.TERMINATED);
+    }
+
+    @Override
     public ConsultantClientMapping getMappingById(Long mappingId) {
         return mappingRepository.findById(mappingId).orElse(null);
     }

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { WELCOME_SECTION_CSS } from '../../constants/css';
+import { DASHBOARD_MESSAGES } from '../../constants/dashboard';
 import './WelcomeSection.css';
 
 const WelcomeSection = ({ user, currentTime, consultationData }) => {
@@ -13,7 +15,8 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
     if (user?.socialProfileImage && !imageLoadError) {
       return user.socialProfileImage;
     }
-    return null;
+    // 기본 아바타 사용
+    return '/default-avatar.svg';
   };
 
   // 사용자 이름 가져오기
@@ -36,20 +39,20 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
     
     if (!user?.role) {
       console.log('⚠️ role 정보 없음, 기본 인사말 사용');
-      return '안녕하세요!';
+      return DASHBOARD_MESSAGES.WELCOME.DEFAULT;
     }
     
     switch (user.role) {
       case 'CLIENT':
-        return '안녕하세요, 내담자님!';
+        return DASHBOARD_MESSAGES.WELCOME.CLIENT;
       case 'CONSULTANT':
-        return '안녕하세요, 상담사님!';
+        return DASHBOARD_MESSAGES.WELCOME.CONSULTANT;
       case 'ADMIN':
       case 'SUPER_ADMIN':
-        return '안녕하세요, 관리자님!';
+        return DASHBOARD_MESSAGES.WELCOME.ADMIN;
       default:
         console.log('⚠️ 알 수 없는 role:', user.role);
-        return '안녕하세요!';
+        return DASHBOARD_MESSAGES.WELCOME.DEFAULT;
     }
   };
 
@@ -57,33 +60,29 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
   const displayName = getUserDisplayName();
 
   return (
-    <div className="welcome-section">
-      <div className="welcome-card">
-        <div className="welcome-profile">
-          <div className="profile-avatar">
-            {profileImageUrl ? (
-              <img 
-                src={profileImageUrl} 
-                alt="프로필 이미지" 
-                className="profile-image"
-                onError={() => setImageLoadError(true)}
-                style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  objectFit: 'cover',
-                  borderRadius: '50%'
-                }}
-              />
-            ) : (
-              <i className="bi bi-person-circle profile-icon"></i>
-            )}
+    <div className={WELCOME_SECTION_CSS.CONTAINER}>
+      <div className={WELCOME_SECTION_CSS.WELCOME_CARD}>
+        <div className={WELCOME_SECTION_CSS.PROFILE_SECTION}>
+          <div className={WELCOME_SECTION_CSS.PROFILE_IMAGE}>
+            <img 
+              src={profileImageUrl} 
+              alt="프로필 이미지" 
+              className="profile-image"
+              onError={() => setImageLoadError(true)}
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'cover',
+                borderRadius: '50%'
+              }}
+            />
           </div>
-          <div className="welcome-content">
-            <h2 className="welcome-title">{getWelcomeTitle()}</h2>
-            <p className="welcome-message">
+          <div className={WELCOME_SECTION_CSS.PROFILE_INFO}>
+            <h2 className={WELCOME_SECTION_CSS.WELCOME_TITLE}>{getWelcomeTitle()}</h2>
+            <p className={WELCOME_SECTION_CSS.WELCOME_SUBTITLE}>
               {displayName}님, 오늘도 좋은 하루 되세요!
             </p>
-            <div className="welcome-time">
+            <div className={WELCOME_SECTION_CSS.WELCOME_TIME}>
               <i className="bi bi-clock"></i>
               <span>{currentTime}</span>
             </div>

@@ -43,6 +43,63 @@ export const COMMON_DASHBOARD_CSS = {
   RECENT_ACTIVITIES: 'common-dashboard-recent-activities'
 };
 
+// SummaryPanels 컴포넌트 CSS 클래스명
+export const SUMMARY_PANELS_CSS = {
+  CONTAINER: 'summary-panels',
+  PANEL: 'summary-panel',
+  PANEL_HEADER: 'panel-header',
+  PANEL_TITLE: 'panel-title',
+  PANEL_ICON: 'panel-icon',
+  PANEL_CONTENT: 'panel-content',
+  SUMMARY_ITEM: 'summary-item',
+  SUMMARY_ICON: 'summary-icon',
+  SUMMARY_INFO: 'summary-info',
+  SUMMARY_LABEL: 'summary-label',
+  SUMMARY_VALUE: 'summary-value',
+  CONSULTANT_PROFILE: 'consultant-profile',
+  CONSULTANT_AVATAR: 'consultant-avatar',
+  CONSULTANT_DETAILS: 'consultant-details',
+  CONSULTANT_NAME: 'consultant-name',
+  CONSULTANT_SPECIALTY: 'consultant-specialty',
+  CONSULTANT_INTRO: 'consultant-intro',
+  MAPPING_ACTIONS: 'mapping-actions'
+};
+
+// WelcomeSection 컴포넌트 CSS 클래스명
+export const WELCOME_SECTION_CSS = {
+  CONTAINER: 'welcome-section',
+  WELCOME_CARD: 'welcome-card',
+  WELCOME_HEADER: 'welcome-header',
+  WELCOME_TITLE: 'welcome-title',
+  WELCOME_SUBTITLE: 'welcome-subtitle',
+  WELCOME_TIME: 'welcome-time',
+  PROFILE_SECTION: 'profile-section',
+  PROFILE_IMAGE: 'profile-image',
+  PROFILE_INFO: 'profile-info',
+  PROFILE_NAME: 'profile-name',
+  PROFILE_ROLE: 'profile-role'
+};
+
+// QuickActions 컴포넌트 CSS 클래스명
+export const QUICK_ACTIONS_CSS = {
+  CONTAINER: 'quick-actions',
+  ACTION_GRID: 'action-grid',
+  ACTION_BUTTON: 'action-button',
+  ACTION_ICON: 'action-icon',
+  ACTION_LABEL: 'action-label'
+};
+
+// RecentActivities 컴포넌트 CSS 클래스명
+export const RECENT_ACTIVITIES_CSS = {
+  CONTAINER: 'recent-activities',
+  ACTIVITY_LIST: 'activity-list',
+  ACTIVITY_ITEM: 'activity-item',
+  ACTIVITY_ICON: 'activity-icon',
+  ACTIVITY_CONTENT: 'activity-content',
+  ACTIVITY_TITLE: 'activity-title',
+  ACTIVITY_TIME: 'activity-time'
+};
+
 // SessionManagement 컴포넌트 CSS 클래스명
 export const SESSION_MANAGEMENT_CSS = {
   CONTAINER: 'session-mgmt-container',
@@ -182,6 +239,10 @@ export const STATS_CARD_GRID_CSS = {
 export const CSS_CLASSES = {
   ADMIN_DASHBOARD: ADMIN_DASHBOARD_CSS,
   COMMON_DASHBOARD: COMMON_DASHBOARD_CSS,
+  SUMMARY_PANELS: SUMMARY_PANELS_CSS,
+  WELCOME_SECTION: WELCOME_SECTION_CSS,
+  QUICK_ACTIONS: QUICK_ACTIONS_CSS,
+  RECENT_ACTIVITIES: RECENT_ACTIVITIES_CSS,
   SESSION_MANAGEMENT: SESSION_MANAGEMENT_CSS,
   CONSULTANT_COMPREHENSIVE: CONSULTANT_COMPREHENSIVE_CSS,
   CLIENT_COMPREHENSIVE: CLIENT_COMPREHENSIVE_CSS,

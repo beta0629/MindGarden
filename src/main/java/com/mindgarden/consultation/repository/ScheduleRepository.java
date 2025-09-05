@@ -56,6 +56,11 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByClientId(Long clientId);
     
     /**
+     * 내담자별 스케줄 페이지네이션 조회
+     */
+    Page<Schedule> findByClientId(Long clientId, Pageable pageable);
+    
+    /**
      * 내담자별 특정 날짜 스케줄 조회
      */
     List<Schedule> findByClientIdAndDate(Long clientId, LocalDate date);

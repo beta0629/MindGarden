@@ -26,33 +26,103 @@ const TimeSlotGrid = ({
     const [timeSlots, setTimeSlots] = useState([]);
     const [existingSchedules, setExistingSchedules] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [consultantInfo, setConsultantInfo] = useState(null);
 
     useEffect(() => {
-        generateTimeSlots();
+        if (consultantId) {
+            loadConsultantInfo();
+        }
         if (consultantId && date) {
             loadExistingSchedules();
         }
     }, [date, consultantId, duration]);
 
+    useEffect(() => {
+        if (consultantInfo) {
+            generateTimeSlots();
+        }
+    }, [consultantInfo, duration]);
+
+    /**
+     * 상담사 정보 로드
+     */
+    const loadConsultantInfo = async () => {
+        try {
+            const response = await fetch(`/api/v1/consultants/${consultantId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.data) {
+                    setConsultantInfo(result.data);
+                } else {
+                    setDefaultConsultantInfo();
+                }
+            } else {
+                setDefaultConsultantInfo();
+            }
+        } catch (error) {
+            console.error('상담사 정보 로드 실패:', error);
+            setDefaultConsultantInfo();
+        }
+    };
+
+    const setDefaultConsultantInfo = () => {
+        setConsultantInfo({
+            consultationHours: '09:00-18:00',
+            breakTime: '12:00-13:00',
+            sessionDuration: 50,
+            breakBetweenSessions: 10
+        });
+    };
+
     /**
      * 시간 슬롯 생성
      */
     const generateTimeSlots = () => {
+        if (!consultantInfo) return;
         const slots = [];
-        const startHour = BUSINESS_HOURS.START_HOUR;
-        const endHour = BUSINESS_HOURS.END_HOUR;
         
-        for (let hour = startHour; hour < endHour; hour++) {
+        // 상담사별 업무시간 파싱 (예: "09:00-18:00")
+        const [startTime, endTime] = consultantInfo.consultationHours.split('-');
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const [endHour, endMinute] = endTime.split(':').map(Number);
+        
+        // 상담사별 휴식시간 파싱 (예: "12:00-13:00")
+        const breakTimes = consultantInfo.breakTime ? consultantInfo.breakTime.split('-') : null;
+        const breakStart = breakTimes ? breakTimes[0].split(':').map(Number) : null;
+        const breakEnd = breakTimes ? breakTimes[1].split(':').map(Number) : null;
+        
+        // 상담사별 세션 간 휴식 시간
+        const breakBetweenSessions = consultantInfo.breakBetweenSessions || 10;
+        
+        // 상담 시간을 고려하여 마지막 가능한 시작 시간 계산
+        const totalDuration = duration + breakBetweenSessions;
+        const maxStartMinutes = (endHour * 60 + endMinute) - totalDuration;
+        const maxStartHour = Math.floor(maxStartMinutes / 60);
+        const maxStartMinute = maxStartMinutes % 60;
+        
+        for (let hour = startHour; hour <= maxStartHour; hour++) {
             for (let minute = 0; minute < 60; minute += TIME_SLOT_INTERVAL) {
+                // 마지막 시간대 체크
+                if (hour === maxStartHour && minute > maxStartMinute) {
+                    break;
+                }
+                
                 const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                const endTime = calculateEndTime(timeString, duration);
+                const slotEndTime = calculateEndTime(timeString, duration);
                 
                 // 업무 시간 내에서만 종료되는 슬롯만 추가
-                if (isWithinBusinessHours(endTime)) {
+                if (isWithinConsultantHours(slotEndTime, startHour, startMinute, endHour, endMinute)) {
                     slots.push({
                         id: `slot-${timeString}`,
                         time: timeString,
-                        endTime: endTime,
+                        endTime: slotEndTime,
                         duration: duration,
                         available: true,
                         conflict: false
@@ -176,7 +246,8 @@ const TimeSlotGrid = ({
      */
     const calculateEndTime = (startTime, durationMinutes) => {
         const [hour, minute] = startTime.split(':').map(Number);
-        const totalMinutes = hour * 60 + minute + durationMinutes + 10; // 10분 휴식 시간 추가
+        const breakBetweenSessions = consultantInfo?.breakBetweenSessions || 10;
+        const totalMinutes = hour * 60 + minute + durationMinutes + breakBetweenSessions;
         
         const endHour = Math.floor(totalMinutes / 60);
         const endMinute = totalMinutes % 60;
@@ -185,11 +256,33 @@ const TimeSlotGrid = ({
     };
 
     /**
-     * 업무 시간 내 확인
+     * 상담사 업무 시간 내 확인
      */
-    const isWithinBusinessHours = (timeString) => {
-        const [hour] = timeString.split(':').map(Number);
-        return hour >= 9 && hour <= 18;
+    const isWithinConsultantHours = (timeString, startHour, startMinute, endHour, endMinute) => {
+        const [hour, minute] = timeString.split(':').map(Number);
+        const totalMinutes = hour * 60 + minute;
+        
+        const consultantStart = startHour * 60 + startMinute;
+        const consultantEnd = endHour * 60 + endMinute;
+        
+        return totalMinutes >= consultantStart && totalMinutes <= consultantEnd;
+    };
+
+    /**
+     * 휴식시간과 겹치는지 확인 (현재는 사용하지 않음)
+     */
+    const isOverlappingWithBreakTime = (startTime, endTime, breakStart, breakEnd) => {
+        if (!breakStart || !breakEnd) return false;
+        
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const [endHour, endMinute] = endTime.split(':').map(Number);
+        
+        const slotStartMinutes = startHour * 60 + startMinute;
+        const slotEndMinutes = endHour * 60 + endMinute;
+        const breakStartMinutes = breakStart[0] * 60 + breakStart[1];
+        const breakEndMinutes = breakEnd[0] * 60 + breakEnd[1];
+        
+        return (slotStartMinutes < breakEndMinutes && slotEndMinutes > breakStartMinutes);
     };
 
     /**

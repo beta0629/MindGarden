@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { QUICK_ACTIONS_CSS } from '../../constants/css';
+import { DASHBOARD_ACTIONS } from '../../constants/dashboard';
 
 const QuickActions = ({ user }) => {
   const navigate = useNavigate();
@@ -34,42 +36,46 @@ const QuickActions = ({ user }) => {
   };
 
   return (
-    <div className="quick-actions">
+    <div className={QUICK_ACTIONS_CSS.CONTAINER}>
       <h3 className="section-title">
         <i className="bi bi-lightning"></i>
         빠른 액션
       </h3>
-      <div className={`action-buttons ${(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? 'admin-layout' : ''}`}>
-        <button className="action-btn" onClick={goToProfile}>
-          <i className="bi bi-person-circle"></i>
-          <span>마이페이지</span>
+      <div className={`${QUICK_ACTIONS_CSS.ACTION_GRID} ${(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? 'admin-layout' : ''}`}>
+        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToProfile}>
+          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.PROFILE.ICON}`}></i>
+          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.PROFILE.LABEL}</span>
         </button>
-        <button className="action-btn" onClick={goToSchedule}>
-          <i className="bi bi-calendar-check"></i>
-          <span>일정 관리</span>
+        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToSchedule}>
+          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.SCHEDULE.ICON}`}></i>
+          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.SCHEDULE.LABEL}</span>
         </button>
         
         {/* 관리자 전용 액션 */}
         {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
           <>
-            <button className="action-btn" onClick={goToMappingManagement}>
-              <i className="bi bi-link-45deg"></i>
-              <span>매핑 관리</span>
+            <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToMappingManagement}>
+              <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.MAPPING_MANAGEMENT.ICON}`}></i>
+              <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.MAPPING_MANAGEMENT.LABEL}</span>
             </button>
-            <button className="action-btn" onClick={goToCommonCodeManagement}>
-              <i className="bi bi-code-square"></i>
-              <span>공통코드 관리</span>
+            <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToCommonCodeManagement}>
+              <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.COMMON_CODES.ICON}`}></i>
+              <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.COMMON_CODES.LABEL}</span>
+            </button>
+            <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={() => navigate('/admin/statistics')}>
+              <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.STATISTICS.ICON}`}></i>
+              <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.STATISTICS.LABEL}</span>
             </button>
           </>
         )}
         
-        <button className="action-btn" onClick={goToHelp}>
-          <i className="bi bi-question-circle"></i>
-          <span>도움말</span>
+        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToHelp}>
+          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.HELP.ICON}`}></i>
+          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.HELP.LABEL}</span>
         </button>
-        <button className="action-btn" onClick={goToSettings}>
-          <i className="bi bi-gear"></i>
-          <span>설정</span>
+        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToSettings}>
+          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.SETTINGS.ICON}`}></i>
+          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.SETTINGS.LABEL}</span>
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { RECENT_ACTIVITIES_CSS } from '../../constants/css';
 
 const RecentActivities = ({ consultationData }) => {
   const getActivityIcon = (type) => {
@@ -18,21 +19,21 @@ const RecentActivities = ({ consultationData }) => {
   };
 
   return (
-    <div className="recent-activities">
+    <div className={RECENT_ACTIVITIES_CSS.CONTAINER}>
       <h3 className="section-title">
         <i className="bi bi-clock-history"></i>
         최근 활동
       </h3>
-      <div className="activity-list">
+      <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_LIST}>
         {consultationData?.recentActivities && consultationData.recentActivities.length > 0 ? (
           consultationData.recentActivities.map((activity, index) => (
-            <div key={index} className="activity-item">
-              <div className="activity-icon">
+            <div key={index} className={RECENT_ACTIVITIES_CSS.ACTIVITY_ITEM}>
+              <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_ICON}>
                 <i className={`bi ${getActivityIcon(activity.type)}`}></i>
               </div>
-              <div className="activity-content">
-                <div className="activity-title">{activity.title}</div>
-                <div className="activity-time">{activity.time}</div>
+              <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_CONTENT}>
+                <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_TITLE}>{activity.title}</div>
+                <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_TIME}>{activity.time}</div>
               </div>
             </div>
           ))

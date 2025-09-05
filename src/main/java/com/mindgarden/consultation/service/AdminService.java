@@ -144,6 +144,11 @@ public interface AdminService {
     List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId);
 
     /**
+     * 내담자별 매핑 목록 조회
+     */
+    List<ConsultantClientMapping> getMappingsByClient(Long clientId);
+
+    /**
      * 개별 매핑 조회
      */
     ConsultantClientMapping getMappingById(Long mappingId);

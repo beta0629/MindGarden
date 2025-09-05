@@ -19,7 +19,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: false  # SQL 로그는 별도로 제어
+    show-sql: true  # SQL 로그 활성화
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect

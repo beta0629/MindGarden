@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ProfileImageUpload.css';
 
 const ProfileImageUpload = ({ 
@@ -11,22 +11,50 @@ const ProfileImageUpload = ({
 }) => {
   const [isCropping, setIsCropping] = useState(false);
   const [cropImage, setCropImage] = useState(null);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
-  // 프로필 이미지 우선순위 결정
-  const getProfileImageUrl = () => {
-    // 1. 사용자가 등록한 이미지 우선
+  // profileImage 변경 감지
+  useEffect(() => {
+    console.log('🖼️ ProfileImageUpload profileImage 변경 감지:', {
+      profileImage: profileImage ? profileImage.substring(0, 50) + '...' : 'null',
+      profileImageType
+    });
+  }, [profileImage, profileImageType]);
+
+  // 프로필 이미지 우선순위 결정 (forceUpdate 의존성 추가)
+  const getProfileImageUrl = React.useCallback(() => {
+    console.log('🖼️ getProfileImageUrl 호출:', {
+      profileImage: profileImage ? profileImage.substring(0, 50) + '...' : 'null',
+      profileImageType,
+      socialProfileImage: socialProfileImage ? socialProfileImage.substring(0, 50) + '...' : 'null',
+      forceUpdate
+    });
+    
+    // 1. 사용자가 등록한 이미지 우선 (크롭된 이미지 포함)
     if (profileImage && profileImageType === 'USER_PROFILE') {
+      console.log('✅ USER_PROFILE 이미지 반환 (교체됨)');
       return profileImage;
     }
     
     // 2. 소셜 이미지
     if (socialProfileImage && profileImageType === 'SOCIAL_IMAGE') {
+      console.log('✅ SOCIAL_IMAGE 이미지 반환');
       return socialProfileImage;
     }
     
-            // 3. 기본 아이콘
-        return '/default-avatar.svg';
-  };
+    // 3. 기본 아이콘 (기존 이미지가 없을 때만)
+    console.log('✅ 기본 아이콘 반환: 인라인 SVG');
+    return 'data:image/svg+xml;base64,' + btoa(`
+      <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="60" fill="#f0f0f0"/>
+        <g fill="#999999">
+          <circle cx="60" cy="45" r="18"/>
+          <path d="M30 100 C30 80, 45 70, 60 70 C75 70, 90 80, 90 100 L90 110 L30 110 Z"/>
+        </g>
+        <circle cx="60" cy="60" r="60" fill="none" stroke="#e0e0e0" stroke-width="2"/>
+      </svg>
+    `);
+  }, [profileImage, profileImageType, socialProfileImage, forceUpdate]);
 
   const getProfileImageTypeText = () => {
     switch (profileImageType) {
@@ -79,10 +107,70 @@ const ProfileImageUpload = ({
 
   // 크롭 이미지 처리
   const handleCropImage = () => {
+    console.log('🖼️ 크롭 완료 버튼 클릭됨!');
+    console.log('🖼️ cropImage 상태:', cropImage ? '있음' : '없음');
+    
     if (cropImage) {
-      onImageChange(cropImage);
-      setIsCropping(false);
-      setCropImage(null);
+      console.log('🖼️ 크롭 시작:', cropImage.substring(0, 50) + '...');
+      
+      // 실제 크롭 로직 구현
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        console.log('🖼️ 이미지 로드 완료:', img.width, 'x', img.height);
+        
+        // 크롭 영역 계산 (간단한 중앙 크롭)
+        const size = Math.min(img.width, img.height);
+        const x = (img.width - size) / 2;
+        const y = (img.height - size) / 2;
+        
+        canvas.width = 200;
+        canvas.height = 200;
+        
+        // 이미지 그리기
+        ctx.drawImage(img, x, y, size, size, 0, 0, 200, 200);
+        
+        // 크롭된 이미지를 base64로 변환
+        const croppedImage = canvas.toDataURL('image/jpeg', 0.8);
+        console.log('🖼️ 크롭 완료:', croppedImage.substring(0, 50) + '...');
+        
+        // 부모 컴포넌트에 전달 (기존 이미지 완전 교체)
+        if (onImageChange) {
+          onImageChange(croppedImage);
+          console.log('✅ onImageChange 호출 완료 - 이미지 교체');
+        } else {
+          console.error('❌ onImageChange 함수가 없습니다');
+        }
+        
+        setIsCropping(false);
+        setCropImage(null);
+        
+        // 강제 리렌더링으로 이미지 즉시 반영
+        setForceUpdate(prev => prev + 1);
+        console.log('🔄 강제 리렌더링 실행');
+        
+        // 추가 강제 리렌더링으로 확실히 반영
+        setTimeout(() => {
+          setForceUpdate(prev => prev + 1);
+          console.log('🔄 추가 강제 리렌더링 실행');
+        }, 50);
+        
+        // 한 번 더 강제 리렌더링
+        setTimeout(() => {
+          setForceUpdate(prev => prev + 1);
+          console.log('🔄 최종 강제 리렌더링 실행');
+        }, 100);
+      };
+      
+      img.onerror = (error) => {
+        console.error('❌ 이미지 로드 실패:', error);
+      };
+      
+      img.src = cropImage;
+    } else {
+      console.error('❌ cropImage가 없습니다');
     }
   };
 
@@ -96,6 +184,19 @@ const ProfileImageUpload = ({
         setIsCropping(true);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // 이미지 삭제 기능
+  const handleDeleteImage = () => {
+    console.log('🗑️ 이미지 삭제 요청');
+    
+    // 부모 컴포넌트에 null 전달하여 이미지 삭제
+    if (onImageChange) {
+      onImageChange(null);
+      console.log('✅ 이미지 삭제 완료 - 기본 아바타로 복원');
+    } else {
+      console.error('❌ onImageChange 함수가 없습니다');
     }
   };
 
@@ -113,7 +214,13 @@ const ProfileImageUpload = ({
             src={getProfileImageUrl()}
             alt="프로필 이미지"
             onError={(e) => {
+              console.log('🖼️ 이미지 로드 실패, 기본 아바타로 대체');
+              console.log('🖼️ 실패한 이미지 src:', e.target.src);
               e.target.src = '/default-avatar.svg';
+            }}
+            onLoad={(e) => {
+              console.log('🖼️ 이미지 로드 성공');
+              console.log('🖼️ 로드된 이미지 src:', e.target.src);
             }}
           />
           <div className="profile-image-type">
@@ -132,10 +239,22 @@ const ProfileImageUpload = ({
                 className="image-upload"
                 id="profile-image-input"
               />
-              <label htmlFor="profile-image-input" className="file-upload-btn">
-                <i className="bi bi-file-earmark-image"></i>
-                파일 선택
-              </label>
+              <div className="image-controls">
+                <label htmlFor="profile-image-input" className="file-upload-btn">
+                  <i className="bi bi-file-earmark-image"></i>
+                  파일 선택
+                </label>
+                {profileImage && profileImageType === 'USER_PROFILE' && profileImage.startsWith('data:image/') && (
+                  <button 
+                    className="delete-image-btn"
+                    onClick={handleDeleteImage}
+                    title="이미지 삭제"
+                  >
+                    <i className="bi bi-trash"></i>
+                    삭제
+                  </button>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -161,12 +280,27 @@ const ProfileImageUpload = ({
                   alt="크롭할 이미지"
                   className="crop-image"
                   draggable="false"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '400px',
+                    objectFit: 'contain'
+                  }}
                 />
-                <div className="crop-frame">
-                  <div className="crop-handle top-left"></div>
-                  <div className="crop-handle top-right"></div>
-                  <div className="crop-handle bottom-left"></div>
-                  <div className="crop-handle bottom-right"></div>
+                <div className="crop-preview">
+                  <div className="crop-preview-label">미리보기:</div>
+                  <div className="crop-preview-image">
+                    <img 
+                      src={cropImage} 
+                      alt="크롭 미리보기"
+                      style={{
+                        width: '100px',
+                        height: '100px',
+                        objectFit: 'cover',
+                        borderRadius: '50%',
+                        border: '2px solid #007bff'
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

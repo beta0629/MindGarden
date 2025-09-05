@@ -847,6 +847,10 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 조회: {}", userId);
             schedules = scheduleRepository.findByConsultantId(userId);
+        } else if ("CLIENT".equals(userRole)) {
+            // 내담자: 자신의 스케줄만 조회
+            log.info("👤 내담자 권한으로 자신의 스케줄만 조회: {}", userId);
+            schedules = scheduleRepository.findByClientId(userId);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }
@@ -876,6 +880,10 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
             schedulePage = scheduleRepository.findByConsultantId(userId, pageable);
+        } else if ("CLIENT".equals(userRole)) {
+            // 내담자: 자신의 스케줄만 조회
+            log.info("👤 내담자 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
+            schedulePage = scheduleRepository.findByClientId(userId, pageable);
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }

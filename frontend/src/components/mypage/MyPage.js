@@ -16,8 +16,6 @@ const MyPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [socialAccounts, setSocialAccounts] = useState([]);
-  const [isCropping, setIsCropping] = useState(false);
-  const [cropImage, setCropImage] = useState(null);
   const [formData, setFormData] = useState({
     username: '',
     nickname: '',
@@ -210,52 +208,32 @@ const MyPage = () => {
     if (files.length > 0) {
       const file = files[0];
       if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setCropImage(e.target.result);
-          setIsCropping(true);
-        };
-        reader.readAsDataURL(file);
+        notification.showToast('이미지 업로드는 프로필 정보 탭에서 가능합니다.', 'info');
       } else {
         notification.showToast('이미지 파일만 업로드 가능합니다.', 'warning');
       }
     }
   };
 
-  // 크롭 이미지 처리
-  const handleCropImage = () => {
-    if (cropImage) {
-      // 실제 크롭 로직은 Canvas API를 사용하여 구현
-      // 여기서는 간단히 이미지를 그대로 사용
-      setFormData(prev => ({
-        ...prev,
-        profileImage: cropImage
-      }));
-      setIsCropping(false);
-      setCropImage(null);
-    }
-  };
 
-  // 이미지 파일 선택 시 크롭 모달 열기
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setCropImage(e.target.result);
-        setIsCropping(true);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleSubmit = withFormSubmit(async (e, formDataToUpdate) => {
     if (e && e.preventDefault) {
       e.preventDefault();
     }
     
+    // 최신 formData를 사용하도록 수정
     const dataToUpdate = formDataToUpdate || formData;
     console.log('🚀 백엔드로 전송할 데이터:', dataToUpdate);
+    console.log('🔍 프로필 이미지 확인:', {
+      profileImage: dataToUpdate.profileImage ? dataToUpdate.profileImage.substring(0, 50) + '...' : 'null',
+      profileImageType: dataToUpdate.profileImageType
+    });
+    
+    // 크롭된 이미지도 백엔드에 저장하도록 수정
+    if (dataToUpdate.profileImage && dataToUpdate.profileImage.startsWith('data:image/')) {
+      console.log('🖼️ 크롭된 이미지 감지 - 백엔드에 저장 진행');
+    }
     
     const response = await mypageApi.updateMyPageInfo(dataToUpdate);
     console.log('✅ 백엔드 응답:', response);
@@ -266,18 +244,24 @@ const MyPage = () => {
     console.log('  - gender:', response.gender);
     console.log('  - profileImage:', response.profileImage);
     
-    // 사용자 정보 업데이트 (모든 필드 포함)
-    setUser(prev => ({
-      ...prev,
-      username: dataToUpdate.username,
-      nickname: dataToUpdate.nickname,
-      phone: dataToUpdate.phone,
-      gender: dataToUpdate.gender,
-      profileImage: dataToUpdate.profileImage
-    }));
-    
-    // formData도 업데이트
-    setFormData(dataToUpdate);
+              // 사용자 정보 업데이트 (크롭된 이미지는 프론트엔드 데이터 우선 사용)
+          setUser(prev => ({
+            ...prev,
+            username: response.username || dataToUpdate.username,
+            nickname: response.nickname || dataToUpdate.nickname,
+            phone: response.phone || dataToUpdate.phone,
+            gender: response.gender || dataToUpdate.gender,
+            // 크롭된 이미지는 프론트엔드 데이터 우선 사용
+            profileImage: dataToUpdate.profileImage || response.profileImage,
+            profileImageType: dataToUpdate.profileImageType || response.profileImageType
+          }));
+
+          // formData도 크롭된 이미지 우선으로 업데이트
+          setFormData({
+            ...dataToUpdate,
+            profileImage: dataToUpdate.profileImage || response.profileImage,
+            profileImageType: dataToUpdate.profileImageType || response.profileImageType
+          });
     
     // 세션 매니저의 사용자 정보 즉시 업데이트 (모든 필드 포함)
     if (sessionManager.user) {
@@ -443,13 +427,14 @@ const MyPage = () => {
 
         <div className="mypage-main-content">
           {activeTab === 'profile' && (
-            <ProfileSection
-              user={user}
-              formData={formData}
-              onFormDataChange={setFormData}
-              onSave={handleSubmit}
-              formatPhoneNumber={formatPhoneNumber}
-            />
+                    <ProfileSection
+          user={user}
+          formData={formData}
+          onFormDataChange={setFormData}
+          onUserChange={setUser}
+          onSave={handleSubmit}
+          formatPhoneNumber={formatPhoneNumber}
+        />
           )}
 
           {activeTab === 'settings' && (

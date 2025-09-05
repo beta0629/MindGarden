@@ -157,6 +157,24 @@ export const SCHEDULE_API = {
   CONSULTATION_TYPE_KOREAN: '/api/schedules/consultation-type-korean'
 };
 
+// 대시보드 관련 API
+export const DASHBOARD_API = {
+  // 내담자 대시보드
+  CLIENT_SCHEDULES: '/api/schedules',
+  CLIENT_CONSULTANT_INFO: '/api/admin/mappings/client',
+  
+  // 상담사 대시보드
+  CONSULTANT_SCHEDULES: '/api/schedules',
+  CONSULTANT_STATS: '/api/schedules/today/statistics',
+  
+  // 관리자 대시보드
+  ADMIN_STATS: '/api/schedules/admin/statistics',
+  ADMIN_SYSTEM_INFO: '/api/admin/system/stats',
+  
+  // 세션 정보
+  SESSION_INFO: '/api/auth/session-info'
+};
+
 // 파일 업로드 관련 API
 export const FILE_API = {
   UPLOAD_IMAGE: '/api/files/upload/image',
@@ -186,6 +204,8 @@ export const API_ENDPOINTS = {
   USER: USER_API,
   CONSULTATION: CONSULTATION_API,
   ADMIN: ADMIN_API,
+  SCHEDULE: SCHEDULE_API,
+  DASHBOARD: DASHBOARD_API,
   FILE: FILE_API,
   NOTIFICATION: NOTIFICATION_API,
   SEARCH: SEARCH_API

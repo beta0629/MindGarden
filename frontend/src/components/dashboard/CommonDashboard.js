@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
-import { authAPI } from '../../utils/ajax';
+import { authAPI, apiGet } from '../../utils/ajax';
+import { DASHBOARD_API } from '../../constants/api';
+import { COMMON_DASHBOARD_CSS } from '../../constants/css';
+import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
 import SimpleLayout from '../layout/SimpleLayout';
 import WelcomeSection from './WelcomeSection';
 import SummaryPanels from './SummaryPanels';
@@ -16,20 +19,7 @@ const CommonDashboard = ({ user: propUser }) => {
   const [currentTime, setCurrentTime] = useState('');
   const [activeTab, setActiveTab] = useState('today');
   const [user, setUser] = useState(null);
-  const [consultationData, setConsultationData] = useState({
-    upcomingConsultations: [],
-    weeklyConsultations: 0,
-    monthlyConsultations: 0,
-    rating: 0,
-    totalUsers: 0,
-    todayConsultations: 0,
-    consultantInfo: {
-      name: '',
-      specialty: '',
-      intro: ''
-    },
-    recentActivities: []
-  });
+  const [consultationData, setConsultationData] = useState(DASHBOARD_DEFAULT_DATA.consultationData);
   const [isLoading, setIsLoading] = useState(true);
 
   // 세션 데이터 및 상담 데이터 로드
@@ -187,75 +177,424 @@ const CommonDashboard = ({ user: propUser }) => {
   // 내담자 상담 데이터 로드
   const loadClientConsultationData = async (userId) => {
     try {
-      // API가 아직 구현되지 않았으므로 기본 데이터 사용
+      console.log('📊 내담자 상담 데이터 로드 시작 - 사용자 ID:', userId);
+      
+      // 1. 내담자 스케줄 데이터 로드
+      const scheduleResponse = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
+        userId: userId,
+        userRole: 'CLIENT'
+      });
+      
+      console.log('📅 스케줄 응답:', scheduleResponse);
+      
+      let schedules = [];
+      if (scheduleResponse?.success && scheduleResponse?.data) {
+        schedules = scheduleResponse.data;
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const endOfWeek = new Date(today);
+        endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
+        
+        // 오늘의 상담
+        const todaySchedules = schedules.filter(schedule => {
+          const scheduleDate = new Date(schedule.date);
+          return scheduleDate.toDateString() === today.toDateString();
+        });
+        
+        // 이번 주 상담
+        const weeklySchedules = schedules.filter(schedule => {
+          const scheduleDate = new Date(schedule.date);
+          return scheduleDate >= startOfWeek && scheduleDate <= endOfWeek;
+        });
+        
+        // 다가오는 상담 (오늘 이후)
+        const upcomingSchedules = schedules.filter(schedule => {
+          const scheduleDate = new Date(schedule.date);
+          return scheduleDate > today && schedule.status === 'CONFIRMED';
+        });
+        
+        // 최근 활동 데이터 생성
+        const recentActivities = [];
+        
+        // 최근 스케줄을 활동으로 변환
+        const recentSchedules = schedules
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 5); // 최근 5개만
+        
+        recentSchedules.forEach(schedule => {
+          const scheduleDate = new Date(schedule.date);
+          const now = new Date();
+          const timeDiff = now - scheduleDate;
+          const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+          
+          let timeAgo;
+          if (daysDiff === 0) {
+            timeAgo = '오늘';
+          } else if (daysDiff === 1) {
+            timeAgo = '1일 전';
+          } else if (daysDiff < 7) {
+            timeAgo = `${daysDiff}일 전`;
+          } else {
+            timeAgo = `${Math.floor(daysDiff / 7)}주 전`;
+          }
+          
+          recentActivities.push({
+            type: 'schedule',
+            title: `${schedule.consultantName} 상담사와의 상담 일정 ${schedule.status === 'CONFIRMED' ? '확정' : '등록'}`,
+            time: timeAgo,
+            details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
+          });
+        });
+        
+        // 내담자 프로필 관련 활동 추가 (예시)
+        if (recentActivities.length < 3) {
+          recentActivities.push({
+            type: 'profile',
+            title: '프로필 정보 확인',
+            time: '2일 전',
+            details: '내담자 프로필 정보를 확인했습니다'
+          });
+        }
+        
+        setConsultationData(prev => ({
+          ...prev,
+          upcomingConsultations: upcomingSchedules,
+          weeklyConsultations: weeklySchedules.length,
+          todayConsultations: todaySchedules.length,
+          recentActivities: recentActivities
+        }));
+        
+        console.log('✅ 내담자 스케줄 데이터 로드 완료:', {
+          today: todaySchedules.length,
+          weekly: weeklySchedules.length,
+          upcoming: upcomingSchedules.length
+        });
+      }
+      
+      // 2. 담당 상담사 정보 로드 (매핑 API 사용)
+      try {
+        console.log('👤 담당 상담사 정보 로드 시작 - 내담자 ID:', userId);
+        const consultantResponse = await apiGet(DASHBOARD_API.CLIENT_CONSULTANT_INFO, {
+          clientId: userId
+        });
+        
+        console.log('👤 상담사 정보 응답:', consultantResponse);
+        
+        if (consultantResponse?.success && consultantResponse?.data) {
+          const consultantData = consultantResponse.data;
+          setConsultationData(prev => ({
+            ...prev,
+            consultantInfo: {
+              name: consultantData.consultantName || '담당 상담사 없음',
+              specialty: consultantData.specialty || '상담 심리학',
+              intro: consultantData.intro || '전문적이고 따뜻한 상담을 제공합니다.',
+              profileImage: consultantData.profileImage || null
+            }
+          }));
+          
+          console.log('✅ 상담사 정보 로드 완료:', consultantData.consultantName);
+        } else {
+          // 스케줄에서 상담사 정보 추출 시도
+          if (schedules && schedules.length > 0) {
+            const latestSchedule = schedules[0];
+            if (latestSchedule.consultantName) {
+              setConsultationData(prev => ({
+                ...prev,
+                consultantInfo: {
+                  name: latestSchedule.consultantName || '담당 상담사 없음',
+                  specialty: '상담 심리학',
+                  intro: '전문적이고 따뜻한 상담을 제공합니다.',
+                  profileImage: null
+                }
+              }));
+              
+              console.log('✅ 스케줄에서 상담사 정보 추출 완료:', latestSchedule.consultantName);
+            } else {
+              setDefaultConsultantInfo();
+            }
+          } else {
+            setDefaultConsultantInfo();
+          }
+        }
+      } catch (consultantError) {
+        console.warn('⚠️ 상담사 정보 로드 실패, 기본값 사용:', consultantError);
+        setDefaultConsultantInfo();
+      }
+      
+      const setDefaultConsultantInfo = () => {
+        setConsultationData(prev => ({
+          ...prev,
+          consultantInfo: {
+            name: '담당 상담사 없음',
+            specialty: '전문 분야 미정',
+            intro: '상담사 정보가 없습니다.',
+            profileImage: null
+          }
+        }));
+      };
+      
+    } catch (error) {
+      console.error('❌ 내담자 상담 데이터 로드 오류:', error);
       setConsultationData(prev => ({
         ...prev,
         upcomingConsultations: [],
         weeklyConsultations: 0,
-        monthlyConsultations: 0,
+        todayConsultations: 0,
         consultantInfo: {
-          name: '김상담',
-          specialty: '상담 심리학',
-          intro: '전문적이고 따뜻한 상담을 제공합니다.'
+          name: '데이터 로드 실패',
+          specialty: '정보 없음',
+          intro: '데이터를 불러오는데 실패했습니다.',
+          profileImage: null
         }
       }));
-    } catch (error) {
-      console.error('내담자 상담 데이터 로드 오류:', error);
     }
   };
 
   // 상담사 상담 데이터 로드
   const loadConsultantConsultationData = async (userId) => {
     try {
-      console.log('📊 상담사 데이터 로드 - API 호출 없이 기본 데이터 사용');
-      // API가 아직 구현되지 않았으므로 기본 데이터 사용
-      setConsultationData(prev => ({
-        ...prev,
-        monthlyConsultations: 12,
-        rating: 4.8,
-        consultantInfo: {
-          name: '김상담신규',
-          specialty: '심리상담',
-          intro: '전문적인 심리상담을 제공합니다.'
+      console.log('📊 상담사 상담 데이터 로드 시작 - 사용자 ID:', userId);
+      
+      // 1. 상담사 스케줄 데이터 로드
+      const scheduleResponse = await apiGet(DASHBOARD_API.CONSULTANT_SCHEDULES, {
+        userId: userId,
+        userRole: 'CONSULTANT'
+      });
+      
+      console.log('📅 상담사 스케줄 응답:', scheduleResponse);
+      
+      if (scheduleResponse?.success && scheduleResponse?.data) {
+        const schedules = scheduleResponse.data;
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const endOfWeek = new Date(today);
+        endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
+        
+        // 오늘의 상담
+        const todaySchedules = schedules.filter(schedule => {
+          const scheduleDate = new Date(schedule.date);
+          return scheduleDate.toDateString() === today.toDateString();
+        });
+        
+        // 이번 주 상담
+        const weeklySchedules = schedules.filter(schedule => {
+          const scheduleDate = new Date(schedule.date);
+          return scheduleDate >= startOfWeek && scheduleDate <= endOfWeek;
+        });
+        
+        // 이번 달 상담
+        const monthlySchedules = schedules.filter(schedule => {
+          const scheduleDate = new Date(schedule.date);
+          return scheduleDate >= startOfMonth && scheduleDate <= today;
+        });
+        
+        // 다가오는 상담 (오늘 이후)
+        const upcomingSchedules = schedules.filter(schedule => {
+          const scheduleDate = new Date(schedule.date);
+          return scheduleDate > today && (schedule.status === 'CONFIRMED' || schedule.status === 'BOOKED');
+        });
+        
+        // 최근 활동 데이터 생성
+        const recentActivities = [];
+        
+        // 최근 스케줄을 활동으로 변환
+        const recentSchedules = schedules
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 5); // 최근 5개만
+        
+        recentSchedules.forEach(schedule => {
+          const scheduleDate = new Date(schedule.date);
+          const now = new Date();
+          const timeDiff = now - scheduleDate;
+          const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+          
+          let timeAgo;
+          if (daysDiff === 0) {
+            timeAgo = '오늘';
+          } else if (daysDiff === 1) {
+            timeAgo = '1일 전';
+          } else if (daysDiff < 7) {
+            timeAgo = `${daysDiff}일 전`;
+          } else {
+            timeAgo = `${Math.floor(daysDiff / 7)}주 전`;
+          }
+          
+          recentActivities.push({
+            type: 'schedule',
+            title: `${schedule.clientName}과의 상담 일정 ${schedule.status === 'CONFIRMED' ? '확정' : '등록'}`,
+            time: timeAgo,
+            details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
+          });
+        });
+        
+        // 상담사 프로필 관련 활동 추가 (예시)
+        if (recentActivities.length < 3) {
+          recentActivities.push({
+            type: 'profile',
+            title: '프로필 정보 확인',
+            time: '2일 전',
+            details: '상담사 프로필 정보를 확인했습니다'
+          });
         }
-      }));
-      console.log('✅ 상담사 기본 데이터 설정 완료');
+        
+        setConsultationData(prev => ({
+          ...prev,
+          monthlyConsultations: monthlySchedules.length,
+          todayConsultations: todaySchedules.length,
+          weeklyConsultations: weeklySchedules.length,
+          upcomingConsultations: upcomingSchedules,
+          recentActivities: recentActivities
+        }));
+        
+        console.log('✅ 상담사 스케줄 데이터 로드 완료:', {
+          today: todaySchedules.length,
+          weekly: weeklySchedules.length,
+          monthly: monthlySchedules.length,
+          upcoming: upcomingSchedules.length
+        });
+      }
+      
+      // 2. 상담사 통계 데이터 로드
+      try {
+        const statsResponse = await apiGet(DASHBOARD_API.CONSULTANT_STATS, {
+          userRole: 'CONSULTANT'
+        });
+        
+        console.log('📊 상담사 통계 응답:', statsResponse);
+        
+        if (statsResponse?.success && statsResponse?.data) {
+          setConsultationData(prev => ({
+            ...prev,
+            rating: statsResponse.data.averageRating || 0
+          }));
+          
+          console.log('✅ 상담사 통계 로드 완료:', statsResponse.data);
+        }
+      } catch (statsError) {
+        console.warn('⚠️ 상담사 통계 로드 실패, 기본값 사용:', statsError);
+        setConsultationData(prev => ({
+          ...prev,
+          rating: 0
+        }));
+      }
+      
     } catch (error) {
       console.error('❌ 상담사 상담 데이터 로드 오류:', error);
+      setConsultationData(prev => ({
+        ...prev,
+        monthlyConsultations: 0,
+        todayConsultations: 0,
+        rating: 0
+      }));
     }
   };
 
   // 관리자 시스템 데이터 로드
   const loadAdminSystemData = async () => {
     try {
-      // 매핑 데이터 로드
+      console.log('📊 관리자 시스템 데이터 로드 시작');
+      
+      // 1. 관리자 통계 데이터 로드
+      try {
+        const statsResponse = await apiGet(DASHBOARD_API.ADMIN_STATS, {
+          userRole: 'ADMIN'
+        });
+        
+        console.log('📊 관리자 통계 응답:', statsResponse);
+        
+        if (statsResponse?.success && statsResponse?.data) {
+          const stats = statsResponse.data;
+                  // 관리자용 최근 활동 데이터 생성
+        const recentActivities = [];
+        
+        // 시스템 통계 기반 활동 생성
+        if (stats.totalUsers > 0) {
+          recentActivities.push({
+            type: 'profile',
+            title: `총 ${stats.totalUsers}명의 사용자 관리`,
+            time: '오늘',
+            details: '전체 사용자 현황을 확인했습니다'
+          });
+        }
+        
+        if (stats.todayConsultations > 0) {
+          recentActivities.push({
+            type: 'schedule',
+            title: `오늘 ${stats.todayConsultations}건의 상담 일정 관리`,
+            time: '오늘',
+            details: '오늘의 상담 일정을 확인했습니다'
+          });
+        }
+        
+        // 기본 활동 추가
+        recentActivities.push({
+          type: 'consultation',
+          title: '시스템 현황 점검',
+          time: '1시간 전',
+          details: '전체 시스템 상태를 점검했습니다'
+        });
+        
+        setConsultationData(prev => ({
+          ...prev,
+          totalUsers: stats.totalUsers || 0,
+          todayConsultations: stats.todayConsultations || 0,
+          recentActivities: recentActivities
+        }));
+          
+          console.log('✅ 관리자 통계 로드 완료:', stats);
+        }
+      } catch (statsError) {
+        console.warn('⚠️ 관리자 통계 로드 실패, 기본값 사용:', statsError);
+        setConsultationData(prev => ({
+          ...prev,
+          totalUsers: 0,
+          todayConsultations: 0
+        }));
+      }
+      
+      // 2. 매핑 데이터 로드
       let pendingMappings = 0;
       let activeMappings = 0;
       
       try {
-        const mappingResponse = await authAPI.get('/api/admin/mappings');
-        if (mappingResponse && mappingResponse.data && mappingResponse.data.length > 0) {
+        const mappingResponse = await apiGet('/api/admin/mappings');
+        if (mappingResponse?.success && mappingResponse?.data) {
           const mappings = mappingResponse.data;
           pendingMappings = mappings.filter(m => m.paymentStatus === 'PENDING').length;
           activeMappings = mappings.filter(m => m.status === 'ACTIVE').length;
         }
       } catch (mappingError) {
-        console.log('매핑 데이터 로드 실패, 기본값 사용:', mappingError);
-        // 테스트 데이터 사용
-        pendingMappings = 10;
-        activeMappings = 7;
+        console.warn('⚠️ 매핑 데이터 로드 실패, 기본값 사용:', mappingError);
+        // 기본값 사용
+        pendingMappings = 0;
+        activeMappings = 0;
       }
       
-      // API가 아직 구현되지 않았으므로 기본 데이터 사용
       setConsultationData(prev => ({
         ...prev,
-        totalUsers: 156,
-        todayConsultations: 8,
         pendingMappings: pendingMappings,
         activeMappings: activeMappings
       }));
+      
+      console.log('✅ 관리자 시스템 데이터 로드 완료:', {
+        totalUsers: consultationData.totalUsers,
+        todayConsultations: consultationData.todayConsultations,
+        pendingMappings: pendingMappings,
+        activeMappings: activeMappings
+      });
+      
     } catch (error) {
-      console.error('시스템 데이터 로드 오류:', error);
+      console.error('❌ 관리자 시스템 데이터 로드 오류:', error);
+      setConsultationData(prev => ({
+        ...prev,
+        totalUsers: 0,
+        todayConsultations: 0,
+        pendingMappings: 0,
+        activeMappings: 0
+      }));
     }
   };
 
@@ -307,7 +646,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
   return (
     <SimpleLayout>
-      <div className="common-dashboard-content">
+      <div className={COMMON_DASHBOARD_CSS.CONTAINER}>
         
         {/* 웰컴 섹션 */}
         <WelcomeSection 

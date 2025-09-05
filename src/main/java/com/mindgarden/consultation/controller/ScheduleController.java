@@ -344,9 +344,9 @@ public class ScheduleController {
         
         log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}", userRole);
         
-        // 관리자 권한 확인
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
-            log.warn("❌ 관리자 권한 없음: {}", userRole);
+        // 관리자 또는 상담사 권한 확인
+        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && !"CONSULTANT".equals(userRole)) {
+            log.warn("❌ 접근 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         

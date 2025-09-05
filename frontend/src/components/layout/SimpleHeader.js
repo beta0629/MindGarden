@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import SimpleHamburgerMenu from './SimpleHamburgerMenu';
@@ -15,9 +15,15 @@ const SimpleHeader = () => {
   const navigate = useNavigate();
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
   
   // 중앙 세션 훅 사용 (헤더는 단순히 상태만 표시)
   const { user, isLoggedIn, isLoading, logout } = useSession();
+
+  // 사용자가 변경될 때 이미지 로드 에러 상태 초기화
+  useEffect(() => {
+    setImageLoadError(false);
+  }, [user?.id, user?.profileImageUrl, user?.socialProfileImage]);
 
   const handleLogout = async () => {
     setShowLogoutModal(true);
@@ -49,6 +55,30 @@ const SimpleHeader = () => {
     window.location.reload();
   };
 
+  // 프로필 이미지 우선순위: 사용자 업로드 > 소셜 > 기본 아이콘
+  const getProfileImageUrl = () => {
+    if (user?.profileImageUrl && !imageLoadError) {
+      console.log('🖼️ SimpleHeader - 사용자 업로드 이미지 사용:', user.profileImageUrl);
+      return user.profileImageUrl;
+    }
+    if (user?.socialProfileImage && !imageLoadError) {
+      console.log('🖼️ SimpleHeader - 소셜 이미지 사용:', user.socialProfileImage);
+      return user.socialProfileImage;
+    }
+    console.log('🖼️ SimpleHeader - 기본 아이콘 사용');
+    return null;
+  };
+
+  // 이미지 로드 실패 처리
+  const handleImageError = () => {
+    console.log('🖼️ SimpleHeader - 프로필 이미지 로드 실패, 기본 아이콘으로 대체');
+    setImageLoadError(true);
+  };
+
+  const handleImageLoad = () => {
+    console.log('🖼️ SimpleHeader - 프로필 이미지 로드 성공');
+  };
+
   return (
     <>
       <header className="simple-header">
@@ -73,11 +103,13 @@ const SimpleHeader = () => {
               {/* 사용자 정보 */}
               <div className="simple-user-info" onClick={handleProfileClick}>
                 <div className="simple-user-avatar">
-                  {user.profileImageUrl ? (
+                  {getProfileImageUrl() ? (
                     <img 
-                      src={user.profileImageUrl} 
+                      src={getProfileImageUrl()} 
                       alt="프로필" 
                       className="simple-profile-image"
+                      onError={handleImageError}
+                      onLoad={handleImageLoad}
                     />
                   ) : (
                     <i className="bi bi-person-circle"></i>

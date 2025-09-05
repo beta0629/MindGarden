@@ -34,6 +34,12 @@ public class MyPageServiceImpl implements MyPageService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
         
+        log.info("🖼️ DB에서 조회한 사용자 프로필 이미지: userId={}, dbImage={}, imageType={}", 
+            userId, 
+            user.getProfileImageUrl() != null ? 
+                user.getProfileImageUrl().substring(0, Math.min(50, user.getProfileImageUrl().length())) + "..." : "null",
+            user.getProfileImageUrl() != null && user.getProfileImageUrl().startsWith("data:") ? "base64" : "url");
+        
         // 프로필 이미지 정보 조회
         List<Object[]> profileResults = userRepository.findProfileImageInfoByUserId(userId);
         
@@ -45,6 +51,10 @@ public class MyPageServiceImpl implements MyPageService {
         
         // 1. 사용자 프로필 사진 우선
         if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().trim().isEmpty()) {
+            log.info("🖼️ 사용자 프로필 이미지 사용: userId={}, imageType={}, imageLength={}", 
+                userId,
+                user.getProfileImageUrl().startsWith("data:") ? "base64" : "url",
+                user.getProfileImageUrl().length());
             finalProfileImageUrl = user.getProfileImageUrl();
             profileImageType = "USER_PROFILE";
         } else {
@@ -103,7 +113,12 @@ public class MyPageServiceImpl implements MyPageService {
             mpAddress = addr.getFullAddress();
             mpAddressDetail = addr.getDetailAddress();
         }
-
+        
+        log.info("🖼️ 최종 프로필 이미지 정보: userId={}, finalImage={}, imageType={}", 
+            userId, 
+            finalProfileImageUrl != null ? finalProfileImageUrl.substring(0, Math.min(50, finalProfileImageUrl.length())) + "..." : "null",
+            profileImageType);
+        
         return MyPageResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -184,10 +199,23 @@ public class MyPageServiceImpl implements MyPageService {
         }
         
         if (request.getProfileImage() != null) {
+            log.info("🖼️ 프로필 이미지 업데이트: userId={}, imageType={}, imageLength={}", 
+                userId, 
+                request.getProfileImage().startsWith("data:") ? "base64" : "url",
+                request.getProfileImage().length());
+            
+            // Base64 이미지 저장 (TEXT 컬럼으로 저장 가능)
             user.setProfileImageUrl(request.getProfileImage());
         }
         
         User updatedUser = userRepository.save(user);
+        
+        // 저장 후 프로필 이미지 확인
+        log.info("🖼️ 저장 후 프로필 이미지 확인: userId={}, savedImage={}, imageType={}", 
+            userId, 
+            updatedUser.getProfileImageUrl() != null ? 
+                updatedUser.getProfileImageUrl().substring(0, Math.min(50, updatedUser.getProfileImageUrl().length())) + "..." : "null",
+            updatedUser.getProfileImageUrl() != null && updatedUser.getProfileImageUrl().startsWith("data:") ? "base64" : "url");
 
         // 주소 upsert: 기본 주소 기준
         final String reqAddress = request.getAddress();

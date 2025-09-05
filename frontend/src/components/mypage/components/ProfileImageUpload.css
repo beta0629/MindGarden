@@ -3,7 +3,7 @@
 /* ProfileImageUpload 상수 변수 */
 :root {
   --profile-image-section-margin: 20px;
-  --profile-image-size: 200px;
+  --profile-image-size: 150px;
   --profile-image-border: 3px solid #e9ecef;
   --profile-image-hover-border: #007bff;
   --profile-image-type-bottom: -5px;
@@ -19,12 +19,12 @@
   --drag-icon-size: 24px;
   --drag-icon-margin: 8px;
   --drag-text-size: 12px;
-  --upload-btn-bottom: 5px;
-  --upload-btn-right: 5px;
+  --upload-btn-bottom: 20px;
+  --upload-btn-right: 50%;
   --upload-btn-bg: #007bff;
   --upload-btn-color: white;
-  --upload-btn-size: 32px;
-  --upload-btn-font-size: 14px;
+  --upload-btn-size: 40px;
+  --upload-btn-font-size: 16px;
   --upload-btn-hover-bg: #0056b3;
   --crop-overlay-bg: rgba(0, 0, 0, 0.8);
   --crop-overlay-z-index: 1000;
@@ -57,6 +57,11 @@
 
 .profile-image-section {
   margin-bottom: var(--profile-image-section-margin);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .profile-image {
@@ -82,6 +87,22 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  background-color: #f8f9fa;
+}
+
+.profile-image img[src="/default-avatar.svg"] {
+  background-color: #f8f9fa;
+  background-image: none;
+  object-fit: contain;
+}
+
+/* 기본 아바타가 로드되지 않을 때를 위한 fallback */
+.profile-image img:not([src]) {
+  background-color: #f8f9fa;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%236c757d"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 60%;
 }
 
 .profile-image-type {
@@ -140,7 +161,8 @@
 .file-upload-btn {
   position: absolute;
   bottom: var(--upload-btn-bottom);
-  right: var(--upload-btn-right);
+  left: 50%;
+  transform: translateX(-50%);
   background: var(--upload-btn-bg);
   color: var(--upload-btn-color);
   border: none;
@@ -152,6 +174,8 @@
   justify-content: center;
   cursor: pointer;
   font-size: var(--upload-btn-font-size);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 5;
 }
 
 .file-upload-btn:hover {
@@ -286,4 +310,170 @@
 
 .cancel-btn:hover {
   background: var(--cancel-btn-hover-bg);
+}
+
+/* 크롭 모달 스타일 */
+.crop-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.crop-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 600px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.crop-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.crop-modal-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.crop-container {
+  margin-bottom: 20px;
+}
+
+.crop-area {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.crop-image {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.crop-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.crop-preview-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.crop-preview-image {
+  border: 2px solid #e9ecef;
+  border-radius: 50%;
+  padding: 5px;
+  background: white;
+}
+
+.crop-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.crop-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.crop-btn:hover {
+  background: #218838;
+}
+
+.cancel-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #5a6268;
+}
+
+/* 이미지 컨트롤 버튼들 */
+.image-controls {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+  justify-content: center;
+  width: 100%;
+}
+
+.delete-image-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.2s;
+}
+
+.delete-image-btn:hover {
+  background-color: #c82333;
+}
+
+.delete-image-btn i {
+  font-size: 12px;
 }

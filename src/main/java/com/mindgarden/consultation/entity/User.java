@@ -144,7 +144,7 @@ public class User extends BaseEntity {
     @Column(name = "password_reset_expires_at")
     private LocalDateTime passwordResetExpiresAt;
     
-    @Column(name = "profile_image_url", length = 500)
+    @Column(name = "profile_image_url", columnDefinition = "TEXT")
     private String profileImageUrl;
     
     @Column(name = "memo", columnDefinition = "TEXT")

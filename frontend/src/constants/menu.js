@@ -47,9 +47,9 @@ export const ADMIN_MENU_ITEMS = {
       { id: 'admin-settings', label: '관리자 설정', path: '/admin/settings', icon: 'bi-gear-fill' }
     ],
     users: [
-      { id: 'admin-consultants', label: '상담사 관리', path: '/admin/consultants', icon: 'bi-person-badge' },
-      { id: 'admin-clients', label: '내담자 관리', path: '/admin/clients', icon: 'bi-person-check' },
-      { id: 'admin-mapping', label: '매핑 관리', path: '/admin/mapping', icon: 'bi-link' }
+      { id: 'admin-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
+      { id: 'admin-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
+      { id: 'admin-mapping', label: '매핑 관리', path: '/admin/mapping-management', icon: 'bi-link' }
     ],
     system: [
       { id: 'admin-codes', label: '공통코드 관리', path: '/admin/common-codes', icon: 'bi-code' },

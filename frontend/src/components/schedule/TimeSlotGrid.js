@@ -89,7 +89,8 @@ const TimeSlotGrid = ({
         const slots = [];
         
         // 상담사별 업무시간 파싱 (예: "09:00-18:00")
-        const [startTime, endTime] = consultantInfo.consultationHours.split('-');
+        const consultationHours = consultantInfo.consultationHours || '09:00-18:00';
+        const [startTime, endTime] = consultationHours.split('-');
         const [startHour, startMinute] = startTime.split(':').map(Number);
         const [endHour, endMinute] = endTime.split(':').map(Number);
         

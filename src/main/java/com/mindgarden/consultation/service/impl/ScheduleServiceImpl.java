@@ -18,6 +18,8 @@ import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.CodeManagementService;
 import com.mindgarden.consultation.service.ScheduleService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -564,31 +566,155 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public Map<String, Object> getScheduleStatisticsForAdmin() {
-        log.info("📊 관리자용 전체 스케줄 통계 조회");
+    public Map<String, Object> getScheduleStatisticsForAdmin(String startDate, String endDate) {
+        log.info("📊 관리자용 전체 스케줄 통계 조회 시작 - 시작일: {}, 종료일: {}", startDate, endDate);
         
-        Map<String, Object> statistics = new HashMap<>();
-        
-        // 전체 스케줄 수
-        long totalSchedules = scheduleRepository.count();
-        statistics.put("totalSchedules", totalSchedules);
-        
-        // 상담사별 스케줄 수
-        List<Object[]> consultantStats = scheduleRepository.countSchedulesByConsultant();
-        statistics.put("consultantStats", consultantStats);
-        
-        // 날짜별 스케줄 수 (최근 30일)
-        LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusDays(ScheduleConstants.MAX_ADVANCE_BOOKING_DAYS);
-        List<Object[]> dailyStats = scheduleRepository.countSchedulesByDateBetween(startDate, endDate);
-        statistics.put("dailyStats", dailyStats);
-        
-        // 상태별 스케줄 수
-        List<Object[]> statusStats = scheduleRepository.countSchedulesByStatus();
-        statistics.put("statusStats", statusStats);
-        
-        log.info("✅ 관리자용 스케줄 통계 조회 완료: 총 {}개 스케줄", totalSchedules);
-        return statistics;
+        try {
+            Map<String, Object> statistics = new HashMap<>();
+            
+            // 날짜 범위 설정
+            LocalDate start = startDate != null ? LocalDate.parse(startDate) : null;
+            LocalDate end = endDate != null ? LocalDate.parse(endDate) : null;
+            
+            // 전체 스케줄 수 (날짜 범위 적용)
+            log.info("📊 전체 스케줄 수 조회 중...");
+            long totalSchedules;
+            if (start != null && end != null) {
+                totalSchedules = scheduleRepository.countByDateBetween(start, end);
+            } else if (start != null) {
+                totalSchedules = scheduleRepository.countByDateGreaterThanEqual(start);
+            } else if (end != null) {
+                totalSchedules = scheduleRepository.countByDateLessThanEqual(end);
+            } else {
+                totalSchedules = scheduleRepository.count();
+            }
+            statistics.put("totalSchedules", totalSchedules);
+            log.info("📊 전체 스케줄 수: {}", totalSchedules);
+            
+            // 상태별 스케줄 수 (날짜 범위 적용)
+            log.info("📊 상태별 스케줄 수 조회 중...");
+            long bookedSchedules, confirmedSchedules, completedSchedules, cancelledSchedules, inProgressSchedules;
+            
+            if (start != null && end != null) {
+                bookedSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_BOOKED, start, end);
+                confirmedSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_CONFIRMED, start, end);
+                completedSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_COMPLETED, start, end);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_CANCELLED, start, end);
+                inProgressSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_IN_PROGRESS, start, end);
+            } else if (start != null) {
+                bookedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleConstants.STATUS_BOOKED, start);
+                confirmedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleConstants.STATUS_CONFIRMED, start);
+                completedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleConstants.STATUS_COMPLETED, start);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleConstants.STATUS_CANCELLED, start);
+                inProgressSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleConstants.STATUS_IN_PROGRESS, start);
+            } else if (end != null) {
+                bookedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleConstants.STATUS_BOOKED, end);
+                confirmedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleConstants.STATUS_CONFIRMED, end);
+                completedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleConstants.STATUS_COMPLETED, end);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleConstants.STATUS_CANCELLED, end);
+                inProgressSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleConstants.STATUS_IN_PROGRESS, end);
+            } else {
+                bookedSchedules = scheduleRepository.countByStatus(ScheduleConstants.STATUS_BOOKED);
+                confirmedSchedules = scheduleRepository.countByStatus(ScheduleConstants.STATUS_CONFIRMED);
+                completedSchedules = scheduleRepository.countByStatus(ScheduleConstants.STATUS_COMPLETED);
+                cancelledSchedules = scheduleRepository.countByStatus(ScheduleConstants.STATUS_CANCELLED);
+                inProgressSchedules = scheduleRepository.countByStatus(ScheduleConstants.STATUS_IN_PROGRESS);
+            }
+            
+            statistics.put("bookedSchedules", bookedSchedules);
+            statistics.put("confirmedSchedules", confirmedSchedules);
+            statistics.put("completedSchedules", completedSchedules);
+            statistics.put("cancelledSchedules", cancelledSchedules);
+            statistics.put("inProgressSchedules", inProgressSchedules);
+            
+            log.info("📊 상태별 스케줄 수 - 예약: {}, 확정: {}, 완료: {}, 취소: {}, 진행중: {}", 
+                    bookedSchedules, confirmedSchedules, completedSchedules, cancelledSchedules, inProgressSchedules);
+            
+            // 오늘의 통계
+            LocalDate today = LocalDate.now();
+            log.info("📊 오늘의 통계 조회 중... (날짜: {})", today);
+            long totalToday = scheduleRepository.countByDate(today);
+            long bookedToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_BOOKED);
+            long confirmedToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_CONFIRMED);
+            long completedToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_COMPLETED);
+            long cancelledToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_CANCELLED);
+            long inProgressToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_IN_PROGRESS);
+            
+            statistics.put("totalToday", totalToday);
+            statistics.put("bookedToday", bookedToday);
+            statistics.put("confirmedToday", confirmedToday);
+            statistics.put("completedToday", completedToday);
+            statistics.put("cancelledToday", cancelledToday);
+            statistics.put("inProgressToday", inProgressToday);
+            
+            log.info("📊 오늘의 통계 - 총: {}, 예약: {}, 확정: {}, 완료: {}, 취소: {}, 진행중: {}", 
+                    totalToday, bookedToday, confirmedToday, completedToday, cancelledToday, inProgressToday);
+            
+            // 추가 상세 통계
+            log.info("📊 추가 상세 통계 조회 중...");
+            
+            // 내담자 증감 통계 (이번 달 vs 지난 달)
+            LocalDate thisMonthStart = today.withDayOfMonth(1);
+            LocalDate lastMonthStart = thisMonthStart.minusMonths(1);
+            LocalDate lastMonthEnd = thisMonthStart.minusDays(1);
+            
+            long thisMonthClients = scheduleRepository.countDistinctClientsByDateBetween(thisMonthStart, today);
+            long lastMonthClients = scheduleRepository.countDistinctClientsByDateBetween(lastMonthStart, lastMonthEnd);
+            long clientGrowth = thisMonthClients - lastMonthClients;
+            double clientGrowthRate = lastMonthClients > 0 ? ((double) clientGrowth / lastMonthClients) * 100 : 0;
+            
+            statistics.put("thisMonthClients", thisMonthClients);
+            statistics.put("lastMonthClients", lastMonthClients);
+            statistics.put("clientGrowth", clientGrowth);
+            statistics.put("clientGrowthRate", Math.round(clientGrowthRate * 100.0) / 100.0);
+            
+            // 상담사 증감 통계
+            long thisMonthConsultants = scheduleRepository.countDistinctConsultantsByDateBetween(thisMonthStart, today);
+            long lastMonthConsultants = scheduleRepository.countDistinctConsultantsByDateBetween(lastMonthStart, lastMonthEnd);
+            long consultantGrowth = thisMonthConsultants - lastMonthConsultants;
+            double consultantGrowthRate = lastMonthConsultants > 0 ? ((double) consultantGrowth / lastMonthConsultants) * 100 : 0;
+            
+            statistics.put("thisMonthConsultants", thisMonthConsultants);
+            statistics.put("lastMonthConsultants", lastMonthConsultants);
+            statistics.put("consultantGrowth", consultantGrowth);
+            statistics.put("consultantGrowthRate", Math.round(consultantGrowthRate * 100.0) / 100.0);
+            
+            // 상담 완료율 통계
+            long totalSchedulesInPeriod = scheduleRepository.countByDateBetween(thisMonthStart, today);
+            long completedSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_COMPLETED, thisMonthStart, today);
+            double completionRate = totalSchedulesInPeriod > 0 ? ((double) completedSchedulesInPeriod / totalSchedulesInPeriod) * 100 : 0;
+            
+            statistics.put("totalSchedulesInPeriod", totalSchedulesInPeriod);
+            statistics.put("completedSchedulesInPeriod", completedSchedulesInPeriod);
+            statistics.put("completionRate", Math.round(completionRate * 100.0) / 100.0);
+            
+            // 취소율 통계
+            long cancelledSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_CANCELLED, thisMonthStart, today);
+            double cancellationRate = totalSchedulesInPeriod > 0 ? ((double) cancelledSchedulesInPeriod / totalSchedulesInPeriod) * 100 : 0;
+            
+            statistics.put("cancelledSchedulesInPeriod", cancelledSchedulesInPeriod);
+            statistics.put("cancellationRate", Math.round(cancellationRate * 100.0) / 100.0);
+            
+            // 주간 통계 (최근 7일)
+            LocalDate weekAgo = today.minusDays(7);
+            long weeklySchedules = scheduleRepository.countByDateBetween(weekAgo, today);
+            long weeklyCompleted = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_COMPLETED, weekAgo, today);
+            long weeklyCancelled = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_CANCELLED, weekAgo, today);
+            
+            statistics.put("weeklySchedules", weeklySchedules);
+            statistics.put("weeklyCompleted", weeklyCompleted);
+            statistics.put("weeklyCancelled", weeklyCancelled);
+            
+            log.info("📊 상세 통계 - 이번달 내담자: {} (증감: {}), 이번달 상담사: {} (증감: {}), 완료율: {}%, 취소율: {}%", 
+                    thisMonthClients, clientGrowth, thisMonthConsultants, consultantGrowth, completionRate, cancellationRate);
+            
+            log.info("✅ 관리자용 스케줄 통계 조회 완료: 총 {}개 스케줄", totalSchedules);
+            return statistics;
+            
+        } catch (Exception e) {
+            log.error("❌ 관리자용 스케줄 통계 조회 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("통계 조회 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -729,6 +855,33 @@ public class ScheduleServiceImpl implements ScheduleService {
         return schedules.stream()
             .map(this::convertToScheduleDto)
             .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * 권한 기반 페이지네이션 스케줄 조회 (상담사 이름 포함)
+     */
+    @Override
+    public Page<ScheduleDto> findSchedulesWithNamesByUserRolePaged(Long userId, String userRole, Pageable pageable) {
+        log.info("🔐 권한 기반 페이지네이션 스케줄 조회 (이름 포함): 사용자 {}, 역할 {}, 페이지 {}", userId, userRole, pageable.getPageNumber());
+        
+        // 먼저 자동 완료 처리 실행
+        autoCompleteExpiredSchedules();
+        
+        Page<Schedule> schedulePage;
+        if (isAdminRole(userRole)) {
+            // 관리자: 모든 스케줄 조회
+            log.info("👑 관리자 권한으로 모든 스케줄 페이지네이션 조회");
+            schedulePage = scheduleRepository.findAll(pageable);
+        } else if (isConsultantRole(userRole)) {
+            // 상담사: 자신의 스케줄만 조회
+            log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
+            schedulePage = scheduleRepository.findByConsultantId(userId, pageable);
+        } else {
+            throw new RuntimeException("스케줄 조회 권한이 없습니다.");
+        }
+        
+        // Schedule을 ScheduleDto로 변환 (상담사 이름 포함)
+        return schedulePage.map(this::convertToScheduleDto);
     }
 
     /**

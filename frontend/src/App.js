@@ -15,6 +15,9 @@ import ClientComprehensiveManagement from './components/admin/ClientComprehensiv
 import SessionManagement from './components/admin/SessionManagement';
 import MappingManagement from './components/admin/MappingManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
+import StatisticsModal from './components/common/StatisticsModal';
+import ScheduleList from './components/common/ScheduleList';
+import StatisticsDashboard from './components/admin/StatisticsDashboard';
 import SimpleLayout from './components/layout/SimpleLayout';
 import Toast from './components/common/Toast';
 import NotificationTest from './components/test/NotificationTest';
@@ -53,6 +56,9 @@ function QueryParamHandler({ children, onLoginSuccess }) {
 // 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
 function AppContent() {
   const { user, sessionInfo, isLoading, checkSession, logout } = useSession();
+  
+  // 통계 모달 상태
+  const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);
 
   // 콜백 함수로 메모이제이션
   const logMount = useCallback(() => {
@@ -125,6 +131,31 @@ function AppContent() {
             <Route path="/admin/mapping-management" element={<MappingManagement />} />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<SessionManagement />} />
+            <Route path="/admin/schedules" element={
+              <SimpleLayout>
+                <ScheduleList 
+                  userRole={user?.role || 'ADMIN'}
+                  userId={user?.id || 1}
+                />
+              </SimpleLayout>
+            } />
+            <Route path="/admin/statistics" element={
+              <SimpleLayout>
+                <StatisticsModal 
+                  isOpen={true}
+                  onClose={() => window.history.back()}
+                  userRole={user?.role || 'ADMIN'}
+                />
+              </SimpleLayout>
+            } />
+            <Route path="/admin/statistics-dashboard" element={
+              <SimpleLayout>
+                <StatisticsDashboard 
+                  userRole={user?.role || 'ADMIN'}
+                  userId={user?.id || 1}
+                />
+              </SimpleLayout>
+            } />
             
             {/* OAuth2 콜백 처리 라우트 */}
             <Route path="/oauth2/callback" element={<OAuth2Callback />} />
@@ -138,6 +169,13 @@ function AppContent() {
             {/* catch-all 라우트 제거 (개발 중) */}
             {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
           </Routes>
+          
+          {/* 통계 모달 */}
+          <StatisticsModal
+            isOpen={showStatisticsModal}
+            onClose={() => setShowStatisticsModal(false)}
+            userRole={user?.role || 'ADMIN'}
+          />
         </div>
       </QueryParamHandler>
     </Router>

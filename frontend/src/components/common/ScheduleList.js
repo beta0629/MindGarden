@@ -1,0 +1,382 @@
+/**
+ * 스케줄 리스트 컴포넌트
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2025-09-05
+ */
+
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import { apiGet } from '../../utils/ajax';
+import { SCHEDULE_API } from '../../constants/api';
+import { 
+  SORT_OPTIONS, 
+  SORT_OPTION_LABELS, 
+  FILTER_OPTIONS, 
+  FILTER_OPTION_LABELS,
+  PAGINATION,
+  PAGINATION_LABELS,
+  SCHEDULE_LOADING_STATES,
+  SCHEDULE_ERROR_MESSAGES
+} from '../../constants/schedule';
+import ScheduleCard from './ScheduleCard';
+import './ScheduleList.css';
+
+const ScheduleList = ({ 
+  userRole = 'ADMIN',
+  userId = 1,
+  onScheduleView,
+  onScheduleEdit,
+  onScheduleDelete,
+  onScheduleConfirm,
+  onScheduleCancel,
+  onScheduleComplete
+}) => {
+  const [schedules, setSchedules] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState(SORT_OPTIONS.DATE_DESC);
+  const [filterBy, setFilterBy] = useState(FILTER_OPTIONS.ALL);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGINATION.DEFAULT_PAGE_SIZE);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // 스케줄 데이터 로드
+  const loadSchedules = async () => {
+    setLoading(true);
+    setError(false);
+    
+    console.log('🔍 ScheduleList 로드 시작:', { userId, userRole });
+    
+    try {
+      const response = await apiGet(SCHEDULE_API.SCHEDULES, {
+        userId: userId,
+        userRole: userRole
+      });
+      
+      if (response.success) {
+        setSchedules(response.data || []);
+        setTotalCount(response.data?.length || 0);
+      } else {
+        setError(true);
+      }
+    } catch (err) {
+      console.error('스케줄 로드 실패:', err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 스케줄 로드
+  useEffect(() => {
+    loadSchedules();
+  }, [userId, userRole]);
+
+  // 검색 및 필터링된 스케줄 계산
+  const getFilteredSchedules = () => {
+    let filtered = [...schedules];
+
+    // 검색어 필터링
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(schedule => 
+        schedule.title?.toLowerCase().includes(term) ||
+        schedule.consultantName?.toLowerCase().includes(term) ||
+        schedule.clientName?.toLowerCase().includes(term) ||
+        schedule.description?.toLowerCase().includes(term)
+      );
+    }
+
+    // 상태별 필터링
+    if (filterBy !== FILTER_OPTIONS.ALL) {
+      if (filterBy === FILTER_OPTIONS.TODAY) {
+        const today = new Date().toISOString().split('T')[0];
+        filtered = filtered.filter(schedule => schedule.date === today);
+      } else if (filterBy === FILTER_OPTIONS.THIS_WEEK) {
+        const today = new Date();
+        const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+        const weekEnd = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+        filtered = filtered.filter(schedule => {
+          const scheduleDate = new Date(schedule.date);
+          return scheduleDate >= weekStart && scheduleDate <= weekEnd;
+        });
+      } else if (filterBy === FILTER_OPTIONS.THIS_MONTH) {
+        const today = new Date();
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        filtered = filtered.filter(schedule => {
+          const scheduleDate = new Date(schedule.date);
+          return scheduleDate >= monthStart && scheduleDate <= monthEnd;
+        });
+      } else {
+        filtered = filtered.filter(schedule => schedule.status === filterBy);
+      }
+    }
+
+    return filtered;
+  };
+
+  // 정렬된 스케줄 계산
+  const getSortedSchedules = (schedules) => {
+    const sorted = [...schedules];
+    
+    sorted.sort((a, b) => {
+      switch (sortBy) {
+        case SORT_OPTIONS.DATE_ASC:
+          return new Date(a.date) - new Date(b.date);
+        case SORT_OPTIONS.DATE_DESC:
+          return new Date(b.date) - new Date(a.date);
+        case SORT_OPTIONS.TITLE_ASC:
+          return (a.title || '').localeCompare(b.title || '');
+        case SORT_OPTIONS.TITLE_DESC:
+          return (b.title || '').localeCompare(a.title || '');
+        case SORT_OPTIONS.STATUS_ASC:
+          return (a.status || '').localeCompare(b.status || '');
+        case SORT_OPTIONS.STATUS_DESC:
+          return (b.status || '').localeCompare(a.status || '');
+        case SORT_OPTIONS.CONSULTANT_ASC:
+          return (a.consultantName || '').localeCompare(b.consultantName || '');
+        case SORT_OPTIONS.CONSULTANT_DESC:
+          return (b.consultantName || '').localeCompare(a.consultantName || '');
+        default:
+          return 0;
+      }
+    });
+    
+    return sorted;
+  };
+
+  // 페이지네이션된 스케줄 계산
+  const getPaginatedSchedules = (schedules) => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return schedules.slice(startIndex, endIndex);
+  };
+
+  // 최종 표시할 스케줄 계산
+  const getDisplaySchedules = () => {
+    const filtered = getFilteredSchedules();
+    const sorted = getSortedSchedules(filtered);
+    const paginated = getPaginatedSchedules(sorted);
+    return paginated;
+  };
+
+  // 페이지 수 계산
+  const getTotalPages = () => {
+    const filtered = getFilteredSchedules();
+    return Math.ceil(filtered.length / pageSize);
+  };
+
+  // 검색 핸들러
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  // 정렬 핸들러
+  const handleSort = (e) => {
+    setSortBy(e.target.value);
+    setCurrentPage(1);
+  };
+
+  // 필터 핸들러
+  const handleFilter = (e) => {
+    setFilterBy(e.target.value);
+    setCurrentPage(1);
+  };
+
+  // 페이지 크기 변경 핸들러
+  const handlePageSizeChange = (e) => {
+    setPageSize(parseInt(e.target.value));
+    setCurrentPage(1);
+  };
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // 새로고침 핸들러
+  const handleRefresh = () => {
+    loadSchedules();
+  };
+
+  const displaySchedules = getDisplaySchedules();
+  const totalPages = getTotalPages();
+  const filteredCount = getFilteredSchedules().length;
+
+  if (error) {
+    return (
+      <div className="schedule-list">
+        <div className="schedule-error">
+          <i className="bi bi-exclamation-triangle"></i>
+          <p>{SCHEDULE_ERROR_MESSAGES.LOAD_FAILED}</p>
+          <button className="btn btn-primary" onClick={handleRefresh}>
+            <i className="bi bi-arrow-clockwise"></i>
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="schedule-list">
+      <div className="schedule-list-header">
+        <h2>전체 스케줄</h2>
+        <button className="btn btn-outline-primary" onClick={handleRefresh} disabled={loading}>
+          <i className="bi bi-arrow-clockwise"></i>
+          새로고침
+        </button>
+      </div>
+
+      <div className="schedule-filters">
+        <div className="schedule-search">
+          <i className="bi bi-search"></i>
+          <input
+            type="text"
+            placeholder="스케줄 검색..."
+            value={searchTerm}
+            onChange={handleSearch}
+            className="schedule-search-input"
+          />
+        </div>
+        
+        <div className="schedule-controls">
+          <select
+            value={filterBy}
+            onChange={handleFilter}
+            className="schedule-filter-select"
+          >
+            {Object.entries(FILTER_OPTION_LABELS).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
+          
+          <select
+            value={sortBy}
+            onChange={handleSort}
+            className="schedule-sort-select"
+          >
+            {Object.entries(SORT_OPTION_LABELS).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="schedule-content">
+        {loading ? (
+          <div className="schedule-loading">
+            <div className="loading-spinner"></div>
+            <p>스케줄을 불러오는 중...</p>
+          </div>
+        ) : displaySchedules.length === 0 ? (
+          <div className="schedule-empty">
+            <i className="bi bi-calendar-x"></i>
+            <p>표시할 스케줄이 없습니다.</p>
+          </div>
+        ) : (
+          <div className="schedule-grid">
+            {displaySchedules.map(schedule => (
+              <ScheduleCard
+                key={schedule.id}
+                schedule={schedule}
+                onView={onScheduleView}
+                onEdit={onScheduleEdit}
+                onDelete={onScheduleDelete}
+                onConfirm={onScheduleConfirm}
+                onCancel={onScheduleCancel}
+                onComplete={onScheduleComplete}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {!loading && displaySchedules.length > 0 && (
+        <div className="schedule-pagination">
+          <div className="pagination-info">
+            <span>
+              {PAGINATION_LABELS.TOTAL} {filteredCount}개 {PAGINATION_LABELS.OF} {totalCount}개
+            </span>
+            <select
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              className="pagination-size-select"
+            >
+              {PAGINATION.PAGE_SIZE_OPTIONS.map(size => (
+                <option key={size} value={size}>
+                  {size}개씩 보기
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="pagination-controls">
+            <button
+              className="pagination-btn"
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+            >
+              {PAGINATION_LABELS.FIRST}
+            </button>
+            <button
+              className="pagination-btn"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              {PAGINATION_LABELS.PREVIOUS}
+            </button>
+            
+            <span className="pagination-pages">
+              {currentPage} / {totalPages}
+            </span>
+            
+            <button
+              className="pagination-btn"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              {PAGINATION_LABELS.NEXT}
+            </button>
+            <button
+              className="pagination-btn"
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              {PAGINATION_LABELS.LAST}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+ScheduleList.propTypes = {
+  userRole: PropTypes.string,
+  userId: PropTypes.number,
+  onScheduleView: PropTypes.func,
+  onScheduleEdit: PropTypes.func,
+  onScheduleDelete: PropTypes.func,
+  onScheduleConfirm: PropTypes.func,
+  onScheduleCancel: PropTypes.func,
+  onScheduleComplete: PropTypes.func
+};
+
+ScheduleList.defaultProps = {
+  userRole: 'ADMIN',
+  userId: 1,
+  onScheduleView: null,
+  onScheduleEdit: null,
+  onScheduleDelete: null,
+  onScheduleConfirm: null,
+  onScheduleCancel: null,
+  onScheduleComplete: null
+};
+
+export default ScheduleList;

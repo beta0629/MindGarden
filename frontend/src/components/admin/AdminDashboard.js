@@ -6,6 +6,7 @@ import SimpleLayout from '../layout/SimpleLayout';
 import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
 import SystemTools from './system/SystemTools';
+import StatisticsModal from '../common/StatisticsModal';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
 import './AdminDashboard.css';
@@ -31,6 +32,7 @@ const AdminDashboard = ({ user: propUser }) => {
         database: 'unknown',
         lastChecked: null
     });
+    const [showStatisticsModal, setShowStatisticsModal] = useState(false);
 
     // 세션 체크 및 권한 확인
     useEffect(() => {
@@ -250,7 +252,8 @@ const AdminDashboard = ({ user: propUser }) => {
             {(propUser || sessionUser) && (propUser || sessionUser)?.id && (propUser || sessionUser)?.role && (
                 <TodayStatistics 
                     userId={(propUser || sessionUser)?.id} 
-                    userRole={(propUser || sessionUser)?.role} 
+                    userRole={(propUser || sessionUser)?.role}
+                    onShowStatistics={() => setShowStatisticsModal(true)}
                 />
             )}
 
@@ -410,6 +413,13 @@ const AdminDashboard = ({ user: propUser }) => {
                     <div className={COMPONENT_CSS.ADMIN_DASHBOARD.TOAST_BODY}>{toastMessage}</div>
                 </div>
             )}
+            
+            {/* 통계 모달 */}
+            <StatisticsModal
+                isOpen={showStatisticsModal}
+                onClose={() => setShowStatisticsModal(false)}
+                userRole={(propUser || sessionUser)?.role || 'ADMIN'}
+            />
             </div>
         </SimpleLayout>
     );

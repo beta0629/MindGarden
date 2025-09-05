@@ -54,9 +54,13 @@ const handleError = (error, status) => {
 };
 
 // GET 요청
-export const apiGet = async (endpoint, options = {}) => {
+export const apiGet = async (endpoint, params = {}, options = {}) => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    // 쿼리 파라미터 생성
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `${API_BASE_URL}${endpoint}?${queryString}` : `${API_BASE_URL}${endpoint}`;
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: { ...getDefaultHeaders(), ...options.headers },
       credentials: 'include', // 세션 쿠키 포함

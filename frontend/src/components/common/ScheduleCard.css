@@ -1,0 +1,226 @@
+/**
+ * 스케줄 카드 컴포넌트 스타일
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2025-09-05
+ */
+
+.schedule-card {
+  background: var(--schedule-card-bg);
+  border: var(--schedule-card-border);
+  border-radius: var(--schedule-card-border-radius);
+  padding: var(--schedule-card-padding);
+  margin: var(--schedule-card-margin);
+  box-shadow: var(--schedule-card-shadow);
+  transition: var(--schedule-card-transition);
+}
+
+.schedule-card:hover {
+  box-shadow: var(--schedule-card-hover-shadow);
+  transform: translateY(-1px);
+}
+
+.schedule-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-md);
+}
+
+.schedule-card-title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.schedule-card-title h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.schedule-status-badge {
+  display: inline-block;
+  padding: var(--schedule-status-badge-padding);
+  border-radius: var(--schedule-status-badge-border-radius);
+  font-size: var(--schedule-status-badge-font-size);
+  font-weight: var(--schedule-status-badge-font-weight);
+  text-transform: var(--schedule-status-badge-text-transform);
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.schedule-card-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
+.schedule-action-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-neutral-dark);
+  border-radius: var(--border-radius-small);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.schedule-action-btn:hover {
+  background: var(--color-neutral-light);
+  color: var(--color-text-primary);
+  border-color: var(--color-primary);
+}
+
+.schedule-action-btn.view:hover {
+  background: var(--color-info-light);
+  color: var(--color-info);
+  border-color: var(--color-info);
+}
+
+.schedule-action-btn.edit:hover {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+.schedule-action-btn.delete:hover {
+  background: var(--color-error-light);
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.schedule-action-btn.confirm:hover {
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.schedule-action-btn.cancel:hover {
+  background: var(--color-error-light);
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.schedule-action-btn.complete:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.schedule-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.schedule-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.schedule-info-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.schedule-info-item i {
+  width: 16px;
+  text-align: center;
+  color: var(--color-primary);
+}
+
+.schedule-info-item span {
+  flex: 1;
+  word-break: break-word;
+}
+
+.schedule-card-description {
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--color-neutral-light);
+}
+
+.schedule-card-description p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .schedule-card {
+    padding: var(--schedule-mobile-card-padding);
+    margin: var(--spacing-xs) 0;
+  }
+  
+  .schedule-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+  
+  .schedule-card-actions {
+    justify-content: flex-end;
+  }
+  
+  .schedule-action-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .schedule-card-title h3 {
+    font-size: 1rem;
+  }
+  
+  .schedule-info-item {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .schedule-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .schedule-card-actions {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+  
+  .schedule-action-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+  
+  .schedule-card-title h3 {
+    font-size: 0.9rem;
+  }
+  
+  .schedule-info-item {
+    font-size: 12px;
+  }
+  
+  .schedule-card-description p {
+    font-size: 13px;
+  }
+}

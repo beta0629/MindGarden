@@ -1,0 +1,175 @@
+/**
+ * 통계 카드 그리드 컴포넌트 스타일
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2025-09-05
+ */
+
+.stats-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.stats-card-grid-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  background: var(--color-neutral-light);
+  border-radius: var(--card-radius);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.stats-card-grid-empty i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.stats-card-grid-empty p {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+  .stats-card-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-card-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  
+  .stats-card-grid-empty {
+    padding: 2rem;
+  }
+  
+  .stats-card-grid-empty i {
+    font-size: 2.5rem;
+  }
+  
+  .stats-card-grid-empty p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-card-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  
+  .stats-card-grid-empty {
+    padding: 1.5rem;
+  }
+  
+  .stats-card-grid-empty i {
+    font-size: 2rem;
+  }
+  
+  .stats-card-grid-empty p {
+    font-size: 0.9rem;
+  }
+}
+
+/* 그리드 애니메이션 */
+.stats-card-grid {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 카드 스태거 애니메이션 */
+.stats-card-grid > * {
+  animation: slideInUp 0.6s ease-out;
+  animation-fill-mode: both;
+}
+
+.stats-card-grid > *:nth-child(1) { animation-delay: 0.1s; }
+.stats-card-grid > *:nth-child(2) { animation-delay: 0.2s; }
+.stats-card-grid > *:nth-child(3) { animation-delay: 0.3s; }
+.stats-card-grid > *:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 그리드 호버 효과 */
+.stats-card-grid:hover > * {
+  transition: transform 0.3s ease;
+}
+
+.stats-card-grid:hover > *:hover {
+  transform: translateY(-5px);
+  z-index: 10;
+}
+
+/* 그리드 그라데이션 배경 */
+.stats-card-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(0, 123, 255, 0.02) 0%, 
+    rgba(40, 167, 69, 0.02) 50%, 
+    rgba(255, 193, 7, 0.02) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* 그리드 섹션 제목 */
+.stats-card-grid-section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stats-card-grid-section-title i {
+  color: var(--color-primary);
+  font-size: 1.25rem;
+}
+
+/* 그리드 섹션 설명 */
+.stats-card-grid-section-description {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}

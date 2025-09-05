@@ -1,0 +1,145 @@
+/**
+ * 상세 통계 그리드 컴포넌트 스타일
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2025-09-05
+ */
+
+.detailed-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.detailed-stats-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  background: var(--color-neutral-light);
+  border-radius: var(--card-radius);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.detailed-stats-empty i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.detailed-stats-empty p {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .detailed-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  
+  .detailed-stats-empty {
+    padding: 2rem;
+  }
+  
+  .detailed-stats-empty i {
+    font-size: 2.5rem;
+  }
+  
+  .detailed-stats-empty p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .detailed-stats-grid {
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  
+  .detailed-stats-empty {
+    padding: 1.5rem;
+  }
+  
+  .detailed-stats-empty i {
+    font-size: 2rem;
+  }
+  
+  .detailed-stats-empty p {
+    font-size: 0.9rem;
+  }
+}
+
+/* 그리드 애니메이션 */
+.detailed-stats-grid {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 카드 스태거 애니메이션 */
+.detailed-stats-grid > * {
+  animation: slideInUp 0.6s ease-out;
+  animation-fill-mode: both;
+}
+
+.detailed-stats-grid > *:nth-child(1) { animation-delay: 0.1s; }
+.detailed-stats-grid > *:nth-child(2) { animation-delay: 0.2s; }
+.detailed-stats-grid > *:nth-child(3) { animation-delay: 0.3s; }
+.detailed-stats-grid > *:nth-child(4) { animation-delay: 0.4s; }
+.detailed-stats-grid > *:nth-child(5) { animation-delay: 0.5s; }
+.detailed-stats-grid > *:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 그리드 호버 효과 */
+.detailed-stats-grid:hover > * {
+  transition: transform 0.3s ease;
+}
+
+.detailed-stats-grid:hover > *:hover {
+  transform: translateY(-5px);
+  z-index: 10;
+}
+
+/* 그리드 그라데이션 배경 */
+.detailed-stats-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(0, 123, 255, 0.02) 0%, 
+    rgba(40, 167, 69, 0.02) 50%, 
+    rgba(255, 193, 7, 0.02) 100%);
+  pointer-events: none;
+  z-index: -1;
+}

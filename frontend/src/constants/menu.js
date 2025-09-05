@@ -41,6 +41,9 @@ export const ADMIN_MENU_ITEMS = {
   SUB: {
     admin: [
       { id: 'admin-dashboard', label: '관리자 대시보드', path: '/admin/dashboard', icon: 'bi-speedometer2' },
+      { id: 'admin-statistics', label: '통계 보기', path: '/admin/statistics', icon: 'bi-graph-up', isModal: true },
+      { id: 'admin-statistics-dashboard', label: '통계 대시보드', path: '/admin/statistics-dashboard', icon: 'bi-bar-chart' },
+      { id: 'admin-schedules', label: '전체 스케줄', path: '/admin/schedules', icon: 'bi-calendar-check' },
       { id: 'admin-settings', label: '관리자 설정', path: '/admin/settings', icon: 'bi-gear-fill' }
     ],
     users: [

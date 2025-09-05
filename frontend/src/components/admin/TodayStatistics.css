@@ -14,6 +14,12 @@
     margin-bottom: 20px;
 }
 
+.statistics-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .statistics-title {
     margin: 0;
     font-size: 18px;
@@ -50,6 +56,31 @@
 .refresh-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.statistics-view-btn {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.statistics-view-btn:hover {
+    background: var(--color-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.statistics-view-btn i {
+    font-size: 12px;
 }
 
 .spinning {

@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import com.mindgarden.consultation.entity.Schedule;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,6 +27,11 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
      * 상담사별 스케줄 조회
      */
     List<Schedule> findByConsultantId(Long consultantId);
+    
+    /**
+     * 상담사별 스케줄 페이지네이션 조회
+     */
+    Page<Schedule> findByConsultantId(Long consultantId, Pageable pageable);
     
     /**
      * 상담사별 특정 날짜 스케줄 조회
@@ -157,12 +164,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     long countByClientId(@Param("clientId") Long clientId);
     
     /**
-     * 특정 날짜의 스케줄 개수 조회
-     */
-    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date = :date AND s.isDeleted = false")
-    long countByDate(@Param("date") LocalDate date);
-    
-    /**
      * 상담사별 특정 날짜의 스케줄 개수 조회
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.consultantId = :consultantId AND s.date = :date AND s.isDeleted = false")
@@ -220,4 +221,68 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date = :date AND s.status = :status AND s.isDeleted = false")
     long countByDateAndStatus(@Param("date") LocalDate date, @Param("status") String status);
+    
+    /**
+     * 특정 날짜의 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date = :date AND s.isDeleted = false")
+    long countByDate(@Param("date") LocalDate date);
+    
+    /**
+     * 특정 상태의 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.status = :status AND s.isDeleted = false")
+    long countByStatus(@Param("status") String status);
+    
+    // ==================== 날짜 범위 통계 ====================
+    
+    /**
+     * 날짜 범위 내 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
+    long countByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    
+    /**
+     * 시작일 이후 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date >= :startDate AND s.isDeleted = false")
+    long countByDateGreaterThanEqual(@Param("startDate") LocalDate startDate);
+    
+    /**
+     * 종료일 이전 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date <= :endDate AND s.isDeleted = false")
+    long countByDateLessThanEqual(@Param("endDate") LocalDate endDate);
+    
+    /**
+     * 날짜 범위 내 특정 상태 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.status = :status AND s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
+    long countByStatusAndDateBetween(@Param("status") String status, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    
+    /**
+     * 시작일 이후 특정 상태 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.status = :status AND s.date >= :startDate AND s.isDeleted = false")
+    long countByStatusAndDateGreaterThanEqual(@Param("status") String status, @Param("startDate") LocalDate startDate);
+    
+    /**
+     * 종료일 이전 특정 상태 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.status = :status AND s.date <= :endDate AND s.isDeleted = false")
+    long countByStatusAndDateLessThanEqual(@Param("status") String status, @Param("endDate") LocalDate endDate);
+    
+    // ==================== 상세 통계 ====================
+    
+    /**
+     * 날짜 범위 내 고유 내담자 수 조회
+     */
+    @Query("SELECT COUNT(DISTINCT s.clientId) FROM Schedule s WHERE s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
+    long countDistinctClientsByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    
+    /**
+     * 날짜 범위 내 고유 상담사 수 조회
+     */
+    @Query("SELECT COUNT(DISTINCT s.consultantId) FROM Schedule s WHERE s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
+    long countDistinctConsultantsByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }

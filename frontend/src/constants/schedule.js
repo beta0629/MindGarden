@@ -1,59 +1,263 @@
 /**
- * 스케줄 관련 상수
- * 시간 슬롯, 상담 시간, 업무 시간 등 스케줄 관련 설정
+ * 스케줄 관련 상수 정의
  * 
  * @author MindGarden
  * @version 1.0.0
- * @since 2024-12-19
+ * @since 2025-09-05
  */
 
-// 업무 시간 설정
-export const BUSINESS_HOURS = {
-  START_HOUR: 9,
-  END_HOUR: 18
-};
-
-// 시간 슬롯 간격 (분)
-export const TIME_SLOT_INTERVAL = 30;
-
-// 상담 타입별 기본 시간 설정 (분)
-export const CONSULTATION_DURATIONS = {
-  '초기상담': 60,
-  '진행상담': 50,
-  '종결상담': 50,
-  '가족상담': 100,
-  '부부상담': 80,
-  '그룹상담': 90,
-  '긴급상담': 30,
-  '사후관리': 40,
-  '평가상담': 120
-};
-
-// 기본 상담 시간 (분)
-export const DEFAULT_CONSULTATION_DURATION = 50;
-
-// 휴식시간 (분)
-export const BREAK_TIME_MINUTES = 10;
-
-// 시간 포맷팅 상수
-export const TIME_FORMAT = {
-  HOUR_MINUTE: 'HH:mm',
-  FULL_DATETIME: 'YYYY-MM-DD HH:mm:ss'
-};
-
-// 스케줄 상태
+// ==================== 스케줄 상태 ====================
 export const SCHEDULE_STATUS = {
-  PENDING: 'PENDING',
+  BOOKED: 'BOOKED',
   CONFIRMED: 'CONFIRMED',
+  IN_PROGRESS: 'IN_PROGRESS',
   COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED',
-  NO_SHOW: 'NO_SHOW'
+  CANCELLED: 'CANCELLED'
 };
 
-// 스케줄 타입
+// ==================== 스케줄 상태 라벨 ====================
+export const SCHEDULE_STATUS_LABELS = {
+  [SCHEDULE_STATUS.BOOKED]: '예약됨',
+  [SCHEDULE_STATUS.CONFIRMED]: '확정됨',
+  [SCHEDULE_STATUS.IN_PROGRESS]: '진행중',
+  [SCHEDULE_STATUS.COMPLETED]: '완료됨',
+  [SCHEDULE_STATUS.CANCELLED]: '취소됨'
+};
+
+// ==================== 스케줄 상태 색상 ====================
+export const SCHEDULE_STATUS_COLORS = {
+  [SCHEDULE_STATUS.BOOKED]: 'var(--schedule-status-booked-bg)',
+  [SCHEDULE_STATUS.CONFIRMED]: 'var(--schedule-status-confirmed-bg)',
+  [SCHEDULE_STATUS.IN_PROGRESS]: 'var(--schedule-status-in-progress-bg)',
+  [SCHEDULE_STATUS.COMPLETED]: 'var(--schedule-status-completed-bg)',
+  [SCHEDULE_STATUS.CANCELLED]: 'var(--schedule-status-cancelled-bg)'
+};
+
+// ==================== 스케줄 상태 텍스트 색상 ====================
+export const SCHEDULE_STATUS_TEXT_COLORS = {
+  [SCHEDULE_STATUS.BOOKED]: 'var(--schedule-status-booked-color)',
+  [SCHEDULE_STATUS.CONFIRMED]: 'var(--schedule-status-confirmed-color)',
+  [SCHEDULE_STATUS.IN_PROGRESS]: 'var(--schedule-status-in-progress-color)',
+  [SCHEDULE_STATUS.COMPLETED]: 'var(--schedule-status-completed-color)',
+  [SCHEDULE_STATUS.CANCELLED]: 'var(--schedule-status-cancelled-color)'
+};
+
+// ==================== 스케줄 타입 ====================
 export const SCHEDULE_TYPES = {
   CONSULTATION: 'CONSULTATION',
-  SUPERVISION: 'SUPERVISION',
+  MEETING: 'MEETING',
   TRAINING: 'TRAINING',
-  MEETING: 'MEETING'
+  OTHER: 'OTHER'
 };
+
+// ==================== 스케줄 타입 라벨 ====================
+export const SCHEDULE_TYPE_LABELS = {
+  [SCHEDULE_TYPES.CONSULTATION]: '상담',
+  [SCHEDULE_TYPES.MEETING]: '회의',
+  [SCHEDULE_TYPES.TRAINING]: '교육',
+  [SCHEDULE_TYPES.OTHER]: '기타'
+};
+
+// ==================== 상담 유형 ====================
+export const CONSULTATION_TYPES = {
+  INDIVIDUAL: 'INDIVIDUAL',
+  FAMILY: 'FAMILY',
+  COUPLE: 'COUPLE',
+  GROUP: 'GROUP',
+  OTHER: 'OTHER'
+};
+
+// ==================== 상담 유형 라벨 ====================
+export const CONSULTATION_TYPE_LABELS = {
+  [CONSULTATION_TYPES.INDIVIDUAL]: '개인상담',
+  [CONSULTATION_TYPES.FAMILY]: '가족상담',
+  [CONSULTATION_TYPES.COUPLE]: '부부상담',
+  [CONSULTATION_TYPES.GROUP]: '그룹상담',
+  [CONSULTATION_TYPES.OTHER]: '기타'
+};
+
+// ==================== 정렬 옵션 ====================
+export const SORT_OPTIONS = {
+  DATE_ASC: 'date_asc',
+  DATE_DESC: 'date_desc',
+  TITLE_ASC: 'title_asc',
+  TITLE_DESC: 'title_desc',
+  STATUS_ASC: 'status_asc',
+  STATUS_DESC: 'status_desc',
+  CONSULTANT_ASC: 'consultant_asc',
+  CONSULTANT_DESC: 'consultant_desc'
+};
+
+// ==================== 정렬 옵션 라벨 ====================
+export const SORT_OPTION_LABELS = {
+  [SORT_OPTIONS.DATE_ASC]: '날짜 (오름차순)',
+  [SORT_OPTIONS.DATE_DESC]: '날짜 (내림차순)',
+  [SORT_OPTIONS.TITLE_ASC]: '제목 (오름차순)',
+  [SORT_OPTIONS.TITLE_DESC]: '제목 (내림차순)',
+  [SORT_OPTIONS.STATUS_ASC]: '상태 (오름차순)',
+  [SORT_OPTIONS.STATUS_DESC]: '상태 (내림차순)',
+  [SORT_OPTIONS.CONSULTANT_ASC]: '상담사 (오름차순)',
+  [SORT_OPTIONS.CONSULTANT_DESC]: '상담사 (내림차순)'
+};
+
+// ==================== 필터 옵션 ====================
+export const FILTER_OPTIONS = {
+  ALL: 'all',
+  TODAY: 'today',
+  THIS_WEEK: 'this_week',
+  THIS_MONTH: 'this_month',
+  BOOKED: 'booked',
+  CONFIRMED: 'confirmed',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled'
+};
+
+// ==================== 필터 옵션 라벨 ====================
+export const FILTER_OPTION_LABELS = {
+  [FILTER_OPTIONS.ALL]: '전체',
+  [FILTER_OPTIONS.TODAY]: '오늘',
+  [FILTER_OPTIONS.THIS_WEEK]: '이번 주',
+  [FILTER_OPTIONS.THIS_MONTH]: '이번 달',
+  [FILTER_OPTIONS.BOOKED]: '예약됨',
+  [FILTER_OPTIONS.CONFIRMED]: '확정됨',
+  [FILTER_OPTIONS.COMPLETED]: '완료됨',
+  [FILTER_OPTIONS.CANCELLED]: '취소됨'
+};
+
+// ==================== 페이지네이션 ====================
+export const PAGINATION = {
+  DEFAULT_PAGE_SIZE: 10,
+  PAGE_SIZE_OPTIONS: [5, 10, 20, 50],
+  MAX_VISIBLE_PAGES: 5
+};
+
+// ==================== 페이지네이션 라벨 ====================
+export const PAGINATION_LABELS = {
+  FIRST: '처음',
+  PREVIOUS: '이전',
+  NEXT: '다음',
+  LAST: '마지막',
+  PAGE_SIZE: '페이지당 항목 수',
+  OF: '중',
+  TOTAL: '총'
+};
+
+// ==================== 스케줄 액션 ====================
+export const SCHEDULE_ACTIONS = {
+  VIEW: 'view',
+  EDIT: 'edit',
+  DELETE: 'delete',
+  CONFIRM: 'confirm',
+  CANCEL: 'cancel',
+  COMPLETE: 'complete'
+};
+
+// ==================== 스케줄 액션 라벨 ====================
+export const SCHEDULE_ACTION_LABELS = {
+  [SCHEDULE_ACTIONS.VIEW]: '보기',
+  [SCHEDULE_ACTIONS.EDIT]: '수정',
+  [SCHEDULE_ACTIONS.DELETE]: '삭제',
+  [SCHEDULE_ACTIONS.CONFIRM]: '확정',
+  [SCHEDULE_ACTIONS.CANCEL]: '취소',
+  [SCHEDULE_ACTIONS.COMPLETE]: '완료'
+};
+
+// ==================== 스케줄 액션 아이콘 ====================
+export const SCHEDULE_ACTION_ICONS = {
+  [SCHEDULE_ACTIONS.VIEW]: 'bi-eye',
+  [SCHEDULE_ACTIONS.EDIT]: 'bi-pencil',
+  [SCHEDULE_ACTIONS.DELETE]: 'bi-trash',
+  [SCHEDULE_ACTIONS.CONFIRM]: 'bi-check-circle',
+  [SCHEDULE_ACTIONS.CANCEL]: 'bi-x-circle',
+  [SCHEDULE_ACTIONS.COMPLETE]: 'bi-check2-circle'
+};
+
+// ==================== 스케줄 로딩 상태 ====================
+export const SCHEDULE_LOADING_STATES = {
+  IDLE: 'idle',
+  LOADING: 'loading',
+  SUCCESS: 'success',
+  ERROR: 'error'
+};
+
+// ==================== 스케줄 에러 메시지 ====================
+export const SCHEDULE_ERROR_MESSAGES = {
+  LOAD_FAILED: '스케줄을 불러오는데 실패했습니다.',
+  SAVE_FAILED: '스케줄 저장에 실패했습니다.',
+  DELETE_FAILED: '스케줄 삭제에 실패했습니다.',
+  UPDATE_FAILED: '스케줄 수정에 실패했습니다.',
+  NETWORK_ERROR: '네트워크 오류가 발생했습니다.',
+  UNAUTHORIZED: '권한이 없습니다.',
+  SERVER_ERROR: '서버 오류가 발생했습니다.'
+};
+
+// ==================== 스케줄 성공 메시지 ====================
+export const SCHEDULE_SUCCESS_MESSAGES = {
+  LOAD_SUCCESS: '스케줄이 성공적으로 로드되었습니다.',
+  SAVE_SUCCESS: '스케줄이 성공적으로 저장되었습니다.',
+  DELETE_SUCCESS: '스케줄이 성공적으로 삭제되었습니다.',
+  UPDATE_SUCCESS: '스케줄이 성공적으로 수정되었습니다.',
+  CONFIRM_SUCCESS: '스케줄이 확정되었습니다.',
+  CANCEL_SUCCESS: '스케줄이 취소되었습니다.',
+  COMPLETE_SUCCESS: '스케줄이 완료되었습니다.'
+};
+
+// ==================== 날짜 형식 ====================
+export const DATE_FORMATS = {
+  DISPLAY: 'YYYY-MM-DD',
+  API: 'YYYY-MM-DD',
+  TIME: 'HH:mm',
+  DATETIME: 'YYYY-MM-DD HH:mm',
+  FULL: 'YYYY년 MM월 DD일 HH:mm'
+};
+
+// ==================== 시간 형식 ====================
+export const TIME_FORMATS = {
+  DISPLAY: 'HH:mm',
+  API: 'HH:mm:ss',
+  FULL: 'HH시 mm분'
+};
+
+// ==================== 상담 시간 관련 상수 ====================
+export const CONSULTATION_DURATIONS = {
+  THIRTY_MINUTES: 30,
+  FORTY_FIVE_MINUTES: 45,
+  SIXTY_MINUTES: 60,
+  NINETY_MINUTES: 90,
+  ONE_HUNDRED_TWENTY_MINUTES: 120
+};
+
+export const CONSULTATION_DURATION_LABELS = {
+  [CONSULTATION_DURATIONS.THIRTY_MINUTES]: '30분',
+  [CONSULTATION_DURATIONS.FORTY_FIVE_MINUTES]: '45분',
+  [CONSULTATION_DURATIONS.SIXTY_MINUTES]: '60분',
+  [CONSULTATION_DURATIONS.NINETY_MINUTES]: '90분',
+  [CONSULTATION_DURATIONS.ONE_HUNDRED_TWENTY_MINUTES]: '120분'
+};
+
+export const DEFAULT_CONSULTATION_DURATION = CONSULTATION_DURATIONS.SIXTY_MINUTES;
+
+export const BREAK_TIME_MINUTES = 10;
+
+// ==================== 영업 시간 ====================
+export const BUSINESS_HOURS = {
+  START: '09:00',
+  END: '18:00',
+  LUNCH_START: '12:00',
+  LUNCH_END: '13:00'
+};
+
+export const BUSINESS_HOURS_DISPLAY = {
+  START: '09:00',
+  END: '18:00',
+  LUNCH: '12:00 - 13:00'
+};
+
+// ==================== 시간 슬롯 관련 ====================
+export const TIME_SLOT_INTERVAL = 30; // 30분 간격
+export const TIME_SLOT_DURATION = 30; // 30분 슬롯
+
+// ==================== 상담 시간 유효성 검사 ====================
+export const MIN_CONSULTATION_DURATION = 30; // 최소 30분
+export const MAX_CONSULTATION_DURATION = 180; // 최대 3시간
+export const MAX_ADVANCE_BOOKING_DAYS = 30; // 최대 30일 후까지 예약 가능

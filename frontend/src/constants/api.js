@@ -123,6 +123,40 @@ export const ADMIN_API = {
   GET_SYSTEM_LOGS: '/api/admin/system/logs'
 };
 
+// 스케줄 관련 API
+export const SCHEDULE_API = {
+  // 스케줄 조회
+  SCHEDULES: '/api/schedules',
+  SCHEDULES_BY_DATE: '/api/schedules/date',
+  SCHEDULES_BY_DATE_RANGE: '/api/schedules/date-range',
+  SCHEDULES_BY_CONSULTANT: '/api/schedules/consultant',
+  SCHEDULES_BY_CLIENT: '/api/schedules/client',
+  
+  // 스케줄 관리
+  SCHEDULE_DETAIL: '/api/schedules',
+  SCHEDULE_CREATE: '/api/schedules/consultant',
+  SCHEDULE_UPDATE: '/api/schedules',
+  SCHEDULE_DELETE: '/api/schedules',
+  SCHEDULE_CONFIRM: '/api/schedules',
+  SCHEDULE_CANCEL: '/api/schedules',
+  SCHEDULE_COMPLETE: '/api/schedules',
+  
+  // 자동 완료 처리
+  AUTO_COMPLETE: '/api/schedules/auto-complete',
+  
+  // 통계
+  STATISTICS: '/api/schedules/admin/statistics',
+  TODAY_STATISTICS: '/api/schedules/today/statistics',
+  
+  // 페이지네이션
+  PAGED_SCHEDULES: '/api/schedules/paged',
+  
+  // 한글 변환
+  STATUS_KOREAN: '/api/schedules/status-korean',
+  TYPE_KOREAN: '/api/schedules/type-korean',
+  CONSULTATION_TYPE_KOREAN: '/api/schedules/consultation-type-korean'
+};
+
 // 파일 업로드 관련 API
 export const FILE_API = {
   UPLOAD_IMAGE: '/api/files/upload/image',

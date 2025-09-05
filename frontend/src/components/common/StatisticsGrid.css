@@ -1,0 +1,66 @@
+/**
+ * 통계 그리드 컴포넌트 스타일
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2025-09-05
+ */
+
+.statistics-grid {
+  display: grid;
+  grid-template-columns: var(--stats-grid-columns);
+  gap: var(--stats-grid-gap);
+  padding: var(--spacing-lg);
+  background: var(--color-background);
+  min-height: 200px;
+}
+
+.statistics-error {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.statistics-error i {
+  font-size: 3rem;
+  color: var(--color-warning);
+  margin-bottom: var(--spacing-md);
+}
+
+.statistics-error p {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .statistics-grid {
+    grid-template-columns: var(--stats-grid-mobile-columns);
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .statistics-grid {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+  
+  .statistics-error {
+    padding: var(--spacing-lg);
+  }
+  
+  .statistics-error i {
+    font-size: 2rem;
+  }
+  
+  .statistics-error p {
+    font-size: 1rem;
+  }
+}

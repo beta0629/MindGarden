@@ -2,12 +2,16 @@ package com.mindgarden.consultation.controller;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.dto.ScheduleCreateDto;
 import com.mindgarden.consultation.dto.ScheduleDto;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.service.ScheduleService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,18 +49,61 @@ public class ScheduleController {
      * 상담사: 자신의 일정만, 관리자: 모든 일정
      */
     @GetMapping
-    public ResponseEntity<List<ScheduleDto>> getSchedulesByUserRole(
-            @RequestParam Long userId,
-            @RequestParam String userRole) {
+    public ResponseEntity<Map<String, Object>> getSchedulesByUserRole(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String userRole) {
         
         log.info("🔐 권한 기반 스케줄 조회 요청: 사용자 {}, 역할 {}", userId, userRole);
+        
+        // 필수 파라미터 검증
+        if (userId == null || userRole == null) {
+            log.error("❌ 필수 파라미터 누락: userId={}, userRole={}", userId, userRole);
+            return ResponseEntity.badRequest().body(null);
+        }
         
         try {
             List<ScheduleDto> schedules = scheduleService.findSchedulesWithNamesByUserRole(userId, userRole);
             log.info("✅ 스케줄 조회 완료: {}개", schedules.size());
+            
+            // 일관된 응답 형식으로 반환
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", schedules);
+            response.put("message", "스케줄 조회 성공");
+            response.put("totalCount", schedules.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("❌ 스케줄 조회 실패: {}", e.getMessage(), e);
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("data", null);
+            errorResponse.put("message", "스케줄 조회 실패: " + e.getMessage());
+            errorResponse.put("totalCount", 0);
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * 권한 기반 페이지네이션 스케줄 조회 (상담사 이름 포함)
+     * 상담사: 자신의 일정만, 관리자: 모든 일정
+     */
+    @GetMapping("/paged")
+    public ResponseEntity<Page<ScheduleDto>> getSchedulesByUserRolePaged(
+            @RequestParam Long userId,
+            @RequestParam String userRole,
+            @PageableDefault(size = 10, sort = "date") Pageable pageable) {
+        
+        log.info("🔐 권한 기반 페이지네이션 스케줄 조회 요청: 사용자 {}, 역할 {}, 페이지 {}", userId, userRole, pageable.getPageNumber());
+        
+        try {
+            Page<ScheduleDto> schedules = scheduleService.findSchedulesWithNamesByUserRolePaged(userId, userRole, pageable);
+            log.info("✅ 페이지네이션 스케줄 조회 완료: {}개 (총 {}개)", schedules.getNumberOfElements(), schedules.getTotalElements());
             return ResponseEntity.ok(schedules);
         } catch (Exception e) {
-            log.error("❌ 스케줄 조회 실패: {}", e.getMessage());
+            log.error("❌ 페이지네이션 스케줄 조회 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
@@ -266,9 +313,11 @@ public class ScheduleController {
      */
     @GetMapping("/admin/statistics")
     public ResponseEntity<Map<String, Object>> getScheduleStatisticsForAdmin(
-            @RequestParam String userRole) {
+            @RequestParam String userRole,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
         
-        log.info("📊 관리자용 스케줄 통계 조회 요청: 역할 {}", userRole);
+        log.info("📊 관리자용 스케줄 통계 조회 요청: 역할 {}, 시작일: {}, 종료일: {}", userRole, startDate, endDate);
         
         // 관리자 권한 확인
         if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
@@ -277,7 +326,7 @@ public class ScheduleController {
         }
         
         try {
-            Map<String, Object> statistics = scheduleService.getScheduleStatisticsForAdmin();
+            Map<String, Object> statistics = scheduleService.getScheduleStatisticsForAdmin(startDate, endDate);
             log.info("✅ 관리자용 스케줄 통계 조회 완료");
             return ResponseEntity.ok(statistics);
         } catch (Exception e) {

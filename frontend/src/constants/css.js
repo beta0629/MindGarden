@@ -117,6 +117,67 @@ export const TODAY_STATISTICS_CSS = {
   STAT_ICON: 'today-stats-icon'
 };
 
+// DetailedStatsCard 컴포넌트 CSS 클래스명
+export const DETAILED_STATS_CARD_CSS = {
+  CONTAINER: 'detailed-stats-card',
+  HEADER: 'detailed-stats-header',
+  ICON: 'detailed-stats-icon',
+  TITLE: 'detailed-stats-title',
+  CONTENT: 'detailed-stats-content',
+  MAIN: 'detailed-stats-main',
+  NUMBER: 'detailed-stats-number',
+  LABEL: 'detailed-stats-label',
+  SUB: 'detailed-stats-sub',
+  CHANGE: 'detailed-stats-change',
+  CHANGE_POSITIVE: 'detailed-stats-change positive',
+  CHANGE_NEGATIVE: 'detailed-stats-change negative',
+  RATE: 'detailed-stats-rate',
+  DETAIL: 'detailed-stats-detail',
+  DESC: 'detailed-stats-desc',
+  EMPTY: 'detailed-stats-empty'
+};
+
+// DetailedStatsGrid 컴포넌트 CSS 클래스명
+export const DETAILED_STATS_GRID_CSS = {
+  CONTAINER: 'detailed-stats-grid',
+  EMPTY: 'detailed-stats-empty'
+};
+
+// StatsCard 컴포넌트 CSS 클래스명
+export const STATS_CARD_CSS = {
+  CONTAINER: 'stats-card',
+  HEADER: 'stats-card-header',
+  ICON: 'stats-card-icon',
+  TITLE: 'stats-card-title',
+  CONTENT: 'stats-card-content',
+  VALUE: 'stats-card-value',
+  LABEL: 'stats-card-label',
+  CHANGE_CONTAINER: 'stats-card-change-container',
+  CHANGE: 'stats-card-change',
+  CHANGE_POSITIVE: 'stats-card-change positive',
+  CHANGE_NEGATIVE: 'stats-card-change negative',
+  LOADING: 'loading',
+  LOADING_SPINNER: 'stats-card-loading-spinner',
+  LOADING_TEXT: 'stats-card-loading-text',
+  ERROR: 'error',
+  ERROR_ICON: 'stats-card-error-icon',
+  ERROR_TEXT: 'stats-card-error-text',
+  CARD_PRIMARY: 'primary',
+  CARD_SUCCESS: 'success',
+  CARD_WARNING: 'warning',
+  CARD_DANGER: 'danger',
+  CARD_INFO: 'info',
+  CARD_DEFAULT: 'default'
+};
+
+// StatsCardGrid 컴포넌트 CSS 클래스명
+export const STATS_CARD_GRID_CSS = {
+  CONTAINER: 'stats-card-grid',
+  EMPTY: 'stats-card-grid-empty',
+  SECTION_TITLE: 'stats-card-grid-section-title',
+  SECTION_DESCRIPTION: 'stats-card-grid-section-description'
+};
+
 // 전체 CSS 클래스명 객체
 export const CSS_CLASSES = {
   ADMIN_DASHBOARD: ADMIN_DASHBOARD_CSS,
@@ -124,7 +185,11 @@ export const CSS_CLASSES = {
   SESSION_MANAGEMENT: SESSION_MANAGEMENT_CSS,
   CONSULTANT_COMPREHENSIVE: CONSULTANT_COMPREHENSIVE_CSS,
   CLIENT_COMPREHENSIVE: CLIENT_COMPREHENSIVE_CSS,
-  TODAY_STATISTICS: TODAY_STATISTICS_CSS
+  TODAY_STATISTICS: TODAY_STATISTICS_CSS,
+  DETAILED_STATS_CARD: DETAILED_STATS_CARD_CSS,
+  DETAILED_STATS_GRID: DETAILED_STATS_GRID_CSS,
+  STATS_CARD: STATS_CARD_CSS,
+  STATS_CARD_GRID: STATS_CARD_GRID_CSS
 };
 
 export default CSS_CLASSES;

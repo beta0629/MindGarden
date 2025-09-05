@@ -1,0 +1,303 @@
+/**
+ * 기본 통계 카드 컴포넌트 스타일
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2025-09-05
+ */
+
+.stats-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 1.5rem;
+  transition: var(--card-transition);
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-hover-shadow);
+}
+
+.stats-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stats-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--card-color-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--card-color-primary);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.stats-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.stats-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.stats-card-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--card-color-primary);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.stats-card-label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+
+.stats-card-change-container {
+  margin-top: auto;
+}
+
+.stats-card-change {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  background: var(--color-neutral-light);
+}
+
+.stats-card-change.positive {
+  color: var(--card-color-success);
+  background: rgba(40, 167, 69, 0.1);
+}
+
+.stats-card-change.negative {
+  color: var(--card-color-danger);
+  background: rgba(220, 53, 69, 0.1);
+}
+
+/* 카드 색상 변형 */
+.stats-card.primary {
+  border-left: 4px solid var(--card-color-primary);
+}
+
+.stats-card.primary .stats-card-icon {
+  background: var(--card-color-primary);
+  color: white;
+}
+
+.stats-card.primary .stats-card-value {
+  color: var(--card-color-primary);
+}
+
+.stats-card.success {
+  border-left: 4px solid var(--card-color-success);
+}
+
+.stats-card.success .stats-card-icon {
+  background: var(--card-color-success);
+  color: white;
+}
+
+.stats-card.success .stats-card-value {
+  color: var(--card-color-success);
+}
+
+.stats-card.warning {
+  border-left: 4px solid var(--card-color-warning);
+}
+
+.stats-card.warning .stats-card-icon {
+  background: var(--card-color-warning);
+  color: white;
+}
+
+.stats-card.warning .stats-card-value {
+  color: var(--card-color-warning);
+}
+
+.stats-card.danger {
+  border-left: 4px solid var(--card-color-danger);
+}
+
+.stats-card.danger .stats-card-icon {
+  background: var(--card-color-danger);
+  color: white;
+}
+
+.stats-card.danger .stats-card-value {
+  color: var(--card-color-danger);
+}
+
+.stats-card.info {
+  border-left: 4px solid var(--card-color-info);
+}
+
+.stats-card.info .stats-card-icon {
+  background: var(--card-color-info);
+  color: white;
+}
+
+.stats-card.info .stats-card-value {
+  color: var(--card-color-info);
+}
+
+/* 로딩 상태 */
+.stats-card.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+}
+
+.stats-card-loading-spinner {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.stats-card-loading-spinner .spinner-border {
+  width: 2rem;
+  height: 2rem;
+  color: var(--card-color-primary);
+}
+
+.stats-card-loading-text {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* 에러 상태 */
+.stats-card.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+  background: rgba(220, 53, 69, 0.05);
+  border-color: var(--card-color-danger);
+}
+
+.stats-card-error-icon {
+  font-size: 2rem;
+  color: var(--card-color-danger);
+  margin-bottom: 0.5rem;
+}
+
+.stats-card-error-text {
+  color: var(--card-color-danger);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .stats-card {
+    padding: 1.25rem;
+  }
+  
+  .stats-card-value {
+    font-size: 2rem;
+  }
+  
+  .stats-card-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  
+  .stats-card-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-card {
+    padding: 1rem;
+  }
+  
+  .stats-card-value {
+    font-size: 1.75rem;
+  }
+  
+  .stats-card-title {
+    font-size: 0.9rem;
+  }
+  
+  .stats-card-label {
+    font-size: 0.8rem;
+  }
+}
+
+/* 애니메이션 */
+.stats-card {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 카드 그라데이션 효과 */
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--card-color-primary), var(--card-color-success));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stats-card:hover::before {
+  opacity: 1;
+}
+
+/* 아이콘 호버 효과 */
+.stats-card-icon {
+  transition: all 0.3s ease;
+}
+
+.stats-card:hover .stats-card-icon {
+  transform: scale(1.1);
+  background: var(--card-color-primary);
+  color: white;
+}

@@ -10,7 +10,7 @@ import './TodayStatistics.css';
  * @version 1.0.0
  * @since 2024-12-19
  */
-const TodayStatistics = ({ userRole, userId }) => {
+const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {
     const [statistics, setStatistics] = useState({
         totalToday: 0,
         completedToday: 0,
@@ -96,14 +96,24 @@ const TodayStatistics = ({ userRole, userId }) => {
                     <FaChartLine className="title-icon" />
                     오늘의 통계
                 </h3>
-                <button 
-                    className="refresh-btn"
-                    onClick={handleRefresh}
-                    disabled={loading}
-                    title="새로고침"
-                >
-                    <FaSync className={loading ? 'spinning' : ''} />
-                </button>
+                <div className="statistics-actions">
+                    <button
+                        className="statistics-view-btn"
+                        onClick={onShowStatistics}
+                        title="전체 통계 보기"
+                    >
+                        <i className="bi bi-graph-up"></i>
+                        통계 보기
+                    </button>
+                    <button 
+                        className="refresh-btn"
+                        onClick={handleRefresh}
+                        disabled={loading}
+                        title="새로고침"
+                    >
+                        <FaSync className={loading ? 'spinning' : ''} />
+                    </button>
+                </div>
             </div>
             
             <div className="statistics-grid">

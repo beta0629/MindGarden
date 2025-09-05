@@ -201,6 +201,11 @@ public interface ScheduleService {
     List<ScheduleDto> findSchedulesWithNamesByUserRole(Long userId, String userRole);
     
     /**
+     * 권한 기반 페이지네이션 스케줄 조회 (상담사 이름 포함)
+     */
+    Page<ScheduleDto> findSchedulesWithNamesByUserRolePaged(Long userId, String userRole, Pageable pageable);
+    
+    /**
      * 권한 기반 특정 날짜 스케줄 조회
      */
     List<Schedule> findSchedulesByUserRoleAndDate(Long userId, String userRole, LocalDate date);
@@ -213,7 +218,7 @@ public interface ScheduleService {
     /**
      * 관리자용 전체 스케줄 통계 조회
      */
-    Map<String, Object> getScheduleStatisticsForAdmin();
+    Map<String, Object> getScheduleStatisticsForAdmin(String startDate, String endDate);
     
     /**
      * 오늘의 스케줄 통계 조회

@@ -47,6 +47,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public Schedule createSchedule(Schedule schedule) {
+        
         log.info("📅 스케줄 생성: {}", schedule.getTitle());
         return scheduleRepository.save(schedule);
     }
@@ -223,16 +224,22 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public List<Schedule> findByConsultantId(Long consultantId) {
+        // 먼저 자동 완료 처리 실행
+        autoCompleteExpiredSchedules();
         return scheduleRepository.findByConsultantId(consultantId);
     }
 
     @Override
     public List<Schedule> findByConsultantIdAndDate(Long consultantId, LocalDate date) {
+        // 먼저 자동 완료 처리 실행
+        autoCompleteExpiredSchedules();
         return scheduleRepository.findByConsultantIdAndDate(consultantId, date);
     }
 
     @Override
     public List<Schedule> findByConsultantIdAndDateBetween(Long consultantId, LocalDate startDate, LocalDate endDate) {
+        // 먼저 자동 완료 처리 실행
+        autoCompleteExpiredSchedules();
         return scheduleRepository.findByConsultantIdAndDateBetween(consultantId, startDate, endDate);
     }
 
@@ -240,16 +247,22 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public List<Schedule> findByClientId(Long clientId) {
+        // 먼저 자동 완료 처리 실행
+        autoCompleteExpiredSchedules();
         return scheduleRepository.findByClientId(clientId);
     }
 
     @Override
     public List<Schedule> findByClientIdAndDate(Long clientId, LocalDate date) {
+        // 먼저 자동 완료 처리 실행
+        autoCompleteExpiredSchedules();
         return scheduleRepository.findByClientIdAndDate(clientId, date);
     }
 
     @Override
     public List<Schedule> findByClientIdAndDateBetween(Long clientId, LocalDate startDate, LocalDate endDate) {
+        // 먼저 자동 완료 처리 실행
+        autoCompleteExpiredSchedules();
         return scheduleRepository.findByClientIdAndDateBetween(clientId, startDate, endDate);
     }
 
@@ -496,6 +509,9 @@ public class ScheduleServiceImpl implements ScheduleService {
     public List<Schedule> findSchedulesByUserRole(Long userId, String userRole) {
         log.info("🔐 권한 기반 스케줄 조회: 사용자 {}, 역할 {}", userId, userRole);
         
+        // 먼저 자동 완료 처리 실행
+        autoCompleteExpiredSchedules();
+        
         if (isAdminRole(userRole)) {
             // 관리자: 모든 스케줄 조회
             log.info("👑 관리자 권한으로 모든 스케줄 조회");
@@ -515,6 +531,9 @@ public class ScheduleServiceImpl implements ScheduleService {
     public List<Schedule> findSchedulesByUserRoleAndDate(Long userId, String userRole, LocalDate date) {
         log.info("🔐 권한 기반 특정 날짜 스케줄 조회: 사용자 {}, 역할 {}, 날짜 {}", userId, userRole, date);
         
+        // 먼저 자동 완료 처리 실행
+        autoCompleteExpiredSchedules();
+        
         if (isAdminRole(userRole)) {
             // 관리자: 해당 날짜의 모든 스케줄 조회
             return scheduleRepository.findByDate(date);
@@ -529,6 +548,9 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public List<Schedule> findSchedulesByUserRoleAndDateBetween(Long userId, String userRole, LocalDate startDate, LocalDate endDate) {
         log.info("🔐 권한 기반 날짜 범위 스케줄 조회: 사용자 {}, 역할 {}, 기간 {} ~ {}", userId, userRole, startDate, endDate);
+        
+        // 먼저 자동 완료 처리 실행
+        autoCompleteExpiredSchedules();
         
         if (isAdminRole(userRole)) {
             // 관리자: 해당 기간의 모든 스케줄 조회
@@ -687,6 +709,9 @@ public class ScheduleServiceImpl implements ScheduleService {
     public List<ScheduleDto> findSchedulesWithNamesByUserRole(Long userId, String userRole) {
         log.info("🔐 권한 기반 스케줄 조회 (이름 포함): 사용자 {}, 역할 {}", userId, userRole);
         
+        // 먼저 자동 완료 처리 실행
+        autoCompleteExpiredSchedules();
+        
         List<Schedule> schedules;
         if (isAdminRole(userRole)) {
             // 관리자: 모든 스케줄 조회
@@ -806,26 +831,46 @@ public class ScheduleServiceImpl implements ScheduleService {
         LocalDate today = now.toLocalDate();
         LocalTime currentTime = now.toLocalTime();
         
-        // 오늘 날짜이고 현재 시간을 지난 확정된 스케줄 조회
-        List<Schedule> expiredSchedules = scheduleRepository.findExpiredConfirmedSchedules(today, currentTime);
-        
         int completedCount = 0;
-        for (Schedule schedule : expiredSchedules) {
+        
+        // 1. 오늘 날짜이고 현재 시간을 지난 확정된 스케줄 조회
+        List<Schedule> todayExpiredSchedules = scheduleRepository.findExpiredConfirmedSchedules(today, currentTime);
+        
+        for (Schedule schedule : todayExpiredSchedules) {
             try {
                 schedule.setStatus(ScheduleConstants.STATUS_COMPLETED);
                 schedule.setUpdatedAt(LocalDateTime.now());
                 scheduleRepository.save(schedule);
                 completedCount++;
                 
-                log.info("✅ 스케줄 자동 완료: ID={}, 제목={}, 시간={}", 
+                log.info("✅ 오늘 스케줄 자동 완료: ID={}, 제목={}, 시간={}", 
                     schedule.getId(), schedule.getTitle(), schedule.getStartTime());
                 
             } catch (Exception e) {
-                log.error("❌ 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
+                log.error("❌ 오늘 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
             }
         }
         
-        log.info("🔄 자동 완료 처리 완료: {}개 스케줄 처리됨", completedCount);
+        // 2. 지난 날짜의 확정된 스케줄 조회 (오늘 이전)
+        List<Schedule> pastSchedules = scheduleRepository.findByDateBeforeAndStatus(today, ScheduleConstants.STATUS_CONFIRMED);
+        
+        for (Schedule schedule : pastSchedules) {
+            try {
+                schedule.setStatus(ScheduleConstants.STATUS_COMPLETED);
+                schedule.setUpdatedAt(LocalDateTime.now());
+                scheduleRepository.save(schedule);
+                completedCount++;
+                
+                log.info("✅ 지난 스케줄 자동 완료: ID={}, 제목={}, 날짜={}, 시간={}", 
+                    schedule.getId(), schedule.getTitle(), schedule.getDate(), schedule.getStartTime());
+                
+            } catch (Exception e) {
+                log.error("❌ 지난 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
+            }
+        }
+        
+        log.info("🔄 자동 완료 처리 완료: {}개 스케줄 처리됨 (오늘: {}, 지난날: {})", 
+            completedCount, todayExpiredSchedules.size(), pastSchedules.size());
     }
 
     /**

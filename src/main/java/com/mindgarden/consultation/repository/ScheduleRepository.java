@@ -201,6 +201,17 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
         @Param("date") LocalDate date,
         @Param("currentTime") LocalTime currentTime
     );
+    
+    /**
+     * 특정 날짜 이전의 특정 상태 스케줄 조회 (자동 완료 처리용)
+     */
+    @Query("SELECT s FROM Schedule s WHERE s.date < :date " +
+           "AND s.status = :status " +
+           "AND s.isDeleted = false")
+    List<Schedule> findByDateBeforeAndStatus(
+        @Param("date") LocalDate date,
+        @Param("status") String status
+    );
 
     // ==================== 오늘의 통계 ====================
     

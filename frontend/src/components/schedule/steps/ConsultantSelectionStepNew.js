@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ConsultantCardNew from '../ConsultantCardNew';
 import ConsultantFilterNew from '../components/ConsultantFilterNew';
+import notificationManager from '../../../utils/notification';
 import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../../constants/css-variables';
 
 /**

@@ -52,26 +52,57 @@ const ConsultantCardNew = ({
     };
 
     /**
+     * 전문분야를 한글로 변환
+     */
+    const convertSpecialtyToKorean = (specialty) => {
+        if (!specialty) return '전문분야 미설정';
+        
+        const specialtyMap = {
+            'DEPRESSION': '우울증',
+            'ANXIETY': '불안장애',
+            'TRAUMA': '트라우마',
+            'RELATIONSHIP': '관계상담',
+            'FAMILY': '가족상담',
+            'COUPLE': '부부상담',
+            'CHILD': '아동상담',
+            'ADOLESCENT': '청소년상담',
+            'ADDICTION': '중독상담',
+            'EATING_DISORDER': '섭식장애',
+            'PERSONALITY': '성격장애',
+            'BIPOLAR': '양극성장애',
+            'OCD': '강박장애',
+            'PTSD': '외상후스트레스장애',
+            'GRIEF': '상실상담',
+            'CAREER': '진로상담',
+            'STRESS': '스트레스관리',
+            'SLEEP': '수면장애',
+            'ANGER': '분노조절',
+            'SELF_ESTEEM': '자존감'
+        };
+        
+        return specialtyMap[specialty] || specialty;
+    };
+
+    /**
      * 전문분야 텍스트 반환
      */
     const getSpecialtyText = () => {
         // 백엔드에서 반환하는 필드명들 확인
+        let specialty = null;
+        
         if (consultant.specialization && consultant.specialization.trim() !== '') {
-            return consultant.specialization;
+            specialty = consultant.specialization;
+        } else if (consultant.specialty && consultant.specialty.trim() !== '') {
+            specialty = consultant.specialty;
+        } else if (consultant.specialties && consultant.specialties.length > 0) {
+            specialty = consultant.specialties[0];
+        } else if (consultant.specialtyName && consultant.specialtyName.trim() !== '') {
+            specialty = consultant.specialtyName;
+        } else if (consultant.expertise && consultant.expertise.trim() !== '') {
+            specialty = consultant.expertise;
         }
-        if (consultant.specialty && consultant.specialty.trim() !== '') {
-            return consultant.specialty;
-        }
-        if (consultant.specialties && consultant.specialties.length > 0) {
-            return consultant.specialties[0];
-        }
-        if (consultant.specialtyName && consultant.specialtyName.trim() !== '') {
-            return consultant.specialtyName;
-        }
-        if (consultant.expertise && consultant.expertise.trim() !== '') {
-            return consultant.expertise;
-        }
-        return '전문분야 미설정';
+        
+        return convertSpecialtyToKorean(specialty);
     };
 
     /**

@@ -125,6 +125,11 @@
     background-color: #007bff;
 }
 
+/* 1단계일 때 2단계로 가는 연결선 숨김 */
+.schedule-modal .step-item.current:first-child:not(:last-child)::after {
+    display: none;
+}
+
 /* 모바일 반응형 */
 @media (max-width: 768px) {
     .schedule-modal .step-icon {

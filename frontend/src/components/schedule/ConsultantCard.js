@@ -80,6 +80,13 @@ const ConsultantCardNew = ({
             'SELF_ESTEEM': '자존감'
         };
         
+        // 콤마로 구분된 여러 전문분야 처리
+        if (specialty.includes(',')) {
+            const specialties = specialty.split(',').map(s => s.trim());
+            const koreanSpecialties = specialties.map(s => specialtyMap[s] || s);
+            return koreanSpecialties.join(', ');
+        }
+        
         return specialtyMap[specialty] || specialty;
     };
 
@@ -101,6 +108,10 @@ const ConsultantCardNew = ({
         } else if (consultant.expertise && consultant.expertise.trim() !== '') {
             specialty = consultant.expertise;
         }
+        
+        // 디버깅을 위한 로그
+        console.log('Consultant data:', consultant);
+        console.log('Specialty found:', specialty);
         
         return convertSpecialtyToKorean(specialty);
     };

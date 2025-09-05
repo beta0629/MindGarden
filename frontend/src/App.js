@@ -16,8 +16,8 @@ import SessionManagement from './components/admin/SessionManagement';
 import MappingManagement from './components/admin/MappingManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import StatisticsModal from './components/common/StatisticsModal';
-import ScheduleList from './components/common/ScheduleList';
 import StatisticsDashboard from './components/admin/StatisticsDashboard';
+import ScheduleList from './components/common/ScheduleList';
 import SimpleLayout from './components/layout/SimpleLayout';
 import Toast from './components/common/Toast';
 import NotificationTest from './components/test/NotificationTest';
@@ -141,10 +141,9 @@ function AppContent() {
             } />
             <Route path="/admin/statistics" element={
               <SimpleLayout>
-                <StatisticsModal 
-                  isOpen={true}
-                  onClose={() => window.history.back()}
+                <StatisticsDashboard 
                   userRole={user?.role || 'ADMIN'}
+                  userId={user?.id || 1}
                 />
               </SimpleLayout>
             } />

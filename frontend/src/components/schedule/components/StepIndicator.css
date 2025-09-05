@@ -121,7 +121,8 @@
     transform: translateX(50%);
 }
 
-.schedule-modal .step-item.active:not(:last-child)::after {
+.schedule-modal .step-item.active:not(:last-child)::after,
+.schedule-modal .step-item.current:not(:last-child)::after {
     background-color: #007bff;
 }
 

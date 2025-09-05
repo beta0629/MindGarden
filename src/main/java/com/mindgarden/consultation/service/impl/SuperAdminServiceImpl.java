@@ -64,10 +64,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
                 .role(UserRole.SUPER_ADMIN)
                 .isActive(true)
                 .isEmailVerified(true) // 수퍼어드민은 이메일 인증 생략
-                .isDeleted(false)
                 .isSocialAccount(false)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .lastLoginAt(null)
                 .memo(request.getMemo())
                 .build();
@@ -96,7 +93,10 @@ public class SuperAdminServiceImpl implements SuperAdminService {
         try {
             log.info("수퍼어드민 목록 조회 시작");
             
-            List<User> superAdmins = userRepository.findByRoleAndIsDeletedFalse(UserRole.SUPER_ADMIN);
+            List<User> superAdmins = userRepository.findByRole(UserRole.SUPER_ADMIN)
+                .stream()
+                .filter(user -> !user.isDeleted())
+                .collect(Collectors.toList());
             
             List<Map<String, Object>> superAdminList = superAdmins.stream()
                 .map(user -> {

@@ -470,6 +470,7 @@
   flex-direction: row;
   gap: 12px;
   margin-top: 8px;
+  margin-left: 16px;
   align-items: center;
   justify-content: space-between;
 }

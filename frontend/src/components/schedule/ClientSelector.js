@@ -24,27 +24,30 @@ const ClientSelector = ({
     /**
      * 내담자 상담 히스토리 조회
      */
-    const loadClientHistory = async (clientId) => {
-        if (clientHistory[clientId] || loadingHistory[clientId]) {
+    const loadClientHistory = async (client) => {
+        const clientId = client.originalId || client.id;
+        const displayId = client.id; // 표시용 ID (client-34-22 형태)
+        
+        if (clientHistory[displayId] || loadingHistory[displayId]) {
             return; // 이미 로드되었거나 로딩 중
         }
 
         try {
-            setLoadingHistory(prev => ({ ...prev, [clientId]: true }));
-            console.log('📋 내담자 히스토리 조회 시작:', clientId);
+            setLoadingHistory(prev => ({ ...prev, [displayId]: true }));
+            console.log('📋 내담자 히스토리 조회 시작:', { displayId, clientId });
             
             const response = await apiGet(`/api/v1/consultations/client/${clientId}/history`);
             
             if (response.success) {
                 console.log('📋 내담자 히스토리 조회 완료:', response.data);
-                setClientHistory(prev => ({ ...prev, [clientId]: response.data }));
+                setClientHistory(prev => ({ ...prev, [displayId]: response.data }));
             } else {
                 console.warn('📋 내담자 히스토리 조회 실패:', response.message);
             }
         } catch (error) {
             console.error('📋 내담자 히스토리 조회 오류:', error);
         } finally {
-            setLoadingHistory(prev => ({ ...prev, [clientId]: false }));
+            setLoadingHistory(prev => ({ ...prev, [displayId]: false }));
         }
     };
 
@@ -208,7 +211,7 @@ const ClientSelector = ({
                                         className="history-toggle-btn"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            loadClientHistory(client.id);
+                                            loadClientHistory(client);
                                         }}
                                         disabled={loadingHistory[client.id]}
                                     >

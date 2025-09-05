@@ -18,6 +18,7 @@ import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import StatisticsModal from './components/common/StatisticsModal';
 import StatisticsDashboard from './components/admin/StatisticsDashboard';
 import ScheduleList from './components/common/ScheduleList';
+import ComingSoon from './components/common/ComingSoon';
 import SimpleLayout from './components/layout/SimpleLayout';
 import Toast from './components/common/Toast';
 import NotificationTest from './components/test/NotificationTest';
@@ -154,6 +155,26 @@ function AppContent() {
                   userId={user?.id || 1}
                 />
               </SimpleLayout>
+            } />
+            
+            {/* 시스템 관리 라우트 (준비중) */}
+            <Route path="/admin/system" element={
+              <ComingSoon 
+                title="시스템 도구"
+                description="시스템 도구 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/admin/logs" element={
+              <ComingSoon 
+                title="시스템 로그"
+                description="시스템 로그 조회 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/admin/settings" element={
+              <ComingSoon 
+                title="관리자 설정"
+                description="관리자 설정 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
             } />
             
             {/* OAuth2 콜백 처리 라우트 */}

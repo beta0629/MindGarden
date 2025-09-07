@@ -167,6 +167,7 @@ export const CLIENT_MENU_ITEMS = {
 // 사용자 역할 상수
 export const USER_ROLES = {
   ADMIN: 'ADMIN',
+  SUPER_ADMIN: 'SUPER_ADMIN',
   CONSULTANT: 'CONSULTANT',
   CLIENT: 'CLIENT'
 };

@@ -8,8 +8,8 @@ import './StepIndicator.css';
  * - 단계별 제목 표시
  * 
  * @author MindGarden
- * @version 1.0.0
- * @since 2024-12-19
+ * @version 2.0.0
+ * @since 2025-01-05
  */
 const StepIndicator = ({ 
     currentStep, 
@@ -22,6 +22,8 @@ const StepIndicator = ({
     ]
 }) => {
     const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+    
+    console.log('StepIndicator 렌더링:', { currentStep, totalSteps, steps });
 
     return (
         <div className="step-indicator">

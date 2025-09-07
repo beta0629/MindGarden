@@ -245,6 +245,30 @@ const ScheduleModalNew = ({
 
                 {/* 모달 콘텐츠 */}
                 <div className={COMPONENT_CSS.SCHEDULE_MODAL.CONTENT}>
+                    {/* StepIndicator 강제 표시 */}
+                    <div style={{
+                        display: 'block !important',
+                        visibility: 'visible !important',
+                        opacity: '1 !important',
+                        background: '#f8f9fa',
+                        padding: '16px',
+                        borderRadius: '8px',
+                        border: '2px solid #007bff',
+                        margin: '16px 0',
+                        width: '100%'
+                    }}>
+                        <StepIndicator 
+                            currentStep={step} 
+                            totalSteps={4}
+                            steps={[
+                                { id: 1, title: '상담사 선택', icon: '👨‍⚕️' },
+                                { id: 2, title: '내담자 선택', icon: '👤' },
+                                { id: 3, title: '시간 선택', icon: '⏰' },
+                                { id: 4, title: '세부사항', icon: '📝' }
+                            ]}
+                        />
+                    </div>
+                    
                     {/* 1단계: 상담사 선택 */}
                     {step === 1 && (
                         <ConsultantSelectionStep

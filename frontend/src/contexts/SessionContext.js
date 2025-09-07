@@ -316,7 +316,8 @@ export const SessionProvider = ({ children }) => {
     // 유틸리티
     hasRole: (role) => state.user?.role === role,
     hasAnyRole: (roles) => roles.includes(state.user?.role),
-    isAdmin: () => state.user?.role === 'ADMIN',
+    isAdmin: () => state.user?.role === 'ADMIN' || state.user?.role === 'SUPER_ADMIN',
+    isSuperAdmin: () => state.user?.role === 'SUPER_ADMIN',
     isConsultant: () => state.user?.role === 'CONSULTANT',
     isClient: () => state.user?.role === 'CLIENT'
   };

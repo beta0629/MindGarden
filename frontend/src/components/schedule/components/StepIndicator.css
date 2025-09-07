@@ -1,10 +1,18 @@
 /* StepIndicator.css */
 
-.schedule-modal .step-indicator {
+.step-indicator {
     margin-bottom: 16px;
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    width: 100%;
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 8px;
+    border: none;
 }
 
-.schedule-modal .progress-bar {
+.progress-bar {
     width: 100%;
     height: 4px;
     background-color: #e9ecef;
@@ -13,21 +21,23 @@
     margin-bottom: 8px;
 }
 
-.schedule-modal .progress-fill {
+.progress-fill {
     height: 100%;
     background: linear-gradient(90deg, #007bff, #28a745);
     border-radius: 2px;
     transition: width 0.3s ease;
 }
 
-.schedule-modal .steps-container {
+.steps-container {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     position: relative;
+    width: 100%;
+    overflow: visible;
 }
 
-.schedule-modal .step-item {
+.step-item {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -37,16 +47,16 @@
     transition: all 0.3s ease;
 }
 
-.schedule-modal .step-item.active {
+.step-item.active {
     opacity: 1;
 }
 
-.schedule-modal .step-item.current {
+.step-item.current {
     opacity: 1;
     transform: scale(1.05);
 }
 
-.schedule-modal .step-icon {
+.step-icon {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -60,56 +70,56 @@
     border: 3px solid transparent;
 }
 
-.schedule-modal .step-item.active .step-icon {
+.step-item.active .step-icon {
     background-color: #007bff;
     color: white;
     border-color: #007bff;
 }
 
-.schedule-modal .step-item.current .step-icon {
+.step-item.current .step-icon {
     background-color: #28a745;
     color: white;
     border-color: #28a745;
     box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.2);
 }
 
-.schedule-modal .step-content {
+.step-content {
     text-align: center;
 }
 
-.schedule-modal .step-number {
+.step-number {
     font-size: 12px;
     font-weight: 600;
     color: #6c757d;
     margin-bottom: 2px;
 }
 
-.schedule-modal .step-item.active .step-number {
+.step-item.active .step-number {
     color: #007bff;
 }
 
-.schedule-modal .step-item.current .step-number {
+.step-item.current .step-number {
     color: #28a745;
 }
 
-.schedule-modal .step-title {
+.step-title {
     font-size: 11px;
     color: #6c757d;
     font-weight: 500;
     line-height: 1.2;
 }
 
-.schedule-modal .step-item.active .step-title {
+.step-item.active .step-title {
     color: #495057;
 }
 
-.schedule-modal .step-item.current .step-title {
+.step-item.current .step-title {
     color: #28a745;
     font-weight: 600;
 }
 
 /* 연결선 */
-.schedule-modal .step-item:not(:last-child)::after {
+.step-item:not(:last-child)::after {
     content: '';
     position: absolute;
     top: 20px;
@@ -121,32 +131,32 @@
     transform: translateX(50%);
 }
 
-.schedule-modal .step-item.active:not(:last-child)::after {
+.step-item.active:not(:last-child)::after {
     background-color: #007bff;
 }
 
 /* 1단계일 때 2단계로 가는 연결선 숨김 */
-.schedule-modal .step-item.current:first-child:not(:last-child)::after {
-    display: none;
+.step-item.current:first-child:not(:last-child)::after {
+    display: none !important;
 }
 
 /* 모바일 반응형 */
 @media (max-width: 768px) {
-    .schedule-modal .step-icon {
+    .step-icon {
         width: 32px;
         height: 32px;
         font-size: 14px;
     }
     
-    .schedule-modal .step-title {
+    .step-title {
         font-size: 10px;
     }
     
-    .schedule-modal .step-number {
+    .step-number {
         font-size: 10px;
     }
     
-    .schedule-modal .step-item:not(:last-child)::after {
+    .step-item:not(:last-child)::after {
         top: 16px;
     }
 }
@@ -164,6 +174,6 @@
     }
 }
 
-.schedule-modal .step-item.current .step-icon {
+.step-item.current .step-icon {
     animation: stepPulse 2s infinite;
 }

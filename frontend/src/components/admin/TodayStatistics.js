@@ -27,7 +27,7 @@ const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {
      * 통계 데이터 로드
      */
     const loadStatistics = useCallback(async () => {
-        if (!userRole || !userId) return;
+        if (!userRole) return;
         
         setLoading(true);
         try {
@@ -47,14 +47,17 @@ const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {
                 const data = await response.json();
                 console.log('📊 오늘의 통계 데이터:', data);
                 
-                setStatistics({
+                const newStatistics = {
                     totalToday: data.totalToday || 0,
                     completedToday: data.completedToday || 0,
                     inProgressToday: data.inProgressToday || 0,
                     cancelledToday: data.cancelledToday || 0,
                     bookedToday: data.bookedToday || 0,
                     confirmedToday: data.confirmedToday || 0
-                });
+                };
+                
+                console.log('📊 설정할 통계 데이터:', newStatistics);
+                setStatistics(newStatistics);
                 
                 setLastUpdated(new Date());
                 console.log('📊 오늘의 통계 로드 완료');

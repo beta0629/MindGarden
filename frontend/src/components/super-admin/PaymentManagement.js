@@ -31,6 +31,8 @@ const PaymentManagement = () => {
     totalElements: 0,
     size: 20
   });
+  const [selectedPayments, setSelectedPayments] = useState([]);
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
   useEffect(() => {
     loadPayments();
@@ -170,105 +172,126 @@ const PaymentManagement = () => {
     }).format(amount);
   };
 
-  // 테스트 함수들
-  const testCreatePayment = async () => {
+  // 실제 서비스 기능들
+  const exportPayments = async () => {
     try {
-      const paymentRequest = {
-        orderId: `TEST_ORDER_${Date.now()}`,
-        amount: 100000,
-        method: 'CARD',
-        provider: 'TOSS',
-        payerId: 1,
-        recipientId: 1,
-        branchId: 1,
-        description: '테스트 결제 - 실제 데이터',
-        timeoutMinutes: 30,
-        successUrl: 'http://localhost:3000/payment/success',
-        failUrl: 'http://localhost:3000/payment/fail',
-        cancelUrl: 'http://localhost:3000/payment/cancel'
-      };
+      const params = new URLSearchParams({
+        ...filters,
+        export: 'true',
+        format: 'excel'
+      });
 
-      const response = await fetch(`${API_BASE_URL}/api/payments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(paymentRequest)
+      const response = await fetch(`${API_BASE_URL}/api/payments/export?${params}`, {
+        method: 'GET',
+        credentials: 'include'
       });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const result = await response.json();
-      alert(`테스트 결제 생성 성공!\n결제 ID: ${result.data?.paymentId}\n주문 ID: ${result.data?.orderId}`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `payments_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
       
-      // 결제 목록 새로고침
-      loadPayments();
-      loadStatistics();
+      alert('결제 데이터가 성공적으로 내보내졌습니다.');
       
     } catch (error) {
-      console.error('테스트 결제 생성 실패:', error);
-      alert(`테스트 결제 생성 실패: ${error.message}`);
+      console.error('데이터 내보내기 실패:', error);
+      alert(`데이터 내보내기 실패: ${error.message}`);
     }
   };
 
-  const testPaymentScenarios = async () => {
+  const showPaymentAnalytics = () => {
+    // 결제 분석 모달 또는 페이지로 이동
+    alert('결제 분석 기능은 개발 중입니다.');
+  };
+
+  const handleBulkAction = async (action, selectedPayments) => {
+    if (!selectedPayments || selectedPayments.length === 0) {
+      alert('선택된 결제가 없습니다.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `선택된 ${selectedPayments.length}건의 결제를 ${action === 'approve' ? '승인' : action === 'refund' ? '환불' : '취소'}하시겠습니까?`
+    );
+
+    if (!confirmed) return;
+
     try {
-      // 여러 시나리오 테스트
-      const scenarios = [
-        { amount: 50000, method: 'CARD', provider: 'TOSS', description: '카드 결제 테스트' },
-        { amount: 100000, method: 'BANK_TRANSFER', provider: 'KAKAO', description: '계좌이체 테스트' },
-        { amount: 200000, method: 'CARD', provider: 'KAKAO', description: '간편결제 테스트' }
-      ];
+      const promises = selectedPayments.map(paymentId => {
+        const endpoint = action === 'refund' 
+          ? `${API_BASE_URL}/api/payments/${paymentId}/refund`
+          : `${API_BASE_URL}/api/payments/${paymentId}/status`;
+        
+        const body = action === 'refund' 
+          ? { amount: payments.find(p => p.id === paymentId)?.amount }
+          : { status: action === 'approve' ? 'APPROVED' : 'CANCELLED' };
 
-      for (const scenario of scenarios) {
-        const paymentRequest = {
-          orderId: `SCENARIO_${Date.now()}_${scenario.method}`,
-          amount: scenario.amount,
-          method: scenario.method,
-          provider: scenario.provider,
-          payerId: 1,
-          recipientId: 1,
-          branchId: 1,
-          description: scenario.description,
-          timeoutMinutes: 30,
-          successUrl: 'http://localhost:3000/payment/success',
-          failUrl: 'http://localhost:3000/payment/fail',
-          cancelUrl: 'http://localhost:3000/payment/cancel'
-        };
-
-        const response = await fetch(`${API_BASE_URL}/api/payments`, {
-          method: 'POST',
+        return fetch(endpoint, {
+          method: action === 'refund' ? 'POST' : 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          body: JSON.stringify(paymentRequest)
+          body: JSON.stringify(body)
         });
-        
-        if (response.ok) {
-          console.log(`${scenario.description} 성공`);
-        } else {
-          console.error(`${scenario.description} 실패`);
-        }
+      });
+
+      const responses = await Promise.all(promises);
+      const failedCount = responses.filter(r => !r.ok).length;
+      
+      if (failedCount === 0) {
+        alert('모든 작업이 성공적으로 완료되었습니다.');
+      } else {
+        alert(`${responses.length - failedCount}건 성공, ${failedCount}건 실패`);
       }
       
-      alert('시나리오 테스트 완료!');
-      
-      // 결제 목록 새로고침
       loadPayments();
       loadStatistics();
       
     } catch (error) {
-      console.error('시나리오 테스트 실패:', error);
-      alert(`시나리오 테스트 실패: ${error.message}`);
+      console.error('일괄 작업 실패:', error);
+      alert(`일괄 작업 실패: ${error.message}`);
     }
   };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('ko-KR');
+  };
+
+  const handleSelectPayment = (paymentId, checked) => {
+    if (checked) {
+      setSelectedPayments(prev => [...prev, paymentId]);
+    } else {
+      setSelectedPayments(prev => prev.filter(id => id !== paymentId));
+    }
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedPayments(payments.map(p => p.id));
+    } else {
+      setSelectedPayments([]);
+    }
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+    setPagination(prev => ({
+      ...prev,
+      currentPage: 0
+    }));
   };
 
   const getStatusBadge = (status) => {
@@ -303,16 +326,16 @@ const PaymentManagement = () => {
           <h1>결제 관리</h1>
           <div className="header-actions">
             <button 
-              className="btn btn-secondary"
-              onClick={() => testCreatePayment()}
+              className="btn btn-success"
+              onClick={() => exportPayments()}
             >
-              테스트 결제 생성
+              데이터 내보내기
             </button>
             <button 
               className="btn btn-info"
-              onClick={() => testPaymentScenarios()}
+              onClick={() => showPaymentAnalytics()}
             >
-              시나리오 테스트
+              결제 분석
             </button>
             <button 
               className="btn btn-primary"
@@ -419,12 +442,54 @@ const PaymentManagement = () => {
           </div>
         </div>
 
+        {/* 일괄 작업 도구 */}
+        {selectedPayments.length > 0 && (
+          <div className="bulk-actions">
+            <div className="bulk-info">
+              {selectedPayments.length}건 선택됨
+            </div>
+            <div className="bulk-buttons">
+              <button 
+                className="btn btn-success btn-sm"
+                onClick={() => handleBulkAction('approve', selectedPayments)}
+              >
+                일괄 승인
+              </button>
+              <button 
+                className="btn btn-warning btn-sm"
+                onClick={() => handleBulkAction('cancel', selectedPayments)}
+              >
+                일괄 취소
+              </button>
+              <button 
+                className="btn btn-danger btn-sm"
+                onClick={() => handleBulkAction('refund', selectedPayments)}
+              >
+                일괄 환불
+              </button>
+              <button 
+                className="btn btn-secondary btn-sm"
+                onClick={() => setSelectedPayments([])}
+              >
+                선택 해제
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* 결제 목록 */}
         <div className="payment-list">
           <div className="table-container">
             <table className="payment-table">
               <thead>
                 <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      checked={selectedPayments.length === payments.length && payments.length > 0}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                    />
+                  </th>
                   <th>결제 ID</th>
                   <th>주문 ID</th>
                   <th>금액</th>
@@ -440,6 +505,13 @@ const PaymentManagement = () => {
               <tbody>
                 {payments.map((payment) => (
                   <tr key={payment.id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedPayments.includes(payment.id)}
+                        onChange={(e) => handleSelectPayment(payment.id, e.target.checked)}
+                      />
+                    </td>
                     <td>{payment.paymentId}</td>
                     <td>{payment.orderId}</td>
                     <td>{formatCurrency(payment.amount)}</td>

@@ -27,10 +27,11 @@
 
 /* 테스트 설정 */
 .test-config {
-  background: #f8f9fa;
+  background: #fef7f0;
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 30px;
+  border: 1px solid #f5e6d3;
 }
 
 .test-config h3 {

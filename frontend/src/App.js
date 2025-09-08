@@ -25,6 +25,7 @@ import SimpleLayout from './components/layout/SimpleLayout';
 import Toast from './components/common/Toast';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
+import AccountManagement from './components/admin/AccountManagement';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { sessionManager } from './utils/sessionManager';
@@ -136,6 +137,7 @@ function AppContent() {
             <Route path="/admin/mapping-management" element={<MappingManagement />} />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<SessionManagement />} />
+            <Route path="/admin/accounts" element={<AccountManagement />} />
             <Route path="/admin/schedules" element={
               <SimpleLayout>
                 <ScheduleList 

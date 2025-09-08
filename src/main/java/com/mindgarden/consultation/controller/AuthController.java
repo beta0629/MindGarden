@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.AuthRequest;
 import com.mindgarden.consultation.dto.AuthResponse;
@@ -40,6 +41,10 @@ public class AuthController {
     // Redis 연동을 위한 RedisTemplate (선택적 의존성)
     @Autowired(required = false)
     private RedisTemplate<String, String> redisTemplate;
+    
+    // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
+    private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
+    private final Map<String, Long> verificationTimes = new ConcurrentHashMap<>();
     
     @PostMapping("/clear-session")
     public ResponseEntity<?> clearSession(HttpSession session) {
@@ -272,7 +277,11 @@ public class AuthController {
                         } else {
                             // Redis가 없는 경우 메모리 저장
                             log.info("Redis 없음 - 메모리 저장: {} -> {} (5분 만료)", phoneNumber, verificationCode);
-                            // TODO: 메모리 저장 로직 구현 (ConcurrentHashMap 사용)
+                            
+                            // 메모리 저장 로직 구현 (ConcurrentHashMap 사용)
+                            verificationCodes.put(phoneNumber, verificationCode);
+                            verificationTimes.put(phoneNumber, System.currentTimeMillis());
+                            log.info("메모리에 인증 코드 저장 완료: {} -> {} (5분 만료)", phoneNumber, verificationCode);
                         }
                         
                     } catch (Exception e) {
@@ -359,7 +368,33 @@ public class AuthController {
                 } else {
                     // Redis가 없는 경우 메모리에서 조회
                     log.info("Redis 없음 - 메모리에서 인증 코드 조회: {}", phoneNumber);
-                    // TODO: 메모리 저장소에서 조회 로직 구현
+                    
+                    // 메모리 저장소에서 조회 로직 구현
+                    storedCode = verificationCodes.get(phoneNumber);
+                    if (storedCode != null) {
+                        // 만료 시간 확인 (5분)
+                        Long storedTime = verificationTimes.get(phoneNumber);
+                        if (storedTime != null) {
+                            long currentTime = System.currentTimeMillis();
+                            long timeDiff = currentTime - storedTime;
+                            long fiveMinutesInMillis = 5 * 60 * 1000; // 5분을 밀리초로 변환
+                            
+                            if (timeDiff > fiveMinutesInMillis) {
+                                // 만료된 경우 메모리에서 제거
+                                verificationCodes.remove(phoneNumber);
+                                verificationTimes.remove(phoneNumber);
+                                storedCode = null;
+                                log.info("메모리에서 만료된 인증 코드 제거: {}", phoneNumber);
+                            } else {
+                                log.info("메모리에서 인증 코드 조회 성공: {} -> {}", phoneNumber, storedCode);
+                            }
+                        } else {
+                            storedCode = null;
+                            log.warn("메모리에서 인증 코드 시간 정보 없음: {}", phoneNumber);
+                        }
+                    } else {
+                        log.info("메모리에서 인증 코드 없음: {}", phoneNumber);
+                    }
                 }
                 
                 if (verificationCode.length() == 6 && verificationCode.matches("^[0-9]+$")) {
@@ -373,11 +408,16 @@ public class AuthController {
                     }
                     
                     if (isValid) {
-                        // 인증 성공 시 Redis에서 코드 삭제
+                        // 인증 성공 시 Redis 또는 메모리에서 코드 삭제
                         if (redisTemplate != null) {
                             String redisKey = "sms_verification_" + phoneNumber;
                             redisTemplate.delete(redisKey);
                             log.info("Redis에서 인증 코드 삭제 완료: {}", phoneNumber);
+                        } else {
+                            // 메모리에서도 코드 삭제
+                            verificationCodes.remove(phoneNumber);
+                            verificationTimes.remove(phoneNumber);
+                            log.info("메모리에서 인증 코드 삭제 완료: {}", phoneNumber);
                         }
                         log.info("SMS 인증 코드 검증 성공: {}", phoneNumber);
                     } else {

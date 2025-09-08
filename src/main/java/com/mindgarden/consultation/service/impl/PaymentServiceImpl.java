@@ -441,12 +441,12 @@ public class PaymentServiceImpl implements PaymentService {
     
     private String createExternalPayment(Payment payment) {
         log.info("외부 결제 시스템 연동 시작: paymentId={}, amount={}, method={}", 
-                payment.getPaymentId(), payment.getAmount(), payment.getPaymentMethod());
+                payment.getPaymentId(), payment.getAmount(), payment.getMethod());
         
         try {
             // 결제 금액 유효성 검사
-            if (payment.getAmount() < PaymentConstants.MIN_PAYMENT_AMOUNT || 
-                payment.getAmount() > PaymentConstants.MAX_PAYMENT_AMOUNT) {
+            if (payment.getAmount().compareTo(BigDecimal.valueOf(PaymentConstants.MIN_PAYMENT_AMOUNT)) < 0 || 
+                payment.getAmount().compareTo(BigDecimal.valueOf(PaymentConstants.MAX_PAYMENT_AMOUNT)) > 0) {
                 throw new IllegalArgumentException(PaymentConstants.ERROR_INVALID_PAYMENT_AMOUNT);
             }
             
@@ -455,9 +455,9 @@ public class PaymentServiceImpl implements PaymentService {
             paymentRequest.put("paymentId", payment.getPaymentId());
             paymentRequest.put("amount", payment.getAmount());
             paymentRequest.put("currency", "KRW");
-            paymentRequest.put("method", payment.getPaymentMethod());
+            paymentRequest.put("method", payment.getMethod());
             paymentRequest.put("description", payment.getDescription());
-            paymentRequest.put("customerId", payment.getUserId());
+            paymentRequest.put("customerId", payment.getPayerId());
             paymentRequest.put("returnUrl", PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + "/return");
             paymentRequest.put("cancelUrl", PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + "/cancel");
             
@@ -490,8 +490,8 @@ public class PaymentServiceImpl implements PaymentService {
         try {
             // Webhook 서명 검증 로직
             String receivedSignature = webhookRequest.getSignature();
-            String timestamp = webhookRequest.getTimestamp();
-            String payload = webhookRequest.getPayload();
+            String timestamp = webhookRequest.getTimestamp() != null ? webhookRequest.getTimestamp().toString() : null;
+            String payload = webhookRequest.getExternalData() != null ? webhookRequest.getExternalData().toString() : "";
             
             if (receivedSignature == null || timestamp == null || payload == null) {
                 log.warn("Webhook 필수 필드 누락: signature={}, timestamp={}, payload={}", 

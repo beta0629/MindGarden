@@ -5,8 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.constant.AdminConstants;
+import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.UserProfileService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +36,7 @@ public class AdminUserController {
     
     private final UserProfileService userProfileService;
     private final com.mindgarden.consultation.service.UserService userService;
+    private final EmailService emailService;
     
     /**
      * 전체 사용자 목록 조회 (관리자 전용)
@@ -150,6 +154,10 @@ public class AdminUserController {
             boolean success = userProfileService.changeUserRole(userId, UserRole.CONSULTANT);
             if (success) {
                 log.info("상담사 승인 완료: userId={}", userId);
+                
+                // 승인 완료 이메일 발송
+                sendConsultantApprovalEmail(userId);
+                
                 return ResponseEntity.ok(true);
             } else {
                 return ResponseEntity.badRequest().body(false);
@@ -178,6 +186,10 @@ public class AdminUserController {
             boolean success = userProfileService.changeUserRole(userId, UserRole.ADMIN);
             if (success) {
                 log.info("관리자 승인 완료: userId={}", userId);
+                
+                // 승인 완료 이메일 발송
+                sendAdminApprovalEmail(userId);
+                
                 return ResponseEntity.ok(true);
             } else {
                 return ResponseEntity.badRequest().body(false);
@@ -320,5 +332,164 @@ public class AdminUserController {
             certifications.add("가족상담사");
         }
         return certifications;
+    }
+    
+    /**
+     * 상담사 승인 완료 이메일 발송
+     */
+    private void sendConsultantApprovalEmail(Long userId) {
+        try {
+            log.info("상담사 승인 완료 이메일 발송: userId={}", userId);
+            
+            // 사용자 정보 조회
+            User user = userService.findActiveById(userId).orElse(null);
+            if (user == null) {
+                log.warn("사용자를 찾을 수 없어 이메일 발송을 건너뜁니다: userId={}", userId);
+                return;
+            }
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, user.getName());
+            variables.put(EmailConstants.VAR_USER_EMAIL, user.getEmail());
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_CONSULTANT_APPROVAL,
+                    user.getEmail(),
+                    user.getName(),
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("상담사 승인 완료 이메일 발송 성공: userId={}, emailId={}", userId, response.getEmailId());
+            } else {
+                log.error("상담사 승인 완료 이메일 발송 실패: userId={}, error={}", userId, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("상담사 승인 완료 이메일 발송 중 오류: userId={}, error={}", userId, e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 관리자 승인 완료 이메일 발송
+     */
+    private void sendAdminApprovalEmail(Long userId) {
+        try {
+            log.info("관리자 승인 완료 이메일 발송: userId={}", userId);
+            
+            // 사용자 정보 조회
+            User user = userService.findActiveById(userId).orElse(null);
+            if (user == null) {
+                log.warn("사용자를 찾을 수 없어 이메일 발송을 건너뜁니다: userId={}", userId);
+                return;
+            }
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, user.getName());
+            variables.put(EmailConstants.VAR_USER_EMAIL, user.getEmail());
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_ADMIN_APPROVAL,
+                    user.getEmail(),
+                    user.getName(),
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("관리자 승인 완료 이메일 발송 성공: userId={}, emailId={}", userId, response.getEmailId());
+            } else {
+                log.error("관리자 승인 완료 이메일 발송 실패: userId={}, error={}", userId, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("관리자 승인 완료 이메일 발송 중 오류: userId={}, error={}", userId, e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 상담사 신청 거부 이메일 발송
+     */
+    private void sendConsultantRejectionEmail(Long userId, String reason) {
+        try {
+            log.info("상담사 신청 거부 이메일 발송: userId={}, reason={}", userId, reason);
+            
+            // 사용자 정보 조회
+            User user = userService.findActiveById(userId).orElse(null);
+            if (user == null) {
+                log.warn("사용자를 찾을 수 없어 이메일 발송을 건너뜁니다: userId={}", userId);
+                return;
+            }
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, user.getName());
+            variables.put(EmailConstants.VAR_USER_EMAIL, user.getEmail());
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            variables.put("rejectionReason", reason != null ? reason : "자격 요건을 충족하지 못했습니다.");
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_CONSULTANT_REJECTION,
+                    user.getEmail(),
+                    user.getName(),
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("상담사 신청 거부 이메일 발송 성공: userId={}, emailId={}", userId, response.getEmailId());
+            } else {
+                log.error("상담사 신청 거부 이메일 발송 실패: userId={}, error={}", userId, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("상담사 신청 거부 이메일 발송 중 오류: userId={}, error={}", userId, e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 시스템 알림 이메일 발송
+     */
+    private void sendSystemNotificationEmail(String toEmail, String toName, String message) {
+        try {
+            log.info("시스템 알림 이메일 발송: to={}, message={}", toEmail, message);
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, toName);
+            variables.put(EmailConstants.VAR_USER_EMAIL, toEmail);
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            variables.put("message", message);
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
+                    toEmail,
+                    toName,
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("시스템 알림 이메일 발송 성공: to={}, emailId={}", toEmail, response.getEmailId());
+            } else {
+                log.error("시스템 알림 이메일 발송 실패: to={}, error={}", toEmail, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("시스템 알림 이메일 발송 중 오류: to={}, error={}", toEmail, e.getMessage(), e);
+        }
     }
 }

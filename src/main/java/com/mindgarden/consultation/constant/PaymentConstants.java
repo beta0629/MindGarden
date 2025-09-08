@@ -49,6 +49,37 @@ public final class PaymentConstants {
     public static final String ENCRYPTION_ALGORITHM = "AES-256-GCM";
     public static final String HASH_ALGORITHM = "SHA-256";
     
+    // 외부 결제 시스템 관련
+    public static final String EXTERNAL_PAYMENT_BASE_URL = "https://api.payment.example.com";
+    public static final String EXTERNAL_PAYMENT_CREATE_ENDPOINT = "/v1/payments";
+    public static final String EXTERNAL_PAYMENT_APPROVE_ENDPOINT = "/v1/payments/{paymentId}/approve";
+    public static final String EXTERNAL_PAYMENT_CANCEL_ENDPOINT = "/v1/payments/{paymentId}/cancel";
+    public static final String EXTERNAL_PAYMENT_REFUND_ENDPOINT = "/v1/payments/{paymentId}/refund";
+    public static final String EXTERNAL_PAYMENT_STATUS_ENDPOINT = "/v1/payments/{paymentId}/status";
+    
+    // Webhook 관련
+    public static final String WEBHOOK_HEADER_SIGNATURE = "X-Payment-Signature";
+    public static final String WEBHOOK_HEADER_TIMESTAMP = "X-Payment-Timestamp";
+    public static final String WEBHOOK_SECRET_KEY = "webhook_secret_key";
+    
+    // API 인증
+    public static final String API_KEY_HEADER = "Authorization";
+    public static final String API_KEY_PREFIX = "Bearer ";
+    public static final String API_KEY_VALUE = "test_api_key_12345";
+    
+    // 에러 메시지
+    public static final String ERROR_EXTERNAL_PAYMENT_FAILED = "외부 결제 시스템 연동에 실패했습니다.";
+    public static final String ERROR_WEBHOOK_VERIFICATION_FAILED = "Webhook 서명 검증에 실패했습니다.";
+    public static final String ERROR_PAYMENT_TIMEOUT = "결제 시간이 만료되었습니다.";
+    public static final String ERROR_INVALID_PAYMENT_AMOUNT = "결제 금액이 유효하지 않습니다.";
+    
+    // 성공 메시지
+    public static final String SUCCESS_PAYMENT_CREATED = "결제가 생성되었습니다.";
+    public static final String SUCCESS_PAYMENT_APPROVED = "결제가 승인되었습니다.";
+    public static final String SUCCESS_PAYMENT_CANCELLED = "결제가 취소되었습니다.";
+    public static final String SUCCESS_PAYMENT_REFUNDED = "결제가 환불되었습니다.";
+    public static final String SUCCESS_WEBHOOK_VERIFIED = "Webhook이 검증되었습니다.";
+    
     // API 관련
     public static final String WEBHOOK_SIGNATURE_HEADER = "X-Webhook-Signature";
     public static final String WEBHOOK_TIMESTAMP_HEADER = "X-Webhook-Timestamp";

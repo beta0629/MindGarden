@@ -440,19 +440,96 @@ public class PaymentServiceImpl implements PaymentService {
     }
     
     private String createExternalPayment(Payment payment) {
-        // TODO: 실제 외부 결제 시스템 연동 구현
-        // 토스페이먼츠 또는 아임포트 API 호출
-        log.info("외부 결제 시스템 연동: {}", payment.getPaymentId());
+        log.info("외부 결제 시스템 연동 시작: paymentId={}, amount={}, method={}", 
+                payment.getPaymentId(), payment.getAmount(), payment.getPaymentMethod());
         
-        // 임시로 결제 URL 생성
-        return "https://payment.example.com/pay/" + payment.getPaymentId();
+        try {
+            // 결제 금액 유효성 검사
+            if (payment.getAmount() < PaymentConstants.MIN_PAYMENT_AMOUNT || 
+                payment.getAmount() > PaymentConstants.MAX_PAYMENT_AMOUNT) {
+                throw new IllegalArgumentException(PaymentConstants.ERROR_INVALID_PAYMENT_AMOUNT);
+            }
+            
+            // 외부 결제 시스템 API 호출을 위한 요청 데이터 구성
+            Map<String, Object> paymentRequest = new HashMap<>();
+            paymentRequest.put("paymentId", payment.getPaymentId());
+            paymentRequest.put("amount", payment.getAmount());
+            paymentRequest.put("currency", "KRW");
+            paymentRequest.put("method", payment.getPaymentMethod());
+            paymentRequest.put("description", payment.getDescription());
+            paymentRequest.put("customerId", payment.getUserId());
+            paymentRequest.put("returnUrl", PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + "/return");
+            paymentRequest.put("cancelUrl", PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + "/cancel");
+            
+            // 실제 외부 API 호출 (현재는 시뮬레이션)
+            String apiUrl = PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + PaymentConstants.EXTERNAL_PAYMENT_CREATE_ENDPOINT;
+            log.info("외부 결제 API 호출: {}", apiUrl);
+            
+            // API 호출 시뮬레이션
+            String paymentUrl = simulateExternalPaymentApi(paymentRequest);
+            
+            log.info(PaymentConstants.SUCCESS_PAYMENT_CREATED);
+            return paymentUrl;
+            
+        } catch (Exception e) {
+            log.error("외부 결제 시스템 연동 실패: {}", e.getMessage(), e);
+            throw new RuntimeException(PaymentConstants.ERROR_EXTERNAL_PAYMENT_FAILED, e);
+        }
+    }
+    
+    private String simulateExternalPaymentApi(Map<String, Object> paymentRequest) {
+        // 실제 구현에서는 RestTemplate 또는 WebClient를 사용하여 HTTP API 호출
+        // 현재는 시뮬레이션을 위한 임시 URL 생성
+        String paymentId = (String) paymentRequest.get("paymentId");
+        return PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + "/pay/" + paymentId;
     }
     
     private boolean verifyWebhook(PaymentWebhookRequest webhookRequest) {
-        // TODO: Webhook 서명 검증 구현
-        // 실제로는 결제 대행사에서 제공하는 서명 검증 로직 구현
-        log.info("Webhook 검증: {}", webhookRequest.getPaymentId());
-        return true;
+        log.info("Webhook 서명 검증 시작: paymentId={}", webhookRequest.getPaymentId());
+        
+        try {
+            // Webhook 서명 검증 로직
+            String receivedSignature = webhookRequest.getSignature();
+            String timestamp = webhookRequest.getTimestamp();
+            String payload = webhookRequest.getPayload();
+            
+            if (receivedSignature == null || timestamp == null || payload == null) {
+                log.warn("Webhook 필수 필드 누락: signature={}, timestamp={}, payload={}", 
+                        receivedSignature != null, timestamp != null, payload != null);
+                return false;
+            }
+            
+            // 타임스탬프 유효성 검사 (5분 이내)
+            long currentTime = System.currentTimeMillis() / 1000;
+            long webhookTime = Long.parseLong(timestamp);
+            if (Math.abs(currentTime - webhookTime) > 300) { // 5분 = 300초
+                log.warn("Webhook 타임스탬프가 너무 오래됨: current={}, webhook={}", currentTime, webhookTime);
+                return false;
+            }
+            
+            // 서명 검증 (실제 구현에서는 HMAC-SHA256 사용)
+            String expectedSignature = generateWebhookSignature(payload, timestamp);
+            boolean isValid = expectedSignature.equals(receivedSignature);
+            
+            if (isValid) {
+                log.info(PaymentConstants.SUCCESS_WEBHOOK_VERIFIED);
+            } else {
+                log.warn("Webhook 서명 검증 실패: expected={}, received={}", expectedSignature, receivedSignature);
+            }
+            
+            return isValid;
+            
+        } catch (Exception e) {
+            log.error("Webhook 검증 중 오류 발생: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    private String generateWebhookSignature(String payload, String timestamp) {
+        // 실제 구현에서는 HMAC-SHA256을 사용하여 서명 생성
+        // 현재는 시뮬레이션을 위한 간단한 해시 생성
+        String data = payload + timestamp + PaymentConstants.WEBHOOK_SECRET_KEY;
+        return "sha256=" + Integer.toHexString(data.hashCode());
     }
     
     private PaymentResponse buildPaymentResponse(Payment payment, String paymentUrl) {

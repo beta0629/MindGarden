@@ -10,7 +10,7 @@ import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallbac
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import { LOGIN_SESSION_CHECK_DELAY, EXISTING_SESSION_CHECK_DELAY } from '../../constants/session';
-import { notification } from '../../utils/scripts';
+import notificationManager from '../../utils/notification';
 
 const TabletLogin = () => {
   const navigate = useNavigate();
@@ -104,7 +104,7 @@ const TabletLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email || !formData.password) {
-      notification.warning('이메일과 비밀번호를 입력해주세요.');
+      notificationManager.show('이메일과 비밀번호를 입력해주세요.', 'warning');
       return;
     }
 
@@ -118,6 +118,9 @@ const TabletLogin = () => {
       if (result.success) {
         console.log('✅ 로그인 성공:', result.user);
         
+        // 로그인 성공 알림
+        notificationManager.show('로그인에 성공했습니다.', 'success');
+        
         // 세션 설정 완료 후 잠시 대기 (시간 단축)
         console.log('⏳ 세션 설정 완료, 잠시 대기...');
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -128,13 +131,13 @@ const TabletLogin = () => {
         navigate(dashboardPath, { replace: true });
       } else {
         console.log('❌ 로그인 실패:', result.message);
-        notification.error(result.message);
+        notificationManager.show(result.message, 'error');
       }
     } catch (error) {
       console.error('❌ 로그인 오류:', error);
       console.error('❌ 오류 상세:', error.message);
       // 공통 알림 시스템 사용
-      notification.error(`로그인 처리 중 오류가 발생했습니다: ${error.message}`);
+      notificationManager.show(`로그인 처리 중 오류가 발생했습니다: ${error.message}`, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -212,6 +215,9 @@ const TabletLogin = () => {
         });
         
         if (loginSuccess) {
+          // 테스트 로그인 성공 알림
+          notificationManager.show('테스트 로그인에 성공했습니다.', 'success');
+          
           // 세션 설정 완료 후 잠시 대기
           console.log('⏳ 테스트 로그인 - 세션 설정 완료, 잠시 대기...');
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -222,14 +228,14 @@ const TabletLogin = () => {
           navigate(dashboardPath, { replace: true });
         } else {
           console.log('❌ 테스트 로그인 - 세션 설정 실패');
-          alert('세션 설정에 실패했습니다.');
+          notificationManager.show('세션 설정에 실패했습니다.', 'error');
         }
       } else {
-        alert(response.message || '테스트 로그인에 실패했습니다.');
+        notificationManager.show(response.message || '테스트 로그인에 실패했습니다.', 'error');
       }
     } catch (error) {
       console.error('테스트 로그인 오류:', error);
-      alert('테스트 로그인 처리 중 오류가 발생했습니다.');
+      notificationManager.show('테스트 로그인 처리 중 오류가 발생했습니다.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -293,7 +299,7 @@ const TabletLogin = () => {
         console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
         
         // 알림 표시
-        notification.showToast(`${socialUserInfo.provider === 'kakao' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning', 4000);
+        notificationManager.show(`${socialUserInfo.provider === 'kakao' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
         
         setSocialUserInfo(socialUserInfo);
         setShowSocialSignupModal(true);
@@ -301,7 +307,7 @@ const TabletLogin = () => {
         console.log('📋 모달 상태 설정 완료 - showSocialSignupModal: true');
       } else {
         // 일반 에러는 토스트로만 표시
-        notification.showToast(decodedError, 'error', 5000);
+        notificationManager.show(decodedError, 'error');
       }
       
       // URL에서 에러 파라미터 제거
@@ -336,7 +342,7 @@ const TabletLogin = () => {
       console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
       
       // 알림 표시
-      notification.showToast(`${provider === 'kakao' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning', 4000);
+      notificationManager.show(`${provider === 'kakao' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
       
       setSocialUserInfo(socialUserInfo);
       setShowSocialSignupModal(true);
@@ -371,7 +377,7 @@ const TabletLogin = () => {
           errorMessage = '소셜 인증에 실패했습니다. 다시 시도해주세요.';
         }
         
-        notification.showToast(errorMessage, 'error', 5000);
+        notificationManager.show(errorMessage, 'error');
         
         // URL에서 OAuth2 파라미터 제거
         window.history.replaceState({}, document.title, '/login');

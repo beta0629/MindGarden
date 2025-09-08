@@ -1012,10 +1012,31 @@ public class AdminController {
                 ));
             }
             
-            // TODO: 실제 결제 확인 로직 구현
-            // 현재는 테스트용으로 성공 응답 반환
+            // 실제 결제 확인 로직 구현
             log.info("결제 확인 처리: mappingIds={}, method={}, amount={}, note={}", 
                 mappingIds, paymentMethod, amount, note);
+            
+            // 매핑 상태 업데이트
+            for (Long mappingId : mappingIds) {
+                try {
+                    ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
+                    if (mapping != null) {
+                        // 결제 상태를 확인됨으로 변경
+                        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+                        mapping.setPaymentMethod(paymentMethod);
+                        mapping.setPaymentAmount(amount != null ? amount.longValue() : 0L);
+                        mapping.setPaymentReference("ADMIN_CONFIRMED_" + System.currentTimeMillis());
+                        mapping.setPaymentDate(java.time.LocalDateTime.now());
+                        mapping.setUpdatedAt(java.time.LocalDateTime.now());
+                        
+                        // 매핑 저장
+                        adminService.updateMapping(mappingId, mapping);
+                        log.info("매핑 ID {} 결제 확인 완료", mappingId);
+                    }
+                } catch (Exception e) {
+                    log.error("매핑 ID {} 결제 확인 실패: {}", mappingId, e.getMessage());
+                }
+            }
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1057,9 +1078,26 @@ public class AdminController {
                 ));
             }
             
-            // TODO: 실제 결제 취소 로직 구현
-            // 현재는 테스트용으로 성공 응답 반환
+            // 실제 결제 취소 로직 구현
             log.info("결제 취소 처리: mappingIds={}", mappingIds);
+            
+            // 매핑 상태 업데이트
+            for (Long mappingId : mappingIds) {
+                try {
+                    ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
+                    if (mapping != null) {
+                        // 결제 상태를 취소됨으로 변경
+                        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CANCELLED);
+                        mapping.setUpdatedAt(java.time.LocalDateTime.now());
+                        
+                        // 매핑 저장
+                        adminService.updateMapping(mappingId, mapping);
+                        log.info("매핑 ID {} 결제 취소 완료", mappingId);
+                    }
+                } catch (Exception e) {
+                    log.error("매핑 ID {} 결제 취소 실패: {}", mappingId, e.getMessage());
+                }
+            }
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

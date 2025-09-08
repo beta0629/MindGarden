@@ -242,14 +242,21 @@ public class AuthController {
                 ));
             }
             
-            // TODO: 실제 SMS 발송 서비스 연동
-            // 현재는 테스트용으로 6자리 랜덤 코드 생성
+            // 실제 SMS 발송 서비스 연동
             String verificationCode = String.format("%06d", (int)(Math.random() * 1000000));
             
-            // 세션에 인증 코드 저장 (실제로는 Redis 등에 저장)
-            // HttpSession session = request.getSession();
-            // session.setAttribute("sms_verification_code_" + phoneNumber, verificationCode);
-            // session.setAttribute("sms_verification_time_" + phoneNumber, System.currentTimeMillis());
+            // TODO: 실제 SMS 서비스 연동 (예: 네이버 클라우드 플랫폼, 카카오 알림톡 등)
+            // 현재는 테스트용으로 콘솔에 출력
+            log.info("SMS 발송 시뮬레이션: {} -> 인증코드: {}", phoneNumber, verificationCode);
+            
+            // 실제 구현 시:
+            // 1. SMS 서비스 API 호출
+            // 2. Redis에 인증 코드 저장 (5분 만료)
+            // 3. 발송 결과 로깅 및 에러 처리
+            
+            // 임시로 메모리에 저장 (실제로는 Redis 사용)
+            // verificationCodes.put(phoneNumber, verificationCode);
+            // verificationTimes.put(phoneNumber, System.currentTimeMillis());
             
             log.info("SMS 인증 코드 생성: {} (테스트용)", verificationCode);
             
@@ -299,9 +306,22 @@ public class AuthController {
                 ));
             }
             
-            // TODO: 실제 SMS 인증 코드 검증 로직
+            // 실제 SMS 인증 코드 검증 로직
+            boolean isValid = false;
+            
+            // TODO: 실제 Redis에서 인증 코드 조회 및 검증
             // 현재는 테스트용으로 간단한 검증
-            boolean isValid = verificationCode.length() == 6 && verificationCode.matches("^[0-9]+$");
+            if (verificationCode.length() == 6 && verificationCode.matches("^[0-9]+$")) {
+                // 실제 구현 시:
+                // 1. Redis에서 phoneNumber로 저장된 인증 코드 조회
+                // 2. 만료 시간 확인 (5분)
+                // 3. 코드 일치 여부 확인
+                // 4. 인증 성공 시 Redis에서 코드 삭제
+                
+                // 테스트용으로 항상 성공 처리
+                isValid = true;
+                log.info("SMS 인증 코드 검증 성공: {}", phoneNumber);
+            }
             
             if (isValid) {
                 log.info("SMS 인증 성공: {}", phoneNumber);

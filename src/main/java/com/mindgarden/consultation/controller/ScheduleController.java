@@ -5,10 +5,13 @@ import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.mindgarden.consultation.dto.ScheduleCreateDto;
 import com.mindgarden.consultation.dto.ScheduleDto;
 import com.mindgarden.consultation.entity.Schedule;
+import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.service.ScheduleService;
+import com.mindgarden.consultation.service.AdminService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -41,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ScheduleController {
 
     private final ScheduleService scheduleService;
+    private final AdminService adminService;
 
     // ==================== 권한 기반 스케줄 조회 ====================
 
@@ -579,15 +583,60 @@ public class ScheduleController {
             
             log.info("매핑 확인 요청: clientId={}, consultantId={}", clientId, consultantId);
             
-            // TODO: 실제 매핑 확인 로직 구현
-            // 현재는 테스트용 데이터 반환
+            // 실제 매핑 확인 로직 구현
             Map<String, Object> mappingData = new HashMap<>();
-            mappingData.put("hasMapping", true);
-            mappingData.put("remainingSessions", 5);
-            mappingData.put("packageName", "기본 패키지");
-            mappingData.put("mappingStatus", "ACTIVE");
-            mappingData.put("lastSessionDate", "2024-12-15");
-            mappingData.put("totalSessions", 10);
+            
+            try {
+                // AdminService를 통해 실제 매핑 조회
+                List<ConsultantClientMapping> mappings = adminService.getMappingsByClient(clientId);
+                
+                // 해당 상담사와의 활성 매핑 찾기
+                Optional<ConsultantClientMapping> activeMapping = mappings.stream()
+                    .filter(mapping -> mapping.getConsultant() != null && 
+                            mapping.getConsultant().getId().equals(consultantId) &&
+                            mapping.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                    .findFirst();
+                
+                if (activeMapping.isPresent()) {
+                    ConsultantClientMapping mapping = activeMapping.get();
+                    mappingData.put("hasMapping", true);
+                    mappingData.put("remainingSessions", mapping.getRemainingSessions());
+                    mappingData.put("packageName", mapping.getPackageName());
+                    mappingData.put("mappingStatus", mapping.getStatus().toString());
+                    mappingData.put("lastSessionDate", mapping.getLastSessionDate() != null ? 
+                        mapping.getLastSessionDate().toString() : null);
+                    mappingData.put("totalSessions", mapping.getTotalSessions());
+                    mappingData.put("usedSessions", mapping.getUsedSessions());
+                    mappingData.put("paymentStatus", mapping.getPaymentStatus() != null ? 
+                        mapping.getPaymentStatus().toString() : "UNKNOWN");
+                } else {
+                    mappingData.put("hasMapping", false);
+                    mappingData.put("remainingSessions", 0);
+                    mappingData.put("packageName", null);
+                    mappingData.put("mappingStatus", "NO_MAPPING");
+                    mappingData.put("lastSessionDate", null);
+                    mappingData.put("totalSessions", 0);
+                    mappingData.put("usedSessions", 0);
+                    mappingData.put("paymentStatus", "NO_MAPPING");
+                }
+                
+                log.info("매핑 확인 완료: clientId={}, consultantId={}, hasMapping={}", 
+                    clientId, consultantId, mappingData.get("hasMapping"));
+                
+            } catch (Exception e) {
+                log.error("매핑 확인 중 오류: clientId={}, consultantId={}, error={}", 
+                    clientId, consultantId, e.getMessage());
+                
+                // 오류 시 기본값 반환
+                mappingData.put("hasMapping", false);
+                mappingData.put("remainingSessions", 0);
+                mappingData.put("packageName", null);
+                mappingData.put("mappingStatus", "ERROR");
+                mappingData.put("lastSessionDate", null);
+                mappingData.put("totalSessions", 0);
+                mappingData.put("usedSessions", 0);
+                mappingData.put("paymentStatus", "ERROR");
+            }
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

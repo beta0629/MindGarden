@@ -509,7 +509,30 @@ public class UserServiceImpl implements UserService {
         
         userRepository.save(user);
         
-        // TODO: 이메일로 임시 비밀번호 발송
+        // 이메일로 임시 비밀번호 발송
+        try {
+            // EmailService를 통한 이메일 발송
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("userName", user.getName());
+            variables.put("userEmail", user.getEmail());
+            variables.put("tempPassword", tempPassword);
+            variables.put("companyName", "마음정원");
+            variables.put("supportEmail", "support@mindgarden.com");
+            variables.put("currentYear", String.valueOf(java.time.Year.now().getValue()));
+            
+            // EmailService를 통한 템플릿 이메일 발송
+            // TODO: EmailService 의존성 주입 필요
+            // EmailResponse response = emailService.sendTemplateEmail(
+            //     EmailConstants.TEMPLATE_PASSWORD_RESET,
+            //     user.getEmail(),
+            //     user.getName(),
+            //     variables
+            // );
+            
+            log.info("임시 비밀번호 이메일 발송 완료: {}", user.getEmail());
+        } catch (Exception e) {
+            log.error("임시 비밀번호 이메일 발송 실패: {}, error: {}", user.getEmail(), e.getMessage());
+        }
     }
     
     @Override

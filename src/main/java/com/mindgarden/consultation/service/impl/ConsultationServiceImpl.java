@@ -1127,8 +1127,8 @@ public class ConsultationServiceImpl implements ConsultationService {
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
             // 클라이언트 이메일 조회 (실제 구현에서는 UserService를 통해 조회)
-            String clientEmail = "client@example.com"; // TODO: 실제 클라이언트 이메일 조회
-            String clientName = "클라이언트"; // TODO: 실제 클라이언트 이름 조회
+            String clientEmail = "client@example.com"; // TODO: UserService를 통한 실제 클라이언트 이메일 조회
+            String clientName = "클라이언트"; // TODO: UserService를 통한 실제 클라이언트 이름 조회
             
             // 이메일 템플릿 변수 설정
             Map<String, Object> variables = new HashMap<>();

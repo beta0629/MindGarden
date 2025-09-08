@@ -1,13 +1,11 @@
 package com.mindgarden.consultation.service;
 
-import com.mindgarden.consultation.dto.AccountRequest;
-import com.mindgarden.consultation.dto.AccountResponse;
-import com.mindgarden.consultation.entity.Account;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
 import java.util.List;
 import java.util.Map;
+import com.mindgarden.consultation.dto.AccountRequest;
+import com.mindgarden.consultation.dto.AccountResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface AccountService {
     

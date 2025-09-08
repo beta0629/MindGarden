@@ -24,6 +24,7 @@ import PaymentManagement from './components/super-admin/PaymentManagement';
 import SimpleLayout from './components/layout/SimpleLayout';
 import Toast from './components/common/Toast';
 import NotificationTest from './components/test/NotificationTest';
+import PaymentTest from './components/test/PaymentTest';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { sessionManager } from './utils/sessionManager';
@@ -213,6 +214,7 @@ function AppContent() {
             
             {/* 테스트 페이지 라우트 */}
             <Route path="/test/notifications" element={<NotificationTest />} />
+            <Route path="/test/payment" element={<PaymentTest />} />
             
             {/* 추후 홈페이지 추가 시 사용할 경로들 */}
             {/* <Route path="/homepage" element={<Homepage />} /> */}

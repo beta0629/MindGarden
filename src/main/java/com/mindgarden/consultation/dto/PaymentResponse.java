@@ -1,13 +1,12 @@
 package com.mindgarden.consultation.dto;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import com.mindgarden.consultation.entity.Payment;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * 결제 응답 DTO

@@ -92,7 +92,7 @@ public class PaymentServiceImpl implements PaymentService {
         
         Page<Payment> payments = paymentRepository.findByPayerIdAndIsDeletedFalse(payerId, pageable);
         
-        return payments.map(this::buildPaymentResponse);
+        return payments.map(payment -> buildPaymentResponse(payment, null));
     }
     
     @Override
@@ -102,7 +102,7 @@ public class PaymentServiceImpl implements PaymentService {
         
         Page<Payment> payments = paymentRepository.findByBranchIdAndIsDeletedFalse(branchId, pageable);
         
-        return payments.map(this::buildPaymentResponse);
+        return payments.map(payment -> buildPaymentResponse(payment, null));
     }
     
     @Override
@@ -112,7 +112,7 @@ public class PaymentServiceImpl implements PaymentService {
         
         Page<Payment> payments = paymentRepository.findAll(pageable);
         
-        return payments.map(this::buildPaymentResponse);
+        return payments.map(payment -> buildPaymentResponse(payment, null));
     }
     
     @Override
@@ -137,6 +137,12 @@ public class PaymentServiceImpl implements PaymentService {
                 break;
             case REFUNDED:
                 payment.setRefundedAt(LocalDateTime.now());
+                break;
+            case PENDING:
+            case PROCESSING:
+            case FAILED:
+            case EXPIRED:
+                // 추가 처리 없음
                 break;
         }
         

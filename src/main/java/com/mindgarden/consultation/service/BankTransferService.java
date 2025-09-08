@@ -1,11 +1,10 @@
 package com.mindgarden.consultation.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import com.mindgarden.consultation.dto.BankTransferRequest;
 import com.mindgarden.consultation.dto.BankTransferResponse;
 import com.mindgarden.consultation.entity.Payment;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 계좌이체 입금 확인 서비스 인터페이스

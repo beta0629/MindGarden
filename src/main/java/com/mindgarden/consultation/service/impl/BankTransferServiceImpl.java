@@ -1,20 +1,17 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import com.mindgarden.consultation.dto.BankTransferRequest;
 import com.mindgarden.consultation.dto.BankTransferResponse;
 import com.mindgarden.consultation.entity.Payment;
 import com.mindgarden.consultation.repository.PaymentRepository;
 import com.mindgarden.consultation.service.BankTransferService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 계좌이체 입금 확인 서비스 구현체
@@ -126,7 +123,7 @@ public class BankTransferServiceImpl implements BankTransferService {
     public List<Payment> getUnconfirmedDeposits() {
         log.info("미확인 입금 목록 조회");
         
-        return paymentRepository.findByStatusAndIsDeletedFalse(Payment.PaymentStatus.PENDING);
+        return paymentRepository.findByStatusAndIsDeletedFalse(Payment.PaymentStatus.PENDING, null).getContent();
     }
     
     @Override
@@ -218,7 +215,7 @@ public class BankTransferServiceImpl implements BankTransferService {
     private Payment findPaymentByVirtualAccount(String virtualAccountNumber) {
         // TODO: 가상계좌번호로 결제 조회 로직 구현
         // 현재는 임시로 첫 번째 대기 중인 결제 반환
-        List<Payment> pendingPayments = paymentRepository.findByStatusAndIsDeletedFalse(Payment.PaymentStatus.PENDING);
+        List<Payment> pendingPayments = paymentRepository.findByStatusAndIsDeletedFalse(Payment.PaymentStatus.PENDING, null).getContent();
         return pendingPayments.isEmpty() ? null : pendingPayments.get(0);
     }
 }

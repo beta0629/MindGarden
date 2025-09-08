@@ -249,3 +249,35 @@ export const SUMMARY_PANELS_CSS = {
   ICON: 'summary-panels-icon',
   CHANGE: 'summary-panels-change'
 };
+
+// 결제 테스트 CSS 클래스
+export const PAYMENT_TEST_CSS = {
+  CONTAINER: 'payment-test',
+  HEADER: 'payment-test-header',
+  TITLE: 'payment-test-title',
+  CONTENT: 'payment-test-content',
+  CONFIG: 'payment-test-config',
+  FORM: 'payment-test-form',
+  FORM_GROUP: 'payment-test-form-group',
+  LABEL: 'payment-test-label',
+  INPUT: 'payment-test-input',
+  SELECT: 'payment-test-select',
+  BUTTON: 'payment-test-button',
+  BUTTON_PRIMARY: 'payment-test-button-primary',
+  BUTTON_SECONDARY: 'payment-test-button-secondary',
+  BUTTON_SUCCESS: 'payment-test-button-success',
+  BUTTON_DANGER: 'payment-test-button-danger',
+  BUTTON_GROUP: 'payment-test-button-group',
+  RESULTS: 'payment-test-results',
+  RESULT_ITEM: 'payment-test-result-item',
+  RESULT_HEADER: 'payment-test-result-header',
+  RESULT_TITLE: 'payment-test-result-title',
+  RESULT_TIMESTAMP: 'payment-test-result-timestamp',
+  RESULT_STATUS: 'payment-test-result-status',
+  RESULT_DATA: 'payment-test-result-data',
+  RESULT_ERROR: 'payment-test-result-error',
+  STATUS_SUCCESS: 'payment-test-status-success',
+  STATUS_ERROR: 'payment-test-status-error',
+  LOADING: 'payment-test-loading',
+  CLEAR_BUTTON: 'payment-test-clear-button'
+};

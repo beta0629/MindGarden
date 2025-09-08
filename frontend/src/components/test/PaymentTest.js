@@ -1,5 +1,23 @@
 import React, { useState } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
+import { PAYMENT_TEST_CSS } from '../../constants/css';
+import { 
+  PAYMENT_TEST_API,
+  HTTP_METHODS,
+  HTTP_HEADERS,
+  DEFAULT_TEST_DATA,
+  PAYMENT_METHODS,
+  PAYMENT_PROVIDERS,
+  TEST_SCENARIOS,
+  PAYMENT_STATUSES,
+  BUTTON_TEXT,
+  FORM_LABELS,
+  PLACEHOLDERS,
+  MESSAGES,
+  PAGE_TITLES,
+  RESULT_TYPES,
+  TEST_TYPES
+} from '../../constants/paymentTest';
 import './PaymentTest.css';
 
 /**
@@ -16,10 +34,10 @@ const PaymentTest = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
   const [testData, setTestData] = useState({
-    method: 'CARD',
-    provider: 'TOSS',
-    amount: 100000,
-    payerId: 1
+    method: DEFAULT_TEST_DATA.METHOD,
+    provider: DEFAULT_TEST_DATA.PROVIDER,
+    amount: DEFAULT_TEST_DATA.AMOUNT,
+    payerId: DEFAULT_TEST_DATA.PAYER_ID
   });
 
   const addResult = (title, success, data, error = null) => {
@@ -48,13 +66,28 @@ const PaymentTest = () => {
 
   // 테스트 함수들
   const testCreatePayment = async () => {
-    const response = await fetch('http://localhost:8080/api/test/payment/create', {
-      method: 'POST',
+    const paymentRequest = {
+      orderId: `TEST_ORDER_${Date.now()}`,
+      amount: testData.amount,
+      method: testData.method,
+      provider: testData.provider,
+      payerId: testData.payerId,
+      recipientId: DEFAULT_TEST_DATA.RECIPIENT_ID,
+      branchId: DEFAULT_TEST_DATA.BRANCH_ID,
+      description: `테스트 결제 - ${testData.method} ${testData.provider}`,
+      timeoutMinutes: DEFAULT_TEST_DATA.TIMEOUT_MINUTES,
+      successUrl: 'http://localhost:3000/payment/success',
+      failUrl: 'http://localhost:3000/payment/fail',
+      cancelUrl: 'http://localhost:3000/payment/cancel'
+    };
+
+    const response = await fetch(`http://localhost:8080${PAYMENT_TEST_API.CREATE_PAYMENT}`, {
+      method: HTTP_METHODS.POST,
       headers: {
-        'Content-Type': 'application/json',
+        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
       },
       credentials: 'include',
-      body: JSON.stringify(testData)
+      body: JSON.stringify(paymentRequest)
     });
     
     if (!response.ok) {
@@ -64,10 +97,10 @@ const PaymentTest = () => {
   };
 
   const testPaymentScenarios = async () => {
-    const response = await fetch('http://localhost:8080/api/test/payment/scenarios', {
-      method: 'POST',
+    const response = await fetch(`http://localhost:8080${PAYMENT_TEST_API.PAYMENT_SCENARIOS}`, {
+      method: HTTP_METHODS.POST,
       headers: {
-        'Content-Type': 'application/json',
+        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
       },
       credentials: 'include'
     });
@@ -82,15 +115,16 @@ const PaymentTest = () => {
     const paymentId = prompt('결제 ID를 입력하세요:');
     if (!paymentId) return;
     
-    const status = prompt('상태를 입력하세요 (APPROVED, CANCELLED, REFUNDED):', 'APPROVED');
+    const status = prompt('상태를 입력하세요 (APPROVED, CANCELLED, REFUNDED):', PAYMENT_STATUSES[0].value);
     if (!status) return;
 
-    const response = await fetch(`http://localhost:8080/api/test/payment/status-test?paymentId=${paymentId}&status=${status}`, {
-      method: 'POST',
+    const response = await fetch(`http://localhost:8080${PAYMENT_TEST_API.PAYMENT_STATUS}/${paymentId}/status`, {
+      method: HTTP_METHODS.PUT,
       headers: {
-        'Content-Type': 'application/json',
+        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
       },
-      credentials: 'include'
+      credentials: 'include',
+      body: JSON.stringify({ status })
     });
     
     if (!response.ok) {
@@ -103,15 +137,25 @@ const PaymentTest = () => {
     const paymentId = prompt('결제 ID를 입력하세요:');
     if (!paymentId) return;
     
-    const status = prompt('상태를 입력하세요 (APPROVED, FAILED, CANCELLED):', 'APPROVED');
+    const status = prompt('상태를 입력하세요 (APPROVED, FAILED, CANCELLED):', PAYMENT_STATUSES[0].value);
     if (!status) return;
 
-    const response = await fetch(`http://localhost:8080/api/test/payment/webhook-test?paymentId=${paymentId}&status=${status}`, {
-      method: 'POST',
+    const webhookData = {
+      paymentId: paymentId,
+      status: status,
+      amount: testData.amount,
+      method: testData.method,
+      provider: testData.provider,
+      timestamp: new Date().toISOString()
+    };
+
+    const response = await fetch(`http://localhost:8080${PAYMENT_TEST_API.WEBHOOK}`, {
+      method: HTTP_METHODS.POST,
       headers: {
-        'Content-Type': 'application/json',
+        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
       },
-      credentials: 'include'
+      credentials: 'include',
+      body: JSON.stringify(webhookData)
     });
     
     if (!response.ok) {
@@ -121,10 +165,10 @@ const PaymentTest = () => {
   };
 
   const testStatistics = async () => {
-    const response = await fetch('http://localhost:8080/api/test/payment/statistics-test', {
-      method: 'GET',
+    const response = await fetch(`http://localhost:8080${PAYMENT_TEST_API.STATISTICS}`, {
+      method: HTTP_METHODS.GET,
       headers: {
-        'Content-Type': 'application/json',
+        [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
       },
       credentials: 'include'
     });
@@ -225,137 +269,143 @@ const PaymentTest = () => {
 
   return (
     <SimpleLayout>
-      <div className="payment-test">
-        <div className="test-header">
-          <h1>결제 시스템 테스트</h1>
-          <div className="header-actions">
+      <div className={PAYMENT_TEST_CSS.CONTAINER}>
+        <div className={PAYMENT_TEST_CSS.HEADER}>
+          <h1 className={PAYMENT_TEST_CSS.TITLE}>{PAGE_TITLES.MAIN}</h1>
+          <div className={PAYMENT_TEST_CSS.BUTTON_GROUP}>
             <button 
-              className="btn btn-secondary"
+              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
               onClick={clearResults}
             >
-              결과 초기화
+              {BUTTON_TEXT.CLEAR_RESULTS}
             </button>
           </div>
         </div>
 
         {/* 테스트 설정 */}
-        <div className="test-config">
+        <div className={PAYMENT_TEST_CSS.CONFIG}>
           <h3>테스트 설정</h3>
-          <div className="config-grid">
-            <div className="config-item">
-              <label>결제 방법</label>
+          <div className={PAYMENT_TEST_CSS.FORM}>
+            <div className={PAYMENT_TEST_CSS.FORM_GROUP}>
+              <label className={PAYMENT_TEST_CSS.LABEL}>{FORM_LABELS.PAYMENT_METHOD}</label>
               <select 
+                className={PAYMENT_TEST_CSS.SELECT}
                 value={testData.method}
                 onChange={(e) => setTestData(prev => ({ ...prev, method: e.target.value }))}
               >
-                <option value="CARD">카드</option>
-                <option value="BANK_TRANSFER">계좌이체</option>
-                <option value="VIRTUAL_ACCOUNT">가상계좌</option>
-                <option value="MOBILE">모바일결제</option>
-                <option value="CASH">현금</option>
+                {PAYMENT_METHODS.map(method => (
+                  <option key={method.value} value={method.value}>
+                    {method.label}
+                  </option>
+                ))}
               </select>
             </div>
-            <div className="config-item">
-              <label>결제 대행사</label>
+            <div className={PAYMENT_TEST_CSS.FORM_GROUP}>
+              <label className={PAYMENT_TEST_CSS.LABEL}>{FORM_LABELS.PAYMENT_PROVIDER}</label>
               <select 
+                className={PAYMENT_TEST_CSS.SELECT}
                 value={testData.provider}
                 onChange={(e) => setTestData(prev => ({ ...prev, provider: e.target.value }))}
               >
-                <option value="TOSS">토스페이먼츠</option>
-                <option value="IAMPORT">아임포트</option>
-                <option value="KAKAO">카카오페이</option>
-                <option value="NAVER">네이버페이</option>
-                <option value="PAYPAL">페이팔</option>
+                {PAYMENT_PROVIDERS.map(provider => (
+                  <option key={provider.value} value={provider.value}>
+                    {provider.label}
+                  </option>
+                ))}
               </select>
             </div>
-            <div className="config-item">
-              <label>결제 금액</label>
+            <div className={PAYMENT_TEST_CSS.FORM_GROUP}>
+              <label className={PAYMENT_TEST_CSS.LABEL}>{FORM_LABELS.AMOUNT}</label>
               <input
+                className={PAYMENT_TEST_CSS.INPUT}
                 type="number"
                 value={testData.amount}
                 onChange={(e) => setTestData(prev => ({ ...prev, amount: parseInt(e.target.value) }))}
                 min="1000"
                 max="10000000"
+                placeholder={PLACEHOLDERS.AMOUNT}
               />
             </div>
-            <div className="config-item">
-              <label>결제자 ID</label>
+            <div className={PAYMENT_TEST_CSS.FORM_GROUP}>
+              <label className={PAYMENT_TEST_CSS.LABEL}>{FORM_LABELS.PAYER_ID}</label>
               <input
+                className={PAYMENT_TEST_CSS.INPUT}
                 type="number"
                 value={testData.payerId}
                 onChange={(e) => setTestData(prev => ({ ...prev, payerId: parseInt(e.target.value) }))}
                 min="1"
+                placeholder={PLACEHOLDERS.PAYER_ID}
               />
             </div>
           </div>
         </div>
 
         {/* 테스트 버튼들 */}
-        <div className="test-buttons">
+        <div className={PAYMENT_TEST_CSS.BUTTON_GROUP}>
           <h3>테스트 실행</h3>
-          <div className="button-grid">
+          <div className={PAYMENT_TEST_CSS.BUTTON_GROUP}>
             <button 
-              className="btn btn-primary"
-              onClick={() => executeTest(testCreatePayment, '결제 생성 테스트')}
+              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_PRIMARY}`}
+              onClick={() => executeTest(testCreatePayment, PAGE_TITLES.CREATE_PAYMENT)}
               disabled={loading}
             >
-              결제 생성
+              {BUTTON_TEXT.CREATE_PAYMENT}
             </button>
             <button 
-              className="btn btn-info"
-              onClick={() => executeTest(testPaymentScenarios, '결제 시나리오 테스트')}
+              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
+              onClick={() => executeTest(testPaymentScenarios, PAGE_TITLES.SCENARIOS)}
               disabled={loading}
             >
-              시나리오 테스트
+              {BUTTON_TEXT.SCENARIOS}
             </button>
             <button 
-              className="btn btn-warning"
-              onClick={() => executeTest(testPaymentStatus, '결제 상태 변경 테스트')}
+              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
+              onClick={() => executeTest(testPaymentStatus, PAGE_TITLES.STATUS_UPDATE)}
               disabled={loading}
             >
-              상태 변경
+              {BUTTON_TEXT.STATUS_UPDATE}
             </button>
             <button 
-              className="btn btn-secondary"
-              onClick={() => executeTest(testWebhook, 'Webhook 테스트')}
+              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
+              onClick={() => executeTest(testWebhook, PAGE_TITLES.WEBHOOK)}
               disabled={loading}
             >
-              Webhook 테스트
+              {BUTTON_TEXT.WEBHOOK_TEST}
             </button>
             <button 
-              className="btn btn-success"
-              onClick={() => executeTest(testStatistics, '통계 테스트')}
+              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SUCCESS}`}
+              onClick={() => executeTest(testStatistics, PAGE_TITLES.STATISTICS)}
               disabled={loading}
             >
-              통계 조회
+              {BUTTON_TEXT.STATISTICS}
             </button>
             <button 
-              className="btn btn-info"
+              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
               onClick={() => executeTest(testDepositConfirmation, '입금 확인 테스트')}
               disabled={loading}
             >
-              입금 확인
+              {BUTTON_TEXT.DEPOSIT_CONFIRM}
             </button>
             <button 
-              className="btn btn-danger"
+              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_DANGER}`}
               onClick={() => executeTest(testCancelRefund, '취소/환불 테스트')}
               disabled={loading}
             >
               취소/환불
             </button>
             <button 
-              className="btn btn-primary"
+              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SECONDARY}`}
               onClick={() => executeTest(testBulkCreate, '대량 데이터 생성')}
               disabled={loading}
             >
-              대량 생성
+              {BUTTON_TEXT.BULK_CREATE}
             </button>
             <button 
-              className="btn btn-success"
-              onClick={() => executeTest(testSystemHealth, '시스템 상태 확인')}
+              className={`${PAYMENT_TEST_CSS.BUTTON} ${PAYMENT_TEST_CSS.BUTTON_SUCCESS}`}
+              onClick={() => executeTest(testSystemHealth, PAGE_TITLES.HEALTH)}
               disabled={loading}
             >
-              시스템 상태
+              {BUTTON_TEXT.HEALTH_CHECK}
             </button>
           </div>
         </div>

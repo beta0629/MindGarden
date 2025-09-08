@@ -116,6 +116,13 @@ public class PaymentServiceImpl implements PaymentService {
     }
     
     @Override
+    public List<Payment> getAllPayments() {
+        log.info("전체 결제 목록 조회 (페이지네이션 없음)");
+        
+        return paymentRepository.findAll();
+    }
+    
+    @Override
     public PaymentResponse updatePaymentStatus(String paymentId, Payment.PaymentStatus status) {
         log.info("결제 상태 업데이트: {} -> {}", paymentId, status);
         

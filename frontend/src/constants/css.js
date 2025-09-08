@@ -201,28 +201,24 @@ export const COMMON_DASHBOARD_CSS = {
 // 빠른 액션 CSS 클래스
 export const QUICK_ACTIONS_CSS = {
   CONTAINER: 'quick-actions',
-  HEADER: 'quick-actions-header',
-  TITLE: 'quick-actions-title',
-  CONTENT: 'quick-actions-content',
-  GRID: 'quick-actions-grid',
-  BUTTON: 'quick-actions-button',
-  ICON: 'quick-actions-icon',
-  LABEL: 'quick-actions-label',
-  DESCRIPTION: 'quick-actions-description'
+  SECTION_TITLE: 'section-title',
+  ACTION_GRID: 'quick-actions-action-grid',
+  ACTION_BUTTON: 'quick-actions-action-button',
+  ACTION_ICON: 'quick-actions-action-icon',
+  ACTION_LABEL: 'quick-actions-action-label'
 };
 
 // 최근 활동 CSS 클래스
 export const RECENT_ACTIVITIES_CSS = {
   CONTAINER: 'recent-activities',
-  HEADER: 'recent-activities-header',
-  TITLE: 'recent-activities-title',
-  CONTENT: 'recent-activities-content',
-  LIST: 'recent-activities-list',
-  ITEM: 'recent-activities-item',
-  ICON: 'recent-activities-icon',
-  TEXT: 'recent-activities-text',
-  TIME: 'recent-activities-time',
-  EMPTY: 'recent-activities-empty'
+  SECTION_TITLE: 'section-title',
+  ACTIVITY_LIST: 'recent-activities-activity-list',
+  ACTIVITY_ITEM: 'recent-activities-activity-item',
+  ACTIVITY_ICON: 'recent-activities-activity-icon',
+  ACTIVITY_CONTENT: 'recent-activities-activity-content',
+  ACTIVITY_TITLE: 'recent-activities-activity-title',
+  ACTIVITY_TIME: 'recent-activities-activity-time',
+  NO_ACTIVITIES: 'no-activities'
 };
 
 // 환영 섹션 CSS 클래스
@@ -241,13 +237,22 @@ export const SUMMARY_PANELS_CSS = {
   CONTAINER: 'summary-panels',
   GRID: 'summary-panels-grid',
   PANEL: 'summary-panels-panel',
-  HEADER: 'summary-panels-header',
-  TITLE: 'summary-panels-title',
-  CONTENT: 'summary-panels-content',
-  NUMBER: 'summary-panels-number',
-  LABEL: 'summary-panels-label',
-  ICON: 'summary-panels-icon',
-  CHANGE: 'summary-panels-change'
+  PANEL_HEADER: 'summary-panels-panel-header',
+  PANEL_TITLE: 'summary-panels-panel-title',
+  PANEL_ICON: 'summary-panels-panel-icon',
+  PANEL_CONTENT: 'summary-panels-panel-content',
+  SUMMARY_ITEM: 'summary-panels-summary-item',
+  SUMMARY_ICON: 'summary-panels-summary-icon',
+  SUMMARY_INFO: 'summary-panels-summary-info',
+  SUMMARY_LABEL: 'summary-panels-summary-label',
+  SUMMARY_VALUE: 'summary-panels-summary-value',
+  CONSULTANT_PROFILE: 'summary-panels-consultant-profile',
+  CONSULTANT_AVATAR: 'summary-panels-consultant-avatar',
+  CONSULTANT_DETAILS: 'summary-panels-consultant-details',
+  CONSULTANT_NAME: 'summary-panels-consultant-name',
+  CONSULTANT_SPECIALTY: 'summary-panels-consultant-specialty',
+  CONSULTANT_INTRO: 'summary-panels-consultant-intro',
+  MAPPING_ACTIONS: 'summary-panels-mapping-actions'
 };
 
 // 결제 테스트 CSS 클래스
@@ -287,6 +292,7 @@ export const TABLET_LOGIN_CSS = {
   CONTAINER: 'tablet-login',
   HEADER: 'tablet-login-header',
   TITLE: 'tablet-login-title',
+  SUBTITLE: 'login-subtitle',
   CONTENT: 'tablet-login-content',
   FORM: 'tablet-login-form',
   FORM_GROUP: 'tablet-login-form-group',
@@ -300,7 +306,8 @@ export const TABLET_LOGIN_CSS = {
   BUTTON_SOCIAL: 'tablet-login-button-social',
   BUTTON_SMS: 'tablet-login-button-sms',
   BUTTON_GROUP: 'tablet-login-button-group',
-  SOCIAL_BUTTONS: 'tablet-login-social-buttons',
+  SOCIAL_BUTTONS: 'social-login-buttons',
+  SOCIAL_BUTTON: 'social-login-button',
   SMS_SECTION: 'tablet-login-sms-section',
   SMS_FORM: 'tablet-login-sms-form',
   SMS_INPUT: 'tablet-login-sms-input',
@@ -316,8 +323,10 @@ export const TABLET_LOGIN_CSS = {
   LOADING: 'tablet-login-loading',
   ERROR: 'tablet-login-error',
   SUCCESS: 'tablet-login-success',
-  FOOTER: 'tablet-login-footer',
-  FOOTER_LINK: 'tablet-login-footer-link'
+  DIVIDER: 'login-divider',
+  FOOTER: 'login-footer',
+  FOOTER_LINK: 'link-button',
+  TEST_BUTTON: 'test-button'
 };
 
 // 재무 대시보드 CSS 클래스

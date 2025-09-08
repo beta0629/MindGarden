@@ -2,6 +2,7 @@ import React from 'react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { SUMMARY_PANELS_CSS } from '../../constants/css';
 import { DASHBOARD_ICONS, DASHBOARD_LABELS, DASHBOARD_MESSAGES } from '../../constants/dashboard';
+import './SummaryPanels.css';
 
 const SummaryPanels = ({ user, consultationData }) => {
   // 상담 일정 데이터 처리

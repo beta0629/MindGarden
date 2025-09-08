@@ -4,7 +4,7 @@
 @import './common/index.css';
 
 /* 대시보드 스타일 */
-@import './dashboard/index.css';
+@import './dashboard/dashboard.css';
 
 /* 홈페이지 전용 스타일 */
 @import './homepage/index.css';

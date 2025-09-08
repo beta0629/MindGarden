@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { QUICK_ACTIONS_CSS } from '../../constants/css';
 import { DASHBOARD_ACTIONS } from '../../constants/dashboard';
+import './QuickActions.css';
 
 const QuickActions = ({ user }) => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const QuickActions = ({ user }) => {
 
   return (
     <div className={QUICK_ACTIONS_CSS.CONTAINER}>
-      <h3 className="section-title">
+      <h3 className={QUICK_ACTIONS_CSS.SECTION_TITLE}>
         <i className="bi bi-lightning"></i>
         빠른 액션
       </h3>

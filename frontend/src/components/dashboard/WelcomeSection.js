@@ -61,28 +61,22 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
 
   return (
     <div className={WELCOME_SECTION_CSS.CONTAINER}>
-      <div className={WELCOME_SECTION_CSS.WELCOME_CARD}>
-        <div className={WELCOME_SECTION_CSS.PROFILE_SECTION}>
-          <div className={WELCOME_SECTION_CSS.PROFILE_IMAGE}>
+      <div className="welcome-card">
+        <div className="welcome-profile">
+          <div className="profile-avatar">
             <img 
               src={profileImageUrl} 
               alt="프로필 이미지" 
               className="profile-image"
               onError={() => setImageLoadError(true)}
-              style={{ 
-                width: '100%', 
-                height: '100%', 
-                objectFit: 'cover',
-                borderRadius: '50%'
-              }}
             />
           </div>
-          <div className={WELCOME_SECTION_CSS.PROFILE_INFO}>
-            <h2 className={WELCOME_SECTION_CSS.WELCOME_TITLE}>{getWelcomeTitle()}</h2>
-            <p className={WELCOME_SECTION_CSS.WELCOME_SUBTITLE}>
+          <div className="welcome-content">
+            <h2 className="welcome-title">{getWelcomeTitle()}</h2>
+            <p className="welcome-message">
               {displayName}님, 오늘도 좋은 하루 되세요!
             </p>
-            <div className={WELCOME_SECTION_CSS.WELCOME_TIME}>
+            <div className="welcome-time">
               <i className="bi bi-clock"></i>
               <span>{currentTime}</span>
             </div>

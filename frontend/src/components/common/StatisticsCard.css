@@ -49,11 +49,12 @@
   padding: var(--stats-icon-padding);
   margin-bottom: var(--stats-icon-margin-bottom);
   background: var(--stats-color);
-  color: var(--color-text-light);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .statistics-card-icon i {

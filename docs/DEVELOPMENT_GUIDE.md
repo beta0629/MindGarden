@@ -73,6 +73,8 @@
 - [x] User 엔티티 및 상속 구조 (Client, Consultant, Admin)
 - [x] 사용자 등록/수정/조회 서비스
 - [x] 개인정보 암호화 시스템 (AES/CBC/PKCS5Padding)
+- [x] 전화번호 암호화 마이그레이션 시스템 ✅
+- [x] 자동 전화번호 암호화 로직 ✅
 - [x] 세션 관리 및 JWT 토큰 시스템
 
 #### **3. 소셜 로그인 시스템**
@@ -958,6 +960,58 @@ com.mindgarden.consultation
 - 페이징 처리 활용 (BaseController 지원)
 - 캐싱 전략 적용
 - REST API 표준 준수
+
+## 최근 업데이트 (2024-12-19)
+
+### ✅ 전화번호 암호화 시스템 구축 완료
+
+#### **구현된 기능:**
+1. **전화번호 암호화 마이그레이션 서비스**
+   - `PhoneMigrationService.java`: 기존 평문 전화번호를 암호화하는 마이그레이션 서비스
+   - `PhoneMigrationController.java`: 마이그레이션 실행을 위한 REST API 엔드포인트
+   - `MigrationScript.java`: 애플리케이션 시작 시 자동 마이그레이션 실행
+
+2. **자동 암호화 로직 추가**
+   - `UserServiceImpl.save()`: 새 사용자 등록 시 전화번호 자동 암호화
+   - `AdminServiceImpl.registerClient()`: 관리자 내담자 등록 시 전화번호 암호화
+   - `AdminServiceImpl.registerConsultant()`: 관리자 상담사 등록 시 전화번호 암호화
+
+3. **보안 강화**
+   - 개인정보보호법 준수: 전화번호를 민감정보로 분류하여 암호화 저장
+   - 데이터 유출 방지: 데이터베이스 직접 접근 시에도 전화번호가 암호화된 상태로 보호
+   - 자동화된 보안: 새로운 사용자 등록 시 자동으로 전화번호가 암호화되어 실수 방지
+
+#### **마이그레이션 결과:**
+- **총 사용자 수**: 17명
+- **마이그레이션된 사용자**: 0명 (이미 모두 암호화되어 있었음)
+- **이미 암호화된 사용자**: 16명
+- **오류**: 0건
+
+#### **API 엔드포인트:**
+- `GET /api/admin/migration/phone/status`: 전화번호 암호화 상태 확인
+- `POST /api/admin/migration/phone/encrypt`: 전화번호 암호화 마이그레이션 실행
+
+#### **사용법:**
+```java
+// 마이그레이션 서비스 사용
+@Autowired
+private PhoneMigrationService phoneMigrationService;
+
+// 전화번호 암호화 상태 확인
+Map<String, Object> status = phoneMigrationService.checkPhoneEncryptionStatus();
+
+// 마이그레이션 실행
+phoneMigrationService.migratePhones();
+```
+
+#### **보안 특징:**
+- **이름은 평문 유지**: 이름은 암호화하지 않고 평문으로 유지
+- **전화번호만 암호화**: 개인정보보호법에 따라 전화번호만 암호화
+- **안전한 마이그레이션**: 이미 암호화된 데이터는 건드리지 않음
+- **상세한 로깅**: 각 단계별로 상세한 로그 출력
+- **트랜잭션 보장**: 오류 발생 시 롤백
+
+---
 
 ## 최근 업데이트 (2025-09-01)
 

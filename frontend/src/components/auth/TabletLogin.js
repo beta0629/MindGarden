@@ -13,6 +13,7 @@ import { LOGIN_SESSION_CHECK_DELAY, EXISTING_SESSION_CHECK_DELAY } from '../../c
 import notificationManager from '../../utils/notification';
 import { TABLET_LOGIN_CSS } from '../../constants/css';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
+import '../../styles/auth/TabletLogin.css';
 
 const TabletLogin = () => {
   const navigate = useNavigate();
@@ -248,46 +249,6 @@ const TabletLogin = () => {
     await naverLogin();
   };
 
-  const handleTestLogin = async () => {
-    try {
-      setIsLoading(true);
-      const response = await testLogin();
-      if (response.success) {
-        console.log('테스트 로그인 성공:', response);
-        
-        // 중앙 세션의 테스트 로그인 함수 사용
-        console.log('🔄 테스트 로그인 - 중앙 세션 설정 시작...');
-        const loginSuccess = await centralTestLogin(response.user, {
-          accessToken: 'test-token',
-          refreshToken: 'test-refresh-token'
-        });
-        
-        if (loginSuccess) {
-          // 테스트 로그인 성공 알림
-          notificationManager.show('테스트 로그인에 성공했습니다.', 'success');
-          
-          // 세션 설정 완료 후 잠시 대기
-          console.log('⏳ 테스트 로그인 - 세션 설정 완료, 잠시 대기...');
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // 역할에 따른 대시보드로 리다이렉트
-          const dashboardPath = `/${response.user.role.toLowerCase()}/dashboard`;
-          console.log('✅ 테스트 로그인 성공, 대시보드로 이동:', dashboardPath);
-          navigate(dashboardPath, { replace: true });
-        } else {
-          console.log('❌ 테스트 로그인 - 세션 설정 실패');
-          notificationManager.show('세션 설정에 실패했습니다.', 'error');
-        }
-      } else {
-        notificationManager.show(response.message || '테스트 로그인에 실패했습니다.', 'error');
-      }
-    } catch (error) {
-      console.error('테스트 로그인 오류:', error);
-      notificationManager.show('테스트 로그인 처리 중 오류가 발생했습니다.', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const checkOAuthCallback = async () => {
     console.log('🔍 checkOAuthCallback 함수 실행됨');
@@ -487,19 +448,11 @@ const TabletLogin = () => {
   };
 
   return (
-    <CommonPageTemplate 
-      title="MindGarden - 로그인"
-      description="MindGarden 계정으로 로그인하여 상담 서비스를 이용하세요"
-      bodyClass="tablet-page"
-    >
-      <div className={`${TABLET_LOGIN_CSS.CONTAINER} tablet-page`}>
-        {/* 공통 헤더 */}
-        <SimpleHeader />
-        
-        <div className={TABLET_LOGIN_CSS.CONTENT}>
+    <div className={TABLET_LOGIN_CSS.CONTAINER}>
+      <div className={TABLET_LOGIN_CSS.CONTENT}>
           <div className={TABLET_LOGIN_CSS.HEADER}>
             <h1 className={TABLET_LOGIN_CSS.TITLE}>MindGarden 로그인</h1>
-            <p className="login-subtitle">마음의 정원에 오신 것을 환영합니다</p>
+            <p className={TABLET_LOGIN_CSS.SUBTITLE}>마음의 정원에 오신 것을 환영합니다</p>
           </div>
 
           <div className={TABLET_LOGIN_CSS.MODE_SWITCH}>
@@ -637,7 +590,7 @@ const TabletLogin = () => {
 
               <button
                 type="button"
-                className="login-button secondary"
+                className={`${TABLET_LOGIN_CSS.BUTTON} ${TABLET_LOGIN_CSS.BUTTON_SECONDARY}`}
                 disabled={!isCodeSent || !verificationCode}
               >
                 SMS 로그인
@@ -645,13 +598,13 @@ const TabletLogin = () => {
             </div>
           )}
 
-          <div className="login-divider">
+          <div className={TABLET_LOGIN_CSS.DIVIDER}>
             <span>또는</span>
           </div>
 
-          <div className="social-login-buttons">
+          <div className={TABLET_LOGIN_CSS.SOCIAL_BUTTONS}>
             <button
-              className="social-login-button kakao"
+              className={`${TABLET_LOGIN_CSS.SOCIAL_BUTTON} kakao`}
               onClick={handleKakaoLogin}
               disabled={!oauth2Config?.kakao}
             >
@@ -659,7 +612,7 @@ const TabletLogin = () => {
               카카오로 로그인
             </button>
             <button
-              className="social-login-button naver"
+              className={`${TABLET_LOGIN_CSS.SOCIAL_BUTTON} naver`}
               onClick={handleNaverLogin}
               disabled={!oauth2Config?.naver}
             >
@@ -668,12 +621,12 @@ const TabletLogin = () => {
             </button>
           </div>
 
-          <div className="login-footer">
+          <div className={TABLET_LOGIN_CSS.FOOTER}>
             <p className="register-link">
               계정이 없으신가요?{' '}
               <button
                 type="button"
-                className="link-button"
+                className={TABLET_LOGIN_CSS.FOOTER_LINK}
                 onClick={() => navigate('/register')}
               >
                 회원가입
@@ -682,37 +635,25 @@ const TabletLogin = () => {
             <p className="forgot-password">
               <button
                 type="button"
-                className="link-button"
+                className={TABLET_LOGIN_CSS.FOOTER_LINK}
                 onClick={() => alert('비밀번호 찾기 기능은 준비 중입니다.')}
               >
                 비밀번호를 잊으셨나요?
               </button>
             </p>
-            {/* 테스트 로그인 버튼 (개발 환경에서만 표시) */}
-            <p className="test-login">
-              <button
-                type="button"
-                className="link-button test-button"
-                onClick={handleTestLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? '테스트 로그인 중...' : '테스트 로그인'}
-              </button>
-            </p>
           </div>
         </div>
 
-        <SocialSignupModal
-          isOpen={showSocialSignupModal}
-          onClose={() => {
-            console.log('📋 모달 닫기 버튼 클릭');
-            setShowSocialSignupModal(false);
-          }}
-          socialUser={socialUserInfo}
-          onSignupSuccess={handleSocialSignupSuccess}
-        />
-      </div>
-    </CommonPageTemplate>
+      <SocialSignupModal
+        isOpen={showSocialSignupModal}
+        onClose={() => {
+          console.log('📋 모달 닫기 버튼 클릭');
+          setShowSocialSignupModal(false);
+        }}
+        socialUser={socialUserInfo}
+        onSignupSuccess={handleSocialSignupSuccess}
+      />
+    </div>
   );
 };
 

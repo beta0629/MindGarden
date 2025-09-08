@@ -9,6 +9,17 @@
   --color-primary-light: #D4F0D4;  /* 밝은 민트 */
   --color-primary-dark: #9CD69C;   /* 진한 민트 */
   
+  /* 역할별 대시보드 색상 */
+  /* 상담사/관리자 대시보드 (기본 파란색) */
+  --dashboard-consultant-primary: #667eea;
+  --dashboard-consultant-primary-light: #7c8ef0;
+  --dashboard-consultant-primary-dark: #5a67d8;
+  
+  /* 내담자 대시보드 (연한 연두색) */
+  --dashboard-client-primary: #A8E6A8;        /* 연한 연두색 */
+  --dashboard-client-primary-light: #C4F0C4;  /* 밝은 연두색 */
+  --dashboard-client-primary-dark: #8CD68C;   /* 진한 연두색 */
+  
   /* 파스텔 톤 보조 컬러 */
   --color-secondary: #FFB3BA;      /* 부드러운 파스텔 핑크 */
   --color-secondary-light: #FFD1D6; /* 밝은 파스텔 핑크 */
@@ -46,8 +57,8 @@
   --color-error: #FFCDD2;          /* 부드러운 레드 */
   --color-info: #BBDEFB;           /* 부드러운 블루 */
   
-  /* 파스텔 톤 그라데이션 */
-  --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  /* 파스텔 톤 단색 */
+  --gradient-primary: var(--color-primary);
   
   /* Toast 알림 시스템 */
   --toast-container-top: 20px;
@@ -110,10 +121,10 @@
   --toast-dark-close-hover-bg: #4a5568;
   --toast-dark-close-hover-color: #e2e8f0;
   --toast-dark-progress-bg: rgba(255, 255, 255, 0.1);
-  --gradient-secondary: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-light) 100%);
-  --gradient-accent: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 100%);
-  --gradient-warm: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-tertiary) 100%);
-  --gradient-cool: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  --gradient-secondary: var(--color-secondary);
+  --gradient-accent: var(--color-accent);
+  --gradient-warm: var(--color-secondary);
+  --gradient-cool: var(--color-primary);
   
   /* 파스텔 톤 그림자 */
   --shadow-soft: 0 2px 8px rgba(184, 230, 184, 0.15);

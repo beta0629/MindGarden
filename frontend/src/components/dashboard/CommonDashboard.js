@@ -4,7 +4,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI, apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
-import { COMMON_DASHBOARD_CSS } from '../../constants/css';
+import '../../styles/dashboard/dashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
 import SimpleLayout from '../layout/SimpleLayout';
 import WelcomeSection from './WelcomeSection';
@@ -646,7 +646,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
   return (
     <SimpleLayout>
-      <div className={COMMON_DASHBOARD_CSS.CONTAINER}>
+      <div className={`dashboard-container ${user?.role?.toLowerCase() || ''}`}>
         
         {/* 웰컴 섹션 */}
         <WelcomeSection 

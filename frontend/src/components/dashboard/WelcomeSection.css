@@ -1,33 +1,39 @@
-/* 웰컴 섹션 스타일 */
+/* 웰컴 섹션 - 두 번째 스크린샷과 같은 깔끔한 카드 형태 */
 .welcome-section {
   margin-bottom: 2rem;
 }
 
 .welcome-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16px;
-  padding: 2rem;
+  background: var(--dashboard-consultant-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
   color: white;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
   margin-bottom: 1.5rem;
+}
+
+/* 내담자 대시보드 색상 */
+.dashboard-container.client .welcome-card {
+  background: var(--dashboard-client-primary);
+  box-shadow: 0 4px 12px rgba(168, 230, 168, 0.15);
 }
 
 .welcome-profile {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .profile-avatar {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   flex-shrink: 0;
 }
 
@@ -38,25 +44,20 @@
   border-radius: 50%;
 }
 
-.profile-icon {
-  font-size: 3rem;
-  color: rgba(255, 255, 255, 0.8);
-}
-
 .welcome-content {
   flex: 1;
 }
 
 .welcome-title {
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 600;
   margin: 0 0 0.5rem 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .welcome-message {
-  font-size: 1.1rem;
-  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  margin: 0 0 0.5rem 0;
   opacity: 0.9;
   line-height: 1.4;
 }
@@ -65,7 +66,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   opacity: 0.8;
 }
 
@@ -75,38 +76,50 @@
 
 .welcome-info-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
 .welcome-info-card {
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
 .welcome-info-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .welcome-info-card .info-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--dashboard-consultant-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+/* 내담자 대시보드 아이콘 색상 */
+.dashboard-container.client .welcome-info-card .info-icon {
+  background: var(--dashboard-client-primary);
+  box-shadow: 0 2px 4px rgba(168, 230, 168, 0.2);
 }
 
 .welcome-info-card .info-icon i {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   color: white;
+}
+
+.welcome-info-card .info-content {
+  position: relative;
 }
 
 .welcome-info-card .info-title {
@@ -117,7 +130,7 @@
 }
 
 .welcome-info-card .info-value {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #4a5568;
   margin: 0;
   line-height: 1.5;
@@ -126,28 +139,24 @@
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .welcome-card {
-    padding: 1.5rem;
+    padding: 1rem;
   }
   
   .welcome-profile {
-    gap: 1rem;
+    gap: 0.75rem;
   }
   
   .profile-avatar {
-    width: 60px;
-    height: 60px;
-  }
-  
-  .profile-icon {
-    font-size: 2.5rem;
+    width: 50px;
+    height: 50px;
   }
   
   .welcome-title {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
   }
   
   .welcome-message {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
   
   .welcome-info-cards {
@@ -155,27 +164,23 @@
   }
   
   .welcome-info-card {
-    padding: 1.25rem;
+    padding: 1rem;
   }
 }
 
 @media (max-width: 480px) {
-  .welcome-card {
-    padding: 1.25rem;
-  }
-  
   .welcome-profile {
     flex-direction: column;
     text-align: center;
-    gap: 1rem;
+    gap: 0.5rem;
   }
   
   .profile-avatar {
-    width: 70px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
   }
   
   .welcome-title {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
   }
 }

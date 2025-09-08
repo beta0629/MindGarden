@@ -1,0 +1,249 @@
+/* 요약 패널 - 두 번째 스크린샷과 같은 깔끔한 카드 형태 */
+.summary-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-panels-panel {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.summary-panels-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.summary-panels-panel-header {
+  background: var(--dashboard-consultant-primary);
+  padding: 1rem 1.5rem;
+  color: white;
+}
+
+/* 내담자 대시보드 패널 헤더 색상 */
+.dashboard-container.client .summary-panels-panel-header {
+  background: var(--dashboard-client-primary);
+}
+
+.summary-panels-panel-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.summary-panels-panel-icon {
+  font-size: 1.2rem;
+}
+
+.summary-panels-panel-content {
+  padding: 1.5rem;
+}
+
+.summary-panels-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.summary-panels-summary-item:hover {
+  background: #e9ecef;
+}
+
+.summary-panels-summary-item:last-child {
+  margin-bottom: 0;
+}
+
+.summary-panels-summary-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--dashboard-consultant-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+/* 내담자 대시보드 아이콘 색상 */
+.dashboard-container.client .summary-panels-summary-icon {
+  background: var(--dashboard-client-primary);
+  box-shadow: 0 2px 4px rgba(168, 230, 168, 0.2);
+}
+
+.summary-panels-summary-icon i {
+  font-size: 1.2rem;
+  color: white;
+}
+
+.summary-panels-summary-info {
+  flex: 1;
+}
+
+.summary-panels-summary-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.summary-panels-summary-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* 상담사 프로필 */
+.summary-panels-consultant-profile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.summary-panels-consultant-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid #e9ecef;
+}
+
+.consultant-profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.summary-panels-consultant-details {
+  flex: 1;
+}
+
+.summary-panels-consultant-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.25rem;
+}
+
+.summary-panels-consultant-specialty {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.summary-panels-consultant-intro {
+  font-size: 0.85rem;
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+/* 매핑 액션 */
+.summary-panels-mapping-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.summary-panels-mapping-actions .btn {
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .summary-panels {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .summary-panels-panel-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .summary-panels-panel-title {
+    font-size: 1rem;
+  }
+  
+  .summary-panels-panel-content {
+    padding: 1rem;
+  }
+  
+  .summary-panels-summary-item {
+    padding: 0.5rem;
+    gap: 0.75rem;
+  }
+  
+  .summary-panels-summary-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .summary-panels-summary-icon i {
+    font-size: 1rem;
+  }
+  
+  .summary-panels-consultant-profile {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+  
+  .summary-panels-consultant-avatar {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-panels {
+    margin-bottom: 1rem;
+  }
+  
+  .summary-panels-panel {
+    border-radius: 8px;
+  }
+  
+  .summary-panels-panel-header {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .summary-panels-panel-content {
+    padding: 0.75rem;
+  }
+  
+  .summary-panels-summary-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  
+  .summary-panels-summary-icon {
+    width: 40px;
+    height: 40px;
+  }
+}

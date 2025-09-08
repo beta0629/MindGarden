@@ -38,6 +38,7 @@ public class AuthController {
     
     // Redis 연동을 위한 RedisTemplate (선택적 의존성)
     @Autowired(required = false)
+    @org.springframework.beans.factory.annotation.Qualifier("redisTemplate")
     private Object redisTemplate;
     
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)

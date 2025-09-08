@@ -11,6 +11,7 @@ import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.UserProfileService;
+import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +38,7 @@ public class AdminUserController {
     private final UserProfileService userProfileService;
     private final com.mindgarden.consultation.service.UserService userService;
     private final EmailService emailService;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     
     /**
      * 전체 사용자 목록 조회 (관리자 전용)
@@ -52,14 +54,31 @@ public class AdminUserController {
             // 사용자 정보를 Map으로 변환
             List<Map<String, Object>> userList = new ArrayList<>();
             for (User user : users) {
+                // UserService.findAllActive()에서 이미 복호화된 데이터를 사용
+                // 이중 복호화 방지를 위해 원본 데이터 그대로 사용
+                String name = user.getName();
+                String phone = user.getPhone();
+                String email = user.getEmail();
+                
+                // 전화번호가 null이거나 빈 문자열인 경우 처리
+                if (phone == null || phone.trim().isEmpty()) {
+                    phone = "전화번호 없음";
+                }
+                
                 Map<String, Object> userInfo = new HashMap<>();
                 userInfo.put("id", user.getId());
-                userInfo.put("email", user.getEmail());
-                userInfo.put("name", user.getName());
+                userInfo.put("email", email);
+                userInfo.put("name", name);
+                userInfo.put("phone", phone);
                 userInfo.put("role", user.getRole());
                 userInfo.put("isActive", !user.getIsDeleted());
                 userInfo.put("createdAt", user.getCreatedAt());
                 userInfo.put("updatedAt", user.getUpdatedAt());
+                
+                // 디버깅을 위한 로깅
+                log.info("👤 사용자 정보 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 역할: '{}'", 
+                    user.getId(), name, email, phone, user.getRole());
+                
                 userList.add(userInfo);
             }
             
@@ -491,5 +510,53 @@ public class AdminUserController {
         } catch (Exception e) {
             log.error("시스템 알림 이메일 발송 중 오류: to={}, error={}", toEmail, e.getMessage(), e);
         }
+    }
+    
+    /**
+     * 개인정보 복호화 (안전한 복호화)
+     */
+    private String decryptPersonalData(String encryptedData) {
+        if (encryptedData == null || encryptedData.trim().isEmpty()) {
+            return encryptedData;
+        }
+        
+        try {
+            // 이미 복호화된 데이터인지 확인
+            if (isEncryptedData(encryptedData)) {
+                return encryptionUtil.decrypt(encryptedData);
+            } else {
+                // 복호화되지 않은 데이터는 그대로 반환
+                return encryptedData;
+            }
+        } catch (Exception e) {
+            log.warn("개인정보 복호화 실패, 원본 데이터 반환: {}", e.getMessage());
+            return encryptedData;
+        }
+    }
+    
+    /**
+     * 데이터가 암호화된 데이터인지 확인
+     */
+    private boolean isEncryptedData(String data) {
+        if (data == null || data.trim().isEmpty()) {
+            return false;
+        }
+        
+        // Base64 패턴 확인 (A-Z, a-z, 0-9, +, /, =)
+        if (!data.matches("^[A-Za-z0-9+/]*={0,2}$")) {
+            return false;
+        }
+        
+        // 암호화된 데이터는 일반적으로 20자 이상
+        if (data.length() < 20) {
+            return false;
+        }
+        
+        // 한글이나 특수문자가 포함된 경우 평문으로 판단
+        if (data.matches(".*[가-힣].*") || data.matches(".*[^A-Za-z0-9+/=].*")) {
+            return false;
+        }
+        
+        return true;
     }
 }

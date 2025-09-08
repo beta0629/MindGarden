@@ -59,6 +59,12 @@ public class UserServiceImpl implements UserService {
             if (user.getPassword() != null && !isPasswordEncoded(user.getPassword())) {
                 user.setPassword(passwordEncoder.encode(user.getPassword()));
             }
+            
+            // 전화번호 암호화 (새 사용자 등록 시)
+            if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
+                user.setPhone(encryptionUtil.encrypt(user.getPhone()));
+                log.info("🔐 새 사용자 전화번호 암호화 완료: {}", maskPhone(user.getPhone()));
+            }
         }
         user.setUpdatedAt(LocalDateTime.now());
         user.setVersion(user.getVersion() + 1);
@@ -808,5 +814,20 @@ public class UserServiceImpl implements UserService {
         // BCrypt 해시 패턴 확인: $2a$, $2b$, $2y$ 등으로 시작하고 길이가 60자
         return password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$") 
                && password.length() == 60;
+    }
+    
+    /**
+     * 전화번호 마스킹
+     */
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 4) {
+            return phone;
+        }
+        
+        if (phone.length() <= 8) {
+            return phone.substring(0, 3) + "****";
+        }
+        
+        return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
 }

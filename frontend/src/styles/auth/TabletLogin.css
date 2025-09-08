@@ -1,63 +1,120 @@
-/* 태블릿 전용 로그인 페이지 스타일 */
+/* 태블릿 전용 로그인 페이지 스타일 - 차분한 디자인 */
 .tablet-login {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+  min-height: 100vh !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  position: relative !important;
+  margin: 0 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
 }
 
 .tablet-login-content {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  padding: 40px;
-  width: 100%;
-  max-width: 480px;
-  text-align: center;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+  padding: 48px !important;
+  width: 100% !important;
+  max-width: 500px !important;
+  text-align: center !important;
+  position: relative !important;
+  z-index: 1 !important;
+  margin: 0 auto !important;
+  border: 1px solid rgba(226, 232, 240, 0.5) !important;
 }
 
-/* 로고 및 헤더 */
+/* 로그인 헤더 */
 .tablet-login-header {
-  margin-bottom: 40px;
+  text-align: center;
+  margin-bottom: 32px;
+  position: relative;
 }
 
 .tablet-login-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 20px 0;
+  font-size: 2.2rem !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  margin: 0 0 8px 0 !important;
+  letter-spacing: -0.025em !important;
 }
 
 .login-subtitle {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #64748b;
   margin: 0;
-  line-height: 1.6;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* 로그인 모드 스위치 */
+.tablet-login-mode-switch {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 32px;
+  border: 1px solid #e2e8f0;
+}
+
+.tablet-login-mode-button {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.tablet-login-mode-button:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: #475569;
+}
+
+.tablet-login-mode-button-active {
+  background: #ffffff;
+  color: #1e293b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
+
+.tablet-login-mode-button i {
+  font-size: 1rem;
 }
 
 /* 로그인 폼 */
 .tablet-login-form {
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 }
 
 .tablet-login-form-group {
-  margin-bottom: 25px;
+  margin-bottom: 20px;
   text-align: left;
 }
 
 .tablet-login-label {
   display: block;
-  font-size: 0.95rem;
-  font-weight: 600;
+  margin-bottom: 6px;
   color: #374151;
-  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .tablet-login-label i {
-  margin-right: 8px;
-  color: #9ca3af;
+  font-size: 0.9rem;
+  color: #6b7280;
 }
 
 .tablet-login-input-group {
@@ -68,20 +125,20 @@
 
 .tablet-login-input {
   width: 100%;
-  padding: 15px 15px 15px 50px;
-  border: none !important;
-  border-radius: 12px;
+  padding: 12px 16px 12px 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
   font-size: 1rem;
   color: #374151;
-  background: #f9fafb;
-  transition: all 0.3s ease;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .tablet-login-input:focus {
   outline: none;
-  border: none !important;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .tablet-login-input::placeholder {
@@ -90,173 +147,124 @@
 
 .tablet-login-password-toggle {
   position: absolute;
-  right: 15px;
+  right: 12px;
   background: none;
   border: none;
-  color: #9ca3af;
+  color: #6b7280;
   cursor: pointer;
-  font-size: 1.1rem;
-  padding: 5px;
+  padding: 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tablet-login-password-toggle:hover {
-  color: #6b7280;
-}
-
-/* 에러 메시지 */
-.error-message {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 20px;
-  color: #dc2626;
-  font-size: 0.9rem;
-}
-
-.error-message i {
-  margin-right: 8px;
-  color: #ef4444;
-}
-
-/* 로그인 버튼 */
-.tablet-login-button {
-  width: 100%;
-  padding: 16px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.tablet-login-button-primary {
-  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-  color: white;
-}
-
-.tablet-login-button-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
-}
-
-.tablet-login-button-secondary {
   background: #f3f4f6;
   color: #374151;
-  border: 1px solid #d1d5db;
 }
 
-.tablet-login-button-secondary:hover:not(:disabled) {
-  background: #e5e7eb;
-  transform: translateY(-2px);
+.tablet-login-password-toggle i {
+  font-size: 1rem;
+}
+
+/* 버튼 스타일 */
+.tablet-login-button {
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.tablet-login-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .tablet-login-button:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.tablet-login-loading {
-  animation: spin 1s linear infinite;
+.tablet-login-button-primary {
+  background: #3b82f6;
+  color: white;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.tablet-login-button-primary:hover:not(:disabled) {
+  background: #2563eb;
 }
 
-/* 모드 스위치 */
-.tablet-login-mode-switch {
-  display: flex;
-  background: #f3f4f6;
-  border-radius: 12px;
-  padding: 4px;
-  margin-bottom: 30px;
+.tablet-login-button-secondary {
+  background: #10b981;
+  color: white;
 }
 
-.tablet-login-mode-button {
-  flex: 1;
-  padding: 12px 16px;
-  border: none;
-  background: transparent;
-  color: #6b7280;
-  font-size: 0.95rem;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.tablet-login-mode-button-active {
-  background: white;
-  color: #0ea5e9;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.tablet-login-mode-button i {
-  font-size: 1.1rem;
+.tablet-login-button-secondary:hover:not(:disabled) {
+  background: #059669;
 }
 
 /* SMS 섹션 */
 .tablet-login-sms-section {
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 }
 
 .tablet-login-sms-button {
-  background: #0ea5e9;
+  background: #6b7280;
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .tablet-login-sms-button:hover:not(:disabled) {
-  background: #0284c7;
+  background: #4b5563;
+  transform: translateY(-1px);
 }
 
 .tablet-login-sms-button:disabled {
-  background: #9ca3af;
+  background: #d1d5db;
+  color: #9ca3af;
   cursor: not-allowed;
+  transform: none;
 }
 
 .tablet-login-sms-verification {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
 .tablet-login-verification-input {
   flex: 1;
-  padding: 12px;
+  padding: 12px 16px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
   text-align: center;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
+  color: #374151;
+  background: #ffffff;
+  transition: all 0.2s ease;
 }
 
 .tablet-login-verification-input:focus {
   outline: none;
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .tablet-login-verification-button {
@@ -265,21 +273,22 @@
   border: none;
   padding: 12px 20px;
   border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .tablet-login-verification-button:hover:not(:disabled) {
   background: #059669;
+  transform: translateY(-1px);
 }
 
 /* 구분선 */
 .login-divider {
   position: relative;
   text-align: center;
-  margin: 30px 0;
+  margin: 24px 0;
 }
 
 .login-divider::before {
@@ -293,41 +302,42 @@
 }
 
 .login-divider span {
-  background: white;
-  padding: 0 20px;
-  color: #9ca3af;
+  background: #ffffff;
+  padding: 0 16px;
+  color: #6b7280;
   font-size: 0.9rem;
   font-weight: 500;
 }
 
 /* 소셜 로그인 */
 .social-login-buttons {
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 }
 
 .social-login-button {
   width: 100%;
-  padding: 14px;
+  padding: 12px 16px;
   margin-bottom: 12px;
-  border: 2px solid transparent;
-  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
+  background: #ffffff;
 }
 
 .social-login-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .social-login-button:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
@@ -355,7 +365,7 @@
 }
 
 .social-login-button i {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 /* 로그인 푸터 */
@@ -365,83 +375,116 @@
 
 .login-footer p {
   color: #6b7280;
-  margin-bottom: 15px;
-  font-size: 0.95rem;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  font-weight: 400;
 }
 
 .link-button {
   background: none;
   border: none;
-  color: #0ea5e9;
+  color: #3b82f6;
   cursor: pointer;
   font-size: inherit;
+  font-weight: 500;
   text-decoration: underline;
-  transition: color 0.3s ease;
+  transition: all 0.2s ease;
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 
 .link-button:hover {
-  color: #0284c7;
+  color: #2563eb;
+  background: rgba(59, 130, 246, 0.1);
+  text-decoration: none;
 }
 
 .test-button {
-  background-color: #ff6b6b;
+  background: #ef4444;
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .test-button:hover:not(:disabled) {
-  background-color: #ff5252;
+  background: #dc2626;
+  transform: translateY(-1px);
 }
 
 .test-button:disabled {
-  background-color: #ccc;
+  background: #d1d5db;
+  color: #9ca3af;
   cursor: not-allowed;
+  transform: none;
+}
+
+/* 로딩 애니메이션 */
+.tablet-login-loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* 태블릿 최적화 */
 @media (min-width: 768px) and (max-width: 1024px) {
   .tablet-login-content {
-    padding: 50px;
-    max-width: 520px;
+    padding: 56px;
+    max-width: 550px;
   }
   
   .tablet-login-title {
-    font-size: 2.8rem;
+    font-size: 2.5rem;
   }
   
   .login-subtitle {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
   
   .tablet-login-input {
-    padding: 18px 18px 18px 55px;
-    font-size: 1.1rem;
+    padding: 14px 18px 14px 44px;
+    font-size: 1.05rem;
   }
   
   .tablet-login-button {
-    padding: 18px;
-    font-size: 1.2rem;
+    padding: 16px 24px;
+    font-size: 1.05rem;
   }
   
   .social-login-button {
-    padding: 16px;
-    font-size: 1.1rem;
+    padding: 14px 18px;
+    font-size: 1.05rem;
+  }
+  
+  .tablet-login-mode-button {
+    padding: 14px 20px;
+    font-size: 1rem;
   }
 }
 
 /* 반응형 디자인 */
 @media (max-width: 767px) {
   .tablet-login {
-    padding: 15px;
+    padding: 20px;
   }
   
   .tablet-login-content {
-    padding: 30px 25px;
+    padding: 40px 32px;
+    border-radius: 12px;
+    max-width: 450px;
   }
   
   .tablet-login-title {
@@ -449,6 +492,26 @@
   }
   
   .login-subtitle {
-    font-size: 1rem;
+    font-size: 0.95rem;
+  }
+  
+  .tablet-login-input {
+    padding: 12px 14px 12px 36px;
+    font-size: 0.95rem;
+  }
+  
+  .tablet-login-button {
+    padding: 14px 18px;
+    font-size: 0.95rem;
+  }
+  
+  .social-login-button {
+    padding: 12px 14px;
+    font-size: 0.95rem;
+  }
+  
+  .tablet-login-mode-button {
+    padding: 10px 14px;
+    font-size: 0.9rem;
   }
 }

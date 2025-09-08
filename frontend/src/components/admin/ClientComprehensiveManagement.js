@@ -85,12 +85,47 @@ const ClientComprehensiveManagement = () => {
      */
     const loadClients = async () => {
         try {
-            const response = await apiGet('/api/admin/clients');
+            console.log('🔍 내담자 목록 로드 시작');
+            
+            // /api/admin/users API를 직접 사용 (복호화가 더 잘 됨)
+            const response = await apiGet('/api/admin/users');
+            console.log('📊 /api/admin/users 응답:', response);
+            
             if (response.success) {
-                setClients(response.data || []);
+                let clientsData = response.data || [];
+                
+                // CLIENT 역할만 필터링
+                if (Array.isArray(clientsData) && clientsData.length > 0) {
+                    clientsData = clientsData.filter(user => user.role === 'CLIENT');
+                    console.log('👥 CLIENT 역할 필터링 후:', clientsData.length, '명');
+                }
+                
+                // 각 내담자 데이터를 상세히 로깅
+                clientsData.forEach((client, index) => {
+                    console.log(`👤 내담자 ${index + 1}:`, {
+                        id: client.id,
+                        name: client.name,
+                        email: client.email,
+                        phone: client.phone,
+                        role: client.role,
+                        isActive: client.isActive,
+                        createdAt: client.createdAt
+                    });
+                    
+                    // 전화번호가 제대로 있는지 확인
+                    if (client.phone && client.phone !== '전화번호 없음' && client.phone !== '-') {
+                        console.log(`✅ 전화번호 확인됨: ${client.name} - ${client.phone}`);
+                    } else {
+                        console.log(`❌ 전화번호 없음: ${client.name} - ${client.phone}`);
+                    }
+                });
+                
+                setClients(clientsData);
+            } else {
+                console.error('❌ 내담자 목록 로드 실패:', response.message);
             }
         } catch (error) {
-            console.error('내담자 목록 로드 실패:', error);
+            console.error('❌ 내담자 목록 로드 오류:', error);
         }
     };
 
@@ -510,7 +545,7 @@ const ClientComprehensiveManagement = () => {
                                         <FaUser />
                                     </div>
                                     <div className="client-info">
-                                        <div className="client-name">{client.name || '이름 없음'}</div>
+                                        <div className="client-name">{client.name || 'Unknown Client'}</div>
                                         <div className="client-email">{client.email}</div>
                                         <div className="client-phone">{client.phone || '전화번호 없음'}</div>
                                         <div className="client-grade">
@@ -795,7 +830,7 @@ const ClientComprehensiveManagement = () => {
                                                     <FaUser />
                                                 </div>
                                                 <div className="client-basic-info">
-                                                    <h4 className="client-name">{client.name || '이름 없음'}</h4>
+                                                    <h4 className="client-name">{client.name || 'Unknown Client'}</h4>
                                                     <p className="client-email">{client.email || '-'}</p>
                                                 </div>
                                                 <div className="client-status">
@@ -816,7 +851,7 @@ const ClientComprehensiveManagement = () => {
                                                 <div className="client-details">
                                                     <div className="detail-item">
                                                         <span className="detail-label">전화번호:</span>
-                                                        <span className="detail-value">{client.phone || '-'}</span>
+                                                        <span className="detail-value">{client.phone || '전화번호 없음'}</span>
                                                     </div>
                                                     <div className="detail-item">
                                                         <span className="detail-label">등급:</span>

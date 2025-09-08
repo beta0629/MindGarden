@@ -20,6 +20,7 @@ import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.AdminService;
+import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,9 +37,17 @@ public class AdminServiceImpl implements AdminService {
     private final ClientRepository clientRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PersonalDataEncryptionUtil encryptionUtil;
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
+        // 전화번호 암호화
+        String encryptedPhone = null;
+        if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
+            encryptedPhone = encryptionUtil.encrypt(dto.getPhone());
+            log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", maskPhone(dto.getPhone()));
+        }
+        
         // 같은 username을 가진 삭제된 상담사가 있는지 확인
         Optional<User> existingConsultant = userRepository.findByUsernameAndIsActive(dto.getUsername(), false);
         
@@ -48,7 +57,7 @@ public class AdminServiceImpl implements AdminService {
             consultant.setEmail(dto.getEmail());
             consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
             consultant.setName(dto.getName());
-            consultant.setPhone(dto.getPhone());
+            consultant.setPhone(encryptedPhone);
             consultant.setIsActive(true); // 활성화
             consultant.setSpecialization(dto.getSpecialization());
             
@@ -65,7 +74,7 @@ public class AdminServiceImpl implements AdminService {
             consultant.setEmail(dto.getEmail());
             consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
             consultant.setName(dto.getName());
-            consultant.setPhone(dto.getPhone());
+            consultant.setPhone(encryptedPhone);
             consultant.setRole(UserRole.CONSULTANT);
             consultant.setIsActive(true);
             
@@ -79,16 +88,39 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public Client registerClient(ClientRegistrationDto dto) {
-        // Client 엔티티 생성 (User를 상속받음)
-        Client client = Client.builder()
-                .name(dto.getName())
+        // 전화번호 암호화
+        String encryptedPhone = null;
+        if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
+            encryptedPhone = encryptionUtil.encrypt(dto.getPhone());
+            log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", maskPhone(dto.getPhone()));
+        }
+        
+        // User 테이블에 CLIENT role로 저장
+        User clientUser = User.builder()
+                .username(dto.getUsername())
                 .email(dto.getEmail())
-                .phone(dto.getPhone())
-                .isDeleted(false)
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .name(dto.getName())
+                .phone(encryptedPhone)
+                .role(UserRole.CLIENT)
+                .isActive(true)
                 .build();
         
-        // Client만 저장하면 User도 자동으로 저장됨 (상속 구조)
-        return clientRepository.save(client);
+        User savedUser = userRepository.save(clientUser);
+        
+        // Client 객체로 변환하여 반환
+        Client client = new Client();
+        client.setId(savedUser.getId());
+        client.setName(savedUser.getName());
+        client.setEmail(savedUser.getEmail());
+        client.setPhone(savedUser.getPhone());
+        client.setBirthDate(savedUser.getBirthDate());
+        client.setGender(savedUser.getGender());
+        client.setIsDeleted(!savedUser.getIsActive());
+        client.setCreatedAt(savedUser.getCreatedAt());
+        client.setUpdatedAt(savedUser.getUpdatedAt());
+        
+        return client;
     }
 
     @Override
@@ -328,13 +360,133 @@ public class AdminServiceImpl implements AdminService {
         
         return specialtyMap.getOrDefault(code, code);
     }
+    
+    /**
+     * 사용자 개인정보 복호화
+     */
+    private User decryptUserPersonalData(User user) {
+        if (user == null || encryptionUtil == null) {
+            return user;
+        }
+        
+        try {
+            // 이름 복호화 (암호화된 데이터인지 확인)
+            if (user.getName() != null && !user.getName().trim().isEmpty()) {
+                if (isEncryptedData(user.getName())) {
+                    user.setName(encryptionUtil.decrypt(user.getName()));
+                }
+                // 암호화되지 않은 데이터는 그대로 유지
+            }
+            
+            // 닉네임 복호화
+            if (user.getNickname() != null && !user.getNickname().trim().isEmpty()) {
+                if (isEncryptedData(user.getNickname())) {
+                    user.setNickname(encryptionUtil.decrypt(user.getNickname()));
+                }
+            }
+            
+            // 전화번호 복호화
+            if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
+                if (isEncryptedData(user.getPhone())) {
+                    user.setPhone(encryptionUtil.decrypt(user.getPhone()));
+                }
+            }
+            
+            // 성별 복호화
+            if (user.getGender() != null && !user.getGender().trim().isEmpty()) {
+                if (isEncryptedData(user.getGender())) {
+                    user.setGender(encryptionUtil.decrypt(user.getGender()));
+                }
+            }
+            
+        } catch (Exception e) {
+            // 복호화 실패 시 원본 데이터 유지
+            log.warn("사용자 개인정보 복호화 실패: {}", e.getMessage());
+        }
+        
+        return user;
+    }
+    
+    /**
+     * 데이터가 암호화된 데이터인지 확인
+     * Base64 패턴과 길이로 판단
+     */
+    private boolean isEncryptedData(String data) {
+        if (data == null || data.trim().isEmpty()) {
+            return false;
+        }
+        
+        // Base64 패턴 확인 (A-Z, a-z, 0-9, +, /, =)
+        if (!data.matches("^[A-Za-z0-9+/]*={0,2}$")) {
+            return false;
+        }
+        
+        // 암호화된 데이터는 일반적으로 20자 이상
+        if (data.length() < 20) {
+            return false;
+        }
+        
+        // 한글이나 특수문자가 포함된 경우 평문으로 판단
+        if (data.matches(".*[가-힣].*") || data.matches(".*[^A-Za-z0-9+/=].*")) {
+            return false;
+        }
+        
+        return true;
+    }
 
     @Override
     public List<Client> getAllClients() {
-        // UserRepository를 사용하여 CLIENT role 사용자만 조회
-        // User 엔티티를 Client로 변환하여 반환
-        // Client 엔티티를 직접 조회
-        return clientRepository.findAll();
+        // User 테이블에서 CLIENT role 사용자들을 조회하고 Client 정보와 조인
+        List<User> clientUsers = userRepository.findByRole(UserRole.CLIENT);
+        
+        log.info("🔍 내담자 조회 - 총 {}명", clientUsers.size());
+        
+        // 각 내담자 정보를 상세히 로깅
+        for (User user : clientUsers) {
+            log.info("👤 내담자 원본 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}, 역할: {}", 
+                user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getIsActive(), user.getIsDeleted(), user.getRole());
+        }
+        
+        // 삭제된 사용자도 포함해서 전체 조회해보기
+        List<User> allUsers = userRepository.findAll();
+        List<User> allClientUsers = allUsers.stream()
+            .filter(user -> user.getRole() == UserRole.CLIENT)
+            .collect(Collectors.toList());
+        
+        log.info("🔍 전체 사용자 중 CLIENT 역할 - 총 {}명 (삭제 포함)", allClientUsers.size());
+        for (User user : allClientUsers) {
+            log.info("👤 전체 내담자 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}", 
+                user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getIsActive(), user.getIsDeleted());
+        }
+        
+        return clientUsers.stream()
+            .map(user -> {
+                // User 정보를 Client로 매핑 (이미 복호화된 데이터 사용)
+                Client client = new Client();
+                client.setId(user.getId());
+                client.setName(user.getName());
+                client.setEmail(user.getEmail());
+                
+                // 전화번호 처리 - null이거나 빈 문자열인 경우 기본값 설정
+                String phone = user.getPhone();
+                if (phone == null || phone.trim().isEmpty()) {
+                    phone = "전화번호 없음";
+                }
+                client.setPhone(phone);
+                
+                client.setBirthDate(user.getBirthDate());
+                client.setGender(user.getGender());
+                client.setIsDeleted(user.getIsDeleted()); // isDeleted 필드 직접 사용
+                client.setCreatedAt(user.getCreatedAt());
+                client.setUpdatedAt(user.getUpdatedAt());
+                
+                // 디버깅을 위한 로깅
+                log.info("👤 내담자 최종 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 삭제상태: {}", 
+                    user.getId(), user.getName(), user.getEmail(), phone, user.getIsDeleted());
+                
+                return client;
+            })
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -367,14 +519,28 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public Client updateClient(Long id, ClientRegistrationDto dto) {
-        Client client = clientRepository.findById(id)
+        User clientUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
         
-        client.setName(dto.getName());
-        client.setEmail(dto.getEmail());
-        client.setPhone(dto.getPhone());
+        clientUser.setName(dto.getName());
+        clientUser.setEmail(dto.getEmail());
+        clientUser.setPhone(dto.getPhone());
         
-        return clientRepository.save(client);
+        User savedUser = userRepository.save(clientUser);
+        
+        // Client 객체로 변환하여 반환
+        Client client = new Client();
+        client.setId(savedUser.getId());
+        client.setName(savedUser.getName());
+        client.setEmail(savedUser.getEmail());
+        client.setPhone(savedUser.getPhone());
+        client.setBirthDate(savedUser.getBirthDate());
+        client.setGender(savedUser.getGender());
+        client.setIsDeleted(!savedUser.getIsActive());
+        client.setCreatedAt(savedUser.getCreatedAt());
+        client.setUpdatedAt(savedUser.getUpdatedAt());
+        
+        return client;
     }
 
     @Override
@@ -411,10 +577,10 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public void deleteClient(Long id) {
-        Client client = clientRepository.findById(id)
+        User clientUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
-        client.setIsDeleted(true);
-        clientRepository.save(client);
+        clientUser.setIsActive(false);
+        userRepository.save(clientUser);
     }
 
     @Override
@@ -517,5 +683,20 @@ public class AdminServiceImpl implements AdminService {
                 .filter(mapping -> mapping.getTerminationReason() != null && 
                         mapping.getTerminationReason().contains("상담사 변경"))
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * 전화번호 마스킹
+     */
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 4) {
+            return phone;
+        }
+        
+        if (phone.length() <= 8) {
+            return phone.substring(0, 3) + "****";
+        }
+        
+        return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
 }

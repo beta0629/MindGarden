@@ -1,6 +1,7 @@
 import React from 'react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { RECENT_ACTIVITIES_CSS } from '../../constants/css';
+import './RecentActivities.css';
 
 const RecentActivities = ({ consultationData }) => {
   const getActivityIcon = (type) => {
@@ -20,7 +21,7 @@ const RecentActivities = ({ consultationData }) => {
 
   return (
     <div className={RECENT_ACTIVITIES_CSS.CONTAINER}>
-      <h3 className="section-title">
+      <h3 className={RECENT_ACTIVITIES_CSS.SECTION_TITLE}>
         <i className="bi bi-clock-history"></i>
         최근 활동
       </h3>

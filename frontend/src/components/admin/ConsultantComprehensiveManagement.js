@@ -50,6 +50,64 @@ const ConsultantComprehensiveManagement = () => {
         loadSpecialtyCodes();
     }, []);
 
+    // 전문분야 섹션 스타일 강제 적용
+    useEffect(() => {
+        const applySpecialtyStyles = () => {
+            const specialtyElements = document.querySelectorAll('.basic-management-tab .consultant-specialty-display');
+            specialtyElements.forEach(element => {
+                // 기존 스타일 제거
+                element.style.cssText = '';
+                
+                // 새로운 스타일 강제 적용
+                element.style.setProperty('font-size', '14px', 'important');
+                element.style.setProperty('color', '#374151', 'important');
+                element.style.setProperty('line-height', '1.6', 'important');
+                element.style.setProperty('background', '#f0f9ff', 'important');
+                element.style.setProperty('padding', '16px 20px', 'important');
+                element.style.setProperty('border-radius', '8px', 'important');
+                element.style.setProperty('border', '1px solid #e0f2fe', 'important');
+                element.style.setProperty('word-wrap', 'break-word', 'important');
+                element.style.setProperty('word-break', 'break-word', 'important');
+                element.style.setProperty('white-space', 'normal', 'important');
+                element.style.setProperty('min-height', '100px', 'important');
+                element.style.setProperty('max-height', '120px', 'important');
+                element.style.setProperty('display', 'flex', 'important');
+                element.style.setProperty('align-items', 'center', 'important');
+                element.style.setProperty('justify-content', 'center', 'important');
+                element.style.setProperty('text-align', 'center', 'important');
+                element.style.setProperty('width', '100%', 'important');
+                element.style.setProperty('max-width', '100%', 'important');
+                element.style.setProperty('overflow', 'hidden', 'important');
+                element.style.setProperty('text-overflow', 'ellipsis', 'important');
+                element.style.setProperty('transform', 'none', 'important');
+                element.style.setProperty('position', 'relative', 'important');
+                element.style.setProperty('z-index', '999', 'important');
+                element.style.setProperty('font-weight', '500', 'important');
+                element.style.setProperty('box-sizing', 'border-box', 'important');
+                element.style.setProperty('margin', '0', 'important');
+                element.style.setProperty('border-collapse', 'separate', 'important');
+                element.style.setProperty('border-spacing', '0', 'important');
+                element.style.setProperty('vertical-align', 'baseline', 'important');
+                element.style.setProperty('text-decoration', 'none', 'important');
+                element.style.setProperty('text-shadow', 'none', 'important');
+                element.style.setProperty('box-shadow', 'none', 'important');
+                element.style.setProperty('outline', 'none', 'important');
+                element.style.setProperty('resize', 'none', 'important');
+                element.style.setProperty('appearance', 'none', 'important');
+                element.style.setProperty('-webkit-appearance', 'none', 'important');
+                element.style.setProperty('-moz-appearance', 'none', 'important');
+            });
+        };
+
+        // 컴포넌트 마운트 후 적용
+        setTimeout(applySpecialtyStyles, 100);
+        
+        // 상담사 데이터 로드 후 적용
+        if (consultants.length > 0) {
+            setTimeout(applySpecialtyStyles, 200);
+        }
+    }, [consultants]);
+
     /**
      * 모든 데이터 로드
      */
@@ -592,23 +650,6 @@ const ConsultantComprehensiveManagement = () => {
                                             <div 
                                                 className={`consultant-comp-consultant-specialty ${!consultant.specialty || consultant.specialty.trim() === '' ? 'no-specialty' : ''}`}
                                                 title={consultant.specialty || '전문분야 미설정'}
-                                                style={{
-                                                    fontSize: '12px',
-                                                    color: '#374151',
-                                                    marginBottom: '8px',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    lineHeight: '1.3',
-                                                    maxWidth: '100%',
-                                                    display: 'block',
-                                                    width: '100%',
-                                                    wordBreak: 'normal',
-                                                    wordWrap: 'normal',
-                                                    height: 'auto',
-                                                    minHeight: 'auto',
-                                                    maxHeight: '20px'
-                                                }}
                                             >
                                                 {getSpecialtyDisplayText(consultant)}
                                             </div>
@@ -819,10 +860,10 @@ const ConsultantComprehensiveManagement = () => {
                     </div>
                 </>
             ) : (
-                /* 상담사 기본관리 탭 */
-                <div className="basic-management-tab">
-                    <div className="basic-management-content">
-                        <h3>상담사 기본 정보 관리</h3>
+                /* 상담사 기본관리 탭 - 상담사 종합관리와 동일한 디자인 */
+                <div className="consultant-comp-container">
+                    <div className="consultant-comp-header">
+                        <h2>상담사 기본 정보 관리</h2>
                         <p>상담사의 기본 정보를 등록, 수정, 삭제할 수 있습니다.</p>
                         
                         {/* 기본관리 기능들 */}
@@ -840,80 +881,72 @@ const ConsultantComprehensiveManagement = () => {
                                 🔄 새로고침
                             </button>
                         </div>
-                        
-                        {/* 상담사 목록 카드 */}
-                        <div className="consultants-cards-container">
-                            {consultants.length > 0 ? (
-                                <div className="consultants-cards-grid">
-                                    {consultants.map(consultant => (
-                                        <div key={consultant.id} className="consultant-card">
-                                            <div className="card-header">
-                                                <div className="consultant-avatar">
-                                                    {consultant.name?.charAt(0) || '?'}
-                                                </div>
-                                                <div className="consultant-info">
-                                                    <h4 className="consultant-name">{consultant.name || '이름 없음'}</h4>
-                                                    <p className="consultant-email">{consultant.email || '-'}</p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="card-body">
-                                                <div className="info-item">
-                                                    <div 
-                                                        className="info-value"
-                                                        style={{
-                                                            fontSize: '14px',
-                                                            color: '#374151',
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            maxWidth: '100%',
-                                                            lineHeight: '1.3',
-                                                            marginBottom: '8px'
-                                                        }}
-                                                        title={getSpecialtyDisplayText(consultant)}
-                                                    >
-                                                        {getSpecialtyDisplayText(consultant)}
-                                                    </div>
-                                                </div>
-                                                <div className="info-item" style={{ marginTop: 'auto' }}>
-                                                    <span className="info-label">가입일</span>
-                                                    <span className="info-value">
-                                                        {consultant.createdAt ? 
-                                                            new Date(consultant.createdAt).toLocaleDateString('ko-KR') : 
-                                                            '-'
-                                                        }
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="card-actions">
-                                                <button 
-                                                    className="btn btn-sm btn-primary"
-                                                    onClick={() => handleOpenModal('edit', consultant)}
-                                                >
-                                                    <i className="bi bi-pencil"></i>
-                                                    수정
-                                                </button>
-                                                <button 
-                                                    className="btn btn-sm btn-danger"
-                                                    onClick={() => handleOpenModal('delete', consultant)}
-                                                >
-                                                    <i className="bi bi-trash"></i>
-                                                    삭제
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="no-data">
-                                    <div className="no-data-icon">
-                                        <i className="bi bi-person-x"></i>
+                    </div>
+
+                    {/* 상담사 목록 - 상담사 종합관리와 동일한 디자인 */}
+                    <div className="consultant-comp-consultant-list-section">
+                        <div className="consultant-comp-section-header">
+                            <h3>상담사 목록</h3>
+                            <div className="consultant-comp-filters">
+                                <input
+                                    type="text"
+                                    placeholder="상담사 검색..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="consultant-comp-search-input"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="consultant-comp-consultant-grid">
+                            {getFilteredConsultants().map(consultant => (
+                                <div
+                                    key={consultant.id}
+                                    className="consultant-comp-consultant-card"
+                                >
+                                    <div className="consultant-comp-consultant-avatar">
+                                        {consultant.name ? consultant.name.charAt(0) : '?'}
                                     </div>
-                                    <p>등록된 상담사가 없습니다.</p>
+                                    <div className="consultant-comp-consultant-info">
+                                        <div className="consultant-comp-consultant-name">{consultant.name || '이름 없음'}</div>
+                                        <div className="consultant-comp-consultant-email">{consultant.email}</div>
+                                        <div className="consultant-comp-consultant-phone">{consultant.phone || '전화번호 없음'}</div>
+                                        <div 
+                                            className={`consultant-comp-consultant-specialty ${!consultant.specialty || consultant.specialty.trim() === '' ? 'no-specialty' : ''}`}
+                                            title={consultant.specialty || '전문분야 미설정'}
+                                        >
+                                            {getSpecialtyDisplayText(consultant)}
+                                        </div>
+                                        <div className="consultant-comp-consultant-date">
+                                            가입일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* 수정/삭제 버튼 추가 */}
+                                    <div className="consultant-comp-consultant-actions">
+                                        <button 
+                                            className="btn btn-sm btn-primary"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOpenModal('edit', consultant);
+                                            }}
+                                        >
+                                            <i className="bi bi-pencil"></i>
+                                            수정
+                                        </button>
+                                        <button 
+                                            className="btn btn-sm btn-danger"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOpenModal('delete', consultant);
+                                            }}
+                                        >
+                                            <i className="bi bi-trash"></i>
+                                            삭제
+                                        </button>
+                                    </div>
                                 </div>
-                            )}
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -951,6 +984,18 @@ const ConsultantComprehensiveManagement = () => {
                                             onChange={handleFormChange}
                                             placeholder="상담사 이름을 입력하세요"
                                             required
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                border: '2px solid #e5e7eb',
+                                                borderRadius: '8px',
+                                                background: '#ffffff',
+                                                color: '#374151',
+                                                fontSize: '14px',
+                                                fontFamily: 'inherit',
+                                                boxSizing: 'border-box',
+                                                transition: 'all 0.2s ease'
+                                            }}
                                         />
                                     </div>
                                     
@@ -963,6 +1008,18 @@ const ConsultantComprehensiveManagement = () => {
                                             onChange={handleFormChange}
                                             placeholder="이메일을 입력하세요"
                                             required
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                border: '2px solid #e5e7eb',
+                                                borderRadius: '8px',
+                                                background: '#ffffff',
+                                                color: '#374151',
+                                                fontSize: '14px',
+                                                fontFamily: 'inherit',
+                                                boxSizing: 'border-box',
+                                                transition: 'all 0.2s ease'
+                                            }}
                                         />
                                     </div>
                                     
@@ -975,11 +1032,42 @@ const ConsultantComprehensiveManagement = () => {
                                             onChange={handleFormChange}
                                             placeholder="010-1234-5678"
                                             maxLength="13"
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                border: '2px solid #e5e7eb',
+                                                borderRadius: '8px',
+                                                background: '#ffffff',
+                                                color: '#374151',
+                                                fontSize: '14px',
+                                                fontFamily: 'inherit',
+                                                boxSizing: 'border-box',
+                                                transition: 'all 0.2s ease'
+                                            }}
                                         />
                                     </div>
                                     
-                                    <div className="form-group">
-                                        <label>전문분야</label>
+                                    <div className="form-group" style={{ marginTop: '24px' }}>
+                                        <label style={{ 
+                                            display: 'block', 
+                                            marginBottom: '12px', 
+                                            fontSize: '16px', 
+                                            fontWeight: '600', 
+                                            color: '#1f2937' 
+                                        }}>
+                                            전문분야
+                                        </label>
+                                        <div style={{ 
+                                            marginBottom: '8px', 
+                                            fontSize: '12px', 
+                                            color: '#6b7280',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px'
+                                        }}>
+                                            <span>💡</span>
+                                            <span>Ctrl(Windows) 또는 Cmd(Mac)를 누르고 클릭하여 여러 개 선택할 수 있습니다.</span>
+                                        </div>
                                         {console.log('🔍 다중선택 필드 렌더링:', {
                                             formDataSpecialty: formData.specialty,
                                             specialtyType: typeof formData.specialty,
@@ -994,20 +1082,22 @@ const ConsultantComprehensiveManagement = () => {
                                             size="6"
                                             className="specialty-select"
                                             style={{
-                                                padding: '12px 16px',
+                                                padding: '16px 20px',
                                                 border: '2px solid #e5e7eb',
-                                                borderRadius: '8px',
+                                                borderRadius: '12px',
                                                 background: '#ffffff',
                                                 color: '#374151',
                                                 fontSize: '14px',
-                                                minHeight: '150px',
-                                                height: '150px',
+                                                minHeight: '180px',
+                                                height: '180px',
                                                 width: '100%',
                                                 maxWidth: '100%',
                                                 resize: 'vertical',
                                                 fontFamily: 'inherit',
                                                 boxSizing: 'border-box',
-                                                overflowY: 'auto'
+                                                overflowY: 'auto',
+                                                lineHeight: '1.6',
+                                                transition: 'all 0.2s ease'
                                             }}
                                         >
                                             {specialtyCodes.length > 0 ? (
@@ -1018,9 +1108,15 @@ const ConsultantComprehensiveManagement = () => {
                                                             key={code.id || code.codeValue} 
                                                             value={code.code || code.codeValue}
                                                             style={{
-                                                                backgroundColor: isSelected ? '#e0e7ff' : '#ffffff',
-                                                                color: isSelected ? '#1e40af' : '#000000',
-                                                                fontWeight: isSelected ? '600' : '400'
+                                                                backgroundColor: isSelected ? '#f0f9ff' : '#ffffff',
+                                                                color: isSelected ? '#1e40af' : '#374151',
+                                                                fontWeight: isSelected ? '600' : '400',
+                                                                padding: '8px 12px',
+                                                                margin: '2px 0',
+                                                                borderRadius: '6px',
+                                                                border: 'none',
+                                                                fontSize: '14px',
+                                                                lineHeight: '1.5'
                                                             }}
                                                         >
                                                             {code.icon ? `${code.icon} ` : ''}{code.name || code.codeLabel}
@@ -1047,6 +1143,18 @@ const ConsultantComprehensiveManagement = () => {
                                             onChange={handleFormChange}
                                             placeholder={modalType === 'create' ? '비밀번호를 입력하세요' : '새 비밀번호를 입력하세요 (선택사항)'}
                                             required={modalType === 'create'}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                border: '2px solid #e5e7eb',
+                                                borderRadius: '8px',
+                                                background: '#ffffff',
+                                                color: '#374151',
+                                                fontSize: '14px',
+                                                fontFamily: 'inherit',
+                                                boxSizing: 'border-box',
+                                                transition: 'all 0.2s ease'
+                                            }}
                                         />
                                     </div>
                                 </form>

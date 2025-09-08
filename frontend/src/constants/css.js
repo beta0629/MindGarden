@@ -139,3 +139,31 @@ export const DETAILED_STATS = {
     NEUTRAL: 'neutral'
   }
 };
+
+// 상세 통계 그리드 CSS 클래스
+export const DETAILED_STATS_GRID_CSS = {
+  CONTAINER: 'detailed-stats-grid',
+  GRID: 'detailed-stats-grid-container',
+  CARD: 'detailed-stats-grid-card',
+  HEADER: 'detailed-stats-grid-header',
+  TITLE: 'detailed-stats-grid-title',
+  CONTENT: 'detailed-stats-grid-content',
+  ITEM: 'detailed-stats-grid-item',
+  LABEL: 'detailed-stats-grid-label',
+  VALUE: 'detailed-stats-grid-value',
+  CHANGE: 'detailed-stats-grid-change',
+  ICON: 'detailed-stats-grid-icon'
+};
+
+// 통계 카드 CSS 클래스
+export const STATS_CARD_CSS = {
+  CONTAINER: 'stats-card',
+  HEADER: 'stats-card-header',
+  TITLE: 'stats-card-title',
+  CONTENT: 'stats-card-content',
+  NUMBER: 'stats-card-number',
+  LABEL: 'stats-card-label',
+  ICON: 'stats-card-icon',
+  CHANGE: 'stats-card-change',
+  TREND: 'stats-card-trend'
+};

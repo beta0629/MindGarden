@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.service.impl;
 
 import java.util.HashMap;
+import java.util.Map;
 import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.dto.AuthResponse;
 import com.mindgarden.consultation.dto.EmailResponse;
@@ -18,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 인증 서비스 구현체
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Service;
  * @version 1.0.0
  * @since 2024-12-19
  */
+@Slf4j
 @Service
 public class AuthServiceImpl implements AuthService {
     

@@ -8,6 +8,7 @@ import com.mindgarden.consultation.dto.SocialUserInfo;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.UserSocialAccount;
+import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.JwtService;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class AbstractOAuth2Service implements OAuth2Service {
 
     protected final UserRepository userRepository;
+    protected final ClientRepository clientRepository;
     protected final UserSocialAccountRepository userSocialAccountRepository;
     protected final JwtService jwtService;
 
@@ -206,23 +208,33 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long createUserFromSocial(SocialUserInfo socialUserInfo) {
-        // 1. Client 엔티티로 사용자 생성 (소셜 로그인용 임시 비밀번호 생성)
-        Client client = new Client();
-        client.setEmail(socialUserInfo.getEmail());
-        client.setPassword(generateTemporaryPassword()); // 임시 비밀번호 생성
-        client.setName(socialUserInfo.getName());
-        client.setNickname(socialUserInfo.getNickname());
-        client.setRole(UserRole.CLIENT); // 기본 역할
-        client.setProfileImageUrl(socialUserInfo.getProfileImageUrl());
-        client.setIsEmailVerified(true); // 소셜 계정은 이메일 인증 완료로 간주
-        client.setIsActive(true);
-        client.setUsername(socialUserInfo.getEmail()); // username 설정
+        // 1. Client 엔티티로 사용자 생성
+        Client client = Client.builder()
+                .name(socialUserInfo.getName())
+                .email(socialUserInfo.getEmail())
+                .phone(socialUserInfo.getPhone())
+                .birthDate(socialUserInfo.getBirthDate())
+                .gender(socialUserInfo.getGender())
+                .address(socialUserInfo.getAddress())
+                .preferredLanguage(socialUserInfo.getPreferredLanguage())
+                .emergencyContactName(socialUserInfo.getEmergencyContactName())
+                .emergencyContactPhone(socialUserInfo.getEmergencyContactPhone())
+                .medicalHistory(socialUserInfo.getMedicalHistory())
+                .isDeleted(false)
+                .build();
         
-        client = (Client) userRepository.save(client);
+        // ClientRepository를 사용하여 저장
+        client = clientRepository.save(client);
         
-        // 2. 소셜 계정 정보 생성
+        // 2. 소셜 계정 정보 생성 (Client를 User로 변환)
+        User user = new User();
+        user.setId(client.getId());
+        user.setEmail(client.getEmail());
+        user.setName(client.getName());
+        user.setRole(UserRole.CLIENT);
+        
         UserSocialAccount socialAccount = UserSocialAccount.builder()
-            .user(client)
+            .user(user)
             .provider(getProviderName())
             .providerUserId(socialUserInfo.getProviderUserId())
             .providerUsername(socialUserInfo.getNickname())

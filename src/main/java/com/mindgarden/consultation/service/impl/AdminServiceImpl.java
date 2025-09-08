@@ -84,13 +84,6 @@ public class AdminServiceImpl implements AdminService {
                 .name(dto.getName())
                 .email(dto.getEmail())
                 .phone(dto.getPhone())
-                .birthDate(dto.getBirthDate())
-                .gender(dto.getGender())
-                .address(dto.getAddress())
-                .preferredLanguage(dto.getPreferredLanguage())
-                .emergencyContactName(dto.getEmergencyContactName())
-                .emergencyContactPhone(dto.getEmergencyContactPhone())
-                .medicalHistory(dto.getMedicalHistory())
                 .isDeleted(false)
                 .build();
         

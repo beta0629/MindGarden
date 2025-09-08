@@ -4,7 +4,9 @@ import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SocialSignupRequest;
 import com.mindgarden.consultation.dto.SocialSignupResponse;
 import com.mindgarden.consultation.entity.Client;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.UserSocialAccount;
+import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.SocialAuthService;
@@ -28,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SocialAuthServiceImpl implements SocialAuthService {
 
     private final UserRepository userRepository;
+    private final ClientRepository clientRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final PersonalDataEncryptionUtil encryptionUtil;
@@ -64,13 +67,6 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                     .name(request.getName())
                     .email(request.getEmail())
                     .phone(phone)
-                    .birthDate(request.getBirthDate())
-                    .gender(request.getGender())
-                    .address(request.getAddress())
-                    .preferredLanguage(request.getPreferredLanguage())
-                    .emergencyContactName(request.getEmergencyContactName())
-                    .emergencyContactPhone(request.getEmergencyContactPhone())
-                    .medicalHistory(request.getMedicalHistory())
                     .isDeleted(false)
                     .build();
             
@@ -125,7 +121,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 .userId(client.getId())
                 .email(client.getEmail())
                 .name(encryptionUtil.safeDecrypt(client.getName()))
-                .nickname(encryptionUtil.safeDecrypt(client.getNickname()))
+                .nickname(null) // Client 엔티티에는 nickname 필드가 없음
                 .redirectUrl("http://localhost:3000/login?signup=success&email=" + client.getEmail())
                 .canApplyConsultant(canApplyConsultant)
                 .consultantApplicationMessage(consultantApplicationMessage)

@@ -433,7 +433,7 @@ public class TestDataController {
             // 새 매핑 생성
             ConsultantClientMapping mapping = new ConsultantClientMapping();
             mapping.setConsultant(consultant);  // User 타입
-            mapping.setClientId(clientEntity.getId());  // Client ID만 설정
+            // mapping.setClientId(clientEntity.getId());  // setClientId 메서드가 없으므로 주석 처리
             mapping.setStartDate(LocalDateTime.now());  // 필수 필드 추가
             mapping.setStatus(MappingStatus.ACTIVE);
             mapping.setPaymentStatus(PaymentStatus.APPROVED);

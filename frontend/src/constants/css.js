@@ -111,3 +111,31 @@ export const STATISTICS_CSS_CLASSES = {
   STAT_NUMBER: 'stat-number',
   STAT_LABEL: 'stat-label'
 };
+
+// 상세 통계 카드 CSS 클래스
+export const DETAILED_STATS_CARD_CSS = {
+  CONTAINER: 'detailed-stats-card',
+  HEADER: 'detailed-stats-card-header',
+  ICON: 'detailed-stats-card-icon',
+  TITLE: 'detailed-stats-card-title',
+  CONTENT: 'detailed-stats-card-content',
+  MAIN: 'detailed-stats-card-main',
+  NUMBER: 'detailed-stats-card-number',
+  LABEL: 'detailed-stats-card-label',
+  SUB: 'detailed-stats-card-sub',
+  DETAIL: 'detailed-stats-card-detail',
+  RATE: 'detailed-stats-card-rate',
+  DESC: 'detailed-stats-card-desc',
+  CHANGE: 'detailed-stats-card-change',
+  CHANGE_POSITIVE: 'detailed-stats-card-change positive',
+  CHANGE_NEGATIVE: 'detailed-stats-card-change negative'
+};
+
+// 상세 통계 상수
+export const DETAILED_STATS = {
+  CHANGE_TYPES: {
+    POSITIVE: 'positive',
+    NEGATIVE: 'negative',
+    NEUTRAL: 'neutral'
+  }
+};

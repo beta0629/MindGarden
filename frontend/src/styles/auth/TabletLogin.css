@@ -1,5 +1,5 @@
 /* 태블릿 전용 로그인 페이지 스타일 */
-.tablet-login-page {
+.tablet-login {
   min-height: 100vh;
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
   display: flex;
@@ -8,7 +8,7 @@
   padding: 20px;
 }
 
-.login-container {
+.tablet-login-content {
   background: white;
   border-radius: 20px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
@@ -19,31 +19,18 @@
 }
 
 /* 로고 및 헤더 */
-.login-header {
+.tablet-login-header {
   margin-bottom: 40px;
 }
 
-.logo-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-}
-
-.logo-icon {
-  font-size: 3rem;
-  color: #0ea5e9;
-  margin-right: 15px;
-}
-
-.logo-text {
+.tablet-login-title {
   font-size: 2.5rem;
   font-weight: 700;
   color: #0f172a;
-  margin: 0;
+  margin: 0 0 20px 0;
 }
 
-.welcome-message {
+.login-subtitle {
   font-size: 1.1rem;
   color: #64748b;
   margin: 0;
@@ -51,16 +38,16 @@
 }
 
 /* 로그인 폼 */
-.login-form {
+.tablet-login-form {
   margin-bottom: 30px;
 }
 
-.tablet-login .form-group {
+.tablet-login-form-group {
   margin-bottom: 25px;
   text-align: left;
 }
 
-.form-label {
+.tablet-login-label {
   display: block;
   font-size: 0.95rem;
   font-weight: 600;
@@ -68,21 +55,18 @@
   margin-bottom: 8px;
 }
 
-.input-wrapper {
+.tablet-login-label i {
+  margin-right: 8px;
+  color: #9ca3af;
+}
+
+.tablet-login-input-group {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.input-icon {
-  position: absolute;
-  left: 15px;
-  color: #9ca3af;
-  font-size: 1.1rem;
-  z-index: 1;
-}
-
-.tablet-login .form-input {
+.tablet-login-input {
   width: 100%;
   padding: 15px 15px 15px 50px;
   border: none !important;
@@ -93,15 +77,30 @@
   transition: all 0.3s ease;
 }
 
-.tablet-login .form-input:focus {
+.tablet-login-input:focus {
   outline: none;
   border: none !important;
   background: white;
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
 }
 
-.tablet-login .form-input::placeholder {
+.tablet-login-input::placeholder {
   color: #9ca3af;
+}
+
+.tablet-login-password-toggle {
+  position: absolute;
+  right: 15px;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 5px;
+}
+
+.tablet-login-password-toggle:hover {
+  color: #6b7280;
 }
 
 /* 에러 메시지 */
@@ -124,15 +123,13 @@
 }
 
 /* 로그인 버튼 */
-.login-btn {
+.tablet-login-button {
   width: 100%;
   padding: 16px;
   font-size: 1.1rem;
   font-weight: 600;
   border-radius: 12px;
   border: none;
-  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-  color: white;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
@@ -141,22 +138,34 @@
   gap: 10px;
 }
 
-.login-btn:hover:not(:disabled) {
+.tablet-login-button-primary {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: white;
+}
+
+.tablet-login-button-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
 }
 
-.login-btn:disabled {
+.tablet-login-button-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.tablet-login-button-secondary:hover:not(:disabled) {
+  background: #e5e7eb;
+  transform: translateY(-2px);
+}
+
+.tablet-login-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
   transform: none;
 }
 
-.login-btn i {
-  font-size: 1.2rem;
-}
-
-.spin {
+.tablet-login-loading {
   animation: spin 1s linear infinite;
 }
 
@@ -165,14 +174,115 @@
   to { transform: rotate(360deg); }
 }
 
+/* 모드 스위치 */
+.tablet-login-mode-switch {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 30px;
+}
+
+.tablet-login-mode-button {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tablet-login-mode-button-active {
+  background: white;
+  color: #0ea5e9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tablet-login-mode-button i {
+  font-size: 1.1rem;
+}
+
+/* SMS 섹션 */
+.tablet-login-sms-section {
+  margin-bottom: 30px;
+}
+
+.tablet-login-sms-button {
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.tablet-login-sms-button:hover:not(:disabled) {
+  background: #0284c7;
+}
+
+.tablet-login-sms-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.tablet-login-sms-verification {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.tablet-login-verification-input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.tablet-login-verification-input:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.tablet-login-verification-button {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tablet-login-verification-button:hover:not(:disabled) {
+  background: #059669;
+}
+
 /* 구분선 */
-.divider {
+.login-divider {
   position: relative;
   text-align: center;
   margin: 30px 0;
 }
 
-.divider::before {
+.login-divider::before {
   content: '';
   position: absolute;
   top: 50%;
@@ -182,7 +292,7 @@
   background: #e5e7eb;
 }
 
-.divider span {
+.login-divider span {
   background: white;
   padding: 0 20px;
   color: #9ca3af;
@@ -191,11 +301,11 @@
 }
 
 /* 소셜 로그인 */
-.social-login {
+.social-login-buttons {
   margin-bottom: 30px;
 }
 
-.social-btn {
+.social-login-button {
   width: 100%;
   padding: 14px;
   margin-bottom: 12px;
@@ -211,71 +321,66 @@
   gap: 10px;
 }
 
-.social-btn:hover {
+.social-login-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-.kakao-btn {
+.social-login-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.social-login-button.kakao {
   background: #fef01b;
   color: #000;
   border-color: #fef01b;
 }
 
-.kakao-btn:hover {
+.social-login-button.kakao:hover:not(:disabled) {
   background: #f4e800;
   border-color: #f4e800;
 }
 
-.naver-btn {
+.social-login-button.naver {
   background: #03c75a;
   color: white;
   border-color: #03c75a;
 }
 
-.naver-btn:hover {
+.social-login-button.naver:hover:not(:disabled) {
   background: #02b351;
   border-color: #02b351;
 }
 
-.social-btn i {
+.social-login-button i {
   font-size: 1.2rem;
 }
 
-/* 회원가입 링크 */
-.register-link {
+/* 로그인 푸터 */
+.login-footer {
   text-align: center;
 }
 
-.register-link p {
+.login-footer p {
   color: #6b7280;
   margin-bottom: 15px;
   font-size: 0.95rem;
 }
 
-.register-btn {
-  padding: 12px 24px;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 10px;
-  border: 2px solid #0ea5e9;
-  background: transparent;
+.link-button {
+  background: none;
+  border: none;
   color: #0ea5e9;
   cursor: pointer;
-  transition: all 0.3s ease;
+  font-size: inherit;
+  text-decoration: underline;
+  transition: color 0.3s ease;
 }
 
-.register-btn:hover {
-  background: #0ea5e9;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3);
-}
-
-/* 테스트 로그인 버튼 */
-.test-login {
-  margin-top: 10px;
-  text-align: center;
+.link-button:hover {
+  color: #0284c7;
 }
 
 .test-button {
@@ -289,7 +394,7 @@
   transition: background-color 0.3s;
 }
 
-.test-button:hover {
+.test-button:hover:not(:disabled) {
   background-color: #ff5252;
 }
 
@@ -300,34 +405,30 @@
 
 /* 태블릿 최적화 */
 @media (min-width: 768px) and (max-width: 1024px) {
-  .login-container {
+  .tablet-login-content {
     padding: 50px;
     max-width: 520px;
   }
   
-  .logo-icon {
-    font-size: 3.5rem;
-  }
-  
-  .logo-text {
+  .tablet-login-title {
     font-size: 2.8rem;
   }
   
-  .welcome-message {
+  .login-subtitle {
     font-size: 1.2rem;
   }
   
-  .form-input {
+  .tablet-login-input {
     padding: 18px 18px 18px 55px;
     font-size: 1.1rem;
   }
   
-  .login-btn {
+  .tablet-login-button {
     padding: 18px;
     font-size: 1.2rem;
   }
   
-  .social-btn {
+  .social-login-button {
     padding: 16px;
     font-size: 1.1rem;
   }
@@ -335,23 +436,19 @@
 
 /* 반응형 디자인 */
 @media (max-width: 767px) {
-  .tablet-login-page {
+  .tablet-login {
     padding: 15px;
   }
   
-  .login-container {
+  .tablet-login-content {
     padding: 30px 25px;
   }
   
-  .logo-icon {
-    font-size: 2.5rem;
-  }
-  
-  .logo-text {
+  .tablet-login-title {
     font-size: 2rem;
   }
   
-  .welcome-message {
+  .login-subtitle {
     font-size: 1rem;
   }
 }

@@ -106,19 +106,19 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     /**
      * 결제 상태별 건수 조회
      */
-    @Query("SELECT p.status, COUNT(p) FROM Payment p WHERE p.isDeleted = false GROUP BY p.status")
+    @Query("SELECT CAST(p.status AS string), COUNT(p) FROM Payment p WHERE p.isDeleted = false GROUP BY p.status")
     List<Object[]> getPaymentCountByStatus();
     
     /**
      * 결제 방법별 건수 조회
      */
-    @Query("SELECT p.method, COUNT(p) FROM Payment p WHERE p.isDeleted = false GROUP BY p.method")
+    @Query("SELECT CAST(p.method AS string), COUNT(p) FROM Payment p WHERE p.isDeleted = false GROUP BY p.method")
     List<Object[]> getPaymentCountByMethod();
     
     /**
      * 결제 대행사별 건수 조회
      */
-    @Query("SELECT p.provider, COUNT(p) FROM Payment p WHERE p.isDeleted = false GROUP BY p.provider")
+    @Query("SELECT CAST(p.provider AS string), COUNT(p) FROM Payment p WHERE p.isDeleted = false GROUP BY p.provider")
     List<Object[]> getPaymentCountByProvider();
     
     /**

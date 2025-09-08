@@ -183,3 +183,30 @@ export const STATS_CARD_GRID_CSS = {
   CHANGE: 'stats-card-grid-change',
   TREND: 'stats-card-grid-trend'
 };
+
+// 공통 대시보드 CSS 클래스
+export const COMMON_DASHBOARD_CSS = {
+  CONTAINER: 'common-dashboard',
+  HEADER: 'common-dashboard-header',
+  TITLE: 'common-dashboard-title',
+  CONTENT: 'common-dashboard-content',
+  SECTION: 'common-dashboard-section',
+  CARD: 'common-dashboard-card',
+  GRID: 'common-dashboard-grid',
+  STATS: 'common-dashboard-stats',
+  ACTIONS: 'common-dashboard-actions',
+  FOOTER: 'common-dashboard-footer'
+};
+
+// 빠른 액션 CSS 클래스
+export const QUICK_ACTIONS_CSS = {
+  CONTAINER: 'quick-actions',
+  HEADER: 'quick-actions-header',
+  TITLE: 'quick-actions-title',
+  CONTENT: 'quick-actions-content',
+  GRID: 'quick-actions-grid',
+  BUTTON: 'quick-actions-button',
+  ICON: 'quick-actions-icon',
+  LABEL: 'quick-actions-label',
+  DESCRIPTION: 'quick-actions-description'
+};

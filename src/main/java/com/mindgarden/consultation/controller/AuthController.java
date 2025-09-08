@@ -16,7 +16,6 @@ import com.mindgarden.consultation.service.AuthService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,7 +39,7 @@ public class AuthController {
     
     // Redis 연동을 위한 RedisTemplate (선택적 의존성)
     @Autowired(required = false)
-    private RedisTemplate<String, String> redisTemplate;
+    private Object redisTemplate;
     
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();

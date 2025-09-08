@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.dto.EmailResponse;
+import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.entity.Consultation;
 import com.mindgarden.consultation.entity.Note;

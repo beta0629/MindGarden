@@ -80,14 +80,19 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Client registerClient(ClientRegistrationDto dto) {
         // Client 엔티티 생성 (User를 상속받음)
-        Client client = new Client();
-        client.setUsername(dto.getUsername());
-        client.setEmail(dto.getEmail());
-        client.setPassword(passwordEncoder.encode(dto.getPassword()));
-        client.setName(dto.getName());
-        client.setPhone(dto.getPhone());
-        client.setRole(UserRole.CLIENT);
-        client.setIsActive(true);
+        Client client = Client.builder()
+                .name(dto.getName())
+                .email(dto.getEmail())
+                .phone(dto.getPhone())
+                .birthDate(dto.getBirthDate())
+                .gender(dto.getGender())
+                .address(dto.getAddress())
+                .preferredLanguage(dto.getPreferredLanguage())
+                .emergencyContactName(dto.getEmergencyContactName())
+                .emergencyContactPhone(dto.getEmergencyContactPhone())
+                .medicalHistory(dto.getMedicalHistory())
+                .isDeleted(false)
+                .build();
         
         // Client만 저장하면 User도 자동으로 저장됨 (상속 구조)
         return clientRepository.save(client);
@@ -335,39 +340,8 @@ public class AdminServiceImpl implements AdminService {
     public List<Client> getAllClients() {
         // UserRepository를 사용하여 CLIENT role 사용자만 조회
         // User 엔티티를 Client로 변환하여 반환
-        return userRepository.findByRole(UserRole.CLIENT).stream()
-                .map(user -> {
-                    // User를 Client로 변환
-                    Client client = new Client();
-                    client.setId(user.getId());
-                    client.setUsername(user.getUsername());
-                    client.setEmail(user.getEmail());
-                    client.setName(user.getName());
-                    client.setPhone(user.getPhone());
-                    client.setRole(user.getRole());
-                    client.setIsActive(user.getIsActive());
-                    client.setGrade(user.getGrade());
-                    client.setCreatedAt(user.getCreatedAt());
-                    client.setUpdatedAt(user.getUpdatedAt());
-                    client.setAddress(user.getAddress());
-                    client.setAddressDetail(user.getAddressDetail());
-                    client.setPostalCode(user.getPostalCode());
-                    client.setAge(user.getAge());
-                    client.setGender(user.getGender());
-                    client.setBirthDate(user.getBirthDate());
-                    client.setProfileImageUrl(user.getProfileImageUrl());
-                    client.setIsEmailVerified(user.getIsEmailVerified());
-                    client.setTotalConsultations(user.getTotalConsultations());
-                    client.setExperiencePoints(user.getExperiencePoints());
-                    client.setLastLoginAt(user.getLastLoginAt());
-                    client.setMemo(user.getMemo());
-                    client.setNotes(user.getNotes());
-                    client.setIsDeleted(user.getIsDeleted());
-                    client.setDeletedAt(user.getDeletedAt());
-                    client.setVersion(user.getVersion());
-                    return client;
-                })
-                .collect(Collectors.toList());
+        // Client 엔티티를 직접 조회
+        return clientRepository.findAll();
     }
 
     @Override
@@ -446,7 +420,7 @@ public class AdminServiceImpl implements AdminService {
     public void deleteClient(Long id) {
         Client client = clientRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
-        client.setIsActive(false);
+        client.setIsDeleted(true);
         clientRepository.save(client);
     }
 

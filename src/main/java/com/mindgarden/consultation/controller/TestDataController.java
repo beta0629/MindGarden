@@ -328,7 +328,7 @@ public class TestDataController {
             log.info("🔍 ClientRepository에서 조회된 내담자 수: {}", existingClients.size());
             if (!existingClients.isEmpty()) {
                 var client = existingClients.get(0);
-                log.info("🔍 기존 내담자 정보: ID={}, Name={}, Role={}", client.getId(), client.getName(), client.getRole());
+                log.info("🔍 기존 내담자 정보: ID={}, Name={}", client.getId(), client.getName());
                 return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "내담자가 이미 존재합니다.",
@@ -433,7 +433,7 @@ public class TestDataController {
             // 새 매핑 생성
             ConsultantClientMapping mapping = new ConsultantClientMapping();
             mapping.setConsultant(consultant);  // User 타입
-            mapping.setClient(clientEntity);  // Client 타입
+            mapping.setClientId(clientEntity.getId());  // Client ID만 설정
             mapping.setStartDate(LocalDateTime.now());  // 필수 필드 추가
             mapping.setStatus(MappingStatus.ACTIVE);
             mapping.setPaymentStatus(PaymentStatus.APPROVED);

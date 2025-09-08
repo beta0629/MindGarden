@@ -252,7 +252,7 @@ public class IntegrationTestController {
                     client.setId(u.getId());
                     client.setEmail(u.getEmail());
                     client.setName(u.getName());
-                    client.setIsActive(true);
+                    // Client 엔티티는 isActive 필드가 없으므로 제거
                     return client;
                 })
                 .collect(Collectors.toList());

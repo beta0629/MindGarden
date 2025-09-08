@@ -603,8 +603,7 @@ public class ScheduleController {
                     mappingData.put("remainingSessions", mapping.getRemainingSessions());
                     mappingData.put("packageName", mapping.getPackageName());
                     mappingData.put("mappingStatus", mapping.getStatus().toString());
-                    mappingData.put("lastSessionDate", mapping.getLastSessionDate() != null ? 
-                        mapping.getLastSessionDate().toString() : null);
+                    mappingData.put("lastSessionDate", null); // getLastSessionDate 메서드가 없으므로 null로 설정
                     mappingData.put("totalSessions", mapping.getTotalSessions());
                     mappingData.put("usedSessions", mapping.getUsedSessions());
                     mappingData.put("paymentStatus", mapping.getPaymentStatus() != null ? 

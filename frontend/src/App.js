@@ -20,6 +20,7 @@ import StatisticsDashboard from './components/admin/StatisticsDashboard';
 import ScheduleList from './components/common/ScheduleList';
 import ComingSoon from './components/common/ComingSoon';
 import FinanceDashboard from './components/super-admin/FinanceDashboard';
+import PaymentManagement from './components/super-admin/PaymentManagement';
 import SimpleLayout from './components/layout/SimpleLayout';
 import Toast from './components/common/Toast';
 import NotificationTest from './components/test/NotificationTest';
@@ -193,12 +194,7 @@ function AppContent() {
                 description="지출 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
               />
             } />
-            <Route path="/super-admin/payments" element={
-              <ComingSoon 
-                title="결제 관리"
-                description="결제 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
-              />
-            } />
+            <Route path="/super-admin/payments" element={<PaymentManagement />} />
             <Route path="/super-admin/finance-reports" element={
               <ComingSoon 
                 title="재무 보고서"

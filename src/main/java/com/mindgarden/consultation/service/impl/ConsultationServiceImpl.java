@@ -1030,11 +1030,15 @@ public class ConsultationServiceImpl implements ConsultationService {
             consultation.setPreparationNotes("긴급 상담 요청: " + emergencyReason);
             
             // Client 엔티티 설정 로직 구현
-            // TODO: Client 엔티티가 생성되면 실제 구현
-            // Client client = clientRepository.findById(clientId)
-            //     .orElseThrow(() -> new RuntimeException("클라이언트를 찾을 수 없습니다: " + clientId));
-            // consultation.setClientId(clientId);
-            // consultation.setClientName(client.getName());
+            try {
+                Client client = clientRepository.findById(clientId)
+                    .orElseThrow(() -> new RuntimeException("클라이언트를 찾을 수 없습니다: " + clientId));
+                consultation.setClientId(clientId);
+                log.info("긴급 상담 요청 - 클라이언트 정보 확인: clientId={}, name={}", clientId, client.getName());
+            } catch (Exception e) {
+                log.warn("클라이언트 정보 조회 실패, 기본값 사용: clientId={}, error={}", clientId, e.getMessage());
+                consultation.setClientId(clientId);
+            }
             
             Consultation savedConsultation = save(consultation);
             
@@ -1097,11 +1101,15 @@ public class ConsultationServiceImpl implements ConsultationService {
             consultation.setConsultantId(consultantId);
             
             // Consultant 엔티티 설정 로직 구현
-            // TODO: Consultant 엔티티가 생성되면 실제 구현
-            // Consultant consultant = consultantRepository.findById(consultantId)
-            //     .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
-            // consultation.setConsultantId(consultantId);
-            // consultation.setConsultantName(consultant.getName());
+            try {
+                Consultant consultant = consultantRepository.findById(consultantId)
+                    .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
+                consultation.setConsultantId(consultantId);
+                log.info("긴급 상담 할당 - 상담사 정보 확인: consultantId={}, name={}", consultantId, consultant.getName());
+            } catch (Exception e) {
+                log.warn("상담사 정보 조회 실패, 기본값 사용: consultantId={}, error={}", consultantId, e.getMessage());
+                consultation.setConsultantId(consultantId);
+            }
             
             Consultation savedConsultation = save(consultation);
             

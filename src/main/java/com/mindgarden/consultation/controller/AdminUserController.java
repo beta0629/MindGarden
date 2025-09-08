@@ -1,9 +1,12 @@
 package com.mindgarden.consultation.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.mindgarden.consultation.constant.AdminConstants;
 import com.mindgarden.consultation.constant.UserRole;
-import com.mindgarden.consultation.dto.UserProfileResponse;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.UserProfileService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,19 +42,40 @@ public class AdminUserController {
         try {
             log.info("전체 사용자 목록 조회 요청");
             
-            // TODO: UserRepository를 직접 주입받아 사용하거나 UserService에 getAllUsers 메서드 추가 필요
-            // 현재는 임시로 빈 리스트 반환
-            List<Map<String, Object>> userList = List.of();
+            // UserService를 통해 전체 사용자 조회
+            List<User> users = userService.findAllActive();
             
-            Map<String, Object> response = Map.of(
-                "count", 0,
-                "data", userList
-            );
+            // 사용자 정보를 Map으로 변환
+            List<Map<String, Object>> userList = new ArrayList<>();
+            for (User user : users) {
+                Map<String, Object> userInfo = new HashMap<>();
+                userInfo.put("id", user.getId());
+                userInfo.put("email", user.getEmail());
+                userInfo.put("name", user.getName());
+                userInfo.put("role", user.getRole());
+                userInfo.put("isActive", !user.getIsDeleted());
+                userInfo.put("createdAt", user.getCreatedAt());
+                userInfo.put("updatedAt", user.getUpdatedAt());
+                userList.add(userInfo);
+            }
             
+            Map<String, Object> response = new HashMap<>();
+            response.put(AdminConstants.RESPONSE_KEY_COUNT, userList.size());
+            response.put(AdminConstants.RESPONSE_KEY_DATA, userList);
+            response.put(AdminConstants.RESPONSE_KEY_MESSAGE, AdminConstants.SUCCESS_USERS_RETRIEVED);
+            response.put(AdminConstants.RESPONSE_KEY_SUCCESS, true);
+            
+            log.info(AdminConstants.SUCCESS_USERS_RETRIEVED + ": {}명", userList.size());
             return ResponseEntity.ok(response);
+            
         } catch (Exception e) {
             log.error("사용자 목록 조회 중 오류 발생: error={}", e.getMessage(), e);
-            return ResponseEntity.badRequest().build();
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put(AdminConstants.RESPONSE_KEY_MESSAGE, AdminConstants.ERROR_USERS_RETRIEVAL_FAILED);
+            errorResponse.put(AdminConstants.RESPONSE_KEY_SUCCESS, false);
+            
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
     
@@ -59,15 +83,52 @@ public class AdminUserController {
      * 상담사 신청자 목록 조회 (역할이 CLIENT인 사용자 중 상담사 자격 요건 충족자)
      */
     @GetMapping("/consultant-applicants")
-    public ResponseEntity<List<UserProfileResponse>> getConsultantApplicants() {
+    public ResponseEntity<Map<String, Object>> getConsultantApplicants() {
         try {
-            // TODO: 상담사 신청자 목록 조회 로직 구현
-            // 현재는 간단하게 응답만 반환
             log.info("상담사 신청자 목록 조회 요청");
-            return ResponseEntity.ok().build();
+            
+            // 전체 사용자 조회
+            List<User> allUsers = userService.findAllActive();
+            
+            // 상담사 신청자 필터링 (CLIENT 역할이면서 자격 요건 충족)
+            List<Map<String, Object>> applicantList = new ArrayList<>();
+            for (User user : allUsers) {
+                if (UserRole.CLIENT.equals(user.getRole())) {
+                    // 상담사 자격 요건 확인 (실제 구현에서는 더 복잡한 로직 필요)
+                    boolean isEligible = checkConsultantEligibility(user);
+                    if (isEligible) {
+                        Map<String, Object> applicantInfo = new HashMap<>();
+                        applicantInfo.put("id", user.getId());
+                        applicantInfo.put("email", user.getEmail());
+                        applicantInfo.put("name", user.getName());
+                        applicantInfo.put("role", user.getRole());
+                        applicantInfo.put("experience", getConsultantExperience(user));
+                        applicantInfo.put("rating", getConsultantRating(user));
+                        applicantInfo.put("sessions", getConsultantSessions(user));
+                        applicantInfo.put("certifications", getConsultantCertifications(user));
+                        applicantInfo.put("appliedAt", user.getCreatedAt());
+                        applicantList.add(applicantInfo);
+                    }
+                }
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put(AdminConstants.RESPONSE_KEY_COUNT, applicantList.size());
+            response.put(AdminConstants.RESPONSE_KEY_DATA, applicantList);
+            response.put(AdminConstants.RESPONSE_KEY_MESSAGE, AdminConstants.SUCCESS_CONSULTANT_APPLICANTS_RETRIEVED);
+            response.put(AdminConstants.RESPONSE_KEY_SUCCESS, true);
+            
+            log.info(AdminConstants.SUCCESS_CONSULTANT_APPLICANTS_RETRIEVED + ": {}명", applicantList.size());
+            return ResponseEntity.ok(response);
+            
         } catch (Exception e) {
             log.error("상담사 신청자 목록 조회 중 오류 발생: error={}", e.getMessage(), e);
-            return ResponseEntity.badRequest().build();
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put(AdminConstants.RESPONSE_KEY_MESSAGE, AdminConstants.ERROR_CONSULTANT_APPLICANTS_RETRIEVAL_FAILED);
+            errorResponse.put(AdminConstants.RESPONSE_KEY_SUCCESS, false);
+            
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
     
@@ -169,5 +230,95 @@ public class AdminUserController {
             log.error("역할 목록 조회 중 오류 발생: error={}", e.getMessage(), e);
             return ResponseEntity.badRequest().build();
         }
+    }
+    
+    // ==================== Private Helper Methods ====================
+    
+    /**
+     * 상담사 자격 요건 확인
+     */
+    private boolean checkConsultantEligibility(User user) {
+        try {
+            // 기본 자격 요건 확인
+            int experience = getConsultantExperience(user);
+            double rating = getConsultantRating(user);
+            int sessions = getConsultantSessions(user);
+            List<String> certifications = getConsultantCertifications(user);
+            
+            // 최소 경력 확인
+            if (experience < AdminConstants.MIN_CONSULTANT_EXPERIENCE) {
+                log.debug("상담사 자격 미충족 - 경력 부족: userId={}, experience={}", user.getId(), experience);
+                return false;
+            }
+            
+            // 최소 평점 확인
+            if (rating < AdminConstants.MIN_CONSULTANT_RATING) {
+                log.debug("상담사 자격 미충족 - 평점 부족: userId={}, rating={}", user.getId(), rating);
+                return false;
+            }
+            
+            // 최소 상담 세션 수 확인
+            if (sessions < AdminConstants.MIN_CONSULTANT_SESSIONS) {
+                log.debug("상담사 자격 미충족 - 상담 세션 부족: userId={}, sessions={}", user.getId(), sessions);
+                return false;
+            }
+            
+            // 필수 자격증 확인
+            if (certifications == null || !certifications.contains(AdminConstants.REQUIRED_CERTIFICATION)) {
+                log.debug("상담사 자격 미충족 - 자격증 부족: userId={}, certifications={}", user.getId(), certifications);
+                return false;
+            }
+            
+            log.debug("상담사 자격 충족: userId={}", user.getId());
+            return true;
+            
+        } catch (Exception e) {
+            log.error("상담사 자격 요건 확인 중 오류: userId={}, error={}", user.getId(), e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    /**
+     * 상담사 경력 조회 (임시 구현)
+     */
+    private int getConsultantExperience(User user) {
+        // 실제 구현에서는 사용자 프로필이나 별도 테이블에서 조회
+        // 현재는 임시로 랜덤 값 반환
+        return (int) (Math.random() * 10) + 1; // 1-10년
+    }
+    
+    /**
+     * 상담사 평점 조회 (임시 구현)
+     */
+    private double getConsultantRating(User user) {
+        // 실제 구현에서는 리뷰 테이블에서 조회
+        // 현재는 임시로 랜덤 값 반환
+        return Math.round((Math.random() * 2 + 3) * 10.0) / 10.0; // 3.0-5.0
+    }
+    
+    /**
+     * 상담사 상담 세션 수 조회 (임시 구현)
+     */
+    private int getConsultantSessions(User user) {
+        // 실제 구현에서는 상담 테이블에서 조회
+        // 현재는 임시로 랜덤 값 반환
+        return (int) (Math.random() * 200) + 1; // 1-200회
+    }
+    
+    /**
+     * 상담사 자격증 목록 조회 (임시 구현)
+     */
+    private List<String> getConsultantCertifications(User user) {
+        // 실제 구현에서는 자격증 테이블에서 조회
+        // 현재는 임시로 기본 자격증 반환
+        List<String> certifications = new ArrayList<>();
+        certifications.add(AdminConstants.REQUIRED_CERTIFICATION);
+        if (Math.random() > 0.5) {
+            certifications.add("심리상담사 1급");
+        }
+        if (Math.random() > 0.7) {
+            certifications.add("가족상담사");
+        }
+        return certifications;
     }
 }

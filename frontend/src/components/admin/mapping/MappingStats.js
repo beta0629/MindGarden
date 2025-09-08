@@ -5,7 +5,6 @@ import {
     MAPPING_STAT_COLORS, 
     MAPPING_STAT_BG_COLORS 
 } from '../../../constants/mapping';
-import './MappingStats.css';
 
 /**
  * 매핑 통계 컴포넌트
@@ -85,37 +84,121 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
     ];
 
     return (
-        <div className="mapping-stats">
-            <div className="stats-header">
-                <h3>📊 매핑 통계</h3>
-                <p>현재 매핑 상태별 통계입니다.</p>
+        <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+            marginBottom: '24px',
+            border: '1px solid #e1e8ed',
+            overflow: 'hidden'
+        }}>
+            <div style={{
+                padding: '20px',
+                background: 'linear-gradient(135deg, #E8E0FF 0%, #D1C4E9 100%)',
+                color: '#7B68EE',
+                textAlign: 'center'
+            }}>
+                <h3 style={{
+                    margin: '0 0 8px 0',
+                    fontSize: '18px',
+                    fontWeight: '600'
+                }}>📊 매핑 통계</h3>
+                <p style={{
+                    margin: '0',
+                    fontSize: '14px',
+                    opacity: 0.9
+                }}>현재 매핑 상태별 통계입니다.</p>
             </div>
             
-            <div className="stats-grid">
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '16px',
+                padding: '20px'
+            }}>
                 {statCards.map((stat, index) => (
                     <div 
                         key={index} 
-                        className="stat-card clickable"
-                        style={{ 
-                            backgroundColor: stat.bgColor 
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '16px',
+                            borderRadius: '8px',
+                            border: '1px solid #e1e8ed',
+                            transition: 'all 0.3s ease',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            background: stat.bgColor
                         }}
                         onClick={() => onStatCardClick && onStatCardClick(stat)}
                         title={`${stat.label} 클릭하여 ${stat.action === 'payment' ? '결제 확인' : '상세 조회'}`}
+                        onMouseEnter={(e) => {
+                            e.target.style.transform = 'translateY(-2px)';
+                            e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.transform = 'translateY(0)';
+                            e.target.style.boxShadow = 'none';
+                        }}
                     >
-                        <div className="stat-icon" style={{ color: stat.color }}>
+                        <div style={{
+                            fontSize: '24px',
+                            width: '40px',
+                            height: '40px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '50%',
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            color: stat.color
+                        }}>
                             {stat.icon}
                         </div>
-                        <div className="stat-info">
-                            <div className="stat-label">{stat.label}</div>
-                            <div className="stat-value" style={{ color: stat.color }}>
+                        <div style={{ flex: 1 }}>
+                            <div style={{
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: '#6c757d',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                                marginBottom: '2px'
+                            }}>{stat.label}</div>
+                            <div style={{
+                                fontSize: '20px',
+                                fontWeight: '700',
+                                lineHeight: 1,
+                                color: stat.color
+                            }}>
                                 {stat.value}건
                             </div>
                         </div>
-                        <div className="stat-percentage">
+                        <div style={{
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: '#6c757d',
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            padding: '4px 8px',
+                            borderRadius: '12px'
+                        }}>
                             {stats.total > 0 ? Math.round((stat.value / stats.total) * 100) : 0}%
                         </div>
                         {stat.action === 'payment' && stat.value > 0 && (
-                            <div className="stat-action-badge">
+                            <div style={{
+                                position: 'absolute',
+                                top: '8px',
+                                right: '8px',
+                                background: 'rgba(255, 255, 255, 0.9)',
+                                color: '#059669',
+                                fontSize: '10px',
+                                fontWeight: '600',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                border: '1px solid #10b981',
+                                animation: 'pulse 2s infinite'
+                            }}>
                                 💳 결제 확인
                             </div>
                         )}
@@ -123,20 +206,65 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 ))}
             </div>
             
-            <div className="stats-summary">
-                <div className="summary-item">
-                    <span className="summary-label">총 매핑 수:</span>
-                    <span className="summary-value">{stats.total}건</span>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-around',
+                padding: '16px 20px',
+                background: '#f8f9fa',
+                borderTop: '1px solid #e1e8ed'
+            }}>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px'
+                }}>
+                    <span style={{
+                        fontSize: '12px',
+                        color: '#6c757d',
+                        fontWeight: '500'
+                    }}>총 매핑 수:</span>
+                    <span style={{
+                        fontSize: '16px',
+                        fontWeight: '700',
+                        color: '#2c3e50'
+                    }}>{stats.total}건</span>
                 </div>
-                <div className="summary-item">
-                    <span className="summary-label">활성 비율:</span>
-                    <span className="summary-value">
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px'
+                }}>
+                    <span style={{
+                        fontSize: '12px',
+                        color: '#6c757d',
+                        fontWeight: '500'
+                    }}>활성 비율:</span>
+                    <span style={{
+                        fontSize: '16px',
+                        fontWeight: '700',
+                        color: '#2c3e50'
+                    }}>
                         {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
                     </span>
                 </div>
-                <div className="summary-item">
-                    <span className="summary-label">승인 대기 비율:</span>
-                    <span className="summary-value">
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px'
+                }}>
+                    <span style={{
+                        fontSize: '12px',
+                        color: '#6c757d',
+                        fontWeight: '500'
+                    }}>승인 대기 비율:</span>
+                    <span style={{
+                        fontSize: '16px',
+                        fontWeight: '700',
+                        color: '#2c3e50'
+                    }}>
                         {stats.total > 0 ? Math.round((stats.pending / stats.total) * 100) : 0}%
                     </span>
                 </div>

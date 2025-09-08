@@ -170,6 +170,103 @@ const PaymentManagement = () => {
     }).format(amount);
   };
 
+  // 테스트 함수들
+  const testCreatePayment = async () => {
+    try {
+      const paymentRequest = {
+        orderId: `TEST_ORDER_${Date.now()}`,
+        amount: 100000,
+        method: 'CARD',
+        provider: 'TOSS',
+        payerId: 1,
+        recipientId: 1,
+        branchId: 1,
+        description: '테스트 결제 - 실제 데이터',
+        timeoutMinutes: 30,
+        successUrl: 'http://localhost:3000/payment/success',
+        failUrl: 'http://localhost:3000/payment/fail',
+        cancelUrl: 'http://localhost:3000/payment/cancel'
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(paymentRequest)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      alert(`테스트 결제 생성 성공!\n결제 ID: ${result.data?.paymentId}\n주문 ID: ${result.data?.orderId}`);
+      
+      // 결제 목록 새로고침
+      loadPayments();
+      loadStatistics();
+      
+    } catch (error) {
+      console.error('테스트 결제 생성 실패:', error);
+      alert(`테스트 결제 생성 실패: ${error.message}`);
+    }
+  };
+
+  const testPaymentScenarios = async () => {
+    try {
+      // 여러 시나리오 테스트
+      const scenarios = [
+        { amount: 50000, method: 'CARD', provider: 'TOSS', description: '카드 결제 테스트' },
+        { amount: 100000, method: 'BANK_TRANSFER', provider: 'KAKAO', description: '계좌이체 테스트' },
+        { amount: 200000, method: 'CARD', provider: 'KAKAO', description: '간편결제 테스트' }
+      ];
+
+      for (const scenario of scenarios) {
+        const paymentRequest = {
+          orderId: `SCENARIO_${Date.now()}_${scenario.method}`,
+          amount: scenario.amount,
+          method: scenario.method,
+          provider: scenario.provider,
+          payerId: 1,
+          recipientId: 1,
+          branchId: 1,
+          description: scenario.description,
+          timeoutMinutes: 30,
+          successUrl: 'http://localhost:3000/payment/success',
+          failUrl: 'http://localhost:3000/payment/fail',
+          cancelUrl: 'http://localhost:3000/payment/cancel'
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/payments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(paymentRequest)
+        });
+        
+        if (response.ok) {
+          console.log(`${scenario.description} 성공`);
+        } else {
+          console.error(`${scenario.description} 실패`);
+        }
+      }
+      
+      alert('시나리오 테스트 완료!');
+      
+      // 결제 목록 새로고침
+      loadPayments();
+      loadStatistics();
+      
+    } catch (error) {
+      console.error('시나리오 테스트 실패:', error);
+      alert(`시나리오 테스트 실패: ${error.message}`);
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('ko-KR');
   };
@@ -205,6 +302,18 @@ const PaymentManagement = () => {
         <div className="payment-header">
           <h1>결제 관리</h1>
           <div className="header-actions">
+            <button 
+              className="btn btn-secondary"
+              onClick={() => testCreatePayment()}
+            >
+              테스트 결제 생성
+            </button>
+            <button 
+              className="btn btn-info"
+              onClick={() => testPaymentScenarios()}
+            >
+              시나리오 테스트
+            </button>
             <button 
               className="btn btn-primary"
               onClick={() => loadPayments()}

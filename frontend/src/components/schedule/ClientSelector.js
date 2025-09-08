@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
+import notificationManager from '../../utils/notification';
+import { CLIENT_SELECTOR_CONSTANTS } from '../../constants/css-variables';
 import './ClientSelector.css';
 
 /**
@@ -54,13 +56,59 @@ const ClientSelector = ({
     /**
      * 내담자와 상담사 간의 매핑 확인
      */
-    const getClientMappingInfo = (client) => {
-        // 실제로는 백엔드에서 매핑 정보를 확인해야 함
-        return {
-            hasMapping: true, // TODO: 실제 매핑 확인 로직
-            remainingSessions: client.remainingSessions || 0,
-            packageName: client.packageName || '기본 패키지'
-        };
+    const getClientMappingInfo = async (client) => {
+        const { API_ENDPOINTS, MESSAGES, MAPPING_STATUS } = CLIENT_SELECTOR_CONSTANTS;
+        
+        try {
+            console.log('매핑 정보 확인 중:', client.id, selectedConsultant?.id);
+            
+            const response = await fetch(API_ENDPOINTS.CHECK_MAPPING, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    clientId: client.id,
+                    consultantId: selectedConsultant?.id
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                console.log('매핑 정보 확인 성공:', data.data);
+                return {
+                    hasMapping: data.data.hasMapping,
+                    remainingSessions: data.data.remainingSessions || 0,
+                    packageName: data.data.packageName || '기본 패키지',
+                    mappingStatus: data.data.mappingStatus || MAPPING_STATUS.ACTIVE,
+                    lastSessionDate: data.data.lastSessionDate,
+                    totalSessions: data.data.totalSessions || 0
+                };
+            } else {
+                console.warn('매핑 정보 확인 실패:', data.message);
+                return {
+                    hasMapping: false,
+                    remainingSessions: 0,
+                    packageName: '매핑 없음',
+                    mappingStatus: MAPPING_STATUS.INACTIVE,
+                    lastSessionDate: null,
+                    totalSessions: 0
+                };
+            }
+        } catch (error) {
+            console.error('매핑 정보 확인 오류:', error);
+            // 에러 시 기본값 반환
+            return {
+                hasMapping: false,
+                remainingSessions: 0,
+                packageName: '확인 불가',
+                mappingStatus: MAPPING_STATUS.INACTIVE,
+                lastSessionDate: null,
+                totalSessions: 0
+            };
+        }
     };
 
     /**
@@ -87,20 +135,34 @@ const ClientSelector = ({
     /**
      * 내담자 카드 클릭 핸들러
      */
-    const handleClientClick = (client) => {
-        const mappingInfo = getClientMappingInfo(client);
+    const handleClientClick = async (client) => {
+        const { MESSAGES } = CLIENT_SELECTOR_CONSTANTS;
         
-        if (!mappingInfo.hasMapping) {
-            alert('해당 내담자와 상담사 간의 매핑이 없습니다.');
-            return;
+        try {
+            // 매핑 정보 확인
+            const mappingInfo = await getClientMappingInfo(client);
+            
+            if (!mappingInfo.hasMapping) {
+                notificationManager.error(MESSAGES.NO_MAPPING);
+                return;
+            }
+            
+            if (mappingInfo.remainingSessions <= 0) {
+                notificationManager.error(MESSAGES.NO_SESSIONS);
+                return;
+            }
+            
+            // 매핑 정보를 클라이언트 객체에 추가
+            const clientWithMapping = {
+                ...client,
+                mappingInfo
+            };
+            
+            onClientSelect(clientWithMapping);
+        } catch (error) {
+            console.error('내담자 선택 오류:', error);
+            notificationManager.error('내담자 선택 중 오류가 발생했습니다.');
         }
-        
-        if (mappingInfo.remainingSessions <= 0) {
-            alert('사용 가능한 세션이 없습니다.');
-            return;
-        }
-        
-        onClientSelect(client);
     };
 
     /**

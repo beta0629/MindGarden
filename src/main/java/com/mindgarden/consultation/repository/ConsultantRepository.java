@@ -1,11 +1,10 @@
 package com.mindgarden.consultation.repository;
 
+import java.util.List;
 import com.mindgarden.consultation.entity.Consultant;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 /**
  * 상담사 데이터 접근 레이어

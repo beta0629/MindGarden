@@ -157,4 +157,64 @@ public class SuperAdminController {
                 .body(Map.of("success", false, "message", "목록 조회 중 오류가 발생했습니다."));
         }
     }
+    
+    /**
+     * 재무 대시보드 데이터 조회
+     * 
+     * @param session HTTP 세션
+     * @return 재무 대시보드 데이터
+     */
+    @GetMapping("/finance/dashboard")
+    public ResponseEntity<?> getFinanceDashboard(HttpSession session) {
+        try {
+            // 수퍼어드민 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+            }
+            
+            log.info("재무 대시보드 데이터 조회 요청: {}", currentUser.getEmail());
+            
+            // TODO: 실제 재무 데이터 조회 로직 구현
+            // 현재는 테스트용 데이터 반환
+            Map<String, Object> financeData = new HashMap<>();
+            
+            // 기본 통계
+            financeData.put("totalRevenue", 12500000);
+            financeData.put("totalExpenses", 8500000);
+            financeData.put("netProfit", 4000000);
+            
+            // 월별 수익 데이터
+            Map<String, Object>[] monthlyRevenue = new Map[6];
+            for (int i = 0; i < 6; i++) {
+                Map<String, Object> monthData = new HashMap<>();
+                monthData.put("month", (i + 1) + "월");
+                monthData.put("revenue", 1200000 + (i * 200000));
+                monthData.put("expenses", 800000 + (i * 100000));
+                monthlyRevenue[i] = monthData;
+            }
+            financeData.put("monthlyRevenue", monthlyRevenue);
+            
+            // 결제 통계
+            Map<String, Object> paymentStats = new HashMap<>();
+            paymentStats.put("totalPayments", 156);
+            paymentStats.put("pendingPayments", 12);
+            paymentStats.put("completedPayments", 140);
+            paymentStats.put("failedPayments", 4);
+            financeData.put("paymentStats", paymentStats);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "재무 대시보드 데이터를 성공적으로 조회했습니다.");
+            response.put("data", financeData);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("재무 대시보드 데이터 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "재무 데이터 조회 중 오류가 발생했습니다."));
+        }
+    }
 }

@@ -14,6 +14,7 @@ import MappingFilters from './mapping/MappingFilters';
 import MappingStats from './mapping/MappingStats';
 import ConsultantTransferModal from './mapping/ConsultantTransferModal';
 import ConsultantTransferHistory from './mapping/ConsultantTransferHistory';
+import PaymentConfirmationModal from './PaymentConfirmationModal';
 import './MappingManagement.css';
 
 /**
@@ -37,6 +38,8 @@ const MappingManagement = () => {
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [showTransferHistory, setShowTransferHistory] = useState(false);
     const [selectedClientId, setSelectedClientId] = useState(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [pendingMappings, setPendingMappings] = useState([]);
 
     // 데이터 로드
     useEffect(() => {
@@ -269,8 +272,12 @@ const MappingManagement = () => {
             case 'payment':
                 // 결제 확인 모달 열기
                 if (stat.value > 0) {
+                    const pendingMappings = mappings.filter(mapping => 
+                        mapping.status === 'PENDING' || mapping.paymentStatus === 'PENDING'
+                    );
+                    setPendingMappings(pendingMappings);
+                    setShowPaymentModal(true);
                     notificationManager.info(`${stat.label} 매핑의 결제 확인을 진행합니다.`);
-                    // TODO: 결제 확인 모달 구현
                 } else {
                     notificationManager.info('결제 대기 중인 매핑이 없습니다.');
                 }
@@ -288,6 +295,20 @@ const MappingManagement = () => {
             default:
                 console.log('알 수 없는 액션:', stat.action);
         }
+    };
+
+    // 결제 확인 모달 핸들러
+    const handlePaymentConfirmed = (updatedMappings) => {
+        console.log('결제 확인 완료:', updatedMappings);
+        // 매핑 목록 새로고침
+        loadMappings();
+        setShowPaymentModal(false);
+        setPendingMappings([]);
+    };
+
+    const handlePaymentModalClose = () => {
+        setShowPaymentModal(false);
+        setPendingMappings([]);
     };
 
     // 필터링된 매핑 목록
@@ -396,6 +417,14 @@ const MappingManagement = () => {
                 isOpen={showTransferHistory}
                 onClose={handleCloseTransferHistory}
                 clientId={selectedClientId}
+            />
+
+            {/* 결제 확인 모달 */}
+            <PaymentConfirmationModal
+                isOpen={showPaymentModal}
+                onClose={handlePaymentModalClose}
+                mappings={pendingMappings}
+                onPaymentConfirmed={handlePaymentConfirmed}
             />
             </div>
         </SimpleLayout>

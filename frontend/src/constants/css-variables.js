@@ -392,3 +392,298 @@ export const SCHEDULE_MODAL_CONSTANTS = {
     CONSULTANT_COUNT_TEXT: '명의 상담사'
   }
 };
+
+// 태블릿 로그인 상수
+export const TABLET_LOGIN_CONSTANTS = {
+  // SMS 인증 설정
+  SMS: {
+    PHONE_LENGTH: 11,
+    CODE_LENGTH: 6,
+    COUNTDOWN_DURATION: 180, // 3분
+    RESEND_DELAY: 60 // 1분
+  },
+  
+  // 폼 유효성 검사
+  VALIDATION: {
+    EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    PHONE_REGEX: /^01[0-9]{8,9}$/,
+    PASSWORD_MIN_LENGTH: 6
+  },
+  
+  // 로그인 모드
+  LOGIN_MODES: {
+    EMAIL: 'email',
+    SMS: 'sms'
+  },
+  
+  // API 엔드포인트
+  API_ENDPOINTS: {
+    LOGIN: '/api/auth/login',
+    SMS_SEND: '/api/auth/sms/send',
+    SMS_VERIFY: '/api/auth/sms/verify',
+    OAUTH_CONFIG: '/api/auth/oauth2/config',
+    OAUTH_CALLBACK: '/api/auth/oauth2/callback'
+  },
+  
+  // 메시지
+  MESSAGES: {
+    LOGIN_SUCCESS: '로그인되었습니다.',
+    LOGIN_FAILED: '아이디 또는 비밀번호 틀림',
+    SMS_SENT: '인증 코드가 전송되었습니다.',
+    SMS_SEND_FAILED: '인증 코드 전송에 실패했습니다.',
+    SMS_VERIFY_SUCCESS: '인증이 완료되었습니다.',
+    SMS_VERIFY_FAILED: '인증 코드가 올바르지 않습니다.',
+    PHONE_INVALID: '올바른 휴대폰 번호를 입력해주세요.',
+    CODE_INVALID: '6자리 인증 코드를 입력해주세요.',
+    EMAIL_INVALID: '올바른 이메일을 입력해주세요.',
+    PASSWORD_INVALID: '비밀번호를 입력해주세요.',
+    LOADING: '처리 중...',
+    RETRY: '다시 시도',
+    RESEND: '재전송'
+  },
+  
+  // 소셜 로그인
+  SOCIAL: {
+    PROVIDERS: {
+      KAKAO: 'kakao',
+      NAVER: 'naver'
+    },
+    BUTTONS: {
+      KAKAO: {
+        TEXT: '카카오로 로그인',
+        COLOR: '#FEE500',
+        TEXT_COLOR: '#000000'
+      },
+      NAVER: {
+        TEXT: '네이버로 로그인',
+        COLOR: '#03C75A',
+        TEXT_COLOR: '#FFFFFF'
+      }
+    }
+  },
+  
+  // UI 설정
+  UI: {
+    ANIMATION_DURATION: 300,
+    LOADING_DELAY: 1000,
+    TOAST_DURATION: 3000
+  }
+};
+
+// 재무 대시보드 상수
+export const FINANCE_DASHBOARD_CONSTANTS = {
+  // API 엔드포인트
+  API_ENDPOINTS: {
+    DASHBOARD: '/api/super-admin/finance/dashboard',
+    STATISTICS: '/api/super-admin/finance/statistics',
+    PAYMENTS: '/api/super-admin/finance/payments',
+    REVENUE: '/api/super-admin/finance/revenue',
+    EXPENSES: '/api/super-admin/finance/expenses'
+  },
+  
+  // 통계 타입
+  STAT_TYPES: {
+    REVENUE: 'revenue',
+    EXPENSE: 'expense',
+    PROFIT: 'profit',
+    PAYMENT: 'payment'
+  },
+  
+  // 결제 상태
+  PAYMENT_STATUS: {
+    PENDING: 'pending',
+    COMPLETED: 'completed',
+    FAILED: 'failed',
+    CANCELLED: 'cancelled'
+  },
+  
+  // 차트 설정
+  CHART: {
+    COLORS: {
+      REVENUE: '#28a745',
+      EXPENSE: '#dc3545',
+      PROFIT: '#007bff',
+      PENDING: '#ffc107',
+      COMPLETED: '#28a745',
+      FAILED: '#dc3545'
+    },
+    MONTHS: [
+      '1월', '2월', '3월', '4월', '5월', '6월',
+      '7월', '8월', '9월', '10월', '11월', '12월'
+    ]
+  },
+  
+  // 메시지
+  MESSAGES: {
+    LOADING: '재무 데이터를 불러오는 중...',
+    LOAD_SUCCESS: '재무 데이터를 성공적으로 불러왔습니다.',
+    LOAD_ERROR: '재무 데이터를 불러오는데 실패했습니다.',
+    REFRESH_SUCCESS: '데이터가 새로고침되었습니다.',
+    REFRESH_ERROR: '데이터 새로고침에 실패했습니다.'
+  },
+  
+  // 포맷팅
+  FORMAT: {
+    CURRENCY: {
+      STYLE: 'currency',
+      CURRENCY: 'KRW',
+      LOCALE: 'ko-KR'
+    },
+    PERCENTAGE: {
+      MINIMUM_FRACTION_DIGITS: 1,
+      MAXIMUM_FRACTION_DIGITS: 1
+    }
+  },
+  
+  // 새로고침 간격 (밀리초)
+  REFRESH_INTERVAL: 30000, // 30초
+  
+  // 로딩 지연 시간 (밀리초)
+  LOADING_DELAY: 500
+};
+
+// 결제 확인 모달 상수
+export const PAYMENT_CONFIRMATION_MODAL_CONSTANTS = {
+  // API 엔드포인트
+  API_ENDPOINTS: {
+    CONFIRM_PAYMENT: '/api/admin/mapping/payment/confirm',
+    CANCEL_PAYMENT: '/api/admin/mapping/payment/cancel',
+    GET_PAYMENT_DETAILS: '/api/admin/mapping/payment/details'
+  },
+  
+  // 결제 상태
+  PAYMENT_STATUS: {
+    PENDING: 'pending',
+    CONFIRMED: 'confirmed',
+    CANCELLED: 'cancelled',
+    FAILED: 'failed'
+  },
+  
+  // 결제 방법
+  PAYMENT_METHODS: {
+    CARD: 'card',
+    BANK_TRANSFER: 'bank_transfer',
+    CASH: 'cash',
+    OTHER: 'other'
+  },
+  
+  // 메시지
+  MESSAGES: {
+    LOADING: '결제 정보를 불러오는 중...',
+    CONFIRM_SUCCESS: '결제가 성공적으로 확인되었습니다.',
+    CONFIRM_ERROR: '결제 확인에 실패했습니다.',
+    CANCEL_SUCCESS: '결제가 성공적으로 취소되었습니다.',
+    CANCEL_ERROR: '결제 취소에 실패했습니다.',
+    LOAD_ERROR: '결제 정보를 불러오는데 실패했습니다.',
+    INVALID_AMOUNT: '올바른 결제 금액을 입력해주세요.',
+    REQUIRED_FIELDS: '필수 입력 항목을 모두 입력해주세요.'
+  },
+  
+  // 포맷팅
+  FORMAT: {
+    CURRENCY: {
+      STYLE: 'currency',
+      CURRENCY: 'KRW',
+      LOCALE: 'ko-KR'
+    }
+  },
+  
+  // 유효성 검사
+  VALIDATION: {
+    MIN_AMOUNT: 1000,
+    MAX_AMOUNT: 10000000,
+    MAX_NOTE_LENGTH: 500
+  },
+  
+  // UI 설정
+  UI: {
+    MODAL_WIDTH: '800px',
+    MODAL_MAX_HEIGHT: '90vh',
+    ANIMATION_DURATION: 300
+  }
+};
+
+// 클라이언트 선택기 상수
+export const CLIENT_SELECTOR_CONSTANTS = {
+  // API 엔드포인트
+  API_ENDPOINTS: {
+    CHECK_MAPPING: '/api/schedule/client/mapping/check',
+    GET_CLIENT_MAPPINGS: '/api/schedule/client/mappings',
+    GET_CLIENT_HISTORY: '/api/schedule/client/history'
+  },
+  
+  // 매핑 상태
+  MAPPING_STATUS: {
+    ACTIVE: 'ACTIVE',
+    PENDING: 'PENDING',
+    INACTIVE: 'INACTIVE',
+    EXPIRED: 'EXPIRED'
+  },
+  
+  // 세션 상태
+  SESSION_STATUS: {
+    AVAILABLE: 'available',
+    LOW: 'low',
+    NONE: 'none'
+  },
+  
+  // 메시지
+  MESSAGES: {
+    MAPPING_CHECK_SUCCESS: '매핑 정보를 확인했습니다.',
+    MAPPING_CHECK_ERROR: '매핑 정보 확인에 실패했습니다.',
+    NO_MAPPING: '해당 내담자와 상담사 간의 매핑이 없습니다.',
+    NO_SESSIONS: '사용 가능한 세션이 없습니다.',
+    LOADING_MAPPING: '매핑 정보를 확인하는 중...',
+    LOADING_HISTORY: '상담 이력을 불러오는 중...'
+  },
+  
+  // 유효성 검사
+  VALIDATION: {
+    MIN_SESSIONS: 1,
+    MAX_SESSIONS: 100
+  },
+  
+  // UI 설정
+  UI: {
+    LOADING_DELAY: 500,
+    ANIMATION_DURATION: 300
+  }
+};
+
+// 홈페이지 상수
+export const HOMEPAGE_CONSTANTS = {
+  // 메뉴 항목
+  MENU_ITEMS: {
+    HOME: 'home',
+    LOGIN: 'login',
+    REGISTER: 'register',
+    ABOUT: 'about',
+    SERVICES: 'services',
+    CONTACT: 'contact'
+  },
+  
+  // 프로필 메뉴 항목
+  PROFILE_MENU_ITEMS: {
+    DASHBOARD: 'dashboard',
+    PROFILE: 'profile',
+    SETTINGS: 'settings',
+    LOGOUT: 'logout'
+  },
+  
+  // 메시지
+  MESSAGES: {
+    MENU_OPENED: '메뉴가 열렸습니다.',
+    MENU_CLOSED: '메뉴가 닫혔습니다.',
+    PROFILE_OPENED: '프로필 메뉴가 열렸습니다.',
+    PROFILE_CLOSED: '프로필 메뉴가 닫혔습니다.',
+    LOGOUT_SUCCESS: '로그아웃되었습니다.',
+    LOGOUT_ERROR: '로그아웃 중 오류가 발생했습니다.'
+  },
+  
+  // UI 설정
+  UI: {
+    ANIMATION_DURATION: 300,
+    MENU_WIDTH: '300px',
+    PROFILE_MENU_WIDTH: '200px'
+  }
+};

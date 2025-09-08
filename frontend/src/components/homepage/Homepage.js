@@ -3,10 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleHeader from '../layout/SimpleHeader';
 import TabletBottomNavigation from '../layout/TabletBottomNavigation';
+import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
+import { useSession } from '../../contexts/SessionContext';
+import notificationManager from '../../utils/notification';
 
 const TabletHomepage = () => {
   const navigate = useNavigate();
+  const { user, logout } = useSession();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   useEffect(() => {
     console.log('🏠 TabletHomepage 마운트됨');
@@ -36,13 +42,99 @@ const TabletHomepage = () => {
   };
 
   const handleHamburgerToggle = () => {
+    const { MESSAGES } = HOMEPAGE_CONSTANTS;
     console.log('🍔 햄버거 메뉴 토글');
-    // TODO: 햄버거 메뉴 로직 구현
+    
+    setIsMenuOpen(prev => {
+      const newState = !prev;
+      notificationManager.info(newState ? MESSAGES.MENU_OPENED : MESSAGES.MENU_CLOSED);
+      return newState;
+    });
   };
 
   const handleProfileClick = () => {
+    const { MESSAGES } = HOMEPAGE_CONSTANTS;
     console.log('👤 프로필 클릭');
-    // TODO: 프로필 페이지로 이동
+    
+    if (user) {
+      // 로그인된 사용자: 프로필 메뉴 토글
+      setIsProfileMenuOpen(prev => {
+        const newState = !prev;
+        notificationManager.info(newState ? MESSAGES.PROFILE_OPENED : MESSAGES.PROFILE_CLOSED);
+        return newState;
+      });
+    } else {
+      // 로그인되지 않은 사용자: 로그인 페이지로 이동
+      navigate('/login');
+    }
+  };
+
+  const handleMenuClick = (menuItem) => {
+    const { MENU_ITEMS } = HOMEPAGE_CONSTANTS;
+    console.log('메뉴 클릭:', menuItem);
+    
+    setIsMenuOpen(false);
+    
+    switch (menuItem) {
+      case MENU_ITEMS.HOME:
+        navigate('/');
+        break;
+      case MENU_ITEMS.LOGIN:
+        navigate('/login');
+        break;
+      case MENU_ITEMS.REGISTER:
+        navigate('/register');
+        break;
+      case MENU_ITEMS.ABOUT:
+        navigate('/about');
+        break;
+      case MENU_ITEMS.SERVICES:
+        navigate('/services');
+        break;
+      case MENU_ITEMS.CONTACT:
+        navigate('/contact');
+        break;
+      default:
+        console.log('알 수 없는 메뉴 항목:', menuItem);
+    }
+  };
+
+  const handleProfileMenuClick = async (menuItem) => {
+    const { PROFILE_MENU_ITEMS, MESSAGES } = HOMEPAGE_CONSTANTS;
+    console.log('프로필 메뉴 클릭:', menuItem);
+    
+    setIsProfileMenuOpen(false);
+    
+    switch (menuItem) {
+      case PROFILE_MENU_ITEMS.DASHBOARD:
+        // 사용자 역할에 따른 대시보드로 이동
+        const dashboardPath = user?.role ? `/${user.role.toLowerCase()}/dashboard` : '/dashboard';
+        navigate(dashboardPath);
+        break;
+      case PROFILE_MENU_ITEMS.PROFILE:
+        navigate('/mypage');
+        break;
+      case PROFILE_MENU_ITEMS.SETTINGS:
+        navigate('/settings');
+        break;
+      case PROFILE_MENU_ITEMS.LOGOUT:
+        try {
+          await logout();
+          notificationManager.success(MESSAGES.LOGOUT_SUCCESS);
+          navigate('/');
+        } catch (error) {
+          console.error('로그아웃 실패:', error);
+          notificationManager.error(MESSAGES.LOGOUT_ERROR);
+        }
+        break;
+      default:
+        console.log('알 수 없는 프로필 메뉴 항목:', menuItem);
+    }
+  };
+
+  const handleOverlayClick = () => {
+    setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
   };
 
   return (
@@ -57,6 +149,130 @@ const TabletHomepage = () => {
           onHamburgerToggle={handleHamburgerToggle}
           onProfileClick={handleProfileClick}
         />
+        
+        {/* 햄버거 메뉴 */}
+        {isMenuOpen && (
+          <div className="hamburger-menu-overlay" onClick={handleOverlayClick}>
+            <div className="hamburger-menu" onClick={(e) => e.stopPropagation()}>
+              <div className="hamburger-menu-header">
+                <h3>메뉴</h3>
+                <button 
+                  className="hamburger-menu-close"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <i className="bi bi-x"></i>
+                </button>
+              </div>
+              <div className="hamburger-menu-content">
+                <button 
+                  className="hamburger-menu-item"
+                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.HOME)}
+                >
+                  <i className="bi bi-house"></i>
+                  홈
+                </button>
+                <button 
+                  className="hamburger-menu-item"
+                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.ABOUT)}
+                >
+                  <i className="bi bi-info-circle"></i>
+                  소개
+                </button>
+                <button 
+                  className="hamburger-menu-item"
+                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.SERVICES)}
+                >
+                  <i className="bi bi-heart"></i>
+                  서비스
+                </button>
+                <button 
+                  className="hamburger-menu-item"
+                  onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.CONTACT)}
+                >
+                  <i className="bi bi-telephone"></i>
+                  문의
+                </button>
+                {!user && (
+                  <>
+                    <button 
+                      className="hamburger-menu-item"
+                      onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.LOGIN)}
+                    >
+                      <i className="bi bi-box-arrow-in-right"></i>
+                      로그인
+                    </button>
+                    <button 
+                      className="hamburger-menu-item"
+                      onClick={() => handleMenuClick(HOMEPAGE_CONSTANTS.MENU_ITEMS.REGISTER)}
+                    >
+                      <i className="bi bi-person-plus"></i>
+                      회원가입
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* 프로필 메뉴 */}
+        {isProfileMenuOpen && user && (
+          <div className="profile-menu-overlay" onClick={handleOverlayClick}>
+            <div className="profile-menu" onClick={(e) => e.stopPropagation()}>
+              <div className="profile-menu-header">
+                <div className="profile-menu-user">
+                  <div className="profile-menu-avatar">
+                    {user.profileImageUrl ? (
+                      <img src={user.profileImageUrl} alt={user.name} />
+                    ) : (
+                      <i className="bi bi-person-circle"></i>
+                    )}
+                  </div>
+                  <div className="profile-menu-info">
+                    <h4>{user.name}</h4>
+                    <p>{user.email}</p>
+                  </div>
+                </div>
+                <button 
+                  className="profile-menu-close"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                >
+                  <i className="bi bi-x"></i>
+                </button>
+              </div>
+              <div className="profile-menu-content">
+                <button 
+                  className="profile-menu-item"
+                  onClick={() => handleProfileMenuClick(HOMEPAGE_CONSTANTS.PROFILE_MENU_ITEMS.DASHBOARD)}
+                >
+                  <i className="bi bi-speedometer2"></i>
+                  대시보드
+                </button>
+                <button 
+                  className="profile-menu-item"
+                  onClick={() => handleProfileMenuClick(HOMEPAGE_CONSTANTS.PROFILE_MENU_ITEMS.PROFILE)}
+                >
+                  <i className="bi bi-person"></i>
+                  프로필
+                </button>
+                <button 
+                  className="profile-menu-item"
+                  onClick={() => handleProfileMenuClick(HOMEPAGE_CONSTANTS.PROFILE_MENU_ITEMS.SETTINGS)}
+                >
+                  <i className="bi bi-gear"></i>
+                  설정
+                </button>
+                <button 
+                  className="profile-menu-item profile-menu-logout"
+                  onClick={() => handleProfileMenuClick(HOMEPAGE_CONSTANTS.PROFILE_MENU_ITEMS.LOGOUT)}
+                >
+                  <i className="bi bi-box-arrow-right"></i>
+                  로그아웃
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         <main className="tablet-main">
           <div className="tablet-container">

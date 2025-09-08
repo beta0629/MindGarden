@@ -224,4 +224,105 @@ public class AuthController {
             return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
+    
+    /**
+     * SMS 인증 코드 전송
+     */
+    @PostMapping("/sms/send")
+    public ResponseEntity<?> sendSmsCode(@RequestBody Map<String, String> request) {
+        try {
+            String phoneNumber = request.get("phoneNumber");
+            log.info("SMS 인증 코드 전송 요청: {}", phoneNumber);
+            
+            // 휴대폰 번호 유효성 검사
+            if (phoneNumber == null || !phoneNumber.matches("^01[0-9]{8,9}$")) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "올바른 휴대폰 번호를 입력해주세요."
+                ));
+            }
+            
+            // TODO: 실제 SMS 발송 서비스 연동
+            // 현재는 테스트용으로 6자리 랜덤 코드 생성
+            String verificationCode = String.format("%06d", (int)(Math.random() * 1000000));
+            
+            // 세션에 인증 코드 저장 (실제로는 Redis 등에 저장)
+            // HttpSession session = request.getSession();
+            // session.setAttribute("sms_verification_code_" + phoneNumber, verificationCode);
+            // session.setAttribute("sms_verification_time_" + phoneNumber, System.currentTimeMillis());
+            
+            log.info("SMS 인증 코드 생성: {} (테스트용)", verificationCode);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "인증 코드가 전송되었습니다.",
+                "verificationCode", verificationCode // 테스트용으로 코드 반환
+            ));
+        } catch (Exception e) {
+            log.error("SMS 인증 코드 전송 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "인증 코드 전송에 실패했습니다."
+            ));
+        }
+    }
+    
+    /**
+     * SMS 인증 코드 검증
+     */
+    @PostMapping("/sms/verify")
+    public ResponseEntity<?> verifySmsCode(@RequestBody Map<String, String> request) {
+        try {
+            String phoneNumber = request.get("phoneNumber");
+            String verificationCode = request.get("verificationCode");
+            log.info("SMS 인증 코드 검증 요청: {} - {}", phoneNumber, verificationCode);
+            
+            // 입력값 유효성 검사
+            if (phoneNumber == null || verificationCode == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "휴대폰 번호와 인증 코드를 입력해주세요."
+                ));
+            }
+            
+            if (!phoneNumber.matches("^01[0-9]{8,9}$")) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "올바른 휴대폰 번호를 입력해주세요."
+                ));
+            }
+            
+            if (!verificationCode.matches("^[0-9]{6}$")) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "6자리 인증 코드를 입력해주세요."
+                ));
+            }
+            
+            // TODO: 실제 SMS 인증 코드 검증 로직
+            // 현재는 테스트용으로 간단한 검증
+            boolean isValid = verificationCode.length() == 6 && verificationCode.matches("^[0-9]+$");
+            
+            if (isValid) {
+                log.info("SMS 인증 성공: {}", phoneNumber);
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "인증이 완료되었습니다.",
+                    "phoneNumber", phoneNumber
+                ));
+            } else {
+                log.warn("SMS 인증 실패: {} - {}", phoneNumber, verificationCode);
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "인증 코드가 올바르지 않습니다."
+                ));
+            }
+        } catch (Exception e) {
+            log.error("SMS 인증 코드 검증 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "인증 코드 검증에 실패했습니다."
+            ));
+        }
+    }
 }

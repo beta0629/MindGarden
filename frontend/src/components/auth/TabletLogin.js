@@ -11,6 +11,8 @@ import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import { LOGIN_SESSION_CHECK_DELAY, EXISTING_SESSION_CHECK_DELAY } from '../../constants/session';
 import notificationManager from '../../utils/notification';
+import { TABLET_LOGIN_CSS } from '../../constants/css';
+import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
 
 const TabletLogin = () => {
   const navigate = useNavigate();
@@ -158,37 +160,83 @@ const TabletLogin = () => {
   };
 
   const sendVerificationCode = async () => {
-    if (!phoneNumber || phoneNumber.length !== 11) {
-      alert('올바른 휴대폰 번호를 입력해주세요.');
+    const { SMS, VALIDATION, MESSAGES } = TABLET_LOGIN_CONSTANTS;
+    
+    if (!phoneNumber || phoneNumber.length !== SMS.PHONE_LENGTH) {
+      notificationManager.error(MESSAGES.PHONE_INVALID);
+      return;
+    }
+
+    if (!phoneNumber.match(VALIDATION.PHONE_REGEX)) {
+      notificationManager.error(MESSAGES.PHONE_INVALID);
       return;
     }
 
     try {
-      // TODO: 실제 SMS 인증 코드 전송 API 호출
-      console.log('SMS 인증 코드 전송:', phoneNumber);
-      setIsCodeSent(true);
-      setCountdown(180); // 3분 카운트다운
-      alert('인증 코드가 전송되었습니다.');
+      const response = await fetch(TABLET_LOGIN_CONSTANTS.API_ENDPOINTS.SMS_SEND, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log('SMS 인증 코드 전송 성공:', data);
+        setIsCodeSent(true);
+        setCountdown(SMS.COUNTDOWN_DURATION);
+        notificationManager.success(MESSAGES.SMS_SENT);
+      } else {
+        console.error('SMS 전송 실패:', data.message);
+        notificationManager.error(data.message || MESSAGES.SMS_SEND_FAILED);
+      }
     } catch (error) {
       console.error('SMS 전송 오류:', error);
-      alert('인증 코드 전송에 실패했습니다.');
+      notificationManager.error(MESSAGES.SMS_SEND_FAILED);
     }
   };
 
   const verifyCode = async () => {
-    if (!verificationCode || verificationCode.length !== 6) {
-      alert('6자리 인증 코드를 입력해주세요.');
+    const { SMS, VALIDATION, MESSAGES } = TABLET_LOGIN_CONSTANTS;
+    
+    if (!verificationCode || verificationCode.length !== SMS.CODE_LENGTH) {
+      notificationManager.error(MESSAGES.CODE_INVALID);
+      return;
+    }
+
+    if (!verificationCode.match(VALIDATION.PHONE_REGEX)) {
+      notificationManager.error(MESSAGES.CODE_INVALID);
       return;
     }
 
     try {
-      // TODO: 실제 SMS 인증 코드 검증 API 호출
-      console.log('SMS 인증 코드 검증:', verificationCode);
-      alert('인증이 완료되었습니다.');
-      // 인증 성공 후 처리
+      const response = await fetch(TABLET_LOGIN_CONSTANTS.API_ENDPOINTS.SMS_VERIFY, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          phoneNumber, 
+          verificationCode 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log('SMS 인증 성공:', data);
+        notificationManager.success(MESSAGES.SMS_VERIFY_SUCCESS);
+        // 인증 성공 후 처리 - 로그인 완료 또는 다음 단계로 진행
+        // TODO: SMS 인증 성공 후 로그인 처리 로직 구현
+      } else {
+        console.error('SMS 인증 실패:', data.message);
+        notificationManager.error(data.message || MESSAGES.SMS_VERIFY_FAILED);
+      }
     } catch (error) {
       console.error('SMS 검증 오류:', error);
-      alert('인증 코드가 올바르지 않습니다.');
+      notificationManager.error(MESSAGES.SMS_VERIFY_FAILED);
     }
   };
 
@@ -444,26 +492,26 @@ const TabletLogin = () => {
       description="MindGarden 계정으로 로그인하여 상담 서비스를 이용하세요"
       bodyClass="tablet-page"
     >
-      <div className="tablet-login-page tablet-page">
+      <div className={`${TABLET_LOGIN_CSS.CONTAINER} tablet-page`}>
         {/* 공통 헤더 */}
         <SimpleHeader />
         
-        <div className="login-container">
-          <div className="login-header">
-            <h1 className="login-title">MindGarden 로그인</h1>
+        <div className={TABLET_LOGIN_CSS.CONTENT}>
+          <div className={TABLET_LOGIN_CSS.HEADER}>
+            <h1 className={TABLET_LOGIN_CSS.TITLE}>MindGarden 로그인</h1>
             <p className="login-subtitle">마음의 정원에 오신 것을 환영합니다</p>
           </div>
 
-          <div className="login-tabs">
+          <div className={TABLET_LOGIN_CSS.MODE_SWITCH}>
             <button 
-              className={`login-tab ${!smsMode ? 'active' : ''}`}
+              className={`${TABLET_LOGIN_CSS.MODE_BUTTON} ${!smsMode ? TABLET_LOGIN_CSS.MODE_ACTIVE : ''}`}
               onClick={() => setSmsMode(false)}
             >
               <i className="bi bi-envelope"></i>
               이메일 로그인
             </button>
             <button 
-              className={`login-tab ${smsMode ? 'active' : ''}`}
+              className={`${TABLET_LOGIN_CSS.MODE_BUTTON} ${smsMode ? TABLET_LOGIN_CSS.MODE_ACTIVE : ''}`}
               onClick={() => setSmsMode(true)}
             >
               <i className="bi bi-phone"></i>
@@ -473,9 +521,9 @@ const TabletLogin = () => {
 
           {!smsMode ? (
             /* 이메일 로그인 폼 */
-            <form className="login-form" onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label className="form-label">
+            <form className={TABLET_LOGIN_CSS.FORM} onSubmit={handleSubmit}>
+              <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
+                <label className={TABLET_LOGIN_CSS.LABEL}>
                   <i className="bi bi-envelope"></i>
                   이메일
                 </label>
@@ -484,30 +532,30 @@ const TabletLogin = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="form-input"
+                  className={TABLET_LOGIN_CSS.INPUT}
                   placeholder="이메일을 입력하세요"
                   required
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">
+              <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
+                <label className={TABLET_LOGIN_CSS.LABEL}>
                   <i className="bi bi-lock"></i>
                   비밀번호
                 </label>
-                <div className="password-input-group">
+                <div className={TABLET_LOGIN_CSS.INPUT_GROUP}>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="form-input"
+                    className={TABLET_LOGIN_CSS.INPUT}
                     placeholder="비밀번호를 입력하세요"
                     required
                   />
                   <button
                     type="button"
-                    className="password-toggle"
+                    className={TABLET_LOGIN_CSS.PASSWORD_TOGGLE}
                     onClick={togglePassword}
                   >
                     <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
@@ -517,12 +565,12 @@ const TabletLogin = () => {
 
               <button
                 type="submit"
-                className="login-button primary"
+                className={`${TABLET_LOGIN_CSS.BUTTON} ${TABLET_LOGIN_CSS.BUTTON_PRIMARY}`}
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <>
-                    <span className="loading-spinner"></span>
+                    <span className={TABLET_LOGIN_CSS.LOADING}></span>
                     로그인 중...
                   </>
                 ) : (
@@ -532,24 +580,24 @@ const TabletLogin = () => {
             </form>
           ) : (
             /* SMS 로그인 폼 */
-            <div className="sms-login-form">
-              <div className="form-group">
-                <label className="form-label">
+            <div className={TABLET_LOGIN_CSS.SMS_SECTION}>
+              <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
+                <label className={TABLET_LOGIN_CSS.LABEL}>
                   <i className="bi bi-phone"></i>
                   휴대폰 번호
                 </label>
-                <div className="phone-input-group">
+                <div className={TABLET_LOGIN_CSS.INPUT_GROUP}>
                   <input
                     type="tel"
                     value={formatPhoneNumber(phoneNumber)}
                     onChange={handlePhoneChange}
-                    className="form-input"
+                    className={TABLET_LOGIN_CSS.INPUT}
                     placeholder="010-0000-0000"
                     maxLength="13"
                   />
                   <button
                     type="button"
-                    className="send-code-button"
+                    className={TABLET_LOGIN_CSS.SMS_BUTTON}
                     onClick={sendVerificationCode}
                     disabled={isCodeSent && countdown > 0}
                   >
@@ -562,23 +610,23 @@ const TabletLogin = () => {
               </div>
 
               {isCodeSent && (
-                <div className="form-group">
-                  <label className="form-label">
+                <div className={TABLET_LOGIN_CSS.FORM_GROUP}>
+                  <label className={TABLET_LOGIN_CSS.LABEL}>
                     <i className="bi bi-shield-check"></i>
                     인증 코드
                   </label>
-                  <div className="verification-input-group">
+                  <div className={TABLET_LOGIN_CSS.SMS_VERIFICATION}>
                     <input
                       type="text"
                       value={verificationCode}
                       onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, ''))}
-                      className="form-input"
+                      className={TABLET_LOGIN_CSS.VERIFICATION_INPUT}
                       placeholder="6자리 인증 코드"
                       maxLength="6"
                     />
                     <button
                       type="button"
-                      className="verify-code-button"
+                      className={TABLET_LOGIN_CSS.VERIFICATION_BUTTON}
                       onClick={verifyCode}
                     >
                       인증

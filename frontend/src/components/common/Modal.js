@@ -1,4 +1,5 @@
 import React from 'react';
+import { MODAL_CSS_CLASSES, MODAL_SIZES, MODAL_DEFAULTS } from '../../constants/modal';
 import './Modal.css';
 
 /**

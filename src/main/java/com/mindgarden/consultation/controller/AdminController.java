@@ -990,4 +990,93 @@ public class AdminController {
             ));
         }
     }
+    
+    /**
+     * 매핑 결제 확인
+     */
+    @PostMapping("/mapping/payment/confirm")
+    public ResponseEntity<?> confirmMappingPayment(@RequestBody Map<String, Object> request) {
+        try {
+            log.info("결제 확인 요청: {}", request);
+            
+            @SuppressWarnings("unchecked")
+            List<Long> mappingIds = (List<Long>) request.get("mappingIds");
+            String paymentMethod = (String) request.get("paymentMethod");
+            Integer amount = (Integer) request.get("amount");
+            String note = (String) request.get("note");
+            
+            if (mappingIds == null || mappingIds.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "매핑 ID가 필요합니다."
+                ));
+            }
+            
+            // TODO: 실제 결제 확인 로직 구현
+            // 현재는 테스트용으로 성공 응답 반환
+            log.info("결제 확인 처리: mappingIds={}, method={}, amount={}, note={}", 
+                mappingIds, paymentMethod, amount, note);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "결제가 성공적으로 확인되었습니다.");
+            response.put("data", Map.of(
+                "confirmedMappings", mappingIds,
+                "paymentMethod", paymentMethod,
+                "amount", amount,
+                "note", note,
+                "confirmedAt", System.currentTimeMillis()
+            ));
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("결제 확인 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "결제 확인 중 오류가 발생했습니다."
+            ));
+        }
+    }
+    
+    /**
+     * 매핑 결제 취소
+     */
+    @PostMapping("/mapping/payment/cancel")
+    public ResponseEntity<?> cancelMappingPayment(@RequestBody Map<String, Object> request) {
+        try {
+            log.info("결제 취소 요청: {}", request);
+            
+            @SuppressWarnings("unchecked")
+            List<Long> mappingIds = (List<Long>) request.get("mappingIds");
+            
+            if (mappingIds == null || mappingIds.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "매핑 ID가 필요합니다."
+                ));
+            }
+            
+            // TODO: 실제 결제 취소 로직 구현
+            // 현재는 테스트용으로 성공 응답 반환
+            log.info("결제 취소 처리: mappingIds={}", mappingIds);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "결제가 성공적으로 취소되었습니다.");
+            response.put("data", Map.of(
+                "cancelledMappings", mappingIds,
+                "cancelledAt", System.currentTimeMillis()
+            ));
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("결제 취소 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "결제 취소 중 오류가 발생했습니다."
+            ));
+        }
+    }
 }

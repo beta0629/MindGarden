@@ -63,6 +63,13 @@ public interface PaymentService {
     Page<PaymentResponse> getAllPayments(Pageable pageable);
     
     /**
+     * 모든 결제 조회 (페이지네이션 없음)
+     * 
+     * @return 결제 목록
+     */
+    List<Payment> getAllPayments();
+    
+    /**
      * 결제 상태 업데이트
      * 
      * @param paymentId 결제 ID

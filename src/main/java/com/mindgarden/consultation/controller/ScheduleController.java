@@ -567,4 +567,39 @@ public class ScheduleController {
                 .body(Map.of("success", false, "message", "상담 유형 한글 변환에 실패했습니다: " + e.getMessage()));
         }
     }
+    
+    /**
+     * 내담자-상담사 매핑 확인
+     */
+    @PostMapping("/client/mapping/check")
+    public ResponseEntity<?> checkClientMapping(@RequestBody Map<String, Object> request) {
+        try {
+            Long clientId = Long.valueOf(request.get("clientId").toString());
+            Long consultantId = Long.valueOf(request.get("consultantId").toString());
+            
+            log.info("매핑 확인 요청: clientId={}, consultantId={}", clientId, consultantId);
+            
+            // TODO: 실제 매핑 확인 로직 구현
+            // 현재는 테스트용 데이터 반환
+            Map<String, Object> mappingData = new HashMap<>();
+            mappingData.put("hasMapping", true);
+            mappingData.put("remainingSessions", 5);
+            mappingData.put("packageName", "기본 패키지");
+            mappingData.put("mappingStatus", "ACTIVE");
+            mappingData.put("lastSessionDate", "2024-12-15");
+            mappingData.put("totalSessions", 10);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "매핑 정보를 성공적으로 확인했습니다.");
+            response.put("data", mappingData);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("매핑 확인 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "매핑 확인 중 오류가 발생했습니다."));
+        }
+    }
 }

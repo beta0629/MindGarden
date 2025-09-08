@@ -82,6 +82,12 @@ public class Payment {
     private PaymentProvider provider;
     
     /**
+     * 가상계좌번호 (가상계좌 결제 시 사용)
+     */
+    @Column(name = "virtual_account_number", length = 50)
+    private String virtualAccountNumber;
+    
+    /**
      * 결제자 ID (User 엔티티와 연결)
      */
     @Column(name = "payer_id", nullable = false)

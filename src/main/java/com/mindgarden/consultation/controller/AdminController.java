@@ -1087,7 +1087,7 @@ public class AdminController {
                     ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
                     if (mapping != null) {
                         // 결제 상태를 취소됨으로 변경
-                        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CANCELLED);
+                        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CANCELED);
                         mapping.setUpdatedAt(java.time.LocalDateTime.now());
                         
                         // 매핑 저장 (AdminService의 updateMapping은 DTO를 받으므로 직접 저장)

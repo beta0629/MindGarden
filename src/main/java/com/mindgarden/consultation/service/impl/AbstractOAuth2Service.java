@@ -213,13 +213,6 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                 .name(socialUserInfo.getName())
                 .email(socialUserInfo.getEmail())
                 .phone(socialUserInfo.getPhone())
-                .birthDate(socialUserInfo.getBirthDate())
-                .gender(socialUserInfo.getGender())
-                .address(socialUserInfo.getAddress())
-                .preferredLanguage(socialUserInfo.getPreferredLanguage())
-                .emergencyContactName(socialUserInfo.getEmergencyContactName())
-                .emergencyContactPhone(socialUserInfo.getEmergencyContactPhone())
-                .medicalHistory(socialUserInfo.getMedicalHistory())
                 .isDeleted(false)
                 .build();
         

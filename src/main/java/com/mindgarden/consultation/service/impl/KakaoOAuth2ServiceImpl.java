@@ -2,6 +2,7 @@ package com.mindgarden.consultation.service.impl;
 
 import java.util.Map;
 import com.mindgarden.consultation.dto.SocialUserInfo;
+import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.JwtService;
@@ -42,9 +43,10 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
     public KakaoOAuth2ServiceImpl(
             RestTemplate restTemplate,
             UserRepository userRepository,
+            ClientRepository clientRepository,
             UserSocialAccountRepository userSocialAccountRepository,
             JwtService jwtService) {
-        super(userRepository, userSocialAccountRepository, jwtService);
+        super(userRepository, clientRepository, userSocialAccountRepository, jwtService);
         this.restTemplate = restTemplate;
     }
 

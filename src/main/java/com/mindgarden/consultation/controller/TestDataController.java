@@ -418,7 +418,7 @@ public class TestDataController {
 
             // UserRole 확인 (enum 비교는 안전하게)
             log.info("상담사 역할: {}", consultant.getRole());
-            log.info("내담자 역할: {}", clientEntity.getRole());
+            log.info("내담자 ID: {}", clientEntity.getId());
 
             // 기존 매핑이 있는지 확인 (임시로 false로 설정)
             boolean existingMapping = false;

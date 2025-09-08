@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import notificationManager from '../../utils/notification';
+import { API_BASE_URL } from '../../constants/api';
 
 /**
  * 수퍼어드민 자금 대시보드 컴포넌트
@@ -37,7 +38,7 @@ const FinanceDashboard = () => {
       console.log('재무 데이터 로드 시작...');
       
       // 올바른 API 엔드포인트로 수정
-      const response = await fetch('http://localhost:8080/api/super-admin/finance/dashboard', {
+      const response = await fetch(`${API_BASE_URL}/api/super-admin/finance/dashboard`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

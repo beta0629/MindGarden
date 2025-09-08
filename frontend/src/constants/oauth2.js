@@ -4,9 +4,11 @@
  */
 
 // 카카오 OAuth2 설정
+import ENV from './environment';
+
 export const KAKAO_OAUTH2_CONFIG = {
-  clientId: process.env.REACT_APP_KAKAO_CLIENT_ID || 'cbb457cfb5f9351fd495be4af2b11a34',
-  redirectUri: process.env.REACT_APP_KAKAO_REDIRECT_URI || 'http://localhost:8080/api/auth/oauth2/callback',
+  clientId: ENV.KAKAO.CLIENT_ID,
+  redirectUri: ENV.KAKAO.REDIRECT_URI,
   authUrl: 'https://kauth.kakao.com/oauth/authorize',
   tokenUrl: 'https://kauth.kakao.com/oauth/token',
   userInfoUrl: 'https://kapi.kakao.com/v2/user/me',
@@ -17,9 +19,9 @@ export const KAKAO_OAUTH2_CONFIG = {
 
 // 네이버 OAuth2 설정
 export const NAVER_OAUTH2_CONFIG = {
-  clientId: process.env.REACT_APP_NAVER_CLIENT_ID || 'vTKNlxYKIfo1uCCXaDfk',
-  clientSecret: process.env.REACT_APP_NAVER_CLIENT_SECRET || 'V_b3omW5pu',
-  redirectUri: process.env.REACT_APP_NAVER_REDIRECT_URI || 'http://localhost:8080/api/auth/oauth2/callback',
+  clientId: ENV.NAVER.CLIENT_ID,
+  clientSecret: ENV.NAVER.CLIENT_SECRET,
+  redirectUri: ENV.NAVER.REDIRECT_URI,
   authUrl: 'https://nid.naver.com/oauth2.0/authorize',
   tokenUrl: 'https://nid.naver.com/oauth2.0/token',
   userInfoUrl: 'https://openapi.naver.com/v1/nid/me',

@@ -607,9 +607,9 @@ export const PAYMENT_CONFIRMATION_MODAL_CONSTANTS = {
 export const CLIENT_SELECTOR_CONSTANTS = {
   // API 엔드포인트
   API_ENDPOINTS: {
-    CHECK_MAPPING: 'http://localhost:8080/api/schedules/client/mapping/check',
-    GET_CLIENT_MAPPINGS: 'http://localhost:8080/api/schedules/client/mappings',
-    GET_CLIENT_HISTORY: 'http://localhost:8080/api/schedules/client/history'
+    CHECK_MAPPING: '/api/schedules/client/mapping/check',
+    GET_CLIENT_MAPPINGS: '/api/schedules/client/mappings',
+    GET_CLIENT_HISTORY: '/api/schedules/client/history'
   },
   
   // 매핑 상태

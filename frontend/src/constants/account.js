@@ -2,14 +2,16 @@
  * 계좌 관리 관련 상수 정의
  */
 
+import { createApiUrl } from './environment';
+
 // API 엔드포인트
 export const ACCOUNT_API_ENDPOINTS = {
-  BASE: 'http://localhost:8080/api/accounts',
-  ACTIVE: 'http://localhost:8080/api/accounts/active',
-  BANKS: 'http://localhost:8080/api/accounts/banks',
-  STATISTICS: 'http://localhost:8080/api/accounts/statistics',
-  VALIDATE: 'http://localhost:8080/api/accounts/validate',
-  PRIMARY: 'http://localhost:8080/api/accounts/primary'
+  BASE: createApiUrl('/api/accounts'),
+  ACTIVE: createApiUrl('/api/accounts/active'),
+  BANKS: createApiUrl('/api/accounts/banks'),
+  STATISTICS: createApiUrl('/api/accounts/statistics'),
+  VALIDATE: createApiUrl('/api/accounts/validate'),
+  PRIMARY: createApiUrl('/api/accounts/primary')
 };
 
 // HTTP 메서드

@@ -7,8 +7,10 @@
  * @since 2024-12-19
  */
 
+import ENV from './environment';
+
 // 기본 API 경로 (백엔드 서버 직접 연결)
-export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+export const API_BASE_URL = ENV.API_BASE_URL;
 
 // 인증 관련 API
 export const AUTH_API = {

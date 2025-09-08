@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import { PAYMENT_TEST_CSS } from '../../constants/css';
+import { API_BASE_URL } from '../../constants/api';
 import { 
   PAYMENT_TEST_API,
   HTTP_METHODS,
@@ -81,7 +82,7 @@ const PaymentTest = () => {
       cancelUrl: 'http://localhost:3000/payment/cancel'
     };
 
-    const response = await fetch(`http://localhost:8080${PAYMENT_TEST_API.CREATE_PAYMENT}`, {
+    const response = await fetch(`${API_BASE_URL}${PAYMENT_TEST_API.CREATE_PAYMENT}`, {
       method: HTTP_METHODS.POST,
       headers: {
         [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
@@ -97,7 +98,7 @@ const PaymentTest = () => {
   };
 
   const testPaymentScenarios = async () => {
-    const response = await fetch(`http://localhost:8080${PAYMENT_TEST_API.PAYMENT_SCENARIOS}`, {
+    const response = await fetch(`${API_BASE_URL}${PAYMENT_TEST_API.PAYMENT_SCENARIOS}`, {
       method: HTTP_METHODS.POST,
       headers: {
         [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
@@ -118,7 +119,7 @@ const PaymentTest = () => {
     const status = prompt('상태를 입력하세요 (APPROVED, CANCELLED, REFUNDED):', PAYMENT_STATUSES[0].value);
     if (!status) return;
 
-    const response = await fetch(`http://localhost:8080${PAYMENT_TEST_API.PAYMENT_STATUS}/${paymentId}/status`, {
+    const response = await fetch(`${API_BASE_URL}${PAYMENT_TEST_API.PAYMENT_STATUS}/${paymentId}/status`, {
       method: HTTP_METHODS.PUT,
       headers: {
         [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
@@ -149,7 +150,7 @@ const PaymentTest = () => {
       timestamp: new Date().toISOString()
     };
 
-    const response = await fetch(`http://localhost:8080${PAYMENT_TEST_API.WEBHOOK}`, {
+    const response = await fetch(`${API_BASE_URL}${PAYMENT_TEST_API.WEBHOOK}`, {
       method: HTTP_METHODS.POST,
       headers: {
         [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
@@ -165,7 +166,7 @@ const PaymentTest = () => {
   };
 
   const testStatistics = async () => {
-    const response = await fetch(`http://localhost:8080${PAYMENT_TEST_API.STATISTICS}`, {
+    const response = await fetch(`${API_BASE_URL}${PAYMENT_TEST_API.STATISTICS}`, {
       method: HTTP_METHODS.GET,
       headers: {
         [HTTP_HEADERS.CONTENT_TYPE]: HTTP_HEADERS.APPLICATION_JSON,
@@ -189,7 +190,7 @@ const PaymentTest = () => {
     const depositorName = prompt('입금자명을 입력하세요:', '테스트입금자');
     if (!depositorName) return;
 
-    const response = await fetch(`http://localhost:8080/api/test/payment/deposit-test?paymentId=${paymentId}&amount=${amount}&depositorName=${depositorName}`, {
+    const response = await fetch(`${API_BASE_URL}/api/test/payment/deposit-test?paymentId=${paymentId}&amount=${amount}&depositorName=${depositorName}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -217,7 +218,7 @@ const PaymentTest = () => {
       ...(amount && { amount })
     });
 
-    const response = await fetch(`http://localhost:8080/api/test/payment/cancel-refund-test?${params}`, {
+    const response = await fetch(`${API_BASE_URL}/api/test/payment/cancel-refund-test?${params}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -231,7 +232,7 @@ const PaymentTest = () => {
     const count = prompt('생성할 결제 수를 입력하세요:', '10');
     if (!count) return;
 
-    const response = await fetch(`http://localhost:8080/api/test/payment/bulk-create?count=${count}`, {
+    const response = await fetch(`${API_BASE_URL}/api/test/payment/bulk-create?count=${count}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -242,7 +243,7 @@ const PaymentTest = () => {
   };
 
   const testSystemHealth = async () => {
-    const response = await fetch('http://localhost:8080/api/test/payment/health', {
+    const response = await fetch(`${API_BASE_URL}/api/test/payment/health`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

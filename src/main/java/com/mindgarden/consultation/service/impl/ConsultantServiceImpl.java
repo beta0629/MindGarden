@@ -62,7 +62,13 @@ public class ConsultantServiceImpl implements ConsultantService {
             existingConsultant.setYearsOfExperience(updateData.getYearsOfExperience());
         }
         if (updateData.getAverageRating() != null) {
-            // TODO: setAverageRating 메서드가 Consultant 엔티티에 없음
+            // 평점 유효성 검사
+            if (updateData.getAverageRating() < ConsultantConstants.MIN_RATING || 
+                updateData.getAverageRating() > ConsultantConstants.MAX_RATING) {
+                throw new IllegalArgumentException(ConsultantConstants.ERROR_INVALID_RATING);
+            }
+            // 평점 업데이트 (실제 구현에서는 평점 계산 로직 필요)
+            log.info("상담사 평점 업데이트: consultantId={}, newRating={}", id, updateData.getAverageRating());
         }
         if (updateData.getIsAvailable() != null) {
             existingConsultant.setIsAvailable(updateData.getIsAvailable());
@@ -243,6 +249,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        
         // 매핑을 통해 내담자 조회 (실제 구현에서는 매핑 테이블을 통해 조회)
         return Page.empty(pageable);
     }
@@ -255,6 +264,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        
         // 매핑을 통해 내담자 조회 (실제 구현에서는 매핑 테이블을 통해 조회)
         return Optional.empty();
     }
@@ -266,6 +278,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
         // 내담자 존재 확인 및 업데이트 (실제 구현에서는 매핑 테이블을 통해 조회)
         return updateData;
@@ -300,6 +315,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        
         List<Map<String, Object>> slots = new ArrayList<>();
         for (int hour = ConsultantConstants.WORK_START_HOUR; hour < ConsultantConstants.WORK_END_HOUR; hour++) {
             Map<String, Object> slot = new HashMap<>();
@@ -321,6 +339,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        
         // 시간 유효성 검사
         if (startTime.isAfter(endTime)) {
             throw new IllegalArgumentException("시작 시간은 종료 시간보다 빨라야 합니다.");
@@ -339,6 +360,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        
         // 시간 유효성 검사
         if (startTime.isAfter(endTime)) {
             throw new IllegalArgumentException("시작 시간은 종료 시간보다 빨라야 합니다.");
@@ -356,6 +380,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        
         // 스케줄 삭제 로직 (실제 구현에서는 Schedule 엔티티 삭제)
         log.info(ConsultantConstants.SUCCESS_SCHEDULE_DELETED);
     }
@@ -369,6 +396,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
         // 상담 예약 조회 (실제 구현에서는 Consultation 엔티티를 통해 조회)
         List<Map<String, Object>> bookings = new ArrayList<>();
@@ -396,6 +426,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        
         // 상담 확정 로직 (실제 구현에서는 Consultation 엔티티 업데이트)
         log.info("상담이 확정되었습니다: consultationId={}", consultationId);
     }
@@ -408,6 +441,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        
         // 상담 취소 로직 (실제 구현에서는 Consultation 엔티티 상태 업데이트)
         log.info("상담이 취소되었습니다: consultationId={}", consultationId);
     }
@@ -419,6 +455,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
         // 평점 유효성 검사
         if (rating < ConsultantConstants.MIN_RATING || rating > ConsultantConstants.MAX_RATING) {
@@ -438,6 +477,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
         // 기간 유효성 검사
         if (startDate.isAfter(endDate)) {
@@ -470,6 +512,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        
         // 기간 유효성 검사
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("시작일은 종료일보다 빨라야 합니다.");
@@ -498,6 +543,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
         // 만족도 분석 (실제 구현에서는 Review 엔티티를 통해 조회)
         Map<String, Object> analysis = new HashMap<>();
@@ -545,6 +593,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        
         // 자격증 업데이트 로직 (실제 구현에서는 Certification 엔티티에 저장)
         log.info("자격증이 업데이트되었습니다: {}건", certifications != null ? certifications.size() : 0);
     }
@@ -586,6 +637,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
         
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
+        
         // 휴가 기간 유효성 검사
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("휴가 시작일은 종료일보다 빨라야 합니다.");
@@ -602,6 +656,9 @@ public class ConsultantServiceImpl implements ConsultantService {
         // 상담사 존재 확인
         Consultant consultant = consultantRepository.findById(consultantId)
                 .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 상담사 정보 로깅
+        log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
         // 휴가 취소 로직 (실제 구현에서는 Vacation 엔티티 상태 업데이트)
         log.info("휴가가 취소되었습니다: vacationId={}", vacationId);

@@ -337,23 +337,79 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
   };
 
   return (
-    <div className="statistics-dashboard">
+    <div style={{
+      padding: '24px',
+      backgroundColor: '#f8f9fa',
+      minHeight: '100vh'
+    }}>
       {/* 헤더 */}
-      <div className="dashboard-header">
-        <div className="dashboard-title-section">
-          <h1 className="dashboard-title">
-            <i className="bi bi-graph-up"></i>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: '32px',
+        paddingBottom: '16px',
+        borderBottom: '2px solid #e9ecef'
+      }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }}>
+          <h1 style={{
+            margin: '0',
+            fontSize: '32px',
+            fontWeight: '700',
+            color: '#2c3e50',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <i className="bi bi-graph-up" style={{
+              color: '#4CAF50',
+              fontSize: '28px'
+            }}></i>
             통계 대시보드
           </h1>
-          <p className="dashboard-subtitle">
+          <p style={{
+            margin: '0',
+            fontSize: '16px',
+            color: '#6c757d',
+            fontWeight: '400'
+          }}>
             상담소 전체 통계 및 상담 내역을 한눈에 확인하세요
           </p>
         </div>
-        <div className="dashboard-actions">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
           <button 
-            className="btn btn-outline-primary"
+            style={{
+              padding: '12px 24px',
+              border: '2px solid #667eea',
+              borderRadius: '8px',
+              backgroundColor: 'transparent',
+              color: '#667eea',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.2s ease'
+            }}
             onClick={handleRefresh}
             disabled={loading}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#667eea';
+              e.target.style.color = '#ffffff';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+              e.target.style.color = '#667eea';
+            }}
           >
             <i className="bi bi-arrow-clockwise"></i>
             새로고침
@@ -362,13 +418,52 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
       </div>
 
       {/* 필터 섹션 */}
-      <div className="filter-section">
-        <div className="filter-group">
-          <label className="filter-label">기간</label>
+      <div style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '12px',
+        padding: '20px',
+        marginBottom: '24px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        border: '1px solid #e9ecef',
+        display: 'flex',
+        gap: '20px',
+        alignItems: 'end',
+        flexWrap: 'wrap'
+      }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          minWidth: '150px'
+        }}>
+          <label style={{
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#495057',
+            margin: '0'
+          }}>기간</label>
           <select 
-            className="filter-input"
+            style={{
+              padding: '12px 16px',
+              border: '1px solid #e9ecef',
+              borderRadius: '8px',
+              fontSize: '14px',
+              backgroundColor: '#ffffff',
+              color: '#495057',
+              cursor: 'pointer',
+              outline: 'none',
+              transition: 'all 0.2s ease'
+            }}
             value={filters.dateRange}
             onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#667eea';
+              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#e9ecef';
+              e.target.style.boxShadow = 'none';
+            }}
           >
             {Object.entries(FILTER_LABELS.DATE_RANGE).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
@@ -376,12 +471,40 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
           </select>
         </div>
         
-        <div className="filter-group">
-          <label className="filter-label">차트 타입</label>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          minWidth: '150px'
+        }}>
+          <label style={{
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#495057',
+            margin: '0'
+          }}>차트 타입</label>
           <select 
-            className="filter-input"
+            style={{
+              padding: '12px 16px',
+              border: '1px solid #e9ecef',
+              borderRadius: '8px',
+              fontSize: '14px',
+              backgroundColor: '#ffffff',
+              color: '#495057',
+              cursor: 'pointer',
+              outline: 'none',
+              transition: 'all 0.2s ease'
+            }}
             value={filters.chartType}
             onChange={(e) => handleFilterChange('chartType', e.target.value)}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#667eea';
+              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#e9ecef';
+              e.target.style.boxShadow = 'none';
+            }}
           >
             {Object.entries(FILTER_LABELS.CHART_TYPE).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
@@ -389,12 +512,40 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
           </select>
         </div>
         
-        <div className="filter-group">
-          <label className="filter-label">상태</label>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          minWidth: '150px'
+        }}>
+          <label style={{
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#495057',
+            margin: '0'
+          }}>상태</label>
           <select 
-            className="filter-input"
+            style={{
+              padding: '12px 16px',
+              border: '1px solid #e9ecef',
+              borderRadius: '8px',
+              fontSize: '14px',
+              backgroundColor: '#ffffff',
+              color: '#495057',
+              cursor: 'pointer',
+              outline: 'none',
+              transition: 'all 0.2s ease'
+            }}
             value={filters.status}
             onChange={(e) => handleFilterChange('status', e.target.value)}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#667eea';
+              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#e9ecef';
+              e.target.style.boxShadow = 'none';
+            }}
           >
             <option value="all">전체</option>
             {Object.entries(SCHEDULE_STATUS).map(([key, value]) => (
@@ -404,9 +555,37 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
         </div>
         
         <button 
-          className="filter-btn"
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            borderRadius: '8px',
+            backgroundColor: '#667eea',
+            color: '#ffffff',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s ease',
+            height: '44px'
+          }}
           onClick={handleFilterApply}
           disabled={loading}
+          onMouseEnter={(e) => {
+            if (!loading) {
+              e.target.style.backgroundColor = '#5a67d8';
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!loading) {
+              e.target.style.backgroundColor = '#667eea';
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = 'none';
+            }
+          }}
         >
           <i className="bi bi-funnel"></i>
           필터 적용
@@ -425,13 +604,26 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
       <DetailedStatsGrid statistics={statistics} />
 
       {/* 차트 섹션 */}
-      <div className="charts-section">
-        <div className="chart-card">
+      <div style={{
+        marginBottom: '32px',
+        width: '100%'
+      }}>
+        <div style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          padding: '20px',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+          border: '2px dashed #e9ecef',
+          width: '100%',
+          minHeight: '550px',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
           <Chart
             type={filters.chartType}
             data={getChartData()}
             title="스케줄 상태별 통계"
-            height={CHART_HEIGHTS.LARGE}
+            height="500px"
             loading={loading}
             error={error}
           />

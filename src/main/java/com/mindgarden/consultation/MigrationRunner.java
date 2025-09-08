@@ -1,14 +1,13 @@
 package com.mindgarden.consultation;
 
+import java.util.List;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 전화번호 암호화 마이그레이션 실행기

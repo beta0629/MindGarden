@@ -245,37 +245,32 @@ const ScheduleModalNew = ({
 
                 {/* 모달 콘텐츠 */}
                 <div className={COMPONENT_CSS.SCHEDULE_MODAL.CONTENT}>
-                    {/* StepIndicator 강제 표시 */}
-                    <div style={{
-                        display: 'block !important',
-                        visibility: 'visible !important',
-                        opacity: '1 !important',
-                        background: '#f8f9fa',
-                        padding: '16px',
-                        borderRadius: '8px',
-                        border: '2px solid #007bff',
-                        margin: '16px 0',
-                        width: '100%'
-                    }}>
-                        <StepIndicator 
-                            currentStep={step} 
-                            totalSteps={4}
-                            steps={[
-                                { id: 1, title: '상담사 선택', icon: '👨‍⚕️' },
-                                { id: 2, title: '내담자 선택', icon: '👤' },
-                                { id: 3, title: '시간 선택', icon: '⏰' },
-                                { id: 4, title: '세부사항', icon: '📝' }
-                            ]}
-                        />
-                    </div>
+                    <StepIndicator 
+                        currentStep={step} 
+                        totalSteps={4}
+                        steps={[
+                            { id: 1, title: '상담사 선택', icon: '👨‍⚕️' },
+                            { id: 2, title: '내담자 선택', icon: '👤' },
+                            { id: 3, title: '시간 선택', icon: '⏰' },
+                            { id: 4, title: '세부사항', icon: '📝' }
+                        ]}
+                    />
                     
                     {/* 1단계: 상담사 선택 */}
                     {step === 1 && (
-                        <ConsultantSelectionStep
-                            onConsultantSelect={handleConsultantDrop}
-                            selectedConsultant={selectedConsultant}
-                            selectedDate={selectedDate}
-                        />
+                        <div style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '20px'
+                        }}>
+                            <ConsultantSelectionStep
+                                onConsultantSelect={handleConsultantDrop}
+                                selectedConsultant={selectedConsultant}
+                                selectedDate={selectedDate}
+                            />
+                        </div>
                     )}
 
                     {/* 2단계: 내담자 선택 */}
@@ -318,18 +313,53 @@ const ScheduleModalNew = ({
                     {step === 4 && (
                         <div className="schedule-details">
                             <h4>📝 스케줄 세부사항</h4>
-                            <div className="schedule-summary">
-                                <div className="summary-item">
-                                    <strong>상담사:</strong> {selectedConsultant?.name}
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '12px',
+                                padding: '16px',
+                                backgroundColor: '#f8f9fa',
+                                borderRadius: '8px',
+                                marginBottom: '20px'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '8px 0',
+                                    borderBottom: '1px solid #e9ecef'
+                                }}>
+                                    <strong style={{ color: '#495057', fontSize: '14px' }}>상담사:</strong>
+                                    <span style={{ color: '#495057', fontSize: '14px' }}>{selectedConsultant?.name}</span>
                                 </div>
-                                <div className="summary-item">
-                                    <strong>내담자:</strong> {selectedClient?.name}
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '8px 0',
+                                    borderBottom: '1px solid #e9ecef'
+                                }}>
+                                    <strong style={{ color: '#495057', fontSize: '14px' }}>내담자:</strong>
+                                    <span style={{ color: '#495057', fontSize: '14px' }}>{selectedClient?.name}</span>
                                 </div>
-                                <div className="summary-item">
-                                    <strong>시간:</strong> {selectedTimeSlot?.time} ({getConsultationDuration(consultationType)}분)
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '8px 0',
+                                    borderBottom: '1px solid #e9ecef'
+                                }}>
+                                    <strong style={{ color: '#495057', fontSize: '14px' }}>시간:</strong>
+                                    <span style={{ color: '#495057', fontSize: '14px' }}>{selectedTimeSlot?.time} ({getConsultationDuration(consultationType)}분)</span>
                                 </div>
-                                <div className="summary-item">
-                                    <strong>유형:</strong> {convertConsultationTypeToKorean(consultationType)}
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '8px 0'
+                                }}>
+                                    <strong style={{ color: '#495057', fontSize: '14px' }}>유형:</strong>
+                                    <span style={{ color: '#495057', fontSize: '14px' }}>{convertConsultationTypeToKorean(consultationType)}</span>
                                 </div>
                             </div>
                             
@@ -340,6 +370,25 @@ const ScheduleModalNew = ({
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="스케줄 제목 (선택사항)"
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 16px',
+                                        border: '1px solid #e9ecef',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        color: '#495057',
+                                        backgroundColor: '#ffffff',
+                                        outline: 'none',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = '#667eea';
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#e9ecef';
+                                        e.target.style.boxShadow = 'none';
+                                    }}
                                 />
                             </div>
                             
@@ -350,6 +399,27 @@ const ScheduleModalNew = ({
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="추가 설명 (선택사항)"
                                     rows="3"
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px 16px',
+                                        border: '1px solid #e9ecef',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        color: '#495057',
+                                        backgroundColor: '#ffffff',
+                                        outline: 'none',
+                                        transition: 'all 0.2s ease',
+                                        resize: 'vertical',
+                                        fontFamily: 'inherit'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = '#667eea';
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#e9ecef';
+                                        e.target.style.boxShadow = 'none';
+                                    }}
                                 />
                             </div>
                         </div>

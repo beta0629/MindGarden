@@ -374,7 +374,7 @@ export const SCHEDULE_MODAL_CONSTANTS = {
     { value: 'all', label: '전체', color: '#6c757d' },
     { value: 'available', label: '여유', color: '#28a745' },
     { value: 'busy', label: '바쁨', color: '#ffc107' },
-    { value: 'unavailable', label: '휴', color: '#dc3545' }
+    { value: 'unavailable', label: '휴무', color: '#dc3545' }
   ],
   
   // 상담사 카드 설정
@@ -607,9 +607,9 @@ export const PAYMENT_CONFIRMATION_MODAL_CONSTANTS = {
 export const CLIENT_SELECTOR_CONSTANTS = {
   // API 엔드포인트
   API_ENDPOINTS: {
-    CHECK_MAPPING: '/api/schedule/client/mapping/check',
-    GET_CLIENT_MAPPINGS: '/api/schedule/client/mappings',
-    GET_CLIENT_HISTORY: '/api/schedule/client/history'
+    CHECK_MAPPING: 'http://localhost:8080/api/schedules/client/mapping/check',
+    GET_CLIENT_MAPPINGS: 'http://localhost:8080/api/schedules/client/mappings',
+    GET_CLIENT_HISTORY: 'http://localhost:8080/api/schedules/client/history'
   },
   
   // 매핑 상태

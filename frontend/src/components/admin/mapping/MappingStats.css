@@ -10,8 +10,8 @@
 
 .stats-header {
     padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: #E8E0FF;
+    color: #7B68EE;
     text-align: center;
 }
 
@@ -90,7 +90,7 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, currentColor, transparent);
+    background: currentColor;
     opacity: 0.3;
 }
 

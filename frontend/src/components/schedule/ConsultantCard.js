@@ -30,7 +30,7 @@ const ConsultantCardNew = ({
      * 가용성 상태에 따른 텍스트 반환
      */
     const getAvailabilityText = () => {
-        if (!consultant.available) return '휴';
+        if (!consultant.available) return '휴무';
         if (consultant.busy) return '바쁨';
         return '여유';
     };
@@ -127,7 +127,6 @@ const ConsultantCardNew = ({
 
     return (
         <div
-            className={`${COMPONENT_CSS.SCHEDULE_MODAL.CONSULTANT_CARD} ${selected ? 'selected' : ''}`}
             onClick={handleClick}
             draggable={draggable}
             role="button"
@@ -139,29 +138,163 @@ const ConsultantCardNew = ({
                 }
             }}
             aria-label={`${consultant.name} 상담사 선택`}
+            style={{
+                minHeight: '220px',
+                background: selected ? 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)' : '#ffffff',
+                borderRadius: '16px',
+                padding: '20px',
+                border: selected ? '2px solid #667eea' : '2px solid #e9ecef',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'flex-start',
+                alignItems: 'flex-start',
+                textAlign: 'left',
+                position: 'relative',
+                overflow: 'visible',
+                boxShadow: selected ? '0 8px 25px rgba(102, 126, 234, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                margin: '0',
+                gap: '16px'
+            }}
+            onMouseEnter={(e) => {
+                if (!selected) {
+                    e.target.style.transform = 'translateY(-4px)';
+                    e.target.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.2)';
+                    e.target.style.borderColor = '#667eea';
+                }
+            }}
+            onMouseLeave={(e) => {
+                if (!selected) {
+                    e.target.style.transform = 'translateY(0)';
+                    e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                    e.target.style.borderColor = '#e9ecef';
+                }
+            }}
         >
             {/* 상담사 아바타 */}
-            <div className="consultant-avatar">
+            <div style={{
+                width: '50px',
+                height: '50px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                fontWeight: '700',
+                color: '#ffffff',
+                flexShrink: '0',
+                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                border: '2px solid #e9ecef'
+            }}>
                 {getInitial()}
             </div>
 
             {/* 상담사 정보 */}
-            <div className="consultant-info">
-                <h5 className="consultant-name">{consultant.name}</h5>
-                <p className="consultant-email">{consultant.email || '이메일 없음'}</p>
-                <p className="consultant-phone">{consultant.phone || '전화번호 없음'}</p>
-                <p className="consultant-specialty">{getSpecialtyText()}</p>
+            <div style={{
+                flex: '1',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+                overflow: 'visible',
+                justifyContent: 'flex-start',
+                alignItems: 'flex-start',
+                height: '100%',
+                minWidth: '0',
+                textAlign: 'left'
+            }}>
+                <h5 style={{
+                    fontSize: '18px',
+                    fontWeight: '700',
+                    color: '#495057',
+                    margin: '0',
+                    lineHeight: '1.2',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
+                    textAlign: 'left'
+                }}>{consultant.name}</h5>
+                <p style={{
+                    fontSize: '14px',
+                    color: '#6c757d',
+                    margin: '0',
+                    fontWeight: '400',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
+                    textAlign: 'left'
+                }}>{consultant.email || '이메일 없음'}</p>
+                <p style={{
+                    fontSize: '14px',
+                    color: '#6c757d',
+                    margin: '0',
+                    fontWeight: '400',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
+                    textAlign: 'left'
+                }}>{consultant.phone || '전화번호 없음'}</p>
+                <p style={{
+                    fontSize: '12px',
+                    color: '#6c757d',
+                    fontWeight: '400',
+                    margin: '0',
+                    fontStyle: 'italic',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
+                    textAlign: 'left'
+                }}>{getSpecialtyText()}</p>
                 
                 {/* 상태 및 등록일 */}
-                <div className="consultant-status-info">
-                    <div 
-                        className={`consultant-availability ${getAvailabilityClass()}`}
-                        style={{ '--availability-color': getAvailabilityColor() }}
-                    >
-                        <div className="availability-dot"></div>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: '12px',
+                    marginTop: '8px',
+                    marginLeft: '16px',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    textAlign: 'left'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        background: getAvailabilityClass() === 'available' ? '#d4edda' : 
+                                   getAvailabilityClass() === 'busy' ? '#fff3cd' : '#f8d7da',
+                        color: getAvailabilityClass() === 'available' ? '#28a745' : 
+                               getAvailabilityClass() === 'busy' ? '#856404' : '#dc3545',
+                        minWidth: '60px',
+                        justifyContent: 'center',
+                        border: getAvailabilityClass() === 'available' ? '1px solid #c3e6cb' : 
+                                getAvailabilityClass() === 'busy' ? '1px solid #ffeaa7' : '1px solid #f5c6cb'
+                    }}>
+                        <div style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: 'currentColor',
+                            boxShadow: '0 0 4px rgba(0, 0, 0, 0.2)'
+                        }}></div>
                         {getAvailabilityText()}
                     </div>
-                    <p className="consultant-registration-date">
+                    <p style={{
+                        fontSize: '12px',
+                        color: '#6c757d',
+                        fontWeight: '400',
+                        margin: '0',
+                        textAlign: 'left'
+                    }}>
                         등록일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '2025. 1. 5.'}
                     </p>
                 </div>
@@ -169,7 +302,22 @@ const ConsultantCardNew = ({
 
             {/* 선택 표시 */}
             {selected && (
-                <div className="selection-indicator">
+                <div style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    width: '24px',
+                    height: '24px',
+                    background: '#28a745',
+                    color: '#ffffff',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    animation: 'selectionPulse 0.3s ease'
+                }}>
                     ✓
                 </div>
             )}

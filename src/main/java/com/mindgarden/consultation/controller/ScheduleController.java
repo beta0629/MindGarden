@@ -578,10 +578,12 @@ public class ScheduleController {
     @PostMapping("/client/mapping/check")
     public ResponseEntity<?> checkClientMapping(@RequestBody Map<String, Object> request) {
         try {
+            log.info("매핑 확인 요청 받음: request={}", request);
+            
             Long clientId = Long.valueOf(request.get("clientId").toString());
             Long consultantId = Long.valueOf(request.get("consultantId").toString());
             
-            log.info("매핑 확인 요청: clientId={}, consultantId={}", clientId, consultantId);
+            log.info("매핑 확인 요청 파싱 완료: clientId={}, consultantId={}", clientId, consultantId);
             
             // 실제 매핑 확인 로직 구현
             Map<String, Object> mappingData = new HashMap<>();

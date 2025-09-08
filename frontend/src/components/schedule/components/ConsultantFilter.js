@@ -39,28 +39,95 @@ const ConsultantFilterNew = ({
     };
 
     return (
-        <div className={COMPONENT_CSS.SCHEDULE_MODAL.FILTER_SECTION}>
+        <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+        }}>
             {/* 필터 행 */}
-            <div className="filter-row">
+            <div style={{
+                display: 'flex',
+                gap: '16px',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+            }}>
                 {/* 검색 입력 */}
-                <div className="filter-group">
-                    <label>검색</label>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    minWidth: '200px',
+                    flex: '1'
+                }}>
+                    <label style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#495057',
+                        margin: '0'
+                    }}>검색</label>
                     <input
                         type="text"
-                        className={COMPONENT_CSS.SCHEDULE_MODAL.SEARCH_INPUT}
+                        style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            transition: 'all 0.2s ease',
+                            background: '#ffffff'
+                        }}
                         placeholder={SCHEDULE_MODAL_CONSTANTS.FILTER.SEARCH_PLACEHOLDER}
                         value={filters.search}
                         onChange={handleSearchChange}
+                        onFocus={(e) => {
+                            e.target.style.outline = 'none';
+                            e.target.style.borderColor = '#667eea';
+                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                        }}
+                        onBlur={(e) => {
+                            e.target.style.borderColor = 'transparent';
+                            e.target.style.boxShadow = 'none';
+                        }}
                     />
                 </div>
 
                 {/* 전문분야 선택 */}
-                <div className="filter-group">
-                    <label>전문분야</label>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    minWidth: '150px'
+                }}>
+                    <label style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#495057',
+                        margin: '0'
+                    }}>전문분야</label>
                     <select
-                        className={COMPONENT_CSS.SCHEDULE_MODAL.SPECIALTY_SELECT}
+                        style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            background: '#ffffff',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
                         value={filters.specialty}
                         onChange={handleSpecialtyChange}
+                        onFocus={(e) => {
+                            e.target.style.outline = 'none';
+                            e.target.style.borderColor = '#667eea';
+                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                        }}
+                        onBlur={(e) => {
+                            e.target.style.borderColor = 'transparent';
+                            e.target.style.boxShadow = 'none';
+                        }}
                     >
                         {SCHEDULE_MODAL_CONSTANTS.SPECIALTIES.map(specialty => (
                             <option key={specialty.value} value={specialty.value}>
@@ -71,39 +138,132 @@ const ConsultantFilterNew = ({
                 </div>
 
                 {/* 초기화 버튼 */}
-                <div className="filter-group">
-                    <label>&nbsp;</label>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    minWidth: '100px'
+                }}>
+                    <label style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#495057',
+                        margin: '0'
+                    }}>&nbsp;</label>
                     <button
-                        className={COMPONENT_CSS.SCHEDULE_MODAL.RESET_BUTTON}
+                        style={{
+                            height: '40px',
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '8px',
+                            background: '#ffffff',
+                            color: '#6c757d',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            minWidth: '80px',
+                            justifyContent: 'center'
+                        }}
                         onClick={onResetFilters}
+                        onMouseEnter={(e) => {
+                            e.target.style.background = '#6c757d';
+                            e.target.style.color = '#ffffff';
+                            e.target.style.transform = 'translateY(-2px)';
+                            e.target.style.boxShadow = '0 4px 12px rgba(108, 117, 125, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.background = '#ffffff';
+                            e.target.style.color = '#6c757d';
+                            e.target.style.transform = 'translateY(0)';
+                            e.target.style.boxShadow = 'none';
+                        }}
                     >
                         🔄 {SCHEDULE_MODAL_CONSTANTS.FILTER.RESET_BUTTON_TEXT}
                     </button>
                 </div>
 
                 {/* 상담사 수 표시 */}
-                <div className="consultant-count">
+                <div style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#495057',
+                    marginLeft: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '40px'
+                }}>
                     {consultantCount}{SCHEDULE_MODAL_CONSTANTS.FILTER.CONSULTANT_COUNT_TEXT}
                 </div>
             </div>
 
             {/* 가용성 필터 */}
-            <div className="filter-row">
-                <div className="filter-group">
-                    <label>가용성</label>
-                    <div className={COMPONENT_CSS.SCHEDULE_MODAL.AVAILABILITY_FILTER}>
+            <div style={{
+                display: 'flex',
+                gap: '16px',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+            }}>
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    minWidth: '200px'
+                }}>
+                    <label style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#495057',
+                        margin: '0'
+                    }}>가용성</label>
+                    <div style={{
+                        display: 'flex',
+                        gap: '8px',
+                        flexWrap: 'wrap'
+                    }}>
                         {SCHEDULE_MODAL_CONSTANTS.AVAILABILITY_OPTIONS.map(option => (
                             <button
                                 key={option.value}
-                                className={`${COMPONENT_CSS.SCHEDULE_MODAL.FILTER_BUTTON} ${option.value} ${
-                                    filters.availability === option.value ? 'active' : ''
-                                }`}
-                                onClick={() => handleAvailabilityChange(option.value)}
                                 style={{
-                                    '--button-color': option.color
+                                    height: '40px',
+                                    padding: '8px 16px',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    background: filters.availability === option.value ? option.color : '#ffffff',
+                                    color: filters.availability === option.value ? '#ffffff' : '#495057',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    minWidth: '80px',
+                                    justifyContent: 'center'
+                                }}
+                                onClick={() => handleAvailabilityChange(option.value)}
+                                onMouseEnter={(e) => {
+                                    if (filters.availability !== option.value) {
+                                        e.target.style.transform = 'translateY(-2px)';
+                                        e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (filters.availability !== option.value) {
+                                        e.target.style.transform = 'translateY(0)';
+                                        e.target.style.boxShadow = 'none';
+                                    }
                                 }}
                             >
-                                <div className="availability-indicator" style={{ backgroundColor: option.color }}></div>
+                                <div style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    background: 'currentColor'
+                                }}></div>
                                 {option.label}
                             </button>
                         ))}

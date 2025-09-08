@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { CLIENT_SELECTOR_CONSTANTS } from '../../constants/css-variables';
@@ -22,6 +22,57 @@ const ClientSelector = ({
 }) => {
     const [clientHistory, setClientHistory] = useState({});
     const [loadingHistory, setLoadingHistory] = useState({});
+    const [clientMappings, setClientMappings] = useState({});
+    const [loadingMappings, setLoadingMappings] = useState({});
+
+    /**
+     * 컴포넌트 마운트 시 모든 내담자의 매핑 정보 로드
+     */
+    useEffect(() => {
+        if (clients && clients.length > 0 && selectedConsultant) {
+            console.log('🚀 내담자 매핑 정보 일괄 로드 시작:', clients.length, '명');
+            clients.forEach(client => {
+                loadClientMapping(client);
+            });
+        }
+    }, [clients, selectedConsultant]); // loadClientMapping 제거하여 무한 루프 방지
+
+    /**
+     * 내담자 매핑 정보 미리 로드
+     */
+    const loadClientMapping = useCallback(async (client) => {
+        const clientId = client.originalId || client.id;
+        
+        if (clientMappings[clientId] || loadingMappings[clientId]) {
+            return; // 이미 로드되었거나 로딩 중
+        }
+
+        try {
+            setLoadingMappings(prev => ({ ...prev, [clientId]: true }));
+            console.log('🔍 내담자 매핑 정보 로드 시작:', { clientId, consultantId: selectedConsultant?.originalId || selectedConsultant?.id });
+            
+            const mappingInfo = await getClientMappingInfo(client);
+            
+            console.log('📊 내담자 매핑 정보 로드 완료:', mappingInfo);
+            setClientMappings(prev => ({ ...prev, [clientId]: mappingInfo }));
+        } catch (error) {
+            console.error('❌ 내담자 매핑 정보 로드 오류:', error);
+            // 오류 시 기본값 설정
+            setClientMappings(prev => ({ 
+                ...prev, 
+                [clientId]: {
+                    hasMapping: false,
+                    remainingSessions: 0,
+                    packageName: '확인 불가',
+                    mappingStatus: 'INACTIVE',
+                    lastSessionDate: null,
+                    totalSessions: 0
+                }
+            }));
+        } finally {
+            setLoadingMappings(prev => ({ ...prev, [clientId]: false }));
+        }
+    }, [clientMappings, loadingMappings, selectedConsultant]);
 
     /**
      * 내담자 상담 히스토리 조회
@@ -60,7 +111,18 @@ const ClientSelector = ({
         const { API_ENDPOINTS, MESSAGES, MAPPING_STATUS } = CLIENT_SELECTOR_CONSTANTS;
         
         try {
-            console.log('매핑 정보 확인 중:', client.id, selectedConsultant?.id);
+            console.log('🔍 매핑 정보 확인 시작:', {
+                clientId: client.originalId || client.id,
+                consultantId: selectedConsultant?.originalId || selectedConsultant?.id,
+                apiEndpoint: API_ENDPOINTS.CHECK_MAPPING
+            });
+            
+            const requestBody = {
+                clientId: client.originalId || client.id,
+                consultantId: selectedConsultant?.originalId || selectedConsultant?.id
+            };
+            
+            console.log('📤 요청 데이터:', requestBody);
             
             const response = await fetch(API_ENDPOINTS.CHECK_MAPPING, {
                 method: 'POST',
@@ -68,13 +130,17 @@ const ClientSelector = ({
                     'Content-Type': 'application/json',
                 },
                 credentials: 'include',
-                body: JSON.stringify({
-                    clientId: client.id,
-                    consultantId: selectedConsultant?.id
-                })
+                body: JSON.stringify(requestBody)
             });
 
+            console.log('📥 응답 상태:', response.status, response.statusText);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
             const data = await response.json();
+            console.log('📊 응답 데이터:', data);
 
             if (data.success) {
                 console.log('매핑 정보 확인 성공:', data.data);
@@ -99,6 +165,7 @@ const ClientSelector = ({
             }
         } catch (error) {
             console.error('매핑 정보 확인 오류:', error);
+            console.error('오류 상세:', error.message);
             // 에러 시 기본값 반환
             return {
                 hasMapping: false,
@@ -193,7 +260,23 @@ const ClientSelector = ({
         <div className="client-selector">
             <div className="client-grid">
                 {clients.map(client => {
-                    const mappingInfo = getClientMappingInfo(client);
+                    const clientId = client.originalId || client.id;
+                    const mappingInfo = clientMappings[clientId] || {
+                        hasMapping: false,
+                        remainingSessions: 0,
+                        packageName: loadingMappings[clientId] ? '로딩 중...' : '확인 중...',
+                        mappingStatus: 'INACTIVE',
+                        lastSessionDate: null,
+                        totalSessions: 0
+                    };
+                    
+                    // 디버깅용 로그
+                    console.log(`🔍 내담자 ${client.name} (ID: ${clientId}) 매핑 정보:`, {
+                        mappingInfo,
+                        clientMappings: clientMappings[clientId],
+                        loadingMappings: loadingMappings[clientId]
+                    });
+                    
                     const isSelected = selectedClient?.id === client.id;
                     const isAvailable = mappingInfo.hasMapping && mappingInfo.remainingSessions > 0;
                     

@@ -336,11 +336,41 @@ const ConsultantSelectionStepNew = ({
     }
 
     return (
-        <div className="consultant-selection-step">
+        <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            padding: '0',
+            margin: '0'
+        }}>
             {/* 단계 헤더 */}
-            <div className={COMPONENT_CSS.SCHEDULE_MODAL.STEP_HEADER}>
-                <h4>👨‍⚕️ 상담사를 선택하세요</h4>
-                <p className={COMPONENT_CSS.SCHEDULE_MODAL.STEP_DESCRIPTION}>
+            <div style={{
+                height: '80px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                textAlign: 'center',
+                marginBottom: '20px',
+                padding: '16px 0',
+                background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                borderRadius: '12px',
+                border: 'none'
+            }}>
+                <h4 style={{
+                    margin: '0 0 8px 0',
+                    fontSize: '24px',
+                    fontWeight: '700',
+                    color: '#495057'
+                }}>👨‍⚕️ 상담사를 선택하세요</h4>
+                <p style={{
+                    margin: '0',
+                    fontSize: '16px',
+                    color: '#6c757d',
+                    fontWeight: '500'
+                }}>
                     {selectedDate?.toLocaleDateString('ko-KR', { 
                         year: 'numeric', 
                         month: 'long', 
@@ -350,20 +380,63 @@ const ConsultantSelectionStepNew = ({
             </div>
 
             {/* 필터 섹션 */}
-            <ConsultantFilter
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                onResetFilters={handleResetFilters}
-                consultantCount={filteredConsultants.length}
-            />
+            <div style={{
+                height: '200px',
+                background: '#f8f9fa',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '20px',
+                border: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+            }}>
+                <ConsultantFilter
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    onResetFilters={handleResetFilters}
+                    consultantCount={filteredConsultants.length}
+                />
+            </div>
 
             {/* 상담사 그리드 */}
-            <div className={COMPONENT_CSS.SCHEDULE_MODAL.CONSULTANT_GRID}>
+            <div style={{
+                height: '350px',
+                overflowY: 'auto',
+                padding: '20px',
+                background: '#f8f9fa',
+                borderRadius: '12px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '20px',
+                alignItems: 'start',
+                gridAutoRows: 'max-content'
+            }}>
                 {filteredConsultants.length === 0 ? (
-                    <div className={COMPONENT_CSS.SCHEDULE_MODAL.NO_CONSULTANTS}>
-                        <div className="no-consultants-icon">👨‍⚕️</div>
-                        <p>조건에 맞는 상담사가 없습니다.</p>
-                        <small>필터를 조정해보세요.</small>
+                    <div style={{
+                        gridColumn: '1 / -1',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        padding: '40px 20px',
+                        color: '#6c757d'
+                    }}>
+                        <div style={{
+                            fontSize: '48px',
+                            marginBottom: '16px',
+                            opacity: '0.5'
+                        }}>👨‍⚕️</div>
+                        <p style={{
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            margin: '0 0 8px 0'
+                        }}>조건에 맞는 상담사가 없습니다.</p>
+                        <small style={{
+                            fontSize: '14px',
+                            opacity: '0.7'
+                        }}>필터를 조정해보세요.</small>
                     </div>
                 ) : (
                     filteredConsultants.map(consultant => (
@@ -380,10 +453,24 @@ const ConsultantSelectionStepNew = ({
 
             {/* 선택된 상담사 정보 */}
             {selectedConsultant && (
-                <div className={COMPONENT_CSS.SCHEDULE_MODAL.SELECTED_INFO}>
-                    <div className={COMPONENT_CSS.SCHEDULE_MODAL.SELECTION_SUMMARY}>
+                <div style={{
+                    marginTop: '20px',
+                    padding: '16px',
+                    background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
+                    borderRadius: '12px',
+                    border: 'none'
+                }}>
+                    <div style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#495057',
+                        textAlign: 'center'
+                    }}>
                         <strong>선택된 상담사:</strong> {selectedConsultant.name}
-                        <span className={COMPONENT_CSS.SCHEDULE_MODAL.CONSULTANT_SPECIALTY}>
+                        <span style={{
+                            color: '#667eea',
+                            fontWeight: '500'
+                        }}>
                             ({selectedConsultant.specialties?.[0] || selectedConsultant.specialty})
                         </span>
                     </div>

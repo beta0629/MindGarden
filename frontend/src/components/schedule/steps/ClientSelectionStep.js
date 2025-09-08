@@ -113,6 +113,7 @@ const ClientSelectionStep = ({
                     // 선택된 상담사와 매핑된 내담자만 필터링
                     const availableClients = mappings
                         .filter(mapping => 
+                            mapping.consultant && 
                             mapping.consultant.id === (selectedConsultant.originalId || selectedConsultant.id) &&
                             mapping.paymentStatus === 'APPROVED' && 
                             mapping.remainingSessions > 0

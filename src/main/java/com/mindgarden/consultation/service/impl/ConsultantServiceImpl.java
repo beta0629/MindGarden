@@ -13,6 +13,7 @@ import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.repository.BaseRepository;
 import com.mindgarden.consultation.repository.ConsultantRepository;
 import com.mindgarden.consultation.service.ConsultantService;
+import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,19 @@ public class ConsultantServiceImpl implements ConsultantService {
     
     @Autowired
     private ConsultantRepository consultantRepository;
+    
+    @Autowired
+    private PersonalDataEncryptionUtil encryptionUtil;
+    
+    /**
+     * 전화번호 마스킹 처리
+     */
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 4) {
+            return "***";
+        }
+        return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
+    }
     
     // === BaseService 구현 메서드들 ===
     
@@ -225,6 +239,20 @@ public class ConsultantServiceImpl implements ConsultantService {
                 specialty, minExperience, minRating, available);
         
         List<Consultant> consultants = consultantRepository.findByIsDeletedFalse();
+        
+        // 각 상담사의 전화번호 복호화
+        consultants.forEach(consultant -> {
+            if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
+                try {
+                    String decryptedPhone = encryptionUtil.decrypt(consultant.getPhone());
+                    consultant.setPhone(decryptedPhone);
+                    log.info("🔓 상담사 전화번호 복호화 완료: {}", maskPhone(decryptedPhone));
+                } catch (Exception e) {
+                    log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
+                    consultant.setPhone("복호화 실패");
+                }
+            }
+        });
         
         return consultants.stream()
                 .filter(consultant -> specialty == null || consultant.getSpecialty().contains(specialty))

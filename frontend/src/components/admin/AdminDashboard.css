@@ -52,24 +52,24 @@
     --admin-transition-normal: 0.3s ease;
     --admin-transition-slow: 0.5s ease;
     
-    /* 그라데이션 변수 */
-    --admin-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --admin-gradient-consultants: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --admin-gradient-clients: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --admin-gradient-mappings: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --admin-gradient-active: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    --admin-gradient-schedule: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-    --admin-gradient-sessions: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-    --admin-gradient-consultant-mgmt: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
-    --admin-gradient-client-mgmt: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+    /* 파스텔톤 단색 변수 (그라데이션 제거) */
+    --admin-color-primary: #E8E0FF;
+    --admin-color-consultants: #E8E0FF;
+    --admin-color-clients: #FFE0DB;
+    --admin-color-mappings: #E3F2FD;
+    --admin-color-active: #D4F1E0;
+    --admin-color-schedule: #FFE8D1;
+    --admin-color-sessions: #E1F5FE;
+    --admin-color-consultant-mgmt: #F3E5F5;
+    --admin-color-client-mgmt: #E8F5E8;
     
-    /* 재무 관리 그라데이션 변수 */
-    --admin-gradient-finance: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-    --admin-gradient-revenue: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-    --admin-gradient-expense: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-    --admin-gradient-payment: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
-    --admin-gradient-report: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
-    --admin-gradient-settings: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    /* 재무 관리 단색 변수 */
+    --admin-color-finance: #f39c12;
+    --admin-color-revenue: #27ae60;
+    --admin-color-expense: #e74c3c;
+    --admin-color-payment: #9b59b6;
+    --admin-color-report: #34495e;
+    --admin-color-settings: #95a5a6;
 }
 
 .admin-dashboard-content {
@@ -138,19 +138,19 @@
 }
 
 .card-icon.consultants {
-    background: var(--admin-gradient-consultants);
+    background: var(--admin-color-consultants);
 }
 
 .card-icon.clients {
-    background: var(--admin-gradient-clients);
+    background: var(--admin-color-clients);
 }
 
 .card-icon.mappings {
-    background: var(--admin-gradient-mappings);
+    background: var(--admin-color-mappings);
 }
 
 .card-icon.active {
-    background: var(--admin-gradient-active);
+    background: var(--admin-color-active);
 }
 
 .card-content h3 {
@@ -212,48 +212,48 @@
 }
 
 .management-icon.schedule {
-    background: var(--admin-gradient-schedule);
+    background: var(--admin-color-schedule);
 }
 
 .management-icon.sessions {
-    background: var(--admin-gradient-sessions);
+    background: var(--admin-color-sessions);
 }
 
 .management-icon.consultants {
-    background: var(--admin-gradient-consultant-mgmt);
+    background: var(--admin-color-consultant-mgmt);
 }
 
 .management-icon.clients {
-    background: var(--admin-gradient-client-mgmt);
+    background: var(--admin-color-client-mgmt);
 }
 
 .management-icon.mappings {
-    background: var(--admin-gradient-mappings);
+    background: var(--admin-color-mappings);
 }
 
 /* 재무 관리 아이콘 스타일 */
 .management-icon.finance {
-    background: var(--admin-gradient-finance);
+    background: var(--admin-color-finance);
 }
 
 .management-icon.revenue {
-    background: var(--admin-gradient-revenue);
+    background: var(--admin-color-revenue);
 }
 
 .management-icon.expense {
-    background: var(--admin-gradient-expense);
+    background: var(--admin-color-expense);
 }
 
 .management-icon.payment {
-    background: var(--admin-gradient-payment);
+    background: var(--admin-color-payment);
 }
 
 .management-icon.reports {
-    background: var(--admin-gradient-report);
+    background: var(--admin-color-report);
 }
 
 .management-icon.settings {
-    background: var(--admin-gradient-settings);
+    background: var(--admin-color-settings);
 }
 
 .management-content h3 {
@@ -318,7 +318,7 @@
 }
 
 .toast-success {
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    background: #d4edda;
     color: #155724;
 }
 

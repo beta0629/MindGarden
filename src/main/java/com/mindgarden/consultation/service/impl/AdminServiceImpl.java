@@ -276,7 +276,23 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<User> getAllConsultants() {
-        return userRepository.findByRole(UserRole.CONSULTANT);
+        List<User> consultants = userRepository.findByRole(UserRole.CONSULTANT);
+        
+        // 각 상담사의 전화번호 복호화
+        consultants.forEach(consultant -> {
+            if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
+                try {
+                    String decryptedPhone = encryptionUtil.decrypt(consultant.getPhone());
+                    consultant.setPhone(decryptedPhone);
+                    log.info("🔓 상담사 전화번호 복호화 완료: {}", maskPhone(decryptedPhone));
+                } catch (Exception e) {
+                    log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
+                    consultant.setPhone("복호화 실패");
+                }
+            }
+        });
+        
+        return consultants;
     }
     
     @Override
@@ -289,7 +305,20 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("id", consultant.getId());
                 consultantData.put("name", consultant.getName());
                 consultantData.put("email", consultant.getEmail());
-                consultantData.put("phone", consultant.getPhone());
+                
+                // 전화번호 복호화
+                String decryptedPhone = null;
+                if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
+                    try {
+                        decryptedPhone = encryptionUtil.decrypt(consultant.getPhone());
+                        log.info("🔓 상담사 전화번호 복호화 완료: {}", maskPhone(decryptedPhone));
+                    } catch (Exception e) {
+                        log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
+                        decryptedPhone = "복호화 실패";
+                    }
+                }
+                consultantData.put("phone", decryptedPhone);
+                
                 consultantData.put("role", consultant.getRole());
                 consultantData.put("isActive", consultant.getIsActive());
                 consultantData.put("createdAt", consultant.getCreatedAt());
@@ -594,12 +623,58 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId) {
-        return mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
+        List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
+        
+        // 매핑된 사용자 정보 복호화
+        for (ConsultantClientMapping mapping : mappings) {
+            if (mapping.getConsultant() != null) {
+                decryptUserPersonalData(mapping.getConsultant());
+            }
+            if (mapping.getClient() != null) {
+                decryptUserPersonalData(mapping.getClient());
+            }
+        }
+        
+        return mappings;
     }
 
     @Override
     public List<ConsultantClientMapping> getMappingsByClient(Long clientId) {
-        return mappingRepository.findByClientIdAndStatusNot(clientId, ConsultantClientMapping.MappingStatus.TERMINATED);
+        try {
+            log.info("🔍 내담자별 매핑 조회 시작: clientId={}", clientId);
+            
+            // 안전한 매핑 조회
+            List<ConsultantClientMapping> mappings = new ArrayList<>();
+            try {
+                mappings = mappingRepository.findByClientIdAndStatusNot(clientId, ConsultantClientMapping.MappingStatus.TERMINATED);
+                log.info("🔍 내담자별 매핑 조회 완료: clientId={}, 매핑 수={}", clientId, mappings.size());
+                
+                // 매핑된 사용자 정보 복호화
+                for (ConsultantClientMapping mapping : mappings) {
+                    if (mapping.getConsultant() != null) {
+                        decryptUserPersonalData(mapping.getConsultant());
+                        log.info("🔐 상담사 정보 복호화 완료: ID={}, 이름={}", 
+                            mapping.getConsultant().getId(), mapping.getConsultant().getName());
+                    }
+                    if (mapping.getClient() != null) {
+                        decryptUserPersonalData(mapping.getClient());
+                        log.info("🔐 내담자 정보 복호화 완료: ID={}, 이름={}", 
+                            mapping.getClient().getId(), mapping.getClient().getName());
+                    }
+                }
+                
+            } catch (Exception e) {
+                log.error("❌ 매핑 조회 중 오류: clientId={}, error={}", clientId, e.getMessage(), e);
+                // 오류 시 빈 목록 반환
+                mappings = new ArrayList<>();
+            }
+            
+            return mappings;
+        } catch (Exception e) {
+            log.error("❌ 내담자별 매핑 조회 실패: clientId={}, error={}", clientId, e.getMessage(), e);
+            // 오류 시 빈 목록 반환
+            return new ArrayList<>();
+        }
     }
 
     @Override

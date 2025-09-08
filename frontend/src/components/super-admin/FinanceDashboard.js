@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
-import './FinanceDashboard.css';
-import { FINANCE_DASHBOARD_CSS } from '../../constants/css';
-import { FINANCE_DASHBOARD_CONSTANTS } from '../../constants/css-variables';
 import notificationManager from '../../utils/notification';
 
 /**
@@ -35,14 +32,12 @@ const FinanceDashboard = () => {
   }, []);
 
   const loadFinanceData = async () => {
-    const { API_ENDPOINTS, MESSAGES, LOADING_DELAY } = FINANCE_DASHBOARD_CONSTANTS;
-    
     setLoading(true);
     try {
       console.log('재무 데이터 로드 시작...');
       
-      // 실제 API 호출
-      const response = await fetch(API_ENDPOINTS.DASHBOARD, {
+      // 올바른 API 엔드포인트로 수정
+      const response = await fetch('http://localhost:8080/api/super-admin/finance/dashboard', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -59,13 +54,13 @@ const FinanceDashboard = () => {
       if (data.success) {
         console.log('재무 데이터 로드 성공:', data);
         setFinanceData(data.data);
-        notificationManager.success(MESSAGES.LOAD_SUCCESS);
+        notificationManager.success('재무 데이터를 성공적으로 불러왔습니다.');
       } else {
-        throw new Error(data.message || MESSAGES.LOAD_ERROR);
+        throw new Error(data.message || '재무 데이터를 불러오는데 실패했습니다.');
       }
     } catch (error) {
       console.error('재무 데이터 로드 실패:', error);
-      notificationManager.error(error.message || MESSAGES.LOAD_ERROR);
+      notificationManager.error(error.message || '재무 데이터를 불러오는데 실패했습니다.');
       
       // 에러 시 기본 데이터로 폴백
       setFinanceData({
@@ -84,38 +79,77 @@ const FinanceDashboard = () => {
       // 최소 로딩 시간 보장
       setTimeout(() => {
         setLoading(false);
-      }, LOADING_DELAY);
+      }, 500);
     }
   };
 
   const formatCurrency = (amount) => {
-    const { FORMAT } = FINANCE_DASHBOARD_CONSTANTS;
-    return new Intl.NumberFormat(FORMAT.CURRENCY.LOCALE, {
-      style: FORMAT.CURRENCY.STYLE,
-      currency: FORMAT.CURRENCY.CURRENCY
+    return new Intl.NumberFormat('ko-KR', {
+      style: 'currency',
+      currency: 'KRW'
     }).format(amount);
   };
 
   const handleRefresh = async () => {
-    const { MESSAGES } = FINANCE_DASHBOARD_CONSTANTS;
     console.log('재무 데이터 새로고침...');
     await loadFinanceData();
-    notificationManager.success(MESSAGES.REFRESH_SUCCESS);
+    notificationManager.success('데이터가 새로고침되었습니다.');
   };
 
   return (
     <SimpleLayout>
-      <div className={FINANCE_DASHBOARD_CSS.CONTAINER}>
-        <div className={FINANCE_DASHBOARD_CSS.HEADER}>
-          <h1 className={FINANCE_DASHBOARD_CSS.TITLE}>
-            <i className="bi bi-currency-dollar"></i>
+      <div style={{
+        padding: '20px',
+        background: '#f8f9fa',
+        minHeight: '100vh'
+      }}>
+        {/* 헤더 */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '30px',
+          padding: '20px',
+          background: '#ffffff',
+          borderRadius: '12px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+        }}>
+          <h1 style={{
+            display: 'flex',
+            alignItems: 'center',
+            margin: 0,
+            fontSize: '2rem',
+            fontWeight: '700',
+            color: '#2c3e50'
+          }}>
+            <i className="bi bi-currency-dollar" style={{
+              marginRight: '15px',
+              color: '#28a745',
+              fontSize: '2.2rem'
+            }}></i>
             자금 관리 대시보드
           </h1>
-          <div className="finance-actions">
+          <div style={{ display: 'flex', gap: '10px' }}>
             <button 
-              className={`btn btn-outline-primary ${FINANCE_DASHBOARD_CSS.REFRESH_BUTTON}`} 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 20px',
+                border: '2px solid #007bff',
+                borderRadius: '8px',
+                background: 'transparent',
+                color: '#007bff',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                transition: 'all 0.3s ease'
+              }}
               onClick={handleRefresh}
               disabled={loading}
+              onMouseOver={(e) => !loading && (e.target.style.background = '#007bff', e.target.style.color = '#ffffff')}
+              onMouseOut={(e) => !loading && (e.target.style.background = 'transparent', e.target.style.color = '#007bff')}
             >
               <i className="bi bi-arrow-clockwise"></i>
               새로고침
@@ -124,103 +158,438 @@ const FinanceDashboard = () => {
         </div>
 
         {loading ? (
-          <div className={FINANCE_DASHBOARD_CSS.LOADING}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '60px 20px',
+            background: '#ffffff',
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+          }}>
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">로딩 중...</span>
             </div>
-            <p>{FINANCE_DASHBOARD_CONSTANTS.MESSAGES.LOADING}</p>
+            <p style={{
+              marginTop: '20px',
+              color: '#6c757d',
+              fontSize: '1.1rem'
+            }}>재무 데이터를 불러오는 중...</p>
           </div>
         ) : (
           <>
             {/* 주요 지표 카드 */}
-            <div className={FINANCE_DASHBOARD_CSS.STATS_GRID}>
-              <div className={`${FINANCE_DASHBOARD_CSS.STAT_CARD} ${FINANCE_DASHBOARD_CSS.STAT_CARD_REVENUE}`}>
-                <div className={FINANCE_DASHBOARD_CSS.STAT_ICON}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '20px',
+              marginBottom: '30px'
+            }}>
+              {/* 총 수익 카드 */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '25px',
+                background: '#ffffff',
+                borderRadius: '12px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s ease',
+                border: '2px solid #e9ecef'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+              }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: '20px',
+                  fontSize: '1.8rem',
+                  color: '#ffffff',
+                  background: '#28a745'
+                }}>
                   <i className="bi bi-graph-up-arrow"></i>
                 </div>
-                <div className="metric-content">
-                  <h3>총 수익</h3>
-                  <p className={FINANCE_DASHBOARD_CSS.STAT_VALUE}>{formatCurrency(financeData.totalRevenue)}</p>
-                  <span className={FINANCE_DASHBOARD_CSS.STAT_LABEL}>누적 수익</span>
+                <div>
+                  <h3 style={{
+                    margin: '0 0 8px 0',
+                    fontSize: '1.1rem',
+                    fontWeight: '600',
+                    color: '#6c757d'
+                  }}>총 수익</h3>
+                  <p style={{
+                    margin: '0 0 5px 0',
+                    fontSize: '2rem',
+                    fontWeight: '700',
+                    color: '#2c3e50'
+                  }}>{formatCurrency(financeData.totalRevenue)}</p>
+                  <span style={{
+                    fontSize: '0.9rem',
+                    color: '#6c757d'
+                  }}>누적 수익</span>
                 </div>
               </div>
 
-              <div className={`${FINANCE_DASHBOARD_CSS.STAT_CARD} ${FINANCE_DASHBOARD_CSS.STAT_CARD_EXPENSE}`}>
-                <div className={FINANCE_DASHBOARD_CSS.STAT_ICON}>
+              {/* 총 지출 카드 */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '25px',
+                background: '#ffffff',
+                borderRadius: '12px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s ease',
+                border: '2px solid #e9ecef'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+              }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: '20px',
+                  fontSize: '1.8rem',
+                  color: '#ffffff',
+                  background: '#dc3545'
+                }}>
                   <i className="bi bi-graph-down-arrow"></i>
                 </div>
-                <div className="metric-content">
-                  <h3>총 지출</h3>
-                  <p className={FINANCE_DASHBOARD_CSS.STAT_VALUE}>{formatCurrency(financeData.totalExpenses)}</p>
-                  <span className={FINANCE_DASHBOARD_CSS.STAT_LABEL}>누적 지출</span>
+                <div>
+                  <h3 style={{
+                    margin: '0 0 8px 0',
+                    fontSize: '1.1rem',
+                    fontWeight: '600',
+                    color: '#6c757d'
+                  }}>총 지출</h3>
+                  <p style={{
+                    margin: '0 0 5px 0',
+                    fontSize: '2rem',
+                    fontWeight: '700',
+                    color: '#2c3e50'
+                  }}>{formatCurrency(financeData.totalExpenses)}</p>
+                  <span style={{
+                    fontSize: '0.9rem',
+                    color: '#6c757d'
+                  }}>누적 지출</span>
                 </div>
               </div>
 
-              <div className={`${FINANCE_DASHBOARD_CSS.STAT_CARD} ${FINANCE_DASHBOARD_CSS.STAT_CARD_PROFIT}`}>
-                <div className={FINANCE_DASHBOARD_CSS.STAT_ICON}>
+              {/* 순이익 카드 */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '25px',
+                background: '#ffffff',
+                borderRadius: '12px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.3s ease',
+                border: '2px solid #e9ecef'
+              }}
+              onMouseOver={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+              }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: '20px',
+                  fontSize: '1.8rem',
+                  color: '#ffffff',
+                  background: '#007bff'
+                }}>
                   <i className="bi bi-cash-stack"></i>
                 </div>
-                <div className="metric-content">
-                  <h3>순이익</h3>
-                  <p className={FINANCE_DASHBOARD_CSS.STAT_VALUE}>{formatCurrency(financeData.netProfit)}</p>
-                  <span className={FINANCE_DASHBOARD_CSS.STAT_LABEL}>수익 - 지출</span>
+                <div>
+                  <h3 style={{
+                    margin: '0 0 8px 0',
+                    fontSize: '1.1rem',
+                    fontWeight: '600',
+                    color: '#6c757d'
+                  }}>순이익</h3>
+                  <p style={{
+                    margin: '0 0 5px 0',
+                    fontSize: '2rem',
+                    fontWeight: '700',
+                    color: '#2c3e50'
+                  }}>{formatCurrency(financeData.netProfit)}</p>
+                  <span style={{
+                    fontSize: '0.9rem',
+                    color: '#6c757d'
+                  }}>수익 - 지출</span>
                 </div>
               </div>
             </div>
 
             {/* 결제 현황 */}
-            <div className={FINANCE_DASHBOARD_CSS.PAYMENT_SECTION}>
-              <h2 className={FINANCE_DASHBOARD_CSS.PAYMENT_TITLE}>결제 현황</h2>
-              <div className={FINANCE_DASHBOARD_CSS.PAYMENT_GRID}>
-                <div className="stat-item">
-                  <div className="stat-icon total">
+            <div style={{
+              background: '#ffffff',
+              padding: '25px',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              marginBottom: '30px'
+            }}>
+              <h2 style={{
+                margin: '0 0 25px 0',
+                fontSize: '1.5rem',
+                fontWeight: '600',
+                color: '#2c3e50',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <span style={{
+                  content: '""',
+                  width: '4px',
+                  height: '24px',
+                  background: '#007bff',
+                  marginRight: '12px',
+                  borderRadius: '2px'
+                }}></span>
+                결제 현황
+              </h2>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '20px'
+              }}>
+                {/* 전체 결제 */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '20px',
+                  background: '#f8f9fa',
+                  borderRadius: '8px',
+                  transition: 'background-color 0.3s ease'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#e9ecef'}
+                onMouseOut={(e) => e.target.style.background = '#f8f9fa'}>
+                  <div style={{
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '15px',
+                    fontSize: '1.5rem',
+                    color: '#ffffff',
+                    background: '#6c757d'
+                  }}>
                     <i className="bi bi-credit-card"></i>
                   </div>
-                  <div className="stat-content">
-                    <h4>전체 결제</h4>
-                    <p className="stat-value">{financeData.paymentStats.totalPayments}건</p>
+                  <div>
+                    <h4 style={{
+                      margin: '0 0 5px 0',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      color: '#495057'
+                    }}>전체 결제</h4>
+                    <p style={{
+                      margin: 0,
+                      fontSize: '1.5rem',
+                      fontWeight: '700',
+                      color: '#2c3e50'
+                    }}>{financeData.paymentStats.totalPayments}건</p>
                   </div>
                 </div>
 
-                <div className="stat-item">
-                  <div className="stat-icon completed">
+                {/* 완료된 결제 */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '20px',
+                  background: '#f8f9fa',
+                  borderRadius: '8px',
+                  transition: 'background-color 0.3s ease'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#e9ecef'}
+                onMouseOut={(e) => e.target.style.background = '#f8f9fa'}>
+                  <div style={{
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '15px',
+                    fontSize: '1.5rem',
+                    color: '#ffffff',
+                    background: '#28a745'
+                  }}>
                     <i className="bi bi-check-circle"></i>
                   </div>
-                  <div className="stat-content">
-                    <h4>완료된 결제</h4>
-                    <p className="stat-value">{financeData.paymentStats.completedPayments}건</p>
+                  <div>
+                    <h4 style={{
+                      margin: '0 0 5px 0',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      color: '#495057'
+                    }}>완료된 결제</h4>
+                    <p style={{
+                      margin: 0,
+                      fontSize: '1.5rem',
+                      fontWeight: '700',
+                      color: '#2c3e50'
+                    }}>{financeData.paymentStats.completedPayments}건</p>
                   </div>
                 </div>
 
-                <div className="stat-item">
-                  <div className="stat-icon pending">
+                {/* 대기 중 */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '20px',
+                  background: '#f8f9fa',
+                  borderRadius: '8px',
+                  transition: 'background-color 0.3s ease'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#e9ecef'}
+                onMouseOut={(e) => e.target.style.background = '#f8f9fa'}>
+                  <div style={{
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '15px',
+                    fontSize: '1.5rem',
+                    color: '#ffffff',
+                    background: '#ffc107'
+                  }}>
                     <i className="bi bi-clock"></i>
                   </div>
-                  <div className="stat-content">
-                    <h4>대기 중</h4>
-                    <p className="stat-value">{financeData.paymentStats.pendingPayments}건</p>
+                  <div>
+                    <h4 style={{
+                      margin: '0 0 5px 0',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      color: '#495057'
+                    }}>대기 중</h4>
+                    <p style={{
+                      margin: 0,
+                      fontSize: '1.5rem',
+                      fontWeight: '700',
+                      color: '#2c3e50'
+                    }}>{financeData.paymentStats.pendingPayments}건</p>
                   </div>
                 </div>
 
-                <div className="stat-item">
-                  <div className="stat-icon failed">
+                {/* 실패한 결제 */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '20px',
+                  background: '#f8f9fa',
+                  borderRadius: '8px',
+                  transition: 'background-color 0.3s ease'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#e9ecef'}
+                onMouseOut={(e) => e.target.style.background = '#f8f9fa'}>
+                  <div style={{
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '15px',
+                    fontSize: '1.5rem',
+                    color: '#ffffff',
+                    background: '#dc3545'
+                  }}>
                     <i className="bi bi-x-circle"></i>
                   </div>
-                  <div className="stat-content">
-                    <h4>실패한 결제</h4>
-                    <p className="stat-value">{financeData.paymentStats.failedPayments}건</p>
+                  <div>
+                    <h4 style={{
+                      margin: '0 0 5px 0',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      color: '#495057'
+                    }}>실패한 결제</h4>
+                    <p style={{
+                      margin: 0,
+                      fontSize: '1.5rem',
+                      fontWeight: '700',
+                      color: '#2c3e50'
+                    }}>{financeData.paymentStats.failedPayments}건</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* 월별 수익/지출 차트 */}
-            <div className="monthly-chart">
-              <h2 className="section-title">월별 수익/지출 현황</h2>
-              <div className="chart-container">
-                <div className="chart-placeholder">
-                  <i className="bi bi-bar-chart"></i>
-                  <p>차트 구현 예정</p>
+            <div style={{
+              background: '#ffffff',
+              padding: '25px',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+            }}>
+              <h2 style={{
+                margin: '0 0 25px 0',
+                fontSize: '1.5rem',
+                fontWeight: '600',
+                color: '#2c3e50',
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                <span style={{
+                  content: '""',
+                  width: '4px',
+                  height: '24px',
+                  background: '#007bff',
+                  marginRight: '12px',
+                  borderRadius: '2px'
+                }}></span>
+                월별 수익/지출 현황
+              </h2>
+              <div style={{
+                height: '300px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#f8f9fa',
+                borderRadius: '8px',
+                border: '2px dashed #dee2e6'
+              }}>
+                <div style={{
+                  textAlign: 'center',
+                  color: '#6c757d'
+                }}>
+                  <i className="bi bi-bar-chart" style={{
+                    fontSize: '3rem',
+                    marginBottom: '15px',
+                    color: '#adb5bd'
+                  }}></i>
+                  <p style={{
+                    margin: 0,
+                    fontSize: '1.1rem'
+                  }}>차트 구현 예정</p>
                 </div>
               </div>
             </div>

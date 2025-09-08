@@ -331,9 +331,19 @@ public class AdminController {
                         if (mapping.getConsultant() != null) {
                             data.put("consultantId", mapping.getConsultant().getId());
                             data.put("consultantName", mapping.getConsultant().getName());
+                            
+                            // Consultant 객체도 포함
+                            Map<String, Object> consultantInfo = new java.util.HashMap<>();
+                            consultantInfo.put("id", mapping.getConsultant().getId());
+                            consultantInfo.put("name", mapping.getConsultant().getName());
+                            consultantInfo.put("email", mapping.getConsultant().getEmail());
+                            consultantInfo.put("phone", mapping.getConsultant().getPhone());
+                            consultantInfo.put("role", mapping.getConsultant().getRole() != null ? mapping.getConsultant().getRole().toString() : "CONSULTANT");
+                            data.put("consultant", consultantInfo);
                         } else {
                             data.put("consultantId", null);
                             data.put("consultantName", "알 수 없음");
+                            data.put("consultant", null);
                         }
 
                         // Client 정보 안전하게 추출

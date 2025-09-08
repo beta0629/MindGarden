@@ -1,9 +1,13 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.util.HashMap;
+import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.dto.AuthResponse;
+import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.dto.UserDto;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.AuthService;
+import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.JwtService;
 import com.mindgarden.consultation.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +40,9 @@ public class AuthServiceImpl implements AuthService {
     
     @Autowired
     private UserDetailsService userDetailsService;
+    
+    @Autowired
+    private EmailService emailService;
     
     @Override
     public AuthResponse authenticate(String email, String password) {
@@ -111,21 +118,56 @@ public class AuthServiceImpl implements AuthService {
     
     @Override
     public void forgotPassword(String email) {
-        // 비밀번호 재설정 토큰 생성 및 이메일 발송
-        // 현재는 기본 구현만 제공
-        User user = userService.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
-        
-        // TODO: 비밀번호 재설정 토큰 생성 및 이메일 발송 로직 구현
+        try {
+            log.info("비밀번호 재설정 요청: email={}", email);
+            
+            // 사용자 존재 확인
+            User user = userService.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
+            
+            // 비밀번호 재설정 토큰 생성
+            String resetToken = jwtService.generateToken(email);
+            
+            // 비밀번호 재설정 이메일 발송
+            sendPasswordResetEmail(email, user.getName(), resetToken);
+            
+            log.info("비밀번호 재설정 이메일 발송 완료: email={}", email);
+            
+        } catch (Exception e) {
+            log.error("비밀번호 재설정 이메일 발송 실패: email={}, error={}", email, e.getMessage(), e);
+        }
     }
     
     @Override
     public void resetPassword(String token, String newPassword) {
-        // 비밀번호 재설정 토큰 검증 및 비밀번호 변경
-        // 현재는 기본 구현만 제공
-        
-        // TODO: 토큰 검증 및 비밀번호 변경 로직 구현
-        // userService.changePassword(userId, null, newPassword);
+        try {
+            log.info("비밀번호 재설정 처리: token={}", token);
+            
+            // 토큰에서 이메일 추출
+            String email = jwtService.extractUsername(token);
+            
+            // 사용자 존재 확인
+            User user = userService.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
+            
+            // 토큰 유효성 검사
+            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            if (!jwtService.isTokenValid(token, userDetails)) {
+                throw new RuntimeException("유효하지 않은 토큰입니다.");
+            }
+            
+            // 비밀번호 변경
+            userService.changePassword(user.getId(), null, newPassword);
+            
+            // 비밀번호 재설정 완료 이메일 발송
+            sendPasswordResetSuccessEmail(email, user.getName());
+            
+            log.info("비밀번호 재설정 완료: email={}", email);
+            
+        } catch (Exception e) {
+            log.error("비밀번호 재설정 실패: token={}, error={}", token, e.getMessage(), e);
+            throw new RuntimeException("비밀번호 재설정에 실패했습니다: " + e.getMessage());
+        }
     }
     
     /**
@@ -141,5 +183,77 @@ public class AuthServiceImpl implements AuthService {
             .isActive(user.getIsActive())
             .isEmailVerified(user.getIsEmailVerified())
             .build();
+    }
+    
+    // ==================== Private Email Methods ====================
+    
+    /**
+     * 비밀번호 재설정 이메일 발송
+     */
+    private void sendPasswordResetEmail(String email, String name, String resetToken) {
+        try {
+            log.info("비밀번호 재설정 이메일 발송: email={}", email);
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, name);
+            variables.put(EmailConstants.VAR_USER_EMAIL, email);
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            variables.put(EmailConstants.VAR_RESET_LINK, "https://mindgarden.com/reset-password?token=" + resetToken);
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_PASSWORD_RESET,
+                    email,
+                    name,
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("비밀번호 재설정 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
+            } else {
+                log.error("비밀번호 재설정 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("비밀번호 재설정 이메일 발송 중 오류: email={}, error={}", email, e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 비밀번호 재설정 완료 이메일 발송
+     */
+    private void sendPasswordResetSuccessEmail(String email, String name) {
+        try {
+            log.info("비밀번호 재설정 완료 이메일 발송: email={}", email);
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, name);
+            variables.put(EmailConstants.VAR_USER_EMAIL, email);
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            variables.put("resetMessage", "비밀번호가 성공적으로 변경되었습니다.");
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
+                    email,
+                    name,
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("비밀번호 재설정 완료 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
+            } else {
+                log.error("비밀번호 재설정 완료 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("비밀번호 재설정 완료 이메일 발송 중 오류: email={}, error={}", email, e.getMessage(), e);
+        }
     }
 }

@@ -14,6 +14,9 @@ import com.mindgarden.consultation.repository.BaseRepository;
 import com.mindgarden.consultation.repository.ConsultantRepository;
 import com.mindgarden.consultation.repository.ConsultationRepository;
 import com.mindgarden.consultation.service.ConsultationService;
+import com.mindgarden.consultation.service.EmailService;
+import com.mindgarden.consultation.constant.EmailConstants;
+import com.mindgarden.consultation.dto.EmailResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +44,9 @@ public class ConsultationServiceImpl implements ConsultationService {
     
     @Autowired
     private ConsultantRepository consultantRepository;
+    
+    @Autowired
+    private EmailService emailService;
     
     // === BaseService 구현 메서드들 ===
     
@@ -334,7 +340,12 @@ public class ConsultationServiceImpl implements ConsultationService {
         consultation.setUpdatedAt(LocalDateTime.now());
         consultation.setVersion(consultation.getVersion() + 1);
         
-        return save(consultation);
+        Consultation savedConsultation = save(consultation);
+        
+        // 상담 예약 확인 이메일 발송
+        sendConsultationConfirmation(consultationId);
+        
+        return savedConsultation;
     }
     
     @Override
@@ -345,7 +356,12 @@ public class ConsultationServiceImpl implements ConsultationService {
         consultation.setUpdatedAt(LocalDateTime.now());
         consultation.setVersion(consultation.getVersion() + 1);
         
-        return save(consultation);
+        Consultation savedConsultation = save(consultation);
+        
+        // 상담 취소 변경 알림 이메일 발송
+        sendConsultationChangeNotification(consultationId, "취소");
+        
+        return savedConsultation;
     }
     
     @Override
@@ -357,7 +373,12 @@ public class ConsultationServiceImpl implements ConsultationService {
         consultation.setUpdatedAt(LocalDateTime.now());
         consultation.setVersion(consultation.getVersion() + 1);
         
-        return save(consultation);
+        Consultation savedConsultation = save(consultation);
+        
+        // 상담 일정 변경 알림 이메일 발송
+        sendConsultationChangeNotification(consultationId, "일정 변경");
+        
+        return savedConsultation;
     }
     
     @Override
@@ -387,7 +408,12 @@ public class ConsultationServiceImpl implements ConsultationService {
             consultation.setDurationMinutes((int) durationMinutes);
         }
         
-        return save(consultation);
+        Consultation savedConsultation = save(consultation);
+        
+        // 상담 완료 알림 이메일 발송
+        sendConsultationCompletionNotification(consultationId);
+        
+        return savedConsultation;
     }
     
     @Override
@@ -711,36 +737,122 @@ public class ConsultationServiceImpl implements ConsultationService {
     
     @Override
     public Map<String, Object> getConsultationStatisticsByPriority() {
-        // 우선순위별 상담 통계 조회 로직
+        log.info("우선순위별 상담 통계 조회");
+        
         Map<String, Object> statistics = new HashMap<>();
-        statistics.put("LOW", 0L);
-        statistics.put("MEDIUM", 0L);
-        statistics.put("HIGH", 0L);
-        statistics.put("URGENT", 0L);
-        // TODO: 실제 우선순위별 통계 계산
+        
+        try {
+            // 실제 우선순위별 통계 계산
+            List<Consultation> allConsultations = findAllActive();
+            
+            long lowCount = allConsultations.stream()
+                    .filter(c -> "LOW".equals(c.getPriority()))
+                    .count();
+            long mediumCount = allConsultations.stream()
+                    .filter(c -> "MEDIUM".equals(c.getPriority()))
+                    .count();
+            long highCount = allConsultations.stream()
+                    .filter(c -> "HIGH".equals(c.getPriority()))
+                    .count();
+            long urgentCount = allConsultations.stream()
+                    .filter(c -> "URGENT".equals(c.getPriority()))
+                    .count();
+            
+            statistics.put("LOW", lowCount);
+            statistics.put("MEDIUM", mediumCount);
+            statistics.put("HIGH", highCount);
+            statistics.put("URGENT", urgentCount);
+            
+            log.info("우선순위별 상담 통계 조회 완료: LOW={}, MEDIUM={}, HIGH={}, URGENT={}", 
+                    lowCount, mediumCount, highCount, urgentCount);
+            
+        } catch (Exception e) {
+            log.error("우선순위별 상담 통계 조회 실패: error={}", e.getMessage(), e);
+            statistics.put("LOW", 0L);
+            statistics.put("MEDIUM", 0L);
+            statistics.put("HIGH", 0L);
+            statistics.put("URGENT", 0L);
+        }
+        
         return statistics;
     }
     
     @Override
     public Map<String, Object> getConsultationStatisticsByRiskLevel() {
-        // 위험도별 상담 통계 조회 로직
+        log.info("위험도별 상담 통계 조회");
+        
         Map<String, Object> statistics = new HashMap<>();
-        statistics.put("LOW", 0L);
-        statistics.put("MEDIUM", 0L);
-        statistics.put("HIGH", 0L);
-        // TODO: 실제 위험도별 통계 계산
+        
+        try {
+            // 실제 위험도별 통계 계산
+            List<Consultation> allConsultations = findAllActive();
+            
+            long lowCount = allConsultations.stream()
+                    .filter(c -> "LOW".equals(c.getRiskLevel()))
+                    .count();
+            long mediumCount = allConsultations.stream()
+                    .filter(c -> "MEDIUM".equals(c.getRiskLevel()))
+                    .count();
+            long highCount = allConsultations.stream()
+                    .filter(c -> "HIGH".equals(c.getRiskLevel()))
+                    .count();
+            
+            statistics.put("LOW", lowCount);
+            statistics.put("MEDIUM", mediumCount);
+            statistics.put("HIGH", highCount);
+            
+            log.info("위험도별 상담 통계 조회 완료: LOW={}, MEDIUM={}, HIGH={}", 
+                    lowCount, mediumCount, highCount);
+            
+        } catch (Exception e) {
+            log.error("위험도별 상담 통계 조회 실패: error={}", e.getMessage(), e);
+            statistics.put("LOW", 0L);
+            statistics.put("MEDIUM", 0L);
+            statistics.put("HIGH", 0L);
+        }
+        
         return statistics;
     }
     
     @Override
     public Map<String, Object> getConsultationStatisticsByMethod() {
-        // 상담 방법별 통계 조회 로직
+        log.info("상담 방법별 통계 조회");
+        
         Map<String, Object> statistics = new HashMap<>();
-        statistics.put("FACE_TO_FACE", 0L);
-        statistics.put("VIDEO_CALL", 0L);
-        statistics.put("PHONE_CALL", 0L);
-        statistics.put("CHAT", 0L);
-        // TODO: 실제 상담 방법별 통계 계산
+        
+        try {
+            // 실제 상담 방법별 통계 계산
+            List<Consultation> allConsultations = findAllActive();
+            
+            long faceToFaceCount = allConsultations.stream()
+                    .filter(c -> "FACE_TO_FACE".equals(c.getConsultationMethod()))
+                    .count();
+            long videoCallCount = allConsultations.stream()
+                    .filter(c -> "VIDEO_CALL".equals(c.getConsultationMethod()))
+                    .count();
+            long phoneCallCount = allConsultations.stream()
+                    .filter(c -> "PHONE_CALL".equals(c.getConsultationMethod()))
+                    .count();
+            long chatCount = allConsultations.stream()
+                    .filter(c -> "CHAT".equals(c.getConsultationMethod()))
+                    .count();
+            
+            statistics.put("FACE_TO_FACE", faceToFaceCount);
+            statistics.put("VIDEO_CALL", videoCallCount);
+            statistics.put("PHONE_CALL", phoneCallCount);
+            statistics.put("CHAT", chatCount);
+            
+            log.info("상담 방법별 통계 조회 완료: FACE_TO_FACE={}, VIDEO_CALL={}, PHONE_CALL={}, CHAT={}", 
+                    faceToFaceCount, videoCallCount, phoneCallCount, chatCount);
+            
+        } catch (Exception e) {
+            log.error("상담 방법별 통계 조회 실패: error={}", e.getMessage(), e);
+            statistics.put("FACE_TO_FACE", 0L);
+            statistics.put("VIDEO_CALL", 0L);
+            statistics.put("PHONE_CALL", 0L);
+            statistics.put("CHAT", 0L);
+        }
+        
         return statistics;
     }
     
@@ -757,39 +869,181 @@ public class ConsultationServiceImpl implements ConsultationService {
     
     @Override
     public Map<String, Object> getClientConsultationStatistics(Long clientId) {
-        // 클라이언트별 상담 통계 조회 로직
+        log.info("클라이언트별 상담 통계 조회: clientId={}", clientId);
+        
         Map<String, Object> statistics = new HashMap<>();
-        statistics.put("clientId", clientId);
-        statistics.put("totalConsultations", countConsultationsByClient(clientId));
-        statistics.put("completedConsultations", 0L);
-        statistics.put("pendingConsultations", 0L);
-        // TODO: 실제 클라이언트별 통계 계산
+        
+        try {
+            // 실제 클라이언트별 통계 계산
+            List<Consultation> clientConsultations = findByClientId(clientId);
+            
+            long totalConsultations = clientConsultations.size();
+            long completedConsultations = clientConsultations.stream()
+                    .filter(c -> "COMPLETED".equals(c.getStatus()))
+                    .count();
+            long pendingConsultations = clientConsultations.stream()
+                    .filter(c -> "REQUESTED".equals(c.getStatus()) || "CONFIRMED".equals(c.getStatus()))
+                    .count();
+            long cancelledConsultations = clientConsultations.stream()
+                    .filter(c -> "CANCELLED".equals(c.getStatus()))
+                    .count();
+            long inProgressConsultations = clientConsultations.stream()
+                    .filter(c -> "IN_PROGRESS".equals(c.getStatus()))
+                    .count();
+            
+            statistics.put("clientId", clientId);
+            statistics.put("totalConsultations", totalConsultations);
+            statistics.put("completedConsultations", completedConsultations);
+            statistics.put("pendingConsultations", pendingConsultations);
+            statistics.put("cancelledConsultations", cancelledConsultations);
+            statistics.put("inProgressConsultations", inProgressConsultations);
+            statistics.put("completionRate", totalConsultations > 0 ? (double) completedConsultations / totalConsultations * 100 : 0.0);
+            
+            log.info("클라이언트별 상담 통계 조회 완료: clientId={}, total={}, completed={}, pending={}", 
+                    clientId, totalConsultations, completedConsultations, pendingConsultations);
+            
+        } catch (Exception e) {
+            log.error("클라이언트별 상담 통계 조회 실패: clientId={}, error={}", clientId, e.getMessage(), e);
+            statistics.put("clientId", clientId);
+            statistics.put("totalConsultations", 0L);
+            statistics.put("completedConsultations", 0L);
+            statistics.put("pendingConsultations", 0L);
+            statistics.put("cancelledConsultations", 0L);
+            statistics.put("inProgressConsultations", 0L);
+            statistics.put("completionRate", 0.0);
+        }
+        
         return statistics;
     }
     
     @Override
     public Map<String, Object> getConsultantConsultationStatistics(Long consultantId) {
-        // 상담사별 상담 통계 조회 로직
+        log.info("상담사별 상담 통계 조회: consultantId={}", consultantId);
+        
         Map<String, Object> statistics = new HashMap<>();
-        statistics.put("consultantId", consultantId);
-        statistics.put("totalConsultations", countConsultationsByConsultant(consultantId));
-        statistics.put("completedConsultations", 0L);
-        statistics.put("pendingConsultations", 0L);
-        // TODO: 실제 상담사별 통계 계산
+        
+        try {
+            // 실제 상담사별 통계 계산
+            List<Consultation> consultantConsultations = findByConsultantId(consultantId);
+            
+            long totalConsultations = consultantConsultations.size();
+            long completedConsultations = consultantConsultations.stream()
+                    .filter(c -> "COMPLETED".equals(c.getStatus()))
+                    .count();
+            long pendingConsultations = consultantConsultations.stream()
+                    .filter(c -> "REQUESTED".equals(c.getStatus()) || "CONFIRMED".equals(c.getStatus()))
+                    .count();
+            long cancelledConsultations = consultantConsultations.stream()
+                    .filter(c -> "CANCELLED".equals(c.getStatus()))
+                    .count();
+            long inProgressConsultations = consultantConsultations.stream()
+                    .filter(c -> "IN_PROGRESS".equals(c.getStatus()))
+                    .count();
+            
+            // 평균 상담 시간 계산
+            double averageDuration = consultantConsultations.stream()
+                    .filter(c -> c.getDurationMinutes() != null && c.getDurationMinutes() > 0)
+                    .mapToInt(Consultation::getDurationMinutes)
+                    .average()
+                    .orElse(0.0);
+            
+            statistics.put("consultantId", consultantId);
+            statistics.put("totalConsultations", totalConsultations);
+            statistics.put("completedConsultations", completedConsultations);
+            statistics.put("pendingConsultations", pendingConsultations);
+            statistics.put("cancelledConsultations", cancelledConsultations);
+            statistics.put("inProgressConsultations", inProgressConsultations);
+            statistics.put("completionRate", totalConsultations > 0 ? (double) completedConsultations / totalConsultations * 100 : 0.0);
+            statistics.put("averageDuration", averageDuration);
+            
+            log.info("상담사별 상담 통계 조회 완료: consultantId={}, total={}, completed={}, pending={}, avgDuration={}", 
+                    consultantId, totalConsultations, completedConsultations, pendingConsultations, averageDuration);
+            
+        } catch (Exception e) {
+            log.error("상담사별 상담 통계 조회 실패: consultantId={}, error={}", consultantId, e.getMessage(), e);
+            statistics.put("consultantId", consultantId);
+            statistics.put("totalConsultations", 0L);
+            statistics.put("completedConsultations", 0L);
+            statistics.put("pendingConsultations", 0L);
+            statistics.put("cancelledConsultations", 0L);
+            statistics.put("inProgressConsultations", 0L);
+            statistics.put("completionRate", 0.0);
+            statistics.put("averageDuration", 0.0);
+        }
+        
         return statistics;
     }
     
     @Override
     public Map<String, Object> getConsultationPerformanceAnalysis(LocalDate startDate, LocalDate endDate) {
-        // 상담 성과 분석 로직
+        log.info("상담 성과 분석: startDate={}, endDate={}", startDate, endDate);
+        
         Map<String, Object> analysis = new HashMap<>();
-        analysis.put("startDate", startDate);
-        analysis.put("endDate", endDate);
-        analysis.put("totalConsultations", 0);
-        analysis.put("completionRate", 0.0);
-        analysis.put("averageRating", 0.0);
-        analysis.put("averageDuration", 0.0);
-        // TODO: 실제 성과 분석 로직 구현
+        
+        try {
+            // 실제 성과 분석 로직 구현
+            List<Consultation> consultations = findByConsultationDateBetween(startDate, endDate);
+            
+            int totalConsultations = consultations.size();
+            long completedConsultations = consultations.stream()
+                    .filter(c -> "COMPLETED".equals(c.getStatus()))
+                    .count();
+            long cancelledConsultations = consultations.stream()
+                    .filter(c -> "CANCELLED".equals(c.getStatus()))
+                    .count();
+            
+            double completionRate = totalConsultations > 0 ? (double) completedConsultations / totalConsultations * 100 : 0.0;
+            double cancellationRate = totalConsultations > 0 ? (double) cancelledConsultations / totalConsultations * 100 : 0.0;
+            
+            // 평균 상담 시간 계산
+            double averageDuration = consultations.stream()
+                    .filter(c -> c.getDurationMinutes() != null && c.getDurationMinutes() > 0)
+                    .mapToInt(Consultation::getDurationMinutes)
+                    .average()
+                    .orElse(0.0);
+            
+            // 상담 방법별 분포
+            Map<String, Long> methodDistribution = consultations.stream()
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            c -> c.getConsultationMethod() != null ? c.getConsultationMethod() : "UNKNOWN",
+                            java.util.stream.Collectors.counting()
+                    ));
+            
+            // 우선순위별 분포
+            Map<String, Long> priorityDistribution = consultations.stream()
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            c -> c.getPriority() != null ? c.getPriority() : "UNKNOWN",
+                            java.util.stream.Collectors.counting()
+                    ));
+            
+            analysis.put("startDate", startDate);
+            analysis.put("endDate", endDate);
+            analysis.put("totalConsultations", totalConsultations);
+            analysis.put("completedConsultations", completedConsultations);
+            analysis.put("cancelledConsultations", cancelledConsultations);
+            analysis.put("completionRate", completionRate);
+            analysis.put("cancellationRate", cancellationRate);
+            analysis.put("averageDuration", averageDuration);
+            analysis.put("methodDistribution", methodDistribution);
+            analysis.put("priorityDistribution", priorityDistribution);
+            
+            log.info("상담 성과 분석 완료: total={}, completed={}, completionRate={}%, avgDuration={}", 
+                    totalConsultations, completedConsultations, completionRate, averageDuration);
+            
+        } catch (Exception e) {
+            log.error("상담 성과 분석 실패: startDate={}, endDate={}, error={}", startDate, endDate, e.getMessage(), e);
+            analysis.put("startDate", startDate);
+            analysis.put("endDate", endDate);
+            analysis.put("totalConsultations", 0);
+            analysis.put("completedConsultations", 0L);
+            analysis.put("cancelledConsultations", 0L);
+            analysis.put("completionRate", 0.0);
+            analysis.put("cancellationRate", 0.0);
+            analysis.put("averageDuration", 0.0);
+            analysis.put("methodDistribution", new HashMap<>());
+            analysis.put("priorityDistribution", new HashMap<>());
+        }
+        
         return analysis;
     }
     
@@ -867,26 +1121,169 @@ public class ConsultationServiceImpl implements ConsultationService {
     
     @Override
     public void sendConsultationConfirmation(Long consultationId) {
-        // 상담 예약 확인 알림 발송 로직
-        // TODO: 이메일/SMS 발송 로직 구현
+        try {
+            log.info("상담 예약 확인 알림 발송: consultationId={}", consultationId);
+            
+            Consultation consultation = findActiveByIdOrThrow(consultationId);
+            
+            // 클라이언트 이메일 조회 (실제 구현에서는 UserService를 통해 조회)
+            String clientEmail = "client@example.com"; // TODO: 실제 클라이언트 이메일 조회
+            String clientName = "클라이언트"; // TODO: 실제 클라이언트 이름 조회
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, clientName);
+            variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");
+            variables.put(EmailConstants.VAR_APPOINTMENT_TIME, consultation.getStartTime() != null ? consultation.getStartTime().toString() : "");
+            variables.put(EmailConstants.VAR_CONSULTANT_NAME, "상담사"); // TODO: 실제 상담사 이름 조회
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_APPOINTMENT_CONFIRMATION,
+                    clientEmail,
+                    clientName,
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("상담 예약 확인 이메일 발송 성공: consultationId={}, emailId={}", consultationId, response.getEmailId());
+            } else {
+                log.error("상담 예약 확인 이메일 발송 실패: consultationId={}, error={}", consultationId, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("상담 예약 확인 알림 발송 중 오류: consultationId={}, error={}", consultationId, e.getMessage(), e);
+        }
     }
     
     @Override
     public void sendConsultationReminder(Long consultationId) {
-        // 상담 리마인더 발송 로직
-        // TODO: 이메일/SMS 발송 로직 구현
+        try {
+            log.info("상담 리마인더 발송: consultationId={}", consultationId);
+            
+            Consultation consultation = findActiveByIdOrThrow(consultationId);
+            
+            // 클라이언트 이메일 조회 (실제 구현에서는 UserService를 통해 조회)
+            String clientEmail = "client@example.com"; // TODO: 실제 클라이언트 이메일 조회
+            String clientName = "클라이언트"; // TODO: 실제 클라이언트 이름 조회
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, clientName);
+            variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");
+            variables.put(EmailConstants.VAR_APPOINTMENT_TIME, consultation.getStartTime() != null ? consultation.getStartTime().toString() : "");
+            variables.put(EmailConstants.VAR_CONSULTANT_NAME, "상담사"); // TODO: 실제 상담사 이름 조회
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_APPOINTMENT_REMINDER,
+                    clientEmail,
+                    clientName,
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("상담 리마인더 이메일 발송 성공: consultationId={}, emailId={}", consultationId, response.getEmailId());
+            } else {
+                log.error("상담 리마인더 이메일 발송 실패: consultationId={}, error={}", consultationId, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("상담 리마인더 발송 중 오류: consultationId={}, error={}", consultationId, e.getMessage(), e);
+        }
     }
     
     @Override
     public void sendConsultationChangeNotification(Long consultationId, String changeType) {
-        // 상담 변경 알림 발송 로직
-        // TODO: 이메일/SMS 발송 로직 구현
+        try {
+            log.info("상담 변경 알림 발송: consultationId={}, changeType={}", consultationId, changeType);
+            
+            Consultation consultation = findActiveByIdOrThrow(consultationId);
+            
+            // 클라이언트 이메일 조회 (실제 구현에서는 UserService를 통해 조회)
+            String clientEmail = "client@example.com"; // TODO: 실제 클라이언트 이메일 조회
+            String clientName = "클라이언트"; // TODO: 실제 클라이언트 이름 조회
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, clientName);
+            variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");
+            variables.put(EmailConstants.VAR_APPOINTMENT_TIME, consultation.getStartTime() != null ? consultation.getStartTime().toString() : "");
+            variables.put(EmailConstants.VAR_CONSULTANT_NAME, "상담사"); // TODO: 실제 상담사 이름 조회
+            variables.put("changeType", changeType);
+            variables.put("changeMessage", "상담 일정이 " + changeType + "되었습니다.");
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
+                    clientEmail,
+                    clientName,
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("상담 변경 알림 이메일 발송 성공: consultationId={}, emailId={}", consultationId, response.getEmailId());
+            } else {
+                log.error("상담 변경 알림 이메일 발송 실패: consultationId={}, error={}", consultationId, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("상담 변경 알림 발송 중 오류: consultationId={}, error={}", consultationId, e.getMessage(), e);
+        }
     }
     
     @Override
     public void sendConsultationCompletionNotification(Long consultationId) {
-        // 상담 완료 알림 발송 로직
-        // TODO: 이메일/SMS 발송 로직 구현
+        try {
+            log.info("상담 완료 알림 발송: consultationId={}", consultationId);
+            
+            Consultation consultation = findActiveByIdOrThrow(consultationId);
+            
+            // 클라이언트 이메일 조회 (실제 구현에서는 UserService를 통해 조회)
+            String clientEmail = "client@example.com"; // TODO: 실제 클라이언트 이메일 조회
+            String clientName = "클라이언트"; // TODO: 실제 클라이언트 이름 조회
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, clientName);
+            variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");
+            variables.put(EmailConstants.VAR_APPOINTMENT_TIME, consultation.getStartTime() != null ? consultation.getStartTime().toString() : "");
+            variables.put(EmailConstants.VAR_CONSULTANT_NAME, "상담사"); // TODO: 실제 상담사 이름 조회
+            variables.put("completionMessage", "상담이 성공적으로 완료되었습니다. 감사합니다.");
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
+                    clientEmail,
+                    clientName,
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("상담 완료 알림 이메일 발송 성공: consultationId={}, emailId={}", consultationId, response.getEmailId());
+            } else {
+                log.error("상담 완료 알림 이메일 발송 실패: consultationId={}, error={}", consultationId, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("상담 완료 알림 발송 중 오류: consultationId={}, error={}", consultationId, e.getMessage(), e);
+        }
     }
     
     // === 상담 검색 및 필터링 ===

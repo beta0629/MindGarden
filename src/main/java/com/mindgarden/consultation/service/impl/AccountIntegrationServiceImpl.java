@@ -1,17 +1,21 @@
 package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.dto.AccountIntegrationRequest;
 import com.mindgarden.consultation.dto.AccountIntegrationResponse;
+import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.UserSocialAccount;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AccountIntegrationService;
+import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.JwtService;
 import com.mindgarden.consultation.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,6 +42,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     private final UserService userService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
     
     // 이메일 인증 코드 저장 (실제 운영에서는 Redis 등 사용)
     private final Map<String, EmailVerificationCode> emailVerificationCodes = new ConcurrentHashMap<>();
@@ -144,6 +149,9 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             // 8. 인증 코드 삭제
             emailVerificationCodes.remove(request.getExistingEmail());
             
+            // 9. 계정 통합 완료 이메일 발송
+            sendAccountIntegrationSuccessEmail(existingUser.getEmail(), existingUser.getName(), request.getProvider());
+            
             log.info("계정 통합 완료: userId={}, provider={}", existingUser.getId(), request.getProvider());
             
             return AccountIntegrationResponse.success(
@@ -180,15 +188,10 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             // 코드 저장
             emailVerificationCodes.put(email, new EmailVerificationCode(code, expiryTime));
             
-            // TODO: 실제 이메일 발송 로직 구현
-            log.info("이메일 인증 코드 생성: email={}, code={}, expiryTime={}", email, code, expiryTime);
+            // 이메일 인증 코드 이메일 발송
+            sendEmailVerificationCodeEmail(email, code);
             
-            // 임시로 콘솔에 출력 (개발용)
-            System.out.println("=== 이메일 인증 코드 ===");
-            System.out.println("이메일: " + email);
-            System.out.println("인증 코드: " + code);
-            System.out.println("만료 시간: " + expiryTime);
-            System.out.println("=====================");
+            log.info("이메일 인증 코드 생성 및 발송: email={}, code={}, expiryTime={}", email, code, expiryTime);
             
             return true;
             
@@ -332,6 +335,79 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
                 "계정 통합 상태 확인 중 오류가 발생했습니다: " + e.getMessage(),
                 AccountIntegrationResponse.IntegrationStatus.INTEGRATION_FAILED
             );
+        }
+    }
+    
+    // ==================== Private Email Methods ====================
+    
+    /**
+     * 이메일 인증 코드 발송
+     */
+    private void sendEmailVerificationCodeEmail(String email, String code) {
+        try {
+            log.info("이메일 인증 코드 이메일 발송: email={}", email);
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_EMAIL, email);
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            variables.put("verificationCode", code);
+            variables.put("expiryMinutes", "10");
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_ACCOUNT_ACTIVATION,
+                    email,
+                    "사용자",
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("이메일 인증 코드 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
+            } else {
+                log.error("이메일 인증 코드 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("이메일 인증 코드 이메일 발송 중 오류: email={}, error={}", email, e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 계정 통합 완료 이메일 발송
+     */
+    private void sendAccountIntegrationSuccessEmail(String email, String name, String provider) {
+        try {
+            log.info("계정 통합 완료 이메일 발송: email={}, provider={}", email, provider);
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put(EmailConstants.VAR_USER_NAME, name);
+            variables.put(EmailConstants.VAR_USER_EMAIL, email);
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
+            variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
+            variables.put("provider", provider);
+            variables.put("integrationMessage", provider + " 계정이 성공적으로 연결되었습니다.");
+            
+            // 템플릿 기반 이메일 발송
+            EmailResponse response = emailService.sendTemplateEmail(
+                    EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION,
+                    email,
+                    name,
+                    variables
+            );
+            
+            if (response.isSuccess()) {
+                log.info("계정 통합 완료 이메일 발송 성공: email={}, emailId={}", email, response.getEmailId());
+            } else {
+                log.error("계정 통합 완료 이메일 발송 실패: email={}, error={}", email, response.getErrorMessage());
+            }
+            
+        } catch (Exception e) {
+            log.error("계정 통합 완료 이메일 발송 중 오류: email={}, error={}", email, e.getMessage(), e);
         }
     }
 }

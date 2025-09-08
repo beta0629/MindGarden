@@ -85,13 +85,17 @@ const PaymentTest = () => {
     const status = prompt('상태를 입력하세요 (APPROVED, CANCELLED, REFUNDED):', 'APPROVED');
     if (!status) return;
 
-    const response = await fetch(`/api/test/payment/status-test?paymentId=${paymentId}&status=${status}`, {
+    const response = await fetch(`http://localhost:8080/api/test/payment/status-test?paymentId=${paymentId}&status=${status}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include'
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return await response.json();
   };
 
@@ -102,13 +106,17 @@ const PaymentTest = () => {
     const status = prompt('상태를 입력하세요 (APPROVED, FAILED, CANCELLED):', 'APPROVED');
     if (!status) return;
 
-    const response = await fetch(`/api/test/payment/webhook-test?paymentId=${paymentId}&status=${status}`, {
+    const response = await fetch(`http://localhost:8080/api/test/payment/webhook-test?paymentId=${paymentId}&status=${status}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include'
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return await response.json();
   };
 
@@ -137,7 +145,7 @@ const PaymentTest = () => {
     const depositorName = prompt('입금자명을 입력하세요:', '테스트입금자');
     if (!depositorName) return;
 
-    const response = await fetch(`/api/test/payment/deposit-test?paymentId=${paymentId}&amount=${amount}&depositorName=${depositorName}`, {
+    const response = await fetch(`http://localhost:8080/api/test/payment/deposit-test?paymentId=${paymentId}&amount=${amount}&depositorName=${depositorName}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -165,7 +173,7 @@ const PaymentTest = () => {
       ...(amount && { amount })
     });
 
-    const response = await fetch(`/api/test/payment/cancel-refund-test?${params}`, {
+    const response = await fetch(`http://localhost:8080/api/test/payment/cancel-refund-test?${params}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -179,7 +187,7 @@ const PaymentTest = () => {
     const count = prompt('생성할 결제 수를 입력하세요:', '10');
     if (!count) return;
 
-    const response = await fetch(`/api/test/payment/bulk-create?count=${count}`, {
+    const response = await fetch(`http://localhost:8080/api/test/payment/bulk-create?count=${count}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

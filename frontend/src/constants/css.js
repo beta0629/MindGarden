@@ -167,3 +167,19 @@ export const STATS_CARD_CSS = {
   CHANGE: 'stats-card-change',
   TREND: 'stats-card-trend'
 };
+
+// 통계 카드 그리드 CSS 클래스
+export const STATS_CARD_GRID_CSS = {
+  CONTAINER: 'stats-card-grid',
+  GRID: 'stats-card-grid-container',
+  CARD: 'stats-card-grid-card',
+  HEADER: 'stats-card-grid-header',
+  TITLE: 'stats-card-grid-title',
+  CONTENT: 'stats-card-grid-content',
+  ITEM: 'stats-card-grid-item',
+  LABEL: 'stats-card-grid-label',
+  VALUE: 'stats-card-grid-value',
+  ICON: 'stats-card-grid-icon',
+  CHANGE: 'stats-card-grid-change',
+  TREND: 'stats-card-grid-trend'
+};

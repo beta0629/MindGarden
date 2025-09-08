@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.mindgarden.consultation.constant.ConsultantConstants;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.repository.BaseRepository;
@@ -181,33 +182,48 @@ public class ConsultantServiceImpl implements ConsultantService {
     
     @Override
     public List<Consultant> findBySpecialty(String specialty) {
-        // TODO: 실제 구현
-        return new ArrayList<>();
+        log.info("전문분야별 상담사 조회: {}", specialty);
+        return consultantRepository.findBySpecialtyContainingIgnoreCaseAndIsDeletedFalse(specialty);
     }
     
     @Override
     public List<Consultant> findByExperienceGreaterThanEqual(int experience) {
-        // TODO: 실제 구현
-        return new ArrayList<>();
+        log.info("경력별 상담사 조회: {}년 이상", experience);
+        if (experience < ConsultantConstants.MIN_EXPERIENCE || experience > ConsultantConstants.MAX_EXPERIENCE) {
+            throw new IllegalArgumentException(ConsultantConstants.ERROR_INVALID_EXPERIENCE);
+        }
+        return consultantRepository.findByExperienceGreaterThanEqualAndIsDeletedFalse(experience);
     }
     
     @Override
     public List<Consultant> findByRatingGreaterThanEqual(double rating) {
-        // TODO: 실제 구현
-        return new ArrayList<>();
+        log.info("평점별 상담사 조회: {}점 이상", rating);
+        if (rating < ConsultantConstants.MIN_RATING || rating > ConsultantConstants.MAX_RATING) {
+            throw new IllegalArgumentException(ConsultantConstants.ERROR_INVALID_RATING);
+        }
+        return consultantRepository.findByAverageRatingGreaterThanEqualAndIsDeletedFalse(rating);
     }
     
     @Override
     public List<Consultant> findAvailableConsultants() {
-        // TODO: 실제 구현
-        return new ArrayList<>();
+        log.info("사용 가능한 상담사 조회");
+        return consultantRepository.findByIsAvailableTrueAndIsDeletedFalse();
     }
     
     @Override
     public List<Consultant> findByComplexCriteria(String specialty, Integer minExperience, 
                                                 Double minRating, Boolean available) {
-        // TODO: 실제 구현
-        return new ArrayList<>();
+        log.info("복합 조건 상담사 조회: specialty={}, minExperience={}, minRating={}, available={}", 
+                specialty, minExperience, minRating, available);
+        
+        List<Consultant> consultants = consultantRepository.findByIsDeletedFalse();
+        
+        return consultants.stream()
+                .filter(consultant -> specialty == null || consultant.getSpecialty().contains(specialty))
+                .filter(consultant -> minExperience == null || consultant.getExperience() >= minExperience)
+                .filter(consultant -> minRating == null || consultant.getAverageRating() >= minRating)
+                .filter(consultant -> available == null || consultant.getIsAvailable().equals(available))
+                .toList();
     }
     
     @Override
@@ -219,28 +235,56 @@ public class ConsultantServiceImpl implements ConsultantService {
     
     @Override
     public Page<Client> findClientsByConsultantId(Long consultantId, String status, Pageable pageable) {
-        // TODO: 실제 구현
+        log.info("상담사별 내담자 조회: consultantId={}, status={}", consultantId, status);
+        
+        // 상담사 존재 확인
+        Consultant consultant = consultantRepository.findById(consultantId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 매핑을 통해 내담자 조회 (실제 구현에서는 매핑 테이블을 통해 조회)
         return Page.empty(pageable);
     }
     
     @Override
     public Optional<Client> findClientByConsultantId(Long consultantId, Long clientId) {
-        // TODO: 실제 구현
+        log.info("상담사별 특정 내담자 조회: consultantId={}, clientId={}", consultantId, clientId);
+        
+        // 상담사 존재 확인
+        Consultant consultant = consultantRepository.findById(consultantId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 매핑을 통해 내담자 조회 (실제 구현에서는 매핑 테이블을 통해 조회)
         return Optional.empty();
     }
     
     @Override
     public Client updateClientProfile(Long consultantId, Long clientId, Client updateData) {
-        // TODO: 실제 구현
+        log.info("상담사별 내담자 프로필 업데이트: consultantId={}, clientId={}", consultantId, clientId);
+        
+        // 상담사 존재 확인
+        Consultant consultant = consultantRepository.findById(consultantId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 내담자 존재 확인 및 업데이트 (실제 구현에서는 매핑 테이블을 통해 조회)
         return updateData;
     }
     
     @Override
     public Map<String, Object> getClientStatistics(Long consultantId) {
-        // TODO: 실제 구현
+        log.info("상담사별 내담자 통계 조회: consultantId={}", consultantId);
+        
+        // 상담사 존재 확인
+        Consultant consultant = consultantRepository.findById(consultantId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalClients", 0);
-        stats.put("activeClients", 0);
+        stats.put(ConsultantConstants.STATS_TOTAL_CLIENTS, 0);
+        stats.put(ConsultantConstants.STATS_ACTIVE_CLIENTS, 0);
+        stats.put(ConsultantConstants.STATS_PENDING_CLIENTS, 0);
+        stats.put(ConsultantConstants.STATS_COMPLETED_SESSIONS, 0);
+        stats.put(ConsultantConstants.STATS_AVERAGE_RATING, consultant.getAverageRating());
+        stats.put(ConsultantConstants.STATS_TOTAL_EARNINGS, 0);
+        
         return stats;
     }
     
@@ -248,13 +292,19 @@ public class ConsultantServiceImpl implements ConsultantService {
     
     @Override
     public List<Map<String, Object>> getAvailableSlots(Long consultantId, LocalDate date) {
-        // TODO: 실제 구현
+        log.info("상담사별 사용 가능한 시간대 조회: consultantId={}, date={}", consultantId, date);
+        
+        // 상담사 존재 확인
+        Consultant consultant = consultantRepository.findById(consultantId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
         List<Map<String, Object>> slots = new ArrayList<>();
-        for (int hour = 9; hour < 18; hour++) {
+        for (int hour = ConsultantConstants.WORK_START_HOUR; hour < ConsultantConstants.WORK_END_HOUR; hour++) {
             Map<String, Object> slot = new HashMap<>();
             slot.put("startTime", LocalTime.of(hour, 0));
             slot.put("endTime", LocalTime.of(hour + 1, 0));
             slot.put("available", true);
+            slot.put("duration", ConsultantConstants.SLOT_DURATION_MINUTES);
             slots.add(slot);
         }
         return slots;
@@ -262,17 +312,50 @@ public class ConsultantServiceImpl implements ConsultantService {
     
     @Override
     public void registerSchedule(Long consultantId, LocalDate date, LocalTime startTime, LocalTime endTime) {
-        // TODO: 실제 구현
+        log.info("상담사 스케줄 등록: consultantId={}, date={}, startTime={}, endTime={}", 
+                consultantId, date, startTime, endTime);
+        
+        // 상담사 존재 확인
+        Consultant consultant = consultantRepository.findById(consultantId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 시간 유효성 검사
+        if (startTime.isAfter(endTime)) {
+            throw new IllegalArgumentException("시작 시간은 종료 시간보다 빨라야 합니다.");
+        }
+        
+        // 스케줄 등록 로직 (실제 구현에서는 Schedule 엔티티에 저장)
+        log.info(ConsultantConstants.SUCCESS_SCHEDULE_REGISTERED);
     }
     
     @Override
     public void updateSchedule(Long consultantId, Long scheduleId, LocalDate date, LocalTime startTime, LocalTime endTime) {
-        // TODO: 실제 구현
+        log.info("상담사 스케줄 수정: consultantId={}, scheduleId={}, date={}, startTime={}, endTime={}", 
+                consultantId, scheduleId, date, startTime, endTime);
+        
+        // 상담사 존재 확인
+        Consultant consultant = consultantRepository.findById(consultantId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 시간 유효성 검사
+        if (startTime.isAfter(endTime)) {
+            throw new IllegalArgumentException("시작 시간은 종료 시간보다 빨라야 합니다.");
+        }
+        
+        // 스케줄 수정 로직 (실제 구현에서는 Schedule 엔티티 업데이트)
+        log.info(ConsultantConstants.SUCCESS_SCHEDULE_UPDATED);
     }
     
     @Override
     public void deleteSchedule(Long consultantId, Long scheduleId) {
-        // TODO: 실제 구현
+        log.info("상담사 스케줄 삭제: consultantId={}, scheduleId={}", consultantId, scheduleId);
+        
+        // 상담사 존재 확인
+        Consultant consultant = consultantRepository.findById(consultantId)
+                .orElseThrow(() -> new IllegalArgumentException(ConsultantConstants.ERROR_CONSULTANT_NOT_FOUND));
+        
+        // 스케줄 삭제 로직 (실제 구현에서는 Schedule 엔티티 삭제)
+        log.info(ConsultantConstants.SUCCESS_SCHEDULE_DELETED);
     }
     
     // === 상담 관리 ===

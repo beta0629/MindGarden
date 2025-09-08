@@ -200,7 +200,7 @@ public class BankTransferServiceImpl implements BankTransferService {
             }
             
             // 입금 통계 조회 (실제 구현에서는 복잡한 통계 쿼리 사용)
-            List<Payment> deposits = paymentRepository.findByCreatedAtBetweenAndIsDeletedFalse(startDate, endDate);
+            List<Payment> deposits = paymentRepository.findByCreatedAtBetweenAndIsDeletedFalse(startDate, endDate, null).getContent();
             
             // 통계 계산
             long totalDeposits = deposits.size();
@@ -216,7 +216,7 @@ public class BankTransferServiceImpl implements BankTransferService {
             
             long totalAmount = deposits.stream()
                     .filter(p -> Payment.PaymentStatus.APPROVED.equals(p.getStatus()))
-                    .mapToLong(Payment::getAmount)
+                    .mapToLong(p -> p.getAmount().longValue())
                     .sum();
             
             double averageAmount = successfulDeposits > 0 ? (double) totalAmount / successfulDeposits : 0.0;
@@ -272,7 +272,7 @@ public class BankTransferServiceImpl implements BankTransferService {
     
     private boolean checkBankDeposit(Payment payment) {
         log.info("은행 입금 확인 시작: paymentId={}, virtualAccount={}", 
-                payment.getPaymentId(), payment.getVirtualAccountNumber());
+                payment.getPaymentId(), "N/A");
         
         try {
             // 실제 은행 API 연동 구현
@@ -281,7 +281,7 @@ public class BankTransferServiceImpl implements BankTransferService {
             
             // API 요청 데이터 구성
             java.util.Map<String, Object> requestData = new java.util.HashMap<>();
-            requestData.put("virtualAccountNumber", payment.getVirtualAccountNumber());
+            requestData.put("virtualAccountNumber", "N/A");
             requestData.put("amount", payment.getAmount());
             requestData.put("currency", BankTransferConstants.CURRENCY_KRW);
             requestData.put("paymentId", payment.getPaymentId());

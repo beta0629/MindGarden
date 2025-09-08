@@ -18,11 +18,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * ConsultantService 구현체
  * API 설계 문서에 명시된 상담사 관리 비즈니스 로직 구현
  */
+@Slf4j
 @Service
 @Transactional
 public class ConsultantServiceImpl implements ConsultantService {
@@ -220,7 +222,7 @@ public class ConsultantServiceImpl implements ConsultantService {
         
         return consultants.stream()
                 .filter(consultant -> specialty == null || consultant.getSpecialty().contains(specialty))
-                .filter(consultant -> minExperience == null || consultant.getExperience() >= minExperience)
+                .filter(consultant -> minExperience == null || consultant.getYearsOfExperience() >= minExperience)
                 .filter(consultant -> minRating == null || consultant.getAverageRating() >= minRating)
                 .filter(consultant -> available == null || consultant.getIsAvailable().equals(available))
                 .toList();

@@ -98,6 +98,12 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     BigDecimal getTotalAmountByBranchId(@Param("branchId") Long branchId);
     
     /**
+     * 가상계좌번호로 결제 조회
+     */
+    @Query("SELECT p FROM Payment p WHERE p.virtualAccountNumber = :virtualAccountNumber AND p.isDeleted = false")
+    List<Payment> findByVirtualAccountNumberAndIsDeletedFalse(@Param("virtualAccountNumber") String virtualAccountNumber);
+    
+    /**
      * 날짜 범위별 총 결제 금액 조회
      */
     @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.createdAt BETWEEN :startDate AND :endDate AND p.status = 'APPROVED' AND p.isDeleted = false")

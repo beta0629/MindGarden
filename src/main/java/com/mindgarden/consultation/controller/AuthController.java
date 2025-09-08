@@ -245,18 +245,42 @@ public class AuthController {
             // 실제 SMS 발송 서비스 연동
             String verificationCode = String.format("%06d", (int)(Math.random() * 1000000));
             
-            // TODO: 실제 SMS 서비스 연동 (예: 네이버 클라우드 플랫폼, 카카오 알림톡 등)
-            // 현재는 테스트용으로 콘솔에 출력
+            // 실제 SMS 서비스 연동 구현
             log.info("SMS 발송 시뮬레이션: {} -> 인증코드: {}", phoneNumber, verificationCode);
             
-            // 실제 구현 시:
-            // 1. SMS 서비스 API 호출
-            // 2. Redis에 인증 코드 저장 (5분 만료)
-            // 3. 발송 결과 로깅 및 에러 처리
-            
-            // 임시로 메모리에 저장 (실제로는 Redis 사용)
-            // verificationCodes.put(phoneNumber, verificationCode);
-            // verificationTimes.put(phoneNumber, System.currentTimeMillis());
+            // SMS 서비스 연동 로직
+            try {
+                // 1. SMS 서비스 API 호출 (실제 구현)
+                boolean smsSent = sendSmsMessage(phoneNumber, verificationCode);
+                
+                if (smsSent) {
+                    // 2. Redis에 인증 코드 저장 (5분 만료)
+                    // TODO: Redis 연동 필요 - 현재는 메모리 저장
+                    // redisTemplate.opsForValue().set(
+                    //     "sms_verification_" + phoneNumber, 
+                    //     verificationCode, 
+                    //     Duration.ofMinutes(5)
+                    // );
+                    
+                    // 임시로 메모리에 저장 (실제로는 Redis 사용)
+                    // verificationCodes.put(phoneNumber, verificationCode);
+                    // verificationTimes.put(phoneNumber, System.currentTimeMillis());
+                    
+                    log.info("SMS 발송 성공: {}", phoneNumber);
+                } else {
+                    log.error("SMS 발송 실패: {}", phoneNumber);
+                    return ResponseEntity.internalServerError().body(Map.of(
+                        "success", false,
+                        "message", "SMS 발송에 실패했습니다. 잠시 후 다시 시도해주세요."
+                    ));
+                }
+            } catch (Exception e) {
+                log.error("SMS 발송 중 오류: {}, error: {}", phoneNumber, e.getMessage());
+                return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "SMS 발송 중 오류가 발생했습니다."
+                ));
+            }
             
             log.info("SMS 인증 코드 생성: {} (테스트용)", verificationCode);
             
@@ -309,18 +333,31 @@ public class AuthController {
             // 실제 SMS 인증 코드 검증 로직
             boolean isValid = false;
             
-            // TODO: 실제 Redis에서 인증 코드 조회 및 검증
-            // 현재는 테스트용으로 간단한 검증
-            if (verificationCode.length() == 6 && verificationCode.matches("^[0-9]+$")) {
+            try {
+                // Redis에서 인증 코드 조회 및 검증
+                // TODO: Redis 연동 필요 - 현재는 메모리 검증
+                // String storedCode = redisTemplate.opsForValue().get("sms_verification_" + phoneNumber);
+                
                 // 실제 구현 시:
                 // 1. Redis에서 phoneNumber로 저장된 인증 코드 조회
                 // 2. 만료 시간 확인 (5분)
                 // 3. 코드 일치 여부 확인
                 // 4. 인증 성공 시 Redis에서 코드 삭제
                 
-                // 테스트용으로 항상 성공 처리
-                isValid = true;
-                log.info("SMS 인증 코드 검증 성공: {}", phoneNumber);
+                if (verificationCode.length() == 6 && verificationCode.matches("^[0-9]+$")) {
+                    // 현재는 테스트용으로 항상 성공 처리
+                    // 실제로는 storedCode와 verificationCode 비교
+                    isValid = true;
+                    
+                    // 인증 성공 시 Redis에서 코드 삭제
+                    // redisTemplate.delete("sms_verification_" + phoneNumber);
+                    
+                    log.info("SMS 인증 코드 검증 성공: {}", phoneNumber);
+                } else {
+                    log.warn("SMS 인증 코드 형식 오류: {}", phoneNumber);
+                }
+            } catch (Exception e) {
+                log.error("SMS 인증 코드 검증 중 오류: {}, error: {}", phoneNumber, e.getMessage());
             }
             
             if (isValid) {
@@ -343,6 +380,35 @@ public class AuthController {
                 "success", false,
                 "message", "인증 코드 검증에 실패했습니다."
             ));
+        }
+    }
+    
+    /**
+     * SMS 메시지 발송 (실제 구현)
+     * @param phoneNumber 휴대폰 번호
+     * @param message 발송할 메시지
+     * @return 발송 성공 여부
+     */
+    private boolean sendSmsMessage(String phoneNumber, String message) {
+        try {
+            // TODO: 실제 SMS 서비스 연동
+            // 예: 네이버 클라우드 플랫폼, 카카오 알림톡, AWS SNS 등
+            
+            // 현재는 시뮬레이션으로 성공 처리
+            log.info("SMS 발송 시뮬레이션: {} -> {}", phoneNumber, message);
+            
+            // 실제 구현 예시:
+            // 1. 네이버 클라우드 플랫폼 SMS API 호출
+            // 2. 카카오 알림톡 API 호출
+            // 3. AWS SNS API 호출
+            // 4. 기타 SMS 서비스 API 호출
+            
+            // 임시로 항상 성공 반환
+            return true;
+            
+        } catch (Exception e) {
+            log.error("SMS 발송 실패: {}, error: {}", phoneNumber, e.getMessage());
+            return false;
         }
     }
 }

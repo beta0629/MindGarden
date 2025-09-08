@@ -4,13 +4,18 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.dto.ProfileImageInfo;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.BaseRepository;
 import com.mindgarden.consultation.repository.UserRepository;
+import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.UserService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class UserServiceImpl implements UserService {
     
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
+    
     @Autowired
     private UserRepository userRepository;
     
@@ -37,6 +44,9 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private PersonalDataEncryptionUtil encryptionUtil;
+    
+    @Autowired
+    private EmailService emailService;
     
     // ==================== BaseService 구현 ====================
     
@@ -522,15 +532,18 @@ public class UserServiceImpl implements UserService {
             variables.put("currentYear", String.valueOf(java.time.Year.now().getValue()));
             
             // EmailService를 통한 템플릿 이메일 발송
-            // TODO: EmailService 의존성 주입 필요
-            // EmailResponse response = emailService.sendTemplateEmail(
-            //     EmailConstants.TEMPLATE_PASSWORD_RESET,
-            //     user.getEmail(),
-            //     user.getName(),
-            //     variables
-            // );
+            EmailResponse response = emailService.sendTemplateEmail(
+                EmailConstants.TEMPLATE_PASSWORD_RESET,
+                user.getEmail(),
+                user.getName(),
+                variables
+            );
             
-            log.info("임시 비밀번호 이메일 발송 완료: {}", user.getEmail());
+            if (response.isSuccess()) {
+                log.info("임시 비밀번호 이메일 발송 성공: emailId={}, email={}", response.getEmailId(), user.getEmail());
+            } else {
+                log.error("임시 비밀번호 이메일 발송 실패: email={}, error={}", user.getEmail(), response.getErrorMessage());
+            }
         } catch (Exception e) {
             log.error("임시 비밀번호 이메일 발송 실패: {}, error: {}", user.getEmail(), e.getMessage());
         }

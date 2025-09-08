@@ -48,7 +48,7 @@ const PaymentTest = () => {
 
   // 테스트 함수들
   const testCreatePayment = async () => {
-    const response = await fetch('/api/test/payment/create', {
+    const response = await fetch('http://localhost:8080/api/test/payment/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -56,17 +56,25 @@ const PaymentTest = () => {
       credentials: 'include',
       body: JSON.stringify(testData)
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return await response.json();
   };
 
   const testPaymentScenarios = async () => {
-    const response = await fetch('/api/test/payment/scenarios', {
+    const response = await fetch('http://localhost:8080/api/test/payment/scenarios', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include'
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return await response.json();
   };
 
@@ -105,13 +113,17 @@ const PaymentTest = () => {
   };
 
   const testStatistics = async () => {
-    const response = await fetch('/api/test/payment/statistics-test', {
+    const response = await fetch('http://localhost:8080/api/test/payment/statistics-test', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include'
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return await response.json();
   };
 
@@ -178,13 +190,17 @@ const PaymentTest = () => {
   };
 
   const testSystemHealth = async () => {
-    const response = await fetch('/api/test/payment/health', {
+    const response = await fetch('http://localhost:8080/api/test/payment/health', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include'
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return await response.json();
   };
 

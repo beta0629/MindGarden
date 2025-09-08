@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
+import { API_BASE_URL } from '../../constants/api';
 import './PaymentManagement.css';
 
 /**
@@ -45,7 +46,7 @@ const PaymentManagement = () => {
         ...filters
       });
 
-      const response = await fetch(`/api/payments?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/api/payments?${params}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +80,7 @@ const PaymentManagement = () => {
         endDate: filters.endDate || new Date().toISOString()
       });
 
-      const response = await fetch(`/api/payments/statistics?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/api/payments/statistics?${params}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +117,7 @@ const PaymentManagement = () => {
 
   const handleStatusUpdate = async (paymentId, status) => {
     try {
-      const response = await fetch(`/api/payments/${paymentId}/status?status=${status}`, {
+      const response = await fetch(`${API_BASE_URL}/api/payments/${paymentId}/status?status=${status}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +139,7 @@ const PaymentManagement = () => {
 
   const handleRefund = async (paymentId, amount) => {
     try {
-      const response = await fetch(`/api/payments/${paymentId}/refund`, {
+      const response = await fetch(`${API_BASE_URL}/api/payments/${paymentId}/refund`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -283,17 +283,6 @@ const PaymentManagement = () => {
     }
   };
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
-    setPagination(prev => ({
-      ...prev,
-      currentPage: 0
-    }));
-  };
-
   const getStatusBadge = (status) => {
     const statusMap = {
       'PENDING': { text: '대기중', class: 'badge-warning' },

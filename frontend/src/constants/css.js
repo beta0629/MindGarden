@@ -210,3 +210,42 @@ export const QUICK_ACTIONS_CSS = {
   LABEL: 'quick-actions-label',
   DESCRIPTION: 'quick-actions-description'
 };
+
+// 최근 활동 CSS 클래스
+export const RECENT_ACTIVITIES_CSS = {
+  CONTAINER: 'recent-activities',
+  HEADER: 'recent-activities-header',
+  TITLE: 'recent-activities-title',
+  CONTENT: 'recent-activities-content',
+  LIST: 'recent-activities-list',
+  ITEM: 'recent-activities-item',
+  ICON: 'recent-activities-icon',
+  TEXT: 'recent-activities-text',
+  TIME: 'recent-activities-time',
+  EMPTY: 'recent-activities-empty'
+};
+
+// 환영 섹션 CSS 클래스
+export const WELCOME_SECTION_CSS = {
+  CONTAINER: 'welcome-section',
+  HEADER: 'welcome-section-header',
+  TITLE: 'welcome-section-title',
+  SUBTITLE: 'welcome-section-subtitle',
+  CONTENT: 'welcome-section-content',
+  MESSAGE: 'welcome-section-message',
+  ICON: 'welcome-section-icon'
+};
+
+// 요약 패널 CSS 클래스
+export const SUMMARY_PANELS_CSS = {
+  CONTAINER: 'summary-panels',
+  GRID: 'summary-panels-grid',
+  PANEL: 'summary-panels-panel',
+  HEADER: 'summary-panels-header',
+  TITLE: 'summary-panels-title',
+  CONTENT: 'summary-panels-content',
+  NUMBER: 'summary-panels-number',
+  LABEL: 'summary-panels-label',
+  ICON: 'summary-panels-icon',
+  CHANGE: 'summary-panels-change'
+};

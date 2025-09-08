@@ -108,6 +108,7 @@ export const SUPER_ADMIN_MENU_ITEMS = {
       { id: 'finance-revenue', label: '수익 관리', path: '/super-admin/revenue', icon: 'bi-cash-stack' },
       { id: 'finance-expenses', label: '지출 관리', path: '/super-admin/expenses', icon: 'bi-receipt' },
       { id: 'finance-payments', label: '결제 관리', path: '/super-admin/payments', icon: 'bi-credit-card' },
+      { id: 'finance-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' },
       { id: 'finance-reports', label: '재무 보고서', path: '/super-admin/finance-reports', icon: 'bi-file-earmark-bar-graph' },
       { id: 'finance-settings', label: '자금 설정', path: '/super-admin/finance-settings', icon: 'bi-gear' }
     ]

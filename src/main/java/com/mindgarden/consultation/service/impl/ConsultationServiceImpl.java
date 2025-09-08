@@ -1624,33 +1624,28 @@ public class ConsultationServiceImpl implements ConsultationService {
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
             // 품질 평가 데이터 저장 로직 구현
-            // TODO: QualityEvaluation 엔티티가 생성되면 실제 구현
-            // QualityEvaluation qualityEvaluation = new QualityEvaluation();
-            // qualityEvaluation.setConsultationId(consultationId);
-            // qualityEvaluation.setOverallScore((Double) qualityMetrics.get("overallScore"));
-            // qualityEvaluation.setCommunicationScore((Double) qualityMetrics.get("communicationScore"));
-            // qualityEvaluation.setProfessionalismScore((Double) qualityMetrics.get("professionalismScore"));
-            // qualityEvaluation.setEffectivenessScore((Double) qualityMetrics.get("effectivenessScore"));
-            // qualityEvaluation.setClientSatisfactionScore((Double) qualityMetrics.get("clientSatisfactionScore"));
-            // qualityEvaluation.setEvaluatorId((String) qualityMetrics.get("evaluatorId"));
-            // qualityEvaluation.setEvaluationNotes((String) qualityMetrics.get("evaluationNotes"));
-            // qualityEvaluation.setCreatedAt(LocalDateTime.now());
-            // qualityEvaluation.setIsDeleted(false);
-            // qualityEvaluationRepository.save(qualityEvaluation);
+            // QualityEvaluation 엔티티가 생성되면 실제 구현
+            // 현재는 상담 엔티티에 품질 평가 데이터를 JSON 형태로 저장
+            Map<String, Object> qualityData = new HashMap<>();
+            qualityData.put("overallScore", qualityMetrics.get("overallScore"));
+            qualityData.put("communicationScore", qualityMetrics.get("communicationScore"));
+            qualityData.put("professionalismScore", qualityMetrics.get("professionalismScore"));
+            qualityData.put("effectivenessScore", qualityMetrics.get("effectivenessScore"));
+            qualityData.put("clientSatisfactionScore", qualityMetrics.get("clientSatisfactionScore"));
+            qualityData.put("evaluatorId", qualityMetrics.get("evaluatorId"));
+            qualityData.put("evaluationNotes", qualityMetrics.get("evaluationNotes"));
+            qualityData.put("evaluatedAt", LocalDateTime.now().toString());
             
-            // 현재는 상담 엔티티에 임시 저장
+            // JSON으로 직렬화하여 상담 노트에 저장
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String qualityJson = objectMapper.writeValueAsString(qualityData);
+            
             if (consultation.getConsultantNotes() == null) {
                 consultation.setConsultantNotes("");
             }
             consultation.setConsultantNotes(consultation.getConsultantNotes() + 
-                String.format("\n[품질평가] 전체점수: %s, 의사소통: %s, 전문성: %s, 효과성: %s, 고객만족도: %s, 평가자: %s, 비고: %s", 
-                    qualityMetrics.get("overallScore"),
-                    qualityMetrics.get("communicationScore"),
-                    qualityMetrics.get("professionalismScore"),
-                    qualityMetrics.get("effectivenessScore"),
-                    qualityMetrics.get("clientSatisfactionScore"),
-                    qualityMetrics.get("evaluatorId"),
-                    qualityMetrics.get("evaluationNotes")));
+                "\n[품질평가JSON] " + qualityJson);
+            
             
             consultation.setUpdatedAt(LocalDateTime.now());
             consultation.setVersion(consultation.getVersion() + 1);
@@ -1694,22 +1689,29 @@ public class ConsultationServiceImpl implements ConsultationService {
             
             for (Consultation consultation : filteredConsultations) {
                 if (consultation.getConsultantNotes() != null && 
-                    consultation.getConsultantNotes().contains("[품질평가]")) {
+                    consultation.getConsultantNotes().contains("[품질평가JSON]")) {
                     
-                    String notes = consultation.getConsultantNotes();
-                    if (notes.matches(".*\\[품질평가\\].*")) {
-                        String[] parts = notes.split("\\[품질평가\\]")[1].split(",");
-                        for (String part : parts) {
-                            if (part.contains("전체점수:")) {
-                                try {
-                                    double score = Double.parseDouble(part.split(":")[1].trim());
+                    try {
+                        String notes = consultation.getConsultantNotes();
+                        String[] lines = notes.split("\n");
+                        for (String line : lines) {
+                            if (line.contains("[품질평가JSON]")) {
+                                String jsonStr = line.substring(line.indexOf("[품질평가JSON]") + 14).trim();
+                                com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                                Map<String, Object> qualityData = objectMapper.readValue(jsonStr, Map.class);
+                                
+                                Object overallScoreObj = qualityData.get("overallScore");
+                                if (overallScoreObj != null) {
+                                    double score = ((Number) overallScoreObj).doubleValue();
                                     totalScore += score;
                                     evaluationCount++;
-                                } catch (NumberFormatException e) {
-                                    log.warn("품질 평가 점수 파싱 실패: {}", part);
                                 }
+                                break;
                             }
                         }
+                    } catch (Exception e) {
+                        log.warn("품질 평가 JSON 파싱 실패: consultationId={}, error={}", 
+                                consultation.getId(), e.getMessage());
                     }
                 }
             }
@@ -1897,22 +1899,24 @@ public class ConsultationServiceImpl implements ConsultationService {
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
             // 할인 정보 저장 로직 구현
-            // TODO: Discount 엔티티가 생성되면 실제 구현
-            // Discount discount = new Discount();
-            // discount.setConsultationId(consultationId);
-            // discount.setDiscountType(discountType);
-            // discount.setDiscountAmount(discountAmount);
-            // discount.setAppliedAt(LocalDateTime.now());
-            // discount.setIsActive(true);
-            // discountRepository.save(discount);
+            // Discount 엔티티가 생성되면 실제 구현
+            // 현재는 상담 엔티티에 할인 정보를 JSON 형태로 저장
+            Map<String, Object> discountData = new HashMap<>();
+            discountData.put("discountType", discountType);
+            discountData.put("discountAmount", discountAmount);
+            discountData.put("appliedAt", LocalDateTime.now().toString());
+            discountData.put("isActive", true);
             
-            // 현재는 상담 엔티티에 임시 저장
+            // JSON으로 직렬화하여 상담 노트에 저장
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String discountJson = objectMapper.writeValueAsString(discountData);
+            
             if (consultation.getConsultantNotes() == null) {
                 consultation.setConsultantNotes("");
             }
             consultation.setConsultantNotes(consultation.getConsultantNotes() + 
-                String.format("\n[할인] 유형: %s, 금액: %.0f원, 적용시간: %s", 
-                    discountType, discountAmount, LocalDateTime.now().toString()));
+                "\n[할인정보JSON] " + discountJson);
+            
             
             consultation.setUpdatedAt(LocalDateTime.now());
             consultation.setVersion(consultation.getVersion() + 1);
@@ -1936,23 +1940,30 @@ public class ConsultationServiceImpl implements ConsultationService {
             Consultation consultation = findActiveByIdOrThrow(consultationId);
             
             // 결제 정보 저장 로직 구현
-            // TODO: Payment 엔티티가 생성되면 실제 구현
-            // Payment payment = new Payment();
-            // payment.setConsultationId(consultationId);
-            // payment.setPaymentMethod(paymentMethod);
-            // payment.setAmount(calculateConsultationCost(consultationId).get("finalCost"));
-            // payment.setPaymentStatus("COMPLETED");
-            // payment.setPaidAt(LocalDateTime.now());
-            // payment.setIsDeleted(false);
-            // paymentRepository.save(payment);
+            // Payment 엔티티가 생성되면 실제 구현
+            // 현재는 상담 엔티티에 결제 정보를 JSON 형태로 저장
+            Map<String, Object> costInfo = calculateConsultationCost(consultationId);
+            Map<String, Object> paymentData = new HashMap<>();
+            paymentData.put("paymentMethod", paymentMethod);
+            paymentData.put("amount", costInfo.get("finalCost"));
+            paymentData.put("baseCost", costInfo.get("baseCost"));
+            paymentData.put("discountAmount", costInfo.get("discountAmount"));
+            paymentData.put("paymentStatus", "COMPLETED");
+            paymentData.put("paidAt", LocalDateTime.now().toString());
+            paymentData.put("consultationMethod", costInfo.get("consultationMethod"));
+            paymentData.put("isEmergency", costInfo.get("isEmergency"));
+            paymentData.put("priority", costInfo.get("priority"));
             
-            // 현재는 상담 엔티티에 임시 저장
+            // JSON으로 직렬화하여 상담 노트에 저장
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String paymentJson = objectMapper.writeValueAsString(paymentData);
+            
             if (consultation.getConsultantNotes() == null) {
                 consultation.setConsultantNotes("");
             }
             consultation.setConsultantNotes(consultation.getConsultantNotes() + 
-                String.format("\n[결제] 방법: %s, 정산시간: %s", 
-                    paymentMethod, LocalDateTime.now().toString()));
+                "\n[결제정보JSON] " + paymentJson);
+            
             
             consultation.setUpdatedAt(LocalDateTime.now());
             consultation.setVersion(consultation.getVersion() + 1);

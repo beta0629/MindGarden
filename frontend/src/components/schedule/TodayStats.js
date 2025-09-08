@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
+import LoadingSpinner from '../common/LoadingSpinner';
 import './TodayStats.css';
 
 /**
@@ -78,10 +79,12 @@ const TodayStats = () => {
     if (loading) {
         return (
             <div className="stats-grid">
-                <div className="stat-item loading">
-                    <div className="stat-value">-</div>
-                    <div className="stat-label">로딩중...</div>
-                </div>
+                <LoadingSpinner 
+                    text="오늘의 통계를 불러오는 중..." 
+                    size="medium" 
+                    variant="dots"
+                    className="loading-spinner-inline"
+                />
             </div>
         );
     }

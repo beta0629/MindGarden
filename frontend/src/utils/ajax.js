@@ -91,7 +91,7 @@ export const apiPost = async (endpoint, data = {}, options = {}) => {
       method: 'POST',
       headers: { ...getDefaultHeaders(), ...options.headers },
       body: JSON.stringify(data),
-      // credentials 제거 - 세션 쿠키 없이 요청
+      credentials: 'include', // 세션 쿠키 포함
       ...options
     });
 
@@ -113,6 +113,7 @@ export const apiPut = async (endpoint, data = {}, options = {}) => {
       method: 'PUT',
       headers: { ...getDefaultHeaders(), ...options.headers },
       body: JSON.stringify(data),
+      credentials: 'include', // 세션 쿠키 포함
       ...options
     });
 
@@ -138,6 +139,7 @@ export const apiPostFormData = async (endpoint, formData, options = {}) => {
       method: 'POST',
       headers: { ...getDefaultHeaders(), ...headers },
       body: formData,
+      credentials: 'include', // 세션 쿠키 포함
       ...options
     });
 
@@ -158,6 +160,7 @@ export const apiDelete = async (endpoint, options = {}) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
       headers: { ...getDefaultHeaders(), ...options.headers },
+      credentials: 'include', // 세션 쿠키 포함
       ...options
     });
 
@@ -182,6 +185,7 @@ export const apiUpload = async (endpoint, formData, options = {}) => {
       method: 'POST',
       headers: { ...headers, ...options.headers },
       body: formData,
+      credentials: 'include', // 세션 쿠키 포함
       ...options
     });
 
@@ -207,7 +211,8 @@ export const authAPI = {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        credentials: 'include' // 세션 쿠키 포함
       });
       
       if (!response.ok) {

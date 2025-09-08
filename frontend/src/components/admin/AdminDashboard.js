@@ -7,6 +7,7 @@ import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
 import SystemTools from './system/SystemTools';
 import StatisticsModal from '../common/StatisticsModal';
+import LoadingSpinner from '../common/LoadingSpinner';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
 import './AdminDashboard.css';

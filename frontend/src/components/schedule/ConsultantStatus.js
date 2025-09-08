@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
+import LoadingSpinner from '../common/LoadingSpinner';
 import './ConsultantStatus.css';
 
 /**
@@ -169,9 +170,12 @@ const ConsultantStatus = () => {
     if (loading) {
         return (
             <div className="consultant-status">
-                <div className="consultant-status-loading">
-                    <span>상담사 현황 로딩 중...</span>
-                </div>
+                <LoadingSpinner 
+                    text="상담사 현황을 불러오는 중..." 
+                    size="medium" 
+                    variant="bars"
+                    className="loading-spinner-inline"
+                />
             </div>
         );
     }

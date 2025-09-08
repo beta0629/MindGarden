@@ -8,13 +8,16 @@
   padding: 20px;
 }
 
-/* 로딩 스피너 아이콘 - 타원형 */
+/* 기본 로딩 스피너 아이콘 - 원형 */
 .loading-spinner-icon {
   position: relative;
   border-radius: 50%;
-  background: linear-gradient(45deg, #f3f4f6, #e5e7eb);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   overflow: hidden;
+  border: 2px solid rgba(59, 130, 246, 0.1);
 }
 
 /* 로딩 스피너 내부 - 회전하는 부분 */
@@ -28,42 +31,150 @@
   background: conic-gradient(
     from 0deg,
     #3b82f6 0deg,
-    #3b82f6 90deg,
-    transparent 90deg,
-    transparent 360deg
+    #8b5cf6 90deg,
+    #06b6d4 180deg,
+    #10b981 270deg,
+    #3b82f6 360deg
   );
-  animation: spin 1s linear infinite;
+  animation: spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  mask: radial-gradient(circle at center, transparent 40%, black 40%);
+  -webkit-mask: radial-gradient(circle at center, transparent 40%, black 40%);
 }
 
 /* 크기별 스타일 */
 .loading-spinner-small {
   width: 32px;
-  height: 24px;
+  height: 32px;
 }
 
 .loading-spinner-medium {
-  width: 60px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
 }
 
 .loading-spinner-large {
-  width: 80px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
 }
 
-/* 로딩 텍스트 - 고정 */
+/* ==================== 도트 로딩 ==================== */
+.loading-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-dots .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  animation: dot-bounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dots .dot:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots .dot:nth-child(2) { animation-delay: -0.16s; }
+.loading-dots .dot:nth-child(3) { animation-delay: 0s; }
+
+.loading-dots-small { gap: 6px; }
+.loading-dots-small .dot { width: 6px; height: 6px; }
+
+.loading-dots-medium { gap: 8px; }
+.loading-dots-medium .dot { width: 8px; height: 8px; }
+
+.loading-dots-large { gap: 10px; }
+.loading-dots-large .dot { width: 10px; height: 10px; }
+
+/* ==================== 펄스 로딩 ==================== */
+.loading-pulse {
+  position: relative;
+}
+
+.pulse-circle {
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  animation: pulse-scale 1.5s ease-in-out infinite;
+}
+
+.loading-pulse-small .pulse-circle {
+  width: 24px;
+  height: 24px;
+}
+
+.loading-pulse-medium .pulse-circle {
+  width: 40px;
+  height: 40px;
+}
+
+.loading-pulse-large .pulse-circle {
+  width: 56px;
+  height: 56px;
+}
+
+/* ==================== 바 로딩 ==================== */
+.loading-bars {
+  display: flex;
+  align-items: end;
+  gap: 4px;
+  height: 40px;
+}
+
+.loading-bars .bar {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 2px;
+  animation: bar-wave 1.2s ease-in-out infinite;
+}
+
+.loading-bars-small {
+  height: 24px;
+  gap: 3px;
+}
+
+.loading-bars-small .bar {
+  width: 4px;
+  border-radius: 2px;
+}
+
+.loading-bars-medium {
+  height: 40px;
+  gap: 4px;
+}
+
+.loading-bars-medium .bar {
+  width: 6px;
+  border-radius: 3px;
+}
+
+.loading-bars-large {
+  height: 56px;
+  gap: 5px;
+}
+
+.loading-bars-large .bar {
+  width: 8px;
+  border-radius: 4px;
+}
+
+.loading-bars .bar:nth-child(1) { animation-delay: -1.1s; }
+.loading-bars .bar:nth-child(2) { animation-delay: -1.0s; }
+.loading-bars .bar:nth-child(3) { animation-delay: -0.9s; }
+.loading-bars .bar:nth-child(4) { animation-delay: -0.8s; }
+
+/* 로딩 텍스트 - 개선된 스타일 */
 .loading-spinner-text {
-  font-size: 16px;
-  color: #6b7280;
+  font-size: 14px;
+  color: #64748b;
   font-weight: 500;
   margin-top: 16px;
   position: relative;
   z-index: 1;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.5;
+  letter-spacing: 0.025em;
+  animation: text-fade 2s ease-in-out infinite;
 }
 
-/* 회전 애니메이션 */
+/* ==================== 애니메이션 ==================== */
 @keyframes spin {
   0% { 
     transform: rotate(0deg); 
@@ -73,47 +184,138 @@
   }
 }
 
-/* 전체 화면 로딩 */
+@keyframes dot-bounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes bar-wave {
+  0%, 40%, 100% {
+    transform: scaleY(0.4);
+    opacity: 0.6;
+  }
+  20% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes text-fade {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 전체 화면 로딩 - 개선된 스타일 */
 .loading-spinner-fullscreen {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* 컨테이너 내 로딩 */
+/* 컨테이너 내 로딩 - 개선된 스타일 */
 .loading-spinner-inline {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border-radius: 16px;
+  box-shadow: 
+    0 10px 25px rgba(0, 0, 0, 0.08),
+    0 4px 10px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   min-width: 200px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-/* 반응형 */
+/* 반응형 - 개선된 모바일 지원 */
 @media (max-width: 768px) {
+  .loading-spinner-container {
+    padding: 16px;
+  }
+  
   .loading-spinner-medium {
-    width: 50px;
-    height: 35px;
+    width: 40px;
+    height: 40px;
   }
   
   .loading-spinner-large {
-    width: 70px;
-    height: 50px;
+    width: 56px;
+    height: 56px;
   }
   
   .loading-spinner-text {
-    font-size: 14px;
+    font-size: 13px;
     margin-top: 12px;
+  }
+  
+  .loading-spinner-inline {
+    padding: 20px;
+    min-width: 160px;
+  }
+  
+  .loading-dots-medium { gap: 6px; }
+  .loading-dots-medium .dot { width: 6px; height: 6px; }
+  
+  .loading-bars-medium {
+    height: 32px;
+    gap: 3px;
+  }
+  
+  .loading-bars-medium .bar {
+    width: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .loading-spinner-container {
+    padding: 12px;
+  }
+  
+  .loading-spinner-small {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .loading-spinner-medium {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .loading-spinner-text {
+    font-size: 12px;
+    margin-top: 10px;
   }
 }

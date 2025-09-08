@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ConsultantCard from '../ConsultantCard';
 import ConsultantFilter from '../components/ConsultantFilter';
+import LoadingSpinner from '../../common/LoadingSpinner';
 import notificationManager from '../../../utils/notification';
 import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../../constants/css-variables';
 
@@ -328,9 +329,12 @@ const ConsultantSelectionStepNew = ({
     if (loading && consultants.length === 0) {
         return (
             <div className="consultant-selection-step">
-                <div className="loading-container">
-                    <div className="loading-spinner">상담사 목록을 불러오는 중...</div>
-                </div>
+                <LoadingSpinner 
+                    text="상담사 목록을 불러오는 중..." 
+                    size="large" 
+                    variant="dots"
+                    className="loading-spinner-inline"
+                />
             </div>
         );
     }

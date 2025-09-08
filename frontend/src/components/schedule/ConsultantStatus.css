@@ -135,7 +135,8 @@
 
 
 
-.consultant-status-loading,
+/* .consultant-status-loading 제거 - 공통 LoadingSpinner 사용 */
+
 .consultant-status-error,
 .consultant-status-empty {
     display: flex;

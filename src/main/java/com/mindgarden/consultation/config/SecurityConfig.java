@@ -34,7 +34,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
     
     /**
-     * SecurityFilterChain 설정 (개발 중 모든 보안 비활성화)
+     * SecurityFilterChain 설정 (환경별 보안 설정)
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -48,27 +48,39 @@ public class SecurityConfig {
                 .sessionAuthenticationStrategy(sessionAuthenticationStrategy())
             )
             
-            // 인증 설정 (개발 중에는 모든 요청 허용)
-            // TODO: 운영 환경에서는 아래와 같이 변경해야 함
-            // .authorizeHttpRequests(authz -> authz
-            //     // 공개 API
-            //     .requestMatchers("/api/auth/**", "/oauth2/**").permitAll()
-            //     .requestMatchers("/error").permitAll()
-            //     // 보호된 API는 인증 필요
-            //     .anyRequest().authenticated()
-            // )
-            .authorizeHttpRequests(authz -> authz
-                .anyRequest().permitAll()
-            )
+            // 환경별 인증 설정
+            .authorizeHttpRequests(authz -> {
+                // 공개 API (모든 환경에서 허용)
+                authz.requestMatchers(
+                    "/api/auth/**", 
+                    "/oauth2/**",
+                    "/error",
+                    "/actuator/health",
+                    "/actuator/info"
+                ).permitAll();
+                
+                // 운영 환경에서는 나머지 API 인증 필요
+                if (isProductionEnvironment()) {
+                    authz.anyRequest().authenticated();
+                } else {
+                    // 개발 환경에서는 모든 요청 허용
+                    authz.anyRequest().permitAll();
+                }
+            })
             
             // 폼 로그인 비활성화
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable);
-            
-            // TODO: 운영 환경에서는 JWT 필터 활성화 필요
-            // .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
+    }
+    
+    /**
+     * 운영 환경 여부 확인
+     */
+    private boolean isProductionEnvironment() {
+        String activeProfile = System.getProperty("spring.profiles.active");
+        return "prod".equals(activeProfile) || "production".equals(activeProfile);
     }
     
     /**
@@ -107,21 +119,31 @@ public class SecurityConfig {
     // }
     
     /**
-     * CORS 설정
+     * CORS 설정 (환경별 설정)
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // 허용할 Origin 설정 (개발 환경)
-        configuration.setAllowedOrigins(List.of(
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "http://localhost:3001",
-            "http://127.0.0.1:3001",
-            "http://localhost:8080",
-            "http://127.0.0.1:8080"
-        ));
+        // 환경별 Origin 설정
+        if (isProductionEnvironment()) {
+            // 운영 환경: 특정 도메인만 허용
+            if (System.getenv("ALLOWED_ORIGINS") != null) {
+                configuration.setAllowedOrigins(Arrays.asList(System.getenv("ALLOWED_ORIGINS").split(",")));
+            } else {
+                configuration.setAllowedOrigins(List.of("https://yourdomain.com", "https://www.yourdomain.com"));
+            }
+        } else {
+            // 개발 환경: localhost 허용
+            configuration.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+                "http://localhost:3001",
+                "http://127.0.0.1:3001",
+                "http://localhost:8080",
+                "http://127.0.0.1:8080"
+            ));
+        }
         
         // 허용할 HTTP 메서드 설정
         configuration.setAllowedMethods(Arrays.asList(
@@ -137,7 +159,8 @@ public class SecurityConfig {
             "Origin",
             "Access-Control-Request-Method",
             "Access-Control-Request-Headers",
-            "Cache-Control"
+            "Cache-Control",
+            "Pragma"
         ));
         
         // 인증 정보 포함 허용
@@ -151,7 +174,7 @@ public class SecurityConfig {
         ));
         
         // Preflight 요청 캐시 시간 (초)
-        configuration.setMaxAge(3600L);
+        configuration.setMaxAge(isProductionEnvironment() ? 3600L : 0L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

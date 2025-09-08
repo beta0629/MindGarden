@@ -3,6 +3,7 @@ import StepIndicator from './components/StepIndicator';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
+import LoadingSpinner from '../common/LoadingSpinner';
 import notificationManager from '../../utils/notification';
 import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';

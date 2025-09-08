@@ -65,25 +65,7 @@
     line-height: 1.2;
 }
 
-.stat-item.loading .stat-value {
-    color: #94a3b8;
-    animation: pulse 1.5s ease-in-out infinite;
-    position: relative;
-}
-
-.stat-item.loading .stat-value::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 2px solid #e5e7eb;
-    border-top: 2px solid #3b82f6;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
+/* .stat-item.loading 제거 - 공통 LoadingSpinner 사용 */
 
 .stat-item.error .stat-value {
     color: #ef4444;

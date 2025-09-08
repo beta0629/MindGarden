@@ -5,6 +5,8 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
+import LoadingSpinner from '../common/LoadingSpinner';
+import { apiGet } from '../../utils/ajax';
 import './ScheduleCalendar.css';
 
 /**
@@ -48,22 +50,13 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             
             // 실제 API 호출 (캐시 방지를 위해 timestamp 추가)
             const timestamp = new Date().getTime();
-            const response = await fetch(`/api/schedules?userId=${userId}&userRole=${userRole}&_t=${timestamp}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                },
-                credentials: 'include'
-            });
+            const response = await apiGet(`/api/schedules?userId=${userId}&userRole=${userRole}&_t=${timestamp}`);
 
-            if (response.ok) {
-                const responseData = await response.json();
-                console.log('📅 API 응답 데이터:', responseData);
+            if (response && response.success) {
+                console.log('📅 API 응답 데이터:', response);
                 
                 // API 응답 구조에 따라 데이터 추출
-                const schedules = responseData.data || responseData;
+                const schedules = response.data || response;
                 
                 if (!Array.isArray(schedules)) {
                     console.error('스케줄 데이터가 배열이 아닙니다:', schedules);
@@ -95,7 +88,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 setEvents(calendarEvents);
                 console.log('📅 스케줄 로드 완료 (실제 API)');
             } else {
-                console.error('스케줄 API 응답 오류:', response.status, response.statusText);
+                console.error('스케줄 API 응답 오류:', response);
             }
         } catch (error) {
             console.error('스케줄 로드 실패:', error);
@@ -375,9 +368,12 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             </div>
 
             {loading && (
-                <div className="loading-overlay">
-                    <div className="loading-spinner">로딩 중...</div>
-                </div>
+                <LoadingSpinner 
+                    text="스케줄을 불러오는 중..." 
+                    size="large" 
+                    variant="pulse"
+                    className="loading-spinner-fullscreen"
+                />
             )}
 
             <FullCalendar

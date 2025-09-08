@@ -84,22 +84,7 @@
     border-radius: 12px;
 }
 
-.loading-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-}
-
-.loading-spinner {
-    padding: 20px 40px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    font-size: 16px;
-    color: #495057;
-    text-align: center;
-}
+/* 기존 로딩 스타일 제거 - 공통 LoadingSpinner 사용 */
 
 /* 애니메이션 */
 @keyframes slideInUp {

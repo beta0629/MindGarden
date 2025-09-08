@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.entity.Consultation;
 import com.mindgarden.consultation.service.ConsultationService;
+import com.mindgarden.consultation.constant.UserRole;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -243,14 +245,25 @@ public class ConsultationController {
     }
     
     /**
-     * 상담 완료
+     * 상담 완료 (어드민 전용)
      * POST /api/v1/consultations/{id}/complete
      */
     @PostMapping("/{id}/complete")
     public ResponseEntity<Map<String, Object>> completeConsultation(
             @PathVariable Long id,
             @RequestParam String notes,
-            @RequestParam int rating) {
+            @RequestParam int rating,
+            HttpServletRequest request) {
+        
+        // 어드민 권한 체크
+        String userRole = (String) request.getAttribute("userRole");
+        if (!UserRole.ADMIN.name().equals(userRole) && !UserRole.SUPER_ADMIN.name().equals(userRole)) {
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "상담 완료는 어드민만 가능합니다."
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
         
         log.info("상담 완료 - ID: {}, rating: {}", id, rating);
         

@@ -10,6 +10,8 @@ import com.mindgarden.consultation.dto.PaymentResponse;
 import com.mindgarden.consultation.dto.PaymentWebhookRequest;
 import com.mindgarden.consultation.entity.Payment;
 import com.mindgarden.consultation.service.PaymentService;
+import com.mindgarden.consultation.constant.UserRole;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -45,10 +47,18 @@ public class PaymentController {
     private final PaymentService paymentService;
     
     /**
-     * 결제 생성
+     * 결제 생성 (수퍼 어드민 전용)
      */
     @PostMapping
-    public ResponseEntity<?> createPayment(@Valid @RequestBody PaymentRequest request) {
+    public ResponseEntity<?> createPayment(@Valid @RequestBody PaymentRequest request, HttpServletRequest httpRequest) {
+        // 수퍼 어드민 권한 체크
+        String userRole = (String) httpRequest.getAttribute("userRole");
+        if (!UserRole.SUPER_ADMIN.name().equals(userRole)) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "결제 생성은 수퍼 어드민만 가능합니다.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(result);
+        }
         try {
             log.info("결제 생성 요청: {}", request.getOrderId());
             

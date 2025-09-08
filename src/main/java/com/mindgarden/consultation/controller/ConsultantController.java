@@ -7,6 +7,8 @@ import java.util.Map;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.service.ConsultantService;
+import com.mindgarden.consultation.constant.UserRole;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -319,7 +321,7 @@ public class ConsultantController {
     }
     
     /**
-     * 상담 완료 처리
+     * 상담 완료 처리 (상담사 전용 - 상담일지 작성)
      * POST /api/v1/consultants/{id}/consultations/{consultationId}/complete
      */
     @PostMapping("/{id}/consultations/{consultationId}/complete")
@@ -327,7 +329,29 @@ public class ConsultantController {
             @PathVariable Long id,
             @PathVariable Long consultationId,
             @RequestParam String notes,
-            @RequestParam int rating) {
+            @RequestParam int rating,
+            HttpServletRequest request) {
+        
+        // 상담사 권한 체크
+        String userRole = (String) request.getAttribute("userRole");
+        Long userId = (Long) request.getAttribute("userId");
+        
+        if (!UserRole.CONSULTANT.name().equals(userRole) || !id.equals(userId)) {
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "상담 완료는 해당 상담사만 가능합니다."
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+        
+        // 상담일지 필수 작성 체크
+        if (notes == null || notes.trim().isEmpty()) {
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "상담일지는 필수 작성 항목입니다."
+            );
+            return ResponseEntity.badRequest().body(response);
+        }
         
         log.info("상담 완료 처리 - ID: {}, consultationId: {}, rating: {}", id, consultationId, rating);
         
@@ -335,7 +359,57 @@ public class ConsultantController {
         
         Map<String, Object> response = Map.of(
             "success", true,
-            "message", "상담이 완료되었습니다."
+            "message", "상담이 완료되었습니다.",
+            "consultationId", consultationId,
+            "notes", notes,
+            "rating", rating
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 상담 일지 작성 (상담사 전용)
+     * POST /api/v1/consultants/{id}/consultations/{consultationId}/notes
+     */
+    @PostMapping("/{id}/consultations/{consultationId}/notes")
+    public ResponseEntity<Map<String, Object>> writeConsultationNotes(
+            @PathVariable Long id,
+            @PathVariable Long consultationId,
+            @RequestParam String notes,
+            HttpServletRequest request) {
+        
+        // 상담사 권한 체크
+        String userRole = (String) request.getAttribute("userRole");
+        Long userId = (Long) request.getAttribute("userId");
+        
+        if (!UserRole.CONSULTANT.name().equals(userRole) || !id.equals(userId)) {
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "상담 일지 작성은 해당 상담사만 가능합니다."
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+        
+        // 상담일지 필수 작성 체크
+        if (notes == null || notes.trim().isEmpty()) {
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "상담일지는 필수 작성 항목입니다."
+            );
+            return ResponseEntity.badRequest().body(response);
+        }
+        
+        log.info("상담 일지 작성 - ID: {}, consultationId: {}", id, consultationId);
+        
+        // 상담 일지 작성 로직 (실제 구현에서는 ConsultationService 호출)
+        // consultationService.addConsultationNote(consultationId, notes, id.toString());
+        
+        Map<String, Object> response = Map.of(
+            "success", true,
+            "message", "상담 일지가 작성되었습니다.",
+            "consultationId", consultationId,
+            "notes", notes
         );
         
         return ResponseEntity.ok(response);

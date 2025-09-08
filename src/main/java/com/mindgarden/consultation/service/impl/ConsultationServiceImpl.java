@@ -12,6 +12,8 @@ import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.entity.Consultation;
+import com.mindgarden.consultation.entity.Note;
+import com.mindgarden.consultation.entity.Review;
 import com.mindgarden.consultation.repository.BaseRepository;
 import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.ConsultantRepository;
@@ -642,29 +644,27 @@ public class ConsultationServiceImpl implements ConsultationService {
         
         // Review 엔티티 수정 로직 구현
         try {
-            // TODO: Review 엔티티가 생성되면 실제 구현
-            // Review reviewEntity = reviewRepository.findByConsultationId(consultationId);
-            // if (reviewEntity != null) {
-            //     reviewEntity.setRating(rating);
-            //     reviewEntity.setReviewText(review);
-            //     reviewEntity.setUpdatedAt(LocalDateTime.now());
-            //     reviewRepository.save(reviewEntity);
-            // }
+            // Review 엔티티 조회 및 수정
+            Review reviewEntity = reviewRepository.findByConsultationIdAndClientIdAndIsDeletedFalse(
+                consultationId, Long.parseLong(consultation.getClientId().toString())).orElse(null);
             
-            // 현재는 상담 엔티티에 임시 저장
-            if (consultation.getConsultantNotes() == null) {
-                consultation.setConsultantNotes("");
+            if (reviewEntity != null) {
+                reviewEntity.updateReview(rating, review);
+                reviewRepository.save(reviewEntity);
+            } else {
+                // 기존 리뷰가 없으면 새로 생성
+                Review newReview = Review.builder()
+                        .consultationId(consultationId)
+                        .clientId(Long.parseLong(consultation.getClientId().toString()))
+                        .consultantId(consultation.getConsultantId())
+                        .rating(rating)
+                        .reviewText(review)
+                        .isAnonymous(false)
+                        .isVerified(false)
+                        .isDeleted(false)
+                        .build();
+                reviewRepository.save(newReview);
             }
-            // 기존 평가 정보를 새로운 정보로 교체
-            String updatedNotes = consultation.getConsultantNotes().replaceAll(
-                "\\[평가\\].*", 
-                String.format("[평가] 점수: %d, 리뷰: %s", rating, review)
-            );
-            consultation.setConsultantNotes(updatedNotes);
-            
-            consultation.setUpdatedAt(LocalDateTime.now());
-            consultation.setVersion(consultation.getVersion() + 1);
-            save(consultation);
             
             log.info("상담 평가 수정 완료: consultationId={}, rating={}", consultationId, rating);
             
@@ -687,40 +687,17 @@ public class ConsultationServiceImpl implements ConsultationService {
         
         try {
             // Review 엔티티에서 실제 데이터 조회 로직 구현
-            // TODO: Review 엔티티가 생성되면 실제 구현
-            // Review reviewEntity = reviewRepository.findByConsultationId(consultationId);
-            // if (reviewEntity != null) {
-            //     review.put("rating", reviewEntity.getRating());
-            //     review.put("review", reviewEntity.getReviewText());
-            //     review.put("clientId", reviewEntity.getClientId());
-            //     review.put("createdAt", reviewEntity.getCreatedAt());
-            //     review.put("updatedAt", reviewEntity.getUpdatedAt());
-            // }
-            
-            // 현재는 상담 엔티티에서 임시 데이터 조회
-            Consultation consultation = findActiveByIdOrThrow(consultationId);
-            if (consultation.getConsultantNotes() != null && 
-                consultation.getConsultantNotes().contains("[평가]")) {
-                
-                String notes = consultation.getConsultantNotes();
-                // [평가] 점수: 5, 리뷰: 좋은 상담이었습니다, 클라이언트: client123
-                if (notes.matches(".*\\[평가\\].*")) {
-                    String[] parts = notes.split("\\[평가\\]")[1].split(",");
-                    for (String part : parts) {
-                        if (part.contains("점수:")) {
-                            try {
-                                int rating = Integer.parseInt(part.split(":")[1].trim());
-                                review.put("rating", rating);
-                            } catch (NumberFormatException e) {
-                                log.warn("평가 점수 파싱 실패: {}", part);
-                            }
-                        } else if (part.contains("리뷰:")) {
-                            review.put("review", part.split(":")[1].trim());
-                        } else if (part.contains("클라이언트:")) {
-                            review.put("clientId", part.split(":")[1].trim());
-                        }
-                    }
-                }
+            List<Review> reviewEntities = reviewRepository.findByConsultationIdAndIsDeletedFalse(consultationId);
+            if (!reviewEntities.isEmpty()) {
+                Review reviewEntity = reviewEntities.get(0); // 첫 번째 리뷰 사용
+                review.put("rating", reviewEntity.getRating());
+                review.put("review", reviewEntity.getReviewText());
+                review.put("clientId", reviewEntity.getClientId());
+                review.put("consultantId", reviewEntity.getConsultantId());
+                review.put("isAnonymous", reviewEntity.getIsAnonymous());
+                review.put("isVerified", reviewEntity.getIsVerified());
+                review.put("createdAt", reviewEntity.getCreatedAt());
+                review.put("updatedAt", reviewEntity.getUpdatedAt());
             }
             
             log.info("상담 평가 조회 완료: consultationId={}, rating={}", 
@@ -746,44 +723,16 @@ public class ConsultationServiceImpl implements ConsultationService {
         
         try {
             // Review 엔티티에서 실제 평점 데이터 조회 로직 구현
-            // TODO: Review 엔티티가 생성되면 실제 구현
-            // List<Review> reviews = reviewRepository.findByConsultantId(consultantId);
-            // if (reviews.isEmpty()) {
-            //     return 0.0;
-            // }
-            // double averageRating = reviews.stream()
-            //     .mapToInt(Review::getRating)
-            //     .average()
-            //     .orElse(0.0);
-            
-            // 현재는 상담 엔티티에서 임시 데이터 조회
-            double totalRating = 0.0;
-            int ratingCount = 0;
-            
-            for (Consultation consultation : consultations) {
-                if (consultation.getConsultantNotes() != null && 
-                    consultation.getConsultantNotes().contains("[평가]")) {
-                    
-                    String notes = consultation.getConsultantNotes();
-                    if (notes.matches(".*\\[평가\\].*")) {
-                        String[] parts = notes.split("\\[평가\\]")[1].split(",");
-                        for (String part : parts) {
-                            if (part.contains("점수:")) {
-                                try {
-                                    int rating = Integer.parseInt(part.split(":")[1].trim());
-                                    totalRating += rating;
-                                    ratingCount++;
-                                    break;
-                                } catch (NumberFormatException e) {
-                                    log.warn("평가 점수 파싱 실패: {}", part);
-                                }
-                            }
-                        }
-                    }
-                }
+            List<Review> reviews = reviewRepository.findByConsultantIdAndIsDeletedFalse(consultantId);
+            if (reviews.isEmpty()) {
+                log.info("상담사별 리뷰가 없음: consultantId={}", consultantId);
+                return 0.0;
             }
             
-            double averageRating = ratingCount > 0 ? totalRating / ratingCount : 0.0;
+            double averageRating = reviews.stream()
+                .mapToInt(Review::getRating)
+                .average()
+                .orElse(0.0);
             log.info("상담사별 평균 평점 조회 완료: consultantId={}, averageRating={}", 
                     consultantId, averageRating);
             
@@ -806,26 +755,19 @@ public class ConsultationServiceImpl implements ConsultationService {
         
         // Note 엔티티 생성 및 저장 로직 구현
         try {
-            // TODO: Note 엔티티가 생성되면 실제 구현
-            // Note noteEntity = new Note();
-            // noteEntity.setConsultationId(consultationId);
-            // noteEntity.setAuthorId(authorId);
-            // noteEntity.setNoteText(note);
-            // noteEntity.setCreatedAt(LocalDateTime.now());
-            // noteEntity.setIsDeleted(false);
-            // noteRepository.save(noteEntity);
+            // Note 엔티티 생성 및 저장
+            Note noteEntity = Note.builder()
+                    .consultationId(consultationId)
+                    .authorId(authorId)
+                    .authorType("CONSULTANT") // 기본값
+                    .noteText(note)
+                    .noteType("CONSULTATION") // 기본값
+                    .isPrivate(false)
+                    .isImportant(false)
+                    .isDeleted(false)
+                    .build();
             
-            // 현재는 상담 엔티티에 임시 저장
-            if (consultation.getConsultantNotes() == null) {
-                consultation.setConsultantNotes("");
-            }
-            consultation.setConsultantNotes(consultation.getConsultantNotes() + 
-                String.format("\n[노트] 작성자: %s, 내용: %s, 시간: %s", 
-                    authorId, note, LocalDateTime.now().toString()));
-            
-            consultation.setUpdatedAt(LocalDateTime.now());
-            consultation.setVersion(consultation.getVersion() + 1);
-            save(consultation);
+            noteRepository.save(noteEntity);
             
             log.info("상담 노트 추가 완료: consultationId={}, authorId={}", consultationId, authorId);
             
@@ -842,14 +784,12 @@ public class ConsultationServiceImpl implements ConsultationService {
         
         try {
             // Note 엔티티 수정 로직 구현
-            // TODO: Note 엔티티가 생성되면 실제 구현
-            // Note noteEntity = noteRepository.findById(noteId)
-            //     .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다: " + noteId));
-            // noteEntity.setNoteText(note);
-            // noteEntity.setUpdatedAt(LocalDateTime.now());
-            // noteRepository.save(noteEntity);
+            Note noteEntity = noteRepository.findById(noteId)
+                .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다: " + noteId));
             
-            // 현재는 임시 구현 (실제로는 noteId로 상담을 찾아서 수정)
+            noteEntity.updateNote(note);
+            noteRepository.save(noteEntity);
+            
             log.info("상담 노트 수정 완료: noteId={}", noteId);
             
         } catch (Exception e) {
@@ -865,15 +805,12 @@ public class ConsultationServiceImpl implements ConsultationService {
         
         try {
             // Note 엔티티 삭제 로직 구현
-            // TODO: Note 엔티티가 생성되면 실제 구현
-            // Note noteEntity = noteRepository.findById(noteId)
-            //     .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다: " + noteId));
-            // noteEntity.setIsDeleted(true);
-            // noteEntity.setDeletedAt(LocalDateTime.now());
-            // noteEntity.setUpdatedAt(LocalDateTime.now());
-            // noteRepository.save(noteEntity);
+            Note noteEntity = noteRepository.findById(noteId)
+                .orElseThrow(() -> new RuntimeException("노트를 찾을 수 없습니다: " + noteId));
             
-            // 현재는 임시 구현
+            noteEntity.softDelete();
+            noteRepository.save(noteEntity);
+            
             log.info("상담 노트 삭제 완료: noteId={}", noteId);
             
         } catch (Exception e) {
@@ -891,44 +828,20 @@ public class ConsultationServiceImpl implements ConsultationService {
         
         try {
             // Note 엔티티에서 실제 데이터 조회 로직 구현
-            // TODO: Note 엔티티가 생성되면 실제 구현
-            // List<Note> noteEntities = noteRepository.findByConsultationIdAndIsDeletedFalse(consultationId);
-            // for (Note noteEntity : noteEntities) {
-            //     Map<String, Object> note = new HashMap<>();
-            //     note.put("id", noteEntity.getId());
-            //     note.put("authorId", noteEntity.getAuthorId());
-            //     note.put("noteText", noteEntity.getNoteText());
-            //     note.put("createdAt", noteEntity.getCreatedAt());
-            //     note.put("updatedAt", noteEntity.getUpdatedAt());
-            //     notes.add(note);
-            // }
-            
-            // 현재는 상담 엔티티에서 임시 데이터 조회
-            Consultation consultation = findActiveByIdOrThrow(consultationId);
-            if (consultation.getConsultantNotes() != null && 
-                consultation.getConsultantNotes().contains("[노트]")) {
-                
-                String[] noteLines = consultation.getConsultantNotes().split("\n");
-                for (String line : noteLines) {
-                    if (line.contains("[노트]")) {
-                        Map<String, Object> note = new HashMap<>();
-                        note.put("id", System.currentTimeMillis()); // 임시 ID
-                        note.put("consultationId", consultationId);
-                        
-                        // [노트] 작성자: author123, 내용: 노트 내용, 시간: 2024-01-01T10:00:00
-                        String[] parts = line.split("작성자:")[1].split(",");
-                        for (String part : parts) {
-                            if (part.contains("작성자:")) {
-                                note.put("authorId", part.split(":")[1].trim());
-                            } else if (part.contains("내용:")) {
-                                note.put("noteText", part.split(":")[1].trim());
-                            } else if (part.contains("시간:")) {
-                                note.put("createdAt", part.split(":")[1].trim());
-                            }
-                        }
-                        notes.add(note);
-                    }
-                }
+            List<Note> noteEntities = noteRepository.findByConsultationIdAndIsDeletedFalse(consultationId);
+            for (Note noteEntity : noteEntities) {
+                Map<String, Object> note = new HashMap<>();
+                note.put("id", noteEntity.getId());
+                note.put("consultationId", noteEntity.getConsultationId());
+                note.put("authorId", noteEntity.getAuthorId());
+                note.put("authorType", noteEntity.getAuthorType());
+                note.put("noteText", noteEntity.getNoteText());
+                note.put("noteType", noteEntity.getNoteType());
+                note.put("isPrivate", noteEntity.getIsPrivate());
+                note.put("isImportant", noteEntity.getIsImportant());
+                note.put("createdAt", noteEntity.getCreatedAt());
+                note.put("updatedAt", noteEntity.getUpdatedAt());
+                notes.add(note);
             }
             
             log.info("상담 노트 목록 조회 완료: consultationId={}, count={}", consultationId, notes.size());

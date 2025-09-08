@@ -1,12 +1,11 @@
 package com.mindgarden.consultation.repository;
 
+import java.util.List;
 import com.mindgarden.consultation.entity.Note;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 /**
  * 노트 리포지토리

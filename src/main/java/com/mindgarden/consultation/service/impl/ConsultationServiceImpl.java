@@ -13,8 +13,13 @@ import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.entity.Consultation;
 import com.mindgarden.consultation.repository.BaseRepository;
+import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.ConsultantRepository;
 import com.mindgarden.consultation.repository.ConsultationRepository;
+import com.mindgarden.consultation.repository.DiscountRepository;
+import com.mindgarden.consultation.repository.NoteRepository;
+import com.mindgarden.consultation.repository.QualityEvaluationRepository;
+import com.mindgarden.consultation.repository.ReviewRepository;
 import com.mindgarden.consultation.service.ConsultationService;
 import com.mindgarden.consultation.service.EmailService;
 import org.slf4j.Logger;
@@ -44,6 +49,21 @@ public class ConsultationServiceImpl implements ConsultationService {
     
     @Autowired
     private ConsultantRepository consultantRepository;
+    
+    @Autowired
+    private ReviewRepository reviewRepository;
+    
+    @Autowired
+    private NoteRepository noteRepository;
+    
+    @Autowired
+    private QualityEvaluationRepository qualityEvaluationRepository;
+    
+    @Autowired
+    private DiscountRepository discountRepository;
+    
+    @Autowired
+    private ClientRepository clientRepository;
     
     @Autowired
     private EmailService emailService;
@@ -591,29 +611,19 @@ public class ConsultationServiceImpl implements ConsultationService {
         
         // Review 엔티티 생성 및 저장 로직 구현
         try {
-            // Review 엔티티가 생성되면 실제 구현
-            // 현재는 상담 엔티티에 임시 저장하지만, Review 엔티티 생성 시 아래 코드 활성화
-            /*
-            Review reviewEntity = new Review();
-            reviewEntity.setConsultationId(consultationId);
-            reviewEntity.setClientId(clientId);
-            reviewEntity.setRating(rating);
-            reviewEntity.setReviewText(review);
-            reviewEntity.setCreatedAt(LocalDateTime.now());
-            reviewEntity.setIsDeleted(false);
+            // Review 엔티티 생성 및 저장
+            Review reviewEntity = Review.builder()
+                    .consultationId(consultationId)
+                    .clientId(Long.parseLong(clientId))
+                    .consultantId(consultation.getConsultantId())
+                    .rating(rating)
+                    .reviewText(review)
+                    .isAnonymous(false)
+                    .isVerified(false)
+                    .isDeleted(false)
+                    .build();
+            
             reviewRepository.save(reviewEntity);
-            */
-            
-            // 현재는 상담 엔티티에 임시 저장
-            if (consultation.getConsultantNotes() == null) {
-                consultation.setConsultantNotes("");
-            }
-            consultation.setConsultantNotes(consultation.getConsultantNotes() + 
-                String.format("\n[평가] 점수: %d, 리뷰: %s, 클라이언트: %s", rating, review, clientId));
-            
-            consultation.setUpdatedAt(LocalDateTime.now());
-            consultation.setVersion(consultation.getVersion() + 1);
-            save(consultation);
             
             log.info("상담 평가 등록 완료: consultationId={}, rating={}", consultationId, rating);
             

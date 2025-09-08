@@ -2,6 +2,7 @@ package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.mindgarden.consultation.constant.BankTransferConstants;
 import com.mindgarden.consultation.dto.BankTransferRequest;
 import com.mindgarden.consultation.dto.BankTransferResponse;
 import com.mindgarden.consultation.entity.Payment;
@@ -192,30 +193,153 @@ public class BankTransferServiceImpl implements BankTransferService {
     public Object getDepositStatistics(LocalDateTime startDate, LocalDateTime endDate) {
         log.info("입금 통계 조회: {} ~ {}", startDate, endDate);
         
-        // TODO: 입금 통계 조회 로직 구현
-        // 실제로는 복잡한 통계 쿼리를 작성해야 함
-        
-        return null;
+        try {
+            // 기간 유효성 검사
+            if (startDate.isAfter(endDate)) {
+                throw new IllegalArgumentException("시작일은 종료일보다 빨라야 합니다.");
+            }
+            
+            // 입금 통계 조회 (실제 구현에서는 복잡한 통계 쿼리 사용)
+            List<Payment> deposits = paymentRepository.findByCreatedAtBetweenAndIsDeletedFalse(startDate, endDate);
+            
+            // 통계 계산
+            long totalDeposits = deposits.size();
+            long successfulDeposits = deposits.stream()
+                    .filter(p -> Payment.PaymentStatus.APPROVED.equals(p.getStatus()))
+                    .count();
+            long failedDeposits = deposits.stream()
+                    .filter(p -> Payment.PaymentStatus.FAILED.equals(p.getStatus()))
+                    .count();
+            long pendingDeposits = deposits.stream()
+                    .filter(p -> Payment.PaymentStatus.PENDING.equals(p.getStatus()))
+                    .count();
+            
+            long totalAmount = deposits.stream()
+                    .filter(p -> Payment.PaymentStatus.APPROVED.equals(p.getStatus()))
+                    .mapToLong(Payment::getAmount)
+                    .sum();
+            
+            double averageAmount = successfulDeposits > 0 ? (double) totalAmount / successfulDeposits : 0.0;
+            
+            // 통계 결과 구성
+            java.util.Map<String, Object> statistics = new java.util.HashMap<>();
+            statistics.put(BankTransferConstants.STATS_TOTAL_DEPOSITS, totalDeposits);
+            statistics.put(BankTransferConstants.STATS_SUCCESSFUL_DEPOSITS, successfulDeposits);
+            statistics.put(BankTransferConstants.STATS_FAILED_DEPOSITS, failedDeposits);
+            statistics.put(BankTransferConstants.STATS_PENDING_DEPOSITS, pendingDeposits);
+            statistics.put(BankTransferConstants.STATS_TOTAL_AMOUNT, totalAmount);
+            statistics.put(BankTransferConstants.STATS_AVERAGE_AMOUNT, averageAmount);
+            statistics.put("startDate", startDate);
+            statistics.put("endDate", endDate);
+            
+            log.info("입금 통계 조회 완료: total={}, successful={}, failed={}, pending={}", 
+                    totalDeposits, successfulDeposits, failedDeposits, pendingDeposits);
+            
+            return statistics;
+            
+        } catch (Exception e) {
+            log.error("입금 통계 조회 중 오류 발생: {}", e.getMessage(), e);
+            throw new RuntimeException("입금 통계 조회에 실패했습니다.", e);
+        }
     }
     
     // ==================== Private Methods ====================
     
     private String generateVirtualAccountNumber() {
-        // 실제로는 은행 API를 통해 가상계좌번호 생성
-        return "1234567890123456" + System.currentTimeMillis() % 10000;
+        log.info("가상계좌번호 생성 시작");
+        
+        try {
+            // 실제로는 은행 API를 통해 가상계좌번호 생성
+            // 현재는 시뮬레이션을 위한 임시 번호 생성
+            String timestamp = String.valueOf(System.currentTimeMillis());
+            String randomSuffix = String.format("%04d", (int) (Math.random() * 10000));
+            String virtualAccountNumber = BankTransferConstants.VIRTUAL_ACCOUNT_PREFIX + 
+                    timestamp.substring(timestamp.length() - 8) + randomSuffix;
+            
+            // 길이 검증
+            if (virtualAccountNumber.length() != BankTransferConstants.VIRTUAL_ACCOUNT_LENGTH) {
+                throw new RuntimeException("가상계좌번호 길이가 올바르지 않습니다.");
+            }
+            
+            log.info("가상계좌번호 생성 완료: {}", virtualAccountNumber);
+            return virtualAccountNumber;
+            
+        } catch (Exception e) {
+            log.error("가상계좌번호 생성 실패: {}", e.getMessage(), e);
+            throw new RuntimeException(BankTransferConstants.ERROR_VIRTUAL_ACCOUNT_CREATION_FAILED, e);
+        }
     }
     
     private boolean checkBankDeposit(Payment payment) {
-        // TODO: 실제 은행 API 연동 구현
-        // 현재는 임시로 랜덤하게 입금 여부 결정
-        log.info("은행 입금 확인: {}", payment.getPaymentId());
-        return Math.random() > 0.5; // 50% 확률로 입금 확인
+        log.info("은행 입금 확인 시작: paymentId={}, virtualAccount={}", 
+                payment.getPaymentId(), payment.getVirtualAccountNumber());
+        
+        try {
+            // 실제 은행 API 연동 구현
+            // 현재는 시뮬레이션을 위한 로직
+            String apiUrl = BankTransferConstants.BANK_API_BASE_URL + BankTransferConstants.BANK_API_DEPOSIT_CHECK_ENDPOINT;
+            
+            // API 요청 데이터 구성
+            java.util.Map<String, Object> requestData = new java.util.HashMap<>();
+            requestData.put("virtualAccountNumber", payment.getVirtualAccountNumber());
+            requestData.put("amount", payment.getAmount());
+            requestData.put("currency", BankTransferConstants.CURRENCY_KRW);
+            requestData.put("paymentId", payment.getPaymentId());
+            
+            // API 호출 시뮬레이션
+            boolean depositConfirmed = simulateBankDepositCheck(requestData);
+            
+            if (depositConfirmed) {
+                log.info(BankTransferConstants.SUCCESS_DEPOSIT_CONFIRMED);
+            } else {
+                log.info("입금 확인되지 않음: {}", payment.getPaymentId());
+            }
+            
+            return depositConfirmed;
+            
+        } catch (Exception e) {
+            log.error("은행 입금 확인 중 오류 발생: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    private boolean simulateBankDepositCheck(java.util.Map<String, Object> requestData) {
+        // 실제 구현에서는 RestTemplate 또는 WebClient를 사용하여 은행 API 호출
+        // 현재는 시뮬레이션을 위한 로직 (70% 확률로 입금 확인)
+        return Math.random() > 0.3;
     }
     
     private Payment findPaymentByVirtualAccount(String virtualAccountNumber) {
-        // TODO: 가상계좌번호로 결제 조회 로직 구현
-        // 현재는 임시로 첫 번째 대기 중인 결제 반환
-        List<Payment> pendingPayments = paymentRepository.findByStatusAndIsDeletedFalse(Payment.PaymentStatus.PENDING, null).getContent();
-        return pendingPayments.isEmpty() ? null : pendingPayments.get(0);
+        log.info("가상계좌번호로 결제 조회: {}", virtualAccountNumber);
+        
+        try {
+            // 가상계좌번호 유효성 검사
+            if (virtualAccountNumber == null || virtualAccountNumber.length() != BankTransferConstants.VIRTUAL_ACCOUNT_LENGTH) {
+                throw new IllegalArgumentException(BankTransferConstants.ERROR_INVALID_ACCOUNT_NUMBER);
+            }
+            
+            // 가상계좌번호로 결제 조회
+            List<Payment> payments = paymentRepository.findByVirtualAccountNumberAndIsDeletedFalse(virtualAccountNumber);
+            
+            if (payments.isEmpty()) {
+                log.warn("가상계좌번호에 해당하는 결제를 찾을 수 없음: {}", virtualAccountNumber);
+                return null;
+            }
+            
+            // 가장 최근의 대기 중인 결제 반환
+            Payment payment = payments.stream()
+                    .filter(p -> Payment.PaymentStatus.PENDING.equals(p.getStatus()))
+                    .findFirst()
+                    .orElse(payments.get(0));
+            
+            log.info("가상계좌번호로 결제 조회 완료: paymentId={}, status={}", 
+                    payment.getPaymentId(), payment.getStatus());
+            
+            return payment;
+            
+        } catch (Exception e) {
+            log.error("가상계좌번호로 결제 조회 중 오류 발생: {}", e.getMessage(), e);
+            return null;
+        }
     }
 }

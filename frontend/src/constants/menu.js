@@ -55,7 +55,8 @@ export const ADMIN_MENU_ITEMS = {
     system: [
       { id: 'admin-codes', label: '공통코드 관리', path: '/admin/common-codes', icon: 'bi-code' },
       { id: 'admin-system', label: '시스템 도구', path: '/admin/system', icon: 'bi-tools' },
-      { id: 'admin-logs', label: '시스템 로그', path: '/admin/logs', icon: 'bi-file-text' }
+      { id: 'admin-logs', label: '시스템 로그', path: '/admin/logs', icon: 'bi-file-text' },
+      { id: 'admin-integration-test', label: '통합 테스트', path: '/test/integration', icon: 'bi-check-circle' }
     ]
   }
 };
@@ -101,7 +102,8 @@ export const SUPER_ADMIN_MENU_ITEMS = {
     system: [
       { id: 'admin-codes', label: '공통코드 관리', path: '/admin/common-codes', icon: 'bi-code' },
       { id: 'admin-system', label: '시스템 도구', path: '/admin/system', icon: 'bi-tools' },
-      { id: 'admin-logs', label: '시스템 로그', path: '/admin/logs', icon: 'bi-file-text' }
+      { id: 'admin-logs', label: '시스템 로그', path: '/admin/logs', icon: 'bi-file-text' },
+      { id: 'admin-integration-test', label: '통합 테스트', path: '/test/integration', icon: 'bi-check-circle' }
     ],
     finance: [
       { id: 'finance-dashboard', label: '자금 대시보드', path: '/super-admin/finance', icon: 'bi-graph-up-arrow' },

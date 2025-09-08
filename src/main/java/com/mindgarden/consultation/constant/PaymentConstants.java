@@ -72,6 +72,10 @@ public final class PaymentConstants {
     public static final String ERROR_WEBHOOK_VERIFICATION_FAILED = "Webhook 서명 검증에 실패했습니다.";
     public static final String ERROR_PAYMENT_TIMEOUT = "결제 시간이 만료되었습니다.";
     public static final String ERROR_INVALID_PAYMENT_AMOUNT = "결제 금액이 유효하지 않습니다.";
+    public static final String ERROR_INVALID_AMOUNT = "유효하지 않은 결제 금액입니다.";
+    public static final String ERROR_PAYMENT_EXPIRED = "결제가 만료되었습니다.";
+    public static final String ERROR_PAYMENT_ALREADY_PROCESSED = "이미 처리된 결제입니다.";
+    public static final String ERROR_INSUFFICIENT_PERMISSION = "결제 처리 권한이 없습니다.";
     
     // 성공 메시지
     public static final String SUCCESS_PAYMENT_CREATED = "결제가 생성되었습니다.";
@@ -83,13 +87,6 @@ public final class PaymentConstants {
     // API 관련
     public static final String WEBHOOK_SIGNATURE_HEADER = "X-Webhook-Signature";
     public static final String WEBHOOK_TIMESTAMP_HEADER = "X-Webhook-Timestamp";
-    
-    // 에러 메시지
-    public static final String ERROR_INVALID_AMOUNT = "유효하지 않은 결제 금액입니다.";
-    public static final String ERROR_PAYMENT_EXPIRED = "결제가 만료되었습니다.";
-    public static final String ERROR_PAYMENT_ALREADY_PROCESSED = "이미 처리된 결제입니다.";
-    public static final String ERROR_INSUFFICIENT_PERMISSION = "결제 처리 권한이 없습니다.";
-    public static final String ERROR_WEBHOOK_VERIFICATION_FAILED = "Webhook 검증에 실패했습니다.";
     
     private PaymentConstants() {
         // 유틸리티 클래스이므로 인스턴스 생성 방지

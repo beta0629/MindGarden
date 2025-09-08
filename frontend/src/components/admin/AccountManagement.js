@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SimpleLayout from '../layout/SimpleLayout';
 import './AccountManagement.css';
 import AccountForm from './components/AccountForm';
 import AccountTable from './components/AccountTable';
@@ -211,38 +212,40 @@ const AccountManagement = () => {
   };
 
   return (
-    <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT}>
-      <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_HEADER}>
-        <h2>{ACCOUNT_PAGE_TITLES.MAIN}</h2>
-        <button 
-          className="btn btn-primary"
-          onClick={() => setShowForm(true)}
-        >
-          {ACCOUNT_BUTTON_TEXT.REGISTER}
-        </button>
+    <SimpleLayout>
+      <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_MANAGEMENT}>
+        <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_HEADER}>
+          <h2>{ACCOUNT_PAGE_TITLES.MAIN}</h2>
+          <button 
+            className="btn btn-primary"
+            onClick={() => setShowForm(true)}
+          >
+            {ACCOUNT_BUTTON_TEXT.REGISTER}
+          </button>
+        </div>
+
+        <AccountForm
+          showForm={showForm}
+          editingAccount={editingAccount}
+          formData={formData}
+          banks={banks}
+          loading={loading}
+          onClose={resetForm}
+          onSubmit={handleSubmit}
+          onBankChange={handleBankChange}
+          onFormDataChange={handleFormDataChange}
+        />
+
+        <AccountTable
+          accounts={accounts}
+          loading={loading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onToggleStatus={handleToggleStatus}
+          onSetPrimary={handleSetPrimary}
+        />
       </div>
-
-      <AccountForm
-        showForm={showForm}
-        editingAccount={editingAccount}
-        formData={formData}
-        banks={banks}
-        loading={loading}
-        onClose={resetForm}
-        onSubmit={handleSubmit}
-        onBankChange={handleBankChange}
-        onFormDataChange={handleFormDataChange}
-      />
-
-      <AccountTable
-        accounts={accounts}
-        loading={loading}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onToggleStatus={handleToggleStatus}
-        onSetPrimary={handleSetPrimary}
-      />
-    </div>
+    </SimpleLayout>
   );
 };
 

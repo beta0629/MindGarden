@@ -11,6 +11,7 @@ import {
   MESSAGES,
   TEST_TYPES
 } from '../../constants/integrationTest';
+import notificationManager from '../../utils/notification';
 import './IntegrationTest.css';
 
 /**
@@ -45,6 +46,12 @@ const IntegrationTest = () => {
       
       const result = await response.json();
       setTestResults(result);
+      
+      if (result.success) {
+        notificationManager.show(MESSAGES.SUCCESS.FULL_TEST_COMPLETED, 'success');
+      } else {
+        notificationManager.show(MESSAGES.ERROR.FULL_TEST_FAILED, 'error');
+      }
     } catch (error) {
       console.error('통합 테스트 실행 오류:', error);
       setTestResults({
@@ -52,6 +59,7 @@ const IntegrationTest = () => {
         errorMessage: error.message,
         testResults: []
       });
+      notificationManager.show(MESSAGES.ERROR.FULL_TEST_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -74,12 +82,19 @@ const IntegrationTest = () => {
       
       const result = await response.json();
       setHealthStatus(result);
+      
+      if (result.overallStatus === 'HEALTHY') {
+        notificationManager.show(MESSAGES.SUCCESS.HEALTH_CHECK_PASSED, 'success');
+      } else {
+        notificationManager.show(MESSAGES.ERROR.HEALTH_CHECK_FAILED, 'error');
+      }
     } catch (error) {
       console.error('헬스 체크 오류:', error);
       setHealthStatus({
         overallStatus: 'UNHEALTHY',
         message: error.message
       });
+      notificationManager.show(MESSAGES.ERROR.HEALTH_CHECK_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -102,12 +117,19 @@ const IntegrationTest = () => {
       
       const result = await response.json();
       setPerformanceResults(result);
+      
+      if (result.success) {
+        notificationManager.show(MESSAGES.SUCCESS.PERFORMANCE_TEST_COMPLETED, 'success');
+      } else {
+        notificationManager.show(MESSAGES.ERROR.PERFORMANCE_TEST_FAILED, 'error');
+      }
     } catch (error) {
       console.error('성능 테스트 오류:', error);
       setPerformanceResults({
         success: false,
         error: error.message
       });
+      notificationManager.show(MESSAGES.ERROR.PERFORMANCE_TEST_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -130,12 +152,19 @@ const IntegrationTest = () => {
       
       const result = await response.json();
       setSecurityResults(result);
+      
+      if (result.success) {
+        notificationManager.show(MESSAGES.SUCCESS.SECURITY_TEST_COMPLETED, 'success');
+      } else {
+        notificationManager.show(MESSAGES.ERROR.SECURITY_TEST_FAILED, 'error');
+      }
     } catch (error) {
       console.error('보안 테스트 오류:', error);
       setSecurityResults({
         success: false,
         error: error.message
       });
+      notificationManager.show(MESSAGES.ERROR.SECURITY_TEST_FAILED, 'error');
     } finally {
       setLoading(false);
     }
@@ -146,6 +175,7 @@ const IntegrationTest = () => {
     setHealthStatus(null);
     setPerformanceResults(null);
     setSecurityResults(null);
+    notificationManager.show('결과가 초기화되었습니다.', 'info');
   };
 
   const formatDateTime = (dateTime) => {

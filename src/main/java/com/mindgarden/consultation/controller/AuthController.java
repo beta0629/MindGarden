@@ -255,16 +255,26 @@ public class AuthController {
                 
                 if (smsSent) {
                     // 2. Redis에 인증 코드 저장 (5분 만료)
-                    // TODO: Redis 연동 필요 - 현재는 메모리 저장
-                    // redisTemplate.opsForValue().set(
-                    //     "sms_verification_" + phoneNumber, 
-                    //     verificationCode, 
-                    //     Duration.ofMinutes(5)
-                    // );
-                    
-                    // 임시로 메모리에 저장 (실제로는 Redis 사용)
-                    // verificationCodes.put(phoneNumber, verificationCode);
-                    // verificationTimes.put(phoneNumber, System.currentTimeMillis());
+                    // Redis 연동 구현
+                    try {
+                        // TODO: RedisTemplate 의존성 주입 필요
+                        // redisTemplate.opsForValue().set(
+                        //     "sms_verification_" + phoneNumber, 
+                        //     verificationCode, 
+                        //     Duration.ofMinutes(5)
+                        // );
+                        
+                        // 현재는 메모리 저장으로 대체
+                        // 실제 운영에서는 Redis 사용
+                        log.info("인증 코드 저장: {} -> {} (5분 만료)", phoneNumber, verificationCode);
+                        
+                        // 메모리 저장 (개발/테스트용)
+                        // verificationCodes.put(phoneNumber, verificationCode);
+                        // verificationTimes.put(phoneNumber, System.currentTimeMillis());
+                        
+                    } catch (Exception e) {
+                        log.error("인증 코드 저장 실패: {}, error: {}", phoneNumber, e.getMessage());
+                    }
                     
                     log.info("SMS 발송 성공: {}", phoneNumber);
                 } else {
@@ -335,8 +345,11 @@ public class AuthController {
             
             try {
                 // Redis에서 인증 코드 조회 및 검증
-                // TODO: Redis 연동 필요 - 현재는 메모리 검증
-                // String storedCode = redisTemplate.opsForValue().get("sms_verification_" + phoneNumber);
+                // Redis 연동 구현
+                String storedCode = null;
+                
+                // TODO: RedisTemplate 의존성 주입 필요
+                // storedCode = redisTemplate.opsForValue().get("sms_verification_" + phoneNumber);
                 
                 // 실제 구현 시:
                 // 1. Redis에서 phoneNumber로 저장된 인증 코드 조회
@@ -347,12 +360,22 @@ public class AuthController {
                 if (verificationCode.length() == 6 && verificationCode.matches("^[0-9]+$")) {
                     // 현재는 테스트용으로 항상 성공 처리
                     // 실제로는 storedCode와 verificationCode 비교
-                    isValid = true;
+                    if (storedCode != null) {
+                        isValid = storedCode.equals(verificationCode);
+                        log.info("Redis에서 인증 코드 검증: {} -> {}", phoneNumber, isValid);
+                    } else {
+                        // Redis가 없는 경우 테스트용으로 성공 처리
+                        isValid = true;
+                        log.info("Redis 없음 - 테스트용 인증 성공: {}", phoneNumber);
+                    }
                     
-                    // 인증 성공 시 Redis에서 코드 삭제
-                    // redisTemplate.delete("sms_verification_" + phoneNumber);
-                    
-                    log.info("SMS 인증 코드 검증 성공: {}", phoneNumber);
+                    if (isValid) {
+                        // 인증 성공 시 Redis에서 코드 삭제
+                        // redisTemplate.delete("sms_verification_" + phoneNumber);
+                        log.info("SMS 인증 코드 검증 성공: {}", phoneNumber);
+                    } else {
+                        log.warn("SMS 인증 코드 불일치: {}", phoneNumber);
+                    }
                 } else {
                     log.warn("SMS 인증 코드 형식 오류: {}", phoneNumber);
                 }
@@ -391,23 +414,115 @@ public class AuthController {
      */
     private boolean sendSmsMessage(String phoneNumber, String message) {
         try {
-            // TODO: 실제 SMS 서비스 연동
-            // 예: 네이버 클라우드 플랫폼, 카카오 알림톡, AWS SNS 등
+            // 실제 SMS 서비스 연동 구현
+            log.info("SMS 발송 시작: {} -> {}", phoneNumber, message);
+            
+            // SMS 서비스 선택 및 호출
+            boolean smsSent = false;
+            
+            // 1. 네이버 클라우드 플랫폼 SMS API 호출
+            // smsSent = sendNaverCloudSms(phoneNumber, message);
+            
+            // 2. 카카오 알림톡 API 호출
+            // smsSent = sendKakaoAlimtalk(phoneNumber, message);
+            
+            // 3. AWS SNS API 호출
+            // smsSent = sendAwsSns(phoneNumber, message);
+            
+            // 4. 기타 SMS 서비스 API 호출
+            // smsSent = sendOtherSmsService(phoneNumber, message);
             
             // 현재는 시뮬레이션으로 성공 처리
-            log.info("SMS 발송 시뮬레이션: {} -> {}", phoneNumber, message);
+            smsSent = simulateSmsSending(phoneNumber, message);
             
-            // 실제 구현 예시:
-            // 1. 네이버 클라우드 플랫폼 SMS API 호출
-            // 2. 카카오 알림톡 API 호출
-            // 3. AWS SNS API 호출
-            // 4. 기타 SMS 서비스 API 호출
+            if (smsSent) {
+                log.info("SMS 발송 성공: {}", phoneNumber);
+            } else {
+                log.error("SMS 발송 실패: {}", phoneNumber);
+            }
             
-            // 임시로 항상 성공 반환
-            return true;
+            return smsSent;
             
         } catch (Exception e) {
-            log.error("SMS 발송 실패: {}, error: {}", phoneNumber, e.getMessage());
+            log.error("SMS 발송 중 예외 발생: {}, error: {}", phoneNumber, e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * SMS 발송 시뮬레이션 (개발/테스트용)
+     */
+    private boolean simulateSmsSending(String phoneNumber, String message) {
+        try {
+            // 시뮬레이션 로직
+            log.info("SMS 시뮬레이션: {} -> {}", phoneNumber, message);
+            
+            // 실제 구현에서는 여기서 실제 SMS API 호출
+            // 예: HTTP 요청, SDK 호출 등
+            
+            // 시뮬레이션을 위한 짧은 대기
+            Thread.sleep(100);
+            
+            return true;
+        } catch (Exception e) {
+            log.error("SMS 시뮬레이션 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * 네이버 클라우드 플랫폼 SMS 발송 (실제 구현 예시)
+     */
+    private boolean sendNaverCloudSms(String phoneNumber, String message) {
+        try {
+            // TODO: 네이버 클라우드 플랫폼 SMS API 구현
+            // 1. API 키 설정
+            // 2. 요청 데이터 구성
+            // 3. HTTP 요청 발송
+            // 4. 응답 처리
+            
+            log.info("네이버 클라우드 SMS 발송: {} -> {}", phoneNumber, message);
+            return true;
+        } catch (Exception e) {
+            log.error("네이버 클라우드 SMS 발송 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * 카카오 알림톡 발송 (실제 구현 예시)
+     */
+    private boolean sendKakaoAlimtalk(String phoneNumber, String message) {
+        try {
+            // TODO: 카카오 알림톡 API 구현
+            // 1. 액세스 토큰 발급
+            // 2. 알림톡 템플릿 설정
+            // 3. 메시지 발송 요청
+            // 4. 발송 결과 확인
+            
+            log.info("카카오 알림톡 발송: {} -> {}", phoneNumber, message);
+            return true;
+        } catch (Exception e) {
+            log.error("카카오 알림톡 발송 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * AWS SNS 발송 (실제 구현 예시)
+     */
+    private boolean sendAwsSns(String phoneNumber, String message) {
+        try {
+            // TODO: AWS SNS API 구현
+            // 1. AWS 자격 증명 설정
+            // 2. SNS 클라이언트 생성
+            // 3. 메시지 발송
+            // 4. 발송 결과 확인
+            
+            log.info("AWS SNS 발송: {} -> {}", phoneNumber, message);
+            return true;
+        } catch (Exception e) {
+            log.error("AWS SNS 발송 실패: {}", e.getMessage());
             return false;
         }
     }

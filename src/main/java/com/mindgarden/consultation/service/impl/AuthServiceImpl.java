@@ -3,6 +3,7 @@ package com.mindgarden.consultation.service.impl;
 import java.util.HashMap;
 import java.util.Map;
 import com.mindgarden.consultation.constant.EmailConstants;
+import com.mindgarden.consultation.constant.SessionManagementConstants;
 import com.mindgarden.consultation.dto.AuthResponse;
 import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.dto.UserDto;
@@ -11,6 +12,7 @@ import com.mindgarden.consultation.service.AuthService;
 import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.JwtService;
 import com.mindgarden.consultation.service.UserService;
+import com.mindgarden.consultation.service.UserSessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -46,6 +48,9 @@ public class AuthServiceImpl implements AuthService {
     
     @Autowired
     private EmailService emailService;
+    
+    @Autowired
+    private UserSessionService userSessionService;
     
     @Override
     public AuthResponse authenticate(String email, String password) {
@@ -117,6 +122,106 @@ public class AuthServiceImpl implements AuthService {
         // JWT는 stateless이므로 서버에서 별도 처리할 것이 없음
         // 클라이언트에서 토큰을 삭제하면 됨
         // 향후 블랙리스트 기능 추가 가능
+    }
+    
+    @Override
+    public AuthResponse authenticateWithSession(String email, String password, String sessionId, String clientIp, String userAgent) {
+        try {
+            log.info("🔐 세션 기반 로그인 시도: email={}, sessionId={}", email, sessionId);
+            
+            // Spring Security 인증
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, password)
+            );
+            
+            if (authentication.isAuthenticated()) {
+                // 사용자 정보 조회
+                User user = userService.findByEmail(email)
+                    .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
+                
+                // 중복 로그인 체크 (새 세션 생성 전)
+                boolean hasDuplicateLogin = checkDuplicateLogin(user);
+                
+                if (hasDuplicateLogin) {
+                    log.warn("⚠️ 중복 로그인 감지: email={}", email);
+                    
+                    if (SessionManagementConstants.TERMINATE_EXISTING_SESSION) {
+                        // 기존 세션들 정리
+                        cleanupUserSessions(user, SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);
+                        log.info("🔄 기존 세션 정리 완료: email={}", email);
+                    }
+                }
+                
+                // 새 세션 생성 (중복 로그인 체크 후)
+                userSessionService.createSession(user, sessionId, clientIp, userAgent, 
+                    SessionManagementConstants.LOGIN_TYPE_NORMAL, null);
+                
+                // 마지막 로그인 시간 업데이트
+                userService.updateLastLoginTime(user.getId());
+                
+                // UserDto 변환
+                UserDto userDto = convertToUserDto(user);
+                
+                log.info("✅ 세션 기반 로그인 성공: email={}, sessionId={}", email, sessionId);
+                return AuthResponse.success("로그인 성공", null, null, userDto);
+                
+            } else {
+                return AuthResponse.failure("인증에 실패했습니다.");
+            }
+        } catch (Exception e) {
+            log.error("❌ 세션 기반 로그인 실패: email={}, error={}", email, e.getMessage(), e);
+            
+            // 자격 증명 실패인 경우 사용자 친화적인 메시지 반환
+            if (e.getMessage() != null && e.getMessage().contains("자격 증명에 실패하였습니다")) {
+                return AuthResponse.failure("아이디 또는 비밀번호가 올바르지 않습니다.");
+            }
+            return AuthResponse.failure("로그인 실패: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public void logoutSession(String sessionId) {
+        try {
+            log.info("🔓 세션 로그아웃: sessionId={}", sessionId);
+            
+            // 세션 비활성화
+            boolean success = userSessionService.deactivateSession(sessionId, SessionManagementConstants.END_REASON_LOGOUT);
+            
+            if (success) {
+                log.info("✅ 세션 로그아웃 완료: sessionId={}", sessionId);
+            } else {
+                log.warn("⚠️ 세션 로그아웃 실패: sessionId={}", sessionId);
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 세션 로그아웃 실패: sessionId={}, error={}", sessionId, e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public boolean checkDuplicateLogin(User user) {
+        try {
+            long activeSessionCount = userSessionService.getActiveSessionCount(user);
+            return activeSessionCount > 0;
+        } catch (Exception e) {
+            log.error("❌ 중복 로그인 체크 실패: userId={}, error={}", user.getId(), e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    @Override
+    public void cleanupUserSessions(User user, String reason) {
+        try {
+            log.info("🧹 사용자 세션 정리: userId={}, reason={}", user.getId(), reason);
+            
+            int cleanedCount = userSessionService.deactivateAllUserSessions(user, reason);
+            
+            log.info("✅ 사용자 세션 정리 완료: userId={}, cleanedCount={}", user.getId(), cleanedCount);
+            
+        } catch (Exception e) {
+            log.error("❌ 사용자 세션 정리 실패: userId={}, reason={}, error={}", 
+                     user.getId(), reason, e.getMessage(), e);
+        }
     }
     
     @Override

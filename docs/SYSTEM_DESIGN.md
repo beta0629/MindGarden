@@ -34,6 +34,39 @@
 - JPA Auditing 지원
 - 낙관적 락(Optimistic Locking) 지원
 
+### **중복 로그인 방지 시스템 아키텍처**
+
+#### **세션 관리 시스템 구조**
+```
+UserSessionService (인터페이스)
+├── UserSessionServiceImpl (구현체)
+├── UserSession (엔티티)
+├── UserSessionRepository (데이터 접근)
+└── SessionCleanupScheduler (자동 정리)
+
+AuthService (인터페이스)
+├── AuthServiceImpl (구현체)
+└── 중복 로그인 체크 및 세션 관리
+
+AuthController
+├── /api/auth/check-duplicate-login (중복 로그인 체크)
+├── /api/auth/force-logout (강제 로그아웃)
+└── 중복 로그인 감지 및 처리
+```
+
+#### **프론트엔드 세션 관리**
+```
+duplicateLoginManager.js (유틸리티)
+├── 중복 로그인 체크 시작/중지
+├── 주기적 세션 상태 확인
+└── 중복 로그인 감지 이벤트 발생
+
+DuplicateLoginAlert.js (컴포넌트)
+├── 중복 로그인 감지 모달
+├── 자동 로그아웃 카운트다운
+└── 사용자 알림 및 처리
+```
+
 ### **소셜 로그인 시스템 아키텍처**
 
 #### **OAuth2 통합 서비스 구조**

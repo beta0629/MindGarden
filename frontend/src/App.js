@@ -38,6 +38,8 @@ import ConsultantRecords from './components/consultant/ConsultantRecords';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { sessionManager } from './utils/sessionManager';
+import duplicateLoginManager from './utils/duplicateLoginManager';
+import DuplicateLoginAlert from './components/common/DuplicateLoginAlert';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -73,6 +75,9 @@ function AppContent() {
   
   // 통계 모달 상태
   const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);
+  
+  // 중복 로그인 알림 상태
+  const [showDuplicateLoginAlert, setShowDuplicateLoginAlert] = React.useState(false);
 
   // 콜백 함수로 메모이제이션
   const logMount = useCallback(() => {
@@ -91,6 +96,47 @@ function AppContent() {
     logMount();
     return logUnmount;
   }, []); // 의존성 배열을 비워서 한 번만 실행
+
+  // 중복 로그인 체크 시작/중지
+  useEffect(() => {
+    if (user && sessionInfo) {
+      console.log('🔍 중복 로그인 체크 시작');
+      duplicateLoginManager.startChecking();
+    } else {
+      console.log('🛑 중복 로그인 체크 중지');
+      duplicateLoginManager.stopChecking();
+    }
+
+    return () => {
+      duplicateLoginManager.stopChecking();
+    };
+  }, [user, sessionInfo]);
+
+  // 중복 로그인 이벤트 리스너
+  useEffect(() => {
+    const handleDuplicateLoginEvent = (event) => {
+      console.log('⚠️ 중복 로그인 이벤트 수신:', event.detail);
+      setShowDuplicateLoginAlert(true);
+    };
+
+    window.addEventListener('duplicateLoginDetected', handleDuplicateLoginEvent);
+
+    return () => {
+      window.removeEventListener('duplicateLoginDetected', handleDuplicateLoginEvent);
+    };
+  }, []);
+
+  // 중복 로그인 알림 핸들러
+  const handleDuplicateLoginConfirm = useCallback(() => {
+    setShowDuplicateLoginAlert(false);
+    duplicateLoginManager.forceLogout();
+  }, []);
+
+  const handleDuplicateLoginCancel = useCallback(() => {
+    setShowDuplicateLoginAlert(false);
+    // 취소 시에도 강제 로그아웃 (보안상 필요)
+    duplicateLoginManager.forceLogout();
+  }, []);
 
   const handleLogout = useCallback(() => {
     console.log('🚪 로그아웃 처리됨');
@@ -252,6 +298,14 @@ function AppContent() {
             isOpen={showStatisticsModal}
             onClose={() => setShowStatisticsModal(false)}
             userRole={user?.role || 'ADMIN'}
+          />
+          
+          {/* 중복 로그인 알림 */}
+          <DuplicateLoginAlert
+            isVisible={showDuplicateLoginAlert}
+            onConfirm={handleDuplicateLoginConfirm}
+            onCancel={handleDuplicateLoginCancel}
+            countdown={5}
           />
         </div>
       </QueryParamHandler>

@@ -12,6 +12,7 @@ import com.mindgarden.consultation.entity.UserSocialAccount;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AuthService;
+import com.mindgarden.consultation.service.UserSessionService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final AuthService authService;
+    private final UserSessionService userSessionService;
     
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
     private final Map<String, String> verificationCodes = new ConcurrentHashMap<>();
@@ -121,8 +123,23 @@ public class AuthController {
     
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpSession session) {
-        SessionUtils.clearSession(session);
-        return ResponseEntity.ok().build();
+        try {
+            String sessionId = session.getId();
+            log.info("🔓 로그아웃 요청: sessionId={}", sessionId);
+            
+            // 세션 기반 로그아웃 (중복로그인 방지 포함)
+            authService.logoutSession(sessionId);
+            
+            // HTTP 세션 정리
+            SessionUtils.clearSession(session);
+            
+            log.info("✅ 로그아웃 완료: sessionId={}", sessionId);
+            return ResponseEntity.ok().build();
+            
+        } catch (Exception e) {
+            log.error("❌ 로그아웃 실패: sessionId={}, error={}", session.getId(), e.getMessage(), e);
+            return ResponseEntity.ok().build(); // 로그아웃은 실패해도 성공으로 처리
+        }
     }
     
     @GetMapping("/session-info")
@@ -141,21 +158,107 @@ public class AuthController {
         return ResponseEntity.status(401).build();
     }
     
+    /**
+     * 중복 로그인 체크 API
+     */
+    @GetMapping("/check-duplicate-login")
+    public ResponseEntity<?> checkDuplicateLogin(HttpSession session) {
+        try {
+            User user = SessionUtils.getCurrentUser(session);
+            if (user == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 현재 세션을 제외한 중복 로그인 체크
+            String currentSessionId = session.getId();
+            boolean hasDuplicateLogin = userSessionService.checkDuplicateLoginExcludingCurrent(user, currentSessionId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("hasDuplicateLogin", hasDuplicateLogin);
+            response.put("message", hasDuplicateLogin ? "다른 곳에서 로그인되어 있습니다." : "중복 로그인이 없습니다.");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 중복 로그인 체크 실패: error={}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "중복 로그인 체크에 실패했습니다."
+            ));
+        }
+    }
+    
+    /**
+     * 강제 로그아웃 API (관리자용)
+     */
+    @PostMapping("/force-logout")
+    public ResponseEntity<?> forceLogout(@RequestBody Map<String, String> request) {
+        try {
+            String targetEmail = request.get("email");
+            if (targetEmail == null || targetEmail.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "이메일을 입력해주세요."
+                ));
+            }
+            
+            // 사용자 조회
+            User targetUser = userRepository.findByEmail(targetEmail).orElse(null);
+            if (targetUser == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "사용자를 찾을 수 없습니다."
+                ));
+            }
+            
+            // 사용자 세션 강제 종료
+            authService.cleanupUserSessions(targetUser, "ADMIN_FORCE");
+            
+            log.info("🔓 강제 로그아웃 완료: email={}", targetEmail);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "강제 로그아웃이 완료되었습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 강제 로그아웃 실패: error={}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "강제 로그아웃에 실패했습니다."
+            ));
+        }
+    }
+    
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request, HttpSession session) {
+    public ResponseEntity<?> login(@RequestBody AuthRequest request, HttpSession session, 
+                                  jakarta.servlet.http.HttpServletRequest httpRequest) {
         try {
             log.info("🔐 로그인 시도: email={}, password={}, request={}", 
                 request.getEmail(), 
                 request.getPassword() != null ? "***" : "null",
                 request);
             
-            // AuthService를 통한 인증
-            AuthResponse authResponse = authService.authenticate(request.getEmail(), request.getPassword());
+            // 클라이언트 정보 추출
+            String clientIp = getClientIpAddress(httpRequest);
+            String userAgent = httpRequest.getHeader("User-Agent");
+            String sessionId = session.getId();
+            
+            // 중복로그인 방지 기능이 포함된 세션 기반 인증
+            AuthResponse authResponse = authService.authenticateWithSession(
+                request.getEmail(), 
+                request.getPassword(), 
+                sessionId, 
+                clientIp, 
+                userAgent
+            );
             
             if (authResponse.isSuccess()) {
-                // JWT 대신 세션 기반 로그인으로 변경
                 // 사용자 정보 세션에 저장 (UserDto -> User 변환)
-                // authResponse.getUser()는 UserDto이므로 실제 User 엔티티로 변환 필요
                 User sessionUser = new User();
                 sessionUser.setId(authResponse.getUser().getId());
                 sessionUser.setEmail(authResponse.getUser().getEmail());
@@ -171,6 +274,7 @@ public class AuthController {
                 response.put("success", true);
                 response.put("message", authResponse.getMessage());
                 response.put("user", authResponse.getUser());
+                response.put("sessionId", sessionId);
                 
                 return ResponseEntity.ok(response);
             } else {
@@ -424,6 +528,40 @@ public class AuthController {
     }
     
     /**
+     * 클라이언트 IP 주소 추출
+     * @param request HTTP 요청
+     * @return 클라이언트 IP 주소
+     */
+    private String getClientIpAddress(jakarta.servlet.http.HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty() && !"unknown".equalsIgnoreCase(xRealIp)) {
+            return xRealIp;
+        }
+        
+        String xForwarded = request.getHeader("X-Forwarded");
+        if (xForwarded != null && !xForwarded.isEmpty() && !"unknown".equalsIgnoreCase(xForwarded)) {
+            return xForwarded;
+        }
+        
+        String forwardedFor = request.getHeader("Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(forwardedFor)) {
+            return forwardedFor;
+        }
+        
+        String forwarded = request.getHeader("Forwarded");
+        if (forwarded != null && !forwarded.isEmpty() && !"unknown".equalsIgnoreCase(forwarded)) {
+            return forwarded;
+        }
+        
+        return request.getRemoteAddr();
+    }
+    
+    /**
      * SMS 메시지 발송 (실제 구현)
      * @param phoneNumber 휴대폰 번호
      * @param message 발송할 메시지
@@ -490,6 +628,7 @@ public class AuthController {
     /**
      * 네이버 클라우드 플랫폼 SMS 발송 (완전 구현)
      */
+    @SuppressWarnings("unused")
     private boolean sendNaverCloudSms(String phoneNumber, String message) {
         try {
             // 네이버 클라우드 플랫폼 SMS API 완전 구현
@@ -547,6 +686,7 @@ public class AuthController {
     /**
      * 카카오 알림톡 발송 (완전 구현)
      */
+    @SuppressWarnings("unused")
     private boolean sendKakaoAlimtalk(String phoneNumber, String message) {
         try {
             // 카카오 알림톡 API 완전 구현
@@ -611,6 +751,7 @@ public class AuthController {
     /**
      * AWS SNS 발송 (완전 구현)
      */
+    @SuppressWarnings("unused")
     private boolean sendAwsSns(String phoneNumber, String message) {
         try {
             // AWS SNS API 완전 구현
@@ -620,7 +761,7 @@ public class AuthController {
             String accessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
             String secretAccessKey = System.getenv("AWS_SECRET_ACCESS_KEY");
             String region = System.getenv("AWS_REGION");
-            String topicArn = System.getenv("AWS_SNS_TOPIC_ARN");
+            // String topicArn = System.getenv("AWS_SNS_TOPIC_ARN");
             
             if (accessKeyId == null || secretAccessKey == null || region == null) {
                 log.warn("AWS SNS API 키가 설정되지 않음");

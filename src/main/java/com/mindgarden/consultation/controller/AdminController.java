@@ -56,6 +56,29 @@ public class AdminController {
             ));
         }
     }
+    
+    /**
+     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
+     */
+    @GetMapping("/consultants/with-vacation")
+    public ResponseEntity<?> getAllConsultantsWithVacationInfo(@RequestParam String date) {
+        try {
+            log.info("🔍 휴무 정보를 포함한 상담사 목록 조회: date={}", date);
+            List<Map<String, Object>> consultantsWithVacation = adminService.getAllConsultantsWithVacationInfo(date);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", consultantsWithVacation,
+                "count", consultantsWithVacation.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 휴무 정보를 포함한 상담사 목록 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "상담사 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
 
     /**
      * 내담자 목록 조회
@@ -76,6 +99,29 @@ public class AdminController {
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "내담자 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 통합 내담자 데이터 조회 (매핑 정보, 결제 상태, 남은 세션 등 포함)
+     */
+    @GetMapping("/clients/with-mapping-info")
+    public ResponseEntity<?> getAllClientsWithMappingInfo() {
+        try {
+            log.info("🔍 통합 내담자 데이터 조회");
+            List<Map<String, Object>> clientsWithMappingInfo = adminService.getAllClientsWithMappingInfo();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", clientsWithMappingInfo,
+                "count", clientsWithMappingInfo.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 통합 내담자 데이터 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "통합 내담자 데이터 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }

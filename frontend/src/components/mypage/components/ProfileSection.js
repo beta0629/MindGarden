@@ -9,7 +9,8 @@ const ProfileSection = ({
   onFormDataChange, 
   onUserChange,
   onSave, // Added back for auto-save
-  formatPhoneNumber 
+  formatPhoneNumber,
+  onEditingChange // 수정 모드 상태 변경 콜백 추가
 }) => {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -121,12 +122,18 @@ const ProfileSection = ({
   };
 
   return (
-    <div className="mypage-section">
+    <div className={`mypage-section profile-section ${isEditing ? 'editing' : 'readonly'}`}>
       <div className="section-header">
         <h2>프로필 정보</h2>
         <button
           className="edit-btn"
-          onClick={() => setIsEditing(!isEditing)}
+          onClick={() => {
+            const newEditingState = !isEditing;
+            setIsEditing(newEditingState);
+            if (onEditingChange) {
+              onEditingChange(newEditingState);
+            }
+          }}
         >
           {isEditing ? '취소' : '수정'}
         </button>

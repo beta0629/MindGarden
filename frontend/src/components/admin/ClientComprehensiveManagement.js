@@ -84,20 +84,15 @@ const ClientComprehensiveManagement = () => {
      */
     const loadClients = async () => {
         try {
-            console.log('🔍 내담자 목록 로드 시작');
+            console.log('🔍 통합 내담자 데이터 로드 시작');
             
-            // /api/admin/users API를 직접 사용 (복호화가 더 잘 됨)
-            const response = await apiGet('/api/admin/users');
-            console.log('📊 /api/admin/users 응답:', response);
+            // 통합 내담자 데이터 API 사용 (매핑 정보 포함)
+            const response = await apiGet('/api/admin/clients/with-mapping-info');
+            console.log('📊 통합 내담자 데이터 응답:', response);
             
             if (response.success) {
                 let clientsData = response.data || [];
-                
-                // CLIENT 역할만 필터링
-                if (Array.isArray(clientsData) && clientsData.length > 0) {
-                    clientsData = clientsData.filter(user => user.role === 'CLIENT');
-                    console.log('👥 CLIENT 역할 필터링 후:', clientsData.length, '명');
-                }
+                console.log('👥 통합 내담자 데이터:', clientsData.length, '명');
                 
                 // 각 내담자 데이터를 상세히 로깅
                 clientsData.forEach((client, index) => {
@@ -285,6 +280,20 @@ const ClientComprehensiveManagement = () => {
             'SUPER_ADMIN': '수퍼관리자'
         };
         return statusMap[status] || status;
+    };
+
+    /**
+     * 등급을 한글로 변환
+     */
+    const getGradeText = (grade) => {
+        const gradeMap = {
+            'CLIENT_BRONZE': '브론즈',
+            'CLIENT_SILVER': '실버',
+            'CLIENT_GOLD': '골드',
+            'CLIENT_PLATINUM': '플래티넘',
+            'CLIENT_DIAMOND': '다이아몬드'
+        };
+        return gradeMap[grade] || grade || '브론즈';
     };
 
     /**
@@ -1216,19 +1225,58 @@ const ClientComprehensiveManagement = () => {
                         </div>
                         
                         {/* 검색 및 필터 */}
-                        <div className="basic-search-section">
-                            <div className="search-filters">
+                        <div style={{ marginBottom: '25px' }}>
+                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                                 <input
                                     type="text"
                                     placeholder="내담자 검색..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="search-input"
+                                    style={{
+                                        width: '300px',
+                                        padding: '10px 16px',
+                                        border: '2px solid #e1e8ed',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        background: 'white',
+                                        color: '#495057',
+                                        transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.outline = 'none';
+                                        e.target.style.borderColor = '#a8e6a3';
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#e1e8ed';
+                                        e.target.style.boxShadow = 'none';
+                                    }}
+                                    onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
+                                    onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
                                 />
                                 <select
                                     value={filterStatus}
                                     onChange={(e) => setFilterStatus(e.target.value)}
-                                    className="filter-select"
+                                    style={{
+                                        padding: '10px 16px',
+                                        border: '2px solid #e1e8ed',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        background: 'white',
+                                        color: '#495057',
+                                        transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.outline = 'none';
+                                        e.target.style.borderColor = '#a8e6a3';
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#e1e8ed';
+                                        e.target.style.boxShadow = 'none';
+                                    }}
+                                    onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
+                                    onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
                                 >
                                     <option value="all">전체 상태</option>
                                     <option value="ACTIVE">활성</option>
@@ -1240,84 +1288,264 @@ const ClientComprehensiveManagement = () => {
                         </div>
                         
                         {/* 내담자 목록 카드 */}
-                        <div className="basic-clients-cards">
+                        <div style={{ marginTop: '20px' }}>
                             {getFilteredClients().length > 0 ? (
-                                getFilteredClients().map(client => {
-                                    const mapping = mappings.find(m => m.clientId === client.id);
-                                    return (
-                                        <div key={client.id} className="basic-client-card">
-                                            <div className="card-header">
-                                                <div className="client-avatar">
-                                                    <FaUser />
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                                    gap: '20px'
+                                }}>
+                                    {getFilteredClients().map(client => {
+                                        const mapping = mappings.find(m => m.clientId === client.id);
+                                        return (
+                                            <div key={client.id} style={{
+                                                background: 'white',
+                                                borderRadius: '12px',
+                                                padding: '20px',
+                                                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+                                                border: '1px solid #e9ecef',
+                                                transition: 'all 0.3s ease',
+                                                position: 'relative'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.transform = 'translateY(-2px)';
+                                                e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.12)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.transform = 'translateY(0)';
+                                                e.target.style.boxShadow = '0 2px 12px rgba(0, 0, 0, 0.08)';
+                                            }}
+                                            >
+                                                {/* 카드 헤더 */}
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    marginBottom: '16px',
+                                                    paddingBottom: '16px',
+                                                    borderBottom: '1px solid #f1f3f4'
+                                                }}>
+                                                    <div style={{
+                                                        width: '48px',
+                                                        height: '48px',
+                                                        background: 'linear-gradient(135deg, #a8e6a3 0%, #7dd87a 100%)',
+                                                        borderRadius: '50%',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        color: 'white',
+                                                        fontSize: '20px',
+                                                        marginRight: '12px'
+                                                    }}>
+                                                        <FaUser />
+                                                    </div>
+                                                    <div style={{ flex: '1' }}>
+                                                        <h3 style={{
+                                                            margin: '0 0 4px 0',
+                                                            fontSize: '18px',
+                                                            fontWeight: '600',
+                                                            color: '#2c3e50'
+                                                        }}>
+                                                            {client.name || 'Unknown Client'}
+                                                        </h3>
+                                                        <p style={{
+                                                            margin: '0',
+                                                            fontSize: '14px',
+                                                            color: '#6c757d'
+                                                        }}>
+                                                            {client.email || '이메일 없음'}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div className="client-basic-info">
-                                                    <h4 className="client-name">{client.name || 'Unknown Client'}</h4>
-                                                    <p className="client-email">{client.email || '-'}</p>
-                                                </div>
-                                                <div className="client-status">
-                                                    {mapping ? (
-                                                        <span
-                                                            className="status-badge"
-                                                            style={{ backgroundColor: getStatusColor(mapping.status) }}
-                                                        >
-                                                            {getStatusText(mapping.status)}
+
+                                                {/* 카드 내용 */}
+                                                <div style={{ marginBottom: '16px' }}>
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        marginBottom: '12px'
+                                                    }}>
+                                                        <span style={{
+                                                            fontSize: '14px',
+                                                            color: '#6c757d',
+                                                            fontWeight: '500'
+                                                        }}>전화번호</span>
+                                                        <span style={{
+                                                            fontSize: '14px',
+                                                            color: '#2c3e50',
+                                                            fontWeight: '500'
+                                                        }}>
+                                                            {client.phone || '전화번호 없음'}
                                                         </span>
-                                                    ) : (
-                                                        <span className="status-badge no-mapping">매핑 없음</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="card-body">
-                                                <div className="client-details">
-                                                    <div className="detail-item">
-                                                        <span className="detail-label">전화번호:</span>
-                                                        <span className="detail-value">{client.phone || '전화번호 없음'}</span>
                                                     </div>
-                                                    <div className="detail-item">
-                                                        <span className="detail-label">등급:</span>
-                                                        <span className="detail-value">{client.grade || 'CLIENT_BRONZE'}</span>
+
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        marginBottom: '12px'
+                                                    }}>
+                                                        <span style={{
+                                                            fontSize: '14px',
+                                                            color: '#6c757d',
+                                                            fontWeight: '500'
+                                                        }}>등급</span>
+                                                        <span style={{
+                                                            display: 'inline-block',
+                                                            padding: '4px 12px',
+                                                            borderRadius: '16px',
+                                                            fontSize: '12px',
+                                                            fontWeight: '600',
+                                                            background: '#e3f2fd',
+                                                            color: '#1976d2'
+                                                        }}>
+                                                            {getGradeText(client.grade)}
+                                                        </span>
                                                     </div>
-                                                    <div className="detail-item">
-                                                        <span className="detail-label">가입일:</span>
-                                                        <span className="detail-value">
+
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        marginBottom: '12px'
+                                                    }}>
+                                                        <span style={{
+                                                            fontSize: '14px',
+                                                            color: '#6c757d',
+                                                            fontWeight: '500'
+                                                        }}>상태</span>
+                                                        {mapping ? (
+                                                            <span style={{
+                                                                display: 'inline-block',
+                                                                padding: '4px 12px',
+                                                                borderRadius: '16px',
+                                                                fontSize: '12px',
+                                                                fontWeight: '600',
+                                                                color: 'white',
+                                                                backgroundColor: getStatusColor(mapping.status)
+                                                            }}>
+                                                                {getStatusText(mapping.status)}
+                                                            </span>
+                                                        ) : (
+                                                            <span style={{
+                                                                display: 'inline-block',
+                                                                padding: '4px 12px',
+                                                                borderRadius: '16px',
+                                                                fontSize: '12px',
+                                                                fontWeight: '600',
+                                                                color: 'white',
+                                                                backgroundColor: '#6c757d'
+                                                            }}>
+                                                                매핑 없음
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        marginBottom: '12px'
+                                                    }}>
+                                                        <span style={{
+                                                            fontSize: '14px',
+                                                            color: '#6c757d',
+                                                            fontWeight: '500'
+                                                        }}>가입일</span>
+                                                        <span style={{
+                                                            fontSize: '14px',
+                                                            color: '#2c3e50',
+                                                            fontWeight: '500'
+                                                        }}>
                                                             {client.createdAt ? 
                                                                 new Date(client.createdAt).toLocaleDateString('ko-KR') : 
                                                                 '-'
                                                             }
                                                         </span>
                                                     </div>
-                                                    <div className="detail-item">
-                                                        <span className="detail-label">총 상담:</span>
-                                                        <span className="detail-value">{client.totalConsultations || 0}회</span>
+
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center'
+                                                    }}>
+                                                        <span style={{
+                                                            fontSize: '14px',
+                                                            color: '#6c757d',
+                                                            fontWeight: '500'
+                                                        }}>총 상담</span>
+                                                        <span style={{
+                                                            fontSize: '16px',
+                                                            color: '#2c3e50',
+                                                            fontWeight: '600'
+                                                        }}>
+                                                            {client.totalConsultations || 0}회
+                                                        </span>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            
-                                            <div className="card-footer">
-                                                <div className="action-buttons">
+
+                                                {/* 액션 버튼 */}
+                                                <div style={{
+                                                    display: 'flex',
+                                                    gap: '8px',
+                                                    paddingTop: '16px',
+                                                    borderTop: '1px solid #f1f3f4'
+                                                }}>
                                                     <button 
-                                                        className="btn btn-sm btn-primary"
+                                                        style={{
+                                                            flex: '1',
+                                                            padding: '10px 16px',
+                                                            fontSize: '14px',
+                                                            borderRadius: '8px',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            background: '#007bff',
+                                                            color: 'white',
+                                                            fontWeight: '500',
+                                                            transition: 'all 0.2s ease'
+                                                        }}
+                                                        onMouseEnter={(e) => e.target.style.background = '#0056b3'}
+                                                        onMouseLeave={(e) => e.target.style.background = '#007bff'}
                                                         onClick={() => handleEditClient(client)}
                                                     >
                                                         ✏️ 수정
                                                     </button>
                                                     <button 
-                                                        className="btn btn-sm btn-danger"
+                                                        style={{
+                                                            flex: '1',
+                                                            padding: '10px 16px',
+                                                            fontSize: '14px',
+                                                            borderRadius: '8px',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            background: '#dc3545',
+                                                            color: 'white',
+                                                            fontWeight: '500',
+                                                            transition: 'all 0.2s ease'
+                                                        }}
+                                                        onMouseEnter={(e) => e.target.style.background = '#c82333'}
+                                                        onMouseLeave={(e) => e.target.style.background = '#dc3545'}
                                                         onClick={() => handleDeleteClient(client)}
                                                     >
                                                         🗑️ 삭제
                                                     </button>
                                                 </div>
                                             </div>
-                                        </div>
-                                    );
-                                })
+                                        );
+                                    })}
+                                </div>
                             ) : (
-                                <div className="no-data">
-                                    <div className="no-data-icon">👥</div>
-                                    <p>등록된 내담자가 없습니다.</p>
-                                    <p className="no-data-sub">새 내담자를 등록해보세요.</p>
+                                <div style={{
+                                    textAlign: 'center',
+                                    padding: '80px 20px',
+                                    color: '#6c757d',
+                                    background: 'white',
+                                    borderRadius: '12px',
+                                    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
+                                }}>
+                                    <div style={{ fontSize: '64px', marginBottom: '24px' }}>👥</div>
+                                    <p style={{ fontSize: '20px', marginBottom: '12px', fontWeight: '500' }}>등록된 내담자가 없습니다.</p>
+                                    <p style={{ fontSize: '16px', color: '#adb5bd' }}>새 내담자를 등록해보세요.</p>
                                 </div>
                             )}
                         </div>
@@ -1333,41 +1561,131 @@ const ClientComprehensiveManagement = () => {
 
             {/* CRUD 모달 */}
             {showModal && (
-                <div className="client-modal-overlay" onClick={handleCloseModal}>
-                    <div className="client-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="client-modal-header">
-                            <div>
-                                <h3>
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999
+                }} onClick={handleCloseModal}>
+                    <div style={{
+                        background: 'white',
+                        borderRadius: '12px',
+                        width: '90%',
+                        maxWidth: '500px',
+                        maxHeight: '90vh',
+                        overflow: 'auto',
+                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+                        position: 'relative'
+                    }} onClick={(e) => e.stopPropagation()}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            padding: '24px 24px 16px 24px',
+                            borderBottom: '1px solid #e9ecef'
+                        }}>
+                            <div style={{ flex: '1' }}>
+                                <h3 style={{
+                                    margin: '0 0 8px 0',
+                                    fontSize: '20px',
+                                    fontWeight: '600',
+                                    color: '#2c3e50'
+                                }}>
                                     {modalType === 'create' && '➕ 새 내담자 등록'}
                                     {modalType === 'edit' && '✏️ 내담자 정보 수정'}
                                     {modalType === 'delete' && '🗑️ 내담자 삭제'}
                                 </h3>
                                 {modalType === 'create' && (
-                                    <p className="modal-description">
+                                    <p style={{
+                                        margin: '0',
+                                        fontSize: '14px',
+                                        color: '#6c757d',
+                                        lineHeight: '1.5'
+                                    }}>
                                         내담자가 직접 가입하지 않은 경우, 관리자가 내담자 계정을 생성하고 초기 로그인 정보를 설정합니다.
                                     </p>
                                 )}
                                 {modalType === 'edit' && (
-                                    <p className="modal-description">
+                                    <p style={{
+                                        margin: '0',
+                                        fontSize: '14px',
+                                        color: '#6c757d',
+                                        lineHeight: '1.5'
+                                    }}>
                                         내담자의 기본 정보를 수정합니다.
                                     </p>
                                 )}
                             </div>
-                            <button className="client-modal-close" onClick={handleCloseModal}>
+                            <button style={{
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '24px',
+                                cursor: 'pointer',
+                                color: '#6c757d',
+                                padding: '0',
+                                width: '32px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '50%',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = '#f8f9fa';
+                                e.target.style.color = '#495057';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'transparent';
+                                e.target.style.color = '#6c757d';
+                            }}
+                            onClick={handleCloseModal}>
                                 ✕
                             </button>
                         </div>
                         
-                        <div className="client-modal-body">
+                        <div style={{ padding: '24px' }}>
                             {modalType === 'delete' ? (
-                                <div className="delete-confirmation">
-                                    <p>정말로 <strong>{editingClient?.name}</strong> 내담자를 삭제하시겠습니까?</p>
-                                    <p className="warning-text">⚠️ 이 작업은 되돌릴 수 없습니다.</p>
+                                <div style={{
+                                    textAlign: 'center',
+                                    padding: '20px 0'
+                                }}>
+                                    <p style={{
+                                        fontSize: '16px',
+                                        color: '#2c3e50',
+                                        margin: '0 0 16px 0',
+                                        lineHeight: '1.5'
+                                    }}>
+                                        정말로 <strong style={{ color: '#dc3545' }}>{editingClient?.name}</strong> 내담자를 삭제하시겠습니까?
+                                    </p>
+                                    <p style={{
+                                        fontSize: '14px',
+                                        color: '#dc3545',
+                                        margin: '0',
+                                        fontWeight: '500',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px'
+                                    }}>
+                                        ⚠️ 이 작업은 되돌릴 수 없습니다.
+                                    </p>
                                 </div>
                             ) : (
-                                <div className="client-form">
-                                    <div className="form-group">
-                                        <label htmlFor="name">이름 *</label>
+                                <div style={{ padding: '20px 0' }}>
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label htmlFor="name" style={{ 
+                                            display: 'block', 
+                                            marginBottom: '8px', 
+                                            fontWeight: '500', 
+                                            color: '#2c3e50' 
+                                        }}>이름 *</label>
                                         <input
                                             type="text"
                                             id="name"
@@ -1376,11 +1694,37 @@ const ClientComprehensiveManagement = () => {
                                             onChange={handleFormChange}
                                             placeholder="내담자 이름을 입력하세요"
                                             required
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                border: '2px solid #e1e8ed',
+                                                borderRadius: '8px',
+                                                fontSize: '14px',
+                                                background: 'white',
+                                                color: '#495057',
+                                                transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
+                                            }}
+                                            onFocus={(e) => {
+                                                e.target.style.outline = 'none';
+                                                e.target.style.borderColor = '#a8e6a3';
+                                                e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
+                                            }}
+                                            onBlur={(e) => {
+                                                e.target.style.borderColor = '#e1e8ed';
+                                                e.target.style.boxShadow = 'none';
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
+                                            onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
                                         />
                                     </div>
                                     
-                                    <div className="form-group">
-                                        <label htmlFor="email">이메일 *</label>
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label htmlFor="email" style={{ 
+                                            display: 'block', 
+                                            marginBottom: '8px', 
+                                            fontWeight: '500', 
+                                            color: '#2c3e50' 
+                                        }}>이메일 *</label>
                                         <input
                                             type="email"
                                             id="email"
@@ -1389,11 +1733,37 @@ const ClientComprehensiveManagement = () => {
                                             onChange={handleFormChange}
                                             placeholder="이메일을 입력하세요"
                                             required
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                border: '2px solid #e1e8ed',
+                                                borderRadius: '8px',
+                                                fontSize: '14px',
+                                                background: 'white',
+                                                color: '#495057',
+                                                transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
+                                            }}
+                                            onFocus={(e) => {
+                                                e.target.style.outline = 'none';
+                                                e.target.style.borderColor = '#a8e6a3';
+                                                e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
+                                            }}
+                                            onBlur={(e) => {
+                                                e.target.style.borderColor = '#e1e8ed';
+                                                e.target.style.boxShadow = 'none';
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
+                                            onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
                                         />
                                     </div>
                                     
-                                    <div className="form-group">
-                                        <label htmlFor="phone">전화번호</label>
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label htmlFor="phone" style={{ 
+                                            display: 'block', 
+                                            marginBottom: '8px', 
+                                            fontWeight: '500', 
+                                            color: '#2c3e50' 
+                                        }}>전화번호</label>
                                         <input
                                             type="tel"
                                             id="phone"
@@ -1402,11 +1772,37 @@ const ClientComprehensiveManagement = () => {
                                             onChange={handleFormChange}
                                             placeholder="010-1234-5678"
                                             maxLength="13"
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                border: '2px solid #e1e8ed',
+                                                borderRadius: '8px',
+                                                fontSize: '14px',
+                                                background: 'white',
+                                                color: '#495057',
+                                                transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
+                                            }}
+                                            onFocus={(e) => {
+                                                e.target.style.outline = 'none';
+                                                e.target.style.borderColor = '#a8e6a3';
+                                                e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
+                                            }}
+                                            onBlur={(e) => {
+                                                e.target.style.borderColor = '#e1e8ed';
+                                                e.target.style.boxShadow = 'none';
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
+                                            onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
                                         />
                                     </div>
                                     
-                                    <div className="form-group">
-                                        <label htmlFor="password">
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label htmlFor="password" style={{ 
+                                            display: 'block', 
+                                            marginBottom: '8px', 
+                                            fontWeight: '500', 
+                                            color: '#2c3e50' 
+                                        }}>
                                             {modalType === 'create' ? '초기 비밀번호 *' : '새 비밀번호 (선택사항)'}
                                         </label>
                                         <input
@@ -1417,14 +1813,47 @@ const ClientComprehensiveManagement = () => {
                                             onChange={handleFormChange}
                                             placeholder={modalType === 'create' ? '내담자 로그인용 초기 비밀번호를 입력하세요' : '새 비밀번호를 입력하세요 (비워두면 기존 비밀번호 유지)'}
                                             required={modalType === 'create'}
+                                            style={{
+                                                width: '100%',
+                                                padding: '12px 16px',
+                                                border: '2px solid #e1e8ed',
+                                                borderRadius: '8px',
+                                                fontSize: '14px',
+                                                background: 'white',
+                                                color: '#495057',
+                                                transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
+                                            }}
+                                            onFocus={(e) => {
+                                                e.target.style.outline = 'none';
+                                                e.target.style.borderColor = '#a8e6a3';
+                                                e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
+                                            }}
+                                            onBlur={(e) => {
+                                                e.target.style.borderColor = '#e1e8ed';
+                                                e.target.style.boxShadow = 'none';
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
+                                            onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
                                         />
                                         {modalType === 'create' && (
-                                            <small className="form-help">
+                                            <small style={{
+                                                display: 'block',
+                                                marginTop: '8px',
+                                                fontSize: '12px',
+                                                color: '#6c757d',
+                                                lineHeight: '1.4'
+                                            }}>
                                                 💡 관리자가 생성한 계정이므로, 내담자에게 이 초기 비밀번호를 전달해주세요. 첫 로그인 후 비밀번호 변경이 가능합니다.
                                             </small>
                                         )}
                                         {modalType === 'edit' && (
-                                            <small className="form-help">
+                                            <small style={{
+                                                display: 'block',
+                                                marginTop: '8px',
+                                                fontSize: '12px',
+                                                color: '#6c757d',
+                                                lineHeight: '1.4'
+                                            }}>
                                                 💡 비밀번호를 변경하지 않으려면 비워두세요.
                                             </small>
                                         )}
@@ -1433,12 +1862,54 @@ const ClientComprehensiveManagement = () => {
                             )}
                         </div>
                         
-                        <div className="client-modal-footer">
-                            <button className="btn btn-secondary" onClick={handleCloseModal}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: '12px',
+                            padding: '16px 24px 24px 24px',
+                            borderTop: '1px solid #e9ecef',
+                            background: '#f8f9fa'
+                        }}>
+                            <button style={{
+                                padding: '10px 20px',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                borderRadius: '8px',
+                                border: '1px solid #dee2e6',
+                                background: 'white',
+                                color: '#6c757d',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = '#f8f9fa';
+                                e.target.style.borderColor = '#adb5bd';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'white';
+                                e.target.style.borderColor = '#dee2e6';
+                            }}
+                            onClick={handleCloseModal}>
                                 취소
                             </button>
                             <button 
-                                className={`btn ${modalType === 'delete' ? 'btn-danger' : 'btn-primary'}`}
+                                style={{
+                                    padding: '10px 20px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    background: modalType === 'delete' ? '#dc3545' : '#007bff',
+                                    color: 'white'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.background = modalType === 'delete' ? '#c82333' : '#0056b3';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.background = modalType === 'delete' ? '#dc3545' : '#007bff';
+                                }}
                                 onClick={handleModalSubmit}
                             >
                                 {modalType === 'create' && '등록'}

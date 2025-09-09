@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,10 +14,13 @@ import com.mindgarden.consultation.dto.ScheduleDto;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.entity.Vacation;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
+import com.mindgarden.consultation.repository.VacationRepository;
 import com.mindgarden.consultation.service.CodeManagementService;
+import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.service.ScheduleService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,7 +45,9 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final UserRepository userRepository;
+    private final VacationRepository vacationRepository;
     private final CodeManagementService codeManagementService;
+    private final ConsultantAvailabilityService consultantAvailabilityService;
     
     // 상수는 ScheduleConstants 클래스에서 관리
 
@@ -327,6 +333,13 @@ public class ScheduleServiceImpl implements ScheduleService {
     public boolean hasTimeConflict(Long consultantId, LocalDate date, LocalTime startTime, LocalTime endTime, Long excludeScheduleId) {
         log.debug("⏰ 시간 충돌 검사 (기본): 상담사 {}, 날짜 {}, 시간 {} - {}", consultantId, date, startTime, endTime);
         
+        // 1. 휴가 검사 - 상담사가 해당 날짜에 휴가인지 확인
+        if (consultantAvailabilityService.isConsultantOnVacation(consultantId, date, startTime, endTime)) {
+            log.warn("🚫 휴가 중인 상담사: 상담사 {}, 날짜 {}", consultantId, date);
+            return true;
+        }
+        
+        // 2. 기존 스케줄과의 시간 충돌 검사
         List<Schedule> existingSchedules = findByConsultantIdAndDate(consultantId, date);
         
         for (Schedule existing : existingSchedules) {
@@ -353,12 +366,18 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 1. 상담 시간 + 쉬는 시간 계산
         LocalTime endTime = calculateEndTime(startTime, consultationType);
         
-        // 2. 기본 시간 충돌 검사
+        // 2. 휴가 검사 - 상담사가 해당 날짜에 휴가인지 확인
+        if (consultantAvailabilityService.isConsultantOnVacation(consultantId, date, startTime, endTime)) {
+            log.warn("🚫 휴가 중인 상담사: 상담사 {}, 날짜 {}", consultantId, date);
+            return true;
+        }
+        
+        // 3. 기본 시간 충돌 검사
         if (hasTimeConflict(consultantId, date, startTime, endTime, excludeScheduleId)) {
             return true;
         }
         
-        // 3. 쉬는 시간을 고려한 추가 검사
+        // 4. 쉬는 시간을 고려한 추가 검사
         List<Schedule> existingSchedules = findByConsultantIdAndDate(consultantId, date);
         
         for (Schedule existing : existingSchedules) {
@@ -856,9 +875,18 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
         
         // Schedule을 ScheduleDto로 변환 (상담사 이름 포함)
-        return schedules.stream()
+        List<ScheduleDto> scheduleDtos = schedules.stream()
             .map(this::convertToScheduleDto)
             .collect(java.util.stream.Collectors.toList());
+        
+        // 휴가 데이터 추가
+        List<ScheduleDto> vacationDtos = getVacationSchedules(userId, userRole);
+        scheduleDtos.addAll(vacationDtos);
+        
+        log.info("📅 총 스케줄 데이터: 일반 {}개, 휴가 {}개, 합계 {}개", 
+                schedules.size(), vacationDtos.size(), scheduleDtos.size());
+        
+        return scheduleDtos;
     }
 
     /**
@@ -890,6 +918,112 @@ public class ScheduleServiceImpl implements ScheduleService {
         
         // Schedule을 ScheduleDto로 변환 (상담사 이름 포함)
         return schedulePage.map(this::convertToScheduleDto);
+    }
+
+    /**
+     * 휴가 데이터를 ScheduleDto로 변환
+     */
+    private List<ScheduleDto> getVacationSchedules(Long userId, String userRole) {
+        log.info("🏖️ 휴가 스케줄 조회: 사용자 {}, 역할 {}", userId, userRole);
+        
+        List<Vacation> vacations;
+        if (isAdminRole(userRole)) {
+            // 관리자: 모든 상담사의 휴가 조회
+            vacations = vacationRepository.findByIsDeletedFalseOrderByVacationDateAsc();
+        } else if (isConsultantRole(userRole)) {
+            // 상담사: 자신의 휴가만 조회
+            vacations = vacationRepository.findByConsultantIdAndIsDeletedFalseOrderByVacationDateAsc(userId);
+        } else {
+            // 내담자: 휴가 조회 권한 없음
+            return new ArrayList<>();
+        }
+        
+        return vacations.stream()
+            .map(this::convertVacationToScheduleDto)
+            .collect(java.util.stream.Collectors.toList());
+    }
+    
+    /**
+     * Vacation 엔티티를 ScheduleDto로 변환
+     */
+    private ScheduleDto convertVacationToScheduleDto(Vacation vacation) {
+        ScheduleDto dto = new ScheduleDto();
+        dto.setId(vacation.getId() + 100000L); // 휴가 ID는 100000 이상으로 설정하여 구분
+        dto.setConsultantId(vacation.getConsultantId());
+        dto.setClientId(null); // 휴가는 내담자 없음
+        dto.setDate(vacation.getVacationDate());
+        dto.setStartTime(vacation.getStartTime() != null ? vacation.getStartTime() : LocalTime.of(0, 0));
+        dto.setEndTime(vacation.getEndTime() != null ? vacation.getEndTime() : LocalTime.of(23, 59));
+        dto.setStatus("VACATION"); // 휴가 상태
+        dto.setScheduleType("VACATION");
+        dto.setConsultationType("VACATION");
+        dto.setVacationType(vacation.getVacationType().name()); // 휴가 유형 추가
+        dto.setDescription(vacation.getReason());
+        dto.setCreatedAt(vacation.getCreatedAt());
+        dto.setUpdatedAt(vacation.getUpdatedAt());
+        
+        // 상담사 이름 조회
+        User consultant = userRepository.findById(vacation.getConsultantId()).orElse(null);
+        if (consultant != null) {
+            dto.setConsultantName(consultant.getName());
+        }
+        
+        // 휴가 제목 생성
+        String vacationTitle = getVacationTitle(vacation);
+        dto.setTitle(vacationTitle);
+        
+        return dto;
+    }
+    
+    /**
+     * 휴가 제목 생성
+     */
+    private String getVacationTitle(Vacation vacation) {
+        String consultantName = "";
+        User consultant = userRepository.findById(vacation.getConsultantId()).orElse(null);
+        if (consultant != null) {
+            consultantName = consultant.getName();
+        }
+        
+        String vacationTypeTitle = getVacationTypeTitle(vacation.getVacationType());
+        return consultantName + " - " + vacationTypeTitle;
+    }
+    
+    /**
+     * 휴가 타입별 제목 반환 (데이터베이스 코드 사용)
+     */
+    private String getVacationTypeTitle(Vacation.VacationType type) {
+        try {
+            // 데이터베이스에서 휴가 타입 코드 조회
+            String codeName = codeManagementService.getCodeName("VACATION_TYPE", type.name());
+            if (!codeName.equals(type.name())) {
+                return codeName; // 데이터베이스에서 찾은 한글명 반환
+            }
+        } catch (Exception e) {
+            log.warn("휴가 타입 코드 조회 실패: {} -> 기본값 사용", type.name());
+        }
+        
+        // 데이터베이스에서 찾지 못한 경우 기본값 사용
+        switch (type) {
+            case MORNING:
+                return "🌅 오전 휴가 (09:00-13:00)";
+            case MORNING_HALF_1:
+                return "🌅 오전 반반차 1 (09:00-11:00)";
+            case MORNING_HALF_2:
+                return "🌅 오전 반반차 2 (11:00-13:00)";
+            case AFTERNOON:
+                return "🌆 오후 휴가 (14:00-18:00)";
+            case AFTERNOON_HALF_1:
+                return "🌆 오후 반반차 1 (14:00-16:00)";
+            case AFTERNOON_HALF_2:
+                return "🌆 오후 반반차 2 (16:00-18:00)";
+            case CUSTOM_TIME:
+                return "⏰ 사용자 정의 휴가";
+            case ALL_DAY:
+            case FULL_DAY:
+            default:
+                return "🏖️ 하루 종일 휴가";
+        }
     }
 
     /**

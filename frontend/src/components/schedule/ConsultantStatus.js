@@ -18,18 +18,20 @@ const ConsultantStatus = () => {
     const [error, setError] = useState(null);
 
     /**
-     * 상담사 목록 로드
+     * 상담사 목록 로드 (휴가 정보 포함)
      */
     const loadConsultants = async () => {
         try {
             setLoading(true);
             console.log('👥 상담사 현황 로드 시작');
             
-            const response = await apiGet('/api/admin/consultants');
+            // 오늘 날짜로 휴가 정보를 포함한 상담사 목록 조회
+            const today = new Date().toISOString().split('T')[0];
+            const response = await apiGet(`/api/admin/consultants/with-vacation?date=${today}`);
             
             if (response.success) {
                 const consultantData = response.data || [];
-                console.log('👥 상담사 현황 데이터:', consultantData);
+                console.log('👥 상담사 현황 데이터 (휴가 정보 포함):', consultantData);
                 
                 // 상담사별 상태 계산 (실제 스케줄 데이터 기반)
                 const consultantsWithStatus = await Promise.all(

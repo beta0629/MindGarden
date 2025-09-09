@@ -21,6 +21,11 @@ const ConsultantCardNew = ({
      * 가용성 상태에 따른 클래스명 반환
      */
     const getAvailabilityClass = () => {
+        // 종일 휴가인 경우만 선택 불가능
+        const isFullDayVacation = consultant.isOnVacation && 
+            (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY');
+        
+        if (isFullDayVacation) return 'unavailable';
         if (!consultant.available) return 'unavailable';
         if (consultant.busy) return 'busy';
         return 'available';
@@ -30,7 +35,34 @@ const ConsultantCardNew = ({
      * 가용성 상태에 따른 텍스트 반환
      */
     const getAvailabilityText = () => {
-        if (!consultant.available) return '휴무';
+        // 디버깅을 위한 로그
+        if (consultant.name === '김선희2') {
+            console.log('🔍 김선희2 ConsultantCard 데이터:', {
+                isOnVacation: consultant.isOnVacation,
+                vacationType: consultant.vacationType,
+                vacationReason: consultant.vacationReason,
+                available: consultant.available,
+                busy: consultant.busy
+            });
+        }
+        
+        // 휴가 정보 확인
+        if (consultant.isOnVacation) {
+            const vacationType = consultant.vacationType;
+            if (vacationType === 'FULL_DAY' || vacationType === 'ALL_DAY') {
+                return '🏖️ 종일 휴무';
+            } else if (vacationType === 'MORNING') {
+                return '🌅 오전 휴무';
+            } else if (vacationType === 'AFTERNOON') {
+                return '🌆 오후 휴무';
+            } else if (vacationType === 'CUSTOM') {
+                return '⏰ 시간 휴무';
+            } else {
+                return '🏖️ 휴무';
+            }
+        }
+        
+        if (!consultant.available) return '불가능';
         if (consultant.busy) return '바쁨';
         return '여유';
     };
@@ -117,9 +149,49 @@ const ConsultantCardNew = ({
     };
 
     /**
+     * 상담 가능 시간 정보 파싱
+     */
+    const getAvailabilityInfo = () => {
+        if (!consultant.availabilityData) return null;
+        
+        // 요일별 상담 가능 시간 정보
+        const dayNames = {
+            'MONDAY': '월',
+            'TUESDAY': '화', 
+            'WEDNESDAY': '수',
+            'THURSDAY': '목',
+            'FRIDAY': '금',
+            'SATURDAY': '토',
+            'SUNDAY': '일'
+        };
+        
+        const availabilityInfo = [];
+        Object.keys(consultant.availabilityData).forEach(day => {
+            const daySlots = consultant.availabilityData[day];
+            if (daySlots && daySlots.length > 0) {
+                const dayName = dayNames[day] || day;
+                const timeRanges = daySlots.map(slot => 
+                    `${slot.startTime}-${slot.endTime}`
+                ).join(', ');
+                availabilityInfo.push(`${dayName}: ${timeRanges}`);
+            }
+        });
+        
+        return availabilityInfo;
+    };
+
+    /**
      * 카드 클릭 핸들러
      */
     const handleClick = () => {
+        // 종일 휴가인 경우 클릭 불가
+        const isFullDayVacation = consultant.isOnVacation && 
+            (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY');
+        
+        if (isFullDayVacation || !consultant.available) {
+            return;
+        }
+        
         if (onClick) {
             onClick(consultant);
         }
@@ -144,7 +216,11 @@ const ConsultantCardNew = ({
                 borderRadius: '16px',
                 padding: '20px',
                 border: selected ? '2px solid #667eea' : '2px solid #e9ecef',
-                cursor: 'pointer',
+                cursor: (() => {
+                    const isFullDayVacation = consultant.isOnVacation && 
+                        (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY');
+                    return (isFullDayVacation || !consultant.available) ? 'not-allowed' : 'pointer';
+                })(),
                 transition: 'all 0.3s ease',
                 display: 'flex',
                 flexDirection: 'row',
@@ -298,6 +374,49 @@ const ConsultantCardNew = ({
                         등록일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '2025. 1. 5.'}
                     </p>
                 </div>
+                
+                {/* 상담 가능 시간 정보 */}
+                {getAvailabilityInfo() && getAvailabilityInfo().length > 0 && (
+                    <div style={{
+                        marginTop: '12px',
+                        padding: '8px 12px',
+                        background: '#f8f9fa',
+                        borderRadius: '8px',
+                        border: '1px solid #e9ecef'
+                    }}>
+                        <div style={{
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: '#495057',
+                            marginBottom: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}>
+                            <span>🕐</span>
+                            상담 가능 시간
+                        </div>
+                        <div style={{
+                            fontSize: '11px',
+                            color: '#6c757d',
+                            lineHeight: '1.4'
+                        }}>
+                            {getAvailabilityInfo().slice(0, 3).map((info, index) => (
+                                <div key={index} style={{ marginBottom: '2px' }}>
+                                    {info}
+                                </div>
+                            ))}
+                            {getAvailabilityInfo().length > 3 && (
+                                <div style={{ 
+                                    color: '#999',
+                                    fontStyle: 'italic'
+                                }}>
+                                    +{getAvailabilityInfo().length - 3}개 더
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* 선택 표시 */}

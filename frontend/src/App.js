@@ -9,6 +9,9 @@ import CommonDashboard from './components/dashboard/CommonDashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
 import MyPage from './components/mypage/MyPage';
 import ConsultantSchedule from './components/consultant/ConsultantSchedule';
+import ConsultationRecordScreen from './components/consultant/ConsultationRecordScreen';
+import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
+import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
 import ConsultantComprehensiveManagement from './components/admin/ConsultantComprehensiveManagement';
 import ClientComprehensiveManagement from './components/admin/ClientComprehensiveManagement';
@@ -27,6 +30,11 @@ import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
 import IntegrationTest from './components/test/IntegrationTest';
 import AccountManagement from './components/admin/AccountManagement';
+import ConsultationHistory from './components/consultation/ConsultationHistory';
+import ConsultationReport from './components/consultation/ConsultationReport';
+import ConsultantClientList from './components/consultant/ConsultantClientList';
+import ConsultantAvailability from './components/consultant/ConsultantAvailability';
+import ConsultantRecords from './components/consultant/ConsultantRecords';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { sessionManager } from './utils/sessionManager';
@@ -126,6 +134,18 @@ function AppContent() {
             
             {/* 상담사 전용 라우트 */}
             <Route path="/consultant/schedule" element={<ConsultantSchedule />} />
+            <Route path="/consultant/consultation-record/:consultationId" element={<ConsultationRecordScreen />} />
+            <Route path="/consultant/send-message/:consultationId" element={<ConsultantMessageScreen />} />
+            <Route path="/consultant/clients" element={<ConsultantClientList />} />
+            <Route path="/consultant/availability" element={<ConsultantAvailability />} />
+            <Route path="/consultant/consultation-records" element={<ConsultantRecords />} />
+            
+            {/* 내담자 전용 라우트 */}
+            <Route path="/client/messages" element={<ClientMessageScreen />} />
+            
+            {/* 상담 내역 및 리포트 라우트 (모든 사용자) */}
+            <Route path="/consultation-history" element={<ConsultationHistory />} />
+            <Route path="/consultation-report" element={<ConsultationReport />} />
             
             {/* 통합 스케줄 관리 라우트 */}
             <Route path="/schedule" element={<SchedulePage user={user} />} />

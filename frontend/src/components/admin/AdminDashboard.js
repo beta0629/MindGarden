@@ -69,8 +69,8 @@ const AdminDashboard = ({ user: propUser }) => {
         setLoading(true);
         try {
             const [consultantsRes, clientsRes, mappingsRes] = await Promise.all([
-                fetch('/api/admin/consultants'),
-                fetch('/api/admin/clients'),
+                fetch('/api/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0]),
+                fetch('/api/admin/clients/with-mapping-info'),
                 fetch('/api/admin/mappings')
             ]);
 
@@ -338,6 +338,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                     
+                    
                     <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/consultant-comprehensive')}>
                         <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} consultants`}>
                             <FaUserTie />
@@ -492,6 +493,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 onClose={() => setShowStatisticsModal(false)}
                 userRole={(propUser || sessionUser)?.role || 'ADMIN'}
             />
+            
             </div>
         </SimpleLayout>
     );

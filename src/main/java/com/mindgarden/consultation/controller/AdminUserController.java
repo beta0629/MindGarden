@@ -10,6 +10,7 @@ import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.EmailService;
+import com.mindgarden.consultation.service.UserAddressService;
 import com.mindgarden.consultation.service.UserProfileService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,7 @@ public class AdminUserController {
     private final com.mindgarden.consultation.service.UserService userService;
     private final EmailService emailService;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final UserAddressService userAddressService;
     
     /**
      * 전체 사용자 목록 조회 (관리자 전용)
@@ -65,6 +67,9 @@ public class AdminUserController {
                     phone = "전화번호 없음";
                 }
                 
+                // 사용자 주소 정보 조회
+                Map<String, Object> addressInfo = getUserAddressInfo(user.getId());
+                
                 Map<String, Object> userInfo = new HashMap<>();
                 userInfo.put("id", user.getId());
                 userInfo.put("email", email);
@@ -75,9 +80,14 @@ public class AdminUserController {
                 userInfo.put("createdAt", user.getCreatedAt());
                 userInfo.put("updatedAt", user.getUpdatedAt());
                 
+                // 주소 정보 추가
+                userInfo.put("address", addressInfo.get("address"));
+                userInfo.put("addressDetail", addressInfo.get("addressDetail"));
+                userInfo.put("postalCode", addressInfo.get("postalCode"));
+                
                 // 디버깅을 위한 로깅
-                log.info("👤 사용자 정보 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 역할: '{}'", 
-                    user.getId(), name, email, phone, user.getRole());
+                log.info("👤 사용자 정보 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 역할: '{}', 주소: '{}'", 
+                    user.getId(), name, email, phone, user.getRole(), addressInfo.get("address"));
                 
                 userList.add(userInfo);
             }
@@ -264,6 +274,51 @@ public class AdminUserController {
     }
     
     // ==================== Private Helper Methods ====================
+    
+    /**
+     * 사용자 주소 정보 조회
+     */
+    private Map<String, Object> getUserAddressInfo(Long userId) {
+        try {
+            // 사용자의 기본 주소 조회
+            var primaryAddress = userAddressService.getPrimaryAddress(userId);
+            
+            Map<String, Object> addressInfo = new HashMap<>();
+            
+            if (primaryAddress.isPresent()) {
+                var address = primaryAddress.get();
+                // UserAddressDto에서 주소 정보 추출
+                String fullAddress = String.format("%s %s %s", 
+                    address.getProvince(), 
+                    address.getCity(), 
+                    address.getDistrict());
+                
+                if (address.getDetailAddress() != null && !address.getDetailAddress().trim().isEmpty()) {
+                    fullAddress += " " + address.getDetailAddress();
+                }
+                
+                addressInfo.put("address", fullAddress);
+                addressInfo.put("addressDetail", address.getDetailAddress() != null ? address.getDetailAddress() : "미입력");
+                addressInfo.put("postalCode", address.getPostalCode() != null ? address.getPostalCode() : "미입력");
+            } else {
+                // 기본 주소가 없으면 빈 값 설정
+                addressInfo.put("address", "미입력");
+                addressInfo.put("addressDetail", "미입력");
+                addressInfo.put("postalCode", "미입력");
+            }
+            
+            return addressInfo;
+        } catch (Exception e) {
+            log.warn("사용자 주소 정보 조회 실패: userId={}, error={}", userId, e.getMessage());
+            
+            // 오류 시 기본값 반환
+            Map<String, Object> addressInfo = new HashMap<>();
+            addressInfo.put("address", "미입력");
+            addressInfo.put("addressDetail", "미입력");
+            addressInfo.put("postalCode", "미입력");
+            return addressInfo;
+        }
+    }
     
     /**
      * 상담사 자격 요건 확인

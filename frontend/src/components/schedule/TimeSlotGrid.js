@@ -27,6 +27,7 @@ const TimeSlotGrid = ({
     const [existingSchedules, setExistingSchedules] = useState([]);
     const [loading, setLoading] = useState(false);
     const [consultantInfo, setConsultantInfo] = useState(null);
+    const [vacationInfo, setVacationInfo] = useState(null);
 
     useEffect(() => {
         if (consultantId) {
@@ -34,6 +35,7 @@ const TimeSlotGrid = ({
         }
         if (consultantId && date) {
             loadExistingSchedules();
+            loadVacationInfo();
         }
     }, [date, consultantId, duration]);
 
@@ -41,7 +43,7 @@ const TimeSlotGrid = ({
         if (consultantInfo) {
             generateTimeSlots();
         }
-    }, [consultantInfo, duration]);
+    }, [consultantInfo, duration, vacationInfo]);
 
     /**
      * 상담사 정보 로드
@@ -82,6 +84,65 @@ const TimeSlotGrid = ({
     };
 
     /**
+     * 휴가 정보 로드
+     */
+    const loadVacationInfo = async () => {
+        if (!consultantId || !date) {
+            console.log('휴가 정보 로드 건너뜀: consultantId 또는 date가 없음');
+            return;
+        }
+
+        try {
+            // 날짜 형식 변환 (Date 객체인 경우 YYYY-MM-DD 형식으로 변환)
+            let dateStr;
+            if (date instanceof Date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                dateStr = `${year}-${month}-${day}`;
+            } else {
+                dateStr = date;
+            }
+
+            console.log('휴가 정보 로드:', { consultantId, dateStr });
+
+            const response = await fetch(`/api/consultant/vacations?date=${dateStr}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('휴가 정보 API 응답:', result);
+                if (result.success && result.data) {
+                    // API 응답 구조: {data: {consultantId: {date: vacationInfo}}}
+                    const consultantData = result.data[consultantId];
+                    if (consultantData && consultantData[dateStr]) {
+                        const vacationInfo = consultantData[dateStr];
+                        setVacationInfo(vacationInfo);
+                        console.log('휴가 정보 설정:', vacationInfo);
+                    } else {
+                        setVacationInfo(null);
+                        console.log('해당 상담사의 휴가 정보 없음');
+                    }
+                } else {
+                    setVacationInfo(null);
+                    console.log('휴가 정보 없음');
+                }
+            } else {
+                console.error('휴가 정보 로드 실패:', response.status);
+                setVacationInfo(null);
+            }
+        } catch (error) {
+            console.error('휴가 정보 로드 실패:', error);
+            setVacationInfo(null);
+        }
+    };
+
+    /**
      * 시간 슬롯 생성
      */
     const generateTimeSlots = () => {
@@ -108,8 +169,21 @@ const TimeSlotGrid = ({
         const maxStartHour = Math.floor(maxStartMinutes / 60);
         const maxStartMinute = maxStartMinutes % 60;
         
+        console.log('🕐 시간 슬롯 생성 정보:', {
+            consultationHours: consultationHours,
+            duration: duration,
+            breakBetweenSessions: breakBetweenSessions,
+            totalDuration: totalDuration,
+            maxStartMinutes: maxStartMinutes,
+            maxStartHour: maxStartHour,
+            maxStartMinute: maxStartMinute
+        });
+        
+        // 상담 시간에 맞는 슬롯 간격 계산 (최소 30분, 상담 시간의 절반 이상)
+        const slotInterval = Math.max(30, Math.ceil(duration / 2));
+        
         for (let hour = startHour; hour <= maxStartHour; hour++) {
-            for (let minute = 0; minute < 60; minute += TIME_SLOT_INTERVAL) {
+            for (let minute = 0; minute < 60; minute += slotInterval) {
                 // 마지막 시간대 체크
                 if (hour === maxStartHour && minute > maxStartMinute) {
                     break;
@@ -120,18 +194,113 @@ const TimeSlotGrid = ({
                 
                 // 업무 시간 내에서만 종료되는 슬롯만 추가
                 if (isWithinConsultantHours(slotEndTime, startHour, startMinute, endHour, endMinute)) {
+                    // 휴가 정보 확인
+                    const isVacationTime = checkVacationTime(timeString, slotEndTime);
+                    
                     slots.push({
                         id: `slot-${timeString}`,
                         time: timeString,
                         endTime: slotEndTime,
                         duration: duration,
-                        available: true,
-                        conflict: false
+                        available: !isVacationTime,
+                        conflict: false,
+                        vacation: isVacationTime
                     });
                 }
             }
         }
-        setTimeSlots(slots);
+        
+        // 시간 순서대로 정렬 (더 안전한 정렬)
+        const sortedSlots = [...slots].sort((a, b) => {
+            const timeA = a.time.split(':').map(Number);
+            const timeB = b.time.split(':').map(Number);
+            const minutesA = timeA[0] * 60 + timeA[1];
+            const minutesB = timeB[0] * 60 + timeB[1];
+            return minutesA - minutesB;
+        });
+        
+        console.log('🕐 정렬 전 시간 슬롯:', slots.map(slot => slot.time));
+        console.log('🕐 정렬 후 시간 슬롯:', sortedSlots.map(slot => slot.time));
+        console.log('🕐 생성된 시간 슬롯 상세:', sortedSlots.map(slot => ({
+            time: slot.time,
+            endTime: slot.endTime,
+            available: slot.available,
+            vacation: slot.vacation
+        })));
+        
+        setTimeSlots(sortedSlots);
+    };
+
+    /**
+     * 휴가 시간 확인
+     */
+    const checkVacationTime = (startTime, endTime) => {
+        if (!vacationInfo) {
+            console.log('🔍 휴가 정보 없음');
+            return false;
+        }
+        
+        const vacationType = vacationInfo.type;
+        console.log('🔍 휴가 시간 확인:', {
+            vacationType,
+            startTime,
+            endTime,
+            vacationInfo
+        });
+        const vacationStartTime = vacationInfo.startTime;
+        const vacationEndTime = vacationInfo.endTime;
+        
+        // 시간 문자열을 분으로 변환하는 헬퍼 함수
+        const timeToMinutes = (timeStr) => {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        };
+        
+        const slotStartMinutes = timeToMinutes(startTime);
+        const slotEndMinutes = timeToMinutes(endTime);
+        
+        switch (vacationType) {
+            case 'ALL_DAY':
+            case 'FULL_DAY':
+                return true; // 하루 종일 휴가
+                
+            case 'MORNING':
+                // 오전 휴가: 09:00-12:00
+                return slotStartMinutes < 720; // 12:00 = 720분
+                
+            case 'MORNING_HALF_1':
+                // 오전 반반차 1: 09:00-11:00 (2시간)
+                return slotStartMinutes < 660; // 11:00 = 660분
+                
+            case 'MORNING_HALF_2':
+                // 오전 반반차 2: 11:00-13:00 (2시간)
+                return slotStartMinutes >= 660 && slotStartMinutes < 780; // 11:00-13:00
+                
+            case 'AFTERNOON':
+                // 오후 휴가: 14:00-18:00
+                return slotStartMinutes >= 840; // 14:00 = 840분
+                
+            case 'AFTERNOON_HALF_1':
+                // 오후 반반차 1: 14:00-16:00 (2시간)
+                return slotStartMinutes >= 840 && slotStartMinutes < 960; // 14:00-16:00
+                
+            case 'AFTERNOON_HALF_2':
+                // 오후 반반차 2: 16:00-18:00 (2시간)
+                return slotStartMinutes >= 960; // 16:00-18:00
+                
+            case 'CUSTOM_TIME':
+                if (vacationStartTime && vacationEndTime) {
+                    const vacationStartMinutes = timeToMinutes(vacationStartTime);
+                    const vacationEndMinutes = timeToMinutes(vacationEndTime);
+                    
+                    // 시간 겹침 확인
+                    return (slotStartMinutes < vacationEndMinutes && slotEndMinutes > vacationStartMinutes);
+                }
+                return false;
+                
+            default:
+                return false;
+        }
     };
 
     /**
@@ -290,6 +459,24 @@ const TimeSlotGrid = ({
      * 시간 슬롯 클릭 핸들러
      */
     const handleSlotClick = (slot) => {
+        if (slot.vacation) {
+            // 휴가 시간대 클릭 시 알림
+            const vacationType = vacationInfo?.type || '휴가';
+            const vacationTypeNames = {
+                'ALL_DAY': '하루 종일',
+                'FULL_DAY': '하루 종일',
+                'MORNING': '오전',
+                'MORNING_HALF': '오전 반반차',
+                'AFTERNOON': '오후',
+                'AFTERNOON_HALF': '오후 반반차',
+                'CUSTOM_TIME': '사용자 정의'
+            };
+            
+            const typeName = vacationTypeNames[vacationType] || '휴가';
+            alert(`🏖️ 해당 시간대는 상담사의 ${typeName} 휴가 시간입니다.\n다른 시간을 선택해주세요.`);
+            return;
+        }
+        
         if (!slot.available) {
             return;
         }
@@ -303,6 +490,7 @@ const TimeSlotGrid = ({
     const getSlotClassName = (slot) => {
         const classes = ['time-slot'];
         
+        if (slot.vacation) classes.push('vacation');
         if (!slot.available) classes.push('unavailable');
         if (slot.conflict) classes.push('conflict');
         if (selectedTimeSlot?.id === slot.id) classes.push('selected');
@@ -314,6 +502,7 @@ const TimeSlotGrid = ({
      * 슬롯 상태 아이콘
      */
     const getSlotIcon = (slot) => {
+        if (slot.vacation) return '🏖️';
         if (slot.conflict) return '❌';
         if (!slot.available) return '🚫';
         if (selectedTimeSlot?.id === slot.id) return '✅';
@@ -362,6 +551,10 @@ const TimeSlotGrid = ({
                     <span>사용 가능</span>
                 </div>
                 <div className="legend-item">
+                    <span className="legend-icon">🏖️</span>
+                    <span>휴가 시간</span>
+                </div>
+                <div className="legend-item">
                     <span className="legend-icon">❌</span>
                     <span>충돌</span>
                 </div>
@@ -376,7 +569,9 @@ const TimeSlotGrid = ({
             </div>
 
             <div className="slots-container">
-                {Object.keys(groupedSlots).map(hour => (
+                {Object.keys(groupedSlots)
+                    .sort((a, b) => parseInt(a) - parseInt(b))
+                    .map(hour => (
                     <div key={hour} className="hour-group">
                         <div className="hour-label">{hour}:00</div>
                         <div className="slots-row">

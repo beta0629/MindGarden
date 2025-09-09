@@ -10,7 +10,9 @@ import SimpleLayout from '../layout/SimpleLayout';
 import ClientInfoModal from './ClientInfoModal';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ConsultationLogModal from './ConsultationLogModal';
+import ConsultationLogModalNew from './ConsultationLogModal';
 import EventModal from './EventModal';
+import VacationModal from './VacationModal';
 import { CONSULTATION_DURATIONS, BREAK_TIME_MINUTES } from '../../constants/schedule';
 import { useSession } from '../../contexts/SessionContext';
 import './ConsultantSchedule.css';
@@ -34,6 +36,14 @@ const ConsultantSchedule = () => {
   const [selectedConsultation, setSelectedConsultation] = useState(null);
   const [clientModalMode, setClientModalMode] = useState('view');
   const [consultationLogModalMode, setConsultationLogModalMode] = useState('add');
+  const [isConsultationLogModalNewOpen, setIsConsultationLogModalNewOpen] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [consultationLogCompleteCallback, setConsultationLogCompleteCallback] = useState(null);
+  
+  // 휴무 관련 상태
+  const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
+  const [selectedVacationDate, setSelectedVacationDate] = useState(null);
+  const [vacations, setVacations] = useState([]);
   
   const calendarRef = useRef(null);
 
@@ -140,8 +150,6 @@ const ConsultantSchedule = () => {
       }
     };
 
-    loadMappedClients();
-
     // 샘플 상담 일지 데이터
     const sampleConsultationLogs = [
       {
@@ -164,87 +172,25 @@ const ConsultantSchedule = () => {
     ];
     setConsultationLogs(sampleConsultationLogs);
 
-    // 실제 스케줄 데이터 로드
-    const loadSchedules = async () => {
-      try {
-        console.log('📅 실제 스케줄 데이터 로드 시작 - 상담사 ID:', currentConsultantId);
-        
-        const response = await fetch(`/api/schedules/consultant/${currentConsultantId}/my-schedules`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include'
-        });
+    // 내담자 데이터 로드 후 스케줄 데이터 로드
+    loadMappedClients().then((mappedClients) => {
+      // 실제 스케줄 데이터 로드
 
-        if (response.ok) {
-          const schedules = await response.json();
-          console.log('📅 실제 스케줄 데이터:', schedules);
-          
-          if (schedules && schedules.length > 0) {
-            // 실제 스케줄 데이터를 캘린더 이벤트 형식으로 변환
-            const events = schedules.map((schedule, index) => {
-              // 날짜와 시간을 올바르게 파싱
-              const dateStr = schedule.date; // "2025-10-01"
-              const startTimeStr = schedule.startTime; // "17:30:00"
-              const endTimeStr = schedule.endTime; // "18:20:00"
-              
-              // ISO 형식으로 조합하여 파싱 (로컬 시간대 사용)
-              const startDateTime = new Date(`${dateStr}T${startTimeStr}+09:00`);
-              const endDateTime = new Date(`${dateStr}T${endTimeStr}+09:00`);
-              
-              console.log('📅 스케줄 파싱:', {
-                original: { date: dateStr, startTime: startTimeStr, endTime: endTimeStr },
-                parsed: { start: startDateTime, end: endDateTime },
-                iso: { start: startDateTime.toISOString(), end: endDateTime.toISOString() }
-              });
-              
-              return {
-                id: `schedule-${schedule.id}`,
-                title: schedule.title || '상담',
-                start: startDateTime.toISOString(),
-                end: endDateTime.toISOString(),
-                backgroundColor: index === 0 ? '#4CAF50' : index === 1 ? '#2196F3' : '#FF9800',
-                borderColor: index === 0 ? '#4CAF50' : index === 1 ? '#2196F3' : '#FF9800',
-                textColor: '#fff',
-                extendedProps: {
-                  scheduleId: schedule.id,
-                  clientId: schedule.clientId,
-                  consultantId: schedule.consultantId,
-                  title: schedule.title,
-                  description: schedule.description,
-                  consultationType: schedule.consultationType || 'INDIVIDUAL',
-                  status: schedule.status,
-                  scheduleType: schedule.scheduleType
-                }
-              };
-            });
-            
-            setEvents(events);
-            console.log('📅 실제 스케줄 데이터로 캘린더 이벤트 생성 완료:', events);
-          } else {
-            // 실제 스케줄이 없으면 빈 배열
-            setEvents([]);
-            console.log('📅 등록된 스케줄이 없습니다.');
-          }
-        } else {
-          console.error('스케줄 데이터 로드 실패:', response.status, response.statusText);
-          setEvents([]);
-        }
-      } catch (error) {
-        console.error('스케줄 데이터 로드 오류:', error);
-        setEvents([]);
-      }
-    };
-
-    // 실제 스케줄 데이터 로드
-    loadSchedules();
+      // 실제 스케줄 데이터 로드
+      loadEvents();
+    });
   }, [user?.id]);
 
   // 일정 클릭 시 모달 열기 및 팝오버 자동 닫기
   const handleEventClick = (clickInfo) => {
     // 팝오버 자동 닫기
     closeAllPopovers();
+    
+    // 휴무 이벤트는 클릭해도 아무 동작하지 않음
+    if (clickInfo.event.id && clickInfo.event.id.startsWith('vacation-')) {
+      console.log('🏖️ 휴무 이벤트 클릭 - 동작 없음');
+      return;
+    }
     
     setSelectedEvent(clickInfo.event);
     setModalMode('edit');
@@ -280,6 +226,239 @@ const ConsultantSchedule = () => {
       if (popover.style.display !== 'none') {
         popover.style.display = 'none';
       }
+    });
+  };
+
+  // 휴무 관련 함수들
+  const loadVacations = async () => {
+    if (!user?.id) {
+      console.log('🏖️ 사용자 ID가 없어서 휴무 데이터 로드 건너뜀');
+      return;
+    }
+    
+    try {
+      console.log('🏖️ 휴무 데이터 로드 시작:', user.id);
+      
+      const response = await fetch(`/api/consultant/${user.id}/vacation`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      console.log('🏖️ 휴무 API 응답 상태:', response.status);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('🏖️ 휴무 API 응답 데이터:', result);
+        if (result.success) {
+          setVacations(result.data || []);
+          console.log('🏖️ 휴무 데이터 로드 완료:', result.data);
+        } else {
+          console.error('🏖️ 휴무 API 응답 실패:', result.message);
+        }
+      } else {
+        console.error('🏖️ 휴무 데이터 로드 실패:', response.status);
+      }
+    } catch (error) {
+      console.error('🏖️ 휴무 데이터 로드 오류:', error);
+    }
+  };
+
+  // 이벤트 로드 함수
+  const loadEvents = async () => {
+    if (!user?.id) {
+      console.log('📅 사용자 ID가 없어서 이벤트 로드 건너뜀');
+      return;
+    }
+    
+    console.log('📅 이벤트 로드 시작:', user.id);
+    console.log('🔍 현재 사용자 정보:', user);
+    
+    try {
+      // 스케줄 데이터 로드
+      const scheduleResponse = await fetch(`/api/schedules/consultant/${user.id}/my-schedules`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      let scheduleEvents = [];
+      if (scheduleResponse.ok) {
+        const schedules = await scheduleResponse.json();
+        if (schedules && schedules.length > 0) {
+          console.log('📅 스케줄 데이터 로드 완료:', schedules);
+          
+          // 스케줄을 캘린더 이벤트로 변환
+          scheduleEvents = schedules.map((schedule, index) => {
+            const dateStr = schedule.date;
+            const startTimeStr = schedule.startTime;
+            const endTimeStr = schedule.endTime;
+            
+            const startDateTime = new Date(`${dateStr}T${startTimeStr}+09:00`);
+            const endDateTime = new Date(`${dateStr}T${endTimeStr}+09:00`);
+            
+            const client = clients.find(c => c.originalId === schedule.clientId);
+            
+            return {
+              id: `schedule-${schedule.id}`,
+              title: schedule.title || '상담',
+              start: startDateTime.toISOString(),
+              end: endDateTime.toISOString(),
+              backgroundColor: index === 0 ? '#4CAF50' : index === 1 ? '#2196F3' : '#FF9800',
+              borderColor: index === 0 ? '#4CAF50' : index === 1 ? '#2196F3' : '#FF9800',
+              textColor: '#fff',
+              extendedProps: {
+                scheduleId: schedule.id,
+                clientId: schedule.clientId,
+                consultantId: schedule.consultantId,
+                title: schedule.title,
+                description: schedule.description,
+                consultationType: schedule.consultationType || '미지정',
+                status: schedule.status,
+                scheduleType: schedule.scheduleType,
+                clientName: client?.name || '미지정',
+                notes: schedule.description || ''
+              }
+            };
+          });
+        }
+      }
+      
+      // 휴무 데이터 로드 (현재 월 기준으로 3개월 범위)
+      const today = new Date();
+      const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
+      const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0).toISOString().split('T')[0];
+      
+      const vacationResponse = await fetch(`/api/consultant/${user.id}/vacation?startDate=${startDate}&endDate=${endDate}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      let vacationEvents = [];
+      if (vacationResponse.ok) {
+        const vacationResult = await vacationResponse.json();
+        if (vacationResult.success) {
+          vacationEvents = convertVacationsToEvents(vacationResult.data || []);
+        }
+      }
+      
+      // 스케줄 이벤트와 휴무 이벤트 합치기
+      const allEvents = [...scheduleEvents, ...vacationEvents];
+      
+      setEvents(allEvents);
+      console.log('📅 모든 이벤트 데이터 로드 완료:', allEvents);
+      
+      // 캘린더 강제 새로고침
+      if (calendarRef.current) {
+        calendarRef.current.getApi().refetchEvents();
+        console.log('📅 캘린더 이벤트 새로고침 완료');
+      }
+    } catch (error) {
+      console.error('이벤트 데이터 로드 오류:', error);
+      setEvents([]);
+    }
+  };
+
+  const handleVacationSuccess = (vacationData) => {
+    console.log('🏖️ 휴무 설정 성공:', vacationData);
+    // 휴무 데이터 새로고침
+    loadVacations();
+    // 캘린더 이벤트 새로고침
+    loadEvents();
+    
+    // 캘린더 강제 새로고침
+    setTimeout(() => {
+      if (calendarRef.current) {
+        calendarRef.current.getApi().refetchEvents();
+        console.log('🏖️ 휴무 설정 후 캘린더 새로고침 완료');
+      }
+    }, 100);
+  };
+
+  const handleVacationClick = (dateStr) => {
+    console.log('🏖️ 휴무 설정 클릭:', dateStr);
+    setSelectedVacationDate(dateStr);
+    setIsVacationModalOpen(true);
+  };
+
+  // 휴무를 캘린더 이벤트로 변환
+  const convertVacationsToEvents = (vacations) => {
+    return vacations.map(vacation => {
+      const { date, type, reason, startTime, endTime } = vacation;
+      const startDate = new Date(date + 'T00:00:00+09:00');
+      let endDate, title, backgroundColor, allDay = true;
+      
+      switch (type) {
+        case 'MORNING':
+          endDate = new Date(date + 'T12:00:00+09:00');
+          title = '🌅 오전 휴무';
+          backgroundColor = '#FF9800';
+          break;
+        case 'AFTERNOON':
+          startDate.setHours(13, 0, 0);
+          endDate = new Date(date + 'T18:00:00+09:00');
+          title = '🌇 오후 휴무';
+          backgroundColor = '#FF5722';
+          break;
+        case 'MORNING_HALF':
+          endDate = new Date(date + 'T11:00:00+09:00');
+          title = '🌄 오전 반반차';
+          backgroundColor = '#FFC107';
+          break;
+        case 'AFTERNOON_HALF':
+          startDate.setHours(14, 0, 0);
+          endDate = new Date(date + 'T16:00:00+09:00');
+          title = '🌆 오후 반반차';
+          backgroundColor = '#FF7043';
+          break;
+        case 'CUSTOM_TIME':
+          if (startTime && endTime) {
+            startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
+            endDate = new Date(date + 'T' + endTime + '+09:00');
+            title = '⏰ 사용자 정의 휴무';
+            backgroundColor = '#9C27B0';
+            allDay = false;
+          } else {
+            endDate = new Date(date + 'T23:59:59+09:00');
+            title = '⏰ 사용자 정의 휴무';
+            backgroundColor = '#9C27B0';
+          }
+          break;
+        case 'ALL_DAY':
+        case 'FULL_DAY':
+        default:
+          endDate = new Date(date + 'T23:59:59+09:00');
+          title = '🏖️ 하루 종일 휴무';
+          backgroundColor = '#F44336';
+          break;
+      }
+      
+      return {
+        id: `vacation-${vacation.id}`,
+        title: title,
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+        backgroundColor: backgroundColor,
+        borderColor: backgroundColor,
+        textColor: '#fff',
+        allDay: allDay,
+        extendedProps: {
+          type: 'vacation',
+          vacationType: type,
+          reason: reason,
+          date: date,
+          startTime: startTime,
+          endTime: endTime,
+          isVacation: true
+        }
+      };
     });
   };
 
@@ -382,15 +561,27 @@ const ConsultantSchedule = () => {
   };
 
   // 상담 일지 작성
-  const handleWriteConsultationLog = (event) => {
-    setSelectedConsultation({
-      clientId: event.extendedProps.clientId,
-      startTime: event.start,
-      endTime: event.end,
-      consultationType: event.extendedProps.consultationType
-    });
-    setConsultationLogModalMode('add');
-    setIsConsultationLogModalOpen(true);
+  const handleWriteConsultationLog = (event, onComplete) => {
+    // 스케줄 데이터를 상담일지 모달에 전달
+    const scheduleData = {
+      id: event.id,
+      title: event.title,
+      startTime: event.start ? (event.start instanceof Date ? event.start.toISOString() : event.start) : null,
+      endTime: event.end ? (event.end instanceof Date ? event.end.toISOString() : event.end) : null,
+      clientId: event.extendedProps?.clientId,
+      consultantId: event.extendedProps?.consultantId,
+      consultationType: event.extendedProps?.consultationType,
+      status: event.extendedProps?.status,
+      notes: event.extendedProps?.notes
+    };
+    
+    setSelectedSchedule(scheduleData);
+    setIsConsultationLogModalNewOpen(true);
+    
+    // 상담일지 작성 완료 콜백 저장
+    if (onComplete) {
+      setConsultationLogCompleteCallback(() => onComplete);
+    }
   };
 
   // 할당된 내담자 목록 표시
@@ -407,13 +598,21 @@ const ConsultantSchedule = () => {
     alert(`📋 할당된 내담자 목록 (${clients.length}명)\n\n${clientList}`);
   };
 
-  // 날짜 클릭 시 (상담사는 일정 등록 불가)
+  // 날짜 클릭 시 (휴무 설정 옵션 제공)
   const handleDateClick = (arg) => {
     // 팝오버 자동 닫기
     closeAllPopovers();
     
-    // 상담사는 일정 등록할 수 없으므로 알림만 표시
-    alert('상담사는 일정을 등록할 수 없습니다. 관리자에게 문의하세요.');
+    const dateStr = arg.dateStr;
+    const isPast = new Date(dateStr) < new Date();
+    
+    if (isPast) {
+      alert('과거 날짜는 휴무를 설정할 수 없습니다.');
+      return;
+    }
+    
+    // 바로 휴무 설정 모달 열기
+    handleVacationClick(dateStr);
   };
 
   // 상담 유형별 색상 매핑
@@ -615,8 +814,10 @@ const ConsultantSchedule = () => {
         <EventModal
           event={selectedEvent}
           mode={modalMode}
+          userRole="CONSULTANT"
           onSave={handleSaveEvent}
           onDelete={handleDeleteEvent}
+          onWriteConsultationLog={handleWriteConsultationLog}
           onClose={() => {
             setIsModalOpen(false);
             setSelectedEvent(null);
@@ -653,6 +854,41 @@ const ConsultantSchedule = () => {
           }}
           onSave={handleConsultationLogSave}
           mode={consultationLogModalMode}
+        />
+      )}
+
+      {/* 새로운 상담일지 작성 모달 */}
+      {isConsultationLogModalNewOpen && (
+        <ConsultationLogModalNew
+          isOpen={isConsultationLogModalNewOpen}
+          onClose={() => {
+            setIsConsultationLogModalNewOpen(false);
+            setSelectedSchedule(null);
+            closeAllPopovers();
+          }}
+          scheduleData={selectedSchedule}
+          onSave={(recordData) => {
+            console.log('상담일지 저장됨:', recordData);
+            // 상담일지 작성 완료 콜백 실행
+            if (consultationLogCompleteCallback) {
+              consultationLogCompleteCallback();
+              setConsultationLogCompleteCallback(null);
+            }
+          }}
+        />
+      )}
+
+      {/* 휴무 설정 모달 */}
+      {isVacationModalOpen && (
+        <VacationModal
+          isOpen={isVacationModalOpen}
+          onClose={() => {
+            setIsVacationModalOpen(false);
+            setSelectedVacationDate(null);
+          }}
+          onSuccess={handleVacationSuccess}
+          selectedDate={selectedVacationDate}
+          consultantId={user?.id}
         />
       )}
       </div>

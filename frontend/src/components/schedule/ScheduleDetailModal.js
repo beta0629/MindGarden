@@ -50,9 +50,37 @@ const ScheduleDetailModal = ({
             'IN_PROGRESS': '진행중',
             'COMPLETED': '완료됨',
             'CANCELLED': '취소',
-            'BLOCKED': '차단됨'
+            'BLOCKED': '차단됨',
+            'VACATION': '휴가'
         };
         return statusMap[status] || status || "알 수 없음";
+    };
+
+    /**
+     * 휴가 이벤트인지 확인
+     */
+    const isVacationEvent = () => {
+        return scheduleData.status === 'VACATION' || 
+               scheduleData.consultationType === 'VACATION' ||
+               scheduleData.scheduleType === 'VACATION';
+    };
+
+    /**
+     * 휴가 유형을 표시용으로 변환
+     */
+    const getVacationTypeDisplay = (vacationType) => {
+        const typeMap = {
+            'ALL_DAY': '🏖️ 하루 종일 휴가',
+            'FULL_DAY': '🏖️ 하루 종일 휴가',
+            'MORNING': '🌅 오전 휴가 (09:00-13:00)',
+            'MORNING_HALF_1': '🌅 오전 반반차 1 (09:00-11:00)',
+            'MORNING_HALF_2': '🌅 오전 반반차 2 (11:00-13:00)',
+            'AFTERNOON': '🌆 오후 휴가 (14:00-18:00)',
+            'AFTERNOON_HALF_1': '🌆 오후 반반차 1 (14:00-16:00)',
+            'AFTERNOON_HALF_2': '🌆 오후 반반차 2 (16:00-18:00)',
+            'CUSTOM_TIME': '⏰ 시간 지정 휴가'
+        };
+        return typeMap[vacationType] || '🏖️ 휴가';
     };
 
     /**
@@ -238,14 +266,33 @@ const ScheduleDetailModal = ({
                             <span className="label">상담사:</span>
                             <span className="value">{scheduleData.consultantName}</span>
                         </div>
-                        <div className="info-row">
-                            <span className="label">내담자:</span>
-                            <span className="value">{scheduleData.clientName}</span>
-                        </div>
-                        <div className="info-row">
-                            <span className="label">상담 유형:</span>
-                            <span className="value">{convertConsultationTypeToKorean(scheduleData.consultationType)}</span>
-                        </div>
+                        
+                        {isVacationEvent() ? (
+                            // 휴가 이벤트인 경우
+                            <>
+                                <div className="info-row">
+                                    <span className="label">휴가 사유:</span>
+                                    <span className="value">{scheduleData.description || scheduleData.reason || '사유 없음'}</span>
+                                </div>
+                                <div className="info-row">
+                                    <span className="label">휴가 유형:</span>
+                                    <span className="value">{getVacationTypeDisplay(scheduleData.vacationType)}</span>
+                                </div>
+                            </>
+                        ) : (
+                            // 일반 스케줄인 경우
+                            <>
+                                <div className="info-row">
+                                    <span className="label">내담자:</span>
+                                    <span className="value">{scheduleData.clientName}</span>
+                                </div>
+                                <div className="info-row">
+                                    <span className="label">상담 유형:</span>
+                                    <span className="value">{convertConsultationTypeToKorean(scheduleData.consultationType)}</span>
+                                </div>
+                            </>
+                        )}
+                        
                         <div className="info-row">
                             <span className="label">시간:</span>
                             <span className="value">
@@ -261,60 +308,75 @@ const ScheduleDetailModal = ({
                     </div>
 
                     <div className="action-buttons">
-                        {(scheduleData.status === 'BOOKED' || scheduleData.status === '예약됨') && (
+                        {isVacationEvent() ? (
+                            // 휴가 이벤트인 경우 - 휴가 관련 정보 표시
+                            <div className="vacation-info">
+                                <p className="vacation-notice">
+                                    🏖️ 이 이벤트는 상담사의 휴가입니다.
+                                </p>
+                                <p className="vacation-details">
+                                    해당 시간대에는 상담이 불가능합니다.
+                                </p>
+                            </div>
+                        ) : (
+                            // 일반 스케줄인 경우 - 기존 버튼들
                             <>
-                                <button 
-                                    className="btn-status btn-confirm"
-                                    onClick={() => setShowConfirmModal(true)}
-                                    disabled={loading}
-                                >
-                                    ✅ 예약 확정
-                                </button>
-                                <button 
-                                    className="btn-status btn-complete"
-                                    onClick={() => handleStatusChange('COMPLETED')}
-                                    disabled={loading}
-                                >
-                                    ✅ 완료 처리
-                                </button>
-                                <button 
-                                    className="btn-status btn-cancel"
-                                    onClick={() => setShowCancelConfirm(true)}
-                                    disabled={loading}
-                                >
-                                    ❌ 예약 취소
-                                </button>
+                                {(scheduleData.status === 'BOOKED' || scheduleData.status === '예약됨') && (
+                                    <>
+                                        <button 
+                                            className="btn-status btn-confirm"
+                                            onClick={() => setShowConfirmModal(true)}
+                                            disabled={loading}
+                                        >
+                                            ✅ 예약 확정
+                                        </button>
+                                        <button 
+                                            className="btn-status btn-complete"
+                                            onClick={() => handleStatusChange('COMPLETED')}
+                                            disabled={loading}
+                                        >
+                                            ✅ 완료 처리
+                                        </button>
+                                        <button 
+                                            className="btn-status btn-cancel"
+                                            onClick={() => setShowCancelConfirm(true)}
+                                            disabled={loading}
+                                        >
+                                            ❌ 예약 취소
+                                        </button>
+                                    </>
+                                )}
+                                
+                                {(scheduleData.status === 'CONFIRMED' || scheduleData.status === '확정됨') && (
+                                    <button 
+                                        className="btn-status btn-cancel"
+                                        onClick={() => setShowCancelConfirm(true)}
+                                        disabled={loading}
+                                    >
+                                        ❌ 예약 취소
+                                    </button>
+                                )}
+                                
+                                {(scheduleData.status === 'COMPLETED' || scheduleData.status === '완료됨') && (
+                                    <button 
+                                        className="btn-status btn-reopen"
+                                        onClick={() => handleStatusChange('BOOKED')}
+                                        disabled={loading}
+                                    >
+                                        🔄 다시 예약
+                                    </button>
+                                )}
+                                
+                                {(scheduleData.status === 'CANCELLED' || scheduleData.status === '취소') && (
+                                    <button 
+                                        className="btn-status btn-reopen"
+                                        onClick={() => handleStatusChange('BOOKED')}
+                                        disabled={loading}
+                                    >
+                                        🔄 다시 예약
+                                    </button>
+                                )}
                             </>
-                        )}
-                        
-                        {(scheduleData.status === 'CONFIRMED' || scheduleData.status === '확정됨') && (
-                            <button 
-                                className="btn-status btn-cancel"
-                                onClick={() => setShowCancelConfirm(true)}
-                                disabled={loading}
-                            >
-                                ❌ 예약 취소
-                            </button>
-                        )}
-                        
-                        {(scheduleData.status === 'COMPLETED' || scheduleData.status === '완료됨') && (
-                            <button 
-                                className="btn-status btn-reopen"
-                                onClick={() => handleStatusChange('BOOKED')}
-                                disabled={loading}
-                            >
-                                🔄 다시 예약
-                            </button>
-                        )}
-                        
-                        {(scheduleData.status === 'CANCELLED' || scheduleData.status === '취소') && (
-                            <button 
-                                className="btn-status btn-reopen"
-                                onClick={() => handleStatusChange('BOOKED')}
-                                disabled={loading}
-                            >
-                                🔄 다시 예약
-                            </button>
                         )}
                     </div>
                 </div>

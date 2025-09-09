@@ -58,14 +58,11 @@ const SimpleHeader = () => {
   // 프로필 이미지 우선순위: 사용자 업로드 > 소셜 > 기본 아이콘
   const getProfileImageUrl = () => {
     if (user?.profileImageUrl && !imageLoadError) {
-      console.log('🖼️ SimpleHeader - 사용자 업로드 이미지 사용:', user.profileImageUrl);
       return user.profileImageUrl;
     }
     if (user?.socialProfileImage && !imageLoadError) {
-      console.log('🖼️ SimpleHeader - 소셜 이미지 사용:', user.socialProfileImage);
       return user.socialProfileImage;
     }
-    console.log('🖼️ SimpleHeader - 기본 아이콘 사용');
     return null;
   };
 

@@ -1,0 +1,412 @@
+/* 휴무 설정 모달 스타일 */
+.vacation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.vacation-modal {
+  background: #fff;
+  border-radius: 15px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: #000;
+}
+
+.vacation-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px 30px 20px;
+  border-bottom: 1px solid #e9ecef;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-radius: 15px 15px 0 0;
+}
+
+.vacation-modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #000;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vacation-modal-title i {
+  color: #ff6b6b;
+}
+
+.vacation-modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.vacation-modal-close-btn:hover:not(:disabled) {
+  background: #e9ecef;
+  color: #2c3e50;
+}
+
+.vacation-modal-close-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vacation-modal-body {
+  padding: 30px;
+}
+
+.vacation-date-info {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  border: 2px solid #e9ecef;
+}
+
+.vacation-date-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.vacation-date-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.vacation-type-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vacation-type-option {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fff;
+}
+
+.vacation-type-option:hover {
+  border-color: #3498db;
+  background: #f8f9fa;
+}
+
+.vacation-type-option:has(.vacation-type-radio:checked) {
+  border-color: #3498db;
+  background: #e3f2fd;
+}
+
+.vacation-type-radio {
+  margin: 0;
+  margin-right: 15px;
+  width: 18px;
+  height: 18px;
+  accent-color: #3498db;
+}
+
+.vacation-type-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.vacation-type-icon {
+  font-size: 1.5rem;
+}
+
+.vacation-type-label {
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.vacation-type-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #e0e0e0;
+  margin-left: auto;
+}
+
+/* 시간 설정 그룹 */
+.time-input-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.time-input {
+  flex: 1;
+}
+
+.time-input label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 5px;
+}
+
+.time-input input[type="time"] {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #fff;
+  color: #000;
+}
+
+.time-input input[type="time"]:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.time-separator {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #6c757d;
+  margin-top: 20px;
+}
+
+/* 휴무 사유 옵션 */
+.reason-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.reason-option {
+  padding: 8px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 20px;
+  background: #fff;
+  color: #495057;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reason-option:hover {
+  border-color: #3498db;
+  background: #f8f9fa;
+}
+
+.reason-option.selected {
+  border-color: #3498db;
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.vacation-reason-textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #fff;
+  color: #000;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.vacation-reason-textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.vacation-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 15px;
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+.vacation-error i {
+  color: #dc3545;
+}
+
+.vacation-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  padding: 20px 30px 30px;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  border-radius: 0 0 15px 15px;
+}
+
+.vacation-modal-footer .btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: #fff;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.btn-secondary:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .vacation-modal-overlay {
+    padding: 10px;
+  }
+  
+  .vacation-modal {
+    max-height: 95vh;
+  }
+  
+  .vacation-modal-header,
+  .vacation-modal-body,
+  .vacation-modal-footer {
+    padding: 20px;
+  }
+  
+  .vacation-modal-footer {
+    flex-direction: column;
+  }
+  
+  .vacation-modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .vacation-type-options {
+    gap: 10px;
+  }
+  
+  .vacation-type-option {
+    padding: 12px;
+  }
+  
+  .vacation-type-content {
+    gap: 10px;
+  }
+  
+  .vacation-type-icon {
+    font-size: 1.2rem;
+  }
+  
+  .vacation-type-label {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .vacation-modal-title {
+    font-size: 1.3rem;
+  }
+  
+  .vacation-date-value {
+    font-size: 1.1rem;
+  }
+  
+  .vacation-type-option {
+    padding: 10px;
+  }
+  
+  .vacation-type-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .vacation-type-radio {
+    margin-right: 10px;
+  }
+}

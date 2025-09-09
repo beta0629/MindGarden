@@ -55,7 +55,12 @@ public class UserProfileServiceImpl implements UserProfileService {
             }
             
             if (request.getProfileImageUrl() != null) {
+                log.info("🖼️ 프로필 이미지 업데이트: userId={}, imageType={}, imageLength={}", 
+                    userId, 
+                    request.getProfileImageUrl().startsWith("data:") ? "base64" : "url",
+                    request.getProfileImageUrl().length());
                 user.setProfileImageUrl(request.getProfileImageUrl());
+                log.info("✅ 프로필 이미지 저장 완료: userId={}", userId);
             }
             
             // 역할 변경 요청 처리
@@ -82,6 +87,13 @@ public class UserProfileServiceImpl implements UserProfileService {
             
             user = userRepository.save(user);
             log.info("유저 프로필 업데이트 완료: userId={}", userId);
+            
+            // 저장 후 프로필 이미지 확인
+            log.info("🖼️ 저장 후 프로필 이미지 확인: userId={}, savedImage={}, imageType={}", 
+                userId, 
+                user.getProfileImageUrl() != null ? 
+                    user.getProfileImageUrl().substring(0, Math.min(50, user.getProfileImageUrl().length())) + "..." : "null",
+                user.getProfileImageUrl() != null && user.getProfileImageUrl().startsWith("data:") ? "base64" : "url");
             
             return buildUserProfileResponse(user);
             
@@ -352,6 +364,19 @@ public class UserProfileServiceImpl implements UserProfileService {
      * UserProfileResponse 빌드
      */
     private UserProfileResponse buildUserProfileResponse(User user) {
+        // 프로필 이미지 타입 결정
+        String profileImageType = "DEFAULT_ICON";
+        if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().trim().isEmpty()) {
+            if (user.getProfileImageUrl().startsWith("data:image/")) {
+                profileImageType = "USER_PROFILE";
+            } else {
+                profileImageType = "USER_PROFILE"; // URL 형태의 이미지도 사용자 프로필로 간주
+            }
+        }
+        
+        log.info("🖼️ UserProfileResponse 빌드: userId={}, profileImageType={}, hasImage={}", 
+            user.getId(), profileImageType, user.getProfileImageUrl() != null);
+        
         return UserProfileResponse.builder()
             .userId(user.getId())
             .email(user.getEmail())
@@ -366,6 +391,7 @@ public class UserProfileServiceImpl implements UserProfileService {
             .experiencePoints(user.getExperiencePoints())
             .totalConsultations(user.getTotalConsultations())
             .profileImageUrl(user.getProfileImageUrl())
+            .profileImageType(profileImageType)
             .memo(user.getMemo())
             .isEmailVerified(user.getIsEmailVerified())
             .isActive(user.getIsActive())

@@ -92,9 +92,29 @@
 .schedule-detail-modal .label {
     font-weight: 700;
     color: #4b5563;
-    min-width: 100px;
-    margin-right: 16px;
+}
+
+/* 휴가 정보 스타일 */
+.vacation-info {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 12px;
+    border: 2px solid #f59e0b;
+    margin: 16px 0;
+}
+
+.vacation-notice {
+    font-size: 16px;
+    font-weight: 600;
+    color: #92400e;
+    margin: 0 0 8px 0;
+}
+
+.vacation-details {
     font-size: 14px;
+    color: #a16207;
+    margin: 0;
 }
 
 .value {
@@ -108,6 +128,13 @@
     color: #3b82f6;
     font-weight: 700;
     background: #eff6ff;
+}
+
+.status-휴가 {
+    color: #dc2626;
+    font-weight: 700;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 13px;

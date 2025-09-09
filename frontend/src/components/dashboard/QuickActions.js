@@ -36,6 +36,14 @@ const QuickActions = ({ user }) => {
     navigate('/admin/common-codes');
   };
 
+  const goToConsultationHistory = () => {
+    navigate('/consultation-history');
+  };
+
+  const goToConsultationReport = () => {
+    navigate('/consultation-report');
+  };
+
   return (
     <div className={QUICK_ACTIONS_CSS.CONTAINER}>
       <h3 className={QUICK_ACTIONS_CSS.SECTION_TITLE}>
@@ -50,6 +58,18 @@ const QuickActions = ({ user }) => {
         <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToSchedule}>
           <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.SCHEDULE.ICON}`}></i>
           <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.SCHEDULE.LABEL}</span>
+        </button>
+        
+        {/* 상담 내역 버튼 (모든 사용자) */}
+        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToConsultationHistory}>
+          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.CONSULTATION_HISTORY.ICON}`}></i>
+          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.CONSULTATION_HISTORY.LABEL}</span>
+        </button>
+        
+        {/* 상담 리포트 버튼 (모든 사용자) */}
+        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToConsultationReport}>
+          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.CONSULTATION_REPORT.ICON}`}></i>
+          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.CONSULTATION_REPORT.LABEL}</span>
         </button>
         
         {/* 관리자 전용 액션 */}

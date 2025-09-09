@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.service.impl;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.AddressType;
 import com.mindgarden.consultation.dto.UserAddressDto;
@@ -129,6 +130,16 @@ public class UserAddressServiceImpl implements UserAddressService {
         return addresses.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<UserAddressDto> getPrimaryAddress(Long userId) {
+        log.info("🔍 기본 주소 조회: userId={}", userId);
+        
+        Optional<UserAddress> address = userAddressRepository.findByUserIdAndIsPrimaryTrueAndIsDeletedFalse(userId);
+        
+        return address.map(this::convertToDto);
     }
     
     // DTO <-> Entity 변환 메서드들

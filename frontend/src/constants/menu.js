@@ -16,6 +16,18 @@ export const COMMON_MENU_ITEMS = {
     label: '마이페이지',
     path: '/mypage', // 동적으로 설정됨
     icon: 'bi-person'
+  },
+  CONSULTATION_HISTORY: {
+    id: 'consultation-history',
+    label: '상담 내역',
+    path: '/consultation-history',
+    icon: 'bi-clock-history'
+  },
+  CONSULTATION_REPORT: {
+    id: 'consultation-report',
+    label: '상담 리포트',
+    path: '/consultation-report',
+    icon: 'bi-file-text'
   }
 };
 
@@ -137,8 +149,9 @@ export const CONSULTANT_MENU_ITEMS = {
       { id: 'consultant-availability', label: '상담 가능 시간', path: '/consultant/availability', icon: 'bi-clock' }
     ],
     consultation: [
-      { id: 'consultant-records', label: '상담 기록', path: '/consultant/records', icon: 'bi-journal-text' },
-      { id: 'consultant-clients', label: '내담자 목록', path: '/consultant/clients', icon: 'bi-people' }
+      { id: 'consultant-records', label: '상담 기록', path: '/consultant/consultation-records', icon: 'bi-journal-text' },
+      { id: 'consultant-clients', label: '내담자 목록', path: '/consultant/clients', icon: 'bi-people' },
+      { id: 'consultant-messages', label: '메시지 관리', path: '/consultant/messages', icon: 'bi-chat-dots' }
     ]
   }
 };
@@ -146,25 +159,15 @@ export const CONSULTANT_MENU_ITEMS = {
 // 내담자 메뉴
 export const CLIENT_MENU_ITEMS = {
   MAIN: {
-    APPOINTMENT: {
-      id: 'appointment',
-      label: '상담 예약',
-      icon: 'bi-calendar-plus'
-    },
-    HISTORY: {
-      id: 'history',
-      label: '상담 내역',
-      icon: 'bi-clock-history'
+    MESSAGES: {
+      id: 'messages',
+      label: '상담사 메시지',
+      icon: 'bi-chat-dots'
     }
   },
   SUB: {
-    appointment: [
-      { id: 'client-appointment', label: '상담 예약', path: '/client/appointment', icon: 'bi-calendar-plus' },
-      { id: 'client-consultants', label: '상담사 선택', path: '/client/consultants', icon: 'bi-person-badge' }
-    ],
-    history: [
-      { id: 'client-history', label: '상담 내역', path: '/client/history', icon: 'bi-clock-history' },
-      { id: 'client-reports', label: '상담 리포트', path: '/client/reports', icon: 'bi-file-earmark-text' }
+    messages: [
+      { id: 'client-messages', label: '상담사 메시지', path: '/client/messages', icon: 'bi-chat-dots' }
     ]
   }
 };

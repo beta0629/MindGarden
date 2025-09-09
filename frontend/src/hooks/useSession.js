@@ -39,11 +39,20 @@ export const useSession = () => {
                 // 로딩 상태 설정
                 setSessionState(prev => ({ ...prev, isLoading: true }));
                 
+                // 타임아웃 설정 (5초)
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('세션 체크 타임아웃')), 5000)
+                );
+                
                 // 서버에서만 세션 확인 (localStorage 백업 제거)
-                await sessionManager.checkSession();
+                await Promise.race([
+                    sessionManager.checkSession(),
+                    timeoutPromise
+                ]);
                 console.log('✅ 초기 세션 체크 완료');
             } catch (error) {
                 console.error('❌ 초기 세션 체크 실패:', error);
+                // 타임아웃이거나 오류가 발생해도 로딩 상태는 해제
             } finally {
                 // 로딩 상태 해제
                 setSessionState(prev => ({ ...prev, isLoading: false }));
@@ -72,6 +81,7 @@ export const useSession = () => {
     
     return {
         ...sessionState,
+        isLoggedIn: sessionState.user !== null && sessionManager.isLoggedIn(),
         checkSession: () => sessionManager.checkSession(),
         logout: () => sessionManager.logout()
     };

@@ -33,6 +33,7 @@ public class ScheduleDto {
     private String status;
     private String scheduleType;
     private String consultationType;
+    private String vacationType; // 휴가 유형 (VACATION 스케줄용)
     private String title;
     private String description;
     private String notes;

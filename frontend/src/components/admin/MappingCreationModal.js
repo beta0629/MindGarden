@@ -90,12 +90,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
     const loadConsultants = async () => {
         try {
-            const response = await apiGet('/api/admin/consultants');
+            const today = new Date().toISOString().split('T')[0];
+            const response = await apiGet(`/api/admin/consultants/with-vacation?date=${today}`);
             if (response.success) {
                 setConsultants(response.data || []);
             } else {
                 // API 실패 시 테스트 데이터 사용
-                console.log('상담사 API 실패, 테스트 데이터 사용');
+                console.log('통합 상담사 API 실패, 테스트 데이터 사용');
                 setConsultants(getTestConsultants());
             }
         } catch (error) {
@@ -108,12 +109,12 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
     const loadClients = async () => {
         try {
-            const response = await apiGet('/api/admin/clients');
+            const response = await apiGet('/api/admin/clients/with-mapping-info');
             if (response.success) {
                 setClients(response.data || []);
             } else {
                 // API 실패 시 테스트 데이터 사용
-                console.log('내담자 API 실패, 테스트 데이터 사용');
+                console.log('통합 내담자 API 실패, 테스트 데이터 사용');
                 setClients(getTestClients());
             }
         } catch (error) {

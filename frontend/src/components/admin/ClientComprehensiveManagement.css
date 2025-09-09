@@ -1304,3 +1304,196 @@
         justify-content: center;
     }
 }
+
+/* 테이블 스타일 */
+.basic-clients-table-container {
+    margin-top: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.basic-clients-table {
+    width: 100%;
+    background: white;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 200px 1fr 150px 100px 120px 120px 100px 150px;
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 200px 1fr 150px 100px 120px 120px 100px 150px;
+    border-bottom: 1px solid #dee2e6;
+    transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+    background-color: #f8f9fa;
+}
+
+.table-cell {
+    padding: 15px 12px;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #495057;
+}
+
+.client-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.client-avatar {
+    width: 32px;
+    height: 32px;
+    background: #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.client-name {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.grade-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: white;
+}
+
+.status-badge.no-mapping {
+    background: #6c757d;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.action-buttons .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-buttons .btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.action-buttons .btn-primary:hover {
+    background: #0056b3;
+}
+
+.action-buttons .btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.action-buttons .btn-danger:hover {
+    background: #c82333;
+}
+
+/* 텍스트 필드 기본 스타일 */
+.client-form input[type="text"],
+.client-form input[type="email"],
+.client-form input[type="tel"],
+.client-form input[type="password"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #495057;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.client-form input[type="text"]:focus,
+.client-form input[type="email"]:focus,
+.client-form input[type="tel"]:focus,
+.client-form input[type="password"]:focus {
+    outline: none;
+    border-color: #a8e6a3;
+    box-shadow: 0 0 0 3px rgba(168, 230, 163, 0.1);
+}
+
+.client-form input[type="text"]:hover,
+.client-form input[type="email"]:hover,
+.client-form input[type="tel"]:hover,
+.client-form input[type="password"]:hover {
+    border-color: #c1d9c1;
+}
+
+/* 검색 입력 필드 스타일 */
+.search-input {
+    width: 300px;
+    padding: 10px 16px;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #495057;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #a8e6a3;
+    box-shadow: 0 0 0 3px rgba(168, 230, 163, 0.1);
+}
+
+.search-input:hover {
+    border-color: #c1d9c1;
+}
+
+/* 필터 셀렉트 스타일 */
+.filter-select {
+    padding: 10px 16px;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #495057;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #a8e6a3;
+    box-shadow: 0 0 0 3px rgba(168, 230, 163, 0.1);
+}
+
+.filter-select:hover {
+    border-color: #c1d9c1;
+}

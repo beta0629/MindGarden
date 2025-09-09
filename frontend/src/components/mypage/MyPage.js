@@ -15,6 +15,7 @@ const MyPage = () => {
   const [localUser, setLocalUser] = useState(null);
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
+  const [isProfileEditing, setIsProfileEditing] = useState(false);
   const [socialAccounts, setSocialAccounts] = useState([]);
   const [formData, setFormData] = useState({
     username: '',
@@ -51,23 +52,34 @@ const MyPage = () => {
   // 사용자 정보 로드
   const loadUserInfo = useCallback(async () => {
     try {
-      const response = await mypageApi.getMyPageInfo();
+      // 세션에서 사용자 정보 먼저 가져오기
+      const currentUser = sessionManager.getUser();
+      if (!currentUser) {
+        throw new Error('세션에 사용자 정보가 없습니다');
+      }
+
+      console.log('🔍 MyPage - 사용자 정보 로드 시작, 역할:', currentUser.role, 'ID:', currentUser.id);
+      
+      // 사용자 역할에 따라 다른 API 엔드포인트 사용
+      const response = await mypageApi.getProfileInfo(currentUser.role, currentUser.id);
+      
       if (response) {
         setUser(response);
         setFormData({
-          username: response.username || '',
+          username: response.username || response.name || '',
           nickname: response.nickname || '',
           email: response.email || '',
-          phone: response.phone || '',
+          phone: response.phone || response.phoneNumber || '',
           gender: response.gender || '',
           postalCode: response.postalCode || '',
           address: response.address || '',
           addressDetail: response.addressDetail || '',
-          profileImage: response.profileImage || null,
+          profileImage: response.profileImage || response.profileImageUrl || null,
           profileImageType: response.profileImageType || 'DEFAULT_ICON',
           socialProvider: response.socialProvider || null,
           socialProfileImage: response.socialProfileImage || null
         });
+        console.log('✅ MyPage - 사용자 정보 로드 완료');
       }
     } catch (error) {
       console.error('사용자 정보 로드 실패:', error);
@@ -108,7 +120,13 @@ const MyPage = () => {
   
   const loadSocialAccounts = useCallback(async () => {
     try {
-      const response = await mypageApi.getSocialAccounts();
+      const currentUser = sessionManager.getUser();
+      if (!currentUser) {
+        setSocialAccounts([]);
+        return;
+      }
+      
+      const response = await mypageApi.getSocialAccounts(currentUser.role, currentUser.id);
       setSocialAccounts(response || []);
     } catch (error) {
       console.error('소셜 계정 정보 로드 실패:', error);
@@ -235,7 +253,37 @@ const MyPage = () => {
       console.log('🖼️ 크롭된 이미지 감지 - 백엔드에 저장 진행');
     }
     
-    const response = await mypageApi.updateMyPageInfo(dataToUpdate);
+    // 사용자 역할에 따라 다른 API 엔드포인트 사용
+    const currentUser = sessionManager.getUser();
+    if (!currentUser) {
+      throw new Error('세션에 사용자 정보가 없습니다');
+    }
+    
+    // 백엔드 DTO에 맞게 데이터 변환
+    const requestData = {
+      ...dataToUpdate,
+      profileImageUrl: dataToUpdate.profileImage, // profileImage를 profileImageUrl로 매핑
+      // 필요한 다른 필드들도 매핑
+      gender: dataToUpdate.gender,
+      memo: dataToUpdate.memo || '',
+      // 상담사 전용 필드들 (필요시)
+      specialty: dataToUpdate.specialty || '',
+      qualifications: dataToUpdate.qualifications || '',
+      experience: dataToUpdate.experience || '',
+      availableTime: dataToUpdate.availableTime || '',
+      detailedIntroduction: dataToUpdate.detailedIntroduction || '',
+      education: dataToUpdate.education || '',
+      awards: dataToUpdate.awards || '',
+      research: dataToUpdate.research || '',
+      hourlyRate: dataToUpdate.hourlyRate || null
+    };
+    
+    console.log('🔄 변환된 요청 데이터:', {
+      ...requestData,
+      profileImageUrl: requestData.profileImageUrl ? requestData.profileImageUrl.substring(0, 50) + '...' : 'null'
+    });
+    
+    const response = await mypageApi.updateProfileInfo(currentUser.role, currentUser.id, requestData);
     console.log('✅ 백엔드 응답:', response);
     console.log('📝 백엔드 응답 필드 확인:');
     console.log('  - username:', response.username);
@@ -389,7 +437,7 @@ const MyPage = () => {
 
   return (
     <SimpleLayout>
-      <div className="mypage-container">
+      <div className={`mypage-container mypage ${isProfileEditing ? 'editing' : 'readonly'}`}>
       <div className="mypage-header">
         <h1>마이페이지</h1>
         <p>{displayUser?.username || displayUser?.name || displayUser?.nickname || '사용자'}님의 정보를 관리하세요</p>
@@ -434,6 +482,7 @@ const MyPage = () => {
           onUserChange={setUser}
           onSave={handleSubmit}
           formatPhoneNumber={formatPhoneNumber}
+          onEditingChange={setIsProfileEditing}
         />
           )}
 

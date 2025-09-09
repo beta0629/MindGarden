@@ -128,45 +128,55 @@ const SummaryPanels = ({ user, consultationData }) => {
         </div>
       </div>
       
-      {/* 상담사 정보 (내담자 전용) */}
+      {/* 상담사 목록 (내담자 전용) */}
       {user?.role === 'CLIENT' && (
-        <div className={`${SUMMARY_PANELS_CSS.PANEL} consultant-info`}>
+        <div className={`${SUMMARY_PANELS_CSS.PANEL} consultant-list`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
               <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} ${DASHBOARD_ICONS.PERSON_BADGE}`}></i>
-              {DASHBOARD_LABELS.RESPONSIBLE_CONSULTANT}
+              상담사 목록
             </h3>
           </div>
           <div className={SUMMARY_PANELS_CSS.PANEL_CONTENT}>
-            <div className={SUMMARY_PANELS_CSS.CONSULTANT_PROFILE}>
-              <div className={SUMMARY_PANELS_CSS.CONSULTANT_AVATAR}>
-                <img 
-                  src={consultantInfo.profileImage || '/default-avatar.svg'} 
-                  alt="상담사 프로필" 
-                  className="consultant-profile-image"
-                  onError={(e) => {
-                    e.target.src = '/default-avatar.svg';
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    borderRadius: '50%'
-                  }}
-                />
+            {consultationData?.consultantList && consultationData.consultantList.length > 0 ? (
+              <div className="consultant-list-container">
+                {consultationData.consultantList.map((consultant, index) => (
+                  <div key={consultant.id || index} className="consultant-card">
+                    <div className="consultant-avatar">
+                      <img 
+                        src={consultant.profileImage || '/default-avatar.svg'} 
+                        alt={`${consultant.name} 상담사`}
+                        onError={(e) => {
+                          e.target.src = '/default-avatar.svg';
+                        }}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          borderRadius: '50%'
+                        }}
+                      />
+                    </div>
+                    <div className="consultant-details">
+                      <div className="consultant-name">
+                        {consultant.name}
+                      </div>
+                      <div className="consultant-specialty">
+                        {convertSpecialtyToKorean(consultant.specialty)}
+                      </div>
+                      <div className="consultant-intro">
+                        {consultant.intro}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className={SUMMARY_PANELS_CSS.CONSULTANT_DETAILS}>
-                <div className={SUMMARY_PANELS_CSS.CONSULTANT_NAME}>
-                  {consultantInfo.name || '담당 상담사 없음'}
-                </div>
-                <div className={SUMMARY_PANELS_CSS.CONSULTANT_SPECIALTY}>
-                  {convertSpecialtyToKorean(consultantInfo.specialty)}
-                </div>
-                <div className={SUMMARY_PANELS_CSS.CONSULTANT_INTRO}>
-                  {consultantInfo.intro || '상담사 정보가 없습니다.'}
-                </div>
+            ) : (
+              <div className="no-consultants">
+                <i className="bi bi-person-x"></i>
+                <p>상담받은 상담사가 없습니다</p>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
+import VacationManagementModal from '../admin/VacationManagementModal';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { apiGet } from '../../utils/ajax';
 import './ScheduleCalendar.css';
@@ -22,6 +23,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const [selectedInfo, setSelectedInfo] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
+    const [isDateActionModalOpen, setIsDateActionModalOpen] = useState(false);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
     const [loading, setLoading] = useState(false);
 
@@ -52,44 +55,78 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             const timestamp = new Date().getTime();
             const response = await apiGet(`/api/schedules?userId=${userId}&userRole=${userRole}&_t=${timestamp}`);
 
+            let scheduleEvents = [];
             if (response && response.success) {
                 console.log('📅 API 응답 데이터:', response);
                 
                 // API 응답 구조에 따라 데이터 추출
                 const schedules = response.data || response;
                 
-                if (!Array.isArray(schedules)) {
-                    console.error('스케줄 데이터가 배열이 아닙니다:', schedules);
-                    setEvents([]);
-                    return;
-                }
-                
-                const calendarEvents = schedules.map(schedule => ({
-                    id: schedule.id,
-                    title: schedule.title,
-                    start: `${schedule.date}T${schedule.startTime}`,
-                    end: `${schedule.date}T${schedule.endTime}`,
-                    backgroundColor: getConsultantColor(schedule.consultantId),
-                    borderColor: getConsultantColor(schedule.consultantId),
-                    className: `schedule-event status-${schedule.status?.toLowerCase()}`,
-                    extendedProps: {
+                if (Array.isArray(schedules)) {
+                    scheduleEvents = schedules.map(schedule => ({
                         id: schedule.id,
-                        consultantId: schedule.consultantId,
-                        consultantName: schedule.consultantName,
-                        clientId: schedule.clientId,
-                        clientName: schedule.clientName,
-                        status: schedule.status,
-                        statusKorean: convertStatusToKorean(schedule.status),
-                        type: schedule.scheduleType,
-                        consultationType: schedule.consultationType,
-                        description: schedule.description
-                    }
-                }));
-                setEvents(calendarEvents);
-                console.log('📅 스케줄 로드 완료 (실제 API)');
-            } else {
-                console.error('스케줄 API 응답 오류:', response);
+                        title: schedule.title,
+                        start: `${schedule.date}T${schedule.startTime}`,
+                        end: `${schedule.date}T${schedule.endTime}`,
+                        backgroundColor: getConsultantColor(schedule.consultantId),
+                        borderColor: getConsultantColor(schedule.consultantId),
+                        className: `schedule-event status-${schedule.status?.toLowerCase()}`,
+                        extendedProps: {
+                            id: schedule.id,
+                            consultantId: schedule.consultantId,
+                            consultantName: schedule.consultantName,
+                            clientId: schedule.clientId,
+                            clientName: schedule.clientName,
+                            status: schedule.status,
+                            statusKorean: convertStatusToKorean(schedule.status),
+                            type: schedule.scheduleType,
+                            consultationType: schedule.consultationType,
+                            description: schedule.description
+                        }
+                    }));
+                }
             }
+
+            // 어드민인 경우 모든 상담사의 휴가 데이터 로드
+            let vacationEvents = [];
+            if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+                try {
+                    const today = new Date();
+                    const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
+                    const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0).toISOString().split('T')[0];
+                    
+                    const vacationResponse = await fetch(`/api/consultant/vacations?date=${startDate}`, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include'
+                    });
+                    
+                    if (vacationResponse.ok) {
+                        const vacationResult = await vacationResponse.json();
+                        console.log('🏖️ 어드민 휴가 API 응답:', vacationResult);
+                        if (vacationResult.success && vacationResult.data) {
+                            // 모든 상담사의 휴가 데이터를 이벤트로 변환
+                            Object.entries(vacationResult.data).forEach(([consultantId, consultantVacations]) => {
+                                console.log('🏖️ 상담사 휴가 데이터:', consultantId, consultantVacations);
+                                Object.entries(consultantVacations).forEach(([date, vacationData]) => {
+                                    const vacationEvent = convertVacationToEvent(vacationData, consultantId, date);
+                                    if (vacationEvent) {
+                                        vacationEvents.push(vacationEvent);
+                                        console.log('🏖️ 휴가 이벤트 추가:', vacationEvent);
+                                    }
+                                });
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error('휴가 데이터 로드 실패:', error);
+                }
+            }
+
+            // 스케줄 이벤트와 휴가 이벤트 합치기
+            const allEvents = [...scheduleEvents, ...vacationEvents];
+            setEvents(allEvents);
+            console.log('📅 모든 이벤트 데이터 로드 완료:', allEvents);
         } catch (error) {
             console.error('스케줄 로드 실패:', error);
         } finally {
@@ -101,6 +138,90 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     useEffect(() => {
         loadSchedules();
     }, [loadSchedules]);
+
+    /**
+     * 휴가 데이터를 캘린더 이벤트로 변환
+     */
+    const convertVacationToEvent = (vacationData, consultantId, date) => {
+        const { type, reason, startTime, endTime } = vacationData;
+        const startDate = new Date(date + 'T00:00:00+09:00');
+        let endDate, title, backgroundColor, allDay = true;
+        
+        switch (type) {
+            case 'MORNING':
+                endDate = new Date(date + 'T12:00:00+09:00');
+                title = '🌅 오전 휴무';
+                backgroundColor = '#FF9800';
+                break;
+            case 'AFTERNOON':
+                startDate.setHours(13, 0, 0);
+                endDate = new Date(date + 'T18:00:00+09:00');
+                title = '🌇 오후 휴무';
+                backgroundColor = '#FF5722';
+                break;
+            case 'MORNING_HALF':
+                endDate = new Date(date + 'T11:00:00+09:00');
+                title = '🌄 오전 반반차';
+                backgroundColor = '#FFC107';
+                break;
+            case 'AFTERNOON_HALF':
+                startDate.setHours(14, 0, 0);
+                endDate = new Date(date + 'T16:00:00+09:00');
+                title = '🌆 오후 반반차';
+                backgroundColor = '#FF7043';
+                break;
+            case 'CUSTOM_TIME':
+                if (startTime && endTime) {
+                    startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
+                    endDate = new Date(date + 'T' + endTime + '+09:00');
+                    title = '⏰ 사용자 정의 휴무';
+                    backgroundColor = '#9C27B0';
+                    allDay = false;
+                } else {
+                    endDate = new Date(date + 'T23:59:59+09:00');
+                    title = '⏰ 사용자 정의 휴무';
+                    backgroundColor = '#9C27B0';
+                }
+                break;
+            case 'ALL_DAY':
+            case 'FULL_DAY':
+            default:
+                if (startTime && endTime) {
+                    // 시간 정보가 있는 경우
+                    startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
+                    endDate = new Date(date + 'T' + endTime + '+09:00');
+                    allDay = false;
+                } else {
+                    // 시간 정보가 없는 경우 하루 종일
+                    endDate = new Date(date + 'T23:59:59+09:00');
+                    allDay = true;
+                }
+                title = '🏖️ 하루 종일 휴무';
+                backgroundColor = '#F44336';
+                break;
+        }
+        
+        return {
+            id: `vacation-${consultantId}_${date}`,
+            title: title,
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+            allDay: allDay,
+            backgroundColor: backgroundColor,
+            borderColor: backgroundColor,
+            textColor: '#fff',
+            className: 'vacation-event',
+            extendedProps: {
+                type: 'vacation',
+                vacationType: type,
+                reason: reason,
+                date: date,
+                startTime: startTime,
+                endTime: endTime,
+                consultantId: consultantId
+            }
+        };
+    };
 
     /**
      * 상담사별 색상 반환
@@ -165,15 +286,45 @@ const ScheduleCalendar = ({ userRole, userId }) => {
      */
     const handleDateClick = (info) => {
         console.log('📅 날짜 클릭:', info.dateStr);
+        console.log('📅 현재 상태:', { 
+            userRole, 
+            isDateActionModalOpen, 
+            isModalOpen, 
+            isVacationModalOpen 
+        });
+        console.log('📅 ScheduleCalendar 컴포넌트에서 날짜 클릭 처리');
         
         // 관리자 또는 상담사만 스케줄 생성 가능
         if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'CONSULTANT') {
             setSelectedDate(info.date);
             setSelectedInfo(info);
-            setIsModalOpen(true);
+            console.log('📅 DateActionModal 열기 시도 - isDateActionModalOpen을 true로 설정');
+            setIsDateActionModalOpen(true);
         } else {
             alert('스케줄 생성 권한이 없습니다.');
         }
+    };
+
+    /**
+     * 스케줄 등록 클릭 핸들러
+     */
+    const handleScheduleClick = () => {
+        console.log('📅 스케줄 등록 클릭');
+        setIsDateActionModalOpen(false); // 선택 모달 닫기
+        setTimeout(() => {
+            setIsModalOpen(true); // 스케줄 모달 열기
+        }, 100);
+    };
+
+    /**
+     * 휴가 등록 클릭 핸들러
+     */
+    const handleVacationClick = () => {
+        console.log('📅 휴가 등록 클릭');
+        setIsDateActionModalOpen(false); // 선택 모달 닫기
+        setTimeout(() => {
+            setIsVacationModalOpen(true); // 휴가 모달 열기
+        }, 100);
     };
 
     /**
@@ -182,15 +333,57 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const handleEventClick = (info) => {
         console.log('📋 이벤트 클릭:', info.event.title);
         console.log('📋 이벤트 extendedProps:', info.event.extendedProps);
-        console.log('📋 상담 유형 원본:', info.event.extendedProps.consultationType);
         
         const event = info.event;
+        
+        // 휴가 이벤트인지 확인
+        if (event.extendedProps.type === 'vacation') {
+            console.log('🏖️ 휴가 이벤트 클릭');
+            
+            // 휴가 이벤트용 데이터 설정
+            const scheduleData = {
+                id: event.extendedProps.consultantId,
+                title: event.title,
+                consultantName: event.extendedProps.consultantName || `상담사 ${event.extendedProps.consultantId}`,
+                clientName: '휴가',
+                consultationType: 'VACATION',
+                startTime: event.allDay ? '하루 종일' : formatTime(event.start),
+                endTime: event.allDay ? '하루 종일' : formatTime(event.end),
+                status: 'VACATION',
+                description: event.extendedProps.reason || event.extendedProps.description || '휴가',
+                reason: event.extendedProps.reason || event.extendedProps.description || '휴가',
+                vacationType: event.extendedProps.vacationType,
+                date: event.extendedProps.date
+            };
+
+            setSelectedSchedule(scheduleData);
+            setIsDetailModalOpen(true);
+            return;
+        }
+        
+        // 일반 스케줄 이벤트 처리
+        console.log('📋 상담 유형 원본:', event.extendedProps.consultationType);
+        
         const koreanStatus = event.extendedProps.statusKorean || convertStatusToKorean(event.extendedProps.status);
         const koreanConsultationType = convertConsultationTypeToKorean(event.extendedProps.consultationType);
         const consultantName = event.extendedProps.consultantName || `상담사 ${event.extendedProps.consultantId}`;
         const clientName = event.extendedProps.clientName || `클라이언트 ${event.extendedProps.clientId}`;
 
         console.log('📋 변환된 상담 유형:', koreanConsultationType);
+
+        // 시간 정보 안전하게 처리
+        const formatTime = (timeObj) => {
+            if (!timeObj) return '시간 미정';
+            try {
+                return timeObj.toLocaleTimeString('ko-KR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            } catch (error) {
+                console.warn('시간 변환 오류:', error);
+                return '시간 미정';
+            }
+        };
 
         // 스케줄 상세 정보 설정
         const scheduleData = {
@@ -199,14 +392,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             consultantName: consultantName,
             clientName: clientName,
             consultationType: koreanConsultationType,
-            startTime: event.start.toLocaleTimeString('ko-KR', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            }),
-            endTime: event.end.toLocaleTimeString('ko-KR', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            }),
+            startTime: formatTime(event.start),
+            endTime: formatTime(event.end),
             status: koreanStatus
         };
 
@@ -434,6 +621,154 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     onClose={handleDetailModalClose}
                     scheduleData={selectedSchedule}
                     onScheduleUpdated={handleScheduleUpdated}
+                />
+            )}
+
+            {/* 날짜 액션 선택 모달 - 인라인 */}
+            {isDateActionModalOpen && (
+                console.log('📅 인라인 모달 렌더링 중...', { isDateActionModalOpen, selectedDate, userRole }),
+                <div 
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10000
+                    }}
+                    onClick={() => setIsDateActionModalOpen(false)}
+                >
+                    <div 
+                        style={{
+                            background: 'white',
+                            borderRadius: '16px',
+                            padding: '24px',
+                            maxWidth: '400px',
+                            width: '90%',
+                            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                            <h3 style={{ margin: '0 0 8px 0', color: '#2c3e50' }}>
+                                📅 {selectedDate ? selectedDate.toLocaleDateString('ko-KR', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    weekday: 'long'
+                                }) : ''}
+                            </h3>
+                            <p style={{ margin: 0, color: '#6c757d' }}>원하는 작업을 선택하세요</p>
+                        </div>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <button 
+                                onClick={handleScheduleClick}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '16px',
+                                    border: '2px solid #e9ecef',
+                                    borderRadius: '8px',
+                                    background: 'white',
+                                    cursor: 'pointer',
+                                    width: '100%',
+                                    textAlign: 'left',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.target.style.borderColor = '#007bff';
+                                    e.target.style.background = '#f8f9ff';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.target.style.borderColor = '#e9ecef';
+                                    e.target.style.background = 'white';
+                                }}
+                            >
+                                <span style={{ fontSize: '24px', marginRight: '12px' }}>📋</span>
+                                <div>
+                                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>일정 등록</div>
+                                    <div style={{ fontSize: '14px', color: '#6c757d' }}>상담 일정을 등록합니다</div>
+                                </div>
+                            </button>
+                            
+                            {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+                                <button 
+                                    onClick={handleVacationClick}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '16px',
+                                        border: '2px solid #e9ecef',
+                                        borderRadius: '8px',
+                                        background: 'white',
+                                        cursor: 'pointer',
+                                        width: '100%',
+                                        textAlign: 'left',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        e.target.style.borderColor = '#ffc107';
+                                        e.target.style.background = '#fffbf0';
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.target.style.borderColor = '#e9ecef';
+                                        e.target.style.background = 'white';
+                                    }}
+                                >
+                                    <span style={{ fontSize: '24px', marginRight: '12px' }}>🏖️</span>
+                                    <div>
+                                        <div style={{ fontWeight: '600', marginBottom: '4px' }}>휴가 등록</div>
+                                        <div style={{ fontSize: '14px', color: '#6c757d' }}>상담사의 휴가를 등록합니다</div>
+                                    </div>
+                                </button>
+                            )}
+                        </div>
+                        
+                        <div style={{ textAlign: 'center', marginTop: '24px' }}>
+                            <button 
+                                onClick={() => setIsDateActionModalOpen(false)}
+                                style={{
+                                    background: '#6c757d',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '12px 24px',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.target.style.background = '#5a6268';
+                                    e.target.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.target.style.background = '#6c757d';
+                                    e.target.style.transform = 'translateY(0)';
+                                }}
+                            >
+                                취소
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 휴가 등록 모달 */}
+            {isVacationModalOpen && (
+                <VacationManagementModal
+                    isOpen={isVacationModalOpen}
+                    onClose={() => setIsVacationModalOpen(false)}
+                    selectedConsultant={null}
+                    userRole={userRole}
+                    selectedDate={selectedDate}
+                    onVacationUpdated={() => {
+                        console.log('휴가 정보가 업데이트되었습니다.');
+                        loadSchedules(); // 스케줄 다시 로드
+                    }}
                 />
             )}
         </div>

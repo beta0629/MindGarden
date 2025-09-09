@@ -135,6 +135,19 @@
     background-color: #fff5f5;
 }
 
+.time-slot.vacation {
+    border-color: #ffc107;
+    background-color: #fff8e1;
+    cursor: not-allowed;
+}
+
+.time-slot.vacation:hover {
+    transform: none;
+    border-color: #ffc107;
+    background-color: #fff8e1;
+    box-shadow: none;
+}
+
 .slot-icon {
     font-size: 16px;
     line-height: 1;

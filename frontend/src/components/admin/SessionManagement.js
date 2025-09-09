@@ -62,12 +62,12 @@ const SessionManagement = () => {
      */
     const loadClients = async () => {
         try {
-            const response = await apiGet('/api/admin/clients');
+            const response = await apiGet('/api/admin/clients/with-mapping-info');
             if (response.success) {
                 setClients(response.data || []);
             }
         } catch (error) {
-            console.error('내담자 목록 로드 실패:', error);
+            console.error('통합 내담자 데이터 로드 실패:', error);
         }
     };
 
@@ -76,12 +76,13 @@ const SessionManagement = () => {
      */
     const loadConsultants = async () => {
         try {
-            const response = await apiGet('/api/admin/consultants');
+            const today = new Date().toISOString().split('T')[0];
+            const response = await apiGet(`/api/admin/consultants/with-vacation?date=${today}`);
             if (response.success) {
                 setConsultants(response.data || []);
             }
         } catch (error) {
-            console.error('상담사 목록 로드 실패:', error);
+            console.error('통합 상담사 데이터 로드 실패:', error);
         }
     };
 

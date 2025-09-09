@@ -17,7 +17,8 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         setLoading(true);
 
         try {
-            const response = await fetch('/api/admin/consultants');
+            const today = new Date().toISOString().split('T')[0];
+            const response = await fetch(`/api/admin/consultants/with-vacation?date=${today}`);
             if (response.ok) {
                 const data = await response.json();
                 setConsultants(data.data || []);

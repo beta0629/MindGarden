@@ -83,6 +83,57 @@ export const MYPAGE_API = {
   MANAGE_SOCIAL_ACCOUNT: '/api/client/social-account'
 };
 
+// 역할별 프로필 API
+export const PROFILE_API = {
+  // 클라이언트용
+  CLIENT: {
+    GET_INFO: '/api/client/profile',
+    UPDATE_INFO: '/api/client/profile',
+    CHANGE_PASSWORD: '/api/client/profile/password',
+    UPLOAD_IMAGE: '/api/client/profile/image',
+    GET_SOCIAL_ACCOUNTS: '/api/client/social-accounts',
+    MANAGE_SOCIAL_ACCOUNT: '/api/client/social-account'
+  },
+
+  // 상담사용
+  CONSULTANT: {
+    GET_INFO: (userId) => `/api/user/profile/${userId}`,
+    UPDATE_INFO: (userId) => `/api/user/profile/${userId}`,
+    CHANGE_PASSWORD: (userId) => `/api/user/profile/${userId}/password`,
+    UPLOAD_IMAGE: (userId) => `/api/user/profile/${userId}/image`,
+    GET_SOCIAL_ACCOUNTS: (userId) => `/api/user/profile/${userId}/social-accounts`,
+    MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/user/profile/${userId}/social-account`
+  },
+
+  // 관리자용
+  ADMIN: {
+    GET_INFO: (userId) => `/api/admin/users/${userId}`,
+    UPDATE_INFO: (userId) => `/api/admin/users/${userId}`,
+    CHANGE_PASSWORD: (userId) => `/api/admin/users/${userId}/password`,
+    UPLOAD_IMAGE: (userId) => `/api/admin/users/${userId}/image`,
+    GET_SOCIAL_ACCOUNTS: (userId) => `/api/admin/users/${userId}/social-accounts`,
+    MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/admin/users/${userId}/social-account`
+  }
+};
+
+// 메시지 관련 API
+export const MESSAGE_API = {
+  // 메시지 전송
+  SEND_MESSAGE: '/api/consultation-messages',
+  
+  // 상담사 메시지 조회
+  GET_CONSULTANT_MESSAGES: (consultantId) => `/api/consultation-messages/consultant/${consultantId}`,
+  
+  // 내담자 메시지 조회
+  GET_CLIENT_MESSAGES: (clientId) => `/api/consultation-messages/client/${clientId}`,
+  
+  // 메시지 읽음 처리
+  MARK_AS_READ: (messageId) => `/api/consultation-messages/${messageId}/read`,
+  
+  // 메시지 상세 조회
+  GET_MESSAGE_DETAIL: (messageId) => `/api/consultation-messages/${messageId}`
+};
+
 // 상담 관련 API
 export const CONSULTATION_API = {
   // 상담 목록

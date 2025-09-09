@@ -46,4 +46,9 @@ public interface UserAddressService {
      * 주소 타입별 조회
      */
     List<UserAddressDto> getAddressesByType(Long userId, String addressType);
+    
+    /**
+     * 사용자의 기본 주소 조회
+     */
+    java.util.Optional<UserAddressDto> getPrimaryAddress(Long userId);
 }

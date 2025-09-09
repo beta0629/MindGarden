@@ -55,7 +55,9 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
     // 공통 메뉴 (동적 경로 설정)
     const commonMainMenus = [
       { ...COMMON_MENU_ITEMS.DASHBOARD, path: `/${user.role.toLowerCase()}/dashboard` },
-      { ...COMMON_MENU_ITEMS.MYPAGE, path: `/${user.role.toLowerCase()}/mypage` }
+      { ...COMMON_MENU_ITEMS.MYPAGE, path: `/${user.role.toLowerCase()}/mypage` },
+      COMMON_MENU_ITEMS.CONSULTATION_HISTORY,
+      COMMON_MENU_ITEMS.CONSULTATION_REPORT
     ];
 
     // 역할별 메뉴 구조
@@ -90,8 +92,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
       [USER_ROLES.CLIENT]: {
         mainMenus: [
           ...commonMainMenus,
-          CLIENT_MENU_ITEMS.MAIN.APPOINTMENT,
-          CLIENT_MENU_ITEMS.MAIN.HISTORY
+          CLIENT_MENU_ITEMS.MAIN.MESSAGES
         ],
         subMenus: CLIENT_MENU_ITEMS.SUB
       }

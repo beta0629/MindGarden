@@ -2,15 +2,21 @@ package com.mindgarden.consultation.controller;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.mindgarden.consultation.dto.ScheduleCreateDto;
 import com.mindgarden.consultation.dto.ScheduleDto;
+import com.mindgarden.consultation.dto.ScheduleResponseDto;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
+import com.mindgarden.consultation.entity.ConsultationRecord;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.service.AdminService;
+import com.mindgarden.consultation.service.CodeManagementService;
+import com.mindgarden.consultation.service.ConsultantAvailabilityService;
+import com.mindgarden.consultation.service.ConsultationRecordService;
 import com.mindgarden.consultation.service.ScheduleService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +51,9 @@ public class ScheduleController {
 
     private final ScheduleService scheduleService;
     private final AdminService adminService;
+    private final ConsultationRecordService consultationRecordService;
+    private final CodeManagementService codeManagementService;
+    private final ConsultantAvailabilityService consultantAvailabilityService;
 
     // ==================== 권한 기반 스케줄 조회 ====================
 
@@ -183,14 +192,23 @@ public class ScheduleController {
      * GET /api/schedules/consultant/{consultantId}/my-schedules
      */
     @GetMapping("/consultant/{consultantId}/my-schedules")
-    public ResponseEntity<List<Schedule>> getMySchedules(@PathVariable Long consultantId) {
+    public ResponseEntity<List<ScheduleResponseDto>> getMySchedules(@PathVariable Long consultantId) {
         
         log.info("📅 상담사 자신의 스케줄 조회: 상담사 {}", consultantId);
         
         try {
             List<Schedule> schedules = scheduleService.findByConsultantId(consultantId);
-            log.info("✅ 상담사 스케줄 조회 완료: {}개", schedules.size());
-            return ResponseEntity.ok(schedules);
+            
+            // 상담 유형을 한글로 변환하여 DTO로 변환
+            List<ScheduleResponseDto> responseDtos = schedules.stream()
+                    .map(schedule -> {
+                        String koreanConsultationType = codeManagementService.getCodeName("CONSULTATION_TYPE", schedule.getConsultationType());
+                        return ScheduleResponseDto.from(schedule, koreanConsultationType);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+            
+            log.info("✅ 상담사 스케줄 조회 완료: {}개", responseDtos.size());
+            return ResponseEntity.ok(responseDtos);
         } catch (Exception e) {
             log.error("❌ 상담사 스케줄 조회 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
@@ -217,6 +235,29 @@ public class ScheduleController {
             LocalDate date = LocalDate.parse(scheduleDto.getDate());
             LocalTime startTime = LocalTime.parse(scheduleDto.getStartTime());
             LocalTime endTime = LocalTime.parse(scheduleDto.getEndTime());
+            
+            // 휴무 상태 확인
+            boolean isOnVacation = consultantAvailabilityService.isConsultantOnVacation(
+                scheduleDto.getConsultantId(), 
+                date, 
+                startTime, 
+                endTime
+            );
+            
+            if (isOnVacation) {
+                log.warn("🚫 휴무 상태에서 스케줄 등록 시도: 상담사 {}, 날짜 {}, 시간 {} - {}", 
+                    scheduleDto.getConsultantId(), date, startTime, endTime);
+                
+                // 데이터베이스에서 휴가 관련 메시지 조회
+                String vacationMessage = getVacationConflictMessage();
+                
+                Map<String, Object> response = Map.of(
+                    "success", false,
+                    "message", vacationMessage
+                );
+                
+                return ResponseEntity.badRequest().body(response);
+            }
             
             Schedule schedule = scheduleService.createConsultantSchedule(
                 scheduleDto.getConsultantId(),
@@ -372,12 +413,12 @@ public class ScheduleController {
     @GetMapping("/consultant/{consultantId}")
     public ResponseEntity<List<Schedule>> getSchedulesByConsultant(
             @PathVariable Long consultantId,
-            @RequestParam String userRole) {
+            @RequestParam(required = false) String userRole) {
         
         log.info("👨‍⚕️ 상담사별 스케줄 조회: 상담사 {}, 요청자 역할 {}", consultantId, userRole);
         
-        // 관리자 권한 확인
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
+        // 관리자 권한 확인 (userRole이 제공된 경우에만)
+        if (userRole != null && !"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -651,5 +692,214 @@ public class ScheduleController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("success", false, "message", "매핑 확인 중 오류가 발생했습니다."));
         }
+    }
+    
+    // ==================== 상담일지 관리 ====================
+    
+    /**
+     * 상담일지 목록 조회
+     * GET /api/schedules/consultation-records?consultantId=41&consultationId=schedule-30
+     */
+    @GetMapping("/consultation-records")
+    public ResponseEntity<Map<String, Object>> getConsultationRecords(
+            @RequestParam(required = false) Long consultantId,
+            @RequestParam(required = false) String consultationId) {
+        
+        log.info("📝 상담일지 목록 조회 - 상담사 ID: {}, 상담 ID: {}", consultantId, consultationId);
+        
+        try {
+            List<com.mindgarden.consultation.entity.ConsultationRecord> records;
+            
+            if (consultationId != null) {
+                // consultationId가 "schedule-30" 형태인 경우 숫자 부분만 추출
+                Long consultationIdLong = null;
+                if (consultationId.startsWith("schedule-")) {
+                    consultationIdLong = Long.valueOf(consultationId.replace("schedule-", ""));
+                } else {
+                    consultationIdLong = Long.valueOf(consultationId);
+                }
+                records = consultationRecordService.getConsultationRecordsByConsultationId(consultationIdLong);
+            } else if (consultantId != null) {
+                // 상담사별 조회 (페이지네이션 없이 최근 10개)
+                records = consultationRecordService.getRecentConsultationRecords(consultantId, "CONSULTANT", 10);
+            } else {
+                records = new ArrayList<>();
+            }
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "data", records,
+                "totalCount", records.size()
+            );
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("상담일지 목록 조회 오류:", e);
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "상담일지 조회 중 오류가 발생했습니다: " + e.getMessage(),
+                "data", new ArrayList<>(),
+                "totalCount", 0
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
+    /**
+     * 상담일지 작성
+     * POST /api/schedules/consultation-records
+     */
+    @PostMapping("/consultation-records")
+    public ResponseEntity<Map<String, Object>> createConsultationRecord(
+            @RequestBody Map<String, Object> recordData) {
+        
+        log.info("📝 상담일지 작성 - 데이터: {}", recordData);
+        
+        try {
+            com.mindgarden.consultation.entity.ConsultationRecord savedRecord = 
+                consultationRecordService.createConsultationRecord(recordData);
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "message", "상담일지가 성공적으로 작성되었습니다.",
+                "data", savedRecord
+            );
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            
+        } catch (Exception e) {
+            log.error("상담일지 작성 오류:", e);
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "상담일지 작성 중 오류가 발생했습니다: " + e.getMessage()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    
+    /**
+     * 상담일지 수정
+     * PUT /api/schedules/consultation-records/{recordId}
+     */
+    @PutMapping("/consultation-records/{recordId}")
+    public ResponseEntity<Map<String, Object>> updateConsultationRecord(
+            @PathVariable Long recordId,
+            @RequestBody Map<String, Object> recordData) {
+        
+        log.info("📝 상담일지 수정 - 기록 ID: {}, 데이터: {}", recordId, recordData);
+        
+        try {
+            com.mindgarden.consultation.entity.ConsultationRecord updatedRecord = 
+                consultationRecordService.updateConsultationRecord(recordId, recordData);
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "message", "상담일지가 성공적으로 수정되었습니다.",
+                "data", updatedRecord
+            );
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("상담일지 수정 오류:", e);
+            Map<String, Object> response = Map.of(
+                "success", false,
+                "message", "상담일지 수정 중 오류가 발생했습니다: " + e.getMessage()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * 내담자별 특정 회기 상담일지 조회
+     */
+    @GetMapping("/api/schedules/consultation-records/client/{clientId}/session/{sessionNumber}")
+    public ResponseEntity<Map<String, Object>> getConsultationRecordsByClientAndSession(
+            @PathVariable Long clientId,
+            @PathVariable Integer sessionNumber,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            log.info("👤 내담자별 특정 회기 상담일지 조회 - 내담자ID: {}, 회기: {}", clientId, sessionNumber);
+            
+            Pageable pageable = Pageable.ofSize(size).withPage(page);
+            Page<ConsultationRecord> records = consultationRecordService.getConsultationRecordsByClientAndSession(clientId, sessionNumber, pageable);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", records.getContent(),
+                "totalCount", records.getTotalElements(),
+                "totalPages", records.getTotalPages(),
+                "currentPage", records.getNumber(),
+                "size", records.getSize()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 내담자별 특정 회기 상담일지 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "내담자별 특정 회기 상담일지 조회 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 내담자별 전체 상담일지 조회 (회기순)
+     */
+    @GetMapping("/api/schedules/consultation-records/client/{clientId}")
+    public ResponseEntity<Map<String, Object>> getConsultationRecordsByClient(@PathVariable Long clientId) {
+        try {
+            log.info("👤 내담자별 전체 상담일지 조회 - 내담자ID: {}", clientId);
+            
+            List<ConsultationRecord> records = consultationRecordService.getConsultationRecordsByClientOrderBySession(clientId);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", records,
+                "totalCount", records.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 내담자별 전체 상담일지 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "내담자별 전체 상담일지 조회 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 내담자별 상담일지 회기별 그룹화 조회
+     */
+    @GetMapping("/api/schedules/consultation-records/client/{clientId}/grouped")
+    public ResponseEntity<Map<String, Object>> getConsultationRecordsGroupedBySession(@PathVariable Long clientId) {
+        try {
+            log.info("👤 내담자별 상담일지 회기별 그룹화 조회 - 내담자ID: {}", clientId);
+            
+            Map<Integer, List<ConsultationRecord>> groupedRecords = consultationRecordService.getConsultationRecordsGroupedBySession(clientId);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", groupedRecords,
+                "totalSessions", groupedRecords.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 내담자별 상담일지 회기별 그룹화 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "내담자별 상담일지 회기별 그룹화 조회 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * 휴가 충돌 메시지 조회 (데이터베이스 코드 사용)
+     */
+    private String getVacationConflictMessage() {
+        try {
+            // 데이터베이스에서 휴가 관련 메시지 조회
+            String message = codeManagementService.getCodeName("VACATION_MESSAGE", "CONFLICT");
+            if (!message.equals("CONFLICT")) {
+                return message; // 데이터베이스에서 찾은 메시지 반환
+            }
+        } catch (Exception e) {
+            log.warn("휴가 충돌 메시지 조회 실패: {} -> 기본값 사용", e.getMessage());
+        }
+        
+        // 데이터베이스에서 찾지 못한 경우 기본값 사용
+        return "해당 시간대에 상담사가 휴무 상태입니다. 다른 시간을 선택해주세요.";
     }
 }

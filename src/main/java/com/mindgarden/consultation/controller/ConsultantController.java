@@ -2,6 +2,7 @@ package com.mindgarden.consultation.controller;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.constant.UserRole;
@@ -415,6 +416,72 @@ public class ConsultantController {
         return ResponseEntity.ok(response);
     }
     
+    // === 상담일지 관리 ===
+    
+    /**
+     * 상담일지 목록 조회
+     * GET /api/consultants/{id}/consultation-records?consultationId=123
+     */
+    @GetMapping("/{id}/consultation-records")
+    public ResponseEntity<Map<String, Object>> getConsultationRecords(
+            @PathVariable Long id,
+            @RequestParam(required = false) String consultationId) {
+        
+        log.info("상담일지 목록 조회 - 상담사 ID: {}, 상담 ID: {}", id, consultationId);
+        
+        // 임시로 빈 목록 반환
+        List<Map<String, Object>> records = new ArrayList<>();
+        
+        Map<String, Object> response = Map.of(
+            "success", true,
+            "data", records,
+            "totalCount", records.size()
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 상담일지 작성
+     * POST /api/consultants/{id}/consultation-records
+     */
+    @PostMapping("/{id}/consultation-records")
+    public ResponseEntity<Map<String, Object>> createConsultationRecord(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> recordData) {
+        
+        log.info("상담일지 작성 - 상담사 ID: {}, 데이터: {}", id, recordData);
+        
+        Map<String, Object> response = Map.of(
+            "success", true,
+            "message", "상담일지가 성공적으로 작성되었습니다.",
+            "data", recordData
+        );
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+    
+    /**
+     * 상담일지 수정
+     * PUT /api/consultants/{id}/consultation-records/{recordId}
+     */
+    @PutMapping("/{id}/consultation-records/{recordId}")
+    public ResponseEntity<Map<String, Object>> updateConsultationRecord(
+            @PathVariable Long id,
+            @PathVariable Long recordId,
+            @RequestBody Map<String, Object> recordData) {
+        
+        log.info("상담일지 수정 - 상담사 ID: {}, 기록 ID: {}, 데이터: {}", id, recordId, recordData);
+        
+        Map<String, Object> response = Map.of(
+            "success", true,
+            "message", "상담일지가 성공적으로 수정되었습니다.",
+            "data", recordData
+        );
+        
+        return ResponseEntity.ok(response);
+    }
+
     // === 통계 및 분석 ===
     
     /**

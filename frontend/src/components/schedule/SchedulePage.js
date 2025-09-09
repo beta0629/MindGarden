@@ -173,9 +173,11 @@ const SchedulePage = ({ user: propUser }) => {
                             <h3>👥 상담사 현황</h3>
                             <ConsultantStatus />
                         </div>
+                        
                     </div>
                 )}
             </div>
+            
             </div>
         </SimpleLayout>
     );

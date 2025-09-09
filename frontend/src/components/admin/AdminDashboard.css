@@ -256,6 +256,7 @@
     background: var(--admin-color-settings);
 }
 
+
 .management-content h3 {
     font-size: var(--admin-font-xl);
     font-weight: var(--admin-font-weight-semibold);

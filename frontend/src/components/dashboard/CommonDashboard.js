@@ -11,6 +11,7 @@ import WelcomeSection from './WelcomeSection';
 import SummaryPanels from './SummaryPanels';
 import QuickActions from './QuickActions';
 import RecentActivities from './RecentActivities';
+import ClientMessageSection from './ClientMessageSection';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const CommonDashboard = ({ user: propUser }) => {
@@ -105,9 +106,8 @@ const CommonDashboard = ({ user: propUser }) => {
           await loadAdminSystemData();
         }
         
-        // 3. 최근 활동 로드 (API 없이 기본 데이터 사용)
-        console.log('📈 최근 활동 로드 시작 - 기본 데이터 사용');
-        loadRecentActivities(currentUser.id);
+        // 3. 최근 활동은 각 역할별 데이터 로드에서 처리됨
+        console.log('📈 최근 활동은 역할별 데이터 로드에서 처리됨');
         
         console.log('✅ 대시보드 데이터 로드 완료');
         
@@ -247,22 +247,39 @@ const CommonDashboard = ({ user: propUser }) => {
           });
         });
         
-        // 내담자 프로필 관련 활동 추가 (예시)
-        if (recentActivities.length < 3) {
+        // 최근 활동이 없을 때만 기본 메시지 표시
+        if (recentActivities.length === 0) {
           recentActivities.push({
-            type: 'profile',
-            title: '프로필 정보 확인',
-            time: '2일 전',
-            details: '내담자 프로필 정보를 확인했습니다'
+            type: 'info',
+            title: '최근 활동이 없습니다',
+            time: '현재',
+            details: '아직 등록된 활동이 없습니다'
           });
         }
+        
+        // 상담사 목록 생성 (중복 제거)
+        const consultantMap = new Map();
+        schedules.forEach(schedule => {
+          if (schedule.consultantId && schedule.consultantName) {
+            consultantMap.set(schedule.consultantId, {
+              id: schedule.consultantId,
+              name: schedule.consultantName,
+              specialty: '상담 심리학', // 기본값, 추후 API에서 가져올 수 있음
+              intro: '전문적이고 따뜻한 상담을 제공합니다.',
+              profileImage: null
+            });
+          }
+        });
+        
+        const consultantList = Array.from(consultantMap.values());
         
         setConsultationData(prev => ({
           ...prev,
           upcomingConsultations: upcomingSchedules,
           weeklyConsultations: weeklySchedules.length,
           todayConsultations: todaySchedules.length,
-          recentActivities: recentActivities
+          recentActivities: recentActivities,
+          consultantList: consultantList
         }));
         
         console.log('✅ 내담자 스케줄 데이터 로드 완료:', {
@@ -272,67 +289,7 @@ const CommonDashboard = ({ user: propUser }) => {
         });
       }
       
-      // 2. 담당 상담사 정보 로드 (매핑 API 사용)
-      try {
-        console.log('👤 담당 상담사 정보 로드 시작 - 내담자 ID:', userId);
-        const consultantResponse = await apiGet(DASHBOARD_API.CLIENT_CONSULTANT_INFO, {
-          clientId: userId
-        });
-        
-        console.log('👤 상담사 정보 응답:', consultantResponse);
-        
-        if (consultantResponse?.success && consultantResponse?.data) {
-          const consultantData = consultantResponse.data;
-          setConsultationData(prev => ({
-            ...prev,
-            consultantInfo: {
-              name: consultantData.consultantName || '담당 상담사 없음',
-              specialty: consultantData.specialty || '상담 심리학',
-              intro: consultantData.intro || '전문적이고 따뜻한 상담을 제공합니다.',
-              profileImage: consultantData.profileImage || null
-            }
-          }));
-          
-          console.log('✅ 상담사 정보 로드 완료:', consultantData.consultantName);
-        } else {
-          // 스케줄에서 상담사 정보 추출 시도
-          if (schedules && schedules.length > 0) {
-            const latestSchedule = schedules[0];
-            if (latestSchedule.consultantName) {
-              setConsultationData(prev => ({
-                ...prev,
-                consultantInfo: {
-                  name: latestSchedule.consultantName || '담당 상담사 없음',
-                  specialty: '상담 심리학',
-                  intro: '전문적이고 따뜻한 상담을 제공합니다.',
-                  profileImage: null
-                }
-              }));
-              
-              console.log('✅ 스케줄에서 상담사 정보 추출 완료:', latestSchedule.consultantName);
-            } else {
-              setDefaultConsultantInfo();
-            }
-          } else {
-            setDefaultConsultantInfo();
-          }
-        }
-      } catch (consultantError) {
-        console.warn('⚠️ 상담사 정보 로드 실패, 기본값 사용:', consultantError);
-        setDefaultConsultantInfo();
-      }
-      
-      const setDefaultConsultantInfo = () => {
-        setConsultationData(prev => ({
-          ...prev,
-          consultantInfo: {
-            name: '담당 상담사 없음',
-            specialty: '전문 분야 미정',
-            intro: '상담사 정보가 없습니다.',
-            profileImage: null
-          }
-        }));
-      };
+      // 상담사 목록은 스케줄 데이터에서 추출하여 처리됨
       
     } catch (error) {
       console.error('❌ 내담자 상담 데이터 로드 오류:', error);
@@ -430,13 +387,13 @@ const CommonDashboard = ({ user: propUser }) => {
           });
         });
         
-        // 상담사 프로필 관련 활동 추가 (예시)
-        if (recentActivities.length < 3) {
+        // 최근 활동이 없을 때만 기본 메시지 표시
+        if (recentActivities.length === 0) {
           recentActivities.push({
-            type: 'profile',
-            title: '프로필 정보 확인',
-            time: '2일 전',
-            details: '상담사 프로필 정보를 확인했습니다'
+            type: 'info',
+            title: '최근 활동이 없습니다',
+            time: '현재',
+            details: '아직 등록된 활동이 없습니다'
           });
         }
         
@@ -598,23 +555,6 @@ const CommonDashboard = ({ user: propUser }) => {
     }
   };
 
-  // 최근 활동 로드
-  const loadRecentActivities = (userId) => {
-    try {
-      console.log('📈 최근 활동 기본 데이터 설정');
-      // API가 아직 구현되지 않았으므로 기본 데이터 사용
-      setConsultationData(prev => ({
-        ...prev,
-        recentActivities: [
-          { title: '프로필 업데이트', time: '2시간 전', type: 'profile' },
-          { title: '상담 일정 확인', time: '1일 전', type: 'schedule' }
-        ]
-      }));
-      console.log('✅ 최근 활동 기본 데이터 설정 완료');
-    } catch (error) {
-      console.error('❌ 최근 활동 로드 오류:', error);
-    }
-  };
 
   // 일정 새로고침
   const refreshSchedule = async () => {
@@ -666,6 +606,11 @@ const CommonDashboard = ({ user: propUser }) => {
         
         {/* 최근 활동 섹션 */}
         <RecentActivities consultationData={consultationData} />
+        
+        {/* 내담자 메시지 섹션 */}
+        {user?.role === 'CLIENT' && (
+          <ClientMessageSection userId={user.id} />
+        )}
       </div>
     </SimpleLayout>
   );

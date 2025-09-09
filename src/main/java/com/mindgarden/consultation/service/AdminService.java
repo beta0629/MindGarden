@@ -43,11 +43,21 @@ public interface AdminService {
      * 모든 상담사 조회 (전문분야 상세 정보 포함)
      */
     List<Map<String, Object>> getAllConsultantsWithSpecialty();
+    
+    /**
+     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
+     */
+    List<Map<String, Object>> getAllConsultantsWithVacationInfo(String date);
 
     /**
      * 모든 내담자 조회
      */
     List<Client> getAllClients();
+
+    /**
+     * 통합 내담자 데이터 조회 (매핑 정보, 결제 상태, 남은 세션 등 포함)
+     */
+    List<Map<String, Object>> getAllClientsWithMappingInfo();
 
     /**
      * 모든 매핑 조회
@@ -164,4 +174,9 @@ public interface AdminService {
      * 내담자별 상담사 변경 이력 조회
      */
     List<ConsultantClientMapping> getTransferHistory(Long clientId);
+
+    /**
+     * 상담사별 스케줄 조회
+     */
+    List<Map<String, Object>> getSchedulesByConsultantId(Long consultantId);
 }

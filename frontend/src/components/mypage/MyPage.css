@@ -327,24 +327,47 @@
   font-size: 0.95rem;
 }
 
-.mypage .form-group input {
+/* 읽기 전용 모드 (기본 상태) */
+.mypage.readonly .form-group input {
   padding: var(--mypage-input-padding);
-  border: none;
+  border: 1px solid #ddd;
   border-radius: var(--mypage-input-radius);
   font-size: 1rem;
   transition: all 0.3s ease;
-  background: var(--mypage-input-bg);
+  background: #f8f9fa;
+  color: #666;
+  cursor: not-allowed;
 }
 
-.mypage .form-group input:focus {
+/* 수정 모드 */
+.mypage.editing .form-group input {
+  padding: var(--mypage-input-padding);
+  border: 1px solid #ddd;
+  border-radius: var(--mypage-input-radius);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #fff;
+  color: #333;
+  cursor: text;
+}
+
+/* 수정 모드에서만 focus 효과 적용 */
+.mypage.editing .form-group input:focus {
   outline: none;
   background: var(--mypage-input-focus-bg);
   box-shadow: var(--mypage-input-focus-shadow);
 }
 
+/* 읽기 전용 모드에서는 focus 효과 없음 */
+.mypage.readonly .form-group input:focus {
+  outline: none;
+  background: #f8f9fa;
+  box-shadow: none;
+}
+
 .mypage .form-group input:disabled {
   background: var(--mypage-input-disabled-bg);
-  color: var(--mypage-input-disabled-color);
+  color: #666;
   cursor: not-allowed;
 }
 

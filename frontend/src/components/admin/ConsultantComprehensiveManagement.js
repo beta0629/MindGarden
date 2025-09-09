@@ -133,10 +133,11 @@ const ConsultantComprehensiveManagement = () => {
      */
     const loadConsultants = async () => {
         try {
-            const response = await apiGet('/api/admin/consultants');
-            console.log('🔍 상담사 목록 로드 응답:', response);
+            const today = new Date().toISOString().split('T')[0];
+            const response = await apiGet(`/api/admin/consultants/with-vacation?date=${today}`);
+            console.log('🔍 통합 상담사 데이터 로드 응답:', response);
             if (response.success) {
-                console.log('📋 상담사 데이터:', response.data);
+                console.log('📋 통합 상담사 데이터:', response.data);
                 // isActive가 true인 상담사만 표시 (삭제된 상담사 제외)
                 const activeConsultants = (response.data || []).filter(consultant => consultant.isActive !== false);
                 setConsultants(activeConsultants);
@@ -151,12 +152,12 @@ const ConsultantComprehensiveManagement = () => {
      */
     const loadClients = async () => {
         try {
-            const response = await apiGet('/api/admin/clients');
+            const response = await apiGet('/api/admin/clients/with-mapping-info');
             if (response.success) {
                 setClients(response.data || []);
             }
         } catch (error) {
-            console.error('내담자 목록 로드 실패:', error);
+            console.error('통합 내담자 데이터 로드 실패:', error);
         }
     };
 

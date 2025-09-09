@@ -1,4 +1,4 @@
-import { API_BASE_URL, MYPAGE_API } from '../constants/api';
+import { API_BASE_URL, MYPAGE_API, PROFILE_API } from '../constants/api';
 
 /**
  * 마이페이지 관련 API 호출 유틸리티
@@ -239,6 +239,100 @@ const mypageApi = {
       return await response.text();
     } catch (error) {
       console.error('소셜 계정 연동 해제 실패:', error);
+      throw error;
+    }
+  },
+
+  // 역할별 프로필 정보 조회
+  getProfileInfo: async (userRole, userId) => {
+    try {
+      let endpoint;
+      if (userRole === 'CONSULTANT') {
+        endpoint = PROFILE_API.CONSULTANT.GET_INFO(userId);
+      } else if (userRole === 'ADMIN') {
+        endpoint = PROFILE_API.ADMIN.GET_INFO(userId);
+      } else {
+        endpoint = PROFILE_API.CLIENT.GET_INFO;
+      }
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('프로필 정보 조회 실패:', error);
+      throw error;
+    }
+  },
+
+  // 역할별 프로필 정보 업데이트
+  updateProfileInfo: async (userRole, userId, updateData) => {
+    try {
+      let endpoint;
+      if (userRole === 'CONSULTANT') {
+        endpoint = PROFILE_API.CONSULTANT.UPDATE_INFO(userId);
+      } else if (userRole === 'ADMIN') {
+        endpoint = PROFILE_API.ADMIN.UPDATE_INFO(userId);
+      } else {
+        endpoint = PROFILE_API.CLIENT.UPDATE_INFO;
+      }
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('프로필 정보 업데이트 실패:', error);
+      throw error;
+    }
+  },
+
+  // 역할별 소셜 계정 목록 조회
+  getSocialAccounts: async (userRole, userId) => {
+    try {
+      let endpoint;
+      if (userRole === 'CONSULTANT') {
+        endpoint = PROFILE_API.CONSULTANT.GET_SOCIAL_ACCOUNTS(userId);
+      } else if (userRole === 'ADMIN') {
+        endpoint = PROFILE_API.ADMIN.GET_SOCIAL_ACCOUNTS(userId);
+      } else {
+        endpoint = PROFILE_API.CLIENT.GET_SOCIAL_ACCOUNTS;
+      }
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('소셜 계정 목록 조회 실패:', error);
       throw error;
     }
   },

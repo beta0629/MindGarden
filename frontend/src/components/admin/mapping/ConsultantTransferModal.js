@@ -52,7 +52,8 @@ const ConsultantTransferModal = ({
   // 상담사 목록 로드
   const loadConsultants = async () => {
     try {
-      const response = await fetch('/api/admin/consultants');
+      const today = new Date().toISOString().split('T')[0];
+      const response = await fetch(`/api/admin/consultants/with-vacation?date=${today}`);
       const data = await response.json();
       
       if (data.success) {

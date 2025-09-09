@@ -37,8 +37,23 @@ const ConsultantSelectionStepNew = ({
         try {
             console.log('👨‍⚕️ 상담사 목록 로드 시작');
             
-            // 실제 API 호출
-            const response = await fetch('/api/admin/consultants', {
+            if (!selectedDate) {
+                console.error('❌ selectedDate가 없습니다:', selectedDate);
+                setConsultants([]);
+                return;
+            }
+            
+            // 시간대 문제를 피하기 위해 로컬 날짜로 직접 포맷팅
+            const year = selectedDate.getFullYear();
+            const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+            const day = String(selectedDate.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            
+            console.log('🗓️ 선택된 날짜:', selectedDate);
+            console.log('🗓️ API 호출 날짜:', dateStr);
+            
+            // 휴무 정보를 포함한 상담사 목록 조회
+            const response = await fetch(`/api/admin/consultants/with-vacation?date=${dateStr}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -49,9 +64,12 @@ const ConsultantSelectionStepNew = ({
             if (response.ok) {
                 const responseData = await response.json();
                 console.log('👨‍⚕️ API 응답 데이터:', responseData);
+                console.log('👨‍⚕️ API URL:', `/api/admin/consultants/with-vacation?date=${dateStr}`);
                 
                 // API 응답 구조에 따라 데이터 추출
                 const data = responseData.data || responseData;
+                console.log('👨‍⚕️ 추출된 데이터:', data);
+                console.log('👨‍⚕️ 김선희2 데이터 확인:', data.find(c => c.name === '김선희2'));
                 
                 if (!Array.isArray(data)) {
                     console.error('상담사 데이터가 배열이 아닙니다:', data);
@@ -59,22 +77,114 @@ const ConsultantSelectionStepNew = ({
                     return;
                 }
                 
-                const consultantsWithAvailability = await Promise.all(
-                    data.map(async (consultant, index) => {
-                        const availability = await checkConsultantAvailability(consultant.id, selectedDate);
-                        return {
+                // 휴무 정보가 이미 포함된 상담사 데이터 처리
+                console.log('🔍 필터링 전 상담사 목록:', data.map(c => ({name: c.name, isOnVacation: c.isOnVacation, vacationType: c.vacationType})));
+                
+                // 김선희2 원본 데이터 확인
+                const kimSunHee2Original = data.find(c => c.name === '김선희2');
+                if (kimSunHee2Original) {
+                    console.log('🔍 김선희2 원본 API 데이터:', kimSunHee2Original);
+                } else {
+                    console.log('❌ 김선희2를 원본 데이터에서 찾을 수 없습니다');
+                }
+                
+                // 김선희2 데이터 특별 확인
+                const kimSunHee2 = data.find(c => c.name === '김선희2');
+                if (kimSunHee2) {
+                    console.log('🔍 김선희2 상세 데이터:', kimSunHee2);
+                    console.log('🔍 김선희2 휴가 정보:', {
+                        isOnVacation: kimSunHee2.isOnVacation,
+                        vacationType: kimSunHee2.vacationType,
+                        vacationReason: kimSunHee2.vacationReason,
+                        busy: kimSunHee2.busy,
+                        isVacation: kimSunHee2.isVacation
+                    });
+                } else {
+                    console.log('🔍 김선희2를 찾을 수 없습니다.');
+                }
+                
+                const consultantsWithAvailability = data
+                    .filter((consultant) => {
+                        // 종일 휴가인 상담사는 목록에서 제외
+                        const isOnVacation = consultant.isOnVacation || false;
+                        const vacationType = consultant.vacationType;
+                        
+                        console.log(`🔍 상담사 ${consultant.name} - isOnVacation: ${isOnVacation}, vacationType: ${vacationType}`);
+                        
+                        // 김선희2에 대한 특별 로그
+                        if (consultant.name === '김선희2') {
+                            console.log(`🔍 김선희2 필터링 체크:`, {
+                                isOnVacation: isOnVacation,
+                                vacationType: vacationType,
+                                isOnVacationType: typeof isOnVacation,
+                                vacationTypeType: typeof vacationType,
+                                isOnVacationValue: consultant.isOnVacation,
+                                vacationTypeValue: consultant.vacationType
+                            });
+                        }
+                        
+                        // 모든 상담사를 포함하되, 휴가 정보는 표시
+                        console.log(`✅ 상담사 ${consultant.name} 포함됨 (휴가: ${isOnVacation}, 타입: ${vacationType})`);
+                        return true; // 모든 상담사 포함
+                    })
+                    .map((consultant, index) => {
+                        // 휴무 상태 확인
+                        const isOnVacation = consultant.isOnVacation || false;
+                        
+                        // 김선희2 매핑 과정 디버깅
+                        if (consultant.name === '김선희2') {
+                            console.log('🔍 김선희2 매핑 전 데이터:', {
+                                originalIsOnVacation: consultant.isOnVacation,
+                                originalVacationType: consultant.vacationType,
+                                originalVacationReason: consultant.vacationReason
+                            });
+                            console.log('🔍 김선희2 매핑 후 isOnVacation:', isOnVacation);
+                        }
+                        
+                        // 종일 휴가인 경우만 선택 불가능, 반차나 시간 지정 휴가는 선택 가능
+                        const isFullDayVacation = isOnVacation && 
+                            (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY');
+                        
+                        const mappedConsultant = {
                             ...consultant,
                             id: `consultant-${consultant.id}-${index}`,
                             originalId: consultant.id,
                             type: 'consultant',
-                            available: availability.available,
-                            busy: availability.busy,
-                            todayScheduleCount: availability.scheduleCount
+                            available: !isFullDayVacation, // 종일 휴가가 아니면 선택 가능
+                            busy: isOnVacation, // 휴무 상태면 바쁨으로 표시
+                            reason: isOnVacation ? '휴무' : null,
+                            isOnVacation: isOnVacation, // 휴가 여부 추가
+                            vacationType: consultant.vacationType,
+                            vacationReason: consultant.vacationReason,
+                            vacationStartTime: consultant.vacationStartTime,
+                            vacationEndTime: consultant.vacationEndTime
                         };
-                    })
-                );
+                        
+                        // 김선희2 매핑 후 데이터 확인
+                        if (consultant.name === '김선희2') {
+                            console.log('🔍 김선희2 매핑 후 최종 데이터:', {
+                                isOnVacation: mappedConsultant.isOnVacation,
+                                vacationType: mappedConsultant.vacationType,
+                                vacationReason: mappedConsultant.vacationReason,
+                                available: mappedConsultant.available,
+                                busy: mappedConsultant.busy
+                            });
+                        }
+                        
+                        return mappedConsultant;
+                    });
                 setConsultants(consultantsWithAvailability);
                 console.log('👨‍⚕️ 상담사 목록 로드 완료 (실제 API)');
+                console.log('👨‍⚕️ 필터링 후 상담사 목록:', consultantsWithAvailability.map(c => ({name: c.name, isOnVacation: c.isOnVacation, vacationType: c.vacationType})));
+                console.log('👨‍⚕️ 필터링 후 상담사 수:', consultantsWithAvailability.length);
+                
+                // 김선희2가 필터링 후에도 남아있는지 확인
+                const kimSunHee2AfterFilter = consultantsWithAvailability.find(c => c.name === '김선희2');
+                if (kimSunHee2AfterFilter) {
+                    console.log('⚠️ 김선희2가 필터링 후에도 남아있습니다!', kimSunHee2AfterFilter);
+                } else {
+                    console.log('✅ 김선희2가 올바르게 필터링되었습니다.');
+                }
             } else {
                 console.error('상담사 목록 로드 실패:', response.status);
                 // API 실패 시 더미 데이터 사용
@@ -203,44 +313,6 @@ const ConsultantSelectionStepNew = ({
         }
     }, [selectedDate]);
 
-    /**
-     * 상담사 가용성 확인
-     */
-    const checkConsultantAvailability = async (consultantId, date) => {
-        try {
-            const dateStr = date.toISOString().split('T')[0];
-            const response = await fetch(
-                `/api/schedules/consultant/${consultantId}/date?date=${dateStr}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
-
-            if (response.ok) {
-                const schedules = await response.json();
-                const scheduleCount = schedules.length;
-                const isBusy = scheduleCount >= 6; // 하루 최대 6건
-                const isAvailable = scheduleCount < 8; // 하루 최대 8건
-
-                return {
-                    available: isAvailable,
-                    busy: isBusy,
-                    scheduleCount: scheduleCount
-                };
-            }
-        } catch (error) {
-            console.error('상담사 가용성 확인 실패:', error);
-        }
-
-        return {
-            available: true,
-            busy: false,
-            scheduleCount: 0
-        };
-    };
 
     /**
      * 필터 적용
@@ -260,9 +332,11 @@ const ConsultantSelectionStepNew = ({
         if (filters.availability === SCHEDULE_MODAL_CONSTANTS.AVAILABILITY.AVAILABLE) {
             filtered = filtered.filter(consultant => consultant.available && !consultant.busy);
         } else if (filters.availability === SCHEDULE_MODAL_CONSTANTS.AVAILABILITY.BUSY) {
-            filtered = filtered.filter(consultant => consultant.busy);
+            // 바쁨 필터: busy 상태이지만 휴가가 아닌 상담사 (스케줄로 인한 바쁨)
+            filtered = filtered.filter(consultant => consultant.busy && !consultant.isVacation);
         } else if (filters.availability === SCHEDULE_MODAL_CONSTANTS.AVAILABILITY.UNAVAILABLE) {
-            filtered = filtered.filter(consultant => !consultant.available);
+            // 휴무 필터: 휴가 중인 상담사
+            filtered = filtered.filter(consultant => consultant.isVacation);
         }
 
         // 검색 필터

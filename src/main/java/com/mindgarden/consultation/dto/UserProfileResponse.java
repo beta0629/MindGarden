@@ -33,6 +33,7 @@ public class UserProfileResponse {
     private Long experiencePoints;
     private Integer totalConsultations;
     private String profileImageUrl;
+    private String profileImageType;
     private String memo;
     private Boolean isEmailVerified;
     private Boolean isActive;

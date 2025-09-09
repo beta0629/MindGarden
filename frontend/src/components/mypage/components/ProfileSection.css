@@ -112,26 +112,53 @@
   color: var(--profile-label-color);
 }
 
-.profile-section .form-group input,
-.profile-section .form-group select {
+/* 읽기 전용 모드 (기본 상태) */
+.profile-section.readonly .form-group input,
+.profile-section.readonly .form-group select {
   width: 100%;
   padding: var(--profile-input-padding);
-  border: none !important;
+  border: 1px solid #ddd;
   border-radius: var(--profile-input-radius);
   font-size: var(--profile-input-font-size);
-  box-shadow: none !important;
+  background-color: #f8f9fa;
+  color: #666;
+  cursor: not-allowed;
 }
 
-.profile-section .form-group input:focus,
-.profile-section .form-group select:focus {
+/* 수정 모드 */
+.profile-section.editing .form-group input,
+.profile-section.editing .form-group select {
+  width: 100%;
+  padding: var(--profile-input-padding);
+  border: 1px solid #ddd;
+  border-radius: var(--profile-input-radius);
+  font-size: var(--profile-input-font-size);
+  background-color: #fff;
+  color: #333;
+  cursor: text;
+}
+
+/* 수정 모드에서만 focus 효과 적용 */
+.profile-section.editing .form-group input:focus,
+.profile-section.editing .form-group select:focus {
   outline: none;
   border-color: var(--profile-input-focus-border);
-  box-shadow: var(--profile-input-focus-shadow) !important;
+  box-shadow: var(--profile-input-focus-shadow);
 }
 
+/* 읽기 전용 모드에서는 focus 효과 없음 */
+.profile-section.readonly .form-group input:focus,
+.profile-section.readonly .form-group select:focus {
+  outline: none;
+  border-color: #ddd;
+  box-shadow: none;
+}
+
+/* disabled 상태는 읽기 전용 모드와 동일 */
 .profile-section .form-group input:disabled,
 .profile-section .form-group select:disabled {
   background-color: var(--profile-input-disabled-bg);
+  color: #666;
   cursor: not-allowed;
 }
 

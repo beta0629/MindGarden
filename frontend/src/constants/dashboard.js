@@ -120,6 +120,16 @@ export const DASHBOARD_ACTIONS = {
     LABEL: '통계',
     ICON: 'bi bi-graph-up',
     ROUTE: '/admin/statistics'
+  },
+  CONSULTATION_HISTORY: {
+    LABEL: '상담 내역',
+    ICON: 'bi bi-clock-history',
+    ROUTE: '/consultation-history'
+  },
+  CONSULTATION_REPORT: {
+    LABEL: '상담 리포트',
+    ICON: 'bi bi-file-text',
+    ROUTE: '/consultation-report'
   }
 };
 

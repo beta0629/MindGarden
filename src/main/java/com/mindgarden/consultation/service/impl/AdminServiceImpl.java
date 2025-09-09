@@ -15,11 +15,13 @@ import com.mindgarden.consultation.dto.ConsultantTransferRequest;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
+import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
-import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
+import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.AdminService;
+import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,10 +36,11 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminServiceImpl implements AdminService {
 
     private final UserRepository userRepository;
-    private final ClientRepository clientRepository;
     private final ConsultantClientMappingRepository mappingRepository;
+    private final ScheduleRepository scheduleRepository;
     private final PasswordEncoder passwordEncoder;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final ConsultantAvailabilityService consultantAvailabilityService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
@@ -340,6 +343,86 @@ public class AdminServiceImpl implements AdminService {
     }
     
     /**
+     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
+     */
+    @Override
+    public List<Map<String, Object>> getAllConsultantsWithVacationInfo(String date) {
+        log.info("휴무 정보를 포함한 상담사 목록 조회: date={}", date);
+        
+        List<User> consultants = userRepository.findByRole(UserRole.CONSULTANT);
+        
+        // 모든 상담사의 휴무 정보 조회
+        Map<String, Object> allVacations = consultantAvailabilityService.getAllConsultantsVacations(date);
+        
+        return consultants.stream()
+            .map(consultant -> {
+                Map<String, Object> consultantData = new HashMap<>();
+                consultantData.put("id", consultant.getId());
+                consultantData.put("name", consultant.getName());
+                consultantData.put("email", consultant.getEmail());
+                
+                // 전화번호 복호화
+                String decryptedPhone = null;
+                if (consultant.getPhone() != null && !consultant.getPhone().trim().isEmpty()) {
+                    try {
+                        decryptedPhone = encryptionUtil.decrypt(consultant.getPhone());
+                    } catch (Exception e) {
+                        log.error("❌ 상담사 전화번호 복호화 실패: {}", e.getMessage());
+                        decryptedPhone = "복호화 실패";
+                    }
+                }
+                consultantData.put("phone", decryptedPhone);
+                
+                consultantData.put("role", consultant.getRole());
+                consultantData.put("isActive", consultant.getIsActive());
+                consultantData.put("createdAt", consultant.getCreatedAt());
+                consultantData.put("updatedAt", consultant.getUpdatedAt());
+                
+                // 전문분야 정보 처리
+                String specialization = consultant.getSpecialization();
+                if (specialization != null && !specialization.trim().isEmpty()) {
+                    consultantData.put("specialization", specialization);
+                    consultantData.put("specializationDetails", getSpecializationDetailsFromDB(specialization));
+                } else {
+                    consultantData.put("specialization", null);
+                    consultantData.put("specializationDetails", new ArrayList<>());
+                }
+                
+                // 휴무 정보 추가
+                String consultantId = consultant.getId().toString();
+                Map<String, Object> consultantVacations = (Map<String, Object>) allVacations.get(consultantId);
+                
+                if (consultantVacations != null && consultantVacations.containsKey(date)) {
+                    // 해당 날짜에 휴가가 있는 경우
+                    Map<String, Object> vacationInfo = (Map<String, Object>) consultantVacations.get(date);
+                    consultantData.put("isOnVacation", true);
+                    consultantData.put("vacationType", vacationInfo.get("type"));
+                    consultantData.put("vacationReason", vacationInfo.get("reason"));
+                    consultantData.put("vacationStartTime", vacationInfo.get("startTime"));
+                    consultantData.put("vacationEndTime", vacationInfo.get("endTime"));
+                    
+                    // 휴무 상태 구분
+                    consultantData.put("busy", true); // 휴가 중이므로 바쁨
+                    consultantData.put("isVacation", true); // 휴가 상태임을 명시
+                } else {
+                    // 해당 날짜에 휴가가 없는 경우
+                    consultantData.put("isOnVacation", false);
+                    consultantData.put("vacationType", null);
+                    consultantData.put("vacationReason", null);
+                    consultantData.put("vacationStartTime", null);
+                    consultantData.put("vacationEndTime", null);
+                    
+                    // 일반 상태 (스케줄에 따라 바쁨 여부 결정)
+                    consultantData.put("busy", false); // 기본적으로 여유
+                    consultantData.put("isVacation", false); // 휴가 아님
+                }
+                
+                return consultantData;
+            })
+            .collect(Collectors.toList());
+    }
+    
+    /**
      * 데이터베이스에서 전문분야 상세 정보 조회
      */
     private List<Map<String, String>> getSpecializationDetailsFromDB(String specialization) {
@@ -519,6 +602,95 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    public List<Map<String, Object>> getAllClientsWithMappingInfo() {
+        try {
+            log.info("🔍 통합 내담자 데이터 조회 시작");
+            
+            // 모든 내담자 조회
+            List<User> clientUsers = userRepository.findByRole(UserRole.CLIENT);
+            log.info("🔍 내담자 수: {}", clientUsers.size());
+            
+            // 모든 매핑 조회
+            List<ConsultantClientMapping> allMappings = mappingRepository.findAllWithDetails();
+            log.info("🔍 매핑 수: {}", allMappings.size());
+            
+            List<Map<String, Object>> result = new ArrayList<>();
+            
+            for (User user : clientUsers) {
+                Map<String, Object> clientData = new HashMap<>();
+                
+                // 기본 내담자 정보
+                clientData.put("id", user.getId());
+                clientData.put("name", user.getName());
+                clientData.put("email", user.getEmail() != null ? user.getEmail() : "");
+                clientData.put("phone", user.getPhone() != null ? user.getPhone() : "");
+                clientData.put("birthDate", user.getBirthDate());
+                clientData.put("gender", user.getGender());
+                clientData.put("isActive", user.getIsActive());
+                clientData.put("isDeleted", user.getIsDeleted());
+                clientData.put("createdAt", user.getCreatedAt());
+                clientData.put("updatedAt", user.getUpdatedAt());
+                
+                // 해당 내담자의 매핑 정보들
+                List<Map<String, Object>> mappings = allMappings.stream()
+                    .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId().equals(user.getId()))
+                    .map(mapping -> {
+                        Map<String, Object> mappingData = new HashMap<>();
+                        mappingData.put("mappingId", mapping.getId());
+                        mappingData.put("consultantId", mapping.getConsultant() != null ? mapping.getConsultant().getId() : null);
+                        mappingData.put("consultantName", mapping.getConsultant() != null ? mapping.getConsultant().getName() : "");
+                        mappingData.put("packageName", mapping.getPackageName());
+                        mappingData.put("totalSessions", mapping.getTotalSessions());
+                        mappingData.put("remainingSessions", mapping.getRemainingSessions());
+                        mappingData.put("usedSessions", mapping.getUsedSessions());
+                        mappingData.put("paymentStatus", mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().toString() : "");
+                        mappingData.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "");
+                        mappingData.put("packagePrice", mapping.getPackagePrice());
+                        mappingData.put("createdAt", mapping.getCreatedAt());
+                        mappingData.put("updatedAt", mapping.getUpdatedAt());
+                        mappingData.put("terminatedAt", mapping.getTerminatedAt());
+                        mappingData.put("notes", mapping.getNotes());
+                        return mappingData;
+                    })
+                    .collect(Collectors.toList());
+                
+                clientData.put("mappings", mappings);
+                clientData.put("mappingCount", mappings.size());
+                
+                // 활성 매핑 수 (승인된 매핑)
+                long activeMappingCount = mappings.stream()
+                    .filter(mapping -> "APPROVED".equals(mapping.get("status")))
+                    .count();
+                clientData.put("activeMappingCount", activeMappingCount);
+                
+                // 총 남은 세션 수
+                int totalRemainingSessions = mappings.stream()
+                    .filter(mapping -> "APPROVED".equals(mapping.get("status")))
+                    .mapToInt(mapping -> (Integer) mapping.get("remainingSessions"))
+                    .sum();
+                clientData.put("totalRemainingSessions", totalRemainingSessions);
+                
+                // 결제 상태별 매핑 수
+                Map<String, Long> paymentStatusCount = mappings.stream()
+                    .collect(Collectors.groupingBy(
+                        mapping -> (String) mapping.get("paymentStatus"),
+                        Collectors.counting()
+                    ));
+                clientData.put("paymentStatusCount", paymentStatusCount);
+                
+                result.add(clientData);
+            }
+            
+            log.info("🔍 통합 내담자 데이터 조회 완료 - 총 {}명", result.size());
+            return result;
+            
+        } catch (Exception e) {
+            log.error("❌ 통합 내담자 데이터 조회 실패", e);
+            throw new RuntimeException("통합 내담자 데이터 조회에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     public List<ConsultantClientMapping> getAllMappings() {
         try {
             return mappingRepository.findAllWithDetails();
@@ -541,6 +713,14 @@ public class AdminServiceImpl implements AdminService {
         // 전문분야 필드 처리 추가
         if (dto.getSpecialization() != null) {
             consultant.setSpecialization(dto.getSpecialization());
+        }
+        
+        // 비밀번호 변경 처리 추가
+        if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
+            log.info("🔧 상담사 비밀번호 변경: ID={}", id);
+            consultant.setPassword(passwordEncoder.encode(dto.getPassword()));
+            consultant.setUpdatedAt(LocalDateTime.now());
+            consultant.setVersion(consultant.getVersion() + 1);
         }
         
         return userRepository.save(consultant);
@@ -758,6 +938,63 @@ public class AdminServiceImpl implements AdminService {
                 .filter(mapping -> mapping.getTerminationReason() != null && 
                         mapping.getTerminationReason().contains("상담사 변경"))
                 .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<Map<String, Object>> getSchedulesByConsultantId(Long consultantId) {
+        try {
+            log.info("🔍 상담사별 스케줄 조회: consultantId={}", consultantId);
+            
+            // 상담사 존재 확인
+            userRepository.findById(consultantId)
+                    .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
+            
+            // 상담사의 스케줄 조회
+            List<Schedule> schedules = scheduleRepository.findByConsultantId(consultantId);
+            
+            // 스케줄을 Map 형태로 변환
+            List<Map<String, Object>> scheduleMaps = schedules.stream()
+                    .map(schedule -> {
+                        Map<String, Object> scheduleMap = new HashMap<>();
+                        scheduleMap.put("id", schedule.getId());
+                        scheduleMap.put("title", schedule.getTitle());
+                        scheduleMap.put("startTime", schedule.getStartTime());
+                        scheduleMap.put("endTime", schedule.getEndTime());
+                        scheduleMap.put("consultationType", schedule.getConsultationType());
+                        scheduleMap.put("status", schedule.getStatus());
+                        scheduleMap.put("notes", schedule.getNotes());
+                        
+                        // 내담자 정보 추가
+                        if (schedule.getClientId() != null) {
+                            scheduleMap.put("clientId", schedule.getClientId());
+                            // 내담자 이름은 별도로 조회해야 함
+                            try {
+                                User clientUser = userRepository.findById(schedule.getClientId()).orElse(null);
+                                if (clientUser != null) {
+                                    scheduleMap.put("clientName", clientUser.getName());
+                                } else {
+                                    scheduleMap.put("clientName", "미지정");
+                                }
+                            } catch (Exception e) {
+                                log.warn("내담자 정보 조회 실패: clientId={}, error={}", schedule.getClientId(), e.getMessage());
+                                scheduleMap.put("clientName", "미지정");
+                            }
+                        } else {
+                            scheduleMap.put("clientId", null);
+                            scheduleMap.put("clientName", "미지정");
+                        }
+                        
+                        return scheduleMap;
+                    })
+                    .collect(Collectors.toList());
+            
+            log.info("✅ 상담사별 스케줄 조회 완료: {}개", scheduleMaps.size());
+            return scheduleMaps;
+            
+        } catch (Exception e) {
+            log.error("❌ 상담사별 스케줄 조회 실패: consultantId={}, error={}", consultantId, e.getMessage(), e);
+            return new ArrayList<>();
+        }
     }
     
     /**

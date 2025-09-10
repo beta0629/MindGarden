@@ -151,8 +151,33 @@ Spring Boot 백엔드와 React 프론트엔드로 구성되어 있으며, OAuth2
 - **구매 주문 관리**: 발주 및 배송 추적 시스템
 - **예산 관리**: 부서별 예산 설정 및 사용률 추적
 - **역할 기반 접근**: 어드민/수퍼어드민 권한별 기능 분리
-- **중복 로그인 방지**: 세션 관리 및 사용자 확인 시스템
-- **캐시 시스템**: Redis 기반 비즈니스 캐시 및 자동 갱신
+
+### **9. 캐시 시스템** ⚡
+- **이중 캐시 구조**: Spring Cache + Redis 직접 접근
+- **캐시별 TTL 설정**: 사용자(60분), 스케줄(30분), 아이템(30분), 구매요청(15분), 예산(60분)
+- **자동 캐시 갱신**: 데이터 변경 시 자동 무효화
+- **패턴 기반 제거**: `items:*` 패턴으로 관련 캐시 일괄 제거
+- **타입 안전성**: 제네릭을 통한 타입 안전한 조회
+- **에러 처리**: 캐시 실패 시 자동 폴백 및 로깅
+
+**주요 컴포넌트**:
+- `CacheService.java`: 캐시 서비스 인터페이스
+- `CacheServiceImpl.java`: 이중 캐시 구현체
+- `CacheConfig.java`: Redis 설정 및 TTL 관리
+
+### **10. 중복 로그인 방지 시스템** 🔐
+- **세션 기반 감지**: 데이터베이스 세션 테이블을 통한 중복 로그인 감지
+- **사용자 확인 모달**: 중복 로그인 시 사용자에게 확인 요청
+- **개발 환경 비활성화**: 개발 중 불편함 방지를 위한 자동 비활성화
+- **운영 환경 활성화**: 프로덕션에서 보안 강화
+- **세션 자동 정리**: 만료된 세션 자동 제거
+- **사용자 친화적 UI**: 명확한 안내 메시지와 선택 옵션
+
+**주요 컴포넌트**:
+- `UserSessionService.java`: 세션 관리 서비스
+- `UserSessionServiceImpl.java`: 세션 관리 구현체
+- `DuplicateLoginModal.js`: 중복 로그인 확인 모달
+- `duplicateLoginManager.js`: 프론트엔드 중복 로그인 관리
 
 **주요 엔티티**:
 - `Item`: 아이템 정보 (이름, 카테고리, 단가, 재고, 공급업체)
@@ -169,7 +194,7 @@ Spring Boot 백엔드와 React 프론트엔드로 구성되어 있으며, OAuth2
 - `AdminApprovalDashboard.js`: 관리자 승인 대시보드
 - `SuperAdminApprovalDashboard.js`: 수퍼어드민 승인 대시보드
 
-### **9. 데이터베이스 시스템** 🗄️
+### **11. 데이터베이스 시스템** 🗄️
 - **스키마**: 모든 테이블 정상 작동
 - **상속 구조**: User ← Client 관계 완벽 구현
 - **기본값**: created_at, updated_at, version 등 자동 설정
@@ -177,7 +202,7 @@ Spring Boot 백엔드와 React 프론트엔드로 구성되어 있으며, OAuth2
 - **SNS 사용자 매핑**: SNS 로그인 사용자도 Client 엔티티로 정상 저장
 - **ERP 테이블**: erp_items, erp_purchase_requests, erp_purchase_orders, erp_budgets
 
-### **8. 내담자 관리 시스템** 👥
+### **12. 내담자 관리 시스템** 👥
 - **카드 형태 UI**: 기존 테이블에서 현대적인 카드 레이아웃으로 변경
 - **검색 기능**: 이름과 이메일로 실시간 검색 가능
 - **필터링 기능**: 상태별(활성, 비활성, 일시정지, 완료) 필터링
@@ -190,7 +215,7 @@ Spring Boot 백엔드와 React 프론트엔드로 구성되어 있으며, OAuth2
 - **총 상담 횟수**: 실제 스케줄 데이터 기반으로 정확한 상담 횟수 표시
 - **API 통합**: 올바른 스케줄 API 엔드포인트 사용으로 데이터 정확성 확보
 
-### **9. 상담사 변경 시스템** 🔄
+### **13. 상담사 변경 시스템** 🔄
 - **활성 매핑 상담사 변경**: 활성 상태의 매핑에서 상담사 변경 가능
 - **변경 이력 추적**: 모든 상담사 변경 이력을 자동으로 기록
 - **회기수 이전**: 기존 매핑의 남은 회기수를 새 매핑으로 이전
@@ -420,6 +445,31 @@ frontend/src/components/
 - `PUT /api/client/profile` - 내담자 프로필 수정
 - `GET /api/users/{userId}/profile-image` - 프로필 이미지 조회
 
+### **ERP API**
+- `GET /api/erp/items` - 모든 아이템 조회
+- `POST /api/erp/items` - 아이템 생성 (관리자/수퍼어드민)
+- `PUT /api/erp/items/{id}` - 아이템 수정 (관리자/수퍼어드민)
+- `DELETE /api/erp/items/{id}` - 아이템 삭제 (수퍼어드민)
+- `PUT /api/erp/items/{id}/stock` - 아이템 재고 업데이트 (관리자/수퍼어드민)
+- `GET /api/erp/purchase-requests` - 모든 구매 요청 조회
+- `POST /api/erp/purchase-requests` - 구매 요청 생성
+- `GET /api/erp/purchase-requests/pending-admin` - 관리자 승인 대기 목록
+- `GET /api/erp/purchase-requests/pending-super-admin` - 수퍼어드민 승인 대기 목록
+- `POST /api/erp/purchase-requests/{id}/approve-admin` - 관리자 승인
+- `POST /api/erp/purchase-requests/{id}/reject-admin` - 관리자 거부
+- `POST /api/erp/purchase-requests/{id}/approve-super-admin` - 수퍼어드민 승인
+- `POST /api/erp/purchase-requests/{id}/reject-super-admin` - 수퍼어드민 거부
+- `GET /api/erp/purchase-orders` - 모든 구매 주문 조회
+- `POST /api/erp/purchase-orders` - 구매 주문 생성
+- `GET /api/erp/budgets` - 모든 예산 조회
+
+### **캐시 API**
+- `POST /api/admin/cache/clear` - 캐시 전체 초기화 (관리자 전용)
+
+### **세션 관리 API**
+- `POST /api/auth/check-duplicate-login` - 중복 로그인 확인
+- `POST /api/auth/confirm-duplicate-login` - 중복 로그인 확인 처리
+
 ---
 
 ## 🎨 **UI/UX 특징**
@@ -539,8 +589,11 @@ frontend/src/components/
 
 ## 🎉 **결론**
 
-**MindGarden 상담 시스템의 전체 통계 대시보드 및 스케줄 관리 시스템이 완성되었습니다!**
+**MindGarden 상담 시스템의 ERP 시스템, 캐시 시스템, 중복 로그인 방지 시스템이 완성되었습니다!**
 
+- ✅ **ERP 시스템**: 아이템 관리, 구매 요청, 구매 주문, 예산 관리 완전 구현
+- ✅ **캐시 시스템**: Redis 기반 이중 캐시, TTL 관리, 패턴 기반 제거 완성
+- ✅ **중복 로그인 방지**: 세션 기반 감지, 사용자 확인 모달, 환경별 설정 완성
 - ✅ **전체 통계 대시보드**: Chart.js 기반 차트 시각화, 필터링 기능, 상세 통계 완성
 - ✅ **전체 스케줄 관리**: 권한 기반 스케줄 조회, 상태 관리, 카드 형태 UI 완성
 - ✅ **차트 컴포넌트**: Bar, Line, Pie, Doughnut 차트 재사용 가능한 컴포넌트 완성
@@ -555,7 +608,7 @@ frontend/src/components/
 - ✅ **내담자 관리**: 카드 형태 UI, 검색/필터링, SNS 사용자 지원 완성
 - ✅ **상담사 변경 시스템**: 활성 매핑 상담사 변경, 이력 추적, 회기수 이전 완성
 
-**전체 통계 대시보드 및 스케줄 관리 시스템이 프로덕션 환경 배포 준비가 완료되었습니다!** 🚀
+**ERP 시스템, 캐시 시스템, 중복 로그인 방지 시스템이 프로덕션 환경 배포 준비가 완료되었습니다!** 🚀
 
 ---
 

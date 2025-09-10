@@ -426,7 +426,7 @@ public class AdminUserController {
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, user.getName());
             variables.put(EmailConstants.VAR_USER_EMAIL, user.getEmail());
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             
@@ -467,7 +467,7 @@ public class AdminUserController {
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, user.getName());
             variables.put(EmailConstants.VAR_USER_EMAIL, user.getEmail());
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             
@@ -508,7 +508,7 @@ public class AdminUserController {
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, user.getName());
             variables.put(EmailConstants.VAR_USER_EMAIL, user.getEmail());
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put("rejectionReason", reason != null ? reason : "자격 요건을 충족하지 못했습니다.");
@@ -543,7 +543,7 @@ public class AdminUserController {
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, toName);
             variables.put(EmailConstants.VAR_USER_EMAIL, toEmail);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put("message", message);

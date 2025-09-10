@@ -1062,7 +1062,7 @@ public class ConsultationServiceImpl implements ConsultationService {
             
             // 관리자에게 긴급 상담 알림 이메일 발송
             Map<String, Object> variables = new HashMap<>();
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put("consultationId", consultationId);
@@ -1134,7 +1134,7 @@ public class ConsultationServiceImpl implements ConsultationService {
             
             // 상담사에게 긴급 상담 할당 알림 이메일 발송
             Map<String, Object> variables = new HashMap<>();
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put("consultationId", consultationId);
@@ -1926,7 +1926,7 @@ public class ConsultationServiceImpl implements ConsultationService {
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
             variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");
@@ -1967,7 +1967,7 @@ public class ConsultationServiceImpl implements ConsultationService {
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
             variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");
@@ -2008,7 +2008,7 @@ public class ConsultationServiceImpl implements ConsultationService {
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
             variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");
@@ -2051,7 +2051,7 @@ public class ConsultationServiceImpl implements ConsultationService {
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, clientName);
             variables.put(EmailConstants.VAR_USER_EMAIL, clientEmail);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put(EmailConstants.VAR_APPOINTMENT_DATE, consultation.getConsultationDate() != null ? consultation.getConsultationDate().toString() : "");

@@ -350,7 +350,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             // 이메일 템플릿 변수 설정
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_EMAIL, email);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put("verificationCode", code);
@@ -386,7 +386,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, name);
             variables.put(EmailConstants.VAR_USER_EMAIL, email);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put("provider", provider);

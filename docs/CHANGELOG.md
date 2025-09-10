@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-01-10] - 이메일 시스템 구현 및 브랜드명 변경
+
+### 🆕 새로운 기능
+- **실제 이메일 발송 시스템**
+  - Gmail SMTP를 통한 실제 이메일 발송 기능 구현
+  - JavaMailSender를 활용한 MIME 메시지 생성 및 발송
+  - 이메일 템플릿 시스템 (환영, 승인, 알림 등)
+  - 이메일 발송 상태 추적 및 재시도 기능
+
+- **이메일 테스트 시스템**
+  - EmailTestController를 통한 이메일 발송 테스트 API
+  - MockEmailServiceImpl을 통한 테스트 모드 지원
+  - 이메일 발송 제한 및 통계 기능
+
+- **브랜드명 통일**
+  - "마음정원"을 "mindgarden"으로 전면 변경
+  - 이메일 제목, 발신자명, 템플릿 내용 일관성 확보
+  - 모든 서비스에서 브랜드명 통일
+
+### 🔧 개선사항
+- **이메일 설정 관리**
+  - application-local.yml에 Gmail SMTP 설정 추가
+  - 환경별 이메일 설정 분리 (로컬/운영)
+  - 이메일 발송 모드 전환 기능 (실제/Mock)
+
+- **보안 설정**
+  - 이메일 테스트 API 접근 권한 설정
+  - Gmail App Password를 통한 안전한 인증
+
+### 📝 기술적 변경사항
+- **의존성 추가**: spring-boot-starter-mail
+- **새로운 클래스**:
+  - EmailConfig: JavaMailSender 설정
+  - EmailTestController: 이메일 테스트 API
+  - MockEmailServiceImpl: 테스트용 이메일 서비스
+- **수정된 클래스**:
+  - EmailServiceImpl: 실제 SMTP 발송 로직 구현
+  - EmailConstants: 브랜드명 변경
+  - 모든 서비스 클래스: 이메일 변수 업데이트
+
 ## [2025-01-09] - 중복 로그인 방지 시스템 구현
 
 ### 🆕 새로운 기능

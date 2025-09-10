@@ -54,6 +54,7 @@ public class SecurityConfig {
                 authz.requestMatchers(
                     "/api/auth/**", 
                     "/oauth2/**",
+                    "/api/test/email/**",
                     "/error",
                     "/actuator/health",
                     "/actuator/info"

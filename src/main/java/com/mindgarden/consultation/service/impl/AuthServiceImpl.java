@@ -344,7 +344,7 @@ public class AuthServiceImpl implements AuthService {
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, name);
             variables.put(EmailConstants.VAR_USER_EMAIL, email);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put(EmailConstants.VAR_RESET_LINK, "https://mindgarden.com/reset-password?token=" + resetToken);
@@ -379,7 +379,7 @@ public class AuthServiceImpl implements AuthService {
             Map<String, Object> variables = new HashMap<>();
             variables.put(EmailConstants.VAR_USER_NAME, name);
             variables.put(EmailConstants.VAR_USER_EMAIL, email);
-            variables.put(EmailConstants.VAR_COMPANY_NAME, "마음정원");
+            variables.put(EmailConstants.VAR_COMPANY_NAME, "mindgarden");
             variables.put(EmailConstants.VAR_SUPPORT_EMAIL, EmailConstants.SUPPORT_EMAIL);
             variables.put(EmailConstants.VAR_CURRENT_YEAR, String.valueOf(java.time.Year.now().getValue()));
             variables.put("resetMessage", "비밀번호가 성공적으로 변경되었습니다.");

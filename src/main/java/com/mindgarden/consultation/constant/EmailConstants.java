@@ -23,21 +23,21 @@ public final class EmailConstants {
     public static final String TEMPLATE_SYSTEM_NOTIFICATION = "SYSTEM_NOTIFICATION";
     
     // === 이메일 제목 ===
-    public static final String SUBJECT_WELCOME = "[마음정원] 회원가입을 환영합니다";
-    public static final String SUBJECT_CONSULTANT_APPROVAL = "[마음정원] 상담사 승인 완료";
-    public static final String SUBJECT_CONSULTANT_REJECTION = "[마음정원] 상담사 신청 결과 안내";
-    public static final String SUBJECT_ADMIN_APPROVAL = "[마음정원] 관리자 승인 완료";
-    public static final String SUBJECT_PASSWORD_RESET = "[마음정원] 비밀번호 재설정";
-    public static final String SUBJECT_ACCOUNT_ACTIVATION = "[마음정원] 계정 활성화";
-    public static final String SUBJECT_APPOINTMENT_CONFIRMATION = "[마음정원] 상담 예약 확인";
-    public static final String SUBJECT_APPOINTMENT_REMINDER = "[마음정원] 상담 예약 알림";
-    public static final String SUBJECT_PAYMENT_CONFIRMATION = "[마음정원] 결제 완료 안내";
-    public static final String SUBJECT_PAYMENT_FAILED = "[마음정원] 결제 실패 안내";
-    public static final String SUBJECT_SYSTEM_NOTIFICATION = "[마음정원] 시스템 알림";
+    public static final String SUBJECT_WELCOME = "[mindgarden] 회원가입을 환영합니다";
+    public static final String SUBJECT_CONSULTANT_APPROVAL = "[mindgarden] 상담사 승인 완료";
+    public static final String SUBJECT_CONSULTANT_REJECTION = "[mindgarden] 상담사 신청 결과 안내";
+    public static final String SUBJECT_ADMIN_APPROVAL = "[mindgarden] 관리자 승인 완료";
+    public static final String SUBJECT_PASSWORD_RESET = "[mindgarden] 비밀번호 재설정";
+    public static final String SUBJECT_ACCOUNT_ACTIVATION = "[mindgarden] 계정 활성화";
+    public static final String SUBJECT_APPOINTMENT_CONFIRMATION = "[mindgarden] 상담 예약 확인";
+    public static final String SUBJECT_APPOINTMENT_REMINDER = "[mindgarden] 상담 예약 알림";
+    public static final String SUBJECT_PAYMENT_CONFIRMATION = "[mindgarden] 결제 완료 안내";
+    public static final String SUBJECT_PAYMENT_FAILED = "[mindgarden] 결제 실패 안내";
+    public static final String SUBJECT_SYSTEM_NOTIFICATION = "[mindgarden] 시스템 알림";
     
     // === 이메일 설정 ===
     public static final String FROM_EMAIL = "noreply@mindgarden.com";
-    public static final String FROM_NAME = "마음정원";
+    public static final String FROM_NAME = "mindgarden";
     public static final String REPLY_TO_EMAIL = "support@mindgarden.com";
     public static final String SUPPORT_EMAIL = "support@mindgarden.com";
     

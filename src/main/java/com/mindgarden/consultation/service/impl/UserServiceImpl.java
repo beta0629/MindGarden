@@ -566,7 +566,7 @@ public class UserServiceImpl implements UserService {
             variables.put("userName", user.getName());
             variables.put("userEmail", user.getEmail());
             variables.put("tempPassword", tempPassword);
-            variables.put("companyName", "마음정원");
+            variables.put("companyName", "mindgarden");
             variables.put("supportEmail", "support@mindgarden.com");
             variables.put("currentYear", String.valueOf(java.time.Year.now().getValue()));
             

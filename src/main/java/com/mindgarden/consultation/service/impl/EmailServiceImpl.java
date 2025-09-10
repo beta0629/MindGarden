@@ -14,8 +14,13 @@ import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.dto.EmailRequest;
 import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.service.EmailService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -28,6 +33,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class EmailServiceImpl implements EmailService {
+    
+    @Autowired
+    private JavaMailSender javaMailSender;
     
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5);
     private final Map<String, EmailResponse> emailStatusMap = new ConcurrentHashMap<>();
@@ -335,34 +343,53 @@ public class EmailServiceImpl implements EmailService {
     }
     
     private EmailResponse sendEmailInternal(EmailRequest request, String emailId) {
-        // 실제 구현에서는 외부 이메일 서비스 (SendGrid, AWS SES, SMTP 등) 연동
-        // 현재는 시뮬레이션
-        
         try {
-            // 이메일 발송 시뮬레이션 (90% 성공률)
-            boolean success = Math.random() > 0.1;
+            // MimeMessage 생성
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
             
-            EmailResponse response = EmailResponse.builder()
+            // 발신자 설정
+            String fromEmail = StringUtils.hasText(request.getFromEmail()) ? 
+                request.getFromEmail() : EmailConstants.FROM_EMAIL;
+            String fromName = StringUtils.hasText(request.getFromName()) ? 
+                request.getFromName() : EmailConstants.FROM_NAME;
+            
+            helper.setFrom(fromEmail, fromName);
+            
+            // 수신자 설정
+            helper.setTo(request.getToEmail());
+            
+            // 제목 설정
+            helper.setSubject(request.getSubject());
+            
+            // 내용 설정 (HTML 또는 TEXT)
+            boolean isHtml = "HTML".equalsIgnoreCase(request.getType());
+            helper.setText(request.getContent(), isHtml);
+            
+            // 회신 주소 설정
+            helper.setReplyTo(EmailConstants.REPLY_TO_EMAIL);
+            
+            // 실제 이메일 발송
+            javaMailSender.send(mimeMessage);
+            
+            log.info("이메일 발송 성공: emailId={}, to={}, subject={}", 
+                emailId, request.getToEmail(), request.getSubject());
+            
+            return EmailResponse.builder()
                     .emailId(emailId)
-                    .status(success ? EmailConstants.STATUS_SENT : EmailConstants.STATUS_FAILED)
-                    .success(success)
-                    .message(success ? EmailConstants.SUCCESS_EMAIL_SENT : EmailConstants.ERROR_EMAIL_SEND_FAILED)
+                    .status(EmailConstants.STATUS_SENT)
+                    .success(true)
+                    .message(EmailConstants.SUCCESS_EMAIL_SENT)
                     .toEmail(request.getToEmail())
                     .subject(request.getSubject())
                     .sentAt(LocalDateTime.now())
                     .retryCount(0)
-                    .externalId("ext_" + emailId)
+                    .externalId("smtp_" + emailId)
                     .build();
             
-            if (!success) {
-                response.setErrorCode("SEND_FAILED");
-                response.setErrorMessage("이메일 발송 중 오류가 발생했습니다.");
-            }
-            
-            return response;
-            
-        } catch (Exception e) {
-            log.error("이메일 발송 내부 오류: emailId={}, error={}", emailId, e.getMessage(), e);
+        } catch (MessagingException e) {
+            log.error("이메일 발송 실패 (MessagingException): emailId={}, to={}, error={}", 
+                emailId, request.getToEmail(), e.getMessage(), e);
             
             return EmailResponse.builder()
                     .emailId(emailId)
@@ -371,8 +398,23 @@ public class EmailServiceImpl implements EmailService {
                     .message(EmailConstants.ERROR_EMAIL_SEND_FAILED)
                     .toEmail(request.getToEmail())
                     .subject(request.getSubject())
-                    .errorCode("INTERNAL_ERROR")
-                    .errorMessage(e.getMessage())
+                    .errorCode("MESSAGING_ERROR")
+                    .errorMessage("이메일 메시지 생성 실패: " + e.getMessage())
+                    .build();
+                    
+        } catch (Exception e) {
+            log.error("이메일 발송 실패 (Exception): emailId={}, to={}, error={}", 
+                emailId, request.getToEmail(), e.getMessage(), e);
+            
+            return EmailResponse.builder()
+                    .emailId(emailId)
+                    .status(EmailConstants.STATUS_FAILED)
+                    .success(false)
+                    .message(EmailConstants.ERROR_EMAIL_SEND_FAILED)
+                    .toEmail(request.getToEmail())
+                    .subject(request.getSubject())
+                    .errorCode("SEND_ERROR")
+                    .errorMessage("이메일 발송 중 오류 발생: " + e.getMessage())
                     .build();
         }
     }
@@ -430,7 +472,7 @@ public class EmailServiceImpl implements EmailService {
         subjects.put(EmailConstants.TEMPLATE_PAYMENT_FAILED, EmailConstants.SUBJECT_PAYMENT_FAILED);
         subjects.put(EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION, EmailConstants.SUBJECT_SYSTEM_NOTIFICATION);
         
-        return subjects.getOrDefault(templateType, "마음정원 알림");
+        return subjects.getOrDefault(templateType, "mindgarden 알림");
     }
     
     private void incrementEmailCount(String email) {
@@ -457,11 +499,11 @@ public class EmailServiceImpl implements EmailService {
             <html>
             <body>
                 <h2>안녕하세요, {{userName}}님!</h2>
-                <p>마음정원에 가입해주셔서 감사합니다.</p>
+                <p>mindgarden에 가입해주셔서 감사합니다.</p>
                 <p>계정을 활성화하려면 아래 링크를 클릭해주세요:</p>
                 <p><a href="{{activationLink}}">계정 활성화</a></p>
                 <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>마음정원 팀</p>
+                <p>감사합니다.<br>mindgarden 팀</p>
             </body>
             </html>
             """;
@@ -473,9 +515,9 @@ public class EmailServiceImpl implements EmailService {
             <body>
                 <h2>축하합니다, {{userName}}님!</h2>
                 <p>상담사 승인이 완료되었습니다.</p>
-                <p>이제 마음정원에서 상담 서비스를 제공하실 수 있습니다.</p>
+                <p>이제 mindgarden에서 상담 서비스를 제공하실 수 있습니다.</p>
                 <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>마음정원 팀</p>
+                <p>감사합니다.<br>mindgarden 팀</p>
             </body>
             </html>
             """;
@@ -489,7 +531,7 @@ public class EmailServiceImpl implements EmailService {
                 <p>상담사 신청에 대한 검토 결과를 안내드립니다.</p>
                 <p>현재 자격 요건을 충족하지 못하여 승인이 어렵습니다.</p>
                 <p>자세한 내용은 {{supportEmail}}로 문의해주세요.</p>
-                <p>감사합니다.<br>마음정원 팀</p>
+                <p>감사합니다.<br>mindgarden 팀</p>
             </body>
             </html>
             """;
@@ -501,9 +543,9 @@ public class EmailServiceImpl implements EmailService {
             <body>
                 <h2>축하합니다, {{userName}}님!</h2>
                 <p>관리자 승인이 완료되었습니다.</p>
-                <p>이제 마음정원의 관리자 권한을 사용하실 수 있습니다.</p>
+                <p>이제 mindgarden의 관리자 권한을 사용하실 수 있습니다.</p>
                 <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>마음정원 팀</p>
+                <p>감사합니다.<br>mindgarden 팀</p>
             </body>
             </html>
             """;
@@ -520,7 +562,7 @@ public class EmailServiceImpl implements EmailService {
                 <p><a href="{{resetLink}}">비밀번호 재설정</a></p>
                 <p>이 링크는 24시간 후 만료됩니다.</p>
                 <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>마음정원 팀</p>
+                <p>감사합니다.<br>mindgarden 팀</p>
             </body>
             </html>
             """;
@@ -533,9 +575,9 @@ public class EmailServiceImpl implements EmailService {
                 <h2>계정 활성화</h2>
                 <p>안녕하세요, {{userName}}님</p>
                 <p>계정이 성공적으로 활성화되었습니다.</p>
-                <p>이제 마음정원의 모든 서비스를 이용하실 수 있습니다.</p>
+                <p>이제 mindgarden의 모든 서비스를 이용하실 수 있습니다.</p>
                 <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>마음정원 팀</p>
+                <p>감사합니다.<br>mindgarden 팀</p>
             </body>
             </html>
             """;
@@ -551,7 +593,7 @@ public class EmailServiceImpl implements EmailService {
                 <p><strong>상담사:</strong> {{consultantName}}</p>
                 <p><strong>일시:</strong> {{appointmentDate}} {{appointmentTime}}</p>
                 <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>마음정원 팀</p>
+                <p>감사합니다.<br>mindgarden 팀</p>
             </body>
             </html>
             """;
@@ -567,7 +609,7 @@ public class EmailServiceImpl implements EmailService {
                 <p><strong>상담사:</strong> {{consultantName}}</p>
                 <p><strong>일시:</strong> {{appointmentDate}} {{appointmentTime}}</p>
                 <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>마음정원 팀</p>
+                <p>감사합니다.<br>mindgarden 팀</p>
             </body>
             </html>
             """;
@@ -583,7 +625,7 @@ public class EmailServiceImpl implements EmailService {
                 <p><strong>결제 금액:</strong> {{paymentAmount}}원</p>
                 <p><strong>결제 방법:</strong> {{paymentMethod}}</p>
                 <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>마음정원 팀</p>
+                <p>감사합니다.<br>mindgarden 팀</p>
             </body>
             </html>
             """;
@@ -598,7 +640,7 @@ public class EmailServiceImpl implements EmailService {
                 <p>결제 처리 중 오류가 발생했습니다.</p>
                 <p>다시 시도해주시거나 다른 결제 방법을 이용해주세요.</p>
                 <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>마음정원 팀</p>
+                <p>감사합니다.<br>mindgarden 팀</p>
             </body>
             </html>
             """;
@@ -612,7 +654,7 @@ public class EmailServiceImpl implements EmailService {
                 <p>안녕하세요, {{userName}}님</p>
                 <p>{{message}}</p>
                 <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
-                <p>감사합니다.<br>마음정원 팀</p>
+                <p>감사합니다.<br>mindgarden 팀</p>
             </body>
             </html>
             """;

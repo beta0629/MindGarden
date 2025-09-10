@@ -302,6 +302,7 @@ const SummaryPanels = ({ user, consultationData }) => {
           </div>
         </div>
       )}
+
       
       {/* 시스템 현황 (관리자 전용) */}
       {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (

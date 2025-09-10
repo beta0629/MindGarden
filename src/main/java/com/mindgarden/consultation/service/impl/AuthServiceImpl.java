@@ -14,6 +14,7 @@ import com.mindgarden.consultation.service.JwtService;
 import com.mindgarden.consultation.service.UserService;
 import com.mindgarden.consultation.service.UserSessionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -51,6 +52,14 @@ public class AuthServiceImpl implements AuthService {
     
     @Autowired
     private UserSessionService userSessionService;
+    
+    // 개발 환경에서 중복 로그인 체크 비활성화 설정
+    @Value("${session.duplicate-login-check.enabled:true}")
+    private boolean duplicateLoginCheckEnabled;
+    
+    // 사용자에게 기존 세션 종료 확인 요청 설정
+    @Value("${session.duplicate-login-check.ask-user-confirmation:false}")
+    private boolean askUserConfirmation;
     
     @Override
     public AuthResponse authenticate(String email, String password) {
@@ -129,27 +138,56 @@ public class AuthServiceImpl implements AuthService {
         try {
             log.info("🔐 세션 기반 로그인 시도: email={}, sessionId={}", email, sessionId);
             
+            // 먼저 중복 세션 정리 (같은 sessionId를 가진 중복 세션 삭제)
+            log.info("🧹 중복 세션 정리 시작: sessionId={}", sessionId);
+            System.out.println("🧹 중복 세션 정리 시작: sessionId=" + sessionId);
+            try {
+                int cleanedCount = userSessionService.cleanupDuplicateSessions(sessionId);
+                if (cleanedCount > 0) {
+                    log.info("🧹 중복 세션 정리 완료: sessionId={}, cleanedCount={}", sessionId, cleanedCount);
+                    System.out.println("🧹 중복 세션 정리 완료: sessionId=" + sessionId + ", cleanedCount=" + cleanedCount);
+                } else {
+                    log.info("✅ 중복 세션 없음: sessionId={}", sessionId);
+                    System.out.println("✅ 중복 세션 없음: sessionId=" + sessionId);
+                }
+            } catch (Exception e) {
+                log.error("❌ 중복 세션 정리 실패: sessionId={}, error={}", sessionId, e.getMessage(), e);
+                System.out.println("❌ 중복 세션 정리 실패: sessionId=" + sessionId + ", error=" + e.getMessage());
+            }
+            
             // Spring Security 인증
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password)
             );
             
             if (authentication.isAuthenticated()) {
+                log.info("🔐 Spring Security 인증 성공: email={}", email);
+                
                 // 사용자 정보 조회
                 User user = userService.findByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
                 
-                // 중복 로그인 체크 (새 세션 생성 전)
-                boolean hasDuplicateLogin = checkDuplicateLogin(user);
+                log.info("👤 사용자 정보 조회 완료: userId={}, email={}", user.getId(), email);
                 
-                if (hasDuplicateLogin) {
-                    log.warn("⚠️ 중복 로그인 감지: email={}", email);
+                // 중복 로그인 체크 (설정에 따라 활성화/비활성화)
+                if (duplicateLoginCheckEnabled) {
+                    boolean hasDuplicateLogin = checkDuplicateLogin(user);
                     
-                    if (SessionManagementConstants.TERMINATE_EXISTING_SESSION) {
-                        // 기존 세션들 정리
-                        cleanupUserSessions(user, SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);
-                        log.info("🔄 기존 세션 정리 완료: email={}", email);
+                    if (hasDuplicateLogin) {
+                        log.warn("⚠️ 중복 로그인 감지: email={}", email);
+                        
+                        if (askUserConfirmation) {
+                            // 사용자에게 기존 세션 종료 확인 요청
+                            log.info("🔔 사용자에게 기존 세션 종료 확인 요청: email={}", email);
+                            return AuthResponse.duplicateLoginConfirmation("다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?");
+                        } else if (SessionManagementConstants.TERMINATE_EXISTING_SESSION) {
+                            // 기존 세션들 정리
+                            cleanupUserSessions(user, SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);
+                            log.info("🔄 기존 세션 정리 완료: email={}", email);
+                        }
                     }
+                } else {
+                    log.info("🔧 개발 환경: 중복 로그인 체크 비활성화됨");
                 }
                 
                 // 새 세션 생성 (중복 로그인 체크 후)

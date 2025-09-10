@@ -3,13 +3,13 @@ package com.mindgarden.consultation.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.entity.UserSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import com.mindgarden.consultation.entity.User;
-import com.mindgarden.consultation.entity.UserSession;
 
 /**
  * 사용자 세션 관리 Repository
@@ -83,4 +83,18 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
      */
     @Query("SELECT us.user.id, COUNT(us) FROM UserSession us WHERE us.isActive = true AND us.expiresAt > :now GROUP BY us.user.id")
     List<Object[]> getActiveSessionStatistics(@Param("now") LocalDateTime now);
+    
+    /**
+     * 세션 ID로 모든 세션 조회 (활성/비활성 포함)
+     */
+    @Query("SELECT us FROM UserSession us WHERE us.sessionId = :sessionId")
+    List<UserSession> findBySessionId(@Param("sessionId") String sessionId);
+    
+    /**
+     * 세션 ID로 세션 삭제
+     */
+    @Modifying
+    @Query("DELETE FROM UserSession us WHERE us.sessionId = :sessionId")
+    void deleteBySessionId(@Param("sessionId") String sessionId);
+    
 }

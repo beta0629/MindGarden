@@ -173,7 +173,13 @@ public class AuthController {
             }
             
             // 현재 세션을 제외한 중복 로그인 체크
-            String currentSessionId = session.getId();
+            // HTTP 세션 ID 대신 데이터베이스의 세션 ID를 사용
+            String currentSessionId = (String) session.getAttribute("sessionId");
+            if (currentSessionId == null) {
+                // 세션 ID가 없으면 HTTP 세션 ID를 사용 (하위 호환성)
+                currentSessionId = session.getId();
+            }
+            
             boolean hasDuplicateLogin = userSessionService.checkDuplicateLoginExcludingCurrent(user, currentSessionId);
             
             Map<String, Object> response = new HashMap<>();
@@ -188,6 +194,88 @@ public class AuthController {
             return ResponseEntity.status(500).body(Map.of(
                 "success", false,
                 "message", "중복 로그인 체크에 실패했습니다."
+            ));
+        }
+    }
+    
+    /**
+     * 중복 로그인 확인 처리 API
+     */
+    @PostMapping("/confirm-duplicate-login")
+    public ResponseEntity<?> confirmDuplicateLogin(@RequestBody Map<String, Object> request, HttpSession session, 
+                                                  jakarta.servlet.http.HttpServletRequest httpRequest) {
+        try {
+            String email = (String) request.get("email");
+            String password = (String) request.get("password");
+            Boolean confirmTerminate = (Boolean) request.get("confirmTerminate");
+            
+            if (email == null || password == null || confirmTerminate == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "필수 정보가 누락되었습니다."
+                ));
+            }
+            
+            log.info("🔔 중복 로그인 확인 처리: email={}, confirmTerminate={}", email, confirmTerminate);
+            
+            // 클라이언트 정보 추출
+            String clientIp = getClientIpAddress(httpRequest);
+            String userAgent = httpRequest.getHeader("User-Agent");
+            String sessionId = session.getId();
+            
+            if (confirmTerminate) {
+                // 사용자가 기존 세션 종료를 확인한 경우
+                // 사용자 조회
+                User user = userRepository.findByEmail(email).orElse(null);
+                if (user == null) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "사용자를 찾을 수 없습니다."
+                    ));
+                }
+                
+                // 기존 세션들 정리
+                authService.cleanupUserSessions(user, "USER_CONFIRMED_TERMINATE");
+                log.info("🔄 사용자 확인으로 기존 세션 정리 완료: email={}", email);
+            }
+            
+            // 로그인 재시도
+            AuthResponse authResponse = authService.authenticateWithSession(
+                email, password, sessionId, clientIp, userAgent
+            );
+            
+            if (authResponse.isSuccess()) {
+                // 사용자 정보 세션에 저장
+                User sessionUser = new User();
+                sessionUser.setId(authResponse.getUser().getId());
+                sessionUser.setEmail(authResponse.getUser().getEmail());
+                sessionUser.setName(authResponse.getUser().getName());
+                sessionUser.setRole(UserRole.fromString(authResponse.getUser().getRole()));
+                
+                SessionUtils.setCurrentUser(session, sessionUser);
+                
+                log.info("✅ 중복 로그인 확인 후 로그인 성공: {}", email);
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "로그인 성공");
+                response.put("user", authResponse.getUser());
+                response.put("sessionId", sessionId);
+                
+                return ResponseEntity.ok(response);
+            } else {
+                log.warn("❌ 중복 로그인 확인 후 로그인 실패: {}", authResponse.getMessage());
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", authResponse.getMessage()
+                ));
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 중복 로그인 확인 처리 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "중복 로그인 확인 처리 중 오류가 발생했습니다: " + e.getMessage()
             ));
         }
     }
@@ -249,6 +337,9 @@ public class AuthController {
             String sessionId = session.getId();
             
             // 중복로그인 방지 기능이 포함된 세션 기반 인증
+            log.info("🔐 authenticateWithSession 호출 시작: email={}, sessionId={}", request.getEmail(), sessionId);
+            System.out.println("🔐 authenticateWithSession 호출 시작: email=" + request.getEmail() + ", sessionId=" + sessionId);
+            
             AuthResponse authResponse = authService.authenticateWithSession(
                 request.getEmail(), 
                 request.getPassword(), 
@@ -256,6 +347,8 @@ public class AuthController {
                 clientIp, 
                 userAgent
             );
+            log.info("🔐 authenticateWithSession 호출 완료: success={}", authResponse.isSuccess());
+            System.out.println("🔐 authenticateWithSession 호출 완료: success=" + authResponse.isSuccess());
             
             if (authResponse.isSuccess()) {
                 // 사용자 정보 세션에 저장 (UserDto -> User 변환)
@@ -267,6 +360,9 @@ public class AuthController {
                 
                 SessionUtils.setCurrentUser(session, sessionUser);
                 
+                // 데이터베이스 세션 ID를 HTTP 세션에 저장 (중복 로그인 체크용)
+                session.setAttribute("sessionId", sessionId);
+                
                 log.info("✅ 로그인 성공: {}", request.getEmail());
                 
                 // 응답 데이터 구성
@@ -277,6 +373,15 @@ public class AuthController {
                 response.put("sessionId", sessionId);
                 
                 return ResponseEntity.ok(response);
+            } else if (authResponse.isRequiresConfirmation()) {
+                // 중복 로그인 확인 요청
+                log.info("🔔 중복 로그인 확인 요청: {}", request.getEmail());
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", authResponse.getMessage(),
+                    "requiresConfirmation", true,
+                    "responseType", "duplicate_login_confirmation"
+                ));
             } else {
                 log.warn("❌ 로그인 실패: {}", authResponse.getMessage());
                 return ResponseEntity.badRequest().body(Map.of(

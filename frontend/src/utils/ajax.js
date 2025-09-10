@@ -232,6 +232,7 @@ export const authAPI = {
   getOAuth2Config: () => apiGet(AUTH_API.GET_OAUTH2_CONFIG),
   refreshToken: (data) => apiPost(AUTH_API.REFRESH_TOKEN, data),
   getCurrentUser: () => apiGet(AUTH_API.GET_CURRENT_USER),
+  confirmDuplicateLogin: (data) => apiPost(AUTH_API.CONFIRM_DUPLICATE_LOGIN, data),
   
   // 대시보드 관련 API
   getClientConsultations: (userId) => apiGet(`${CONSULTATION_API.GET_CONSULTATIONS}/client/${userId}`),

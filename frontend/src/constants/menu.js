@@ -95,6 +95,11 @@ export const SUPER_ADMIN_MENU_ITEMS = {
       id: 'finance',
       label: '자금 관리',
       icon: 'bi-currency-dollar'
+    },
+    ERP: {
+      id: 'erp',
+      label: 'ERP 관리',
+      icon: 'bi-box-seam'
     }
   },
   SUB: {
@@ -125,6 +130,15 @@ export const SUPER_ADMIN_MENU_ITEMS = {
       { id: 'finance-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' },
       { id: 'finance-reports', label: '재무 보고서', path: '/super-admin/finance-reports', icon: 'bi-file-earmark-bar-graph' },
       { id: 'finance-settings', label: '자금 설정', path: '/super-admin/finance-settings', icon: 'bi-gear' }
+    ],
+    erp: [
+      { id: 'erp-dashboard', label: 'ERP 대시보드', path: '/erp/dashboard', icon: 'bi-speedometer2' },
+      { id: 'erp-purchase-requests', label: '구매 요청', path: '/erp/purchase-requests', icon: 'bi-cart-plus' },
+      { id: 'erp-approvals', label: '관리자 승인', path: '/erp/approvals', icon: 'bi-check-circle' },
+      { id: 'erp-super-approvals', label: '수퍼 관리자 승인', path: '/erp/super-approvals', icon: 'bi-shield-check' },
+      { id: 'erp-items', label: '아이템 관리', path: '/erp/items', icon: 'bi-box' },
+      { id: 'erp-budgets', label: '예산 관리', path: '/erp/budgets', icon: 'bi-wallet2' },
+      { id: 'erp-orders', label: '주문 관리', path: '/erp/orders', icon: 'bi-truck' }
     ]
   }
 };

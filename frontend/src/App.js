@@ -35,6 +35,11 @@ import ConsultationReport from './components/consultation/ConsultationReport';
 import ConsultantClientList from './components/consultant/ConsultantClientList';
 import ConsultantAvailability from './components/consultant/ConsultantAvailability';
 import ConsultantRecords from './components/consultant/ConsultantRecords';
+import ErpDashboard from './components/erp/ErpDashboard';
+import PurchaseRequestForm from './components/erp/PurchaseRequestForm';
+import AdminApprovalDashboard from './components/erp/AdminApprovalDashboard';
+import SuperAdminApprovalDashboard from './components/erp/SuperAdminApprovalDashboard';
+import ItemManagement from './components/erp/ItemManagement';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { sessionManager } from './utils/sessionManager';
@@ -97,8 +102,15 @@ function AppContent() {
     return logUnmount;
   }, []); // 의존성 배열을 비워서 한 번만 실행
 
-  // 중복 로그인 체크 시작/중지
+  // 중복 로그인 체크 시작/중지 (개발 환경에서는 비활성화)
   useEffect(() => {
+    // 개발 환경에서는 중복 로그인 체크 비활성화
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🛑 개발 환경: 중복 로그인 체크 비활성화');
+      duplicateLoginManager.forceStop();
+      return;
+    }
+
     if (user && sessionInfo) {
       console.log('🔍 중복 로그인 체크 시작');
       duplicateLoginManager.startChecking();
@@ -275,6 +287,25 @@ function AppContent() {
               <ComingSoon 
                 title="자금 설정"
                 description="자금 설정 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            
+            {/* ERP 라우트 */}
+            <Route path="/erp/dashboard" element={<ErpDashboard />} />
+            <Route path="/erp/purchase-requests" element={<PurchaseRequestForm />} />
+            <Route path="/erp/approvals" element={<AdminApprovalDashboard />} />
+            <Route path="/erp/super-approvals" element={<SuperAdminApprovalDashboard />} />
+            <Route path="/erp/items" element={<ItemManagement />} />
+            <Route path="/erp/budgets" element={
+              <ComingSoon 
+                title="예산 관리"
+                description="예산 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/erp/orders" element={
+              <ComingSoon 
+                title="주문 관리"
+                description="주문 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
               />
             } />
             

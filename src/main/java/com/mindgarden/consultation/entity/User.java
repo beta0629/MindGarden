@@ -3,6 +3,7 @@ package com.mindgarden.consultation.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.converter.UserRoleConverter;
@@ -42,6 +43,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User extends BaseEntity {
     
     @NotBlank(message = "사용자명은 필수입니다.")

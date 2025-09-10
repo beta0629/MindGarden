@@ -11,7 +11,12 @@ const SessionState = {
   isLoggedIn: false,
   lastCheckTime: 0,
   error: null,
-  isModalOpen: false // 모달 상태 추가
+  isModalOpen: false, // 모달 상태 추가
+  duplicateLoginModal: {
+    isOpen: false,
+    message: '',
+    loginData: null
+  } // 중복 로그인 확인 모달 상태 추가
 };
 
 // 액션 타입 정의
@@ -22,7 +27,8 @@ const SessionActionTypes = {
   SET_ERROR: 'SET_ERROR',
   CLEAR_SESSION: 'CLEAR_SESSION',
   SET_LAST_CHECK_TIME: 'SET_LAST_CHECK_TIME',
-  SET_MODAL_OPEN: 'SET_MODAL_OPEN' // 모달 상태 액션 추가
+  SET_MODAL_OPEN: 'SET_MODAL_OPEN', // 모달 상태 액션 추가
+  SET_DUPLICATE_LOGIN_MODAL: 'SET_DUPLICATE_LOGIN_MODAL' // 중복 로그인 모달 액션 추가
 };
 
 // 리듀서 함수
@@ -75,6 +81,12 @@ const sessionReducer = (state, action) => {
       return {
         ...state,
         isModalOpen: action.payload
+      };
+    
+    case SessionActionTypes.SET_DUPLICATE_LOGIN_MODAL:
+      return {
+        ...state,
+        duplicateLoginModal: action.payload
       };
     
     default:
@@ -184,13 +196,28 @@ export const SessionProvider = ({ children }) => {
         
         console.log('✅ 중앙 세션 로그인 완료:', response.user);
         return { success: true, user: response.user };
+      } else if (response && response.requiresConfirmation) {
+        // 중복 로그인 확인 요청
+        console.log('🔔 중복 로그인 확인 요청:', response.message);
+        dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
+        dispatch({ 
+          type: SessionActionTypes.SET_DUPLICATE_LOGIN_MODAL, 
+          payload: {
+            isOpen: true,
+            message: response.message,
+            loginData: loginData
+          }
+        });
+        return { success: false, requiresConfirmation: true, message: response.message };
       } else {
         console.log('❌ 로그인 실패:', response);
+        dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
         return { success: false, message: response?.message || '로그인에 실패했습니다.' };
       }
     } catch (error) {
       console.error('❌ 중앙 세션 로그인 실패:', error);
       dispatch({ type: SessionActionTypes.SET_ERROR, payload: error.message });
+      dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
       return { success: false, message: error.message };
     }
   };
@@ -297,6 +324,11 @@ export const SessionProvider = ({ children }) => {
     dispatch({ type: SessionActionTypes.SET_MODAL_OPEN, payload: isOpen });
   }, []);
 
+  // 중복 로그인 모달 상태 관리 함수
+  const setDuplicateLoginModal = useCallback((modalState) => {
+    dispatch({ type: SessionActionTypes.SET_DUPLICATE_LOGIN_MODAL, payload: modalState });
+  }, []);
+
   const value = {
     // 상태
     user: state.user,
@@ -305,6 +337,7 @@ export const SessionProvider = ({ children }) => {
     isLoggedIn: state.isLoggedIn,
     error: state.error,
     isModalOpen: state.isModalOpen,
+    duplicateLoginModal: state.duplicateLoginModal,
     
     // 액션
     checkSession,
@@ -312,6 +345,7 @@ export const SessionProvider = ({ children }) => {
     testLogin,
     logout,
     setModalOpen,
+    setDuplicateLoginModal,
     
     // 유틸리티
     hasRole: (role) => state.user?.role === role,

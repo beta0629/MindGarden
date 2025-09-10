@@ -77,7 +77,8 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           SUPER_ADMIN_MENU_ITEMS.MAIN.ADMIN,
           SUPER_ADMIN_MENU_ITEMS.MAIN.USERS,
           SUPER_ADMIN_MENU_ITEMS.MAIN.SYSTEM,
-          SUPER_ADMIN_MENU_ITEMS.MAIN.FINANCE
+          SUPER_ADMIN_MENU_ITEMS.MAIN.FINANCE,
+          SUPER_ADMIN_MENU_ITEMS.MAIN.ERP
         ],
         subMenus: SUPER_ADMIN_MENU_ITEMS.SUB
       },

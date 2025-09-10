@@ -132,6 +132,10 @@ const TabletLogin = () => {
         const dashboardPath = `/${result.user.role.toLowerCase()}/dashboard`;
         console.log('✅ 로그인 성공, 대시보드로 이동:', dashboardPath);
         navigate(dashboardPath, { replace: true });
+      } else if (result.requiresConfirmation) {
+        // 중복 로그인 확인 요청 - 모달은 SessionContext에서 자동으로 처리됨
+        console.log('🔔 중복 로그인 확인 요청:', result.message);
+        // 모달은 SessionContext에서 자동으로 표시되므로 여기서는 아무것도 하지 않음
       } else {
         console.log('❌ 로그인 실패:', result.message);
         notificationManager.show(result.message, 'error');

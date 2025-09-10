@@ -12,6 +12,7 @@ import com.mindgarden.consultation.dto.ProfileImageInfo;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.BaseRepository;
 import com.mindgarden.consultation.repository.UserRepository;
+import com.mindgarden.consultation.service.CacheService;
 import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.UserService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
@@ -49,7 +50,31 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private EmailService emailService;
     
+    @Autowired
+    private CacheService cacheService;
+    
     // ==================== BaseService 구현 ====================
+    
+    public Optional<User> findById(Long id) {
+        String cacheKey = "user:" + id;
+        
+        // 캐시에서 조회 시도
+        Optional<User> cachedUser = cacheService.get(cacheKey, User.class);
+        if (cachedUser.isPresent()) {
+            log.debug("사용자 캐시 히트: id={}", id);
+            return cachedUser;
+        }
+        
+        // 데이터베이스에서 조회
+        Optional<User> user = userRepository.findById(id);
+        if (user.isPresent()) {
+            // 캐시에 저장
+            cacheService.put(cacheKey, user.get());
+            log.debug("사용자 캐시 저장: id={}", id);
+        }
+        
+        return user;
+    }
     
     @Override
     public User save(User user) {
@@ -103,7 +128,14 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
         user.setVersion(existingUser.getVersion() + 1);
         
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        
+        // 캐시 무효화
+        String cacheKey = "user:" + savedUser.getId();
+        cacheService.evict(cacheKey);
+        log.debug("사용자 캐시 무효화: id={}", savedUser.getId());
+        
+        return savedUser;
     }
     
     @Override

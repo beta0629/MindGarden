@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
 import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
 import SystemTools from './system/SystemTools';
 import StatisticsModal from '../common/StatisticsModal';
-import LoadingSpinner from '../common/LoadingSpinner';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
 import './AdminDashboard.css';
@@ -405,6 +404,47 @@ const AdminDashboard = ({ user: propUser }) => {
                 />
             </div>
 
+            {/* ERP 관리 (어드민/수퍼어드민) */}
+            {((propUser || sessionUser)?.role === 'ADMIN' || (propUser || sessionUser)?.role === 'SUPER_ADMIN') && (
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                        <i className="bi bi-box-seam"></i>
+                        ERP 관리
+                    </h2>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/approvals')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} approvals`}>
+                                <FaCheckCircle />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>구매 요청 승인</h3>
+                                <p>상담사 구매 요청을 검토하고 승인합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/items')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} items`}>
+                                <FaBox />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>아이템 관리</h3>
+                                <p>구매 가능한 아이템을 등록하고 관리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/purchase-requests')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} purchase-requests`}>
+                                <FaShoppingCart />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>구매 요청 현황</h3>
+                                <p>전체 구매 요청 현황을 확인합니다</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* 재무 관리 (수퍼어드민 전용) */}
             {(propUser || sessionUser)?.role === 'SUPER_ADMIN' && (
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
@@ -470,6 +510,87 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
                                 <h3>자금 설정</h3>
                                 <p>재무 관련 설정을 관리합니다</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ERP 관리 (수퍼어드민 전용) */}
+            {(propUser || sessionUser)?.role === 'SUPER_ADMIN' && (
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                        <i className="bi bi-box-seam"></i>
+                        ERP 관리
+                    </h2>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/dashboard')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} erp-dashboard`}>
+                                <FaChartLine />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>ERP 대시보드</h3>
+                                <p>전체 ERP 현황을 한눈에 확인합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/purchase-requests')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} purchase-requests`}>
+                                <FaShoppingCart />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>구매 요청</h3>
+                                <p>상담사 구매 요청을 관리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/approvals')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} approvals`}>
+                                <FaCheckCircle />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>관리자 승인</h3>
+                                <p>구매 요청을 검토하고 승인합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/super-approvals')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} super-approvals`}>
+                                <FaCheckCircle />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>수퍼 관리자 승인</h3>
+                                <p>최종 승인을 처리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/items')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} items`}>
+                                <FaBox />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>아이템 관리</h3>
+                                <p>구매 가능한 아이템을 관리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/budgets')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} budgets`}>
+                                <FaWallet />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>예산 관리</h3>
+                                <p>부서별 예산을 관리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/orders')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} orders`}>
+                                <FaTruck />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>주문 관리</h3>
+                                <p>발주 및 배송을 관리합니다</p>
                             </div>
                         </div>
                     </div>

@@ -105,6 +105,14 @@ public interface UserSessionService {
     boolean extendSession(String sessionId, int minutes);
     
     /**
+     * 중복 세션 정리 (같은 sessionId를 가진 중복 세션 삭제)
+     * 
+     * @param sessionId 중복된 세션 ID
+     * @return 정리된 세션 수
+     */
+    int cleanupDuplicateSessions(String sessionId);
+    
+    /**
      * 만료된 세션 정리
      * 
      * @return 정리된 세션 수

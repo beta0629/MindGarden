@@ -40,7 +40,10 @@ export const AUTH_API = {
   
   // OAuth2 인증 URL 생성
   KAKAO_AUTHORIZE: '/api/auth/oauth2/kakao/authorize',
-  NAVER_AUTHORIZE: '/api/auth/oauth2/naver/authorize'
+  NAVER_AUTHORIZE: '/api/auth/oauth2/naver/authorize',
+  
+  // 중복 로그인 확인
+  CONFIRM_DUPLICATE_LOGIN: '/api/auth/confirm-duplicate-login'
 };
 
 // 사용자 관련 API

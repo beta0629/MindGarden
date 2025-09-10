@@ -44,6 +44,16 @@ public class AuthResponse {
     private UserDto user;
     
     /**
+     * 중복 로그인 확인 필요 여부
+     */
+    private boolean requiresConfirmation;
+    
+    /**
+     * 응답 타입 (normal, duplicate_login_confirmation)
+     */
+    private String responseType;
+    
+    /**
      * 성공 응답 생성
      */
     public static AuthResponse success(String message, String token, String refreshToken, UserDto user) {
@@ -63,6 +73,18 @@ public class AuthResponse {
         return AuthResponse.builder()
             .success(false)
             .message(message)
+            .build();
+    }
+    
+    /**
+     * 중복 로그인 확인 요청 응답 생성
+     */
+    public static AuthResponse duplicateLoginConfirmation(String message) {
+        return AuthResponse.builder()
+            .success(false)
+            .message(message)
+            .requiresConfirmation(true)
+            .responseType("duplicate_login_confirmation")
             .build();
     }
 }

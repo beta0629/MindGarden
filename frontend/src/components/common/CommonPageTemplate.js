@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
+import DuplicateLoginModal from './DuplicateLoginModal';
 
 const CommonPageTemplate = ({ 
   title, 
@@ -41,6 +42,9 @@ const CommonPageTemplate = ({
       margin: '0 auto'
     }}>
       {children}
+      
+      {/* 중복 로그인 확인 모달 */}
+      <DuplicateLoginModal />
     </div>
   );
 };

@@ -14,7 +14,7 @@ class DuplicateLoginManager {
     constructor() {
         this.checkInterval = null;
         this.isChecking = false;
-        this.checkIntervalMs = 30000; // 30초마다 체크
+        this.checkIntervalMs = 60000; // 60초마다 체크 (운영 환경 최적화)
         this.lastCheckTime = null;
     }
 
@@ -29,10 +29,10 @@ class DuplicateLoginManager {
 
         console.log('🔍 중복 로그인 체크 시작');
         
-        // 로그인 직후에는 즉시 체크하지 않고, 30초 후부터 체크 시작
+        // 로그인 직후에는 즉시 체크하지 않고, 60초 후부터 체크 시작
         setTimeout(() => {
             this.checkDuplicateLogin();
-        }, 30000); // 30초 대기
+        }, 60000); // 60초 대기
         
         // 주기적으로 체크
         this.checkInterval = setInterval(() => {
@@ -49,6 +49,16 @@ class DuplicateLoginManager {
             this.checkInterval = null;
             console.log('🛑 중복 로그인 체크 중지');
         }
+        this.isChecking = false;
+    }
+
+    /**
+     * 강제로 모든 체크 중지 (개발 환경용)
+     */
+    forceStop() {
+        this.stopChecking();
+        this.isChecking = false;
+        console.log('🛑 강제 중복 로그인 체크 중지');
     }
 
     /**
@@ -74,10 +84,24 @@ class DuplicateLoginManager {
                 }
             } else {
                 console.warn('중복 로그인 체크 실패:', response.message);
+                // 체크 실패 시 다음 체크까지 대기 시간을 늘림 (서버 부하 방지)
+                if (this.checkInterval) {
+                    clearInterval(this.checkInterval);
+                    this.checkInterval = setInterval(() => {
+                        this.checkDuplicateLogin();
+                    }, this.checkIntervalMs * 2); // 2배로 늘림
+                }
             }
 
         } catch (error) {
             console.error('❌ 중복 로그인 체크 에러:', error);
+            // 에러 발생 시 체크 주기를 늘림
+            if (this.checkInterval) {
+                clearInterval(this.checkInterval);
+                this.checkInterval = setInterval(() => {
+                    this.checkDuplicateLogin();
+                }, this.checkIntervalMs * 3); // 3배로 늘림
+            }
         } finally {
             this.isChecking = false;
         }

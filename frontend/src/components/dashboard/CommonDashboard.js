@@ -12,6 +12,7 @@ import SummaryPanels from './SummaryPanels';
 import QuickActions from './QuickActions';
 import RecentActivities from './RecentActivities';
 import ClientMessageSection from './ClientMessageSection';
+import ErpPurchaseRequestPanel from './ErpPurchaseRequestPanel';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const CommonDashboard = ({ user: propUser }) => {
@@ -606,6 +607,11 @@ const CommonDashboard = ({ user: propUser }) => {
         
         {/* 최근 활동 섹션 */}
         <RecentActivities consultationData={consultationData} />
+        
+        {/* ERP 구매 요청 섹션 (상담사 전용) */}
+        {user?.role === 'CONSULTANT' && (
+          <ErpPurchaseRequestPanel user={user} />
+        )}
         
         {/* 내담자 메시지 섹션 */}
         {user?.role === 'CLIENT' && (

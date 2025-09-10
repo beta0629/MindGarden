@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import com.mindgarden.consultation.constant.SessionManagementConstants;
@@ -36,6 +37,15 @@ public class UserSessionServiceImpl implements UserSessionService {
             log.info("🔐 새 세션 생성 시작: userId={}, sessionId={}, loginType={}", 
                     user.getId(), sessionId, loginType);
             
+            // 먼저 같은 sessionId를 가진 모든 세션을 삭제 (안전한 방식)
+            log.info("🧹 기존 세션 정리 시작: sessionId={}", sessionId);
+            try {
+                userSessionRepository.deleteBySessionId(sessionId);
+                log.info("🗑️ 기존 세션 삭제 완료: sessionId={}", sessionId);
+            } catch (Exception e) {
+                log.warn("⚠️ 기존 세션 삭제 중 오류 (무시하고 계속): sessionId={}, error={}", sessionId, e.getMessage());
+            }
+            
             // 새 세션 생성 (중복 로그인 체크는 AuthService에서 처리)
             LocalDateTime now = LocalDateTime.now();
             UserSession userSession = UserSession.builder()
@@ -52,7 +62,6 @@ public class UserSessionServiceImpl implements UserSessionService {
                     .build();
             
             UserSession savedSession = userSessionRepository.save(userSession);
-            
             log.info("✅ 세션 생성 완료: userId={}, sessionId={}", user.getId(), sessionId);
             return savedSession;
             
@@ -129,18 +138,30 @@ public class UserSessionServiceImpl implements UserSessionService {
     public boolean checkDuplicateLoginExcludingCurrent(User user, String currentSessionId) {
         try {
             List<UserSession> activeSessions = getActiveSessions(user);
+            LocalDateTime now = LocalDateTime.now();
             
-            // 현재 세션을 제외한 활성 세션 수 계산
+            // 현재 세션을 제외하고, 만료되지 않은 활성 세션 수 계산
             long otherActiveSessions = activeSessions.stream()
-                    .filter(session -> !session.getSessionId().equals(currentSessionId))
+                    .filter(session -> {
+                        // 현재 세션 ID와 다르고
+                        boolean isNotCurrentSession = !session.getSessionId().equals(currentSessionId);
+                        // 만료되지 않았고
+                        boolean isNotExpired = session.getExpiresAt() == null || 
+                                             session.getExpiresAt().isAfter(now);
+                        // 활성 상태인 세션만
+                        boolean isActive = session.getIsActive() != null && session.getIsActive();
+                        
+                        return isNotCurrentSession && isNotExpired && isActive;
+                    })
                     .count();
             
             if (otherActiveSessions > 0) {
-                log.warn("⚠️ 중복 로그인 감지 (현재 세션 제외): userId={}, otherActiveSessions={}", 
-                        user.getId(), otherActiveSessions);
+                log.warn("⚠️ 중복 로그인 감지 (현재 세션 제외): userId={}, otherActiveSessions={}, currentSessionId={}", 
+                        user.getId(), otherActiveSessions, currentSessionId);
                 return true;
             }
             
+            log.debug("✅ 중복 로그인 없음: userId={}, currentSessionId={}", user.getId(), currentSessionId);
             return false;
             
         } catch (Exception e) {
@@ -217,6 +238,45 @@ public class UserSessionServiceImpl implements UserSessionService {
             log.error("❌ 세션 연장 실패: sessionId={}, minutes={}, error={}", 
                      sessionId, minutes, e.getMessage(), e);
             return false;
+        }
+    }
+    
+    @Override
+    public int cleanupDuplicateSessions(String sessionId) {
+        try {
+            log.info("🧹 중복 세션 정리 시작: sessionId={}", sessionId);
+            
+            // 같은 sessionId를 가진 모든 세션 조회
+            List<UserSession> duplicateSessions = userSessionRepository.findBySessionId(sessionId);
+            log.info("🔍 조회된 중복 세션 수: sessionId={}, count={}", sessionId, duplicateSessions.size());
+            
+            if (duplicateSessions.isEmpty()) {
+                log.info("✅ 중복 세션 없음: sessionId={}", sessionId);
+                return 0;
+            }
+            
+            // 가장 최근 세션을 제외하고 나머지 삭제
+            UserSession latestSession = duplicateSessions.stream()
+                .max(Comparator.comparing(UserSession::getCreatedAt))
+                .orElse(null);
+            
+            log.info("📅 가장 최근 세션: sessionId={}, latestId={}", sessionId, latestSession != null ? latestSession.getId() : "null");
+            
+            int deletedCount = 0;
+            for (UserSession session : duplicateSessions) {
+                if (!session.equals(latestSession)) {
+                    userSessionRepository.delete(session);
+                    deletedCount++;
+                    log.info("🗑️ 중복 세션 삭제: id={}, sessionId={}", session.getId(), sessionId);
+                }
+            }
+            
+            log.info("✅ 중복 세션 정리 완료: sessionId={}, deletedCount={}", sessionId, deletedCount);
+            return deletedCount;
+            
+        } catch (Exception e) {
+            log.error("❌ 중복 세션 정리 실패: sessionId={}, error={}", sessionId, e.getMessage(), e);
+            return 0;
         }
     }
     

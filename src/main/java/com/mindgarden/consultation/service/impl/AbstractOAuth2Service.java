@@ -89,6 +89,12 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                 user = userRepository.findById(existingUserId)
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
                 
+                // 사용자 null 체크 추가
+                if (user == null) {
+                    log.error("사용자 조회 실패: userId={}", existingUserId);
+                    throw new RuntimeException("사용자를 찾을 수 없습니다.");
+                }
+                
                 // 소셜 계정 정보 업데이트
                 updateSocialAccountInfo(user.getId(), socialUserInfo);
                 
@@ -102,6 +108,12 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                     .requiresSignup(true) // 회원가입 필요 플래그
                     .socialUserInfo(socialUserInfo) // 소셜 사용자 정보 포함
                     .build();
+            }
+            
+            // 사용자 null 체크
+            if (user == null) {
+                log.error("사용자가 null입니다. existingUserId={}", existingUserId);
+                throw new RuntimeException("사용자 정보를 찾을 수 없습니다.");
             }
             
             // 5. JWT 토큰 생성

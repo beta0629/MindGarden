@@ -56,7 +56,7 @@ public class HomeController {
             model.addAttribute("satisfactionRate", 0);
         }
         
-        return "index";
+        return "homepage/main";
     }
     
     /**

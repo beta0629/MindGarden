@@ -31,13 +31,13 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
 
     private final RestTemplate restTemplate;
 
-    @Value("${development.security.oauth2.naver.client-id}")
+    @Value("${spring.security.oauth2.client.registration.naver.client-id:dummy}")
     private String clientId;
 
-    @Value("${development.security.oauth2.naver.client-secret}")
+    @Value("${spring.security.oauth2.client.registration.naver.client-secret:dummy}")
     private String clientSecret;
 
-    @Value("${development.security.oauth2.naver.redirect-uri}")
+    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:http://localhost:8080/api/auth/naver/callback}")
     private String redirectUri;
     
     public NaverOAuth2ServiceImpl(
@@ -113,7 +113,7 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
             params.add("client_secret", clientSecret);
             params.add("code", code);
             params.add("state", "naver_oauth_state"); // 보안을 위한 state 값
-            params.add("redirect_uri", redirectUri.replace("{baseUrl}", "http://localhost:8080"));
+            params.add("redirect_uri", redirectUri);
             
             HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
             

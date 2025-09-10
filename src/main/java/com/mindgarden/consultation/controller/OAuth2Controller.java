@@ -35,22 +35,22 @@ public class OAuth2Controller {
     private final OAuth2FactoryService oauth2FactoryService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     
-    @Value("${development.security.oauth2.kakao.client-id}")
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
     private String kakaoClientId;
     
-    @Value("${development.security.oauth2.kakao.redirect-uri}")
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:http://localhost:8080/api/auth/kakao/callback}")
     private String kakaoRedirectUri;
     
-    @Value("${development.security.oauth2.kakao.scope}")
+    @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,account_email}")
     private String kakaoScope;
     
-    @Value("${development.security.oauth2.naver.client-id}")
+    @Value("${spring.security.oauth2.client.registration.naver.client-id:dummy}")
     private String naverClientId;
     
-    @Value("${development.security.oauth2.naver.redirect-uri}")
+    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:http://localhost:8080/api/auth/naver/callback}")
     private String naverRedirectUri;
     
-    @Value("${development.security.oauth2.naver.scope}")
+    @Value("${spring.security.oauth2.client.registration.naver.scope:name,email}")
     private String naverScope;
     
     /**
@@ -328,6 +328,7 @@ public class OAuth2Controller {
         }
         
         if (code == null) {
+            log.warn("카카오 OAuth2 콜백에서 인증 코드가 없습니다. error={}, state={}", error, state);
             return ResponseEntity.status(302)
                 .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode("인증코드없음", StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();

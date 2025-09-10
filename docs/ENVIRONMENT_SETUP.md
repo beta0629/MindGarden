@@ -4,6 +4,24 @@
 
 MindGarden 통합 상담관리 시스템은 **로컬(Local)**과 **운영(Production)** 2개 환경 모드를 지원합니다.
 
+## ⚠️ 중요: 설정 파일 백업
+
+**로컬 개발 환경 설정이 손실될 경우를 대비해 백업본을 제공합니다:**
+
+- **원본**: `src/main/resources/application-local.yml`
+- **백업본**: `src/main/resources/application-local.yml.backup`
+
+**설정 파일이 손실된 경우:**
+```bash
+# 백업본에서 복원
+cp src/main/resources/application-local.yml.backup src/main/resources/application-local.yml
+```
+
+**백업본 업데이트 시점:**
+- OAuth2 클라이언트 ID/시크릿 키 변경 후
+- 데이터베이스 연결 정보 변경 후
+- 중요한 설정 변경 후
+
 ## 🏠 로컬 환경 (Local)
 
 ### **용도**

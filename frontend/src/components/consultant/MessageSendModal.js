@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../../contexts/SessionContext';
-import { apiPost } from '../../utils/ajax';
+import { apiPost, apiGet } from '../../utils/ajax';
 import LoadingSpinner from '../common/LoadingSpinner';
 import notificationManager from '../../utils/notification';
 
@@ -25,15 +25,42 @@ const MessageSendModal = ({
     isImportant: false,
     isUrgent: false
   });
+  const [messageTypeOptions, setMessageTypeOptions] = useState([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
 
-  // 메시지 타입 옵션
-  const messageTypes = [
-    { value: 'GENERAL', label: '일반 메시지', color: '#6c757d' },
-    { value: 'FOLLOW_UP', label: '후속 조치', color: '#007bff' },
-    { value: 'HOMEWORK', label: '과제 안내', color: '#28a745' },
-    { value: 'APPOINTMENT', label: '약속 안내', color: '#ffc107' },
-    { value: 'EMERGENCY', label: '긴급 안내', color: '#dc3545' }
-  ];
+  // 메시지 유형 코드 로드
+  useEffect(() => {
+    const loadMessageTypeCodes = async () => {
+      try {
+        setLoadingCodes(true);
+        const response = await apiGet('/api/admin/common-codes/values?groupCode=MESSAGE_TYPE');
+        if (response && response.length > 0) {
+          const options = response.map(code => ({
+            value: code.codeValue,
+            label: code.codeLabel,
+            icon: code.icon,
+            color: code.colorCode,
+            description: code.description
+          }));
+          setMessageTypeOptions(options);
+        }
+      } catch (error) {
+        console.error('메시지 유형 코드 로드 실패:', error);
+        // 실패 시 기본값 설정
+        setMessageTypeOptions([
+          { value: 'GENERAL', label: '일반 메시지', icon: '💬', color: '#6c757d', description: '일반적인 메시지' },
+          { value: 'FOLLOW_UP', label: '후속 조치', icon: '🔄', color: '#007bff', description: '후속 조치 안내 메시지' },
+          { value: 'HOMEWORK', label: '과제 안내', icon: '📝', color: '#28a745', description: '과제 및 숙제 안내 메시지' },
+          { value: 'APPOINTMENT', label: '약속 안내', icon: '📅', color: '#ffc107', description: '약속 및 일정 안내 메시지' },
+          { value: 'EMERGENCY', label: '긴급 안내', icon: '🚨', color: '#dc3545', description: '긴급 상황 안내 메시지' }
+        ]);
+      } finally {
+        setLoadingCodes(false);
+      }
+    };
+
+    loadMessageTypeCodes();
+  }, []);
 
   // 안전한 날짜 변환 함수
   const safeFormatDateTime = (dateValue) => {
@@ -344,9 +371,9 @@ const MessageSendModal = ({
               onChange={handleInputChange}
               style={styles.formSelect}
             >
-              {messageTypes.map(type => (
+              {messageTypeOptions.map(type => (
                 <option key={type.value} value={type.value}>
-                  {type.label}
+                  {type.icon} {type.label} ({type.value})
                 </option>
               ))}
             </select>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import StepIndicator from './components/StepIndicator';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
@@ -35,6 +35,40 @@ const ScheduleModal = ({
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1); // 1: 상담사 선택, 2: 내담자 선택, 3: 시간 선택, 4: 세부사항
+    const [consultationTypeOptions, setConsultationTypeOptions] = useState([]);
+    const [loadingCodes, setLoadingCodes] = useState(false);
+
+    // 상담 유형 코드 로드
+    const loadConsultationTypeCodes = useCallback(async () => {
+        try {
+            setLoadingCodes(true);
+            const response = await fetch('/api/admin/common-codes/values?groupCode=CONSULTATION_TYPE');
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    setConsultationTypeOptions(data.map(code => ({
+                        value: code.codeValue,
+                        label: code.codeLabel,
+                        icon: code.icon,
+                        color: code.colorCode,
+                        description: code.description
+                    })));
+                }
+            }
+        } catch (error) {
+            console.error('상담 유형 코드 로드 실패:', error);
+            // 실패 시 기본값 설정
+            setConsultationTypeOptions([
+                { value: 'INDIVIDUAL', label: '개인상담 (50분)', icon: '👤', color: '#3b82f6', description: '개인 상담' },
+                { value: 'FAMILY', label: '가족상담 (100분)', icon: '👨‍👩‍👧‍👦', color: '#10b981', description: '가족 상담' },
+                { value: 'INITIAL', label: '초기상담 (60분)', icon: '🎯', color: '#f59e0b', description: '초기 상담' },
+                { value: 'COUPLE', label: '부부상담 (80분)', icon: '💑', color: '#8b5cf6', description: '부부 상담' },
+                { value: 'GROUP', label: '집단상담 (90분)', icon: '👥', color: '#ef4444', description: '집단 상담' }
+            ]);
+        } finally {
+            setLoadingCodes(false);
+        }
+    }, []);
 
     // 세션 컨텍스트에서 모달 상태 관리 함수 가져오기
     const { setModalOpen } = useSession();
@@ -44,6 +78,7 @@ const ScheduleModal = ({
             // 모달이 열릴 때 세션 컨텍스트에 알림 (세션 체크 중단)
             setModalOpen(true);
             console.log('📱 스케줄 모달 열림 - 세션 체크 일시 중단');
+            loadConsultationTypeCodes();
         } else {
             // 모달이 닫힐 때 세션 컨텍스트에 알림 (세션 체크 재개)
             setModalOpen(false);
@@ -55,7 +90,7 @@ const ScheduleModal = ({
             setModalOpen(false);
             console.log('📱 스케줄 모달 언마운트 - 세션 체크 재개');
         };
-    }, [isOpen]); // setModalOpen 제거하여 무한 리렌더링 방지
+    }, [isOpen, loadConsultationTypeCodes]); // setModalOpen 제거하여 무한 리렌더링 방지
 
 
 
@@ -273,11 +308,11 @@ const ScheduleModal = ({
                                     value={consultationType} 
                                     onChange={(e) => setConsultationType(e.target.value)}
                                 >
-                                    <option value="INDIVIDUAL">개인상담 (50분)</option>
-                                    <option value="FAMILY">가족상담 (100분)</option>
-                                    <option value="INITIAL">초기상담 (60분)</option>
-                                    <option value="COUPLE">부부상담 (80분)</option>
-                                    <option value="GROUP">집단상담 (90분)</option>
+                                    {consultationTypeOptions.map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.icon} {option.label}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <TimeSlotGrid

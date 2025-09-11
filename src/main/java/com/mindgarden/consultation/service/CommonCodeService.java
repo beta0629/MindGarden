@@ -49,4 +49,7 @@ public interface CommonCodeService {
     
     // 공통코드 일괄 생성
     List<CommonCode> createCommonCodesBatch(List<CommonCodeDto> dtos);
+    
+    // 코드 그룹과 값으로 코드명 조회
+    String getCodeName(String codeGroup, String codeValue);
 }

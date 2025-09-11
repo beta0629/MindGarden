@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { notification } from '../../utils/scripts';
 import { API_BASE_URL } from '../../constants/api';
@@ -52,6 +52,32 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     const [packageOptions, setPackageOptions] = useState(PACKAGE_OPTIONS);
     const [paymentMethodOptions, setPaymentMethodOptions] = useState(PAYMENT_METHOD_OPTIONS);
     const [responsibilityOptions, setResponsibilityOptions] = useState(RESPONSIBILITY_OPTIONS);
+    const [loadingPackageCodes, setLoadingPackageCodes] = useState(false);
+
+    // 패키지 코드 로드
+    const loadPackageCodes = useCallback(async () => {
+        try {
+            setLoadingPackageCodes(true);
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=CONSULTATION_PACKAGE');
+            if (response && response.length > 0) {
+                const options = response.map(code => ({
+                    value: code.codeValue,
+                    label: code.codeLabel,
+                    sessions: code.code === 'BASIC' ? 4 : code.code === 'STANDARD' ? 8 : code.code === 'PREMIUM' ? 12 : 20,
+                    price: code.code === 'BASIC' ? 200000 : code.code === 'STANDARD' ? 400000 : code.code === 'PREMIUM' ? 600000 : 1000000,
+                    icon: code.icon,
+                    color: code.colorCode,
+                    description: code.codeDescription
+                }));
+                setPackageOptions(options);
+            }
+        } catch (error) {
+            console.error('패키지 코드 로드 실패:', error);
+            // 실패 시 기본값 사용
+        } finally {
+            setLoadingPackageCodes(false);
+        }
+    }, []);
 
     // 데이터 로드
     useEffect(() => {
@@ -59,8 +85,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             loadConsultants();
             loadClients();
             loadCodeOptions();
+            loadPackageCodes();
         }
-    }, [isOpen]);
+    }, [isOpen, loadPackageCodes]);
 
     // 상담사 검색 필터링
     useEffect(() => {
@@ -129,7 +156,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     const loadCodeOptions = async () => {
         try {
             // 패키지 타입 코드 로드
-            const packageResponse = await apiGet('/api/admin/codes/values?groupCode=PACKAGE_TYPE');
+            const packageResponse = await apiGet('/api/admin/common-codes/values?groupCode=PACKAGE_TYPE');
             if (packageResponse && packageResponse.length > 0) {
                 const packageOpts = packageResponse.map(code => {
                     // 코드별 세션 수와 가격 매핑
@@ -185,7 +212,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             }
 
             // 결제 방법 코드 로드
-            const paymentResponse = await apiGet('/api/admin/codes/values?groupCode=PAYMENT_METHOD');
+            const paymentResponse = await apiGet('/api/admin/common-codes/values?groupCode=PAYMENT_METHOD');
             if (paymentResponse && paymentResponse.length > 0) {
                 const paymentOpts = paymentResponse.map(code => ({
                     value: code.code,
@@ -195,7 +222,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             }
 
             // 담당 업무 코드 로드
-            const responsibilityResponse = await apiGet('/api/admin/codes/values?groupCode=RESPONSIBILITY');
+            const responsibilityResponse = await apiGet('/api/admin/common-codes/values?groupCode=RESPONSIBILITY');
             if (responsibilityResponse && responsibilityResponse.length > 0) {
                 const responsibilityOpts = responsibilityResponse.map(code => ({
                     value: code.code,

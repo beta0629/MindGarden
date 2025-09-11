@@ -85,15 +85,36 @@ class SessionManager {
             console.log('🔍 세션 확인 시작...');
             
             // 먼저 current-user로 시도 (더 안정적)
-            console.log('🔍 세션 체크 요청:', `${API_BASE_URL}/api/auth/current-user`);
-            const userResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, { 
-                credentials: 'include',
-                method: 'GET',
-                mode: 'cors',
-                headers: {
-                    'Accept': 'application/json'
+            let userResponse;
+            try {
+                userResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, { 
+                    credentials: 'include',
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+            } catch (fetchError) {
+                // 401 오류는 정상적인 상황이므로 조용히 처리
+                if (fetchError.message && fetchError.message.includes('401')) {
+                    this.user = null;
+                    this.sessionInfo = null;
+                    this.lastCheckTime = now;
+                    this.notifyListeners();
+                    return false;
                 }
-            });
+                throw fetchError;
+            }
+            
+            // 401 오류는 정상적인 상황이므로 조용히 처리
+            if (userResponse.status === 401) {
+                this.user = null;
+                this.sessionInfo = null;
+                this.lastCheckTime = now;
+                this.notifyListeners();
+                return false;
+            }
             
             if (userResponse.ok) {
                 const newUser = await userResponse.json();
@@ -125,17 +146,11 @@ class SessionManager {
                 } catch (sessionError) {
                     console.warn('⚠️ 세션 정보 로드 실패 (무시):', sessionError);
                 }
-            } else if (userResponse.status === 401) {
-                console.log('ℹ️ 로그인되지 않은 상태 - 정상적인 상황');
-                // 기존 사용자 정보가 있으면 보존 (로그인 직후 세션 동기화 시간 확보)
-                if (!this.user || !this.user.role) {
-                    this.user = null;
-                    this.sessionInfo = null;
-                } else {
-                    console.log('🔄 401 오류지만 기존 사용자 정보 보존:', this.user.role);
-                }
             } else {
-                console.log('❌ 사용자 정보 확인 실패:', userResponse.status);
+                // 401이 아닌 다른 오류만 로그에 표시
+                if (userResponse.status !== 401) {
+                    console.log('❌ 사용자 정보 확인 실패:', userResponse.status);
+                }
                 // 기존 사용자 정보가 있으면 보존
                 if (!this.user || !this.user.role) {
                     this.user = null;
@@ -153,6 +168,9 @@ class SessionManager {
             // 네트워크 오류나 기타 예외는 로그에 남기되, 401은 정상으로 처리
             if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                 console.log('ℹ️ 네트워크 연결 실패 - 서버가 실행되지 않았을 수 있습니다');
+            } else if (error.message && error.message.includes('401')) {
+                // 401 오류는 정상적인 상황이므로 콘솔에 오류로 표시하지 않음
+                // 조용히 처리
             } else {
                 console.error('❌ 세션 확인 중 예외 발생:', error);
             }

@@ -197,7 +197,7 @@ const ConsultantComprehensiveManagement = () => {
             console.log('🔍 전문분야 코드 로드 시작...');
             console.log('🌐 API URL:', '/api/admin/codes/values?groupCode=SPECIALTY');
             
-            const response = await apiGet('/api/admin/codes/values?groupCode=SPECIALTY');
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=SPECIALTY');
             console.log('📋 새로운 API 응답:', response);
             console.log('📋 응답 타입:', typeof response);
             console.log('📋 응답 길이:', response?.length);
@@ -1103,11 +1103,11 @@ const ConsultantComprehensiveManagement = () => {
                                         >
                                             {specialtyCodes.length > 0 ? (
                                                 specialtyCodes.map(code => {
-                                                    const isSelected = Array.isArray(formData.specialty) && formData.specialty.includes(code.code || code.codeValue);
+                                                    const isSelected = Array.isArray(formData.specialty) && formData.specialty.includes(code.codeValue);
                                                     return (
                                                         <option 
                                                             key={code.id || code.codeValue} 
-                                                            value={code.code || code.codeValue}
+                                                            value={code.codeValue}
                                                             style={{
                                                                 backgroundColor: isSelected ? '#f0f9ff' : '#ffffff',
                                                                 color: isSelected ? '#1e40af' : '#374151',
@@ -1120,7 +1120,7 @@ const ConsultantComprehensiveManagement = () => {
                                                                 lineHeight: '1.5'
                                                             }}
                                                         >
-                                                            {code.icon ? `${code.icon} ` : ''}{code.name || code.codeLabel}
+                                                            {code.icon ? `${code.icon} ` : ''}{code.codeLabel}
                                                         </option>
                                                     );
                                                 })

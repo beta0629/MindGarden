@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../../contexts/SessionContext';
+import { apiGet } from '../../utils/ajax';
 import './VacationManagementModal.css';
 
 /**
@@ -33,6 +34,8 @@ const VacationManagementModal = ({
     const [existingVacations, setExistingVacations] = useState([]);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const [vacationTypeOptions, setVacationTypeOptions] = useState([]);
+    const [loadingCodes, setLoadingCodes] = useState(false);
 
     // selectedDate가 변경될 때 vacationData의 날짜 업데이트
     useEffect(() => {
@@ -43,6 +46,43 @@ const VacationManagementModal = ({
             }));
         }
     }, [selectedDate]);
+
+    // 휴가 유형 코드 로드
+    useEffect(() => {
+        const loadVacationTypeCodes = async () => {
+            try {
+                setLoadingCodes(true);
+                const response = await apiGet('/api/admin/common-codes/values?groupCode=VACATION_TYPE');
+                if (response && response.length > 0) {
+                    const options = response.map(code => ({
+                        value: code.codeValue,
+                        label: code.codeLabel,
+                        icon: code.icon,
+                        color: code.colorCode,
+                        description: code.description
+                    }));
+                    setVacationTypeOptions(options);
+                }
+            } catch (error) {
+                console.error('휴가 유형 코드 로드 실패:', error);
+                // 실패 시 기본값 설정
+                setVacationTypeOptions([
+                    { value: 'ALL_DAY', label: '하루 종일', icon: '🏖️', color: '#ef4444', description: '하루 종일 휴가' },
+                    { value: 'MORNING', label: '오전 휴가', icon: '🌅', color: '#f59e0b', description: '오전 시간대 휴가 (09:00-13:00)' },
+                    { value: 'AFTERNOON', label: '오후 휴가', icon: '🌆', color: '#3b82f6', description: '오후 시간대 휴가 (14:00-18:00)' },
+                    { value: 'MORNING_HALF_1', label: '오전 반반차 1', icon: '☀️', color: '#fbbf24', description: '오전 첫 번째 반반차 (09:00-11:00)' },
+                    { value: 'MORNING_HALF_2', label: '오전 반반차 2', icon: '🌞', color: '#f59e0b', description: '오전 두 번째 반반차 (11:00-13:00)' },
+                    { value: 'AFTERNOON_HALF_1', label: '오후 반반차 1', icon: '🌤️', color: '#60a5fa', description: '오후 첫 번째 반반차 (14:00-16:00)' },
+                    { value: 'AFTERNOON_HALF_2', label: '오후 반반차 2', icon: '🌅', color: '#3b82f6', description: '오후 두 번째 반반차 (16:00-18:00)' },
+                    { value: 'CUSTOM_TIME', label: '사용자 정의', icon: '⏰', color: '#8b5cf6', description: '사용자가 직접 시간을 설정하는 휴가' }
+                ]);
+            } finally {
+                setLoadingCodes(false);
+            }
+        };
+
+        loadVacationTypeCodes();
+    }, []);
 
     /**
      * 상담사 목록 로드
@@ -373,16 +413,15 @@ const VacationManagementModal = ({
      * 휴가 유형명 변환
      */
     const getVacationTypeName = (type) => {
-        const typeNames = {
-            'ALL_DAY': '하루 종일',
-            'FULL_DAY': '하루 종일',
-            'MORNING': '오전 휴가',
-            'MORNING_HALF': '오전 반반차',
-            'AFTERNOON': '오후 휴가',
-            'AFTERNOON_HALF': '오후 반반차',
-            'CUSTOM_TIME': '사용자 정의'
-        };
-        return typeNames[type] || type;
+        // 동적으로 로드된 휴가 유형 옵션에서 찾기
+        const typeOption = vacationTypeOptions.find(option => option.value === type);
+        
+        if (typeOption) {
+            return typeOption.label;
+        }
+        
+        // 기본값
+        return type || "알 수 없음";
     };
 
     console.log('🏖️ VacationManagementModal 렌더링:', { isOpen, userRole });
@@ -460,19 +499,16 @@ const VacationManagementModal = ({
 
                                     <div className="form-group">
                                         <label>휴가 유형</label>
-                                        <select
-                                            value={vacationData.type}
+                                        <select 
+                                            value={vacationData.type} 
                                             onChange={(e) => handleVacationTypeChange(e.target.value)}
-                                            disabled={loading}
+                                            disabled={loading || loadingCodes}
                                         >
-                                            <option value="MORNING">오전 휴가 (09:00-13:00)</option>
-                                            <option value="MORNING_HALF_1">오전 반반차 1 (09:00-11:00)</option>
-                                            <option value="MORNING_HALF_2">오전 반반차 2 (11:00-13:00)</option>
-                                            <option value="AFTERNOON">오후 휴가 (14:00-18:00)</option>
-                                            <option value="AFTERNOON_HALF_1">오후 반반차 1 (14:00-16:00)</option>
-                                            <option value="AFTERNOON_HALF_2">오후 반반차 2 (16:00-18:00)</option>
-                                            <option value="ALL_DAY">하루 종일</option>
-                                            <option value="CUSTOM_TIME">사용자 정의</option>
+                                            {vacationTypeOptions.map(option => (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.icon} {option.label} ({option.value})
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
                                 </div>

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,21 @@ import lombok.extern.slf4j.Slf4j;
 public class CommonCodeController {
 
     private final CommonCodeService commonCodeService;
+
+    /**
+     * 코드 그룹별 코드 값 조회 (기존 API 호환성)
+     */
+    @GetMapping("/values")
+    public ResponseEntity<?> getCodeValuesByGroup(@RequestParam String groupCode) {
+        try {
+            log.info("📋 코드 값 목록 조회: 그룹={}", groupCode);
+            List<CommonCode> commonCodes = commonCodeService.getCommonCodesByGroup(groupCode);
+            return ResponseEntity.ok(commonCodes);
+        } catch (Exception e) {
+            log.error("❌ 코드 값 목록 조회 실패", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
     /**
      * 모든 공통코드 조회

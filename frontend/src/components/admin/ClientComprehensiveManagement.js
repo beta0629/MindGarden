@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -28,6 +28,8 @@ const ClientComprehensiveManagement = () => {
     const [mainTab, setMainTab] = useState('comprehensive');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [userStatusOptions, setUserStatusOptions] = useState([]);
+    const [loadingCodes, setLoadingCodes] = useState(false);
     
     // 모달 상태
     const [showModal, setShowModal] = useState(false);
@@ -40,9 +42,38 @@ const ClientComprehensiveManagement = () => {
         password: ''
     });
 
+    // 사용자 상태 코드 로드
+    const loadUserStatusCodes = useCallback(async () => {
+        try {
+            setLoadingCodes(true);
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=USER_STATUS');
+            if (response && response.length > 0) {
+                setUserStatusOptions(response.map(code => ({
+                    value: code.codeValue,
+                    label: code.codeLabel,
+                    icon: code.icon,
+                    color: code.colorCode,
+                    description: code.description
+                })));
+            }
+        } catch (error) {
+            console.error('사용자 상태 코드 로드 실패:', error);
+            // 실패 시 기본값 설정
+            setUserStatusOptions([
+                { value: 'ACTIVE', label: '활성', icon: '🟢', color: '#10b981', description: '활성 사용자' },
+                { value: 'INACTIVE', label: '비활성', icon: '🔴', color: '#6b7280', description: '비활성 사용자' },
+                { value: 'SUSPENDED', label: '일시정지', icon: '⏸️', color: '#f59e0b', description: '일시정지된 사용자' },
+                { value: 'COMPLETED', label: '완료', icon: '✅', color: '#8b5cf6', description: '완료된 사용자' }
+            ]);
+        } finally {
+            setLoadingCodes(false);
+        }
+    }, []);
+
     useEffect(() => {
         loadAllData();
-    }, []);
+        loadUserStatusCodes();
+    }, [loadUserStatusCodes]);
 
     // 디버깅을 위한 로딩 상태 강제 해제
     useEffect(() => {
@@ -795,6 +826,7 @@ const ClientComprehensiveManagement = () => {
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
+                                disabled={loadingCodes}
                                 style={{
                                     padding: '8px 12px',
                                     border: '1px solid #dee2e6',
@@ -806,10 +838,11 @@ const ClientComprehensiveManagement = () => {
                                 }}
                             >
                                 <option value="all">전체 상태</option>
-                                <option value="ACTIVE">활성</option>
-                                <option value="INACTIVE">비활성</option>
-                                <option value="SUSPENDED">일시정지</option>
-                                <option value="COMPLETED">완료</option>
+                                {userStatusOptions.map(option => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.icon} {option.label}
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -1279,10 +1312,11 @@ const ClientComprehensiveManagement = () => {
                                     onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
                                 >
                                     <option value="all">전체 상태</option>
-                                    <option value="ACTIVE">활성</option>
-                                    <option value="INACTIVE">비활성</option>
-                                    <option value="SUSPENDED">일시정지</option>
-                                    <option value="COMPLETED">완료</option>
+                                    {userStatusOptions.map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.icon} {option.label}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>

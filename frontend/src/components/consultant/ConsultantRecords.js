@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../hooks/useSession';
 import { apiGet } from '../../utils/ajax';
 import { useNavigate } from 'react-router-dom';
@@ -13,13 +13,42 @@ const ConsultantRecords = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterDate, setFilterDate] = useState('');
+  const [statusOptions, setStatusOptions] = useState([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
+
+  // 상태 코드 로드
+  const loadStatusCodes = useCallback(async () => {
+    try {
+      setLoadingCodes(true);
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
+      if (response && response.length > 0) {
+        setStatusOptions(response.map(code => ({
+          value: code.codeValue,
+          label: code.codeLabel,
+          icon: code.icon,
+          color: code.colorCode,
+          description: code.description
+        })));
+      }
+    } catch (error) {
+      console.error('상태 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setStatusOptions([
+        { value: 'ALL', label: '전체 상태', icon: '📋', color: '#6b7280', description: '모든 상태' },
+        { value: 'COMPLETED', label: '완료', icon: '✅', color: '#10b981', description: '완료된 상태' }
+      ]);
+    } finally {
+      setLoadingCodes(false);
+    }
+  }, []);
 
   // 데이터 로드
   useEffect(() => {
     if (isLoggedIn && user?.id) {
       loadRecords();
+      loadStatusCodes();
     }
-  }, [isLoggedIn, user?.id]);
+  }, [isLoggedIn, user?.id, loadStatusCodes]);
 
   const loadRecords = async () => {
     try {
@@ -148,11 +177,11 @@ const ConsultantRecords = () => {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
-            <option value="ALL">전체 상태</option>
-            <option value="COMPLETED">완료</option>
-            <option value="IN_PROGRESS">진행중</option>
-            <option value="PENDING">대기</option>
-            <option value="CANCELLED">취소</option>
+            {statusOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.icon} {option.label}
+              </option>
+            ))}
           </select>
         </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiGet } from '../../../utils/ajax';
 import './AddressInput.css';
 
 const AddressInput = ({ 
@@ -12,12 +13,49 @@ const AddressInput = ({
   const [localPostalCode, setLocalPostalCode] = useState(postalCode || '');
   const [localAddress, setLocalAddress] = useState(address || '');
   const [localAddressDetail, setLocalAddressDetail] = useState(addressDetail || '');
+  const [addressTypeOptions, setAddressTypeOptions] = useState([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
 
   useEffect(() => {
     setLocalPostalCode(postalCode || '');
     setLocalAddress(address || '');
     setLocalAddressDetail(addressDetail || '');
   }, [postalCode, address, addressDetail]);
+
+  // 주소 유형 코드 로드
+  useEffect(() => {
+    const loadAddressTypeCodes = async () => {
+      try {
+        setLoadingCodes(true);
+        const response = await apiGet('/api/admin/common-codes/values?groupCode=ADDRESS_TYPE');
+        if (response && response.length > 0) {
+          const options = response.map(code => ({
+            value: code.codeValue,
+            label: code.codeLabel,
+            icon: code.icon,
+            color: code.colorCode,
+            description: code.description
+          }));
+          setAddressTypeOptions(options);
+        }
+      } catch (error) {
+        console.error('주소 유형 코드 로드 실패:', error);
+        // 실패 시 기본값 설정
+        setAddressTypeOptions([
+          { value: 'HOME', label: '집', icon: '🏠', color: '#3b82f6', description: '자택 주소' },
+          { value: 'WORK', label: '회사', icon: '🏢', color: '#10b981', description: '직장 주소' },
+          { value: 'OFFICE', label: '사무실', icon: '🏛️', color: '#8b5cf6', description: '사무실 주소' },
+          { value: 'BRANCH', label: '지점', icon: '🏪', color: '#f59e0b', description: '지점 주소' },
+          { value: 'EMERGENCY', label: '비상연락처', icon: '🚨', color: '#ef4444', description: '비상연락처 주소' },
+          { value: 'OTHER', label: '기타', icon: '📍', color: '#6b7280', description: '기타 주소' }
+        ]);
+      } finally {
+        setLoadingCodes(false);
+      }
+    };
+
+    loadAddressTypeCodes();
+  }, []);
 
   const handleAddressTypeChange = (e) => {
     const newType = e.target.value;
@@ -89,15 +127,14 @@ const AddressInput = ({
         <select
           value={addressType}
           onChange={handleAddressTypeChange}
-          disabled={!isEditing}
+          disabled={!isEditing || loadingCodes}
           className="address-type-select"
         >
-          <option value="HOME">집</option>
-          <option value="WORK">회사</option>
-          <option value="OFFICE">사무실</option>
-          <option value="BRANCH">지점</option>
-          <option value="EMERGENCY">비상연락처</option>
-          <option value="OTHER">기타</option>
+          {addressTypeOptions.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.icon} {option.label} ({option.value})
+            </option>
+          ))}
         </select>
       </div>
 

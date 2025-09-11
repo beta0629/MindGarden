@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { apiGet } from '../../utils/ajax';
 import PropTypes from 'prop-types';
 import Chart from '../common/Chart';
 import DetailedStatsGrid from '../common/DetailedStatsGrid';
@@ -47,6 +48,153 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
   const [sortBy, setSortBy] = useState(SORT_OPTIONS.DATE_DESC);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGINATION.DEFAULT_PAGE_SIZE);
+  
+  // 일정 상태 옵션
+  const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
+  
+  // 필터 옵션 상태
+  const [dateRangeOptions, setDateRangeOptions] = useState([]);
+  const [chartTypeOptions, setChartTypeOptions] = useState([]);
+  const [sortOptions, setSortOptions] = useState([]);
+  const [loadingFilterCodes, setLoadingFilterCodes] = useState(false);
+
+  // 일정 상태 코드 로드
+  const loadScheduleStatusCodes = useCallback(async () => {
+    try {
+      setLoadingCodes(true);
+      const response = await fetch('/api/admin/common-codes/values?groupCode=SCHEDULE_STATUS');
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          setScheduleStatusOptions(data.map(code => ({
+            value: code.codeValue,
+            label: code.codeLabel,
+            icon: code.icon,
+            color: code.colorCode,
+            description: code.codeDescription
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('일정 상태 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setScheduleStatusOptions([
+        { value: 'all', label: '전체', icon: '📋', color: '#6b7280', description: '모든 상태' },
+        { value: 'AVAILABLE', label: '사용가능', icon: '✅', color: '#10b981', description: '사용 가능한 일정' },
+        { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#3b82f6', description: '예약된 일정' },
+        { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#ef4444', description: '차단된 일정' },
+        { value: 'MAINTENANCE', label: '점검중', icon: '🔧', color: '#f59e0b', description: '점검 중인 일정' }
+      ]);
+    } finally {
+      setLoadingCodes(false);
+    }
+  }, []);
+
+  // 날짜 범위 필터 코드 로드
+  const loadDateRangeFilterCodes = useCallback(async () => {
+    try {
+      setLoadingFilterCodes(true);
+      const response = await fetch('/api/admin/common-codes/values?groupCode=DATE_RANGE_FILTER');
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          setDateRangeOptions(data.map(code => ({
+            value: code.codeValue,
+            label: code.codeLabel,
+            icon: code.icon,
+            color: code.colorCode,
+            description: code.codeDescription
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('날짜 범위 필터 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setDateRangeOptions([
+        { value: 'TODAY', label: '오늘', icon: '📅', color: '#3b82f6', description: '오늘' },
+        { value: 'YESTERDAY', label: '어제', icon: '📅', color: '#6b7280', description: '어제' },
+        { value: 'THIS_WEEK', label: '이번 주', icon: '📅', color: '#10b981', description: '이번 주' },
+        { value: 'LAST_WEEK', label: '지난 주', icon: '📅', color: '#f59e0b', description: '지난 주' },
+        { value: 'THIS_MONTH', label: '이번 달', icon: '📅', color: '#8b5cf6', description: '이번 달' },
+        { value: 'LAST_MONTH', label: '지난 달', icon: '📅', color: '#ef4444', description: '지난 달' },
+        { value: 'THIS_YEAR', label: '올해', icon: '📅', color: '#06b6d4', description: '올해' },
+        { value: 'CUSTOM', label: '사용자 정의', icon: '⚙️', color: '#6b7280', description: '사용자 정의 날짜 범위' }
+      ]);
+    } finally {
+      setLoadingFilterCodes(false);
+    }
+  }, []);
+
+  // 차트 유형 필터 코드 로드
+  const loadChartTypeFilterCodes = useCallback(async () => {
+    try {
+      setLoadingFilterCodes(true);
+      const response = await fetch('/api/admin/common-codes/values?groupCode=CHART_TYPE_FILTER');
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          setChartTypeOptions(data.map(code => ({
+            value: code.codeValue,
+            label: code.codeLabel,
+            icon: code.icon,
+            color: code.colorCode,
+            description: code.codeDescription
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('차트 유형 필터 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setChartTypeOptions([
+        { value: 'BAR', label: '막대 차트', icon: '📊', color: '#3b82f6', description: '막대 차트' },
+        { value: 'LINE', label: '선 차트', icon: '📈', color: '#10b981', description: '선 차트' },
+        { value: 'PIE', label: '원형 차트', icon: '🥧', color: '#f59e0b', description: '원형 차트' },
+        { value: 'DOUGHNUT', label: '도넛 차트', icon: '🍩', color: '#8b5cf6', description: '도넛 차트' },
+        { value: 'AREA', label: '영역 차트', icon: '📊', color: '#ef4444', description: '영역 차트' },
+        { value: 'SCATTER', label: '산점도', icon: '🔵', color: '#06b6d4', description: '산점도' },
+        { value: 'RADAR', label: '레이더 차트', icon: '🕸️', color: '#f97316', description: '레이더 차트' },
+        { value: 'TABLE', label: '테이블', icon: '📋', color: '#6b7280', description: '테이블 형태' }
+      ]);
+    } finally {
+      setLoadingFilterCodes(false);
+    }
+  }, []);
+
+  // 정렬 옵션 코드 로드
+  const loadSortOptionCodes = useCallback(async () => {
+    try {
+      setLoadingFilterCodes(true);
+      const response = await fetch('/api/admin/common-codes/values?groupCode=SORT_OPTION');
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          setSortOptions(data.map(code => ({
+            value: code.codeValue,
+            label: code.codeLabel,
+            icon: code.icon,
+            color: code.colorCode,
+            description: code.codeDescription
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('정렬 옵션 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setSortOptions([
+        { value: 'DATE_ASC', label: '날짜 오름차순', icon: '📅', color: '#3b82f6', description: '날짜 오름차순 정렬' },
+        { value: 'DATE_DESC', label: '날짜 내림차순', icon: '📅', color: '#ef4444', description: '날짜 내림차순 정렬' },
+        { value: 'NAME_ASC', label: '이름 오름차순', icon: '🔤', color: '#10b981', description: '이름 오름차순 정렬' },
+        { value: 'NAME_DESC', label: '이름 내림차순', icon: '🔤', color: '#f59e0b', description: '이름 내림차순 정렬' },
+        { value: 'VALUE_ASC', label: '값 오름차순', icon: '📊', color: '#8b5cf6', description: '값 오름차순 정렬' },
+        { value: 'VALUE_DESC', label: '값 내림차순', icon: '📊', color: '#06b6d4', description: '값 내림차순 정렬' },
+        { value: 'STATUS_ASC', label: '상태 오름차순', icon: '🔄', color: '#f97316', description: '상태 오름차순 정렬' },
+        { value: 'STATUS_DESC', label: '상태 내림차순', icon: '🔄', color: '#6b7280', description: '상태 내림차순 정렬' }
+      ]);
+    } finally {
+      setLoadingFilterCodes(false);
+    }
+  }, []);
 
   // 통계 데이터 로드
   const loadStatistics = useCallback(async () => {
@@ -117,7 +265,11 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
   useEffect(() => {
     loadStatistics();
     loadSchedules();
-  }, [loadStatistics, loadSchedules]);
+    loadScheduleStatusCodes();
+    loadDateRangeFilterCodes();
+    loadChartTypeFilterCodes();
+    loadSortOptionCodes();
+  }, [loadStatistics, loadSchedules, loadScheduleStatusCodes, loadDateRangeFilterCodes, loadChartTypeFilterCodes, loadSortOptionCodes]);
 
 
   // 정렬 변경 핸들러
@@ -465,9 +617,15 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
               e.target.style.boxShadow = 'none';
             }}
           >
-            {Object.entries(FILTER_LABELS.DATE_RANGE).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
+            {loadingFilterCodes ? (
+              <option disabled>날짜 범위 옵션을 불러오는 중...</option>
+            ) : (
+              dateRangeOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.icon} {option.label}
+                </option>
+              ))
+            )}
           </select>
         </div>
         
@@ -506,9 +664,15 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
               e.target.style.boxShadow = 'none';
             }}
           >
-            {Object.entries(FILTER_LABELS.CHART_TYPE).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
+            {loadingFilterCodes ? (
+              <option disabled>차트 유형 옵션을 불러오는 중...</option>
+            ) : (
+              chartTypeOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.icon} {option.label}
+                </option>
+              ))
+            )}
           </select>
         </div>
         
@@ -547,9 +711,10 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
               e.target.style.boxShadow = 'none';
             }}
           >
-            <option value="all">전체</option>
-            {Object.entries(SCHEDULE_STATUS).map(([key, value]) => (
-              <option key={key} value={value}>{getStatusLabel(value)}</option>
+            {scheduleStatusOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.icon} {option.label}
+              </option>
             ))}
           </select>
         </div>
@@ -643,9 +808,15 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
               value={sortBy}
               onChange={(e) => handleSortChange(e.target.value)}
             >
-              {Object.entries(SORT_LABELS).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
+              {loadingFilterCodes ? (
+                <option disabled>정렬 옵션을 불러오는 중...</option>
+              ) : (
+                sortOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.icon} {option.label}
+                  </option>
+                ))
+              )}
             </select>
           </div>
         </div>

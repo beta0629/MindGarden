@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -24,6 +24,72 @@ const SessionManagement = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [clientSearchTerm, setClientSearchTerm] = useState('');
     const [clientFilterStatus, setClientFilterStatus] = useState('ALL');
+    const [mappingStatusOptions, setMappingStatusOptions] = useState([]);
+    const [loadingCodes, setLoadingCodes] = useState(false);
+    const [statusOptions, setStatusOptions] = useState([]);
+    const [loadingStatusCodes, setLoadingStatusCodes] = useState(false);
+
+    // 매핑 상태 코드 로드
+    const loadMappingStatusCodes = useCallback(async () => {
+        try {
+            setLoadingCodes(true);
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=MAPPING_STATUS');
+            if (response && response.length > 0) {
+                const options = response.map(code => ({
+                    value: code.codeValue,
+                    label: code.codeLabel,
+                    icon: code.icon,
+                    color: code.colorCode,
+                    description: code.codeDescription
+                }));
+                setMappingStatusOptions(options);
+            }
+        } catch (error) {
+            console.error('매핑 상태 코드 로드 실패:', error);
+            // 실패 시 기본값 설정
+            setMappingStatusOptions([
+                { value: 'HAS_MAPPING', label: '매핑 있음', icon: '✅', color: '#10b981', description: '매핑이 있는 상태' },
+                { value: 'ACTIVE_MAPPING', label: '활성 매핑', icon: '🟢', color: '#3b82f6', description: '활성화된 매핑 상태' },
+                { value: 'NO_MAPPING', label: '매핑 없음', icon: '❌', color: '#ef4444', description: '매핑이 없는 상태' },
+                { value: 'PENDING_MAPPING', label: '매핑 대기', icon: '⏳', color: '#f59e0b', description: '매핑 대기 중인 상태' },
+                { value: 'INACTIVE_MAPPING', label: '비활성 매핑', icon: '🔴', color: '#6b7280', description: '비활성화된 매핑 상태' }
+            ]);
+        } finally {
+            setLoadingCodes(false);
+        }
+    }, []);
+
+    // 상태 코드 로드
+    const loadStatusCodes = useCallback(async () => {
+        try {
+            setLoadingStatusCodes(true);
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
+            if (response && response.length > 0) {
+                const options = response.map(code => ({
+                    value: code.codeValue,
+                    label: code.codeLabel,
+                    icon: code.icon,
+                    color: code.colorCode,
+                    description: code.codeDescription
+                }));
+                setStatusOptions(options);
+            }
+        } catch (error) {
+            console.error('상태 코드 로드 실패:', error);
+            // 실패 시 기본값 설정
+            setStatusOptions([
+                { value: 'ACTIVE', label: '활성', icon: '🟢', color: '#10b981', description: '활성 상태' },
+                { value: 'INACTIVE', label: '비활성', icon: '🔴', color: '#6b7280', description: '비활성 상태' },
+                { value: 'PENDING', label: '대기', icon: '⏳', color: '#f59e0b', description: '대기 상태' },
+                { value: 'SUSPENDED', label: '일시정지', icon: '⏸️', color: '#ef4444', description: '일시정지 상태' },
+                { value: 'DELETED', label: '삭제', icon: '🗑️', color: '#dc2626', description: '삭제된 상태' },
+                { value: 'COMPLETED', label: '완료', icon: '✅', color: '#3b82f6', description: '완료된 상태' }
+            ]);
+        } finally {
+            setLoadingStatusCodes(false);
+        }
+    }, []);
+
     const [newSessionData, setNewSessionData] = useState({
         consultantId: '',
         clientId: '',
@@ -36,7 +102,9 @@ const SessionManagement = () => {
 
     useEffect(() => {
         loadData();
-    }, []);
+        loadMappingStatusCodes();
+        loadStatusCodes();
+    }, [loadMappingStatusCodes, loadStatusCodes]);
 
     /**
      * 초기 데이터 로드
@@ -311,11 +379,14 @@ const SessionManagement = () => {
                             value={clientFilterStatus}
                             onChange={(e) => setClientFilterStatus(e.target.value)}
                             className="session-mgmt-filter-select"
+                            disabled={loadingCodes}
                         >
                             <option value="ALL">전체</option>
-                            <option value="HAS_MAPPING">매핑 있음</option>
-                            <option value="ACTIVE_MAPPING">활성 매핑</option>
-                            <option value="NO_MAPPING">매핑 없음</option>
+                            {mappingStatusOptions.map(status => (
+                                <option key={status.value} value={status.value}>
+                                    {status.icon} {status.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>
@@ -605,16 +676,20 @@ const SessionManagement = () => {
                             
                             <div className="session-mgmt-form-group">
                                 <label>상태</label>
-                                <select 
+                                <select
                                     value={newSessionData.status}
                                     onChange={(e) => setNewSessionData({
                                         ...newSessionData,
                                         status: e.target.value
                                     })}
+                                    disabled={loadingStatusCodes}
                                 >
-                                    <option value="ACTIVE">활성</option>
-                                    <option value="INACTIVE">비활성</option>
-                                    <option value="SUSPENDED">일시정지</option>
+                                    <option value="">상태를 선택하세요</option>
+                                    {statusOptions.map(status => (
+                                        <option key={status.value} value={status.value} style={{color: status.color}}>
+                                            {status.icon} {status.label}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             

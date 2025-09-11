@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import { API_BASE_URL } from '../../constants/api';
+import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
 
 /**
@@ -33,11 +34,120 @@ const PaymentManagement = () => {
   });
   const [selectedPayments, setSelectedPayments] = useState([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [paymentStatusOptions, setPaymentStatusOptions] = useState([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
+  const [paymentGatewayOptions, setPaymentGatewayOptions] = useState([]);
+  const [loadingGatewayCodes, setLoadingGatewayCodes] = useState(false);
+  const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
+  const [loadingMethodCodes, setLoadingMethodCodes] = useState(false);
 
   useEffect(() => {
     loadPayments();
     loadStatistics();
   }, [filters, pagination.currentPage]);
+
+  // 결제 상태 코드 로드
+  useEffect(() => {
+    const loadPaymentStatusCodes = async () => {
+      try {
+        setLoadingCodes(true);
+        const response = await apiGet('/api/admin/common-codes/values?groupCode=PAYMENT_STATUS');
+        if (response && response.length > 0) {
+          const options = response.map(code => ({
+            value: code.codeValue,
+            label: code.codeLabel,
+            icon: code.icon,
+            color: code.colorCode,
+            description: code.codeDescription
+          }));
+          setPaymentStatusOptions(options);
+        }
+      } catch (error) {
+        console.error('결제 상태 코드 로드 실패:', error);
+        // 실패 시 기본값 설정
+        setPaymentStatusOptions([
+          { value: 'PENDING', label: '대기중', icon: '⏳', color: '#f59e0b', description: '결제 대기 중' },
+          { value: 'PROCESSING', label: '처리중', icon: '🔄', color: '#3b82f6', description: '결제 처리 중' },
+          { value: 'APPROVED', label: '승인됨', icon: '✅', color: '#10b981', description: '결제 승인 완료' },
+          { value: 'FAILED', label: '실패', icon: '❌', color: '#ef4444', description: '결제 실패' },
+          { value: 'CANCELLED', label: '취소됨', icon: '🚫', color: '#6b7280', description: '결제 취소' },
+          { value: 'REFUNDED', label: '환불됨', icon: '↩️', color: '#f97316', description: '결제 환불' },
+          { value: 'EXPIRED', label: '만료됨', icon: '⏰', color: '#374151', description: '결제 만료' },
+          { value: 'PARTIAL_REFUND', label: '부분환불', icon: '↩️', color: '#f59e0b', description: '부분 환불' }
+        ]);
+      } finally {
+        setLoadingCodes(false);
+      }
+    };
+
+    loadPaymentStatusCodes();
+  }, []);
+
+  // 결제 게이트웨이 코드 로드
+  const loadPaymentGatewayCodes = useCallback(async () => {
+    try {
+      setLoadingGatewayCodes(true);
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=PAYMENT_GATEWAY');
+      if (response && response.length > 0) {
+        setPaymentGatewayOptions(response.map(code => ({
+          value: code.codeValue,
+          label: code.codeLabel,
+          icon: code.icon,
+          color: code.colorCode,
+          description: code.codeDescription
+        })));
+      }
+    } catch (error) {
+      console.error('결제 게이트웨이 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setPaymentGatewayOptions([
+        { value: 'TOSS', label: '토스페이먼츠', icon: '💙', color: '#0064FF', description: '토스페이먼츠 결제' },
+        { value: 'IAMPORT', label: '아임포트', icon: '🏦', color: '#34495E', description: '아임포트 결제' },
+        { value: 'KAKAO', label: '카카오페이', icon: '💛', color: '#FEE500', description: '카카오페이 결제' },
+        { value: 'NAVER', label: '네이버페이', icon: '💚', color: '#03C75A', description: '네이버페이 결제' },
+        { value: 'PAYPAL', label: '페이팔', icon: '💳', color: '#0070BA', description: '페이팔 결제' }
+      ]);
+    } finally {
+      setLoadingGatewayCodes(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPaymentGatewayCodes();
+  }, [loadPaymentGatewayCodes]);
+
+  // 결제 방법 코드 로드
+  const loadPaymentMethodCodes = useCallback(async () => {
+    try {
+      setLoadingMethodCodes(true);
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=PAYMENT_METHOD');
+      if (response && response.length > 0) {
+        setPaymentMethodOptions(response.map(code => ({
+          value: code.codeValue,
+          label: code.codeLabel,
+          icon: code.icon,
+          color: code.colorCode,
+          description: code.codeDescription
+        })));
+      }
+    } catch (error) {
+      console.error('결제 방법 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setPaymentMethodOptions([
+        { value: 'CARD', label: '카드', icon: '💳', color: '#3b82f6', description: '신용카드/체크카드 결제' },
+        { value: 'BANK_TRANSFER', label: '계좌이체', icon: '🏦', color: '#10b981', description: '은행 계좌 이체' },
+        { value: 'VIRTUAL_ACCOUNT', label: '가상계좌', icon: '🏧', color: '#8b5cf6', description: '가상계좌 결제' },
+        { value: 'MOBILE', label: '모바일결제', icon: '📱', color: '#f59e0b', description: '모바일 결제' },
+        { value: 'CASH', label: '현금', icon: '💵', color: '#f59e0b', description: '현금 결제' }
+      ]);
+    } finally {
+      setLoadingMethodCodes(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPaymentMethodCodes();
+  }, [loadPaymentMethodCodes]);
 
   const loadPayments = async () => {
     setLoading(true);
@@ -284,18 +394,23 @@ const PaymentManagement = () => {
   };
 
   const getStatusBadge = (status) => {
-    const statusMap = {
-      'PENDING': { text: '대기중', class: 'badge-warning' },
-      'PROCESSING': { text: '처리중', class: 'badge-info' },
-      'APPROVED': { text: '승인됨', class: 'badge-success' },
-      'FAILED': { text: '실패', class: 'badge-danger' },
-      'CANCELLED': { text: '취소됨', class: 'badge-secondary' },
-      'REFUNDED': { text: '환불됨', class: 'badge-warning' },
-      'EXPIRED': { text: '만료됨', class: 'badge-dark' }
-    };
-
-    const statusInfo = statusMap[status] || { text: status, class: 'badge-light' };
-    return <span className={`badge ${statusInfo.class}`}>{statusInfo.text}</span>;
+    // 동적으로 로드된 결제 상태 옵션에서 찾기
+    const statusOption = paymentStatusOptions.find(option => option.value === status);
+    
+    if (statusOption) {
+      return (
+        <span className="badge" style={{ backgroundColor: statusOption.color, color: 'white' }}>
+          {statusOption.icon} {statusOption.label}
+        </span>
+      );
+    }
+    
+    // 기본값
+    return (
+      <span className="badge badge-secondary">
+        ❓ {status}
+      </span>
+    );
   };
 
   if (loading) {
@@ -368,17 +483,16 @@ const PaymentManagement = () => {
           <div className="filter-group">
             <label>결제 상태</label>
             <select 
-              value={filters.status}
+              value={filters.status} 
               onChange={(e) => handleFilterChange('status', e.target.value)}
+              disabled={loadingCodes}
             >
               <option value="all">전체</option>
-              <option value="PENDING">대기중</option>
-              <option value="PROCESSING">처리중</option>
-              <option value="APPROVED">승인됨</option>
-              <option value="FAILED">실패</option>
-              <option value="CANCELLED">취소됨</option>
-              <option value="REFUNDED">환불됨</option>
-              <option value="EXPIRED">만료됨</option>
+              {paymentStatusOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.icon} {option.label} ({option.value})
+                </option>
+              ))}
             </select>
           </div>
 
@@ -387,13 +501,14 @@ const PaymentManagement = () => {
             <select 
               value={filters.method}
               onChange={(e) => handleFilterChange('method', e.target.value)}
+              disabled={loadingMethodCodes}
             >
               <option value="all">전체</option>
-              <option value="CARD">카드</option>
-              <option value="BANK_TRANSFER">계좌이체</option>
-              <option value="VIRTUAL_ACCOUNT">가상계좌</option>
-              <option value="MOBILE">모바일결제</option>
-              <option value="CASH">현금</option>
+              {paymentMethodOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.icon} {option.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -402,13 +517,14 @@ const PaymentManagement = () => {
             <select 
               value={filters.provider}
               onChange={(e) => handleFilterChange('provider', e.target.value)}
+              disabled={loadingGatewayCodes}
             >
               <option value="all">전체</option>
-              <option value="TOSS">토스페이먼츠</option>
-              <option value="IAMPORT">아임포트</option>
-              <option value="KAKAO">카카오페이</option>
-              <option value="NAVER">네이버페이</option>
-              <option value="PAYPAL">페이팔</option>
+              {paymentGatewayOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.icon} {option.label}
+                </option>
+              ))}
             </select>
           </div>
 

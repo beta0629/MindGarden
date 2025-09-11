@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -21,6 +21,40 @@ const ConsultationLogModal = ({
   const [client, setClient] = useState(null);
   const [consultationRecord, setConsultationRecord] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [priorityOptions, setPriorityOptions] = useState([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
+  const [completionStatusOptions, setCompletionStatusOptions] = useState([]);
+  const [loadingCompletionCodes, setLoadingCompletionCodes] = useState(false);
+
+  // 우선순위 코드 로드
+  const loadPriorityCodes = useCallback(async () => {
+    try {
+      setLoadingCodes(true);
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=PRIORITY');
+      if (response && response.length > 0) {
+        const options = response.map(code => ({
+          value: code.codeValue,
+          label: code.codeLabel,
+          icon: code.icon,
+          color: code.colorCode,
+          description: code.codeDescription
+        }));
+        setPriorityOptions(options);
+      }
+    } catch (error) {
+      console.error('우선순위 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setPriorityOptions([
+        { value: 'LOW', label: '낮음', icon: '🟢', color: '#28a745', description: '낮은 우선순위' },
+        { value: 'MEDIUM', label: '보통', icon: '🟡', color: '#ffc107', description: '보통 우선순위' },
+        { value: 'HIGH', label: '높음', icon: '🟠', color: '#fd7e14', description: '높은 우선순위' },
+        { value: 'URGENT', label: '긴급', icon: '🔴', color: '#dc3545', description: '긴급 우선순위' },
+        { value: 'CRITICAL', label: '위험', icon: '🚨', color: '#6f42c1', description: '위험 우선순위' }
+      ]);
+    } finally {
+      setLoadingCodes(false);
+    }
+  }, []);
   
   // 상담일지 폼 데이터
   const [formData, setFormData] = useState({
@@ -56,12 +90,8 @@ const ConsultationLogModal = ({
     followUpDueDate: ''
   });
 
-  // 위험도 옵션
-  const riskLevels = [
-    { value: 'LOW', label: '낮음', color: '#28a745' },
-    { value: 'MEDIUM', label: '보통', color: '#ffc107' },
-    { value: 'HIGH', label: '높음', color: '#dc3545' }
-  ];
+  // 위험도 옵션 (우선순위 코드 사용)
+  const riskLevels = priorityOptions;
 
   // 목표 달성도 옵션
   const goalAchievementLevels = [
@@ -70,10 +100,38 @@ const ConsultationLogModal = ({
     { value: 'HIGH', label: '높음', color: '#28a745' }
   ];
 
+  // 완료 상태 코드 로드
+  const loadCompletionStatusCodes = useCallback(async () => {
+    try {
+      setLoadingCompletionCodes(true);
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=COMPLETION_STATUS');
+      if (response && response.length > 0) {
+        setCompletionStatusOptions(response.map(code => ({
+          value: code.codeValue === 'COMPLETED' ? true : false,
+          label: code.codeLabel,
+          icon: code.icon,
+          color: code.colorCode,
+          description: code.codeDescription
+        })));
+      }
+    } catch (error) {
+      console.error('완료 상태 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setCompletionStatusOptions([
+        { value: true, label: '완료', icon: '✅', color: '#10b981', description: '작업 완료' },
+        { value: false, label: '미완료', icon: '❌', color: '#ef4444', description: '작업 미완료' }
+      ]);
+    } finally {
+      setLoadingCompletionCodes(false);
+    }
+  }, []);
+
   // 데이터 로드
   useEffect(() => {
     if (isOpen && scheduleData) {
       loadData();
+      loadPriorityCodes();
+      loadCompletionStatusCodes();
       // 스케줄에서 세션 정보 자동 설정
       setFormData(prev => ({
         ...prev,
@@ -634,8 +692,11 @@ const ConsultationLogModal = ({
                     cursor: 'not-allowed'
                   }}
                 >
-                  <option value={true}>완료</option>
-                  <option value={false}>미완료</option>
+                  {completionStatusOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.icon} {option.label}
+                    </option>
+                  ))}
                 </select>
                 <small style={{ color: '#666', fontSize: '12px' }}>
                   스케줄에서 자동으로 설정됩니다
@@ -733,10 +794,12 @@ const ConsultationLogModal = ({
                   value={formData.riskAssessment}
                   onChange={handleInputChange}
                   style={styles.formSelect}
+                  disabled={loadingCodes}
                 >
+                  <option value="">위험도를 선택하세요</option>
                   {riskLevels.map(level => (
-                    <option key={level.value} value={level.value}>
-                      {level.label}
+                    <option key={level.value} value={level.value} style={{color: level.color}}>
+                      {level.icon} {level.label}
                     </option>
                   ))}
                 </select>

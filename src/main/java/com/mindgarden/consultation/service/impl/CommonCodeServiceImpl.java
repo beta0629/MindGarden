@@ -177,4 +177,20 @@ public class CommonCodeServiceImpl implements CommonCodeService {
 
         return commonCodeRepository.saveAll(commonCodes);
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public String getCodeName(String codeGroup, String codeValue) {
+        log.debug("코드명 조회: 그룹={}, 값={}", codeGroup, codeValue);
+        
+        try {
+            return commonCodeRepository.findByCodeGroupAndCodeValueAndIsActiveTrue(codeGroup, codeValue)
+                    .map(CommonCode::getCodeLabel)
+                    .orElse(codeValue);
+            
+        } catch (Exception e) {
+            log.error("코드명 조회 실패: 그룹={}, 값={}, 오류={}", codeGroup, codeValue, e.getMessage());
+            return codeValue; // 오류 시 원본 값 반환
+        }
+    }
 }

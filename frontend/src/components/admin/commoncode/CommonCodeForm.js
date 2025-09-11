@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { apiGet } from '../../../utils/ajax';
 import './CommonCodeForm.css';
 
 /**
@@ -24,6 +25,44 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
     });
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // 공통 코드 그룹 옵션 상태
+    const [commonCodeGroupOptions, setCommonCodeGroupOptions] = useState([]);
+    const [loadingCodes, setLoadingCodes] = useState(false);
+
+    // 공통 코드 그룹 로드
+    const loadCommonCodeGroupOptions = useCallback(async () => {
+        try {
+            setLoadingCodes(true);
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=COMMON_CODE_GROUP');
+            if (response && response.length > 0) {
+                setCommonCodeGroupOptions(response.map(code => ({
+                    value: code.codeValue,
+                    label: code.codeLabel,
+                    icon: code.icon,
+                    color: code.colorCode,
+                    description: code.description
+                })));
+            }
+        } catch (error) {
+            console.error('공통 코드 그룹 옵션 로드 실패:', error);
+            // 실패 시 기본값 설정
+            setCommonCodeGroupOptions([
+                { value: 'PACKAGE_TYPE', label: '패키지 유형', icon: '📦', color: '#3b82f6', description: '상담 패키지 유형' },
+                { value: 'PAYMENT_METHOD', label: '결제 방법', icon: '💳', color: '#10b981', description: '결제 수단' },
+                { value: 'RESPONSIBILITY', label: '책임', icon: '👤', color: '#f59e0b', description: '책임 및 역할' },
+                { value: 'CONSULTATION_TYPE', label: '상담 유형', icon: '💬', color: '#8b5cf6', description: '상담의 유형' },
+                { value: 'GENDER', label: '성별', icon: '⚧', color: '#ef4444', description: '사용자 성별' },
+                { value: 'ROLE', label: '역할', icon: '👑', color: '#06b6d4', description: '사용자 역할' },
+                { value: 'STATUS', label: '상태', icon: '🔄', color: '#f97316', description: '일반적인 상태' },
+                { value: 'PRIORITY', label: '우선순위', icon: '⚡', color: '#dc2626', description: '우선순위 구분' },
+                { value: 'NOTIFICATION_TYPE', label: '알림 유형', icon: '🔔', color: '#7c3aed', description: '알림의 유형' },
+                { value: 'SCHEDULE_STATUS', label: '일정 상태', icon: '📅', color: '#059669', description: '일정의 상태' }
+            ]);
+        } finally {
+            setLoadingCodes(false);
+        }
+    }, []);
 
     // 편집 모드일 때 기존 데이터 로드
     useEffect(() => {
@@ -41,6 +80,11 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
             });
         }
     }, [code]);
+
+    // 공통 코드 그룹 옵션 로드
+    useEffect(() => {
+        loadCommonCodeGroupOptions();
+    }, [loadCommonCodeGroupOptions]);
 
     // 폼 데이터 변경 핸들러
     const handleChange = (e) => {
@@ -103,16 +147,6 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
         }
     };
 
-    // 일반적인 코드 그룹 옵션들
-    const commonCodeGroups = [
-        'PACKAGE_TYPE',
-        'PAYMENT_METHOD', 
-        'RESPONSIBILITY',
-        'USER_ROLE',
-        'CONSULTATION_STATUS',
-        'PAYMENT_STATUS',
-        'MAPPING_STATUS'
-    ];
 
     return (
         <div className="common-code-form-overlay">
@@ -143,16 +177,22 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                                 required
                             >
                                 <option value="">코드 그룹을 선택하세요</option>
-                                {commonCodeGroups.map(group => (
-                                    <option key={group} value={group}>
-                                        {group}
-                                    </option>
-                                ))}
-                                {codeGroups.filter(group => !commonCodeGroups.includes(group)).map(group => (
-                                    <option key={group} value={group}>
-                                        {group}
-                                    </option>
-                                ))}
+                                {loadingCodes ? (
+                                    <option disabled>코드 그룹을 불러오는 중...</option>
+                                ) : (
+                                    <>
+                                        {commonCodeGroupOptions.map(option => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.icon} {option.label}
+                                            </option>
+                                        ))}
+                                        {codeGroups.filter(group => !commonCodeGroupOptions.some(opt => opt.value === group)).map(group => (
+                                            <option key={group} value={group}>
+                                                {group}
+                                            </option>
+                                        ))}
+                                    </>
+                                )}
                             </select>
                             {errors.codeGroup && (
                                 <div className="invalid-feedback">

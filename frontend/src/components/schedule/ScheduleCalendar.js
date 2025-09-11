@@ -27,20 +27,45 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const [isDateActionModalOpen, setIsDateActionModalOpen] = useState(false);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
+    const [loadingCodes, setLoadingCodes] = useState(false);
+
+    // 일정 상태 코드 로드
+    const loadScheduleStatusCodes = useCallback(async () => {
+        try {
+            setLoadingCodes(true);
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=SCHEDULE_STATUS');
+            if (response && response.length > 0) {
+                setScheduleStatusOptions(response.map(code => ({
+                    value: code.codeValue,
+                    label: code.codeLabel,
+                    icon: code.icon,
+                    color: code.colorCode,
+                    description: code.codeDescription
+                })));
+            }
+        } catch (error) {
+            console.error('일정 상태 코드 로드 실패:', error);
+            // 실패 시 기본값 설정
+            setScheduleStatusOptions([
+                { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#3b82f6', description: '예약된 일정' },
+                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: '#8b5cf6', description: '확정된 일정' },
+                { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#f59e0b', description: '진행 중인 일정' },
+                { value: 'COMPLETED', label: '완료됨', icon: '🎉', color: '#059669', description: '완료된 일정' },
+                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: '#ef4444', description: '취소된 일정' },
+                { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#6b7280', description: '차단된 시간' }
+            ]);
+        } finally {
+            setLoadingCodes(false);
+        }
+    }, []);
 
     /**
-     * 상태값을 한글로 변환
+     * 상태값을 한글로 변환 (동적 로드)
      */
     const convertStatusToKorean = (status) => {
-        const statusMap = {
-            'BOOKED': '예약됨',
-            'CONFIRMED': '확정됨',
-            'IN_PROGRESS': '진행중',
-            'COMPLETED': '완료됨',
-            'CANCELLED': '취소',
-            'BLOCKED': '차단됨'
-        };
-        return statusMap[status] || status || "알 수 없음";
+        const statusOption = scheduleStatusOptions.find(option => option.value === status);
+        return statusOption ? statusOption.label : status || "알 수 없음";
     };
 
     /**
@@ -137,7 +162,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     // 스케줄 데이터 로드
     useEffect(() => {
         loadSchedules();
-    }, [loadSchedules]);
+        loadScheduleStatusCodes();
+    }, [loadSchedules, loadScheduleStatusCodes]);
 
     /**
      * 휴가 데이터를 캘린더 이벤트로 변환

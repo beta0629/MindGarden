@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import notificationManager from '../../utils/notification';
 import './NotificationTest.css';
 
@@ -13,6 +13,43 @@ const NotificationTest = () => {
     const [customMessage, setCustomMessage] = useState('');
     const [customDuration, setCustomDuration] = useState(3000);
     const [selectedType, setSelectedType] = useState('success');
+    const [notificationTypeOptions, setNotificationTypeOptions] = useState([]);
+    const [loadingCodes, setLoadingCodes] = useState(false);
+
+    // 알림 유형 코드 로드
+    const loadNotificationTypeCodes = useCallback(async () => {
+        try {
+            setLoadingCodes(true);
+            const response = await fetch('/api/admin/common-codes/values?groupCode=NOTIFICATION_TYPE');
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    setNotificationTypeOptions(data.map(code => ({
+                        value: code.codeValue,
+                        label: code.codeLabel,
+                        icon: code.icon,
+                        color: code.colorCode,
+                        description: code.description
+                    })));
+                }
+            }
+        } catch (error) {
+            console.error('알림 유형 코드 로드 실패:', error);
+            // 실패 시 기본값 설정
+            setNotificationTypeOptions([
+                { value: 'success', label: '성공', icon: '✅', color: '#10b981', description: '성공 알림' },
+                { value: 'error', label: '오류', icon: '❌', color: '#ef4444', description: '오류 알림' },
+                { value: 'warning', label: '경고', icon: '⚠️', color: '#f59e0b', description: '경고 알림' },
+                { value: 'info', label: '정보', icon: 'ℹ️', color: '#3b82f6', description: '정보 알림' }
+            ]);
+        } finally {
+            setLoadingCodes(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadNotificationTypeCodes();
+    }, [loadNotificationTypeCodes]);
 
     // 기본 알림 테스트
     const testSuccess = () => {
@@ -142,10 +179,11 @@ const NotificationTest = () => {
                             value={selectedType}
                             onChange={(e) => setSelectedType(e.target.value)}
                         >
-                            <option value="success">성공</option>
-                            <option value="error">오류</option>
-                            <option value="warning">경고</option>
-                            <option value="info">정보</option>
+                            {notificationTypeOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                    {option.icon} {option.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div className="form-group">

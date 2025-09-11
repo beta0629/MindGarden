@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-01-11] - 공통코드 시스템 통합 및 스케줄 관리 개선
+
+### 🆕 새로운 기능
+- **공통코드 시스템 통합**
+  - `code_groups`와 `code_values` 테이블을 `common_codes` 테이블로 통합
+  - 기존 38개 코드 그룹 데이터를 새로운 시스템으로 마이그레이션
+  - 통합된 공통코드 관리 시스템 구현
+
+- **스케줄 관리 개선**
+  - 지난 시간 슬롯 비활성화 및 시각적 구분 추가
+  - 상담 시간 변경 시 동적으로 시간 슬롯 업데이트 기능
+  - 스케줄 세부사항에서 선택한 시간을 시작-종료 시간으로 명확하게 표시
+  - 100분 상담 시간 선택 시 올바른 시간 표시 기능
+
+### 🔧 개선사항
+- **API 엔드포인트 통합**
+  - 모든 프론트엔드 컴포넌트에서 `/api/admin/common-codes/values` 사용
+  - 기존 `/api/admin/codes/values` 엔드포인트 호환성 유지
+  - 데이터 구조 통일 (`codeValue`, `codeLabel`, `codeDescription`)
+
+- **세션 관리 개선**
+  - 로그인 전 401 오류를 조용히 처리하도록 수정
+  - 세션 체크 중 불필요한 콘솔 오류 제거
+  - 사용자 경험 개선
+
+- **스케줄 생성 검증**
+  - `endTime` NaN 오류 해결
+  - 상담 시간 유효성 검증 강화
+  - 시간 슬롯 충돌 방지 로직 개선
+
+### 🗑️ 제거된 기능
+- **기존 코드 관리 시스템**
+  - `code_groups` 및 `code_values` 테이블 삭제
+  - `CodeInitializationServiceImpl` 비활성화
+  - 중복된 코드 관리 로직 제거
+
+### 📝 기술적 변경사항
+- **새로운 클래스**:
+  - `CommonCodeController`: 통합된 공통코드 관리 API
+  - `CodeMigrationService`: 기존 데이터 마이그레이션 서비스
+- **수정된 클래스**:
+  - `CommonCodeServiceImpl`: 통합된 공통코드 서비스 구현
+  - `ScheduleModal.js`: 스케줄 생성 UI 개선
+  - `TimeSlotGrid.js`: 동적 시간 슬롯 관리
+  - 47개 프론트엔드 컴포넌트: API 엔드포인트 및 데이터 구조 업데이트
+
 ## [2025-01-10] - 이메일 시스템 구현 및 브랜드명 변경
 
 ### 🆕 새로운 기능

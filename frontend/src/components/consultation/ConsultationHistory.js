@@ -16,6 +16,8 @@ const ConsultationHistory = () => {
   const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterDate, setFilterDate] = useState('');
+  const [statusOptions, setStatusOptions] = useState([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
 
   useEffect(() => {
     if (!sessionLoading && !isLoggedIn) {
@@ -27,6 +29,42 @@ const ConsultationHistory = () => {
       loadConsultationHistory();
     }
   }, [user, sessionLoading, isLoggedIn]);
+
+  // 상담 상태 코드 로드
+  useEffect(() => {
+    const loadStatusCodes = async () => {
+      try {
+        setLoadingCodes(true);
+        const response = await apiGet('/api/admin/common-codes/values?groupCode=CONSULTATION_STATUS');
+        if (response && response.length > 0) {
+          const options = response.map(code => ({
+            value: code.codeValue,
+            label: code.codeLabel,
+            icon: code.icon,
+            color: code.colorCode
+          }));
+          setStatusOptions(options);
+        }
+      } catch (error) {
+        console.error('상담 상태 코드 로드 실패:', error);
+        // 실패 시 기본값 설정
+        setStatusOptions([
+          { value: 'PENDING', label: '대기', icon: '⏳', color: '#f59e0b' },
+          { value: 'BOOKED', label: '예약', icon: '📅', color: '#3b82f6' },
+          { value: 'CONFIRMED', label: '확정', icon: '✅', color: '#10b981' },
+          { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#8b5cf6' },
+          { value: 'COMPLETED', label: '완료', icon: '🎉', color: '#059669' },
+          { value: 'CANCELLED', label: '취소', icon: '❌', color: '#ef4444' },
+          { value: 'NO_SHOW', label: '무단결석', icon: '🚫', color: '#dc2626' },
+          { value: 'RESCHEDULED', label: '재예약', icon: '🔄', color: '#f97316' }
+        ]);
+      } finally {
+        setLoadingCodes(false);
+      }
+    };
+
+    loadStatusCodes();
+  }, []);
 
   const loadConsultationHistory = async () => {
     try {
@@ -69,18 +107,21 @@ const ConsultationHistory = () => {
   };
 
   const getStatusBadge = (status) => {
-    const statusMap = {
-      'CONFIRMED': { text: '확정', class: 'status-confirmed' },
-      'BOOKED': { text: '예약', class: 'status-booked' },
-      'COMPLETED': { text: '완료', class: 'status-completed' },
-      'CANCELLED': { text: '취소', class: 'status-cancelled' },
-      'PENDING': { text: '대기', class: 'status-pending' }
-    };
+    // 동적으로 로드된 상태 옵션에서 찾기
+    const statusOption = statusOptions.find(option => option.value === status);
     
-    const statusInfo = statusMap[status] || { text: status, class: 'status-default' };
+    if (statusOption) {
+      return (
+        <span className={`status-badge status-${status.toLowerCase()}`} style={{ color: statusOption.color }}>
+          {statusOption.icon} {statusOption.label}
+        </span>
+      );
+    }
+    
+    // 기본값
     return (
-      <span className={`status-badge ${statusInfo.class}`}>
-        {statusInfo.text}
+      <span className="status-badge status-default">
+        ❓ {status}
       </span>
     );
   };
@@ -169,13 +210,14 @@ const ConsultationHistory = () => {
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="filter-select"
+                disabled={loadingCodes}
               >
                 <option value="ALL">전체</option>
-                <option value="CONFIRMED">확정</option>
-                <option value="BOOKED">예약</option>
-                <option value="COMPLETED">완료</option>
-                <option value="CANCELLED">취소</option>
-                <option value="PENDING">대기</option>
+                {statusOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.icon} {option.label} ({option.value})
+                  </option>
+                ))}
               </select>
             </div>
             

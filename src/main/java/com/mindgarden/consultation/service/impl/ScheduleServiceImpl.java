@@ -19,7 +19,7 @@ import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.VacationRepository;
-import com.mindgarden.consultation.service.CodeManagementService;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.service.ScheduleService;
 import org.springframework.data.domain.Page;
@@ -46,7 +46,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ConsultantClientMappingRepository mappingRepository;
     private final UserRepository userRepository;
     private final VacationRepository vacationRepository;
-    private final CodeManagementService codeManagementService;
+    private final CommonCodeService commonCodeService;
     private final ConsultantAvailabilityService consultantAvailabilityService;
     
     // 상수는 ScheduleConstants 클래스에서 관리
@@ -995,7 +995,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     private String getVacationTypeTitle(Vacation.VacationType type) {
         try {
             // 데이터베이스에서 휴가 타입 코드 조회
-            String codeName = codeManagementService.getCodeName("VACATION_TYPE", type.name());
+            String codeName = commonCodeService.getCodeName("VACATION_TYPE", type.name());
             if (!codeName.equals(type.name())) {
                 return codeName; // 데이터베이스에서 찾은 한글명 반환
             }
@@ -1078,7 +1078,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (status == null) return "알 수 없음";
         
         try {
-            return codeManagementService.getCodeName("SCHEDULE_STATUS", status);
+            return commonCodeService.getCodeName("SCHEDULE_STATUS", status);
         } catch (Exception e) {
             log.warn("상태값 변환 실패: {} -> 기본값 사용", status);
             return status;
@@ -1092,7 +1092,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (scheduleType == null) return "알 수 없음";
         
         try {
-            return codeManagementService.getCodeName("SCHEDULE_TYPE", scheduleType);
+            return commonCodeService.getCodeName("SCHEDULE_TYPE", scheduleType);
         } catch (Exception e) {
             log.warn("스케줄 타입 변환 실패: {} -> 기본값 사용", scheduleType);
             return scheduleType;
@@ -1106,7 +1106,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (consultationType == null) return "알 수 없음";
         
         try {
-            return codeManagementService.getCodeName("CONSULTATION_TYPE", consultationType);
+            return commonCodeService.getCodeName("CONSULTATION_TYPE", consultationType);
         } catch (Exception e) {
             log.warn("상담 유형 변환 실패: {} -> 기본값 사용", consultationType);
             return consultationType;

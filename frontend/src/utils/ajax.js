@@ -68,6 +68,10 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     });
 
     if (!response.ok) {
+      // 401 오류는 로그인되지 않은 상태로 정상적인 상황이므로 조용히 처리
+      if (response.status === 401) {
+        return null;
+      }
       handleError(new Error('GET 요청 실패'), response.status);
     }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './CommonCodeFilters.css';
 
 /**
@@ -16,6 +16,43 @@ const CommonCodeFilters = ({
     codeGroups, 
     onNewCode 
 }) => {
+    const [activeStatusOptions, setActiveStatusOptions] = useState([]);
+    const [loadingCodes, setLoadingCodes] = useState(false);
+
+    // 활성/비활성 상태 코드 로드
+    const loadActiveStatusCodes = useCallback(async () => {
+        try {
+            setLoadingCodes(true);
+            const response = await fetch('/api/admin/codes/values?groupCode=STATUS');
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    setActiveStatusOptions(data.map(code => ({
+                        value: code.codeValue,
+                        label: code.codeLabel,
+                        icon: code.icon,
+                        color: code.colorCode,
+                        description: code.codeDescription
+                    })));
+                }
+            }
+        } catch (error) {
+            console.error('활성 상태 코드 로드 실패:', error);
+            // 실패 시 기본값 설정
+            setActiveStatusOptions([
+                { value: '', label: '전체 상태', icon: '📋', color: '#6b7280', description: '모든 상태' },
+                { value: 'true', label: '활성', icon: '✅', color: '#10b981', description: '활성 상태' },
+                { value: 'false', label: '비활성', icon: '❌', color: '#ef4444', description: '비활성 상태' }
+            ]);
+        } finally {
+            setLoadingCodes(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadActiveStatusCodes();
+    }, [loadActiveStatusCodes]);
+
     const handleFilterChange = (key, value) => {
         onFiltersChange({
             ...filters,
@@ -73,9 +110,11 @@ const CommonCodeFilters = ({
                             onChange={(e) => handleFilterChange('isActive', e.target.value)}
                             className="form-select"
                         >
-                            <option value="">전체 상태</option>
-                            <option value="true">활성</option>
-                            <option value="false">비활성</option>
+                            {activeStatusOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                    {option.icon} {option.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 

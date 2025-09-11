@@ -7,6 +7,7 @@ import LoadingSpinner from '../common/LoadingSpinner';
 import notificationManager from '../../utils/notification';
 import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
+import { apiGet } from '../../utils/ajax';
 import './ScheduleModal.css';
 
 /**
@@ -33,10 +34,14 @@ const ScheduleModalNew = ({
     const [selectedClient, setSelectedClient] = useState(null);
     const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
     const [consultationType, setConsultationType] = useState('INDIVIDUAL');
+    const [selectedDuration, setSelectedDuration] = useState('50_MIN');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1); // 1: 상담사 선택, 2: 내담자 선택, 3: 시간 선택, 4: 세부사항
+    const [consultationTypeOptions, setConsultationTypeOptions] = useState([]);
+    const [durationOptions, setDurationOptions] = useState([]);
+    const [loadingCodes, setLoadingCodes] = useState(false);
 
     // 세션 컨텍스트에서 모달 상태 관리 함수 가져오기
     const { setModalOpen } = useSession();
@@ -59,32 +64,144 @@ const ScheduleModalNew = ({
         };
     }, [isOpen, setModalOpen]);
 
+    // 상담 유형 코드 로드
+    useEffect(() => {
+        const loadConsultationTypeCodes = async () => {
+            try {
+                setLoadingCodes(true);
+                const response = await apiGet('/api/admin/common-codes/values?groupCode=CONSULTATION_TYPE');
+                if (response && response.length > 0) {
+                    const options = response.map(code => ({
+                        value: code.codeValue,
+                        label: code.codeLabel,
+                        icon: code.icon,
+                        color: code.colorCode,
+                        durationMinutes: code.durationMinutes
+                    }));
+                    setConsultationTypeOptions(options);
+                }
+            } catch (error) {
+                console.error('상담 유형 코드 로드 실패:', error);
+                // 실패 시 기본값 설정
+                setConsultationTypeOptions([
+                    { value: 'INDIVIDUAL', label: '개인상담', icon: '👤', color: '#3b82f6', durationMinutes: 50 },
+                    { value: 'FAMILY', label: '가족상담', icon: '👨‍👩‍👧‍👦', color: '#10b981', durationMinutes: 100 },
+                    { value: 'INITIAL', label: '초기상담', icon: '🎯', color: '#f59e0b', durationMinutes: 60 },
+                    { value: 'COUPLE', label: '부부상담', icon: '👫', color: '#ec4899', durationMinutes: 80 },
+                    { value: 'GROUP', label: '집단상담', icon: '👥', color: '#8b5cf6', durationMinutes: 90 }
+                ]);
+            } finally {
+                setLoadingCodes(false);
+            }
+        };
+
+        loadConsultationTypeCodes();
+    }, []);
+
+    // 상담 시간 코드 로드
+    useEffect(() => {
+        const loadDurationCodes = async () => {
+            try {
+                setLoadingCodes(true);
+                const response = await apiGet('/api/admin/common-codes/values?groupCode=DURATION');
+                if (response && response.length > 0) {
+                    const options = response.map(code => ({
+                        value: code.codeValue,
+                        label: code.codeLabel,
+                        icon: code.icon,
+                        color: code.colorCode,
+                        durationMinutes: code.durationMinutes || parseInt(code.codeValue.replace('_MIN', '')),
+                        description: code.codeDescription
+                    }));
+                    setDurationOptions(options);
+                    // 기본값 설정
+                    if (!selectedDuration && options.length > 0) {
+                        setSelectedDuration(options[0].value);
+                    }
+                }
+            } catch (error) {
+                console.error('상담 시간 코드 로드 실패:', error);
+                // 실패 시 기본값 설정
+                const defaultOptions = [
+                    { value: '30_MIN', label: '30분', icon: '⏰', color: '#f59e0b', durationMinutes: 30, description: '30분 상담' },
+                    { value: '50_MIN', label: '50분', icon: '⏰', color: '#3b82f6', durationMinutes: 50, description: '50분 상담' },
+                    { value: '60_MIN', label: '60분', icon: '⏰', color: '#10b981', durationMinutes: 60, description: '60분 상담' },
+                    { value: '80_MIN', label: '80분', icon: '⏰', color: '#ec4899', durationMinutes: 80, description: '80분 상담' },
+                    { value: '90_MIN', label: '90분', icon: '⏰', color: '#8b5cf6', durationMinutes: 90, description: '90분 상담' },
+                    { value: '100_MIN', label: '100분', icon: '⏰', color: '#f97316', durationMinutes: 100, description: '100분 상담' },
+                    { value: '120_MIN', label: '120분', icon: '⏰', color: '#ef4444', durationMinutes: 120, description: '120분 상담' },
+                    { value: 'CUSTOM', label: '사용자 정의', icon: '⚙️', color: '#6b7280', durationMinutes: 0, description: '사용자가 직접 설정하는 상담 시간' }
+                ];
+                setDurationOptions(defaultOptions);
+                // 기본값 설정
+                if (!selectedDuration) {
+                    setSelectedDuration('60_MIN');
+                }
+            } finally {
+                setLoadingCodes(false);
+            }
+        };
+
+        loadDurationCodes();
+    }, []);
+
     /**
      * 상담 유형별 기본 시간 반환
      */
     const getConsultationDuration = (type) => {
-        const durationMap = {
-            'INDIVIDUAL': 50,
-            'FAMILY': 100,
-            'INITIAL': 60,
-            'COUPLE': 80,
-            'GROUP': 90
-        };
-        return durationMap[type] || 50;
+        // 동적으로 로드된 상담 유형 옵션에서 찾기
+        const typeOption = consultationTypeOptions.find(option => option.value === type);
+        
+        if (typeOption) {
+            return typeOption.durationMinutes;
+        }
+        
+        // 기본값
+        return 50;
+    };
+
+    /**
+     * 상담 시간 옵션에서 시간 반환
+     */
+    const getDurationFromCode = (durationCode) => {
+        console.log('🔍 getDurationFromCode 호출:', { 
+            durationCode, 
+            durationOptionsLength: durationOptions.length,
+            durationOptions: durationOptions.map(opt => ({ value: opt.value, durationMinutes: opt.durationMinutes }))
+        });
+        
+        if (!durationCode) {
+            console.log('⚠️ durationCode가 없음, 기본값 60분 사용');
+            return 60;
+        }
+        
+        const durationOption = durationOptions.find(option => option.value === durationCode);
+        
+        if (durationOption) {
+            console.log('✅ durationOption 찾음:', durationOption);
+            return durationOption.durationMinutes;
+        }
+        
+        console.log('⚠️ durationOption을 찾지 못함, 기본값 60분 사용');
+        console.log('🔍 찾는 값:', durationCode);
+        console.log('🔍 사용 가능한 값들:', durationOptions.map(opt => opt.value));
+        // 기본값
+        return 60;
     };
 
     /**
      * 상담 유형을 한글로 변환
      */
     const convertConsultationTypeToKorean = (consultationType) => {
-        const typeMap = {
-            'INDIVIDUAL': '개인상담',
-            'COUPLE': '부부상담',
-            'FAMILY': '가족상담',
-            'INITIAL': '초기상담',
-            'GROUP': '그룹상담'
-        };
-        return typeMap[consultationType] || consultationType || "알 수 없음";
+        // 동적으로 로드된 상담 유형 옵션에서 찾기
+        const typeOption = consultationTypeOptions.find(option => option.value === consultationType);
+        
+        if (typeOption) {
+            return typeOption.label;
+        }
+        
+        // 기본값
+        return consultationType || "알 수 없음";
     };
 
     /**
@@ -125,13 +242,23 @@ const ScheduleModalNew = ({
 
         setLoading(true);
         try {
-            const duration = getConsultationDuration(consultationType);
+            const duration = getDurationFromCode(selectedDuration);
+            console.log('🔍 스케줄 생성 데이터:', { selectedDuration, duration, selectedTimeSlot });
+            
+            if (!duration || isNaN(duration)) {
+                console.error('❌ duration이 유효하지 않음:', duration);
+                notificationManager.error('상담 시간을 선택해주세요.');
+                return;
+            }
+            
             const startTime = selectedTimeSlot.time;
             const [hour, minute] = startTime.split(':').map(Number);
             const endMinute = minute + duration;
             const endHour = hour + Math.floor(endMinute / 60);
             const finalMinute = endMinute % 60;
             const endTime = `${endHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
+            
+            console.log('🔍 시간 계산 결과:', { startTime, duration, endTime });
 
             // 날짜를 로컬 시간대로 처리하여 시간대 변환 문제 방지
             const year = selectedDate.getFullYear();
@@ -292,18 +419,34 @@ const ScheduleModalNew = ({
                                 <select 
                                     value={consultationType} 
                                     onChange={(e) => setConsultationType(e.target.value)}
+                                    disabled={loadingCodes}
                                 >
-                                    <option value="INDIVIDUAL">개인상담 (50분)</option>
-                                    <option value="FAMILY">가족상담 (100분)</option>
-                                    <option value="INITIAL">초기상담 (60분)</option>
-                                    <option value="COUPLE">부부상담 (80분)</option>
-                                    <option value="GROUP">집단상담 (90분)</option>
+                                    {consultationTypeOptions.map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.icon} {option.label} ({option.value})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="duration-selector">
+                                <label>상담 시간:</label>
+                                <select 
+                                    value={selectedDuration} 
+                                    onChange={(e) => setSelectedDuration(e.target.value)}
+                                    disabled={loadingCodes}
+                                >
+                                    {durationOptions.map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.icon} {option.label} ({option.durationMinutes}분) ({option.value})
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <TimeSlotGrid
                                 date={selectedDate}
                                 consultantId={selectedConsultant?.originalId || selectedConsultant?.id}
-                                duration={getConsultationDuration(consultationType)}
+                                duration={getDurationFromCode(selectedDuration)}
                                 onTimeSlotSelect={handleTimeSlotSelect}
                                 selectedTimeSlot={selectedTimeSlot}
                             />
@@ -351,7 +494,16 @@ const ScheduleModalNew = ({
                                     borderBottom: '1px solid #e9ecef'
                                 }}>
                                     <strong style={{ color: '#495057', fontSize: '14px' }}>시간:</strong>
-                                    <span style={{ color: '#495057', fontSize: '14px' }}>{selectedTimeSlot?.time} ({getConsultationDuration(consultationType)}분)</span>
+                                    <span style={{ color: '#495057', fontSize: '14px' }}>
+                                        {selectedTimeSlot?.time} - {selectedTimeSlot?.endTime} ({getDurationFromCode(selectedDuration)}분)
+                                        {/* 디버깅용 로그 */}
+                                        {console.log('🔍 스케줄 세부사항 시간 표시:', {
+                                            selectedTimeSlot,
+                                            selectedDuration,
+                                            durationFromCode: getDurationFromCode(selectedDuration),
+                                            durationOptions
+                                        })}
+                                    </span>
                                 </div>
                                 <div style={{
                                     display: 'flex',

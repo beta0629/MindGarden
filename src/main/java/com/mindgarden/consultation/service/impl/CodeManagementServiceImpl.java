@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2024-12-19
  */
 @Slf4j
-@Service
+// @Service  // 기존 테이블 삭제로 인해 비활성화
 @RequiredArgsConstructor
 @Transactional
 public class CodeManagementServiceImpl implements CodeManagementService {

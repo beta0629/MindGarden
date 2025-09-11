@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../hooks/useSession';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -14,6 +14,44 @@ const ConsultantAvailability = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingSlot, setEditingSlot] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [durationOptions, setDurationOptions] = useState([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
+
+  // 시간 코드 로드
+  const loadDurationCodes = useCallback(async () => {
+    try {
+      setLoadingCodes(true);
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=DURATION');
+      if (response && response.length > 0) {
+        setDurationOptions(response.map(code => ({
+          value: code.codeValue,
+          label: code.codeLabel,
+          icon: code.icon,
+          color: code.colorCode,
+          description: code.codeDescription
+        })));
+      } else {
+        // API 응답이 없을 때 기본값 설정
+        setDurationOptions([
+          { value: '30_MIN', label: '30분', icon: '⏰', color: '#3b82f6', description: '30분 상담' },
+          { value: '60_MIN', label: '60분', icon: '⏰', color: '#10b981', description: '60분 상담' },
+          { value: '90_MIN', label: '90분', icon: '⏰', color: '#f59e0b', description: '90분 상담' },
+          { value: '120_MIN', label: '120분', icon: '⏰', color: '#ef4444', description: '120분 상담' }
+        ]);
+      }
+    } catch (error) {
+      console.error('시간 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setDurationOptions([
+        { value: '30_MIN', label: '30분', icon: '⏰', color: '#3b82f6', description: '30분 상담' },
+        { value: '60_MIN', label: '60분', icon: '⏰', color: '#10b981', description: '60분 상담' },
+        { value: '90_MIN', label: '90분', icon: '⏰', color: '#f59e0b', description: '90분 상담' },
+        { value: '120_MIN', label: '120분', icon: '⏰', color: '#ef4444', description: '120분 상담' }
+      ]);
+    } finally {
+      setLoadingCodes(false);
+    }
+  }, []);
 
   // 디버깅을 위한 로그
   console.log('🔍 ConsultantAvailability 상태:', {
@@ -77,8 +115,9 @@ const ConsultantAvailability = () => {
   useEffect(() => {
     if (isLoggedIn && user?.id) {
       loadAvailability();
+      loadDurationCodes();
     }
-  }, [isLoggedIn, user?.id]);
+  }, [isLoggedIn, user?.id, loadDurationCodes]);
 
   const loadAvailability = async () => {
     try {
@@ -545,10 +584,15 @@ const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, 
               className={`form-control ${errors.duration ? 'is-invalid' : ''}`}
               required
             >
-              <option value="30">30분</option>
-              <option value="60">60분</option>
-              <option value="90">90분</option>
-              <option value="120">120분</option>
+              {durationOptions && durationOptions.length > 0 ? (
+                durationOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.icon} {option.label}
+                  </option>
+                ))
+              ) : (
+                <option disabled>시간 옵션을 불러오는 중...</option>
+              )}
             </select>
             {errors.duration && (
               <div className="invalid-feedback">{errors.duration}</div>

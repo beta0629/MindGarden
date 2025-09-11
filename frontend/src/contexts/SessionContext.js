@@ -146,13 +146,16 @@ export const SessionProvider = ({ children }) => {
           return state.isLoggedIn; // 기존 로그인 상태 유지
         } else {
           dispatch({ type: SessionActionTypes.CLEAR_SESSION });
-          console.log('ℹ️ 중앙 세션: 로그인되지 않은 상태');
+          // 401 오류는 정상적인 상황이므로 콘솔에 로그하지 않음
         }
       }
 
       return isLoggedIn;
     } catch (error) {
-      console.error('❌ 중앙 세션 확인 실패:', error);
+      // 401 오류는 정상적인 상황이므로 콘솔에 오류로 표시하지 않음
+      if (error.message && !error.message.includes('401')) {
+        console.error('❌ 중앙 세션 확인 실패:', error);
+      }
       dispatch({ type: SessionActionTypes.SET_ERROR, payload: error.message });
       return false;
     } finally {

@@ -23,6 +23,8 @@ const TimeSlotGrid = ({
     onTimeSlotSelect, 
     selectedTimeSlot 
 }) => {
+    // date prop을 selectedDate로 사용
+    const selectedDate = date;
     const [timeSlots, setTimeSlots] = useState([]);
     const [existingSchedules, setExistingSchedules] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -44,6 +46,13 @@ const TimeSlotGrid = ({
             generateTimeSlots();
         }
     }, [consultantInfo, duration, vacationInfo]);
+
+    // 선택된 시간 슬롯이 변경될 때마다 슬롯 가용성 업데이트
+    useEffect(() => {
+        if (selectedTimeSlot && timeSlots.length > 0) {
+            updateSlotsForSelectedTime();
+        }
+    }, [selectedTimeSlot, timeSlots]);
 
     /**
      * 상담사 정보 로드
@@ -147,6 +156,7 @@ const TimeSlotGrid = ({
      */
     const generateTimeSlots = () => {
         if (!consultantInfo) return;
+        console.log('🔍 generateTimeSlots 호출:', { duration, consultantInfo });
         const slots = [];
         
         // 상담사별 업무시간 파싱 (예: "09:00-18:00")
@@ -192,19 +202,27 @@ const TimeSlotGrid = ({
                 const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
                 const slotEndTime = calculateEndTime(timeString, duration);
                 
+                // 휴식 시간을 포함한 총 종료 시간 계산 (업무 시간 확인용)
+                const breakBetweenSessions = consultantInfo?.breakBetweenSessions || 10;
+                const totalEndTime = calculateEndTime(timeString, duration + breakBetweenSessions);
+                
                 // 업무 시간 내에서만 종료되는 슬롯만 추가
-                if (isWithinConsultantHours(slotEndTime, startHour, startMinute, endHour, endMinute)) {
+                if (isWithinConsultantHours(totalEndTime, startHour, startMinute, endHour, endMinute)) {
                     // 휴가 정보 확인
                     const isVacationTime = checkVacationTime(timeString, slotEndTime);
+                    
+                    // 현재 시간과 비교하여 지난 시간인지 확인
+                    const isPastTime = isTimeInPast(timeString, selectedDate);
                     
                     slots.push({
                         id: `slot-${timeString}`,
                         time: timeString,
                         endTime: slotEndTime,
                         duration: duration,
-                        available: !isVacationTime,
+                        available: !isVacationTime && !isPastTime,
                         conflict: false,
-                        vacation: isVacationTime
+                        vacation: isVacationTime,
+                        past: isPastTime
                     });
                 }
             }
@@ -229,6 +247,34 @@ const TimeSlotGrid = ({
         })));
         
         setTimeSlots(sortedSlots);
+    };
+
+    /**
+     * 지난 시간인지 확인
+     */
+    const isTimeInPast = (timeString, selectedDate) => {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const selectedDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+        
+        // 선택된 날짜가 오늘보다 이전이면 모든 시간이 지난 시간
+        if (selectedDay < today) {
+            return true;
+        }
+        
+        // 선택된 날짜가 오늘인 경우에만 시간 비교
+        if (selectedDay.getTime() === today.getTime()) {
+            const [hour, minute] = timeString.split(':').map(Number);
+            const slotTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
+            
+            // 현재 시간보다 30분 이전이면 지난 시간으로 간주 (예약 여유시간)
+            const bufferMinutes = 30;
+            const currentTimeWithBuffer = new Date(now.getTime() + bufferMinutes * 60000);
+            
+            return slotTime < currentTimeWithBuffer;
+        }
+        
+        return false;
     };
 
     /**
@@ -338,6 +384,55 @@ const TimeSlotGrid = ({
     };
 
     /**
+     * 선택된 시간에 따른 슬롯 가용성 업데이트
+     */
+    const updateSlotsForSelectedTime = () => {
+        if (!selectedTimeSlot) return;
+        
+        setTimeSlots(prevSlots => 
+            prevSlots.map(slot => {
+                // 선택된 슬롯은 항상 사용 가능
+                if (slot.id === selectedTimeSlot.id) {
+                    return {
+                        ...slot,
+                        available: true,
+                        conflict: false,
+                        selected: true
+                    };
+                }
+                
+                // 선택된 시간과 충돌하는지 확인
+                const conflictsWithSelected = checkTimeConflictWithSelected(slot, selectedTimeSlot);
+                
+                return {
+                    ...slot,
+                    available: !conflictsWithSelected && !slot.past && !slot.vacation,
+                    conflict: conflictsWithSelected,
+                    selected: false
+                };
+            })
+        );
+    };
+
+    /**
+     * 선택된 시간과의 충돌 검사
+     */
+    const checkTimeConflictWithSelected = (slot, selectedSlot) => {
+        const slotStart = slot.time;
+        const slotEnd = slot.endTime;
+        const selectedStart = selectedSlot.time;
+        const selectedEnd = selectedSlot.endTime;
+        
+        // 시간 겹침 확인
+        const isOverlapping = isTimeOverlapping(slotStart, slotEnd, selectedStart, selectedEnd);
+        
+        // 휴식 시간 고려 (10분)
+        const isTooClose = isTimeTooClose(slotStart, slotEnd, selectedStart, selectedEnd);
+        
+        return isOverlapping || isTooClose;
+    };
+
+    /**
      * 슬롯 가용성 업데이트
      */
     const updateSlotAvailability = (schedules) => {
@@ -412,12 +507,11 @@ const TimeSlotGrid = ({
     };
 
     /**
-     * 종료 시간 계산
+     * 종료 시간 계산 (휴식 시간 제외)
      */
     const calculateEndTime = (startTime, durationMinutes) => {
         const [hour, minute] = startTime.split(':').map(Number);
-        const breakBetweenSessions = consultantInfo?.breakBetweenSessions || 10;
-        const totalMinutes = hour * 60 + minute + durationMinutes + breakBetweenSessions;
+        const totalMinutes = hour * 60 + minute + durationMinutes;
         
         const endHour = Math.floor(totalMinutes / 60);
         const endMinute = totalMinutes % 60;
@@ -459,6 +553,12 @@ const TimeSlotGrid = ({
      * 시간 슬롯 클릭 핸들러
      */
     const handleSlotClick = (slot) => {
+        if (slot.past) {
+            // 지난 시간 클릭 시 알림
+            alert(`⏰ 해당 시간은 이미 지났습니다.\n현재 시간 이후의 시간을 선택해주세요.`);
+            return;
+        }
+        
         if (slot.vacation) {
             // 휴가 시간대 클릭 시 알림
             const vacationType = vacationInfo?.type || '휴가';
@@ -491,9 +591,10 @@ const TimeSlotGrid = ({
         const classes = ['time-slot'];
         
         if (slot.vacation) classes.push('vacation');
+        if (slot.past) classes.push('past');
+        if (slot.selected) classes.push('selected');
         if (!slot.available) classes.push('unavailable');
         if (slot.conflict) classes.push('conflict');
-        if (selectedTimeSlot?.id === slot.id) classes.push('selected');
         
         return classes.join(' ');
     };
@@ -503,9 +604,10 @@ const TimeSlotGrid = ({
      */
     const getSlotIcon = (slot) => {
         if (slot.vacation) return '🏖️';
+        if (slot.past) return '⏰';
+        if (slot.selected) return '✅';
         if (slot.conflict) return '❌';
         if (!slot.available) return '🚫';
-        if (selectedTimeSlot?.id === slot.id) return '✅';
         return '🕐';
     };
 

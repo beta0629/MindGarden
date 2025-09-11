@@ -14,7 +14,7 @@ import com.mindgarden.consultation.entity.ConsultantAvailability;
 import com.mindgarden.consultation.entity.Vacation;
 import com.mindgarden.consultation.repository.ConsultantAvailabilityRepository;
 import com.mindgarden.consultation.repository.VacationRepository;
-import com.mindgarden.consultation.service.CodeManagementService;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +31,7 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
     
     private final ConsultantAvailabilityRepository availabilityRepository;
     private final VacationRepository vacationRepository;
-    private final CodeManagementService codeManagementService;
+    private final CommonCodeService commonCodeService;
     
     // 휴무 정보를 메모리에 저장 (실제 프로덕션에서는 데이터베이스 사용 권장)
     private final Map<String, Map<String, Object>> vacationStorage = new ConcurrentHashMap<>();
@@ -437,7 +437,7 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
     private String getVacationTypeName(String typeCode) {
         try {
             // 데이터베이스에서 휴가 타입 코드 조회
-            String typeName = codeManagementService.getCodeName("VACATION_TYPE", typeCode);
+            String typeName = commonCodeService.getCodeName("VACATION_TYPE", typeCode);
             if (!typeName.equals(typeCode)) {
                 return typeName; // 데이터베이스에서 찾은 한글명 반환
             }
@@ -475,7 +475,7 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
         try {
             String statusCode = isApproved ? "APPROVED" : "PENDING";
             // 데이터베이스에서 휴가 상태 코드 조회
-            String statusName = codeManagementService.getCodeName("VACATION_STATUS", statusCode);
+            String statusName = commonCodeService.getCodeName("VACATION_STATUS", statusCode);
             if (!statusName.equals(statusCode)) {
                 return statusName; // 데이터베이스에서 찾은 한글명 반환
             }
@@ -493,7 +493,7 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
     private String getVacationLogMessage(String messageType, Long consultantId, LocalDate date, java.time.LocalTime startTime, java.time.LocalTime endTime) {
         try {
             // 데이터베이스에서 휴가 관련 로그 메시지 조회
-            String message = codeManagementService.getCodeName("VACATION_LOG", messageType);
+            String message = commonCodeService.getCodeName("VACATION_LOG", messageType);
             if (!message.equals(messageType)) {
                 return message.replace("{consultantId}", consultantId.toString())
                              .replace("{date}", date.toString())

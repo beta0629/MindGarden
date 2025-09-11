@@ -110,6 +110,7 @@
     background-color: #f8fff9;
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
     transform: translateY(-2px);
+    font-weight: 600;
 }
 
 .time-slot.unavailable {
@@ -122,6 +123,20 @@
     transform: none;
     border-color: #e9ecef;
     background-color: #f8f9fa;
+    box-shadow: none;
+}
+
+.time-slot.past {
+    background-color: #e9ecef;
+    color: #adb5bd;
+    cursor: not-allowed;
+    opacity: 0.5;
+    border: 1px solid #dee2e6;
+}
+
+.time-slot.past:hover {
+    background-color: #e9ecef;
+    transform: none;
     box-shadow: none;
 }
 

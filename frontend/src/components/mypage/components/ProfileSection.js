@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProfileImageUpload from './ProfileImageUpload';
 import AddressInput from './AddressInput';
+import { apiGet } from '../../../utils/ajax';
 import './ProfileSection.css';
 
 const ProfileSection = ({ 
@@ -13,6 +14,39 @@ const ProfileSection = ({
   onEditingChange // 수정 모드 상태 변경 콜백 추가
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [genderOptions, setGenderOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // 성별 코드 로드
+  useEffect(() => {
+    const loadGenderCodes = async () => {
+      try {
+        setLoading(true);
+        const response = await apiGet('/api/admin/common-codes/values?groupCode=GENDER');
+        if (response && response.length > 0) {
+          const options = response.map(code => ({
+            value: code.codeValue,
+            label: code.codeLabel,
+            icon: code.icon,
+            color: code.colorCode
+          }));
+          setGenderOptions(options);
+        }
+      } catch (error) {
+        console.error('성별 코드 로드 실패:', error);
+        // 실패 시 기본값 설정
+        setGenderOptions([
+          { value: 'MALE', label: '남성', icon: '♂️', color: '#3b82f6' },
+          { value: 'FEMALE', label: '여성', icon: '♀️', color: '#ec4899' },
+          { value: 'OTHER', label: '기타', icon: '⚧', color: '#6b7280' }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadGenderCodes();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -201,12 +235,14 @@ const ProfileSection = ({
             name="gender"
             value={formData.gender || ''}
             onChange={handleInputChange}
-            disabled={!isEditing}
+            disabled={!isEditing || loading}
           >
             <option value="">선택하세요</option>
-            <option value="MALE">남성</option>
-            <option value="FEMALE">여성</option>
-            <option value="OTHER">기타</option>
+            {genderOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.icon} {option.label} ({option.value})
+              </option>
+            ))}
           </select>
         </div>
 

@@ -7,10 +7,41 @@
  * @since 2024-12-19
  */
 
+import { apiGet } from './ajax';
+
 class NotificationManager {
     constructor() {
         this.listeners = [];
         this.notificationId = 0;
+        this.notificationTypes = [];
+        this.loadNotificationTypes();
+    }
+
+    /**
+     * 알림 유형 코드 로드
+     */
+    async loadNotificationTypes() {
+        try {
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=NOTIFICATION_TYPE');
+            if (response && response.length > 0) {
+                this.notificationTypes = response.map(code => ({
+                    code: code.codeValue,
+                    name: code.codeLabel,
+                    icon: code.icon,
+                    color: code.colorCode,
+                    description: code.codeDescription
+                }));
+            }
+        } catch (error) {
+            console.error('알림 유형 코드 로드 실패:', error);
+            // 실패 시 기본값 설정
+            this.notificationTypes = [
+                { code: 'SUCCESS', name: '성공', icon: '✅', color: '#10b981', description: '성공 알림' },
+                { code: 'ERROR', name: '오류', icon: '❌', color: '#ef4444', description: '오류 알림' },
+                { code: 'WARNING', name: '경고', icon: '⚠️', color: '#f59e0b', description: '경고 알림' },
+                { code: 'INFO', name: '정보', icon: 'ℹ️', color: '#3b82f6', description: '정보 알림' }
+            ];
+        }
     }
 
     /**

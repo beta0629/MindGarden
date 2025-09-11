@@ -1,16 +1,48 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Modal, Form, Badge } from 'react-bootstrap';
 import { FaUsers, FaEdit } from 'react-icons/fa';
+import { apiGet } from '../../utils/ajax';
 
 const UserManagement = ({ onUpdate, showToast }) => {
     const [users, setUsers] = useState([]);
     const [roles, setRoles] = useState([]);
+    const [roleOptions, setRoleOptions] = useState([]);
+    const [loadingCodes, setLoadingCodes] = useState(false);
     const [showRoleModal, setShowRoleModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [loading, setLoading] = useState(false);
     const [form, setForm] = useState({
         newRole: ''
     });
+
+    // 역할 코드 로드
+    const loadRoleCodes = useCallback(async () => {
+        try {
+            setLoadingCodes(true);
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=ROLE');
+            if (response && response.length > 0) {
+                const options = response.map(code => ({
+                    value: code.codeValue,
+                    label: code.codeLabel,
+                    icon: code.icon,
+                    color: code.colorCode,
+                    description: code.description
+                }));
+                setRoleOptions(options);
+            }
+        } catch (error) {
+            console.error('역할 코드 로드 실패:', error);
+            // 실패 시 기본값 설정
+            setRoleOptions([
+                { value: 'CLIENT', label: '내담자', icon: '👤', color: '#3b82f6', description: '상담을 받는 내담자' },
+                { value: 'CONSULTANT', label: '상담사', icon: '👨‍⚕️', color: '#10b981', description: '상담을 제공하는 상담사' },
+                { value: 'ADMIN', label: '관리자', icon: '👨‍💼', color: '#f59e0b', description: '시스템 관리자' },
+                { value: 'SUPER_ADMIN', label: '수퍼관리자', icon: '👑', color: '#ef4444', description: '최고 관리자' }
+            ]);
+        } finally {
+            setLoadingCodes(false);
+        }
+    }, []);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -38,7 +70,8 @@ const UserManagement = ({ onUpdate, showToast }) => {
 
     useEffect(() => {
         loadData();
-    }, [loadData]);
+        loadRoleCodes();
+    }, [loadData, loadRoleCodes]);
 
     const handleRoleChange = async (e) => {
         e.preventDefault();
@@ -172,9 +205,9 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                     required
                                 >
                                     <option value="">역할을 선택하세요</option>
-                                    {roles.map(role => (
-                                        <option key={role} value={role}>
-                                            {getRoleDisplayName(role)}
+                                    {roleOptions.map(role => (
+                                        <option key={role.value} value={role.value}>
+                                            {role.icon} {role.label} ({role.value})
                                         </option>
                                     ))}
                                 </Form.Select>

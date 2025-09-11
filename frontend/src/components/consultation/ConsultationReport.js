@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
@@ -14,10 +14,104 @@ const ConsultationReport = () => {
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const [selectedPeriod, setSelectedPeriod] = useState('MONTH');
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [periodOptions, setPeriodOptions] = useState([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
+  const [yearOptions, setYearOptions] = useState([]);
+  const [monthOptions, setMonthOptions] = useState([]);
+  const [loadingYearCodes, setLoadingYearCodes] = useState(false);
+  const [loadingMonthCodes, setLoadingMonthCodes] = useState(false);
+
+  // 보고서 기간 코드 로드
+  const loadPeriodCodes = useCallback(async () => {
+    try {
+      setLoadingCodes(true);
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=REPORT_PERIOD');
+      if (response && response.length > 0) {
+        const options = response.map(code => ({
+          value: code.codeValue,
+          label: code.codeLabel,
+          icon: code.icon,
+          color: code.colorCode,
+          description: code.codeDescription
+        }));
+        setPeriodOptions(options);
+      }
+    } catch (error) {
+      console.error('보고서 기간 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setPeriodOptions([
+        { value: 'MONTH', label: '월별', icon: '📅', color: '#3b82f6', description: '월별 보고서' },
+        { value: 'YEAR', label: '년별', icon: '📊', color: '#10b981', description: '년별 보고서' },
+        { value: 'QUARTER', label: '분기별', icon: '📈', color: '#f59e0b', description: '분기별 보고서' },
+        { value: 'WEEK', label: '주별', icon: '📋', color: '#8b5cf6', description: '주별 보고서' }
+      ]);
+    } finally {
+      setLoadingCodes(false);
+    }
+  }, []);
+
+  // 년도 코드 로드
+  const loadYearCodes = useCallback(async () => {
+    try {
+      setLoadingYearCodes(true);
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=YEAR_RANGE');
+      if (response && response.length > 0) {
+        setYearOptions(response.map(code => ({
+          value: parseInt(code.codeValue),
+          label: code.codeLabel,
+          icon: code.icon,
+          color: code.colorCode,
+          description: code.codeDescription
+        })));
+      }
+    } catch (error) {
+      console.error('년도 코드 로드 실패:', error);
+      // 실패 시 기본값 설정 (최근 5년)
+      const currentYear = new Date().getFullYear();
+      setYearOptions(Array.from({ length: 5 }, (_, i) => ({
+        value: currentYear - i,
+        label: `${currentYear - i}년`,
+        icon: '📅',
+        color: '#3b82f6',
+        description: `${currentYear - i}년`
+      })));
+    } finally {
+      setLoadingYearCodes(false);
+    }
+  }, []);
+
+  // 월 코드 로드
+  const loadMonthCodes = useCallback(async () => {
+    try {
+      setLoadingMonthCodes(true);
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=MONTH_RANGE');
+      if (response && response.length > 0) {
+        setMonthOptions(response.map(code => ({
+          value: parseInt(code.codeValue),
+          label: code.codeLabel,
+          icon: code.icon,
+          color: code.colorCode,
+          description: code.codeDescription
+        })));
+      }
+    } catch (error) {
+      console.error('월 코드 로드 실패:', error);
+      // 실패 시 기본값 설정 (1-12월)
+      setMonthOptions(Array.from({ length: 12 }, (_, i) => ({
+        value: i + 1,
+        label: `${i + 1}월`,
+        icon: '📅',
+        color: '#10b981',
+        description: `${i + 1}월`
+      })));
+    } finally {
+      setLoadingMonthCodes(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!sessionLoading && !isLoggedIn) {
@@ -27,8 +121,11 @@ const ConsultationReport = () => {
 
     if (user) {
       loadReportData();
+      loadPeriodCodes();
+      loadYearCodes();
+      loadMonthCodes();
     }
-  }, [user, sessionLoading, isLoggedIn, selectedPeriod, selectedYear, selectedMonth]);
+  }, [user, sessionLoading, isLoggedIn, selectedPeriod, selectedYear, selectedMonth, loadPeriodCodes, loadYearCodes, loadMonthCodes]);
 
   const loadReportData = async () => {
     try {
@@ -79,13 +176,13 @@ const ConsultationReport = () => {
     // 선택된 기간에 따른 필터링
     let filteredConsultations = consultations;
     
-    if (selectedPeriod === 'month') {
+    if (selectedPeriod === 'MONTH') {
       filteredConsultations = consultations.filter(consultation => {
         const consultationDate = new Date(consultation.date);
         return consultationDate.getFullYear() === selectedYear && 
                consultationDate.getMonth() + 1 === selectedMonth;
       });
-    } else if (selectedPeriod === 'year') {
+    } else if (selectedPeriod === 'YEAR') {
       filteredConsultations = consultations.filter(consultation => {
         const consultationDate = new Date(consultation.date);
         return consultationDate.getFullYear() === selectedYear;
@@ -173,9 +270,9 @@ const ConsultationReport = () => {
   };
 
   const getPeriodLabel = () => {
-    if (selectedPeriod === 'month') {
+    if (selectedPeriod === 'MONTH') {
       return `${selectedYear}년 ${selectedMonth}월`;
-    } else if (selectedPeriod === 'year') {
+    } else if (selectedPeriod === 'YEAR') {
       return `${selectedYear}년`;
     }
     return '전체';
@@ -243,9 +340,14 @@ const ConsultationReport = () => {
                 value={selectedPeriod}
                 onChange={(e) => setSelectedPeriod(e.target.value)}
                 className="selector-input"
+                disabled={loadingCodes}
               >
-                <option value="month">월별</option>
-                <option value="year">년별</option>
+                <option value="">기간을 선택하세요</option>
+                {periodOptions.map(period => (
+                  <option key={period.value} value={period.value}>
+                    {period.icon} {period.label}
+                  </option>
+                ))}
               </select>
             </div>
             
@@ -257,13 +359,15 @@ const ConsultationReport = () => {
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                 className="selector-input"
               >
-                {Array.from({ length: 5 }, (_, i) => currentYear - i).map(year => (
-                  <option key={year} value={year}>{year}년</option>
+                {yearOptions.map(year => (
+                  <option key={year.value} value={year.value}>
+                    {year.icon} {year.label}
+                  </option>
                 ))}
               </select>
             </div>
             
-            {selectedPeriod === 'month' && (
+            {selectedPeriod === 'MONTH' && (
               <div className="selector-group">
                 <label htmlFor="month-select">월</label>
                 <select
@@ -272,8 +376,10 @@ const ConsultationReport = () => {
                   onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                   className="selector-input"
                 >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                    <option key={month} value={month}>{month}월</option>
+                  {monthOptions.map(month => (
+                    <option key={month.value} value={month.value}>
+                      {month.icon} {month.label}
+                    </option>
                   ))}
                 </select>
               </div>

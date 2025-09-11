@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../hooks/useSession';
 import { apiGet } from '../../utils/ajax';
 import './ConsultantClientList.css';
@@ -12,13 +12,42 @@ const ConsultantClientList = () => {
   const [showClientModal, setShowClientModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [userStatusOptions, setUserStatusOptions] = useState([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
+
+  // 사용자 상태 코드 로드
+  const loadUserStatusCodes = useCallback(async () => {
+    try {
+      setLoadingCodes(true);
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=USER_STATUS');
+      if (response && response.length > 0) {
+        setUserStatusOptions(response.map(code => ({
+          value: code.codeValue,
+          label: code.codeLabel,
+          icon: code.icon,
+          color: code.colorCode,
+          description: code.description
+        })));
+      }
+    } catch (error) {
+      console.error('사용자 상태 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setUserStatusOptions([
+        { value: 'ACTIVE', label: '활성', icon: '🟢', color: '#10b981', description: '활성 사용자' },
+        { value: 'INACTIVE', label: '비활성', icon: '🔴', color: '#6b7280', description: '비활성 사용자' }
+      ]);
+    } finally {
+      setLoadingCodes(false);
+    }
+  }, []);
 
   // 데이터 로드
   useEffect(() => {
     if (isLoggedIn && user?.id) {
       loadClients();
+      loadUserStatusCodes();
     }
-  }, [isLoggedIn, user?.id]);
+  }, [isLoggedIn, user?.id, loadUserStatusCodes]);
 
   const loadClients = async () => {
     try {
@@ -141,10 +170,14 @@ const ConsultantClientList = () => {
             className="filter-select"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
+            disabled={loadingCodes}
           >
             <option value="ALL">전체 상태</option>
-            <option value="ACTIVE">활성</option>
-            <option value="INACTIVE">비활성</option>
+            {userStatusOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.icon} {option.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>

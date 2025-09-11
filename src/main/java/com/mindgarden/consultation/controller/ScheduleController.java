@@ -14,7 +14,7 @@ import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.ConsultationRecord;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.service.AdminService;
-import com.mindgarden.consultation.service.CodeManagementService;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.service.ConsultationRecordService;
 import com.mindgarden.consultation.service.ScheduleService;
@@ -52,7 +52,7 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
     private final AdminService adminService;
     private final ConsultationRecordService consultationRecordService;
-    private final CodeManagementService codeManagementService;
+    private final CommonCodeService commonCodeService;
     private final ConsultantAvailabilityService consultantAvailabilityService;
 
     // ==================== 권한 기반 스케줄 조회 ====================
@@ -202,7 +202,7 @@ public class ScheduleController {
             // 상담 유형을 한글로 변환하여 DTO로 변환
             List<ScheduleResponseDto> responseDtos = schedules.stream()
                     .map(schedule -> {
-                        String koreanConsultationType = codeManagementService.getCodeName("CONSULTATION_TYPE", schedule.getConsultationType());
+                        String koreanConsultationType = commonCodeService.getCodeName("CONSULTATION_TYPE", schedule.getConsultationType());
                         return ScheduleResponseDto.from(schedule, koreanConsultationType);
                     })
                     .collect(java.util.stream.Collectors.toList());
@@ -891,7 +891,7 @@ public class ScheduleController {
     private String getVacationConflictMessage() {
         try {
             // 데이터베이스에서 휴가 관련 메시지 조회
-            String message = codeManagementService.getCodeName("VACATION_MESSAGE", "CONFLICT");
+            String message = commonCodeService.getCodeName("VACATION_MESSAGE", "CONFLICT");
             if (!message.equals("CONFLICT")) {
                 return message; // 데이터베이스에서 찾은 메시지 반환
             }

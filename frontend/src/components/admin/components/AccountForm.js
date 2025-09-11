@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   ACCOUNT_CSS_CLASSES 
 } from '../../../constants/css';
@@ -20,6 +20,47 @@ const AccountForm = ({
   onBankChange,
   onFormDataChange
 }) => {
+  const [bankOptions, setBankOptions] = useState([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
+
+  // 은행 코드 로드
+  const loadBankCodes = useCallback(async () => {
+    try {
+      setLoadingCodes(true);
+      const response = await fetch('/api/admin/common-codes/values?groupCode=BANK');
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          setBankOptions(data.map(code => ({
+            value: code.codeValue,
+            label: code.codeLabel,
+            icon: code.icon,
+            color: code.colorCode,
+            description: code.description
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('은행 코드 로드 실패:', error);
+      // 실패 시 기본값 설정
+      setBankOptions([
+        { value: 'KB', label: '국민은행', icon: '🏦', color: '#3b82f6', description: '국민은행' },
+        { value: 'SHINHAN', label: '신한은행', icon: '🏦', color: '#10b981', description: '신한은행' },
+        { value: 'WOORI', label: '우리은행', icon: '🏦', color: '#f59e0b', description: '우리은행' },
+        { value: 'HANA', label: '하나은행', icon: '🏦', color: '#8b5cf6', description: '하나은행' },
+        { value: 'NH', label: '농협은행', icon: '🏦', color: '#ef4444', description: '농협은행' }
+      ]);
+    } finally {
+      setLoadingCodes(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showForm) {
+      loadBankCodes();
+    }
+  }, [showForm, loadBankCodes]);
+
   if (!showForm) return null;
 
   return (
@@ -35,9 +76,9 @@ const AccountForm = ({
               required
             >
               <option value="">{ACCOUNT_FORM_PLACEHOLDERS.BANK_SELECT}</option>
-              {banks.map(bank => (
-                <option key={bank.code} value={bank.code}>
-                  {bank.name}
+              {bankOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.icon} {option.label}
                 </option>
               ))}
             </select>

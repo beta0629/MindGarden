@@ -59,6 +59,14 @@ cp src/main/resources/application-prod.yml.backup src/main/resources/application
 - **역할 기반 접근**: 어드민/수퍼어드민 권한별 기능 분리
 - **중복 로그인 방지**: 세션 관리 및 사용자 확인 시스템
 
+### 💰 급여 관리 시스템 (NEW!)
+- **상담사 등급별 기본급여 자동 계산**: 주니어(30,000원) ~ 마스터(45,000원)
+- **프리랜서/정규직 급여 계산**: 상담 완료 건수 기반 자동 계산
+- **세금 계산**: 사업자 등록 여부에 따른 차등 세금 적용
+- **급여 프로필 관리**: 상담사별 급여 설정 및 관리
+- **급여 출력**: PDF/Excel 급여 계산서 생성 및 이메일 전송
+- **상담 유형별 옵션 금액**: 초기상담, 가족상담 등 자동 옵션 적용
+
 ## 🏗️ 기술 스택
 
 ### Backend
@@ -188,6 +196,17 @@ mindGarden/
 - **백엔드**: http://localhost:8080
 - **프론트엔드**: http://localhost:3000
 - **API 문서**: http://localhost:8080/api/auth/oauth2/config
+
+## 📚 문서
+
+프로젝트의 상세한 문서는 다음을 참조하세요:
+
+- **[급여 관리 시스템](SALARY_MANAGEMENT_SYSTEM.md)** - 급여 계산 및 관리 시스템 가이드
+- **[개발 가이드](DEVELOPMENT_GUIDE.md)** - 개발 환경 설정 및 코딩 표준
+- **[환경 설정](ENVIRONMENT_SETUP.md)** - 로컬/운영 환경 설정 가이드
+- **[API 설계](API_DESIGN.md)** - REST API 명세서
+- **[시스템 설계](SYSTEM_DESIGN.md)** - 아키텍처 및 설계 문서
+- **[운영 가이드](OPERATION_DEPLOYMENT_GUIDE.md)** - 배포 및 운영 가이드
 
 ## 📝 개발 가이드
 

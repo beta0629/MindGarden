@@ -72,7 +72,14 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       if (response.status === 401) {
         return null;
       }
-      handleError(new Error('GET 요청 실패'), response.status);
+      // 500 오류도 서버 오류이므로 에러 처리
+      if (response.status >= 500) {
+        handleError(new Error('서버 오류'), response.status);
+      }
+      // 4xx 오류는 클라이언트 오류이므로 에러 처리
+      if (response.status >= 400) {
+        handleError(new Error('요청 오류'), response.status);
+      }
     }
 
     return await response.json();

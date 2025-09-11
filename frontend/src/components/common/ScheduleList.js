@@ -47,6 +47,11 @@ const ScheduleList = ({
   const [filterOptions, setFilterOptions] = useState([]);
   const [sortOptions, setSortOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
+  
+  // 상담사 필터링 상태
+  const [consultants, setConsultants] = useState([]);
+  const [selectedConsultantId, setSelectedConsultantId] = useState('');
+  const [loadingConsultants, setLoadingConsultants] = useState(false);
 
   // 필터 옵션 로드
   const loadFilterOptions = useCallback(async () => {
@@ -108,18 +113,48 @@ const ScheduleList = ({
     }
   }, []);
 
+  // 상담사 목록 로드
+  const loadConsultants = useCallback(async () => {
+    try {
+      setLoadingConsultants(true);
+      const response = await apiGet('/api/admin/consultants');
+      
+      if (response && response.success) {
+        setConsultants(response.data || []);
+      }
+    } catch (error) {
+      console.error('상담사 목록 로드 실패:', error);
+      setConsultants([]);
+    } finally {
+      setLoadingConsultants(false);
+    }
+  }, []);
+
   // 스케줄 데이터 로드
   const loadSchedules = async () => {
     setLoading(true);
     setError(false);
     
-    console.log('🔍 ScheduleList 로드 시작:', { userId, userRole });
+    console.log('🔍 ScheduleList 로드 시작:', { userId, userRole, selectedConsultantId });
     
     try {
-      const response = await apiGet(SCHEDULE_API.SCHEDULES, {
+      let url = SCHEDULE_API.SCHEDULES;
+      let params = {
         userId: userId,
         userRole: userRole
-      });
+      };
+      
+      // 어드민인 경우 상담사 필터링 지원
+      if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+        url = '/api/admin/schedules';
+        params = {};
+        
+        if (selectedConsultantId) {
+          params.consultantId = selectedConsultantId;
+        }
+      }
+      
+      const response = await apiGet(url, params);
       
       if (response.success) {
         setSchedules(response.data || []);
@@ -140,7 +175,19 @@ const ScheduleList = ({
     loadSchedules();
     loadFilterOptions();
     loadSortOptions();
-  }, [userId, userRole, loadFilterOptions, loadSortOptions]);
+    
+    // 어드민인 경우 상담사 목록도 로드
+    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+      loadConsultants();
+    }
+  }, [userId, userRole, loadFilterOptions, loadSortOptions, loadConsultants]);
+
+  // 상담사 선택 변경 시 스케줄 다시 로드
+  useEffect(() => {
+    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+      loadSchedules();
+    }
+  }, [selectedConsultantId]);
 
   // 검색 및 필터링된 스케줄 계산
   const getFilteredSchedules = () => {
@@ -313,6 +360,26 @@ const ScheduleList = ({
         </div>
         
         <div className="schedule-controls">
+          {/* 상담사 선택 (어드민/수퍼어드민만) */}
+          {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+            <select
+              value={selectedConsultantId}
+              onChange={(e) => setSelectedConsultantId(e.target.value)}
+              className="schedule-consultant-select"
+            >
+              <option value="">👥 전체 상담사</option>
+              {loadingConsultants ? (
+                <option disabled>상담사 목록을 불러오는 중...</option>
+              ) : (
+                consultants.map(consultant => (
+                  <option key={consultant.id} value={consultant.id}>
+                    👤 {consultant.name}
+                  </option>
+                ))
+              )}
+            </select>
+          )}
+          
           <select
             value={filterBy}
             onChange={handleFilter}

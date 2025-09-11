@@ -29,20 +29,86 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const [loading, setLoading] = useState(false);
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
+    
+    // 상담사 필터링 상태
+    const [consultants, setConsultants] = useState([]);
+    const [selectedConsultantId, setSelectedConsultantId] = useState('');
+    const [loadingConsultants, setLoadingConsultants] = useState(false);
+
+    // 시간 포맷팅 함수
+    const formatTime = (timeObj) => {
+        if (!timeObj) return '시간 미정';
+        try {
+            return timeObj.toLocaleTimeString('ko-KR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        } catch (error) {
+            console.warn('시간 변환 오류:', error);
+            return '시간 미정';
+        }
+    };
 
     // 일정 상태 코드 로드
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
             const response = await apiGet('/api/admin/common-codes/values?groupCode=SCHEDULE_STATUS');
-            if (response && response.length > 0) {
-                setScheduleStatusOptions(response.map(code => ({
-                    value: code.codeValue,
-                    label: code.codeLabel,
-                    icon: code.icon,
-                    color: code.colorCode,
-                    description: code.codeDescription
-                })));
+            console.log('📋 스케줄 상태 코드 응답:', response);
+            
+            if (response && Array.isArray(response) && response.length > 0) {
+                const statusOptions = response.map(code => {
+                    // 색상 매핑 (extraData에서 색상 정보 추출하거나 기본값 사용)
+                    const colorMap = {
+                        'AVAILABLE': '#e5e7eb',      // 연한 회색
+                        'BOOKED': '#3b82f6',         // 파란색
+                        'CONFIRMED': '#8b5cf6',      // 보라색
+                        'IN_PROGRESS': '#f59e0b',    // 주황색
+                        'COMPLETED': '#10b981',      // 초록색
+                        'CANCELLED': '#ef4444',      // 빨간색
+                        'BLOCKED': '#6b7280',        // 회색
+                        'UNDER_REVIEW': '#f97316',   // 주황색
+                        'VACATION': '#06b6d4',       // 청록색
+                        'NO_SHOW': '#dc2626'         // 진한 빨간색
+                    };
+                    
+                    let color = colorMap[code.codeValue] || '#6b7280'; // 기본 회색
+                    if (code.extraData) {
+                        try {
+                            const extraData = JSON.parse(code.extraData);
+                            color = extraData.color || color;
+                        } catch (e) {
+                            // JSON 파싱 실패 시 기본값 사용
+                        }
+                    }
+                    
+                    // 아이콘 매핑
+                    const iconMap = {
+                        'AVAILABLE': '⚪',
+                        'BOOKED': '📅',
+                        'CONFIRMED': '✅',
+                        'IN_PROGRESS': '🔄',
+                        'COMPLETED': '🎉',
+                        'CANCELLED': '❌',
+                        'BLOCKED': '🚫',
+                        'UNDER_REVIEW': '🔍',
+                        'VACATION': '🏖️',
+                        'NO_SHOW': '👻'
+                    };
+                    
+                    return {
+                        value: code.codeValue,
+                        label: code.codeLabel,
+                        icon: iconMap[code.codeValue] || '📋',
+                        color: color,
+                        description: code.codeDescription
+                    };
+                });
+                
+                console.log('📋 변환된 상태 옵션:', statusOptions);
+                setScheduleStatusOptions(statusOptions);
+            } else {
+                console.warn('📋 스케줄 상태 코드 데이터가 없습니다:', response);
             }
         } catch (error) {
             console.error('일정 상태 코드 로드 실패:', error);
@@ -60,6 +126,23 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, []);
 
+    // 상담사 목록 로드
+    const loadConsultants = useCallback(async () => {
+        try {
+            setLoadingConsultants(true);
+            const response = await apiGet('/api/admin/consultants');
+            
+            if (response && response.success) {
+                setConsultants(response.data || []);
+            }
+        } catch (error) {
+            console.error('상담사 목록 로드 실패:', error);
+            setConsultants([]);
+        } finally {
+            setLoadingConsultants(false);
+        }
+    }, []);
+
     /**
      * 상태값을 한글로 변환 (동적 로드)
      */
@@ -74,11 +157,26 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const loadSchedules = useCallback(async () => {
         setLoading(true);
         try {
-            console.log('📅 스케줄 로드 시작:', { userId, userRole });
+            console.log('📅 스케줄 로드 시작:', { userId, userRole, selectedConsultantId });
+            
+            // API URL 결정
+            let url = `/api/schedules?userId=${userId}&userRole=${userRole}`;
+            
+            // 어드민인 경우 상담사 필터링 지원
+            if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+                url = '/api/admin/schedules';
+                if (selectedConsultantId && selectedConsultantId !== '') {
+                    url += `?consultantId=${selectedConsultantId}`;
+                    console.log('🔍 상담사 필터링 적용:', selectedConsultantId);
+                } else {
+                    console.log('🔍 전체 상담사 조회');
+                }
+            }
             
             // 실제 API 호출 (캐시 방지를 위해 timestamp 추가)
             const timestamp = new Date().getTime();
-            const response = await apiGet(`/api/schedules?userId=${userId}&userRole=${userRole}&_t=${timestamp}`);
+            const separator = url.includes('?') ? '&' : '?';
+            const response = await apiGet(`${url}${separator}_t=${timestamp}`);
 
             let scheduleEvents = [];
             if (response && response.success) {
@@ -88,28 +186,36 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 const schedules = response.data || response;
                 
                 if (Array.isArray(schedules)) {
-                    scheduleEvents = schedules.map(schedule => ({
-                        id: schedule.id,
-                        title: schedule.title,
-                        start: `${schedule.date}T${schedule.startTime}`,
-                        end: `${schedule.date}T${schedule.endTime}`,
-                        backgroundColor: getConsultantColor(schedule.consultantId),
-                        borderColor: getConsultantColor(schedule.consultantId),
-                        className: `schedule-event status-${schedule.status?.toLowerCase()}`,
-                        extendedProps: {
+                    scheduleEvents = schedules.map(schedule => {
+                        console.log('📅 스케줄 데이터 처리:', schedule);
+                        return {
                             id: schedule.id,
-                            consultantId: schedule.consultantId,
-                            consultantName: schedule.consultantName,
-                            clientId: schedule.clientId,
-                            clientName: schedule.clientName,
-                            status: schedule.status,
-                            statusKorean: convertStatusToKorean(schedule.status),
-                            type: schedule.scheduleType,
-                            consultationType: schedule.consultationType,
-                            description: schedule.description
-                        }
-                    }));
+                            title: schedule.title || '상담',
+                            start: `${schedule.date}T${schedule.startTime}`,
+                            end: `${schedule.date}T${schedule.endTime}`,
+                            backgroundColor: getConsultantColor(schedule.consultantId),
+                            borderColor: getConsultantColor(schedule.consultantId),
+                            className: `schedule-event status-${schedule.status?.toLowerCase()}`,
+                            extendedProps: {
+                                id: schedule.id,
+                                consultantId: schedule.consultantId,
+                                consultantName: schedule.consultantName,
+                                clientId: schedule.clientId,
+                                clientName: schedule.clientName,
+                                status: schedule.status,
+                                statusKorean: convertStatusToKorean(schedule.status),
+                                type: schedule.scheduleType,
+                                consultationType: schedule.consultationType,
+                                description: schedule.description
+                            }
+                        };
+                    });
+                    console.log('📅 변환된 이벤트:', scheduleEvents);
+                } else {
+                    console.warn('📅 스케줄 데이터가 배열이 아닙니다:', schedules);
                 }
+            } else {
+                console.warn('📅 API 응답 실패:', response);
             }
 
             // 어드민인 경우 모든 상담사의 휴가 데이터 로드
@@ -120,7 +226,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
                     const endDate = new Date(today.getFullYear(), today.getMonth() + 2, 0).toISOString().split('T')[0];
                     
-                    const vacationResponse = await fetch(`/api/consultant/vacations?date=${startDate}`, {
+                    // 날짜 범위로 휴가 조회 (date 파라미터 제거)
+                    const vacationResponse = await fetch(`/api/consultant/vacations`, {
                         method: 'GET',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include'
@@ -157,13 +264,25 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         } finally {
             setLoading(false);
         }
-    }, [userId, userRole]);
+    }, [userId, userRole, selectedConsultantId]);
 
     // 스케줄 데이터 로드
     useEffect(() => {
         loadSchedules();
         loadScheduleStatusCodes();
-    }, [loadSchedules, loadScheduleStatusCodes]);
+        
+        // 어드민인 경우 상담사 목록도 로드
+        if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+            loadConsultants();
+        }
+    }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole]);
+
+    // 상담사 선택 변경 시 스케줄 다시 로드
+    useEffect(() => {
+        if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+            loadSchedules();
+        }
+    }, [selectedConsultantId, loadSchedules, userRole]);
 
     /**
      * 휴가 데이터를 캘린더 이벤트로 변환
@@ -175,26 +294,44 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         
         switch (type) {
             case 'MORNING':
-                endDate = new Date(date + 'T12:00:00+09:00');
+                endDate = new Date(date + 'T13:00:00+09:00');
                 title = '🌅 오전 휴무';
                 backgroundColor = '#FF9800';
+                allDay = false;
                 break;
             case 'AFTERNOON':
-                startDate.setHours(13, 0, 0);
+                startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T18:00:00+09:00');
                 title = '🌇 오후 휴무';
                 backgroundColor = '#FF5722';
+                allDay = false;
                 break;
-            case 'MORNING_HALF':
+            case 'MORNING_HALF_1':
                 endDate = new Date(date + 'T11:00:00+09:00');
-                title = '🌄 오전 반반차';
+                title = '🌄 오전 반반차 1';
                 backgroundColor = '#FFC107';
+                allDay = false;
                 break;
-            case 'AFTERNOON_HALF':
+            case 'MORNING_HALF_2':
+                startDate.setHours(11, 0, 0);
+                endDate = new Date(date + 'T13:00:00+09:00');
+                title = '🌄 오전 반반차 2';
+                backgroundColor = '#FFC107';
+                allDay = false;
+                break;
+            case 'AFTERNOON_HALF_1':
                 startDate.setHours(14, 0, 0);
                 endDate = new Date(date + 'T16:00:00+09:00');
-                title = '🌆 오후 반반차';
+                title = '🌆 오후 반반차 1';
                 backgroundColor = '#FF7043';
+                allDay = false;
+                break;
+            case 'AFTERNOON_HALF_2':
+                startDate.setHours(16, 0, 0);
+                endDate = new Date(date + 'T18:00:00+09:00');
+                title = '🌆 오후 반반차 2';
+                backgroundColor = '#FF7043';
+                allDay = false;
                 break;
             case 'CUSTOM_TIME':
                 if (startTime && endTime) {
@@ -211,7 +348,14 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 break;
             case 'ALL_DAY':
             case 'FULL_DAY':
+                // 종일 휴가 처리
+                endDate = new Date(date + 'T23:59:59+09:00');
+                title = '🏖️ 하루 종일 휴무';
+                backgroundColor = '#F44336';
+                allDay = true;
+                break;
             default:
+                // 기타 휴가 유형
                 if (startTime && endTime) {
                     // 시간 정보가 있는 경우
                     startDate.setHours(parseInt(startTime.split(':')[0]), parseInt(startTime.split(':')[1]), 0);
@@ -222,7 +366,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     endDate = new Date(date + 'T23:59:59+09:00');
                     allDay = true;
                 }
-                title = '🏖️ 하루 종일 휴무';
+                title = '🏖️ 휴무';
                 backgroundColor = '#F44336';
                 break;
         }
@@ -397,20 +541,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
         console.log('📋 변환된 상담 유형:', koreanConsultationType);
 
-        // 시간 정보 안전하게 처리
-        const formatTime = (timeObj) => {
-            if (!timeObj) return '시간 미정';
-            try {
-                return timeObj.toLocaleTimeString('ko-KR', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                });
-            } catch (error) {
-                console.warn('시간 변환 오류:', error);
-                return '시간 미정';
-            }
-        };
-
         // 스케줄 상세 정보 설정
         const scheduleData = {
             id: event.extendedProps.id,
@@ -513,6 +643,33 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             <div className="calendar-header">
                 <h2>📅 스케줄 관리</h2>
                 <div className="header-actions">
+                    {/* 상담사 선택 (어드민/수퍼어드민만) */}
+                    {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+                        <select
+                            value={selectedConsultantId}
+                            onChange={(e) => {
+                                try {
+                                    console.log('👤 상담사 선택 변경:', e.target.value);
+                                    setSelectedConsultantId(e.target.value);
+                                } catch (error) {
+                                    console.error('❌ 상담사 선택 오류:', error);
+                                }
+                            }}
+                            className="consultant-filter-select"
+                        >
+                            <option value="">👥 전체 상담사</option>
+                            {loadingConsultants ? (
+                                <option disabled>상담사 목록을 불러오는 중...</option>
+                            ) : (
+                                consultants.map(consultant => (
+                                    <option key={consultant.id} value={consultant.id}>
+                                        👤 {consultant.name}
+                                    </option>
+                                ))
+                            )}
+                        </select>
+                    )}
+                    
                     <button 
                         onClick={forceRefresh}
                         className="refresh-button"
@@ -526,12 +683,13 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         <div className="legend-title">상담사별 색상</div>
                         <div className="legend-items consultant-legend">
                             {events.reduce((acc, event) => {
-                                const consultantId = event.extendedProps.consultantId;
-                                const consultantName = event.extendedProps.consultantName || `상담사 ${consultantId}`;
-                                if (!acc.find(item => item.id === consultantId)) {
+                                const consultantId = event.extendedProps?.consultantId;
+                                const consultantName = event.extendedProps?.consultantName;
+                                
+                                if (consultantId && !acc.find(item => item.id === consultantId)) {
                                     acc.push({
                                         id: consultantId,
-                                        name: consultantName,
+                                        name: consultantName || `상담사 ${consultantId}`,
                                         color: getConsultantColor(consultantId)
                                     });
                                 }
@@ -551,30 +709,25 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     <div className="legend-section">
                         <div className="legend-title">스케줄 상태</div>
                         <div className="legend-items">
-                            <div className="legend-item">
-                                <span className="legend-color available"></span>
-                                <span>예약 가능</span>
-                            </div>
-                            <div className="legend-item">
-                                <span className="legend-color booked"></span>
-                                <span>예약됨</span>
-                            </div>
-                            <div className="legend-item">
-                                <span className="legend-color in-progress"></span>
-                                <span>진행중</span>
-                            </div>
-                            <div className="legend-item">
-                                <span className="legend-color completed"></span>
-                                <span>완료</span>
-                            </div>
-                            <div className="legend-item">
-                                <span className="legend-color cancelled"></span>
-                                <span>취소</span>
-                            </div>
-                            <div className="legend-item">
-                                <span className="legend-color blocked"></span>
-                                <span>차단</span>
-                            </div>
+                            {scheduleStatusOptions && scheduleStatusOptions.length > 0 ? (
+                                scheduleStatusOptions.map((option, index) => (
+                                    <div key={option.value || `status-${index}`} className="legend-item">
+                                        <span 
+                                            className="legend-color" 
+                                            style={{ backgroundColor: option.color }}
+                                        ></span>
+                                        <span className="legend-text">
+                                            {option.icon && <span className="legend-icon">{option.icon}</span>}
+                                            {option.label}
+                                        </span>
+                                    </div>
+                                ))
+                            ) : (
+                                <div key="loading-status" className="legend-item">
+                                    <span className="legend-color" style={{ backgroundColor: '#e5e7eb' }}></span>
+                                    <span>로딩 중...</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

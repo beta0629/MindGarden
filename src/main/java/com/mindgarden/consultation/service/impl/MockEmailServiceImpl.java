@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.dto.EmailRequest;
 import com.mindgarden.consultation.dto.EmailResponse;
@@ -312,12 +313,162 @@ public class MockEmailServiceImpl implements EmailService {
     }
     
     @Override
+    public List<EmailResponse> getEmailHistory(String toEmail, int limit) {
+        log.info("Mock 이메일 발송 이력 조회: to={}, limit={}", toEmail, limit);
+        
+        return emailStatusMap.values().stream()
+                .filter(response -> response.getToEmail().equals(toEmail))
+                .sorted((a, b) -> b.getSentAt().compareTo(a.getSentAt()))
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
+    public EmailResponse resendEmail(String emailId) {
+        log.info("Mock 이메일 재발송 요청: emailId={}", emailId);
+        
+        EmailResponse originalResponse = emailStatusMap.get(emailId);
+        if (originalResponse == null) {
+            return EmailResponse.builder()
+                    .emailId(emailId)
+                    .status(EmailConstants.STATUS_FAILED)
+                    .success(false)
+                    .message("재발송할 이메일을 찾을 수 없습니다.")
+                    .build();
+        }
+        
+        // 재발송 로직 (실제 구현에서는 원본 요청을 다시 발송)
+        return originalResponse;
+    }
+    
+    @Override
     public List<EmailResponse> getPendingEmails() {
         log.debug("Mock 대기 중인 이메일 목록 조회");
         
         return emailStatusMap.values().stream()
                 .filter(response -> EmailConstants.STATUS_PENDING.equals(response.getStatus()))
                 .toList();
+    }
+    
+    @Override
+    public boolean sendSalaryCalculationEmail(String toEmail, String consultantName, 
+                                            String period, Map<String, Object> salaryData, 
+                                            String attachmentPath) {
+        try {
+            log.info("Mock 급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            
+            String subject = String.format("[mindgarden] %s 급여 계산서 - %s", consultantName, period);
+            String content = "Mock 급여 계산서 이메일 내용";
+            
+            EmailRequest request = EmailRequest.builder()
+                    .toEmail(toEmail)
+                    .toName(consultantName)
+                    .subject(subject)
+                    .content(content)
+                    .type("HTML")
+                    .templateType("SALARY_CALCULATION")
+                    .build();
+            
+            EmailResponse response = sendEmail(request);
+            return response.isSuccess();
+            
+        } catch (Exception e) {
+            log.error("Mock 급여 계산서 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean sendSalaryApprovalEmail(String toEmail, String consultantName, 
+                                         String period, String approvedAmount) {
+        try {
+            log.info("Mock 급여 승인 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            
+            String subject = String.format("[mindgarden] %s 급여 승인 완료 - %s", consultantName, period);
+            String content = "Mock 급여 승인 이메일 내용";
+            
+            EmailRequest request = EmailRequest.builder()
+                    .toEmail(toEmail)
+                    .toName(consultantName)
+                    .subject(subject)
+                    .content(content)
+                    .type("HTML")
+                    .templateType("SALARY_APPROVAL")
+                    .build();
+            
+            EmailResponse response = sendEmail(request);
+            return response.isSuccess();
+            
+        } catch (Exception e) {
+            log.error("Mock 급여 승인 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean sendSalaryPaymentEmail(String toEmail, String consultantName, 
+                                        String period, String paidAmount, String payDate) {
+        try {
+            log.info("Mock 급여 지급 완료 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            
+            String subject = String.format("[mindgarden] %s 급여 지급 완료 - %s", consultantName, period);
+            String content = "Mock 급여 지급 완료 이메일 내용";
+            
+            EmailRequest request = EmailRequest.builder()
+                    .toEmail(toEmail)
+                    .toName(consultantName)
+                    .subject(subject)
+                    .content(content)
+                    .type("HTML")
+                    .templateType("SALARY_PAYMENT")
+                    .build();
+            
+            EmailResponse response = sendEmail(request);
+            return response.isSuccess();
+            
+        } catch (Exception e) {
+            log.error("Mock 급여 지급 완료 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean sendTaxReportEmail(String toEmail, String consultantName, 
+                                    String period, Map<String, Object> taxData, 
+                                    String attachmentPath) {
+        try {
+            log.info("Mock 세금 내역서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            
+            String subject = String.format("[mindgarden] %s 세금 내역서 - %s", consultantName, period);
+            String content = "Mock 세금 내역서 이메일 내용";
+            
+            EmailRequest request = EmailRequest.builder()
+                    .toEmail(toEmail)
+                    .toName(consultantName)
+                    .subject(subject)
+                    .content(content)
+                    .type("HTML")
+                    .templateType("TAX_REPORT")
+                    .build();
+            
+            EmailResponse response = sendEmail(request);
+            return response.isSuccess();
+            
+        } catch (Exception e) {
+            log.error("Mock 세금 내역서 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    @Override
+    public String getEmailTemplate(String templateType) {
+        return switch (templateType) {
+            case "SALARY_CALCULATION" -> "Mock 급여 계산서 템플릿";
+            case "SALARY_APPROVAL" -> "Mock 급여 승인 템플릿";
+            case "SALARY_PAYMENT" -> "Mock 급여 지급 템플릿";
+            case "TAX_REPORT" -> "Mock 세금 내역서 템플릿";
+            default -> "Mock 기본 템플릿";
+        };
     }
     
     // ==================== Private Methods ====================

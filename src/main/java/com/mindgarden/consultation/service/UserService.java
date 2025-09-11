@@ -20,6 +20,11 @@ public interface UserService extends BaseService<User, Long> {
     // ==================== 기본 조회 메서드 ====================
     
     /**
+     * ID로 사용자 조회
+     */
+    Optional<User> findById(Long id);
+    
+    /**
      * 이메일로 사용자 조회
      */
     Optional<User> findByEmail(String email);

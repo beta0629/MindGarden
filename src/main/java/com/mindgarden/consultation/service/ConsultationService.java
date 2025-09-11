@@ -32,6 +32,11 @@ public interface ConsultationService extends BaseService<Consultation, Long> {
     List<Consultation> findByConsultantId(Long consultantId);
     
     /**
+     * 상담사별 완료된 상담 건수 조회 (기간별)
+     */
+    int getCompletedConsultationCount(Long consultantId, LocalDate startDate, LocalDate endDate);
+    
+    /**
      * 상태별 상담 조회
      */
     List<Consultation> findByStatus(String status);

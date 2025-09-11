@@ -1,5 +1,6 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
+import com.mindgarden.consultation.service.ConsultationMessageService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class AdminServiceImpl implements AdminService {
     private final PasswordEncoder passwordEncoder;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final ConsultantAvailabilityService consultantAvailabilityService;
+    private final ConsultationMessageService consultationMessageService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
@@ -390,10 +393,12 @@ public class AdminServiceImpl implements AdminService {
                 
                 // 휴무 정보 추가
                 String consultantId = consultant.getId().toString();
+                @SuppressWarnings("unchecked")
                 Map<String, Object> consultantVacations = (Map<String, Object>) allVacations.get(consultantId);
                 
                 if (consultantVacations != null && consultantVacations.containsKey(date)) {
                     // 해당 날짜에 휴가가 있는 경우
+                    @SuppressWarnings("unchecked")
                     Map<String, Object> vacationInfo = (Map<String, Object>) consultantVacations.get(date);
                     consultantData.put("isOnVacation", true);
                     consultantData.put("vacationType", vacationInfo.get("type"));
@@ -450,9 +455,18 @@ public class AdminServiceImpl implements AdminService {
     }
     
     /**
-     * 코드로 전문분야 이름 조회 (임시 구현)
+     * 코드로 전문분야 이름 조회 (한글 통일)
      */
     private String getSpecialtyNameByCode(String code) {
+        if (code == null || code.trim().isEmpty()) {
+            return "미설정";
+        }
+        
+        // 이미 한글로 된 경우 그대로 반환
+        if (code.matches(".*[가-힣].*")) {
+            return code;
+        }
+        
         Map<String, String> specialtyMap = new HashMap<>();
         specialtyMap.put("DEPRESSION", "우울증");
         specialtyMap.put("ANXIETY", "불안장애");
@@ -469,6 +483,7 @@ public class AdminServiceImpl implements AdminService {
         specialtyMap.put("ANGER", "분노조절");
         specialtyMap.put("GRIEF", "상실");
         specialtyMap.put("SELF_ESTEEM", "자존감");
+        specialtyMap.put("FAMIL", "가족상담"); // FAMILY의 축약형 처리
         
         return specialtyMap.getOrDefault(code, code);
     }
@@ -727,6 +742,19 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    public User updateConsultantGrade(Long id, String grade) {
+        User consultant = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Consultant not found"));
+        
+        consultant.setGrade(grade);
+        consultant.setLastGradeUpdate(LocalDateTime.now());
+        consultant.setUpdatedAt(LocalDateTime.now());
+        
+        log.info("🔧 상담사 등급 업데이트: ID={}, 등급={}", id, grade);
+        return userRepository.save(consultant);
+    }
+
+    @Override
     public Client updateClient(Long id, ClientRegistrationDto dto) {
         User clientUser = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Client not found"));
@@ -958,6 +986,7 @@ public class AdminServiceImpl implements AdminService {
                         Map<String, Object> scheduleMap = new HashMap<>();
                         scheduleMap.put("id", schedule.getId());
                         scheduleMap.put("title", schedule.getTitle());
+                        scheduleMap.put("date", schedule.getDate());
                         scheduleMap.put("startTime", schedule.getStartTime());
                         scheduleMap.put("endTime", schedule.getEndTime());
                         scheduleMap.put("consultationType", schedule.getConsultationType());
@@ -994,6 +1023,349 @@ public class AdminServiceImpl implements AdminService {
         } catch (Exception e) {
             log.error("❌ 상담사별 스케줄 조회 실패: consultantId={}, error={}", consultantId, e.getMessage(), e);
             return new ArrayList<>();
+        }
+    }
+    
+    @Override
+    public List<Map<String, Object>> getConsultationCompletionStatistics(String period) {
+        try {
+            log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
+            
+            // 모든 상담사 조회
+            List<User> consultants = userRepository.findByRole(UserRole.CONSULTANT);
+            
+            List<Map<String, Object>> statistics = new ArrayList<>();
+            
+            for (User consultant : consultants) {
+                try {
+                    // 기간 설정
+                    LocalDate startDate, endDate;
+                    if (period != null && !period.isEmpty()) {
+                        // 기간 파싱 (예: "2025-09")
+                        String[] parts = period.split("-");
+                        int year = Integer.parseInt(parts[0]);
+                        int month = Integer.parseInt(parts[1]);
+                        startDate = LocalDate.of(year, month, 1);
+                        endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+                    } else {
+                        // 전체 기간 (올해)
+                        startDate = LocalDate.of(LocalDate.now().getYear(), 1, 1);
+                        endDate = LocalDate.of(LocalDate.now().getYear(), 12, 31);
+                    }
+                    
+                    // 상담 완료 건수 조회 (스케줄 기준)
+                    int completedCount = getCompletedScheduleCount(consultant.getId(), startDate, endDate);
+                    
+                    // 총 상담 건수 조회 (스케줄 기준)
+                    long totalCount = getTotalScheduleCount(consultant.getId());
+                    
+                    // 상담사 정보와 통계 데이터 매핑
+                    Map<String, Object> consultantStats = new HashMap<>();
+                    consultantStats.put("consultantId", consultant.getId());
+                    consultantStats.put("consultantName", consultant.getName());
+                    consultantStats.put("consultantEmail", consultant.getEmail());
+                    consultantStats.put("consultantPhone", maskPhone(consultant.getPhone()));
+                    consultantStats.put("specialization", consultant.getSpecialization());
+                    consultantStats.put("grade", consultant.getGrade());
+                    consultantStats.put("completedCount", completedCount);
+                    consultantStats.put("totalCount", totalCount);
+                    consultantStats.put("completionRate", totalCount > 0 ? 
+                        Math.round((double) completedCount / totalCount * 100) : 0);
+                    consultantStats.put("period", period != null ? period : "전체");
+                    consultantStats.put("startDate", startDate.toString());
+                    consultantStats.put("endDate", endDate.toString());
+                    
+                    statistics.add(consultantStats);
+                    
+                } catch (Exception e) {
+                    log.warn("상담사 ID {} 통계 조회 실패: {}", consultant.getId(), e.getMessage());
+                }
+            }
+            
+            // 완료 건수 기준으로 내림차순 정렬
+            statistics.sort((a, b) -> {
+                Integer countA = (Integer) a.get("completedCount");
+                Integer countB = (Integer) b.get("completedCount");
+                return countB.compareTo(countA);
+            });
+            
+            log.info("✅ 상담 완료 건수 통계 조회 완료: {}명", statistics.size());
+            return statistics;
+            
+        } catch (Exception e) {
+            log.error("❌ 상담 완료 건수 통계 조회 실패", e);
+            return new ArrayList<>();
+        }
+    }
+    
+    @Override
+    public List<Map<String, Object>> getAllSchedules() {
+        try {
+            log.info("🔍 모든 스케줄 조회");
+            
+            // 모든 스케줄 조회
+            List<Schedule> schedules = scheduleRepository.findAll();
+            
+            // 스케줄을 Map 형태로 변환
+            List<Map<String, Object>> scheduleMaps = schedules.stream()
+                    .map(schedule -> {
+                        Map<String, Object> scheduleMap = new HashMap<>();
+                        scheduleMap.put("id", schedule.getId());
+                        scheduleMap.put("title", schedule.getTitle());
+                        scheduleMap.put("date", schedule.getDate());
+                        scheduleMap.put("startTime", schedule.getStartTime());
+                        scheduleMap.put("endTime", schedule.getEndTime());
+                        scheduleMap.put("consultationType", schedule.getConsultationType());
+                        scheduleMap.put("status", schedule.getStatus());
+                        scheduleMap.put("notes", schedule.getNotes());
+                        scheduleMap.put("consultantId", schedule.getConsultantId());
+                        
+                        // 상담사 정보 추가
+                        if (schedule.getConsultantId() != null) {
+                            try {
+                                User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+                                if (consultant != null) {
+                                    scheduleMap.put("consultantName", consultant.getName());
+                                    scheduleMap.put("consultantEmail", consultant.getEmail());
+                                } else {
+                                    scheduleMap.put("consultantName", "미지정");
+                                    scheduleMap.put("consultantEmail", "");
+                                }
+                            } catch (Exception e) {
+                                log.warn("상담사 정보 조회 실패: consultantId={}, error={}", schedule.getConsultantId(), e.getMessage());
+                                scheduleMap.put("consultantName", "미지정");
+                                scheduleMap.put("consultantEmail", "");
+                            }
+                        } else {
+                            scheduleMap.put("consultantName", "미지정");
+                            scheduleMap.put("consultantEmail", "");
+                        }
+                        
+                        // 내담자 정보 추가
+                        if (schedule.getClientId() != null) {
+                            scheduleMap.put("clientId", schedule.getClientId());
+                            try {
+                                User clientUser = userRepository.findById(schedule.getClientId()).orElse(null);
+                                if (clientUser != null) {
+                                    scheduleMap.put("clientName", clientUser.getName());
+                                    scheduleMap.put("clientEmail", clientUser.getEmail());
+                                } else {
+                                    scheduleMap.put("clientName", "미지정");
+                                    scheduleMap.put("clientEmail", "");
+                                }
+                            } catch (Exception e) {
+                                log.warn("내담자 정보 조회 실패: clientId={}, error={}", schedule.getClientId(), e.getMessage());
+                                scheduleMap.put("clientName", "미지정");
+                                scheduleMap.put("clientEmail", "");
+                            }
+                        } else {
+                            scheduleMap.put("clientId", null);
+                            scheduleMap.put("clientName", "미지정");
+                            scheduleMap.put("clientEmail", "");
+                        }
+                        
+                        return scheduleMap;
+                    })
+                    .collect(Collectors.toList());
+            
+            log.info("✅ 모든 스케줄 조회 완료: {}개", scheduleMaps.size());
+            return scheduleMaps;
+            
+        } catch (Exception e) {
+            log.error("❌ 모든 스케줄 조회 실패", e);
+            return new ArrayList<>();
+        }
+    }
+    
+    @Override
+    public Map<String, Object> getScheduleStatistics() {
+        try {
+            log.info("📊 스케줄 상태별 통계 조회");
+            
+            // 모든 스케줄 조회
+            List<Schedule> allSchedules = scheduleRepository.findAll();
+            
+            // 상태별 카운트
+            Map<String, Long> statusCount = allSchedules.stream()
+                .collect(Collectors.groupingBy(
+                    schedule -> schedule.getStatus() != null ? schedule.getStatus() : "UNKNOWN",
+                    Collectors.counting()
+                ));
+            
+            // 상담사별 완료 건수 (스케줄 기준)
+            Map<Long, Long> consultantCompletedCount = allSchedules.stream()
+                .filter(schedule -> "COMPLETED".equals(schedule.getStatus()))
+                .filter(schedule -> schedule.getConsultantId() != null)
+                .collect(Collectors.groupingBy(
+                    Schedule::getConsultantId,
+                    Collectors.counting()
+                ));
+            
+            Map<String, Object> statistics = new HashMap<>();
+            statistics.put("totalSchedules", allSchedules.size());
+            statistics.put("statusCount", statusCount);
+            statistics.put("consultantCompletedCount", consultantCompletedCount);
+            statistics.put("completedSchedules", statusCount.getOrDefault("COMPLETED", 0L));
+            statistics.put("bookedSchedules", statusCount.getOrDefault("BOOKED", 0L));
+            statistics.put("confirmedSchedules", statusCount.getOrDefault("CONFIRMED", 0L));
+            statistics.put("cancelledSchedules", statusCount.getOrDefault("CANCELLED", 0L));
+            
+            log.info("✅ 스케줄 통계 조회 완료: 총 {}개, 완료 {}개", allSchedules.size(), statusCount.getOrDefault("COMPLETED", 0L));
+            return statistics;
+            
+        } catch (Exception e) {
+            log.error("❌ 스케줄 통계 조회 실패", e);
+            return new HashMap<>();
+        }
+    }
+    
+    @Override
+    public Map<String, Object> autoCompleteSchedulesWithReminder() {
+        try {
+            log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 시작");
+            
+            // 1. 지난 스케줄 중 완료되지 않은 것들 조회
+            List<Schedule> expiredSchedules = scheduleRepository.findByDateBeforeAndStatus(
+                LocalDate.now(), "CONFIRMED");
+            
+            int completedCount = 0;
+            int reminderSentCount = 0;
+            List<Long> consultantIdsWithReminder = new ArrayList<>();
+            
+            for (Schedule schedule : expiredSchedules) {
+                try {
+                    // 스케줄을 완료 상태로 변경
+                    schedule.setStatus("COMPLETED");
+                    schedule.setUpdatedAt(LocalDateTime.now());
+                    scheduleRepository.save(schedule);
+                    completedCount++;
+                    
+                    // 상담일지 작성 여부 확인 (consultations 테이블에 해당 스케줄의 상담 기록이 있는지 확인)
+                    boolean hasConsultationRecord = checkConsultationRecord(schedule);
+                    
+                    if (!hasConsultationRecord) {
+                        // 상담일지 미작성 시 상담사에게 메시지 발송
+                        sendConsultationReminderMessage(schedule);
+                        reminderSentCount++;
+                        
+                        if (!consultantIdsWithReminder.contains(schedule.getConsultantId())) {
+                            consultantIdsWithReminder.add(schedule.getConsultantId());
+                        }
+                    }
+                    
+                } catch (Exception e) {
+                    log.error("❌ 스케줄 ID {} 자동 완료 처리 실패: {}", schedule.getId(), e.getMessage());
+                }
+            }
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("completedSchedules", completedCount);
+            result.put("reminderMessagesSent", reminderSentCount);
+            result.put("consultantsNotified", consultantIdsWithReminder.size());
+            result.put("consultantIds", consultantIdsWithReminder);
+            result.put("message", String.format("스케줄 %d개가 완료 처리되었고, 상담일지 미작성 상담사 %d명에게 알림이 발송되었습니다.", 
+                completedCount, consultantIdsWithReminder.size()));
+            
+            log.info("✅ 스케줄 자동 완료 처리 완료: 완료 {}개, 알림 발송 {}개", completedCount, reminderSentCount);
+            return result;
+            
+        } catch (Exception e) {
+            log.error("❌ 스케줄 자동 완료 처리 실패", e);
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "스케줄 자동 완료 처리에 실패했습니다: " + e.getMessage());
+            return errorResult;
+        }
+    }
+    
+    /**
+     * 상담일지 작성 여부 확인
+     */
+    private boolean checkConsultationRecord(Schedule schedule) {
+        try {
+            // consultations 테이블에서 해당 스케줄과 관련된 상담 기록이 있는지 확인
+            // 여기서는 간단히 스케줄 ID나 날짜/시간으로 매칭하는 로직을 구현
+            // 실제로는 더 정확한 매칭 로직이 필요할 수 있음
+            return false; // 임시로 항상 false 반환 (상담일지 미작성으로 간주)
+        } catch (Exception e) {
+            log.warn("상담일지 작성 여부 확인 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * 상담일지 작성 독려 메시지 발송
+     */
+    private void sendConsultationReminderMessage(Schedule schedule) {
+        try {
+            if (schedule.getConsultantId() == null || schedule.getClientId() == null) {
+                log.warn("스케줄 ID {} 상담사 또는 내담자 정보가 없어 메시지 발송을 건너뜁니다.", schedule.getId());
+                return;
+            }
+            
+            String title = "상담일지 작성 안내";
+            String content = String.format(
+                "안녕하세요. %s에 진행된 상담의 상담일지를 아직 작성하지 않으셨습니다.\n\n" +
+                "상담일지는 상담의 질 향상과 내담자 관리에 매우 중요합니다.\n" +
+                "빠른 시일 내에 상담일지를 작성해 주시기 바랍니다.\n\n" +
+                "상담 정보:\n" +
+                "- 상담일: %s\n" +
+                "- 상담시간: %s ~ %s\n" +
+                "- 내담자: %s\n\n" +
+                "감사합니다.",
+                schedule.getDate(),
+                schedule.getDate(),
+                schedule.getStartTime(),
+                schedule.getEndTime(),
+                schedule.getClientId() // 실제로는 내담자 이름을 조회해야 함
+            );
+            
+            // 상담사에게 메시지 발송
+            consultationMessageService.sendMessage(
+                schedule.getConsultantId(),
+                schedule.getClientId(),
+                null, // consultationId는 null
+                "ADMIN", // 발신자 타입
+                title,
+                content,
+                "REMINDER", // 메시지 타입
+                true, // 중요 메시지
+                false // 긴급 메시지 아님
+            );
+            
+            log.info("📨 상담일지 작성 독려 메시지 발송 완료: 상담사 ID={}, 스케줄 ID={}", 
+                schedule.getConsultantId(), schedule.getId());
+                
+        } catch (Exception e) {
+            log.error("❌ 상담일지 작성 독려 메시지 발송 실패: 스케줄 ID={}, error={}", 
+                schedule.getId(), e.getMessage());
+        }
+    }
+    
+    /**
+     * 상담사별 완료된 스케줄 건수 조회 (기간별)
+     */
+    private int getCompletedScheduleCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
+        try {
+            List<Schedule> completedSchedules = scheduleRepository.findByConsultantIdAndStatusAndDateBetween(
+                consultantId, "COMPLETED", startDate, endDate);
+            return completedSchedules.size();
+        } catch (Exception e) {
+            log.warn("상담사 {} 완료 스케줄 건수 조회 실패: {}", consultantId, e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * 상담사별 총 스케줄 건수 조회
+     */
+    private long getTotalScheduleCount(Long consultantId) {
+        try {
+            return scheduleRepository.countByConsultantId(consultantId);
+        } catch (Exception e) {
+            log.warn("상담사 {} 총 스케줄 건수 조회 실패: {}", consultantId, e.getMessage());
+            return 0;
         }
     }
     

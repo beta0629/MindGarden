@@ -96,19 +96,18 @@ class SessionManager {
                     }
                 });
             } catch (fetchError) {
-                // 401 오류는 정상적인 상황이므로 조용히 처리
-                if (fetchError.message && fetchError.message.includes('401')) {
-                    this.user = null;
-                    this.sessionInfo = null;
-                    this.lastCheckTime = now;
-                    this.notifyListeners();
-                    return false;
-                }
-                throw fetchError;
+                // 네트워크 오류나 401 오류는 정상적인 상황이므로 조용히 처리
+                console.log('🔍 세션 확인 실패 (정상):', fetchError.message);
+                this.user = null;
+                this.sessionInfo = null;
+                this.lastCheckTime = now;
+                this.notifyListeners();
+                return false;
             }
             
             // 401 오류는 정상적인 상황이므로 조용히 처리
             if (userResponse.status === 401) {
+                console.log('🔍 세션 확인 실패 (정상): 401 Unauthorized');
                 this.user = null;
                 this.sessionInfo = null;
                 this.lastCheckTime = now;

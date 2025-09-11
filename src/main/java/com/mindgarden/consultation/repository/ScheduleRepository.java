@@ -121,6 +121,11 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByConsultantIdAndStatus(Long consultantId, String status);
     
     /**
+     * 상담사별 상태별 날짜 범위 스케줄 조회
+     */
+    List<Schedule> findByConsultantIdAndStatusAndDateBetween(Long consultantId, String status, LocalDate startDate, LocalDate endDate);
+    
+    /**
      * 내담자별 상태별 스케줄 조회
      */
     List<Schedule> findByClientIdAndStatus(Long clientId, String status);

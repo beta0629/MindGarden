@@ -11,6 +11,7 @@ import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.AdminService;
+import com.mindgarden.consultation.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -33,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminController {
 
     private final AdminService adminService;
+    private final ScheduleService scheduleService;
 
     /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
@@ -837,6 +839,34 @@ public class AdminController {
     }
 
     /**
+     * 상담사 등급 업데이트
+     */
+    @PutMapping("/consultants/{id}/grade")
+    public ResponseEntity<?> updateConsultantGrade(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        try {
+            String grade = request.get("grade").toString();
+            log.info("🔧 상담사 등급 업데이트: ID={}, 등급={}", id, grade);
+            
+            User consultant = adminService.updateConsultantGrade(id, grade);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "상담사 등급이 성공적으로 업데이트되었습니다",
+                "data", Map.of(
+                    "id", consultant.getId(),
+                    "name", consultant.getName(),
+                    "grade", consultant.getGrade()
+                )
+            ));
+        } catch (Exception e) {
+            log.error("❌ 상담사 등급 업데이트 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "상담사 등급 업데이트에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 내담자 정보 수정
      */
     @PutMapping("/clients/{id}")
@@ -1171,6 +1201,174 @@ public class AdminController {
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "결제 취소 중 오류가 발생했습니다."
+            ));
+        }
+    }
+
+    /**
+     * 상담사별 상담 완료 건수 통계 조회
+     */
+    @GetMapping("/statistics/consultation-completion")
+    public ResponseEntity<?> getConsultationCompletionStatistics(
+            @RequestParam(required = false) String period) {
+        try {
+            log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
+            
+            List<Map<String, Object>> statistics = adminService.getConsultationCompletionStatistics(period);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", statistics,
+                "count", statistics.size(),
+                "period", period != null ? period : "전체"
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 상담 완료 건수 통계 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "상담 완료 건수 통계 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 상담사별 스케줄 조회 (필터링)
+     */
+    @GetMapping("/schedules")
+    public ResponseEntity<?> getSchedules(
+            @RequestParam(required = false) Long consultantId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        try {
+            log.info("📅 어드민 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}", 
+                    consultantId, status, startDate, endDate);
+            
+            List<Map<String, Object>> schedules;
+            
+            if (consultantId != null) {
+                // 특정 상담사의 스케줄만 조회
+                schedules = adminService.getSchedulesByConsultantId(consultantId);
+            } else {
+                // 모든 스케줄 조회 (기존 로직)
+                schedules = adminService.getAllSchedules();
+            }
+            
+            // 상태 필터링
+            if (status != null && !status.isEmpty() && !"ALL".equals(status)) {
+                schedules = schedules.stream()
+                    .filter(schedule -> status.equals(schedule.get("status")))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            // 날짜 필터링
+            if (startDate != null && !startDate.isEmpty()) {
+                schedules = schedules.stream()
+                    .filter(schedule -> {
+                        String scheduleDate = schedule.get("startTime") != null ? 
+                            schedule.get("startTime").toString().substring(0, 10) : "";
+                        return scheduleDate.compareTo(startDate) >= 0;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            if (endDate != null && !endDate.isEmpty()) {
+                schedules = schedules.stream()
+                    .filter(schedule -> {
+                        String scheduleDate = schedule.get("startTime") != null ? 
+                            schedule.get("startTime").toString().substring(0, 10) : "";
+                        return scheduleDate.compareTo(endDate) <= 0;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", schedules);
+            response.put("count", schedules.size());
+            response.put("consultantId", consultantId);
+            response.put("status", status);
+            response.put("startDate", startDate);
+            response.put("endDate", endDate);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 어드민 스케줄 조회 실패", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "스케줄 조회에 실패했습니다: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    /**
+     * 스케줄 자동 완료 처리 (수동 실행)
+     */
+    @PostMapping("/schedules/auto-complete")
+    public ResponseEntity<?> autoCompleteSchedules() {
+        try {
+            log.info("🔄 스케줄 자동 완료 처리 수동 실행");
+            
+            // 스케줄 서비스를 통해 자동 완료 처리 실행
+            scheduleService.autoCompleteExpiredSchedules();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "스케줄 자동 완료 처리가 실행되었습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 스케줄 자동 완료 처리 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "스케줄 자동 완료 처리에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (수동 실행)
+     */
+    @PostMapping("/schedules/auto-complete-with-reminder")
+    public ResponseEntity<?> autoCompleteSchedulesWithReminder() {
+        try {
+            log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 수동 실행");
+            
+            Map<String, Object> result = adminService.autoCompleteSchedulesWithReminder();
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("❌ 스케줄 자동 완료 처리 및 알림 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "스케줄 자동 완료 처리 및 알림에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 스케줄 상태별 통계 조회
+     */
+    @GetMapping("/schedules/statistics")
+    public ResponseEntity<?> getScheduleStatistics() {
+        try {
+            log.info("📊 스케줄 상태별 통계 조회");
+            
+            Map<String, Object> statistics = adminService.getScheduleStatistics();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", statistics
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 스케줄 통계 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "스케줄 통계 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }

@@ -493,6 +493,7 @@ public class AdminUserController {
     /**
      * 상담사 신청 거부 이메일 발송
      */
+    @SuppressWarnings("unused")
     private void sendConsultantRejectionEmail(Long userId, String reason) {
         try {
             log.info("상담사 신청 거부 이메일 발송: userId={}, reason={}", userId, reason);
@@ -535,6 +536,7 @@ public class AdminUserController {
     /**
      * 시스템 알림 이메일 발송
      */
+    @SuppressWarnings("unused")
     private void sendSystemNotificationEmail(String toEmail, String toName, String message) {
         try {
             log.info("시스템 알림 이메일 발송: to={}, message={}", toEmail, message);
@@ -570,6 +572,7 @@ public class AdminUserController {
     /**
      * 개인정보 복호화 (안전한 복호화)
      */
+    @SuppressWarnings("unused")
     private String decryptPersonalData(String encryptedData) {
         if (encryptedData == null || encryptedData.trim().isEmpty()) {
             return encryptedData;

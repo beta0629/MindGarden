@@ -181,6 +181,24 @@ const ErpDashboard = () => {
           >
             예산 관리
           </ErpButton>
+          
+          <ErpButton
+            variant="danger"
+            size="large"
+            onClick={() => window.location.href = '/erp/salary'}
+            style={{ width: '100%' }}
+          >
+            급여 관리
+          </ErpButton>
+          
+          <ErpButton
+            variant="secondary"
+            size="large"
+            onClick={() => window.location.href = '/erp/tax'}
+            style={{ width: '100%' }}
+          >
+            세금 관리
+          </ErpButton>
         </div>
       </ErpCard>
 

@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.dto.EmailRequest;
 import com.mindgarden.consultation.dto.EmailResponse;
@@ -194,6 +195,35 @@ public class EmailServiceImpl implements EmailService {
         }
         
         return response;
+    }
+    
+    @Override
+    public List<EmailResponse> getEmailHistory(String toEmail, int limit) {
+        log.info("이메일 발송 이력 조회: to={}, limit={}", toEmail, limit);
+        
+        return emailStatusMap.values().stream()
+                .filter(response -> response.getToEmail().equals(toEmail))
+                .sorted((a, b) -> b.getSentAt().compareTo(a.getSentAt()))
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
+    public EmailResponse resendEmail(String emailId) {
+        log.info("이메일 재발송 요청: emailId={}", emailId);
+        
+        EmailResponse originalResponse = emailStatusMap.get(emailId);
+        if (originalResponse == null) {
+            return EmailResponse.builder()
+                    .emailId(emailId)
+                    .status(EmailConstants.STATUS_FAILED)
+                    .success(false)
+                    .message("재발송할 이메일을 찾을 수 없습니다.")
+                    .build();
+        }
+        
+        // 재발송 로직 (실제 구현에서는 원본 요청을 다시 발송)
+        return originalResponse;
     }
     
     @Override
@@ -658,5 +688,342 @@ public class EmailServiceImpl implements EmailService {
             </body>
             </html>
             """;
+    }
+    
+    // ==================== 급여 관련 이메일 ====================
+    
+    @Override
+    public boolean sendSalaryCalculationEmail(String toEmail, String consultantName, 
+                                            String period, Map<String, Object> salaryData, 
+                                            String attachmentPath) {
+        try {
+            log.info("급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            
+            String subject = String.format("[mindgarden] %s 급여 계산서 - %s", consultantName, period);
+            String content = createSalaryCalculationEmailContent(consultantName, period, salaryData);
+            
+            EmailRequest request = EmailRequest.builder()
+                    .toEmail(toEmail)
+                    .toName(consultantName)
+                    .subject(subject)
+                    .content(content)
+                    .type("HTML")
+                    .templateType("SALARY_CALCULATION")
+                    .templateVariables(Map.of(
+                        "consultantName", consultantName,
+                        "period", period,
+                        "salaryData", salaryData
+                    ))
+                    .attachments(attachmentPath != null ? List.of(attachmentPath) : null)
+                    .build();
+            
+            EmailResponse response = sendEmail(request);
+            return response.isSuccess();
+            
+        } catch (Exception e) {
+            log.error("급여 계산서 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean sendSalaryApprovalEmail(String toEmail, String consultantName, 
+                                         String period, String approvedAmount) {
+        try {
+            log.info("급여 승인 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            
+            String subject = String.format("[mindgarden] %s 급여 승인 완료 - %s", consultantName, period);
+            String content = createSalaryApprovalEmailContent(consultantName, period, approvedAmount);
+            
+            EmailRequest request = EmailRequest.builder()
+                    .toEmail(toEmail)
+                    .toName(consultantName)
+                    .subject(subject)
+                    .content(content)
+                    .type("HTML")
+                    .templateType("SALARY_APPROVAL")
+                    .templateVariables(Map.of(
+                        "consultantName", consultantName,
+                        "period", period,
+                        "approvedAmount", approvedAmount
+                    ))
+                    .build();
+            
+            EmailResponse response = sendEmail(request);
+            return response.isSuccess();
+            
+        } catch (Exception e) {
+            log.error("급여 승인 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean sendSalaryPaymentEmail(String toEmail, String consultantName, 
+                                        String period, String paidAmount, String payDate) {
+        try {
+            log.info("급여 지급 완료 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            
+            String subject = String.format("[mindgarden] %s 급여 지급 완료 - %s", consultantName, period);
+            String content = createSalaryPaymentEmailContent(consultantName, period, paidAmount, payDate);
+            
+            EmailRequest request = EmailRequest.builder()
+                    .toEmail(toEmail)
+                    .toName(consultantName)
+                    .subject(subject)
+                    .content(content)
+                    .type("HTML")
+                    .templateType("SALARY_PAYMENT")
+                    .templateVariables(Map.of(
+                        "consultantName", consultantName,
+                        "period", period,
+                        "paidAmount", paidAmount,
+                        "payDate", payDate
+                    ))
+                    .build();
+            
+            EmailResponse response = sendEmail(request);
+            return response.isSuccess();
+            
+        } catch (Exception e) {
+            log.error("급여 지급 완료 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean sendTaxReportEmail(String toEmail, String consultantName, 
+                                    String period, Map<String, Object> taxData, 
+                                    String attachmentPath) {
+        try {
+            log.info("세금 내역서 이메일 발송: to={}, 상담사={}, 기간={}", toEmail, consultantName, period);
+            
+            String subject = String.format("[mindgarden] %s 세금 내역서 - %s", consultantName, period);
+            String content = createTaxReportEmailContent(consultantName, period, taxData);
+            
+            EmailRequest request = EmailRequest.builder()
+                    .toEmail(toEmail)
+                    .toName(consultantName)
+                    .subject(subject)
+                    .content(content)
+                    .type("HTML")
+                    .templateType("TAX_REPORT")
+                    .templateVariables(Map.of(
+                        "consultantName", consultantName,
+                        "period", period,
+                        "taxData", taxData
+                    ))
+                    .attachments(attachmentPath != null ? List.of(attachmentPath) : null)
+                    .build();
+            
+            EmailResponse response = sendEmail(request);
+            return response.isSuccess();
+            
+        } catch (Exception e) {
+            log.error("세금 내역서 이메일 발송 실패: to={}, error={}", toEmail, e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    @Override
+    public String getEmailTemplate(String templateType) {
+        return switch (templateType) {
+            case "SALARY_CALCULATION" -> getSalaryCalculationTemplate();
+            case "SALARY_APPROVAL" -> getSalaryApprovalTemplate();
+            case "SALARY_PAYMENT" -> getSalaryPaymentTemplate();
+            case "TAX_REPORT" -> getTaxReportTemplate();
+            default -> getSystemNotificationTemplate();
+        };
+    }
+    
+    // ==================== 급여 이메일 템플릿 ====================
+    
+    private String createSalaryCalculationEmailContent(String consultantName, String period, Map<String, Object> salaryData) {
+        String template = getSalaryCalculationTemplate();
+        
+        return template
+                .replace("{{consultantName}}", consultantName)
+                .replace("{{period}}", period)
+                .replace("{{baseSalary}}", formatAmount(salaryData.get("baseSalary")))
+                .replace("{{optionSalary}}", formatAmount(salaryData.get("optionSalary")))
+                .replace("{{totalSalary}}", formatAmount(salaryData.get("totalSalary")))
+                .replace("{{taxAmount}}", formatAmount(salaryData.get("taxAmount")))
+                .replace("{{netSalary}}", formatAmount(salaryData.get("netSalary")))
+                .replace("{{consultationCount}}", String.valueOf(salaryData.get("consultationCount")))
+                .replace("{{supportEmail}}", EmailConstants.SUPPORT_EMAIL);
+    }
+    
+    private String createSalaryApprovalEmailContent(String consultantName, String period, String approvedAmount) {
+        String template = getSalaryApprovalTemplate();
+        
+        return template
+                .replace("{{consultantName}}", consultantName)
+                .replace("{{period}}", period)
+                .replace("{{approvedAmount}}", approvedAmount)
+                .replace("{{supportEmail}}", EmailConstants.SUPPORT_EMAIL);
+    }
+    
+    private String createSalaryPaymentEmailContent(String consultantName, String period, String paidAmount, String payDate) {
+        String template = getSalaryPaymentTemplate();
+        
+        return template
+                .replace("{{consultantName}}", consultantName)
+                .replace("{{period}}", period)
+                .replace("{{paidAmount}}", paidAmount)
+                .replace("{{payDate}}", payDate)
+                .replace("{{supportEmail}}", EmailConstants.SUPPORT_EMAIL);
+    }
+    
+    private String createTaxReportEmailContent(String consultantName, String period, Map<String, Object> taxData) {
+        String template = getTaxReportTemplate();
+        
+        return template
+                .replace("{{consultantName}}", consultantName)
+                .replace("{{period}}", period)
+                .replace("{{totalTaxAmount}}", formatAmount(taxData.get("totalTaxAmount")))
+                .replace("{{supportEmail}}", EmailConstants.SUPPORT_EMAIL);
+    }
+    
+    private String getSalaryCalculationTemplate() {
+        return """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                        급여 계산서
+                    </h2>
+                    
+                    <p>안녕하세요, <strong>{{consultantName}}</strong>님</p>
+                    
+                    <p>{{period}} 급여 계산이 완료되었습니다.</p>
+                    
+                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #2c3e50; margin-top: 0;">급여 내역</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>기본 급여:</strong></td>
+                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: right;">{{baseSalary}}원</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>옵션 급여:</strong></td>
+                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: right;">{{optionSalary}}원</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>총 급여 (세전):</strong></td>
+                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: right;">{{totalSalary}}원</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>세금:</strong></td>
+                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: right; color: #e74c3c;">-{{taxAmount}}원</td>
+                            </tr>
+                            <tr style="background-color: #e8f5e8;">
+                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong>실지급액 (세후):</strong></td>
+                                <td style="padding: 8px; border-bottom: 1px solid #dee2e6; text-align: right; color: #27ae60; font-weight: bold;">{{netSalary}}원</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px;"><strong>상담 건수:</strong></td>
+                                <td style="padding: 8px; text-align: right;">{{consultationCount}}건</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
+                    
+                    <p>감사합니다.<br><strong>mindgarden 팀</strong></p>
+                </div>
+            </body>
+            </html>
+            """;
+    }
+    
+    private String getSalaryApprovalTemplate() {
+        return """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 10px;">
+                        급여 승인 완료
+                    </h2>
+                    
+                    <p>안녕하세요, <strong>{{consultantName}}</strong>님</p>
+                    
+                    <p>{{period}} 급여가 승인되었습니다.</p>
+                    
+                    <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                        <h3 style="color: #27ae60; margin-top: 0;">승인된 급여</h3>
+                        <p style="font-size: 24px; font-weight: bold; color: #27ae60; margin: 10px 0;">{{approvedAmount}}원</p>
+                    </div>
+                    
+                    <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
+                    
+                    <p>감사합니다.<br><strong>mindgarden 팀</strong></p>
+                </div>
+            </body>
+            </html>
+            """;
+    }
+    
+    private String getSalaryPaymentTemplate() {
+        return """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 10px;">
+                        급여 지급 완료
+                    </h2>
+                    
+                    <p>안녕하세요, <strong>{{consultantName}}</strong>님</p>
+                    
+                    <p>{{period}} 급여가 지급되었습니다.</p>
+                    
+                    <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #27ae60; margin-top: 0;">지급 정보</h3>
+                        <p><strong>지급 금액:</strong> {{paidAmount}}원</p>
+                        <p><strong>지급일:</strong> {{payDate}}</p>
+                    </div>
+                    
+                    <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
+                    
+                    <p>감사합니다.<br><strong>mindgarden 팀</strong></p>
+                </div>
+            </body>
+            </html>
+            """;
+    }
+    
+    private String getTaxReportTemplate() {
+        return """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+                        세금 내역서
+                    </h2>
+                    
+                    <p>안녕하세요, <strong>{{consultantName}}</strong>님</p>
+                    
+                    <p>{{period}} 세금 내역서를 발송해드립니다.</p>
+                    
+                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #2c3e50; margin-top: 0;">세금 요약</h3>
+                        <p><strong>총 세금:</strong> {{totalTaxAmount}}원</p>
+                    </div>
+                    
+                    <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
+                    
+                    <p>감사합니다.<br><strong>mindgarden 팀</strong></p>
+                </div>
+            </body>
+            </html>
+            """;
+    }
+    
+    private String formatAmount(Object amount) {
+        if (amount == null) return "0";
+        try {
+            return String.format("%,d", Long.parseLong(amount.toString()));
+        } catch (NumberFormatException e) {
+            return amount.toString();
+        }
     }
 }

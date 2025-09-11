@@ -13,6 +13,7 @@ import ConsultationRecordScreen from './components/consultant/ConsultationRecord
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
+import ScheduleCalendar from './components/schedule/ScheduleCalendar';
 import ConsultantComprehensiveManagement from './components/admin/ConsultantComprehensiveManagement';
 import ClientComprehensiveManagement from './components/admin/ClientComprehensiveManagement';
 import SessionManagement from './components/admin/SessionManagement';
@@ -40,6 +41,8 @@ import PurchaseRequestForm from './components/erp/PurchaseRequestForm';
 import AdminApprovalDashboard from './components/erp/AdminApprovalDashboard';
 import SuperAdminApprovalDashboard from './components/erp/SuperAdminApprovalDashboard';
 import ItemManagement from './components/erp/ItemManagement';
+import SalaryManagement from './components/erp/SalaryManagement';
+import TaxManagement from './components/erp/TaxManagement';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { sessionManager } from './utils/sessionManager';
@@ -219,7 +222,7 @@ function AppContent() {
             <Route path="/admin/accounts" element={<AccountManagement />} />
             <Route path="/admin/schedules" element={
               <SimpleLayout>
-                <ScheduleList 
+                <ScheduleCalendar 
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id || 1}
                 />
@@ -302,6 +305,8 @@ function AppContent() {
                 description="예산 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
               />
             } />
+            <Route path="/erp/salary" element={<SalaryManagement />} />
+            <Route path="/erp/tax" element={<TaxManagement />} />
             <Route path="/erp/orders" element={
               <ComingSoon 
                 title="주문 관리"

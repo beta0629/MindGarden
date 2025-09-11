@@ -1,14 +1,13 @@
 package com.mindgarden.consultation.repository;
 
-import com.mindgarden.consultation.entity.Consultation;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.mindgarden.consultation.entity.Consultation;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 /**
  * 상담 관리 Repository
@@ -43,6 +42,12 @@ public interface ConsultationRepository extends BaseRepository<Consultation, Lon
      */
     @Query("SELECT COUNT(c) FROM Consultation c WHERE c.consultantId = ?1 AND c.isDeleted = false")
     long countByConsultantId(Long consultantId);
+    
+    /**
+     * 상담사별 완료된 상담 건수 조회 (기간별)
+     */
+    @Query("SELECT COUNT(c) FROM Consultation c WHERE c.consultantId = ?1 AND c.status = ?2 AND c.createdAt BETWEEN ?3 AND ?4 AND c.isDeleted = false")
+    int countByConsultantIdAndStatusAndCreatedAtBetween(Long consultantId, String status, LocalDateTime startDateTime, LocalDateTime endDateTime);
     
     /**
      * 상태별 상담 조회 (활성 상태만)

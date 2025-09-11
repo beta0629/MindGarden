@@ -23,7 +23,7 @@ const CommonCodeFilters = ({
     const loadActiveStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await fetch('/api/admin/codes/values?groupCode=STATUS');
+            const response = await fetch('/api/admin/common-codes/values?groupCode=STATUS');
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.length > 0) {

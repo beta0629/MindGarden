@@ -70,6 +70,11 @@ public interface AdminService {
     User updateConsultant(Long id, ConsultantRegistrationDto request);
 
     /**
+     * 상담사 등급 업데이트
+     */
+    User updateConsultantGrade(Long id, String grade);
+
+    /**
      * 내담자 정보 수정
      */
     Client updateClient(Long id, ClientRegistrationDto request);
@@ -179,4 +184,24 @@ public interface AdminService {
      * 상담사별 스케줄 조회
      */
     List<Map<String, Object>> getSchedulesByConsultantId(Long consultantId);
+
+    /**
+     * 상담사별 상담 완료 건수 통계 조회
+     */
+    List<Map<String, Object>> getConsultationCompletionStatistics(String period);
+
+    /**
+     * 모든 스케줄 조회
+     */
+    List<Map<String, Object>> getAllSchedules();
+
+    /**
+     * 스케줄 상태별 통계 조회
+     */
+    Map<String, Object> getScheduleStatistics();
+    
+    /**
+     * 스케줄 자동 완료 처리 (상담일지 미작성 시 메시지 발송 포함)
+     */
+    Map<String, Object> autoCompleteSchedulesWithReminder();
 }

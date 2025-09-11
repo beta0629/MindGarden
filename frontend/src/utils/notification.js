@@ -150,4 +150,25 @@ class NotificationManager {
 // 싱글톤 인스턴스
 const notificationManager = new NotificationManager();
 
+// 편의 함수들
+export const showNotification = (message, type = 'success', duration = 3000) => {
+    return notificationManager.show(message, type, duration);
+};
+
+export const showSuccess = (message, duration = 3000) => {
+    return notificationManager.success(message, duration);
+};
+
+export const showError = (message, duration = 5000) => {
+    return notificationManager.error(message, duration);
+};
+
+export const showWarning = (message, duration = 4000) => {
+    return notificationManager.warning(message, duration);
+};
+
+export const showInfo = (message, duration = 3000) => {
+    return notificationManager.info(message, duration);
+};
+
 export default notificationManager;

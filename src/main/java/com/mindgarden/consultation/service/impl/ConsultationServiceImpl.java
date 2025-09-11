@@ -60,9 +60,11 @@ public class ConsultationServiceImpl implements ConsultationService {
     private NoteRepository noteRepository;
     
     @Autowired
+    @SuppressWarnings("unused")
     private QualityEvaluationRepository qualityEvaluationRepository;
     
     @Autowired
+    @SuppressWarnings("unused")
     private DiscountRepository discountRepository;
     
     @Autowired
@@ -293,6 +295,17 @@ public class ConsultationServiceImpl implements ConsultationService {
     @Override
     public List<Consultation> findByConsultantId(Long consultantId) {
         return consultationRepository.findByConsultantId(consultantId);
+    }
+    
+    @Override
+    public int getCompletedConsultationCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
+        log.info("🔍 상담사별 완료된 상담 건수 조회: 상담사ID={}, 기간={} ~ {}", consultantId, startDate, endDate);
+        return consultationRepository.countByConsultantIdAndStatusAndCreatedAtBetween(
+            consultantId, 
+            "COMPLETED", 
+            startDate.atStartOfDay(), 
+            endDate.atTime(23, 59, 59)
+        );
     }
     
     @Override
@@ -752,6 +765,7 @@ public class ConsultationServiceImpl implements ConsultationService {
         // 상담 노트 추가 로직
         log.info("상담 노트 추가: consultationId={}, authorId={}", consultationId, authorId);
         
+        @SuppressWarnings("unused")
         Consultation consultation = findActiveByIdOrThrow(consultationId);
         
         // Note 엔티티 생성 및 저장 로직 구현
@@ -1630,6 +1644,7 @@ public class ConsultationServiceImpl implements ConsultationService {
                             if (line.contains("[품질평가JSON]")) {
                                 String jsonStr = line.substring(line.indexOf("[품질평가JSON]") + 14).trim();
                                 com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                                @SuppressWarnings("unchecked")
                                 Map<String, Object> qualityData = objectMapper.readValue(jsonStr, Map.class);
                                 
                                 Object overallScoreObj = qualityData.get("overallScore");
@@ -2276,7 +2291,9 @@ public class ConsultationServiceImpl implements ConsultationService {
             
             // JSON에서 백업 데이터 로드
             com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            @SuppressWarnings("unchecked")
             Map<String, Object> backupData = objectMapper.readValue(backupFile, Map.class);
+            @SuppressWarnings("unchecked")
             List<Map<String, Object>> consultationMaps = (List<Map<String, Object>>) backupData.get("consultations");
             
             // 복원된 데이터를 데이터베이스에 저장

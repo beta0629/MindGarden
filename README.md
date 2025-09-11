@@ -10,6 +10,7 @@
 - **[API 설계](docs/API_DESIGN.md)** - REST API 명세서
 - **[시스템 설계](docs/SYSTEM_DESIGN.md)** - 아키텍처 및 설계 문서
 - **[운영 가이드](docs/OPERATION_DEPLOYMENT_GUIDE.md)** - 배포 및 운영 가이드
+- **[급여 관리 시스템](docs/SALARY_MANAGEMENT_SYSTEM.md)** - 급여 계산 및 관리 시스템 가이드
 
 ## 🚀 빠른 시작
 

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
 import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
 import SystemTools from './system/SystemTools';
 import StatisticsModal from '../common/StatisticsModal';
+import ConsultationCompletionStats from './ConsultationCompletionStats';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
 import './AdminDashboard.css';
@@ -107,6 +108,48 @@ const AdminDashboard = ({ user: propUser }) => {
             setLoading(false);
         }
     }, [showToast]);
+
+    // 스케줄 자동 완료 처리
+    const handleAutoCompleteSchedules = async () => {
+        try {
+            const response = await fetch('/api/admin/schedules/auto-complete', {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                showToast(result.message || '스케줄 자동 완료 처리가 완료되었습니다.');
+                loadStats(); // 통계 새로고침
+            } else {
+                const error = await response.json();
+                showToast(error.message || '스케줄 자동 완료 처리에 실패했습니다.', 'danger');
+            }
+        } catch (error) {
+            console.error('스케줄 자동 완료 처리 실패:', error);
+            showToast('스케줄 자동 완료 처리에 실패했습니다.', 'danger');
+        }
+    };
+
+    // 스케줄 자동 완료 처리 및 상담일지 미작성 알림
+    const handleAutoCompleteWithReminder = async () => {
+        try {
+            const response = await fetch('/api/admin/schedules/auto-complete-with-reminder', {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                showToast(result.message || '스케줄 자동 완료 처리 및 알림이 완료되었습니다.');
+                loadStats(); // 통계 새로고침
+            } else {
+                const error = await response.json();
+                showToast(error.message || '스케줄 자동 완료 처리 및 알림에 실패했습니다.', 'danger');
+            }
+        } catch (error) {
+            console.error('스케줄 자동 완료 처리 및 알림 실패:', error);
+            showToast('스케줄 자동 완료 처리 및 알림에 실패했습니다.', 'danger');
+        }
+    };
 
     useEffect(() => {
         loadStats();
@@ -310,6 +353,17 @@ const AdminDashboard = ({ user: propUser }) => {
                 </div>
             </div>
 
+            {/* 상담 완료 건수 통계 (어드민/수퍼어드민) */}
+            {((propUser || sessionUser)?.role === 'ADMIN' || (propUser || sessionUser)?.role === 'SUPER_ADMIN') && (
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                        <i className="bi bi-graph-up"></i>
+                        상담 완료 건수 통계
+                    </h2>
+                    <ConsultationCompletionStats />
+                </div>
+            )}
+
             {/* 관리 기능 */}
             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
                 <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
@@ -317,7 +371,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     관리 기능
                 </h2>
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/schedule')}>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/schedules')}>
                         <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} schedule`}>
                             <FaCalendarAlt />
                         </div>
@@ -334,6 +388,26 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
                             <h3>회기 관리</h3>
                             <p>상담 회기를 등록하고 관리합니다</p>
+                        </div>
+                    </div>
+                    
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={handleAutoCompleteSchedules}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} auto-complete`}>
+                            <FaSyncAlt />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>스케줄 자동 완료</h3>
+                            <p>지난 스케줄을 자동으로 완료 처리합니다</p>
+                        </div>
+                    </div>
+                    
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={handleAutoCompleteWithReminder}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} auto-complete-reminder`}>
+                            <FaExclamationTriangle />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>스케줄 완료 + 알림</h3>
+                            <p>지난 스케줄 완료 처리 및 상담일지 미작성 알림</p>
                         </div>
                     </div>
                     

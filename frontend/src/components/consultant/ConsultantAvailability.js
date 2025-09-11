@@ -431,6 +431,7 @@ const ConsultantAvailability = () => {
           initialData={editingSlot}
           timeSlots={timeSlots}
           daysOfWeek={DAYS_OF_WEEK}
+          durationOptions={durationOptions}
         />
       )}
       </div>
@@ -439,7 +440,7 @@ const ConsultantAvailability = () => {
 };
 
 // 상담 가능 시간 모달 컴포넌트
-const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, daysOfWeek }) => {
+const AvailabilityModal = ({ isOpen, onClose, onSubmit, initialData, timeSlots, daysOfWeek, durationOptions }) => {
   const [formData, setFormData] = useState({
     dayOfWeek: initialData?.dayOfWeek || 'MONDAY',
     startTime: initialData?.startTime || '09:00',

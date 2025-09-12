@@ -18,6 +18,38 @@
   margin: 0 auto;
 }
 
+/* 왼쪽 영역 */
+.simple-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 뒤로가기 버튼 */
+.simple-back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(108, 92, 231, 0.1);
+  color: #6c5ce7;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+}
+
+.simple-back-button:hover {
+  background: rgba(108, 92, 231, 0.2);
+  transform: translateX(-2px);
+}
+
+.simple-back-button:active {
+  transform: translateX(-1px);
+}
+
 /* 로고 스타일 */
 .simple-header-logo {
   display: flex;
@@ -121,6 +153,28 @@
   letter-spacing: 0.5px;
 }
 
+/* 햄버거 메뉴 버튼 */
+.simple-hamburger-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: #f8f9fa;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 18px;
+  border: 1px solid #dee2e6;
+}
+
+.simple-hamburger-toggle:hover {
+  background: #e9ecef;
+  transform: scale(1.05);
+}
+
 /* 버튼 스타일 */
 .simple-menu-toggle,
 .simple-session-refresh,
@@ -172,6 +226,22 @@
   .simple-header-content {
     padding: 0 15px;
     height: 56px;
+  }
+  
+  .simple-header-left {
+    gap: 8px;
+  }
+  
+  .simple-back-button {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  
+  .simple-hamburger-toggle {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
   }
   
   .simple-header-logo-link {

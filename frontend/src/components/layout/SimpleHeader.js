@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import SimpleHamburgerMenu from './SimpleHamburgerMenu';
 import ConfirmModal from '../common/ConfirmModal';
@@ -10,9 +10,11 @@ import './SimpleHeader.css';
  * - 중앙 세션 상태만 표시 (세션 관리 로직 없음)
  * - 로그인/로그아웃 버튼과 사용자 정보 표시
  * - 세션 관리는 SessionContext에서만 처리
+ * - 뒤로가기 버튼 (조건부 표시)
  */
 const SimpleHeader = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -24,6 +26,51 @@ const SimpleHeader = () => {
   useEffect(() => {
     setImageLoadError(false);
   }, [user?.id, user?.profileImageUrl, user?.socialProfileImage]);
+
+  // 뒤로가기 버튼을 표시할지 결정하는 함수
+  const shouldShowBackButton = () => {
+    const currentPath = location.pathname;
+    const rootPaths = ['/', '/login', '/register'];
+    
+    // 홈페이지, 로그인, 회원가입 페이지에서는 뒤로가기 버튼을 표시하지 않음
+    if (rootPaths.includes(currentPath)) {
+      return false;
+    }
+    
+    // 각 역할의 메인 대시보드에서는 뒤로가기 버튼을 표시하지 않음
+    const mainDashboardPaths = [
+      '/admin/dashboard',
+      '/consultant/dashboard', 
+      '/client/dashboard',
+      '/super_admin/dashboard'
+    ];
+    
+    if (mainDashboardPaths.includes(currentPath)) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  // 뒤로가기 버튼 클릭 핸들러
+  const handleBackClick = () => {
+    // 브라우저 히스토리가 있으면 뒤로가기, 없으면 적절한 대시보드로 이동
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      // 사용자 역할에 따른 기본 대시보드로 이동
+      if (user?.role) {
+        const role = user.role.toLowerCase();
+        if (role === 'super_admin') {
+          navigate('/super_admin/dashboard');
+        } else {
+          navigate(`/${role}/dashboard`);
+        }
+      } else {
+        navigate('/');
+      }
+    }
+  };
 
   const handleLogout = async () => {
     setShowLogoutModal(true);
@@ -80,12 +127,26 @@ const SimpleHeader = () => {
     <>
       <header className="simple-header">
       <div className="simple-header-content">
-        {/* 로고 */}
-        <div className="simple-header-logo">
-          <a href="/" className="simple-header-logo-link">
-            <i className="bi bi-flower1"></i>
-            <span>MindGarden</span>
-          </a>
+        {/* 왼쪽 영역 - 뒤로가기 버튼과 로고 */}
+        <div className="simple-header-left">
+          {/* 뒤로가기 버튼 (조건부 표시) */}
+          {shouldShowBackButton() && (
+            <button 
+              className="simple-back-button" 
+              onClick={handleBackClick}
+              title="뒤로가기"
+            >
+              <i className="bi bi-arrow-left"></i>
+            </button>
+          )}
+          
+          {/* 로고 */}
+          <div className="simple-header-logo">
+            <a href="/" className="simple-header-logo-link">
+              <i className="bi bi-flower1"></i>
+              <span>MindGarden</span>
+            </a>
+          </div>
         </div>
         
         {/* 오른쪽 영역 */}

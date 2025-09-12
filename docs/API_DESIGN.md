@@ -1847,6 +1847,83 @@ Authorization: Bearer {jwt_token}
 - 상담사: 500 requests/hour
 - 관리자: 1000 requests/hour
 
+## 13. 재무 관리 API ✅
+
+### 13.1 재무 거래 관리 (`/api/erp/finance`)
+
+#### **재무 거래 CRUD**
+- `GET /api/erp/finance/transactions` - 재무 거래 목록 조회
+- `POST /api/erp/finance/transactions` - 재무 거래 등록
+- `GET /api/erp/finance/transactions/{id}` - 재무 거래 상세 조회
+- `PUT /api/erp/finance/transactions/{id}` - 재무 거래 수정
+- `DELETE /api/erp/finance/transactions/{id}` - 재무 거래 삭제
+
+#### **빠른 지출 등록**
+- `POST /api/erp/finance/quick-expense` - 빠른 지출 등록
+- `POST /api/erp/finance/quick-income` - 빠른 수입 등록
+
+#### **통합 재무 대시보드**
+- `GET /api/erp/finance/dashboard` - 통합 재무 대시보드 데이터
+- `GET /api/erp/finance/statistics` - 재무 통계
+- `GET /api/erp/finance/category-analysis` - 카테고리별 분석
+
+#### **재무 리포트**
+- `GET /api/erp/finance/balance-sheet` - 대차대조표
+- `GET /api/erp/finance/income-statement` - 손익계산서
+- `GET /api/erp/finance/daily-report` - 일간 재무 리포트
+- `GET /api/erp/finance/monthly-report` - 월간 재무 리포트
+- `GET /api/erp/finance/yearly-report` - 연간 재무 리포트
+- `GET /api/erp/finance/trend-analysis` - 재무 트렌드 분석
+
+### 13.2 공통 코드 관리 (`/api/erp/common-codes`)
+
+#### **재무 거래 공통 코드**
+- `GET /api/erp/common-codes/financial` - 재무 거래 관련 모든 공통 코드
+- `GET /api/erp/common-codes/{codeGroup}` - 특정 코드 그룹 조회
+
+**응답 예시:**
+```json
+{
+  "success": true,
+  "data": {
+    "transactionTypes": [
+      {"codeValue": "INCOME", "codeLabel": "수입"},
+      {"codeValue": "EXPENSE", "codeLabel": "지출"}
+    ],
+    "expenseCategories": [
+      {"codeValue": "SALARY", "codeLabel": "급여"},
+      {"codeValue": "RENT", "codeLabel": "임대료"}
+    ],
+    "incomeCategories": [
+      {"codeValue": "CONSULTATION", "codeLabel": "상담료"},
+      {"codeValue": "PACKAGE", "codeLabel": "패키지"}
+    ]
+  }
+}
+```
+
+### 13.3 반복 지출 관리 (`/api/erp/recurring-expenses`)
+
+#### **반복 지출 CRUD**
+- `GET /api/erp/recurring-expenses` - 반복 지출 목록
+- `POST /api/erp/recurring-expenses` - 반복 지출 등록
+- `PUT /api/erp/recurring-expenses/{id}` - 반복 지출 수정
+- `DELETE /api/erp/recurring-expenses/{id}` - 반복 지출 삭제
+- `POST /api/erp/recurring-expenses/process` - 반복 지출 처리
+- `GET /api/erp/recurring-expenses/status` - 반복 지출 현황
+- `GET /api/erp/recurring-expenses/forecast` - 월별 예상 금액
+
+### 13.4 권한 관리
+- **SUPER_ADMIN**: 모든 재무 관리 API 접근 가능
+- **ADMIN**: 제한된 재무 조회 권한
+- **일반 사용자**: 접근 불가
+
+### 13.5 자동 거래 생성
+- 구매 요청 승인 시 자동 지출 거래 생성
+- 급여 계산 시 자동 지출 거래 생성  
+- 결제 승인 시 자동 수입 거래 생성
+- 적립금 자동 생성
+
 ### 12.4 API 버전 관리
 - URL 경로에 버전 포함: `/api/v1/`
 - 헤더에 버전 정보 포함: `API-Version: 1.0`

@@ -2,6 +2,61 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-01-11] - 재무 거래 공통 코드 시스템 구축
+
+### 🆕 새로운 기능
+- **재무 거래 공통 코드 시스템**
+  - 재무 거래 관련 모든 항목을 공통 코드로 관리
+  - 거래 유형: INCOME, EXPENSE
+  - 수입 카테고리: 상담료, 패키지, 기타수입
+  - 지출 카테고리: 급여, 임대료, 관리비, 사무용품, 세금, 마케팅, 장비, 소프트웨어, 컨설팅, 기타잡비
+  - 수입/지출 세부 항목 23개 추가
+  - 부가세 적용 여부 관리
+
+- **통합 재무 관리 시스템**
+  - 수입/지출 통합 대시보드
+  - 대차대조표 및 손익계산서
+  - 일/월/년 단위 재무 리포트
+  - 자동 부가세 계산 시스템
+  - 반복 지출 관리 시스템
+
+- **ERP 시스템 확장**
+  - 구매 요청 승인 시 자동 지출 거래 생성
+  - 급여 계산 시 자동 지출 거래 생성
+  - 결제 승인 시 자동 수입 거래 생성
+  - 적립금 자동 생성 시스템
+
+### 🔧 개선사항
+- **공통 코드 기반 관리**
+  - 하드코딩된 문자열 제거
+  - 데이터 일관성 및 확장성 향상
+  - 중앙 집중식 코드 관리
+
+- **프론트엔드 개선**
+  - 공통 코드 API 기반 드롭다운 구성
+  - 빠른 지출 등록 기능
+  - 실시간 재무 데이터 표시
+  - 연한 파스텔톤 디자인 적용
+
+### 📝 기술적 변경사항
+- **새로운 클래스**:
+  - `FinancialCommonCodeInitializer`: 재무 거래 공통 코드 초기화
+  - `FinancialTransaction`: 재무 거래 엔티티
+  - `FinancialTransactionService`: 재무 거래 관리 서비스
+  - `TaxCalculationUtil`: 부가세 계산 유틸리티
+  - `RecurringExpenseService`: 반복 지출 관리 서비스
+  - `ReserveFundService`: 적립금 관리 서비스
+  - `FinancialTransactionForm.js`: 재무 거래 등록 폼
+  - `QuickExpenseForm.js`: 빠른 지출 등록 컴포넌트
+  - `IntegratedFinanceDashboard.js`: 통합 재무 대시보드
+
+- **수정된 클래스**:
+  - `ErpServiceImpl`: 공통 코드 기반 카테고리 관리
+  - `ErpController`: 재무 관련 API 엔드포인트 추가
+  - `PaymentServiceImpl`: 자동 수입 거래 생성
+  - `SalaryCalculationServiceImpl`: 자동 지출 거래 생성
+  - `CommonCodeService`: Map 형태 조회 메서드 추가
+
 ## [2025-01-11] - 공통코드 시스템 통합 및 스케줄 관리 개선
 
 ### 🆕 새로운 기능

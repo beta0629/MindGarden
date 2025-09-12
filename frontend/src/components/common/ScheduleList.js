@@ -145,7 +145,8 @@ const ScheduleList = ({
       };
       
       // 어드민인 경우 상담사 필터링 지원
-      if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+      if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || 
+          userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
         url = '/api/admin/schedules';
         params = {};
         
@@ -177,14 +178,16 @@ const ScheduleList = ({
     loadSortOptions();
     
     // 어드민인 경우 상담사 목록도 로드
-    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || 
+        userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
       loadConsultants();
     }
   }, [userId, userRole, loadFilterOptions, loadSortOptions, loadConsultants]);
 
   // 상담사 선택 변경 시 스케줄 다시 로드
   useEffect(() => {
-    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || 
+        userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
       loadSchedules();
     }
   }, [selectedConsultantId]);

@@ -403,8 +403,10 @@ export const SessionProvider = ({ children }) => {
     // 유틸리티
     hasRole: (role) => state.user?.role === role,
     hasAnyRole: (roles) => roles.includes(state.user?.role),
-    isAdmin: () => state.user?.role === 'ADMIN' || state.user?.role === 'SUPER_ADMIN',
-    isSuperAdmin: () => state.user?.role === 'SUPER_ADMIN',
+    isAdmin: () => state.user?.role === 'ADMIN' || state.user?.role === 'SUPER_ADMIN' || 
+              state.user?.role === 'BRANCH_SUPER_ADMIN' || state.user?.role === 'BRANCH_MANAGER' ||
+              state.user?.role === 'HQ_ADMIN' || state.user?.role === 'SUPER_HQ_ADMIN',
+    isSuperAdmin: () => state.user?.role === 'SUPER_ADMIN' || state.user?.role === 'SUPER_HQ_ADMIN',
     isConsultant: () => state.user?.role === 'CONSULTANT',
     isClient: () => state.user?.role === 'CLIENT'
   };

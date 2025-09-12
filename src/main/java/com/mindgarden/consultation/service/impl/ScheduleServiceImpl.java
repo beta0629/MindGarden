@@ -838,7 +838,12 @@ public class ScheduleServiceImpl implements ScheduleService {
      * 관리자 역할 여부 확인
      */
     private boolean isAdminRole(String userRole) {
-        return ScheduleConstants.ROLE_ADMIN.equals(userRole) || ScheduleConstants.ROLE_SUPER_ADMIN.equals(userRole) || "BRANCH_SUPER_ADMIN".equals(userRole);
+        return ScheduleConstants.ROLE_ADMIN.equals(userRole) || 
+               ScheduleConstants.ROLE_SUPER_ADMIN.equals(userRole) || 
+               ScheduleConstants.ROLE_BRANCH_SUPER_ADMIN.equals(userRole) ||
+               ScheduleConstants.ROLE_BRANCH_MANAGER.equals(userRole) ||
+               ScheduleConstants.ROLE_HQ_ADMIN.equals(userRole) ||
+               ScheduleConstants.ROLE_SUPER_HQ_ADMIN.equals(userRole);
     }
     
 

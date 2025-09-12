@@ -45,6 +45,10 @@ public final class ScheduleConstants {
     public static final String ROLE_ADMIN = "ADMIN";
     public static final String ROLE_SUPER_ADMIN = "SUPER_ADMIN";
     public static final String ROLE_CONSULTANT = "CONSULTANT";
+    public static final String ROLE_BRANCH_MANAGER = "BRANCH_MANAGER";
+    public static final String ROLE_BRANCH_SUPER_ADMIN = "BRANCH_SUPER_ADMIN";
+    public static final String ROLE_HQ_ADMIN = "HQ_ADMIN";
+    public static final String ROLE_SUPER_HQ_ADMIN = "SUPER_HQ_ADMIN";
     
     private ScheduleConstants() {
         // 유틸리티 클래스이므로 인스턴스화 방지

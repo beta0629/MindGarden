@@ -244,6 +244,13 @@ const SocialSignupModal = ({
   };
 
   console.log('🔍 SocialSignupModal 렌더링:', { isOpen, socialUser });
+  console.log('🔍 모달 상태 상세:', { 
+    isOpen, 
+    socialUserExists: !!socialUser, 
+    socialUserProvider: socialUser?.provider,
+    socialUserEmail: socialUser?.email,
+    formDataEmail: formData.email
+  });
   
   if (!isOpen) {
     console.log('❌ 모달이 닫혀있음 - isOpen:', isOpen);

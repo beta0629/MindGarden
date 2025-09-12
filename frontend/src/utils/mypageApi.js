@@ -166,7 +166,7 @@ const mypageApi = {
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
         console.log('📝 JSON 응답 데이터:', data);
-        return data.redirectUrl || data;
+        return data.authUrl || data.redirectUrl || data;
       } else {
         // JSON이 아닌 경우 직접 URL 반환
         const url = await response.text();

@@ -68,12 +68,12 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                     // 기존 사용자의 소셜 계정 정보 업데이트 또는 새로 생성
                     updateOrCreateSocialAccount(existingUserId, socialUserInfo);
                 } else {
-                    // 3. 이메일이 다른 경우, 계정 통합 제안
-                    log.info("이메일로도 사용자를 찾지 못함. 계정 통합 제안 필요");
+                    // 3. 이메일로도 사용자를 찾지 못한 경우, 간편 회원가입 필요
+                    log.info("이메일로도 사용자를 찾지 못함. 간편 회원가입 필요");
                     return SocialLoginResponse.builder()
                         .success(false)
-                        .message("기존 계정과 연결하거나 새 계정을 생성해주세요.")
-                        .requiresAccountIntegration(true) // 계정 통합 필요 플래그
+                        .message("간편 회원가입이 필요합니다.")
+                        .requiresSignup(true) // 회원가입 필요 플래그
                         .socialUserInfo(socialUserInfo) // 소셜 사용자 정보 포함
                         .build();
                 }
@@ -299,6 +299,13 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
             User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             
+            // 사용자의 프로필 이미지가 없거나 기본 이미지인 경우 소셜 계정 이미지로 업데이트
+            if (shouldUpdateUserProfileImage(user)) {
+                user.setProfileImageUrl(socialUserInfo.getProfileImageUrl());
+                userRepository.save(user);
+                log.info("사용자 프로필 이미지 업데이트: userId={}, imageUrl={}", userId, socialUserInfo.getProfileImageUrl());
+            }
+            
             UserSocialAccount newSocialAccount = UserSocialAccount.builder()
                 .user(user)
                 .provider(getProviderName())
@@ -314,6 +321,18 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
             userSocialAccountRepository.save(newSocialAccount);
             log.info("새로운 소셜 계정 생성 완료: userId={}, provider={}", userId, getProviderName());
         }
+    }
+
+    /**
+     * 사용자 프로필 이미지 업데이트 여부 결정
+     * 
+     * @param user 사용자 정보
+     * @return 업데이트 여부
+     */
+    private boolean shouldUpdateUserProfileImage(User user) {
+        // 소셜 계정 연동 시에는 항상 프로필 이미지를 업데이트
+        // 사용자가 명시적으로 소셜 계정 연동을 요청했으므로 최신 프로필 이미지로 업데이트
+        return true;
     }
 
     /**

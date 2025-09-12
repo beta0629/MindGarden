@@ -10,6 +10,7 @@ import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallbac
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import { LOGIN_SESSION_CHECK_DELAY, EXISTING_SESSION_CHECK_DELAY } from '../../constants/session';
+import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import notificationManager from '../../utils/notification';
 import { TABLET_LOGIN_CSS } from '../../constants/css';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
@@ -128,10 +129,9 @@ const TabletLogin = () => {
         console.log('⏳ 세션 설정 완료, 잠시 대기...');
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // 역할에 따른 대시보드로 리다이렉트
-        const dashboardPath = `/${result.user.role.toLowerCase()}/dashboard`;
-        console.log('✅ 로그인 성공, 대시보드로 이동:', dashboardPath);
-        navigate(dashboardPath, { replace: true });
+        // 공통 리다이렉션 함수 사용
+        console.log('✅ 로그인 성공, 대시보드로 이동:', result.user.role);
+        redirectToDashboardWithFallback(result.user.role, navigate);
       } else if (result.requiresConfirmation) {
         // 중복 로그인 확인 요청 - 모달은 SessionContext에서 자동으로 처리됨
         console.log('🔔 중복 로그인 확인 요청:', result.message);
@@ -258,6 +258,7 @@ const TabletLogin = () => {
     console.log('🔍 checkOAuthCallback 함수 실행됨');
     console.log('📍 현재 URL:', window.location.href);
     console.log('🔗 URL 검색 파라미터:', window.location.search);
+    console.log('🔍 컴포넌트 상태:', { showSocialSignupModal, socialUserInfo });
     
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -300,19 +301,19 @@ const TabletLogin = () => {
         // 카카오 또는 네이버로 추정 (에러 메시지에서 판단)
         const detectedProvider = decodedError.includes('카카오') ? 'kakao' : 'naver';
         
-        const socialUserInfo = {
-          provider: urlProvider || detectedProvider,
-          email: urlEmail || '',
-          name: urlName || '',
-          nickname: urlNickname || '',
-          providerUserId: '',
-          profileImageUrl: ''
-        };
+      const socialUserInfo = {
+        provider: (urlProvider || detectedProvider).toUpperCase(), // 대문자로 변환
+        email: urlEmail || '',
+        name: urlName || '',
+        nickname: urlNickname || '',
+        providerUserId: '',
+        profileImageUrl: ''
+      };
         
         console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
         
         // 알림 표시
-        notificationManager.show(`${socialUserInfo.provider === 'kakao' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
+        notificationManager.show(`${socialUserInfo.provider === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
         
         setSocialUserInfo(socialUserInfo);
         setShowSocialSignupModal(true);
@@ -332,6 +333,7 @@ const TabletLogin = () => {
     // 간편 회원가입 필요 파라미터가 있으면 모달 표시
     if (signupRequired === 'required' && provider) {
       console.log('🔍 간편 회원가입 필요 감지 - signup=required 파라미터:', { signupRequired, provider });
+      console.log('🎯 모달 표시 조건 충족 - signupRequired:', signupRequired, 'provider:', provider);
       
       const email = urlParams.get('email');
       const name = urlParams.get('name');
@@ -344,7 +346,7 @@ const TabletLogin = () => {
       });
       
       const socialUserInfo = {
-        provider: provider,
+        provider: provider.toUpperCase(), // 대문자로 변환
         email: email || '',
         name: name || '',
         nickname: nickname || '',
@@ -355,12 +357,17 @@ const TabletLogin = () => {
       console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
       
       // 알림 표시
-      notificationManager.show(`${provider === 'kakao' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
+      notificationManager.show(`${provider.toUpperCase() === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
       
+      console.log('📋 모달 상태 설정 시작 - socialUserInfo:', socialUserInfo);
       setSocialUserInfo(socialUserInfo);
       setShowSocialSignupModal(true);
       
       console.log('📋 모달 상태 설정 완료 - showSocialSignupModal: true');
+      console.log('📋 현재 상태 확인:', { 
+        showSocialSignupModal: true, 
+        socialUserInfo: socialUserInfo 
+      });
       
       // URL에서 파라미터 제거
       window.history.replaceState({}, document.title, '/login');
@@ -419,7 +426,7 @@ const TabletLogin = () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // 역할에 따른 대시보드로 리다이렉트
-        const dashboardPath = `/${response.userInfo.role.toLowerCase()}/dashboard`;
+        const dashboardPath = getDashboardPath(response.userInfo.role);
         console.log('✅ 간편 회원가입 성공, 대시보드로 이동:', dashboardPath);
         navigate(dashboardPath, { replace: true });
       } else {
@@ -648,6 +655,11 @@ const TabletLogin = () => {
           </div>
         </div>
 
+      {console.log('🔍 SocialSignupModal 렌더링 체크:', { 
+        showSocialSignupModal, 
+        socialUserInfo,
+        isOpen: showSocialSignupModal 
+      })}
       <SocialSignupModal
         isOpen={showSocialSignupModal}
         onClose={() => {

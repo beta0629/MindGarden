@@ -13,6 +13,7 @@ import com.mindgarden.consultation.service.OAuth2FactoryService;
 import com.mindgarden.consultation.service.OAuth2Service;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
+import com.mindgarden.consultation.util.DashboardRedirectUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -286,24 +287,9 @@ public class OAuth2Controller {
                     log.info("네이버 OAuth2 로그인 성공: userId={}, role={}, profileImage={}", 
                             user.getId(), user.getRole(), user.getProfileImageUrl());
                     
-                    // 사용자 역할에 따른 리다이렉트 (동적 URL 사용)
+                    // 사용자 역할에 따른 리다이렉트 (공통 유틸리티 사용)
                     String frontendUrl = getFrontendBaseUrl(request);
-                    String redirectUrl;
-                    switch (user.getRole()) {
-                        case CLIENT:
-                            redirectUrl = frontendUrl + "/client/dashboard";
-                            break;
-                        case CONSULTANT:
-                            redirectUrl = frontendUrl + "/consultant/dashboard";
-                            break;
-                        case ADMIN:
-                        case SUPER_ADMIN:
-                            redirectUrl = frontendUrl + "/admin/dashboard";
-                            break;
-                        default:
-                            redirectUrl = frontendUrl + "/client/dashboard";
-                            break;
-                    }
+                    String redirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
                     
                     return ResponseEntity.status(302)
                         .header("Location", redirectUrl)
@@ -313,14 +299,18 @@ public class OAuth2Controller {
                 // 간편 회원가입이 필요한 경우
                 log.info("네이버 OAuth2 간편 회원가입 필요: {}", response.getSocialUserInfo());
                 
-                // 소셜 사용자 정보를 URL 파라미터로 전달
+                // 소셜 사용자 정보를 URL 파라미터로 전달 (한글 인코딩 처리)
                 String frontendUrl = getFrontendBaseUrl(request);
+                String email = response.getSocialUserInfo() != null ? response.getSocialUserInfo().getEmail() : "";
+                String name = response.getSocialUserInfo() != null ? response.getSocialUserInfo().getName() : "";
+                String nickname = response.getSocialUserInfo() != null ? response.getSocialUserInfo().getNickname() : "";
+                
                 String signupUrl = frontendUrl + "/login?" +
                     "signup=required" +
                     "&provider=naver" +
-                    "&email=" + (response.getSocialUserInfo() != null ? response.getSocialUserInfo().getEmail() : "") +
-                    "&name=" + (response.getSocialUserInfo() != null ? response.getSocialUserInfo().getName() : "") +
-                    "&nickname=" + (response.getSocialUserInfo() != null ? response.getSocialUserInfo().getNickname() : "");
+                    "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8) +
+                    "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8) +
+                    "&nickname=" + URLEncoder.encode(nickname, StandardCharsets.UTF_8);
                 
                 return ResponseEntity.status(302)
                     .header("Location", signupUrl)
@@ -335,6 +325,32 @@ public class OAuth2Controller {
             return ResponseEntity.status(302)
                 .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=NAVER")
                 .build();
+        }
+    }
+
+    // 테스트용 간편 회원가입 시뮬레이션 엔드포인트
+    @GetMapping("/test/signup-required")
+    public ResponseEntity<?> testSignupRequired(HttpServletRequest request) {
+        try {
+            log.info("테스트용 간편 회원가입 시뮬레이션 요청");
+            
+            String frontendBaseUrl = getFrontendBaseUrl(request);
+            String signupUrl = frontendBaseUrl + "/login?" +
+                "signup=required" +
+                "&provider=kakao" +
+                "&email=" + URLEncoder.encode("test@example.com", StandardCharsets.UTF_8) +
+                "&name=" + URLEncoder.encode("테스트사용자", StandardCharsets.UTF_8) +
+                "&nickname=" + URLEncoder.encode("테스트닉네임", StandardCharsets.UTF_8);
+            
+            log.info("테스트용 간편 회원가입 URL로 리다이렉트: {}", signupUrl);
+            
+            return ResponseEntity.status(302)
+                .header("Location", signupUrl)
+                .build();
+        } catch (Exception e) {
+            log.error("테스트용 간편 회원가입 시뮬레이션 실패", e);
+            return ResponseEntity.status(500)
+                .body(Map.of("success", false, "message", "테스트 실패: " + e.getMessage()));
         }
     }
 
@@ -456,24 +472,9 @@ public class OAuth2Controller {
                     log.info("카카오 OAuth2 로그인 성공: userId={}, role={}, profileImage={}", 
                             user.getId(), user.getRole(), user.getProfileImageUrl());
                     
-                    // 사용자 역할에 따른 리다이렉트 (동적 URL 사용)
+                    // 사용자 역할에 따른 리다이렉트 (공통 유틸리티 사용)
                     String frontendUrl = getFrontendBaseUrl(request);
-                    String redirectUrl;
-                    switch (user.getRole()) {
-                        case CLIENT:
-                            redirectUrl = frontendUrl + "/client/dashboard";
-                            break;
-                        case CONSULTANT:
-                            redirectUrl = frontendUrl + "/consultant/dashboard";
-                            break;
-                        case ADMIN:
-                        case SUPER_ADMIN:
-                            redirectUrl = frontendUrl + "/admin/dashboard";
-                            break;
-                        default:
-                            redirectUrl = frontendUrl + "/client/dashboard";
-                            break;
-                    }
+                    String redirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
                     
                     return ResponseEntity.status(302)
                         .header("Location", redirectUrl)
@@ -483,13 +484,17 @@ public class OAuth2Controller {
                 // 간편 회원가입이 필요한 경우
                 log.info("카카오 OAuth2 간편 회원가입 필요: {}", response.getSocialUserInfo());
                 
-                // 소셜 사용자 정보를 URL 파라미터로 전달
+                // 소셜 사용자 정보를 URL 파라미터로 전달 (한글 인코딩 처리)
+                String email = response.getSocialUserInfo() != null ? response.getSocialUserInfo().getEmail() : "";
+                String name = response.getSocialUserInfo() != null ? response.getSocialUserInfo().getName() : "";
+                String nickname = response.getSocialUserInfo() != null ? response.getSocialUserInfo().getNickname() : "";
+                
                 String signupUrl = frontendBaseUrl + "/login?" +
                     "signup=required" +
                     "&provider=kakao" +
-                    "&email=" + (response.getSocialUserInfo() != null ? response.getSocialUserInfo().getEmail() : "") +
-                    "&name=" + (response.getSocialUserInfo() != null ? response.getSocialUserInfo().getName() : "") +
-                    "&nickname=" + (response.getSocialUserInfo() != null ? response.getSocialUserInfo().getNickname() : "");
+                    "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8) +
+                    "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8) +
+                    "&nickname=" + URLEncoder.encode(nickname, StandardCharsets.UTF_8);
                 
                 return ResponseEntity.status(302)
                     .header("Location", signupUrl)

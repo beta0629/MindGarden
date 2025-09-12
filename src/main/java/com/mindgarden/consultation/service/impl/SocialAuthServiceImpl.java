@@ -3,12 +3,14 @@ package com.mindgarden.consultation.service.impl;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SocialSignupRequest;
 import com.mindgarden.consultation.dto.SocialSignupResponse;
+import com.mindgarden.consultation.entity.Branch;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.UserSocialAccount;
 import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
+import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.SocialAuthService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,6 +36,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final BranchService branchService;
 
 
     @Override
@@ -51,27 +54,90 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                     .build();
             }
             
+            // 비밀번호 검증
+            if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+                log.warn("비밀번호가 입력되지 않음");
+                return SocialSignupResponse.builder()
+                    .success(false)
+                    .message("비밀번호를 입력해주세요.")
+                    .build();
+            }
+            
+            if (request.getPassword().length() < 8) {
+                log.warn("비밀번호가 너무 짧음: {}", request.getPassword().length());
+                return SocialSignupResponse.builder()
+                    .success(false)
+                    .message("비밀번호는 8자 이상이어야 합니다.")
+                    .build();
+            }
+            
+            // 비밀번호 확인 검증은 프론트엔드에서 처리
+            
             // 휴대폰번호 형식 검증
             String phone = request.getPhone();
             if (phone != null) {
                 // 하이픈 제거 후 숫자만 추출
                 phone = phone.replaceAll("[^0-9]", "");
                 if (phone.length() != 11 || !phone.startsWith("01")) {
-                    throw new IllegalArgumentException("올바른 휴대폰 번호 형식이 아닙니다. (11자리 숫자, 01로 시작)");
+                    log.warn("올바르지 않은 휴대폰 번호 형식: {}", request.getPhone());
+                    return SocialSignupResponse.builder()
+                        .success(false)
+                        .message("올바른 휴대폰 번호 형식이 아닙니다. (11자리 숫자, 01로 시작)")
+                        .build();
                 }
             }
             
-            // Client 엔티티로 사용자 생성 (개인정보 암호화) - 필수값만
-            log.info("Client 엔티티 생성 시작");
-            Client client = Client.builder()
+            // User 엔티티 먼저 생성 (기본 사용자 정보)
+            log.info("User 엔티티 생성 시작");
+            
+            // username 생성 (이메일 기반)
+            String username = generateUsernameFromEmail(request.getEmail());
+            
+            // 지점 정보 조회
+            Branch branch = null;
+            if (request.getBranchCode() != null && !request.getBranchCode().trim().isEmpty()) {
+                try {
+                    branch = branchService.getBranchByCode(request.getBranchCode());
+                    log.info("지점 정보 조회 성공: branchCode={}, branchName={}", 
+                        request.getBranchCode(), branch.getBranchName());
+                } catch (Exception e) {
+                    log.warn("지점 정보 조회 실패: branchCode={}, error={}", 
+                        request.getBranchCode(), e.getMessage());
+                    // 지점 조회 실패 시에도 계속 진행 (branch는 null로 유지)
+                }
+            }
+            
+            User user = User.builder()
+                    .username(username)
+                    .password(passwordEncoder.encode(request.getPassword())) // 사용자 입력 비밀번호 암호화
                     .name(request.getName())
                     .email(request.getEmail())
                     .phone(phone)
+                    .role(UserRole.CLIENT)
                     .branchCode(request.getBranchCode()) // 지점코드 추가
-                    .isDeleted(false)
+                    .branch(branch) // 지점 객체 추가
+                    .profileImageUrl(request.getProviderProfileImage()) // 소셜 계정 프로필 이미지 설정
                     .build();
             
-            log.info("Client 엔티티 생성 완료: email={}, name={}, phone={}", client.getEmail(), request.getName(), request.getPhone());
+            log.info("User 엔티티 생성 완료: email={}, name={}, phone={}, branchCode={}, branch={}", 
+                user.getEmail(), request.getName(), request.getPhone(), 
+                user.getBranchCode(), branch != null ? branch.getId() : "null");
+            
+            log.info("User 엔티티 저장 시작");
+            user = userRepository.save(user);
+            log.info("User 엔티티 저장 완료: userId={}, branchId={}, branchCode={}", 
+                user.getId(), user.getBranch() != null ? user.getBranch().getId() : "null", user.getBranchCode());
+            
+            // Client 엔티티 생성 (독립적인 엔티티)
+            log.info("Client 엔티티 생성 시작");
+            Client client = Client.builder()
+                    .name(user.getName())
+                    .email(user.getEmail())
+                    .phone(user.getPhone())
+                    .branchCode(user.getBranchCode())
+                    .build();
+            
+            log.info("Client 엔티티 생성 완료: clientId={}", client.getId());
             
             log.info("Client 엔티티 저장 시작");
             client = clientRepository.save(client);
@@ -82,13 +148,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 log.info("소셜 계정 정보 저장 시작: provider={}, providerUserId={}, providerUsername={}", 
                         request.getProvider(), request.getProviderUserId(), request.getProviderUsername());
                 
-                // Client를 User로 변환하여 소셜 계정 저장
-                User user = new User();
-                user.setId(client.getId());
-                user.setEmail(client.getEmail());
-                user.setName(client.getName());
-                user.setRole(UserRole.CLIENT);
-                user.setBranchCode(request.getBranchCode()); // 지점코드 설정
+                // 이미 생성된 User 객체 사용
                 
                 UserSocialAccount socialAccount = UserSocialAccount.builder()
                     .user(user)

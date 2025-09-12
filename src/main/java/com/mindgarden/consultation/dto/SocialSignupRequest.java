@@ -39,6 +39,11 @@ public class SocialSignupRequest {
     private String password;
     
     /**
+     * 비밀번호 확인
+     */
+    private String confirmPassword;
+    
+    /**
      * 휴대폰 번호
      */
     private String phone;

@@ -46,7 +46,15 @@
 - 엔티티 변경 시 환경에 따라 적절한 DDL 정책 적용 ✅
 - **스키마 생성 오류 해결 완료**: 모든 엔티티가 정상적으로 테이블 생성됨 ✅
 
-### **5. 개발 환경 설정 원칙**
+### **5. 공통 리다이렉션 시스템 원칙** ⚠️ **필수**
+- **모든 로그인 후 리다이렉션은 공통 유틸리티 사용 필수**
+- **역할별 대시보드 경로는 중앙에서 관리**
+- **백엔드**: `DashboardRedirectUtil` 클래스 사용
+- **프론트엔드**: `session.js`의 공통 함수 사용
+- **리다이렉션 로직 중복 구현 절대 금지**
+- **새로운 역할 추가 시 백엔드-프론트엔드 매핑 동시 수정**
+
+### **6. 개발 환경 설정 원칙**
 - **isDev 프로퍼티**: 로컬 개발 환경에서만 `true`로 설정
 - **보안 완화**: 개발 환경에서만 보안 설정 완화 허용
 - **CORS 설정**: 개발 환경에서 모든 도메인 허용
@@ -1013,6 +1021,56 @@ phoneMigrationService.migratePhones();
 
 ---
 
+## 최근 업데이트 (2025-09-12)
+
+### 사용자 역할 시스템 개선 및 권한 체계 통일
+
+#### 1. 역할 명시화 및 권한 체계 개선
+- **파일**: `UserRole.java`
+- **변경사항**:
+  - `SUPER_ADMIN`을 `HQ_SUPER_ADMIN`으로 명시적 변경
+  - `SUPER_HQ_ADMIN`의 표시명을 "본사최고관리자"로 명확화
+  - 권한 체크 로직을 `UserRole.isAdmin()` 메서드로 통일
+  - 기존 호환성 유지를 위한 `fromString()` 메서드 개선
+
+#### 2. 컨트롤러 권한 체크 로직 개선
+- **파일**: `AdminController.java`, `ScheduleController.java`
+- **변경사항**:
+  - 복잡한 개별 역할 비교 로직을 `UserRole.isAdmin()` 메서드로 단순화
+  - `BRANCH_SUPER_ADMIN`, `ADMIN`, `HQ_ADMIN`, `SUPER_HQ_ADMIN`, `BRANCH_MANAGER` 등 모든 관리자 역할을 포함
+  - 디버깅 로그 간소화 및 명확화
+
+#### 3. 권한 체계 문서화
+- **파일**: `docs/USER_ROLE_SYSTEM.md` (신규 생성)
+- **내용**:
+  - 역할별 권한 정의 및 접근 제어 가이드
+  - API 권한 체크 방법 및 예시
+  - 데이터베이스 호환성 및 마이그레이션 가이드
+  - 사용 예시 및 주의사항
+
+#### 4. 권한 체크 메서드 통일
+```java
+// 기존 복잡한 로직
+boolean hasPermission = userRole == UserRole.ADMIN || 
+                      userRole == UserRole.BRANCH_SUPER_ADMIN || 
+                      userRole == UserRole.HQ_ADMIN || 
+                      userRole == UserRole.SUPER_HQ_ADMIN || 
+                      userRole == UserRole.BRANCH_MANAGER;
+
+// 개선된 간단한 로직
+boolean hasPermission = userRole.isAdmin();
+```
+
+#### 5. 역할별 접근 권한 명확화
+- **지점 관리자** (`ADMIN`, `BRANCH_MANAGER`, `BRANCH_SUPER_ADMIN`):
+  - ✅ 지점 내 상담사/내담자 목록 조회
+  - ✅ 지점 내 매핑 및 스케줄 관리
+  - ❌ 다른 지점 데이터 접근
+- **본사 관리자** (`HQ_ADMIN`, `SUPER_HQ_ADMIN`, `HQ_SUPER_ADMIN`):
+  - ✅ 모든 지점 데이터 접근
+  - ✅ 지점 생성/삭제/관리
+  - ✅ 시스템 전체 통계 조회
+
 ## 최근 업데이트 (2025-09-01)
 
 ### OAuth2 소셜 로그인 및 계정 연동 개선
@@ -1505,6 +1563,228 @@ test('통계 API가 올바른 형식으로 응답한다', async () => {
 });
 ```
 
+## 공통 로딩바 컴포넌트 통일 가이드 (2025-09-13 업데이트)
+
+### 1. 현재 로딩바 컴포넌트 현황
+
+#### **기존 로딩바 컴포넌트들**
+- `LoadingSpinner.js` (공통 로딩바) - **메인 컴포넌트** ✅
+- `ErpLoading.js` (ERP 전용) - **통합 대상** ❌
+- 각종 인라인 로딩 스피너들 - **통합 대상** ❌
+
+#### **통일 원칙** ⚠️ **필수**
+- **모든 로딩 UI는 `LoadingSpinner` 컴포넌트 사용**
+- **개별 로딩바 구현 절대 금지**
+- **일관된 로딩 경험 제공**
+
+### 2. LoadingSpinner 컴포넌트 사용법
+
+#### **기본 사용**
+```jsx
+import LoadingSpinner from '../components/common/LoadingSpinner';
+
+// 기본 로딩바
+<LoadingSpinner text="로딩 중..." size="medium" />
+```
+
+#### **다양한 스타일 옵션**
+```jsx
+// 도트 스타일
+<LoadingSpinner variant="dots" text="도트 로딩" size="medium" />
+
+// 펄스 스타일
+<LoadingSpinner variant="pulse" text="펄스 로딩" size="large" />
+
+// 바 스타일
+<LoadingSpinner variant="bars" text="바 로딩" size="small" />
+```
+
+#### **크기 옵션**
+- `small`: 32px
+- `medium`: 48px (기본값)
+- `large`: 64px
+
+#### **특수 스타일 클래스**
+```jsx
+// 전체 화면 로딩
+<LoadingSpinner 
+    text="전체 화면 로딩 중..." 
+    size="large" 
+    className="loading-spinner-fullscreen"
+/>
+
+// 인라인 로딩 (카드 형태)
+<LoadingSpinner 
+    text="인라인 로딩" 
+    size="medium" 
+    className="loading-spinner-inline"
+/>
+
+// 텍스트 없음
+<LoadingSpinner size="medium" showText={false} />
+```
+
+### 3. 기존 로딩바 통합 방법
+
+#### **ErpLoading → LoadingSpinner 교체**
+```jsx
+// ❌ 기존 방식 (ErpLoading 사용)
+import ErpLoading from '../components/erp/common/ErpLoading';
+
+<ErpLoading message="로딩중..." size="medium" />
+
+// ✅ 개선된 방식 (LoadingSpinner 사용)
+import LoadingSpinner from '../components/common/LoadingSpinner';
+
+<LoadingSpinner text="로딩 중..." size="medium" />
+```
+
+#### **인라인 로딩 스피너 교체**
+```jsx
+// ❌ 기존 방식 (인라인 스타일)
+<div style={{textAlign: 'center', padding: '20px'}}>
+  <div className="spinner-border text-primary" role="status">
+    <span className="sr-only">로딩중...</span>
+  </div>
+  <p>사용자 정보 불러오는 중...</p>
+</div>
+
+// ✅ 개선된 방식 (LoadingSpinner 사용)
+import LoadingSpinner from '../components/common/LoadingSpinner';
+
+<LoadingSpinner 
+  text="사용자 정보 불러오는 중..." 
+  size="medium"
+  className="loading-spinner-inline"
+/>
+```
+
+### 4. Props 상세 가이드
+
+#### **LoadingSpinner Props**
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `text` | string | "로딩 중..." | 표시할 텍스트 |
+| `size` | string | "medium" | 크기 (small, medium, large) |
+| `variant` | string | "default" | 스타일 (default, dots, pulse, bars) |
+| `showText` | boolean | true | 텍스트 표시 여부 |
+| `className` | string | "" | 추가 CSS 클래스 |
+
+#### **사용 예시**
+```jsx
+// 다양한 상황별 사용법
+const LoadingExamples = () => {
+  return (
+    <div>
+      {/* 페이지 로딩 */}
+      <LoadingSpinner 
+        text="페이지를 불러오는 중..." 
+        size="large"
+        className="loading-spinner-fullscreen"
+      />
+      
+      {/* 데이터 로딩 */}
+      <LoadingSpinner 
+        text="데이터를 불러오는 중..." 
+        size="medium"
+        variant="dots"
+      />
+      
+      {/* 버튼 로딩 */}
+      <LoadingSpinner 
+        text="저장 중..." 
+        size="small"
+        showText={false}
+      />
+      
+      {/* 차트 로딩 */}
+      <LoadingSpinner 
+        text="차트를 생성하는 중..." 
+        size="medium"
+        variant="pulse"
+        className="loading-spinner-inline"
+      />
+    </div>
+  );
+};
+```
+
+### 5. CSS 스타일 클래스
+
+#### **기본 클래스**
+- `.loading-spinner-container`: 컨테이너
+- `.loading-spinner-icon`: 기본 스피너 아이콘
+- `.loading-spinner-text`: 텍스트
+
+#### **바리언트별 클래스**
+- `.loading-dots`: 도트 스타일
+- `.loading-pulse`: 펄스 스타일
+- `.loading-bars`: 바 스타일
+
+#### **특수 클래스**
+- `.loading-spinner-fullscreen`: 전체 화면 로딩
+- `.loading-spinner-inline`: 인라인 로딩 (카드 형태)
+
+### 6. 마이그레이션 체크리스트
+
+#### **✅ 통합 완료 체크리스트**
+- [ ] **ErpLoading 컴포넌트 제거**: `ErpLoading.js` 사용 중단
+- [ ] **인라인 로딩 스피너 교체**: 모든 인라인 스피너를 LoadingSpinner로 교체
+- [ ] **일관된 텍스트 사용**: "로딩 중...", "불러오는 중..." 등 통일
+- [ ] **크기 표준화**: small/medium/large 크기 일관성 유지
+- [ ] **스타일 통일**: 기본(default) 스타일 우선 사용
+- [ ] **CSS 클래스 정리**: 불필요한 로딩 관련 CSS 제거
+
+#### **마이그레이션 단계**
+1. **1단계**: 기존 ErpLoading 사용 부분 식별
+2. **2단계**: LoadingSpinner로 교체
+3. **3단계**: 인라인 로딩 스피너 교체
+4. **4단계**: 테스트 및 검증
+5. **5단계**: 불필요한 컴포넌트 제거
+
+### 7. 성능 최적화
+
+#### **로딩 상태 관리**
+```jsx
+const [loading, setLoading] = useState(false);
+
+const handleDataLoad = async () => {
+  setLoading(true);
+  try {
+    const data = await fetchData();
+    setData(data);
+  } finally {
+    setLoading(false);
+  }
+};
+
+return (
+  <div>
+    {loading ? (
+      <LoadingSpinner text="데이터를 불러오는 중..." size="medium" />
+    ) : (
+      <DataComponent data={data} />
+    )}
+  </div>
+);
+```
+
+#### **조건부 렌더링**
+```jsx
+// ✅ 좋은 예: 조건부 렌더링
+{isLoading ? (
+  <LoadingSpinner text="로딩 중..." size="medium" />
+) : (
+  <ContentComponent />
+)}
+
+// ❌ 나쁜 예: 항상 렌더링
+<div style={{opacity: isLoading ? 0.5 : 1}}>
+  <LoadingSpinner text="로딩 중..." size="medium" />
+  <ContentComponent />
+</div>
+```
+
 ## 프로필 이미지 처리 가이드라인 (2025-09-05 업데이트)
 
 ### 1. 프로필 이미지 저장 시스템
@@ -1680,12 +1960,127 @@ useEffect(() => {
 }, []);
 ```
 
+## 최근 업데이트 (2025-09-13)
+
+### OAuth2 소셜 로그인 간편 회원가입 시스템 완성
+
+#### 1. 간편 회원가입 플로우 구현
+- **파일**: `OAuth2Controller.java`, `AbstractOAuth2Service.java`, `SocialAuthServiceImpl.java`
+- **변경사항**:
+  - 카카오/네이버 OAuth2 로그인 시 계정이 없으면 간편 회원가입 모달 표시
+  - URL 인코딩 처리로 한글 이름/닉네임 안전하게 전달
+  - 소셜 사용자 정보를 프론트엔드로 전달하여 자동 입력
+
+#### 2. 간편 회원가입 모달 시스템
+- **파일**: `SocialSignupModal.js`, `TabletLogin.js`
+- **변경사항**:
+  - 소셜 계정 정보 자동 입력 (이메일, 이름, 닉네임)
+  - 지점 선택 드롭다운 (한글명과 코드 함께 표시)
+  - 프론트엔드 비밀번호 검증 (길이, 복잡도, 일치 확인)
+  - 소셜 계정 프로필 이미지 자동 설정
+
+#### 3. 백엔드 사용자 생성 로직
+- **파일**: `SocialAuthServiceImpl.java`
+- **변경사항**:
+  - User 엔티티와 Client 엔티티 순차 생성으로 외래키 제약 해결
+  - 사용자 입력 비밀번호 암호화 저장
+  - 지점 코드를 통한 Branch 엔티티 자동 연결
+  - 소셜 계정 정보와 User 엔티티 연결
+
+#### 4. 소셜 계정 연동/해제 시스템
+- **파일**: `ClientSocialAccountController.java`, `MyPage.js`
+- **변경사항**:
+  - 소셜 계정 연동 해제 API 구현 (소프트 삭제)
+  - 소셜 계정 재연동 시 올바른 OAuth2 URL 생성
+  - 연동 시 프로필 이미지 자동 업데이트
+
+#### 5. 프로필 이미지 자동 업데이트
+- **파일**: `AbstractOAuth2Service.java`
+- **변경사항**:
+  - 소셜 계정 연동 시 사용자 프로필 이미지 자동 업데이트
+  - 기존 이미지 상태와 관계없이 소셜 이미지로 교체
+  - 연동 의도가 명확한 경우 최신 프로필 이미지 보장
+
+### 기술적 구현 세부사항
+
+#### 간편 회원가입 플로우
+```java
+// 1. 소셜 로그인 시 계정 없음 감지
+if (existingUserId == null) {
+    return SocialLoginResponse.builder()
+        .requiresSignup(true)
+        .socialUserInfo(socialUserInfo)
+        .build();
+}
+
+// 2. URL 인코딩으로 한글 정보 안전 전달
+String signupUrl = frontendBaseUrl + "/login?" +
+    "signup=required" +
+    "&provider=kakao" +
+    "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8) +
+    "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8) +
+    "&nickname=" + URLEncoder.encode(nickname, StandardCharsets.UTF_8);
+```
+
+#### 사용자 생성 순서
+```java
+// 1. User 엔티티 먼저 생성
+User user = User.builder()
+    .username(username)
+    .password(passwordEncoder.encode(request.getPassword()))
+    .name(request.getName())
+    .email(request.getEmail())
+    .phone(phone)
+    .role(UserRole.CLIENT)
+    .branchCode(request.getBranchCode())
+    .branch(branch)
+    .profileImageUrl(request.getProviderProfileImage())
+    .build();
+
+user = userRepository.save(user); // ID 생성됨
+
+// 2. Client 엔티티 생성 (User ID 사용)
+Client client = Client.builder()
+    .id(user.getId()) // User의 ID 사용
+    .user(user)
+    .build();
+
+clientRepository.save(client);
+```
+
+#### 프론트엔드 비밀번호 검증
+```javascript
+// 비밀번호 검증 로직
+const validatePassword = (password) => {
+  if (!password) return '비밀번호를 입력해주세요.';
+  if (password.length < 8) return '비밀번호는 8자 이상 입력해주세요.';
+  if (!/(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*])/.test(password)) {
+    return '비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.';
+  }
+  return null;
+};
+```
+
+### 해결된 주요 문제들
+
+1. **URL 인코딩 오류**: 한글 이름/닉네임을 `URLEncoder.encode()`로 안전하게 처리
+2. **외래키 제약 위반**: User → Client 순서로 엔티티 생성하여 해결
+3. **프로필 이미지 미업데이트**: 소셜 계정 연동 시 `shouldUpdateUserProfileImage()` 항상 true 반환
+4. **소셜 계정 연동 실패**: OAuth2 URL 생성 및 응답 파싱 로직 개선
+5. **비밀번호 검증**: 프론트엔드에서 즉시 피드백 제공
+
+### API 엔드포인트 추가
+- `POST /api/auth/social/signup`: 간편 회원가입 처리
+- `POST /api/client/social-account`: 소셜 계정 연동/해제 관리
+- `GET /api/auth/test/signup-required`: 테스트용 간편 회원가입 시뮬레이션
+
 ## 다음 단계
 
-1. 프로필 이미지 업로드 기능 테스트
-2. 소셜 계정 연동 기능 완전 테스트
-3. 햄버거 메뉴 동작 확인
-4. 전체 UI/UX 검증
-5. **통계 대시보드 성능 최적화**
-6. **차트 컴포넌트 확장성 개선**
-7. **반응형 디자인 완성도 향상**
+1. **공통 로딩바 컴포넌트 통일**: 현재 여러 로딩바가 혼재되어 있음
+2. **소셜 로그인 테스트 완료**: 카카오/네이버 간편 회원가입 전체 플로우 검증
+3. **프로필 이미지 시스템 테스트**: 업로드/연동/해제 전체 플로우 확인
+4. **햄버거 메뉴 동작 확인**: 모든 메뉴 항목 정상 동작 검증
+5. **전체 UI/UX 검증**: 사용자 경험 일관성 확인
+6. **통계 대시보드 성능 최적화**
+7. **차트 컴포넌트 확장성 개선**
+8. **반응형 디자인 완성도 향상**

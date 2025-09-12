@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Modal, Form, Badge } from 'react-bootstrap';
 import { FaUsers, FaEdit } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 const UserManagement = ({ onUpdate, showToast }) => {
     const [users, setUsers] = useState([]);
@@ -37,7 +38,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                 { value: 'CLIENT', label: '내담자', icon: '👤', color: '#3b82f6', description: '상담을 받는 내담자' },
                 { value: 'CONSULTANT', label: '상담사', icon: '👨‍⚕️', color: '#10b981', description: '상담을 제공하는 상담사' },
                 { value: 'ADMIN', label: '관리자', icon: '👨‍💼', color: '#f59e0b', description: '시스템 관리자' },
-                { value: 'SUPER_ADMIN', label: '수퍼관리자', icon: '👑', color: '#ef4444', description: '최고 관리자' }
+                { value: 'BRANCH_SUPER_ADMIN', label: '수퍼관리자', icon: '👑', color: '#ef4444', description: '최고 관리자' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -103,7 +104,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
             case 'CLIENT': return 'primary';
             case 'CONSULTANT': return 'success';
             case 'ADMIN': return 'warning';
-            case 'SUPER_ADMIN': return 'danger';
+            case 'BRANCH_SUPER_ADMIN': return 'danger';
             default: return 'secondary';
         }
     };
@@ -113,7 +114,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
             case 'CLIENT': return '내담자';
             case 'CONSULTANT': return '상담사';
             case 'ADMIN': return '관리자';
-            case 'SUPER_ADMIN': return '최고관리자';
+            case 'BRANCH_SUPER_ADMIN': return '최고관리자';
             default: return role;
         }
     };
@@ -128,11 +129,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
             </div>
             <div className="panel-content">
                 {loading ? (
-                    <div className="text-center py-4">
-                        <div className="spinner-border spinner-border-sm" role="status">
-                            <span className="visually-hidden">로딩 중...</span>
-                        </div>
-                    </div>
+                    <LoadingSpinner text="사용자 목록을 불러오는 중..." size="medium" />
                 ) : users.length === 0 ? (
                     <div className="text-center py-4 text-muted">
                         <FaUsers className="mb-3" style={{ fontSize: '2rem' }} />

@@ -50,17 +50,37 @@ public class SalaryManagementController {
      * 상담사 목록 조회 (급여 관리용)
      */
     @GetMapping("/consultants")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getConsultants() {
         try {
             log.info("🔍 상담사 목록 조회 (급여 관리용)");
             
             List<User> consultants = adminService.getAllConsultants();
             
+            // Hibernate 프록시 객체 직렬화 문제를 피하기 위해 필요한 필드만 추출
+            List<Map<String, Object>> consultantData = consultants.stream()
+                .map(consultant -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("id", consultant.getId());
+                    data.put("name", consultant.getName());
+                    data.put("email", consultant.getEmail());
+                    data.put("phone", consultant.getPhone());
+                    data.put("role", consultant.getRole());
+                    data.put("grade", consultant.getGrade());
+                    data.put("isActive", consultant.getIsActive());
+                    data.put("branchCode", consultant.getBranchCode());
+                    data.put("specialization", consultant.getSpecialization());
+                    data.put("createdAt", consultant.getCreatedAt());
+                    data.put("updatedAt", consultant.getUpdatedAt());
+                    // branch 객체는 제외하여 직렬화 문제 방지
+                    return data;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "data", consultants,
-                "totalCount", consultants.size()
+                "data", consultantData,
+                "totalCount", consultantData.size()
             ));
         } catch (Exception e) {
             log.error("❌ 상담사 목록 조회 실패", e);
@@ -127,7 +147,7 @@ public class SalaryManagementController {
      * 상담사 상세 정보 조회 (급여 관리용)
      */
     @GetMapping("/consultants/{consultantId}")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getConsultant(@PathVariable Long consultantId) {
         try {
             log.info("🔍 상담사 상세 정보 조회: 상담사ID={}", consultantId);
@@ -161,7 +181,7 @@ public class SalaryManagementController {
      * 급여 프로필 목록 조회
      */
     @GetMapping("/profiles")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getSalaryProfiles() {
         try {
             log.info("🔍 급여 프로필 목록 조회");
@@ -221,7 +241,7 @@ public class SalaryManagementController {
      * 상담사 급여 프로필 생성
      */
     @PostMapping("/profiles")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> createSalaryProfile(@RequestBody Map<String, Object> request) {
         try {
             Long consultantId = Long.valueOf(request.get("consultantId").toString());
@@ -285,7 +305,7 @@ public class SalaryManagementController {
      * 상담사 급여 프로필 조회
      */
     @GetMapping("/profiles/{consultantId}")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getSalaryProfile(@PathVariable Long consultantId) {
         try {
             log.info("🔍 급여 프로필 조회: 상담사ID={}", consultantId);
@@ -342,7 +362,7 @@ public class SalaryManagementController {
      * 급여 옵션 추가
      */
     @PostMapping("/options")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> addSalaryOption(@RequestBody Map<String, Object> request) {
         try {
             Long salaryProfileId = Long.valueOf(request.get("salaryProfileId").toString());
@@ -373,7 +393,7 @@ public class SalaryManagementController {
      * 급여 옵션 조회
      */
     @GetMapping("/options/{salaryProfileId}")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getSalaryOptions(@PathVariable Long salaryProfileId) {
         try {
             log.info("🔍 급여 옵션 조회: 프로필ID={}", salaryProfileId);
@@ -399,7 +419,7 @@ public class SalaryManagementController {
      * 프리랜서 급여 계산
      */
     @PostMapping("/calculate/freelance")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> calculateFreelanceSalary(@RequestBody Map<String, Object> request) {
         try {
             Long consultantId = Long.valueOf(request.get("consultantId").toString());
@@ -430,7 +450,7 @@ public class SalaryManagementController {
      * 정규직 급여 계산
      */
     @PostMapping("/calculate/regular")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> calculateRegularSalary(@RequestBody Map<String, Object> request) {
         try {
             Long consultantId = Long.valueOf(request.get("consultantId").toString());
@@ -460,7 +480,7 @@ public class SalaryManagementController {
      * 급여 계산 실행
      */
     @PostMapping("/calculate")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> calculateSalary(@RequestBody Map<String, Object> request) {
         try {
             log.info("💰 급여 계산 실행: {}", request);
@@ -523,7 +543,7 @@ public class SalaryManagementController {
      * 급여 계산 내역 조회
      */
     @GetMapping("/calculations/{consultantId}")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getSalaryCalculations(@PathVariable Long consultantId) {
         try {
             log.info("🔍 급여 계산 내역 조회: 상담사ID={}", consultantId);
@@ -567,7 +587,7 @@ public class SalaryManagementController {
      * 급여 계산 승인
      */
     @PostMapping("/approve/{calculationId}")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> approveSalaryCalculation(@PathVariable Long calculationId) {
         try {
             log.info("✅ 급여 계산 승인: 계산ID={}", calculationId);
@@ -591,7 +611,7 @@ public class SalaryManagementController {
      * 급여 지급 완료 처리
      */
     @PostMapping("/pay/{calculationId}")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> markSalaryAsPaid(@PathVariable Long calculationId) {
         try {
             log.info("💰 급여 지급 완료: 계산ID={}", calculationId);
@@ -617,7 +637,7 @@ public class SalaryManagementController {
      * 급여 통계 조회
      */
     @GetMapping("/statistics")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getSalaryStatistics(@RequestParam(required = false) String period) {
         try {
             log.info("📊 급여 통계 조회: 기간={}", period);
@@ -651,7 +671,7 @@ public class SalaryManagementController {
      * 급여 계산별 세금 내역 조회
      */
     @GetMapping("/tax/{calculationId}")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getTaxCalculations(@PathVariable Long calculationId) {
         try {
             log.info("🔍 세금 계산 내역 조회: 계산ID={}", calculationId);
@@ -677,7 +697,7 @@ public class SalaryManagementController {
      * 세금 유형별 내역 조회
      */
     @GetMapping("/tax/type/{taxType}")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getTaxCalculationsByType(@PathVariable String taxType) {
         try {
             log.info("🔍 세금 유형별 내역 조회: 세금유형={}", taxType);
@@ -703,7 +723,7 @@ public class SalaryManagementController {
      * 세금 통계 조회
      */
     @GetMapping("/tax/statistics")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getTaxStatistics(@RequestParam(required = false) String period) {
         try {
             log.info("📊 세금 통계 조회: 기간={}", period);
@@ -727,7 +747,7 @@ public class SalaryManagementController {
      * 추가 세금 계산
      */
     @PostMapping("/tax/calculate")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> calculateAdditionalTax(@RequestBody Map<String, Object> request) {
         try {
             Long calculationId = Long.valueOf(request.get("calculationId").toString());
@@ -761,7 +781,7 @@ public class SalaryManagementController {
      * 중복된 급여 계산 기록 정리
      */
     @PostMapping("/cleanup")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> cleanupDuplicateCalculations() {
         try {
             log.info("🧹 중복 급여 계산 기록 정리 요청");
@@ -788,7 +808,7 @@ public class SalaryManagementController {
      * 급여 계산서 PDF 출력
      */
     @PostMapping("/export/pdf")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> exportSalaryToPdf(@RequestBody Map<String, Object> request) {
         try {
             Long calculationId = Long.valueOf(request.get("calculationId").toString());
@@ -827,7 +847,7 @@ public class SalaryManagementController {
      * 급여 계산서 Excel 출력
      */
     @PostMapping("/export/excel")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> exportSalaryToExcel(@RequestBody Map<String, Object> request) {
         try {
             Long calculationId = Long.valueOf(request.get("calculationId").toString());
@@ -866,7 +886,7 @@ public class SalaryManagementController {
      * 급여 계산서 CSV 출력
      */
     @PostMapping("/export/csv")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> exportSalaryToCsv(@RequestBody Map<String, Object> request) {
         try {
             Long calculationId = Long.valueOf(request.get("calculationId").toString());
@@ -907,7 +927,7 @@ public class SalaryManagementController {
      * 급여 계산서 이메일 전송
      */
     @PostMapping("/email/send")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> sendSalaryEmail(@RequestBody Map<String, Object> request) {
         try {
             String toEmail = request.get("toEmail").toString();
@@ -974,7 +994,7 @@ public class SalaryManagementController {
      * 이메일 템플릿 조회
      */
     @GetMapping("/email/templates")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getEmailTemplates(@RequestParam(required = false) String templateType) {
         try {
             log.info("📧 이메일 템플릿 조회: 유형={}", templateType);
@@ -1015,7 +1035,7 @@ public class SalaryManagementController {
      * 급여 관련 공통코드 조회
      */
     @GetMapping("/codes")
-    // @PreAuthorize("hasRole('ROLE_SUPER_ADMIN')") // 개발 환경에서 임시 비활성화
+    // @PreAuthorize("hasRole('ROLE_HQ_MASTER')") // 개발 환경에서 임시 비활성화
     public ResponseEntity<?> getSalaryCodes() {
         try {
             log.info("🔍 급여 관련 공통코드 조회");

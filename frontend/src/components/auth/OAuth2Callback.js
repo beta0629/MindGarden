@@ -4,6 +4,7 @@ import { notification } from '../../utils/scripts';
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import { LOGIN_SESSION_CHECK_DELAY } from '../../constants/session';
+import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import SocialSignupModal from './SocialSignupModal';
 import AccountIntegrationModal from './AccountIntegrationModal';
 
@@ -164,33 +165,14 @@ const OAuth2Callback = () => {
           });
           console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo);
           
-          // 리다이렉트 함수 정의
+          // 공통 리다이렉트 함수 사용
           const redirectToDashboard = (userRole) => {
             if (userRole) {
-              const dashboardPath = `/${userRole.toLowerCase()}/dashboard`;
-              console.log('🎯 대시보드 리다이렉트 시작:', dashboardPath);
+              console.log('🎯 대시보드 리다이렉트 시작:', userRole);
               console.log('🎯 사용자 정보:', userInfo);
-              console.log('🎯 역할:', userRole);
               
-              // 1차: React Router navigate
-              try {
-                navigate(dashboardPath, { replace: true });
-                console.log('✅ React Router navigate 실행됨');
-              } catch (error) {
-                console.error('❌ React Router navigate 실패:', error);
-              }
-              
-              // 2차: window.location (즉시 실행)
-              setTimeout(() => {
-                console.log('🎯 window.location 리다이렉트 실행:', dashboardPath);
-                window.location.href = dashboardPath;
-              }, 100);
-              
-              // 3차: 강제 리다이렉트 (최종 백업)
-              setTimeout(() => {
-                console.log('🎯 강제 리다이렉트 실행:', dashboardPath);
-                window.location.replace(dashboardPath);
-              }, 1000);
+              // 공통 리다이렉트 함수 호출
+              redirectToDashboardWithFallback(userRole, navigate);
             } else {
               console.log('🎯 기본 대시보드로 리다이렉트');
               navigate('/dashboard', { replace: true });

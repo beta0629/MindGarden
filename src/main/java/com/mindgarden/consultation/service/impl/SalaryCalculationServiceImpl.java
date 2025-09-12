@@ -71,8 +71,8 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         /*
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPER_ADMIN") || 
-                                 auth.getAuthority().equals("SUPER_ADMIN"))) {
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_HQ_MASTER") || 
+                                 auth.getAuthority().equals("HQ_MASTER"))) {
             throw new RuntimeException("급여 관리 기능은 수퍼어드민만 접근 가능합니다.");
         }
         */

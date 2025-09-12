@@ -259,7 +259,7 @@ public class ErpServiceImpl implements ErpService {
             throw new RuntimeException("승인할 수 없는 상태입니다: " + request.getStatus());
         }
         
-        request.setStatus(PurchaseRequest.PurchaseRequestStatus.SUPER_ADMIN_APPROVED);
+        request.setStatus(PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED);
         request.setSuperAdminApprover(superAdmin);
         request.setSuperAdminApprovedAt(LocalDateTime.now());
         request.setSuperAdminComment(comment);
@@ -293,7 +293,7 @@ public class ErpServiceImpl implements ErpService {
             throw new RuntimeException("거부할 수 없는 상태입니다: " + request.getStatus());
         }
         
-        request.setStatus(PurchaseRequest.PurchaseRequestStatus.SUPER_ADMIN_REJECTED);
+        request.setStatus(PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_REJECTED);
         request.setSuperAdminApprover(superAdmin);
         request.setSuperAdminApprovedAt(LocalDateTime.now());
         request.setSuperAdminComment(comment);
@@ -336,7 +336,7 @@ public class ErpServiceImpl implements ErpService {
         User purchaser = userService.findActiveById(purchaserId)
                 .orElseThrow(() -> new RuntimeException("구매자를 찾을 수 없습니다: " + purchaserId));
         
-        if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.SUPER_ADMIN_APPROVED) {
+        if (request.getStatus() != PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED) {
             throw new RuntimeException("승인된 구매 요청만 주문할 수 있습니다: " + request.getStatus());
         }
         
@@ -859,21 +859,21 @@ public class ErpServiceImpl implements ErpService {
         
         // 승인된 구매 요청의 총 금액 (지출)
         BigDecimal totalPurchaseAmount = purchaseRequestRepository.findAllActive().stream()
-                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.SUPER_ADMIN_APPROVED)
+                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED)
                 .map(PurchaseRequest::getTotalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         purchaseExpenses.put("totalAmount", totalPurchaseAmount);
         
         // 승인된 구매 요청 건수
         Long approvedCount = purchaseRequestRepository.findAllActive().stream()
-                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.SUPER_ADMIN_APPROVED)
+                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED)
                 .count();
         purchaseExpenses.put("count", approvedCount);
         
         // 카테고리별 구매 금액
         Map<String, BigDecimal> categoryAmounts = new HashMap<>();
         purchaseRequestRepository.findAllActive().stream()
-                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.SUPER_ADMIN_APPROVED)
+                .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED)
                 .forEach(req -> {
                     String category = req.getItem().getCategory();
                     BigDecimal amount = req.getTotalAmount();
@@ -917,7 +917,7 @@ public class ErpServiceImpl implements ErpService {
             
             String monthKey = monthStart.getYear() + "-" + String.format("%02d", monthStart.getMonthValue());
             BigDecimal monthAmount = purchaseRequestRepository.findAllActive().stream()
-                    .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.SUPER_ADMIN_APPROVED)
+                    .filter(req -> req.getStatus() == PurchaseRequest.PurchaseRequestStatus.HQ_MASTER_APPROVED)
                     .filter(req -> req.getCreatedAt().isAfter(monthStart) && req.getCreatedAt().isBefore(monthEnd))
                     .map(PurchaseRequest::getTotalAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);

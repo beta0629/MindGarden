@@ -3,6 +3,7 @@ import axios from 'axios';
 import SimpleHeader from '../layout/SimpleHeader';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 // 공통 유틸리티 함수들
 const formatCurrency = (amount) => {
@@ -54,18 +55,7 @@ const IntegratedFinanceDashboard = () => {
 
 
   if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '400px',
-        fontSize: '18px',
-        color: '#666'
-      }}>
-        데이터를 불러오는 중...
-      </div>
-    );
+    return <LoadingSpinner text="데이터를 불러오는 중..." size="medium" />;
   }
 
   if (error) {
@@ -474,7 +464,7 @@ const BalanceSheetTab = () => {
   };
 
   if (loading) {
-    return <div>대차대조표를 불러오는 중...</div>;
+    return <LoadingSpinner text="대차대조표를 불러오는 중..." size="medium" />;
   }
 
   return (
@@ -634,7 +624,7 @@ const IncomeStatementTab = () => {
   };
 
   if (loading) {
-    return <div>손익계산서를 불러오는 중...</div>;
+    return <LoadingSpinner text="손익계산서를 불러오는 중..." size="medium" />;
   }
 
   return (
@@ -757,11 +747,143 @@ const IncomeStatementTab = () => {
 
 // 일간 리포트 탭 컴포넌트
 const DailyReportTab = ({ period }) => {
+  const [reportData, setReportData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchDailyReport();
+  }, []);
+
+  const fetchDailyReport = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/erp/finance/daily-report', {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setReportData(response.data.data);
+      } else {
+        setError(response.data.message);
+      }
+    } catch (err) {
+      setError('일간 리포트를 불러오는 중 오류가 발생했습니다.');
+      console.error('Daily report fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner text="일간 리포트 데이터를 불러오는 중..." size="medium" />;
+  }
+
+  if (error) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px', color: '#e74c3c' }}>
+        오류: {error}
+      </div>
+    );
+  }
+
   return (
     <div>
       <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>📅 일간 재무 리포트</h2>
-      <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-        일간 리포트 데이터를 불러오는 중...
+      
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '20px',
+        marginBottom: '30px'
+      }}>
+        {/* 일간 수입 */}
+        <div style={{
+          padding: '24px',
+          background: 'linear-gradient(135deg, #bae7d9, #c7f0db)',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(0,184,148,0.2)',
+          color: 'white'
+        }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💚 일간 수입</h3>
+          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+            <div style={{ marginBottom: '6px' }}>상담료: {formatCurrency(reportData?.dailyIncome?.consultationFees || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>기타수입: {formatCurrency(reportData?.dailyIncome?.otherIncome || 0)}</div>
+          </div>
+          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+            총 수입: {formatCurrency(reportData?.dailyIncome?.total || 0)}
+          </div>
+        </div>
+
+        {/* 일간 지출 */}
+        <div style={{
+          padding: '24px',
+          background: 'linear-gradient(135deg, #ffb3ba, #ffc1cc)',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(255,118,117,0.2)',
+          color: 'white'
+        }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>❤️ 일간 지출</h3>
+          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+            <div style={{ marginBottom: '6px' }}>급여: {formatCurrency(reportData?.dailyExpenses?.salary || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>사무용품: {formatCurrency(reportData?.dailyExpenses?.officeSupplies || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>관리비: {formatCurrency(reportData?.dailyExpenses?.utilities || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>기타지출: {formatCurrency(reportData?.dailyExpenses?.otherExpenses || 0)}</div>
+          </div>
+          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+            총 지출: {formatCurrency(reportData?.dailyExpenses?.total || 0)}
+          </div>
+        </div>
+
+        {/* 일간 순이익 */}
+        <div style={{
+          padding: '24px',
+          background: 'linear-gradient(135deg, #a8d8ea, #c7ceea)',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(116,185,255,0.2)',
+          color: 'white'
+        }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💙 일간 순이익</h3>
+          <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>
+            {formatCurrency(reportData?.dailyNetIncome || 0)}
+          </div>
+          <div style={{ fontSize: '14px', opacity: '0.9' }}>
+            수입 - 지출
+          </div>
+        </div>
+      </div>
+
+      {/* 거래 건수 */}
+      <div style={{
+        padding: '24px',
+        background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+        borderRadius: '16px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+      }}>
+        <h3 style={{ marginBottom: '18px', fontSize: '20px', fontWeight: '600', color: '#2c3e50' }}>📊 일간 거래 건수</h3>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: '16px'
+        }}>
+          <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3498db', marginBottom: '8px' }}>
+              {reportData?.transactionCount?.consultations || 0}
+            </div>
+            <div style={{ fontSize: '14px', color: '#666' }}>상담 건수</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#27ae60', marginBottom: '8px' }}>
+              {reportData?.transactionCount?.purchases || 0}
+            </div>
+            <div style={{ fontSize: '14px', color: '#666' }}>구매 건수</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f39c12', marginBottom: '8px' }}>
+              {reportData?.transactionCount?.payments || 0}
+            </div>
+            <div style={{ fontSize: '14px', color: '#666' }}>결제 건수</div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -769,11 +891,145 @@ const DailyReportTab = ({ period }) => {
 
 // 월간 리포트 탭 컴포넌트
 const MonthlyReportTab = ({ period }) => {
+  const [reportData, setReportData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchMonthlyReport();
+  }, []);
+
+  const fetchMonthlyReport = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/erp/finance/monthly-report', {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setReportData(response.data.data);
+      } else {
+        setError(response.data.message);
+      }
+    } catch (err) {
+      setError('월간 리포트를 불러오는 중 오류가 발생했습니다.');
+      console.error('Monthly report fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner text="월간 리포트 데이터를 불러오는 중..." size="medium" />;
+  }
+
+  if (error) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px', color: '#e74c3c' }}>
+        오류: {error}
+      </div>
+    );
+  }
+
   return (
     <div>
       <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>📊 월간 재무 리포트</h2>
-      <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-        월간 리포트 데이터를 불러오는 중...
+      
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '20px',
+        marginBottom: '30px'
+      }}>
+        {/* 월간 수입 */}
+        <div style={{
+          padding: '24px',
+          background: 'linear-gradient(135deg, #bae7d9, #c7f0db)',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(0,184,148,0.2)',
+          color: 'white'
+        }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💚 월간 수입</h3>
+          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+            <div style={{ marginBottom: '6px' }}>상담수익: {formatCurrency(reportData?.monthlyIncome?.consultationRevenue || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>기타수익: {formatCurrency(reportData?.monthlyIncome?.otherRevenue || 0)}</div>
+          </div>
+          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+            총 수입: {formatCurrency(reportData?.monthlyIncome?.total || 0)}
+          </div>
+        </div>
+
+        {/* 월간 지출 */}
+        <div style={{
+          padding: '24px',
+          background: 'linear-gradient(135deg, #ffb3ba, #ffc1cc)',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(255,118,117,0.2)',
+          color: 'white'
+        }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>❤️ 월간 지출</h3>
+          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+            <div style={{ marginBottom: '6px' }}>급여지출: {formatCurrency(reportData?.monthlyExpenses?.salaryExpense || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>임대료: {formatCurrency(reportData?.monthlyExpenses?.rentExpense || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>관리비: {formatCurrency(reportData?.monthlyExpenses?.utilityExpense || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>사무용품비: {formatCurrency(reportData?.monthlyExpenses?.officeExpense || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>세금: {formatCurrency(reportData?.monthlyExpenses?.taxExpense || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>구매비용: {formatCurrency(reportData?.monthlyExpenses?.purchaseExpense || 0)}</div>
+          </div>
+          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+            총 지출: {formatCurrency(reportData?.monthlyExpenses?.total || 0)}
+          </div>
+        </div>
+
+        {/* 월간 순이익 */}
+        <div style={{
+          padding: '24px',
+          background: 'linear-gradient(135deg, #a8d8ea, #c7ceea)',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(116,185,255,0.2)',
+          color: 'white'
+        }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💙 월간 순이익</h3>
+          <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>
+            {formatCurrency(reportData?.monthlyNetIncome || 0)}
+          </div>
+          <div style={{ fontSize: '14px', opacity: '0.9' }}>
+            수입 - 지출
+          </div>
+        </div>
+      </div>
+
+      {/* 월간 거래 건수 */}
+      <div style={{
+        padding: '24px',
+        background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+        borderRadius: '16px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+      }}>
+        <h3 style={{ marginBottom: '18px', fontSize: '20px', fontWeight: '600', color: '#2c3e50' }}>📊 월간 거래 건수</h3>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: '16px'
+        }}>
+          <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3498db', marginBottom: '8px' }}>
+              {reportData?.transactionCount?.consultations || 0}
+            </div>
+            <div style={{ fontSize: '14px', color: '#666' }}>상담 건수</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#27ae60', marginBottom: '8px' }}>
+              {reportData?.transactionCount?.purchases || 0}
+            </div>
+            <div style={{ fontSize: '14px', color: '#666' }}>구매 건수</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f39c12', marginBottom: '8px' }}>
+              {reportData?.transactionCount?.payments || 0}
+            </div>
+            <div style={{ fontSize: '14px', color: '#666' }}>결제 건수</div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -781,11 +1037,146 @@ const MonthlyReportTab = ({ period }) => {
 
 // 년간 리포트 탭 컴포넌트
 const YearlyReportTab = ({ period }) => {
+  const [reportData, setReportData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchYearlyReport();
+  }, []);
+
+  const fetchYearlyReport = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/erp/finance/yearly-report', {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        setReportData(response.data.data);
+      } else {
+        setError(response.data.message);
+      }
+    } catch (err) {
+      setError('년간 리포트를 불러오는 중 오류가 발생했습니다.');
+      console.error('Yearly report fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner text="년간 리포트 데이터를 불러오는 중..." size="medium" />;
+  }
+
+  if (error) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px', color: '#e74c3c' }}>
+        오류: {error}
+      </div>
+    );
+  }
+
   return (
     <div>
       <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>📈 년간 재무 리포트</h2>
-      <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-        년간 리포트 데이터를 불러오는 중...
+      
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '20px',
+        marginBottom: '30px'
+      }}>
+        {/* 년간 수입 */}
+        <div style={{
+          padding: '24px',
+          background: 'linear-gradient(135deg, #bae7d9, #c7f0db)',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(0,184,148,0.2)',
+          color: 'white'
+        }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💚 년간 수입</h3>
+          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+            <div style={{ marginBottom: '6px' }}>상담수익: {formatCurrency(reportData?.yearlyIncome?.consultationRevenue || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>기타수익: {formatCurrency(reportData?.yearlyIncome?.otherRevenue || 0)}</div>
+          </div>
+          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+            총 수입: {formatCurrency(reportData?.yearlyIncome?.total || 0)}
+          </div>
+        </div>
+
+        {/* 년간 지출 */}
+        <div style={{
+          padding: '24px',
+          background: 'linear-gradient(135deg, #ffb3ba, #ffc1cc)',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(255,118,117,0.2)',
+          color: 'white'
+        }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>❤️ 년간 지출</h3>
+          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+            <div style={{ marginBottom: '6px' }}>급여지출: {formatCurrency(reportData?.yearlyExpenses?.salaryExpense || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>임대료: {formatCurrency(reportData?.yearlyExpenses?.rentExpense || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>관리비: {formatCurrency(reportData?.yearlyExpenses?.utilityExpense || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>사무용품비: {formatCurrency(reportData?.yearlyExpenses?.officeExpense || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>세금: {formatCurrency(reportData?.yearlyExpenses?.taxExpense || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>구매비용: {formatCurrency(reportData?.yearlyExpenses?.purchaseExpense || 0)}</div>
+            <div style={{ marginBottom: '6px' }}>기타지출: {formatCurrency(reportData?.yearlyExpenses?.otherExpense || 0)}</div>
+          </div>
+          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+            총 지출: {formatCurrency(reportData?.yearlyExpenses?.total || 0)}
+          </div>
+        </div>
+
+        {/* 년간 순이익 */}
+        <div style={{
+          padding: '24px',
+          background: 'linear-gradient(135deg, #a8d8ea, #c7ceea)',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(116,185,255,0.2)',
+          color: 'white'
+        }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💙 년간 순이익</h3>
+          <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>
+            {formatCurrency(reportData?.yearlyNetIncome || 0)}
+          </div>
+          <div style={{ fontSize: '14px', opacity: '0.9' }}>
+            수입 - 지출
+          </div>
+        </div>
+      </div>
+
+      {/* 년간 거래 건수 */}
+      <div style={{
+        padding: '24px',
+        background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+        borderRadius: '16px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+      }}>
+        <h3 style={{ marginBottom: '18px', fontSize: '20px', fontWeight: '600', color: '#2c3e50' }}>📊 년간 거래 건수</h3>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: '16px'
+        }}>
+          <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3498db', marginBottom: '8px' }}>
+              {reportData?.transactionCount?.consultations || 0}
+            </div>
+            <div style={{ fontSize: '14px', color: '#666' }}>상담 건수</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#27ae60', marginBottom: '8px' }}>
+              {reportData?.transactionCount?.purchases || 0}
+            </div>
+            <div style={{ fontSize: '14px', color: '#666' }}>구매 건수</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f39c12', marginBottom: '8px' }}>
+              {reportData?.transactionCount?.payments || 0}
+            </div>
+            <div style={{ fontSize: '14px', color: '#666' }}>결제 건수</div>
+          </div>
+        </div>
       </div>
     </div>
   );

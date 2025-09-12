@@ -236,23 +236,26 @@ export const forceClearSession = () => {
 };
 
 /**
- * 역할별 대시보드 경로 가져오기
+ * 역할별 대시보드 경로 매핑 (중앙 관리)
+ */
+const ROLE_DASHBOARD_MAP = {
+  'CLIENT': '/client/dashboard',
+  'CONSULTANT': '/consultant/dashboard',
+  'ADMIN': '/admin/dashboard',
+  'BRANCH_BRANCH_SUPER_ADMIN': '/super_admin/dashboard',  // 지점 수퍼 관리자는 수퍼 어드민 대시보드로
+  'HQ_ADMIN': '/erp/dashboard',  // 본사 관리자는 ERP 대시보드로
+  'SUPER_HQ_ADMIN': '/super_admin/dashboard',  // 본사 고급 관리자는 수퍼 어드민 대시보드로
+  'HQ_MASTER': '/super_admin/dashboard'  // 본사 총관리자는 수퍼 어드민 대시보드로
+};
+
+/**
+ * 역할별 대시보드 경로 가져오기 (공통 함수)
  */
 export const getDashboardPath = (role) => {
   if (!role) return '/client/dashboard';
   
-  const roleMap = {
-    'CLIENT': '/client/dashboard',
-    'CONSULTANT': '/consultant/dashboard',
-    'ADMIN': '/admin/dashboard',
-    'SUPER_ADMIN': '/super_admin/dashboard',
-    'HQ_ADMIN': '/hq_admin/dashboard',
-    'SUPER_HQ_ADMIN': '/super_hq_admin/dashboard',
-    'BRANCH_SUPER_ADMIN': '/branch_super_admin/dashboard',
-    'BRANCH_MANAGER': '/branch_manager/dashboard'
-  };
-  
-  return roleMap[role.toUpperCase()] || '/client/dashboard';
+  const normalizedRole = role.toUpperCase();
+  return ROLE_DASHBOARD_MAP[normalizedRole] || '/client/dashboard';
 };
 
 /**
@@ -264,23 +267,54 @@ export const getCurrentUserDashboardPath = () => {
 };
 
 /**
- * 로그인 후 대시보드로 리다이렉트
+ * 공통 리다이렉션 함수 - React Router와 window.location 모두 지원
  */
-export const redirectToDashboard = (userInfo) => {
+export const redirectToDashboardWithFallback = (userRole, navigate = null) => {
   try {
-    const dashboardPath = getDashboardPath(userInfo?.role);
-    console.log('대시보드로 리다이렉트:', {
-      userId: userInfo?.id,
-      role: userInfo?.role,
+    const dashboardPath = getDashboardPath(userRole);
+    console.log('🎯 공통 리다이렉션 시작:', {
+      role: userRole,
       path: dashboardPath
     });
     
-    window.location.href = dashboardPath;
+    // 1차: React Router navigate (navigate 함수가 있는 경우)
+    if (navigate && typeof navigate === 'function') {
+      try {
+        navigate(dashboardPath, { replace: true });
+        console.log('✅ React Router navigate 실행됨');
+      } catch (error) {
+        console.error('❌ React Router navigate 실패:', error);
+      }
+    }
+    
+    // 2차: window.location (즉시 실행)
+    setTimeout(() => {
+      console.log('🎯 window.location 리다이렉트 실행:', dashboardPath);
+      window.location.href = dashboardPath;
+    }, 100);
+    
+    // 3차: 강제 리다이렉트 (최종 백업)
+    setTimeout(() => {
+      console.log('🎯 강제 리다이렉트 실행:', dashboardPath);
+      window.location.replace(dashboardPath);
+    }, 1000);
+    
   } catch (error) {
-    console.error('대시보드 리다이렉트 오류:', error);
+    console.error('❌ 공통 리다이렉션 오류:', error);
     // 기본 경로로 리다이렉트
-    window.location.href = '/client/dashboard';
+    if (navigate && typeof navigate === 'function') {
+      navigate('/client/dashboard', { replace: true });
+    } else {
+      window.location.href = '/client/dashboard';
+    }
   }
+};
+
+/**
+ * 로그인 후 대시보드로 리다이렉트 (기존 호환성 유지)
+ */
+export const redirectToDashboard = (userInfo) => {
+  redirectToDashboardWithFallback(userInfo?.role);
 };
 
 /**

@@ -4,6 +4,7 @@ import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleHeader from '../layout/SimpleHeader';
 import { API_ENDPOINTS } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
+import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import notificationManager from '../../utils/notification';
 import './BranchLogin.css';
 
@@ -109,10 +110,9 @@ const BranchLogin = () => {
         // 로그인 성공 알림
         notificationManager.show('로그인에 성공했습니다.', 'success');
         
-        // 역할에 따른 대시보드로 리다이렉트
-        const dashboardPath = `/${result.user.role.toLowerCase()}/dashboard`;
-        console.log('✅ 로그인 성공, 대시보드로 이동:', dashboardPath);
-        navigate(dashboardPath, { replace: true });
+        // 공통 리다이렉션 함수 사용
+        console.log('✅ 로그인 성공, 대시보드로 이동:', result.user.role);
+        redirectToDashboardWithFallback(result.user.role, navigate);
       } else if (result.requiresConfirmation) {
         // 중복 로그인 확인 요청
         console.log('🔔 중복 로그인 확인 요청:', result.message);

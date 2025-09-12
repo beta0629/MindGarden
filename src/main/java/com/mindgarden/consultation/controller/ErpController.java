@@ -18,6 +18,7 @@ import com.mindgarden.consultation.entity.PurchaseRequest;
 import com.mindgarden.consultation.entity.RecurringExpense;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.CommonCodeService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.RecurringExpenseService;
@@ -59,6 +60,7 @@ public class ErpController {
     private final FinancialTransactionService financialTransactionService;
     private final RecurringExpenseService recurringExpenseService;
     private final CommonCodeService commonCodeService;
+    private final DynamicPermissionService dynamicPermissionService;
     
     // ==================== Item Management ====================
     
@@ -77,11 +79,15 @@ public class ErpController {
             
             List<Item> allItems = erpService.getAllActiveItems();
             
-            // 지점코드로 필터링
+            // 지점코드로 필터링 (branchCode가 null인 아이템은 모든 지점에서 사용 가능)
             List<Item> items = allItems.stream()
                 .filter(item -> {
                     if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
                         return true; // 지점코드가 없으면 모든 아이템 조회
+                    }
+                    // branchCode가 null이면 모든 지점에서 사용 가능
+                    if (item.getBranchCode() == null || item.getBranchCode().trim().isEmpty()) {
+                        return true;
                     }
                     return currentBranchCode.equals(item.getBranchCode());
                 })
@@ -232,7 +238,7 @@ public class ErpController {
         try {
             // 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!currentUser.getRole().equals(UserRole.ADMIN) && !currentUser.getRole().equals(UserRole.SUPER_ADMIN))) {
+            if (currentUser == null || (!currentUser.getRole().equals(UserRole.ADMIN) && !currentUser.getRole().equals(UserRole.HQ_MASTER))) {
                 log.warn("아이템 생성 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
@@ -278,7 +284,7 @@ public class ErpController {
         try {
             // 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!currentUser.getRole().equals(UserRole.ADMIN) && !currentUser.getRole().equals(UserRole.SUPER_ADMIN))) {
+            if (currentUser == null || (!currentUser.getRole().equals(UserRole.ADMIN) && !currentUser.getRole().equals(UserRole.HQ_MASTER))) {
                 log.warn("아이템 수정 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
@@ -329,7 +335,7 @@ public class ErpController {
         try {
             // 권한 확인 (수퍼어드민만)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !currentUser.getRole().equals(UserRole.SUPER_ADMIN)) {
+            if (currentUser == null || !currentUser.getRole().equals(UserRole.HQ_MASTER)) {
                 log.warn("아이템 삭제 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
@@ -368,7 +374,7 @@ public class ErpController {
         try {
             // 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!currentUser.getRole().equals(UserRole.ADMIN) && !currentUser.getRole().equals(UserRole.SUPER_ADMIN))) {
+            if (currentUser == null || (!currentUser.getRole().equals(UserRole.ADMIN) && !currentUser.getRole().equals(UserRole.HQ_MASTER))) {
                 log.warn("아이템 재고 업데이트 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
@@ -1289,11 +1295,13 @@ public class ErpController {
     @GetMapping("/finance/dashboard")
     public ResponseEntity<Map<String, Object>> getFinanceDashboard(HttpSession session) {
         try {
-            // 수퍼어드민 권한 확인
+            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
             
             log.info("통합 재무 대시보드 데이터 조회 요청: {}", currentUser.getEmail());
@@ -1326,7 +1334,7 @@ public class ErpController {
         try {
             // 수퍼어드민 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
             }
@@ -1358,11 +1366,13 @@ public class ErpController {
             @RequestParam(required = false) String endDate,
             HttpSession session) {
         try {
-            // 수퍼어드민 권한 확인
+            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
             
             log.info("카테고리별 분석 조회 요청: {} ~ {}", startDate, endDate);
@@ -1384,6 +1394,130 @@ public class ErpController {
     }
     
     /**
+     * 일간 재무 리포트 조회
+     */
+    @GetMapping("/finance/daily-report")
+    public ResponseEntity<Map<String, Object>> getDailyFinanceReport(
+            @RequestParam(required = false) String reportDate,
+            HttpSession session) {
+        try {
+            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+            }
+            
+            log.info("일간 재무 리포트 조회 요청: {}", reportDate);
+            
+            // 기본값으로 오늘 날짜 사용
+            if (reportDate == null) {
+                reportDate = java.time.LocalDate.now().toString();
+            }
+            
+            Map<String, Object> dailyReport = erpService.getDailyFinanceReport(reportDate);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "일간 재무 리포트를 성공적으로 조회했습니다.");
+            response.put("data", dailyReport);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("일간 재무 리포트 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "일간 리포트 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 월간 재무 리포트 조회
+     */
+    @GetMapping("/finance/monthly-report")
+    public ResponseEntity<Map<String, Object>> getMonthlyFinanceReport(
+            @RequestParam(required = false) String year,
+            @RequestParam(required = false) String month,
+            HttpSession session) {
+        try {
+            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+            }
+            
+            log.info("월간 재무 리포트 조회 요청: {}-{}", year, month);
+            
+            // 기본값으로 현재 년월 사용
+            if (year == null) {
+                year = String.valueOf(java.time.LocalDate.now().getYear());
+            }
+            if (month == null) {
+                month = String.valueOf(java.time.LocalDate.now().getMonthValue());
+            }
+            
+            Map<String, Object> monthlyReport = erpService.getMonthlyFinanceReport(year, month);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "월간 재무 리포트를 성공적으로 조회했습니다.");
+            response.put("data", monthlyReport);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("월간 재무 리포트 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "월간 리포트 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 년간 재무 리포트 조회
+     */
+    @GetMapping("/finance/yearly-report")
+    public ResponseEntity<Map<String, Object>> getYearlyFinanceReport(
+            @RequestParam(required = false) String year,
+            HttpSession session) {
+        try {
+            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+            }
+            
+            log.info("년간 재무 리포트 조회 요청: {}", year);
+            
+            // 기본값으로 현재 년도 사용
+            if (year == null) {
+                year = String.valueOf(java.time.LocalDate.now().getYear());
+            }
+            
+            Map<String, Object> yearlyReport = erpService.getYearlyFinanceReport(year);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "년간 재무 리포트를 성공적으로 조회했습니다.");
+            response.put("data", yearlyReport);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("년간 재무 리포트 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "년간 리포트 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
      * 대차대조표 조회
      */
     @GetMapping("/finance/balance-sheet")
@@ -1393,7 +1527,7 @@ public class ErpController {
         try {
             // 수퍼어드민 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
             }
@@ -1427,7 +1561,7 @@ public class ErpController {
         try {
             // 수퍼어드민 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
             }
@@ -1462,7 +1596,7 @@ public class ErpController {
         try {
             // 수퍼어드민 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
             }
@@ -1496,7 +1630,7 @@ public class ErpController {
         try {
             // 수퍼어드민 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
             }
@@ -1536,7 +1670,7 @@ public class ErpController {
         try {
             // 수퍼어드민 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
             }
@@ -1597,7 +1731,7 @@ public class ErpController {
         try {
             // 수퍼어드민 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
             }

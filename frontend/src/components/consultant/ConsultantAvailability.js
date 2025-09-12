@@ -272,7 +272,7 @@ const ConsultantAvailability = () => {
 
     // 권한 체크 (상담사 또는 관리자만 접근 가능)
     const userRole = sessionManagerUser?.role;
-    const hasPermission = userRole === 'CONSULTANT' || userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+    const hasPermission = userRole === 'CONSULTANT' || userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
     
     if (!hasPermission) {
       return (
@@ -338,12 +338,7 @@ const ConsultantAvailability = () => {
 
       {/* 로딩 상태 */}
       {loading && (
-        <div className="loading-container">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">로딩 중...</span>
-          </div>
-          <p>상담 가능 시간을 불러오는 중...</p>
-        </div>
+        <LoadingSpinner text="상담 가능 시간을 불러오는 중..." size="medium" />
       )}
 
       {/* 오류 상태 */}

@@ -46,6 +46,15 @@ export const AUTH_API = {
   CONFIRM_DUPLICATE_LOGIN: '/api/auth/confirm-duplicate-login'
 };
 
+// 권한 관련 API
+export const PERMISSIONS_API = {
+  MY_PERMISSIONS: '/api/admin/permissions/my-permissions',
+  CHECK_PERMISSION: '/api/admin/permissions/check-permission',
+  ROLE_PERMISSIONS: '/api/admin/permissions/role',
+  PERMISSION_ROLES: '/api/admin/permissions/permission',
+  ALL_PERMISSION_CODES: '/api/admin/permissions/codes'
+};
+
 // 사용자 관련 API
 export const USER_API = {
   // 프로필 관련
@@ -258,6 +267,7 @@ export const SEARCH_API = {
 export const API_ENDPOINTS = {
   AUTH: AUTH_API,
   USER: USER_API,
+  PERMISSIONS: PERMISSIONS_API,
   CONSULTATION: CONSULTATION_API,
   ADMIN: ADMIN_API,
   SCHEDULE: SCHEDULE_API,

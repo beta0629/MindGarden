@@ -37,4 +37,10 @@ public interface CommonCodeRepository extends JpaRepository<CommonCode, Long> {
     // 활성 코드 그룹별 개수 조회
     @Query("SELECT COUNT(c) FROM CommonCode c WHERE c.codeGroup = :codeGroup AND c.isActive = true")
     long countActiveByCodeGroup(@Param("codeGroup") String codeGroup);
+    
+    // 코드 값이 특정 문자열로 시작하는 활성 코드 조회
+    List<CommonCode> findByCodeGroupAndCodeValueStartingWithAndIsActiveTrue(String codeGroup, String codeValuePrefix);
+    
+    // 코드 값이 특정 문자열로 끝나는 활성 코드 조회
+    List<CommonCode> findByCodeGroupAndCodeValueEndingWithAndIsActiveTrue(String codeGroup, String codeValueSuffix);
 }

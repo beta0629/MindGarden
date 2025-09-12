@@ -45,7 +45,7 @@ public class CommonCodeController {
             log.info("📋 코드 값 목록 조회: 그룹={}, 요청자 역할={}", groupCode, userRole);
             
             // 관리자 권한 확인 (userRole이 제공된 경우에만)
-            if (userRole != null && !"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && !"BRANCH_SUPER_ADMIN".equals(userRole)) {
+            if (userRole != null && !"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && !"BRANCH_HQ_MASTER".equals(userRole) && !"BRANCH_SUPER_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole)) {
                 log.warn("❌ 관리자 권한 없음: {}", userRole);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }

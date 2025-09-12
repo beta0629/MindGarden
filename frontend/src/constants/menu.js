@@ -74,7 +74,7 @@ export const ADMIN_MENU_ITEMS = {
 };
 
 // 수퍼어드민 메뉴
-export const SUPER_ADMIN_MENU_ITEMS = {
+export const BRANCH_SUPER_ADMIN_MENU_ITEMS = {
   MAIN: {
     ADMIN: {
       id: 'admin',
@@ -290,7 +290,7 @@ export const SUPER_HQ_ADMIN_MENU_ITEMS = {
 };
 
 // 지점 수퍼 관리자 메뉴
-export const BRANCH_SUPER_ADMIN_MENU_ITEMS = {
+export const BRANCH_BRANCH_SUPER_ADMIN_MENU_ITEMS = {
   MAIN: {
     ADMIN: {
       id: 'admin',
@@ -385,13 +385,13 @@ export const CLIENT_MENU_ITEMS = {
 export const USER_ROLES = {
   HQ_ADMIN: 'HQ_ADMIN',
   SUPER_HQ_ADMIN: 'SUPER_HQ_ADMIN',
-  BRANCH_SUPER_ADMIN: 'BRANCH_SUPER_ADMIN',
+  BRANCH_BRANCH_SUPER_ADMIN: 'BRANCH_BRANCH_SUPER_ADMIN',
   ADMIN: 'ADMIN',
   BRANCH_MANAGER: 'BRANCH_MANAGER',
   CONSULTANT: 'CONSULTANT',
   CLIENT: 'CLIENT',
   // 기존 호환성
-  SUPER_ADMIN: 'SUPER_ADMIN'
+  BRANCH_SUPER_ADMIN: 'BRANCH_SUPER_ADMIN'
 };
 
 // 메뉴 타입 상수

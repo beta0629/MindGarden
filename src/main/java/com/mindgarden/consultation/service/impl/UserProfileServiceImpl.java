@@ -70,7 +70,7 @@ public class UserProfileServiceImpl implements UserProfileService {
                         throw new RuntimeException("상담사 자격 요건을 충족하지 못합니다.");
                     } else if (UserRole.ADMIN.equals(request.getRequestedRole()) && !checkAdminEligibility(userId)) {
                         throw new RuntimeException("관리자 자격 요건을 충족하지 못합니다.");
-                    } else if (UserRole.SUPER_ADMIN.equals(request.getRequestedRole()) && !checkSuperAdminEligibility(userId)) {
+                    } else if (UserRole.HQ_MASTER.equals(request.getRequestedRole()) && !checkSuperAdminEligibility(userId)) {
                         throw new RuntimeException("수퍼관리자 자격 요건을 충족하지 못합니다.");
                     }
                     
@@ -229,7 +229,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         }
         
         // 상담사 전용 정보
-        if (UserRole.CONSULTANT.equals(user.getRole()) || UserRole.ADMIN.equals(user.getRole()) || UserRole.SUPER_ADMIN.equals(user.getRole())) {
+        if (UserRole.CONSULTANT.equals(user.getRole()) || UserRole.ADMIN.equals(user.getRole()) || UserRole.HQ_MASTER.equals(user.getRole())) {
             if (request.getSpecialty() != null) {
                 roleInfo.append("전문분야: ").append(request.getSpecialty()).append("\n");
             }
@@ -260,7 +260,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         }
         
         // 관리자 전용 정보
-        if (UserRole.ADMIN.equals(user.getRole()) || UserRole.SUPER_ADMIN.equals(user.getRole())) {
+        if (UserRole.ADMIN.equals(user.getRole()) || UserRole.HQ_MASTER.equals(user.getRole())) {
             if (request.getAssignedTasks() != null) {
                 roleInfo.append("담당업무: ").append(request.getAssignedTasks()).append("\n");
             }
@@ -288,14 +288,14 @@ public class UserProfileServiceImpl implements UserProfileService {
             // 내담자 → 상담사/관리자/수퍼관리자 가능
             return UserRole.CONSULTANT.equals(newRole) || 
                    UserRole.ADMIN.equals(newRole) || 
-                   UserRole.SUPER_ADMIN.equals(newRole);
+                   UserRole.HQ_MASTER.equals(newRole);
         } else if (UserRole.CONSULTANT.equals(currentRole)) {
             // 상담사 → 관리자/수퍼관리자 가능
             return UserRole.ADMIN.equals(newRole) || 
-                   UserRole.SUPER_ADMIN.equals(newRole);
+                   UserRole.HQ_MASTER.equals(newRole);
         } else if (UserRole.ADMIN.equals(currentRole)) {
             // 관리자 → 수퍼관리자만 가능
-            return UserRole.SUPER_ADMIN.equals(newRole);
+            return UserRole.HQ_MASTER.equals(newRole);
         }
         // 수퍼관리자는 다른 역할로 변경 불가
         return false;
@@ -433,7 +433,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         // 역할별로 필요한 추가 정보 확인
         if (UserRole.CONSULTANT.equals(user.getRole()) || 
             UserRole.ADMIN.equals(user.getRole()) || 
-            UserRole.SUPER_ADMIN.equals(user.getRole())) {
+            UserRole.HQ_MASTER.equals(user.getRole())) {
             // 상담사/관리자 역할은 전문 정보 필요
             return true;
         }
@@ -458,7 +458,7 @@ public class UserProfileServiceImpl implements UserProfileService {
             return "상담사 프로필을 더 자세히 작성해주세요.";
         } else if (UserRole.ADMIN.equals(user.getRole())) {
             return "관리자 프로필을 더 자세히 작성해주세요.";
-        } else if (UserRole.SUPER_ADMIN.equals(user.getRole())) {
+        } else if (UserRole.HQ_MASTER.equals(user.getRole())) {
             return "수퍼관리자 프로필이 완성되었습니다.";
         }
         

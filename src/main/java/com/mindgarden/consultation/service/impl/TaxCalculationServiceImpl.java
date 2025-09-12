@@ -44,7 +44,7 @@ public class TaxCalculationServiceImpl implements TaxCalculationService {
         /*
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPER_ADMIN"))) {
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_HQ_MASTER"))) {
             throw new RuntimeException("세금 계산 기능은 수퍼어드민만 접근 가능합니다.");
         }
         */

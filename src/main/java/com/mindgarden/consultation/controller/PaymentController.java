@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.dto.PaymentRequest;
 import com.mindgarden.consultation.dto.PaymentResponse;
 import com.mindgarden.consultation.dto.PaymentWebhookRequest;
@@ -45,18 +46,21 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentController {
     
     private final PaymentService paymentService;
+    private final DynamicPermissionService dynamicPermissionService;
     
     /**
      * 결제 생성 (수퍼 어드민 전용)
      */
     @PostMapping
     public ResponseEntity<?> createPayment(@Valid @RequestBody PaymentRequest request, HttpServletRequest httpRequest) {
-        // 수퍼 어드민 권한 체크
+        // 동적 권한 체크 - 결제 기능 접근 권한
         String userRole = (String) httpRequest.getAttribute("userRole");
-        if (!UserRole.SUPER_ADMIN.name().equals(userRole) && !UserRole.BRANCH_SUPER_ADMIN.name().equals(userRole)) {
+        UserRole role = UserRole.fromString(userRole);
+        
+        if (!dynamicPermissionService.canAccessPayment(role)) {
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);
-            result.put("message", "결제 생성은 수퍼 어드민만 가능합니다.");
+            result.put("message", "결제 기능 접근 권한이 없습니다.");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(result);
         }
         try {

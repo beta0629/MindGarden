@@ -43,10 +43,10 @@ public final class ScheduleConstants {
     
     // 사용자 역할 문자열 상수
     public static final String ROLE_ADMIN = "ADMIN";
-    public static final String ROLE_SUPER_ADMIN = "SUPER_ADMIN";
+    public static final String ROLE_HQ_MASTER = "HQ_MASTER";
     public static final String ROLE_CONSULTANT = "CONSULTANT";
     public static final String ROLE_BRANCH_MANAGER = "BRANCH_MANAGER";
-    public static final String ROLE_BRANCH_SUPER_ADMIN = "BRANCH_SUPER_ADMIN";
+    public static final String ROLE_BRANCH_HQ_MASTER = "BRANCH_HQ_MASTER";
     public static final String ROLE_HQ_ADMIN = "HQ_ADMIN";
     public static final String ROLE_SUPER_HQ_ADMIN = "SUPER_HQ_ADMIN";
     

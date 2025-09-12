@@ -198,7 +198,7 @@ public class IntegrationTestController {
                     (user.getRole() == UserRole.CLIENT || 
                      user.getRole() == UserRole.CONSULTANT || 
                      user.getRole() == UserRole.ADMIN || 
-                     user.getRole() == UserRole.SUPER_ADMIN));
+                     user.getRole() == UserRole.HQ_MASTER));
             
             result.put("success", true);
             result.put("encryptionWorking", encryptionWorking);

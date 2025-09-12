@@ -12,6 +12,7 @@ import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.AdminService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final ScheduleService scheduleService;
+    private final DynamicPermissionService dynamicPermissionService;
 
     /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
@@ -57,18 +59,11 @@ public class AdminController {
                 ));
             }
             
-            log.info("🔍 상담사 조회 권한 확인: role={}, isAdmin={}, isBranchManager={}, isHeadquartersAdmin={}", 
-                currentUser.getRole(), currentUser.getRole().isAdmin(), 
-                currentUser.getRole().isBranchManager(), currentUser.getRole().isHeadquartersAdmin());
-            
-            // 관리자 권한 확인 (ADMIN, BRANCH_SUPER_ADMIN, HQ_ADMIN, SUPER_HQ_ADMIN, BRANCH_MANAGER)
             UserRole userRole = currentUser.getRole();
-            boolean hasPermission = userRole == UserRole.ADMIN || 
-                                  userRole == UserRole.BRANCH_SUPER_ADMIN || 
-                                  userRole == UserRole.HQ_ADMIN || 
-                                  userRole == UserRole.SUPER_HQ_ADMIN || 
-                                  userRole == UserRole.BRANCH_MANAGER ||
-                                  userRole == UserRole.SUPER_ADMIN;
+            log.info("🔍 상담사 조회 권한 확인: role={}", userRole);
+            
+            // 동적 권한 시스템으로 관리자 권한 확인
+            boolean hasPermission = userRole.isAdmin() || userRole.isBranchSuperAdmin() || userRole.isHeadquartersAdmin();
             
             if (!hasPermission) {
                 log.warn("❌ 상담사 조회 권한 없음: role={}", userRole);
@@ -80,20 +75,37 @@ public class AdminController {
             
             // 현재 로그인한 사용자의 지점코드 확인
             String currentBranchCode = currentUser.getBranchCode();
-            log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+            log.info("🔍 현재 사용자 지점코드: {}, 역할: {}", currentBranchCode, userRole);
             
             List<Map<String, Object>> allConsultants = adminService.getAllConsultantsWithSpecialty();
             
-            // 지점코드로 필터링
-            List<Map<String, Object>> consultantsWithSpecialty = allConsultants.stream()
-                .filter(consultant -> {
-                    if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
-                        return true; // 지점코드가 없으면 모든 상담사 조회
-                    }
-                    String consultantBranchCode = (String) consultant.get("branchCode");
-                    return currentBranchCode.equals(consultantBranchCode);
-                })
-                .collect(java.util.stream.Collectors.toList());
+            // 권한에 따른 데이터 필터링
+            List<Map<String, Object>> consultantsWithSpecialty;
+            
+            if (dynamicPermissionService.canViewBranchDetails(userRole)) {
+                // HQ_MASTER만 모든 지점 내역 조회 가능
+                consultantsWithSpecialty = allConsultants;
+                log.info("🔍 총관리자 권한으로 모든 상담사 조회");
+            } else if (userRole.isHeadquartersAdmin()) {
+                // 본사 관리자는 지점 내역 조회 불가 (보안상 제한)
+                log.warn("❌ 본사 관리자는 지점 내역 조회 권한 없음: role={}", userRole);
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "지점 내역 조회 권한이 없습니다. 지점 관리 기능만 사용 가능합니다."
+                ));
+            } else {
+                // 지점 관리자는 자신의 지점만 조회
+                consultantsWithSpecialty = allConsultants.stream()
+                    .filter(consultant -> {
+                        if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
+                            return false; // 지점코드가 없으면 조회 불가
+                        }
+                        String consultantBranchCode = (String) consultant.get("branchCode");
+                        return currentBranchCode.equals(consultantBranchCode);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+                log.info("🔍 지점 관리자 권한으로 자신의 지점만 조회");
+            }
             
             log.info("🔍 상담사 목록 조회 완료 - 전체: {}, 필터링 후: {}", allConsultants.size(), consultantsWithSpecialty.size());
             

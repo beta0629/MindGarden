@@ -48,7 +48,7 @@ public class BranchController {
      * 지점 생성
      */
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<BranchResponse> createBranch(
             @Valid @RequestBody BranchCreateRequest request) {
         log.info("지점 생성 요청: {}", request.getBranchName());
@@ -87,7 +87,7 @@ public class BranchController {
      * 지점 조회
      */
     @GetMapping("/{branchId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<BranchResponse> getBranch(@PathVariable Long branchId) {
         log.info("지점 조회 요청: ID={}", branchId);
         
@@ -99,7 +99,7 @@ public class BranchController {
      * 지점 수정
      */
     @PutMapping("/{branchId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<BranchResponse> updateBranch(
             @PathVariable Long branchId,
             @Valid @RequestBody BranchUpdateRequest request) {
@@ -113,7 +113,7 @@ public class BranchController {
      * 지점 삭제
      */
     @DeleteMapping("/{branchId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER')")
     public ResponseEntity<Void> deleteBranch(@PathVariable Long branchId) {
         log.info("지점 삭제 요청: ID={}", branchId);
         
@@ -138,7 +138,7 @@ public class BranchController {
      * 지점 페이징 조회
      */
     @GetMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<Page<BranchResponse>> getBranches(Pageable pageable) {
         log.info("지점 페이징 조회 요청: {}", pageable);
         
@@ -150,7 +150,7 @@ public class BranchController {
      * 지점 검색
      */
     @GetMapping("/search")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<List<BranchResponse>> searchBranches(
             @RequestParam("keyword") String keyword) {
         log.info("지점 검색 요청: {}", keyword);
@@ -163,7 +163,7 @@ public class BranchController {
      * 지점 검색 (페이징)
      */
     @GetMapping("/search/paged")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<Page<BranchResponse>> searchBranchesWithPaging(
             @RequestParam("keyword") String keyword,
             Pageable pageable) {
@@ -177,7 +177,7 @@ public class BranchController {
      * 지점 유형별 조회
      */
     @GetMapping("/type/{type}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<List<BranchResponse>> getBranchesByType(
             @PathVariable Branch.BranchType type) {
         log.info("지점 유형별 조회 요청: {}", type);
@@ -190,7 +190,7 @@ public class BranchController {
      * 지점 상태별 조회
      */
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<List<BranchResponse>> getBranchesByStatus(
             @PathVariable Branch.BranchStatus status) {
         log.info("지점 상태별 조회 요청: {}", status);
@@ -203,7 +203,7 @@ public class BranchController {
      * 본점들 조회
      */
     @GetMapping("/main")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<List<BranchResponse>> getMainBranches() {
         log.info("본점 목록 조회 요청");
         
@@ -215,7 +215,7 @@ public class BranchController {
      * 하위 지점들 조회
      */
     @GetMapping("/{branchId}/sub-branches")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<List<BranchResponse>> getSubBranches(@PathVariable Long branchId) {
         log.info("하위 지점 목록 조회 요청: 상위 지점 ID={}", branchId);
         
@@ -227,7 +227,7 @@ public class BranchController {
      * 지점 계층 구조 조회
      */
     @GetMapping("/hierarchy")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<List<BranchResponse>> getBranchHierarchy() {
         log.info("지점 계층 구조 조회 요청");
         
@@ -241,7 +241,7 @@ public class BranchController {
      * 지점장 지정
      */
     @PostMapping("/{branchId}/manager/{managerId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<Void> assignManager(
             @PathVariable Long branchId,
             @PathVariable Long managerId) {
@@ -255,7 +255,7 @@ public class BranchController {
      * 지점장 해제
      */
     @DeleteMapping("/{branchId}/manager")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<Void> removeManager(@PathVariable Long branchId) {
         log.info("지점장 해제 요청: 지점 ID={}", branchId);
         
@@ -267,7 +267,7 @@ public class BranchController {
      * 지점 상태 변경
      */
     @PutMapping("/{branchId}/status/{status}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<Void> changeBranchStatus(
             @PathVariable Long branchId,
             @PathVariable Branch.BranchStatus status) {
@@ -281,7 +281,7 @@ public class BranchController {
      * 지점 활성화
      */
     @PostMapping("/{branchId}/activate")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<Void> activateBranch(@PathVariable Long branchId) {
         log.info("지점 활성화 요청: 지점 ID={}", branchId);
         
@@ -293,7 +293,7 @@ public class BranchController {
      * 지점 비활성화
      */
     @PostMapping("/{branchId}/deactivate")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<Void> deactivateBranch(@PathVariable Long branchId) {
         log.info("지점 비활성화 요청: 지점 ID={}", branchId);
         
@@ -305,7 +305,7 @@ public class BranchController {
      * 지점 폐점
      */
     @PostMapping("/{branchId}/close")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER')")
     public ResponseEntity<Void> closeBranch(@PathVariable Long branchId) {
         log.info("지점 폐점 요청: 지점 ID={}", branchId);
         
@@ -319,7 +319,7 @@ public class BranchController {
      * 지점에 상담사 할당
      */
     @PostMapping("/{branchId}/consultants/{consultantId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<Void> assignConsultant(
             @PathVariable Long branchId,
             @PathVariable Long consultantId) {
@@ -333,7 +333,7 @@ public class BranchController {
      * 지점에 내담자 할당
      */
     @PostMapping("/{branchId}/clients/{clientId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<Void> assignClient(
             @PathVariable Long branchId,
             @PathVariable Long clientId) {
@@ -347,7 +347,7 @@ public class BranchController {
      * 지점에서 사용자 제거
      */
     @DeleteMapping("/users/{userId}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<Void> removeUserFromBranch(@PathVariable Long userId) {
         log.info("사용자 지점 제거 요청: 사용자 ID={}", userId);
         
@@ -359,7 +359,7 @@ public class BranchController {
      * 지점 간 사용자 이동
      */
     @PostMapping("/users/{userId}/transfer")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<Void> transferUser(
             @PathVariable Long userId,
             @RequestParam("fromBranch") Long fromBranchId,
@@ -374,7 +374,7 @@ public class BranchController {
      * 지점 소속 상담사 목록 조회
      */
     @GetMapping("/{branchId}/consultants")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<List<User>> getBranchConsultants(@PathVariable Long branchId) {
         log.info("지점 소속 상담사 목록 조회 요청: 지점 ID={}", branchId);
         
@@ -386,7 +386,7 @@ public class BranchController {
      * 지점 소속 내담자 목록 조회
      */
     @GetMapping("/{branchId}/clients")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<List<User>> getBranchClients(@PathVariable Long branchId) {
         log.info("지점 소속 내담자 목록 조회 요청: 지점 ID={}", branchId);
         
@@ -400,7 +400,7 @@ public class BranchController {
      * 지점 통계 조회
      */
     @GetMapping("/{branchId}/statistics")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<Map<String, Object>> getBranchStatistics(@PathVariable Long branchId) {
         log.info("지점 통계 조회 요청: 지점 ID={}", branchId);
         
@@ -412,7 +412,7 @@ public class BranchController {
      * 전체 지점 통계 조회
      */
     @GetMapping("/statistics")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getAllBranchesStatistics() {
         log.info("전체 지점 통계 조회 요청");
         
@@ -424,7 +424,7 @@ public class BranchController {
      * 지점별 상담사 수 조회
      */
     @GetMapping("/statistics/consultants")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, Integer>> getConsultantCountByBranch() {
         log.info("지점별 상담사 수 조회 요청");
         
@@ -436,7 +436,7 @@ public class BranchController {
      * 지점별 내담자 수 조회
      */
     @GetMapping("/statistics/clients")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, Integer>> getClientCountByBranch() {
         log.info("지점별 내담자 수 조회 요청");
         
@@ -450,7 +450,7 @@ public class BranchController {
      * 지점 코드 중복 확인
      */
     @GetMapping("/validate/branch-code")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, Boolean>> validateBranchCode(
             @RequestParam("branchCode") String branchCode,
             @RequestParam(value = "excludeId", required = false) Long excludeId) {
@@ -468,7 +468,7 @@ public class BranchController {
      * 지점명 중복 확인
      */
     @GetMapping("/validate/branch-name")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, Boolean>> validateBranchName(
             @RequestParam("branchName") String branchName,
             @RequestParam(value = "parentBranchId", required = false) Long parentBranchId,
@@ -487,7 +487,7 @@ public class BranchController {
      * 지점 수용 인원 확인
      */
     @GetMapping("/{branchId}/validate/capacity")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_SUPER_ADMIN')")
+    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
     public ResponseEntity<Map<String, Boolean>> validateCapacity(@PathVariable Long branchId) {
         log.info("지점 수용 인원 확인 요청: 지점 ID={}", branchId);
         

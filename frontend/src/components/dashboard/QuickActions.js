@@ -50,7 +50,7 @@ const QuickActions = ({ user }) => {
         <i className="bi bi-lightning"></i>
         빠른 액션
       </h3>
-      <div className={`${QUICK_ACTIONS_CSS.ACTION_GRID} ${(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? 'admin-layout' : ''}`}>
+      <div className={`${QUICK_ACTIONS_CSS.ACTION_GRID} ${(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') ? 'admin-layout' : ''}`}>
         <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToProfile}>
           <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.PROFILE.ICON}`}></i>
           <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.PROFILE.LABEL}</span>
@@ -73,7 +73,7 @@ const QuickActions = ({ user }) => {
         </button>
         
         {/* 관리자 전용 액션 */}
-        {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+        {(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
           <>
             <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToMappingManagement}>
               <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.MAPPING_MANAGEMENT.ICON}`}></i>

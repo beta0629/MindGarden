@@ -179,9 +179,9 @@ const VacationManagementModal = ({
     }, [selectedConsultantId]);
 
     // 관리자 권한 확인
-    console.log('🏖️ 권한 확인:', { userRole, isAdmin: userRole === 'ADMIN', isSuperAdmin: userRole === 'SUPER_ADMIN' });
+    console.log('🏖️ 권한 확인:', { userRole, isAdmin: userRole === 'ADMIN', isSuperAdmin: userRole === 'BRANCH_SUPER_ADMIN' });
     
-    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+    if (userRole !== 'ADMIN' && userRole !== 'BRANCH_SUPER_ADMIN') {
         console.log('🏖️ 권한 없음 - 모달 렌더링하지 않음');
         return null;
     }

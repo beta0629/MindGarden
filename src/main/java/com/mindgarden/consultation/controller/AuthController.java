@@ -111,10 +111,11 @@ public class AuthController {
                 // 지점 매핑 필요 조건:
                 // 1. 관리자/지점 관리자 역할이거나
                 // 2. 상담사 역할이거나
-                // 3. SNS 로그인한 사용자 (소셜 계정이 있는 경우)
+                // 3. SNS 로그인한 사용자이지만 지점코드가 없는 경우
                 boolean isSocialUser = !userSocialAccountRepository.findByUserIdAndIsDeletedFalse(user.getId()).isEmpty();
-                boolean needsMapping = user.getRole().isAdmin() || user.getRole().isBranchManager() || 
-                                     user.getRole().isConsultant() || isSocialUser;
+                boolean hasBranchCode = user.getBranchCode() != null && !user.getBranchCode().trim().isEmpty();
+                boolean needsMapping = (user.getRole().isAdmin() || user.getRole().isBranchManager() || 
+                                     user.getRole().isConsultant() || isSocialUser) && !hasBranchCode;
                 userInfo.put("needsBranchMapping", needsMapping);
             }
             

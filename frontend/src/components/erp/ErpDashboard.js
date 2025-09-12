@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
-import ErpLoading from './common/ErpLoading';
+import LoadingSpinner from '../common/LoadingSpinner';
 import ErpHeader from './common/ErpHeader';
 
 /**
@@ -78,7 +78,7 @@ const ErpDashboard = () => {
   };
 
   if (loading) {
-    return <ErpLoading message="대시보드 데이터를 불러오는 중..." />;
+    return <LoadingSpinner text="대시보드 데이터를 불러오는 중..." size="medium" />;
   }
 
   return (

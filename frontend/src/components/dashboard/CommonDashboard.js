@@ -4,6 +4,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI, apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
+import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import '../../styles/dashboard/dashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -97,6 +98,15 @@ const CommonDashboard = ({ user: propUser }) => {
         console.log('✅ 사용자 정보 설정:', currentUser);
         setUser(currentUser);
         
+        // 역할별 리다이렉션 체크 (CLIENT, CONSULTANT만 CommonDashboard 사용)
+        if (currentUser?.role && !['CLIENT', 'CONSULTANT'].includes(currentUser.role)) {
+          console.log('🎯 관리자 역할 감지, 적절한 대시보드로 리다이렉션:', currentUser.role);
+          const dashboardPath = getDashboardPath(currentUser.role);
+          console.log('🎯 리다이렉션 경로:', dashboardPath);
+          redirectToDashboardWithFallback(currentUser.role, navigate);
+          return;
+        }
+        
         // 2. 상담 데이터 로드
         if (currentUser?.role === 'CLIENT') {
           console.log('📊 내담자 상담 데이터 로드 시작');
@@ -105,7 +115,7 @@ const CommonDashboard = ({ user: propUser }) => {
         } else if (currentUser?.role === 'CONSULTANT') {
           console.log('📊 상담사 상담 데이터 로드 시작');
           await loadConsultantConsultationData(currentUser.id);
-        } else if (currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN') {
+        } else if (currentUser?.role === 'ADMIN' || currentUser?.role === 'BRANCH_SUPER_ADMIN') {
           console.log('📊 관리자 시스템 데이터 로드 시작');
           await loadAdminSystemData();
         }
@@ -662,7 +672,7 @@ const CommonDashboard = ({ user: propUser }) => {
         )}
         
         {/* 요약 패널 섹션 (상담사/관리자 전용) */}
-        {(user?.role === 'CONSULTANT' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+        {(user?.role === 'CONSULTANT' || user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
           <SummaryPanels 
             user={user} 
             consultationData={consultationData} 

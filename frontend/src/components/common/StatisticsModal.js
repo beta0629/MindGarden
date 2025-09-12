@@ -81,7 +81,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
       console.log('🍪 현재 쿠키:', document.cookie);
       
       // 직접 fetch를 사용해서 더 자세한 로깅
-      const url = `${SCHEDULE_API.TODAY_STATISTICS}?userRole=${userRole}`;
+      const url = `http://localhost:8080${SCHEDULE_API.TODAY_STATISTICS}?userRole=${userRole}`;
       console.log('🔗 요청 URL:', url);
       
       const response = await fetch(url, {

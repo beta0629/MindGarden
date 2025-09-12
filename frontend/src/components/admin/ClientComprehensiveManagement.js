@@ -308,7 +308,7 @@ const ClientComprehensiveManagement = () => {
             'CONSULTANT_SENIOR': '시니어',
             'CONSULTANT_EXPERT': '전문가',
             'ADMIN': '관리자',
-            'SUPER_ADMIN': '수퍼관리자'
+            'BRANCH_SUPER_ADMIN': '수퍼관리자'
         };
         return statusMap[status] || status;
     };
@@ -340,7 +340,7 @@ const ClientComprehensiveManagement = () => {
             'CONSULTANT_SENIOR': '⭐⭐',
             'CONSULTANT_EXPERT': '⭐⭐⭐',
             'ADMIN': '👑',
-            'SUPER_ADMIN': '👑👑'
+            'BRANCH_SUPER_ADMIN': '👑👑'
         };
         return iconMap[grade] || '🥉';
     };
@@ -369,7 +369,7 @@ const ClientComprehensiveManagement = () => {
             'CONSULTANT_SENIOR': '#6f42c1',
             'CONSULTANT_EXPERT': '#fd7e14',
             'ADMIN': '#6c757d',
-            'SUPER_ADMIN': '#343a40'
+            'BRANCH_SUPER_ADMIN': '#343a40'
         };
         return colorMap[status] || '#a8e6a3';
     };

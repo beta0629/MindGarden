@@ -18,7 +18,7 @@ import './BranchManagement.css';
  */
 const BranchManagement = () => {
     const navigate = useNavigate();
-    const { user } = useSession();
+    const { user, hasPermission } = useSession();
     
     // === 권한 체크 ===
     useEffect(() => {
@@ -27,12 +27,18 @@ const BranchManagement = () => {
             return;
         }
         
-        // 본사 관리자만 접근 가능
-        if (user.role !== 'HQ_ADMIN' && user.role !== 'SUPER_HQ_ADMIN') {
-            showAlert('접근 권한이 없습니다.', 'error');
-            navigate('/admin/dashboard');
-            return;
-        }
+        // 동적 권한 시스템으로 지점 관리 권한 확인
+        const checkBranchManagementPermission = async () => {
+            const hasPermissionResult = await hasPermission('MANAGE_BRANCH');
+            
+            if (!hasPermissionResult) {
+                showAlert('접근 권한이 없습니다.', 'error');
+                navigate('/admin/dashboard');
+                return;
+            }
+        };
+        
+        checkBranchManagementPermission();
     }, [user, navigate]);
     
     // 권한이 없는 경우 로딩 표시

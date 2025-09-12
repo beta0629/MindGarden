@@ -10,6 +10,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { apiGet } from '../../utils/ajax';
 import { SCHEDULE_API } from '../../constants/api';
+import LoadingSpinner from './LoadingSpinner';
 import { 
   SORT_OPTIONS, 
   SORT_OPTION_LABELS, 
@@ -145,7 +146,7 @@ const ScheduleList = ({
       };
       
       // 어드민인 경우 상담사 필터링 지원
-      if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || 
+      if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_BRANCH_SUPER_ADMIN' || 
           userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
         url = '/api/admin/schedules';
         params = {};
@@ -178,7 +179,7 @@ const ScheduleList = ({
     loadSortOptions();
     
     // 어드민인 경우 상담사 목록도 로드
-    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || 
+    if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_BRANCH_SUPER_ADMIN' || 
         userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
       loadConsultants();
     }
@@ -186,7 +187,7 @@ const ScheduleList = ({
 
   // 상담사 선택 변경 시 스케줄 다시 로드
   useEffect(() => {
-    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || 
+    if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_BRANCH_SUPER_ADMIN' || 
         userRole === 'BRANCH_MANAGER' || userRole === 'HQ_ADMIN' || userRole === 'SUPER_HQ_ADMIN') {
       loadSchedules();
     }
@@ -364,7 +365,7 @@ const ScheduleList = ({
         
         <div className="schedule-controls">
           {/* 상담사 선택 (어드민/수퍼어드민만) */}
-          {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+          {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
             <select
               value={selectedConsultantId}
               onChange={(e) => setSelectedConsultantId(e.target.value)}
@@ -419,10 +420,7 @@ const ScheduleList = ({
 
       <div className="schedule-content">
         {loading ? (
-          <div className="schedule-loading">
-            <div className="loading-spinner"></div>
-            <p>스케줄을 불러오는 중...</p>
-          </div>
+          <LoadingSpinner text="스케줄을 불러오는 중..." size="medium" />
         ) : displaySchedules.length === 0 ? (
           <div className="schedule-empty">
             <i className="bi bi-calendar-x"></i>

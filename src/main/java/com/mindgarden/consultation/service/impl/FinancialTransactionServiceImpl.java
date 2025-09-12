@@ -60,7 +60,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 request.getTransactionType(), request.getAmount(), request.getCategory());
         
         // 권한 확인 (수퍼어드민 또는 어드민만 거래 생성 가능)
-        if (!UserRole.SUPER_ADMIN.equals(currentUser.getRole()) && !UserRole.ADMIN.equals(currentUser.getRole())) {
+        if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && !UserRole.ADMIN.equals(currentUser.getRole())) {
             throw new RuntimeException("회계 거래 생성 권한이 없습니다.");
         }
         
@@ -93,7 +93,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         log.info("💼 회계 거래 수정: ID={}", id);
         
         // 권한 확인
-        if (!UserRole.SUPER_ADMIN.equals(currentUser.getRole()) && !UserRole.ADMIN.equals(currentUser.getRole())) {
+        if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && !UserRole.ADMIN.equals(currentUser.getRole())) {
             throw new RuntimeException("회계 거래 수정 권한이 없습니다.");
         }
         
@@ -132,7 +132,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         log.info("💼 회계 거래 삭제: ID={}", id);
         
         // 수퍼어드민만 삭제 가능
-        if (!UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+        if (!UserRole.HQ_MASTER.equals(currentUser.getRole())) {
             throw new RuntimeException("회계 거래 삭제 권한이 없습니다.");
         }
         
@@ -207,7 +207,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         log.info("✅ 회계 거래 승인: ID={}, 승인자={}", id, approver.getEmail());
         
         // 수퍼어드민만 승인 가능
-        if (!UserRole.SUPER_ADMIN.equals(approver.getRole())) {
+        if (!UserRole.HQ_MASTER.equals(approver.getRole())) {
             throw new RuntimeException("거래 승인 권한이 없습니다.");
         }
         
@@ -230,7 +230,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         log.info("❌ 회계 거래 거부: ID={}, 거부자={}", id, approver.getEmail());
         
         // 수퍼어드민만 거부 가능
-        if (!UserRole.SUPER_ADMIN.equals(approver.getRole())) {
+        if (!UserRole.HQ_MASTER.equals(approver.getRole())) {
             throw new RuntimeException("거래 거부 권한이 없습니다.");
         }
         

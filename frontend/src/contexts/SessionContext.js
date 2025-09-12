@@ -403,12 +403,33 @@ export const SessionProvider = ({ children }) => {
     // 유틸리티
     hasRole: (role) => state.user?.role === role,
     hasAnyRole: (roles) => roles.includes(state.user?.role),
-    isAdmin: () => state.user?.role === 'ADMIN' || state.user?.role === 'SUPER_ADMIN' || 
-              state.user?.role === 'BRANCH_SUPER_ADMIN' || state.user?.role === 'BRANCH_MANAGER' ||
+    isAdmin: () => state.user?.role === 'ADMIN' || state.user?.role === 'BRANCH_SUPER_ADMIN' || 
+              state.user?.role === 'BRANCH_BRANCH_SUPER_ADMIN' || state.user?.role === 'BRANCH_MANAGER' ||
               state.user?.role === 'HQ_ADMIN' || state.user?.role === 'SUPER_HQ_ADMIN',
-    isSuperAdmin: () => state.user?.role === 'SUPER_ADMIN' || state.user?.role === 'SUPER_HQ_ADMIN',
+    isSuperAdmin: () => state.user?.role === 'BRANCH_SUPER_ADMIN' || state.user?.role === 'SUPER_HQ_ADMIN',
     isConsultant: () => state.user?.role === 'CONSULTANT',
-    isClient: () => state.user?.role === 'CLIENT'
+    isClient: () => state.user?.role === 'CLIENT',
+    
+    // 동적 권한 체크 (백엔드 API 호출)
+    hasPermission: async (permission) => {
+      try {
+        const response = await sessionManager.fetch('/api/admin/permissions/check-permission', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ permission })
+        });
+        
+        if (!response.ok) return false;
+        
+        const result = await response.json();
+        return result.success && result.data?.hasPermission === true;
+      } catch (error) {
+        console.error('권한 체크 오류:', error);
+        return false;
+      }
+    }
   };
 
   return (

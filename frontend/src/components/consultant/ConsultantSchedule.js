@@ -21,7 +21,7 @@ import './ConsultantSchedule.css';
 
 const ConsultantSchedule = () => {
   const navigate = useNavigate();
-  const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { user, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,17 +60,24 @@ const ConsultantSchedule = () => {
       return;
     }
 
-    if (user?.role !== 'CONSULTANT' && user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN') {
-      console.log('❌ 상담사 권한 없음, 대시보드로 이동');
-      navigate('/dashboard', { replace: true });
-      return;
-    }
+    // 동적 권한 시스템으로 스케줄 권한 확인
+    const checkSchedulePermission = async () => {
+      const hasScheduleAccess = await hasPermission('REGISTER_SCHEDULER') || user?.role === 'CONSULTANT';
+      
+      if (!hasScheduleAccess) {
+        console.log('❌ 스케줄 권한 없음, 대시보드로 이동');
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+    };
+    
+    checkSchedulePermission();
   }, [isLoggedIn, sessionLoading, user, navigate]);
 
   // 사용자 권한 확인
   const userRole = user?.role || 'CONSULTANT';
   const isConsultant = userRole === 'CONSULTANT';
-  const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+  const isAdmin = userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN';
 
   // 실제 매핑된 내담자 데이터 로드
   useEffect(() => {

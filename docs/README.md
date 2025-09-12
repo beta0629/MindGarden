@@ -39,6 +39,7 @@ cp src/main/resources/application-prod.yml.backup src/main/resources/application
 - **역할 기반 접근 제어**: CLIENT, CONSULTANT, ADMIN, SUPER_ADMIN
 - **프로필 관리**: 사용자 정보 수정 및 관리
 - **세션 관리**: 자동 세션 확인 및 관리
+- **공통 리다이렉션 시스템**: 역할별 대시보드 경로 중앙 관리
 
 ### 📱 사용자 인터페이스
 - **반응형 디자인**: 태블릿 최적화
@@ -207,6 +208,7 @@ mindGarden/
 - **[API 설계](API_DESIGN.md)** - REST API 명세서
 - **[시스템 설계](SYSTEM_DESIGN.md)** - 아키텍처 및 설계 문서
 - **[운영 가이드](OPERATION_DEPLOYMENT_GUIDE.md)** - 배포 및 운영 가이드
+- **[공통 리다이렉션 시스템](COMMON_REDIRECTION_SYSTEM.md)** - 역할별 대시보드 리다이렉션 시스템
 
 ## 📝 개발 가이드
 

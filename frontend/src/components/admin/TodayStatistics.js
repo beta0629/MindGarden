@@ -33,7 +33,7 @@ const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {
         try {
             console.log('📊 오늘의 통계 로드 시작:', { userId, userRole });
             
-            const response = await fetch(`/api/schedules/today/statistics?userRole=${userRole}`, {
+            const response = await fetch(`http://localhost:8080/api/schedules/today/statistics?userRole=${userRole}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

@@ -58,7 +58,7 @@ public class SuperAdminController {
         try {
             // 현재 사용자가 수퍼어드민인지 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!currentUser.getRole().equals(UserRole.SUPER_ADMIN.getValue()) && !currentUser.getRole().equals(UserRole.BRANCH_SUPER_ADMIN.getValue()))) {
+            if (currentUser == null || (!currentUser.getRole().equals(UserRole.HQ_MASTER.getValue()) && !currentUser.getRole().equals(UserRole.HQ_MASTER.getValue()))) {
                 log.warn("수퍼어드민 계정 생성 권한 없음: {}", currentUser != null ? currentUser.getEmail() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
@@ -116,7 +116,7 @@ public class SuperAdminController {
                     .body(Map.of("success", false, "message", "로그인이 필요합니다."));
             }
             
-            boolean isSuperAdmin = currentUser.getRole().equals(UserRole.SUPER_ADMIN.getValue()) || currentUser.getRole().equals(UserRole.BRANCH_SUPER_ADMIN.getValue());
+            boolean isSuperAdmin = currentUser.getRole().equals(UserRole.HQ_MASTER.getValue()) || currentUser.getRole().equals(UserRole.HQ_MASTER.getValue());
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -144,7 +144,7 @@ public class SuperAdminController {
         try {
             // 현재 사용자가 수퍼어드민인지 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!currentUser.getRole().equals(UserRole.SUPER_ADMIN.getValue()) && !currentUser.getRole().equals(UserRole.BRANCH_SUPER_ADMIN.getValue()))) {
+            if (currentUser == null || (!currentUser.getRole().equals(UserRole.HQ_MASTER.getValue()) && !currentUser.getRole().equals(UserRole.HQ_MASTER.getValue()))) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
             }
@@ -169,7 +169,7 @@ public class SuperAdminController {
         try {
             // 수퍼어드민 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.SUPER_ADMIN.equals(currentUser.getRole()) && !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()))) {
+            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && !UserRole.HQ_MASTER.equals(currentUser.getRole()))) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
             }

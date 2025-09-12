@@ -20,7 +20,7 @@ import './SchedulePage.css';
  */
 const SchedulePage = ({ user: propUser }) => {
     const navigate = useNavigate();
-    const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
+    const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
     const [userRole, setUserRole] = useState('CLIENT');
     const [userId, setUserId] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -48,17 +48,17 @@ const SchedulePage = ({ user: propUser }) => {
 
 
     /**
-     * 권한 확인
+     * 권한 확인 (동적 권한 시스템 사용)
      */
-    const hasSchedulePermission = () => {
-        return userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'CONSULTANT';
+    const hasSchedulePermission = async () => {
+        return await hasPermission('REGISTER_SCHEDULER') || userRole === 'CONSULTANT';
     };
 
     /**
-     * 관리자 권한 확인
+     * 관리자 권한 확인 (동적 권한 시스템 사용)
      */
-    const isAdmin = () => {
-        return userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+    const isAdmin = async () => {
+        return await hasPermission('REGISTER_SCHEDULER');
     };
 
     if (loading || sessionLoading) {

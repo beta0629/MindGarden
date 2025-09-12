@@ -163,7 +163,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             let url = `/api/schedules?userId=${userId}&userRole=${userRole}`;
             
             // 어드민인 경우 상담사 필터링 지원
-            if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
                 url = '/api/admin/schedules';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
@@ -220,7 +220,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
             // 어드민인 경우 모든 상담사의 휴가 데이터 로드
             let vacationEvents = [];
-            if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
                 try {
                     const today = new Date();
                     const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
@@ -272,14 +272,14 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         loadScheduleStatusCodes();
         
         // 어드민인 경우 상담사 목록도 로드
-        if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
             loadConsultants();
         }
     }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole]);
 
     // 상담사 선택 변경 시 스케줄 다시 로드
     useEffect(() => {
-        if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
             loadSchedules();
         }
     }, [selectedConsultantId, loadSchedules, userRole]);
@@ -465,7 +465,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         console.log('📅 ScheduleCalendar 컴포넌트에서 날짜 클릭 처리');
         
         // 관리자 또는 상담사만 스케줄 생성 가능
-        if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'CONSULTANT') {
+        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'CONSULTANT') {
             setSelectedDate(info.date);
             setSelectedInfo(info);
             console.log('📅 DateActionModal 열기 시도 - isDateActionModalOpen을 true로 설정');
@@ -644,7 +644,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 <h2>📅 스케줄 관리</h2>
                 <div className="header-actions">
                     {/* 상담사 선택 (어드민/수퍼어드민만) */}
-                    {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+                    {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
                         <select
                             value={selectedConsultantId}
                             onChange={(e) => {
@@ -759,8 +759,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 dateClick={handleDateClick}
                 eventClick={handleEventClick}
                 eventDrop={handleEventDrop}
-                editable={userRole === 'ADMIN' || userRole === 'SUPER_ADMIN'}
-                droppable={userRole === 'ADMIN' || userRole === 'SUPER_ADMIN'}
+                editable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
+                droppable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
                 height="auto"
                 slotMinTime="08:00:00"
                 slotMaxTime="20:00:00"
@@ -875,7 +875,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 </div>
                             </button>
                             
-                            {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+                            {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
                                 <button 
                                     onClick={handleVacationClick}
                                     style={{

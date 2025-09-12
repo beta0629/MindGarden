@@ -70,7 +70,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
                 .name(encryptedName)
                 .nickname(encryptedNickname)
                 .phone(encryptedPhone)
-                .role(UserRole.SUPER_ADMIN)
+                .role(UserRole.HQ_MASTER)
                 .branchCode(branchCode)
                 .isActive(true)
                 .isEmailVerified(true) // 수퍼어드민은 이메일 인증 생략
@@ -103,7 +103,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
         try {
             log.info("수퍼어드민 목록 조회 시작");
             
-            List<User> superAdmins = userRepository.findByRole(UserRole.SUPER_ADMIN)
+            List<User> superAdmins = userRepository.findByRole(UserRole.HQ_MASTER)
                 .stream()
                 .filter(user -> !user.isDeleted())
                 .collect(Collectors.toList());

@@ -272,7 +272,7 @@ public class ConsultationController {
         
         // 어드민 권한 체크
         String userRole = (String) request.getAttribute("userRole");
-        if (!UserRole.ADMIN.name().equals(userRole) && !UserRole.SUPER_ADMIN.name().equals(userRole)) {
+        if (!UserRole.ADMIN.name().equals(userRole) && !UserRole.HQ_MASTER.name().equals(userRole)) {
             Map<String, Object> response = Map.of(
                 "success", false,
                 "message", "상담 완료는 어드민만 가능합니다."

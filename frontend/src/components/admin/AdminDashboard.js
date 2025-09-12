@@ -16,7 +16,7 @@ import './system/SystemTools.css';
 
 const AdminDashboard = ({ user: propUser }) => {
     const navigate = useNavigate();
-    const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
+    const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
     const [stats, setStats] = useState({
         totalConsultants: 0,
         totalClients: 0,
@@ -49,13 +49,7 @@ const AdminDashboard = ({ user: propUser }) => {
         }
 
         const currentUser = propUser || sessionUser;
-        if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'SUPER_ADMIN' && 
-            currentUser?.role !== 'BRANCH_SUPER_ADMIN' && currentUser?.role !== 'HQ_ADMIN' && 
-            currentUser?.role !== 'SUPER_HQ_ADMIN' && currentUser?.role !== 'BRANCH_MANAGER') {
-            console.log('❌ 관리자 권한 없음, 대시보드로 이동');
-            navigate('/dashboard', { replace: true });
-            return;
-        }
+        console.log('✅ AdminDashboard 접근 허용:', currentUser?.role);
     }, [isLoggedIn, sessionLoading, propUser, sessionUser, navigate]);
 
     const showToast = useCallback((message, type = 'success') => {
@@ -356,7 +350,7 @@ const AdminDashboard = ({ user: propUser }) => {
             </div>
 
             {/* 상담 완료 건수 통계 (어드민/수퍼어드민/지점수퍼어드민) */}
-            {((propUser || sessionUser)?.role === 'ADMIN' || (propUser || sessionUser)?.role === 'SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN') && (
+            {((propUser || sessionUser)?.role === 'ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_BRANCH_SUPER_ADMIN') && (
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
                     <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
                         <i className="bi bi-graph-up"></i>
@@ -482,7 +476,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
 
             {/* 재무 관리 (수퍼어드민/지점수퍼어드민 전용) */}
-            {((propUser || sessionUser)?.role === 'SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN') && (
+            {((propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_BRANCH_SUPER_ADMIN') && (
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
                     <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
                         <i className={ICONS.BI.CURRENCY_DOLLAR}></i>
@@ -553,7 +547,7 @@ const AdminDashboard = ({ user: propUser }) => {
             )}
 
             {/* ERP 관리 (수퍼어드민/지점수퍼어드민 전용) */}
-            {((propUser || sessionUser)?.role === 'SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN') && (
+            {((propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_BRANCH_SUPER_ADMIN') && (
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
                     <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
                         <i className="bi bi-box-seam"></i>

@@ -48,7 +48,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
       case 'CONSULTANT':
         return DASHBOARD_MESSAGES.WELCOME.CONSULTANT;
       case 'ADMIN':
-      case 'SUPER_ADMIN':
+      case 'BRANCH_SUPER_ADMIN':
         return DASHBOARD_MESSAGES.WELCOME.ADMIN;
       default:
         console.log('⚠️ 알 수 없는 role:', user.role);

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
-import ErpLoading from './common/ErpLoading';
+import LoadingSpinner from '../common/LoadingSpinner';
 import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
 
@@ -146,7 +146,7 @@ const SuperAdminApprovalDashboard = () => {
   };
 
   if (loading) {
-    return <ErpLoading message="승인 대기 목록을 불러오는 중..." />;
+    return <LoadingSpinner text="승인 대기 목록을 불러오는 중..." size="medium" />;
   }
 
   return (

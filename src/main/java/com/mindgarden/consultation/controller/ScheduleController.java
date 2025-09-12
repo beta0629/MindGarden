@@ -34,6 +34,7 @@ import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.service.ConsultationRecordService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import jakarta.servlet.http.HttpSession;
@@ -59,6 +60,7 @@ public class ScheduleController {
     private final ConsultationRecordService consultationRecordService;
     private final CommonCodeService commonCodeService;
     private final ConsultantAvailabilityService consultantAvailabilityService;
+    private final DynamicPermissionService dynamicPermissionService;
 
     // ==================== 권한 기반 스케줄 조회 ====================
 
@@ -184,8 +186,8 @@ public class ScheduleController {
         log.info("📅 상담사별 특정 날짜 스케줄 조회: 상담사 {}, 날짜 {}, 요청자 역할 {}", consultantId, date, userRole);
         
         // 관리자 권한 확인 (userRole이 제공된 경우에만)
-        if (userRole != null && !"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
-            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+        if (userRole != null && !"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
+            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -212,8 +214,8 @@ public class ScheduleController {
         log.info("📅 상담사 자신의 스케줄 조회: 상담사 {}, 요청자 역할 {}", consultantId, userRole);
         
         // 관리자 권한 확인 (userRole이 제공된 경우에만)
-        if (userRole != null && !"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
-            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+        if (userRole != null && !"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
+            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -308,19 +310,17 @@ public class ScheduleController {
                 currentUser.getRole(), currentUser.getRole().name(), currentUser.getRole().isAdmin(), 
                 currentUser.getRole().isBranchManager(), currentUser.getRole().isHeadquartersAdmin());
             
-            // 관리자 권한 확인 (ADMIN, BRANCH_SUPER_ADMIN, HQ_ADMIN, SUPER_HQ_ADMIN, BRANCH_MANAGER)
+            // 디버깅을 위한 상세 로그
+            log.info("🔍 사용자 역할 상세: {}", currentUser.getRole());
+            log.info("🔍 UserRole.SUPER_HQ_ADMIN: {}", UserRole.SUPER_HQ_ADMIN);
+            log.info("🔍 역할 비교 결과: {}", currentUser.getRole() == UserRole.SUPER_HQ_ADMIN);
+            
+            // 동적 권한 시스템으로 스케줄러 등록 권한 확인
             UserRole userRole = currentUser.getRole();
-            boolean isAdmin = userRole == UserRole.ADMIN;
-            boolean isBranchSuperAdmin = userRole == UserRole.BRANCH_SUPER_ADMIN;
-            boolean isHqAdmin = userRole == UserRole.HQ_ADMIN;
-            boolean isSuperHqAdmin = userRole == UserRole.SUPER_HQ_ADMIN;
-            boolean isBranchManager = userRole == UserRole.BRANCH_MANAGER;
-            boolean isSuperAdmin = userRole == UserRole.SUPER_ADMIN;
+            boolean hasPermission = dynamicPermissionService.canRegisterScheduler(userRole);
             
-            boolean hasPermission = isAdmin || isBranchSuperAdmin || isHqAdmin || isSuperHqAdmin || isBranchManager || isSuperAdmin;
-            
-            log.info("🔍 권한 상세 확인: isAdmin={}, isBranchSuperAdmin={}, isHqAdmin={}, isSuperHqAdmin={}, isBranchManager={}, isSuperAdmin={}, hasPermission={}", 
-                isAdmin, isBranchSuperAdmin, isHqAdmin, isSuperHqAdmin, isBranchManager, isSuperAdmin, hasPermission);
+            log.info("🔍 권한 상세 확인: userRole={}, isAdmin={}, hasPermission={}", 
+                userRole, userRole.isAdmin(), hasPermission);
             
             if (!hasPermission) {
                 log.warn("❌ 스케줄 등록 권한 없음: role={}, roleName={}", userRole, userRole.name());
@@ -468,8 +468,8 @@ public class ScheduleController {
         log.info("📊 관리자용 스케줄 통계 조회 요청: 역할 {}, 시작일: {}, 종료일: {}", userRole, startDate, endDate);
         
         // 관리자 권한 확인
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
-            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+        if (!"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
+            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -494,8 +494,9 @@ public class ScheduleController {
         log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}", userRole);
         
         // 관리자 또는 상담사 권한 확인
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && !"CONSULTANT".equals(userRole) && 
-            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+        if (!"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && !"CONSULTANT".equals(userRole) && 
+            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole) && 
+            !"BRANCH_SUPER_ADMIN".equals(userRole)) {
             log.warn("❌ 접근 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -523,8 +524,8 @@ public class ScheduleController {
         log.info("👨‍⚕️ 상담사별 스케줄 조회: 상담사 {}, 요청자 역할 {}", consultantId, userRole);
         
         // 관리자 권한 확인 (userRole이 제공된 경우에만)
-        if (userRole != null && !"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
-            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+        if (userRole != null && !"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
+            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -552,8 +553,8 @@ public class ScheduleController {
         log.info("👤 내담자별 스케줄 조회: 내담자 {}, 요청자 역할 {}", clientId, userRole);
         
         // 관리자 권한 확인
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
-            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+        if (!"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
+            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -583,8 +584,8 @@ public class ScheduleController {
         log.info("✅ 예약 확정 요청: ID {}, 관리자 역할 {}", id, userRole);
         
         // 관리자 권한 확인
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
-            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+        if (!"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
+            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
@@ -623,8 +624,8 @@ public class ScheduleController {
             @RequestParam String userRole) {
         log.info("🔄 자동 완료 처리 요청: 사용자 역할 {}", userRole);
         
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
-            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+        if (!"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
+            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));

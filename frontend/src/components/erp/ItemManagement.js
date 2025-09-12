@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
-import ErpLoading from './common/ErpLoading';
+import LoadingSpinner from '../common/LoadingSpinner';
 import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -226,7 +226,7 @@ const ItemManagement = () => {
   };
 
   if (loading && items.length === 0) {
-    return <ErpLoading message="아이템 목록을 불러오는 중..." />;
+    return <LoadingSpinner text="아이템 목록을 불러오는 중..." size="medium" />;
   }
 
   return (

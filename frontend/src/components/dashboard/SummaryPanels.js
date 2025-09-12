@@ -52,7 +52,7 @@ const SummaryPanels = ({ user, consultationData }) => {
   return (
     <div className={SUMMARY_PANELS_CSS.CONTAINER}>
       {/* 상담 일정 요약 (상담사/관리자 전용) */}
-      {(user?.role === 'CONSULTANT' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+      {(user?.role === 'CONSULTANT' || user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
         <div className={`${SUMMARY_PANELS_CSS.PANEL} consultation-summary`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
@@ -255,7 +255,7 @@ const SummaryPanels = ({ user, consultationData }) => {
 
       
       {/* 시스템 현황 (관리자 전용) */}
-      {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+      {(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
         <div className={`${SUMMARY_PANELS_CSS.PANEL} system-status`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
@@ -287,7 +287,7 @@ const SummaryPanels = ({ user, consultationData }) => {
       )}
 
       {/* 매핑 관리 (관리자 전용) */}
-      {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+      {(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
         <div className={`${SUMMARY_PANELS_CSS.PANEL} mapping-management`}>
           <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
             <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>

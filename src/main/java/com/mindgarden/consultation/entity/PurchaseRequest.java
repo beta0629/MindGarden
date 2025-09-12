@@ -124,8 +124,8 @@ public class PurchaseRequest {
         PENDING("대기중"),
         ADMIN_APPROVED("관리자 승인"),
         ADMIN_REJECTED("관리자 거부"),
-        SUPER_ADMIN_APPROVED("수퍼 관리자 승인"),
-        SUPER_ADMIN_REJECTED("수퍼 관리자 거부"),
+        HQ_MASTER_APPROVED("수퍼 관리자 승인"),
+        HQ_MASTER_REJECTED("수퍼 관리자 거부"),
         COMPLETED("완료"),
         CANCELLED("취소");
         

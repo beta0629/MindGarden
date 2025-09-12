@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -56,19 +57,30 @@ public class OAuth2Controller {
     @Value("${frontend.base-url:http://localhost:3000}")
     private String frontendBaseUrl;
     
+    @PostConstruct
+    public void init() {
+        log.info("🔧 OAuth2Controller 초기화 - frontendBaseUrl: {}", frontendBaseUrl);
+    }
+    
     /**
      * 프론트엔드 URL 동적 감지
      * Referer 헤더에서 프론트엔드 URL을 추출
      */
     private String getFrontendBaseUrl(HttpServletRequest request) {
         String referer = request.getHeader("Referer");
-        if (referer != null && !referer.isEmpty()) {
+        if (referer != null && !referer.isEmpty() && !referer.contains("null")) {
             try {
                 // Referer에서 프로토콜과 호스트 부분만 추출
                 java.net.URL url = new java.net.URL(referer);
                 String frontendUrl = url.getProtocol() + "://" + url.getAuthority();
-                log.info("프론트엔드 URL 감지: {}", frontendUrl);
-                return frontendUrl;
+                
+                // null이 포함된 URL 필터링
+                if (frontendUrl.contains("null")) {
+                    log.warn("Referer URL에 null이 포함됨, 무시: {}", frontendUrl);
+                } else {
+                    log.info("프론트엔드 URL 감지: {}", frontendUrl);
+                    return frontendUrl;
+                }
             } catch (Exception e) {
                 log.warn("Referer URL 파싱 실패: {}", referer, e);
             }
@@ -76,6 +88,14 @@ public class OAuth2Controller {
         
         // Referer가 없거나 파싱 실패 시 프로퍼티 값 사용
         log.info("프로퍼티 프론트엔드 URL 사용: {}", frontendBaseUrl);
+        
+        // 프로퍼티 값도 null인 경우 기본값 사용
+        if (frontendBaseUrl == null || frontendBaseUrl.trim().isEmpty()) {
+            String defaultUrl = "http://localhost:3000";
+            log.warn("프론트엔드 URL이 설정되지 않음, 기본값 사용: {}", defaultUrl);
+            return defaultUrl;
+        }
+        
         return frontendBaseUrl;
     }
 

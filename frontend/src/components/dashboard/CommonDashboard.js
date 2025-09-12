@@ -14,6 +14,7 @@ import RecentActivities from './RecentActivities';
 import ClientMessageSection from './ClientMessageSection';
 import ErpPurchaseRequestPanel from './ErpPurchaseRequestPanel';
 import LoadingSpinner from '../common/LoadingSpinner';
+import ClientPersonalizedMessages from './ClientPersonalizedMessages';
 
 const CommonDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ const CommonDashboard = ({ user: propUser }) => {
   const [activeTab, setActiveTab] = useState('today');
   const [user, setUser] = useState(null);
   const [consultationData, setConsultationData] = useState(DASHBOARD_DEFAULT_DATA.consultationData);
+  const [clientStatus, setClientStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // 세션 데이터 및 상담 데이터 로드
@@ -99,6 +101,7 @@ const CommonDashboard = ({ user: propUser }) => {
         if (currentUser?.role === 'CLIENT') {
           console.log('📊 내담자 상담 데이터 로드 시작');
           await loadClientConsultationData(currentUser.id);
+          await loadClientStatus(currentUser.id);
         } else if (currentUser?.role === 'CONSULTANT') {
           console.log('📊 상담사 상담 데이터 로드 시작');
           await loadConsultantConsultationData(currentUser.id);
@@ -172,6 +175,50 @@ const CommonDashboard = ({ user: propUser }) => {
         return '관리자님의 시스템 현황을 확인하세요';
       default:
         return '대시보드에 오신 것을 환영합니다';
+    }
+  };
+
+  // 내담자 상태 데이터 로드
+  const loadClientStatus = async (userId) => {
+    try {
+      console.log('📊 내담자 상태 데이터 로드 시작 - 사용자 ID:', userId);
+      
+      // 임시로 매핑 API 호출을 비활성화하고 기본값 설정
+      // TODO: 백엔드 API 수정 후 활성화
+      /*
+      const mappingResponse = await apiGet(`/api/admin/mappings/client`, { clientId: userId });
+      
+      let mappingStatus = 'NONE';
+      let paymentStatus = 'NONE';
+      
+      if (mappingResponse?.success && mappingResponse?.data) {
+        mappingStatus = 'ACTIVE';
+        paymentStatus = 'NONE';
+      }
+      */
+      
+      // 기본값으로 설정 (매핑 API 오류 임시 해결)
+      let mappingStatus = 'NONE';
+      let paymentStatus = 'NONE';
+      
+      setClientStatus({
+        mappingStatus,
+        paymentStatus,
+        hasMapping: mappingStatus !== 'NONE'
+      });
+      
+      console.log('✅ 내담자 상태 데이터 로드 완료 (기본값):', {
+        mappingStatus,
+        paymentStatus
+      });
+      
+    } catch (error) {
+      console.error('❌ 내담자 상태 데이터 로드 오류:', error);
+      setClientStatus({
+        mappingStatus: 'NONE',
+        paymentStatus: 'NONE',
+        hasMapping: false
+      });
     }
   };
 
@@ -258,21 +305,30 @@ const CommonDashboard = ({ user: propUser }) => {
           });
         }
         
-        // 상담사 목록 생성 (중복 제거)
+        // 상담사 목록 생성 (중복 제거 및 유효성 검사)
         const consultantMap = new Map();
         schedules.forEach(schedule => {
           if (schedule.consultantId && schedule.consultantName) {
-            consultantMap.set(schedule.consultantId, {
-              id: schedule.consultantId,
-              name: schedule.consultantName,
-              specialty: '상담 심리학', // 기본값, 추후 API에서 가져올 수 있음
-              intro: '전문적이고 따뜻한 상담을 제공합니다.',
-              profileImage: null
-            });
+            // ID와 이름이 모두 존재하고 유효한 경우에만 추가
+            const consultantId = String(schedule.consultantId).trim();
+            const consultantName = String(schedule.consultantName).trim();
+            
+            if (consultantId && consultantName && consultantId !== 'undefined' && consultantName !== 'undefined') {
+              consultantMap.set(consultantId, {
+                id: consultantId,
+                name: consultantName,
+                specialty: '상담 심리학', // 기본값, 추후 API에서 가져올 수 있음
+                intro: '전문적이고 따뜻한 상담을 제공합니다.',
+                profileImage: null
+              });
+            }
           }
         });
         
-        const consultantList = Array.from(consultantMap.values());
+        // Map에서 배열로 변환하고 추가 중복 제거
+        const consultantList = Array.from(consultantMap.values()).filter((consultant, index, self) => 
+          index === self.findIndex(c => c.id === consultant.id && c.name === consultant.name)
+        );
         
         setConsultationData(prev => ({
           ...prev,
@@ -596,11 +652,22 @@ const CommonDashboard = ({ user: propUser }) => {
           consultationData={consultationData} 
         />
         
-        {/* 요약 패널 섹션 */}
-        <SummaryPanels 
-          user={user} 
-          consultationData={consultationData} 
-        />
+        {/* 내담자 맞춤형 메시지 (내담자 전용) */}
+        {user?.role === 'CLIENT' && (
+          <ClientPersonalizedMessages 
+            user={user}
+            consultationData={consultationData}
+            clientStatus={clientStatus}
+          />
+        )}
+        
+        {/* 요약 패널 섹션 (상담사/관리자 전용) */}
+        {(user?.role === 'CONSULTANT' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+          <SummaryPanels 
+            user={user} 
+            consultationData={consultationData} 
+          />
+        )}
         
         {/* 빠른 액션 섹션 */}
         <QuickActions user={user} />

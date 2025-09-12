@@ -2,6 +2,82 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-01-11] - 내담자 대시보드 개인화 및 UX 개선
+
+### 🆕 새로운 기능
+- **내담자 맞춤형 메시지 시스템**
+  - 매핑 상태, 상담 진행 상황, 결제 상태 기반 동적 메시지 생성
+  - 신규 내담자, 대기 중, 활성 매핑, 완료된 상담 등 상황별 맞춤 메시지
+  - 실시간 날씨 정보 통합 (OpenWeatherMap API)
+  - 일일 팁 시스템 (7가지 팁 순환)
+
+- **내담자 대시보드 개선**
+  - "오늘의 상담" 큰 카드로 중요 정보 강조
+  - 그라데이션 배경과 반투명 효과로 시각적 임팩트
+  - 상담 일정 상세 정보 표시 (시간, 상담사, 상태)
+  - 중복 카드 제거로 깔끔한 UI
+
+- **상담사 목록 모달**
+  - 상담사가 있으면 목록을 모달로 표시
+  - 상담사가 없으면 안내 메시지와 연결 권유
+  - 반응형 디자인으로 모바일 지원
+
+- **내담자 빠른 액션 페이지**
+  - 일정 페이지 (`/client/schedule`): 풀 캘린더 뷰
+  - 도움말 페이지 (`/help`): 카테고리별 도움말
+  - 설정 페이지 (`/client/settings`): 알림, 개인정보, 언어 설정
+
+### 🔧 개선사항
+- **공통 헤더 개선**
+  - 조건부 뒤로가기 버튼 추가
+  - 동적 제목 설정 지원
+  - 중복 헤더 문제 해결
+
+- **OAuth2 로그인 개선**
+  - JWT secret key Base64 오류 수정
+  - OAuth2 리다이렉트 URL 동적 처리
+  - Referer 헤더 null 값 필터링
+  - 프로퍼티 기반 프론트엔드 URL 설정
+
+- **API 오류 해결**
+  - 내담자 매핑 API 500 에러 임시 해결
+  - 기본값 설정으로 대시보드 안정성 향상
+
+### 📝 기술적 변경사항
+- **새로운 컴포넌트**:
+  - `ClientPersonalizedMessages.js`: 내담자 맞춤형 메시지 시스템
+  - `WeatherCard.js`: 실시간 날씨 정보 표시
+  - `ConsultantListModal.js`: 상담사 목록 모달
+  - `ClientSchedule.js`: 내담자 일정 페이지
+  - `HelpPage.js`: 도움말 페이지
+  - `ClientSettings.js`: 내담자 설정 페이지
+
+- **수정된 컴포넌트**:
+  - `SimpleHeader.js`: 뒤로가기 버튼 및 동적 제목 지원
+  - `SimpleLayout.js`: 제목 prop 전달 지원
+  - `WelcomeSection.js`: 내담자용 큰 상담 카드
+  - `CommonDashboard.js`: 중복 제거 및 API 오류 처리
+  - `ClientPersonalizedMessages.js`: 클릭 핸들러 및 모달 통합
+
+- **설정 파일 업데이트**:
+  - `application-local.yml`: JWT secret, 암호화 키, 프론트엔드 URL
+  - `application-prod.yml`: 프로덕션 프론트엔드 URL
+  - `application.yml`: 기본 프론트엔드 URL
+
+### 🐛 버그 수정
+- OAuth2 로그인 시 `http://null/client/dashboard` 리다이렉트 오류
+- 네이버 로그인 JWT 토큰 검증 실패
+- 내담자 대시보드 API 500 에러
+- 중복 카드 렌더링 문제
+- 불필요한 "자세히 보기" 링크 표시
+
+### 🎨 UI/UX 개선
+- 연한 파스텔톤 색상 테마 적용
+- 카드 호버 효과 및 트랜지션
+- 반응형 그리드 레이아웃
+- 인라인 CSS 스타일링
+- 컴포넌트 재사용성 향상
+
 ## [2025-01-11] - 재무 거래 공통 코드 시스템 구축
 
 ### 🆕 새로운 기능

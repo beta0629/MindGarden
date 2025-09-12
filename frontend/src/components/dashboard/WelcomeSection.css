@@ -136,6 +136,80 @@
   line-height: 1.5;
 }
 
+/* 내담자 전용 - 오늘의 상담 큰 카드 */
+.today-consultation-card {
+  grid-column: 1 / -1; /* 전체 너비 사용 */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.today-consultation-card .info-icon {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+}
+
+.today-consultation-card .info-icon i {
+  font-size: 1.8rem;
+}
+
+.today-consultation-card .info-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.today-consultation-card .info-value {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 1.5rem;
+}
+
+.today-consultation-card .consultation-details {
+  margin-top: 1rem;
+}
+
+.today-consultation-card .consultation-item {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.today-consultation-card .consultation-item:last-child {
+  margin-bottom: 0;
+}
+
+.today-consultation-card .consultation-time {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.today-consultation-card .consultation-consultant {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0.25rem;
+}
+
+.today-consultation-card .consultation-status {
+  font-size: 0.8rem;
+  color: #a8f5a8;
+  font-weight: 500;
+  background: rgba(168, 245, 168, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  display: inline-block;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .welcome-card {

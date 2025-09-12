@@ -44,6 +44,9 @@ import ItemManagement from './components/erp/ItemManagement';
 import SalaryManagement from './components/erp/SalaryManagement';
 import TaxManagement from './components/erp/TaxManagement';
 import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
+import ClientSchedule from './components/client/ClientSchedule';
+import HelpPage from './components/common/HelpPage';
+import ClientSettings from './components/client/ClientSettings';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { sessionManager } from './utils/sessionManager';
@@ -204,10 +207,15 @@ function AppContent() {
             
             {/* 내담자 전용 라우트 */}
             <Route path="/client/messages" element={<ClientMessageScreen />} />
+            <Route path="/client/schedule" element={<ClientSchedule />} />
+            <Route path="/client/settings" element={<ClientSettings />} />
             
             {/* 상담 내역 및 리포트 라우트 (모든 사용자) */}
             <Route path="/consultation-history" element={<ConsultationHistory />} />
             <Route path="/consultation-report" element={<ConsultationReport />} />
+            
+            {/* 공통 라우트 (모든 사용자) */}
+            <Route path="/help" element={<HelpPage />} />
             
             {/* 통합 스케줄 관리 라우트 */}
             <Route path="/schedule" element={<SchedulePage user={user} />} />

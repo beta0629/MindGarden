@@ -118,6 +118,12 @@ public class Payment {
     private String failureReason;
     
     /**
+     * 실패 시간
+     */
+    @Column(name = "failed_at")
+    private LocalDateTime failedAt;
+    
+    /**
      * 결제 승인 시간
      */
     @Column(name = "approved_at")

@@ -538,7 +538,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .paymentId(payment.getPaymentId())
                 .orderId(payment.getOrderId())
                 .amount(payment.getAmount())
-                .status(payment.getStatus())
+                .status(payment.getStatus().toString())
                 .method(payment.getMethod())
                 .provider(payment.getProvider())
                 .payerId(payment.getPayerId())

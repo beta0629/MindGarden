@@ -44,7 +44,7 @@ public class PaymentResponse {
     /**
      * 결제 상태
      */
-    private Payment.PaymentStatus status;
+    private String status;
     
     /**
      * 결제 방법

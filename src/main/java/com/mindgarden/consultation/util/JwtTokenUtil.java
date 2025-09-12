@@ -23,10 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class JwtTokenUtil {
 
-    @Value("${jwt.secret:mindgarden-secret-key}")
+    @Value("${jwt.secret:}")
     private String secret;
 
-    @Value("${jwt.expiration:86400000}")
+    @Value("${jwt.expiration:3600000}")
     private Long expiration;
 
     /**
@@ -41,6 +41,9 @@ public class JwtTokenUtil {
      * JWT 토큰 생성
      */
     private String createToken(Map<String, Object> claims, String subject) {
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalArgumentException("JWT secret key is not configured");
+        }
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)

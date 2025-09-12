@@ -98,16 +98,27 @@ spring:
 
 # JWT 설정
 jwt:
-  secret: ${JWT_SECRET:mindgarden-consultation-system-jwt-secret-key-2024}
-  expiration: 86400000  # 24시간 (밀리초)
+  secret: ${JWT_SECRET:}
+  expiration: 3600000   # 1시간 (밀리초)
   refresh-expiration: 604800000  # 7일 (밀리초)
 
 # 개인정보 암호화 설정
 encryption:
-  personal-info:
-    key: ${PERSONAL_INFO_ENCRYPTION_KEY:mind_garden_2025}
+  personal-data:
+    key: ${PERSONAL_DATA_ENCRYPTION_KEY:}
+    iv: ${PERSONAL_DATA_ENCRYPTION_IV:}
     algorithm: AES-256
     transformation: AES/CBC/PKCS5Padding
+
+# 결제 시스템 설정
+payment:
+  toss:
+    secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
+    base-url: ${PAYMENT_TOSS_BASE_URL:https://api.tosspayments.com}
+  iamport:
+    api-key: ${PAYMENT_IAMPORT_API_KEY:}
+    api-secret: ${PAYMENT_IAMPORT_API_SECRET:}
+    base-url: ${PAYMENT_IAMPORT_BASE_URL:https://api.iamport.kr}
 
 # 서버 설정
 server:
@@ -119,9 +130,10 @@ server:
       force: true
     session:
       cookie:
-        http-only: false
-        secure: false
-        same-site: lax
+        http-only: true
+        secure: false  # 로컬 개발 환경에서는 false, 프로덕션에서는 true
+        same-site: strict
+        max-age: 3600  # 1시간
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json

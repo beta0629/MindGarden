@@ -21,10 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class PersonalDataEncryptionUtil {
 
-    @Value("${encryption.personal-data.key:default-encryption-key-32}")
+    @Value("${encryption.personal-data.key:}")
     private String encryptionKey;
     
-    @Value("${encryption.personal-data.iv:default-iv-16-chars}")
+    @Value("${encryption.personal-data.iv:}")
     private String encryptionIv;
     
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
@@ -39,6 +39,14 @@ public class PersonalDataEncryptionUtil {
     public String encrypt(String plainText) {
         if (plainText == null || plainText.trim().isEmpty()) {
             return plainText;
+        }
+        
+        if (encryptionKey == null || encryptionKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("암호화 키가 설정되지 않았습니다.");
+        }
+        
+        if (encryptionIv == null || encryptionIv.trim().isEmpty()) {
+            throw new IllegalArgumentException("암호화 IV가 설정되지 않았습니다.");
         }
         
         try {

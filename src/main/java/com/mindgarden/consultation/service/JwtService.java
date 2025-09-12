@@ -25,7 +25,7 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
     
-    @Value("${jwt.secret:mind_garden_jwt_secret_key_2025}")
+    @Value("${jwt.secret:}")
     private String secretKey;
     
     @Value("${jwt.expiration:86400000}") // 24시간 (밀리초)
@@ -122,6 +122,9 @@ public class JwtService {
      * 서명 키 생성
      */
     private Key getSignInKey() {
+        if (secretKey == null || secretKey.trim().isEmpty()) {
+            throw new IllegalArgumentException("JWT secret key is not configured");
+        }
         try {
             // Base64로 디코딩 시도
             byte[] keyBytes = Decoders.BASE64.decode(secretKey);

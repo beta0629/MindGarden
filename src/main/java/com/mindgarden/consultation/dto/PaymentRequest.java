@@ -78,6 +78,28 @@ public class PaymentRequest {
     private Long branchId;
     
     /**
+     * 주문명
+     */
+    @NotBlank(message = "주문명은 필수입니다.")
+    @Size(max = 100, message = "주문명은 100자를 초과할 수 없습니다.")
+    private String orderName;
+    
+    /**
+     * 고객 이메일
+     */
+    @NotBlank(message = "고객 이메일은 필수입니다.")
+    @Pattern(regexp = "^[A-Za-z0-9+_.-]+@([A-Za-z0-9.-]+\\.[A-Za-z]{2,})$", 
+             message = "유효하지 않은 이메일 형식입니다.")
+    private String customerEmail;
+    
+    /**
+     * 고객 이름
+     */
+    @NotBlank(message = "고객 이름은 필수입니다.")
+    @Size(max = 50, message = "고객 이름은 50자를 초과할 수 없습니다.")
+    private String customerName;
+    
+    /**
      * 결제 설명
      */
     @Size(max = 500, message = "결제 설명은 500자를 초과할 수 없습니다.")

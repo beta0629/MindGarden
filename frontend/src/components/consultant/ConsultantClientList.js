@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../hooks/useSession';
 import { apiGet } from '../../utils/ajax';
 import './ConsultantClientList.css';
+import SimpleLayout from '../layout/SimpleLayout';
 
 const ConsultantClientList = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -121,24 +122,29 @@ const ConsultantClientList = () => {
 
   if (sessionLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">로딩 중...</span>
+      <SimpleLayout title="내담자 목록">
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">로딩 중...</span>
+          </div>
         </div>
-      </div>
+      </SimpleLayout>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <h3>로그인이 필요합니다.</h3>
-      </div>
+      <SimpleLayout title="내담자 목록">
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <h3>로그인이 필요합니다.</h3>
+        </div>
+      </SimpleLayout>
     );
   }
 
   return (
-    <div className="consultant-client-list-container">
+    <SimpleLayout title="내담자 목록">
+      <div className="consultant-client-list-container">
       {/* 헤더 */}
       <div className="client-list-header">
         <h1 className="client-list-title">
@@ -531,7 +537,8 @@ const ClientDetailModal = ({ client, isOpen, onClose, onSave }) => {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </SimpleLayout>
   );
 };
 

@@ -3,6 +3,7 @@ import { useSession } from '../../hooks/useSession';
 import { apiGet } from '../../utils/ajax';
 import { useNavigate } from 'react-router-dom';
 import './ConsultantRecords.css';
+import SimpleLayout from '../layout/SimpleLayout';
 
 const ConsultantRecords = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -127,24 +128,29 @@ const ConsultantRecords = () => {
 
   if (sessionLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">로딩 중...</span>
+      <SimpleLayout title="상담 기록">
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">로딩 중...</span>
+          </div>
         </div>
-      </div>
+      </SimpleLayout>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <h3>로그인이 필요합니다.</h3>
-      </div>
+      <SimpleLayout title="상담 기록">
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <h3>로그인이 필요합니다.</h3>
+        </div>
+      </SimpleLayout>
     );
   }
 
   return (
-    <div className="consultant-records-container">
+    <SimpleLayout title="상담 기록">
+      <div className="consultant-records-container">
       {/* 헤더 */}
       <div className="records-header">
         <h1 className="records-title">
@@ -279,7 +285,8 @@ const ConsultantRecords = () => {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </SimpleLayout>
   );
 };
 

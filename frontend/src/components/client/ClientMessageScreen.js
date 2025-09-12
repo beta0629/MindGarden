@@ -4,6 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPut, apiPost } from '../../utils/ajax';
 import LoadingSpinner from '../common/LoadingSpinner';
 import notificationManager from '../../utils/notification';
+import SimpleLayout from '../layout/SimpleLayout';
 
 /**
  * 내담자 메시지 확인 화면
@@ -431,14 +432,17 @@ const ClientMessageScreen = () => {
 
   if (loading) {
     return (
-      <div style={styles.loadingOverlay}>
-        <LoadingSpinner variant="pulse" size="large" text="메시지를 불러오는 중..." />
-      </div>
+      <SimpleLayout title="상담사 메시지">
+        <div style={styles.loadingOverlay}>
+          <LoadingSpinner variant="pulse" size="large" text="메시지를 불러오는 중..." />
+        </div>
+      </SimpleLayout>
     );
   }
 
   return (
-    <div style={styles.container}>
+    <SimpleLayout title="상담사 메시지">
+      <div style={styles.container}>
       {/* 헤더 */}
       <div style={styles.header}>
         <h1 style={styles.headerTitle}>
@@ -582,7 +586,8 @@ const ClientMessageScreen = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </SimpleLayout>
   );
 };
 

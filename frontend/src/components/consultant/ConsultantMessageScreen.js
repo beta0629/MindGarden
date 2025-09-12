@@ -4,6 +4,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
 import LoadingSpinner from '../common/LoadingSpinner';
 import notificationManager from '../../utils/notification';
+import SimpleLayout from '../layout/SimpleLayout';
 
 /**
  * 상담사 메시지 전송 화면
@@ -376,25 +377,30 @@ const ConsultantMessageScreen = () => {
 
   if (loading) {
     return (
-      <div style={styles.loadingOverlay}>
-        <LoadingSpinner variant="pulse" size="large" text="데이터를 불러오는 중..." />
-      </div>
+      <SimpleLayout title="메시지 전송">
+        <div style={styles.loadingOverlay}>
+          <LoadingSpinner variant="pulse" size="large" text="데이터를 불러오는 중..." />
+        </div>
+      </SimpleLayout>
     );
   }
 
   if (!client || !consultation) {
     return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <h1 style={styles.headerTitle}>메시지 전송</h1>
-          <p style={styles.headerSubtitle}>상담 정보를 불러올 수 없습니다.</p>
+      <SimpleLayout title="메시지 전송">
+        <div style={styles.container}>
+          <div style={styles.header}>
+            <h1 style={styles.headerTitle}>메시지 전송</h1>
+            <p style={styles.headerSubtitle}>상담 정보를 불러올 수 없습니다.</p>
+          </div>
         </div>
-      </div>
+      </SimpleLayout>
     );
   }
 
   return (
-    <div style={styles.container}>
+    <SimpleLayout title="메시지 전송">
+      <div style={styles.container}>
       {/* 헤더 */}
       <div style={styles.header}>
         <h1 style={styles.headerTitle}>
@@ -546,7 +552,8 @@ const ConsultantMessageScreen = () => {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </SimpleLayout>
   );
 };
 

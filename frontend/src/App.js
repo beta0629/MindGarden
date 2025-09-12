@@ -43,6 +43,7 @@ import SuperAdminApprovalDashboard from './components/erp/SuperAdminApprovalDash
 import ItemManagement from './components/erp/ItemManagement';
 import SalaryManagement from './components/erp/SalaryManagement';
 import TaxManagement from './components/erp/TaxManagement';
+import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { sessionManager } from './utils/sessionManager';
@@ -296,6 +297,7 @@ function AppContent() {
             {/* ERP 라우트 */}
             <Route path="/erp/dashboard" element={<ErpDashboard />} />
             <Route path="/erp/purchase-requests" element={<PurchaseRequestForm />} />
+            <Route path="/erp/finance-dashboard" element={<IntegratedFinanceDashboard />} />
             <Route path="/erp/approvals" element={<AdminApprovalDashboard />} />
             <Route path="/erp/super-approvals" element={<SuperAdminApprovalDashboard />} />
             <Route path="/erp/items" element={<ItemManagement />} />

@@ -51,6 +51,25 @@ public class CommonCodeServiceImpl implements CommonCodeService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Map<String, Object>> getActiveCodesByGroup(String codeGroup) {
+        log.info("🔍 활성 코드 그룹별 공통코드 조회 (Map 형태): {}", codeGroup);
+        List<CommonCode> codes = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(codeGroup);
+        
+        return codes.stream().map(code -> {
+            Map<String, Object> codeMap = new HashMap<>();
+            codeMap.put("id", code.getId());
+            codeMap.put("codeValue", code.getCodeValue());
+            codeMap.put("codeLabel", code.getCodeLabel());
+            codeMap.put("codeDescription", code.getCodeDescription());
+            codeMap.put("sortOrder", code.getSortOrder());
+            codeMap.put("parentCodeGroup", code.getParentCodeGroup());
+            codeMap.put("parentCodeValue", code.getParentCodeValue());
+            return codeMap;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public CommonCode getCommonCodeById(Long id) {
         log.info("🔍 공통코드 ID로 조회: {}", id);
         return commonCodeRepository.findById(id)

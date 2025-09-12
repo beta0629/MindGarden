@@ -8,6 +8,7 @@ import com.mindgarden.consultation.dto.BankTransferResponse;
 import com.mindgarden.consultation.entity.Payment;
 import com.mindgarden.consultation.repository.PaymentRepository;
 import com.mindgarden.consultation.service.BankTransferService;
+import com.mindgarden.consultation.service.FinancialTransactionService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BankTransferServiceImpl implements BankTransferService {
     
     private final PaymentRepository paymentRepository;
+    private final FinancialTransactionService financialTransactionService;
     
     @Override
     public BankTransferResponse createVirtualAccount(BankTransferRequest request) {
@@ -178,6 +180,16 @@ public class BankTransferServiceImpl implements BankTransferService {
             payment.setApprovedAt(depositTime);
             payment.setDescription(payment.getDescription() + " (입금자: " + depositorName + ")");
             paymentRepository.save(payment);
+            
+            // 입금 완료 시 자동으로 수입 거래 생성
+            try {
+                financialTransactionService.createPaymentTransaction(payment.getId(), 
+                    "가상계좌 입금 완료 - " + payment.getDescription(), "가상계좌", "가상계좌입금");
+                log.info("💚 가상계좌 입금으로 인한 수입 거래 자동 생성: PaymentID={}", payment.getPaymentId());
+            } catch (Exception e) {
+                log.error("수입 거래 자동 생성 실패: {}", e.getMessage(), e);
+                // 거래 생성 실패해도 입금 처리는 완료
+            }
             
             log.info("가상계좌 입금 알림 처리 완료: {}", virtualAccountNumber);
             return true;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
@@ -9,6 +10,7 @@ import ErpHeader from './common/ErpHeader';
  * ERP 메인 대시보드 컴포넌트
  */
 const ErpDashboard = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalItems: 0,
@@ -198,6 +200,20 @@ const ErpDashboard = () => {
             style={{ width: '100%' }}
           >
             세금 관리
+          </ErpButton>
+          
+          <ErpButton
+            variant="primary"
+            size="large"
+            onClick={() => navigate('/erp/finance-dashboard')}
+            style={{ 
+              width: '100%', 
+              backgroundColor: '#8e44ad', 
+              borderColor: '#8e44ad',
+              color: 'white'
+            }}
+          >
+            📊 통합 회계 시스템
           </ErpButton>
         </div>
       </ErpCard>

@@ -23,6 +23,9 @@ public interface CommonCodeService {
     // 활성 코드만 조회
     List<CommonCode> getActiveCommonCodesByGroup(String codeGroup);
     
+    // 활성 코드를 Map 형태로 조회 (프론트엔드용)
+    List<Map<String, Object>> getActiveCodesByGroup(String codeGroup);
+    
     // ID로 조회
     CommonCode getCommonCodeById(Long id);
     

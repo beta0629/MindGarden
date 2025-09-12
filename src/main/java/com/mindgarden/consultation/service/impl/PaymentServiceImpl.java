@@ -13,7 +13,9 @@ import com.mindgarden.consultation.dto.PaymentResponse;
 import com.mindgarden.consultation.dto.PaymentWebhookRequest;
 import com.mindgarden.consultation.entity.Payment;
 import com.mindgarden.consultation.repository.PaymentRepository;
+import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.PaymentService;
+import com.mindgarden.consultation.service.ReserveFundService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,8 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentServiceImpl implements PaymentService {
     
     private final PaymentRepository paymentRepository;
+    private final FinancialTransactionService financialTransactionService;
+    private final ReserveFundService reserveFundService;
     
     @Override
     public PaymentResponse createPayment(PaymentRequest request) {
@@ -138,6 +142,30 @@ public class PaymentServiceImpl implements PaymentService {
         switch (status) {
             case APPROVED:
                 payment.setApprovedAt(LocalDateTime.now());
+                // 결제 승인 시 자동으로 수입 거래 생성 (부가세 포함)
+                try {
+                    // 결제 방법에 따른 카테고리 분류
+                    String category = getPaymentCategory(payment);
+                    String subcategory = getPaymentSubcategory(payment);
+                    
+                    financialTransactionService.createPaymentTransaction(payment.getId(), 
+                        "결제 완료 - " + payment.getDescription(), category, subcategory);
+                    log.info("💚 결제 승인으로 인한 수입 거래 자동 생성: PaymentID={}, 카테고리={}, 금액={}", 
+                        paymentId, category, payment.getAmount());
+                    
+                    // 수입에서 자동 적립금 생성
+                    try {
+                        reserveFundService.autoReserveFromIncome(payment.getAmount(), 
+                            "결제 수입 - " + payment.getDescription());
+                        log.info("💚 수입에서 자동 적립금 생성 완료: PaymentID={}, 금액={}", 
+                            paymentId, payment.getAmount());
+                    } catch (Exception e) {
+                        log.error("자동 적립금 생성 실패: {}", e.getMessage(), e);
+                    }
+                } catch (Exception e) {
+                    log.error("수입 거래 자동 생성 실패: {}", e.getMessage(), e);
+                    // 거래 생성 실패해도 결제 상태는 업데이트
+                }
                 break;
             case CANCELLED:
                 payment.setCancelledAt(LocalDateTime.now());
@@ -530,6 +558,42 @@ public class PaymentServiceImpl implements PaymentService {
         // 현재는 시뮬레이션을 위한 간단한 해시 생성
         String data = payload + timestamp + PaymentConstants.WEBHOOK_SECRET_KEY;
         return "sha256=" + Integer.toHexString(data.hashCode());
+    }
+    
+    /**
+     * 결제 방법에 따른 수입 카테고리 분류
+     */
+    private String getPaymentCategory(Payment payment) {
+        switch (payment.getMethod()) {
+            case CARD:
+                return "카드결제";
+            case CASH:
+                return "현금결제";
+            case BANK_TRANSFER:
+                return "계좌이체";
+            case VIRTUAL_ACCOUNT:
+                return "가상계좌";
+            default:
+                return "기타결제";
+        }
+    }
+    
+    /**
+     * 결제 방법에 따른 수입 세부 카테고리 분류
+     */
+    private String getPaymentSubcategory(Payment payment) {
+        switch (payment.getMethod()) {
+            case CARD:
+                return "신용카드";
+            case CASH:
+                return "현금영수증";
+            case BANK_TRANSFER:
+                return "계좌이체";
+            case VIRTUAL_ACCOUNT:
+                return "가상계좌입금";
+            default:
+                return "기타";
+        }
     }
     
     private PaymentResponse buildPaymentResponse(Payment payment, String paymentUrl) {

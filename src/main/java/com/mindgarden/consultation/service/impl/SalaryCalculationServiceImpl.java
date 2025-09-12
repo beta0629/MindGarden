@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mindgarden.consultation.dto.FinancialTransactionRequest;
+import com.mindgarden.consultation.dto.FinancialTransactionResponse;
 import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.entity.ConsultantSalaryOption;
 import com.mindgarden.consultation.entity.ConsultantSalaryProfile;
@@ -22,10 +24,11 @@ import com.mindgarden.consultation.repository.ConsultantSalaryProfileRepository;
 import com.mindgarden.consultation.repository.SalaryCalculationRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.service.CommonCodeService;
-import com.mindgarden.consultation.service.ConsultationService;
+import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.SalaryCalculationService;
 import com.mindgarden.consultation.service.TaxCalculationService;
 import com.mindgarden.consultation.service.UserService;
+import com.mindgarden.consultation.util.TaxCalculationUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -48,8 +51,8 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
     private final ConsultantSalaryOptionRepository salaryOptionRepository;
     private final SalaryCalculationRepository salaryCalculationRepository;
     private final TaxCalculationService taxCalculationService;
+    private final FinancialTransactionService financialTransactionService;
     private final CommonCodeService commonCodeService;
-    private final ConsultationService consultationService;
     private final UserService userService;
     private final ScheduleRepository scheduleRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -445,6 +448,16 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         
         SalaryCalculation savedCalculation = salaryCalculationRepository.save(calculation);
         
+        // 급여 계산 완료 후 자동으로 지출 거래 생성
+        try {
+            createSalaryExpenseTransaction(savedCalculation, profile);
+            log.info("💚 급여 지출 거래 자동 생성 완료: ConsultantID={}, Amount={}", 
+                consultantId, savedCalculation.getTotalSalary());
+        } catch (Exception e) {
+            log.error("급여 지출 거래 자동 생성 실패: {}", e.getMessage(), e);
+            // 거래 생성 실패해도 급여 계산은 완료
+        }
+        
         // 세금 계산은 TaxCalculationService에 위임
         boolean isBusinessRegistered = profile.getIsBusinessRegistered() != null ? profile.getIsBusinessRegistered() : false;
         List<SalaryTaxCalculation> taxCalculations = taxCalculationService.calculateFreelanceTax(
@@ -544,6 +557,16 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         calculation.markAsCalculated();
         
         SalaryCalculation savedCalculation = salaryCalculationRepository.save(calculation);
+        
+        // 급여 계산 완료 후 자동으로 지출 거래 생성
+        try {
+            createSalaryExpenseTransaction(savedCalculation, profile);
+            log.info("💚 급여 지출 거래 자동 생성 완료: ConsultantID={}, Amount={}", 
+                consultantId, savedCalculation.getTotalSalary());
+        } catch (Exception e) {
+            log.error("급여 지출 거래 자동 생성 실패: {}", e.getMessage(), e);
+            // 거래 생성 실패해도 급여 계산은 완료
+        }
         
         // 세금 계산에 실제 계산 ID 설정하고 DB에 저장
         for (SalaryTaxCalculation tax : taxCalculations) {
@@ -864,5 +887,65 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         }
         
         return rates;
+    }
+    
+    /**
+     * 급여 계산 완료 후 자동으로 지출 거래 생성
+     */
+    private void createSalaryExpenseTransaction(SalaryCalculation salaryCalculation, ConsultantSalaryProfile profile) {
+        log.info("급여 지출 거래 생성 시작: ConsultantID={}, Amount={}", 
+            salaryCalculation.getConsultantId(), salaryCalculation.getTotalSalary());
+        
+        // 급여는 부가세 없음
+        TaxCalculationUtil.TaxCalculationResult taxResult = new TaxCalculationUtil.TaxCalculationResult(
+            salaryCalculation.getTotalSalary(), salaryCalculation.getTotalSalary(), BigDecimal.ZERO);
+        
+        // 상담사 정보 조회
+        User consultant = userService.findById(salaryCalculation.getConsultantId())
+            .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + salaryCalculation.getConsultantId()));
+        
+        FinancialTransactionRequest request = FinancialTransactionRequest.builder()
+                .transactionType("EXPENSE")
+                .category("급여")
+                .subcategory(getSalarySubcategory(profile))
+                .amount(taxResult.getAmountIncludingTax()) // 부가세 포함 금액 (급여는 부가세 없음)
+                .amountBeforeTax(taxResult.getAmountExcludingTax()) // 부가세 제외 금액 (급여는 부가세 없음)
+                .taxAmount(taxResult.getVatAmount()) // 부가세 금액 (0)
+                .description(String.format("%s 급여 지급 - %s (%s)", 
+                    consultant.getName(), 
+                    salaryCalculation.getCalculationPeriod(),
+                    profile.getSalaryType()))
+                .transactionDate(salaryCalculation.getPayDate() != null ? salaryCalculation.getPayDate() : LocalDate.now())
+                .relatedEntityId(salaryCalculation.getId())
+                .relatedEntityType("SALARY_CALCULATION")
+                .taxIncluded(false) // 급여는 부가세 없음
+                .build();
+        
+        FinancialTransactionResponse response = financialTransactionService.createTransaction(request, null); // 시스템 자동 생성
+        
+        log.info("✅ 급여 지출 거래 생성 완료: TransactionID={}, ConsultantID={}, Amount={}", 
+            response.getId(), salaryCalculation.getConsultantId(), salaryCalculation.getTotalSalary());
+    }
+    
+    /**
+     * 급여 유형에 따른 세부 카테고리 반환
+     */
+    private String getSalarySubcategory(ConsultantSalaryProfile profile) {
+        if (profile.getSalaryType() == null) {
+            return "기타급여";
+        }
+        
+        switch (profile.getSalaryType().toUpperCase()) {
+            case "FREELANCE":
+                return "프리랜서급여";
+            case "REGULAR":
+                return "정규직급여";
+            case "PART_TIME":
+                return "시간제급여";
+            case "CONTRACT":
+                return "계약직급여";
+            default:
+                return "기타급여";
+        }
     }
 }

@@ -1,20 +1,30 @@
 package com.mindgarden.consultation.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.dto.FinancialTransactionRequest;
+import com.mindgarden.consultation.dto.FinancialTransactionResponse;
 import com.mindgarden.consultation.dto.ItemCreateRequest;
 import com.mindgarden.consultation.dto.ItemUpdateRequest;
 import com.mindgarden.consultation.entity.Budget;
 import com.mindgarden.consultation.entity.Item;
 import com.mindgarden.consultation.entity.PurchaseOrder;
 import com.mindgarden.consultation.entity.PurchaseRequest;
+import com.mindgarden.consultation.entity.RecurringExpense;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ErpService;
+import com.mindgarden.consultation.service.FinancialTransactionService;
+import com.mindgarden.consultation.service.RecurringExpenseService;
+import com.mindgarden.consultation.util.TaxCalculationUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +56,9 @@ import lombok.extern.slf4j.Slf4j;
 public class ErpController {
     
     private final ErpService erpService;
+    private final FinancialTransactionService financialTransactionService;
+    private final RecurringExpenseService recurringExpenseService;
+    private final CommonCodeService commonCodeService;
     
     // ==================== Item Management ====================
     
@@ -1247,6 +1261,608 @@ public class ErpController {
             errorResponse.put("message", "예산 부족 예산 목록 조회에 실패했습니다.");
             
             return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+    
+    // ==================== 회계 시스템 통합 API ====================
+    
+    /**
+     * 통합 재무 대시보드 데이터 조회 (수입/지출 통합)
+     */
+    @GetMapping("/finance/dashboard")
+    public ResponseEntity<Map<String, Object>> getFinanceDashboard(HttpSession session) {
+        try {
+            // 수퍼어드민 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+            }
+            
+            log.info("통합 재무 대시보드 데이터 조회 요청: {}", currentUser.getEmail());
+            
+            // ERP 통합 대시보드 데이터 조회
+            Map<String, Object> financeData = erpService.getIntegratedFinanceDashboard();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "통합 재무 대시보드 데이터를 성공적으로 조회했습니다.");
+            response.put("data", financeData);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("통합 재무 대시보드 데이터 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "재무 데이터 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 수입/지출 통계 조회
+     */
+    @GetMapping("/finance/statistics")
+    public ResponseEntity<Map<String, Object>> getFinanceStatistics(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            HttpSession session) {
+        try {
+            // 수퍼어드민 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+            }
+            
+            log.info("수입/지출 통계 조회 요청: {} ~ {}", startDate, endDate);
+            
+            Map<String, Object> statistics = erpService.getFinanceStatistics(startDate, endDate);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "수입/지출 통계를 성공적으로 조회했습니다.");
+            response.put("data", statistics);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("수입/지출 통계 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "통계 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 카테고리별 수입/지출 분석
+     */
+    @GetMapping("/finance/category-analysis")
+    public ResponseEntity<Map<String, Object>> getCategoryAnalysis(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            HttpSession session) {
+        try {
+            // 수퍼어드민 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+            }
+            
+            log.info("카테고리별 분석 조회 요청: {} ~ {}", startDate, endDate);
+            
+            Map<String, Object> analysis = erpService.getCategoryAnalysis(startDate, endDate);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "카테고리별 분석을 성공적으로 조회했습니다.");
+            response.put("data", analysis);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("카테고리별 분석 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "분석 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 대차대조표 조회
+     */
+    @GetMapping("/finance/balance-sheet")
+    public ResponseEntity<Map<String, Object>> getBalanceSheet(
+            @RequestParam(required = false) String reportDate,
+            HttpSession session) {
+        try {
+            // 수퍼어드민 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+            }
+            
+            log.info("대차대조표 조회 요청: {}", reportDate);
+            
+            Map<String, Object> balanceSheet = erpService.getBalanceSheet(reportDate);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "대차대조표를 성공적으로 조회했습니다.");
+            response.put("data", balanceSheet);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("대차대조표 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "대차대조표 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 손익계산서 조회
+     */
+    @GetMapping("/finance/income-statement")
+    public ResponseEntity<Map<String, Object>> getIncomeStatement(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            HttpSession session) {
+        try {
+            // 수퍼어드민 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+            }
+            
+            log.info("손익계산서 조회 요청: {} ~ {}", startDate, endDate);
+            
+            Map<String, Object> incomeStatement = erpService.getIncomeStatement(startDate, endDate);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "손익계산서를 성공적으로 조회했습니다.");
+            response.put("data", incomeStatement);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("손익계산서 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "손익계산서 조회 중 오류가 발생했습니다."));
+        }
+    }
+
+    // ==================== 수입/지출 직접 등록 ====================
+    
+    /**
+     * 수입/지출 거래 등록
+     */
+    @PostMapping("/finance/transactions")
+    public ResponseEntity<Map<String, Object>> createFinancialTransaction(
+            @Valid @RequestBody FinancialTransactionRequest request,
+            HttpSession session) {
+        try {
+            // 수퍼어드민 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+            }
+            
+            log.info("수입/지출 거래 등록 요청: {}", request);
+            
+            FinancialTransactionResponse response = financialTransactionService.createTransaction(request, currentUser);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "거래가 성공적으로 등록되었습니다.");
+            result.put("data", response);
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("수입/지출 거래 등록 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "거래 등록 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 모든 수입/지출 거래 조회
+     */
+    @GetMapping("/finance/transactions")
+    public ResponseEntity<Map<String, Object>> getAllFinancialTransactions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpSession session) {
+        try {
+            // 수퍼어드민 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+            }
+            
+            log.info("수입/지출 거래 목록 조회 요청");
+            
+            Page<FinancialTransactionResponse> transactionPage = financialTransactionService.getTransactions(
+                PageRequest.of(page, size)
+            );
+            List<FinancialTransactionResponse> transactions = transactionPage.getContent();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "거래 목록을 성공적으로 조회했습니다.");
+            response.put("data", transactions);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("수입/지출 거래 목록 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "거래 목록 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 빠른 지출 등록 (급여, 임대료, 관리비, 세금 등)
+     */
+    @PostMapping("/finance/quick-expense")
+    public ResponseEntity<Map<String, Object>> createQuickExpense(
+            @RequestParam String category,
+            @RequestParam String subcategory,
+            @RequestParam java.math.BigDecimal amount,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String transactionDate,
+            HttpSession session) {
+        try {
+            // 수퍼어드민 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+            }
+            
+            log.info("빠른 지출 등록 요청: category={}, amount={}", category, amount);
+            
+            // 부가세 적용 여부 확인 및 계산
+            boolean isVatApplicable = TaxCalculationUtil.isVatApplicable(category);
+            TaxCalculationUtil.TaxCalculationResult taxResult;
+            
+            if (isVatApplicable) {
+                // 부가세 적용: 입력 금액은 부가세 제외 금액으로 간주
+                taxResult = TaxCalculationUtil.calculateTaxForExpense(amount);
+            } else {
+                // 부가세 미적용: 급여 등
+                taxResult = new TaxCalculationUtil.TaxCalculationResult(amount, amount, BigDecimal.ZERO);
+            }
+            
+            FinancialTransactionRequest request = FinancialTransactionRequest.builder()
+                    .transactionType("EXPENSE")
+                    .category(category)
+                    .subcategory(subcategory)
+                    .amount(taxResult.getAmountIncludingTax()) // 부가세 포함 금액
+                    .amountBeforeTax(taxResult.getAmountExcludingTax()) // 부가세 제외 금액
+                    .taxAmount(taxResult.getVatAmount()) // 부가세 금액
+                    .description(description != null ? description : category + " 지출")
+                    .transactionDate(transactionDate != null ? java.time.LocalDate.parse(transactionDate) : java.time.LocalDate.now())
+                    .taxIncluded(isVatApplicable)
+                    .build();
+            
+            FinancialTransactionResponse response = financialTransactionService.createTransaction(request, currentUser);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", category + " 지출이 성공적으로 등록되었습니다.");
+            result.put("data", response);
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("빠른 지출 등록 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "지출 등록 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 빠른 수입 등록 (상담료, 기타수입 등)
+     */
+    @PostMapping("/finance/quick-income")
+    public ResponseEntity<Map<String, Object>> createQuickIncome(
+            @RequestParam String category,
+            @RequestParam String subcategory,
+            @RequestParam java.math.BigDecimal amount,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String transactionDate,
+            HttpSession session) {
+        try {
+            // 수퍼어드민 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null || !UserRole.SUPER_ADMIN.equals(currentUser.getRole())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+            }
+            
+            log.info("빠른 수입 등록 요청: category={}, amount={}", category, amount);
+            
+            // 수입은 항상 부가세 포함 (내담자가 결제한 금액)
+            TaxCalculationUtil.TaxCalculationResult taxResult = TaxCalculationUtil.calculateTaxFromPayment(amount);
+            
+            FinancialTransactionRequest request = FinancialTransactionRequest.builder()
+                    .transactionType("INCOME")
+                    .category(category)
+                    .subcategory(subcategory)
+                    .amount(taxResult.getAmountIncludingTax()) // 부가세 포함 금액
+                    .amountBeforeTax(taxResult.getAmountExcludingTax()) // 부가세 제외 금액
+                    .taxAmount(taxResult.getVatAmount()) // 부가세 금액
+                    .description(description != null ? description : category + " 수입")
+                    .transactionDate(transactionDate != null ? java.time.LocalDate.parse(transactionDate) : java.time.LocalDate.now())
+                    .taxIncluded(true) // 수입은 항상 부가세 포함
+                    .build();
+            
+            FinancialTransactionResponse response = financialTransactionService.createTransaction(request, currentUser);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", category + " 수입이 성공적으로 등록되었습니다.");
+            result.put("data", response);
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("빠른 수입 등록 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("success", false, "message", "수입 등록 중 오류가 발생했습니다."));
+        }
+    }
+    
+    // ==================== 반복 지출 관리 ====================
+    
+    /**
+     * 반복 지출 생성
+     */
+    @PostMapping("/recurring-expenses")
+    public ResponseEntity<?> createRecurringExpense(@RequestBody RecurringExpense recurringExpense, HttpServletRequest request) {
+        try {
+            log.info("반복 지출 생성 요청: {}", recurringExpense.getExpenseName());
+            
+            User currentUser = SessionUtils.getCurrentUser(request.getSession());
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "로그인이 필요합니다."));
+            }
+            
+            recurringExpense.setCreatedBy(currentUser.getName());
+            recurringExpense.setUpdatedBy(currentUser.getName());
+            
+            RecurringExpense createdExpense = recurringExpenseService.createRecurringExpense(recurringExpense);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "반복 지출이 성공적으로 생성되었습니다.");
+            response.put("data", createdExpense);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("반복 지출 생성 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "반복 지출 생성에 실패했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * 모든 활성 반복 지출 조회
+     */
+    @GetMapping("/recurring-expenses")
+    public ResponseEntity<?> getAllRecurringExpenses() {
+        try {
+            log.info("모든 반복 지출 조회");
+            
+            List<RecurringExpense> expenses = recurringExpenseService.getAllActiveRecurringExpenses();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", expenses);
+            response.put("total", expenses.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("반복 지출 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "반복 지출 조회에 실패했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * 반복 지출 수정
+     */
+    @PutMapping("/recurring-expenses/{id}")
+    public ResponseEntity<?> updateRecurringExpense(@PathVariable Long id, @RequestBody RecurringExpense recurringExpense, HttpServletRequest request) {
+        try {
+            log.info("반복 지출 수정 요청: id={}", id);
+            
+            User currentUser = SessionUtils.getCurrentUser(request.getSession());
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "로그인이 필요합니다."));
+            }
+            
+            recurringExpense.setUpdatedBy(currentUser.getName());
+            RecurringExpense updatedExpense = recurringExpenseService.updateRecurringExpense(id, recurringExpense);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "반복 지출이 성공적으로 수정되었습니다.");
+            response.put("data", updatedExpense);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("반복 지출 수정 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "반복 지출 수정에 실패했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * 반복 지출 삭제 (비활성화)
+     */
+    @DeleteMapping("/recurring-expenses/{id}")
+    public ResponseEntity<?> deleteRecurringExpense(@PathVariable Long id) {
+        try {
+            log.info("반복 지출 삭제 요청: id={}", id);
+            
+            boolean deleted = recurringExpenseService.deleteRecurringExpense(id);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", deleted);
+            response.put("message", deleted ? "반복 지출이 성공적으로 삭제되었습니다." : "반복 지출 삭제에 실패했습니다.");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("반복 지출 삭제 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "반복 지출 삭제에 실패했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * 반복 지출 수동 처리
+     */
+    @PostMapping("/recurring-expenses/{id}/process")
+    public ResponseEntity<?> processRecurringExpense(@PathVariable Long id, @RequestParam(required = false) BigDecimal customAmount) {
+        try {
+            log.info("반복 지출 수동 처리 요청: id={}, 금액={}", id, customAmount);
+            
+            recurringExpenseService.processRecurringExpense(id, customAmount);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "반복 지출이 성공적으로 처리되었습니다.");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("반복 지출 처리 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "반복 지출 처리에 실패했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * 반복 지출 현황 조회
+     */
+    @GetMapping("/recurring-expenses/status")
+    public ResponseEntity<?> getRecurringExpenseStatus() {
+        try {
+            log.info("반복 지출 현황 조회");
+            
+            Map<String, Object> status = recurringExpenseService.getRecurringExpenseStatus();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", status);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("반복 지출 현황 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "반복 지출 현황 조회에 실패했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * 월별 반복 지출 예상 금액 조회
+     */
+    @GetMapping("/recurring-expenses/forecast")
+    public ResponseEntity<?> getMonthlyRecurringExpenseForecast() {
+        try {
+            log.info("월별 반복 지출 예상 금액 조회");
+            
+            Map<String, Object> forecast = recurringExpenseService.getMonthlyRecurringExpenseForecast();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", forecast);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("월별 반복 지출 예상 금액 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "월별 반복 지출 예상 금액 조회에 실패했습니다: " + e.getMessage()));
+        }
+    }
+    
+    // ==================== 공통 코드 관리 ====================
+    
+    /**
+     * 재무 거래 관련 공통 코드 조회
+     */
+    @GetMapping("/common-codes/financial")
+    public ResponseEntity<?> getFinancialCommonCodes() {
+        try {
+            log.info("재무 거래 관련 공통 코드 조회");
+            
+            Map<String, Object> financialCodes = new HashMap<>();
+            
+            // 거래 유형
+            financialCodes.put("transactionTypes", commonCodeService.getActiveCodesByGroup("TRANSACTION_TYPE"));
+            
+            // 수입 카테고리
+            financialCodes.put("incomeCategories", commonCodeService.getActiveCodesByGroup("INCOME_CATEGORY"));
+            
+            // 지출 카테고리
+            financialCodes.put("expenseCategories", commonCodeService.getActiveCodesByGroup("EXPENSE_CATEGORY"));
+            
+            // 수입 세부 항목
+            financialCodes.put("incomeSubcategories", commonCodeService.getActiveCodesByGroup("INCOME_SUBCATEGORY"));
+            
+            // 지출 세부 항목
+            financialCodes.put("expenseSubcategories", commonCodeService.getActiveCodesByGroup("EXPENSE_SUBCATEGORY"));
+            
+            // 부가세 적용 여부
+            financialCodes.put("vatCategories", commonCodeService.getActiveCodesByGroup("VAT_APPLICABLE"));
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", financialCodes);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("재무 거래 관련 공통 코드 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "공통 코드 조회에 실패했습니다: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * 특정 코드 그룹의 공통 코드 조회
+     */
+    @GetMapping("/common-codes/{codeGroup}")
+    public ResponseEntity<?> getCommonCodesByGroup(@PathVariable String codeGroup) {
+        try {
+            log.info("공통 코드 조회: codeGroup={}", codeGroup);
+            
+            List<Map<String, Object>> codes = commonCodeService.getActiveCodesByGroup(codeGroup);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", codes);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("공통 코드 조회 실패: codeGroup={}, error={}", codeGroup, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "공통 코드 조회에 실패했습니다: " + e.getMessage()));
         }
     }
 }

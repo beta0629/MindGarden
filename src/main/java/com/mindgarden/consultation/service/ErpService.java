@@ -263,4 +263,51 @@ public interface ErpService {
      * 예산 부족 예산 목록
      */
     List<Budget> getOverBudgetBudgets();
+    
+    // ==================== 회계 시스템 통합 ====================
+    
+    /**
+     * 통합 재무 대시보드 데이터 조회 (수입/지출 통합)
+     */
+    Map<String, Object> getIntegratedFinanceDashboard();
+    
+    /**
+     * 수입/지출 통계 조회
+     */
+    Map<String, Object> getFinanceStatistics(String startDate, String endDate);
+    
+    /**
+     * 카테고리별 수입/지출 분석
+     */
+    Map<String, Object> getCategoryAnalysis(String startDate, String endDate);
+    
+    /**
+     * 대차대조표 조회
+     */
+    Map<String, Object> getBalanceSheet(String reportDate);
+    
+    /**
+     * 손익계산서 조회
+     */
+    Map<String, Object> getIncomeStatement(String startDate, String endDate);
+    
+    /**
+     * 일단위 재무 리포트
+     */
+    Map<String, Object> getDailyFinanceReport(String reportDate);
+    
+    /**
+     * 월단위 재무 리포트
+     */
+    Map<String, Object> getMonthlyFinanceReport(String year, String month);
+    
+    /**
+     * 년단위 재무 리포트
+     */
+    Map<String, Object> getYearlyFinanceReport(String year);
+    
+    /**
+     * 기간별 재무 트렌드 분석
+     */
+    Map<String, Object> getFinanceTrendAnalysis(String startDate, String endDate, String periodType);
 }

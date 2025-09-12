@@ -115,10 +115,14 @@ payment:
   toss:
     secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
     base-url: ${PAYMENT_TOSS_BASE_URL:https://api.tosspayments.com}
+    simulation-mode: ${PAYMENT_TOSS_SIMULATION_MODE:true}
+    test-payment-url: ${PAYMENT_TOSS_TEST_URL:https://checkout.tosspayments.com/v1/test/}
+    test-payment-key-prefix: ${PAYMENT_TOSS_TEST_KEY_PREFIX:toss_test_}
   iamport:
     api-key: ${PAYMENT_IAMPORT_API_KEY:}
     api-secret: ${PAYMENT_IAMPORT_API_SECRET:}
     base-url: ${PAYMENT_IAMPORT_BASE_URL:https://api.iamport.kr}
+    simulation-mode: ${PAYMENT_IAMPORT_SIMULATION_MODE:true}
 
 # 서버 설정
 server:

@@ -1,21 +1,25 @@
 package com.mindgarden.consultation.service.impl;
 
-import com.mindgarden.consultation.dto.PaymentRequest;
-import com.mindgarden.consultation.dto.PaymentResponse;
-import com.mindgarden.consultation.dto.PaymentStatusResponse;
-import com.mindgarden.consultation.service.PaymentGatewayService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import com.mindgarden.consultation.dto.PaymentRequest;
+import com.mindgarden.consultation.dto.PaymentResponse;
+import com.mindgarden.consultation.dto.PaymentStatusResponse;
+import com.mindgarden.consultation.service.PaymentGatewayService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 토스페이먼츠 API 연동 서비스
@@ -36,6 +40,15 @@ public class TossPaymentServiceImpl implements PaymentGatewayService {
     @Value("${payment.toss.base-url:https://api.tosspayments.com}")
     private String baseUrl;
     
+    @Value("${payment.toss.simulation-mode:true}")
+    private boolean simulationMode;
+    
+    @Value("${payment.toss.test-payment-url:https://checkout.tosspayments.com/v1/test/}")
+    private String testPaymentUrl;
+    
+    @Value("${payment.toss.test-payment-key-prefix:toss_test_}")
+    private String testPaymentKeyPrefix;
+    
     @Override
     public PaymentResponse createPayment(PaymentRequest request) {
         log.info("토스페이먼츠 결제 요청 생성: {}", request.getOrderId());
@@ -52,23 +65,49 @@ public class TossPaymentServiceImpl implements PaymentGatewayService {
             tossRequest.put("failUrl", request.getFailUrl());
             tossRequest.put("validHours", 24); // 24시간 유효
             
-            // 토스페이먼츠 API 호출 (테스트 모드)
-            log.info("토스페이먼츠 API 호출 시뮬레이션 모드");
-            
-            // 실제 API 호출 대신 시뮬레이션 응답 생성
-            Map<String, Object> responseBody = new HashMap<>();
-            responseBody.put("paymentKey", "toss_test_" + System.currentTimeMillis());
-            responseBody.put("checkoutUrl", "https://checkout.tosspayments.com/v1/test/" + System.currentTimeMillis());
-            responseBody.put("status", "PENDING");
-            
-            return PaymentResponse.builder()
-                .paymentId((String) responseBody.get("paymentKey"))
-                .orderId(request.getOrderId())
-                .status("PENDING")
-                .amount(request.getAmount())
-                .paymentUrl((String) responseBody.get("checkoutUrl"))
-                .createdAt(LocalDateTime.now())
-                .build();
+            if (simulationMode) {
+                // 시뮬레이션 모드
+                log.info("토스페이먼츠 API 호출 시뮬레이션 모드");
+                
+                // 시뮬레이션 응답 생성
+                Map<String, Object> responseBody = new HashMap<>();
+                responseBody.put("paymentKey", testPaymentKeyPrefix + System.currentTimeMillis());
+                responseBody.put("checkoutUrl", testPaymentUrl + System.currentTimeMillis());
+                responseBody.put("status", "PENDING");
+                
+                return PaymentResponse.builder()
+                    .paymentId((String) responseBody.get("paymentKey"))
+                    .orderId(request.getOrderId())
+                    .status("PENDING")
+                    .amount(request.getAmount())
+                    .paymentUrl((String) responseBody.get("checkoutUrl"))
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            } else {
+                // 실제 API 호출 모드
+                log.info("토스페이먼츠 실제 API 호출");
+                
+                HttpHeaders headers = createTossHeaders();
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(tossRequest, headers);
+                
+                String url = baseUrl + "/v1/payments/confirm";
+                ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+                
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    Map<String, Object> responseBody = response.getBody();
+                    
+                    return PaymentResponse.builder()
+                        .paymentId((String) responseBody.get("paymentKey"))
+                        .orderId(request.getOrderId())
+                        .status("PENDING")
+                        .amount(request.getAmount())
+                        .paymentUrl((String) responseBody.get("checkoutUrl"))
+                        .createdAt(LocalDateTime.now())
+                        .build();
+                } else {
+                    throw new RuntimeException("토스페이먼츠 결제 요청 실패: " + response.getStatusCode());
+                }
+            }
             
         } catch (Exception e) {
             log.error("토스페이먼츠 결제 요청 실패: {}", e.getMessage(), e);
@@ -78,18 +117,42 @@ public class TossPaymentServiceImpl implements PaymentGatewayService {
     
     @Override
     public PaymentStatusResponse getPaymentStatus(String paymentId) {
-        log.info("토스페이먼츠 결제 상태 조회 (시뮬레이션): {}", paymentId);
+        log.info("토스페이먼츠 결제 상태 조회: {}", paymentId);
         
         try {
-            // 테스트 모드: 시뮬레이션 응답 생성
-            log.info("토스페이먼츠 API 호출 시뮬레이션 모드");
-            
-            return PaymentStatusResponse.builder()
-                .paymentId(paymentId)
-                .status("APPROVED") // 테스트용으로 승인 상태 반환
-                .amount(new java.math.BigDecimal("100000"))
-                .approvedAt(LocalDateTime.now())
-                .build();
+            if (simulationMode) {
+                // 시뮬레이션 모드
+                log.info("토스페이먼츠 API 호출 시뮬레이션 모드");
+                
+                return PaymentStatusResponse.builder()
+                    .paymentId(paymentId)
+                    .status("APPROVED") // 테스트용으로 승인 상태 반환
+                    .amount(new java.math.BigDecimal("100000"))
+                    .approvedAt(LocalDateTime.now())
+                    .build();
+            } else {
+                // 실제 API 호출 모드
+                log.info("토스페이먼츠 실제 API 호출");
+                
+                HttpHeaders headers = createTossHeaders();
+                HttpEntity<String> entity = new HttpEntity<>(headers);
+                
+                String url = baseUrl + "/v1/payments/" + paymentId;
+                ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+                
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    Map<String, Object> responseBody = response.getBody();
+                    
+                    return PaymentStatusResponse.builder()
+                        .paymentId(paymentId)
+                        .status((String) responseBody.get("status"))
+                        .amount(new java.math.BigDecimal(responseBody.get("totalAmount").toString()))
+                        .approvedAt(parseDateTime((String) responseBody.get("approvedAt")))
+                        .build();
+                } else {
+                    throw new RuntimeException("토스페이먼츠 결제 상태 조회 실패: " + response.getStatusCode());
+                }
+            }
             
         } catch (Exception e) {
             log.error("토스페이먼츠 결제 상태 조회 실패: {}", e.getMessage(), e);
@@ -99,14 +162,30 @@ public class TossPaymentServiceImpl implements PaymentGatewayService {
     
     @Override
     public boolean cancelPayment(String paymentId, String reason) {
-        log.info("토스페이먼츠 결제 취소 (시뮬레이션): {}, 사유: {}", paymentId, reason);
+        log.info("토스페이먼츠 결제 취소: {}, 사유: {}", paymentId, reason);
         
         try {
-            // 테스트 모드: 시뮬레이션 응답
-            log.info("토스페이먼츠 API 호출 시뮬레이션 모드");
-            
-            // 시뮬레이션 성공 응답
-            return true;
+            if (simulationMode) {
+                // 시뮬레이션 모드
+                log.info("토스페이먼츠 API 호출 시뮬레이션 모드");
+                
+                // 시뮬레이션 성공 응답
+                return true;
+            } else {
+                // 실제 API 호출 모드
+                log.info("토스페이먼츠 실제 API 호출");
+                
+                Map<String, Object> cancelRequest = new HashMap<>();
+                cancelRequest.put("cancelReason", reason);
+                
+                HttpHeaders headers = createTossHeaders();
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(cancelRequest, headers);
+                
+                String url = baseUrl + "/v1/payments/" + paymentId + "/cancel";
+                ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+                
+                return response.getStatusCode() == HttpStatus.OK;
+            }
             
         } catch (Exception e) {
             log.error("토스페이먼츠 결제 취소 실패: {}", e.getMessage(), e);
@@ -116,14 +195,31 @@ public class TossPaymentServiceImpl implements PaymentGatewayService {
     
     @Override
     public boolean refundPayment(String paymentId, java.math.BigDecimal amount, String reason) {
-        log.info("토스페이먼츠 결제 환불 (시뮬레이션): {}, 금액: {}, 사유: {}", paymentId, amount, reason);
+        log.info("토스페이먼츠 결제 환불: {}, 금액: {}, 사유: {}", paymentId, amount, reason);
         
         try {
-            // 테스트 모드: 시뮬레이션 응답
-            log.info("토스페이먼츠 API 호출 시뮬레이션 모드");
-            
-            // 시뮬레이션 성공 응답
-            return true;
+            if (simulationMode) {
+                // 시뮬레이션 모드
+                log.info("토스페이먼츠 API 호출 시뮬레이션 모드");
+                
+                // 시뮬레이션 성공 응답
+                return true;
+            } else {
+                // 실제 API 호출 모드
+                log.info("토스페이먼츠 실제 API 호출");
+                
+                Map<String, Object> refundRequest = new HashMap<>();
+                refundRequest.put("cancelAmount", amount);
+                refundRequest.put("cancelReason", reason);
+                
+                HttpHeaders headers = createTossHeaders();
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(refundRequest, headers);
+                
+                String url = baseUrl + "/v1/payments/" + paymentId + "/cancel";
+                ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+                
+                return response.getStatusCode() == HttpStatus.OK;
+            }
             
         } catch (Exception e) {
             log.error("토스페이먼츠 결제 환불 실패: {}", e.getMessage(), e);

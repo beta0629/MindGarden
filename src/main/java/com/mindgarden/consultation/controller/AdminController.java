@@ -3,6 +3,7 @@ package com.mindgarden.consultation.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
 import com.mindgarden.consultation.dto.ConsultantRegistrationDto;
@@ -12,6 +13,7 @@ import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.ScheduleService;
+import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,10 +43,59 @@ public class AdminController {
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
      */
     @GetMapping("/consultants")
-    public ResponseEntity<?> getAllConsultants() {
+    public ResponseEntity<?> getAllConsultants(HttpSession session) {
         try {
             log.info("🔍 상담사 목록 조회");
-            List<Map<String, Object>> consultantsWithSpecialty = adminService.getAllConsultantsWithSpecialty();
+            
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            log.info("🔍 상담사 조회 권한 확인: role={}, isAdmin={}, isBranchManager={}, isHeadquartersAdmin={}", 
+                currentUser.getRole(), currentUser.getRole().isAdmin(), 
+                currentUser.getRole().isBranchManager(), currentUser.getRole().isHeadquartersAdmin());
+            
+            // 관리자 권한 확인 (ADMIN, BRANCH_SUPER_ADMIN, HQ_ADMIN, SUPER_HQ_ADMIN, BRANCH_MANAGER)
+            UserRole userRole = currentUser.getRole();
+            boolean hasPermission = userRole == UserRole.ADMIN || 
+                                  userRole == UserRole.BRANCH_SUPER_ADMIN || 
+                                  userRole == UserRole.HQ_ADMIN || 
+                                  userRole == UserRole.SUPER_HQ_ADMIN || 
+                                  userRole == UserRole.BRANCH_MANAGER ||
+                                  userRole == UserRole.SUPER_ADMIN;
+            
+            if (!hasPermission) {
+                log.warn("❌ 상담사 조회 권한 없음: role={}", userRole);
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "상담사 조회 권한이 없습니다."
+                ));
+            }
+            
+            // 현재 로그인한 사용자의 지점코드 확인
+            String currentBranchCode = currentUser.getBranchCode();
+            log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+            
+            List<Map<String, Object>> allConsultants = adminService.getAllConsultantsWithSpecialty();
+            
+            // 지점코드로 필터링
+            List<Map<String, Object>> consultantsWithSpecialty = allConsultants.stream()
+                .filter(consultant -> {
+                    if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
+                        return true; // 지점코드가 없으면 모든 상담사 조회
+                    }
+                    String consultantBranchCode = (String) consultant.get("branchCode");
+                    return currentBranchCode.equals(consultantBranchCode);
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            log.info("🔍 상담사 목록 조회 완료 - 전체: {}, 필터링 후: {}", allConsultants.size(), consultantsWithSpecialty.size());
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -86,10 +138,28 @@ public class AdminController {
      * 내담자 목록 조회
      */
     @GetMapping("/clients")
-    public ResponseEntity<?> getAllClients() {
+    public ResponseEntity<?> getAllClients(HttpSession session) {
         try {
             log.info("🔍 내담자 목록 조회");
-            List<Client> clients = adminService.getAllClients();
+            
+            // 현재 로그인한 사용자의 지점코드 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+            log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+            
+            List<Client> allClients = adminService.getAllClients();
+            
+            // 지점코드로 필터링
+            List<Client> clients = allClients.stream()
+                .filter(client -> {
+                    if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
+                        return true; // 지점코드가 없으면 모든 내담자 조회
+                    }
+                    return currentBranchCode.equals(client.getBranchCode());
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            log.info("🔍 내담자 목록 조회 완료 - 전체: {}, 필터링 후: {}", allClients.size(), clients.size());
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -109,10 +179,29 @@ public class AdminController {
      * 통합 내담자 데이터 조회 (매핑 정보, 결제 상태, 남은 세션 등 포함)
      */
     @GetMapping("/clients/with-mapping-info")
-    public ResponseEntity<?> getAllClientsWithMappingInfo() {
+    public ResponseEntity<?> getAllClientsWithMappingInfo(HttpSession session) {
         try {
             log.info("🔍 통합 내담자 데이터 조회");
-            List<Map<String, Object>> clientsWithMappingInfo = adminService.getAllClientsWithMappingInfo();
+            
+            // 현재 로그인한 사용자의 지점코드 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+            log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+            
+            List<Map<String, Object>> allClientsWithMappingInfo = adminService.getAllClientsWithMappingInfo();
+            
+            // 지점코드로 필터링
+            List<Map<String, Object>> clientsWithMappingInfo = allClientsWithMappingInfo.stream()
+                .filter(client -> {
+                    if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
+                        return true; // 지점코드가 없으면 모든 내담자 조회
+                    }
+                    String clientBranchCode = (String) client.get("branchCode");
+                    return currentBranchCode.equals(clientBranchCode);
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            log.info("🔍 통합 내담자 데이터 조회 완료 - 전체: {}, 필터링 후: {}", allClientsWithMappingInfo.size(), clientsWithMappingInfo.size());
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -132,10 +221,20 @@ public class AdminController {
      * 상담사별 매핑된 내담자 목록 조회 (스케줄 등록용)
      */
     @GetMapping("/mappings/consultant/{consultantId}/clients")
-    public ResponseEntity<?> getClientsByConsultantMapping(@PathVariable Long consultantId) {
+    public ResponseEntity<?> getClientsByConsultantMapping(@PathVariable Long consultantId, HttpSession session) {
         try {
-            log.info("🔍 상담사별 매핑된 내담자 목록 조회 - 상담사 ID: {}", consultantId);
-            List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantId(consultantId);
+            // 세션에서 현재 사용자의 브랜치 코드 가져오기
+            String currentBranchCode = (String) session.getAttribute("branchCode");
+            if (currentBranchCode == null) {
+                log.warn("❌ 세션에서 브랜치 코드를 찾을 수 없습니다");
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "브랜치 코드가 없습니다"
+                ));
+            }
+            
+            log.info("🔍 상담사별 매핑된 내담자 목록 조회 - 상담사 ID: {}, 브랜치 코드: {}", consultantId, currentBranchCode);
+            List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantId(consultantId, currentBranchCode);
             
             // 결제 승인되고 세션이 남은 매핑만 필터링 (PENDING도 포함)
             List<Map<String, Object>> activeMappings = mappings.stream()
@@ -236,10 +335,27 @@ public class AdminController {
      * 매핑 목록 조회
      */
     @GetMapping("/mappings")
-    public ResponseEntity<?> getAllMappings() {
+    public ResponseEntity<?> getAllMappings(HttpSession session) {
         try {
             log.info("🔍 매핑 목록 조회");
-            List<ConsultantClientMapping> mappings = adminService.getAllMappings();
+            
+            // 현재 로그인한 사용자의 지점코드 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+            
+            List<ConsultantClientMapping> allMappings = adminService.getAllMappings();
+            
+            // 지점코드로 필터링
+            List<ConsultantClientMapping> mappings = allMappings.stream()
+                .filter(mapping -> {
+                    if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
+                        return true; // 지점코드가 없으면 모든 매핑 조회
+                    }
+                    return currentBranchCode.equals(mapping.getBranchCode());
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            log.info("🔍 매핑 목록 조회 완료 - 전체: {}, 필터링 후: {}", allMappings.size(), mappings.size());
 
             // 직렬화 문제를 피하기 위해 필요한 정보만 추출 (안전한 방식)
             List<Map<String, Object>> mappingData = mappings.stream()
@@ -754,9 +870,32 @@ public class AdminController {
      * 상담사 등록
      */
     @PostMapping("/consultants")
-    public ResponseEntity<?> registerConsultant(@RequestBody ConsultantRegistrationDto dto) {
+    public ResponseEntity<?> registerConsultant(@RequestBody ConsultantRegistrationDto dto, HttpSession session) {
         try {
             log.info("🔧 상담사 등록: {}", dto.getUsername());
+            
+            // 세션에서 현재 사용자의 지점 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null) {
+                log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
+                
+                // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
+                if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
+                    (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
+                    dto.setBranchCode(currentUser.getBranchCode());
+                    log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", dto.getBranchCode());
+                }
+            }
+            
+            // 지점코드 필수 검증 강화
+            if (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty()) {
+                log.error("❌ 지점코드가 없습니다. 상담사 등록을 거부합니다.");
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "지점코드는 필수입니다. 관리자에게 문의하세요."
+                ));
+            }
+            
             User consultant = adminService.registerConsultant(dto);
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -776,10 +915,39 @@ public class AdminController {
      * 내담자 등록
      */
     @PostMapping("/clients")
-    public ResponseEntity<?> registerClient(@RequestBody ClientRegistrationDto dto) {
+    public ResponseEntity<?> registerClient(@RequestBody ClientRegistrationDto dto, HttpSession session) {
         try {
             log.info("🔧 내담자 등록: {}", dto.getName());
+            log.info("🔧 요청 데이터: branchCode={}", dto.getBranchCode());
+            
+            // 세션에서 현재 사용자의 지점 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            log.info("🔧 세션 사용자: {}", currentUser != null ? currentUser.getName() : "null");
+            
+            if (currentUser != null) {
+                log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
+                
+                // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
+                if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
+                    (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
+                    dto.setBranchCode(currentUser.getBranchCode());
+                    log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", dto.getBranchCode());
+                }
+            }
+            
+            // 지점코드 필수 검증 강화
+            if (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty()) {
+                log.error("❌ 지점코드가 없습니다. 등록을 거부합니다.");
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "지점코드는 필수입니다. 관리자에게 문의하세요."
+                ));
+            }
+            
             Client client = adminService.registerClient(dto);
+            log.info("✅ 내담자 등록 완료: id={}, name={}, branchCode={}", 
+                client.getId(), client.getName(), dto.getBranchCode());
+            
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "내담자가 성공적으로 등록되었습니다",
@@ -798,10 +966,19 @@ public class AdminController {
      * 매핑 생성
      */
     @PostMapping("/mappings")
-    public ResponseEntity<?> createMapping(@RequestBody ConsultantClientMappingDto dto) {
+    public ResponseEntity<?> createMapping(@RequestBody ConsultantClientMappingDto dto, HttpSession session) {
         try {
             log.info("🔧 매핑 생성: 상담사={}, 내담자={}", dto.getConsultantId(), dto.getClientId());
+            
+            // 세션에서 현재 사용자의 지점 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+            log.info("🔧 현재 사용자 지점코드: {}", currentBranchCode);
+            
             ConsultantClientMapping mapping = adminService.createMapping(dto);
+            
+            // 생성된 매핑의 지점코드 확인
+            log.info("🔧 생성된 매핑 지점코드: {}", mapping.getBranchCode());
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "매핑이 성공적으로 생성되었습니다",
@@ -820,9 +997,23 @@ public class AdminController {
      * 상담사 정보 수정
      */
     @PutMapping("/consultants/{id}")
-    public ResponseEntity<?> updateConsultant(@PathVariable Long id, @RequestBody ConsultantRegistrationDto dto) {
+    public ResponseEntity<?> updateConsultant(@PathVariable Long id, @RequestBody ConsultantRegistrationDto dto, HttpSession session) {
         try {
             log.info("🔧 상담사 정보 수정: ID={}", id);
+            
+            // 세션에서 현재 사용자의 지점 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null) {
+                log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
+                
+                // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
+                if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
+                    (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
+                    dto.setBranchCode(currentUser.getBranchCode());
+                    log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", dto.getBranchCode());
+                }
+            }
+            
             User consultant = adminService.updateConsultant(id, dto);
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -870,9 +1061,23 @@ public class AdminController {
      * 내담자 정보 수정
      */
     @PutMapping("/clients/{id}")
-    public ResponseEntity<?> updateClient(@PathVariable Long id, @RequestBody ClientRegistrationDto dto) {
+    public ResponseEntity<?> updateClient(@PathVariable Long id, @RequestBody ClientRegistrationDto dto, HttpSession session) {
         try {
             log.info("🔧 내담자 정보 수정: ID={}", id);
+            
+            // 세션에서 현재 사용자의 지점 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null) {
+                log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
+                
+                // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
+                if (currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty() &&
+                    (dto.getBranchCode() == null || dto.getBranchCode().trim().isEmpty())) {
+                    dto.setBranchCode(currentUser.getBranchCode());
+                    log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", dto.getBranchCode());
+                }
+            }
+            
             Client client = adminService.updateClient(id, dto);
             return ResponseEntity.ok(Map.of(
                 "success", true,

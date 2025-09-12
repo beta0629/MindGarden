@@ -170,6 +170,201 @@ export const CONSULTANT_MENU_ITEMS = {
   }
 };
 
+// 본사 관리자 메뉴 (헤드쿼터)
+export const HQ_ADMIN_MENU_ITEMS = {
+  MAIN: {
+    ADMIN: {
+      id: 'admin',
+      label: '본사 관리',
+      icon: 'bi-building'
+    },
+    USERS: {
+      id: 'users',
+      label: '사용자 관리',
+      icon: 'bi-people'
+    },
+    SYSTEM: {
+      id: 'system',
+      label: '시스템 관리',
+      icon: 'bi-tools'
+    }
+  },
+  SUB: {
+    admin: [
+      { id: 'hq-dashboard', label: '본사 대시보드', path: '/super_admin/dashboard', icon: 'bi-speedometer2' },
+      { id: 'hq-statistics', label: '통계 보기', path: '/admin/statistics', icon: 'bi-graph-up' },
+      { id: 'hq-schedules', label: '전체 스케줄', path: '/admin/schedules', icon: 'bi-calendar-check' }
+    ],
+    users: [
+      { id: 'hq-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
+      { id: 'hq-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
+      { id: 'hq-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' }
+    ],
+    system: [
+      { id: 'hq-codes', label: '공통코드 관리', path: '/admin/common-codes', icon: 'bi-code' },
+      { id: 'hq-system', label: '시스템 도구', path: '/admin/system', icon: 'bi-tools' },
+      { id: 'hq-logs', label: '시스템 로그', path: '/admin/logs', icon: 'bi-file-text' }
+    ],
+    branches: [
+      { id: 'hq-branch-list', label: '지점 목록', path: '/admin/branches', icon: 'bi-list' },
+      { id: 'hq-branch-create', label: '지점 등록', path: '/admin/branches/create', icon: 'bi-plus-circle' },
+      { id: 'hq-branch-managers', label: '지점장 관리', path: '/admin/branch-managers', icon: 'bi-person-badge' }
+    ]
+  }
+};
+
+// 수퍼 본사 관리자 메뉴
+export const SUPER_HQ_ADMIN_MENU_ITEMS = {
+  MAIN: {
+    ADMIN: {
+      id: 'admin',
+      label: '본사 관리',
+      icon: 'bi-building'
+    },
+    USERS: {
+      id: 'users',
+      label: '사용자 관리',
+      icon: 'bi-people'
+    },
+    SYSTEM: {
+      id: 'system',
+      label: '시스템 관리',
+      icon: 'bi-tools'
+    },
+    BRANCHES: {
+      id: 'branches',
+      label: '지점 관리',
+      icon: 'bi-shop'
+    },
+    FINANCE: {
+      id: 'finance',
+      label: '자금 관리',
+      icon: 'bi-currency-dollar'
+    },
+    ERP: {
+      id: 'erp',
+      label: 'ERP 관리',
+      icon: 'bi-box-seam'
+    }
+  },
+  SUB: {
+    admin: [
+      { id: 'super-hq-dashboard', label: '본사 대시보드', path: '/super_admin/dashboard', icon: 'bi-speedometer2' },
+      { id: 'super-hq-statistics', label: '통계 보기', path: '/admin/statistics', icon: 'bi-graph-up' },
+      { id: 'super-hq-schedules', label: '전체 스케줄', path: '/admin/schedules', icon: 'bi-calendar-check' }
+    ],
+    users: [
+      { id: 'super-hq-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
+      { id: 'super-hq-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
+      { id: 'super-hq-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' },
+      { id: 'super-hq-admins', label: '관리자 관리', path: '/super_admin/admin-management', icon: 'bi-shield-check' }
+    ],
+    system: [
+      { id: 'super-hq-codes', label: '공통코드 관리', path: '/admin/common-codes', icon: 'bi-code' },
+      { id: 'super-hq-system', label: '시스템 도구', path: '/admin/system', icon: 'bi-tools' },
+      { id: 'super-hq-logs', label: '시스템 로그', path: '/admin/logs', icon: 'bi-file-text' },
+      { id: 'super-hq-integration-test', label: '통합 테스트', path: '/test/integration', icon: 'bi-check-circle' }
+    ],
+    branches: [
+      { id: 'super-hq-branch-list', label: '지점 목록', path: '/admin/branches', icon: 'bi-list' },
+      { id: 'super-hq-branch-create', label: '지점 등록', path: '/admin/branches/create', icon: 'bi-plus-circle' },
+      { id: 'super-hq-branch-managers', label: '지점장 관리', path: '/admin/branch-managers', icon: 'bi-person-badge' },
+      { id: 'super-hq-branch-hierarchy', label: '지점 계층 관리', path: '/admin/branch-hierarchy', icon: 'bi-diagram-3' }
+    ],
+    finance: [
+      { id: 'super-hq-finance-dashboard', label: '자금 대시보드', path: '/super_admin/finance', icon: 'bi-graph-up-arrow' },
+      { id: 'super-hq-revenue', label: '수익 관리', path: '/super_admin/revenue', icon: 'bi-cash-stack' },
+      { id: 'super-hq-expenses', label: '지출 관리', path: '/super_admin/expenses', icon: 'bi-receipt' },
+      { id: 'super-hq-payments', label: '결제 관리', path: '/super_admin/payments', icon: 'bi-credit-card' },
+      { id: 'super-hq-reports', label: '재무 보고서', path: '/super_admin/finance-reports', icon: 'bi-file-earmark-bar-graph' }
+    ],
+    erp: [
+      { id: 'super-hq-erp-dashboard', label: 'ERP 대시보드', path: '/erp/dashboard', icon: 'bi-speedometer2' },
+      { id: 'super-hq-purchase-requests', label: '구매 요청', path: '/erp/purchase-requests', icon: 'bi-cart-plus' },
+      { id: 'super-hq-approvals', label: '관리자 승인', path: '/erp/approvals', icon: 'bi-check-circle' },
+      { id: 'super-hq-super-approvals', label: '수퍼 관리자 승인', path: '/erp/super-approvals', icon: 'bi-shield-check' },
+      { id: 'super-hq-items', label: '아이템 관리', path: '/erp/items', icon: 'bi-box' },
+      { id: 'super-hq-budgets', label: '예산 관리', path: '/erp/budgets', icon: 'bi-wallet2' }
+    ]
+  }
+};
+
+// 지점 수퍼 관리자 메뉴
+export const BRANCH_SUPER_ADMIN_MENU_ITEMS = {
+  MAIN: {
+    ADMIN: {
+      id: 'admin',
+      label: '지점 관리',
+      icon: 'bi-gear'
+    },
+    USERS: {
+      id: 'users',
+      label: '사용자 관리',
+      icon: 'bi-people'
+    },
+    FINANCE: {
+      id: 'finance',
+      label: '자금 관리',
+      icon: 'bi-currency-dollar'
+    },
+    ERP: {
+      id: 'erp',
+      label: 'ERP 관리',
+      icon: 'bi-box-seam'
+    }
+  },
+  SUB: {
+    admin: [
+      { id: 'branch-dashboard', label: '지점 대시보드', path: '/super_admin/dashboard', icon: 'bi-speedometer2' },
+      { id: 'branch-statistics', label: '통계 보기', path: '/admin/statistics', icon: 'bi-graph-up' },
+      { id: 'branch-schedules', label: '전체 스케줄', path: '/admin/schedules', icon: 'bi-calendar-check' }
+    ],
+    users: [
+      { id: 'branch-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
+      { id: 'branch-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
+      { id: 'branch-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' }
+    ],
+    finance: [
+      { id: 'branch-finance-dashboard', label: '자금 대시보드', path: '/super_admin/finance', icon: 'bi-graph-up-arrow' },
+      { id: 'branch-payments', label: '결제 관리', path: '/super_admin/payments', icon: 'bi-credit-card' },
+      { id: 'branch-reports', label: '재무 보고서', path: '/super_admin/finance-reports', icon: 'bi-file-earmark-bar-graph' }
+    ],
+    erp: [
+      { id: 'branch-erp-dashboard', label: 'ERP 대시보드', path: '/erp/dashboard', icon: 'bi-speedometer2' },
+      { id: 'branch-purchase-requests', label: '구매 요청', path: '/erp/purchase-requests', icon: 'bi-cart-plus' },
+      { id: 'branch-approvals', label: '관리자 승인', path: '/erp/approvals', icon: 'bi-check-circle' },
+      { id: 'branch-items', label: '아이템 관리', path: '/erp/items', icon: 'bi-box' }
+    ]
+  }
+};
+
+// 지점장 메뉴
+export const BRANCH_MANAGER_MENU_ITEMS = {
+  MAIN: {
+    ADMIN: {
+      id: 'admin',
+      label: '지점 관리',
+      icon: 'bi-gear'
+    },
+    USERS: {
+      id: 'users',
+      label: '사용자 관리',
+      icon: 'bi-people'
+    }
+  },
+  SUB: {
+    admin: [
+      { id: 'manager-dashboard', label: '지점 대시보드', path: '/admin/dashboard', icon: 'bi-speedometer2' },
+      { id: 'manager-statistics', label: '통계 보기', path: '/admin/statistics', icon: 'bi-graph-up' },
+      { id: 'manager-schedules', label: '전체 스케줄', path: '/admin/schedules', icon: 'bi-calendar-check' }
+    ],
+    users: [
+      { id: 'manager-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
+      { id: 'manager-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' }
+    ]
+  }
+};
+
 // 내담자 메뉴
 export const CLIENT_MENU_ITEMS = {
   MAIN: {
@@ -188,10 +383,15 @@ export const CLIENT_MENU_ITEMS = {
 
 // 사용자 역할 상수
 export const USER_ROLES = {
+  HQ_ADMIN: 'HQ_ADMIN',
+  SUPER_HQ_ADMIN: 'SUPER_HQ_ADMIN',
+  BRANCH_SUPER_ADMIN: 'BRANCH_SUPER_ADMIN',
   ADMIN: 'ADMIN',
-  SUPER_ADMIN: 'SUPER_ADMIN',
+  BRANCH_MANAGER: 'BRANCH_MANAGER',
   CONSULTANT: 'CONSULTANT',
-  CLIENT: 'CLIENT'
+  CLIENT: 'CLIENT',
+  // 기존 호환성
+  SUPER_ADMIN: 'SUPER_ADMIN'
 };
 
 // 메뉴 타입 상수

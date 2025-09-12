@@ -63,7 +63,7 @@ public interface ScheduleService {
      * 상담사 스케줄 등록 (상담 유형 포함)
      */
     Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date, 
-                                    LocalTime startTime, LocalTime endTime, String title, String description, String consultationType);
+                                    LocalTime startTime, LocalTime endTime, String title, String description, String consultationType, String branchCode);
     
     /**
      * 상담사 스케줄 등록 (상담 유형 기반, 자동 종료 시간 계산)

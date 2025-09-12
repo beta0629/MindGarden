@@ -6,6 +6,10 @@ import {
   COMMON_MENU_ITEMS, 
   ADMIN_MENU_ITEMS, 
   SUPER_ADMIN_MENU_ITEMS,
+  HQ_ADMIN_MENU_ITEMS,
+  SUPER_HQ_ADMIN_MENU_ITEMS,
+  BRANCH_SUPER_ADMIN_MENU_ITEMS,
+  BRANCH_MANAGER_MENU_ITEMS,
   CONSULTANT_MENU_ITEMS, 
   CLIENT_MENU_ITEMS,
   USER_ROLES 
@@ -62,6 +66,38 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
 
     // 역할별 메뉴 구조
     const roleMenuConfig = {
+      [USER_ROLES.HQ_ADMIN]: {
+        mainMenus: [
+          ...commonMainMenus,
+          HQ_ADMIN_MENU_ITEMS.MAIN.ADMIN,
+          HQ_ADMIN_MENU_ITEMS.MAIN.USERS,
+          HQ_ADMIN_MENU_ITEMS.MAIN.SYSTEM,
+          HQ_ADMIN_MENU_ITEMS.MAIN.BRANCHES
+        ],
+        subMenus: HQ_ADMIN_MENU_ITEMS.SUB
+      },
+      [USER_ROLES.SUPER_HQ_ADMIN]: {
+        mainMenus: [
+          ...commonMainMenus,
+          SUPER_HQ_ADMIN_MENU_ITEMS.MAIN.ADMIN,
+          SUPER_HQ_ADMIN_MENU_ITEMS.MAIN.USERS,
+          SUPER_HQ_ADMIN_MENU_ITEMS.MAIN.SYSTEM,
+          SUPER_HQ_ADMIN_MENU_ITEMS.MAIN.BRANCHES,
+          SUPER_HQ_ADMIN_MENU_ITEMS.MAIN.FINANCE,
+          SUPER_HQ_ADMIN_MENU_ITEMS.MAIN.ERP
+        ],
+        subMenus: SUPER_HQ_ADMIN_MENU_ITEMS.SUB
+      },
+      [USER_ROLES.BRANCH_SUPER_ADMIN]: {
+        mainMenus: [
+          ...commonMainMenus,
+          BRANCH_SUPER_ADMIN_MENU_ITEMS.MAIN.ADMIN,
+          BRANCH_SUPER_ADMIN_MENU_ITEMS.MAIN.USERS,
+          BRANCH_SUPER_ADMIN_MENU_ITEMS.MAIN.FINANCE,
+          BRANCH_SUPER_ADMIN_MENU_ITEMS.MAIN.ERP
+        ],
+        subMenus: BRANCH_SUPER_ADMIN_MENU_ITEMS.SUB
+      },
       [USER_ROLES.ADMIN]: {
         mainMenus: [
           ...commonMainMenus,
@@ -71,16 +107,13 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         ],
         subMenus: ADMIN_MENU_ITEMS.SUB
       },
-      [USER_ROLES.SUPER_ADMIN]: {
+      [USER_ROLES.BRANCH_MANAGER]: {
         mainMenus: [
           ...commonMainMenus,
-          SUPER_ADMIN_MENU_ITEMS.MAIN.ADMIN,
-          SUPER_ADMIN_MENU_ITEMS.MAIN.USERS,
-          SUPER_ADMIN_MENU_ITEMS.MAIN.SYSTEM,
-          SUPER_ADMIN_MENU_ITEMS.MAIN.FINANCE,
-          SUPER_ADMIN_MENU_ITEMS.MAIN.ERP
+          BRANCH_MANAGER_MENU_ITEMS.MAIN.ADMIN,
+          BRANCH_MANAGER_MENU_ITEMS.MAIN.USERS
         ],
-        subMenus: SUPER_ADMIN_MENU_ITEMS.SUB
+        subMenus: BRANCH_MANAGER_MENU_ITEMS.SUB
       },
       [USER_ROLES.CONSULTANT]: {
         mainMenus: [
@@ -96,6 +129,18 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
           CLIENT_MENU_ITEMS.MAIN.MESSAGES
         ],
         subMenus: CLIENT_MENU_ITEMS.SUB
+      },
+      // 기존 호환성
+      [USER_ROLES.SUPER_ADMIN]: {
+        mainMenus: [
+          ...commonMainMenus,
+          SUPER_ADMIN_MENU_ITEMS.MAIN.ADMIN,
+          SUPER_ADMIN_MENU_ITEMS.MAIN.USERS,
+          SUPER_ADMIN_MENU_ITEMS.MAIN.SYSTEM,
+          SUPER_ADMIN_MENU_ITEMS.MAIN.FINANCE,
+          SUPER_ADMIN_MENU_ITEMS.MAIN.ERP
+        ],
+        subMenus: SUPER_ADMIN_MENU_ITEMS.SUB
       }
     };
 

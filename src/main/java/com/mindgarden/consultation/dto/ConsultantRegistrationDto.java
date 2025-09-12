@@ -22,4 +22,5 @@ public class ConsultantRegistrationDto {
     private String specialization;
     private String qualifications;
     private String notes;
+    private String branchCode;
 }

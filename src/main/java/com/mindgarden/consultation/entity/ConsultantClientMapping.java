@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.entity;
 
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -40,10 +41,12 @@ public class ConsultantClientMapping extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consultant_id", nullable = false)
+    @JsonIgnore
     private User consultant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false)
+    @JsonIgnore
     private User client;
 
     @Column(name = "start_date", nullable = false)
@@ -116,6 +119,9 @@ public class ConsultantClientMapping extends BaseEntity {
 
     @Column(name = "terminated_at")
     private LocalDateTime terminatedAt;
+
+    @Column(name = "branch_code", length = 20)
+    private String branchCode; // 지점코드
 
     /**
      * 매핑 상태 enum

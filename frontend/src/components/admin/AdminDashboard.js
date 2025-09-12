@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
 import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
@@ -49,7 +49,9 @@ const AdminDashboard = ({ user: propUser }) => {
         }
 
         const currentUser = propUser || sessionUser;
-        if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'SUPER_ADMIN') {
+        if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'SUPER_ADMIN' && 
+            currentUser?.role !== 'BRANCH_SUPER_ADMIN' && currentUser?.role !== 'HQ_ADMIN' && 
+            currentUser?.role !== 'SUPER_HQ_ADMIN' && currentUser?.role !== 'BRANCH_MANAGER') {
             console.log('❌ 관리자 권한 없음, 대시보드로 이동');
             navigate('/dashboard', { replace: true });
             return;
@@ -353,8 +355,8 @@ const AdminDashboard = ({ user: propUser }) => {
                 </div>
             </div>
 
-            {/* 상담 완료 건수 통계 (어드민/수퍼어드민) */}
-            {((propUser || sessionUser)?.role === 'ADMIN' || (propUser || sessionUser)?.role === 'SUPER_ADMIN') && (
+            {/* 상담 완료 건수 통계 (어드민/수퍼어드민/지점수퍼어드민) */}
+            {((propUser || sessionUser)?.role === 'ADMIN' || (propUser || sessionUser)?.role === 'SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN') && (
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
                     <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
                         <i className="bi bi-graph-up"></i>
@@ -479,8 +481,8 @@ const AdminDashboard = ({ user: propUser }) => {
             </div>
 
 
-            {/* 재무 관리 (수퍼어드민 전용) */}
-            {(propUser || sessionUser)?.role === 'SUPER_ADMIN' && (
+            {/* 재무 관리 (수퍼어드민/지점수퍼어드민 전용) */}
+            {((propUser || sessionUser)?.role === 'SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN') && (
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
                     <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
                         <i className={ICONS.BI.CURRENCY_DOLLAR}></i>
@@ -550,8 +552,8 @@ const AdminDashboard = ({ user: propUser }) => {
                 </div>
             )}
 
-            {/* ERP 관리 (수퍼어드민 전용) */}
-            {(propUser || sessionUser)?.role === 'SUPER_ADMIN' && (
+            {/* ERP 관리 (수퍼어드민/지점수퍼어드민 전용) */}
+            {((propUser || sessionUser)?.role === 'SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN') && (
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
                     <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
                         <i className="bi bi-box-seam"></i>
@@ -635,6 +637,77 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
                                 <h3>통합 재무 관리</h3>
                                 <p>수입/지출 통합 관리 및 대차대조표</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 지점 관리 (본사 관리자 전용) */}
+            {((propUser || sessionUser)?.role === 'HQ_ADMIN' || (propUser || sessionUser)?.role === 'SUPER_HQ_ADMIN') && (
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                        <i className="bi bi-building"></i>
+                        지점 관리
+                    </h2>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branches')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-list`}>
+                                <FaBuilding />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>지점 목록</h3>
+                                <p>모든 지점을 조회하고 관리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branch-create')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-create`}>
+                                <FaMapMarkerAlt />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>지점 생성</h3>
+                                <p>새로운 지점을 등록합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branch-hierarchy')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-hierarchy`}>
+                                <FaCogs />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>지점 계층 구조</h3>
+                                <p>지점 간 계층 관계를 관리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branch-managers')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-managers`}>
+                                <FaUserCog />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>지점장 관리</h3>
+                                <p>지점장을 지정하고 관리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branch-status')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-status`}>
+                                <FaToggleOn />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>지점 상태 관리</h3>
+                                <p>지점 활성화/비활성화를 관리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branch-consultants')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-consultants`}>
+                                <FaUserTie />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>지점 상담사 관리</h3>
+                                <p>지점별 상담사를 할당하고 관리합니다</p>
                             </div>
                         </div>
                     </div>

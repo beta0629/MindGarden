@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.mindgarden.consultation.constant.AdminConstants;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
@@ -87,6 +88,7 @@ public class TestDataController {
                     .name("시스템 관리자")
                     .phone("010-0000-0000")
                     .role(UserRole.ADMIN)
+                    .branchCode(AdminConstants.DEFAULT_BRANCH_CODE) // 기본 지점코드 설정
                     .isActive(true)
                     .build();
             

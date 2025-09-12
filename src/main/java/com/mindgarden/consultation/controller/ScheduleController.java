@@ -7,17 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import com.mindgarden.consultation.dto.ScheduleCreateDto;
-import com.mindgarden.consultation.dto.ScheduleDto;
-import com.mindgarden.consultation.dto.ScheduleResponseDto;
-import com.mindgarden.consultation.entity.ConsultantClientMapping;
-import com.mindgarden.consultation.entity.ConsultationRecord;
-import com.mindgarden.consultation.entity.Schedule;
-import com.mindgarden.consultation.service.AdminService;
-import com.mindgarden.consultation.service.CommonCodeService;
-import com.mindgarden.consultation.service.ConsultantAvailabilityService;
-import com.mindgarden.consultation.service.ConsultationRecordService;
-import com.mindgarden.consultation.service.ScheduleService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -32,6 +21,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.mindgarden.consultation.constant.AdminConstants;
+import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.dto.ScheduleCreateDto;
+import com.mindgarden.consultation.dto.ScheduleDto;
+import com.mindgarden.consultation.dto.ScheduleResponseDto;
+import com.mindgarden.consultation.entity.ConsultantClientMapping;
+import com.mindgarden.consultation.entity.ConsultationRecord;
+import com.mindgarden.consultation.entity.Schedule;
+import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.service.AdminService;
+import com.mindgarden.consultation.service.CommonCodeService;
+import com.mindgarden.consultation.service.ConsultantAvailabilityService;
+import com.mindgarden.consultation.service.ConsultationRecordService;
+import com.mindgarden.consultation.service.ScheduleService;
+import com.mindgarden.consultation.utils.SessionUtils;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -173,9 +178,17 @@ public class ScheduleController {
     @GetMapping("/consultant/{consultantId}/date")
     public ResponseEntity<List<Schedule>> getConsultantSchedulesByDate(
             @PathVariable Long consultantId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) String userRole) {
         
-        log.info("📅 상담사별 특정 날짜 스케줄 조회: 상담사 {}, 날짜 {}", consultantId, date);
+        log.info("📅 상담사별 특정 날짜 스케줄 조회: 상담사 {}, 날짜 {}, 요청자 역할 {}", consultantId, date, userRole);
+        
+        // 관리자 권한 확인 (userRole이 제공된 경우에만)
+        if (userRole != null && !"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
+            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+            log.warn("❌ 관리자 권한 없음: {}", userRole);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         try {
             List<Schedule> schedules = scheduleService.findByConsultantIdAndDate(consultantId, date);
@@ -192,9 +205,18 @@ public class ScheduleController {
      * GET /api/schedules/consultant/{consultantId}/my-schedules
      */
     @GetMapping("/consultant/{consultantId}/my-schedules")
-    public ResponseEntity<List<ScheduleResponseDto>> getMySchedules(@PathVariable Long consultantId) {
+    public ResponseEntity<List<ScheduleResponseDto>> getMySchedules(
+            @PathVariable Long consultantId,
+            @RequestParam(required = false) String userRole) {
         
-        log.info("📅 상담사 자신의 스케줄 조회: 상담사 {}", consultantId);
+        log.info("📅 상담사 자신의 스케줄 조회: 상담사 {}, 요청자 역할 {}", consultantId, userRole);
+        
+        // 관리자 권한 확인 (userRole이 제공된 경우에만)
+        if (userRole != null && !"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
+            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
+            log.warn("❌ 관리자 권한 없음: {}", userRole);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         
         try {
             List<Schedule> schedules = scheduleService.findByConsultantId(consultantId);
@@ -218,12 +240,53 @@ public class ScheduleController {
     // ==================== 스케줄 생성 ====================
 
     /**
+     * 현재 사용자 권한 확인 (디버깅용)
+     * GET /api/schedules/debug/user-role
+     */
+    @GetMapping("/debug/user-role")
+    public ResponseEntity<Map<String, Object>> debugUserRole(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            Map<String, Object> debugInfo = new HashMap<>();
+            debugInfo.put("userId", currentUser.getId());
+            debugInfo.put("username", currentUser.getUsername());
+            debugInfo.put("email", currentUser.getEmail());
+            debugInfo.put("role", currentUser.getRole());
+            debugInfo.put("roleName", currentUser.getRole().name());
+            debugInfo.put("roleDisplayName", currentUser.getRole().getDisplayName());
+            debugInfo.put("isAdmin", currentUser.getRole().isAdmin());
+            debugInfo.put("isBranchManager", currentUser.getRole().isBranchManager());
+            debugInfo.put("isHeadquartersAdmin", currentUser.getRole().isHeadquartersAdmin());
+            debugInfo.put("isBranchSuperAdmin", currentUser.getRole().isBranchSuperAdmin());
+            debugInfo.put("branchCode", currentUser.getBranchCode());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", debugInfo
+            ));
+        } catch (Exception e) {
+            log.error("❌ 사용자 권한 디버깅 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "사용자 권한 확인에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 상담사 스케줄 생성
      * POST /api/schedules/consultant
      */
     @PostMapping("/consultant")
     public ResponseEntity<Map<String, Object>> createConsultantSchedule(
-            @RequestBody ScheduleCreateDto scheduleDto) {
+            @RequestBody ScheduleCreateDto scheduleDto, HttpSession session) {
         
         log.info("📅 상담사 스케줄 생성 요청: 상담사 {}, 내담자 {}, 날짜 {}, 시간 {} - {}, 상담유형 {}", 
                 scheduleDto.getConsultantId(), scheduleDto.getClientId(), 
@@ -231,6 +294,41 @@ public class ScheduleController {
                 scheduleDto.getConsultationType());
         
         try {
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            log.info("🔍 현재 사용자 권한 확인: role={}, roleName={}, isAdmin={}, isBranchManager={}, isHeadquartersAdmin={}", 
+                currentUser.getRole(), currentUser.getRole().name(), currentUser.getRole().isAdmin(), 
+                currentUser.getRole().isBranchManager(), currentUser.getRole().isHeadquartersAdmin());
+            
+            // 관리자 권한 확인 (ADMIN, BRANCH_SUPER_ADMIN, HQ_ADMIN, SUPER_HQ_ADMIN, BRANCH_MANAGER)
+            UserRole userRole = currentUser.getRole();
+            boolean isAdmin = userRole == UserRole.ADMIN;
+            boolean isBranchSuperAdmin = userRole == UserRole.BRANCH_SUPER_ADMIN;
+            boolean isHqAdmin = userRole == UserRole.HQ_ADMIN;
+            boolean isSuperHqAdmin = userRole == UserRole.SUPER_HQ_ADMIN;
+            boolean isBranchManager = userRole == UserRole.BRANCH_MANAGER;
+            boolean isSuperAdmin = userRole == UserRole.SUPER_ADMIN;
+            
+            boolean hasPermission = isAdmin || isBranchSuperAdmin || isHqAdmin || isSuperHqAdmin || isBranchManager || isSuperAdmin;
+            
+            log.info("🔍 권한 상세 확인: isAdmin={}, isBranchSuperAdmin={}, isHqAdmin={}, isSuperHqAdmin={}, isBranchManager={}, isSuperAdmin={}, hasPermission={}", 
+                isAdmin, isBranchSuperAdmin, isHqAdmin, isSuperHqAdmin, isBranchManager, isSuperAdmin, hasPermission);
+            
+            if (!hasPermission) {
+                log.warn("❌ 스케줄 등록 권한 없음: role={}, roleName={}", userRole, userRole.name());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "스케줄 등록 권한이 없습니다."
+                ));
+            }
             // 날짜와 시간 파싱
             LocalDate date = LocalDate.parse(scheduleDto.getDate());
             LocalTime startTime = LocalTime.parse(scheduleDto.getStartTime());
@@ -259,6 +357,10 @@ public class ScheduleController {
                 return ResponseEntity.badRequest().body(response);
             }
             
+            // 세션에서 현재 사용자의 지점 정보 가져오기
+            String branchCode = currentUser != null ? currentUser.getBranchCode() : AdminConstants.DEFAULT_BRANCH_CODE;
+            log.info("🔧 스케줄 생성 지점코드: {}", branchCode);
+            
             Schedule schedule = scheduleService.createConsultantSchedule(
                 scheduleDto.getConsultantId(),
                 scheduleDto.getClientId(),
@@ -267,7 +369,8 @@ public class ScheduleController {
                 endTime,
                 scheduleDto.getTitle(),
                 scheduleDto.getDescription(),
-                scheduleDto.getConsultationType()
+                scheduleDto.getConsultationType(),
+                branchCode
             );
             
             Map<String, Object> response = Map.of(
@@ -365,7 +468,8 @@ public class ScheduleController {
         log.info("📊 관리자용 스케줄 통계 조회 요청: 역할 {}, 시작일: {}, 종료일: {}", userRole, startDate, endDate);
         
         // 관리자 권한 확인
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
+        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
+            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -390,7 +494,8 @@ public class ScheduleController {
         log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}", userRole);
         
         // 관리자 또는 상담사 권한 확인
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && !"CONSULTANT".equals(userRole)) {
+        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && !"CONSULTANT".equals(userRole) && 
+            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 접근 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -418,7 +523,8 @@ public class ScheduleController {
         log.info("👨‍⚕️ 상담사별 스케줄 조회: 상담사 {}, 요청자 역할 {}", consultantId, userRole);
         
         // 관리자 권한 확인 (userRole이 제공된 경우에만)
-        if (userRole != null && !"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
+        if (userRole != null && !"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
+            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -446,7 +552,8 @@ public class ScheduleController {
         log.info("👤 내담자별 스케줄 조회: 내담자 {}, 요청자 역할 {}", clientId, userRole);
         
         // 관리자 권한 확인
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
+        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
+            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -476,7 +583,8 @@ public class ScheduleController {
         log.info("✅ 예약 확정 요청: ID {}, 관리자 역할 {}", id, userRole);
         
         // 관리자 권한 확인
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
+        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
+            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
@@ -515,7 +623,8 @@ public class ScheduleController {
             @RequestParam String userRole) {
         log.info("🔄 자동 완료 처리 요청: 사용자 역할 {}", userRole);
         
-        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole)) {
+        if (!"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && 
+            !"BRANCH_SUPER_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
             log.warn("❌ 관리자 권한 없음: {}", userRole);
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));

@@ -245,7 +245,11 @@ export const getDashboardPath = (role) => {
     'CLIENT': '/client/dashboard',
     'CONSULTANT': '/consultant/dashboard',
     'ADMIN': '/admin/dashboard',
-    'SUPER_ADMIN': '/super_admin/dashboard'
+    'SUPER_ADMIN': '/super_admin/dashboard',
+    'HQ_ADMIN': '/hq_admin/dashboard',
+    'SUPER_HQ_ADMIN': '/super_hq_admin/dashboard',
+    'BRANCH_SUPER_ADMIN': '/branch_super_admin/dashboard',
+    'BRANCH_MANAGER': '/branch_manager/dashboard'
   };
   
   return roleMap[role.toUpperCase()] || '/client/dashboard';

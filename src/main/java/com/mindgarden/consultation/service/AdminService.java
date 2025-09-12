@@ -157,6 +157,7 @@ public interface AdminService {
      * 상담사별 매핑 목록 조회
      */
     List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId);
+    List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId, String branchCode);
 
     /**
      * 내담자별 매핑 목록 조회

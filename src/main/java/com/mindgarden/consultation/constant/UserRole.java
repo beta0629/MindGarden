@@ -15,11 +15,23 @@ public enum UserRole {
     // 상담사 역할
     CONSULTANT("상담사"),
     
-    // 관리자 역할
-    ADMIN("관리자"),
+    // 헤드쿼터 관리자 역할
+    HQ_ADMIN("헤드쿼터어드민"),
     
-    // 최고 관리자 역할
-    SUPER_ADMIN("최고관리자");
+    // 수퍼 헤드쿼터 관리자 역할
+    SUPER_HQ_ADMIN("수퍼헤드쿼터어드민"),
+    
+    // 지점 수퍼 관리자 역할
+    BRANCH_SUPER_ADMIN("브런치수퍼어드민"),
+    
+    // 지점 관리자 역할
+    ADMIN("어드민"),
+    
+    // 지점장 역할
+    BRANCH_MANAGER("지점장"),
+    
+    // 본사 최고 관리자 역할 (기존 호환성)
+    SUPER_ADMIN("본사최고관리자");
     
     private final String displayName;
     
@@ -35,14 +47,47 @@ public enum UserRole {
         return this.name();
     }
     
-    // 관리자 역할인지 확인
-    public boolean isAdmin() {
-        return this == ADMIN || this == SUPER_ADMIN;
+    // 헤드쿼터 관리자 역할인지 확인
+    public boolean isHeadquartersAdmin() {
+        return this == HQ_ADMIN || this == SUPER_HQ_ADMIN;
     }
     
-    // 수퍼어드민 역할인지 확인
+    // 수퍼 헤드쿼터 관리자 역할인지 확인
+    public boolean isSuperHeadquartersAdmin() {
+        return this == SUPER_HQ_ADMIN;
+    }
+    
+    // 지점 관리자 역할인지 확인
+    public boolean isBranchAdmin() {
+        return this == BRANCH_MANAGER || this == BRANCH_SUPER_ADMIN;
+    }
+    
+    // 지점장 역할인지 확인
+    public boolean isBranchManager() {
+        return this == BRANCH_MANAGER;
+    }
+    
+    // 지점 최고관리자 역할인지 확인
+    public boolean isBranchSuperAdmin() {
+        return this == BRANCH_SUPER_ADMIN;
+    }
+    
+    // 지점 관리 권한이 있는지 확인 (지점장, 지점최고관리자, 본사관리자, 본사최고관리자)
+    public boolean hasBranchManagementAccess() {
+        return this == BRANCH_MANAGER || this == BRANCH_SUPER_ADMIN || 
+               this == ADMIN || this == SUPER_ADMIN;
+    }
+    
+    // 본사 최고관리자 역할인지 확인
     public boolean isSuperAdmin() {
         return this == SUPER_ADMIN;
+    }
+    
+    // 모든 관리자 역할인지 확인
+    public boolean isAdmin() {
+        return this == HQ_ADMIN || this == SUPER_HQ_ADMIN ||
+               this == BRANCH_SUPER_ADMIN || this == ADMIN || this == BRANCH_MANAGER ||
+               this == SUPER_ADMIN; // 기존 호환성
     }
     
     // 수퍼어드민 또는 일반 관리자인지 확인
@@ -65,9 +110,24 @@ public enum UserRole {
         return values();
     }
     
-    // 관리자 역할 목록 반환
-    public static UserRole[] getAdminRoles() {
+    // 본사 관리자 역할 목록 반환
+    public static UserRole[] getHeadquartersAdminRoles() {
         return new UserRole[]{ADMIN, SUPER_ADMIN};
+    }
+    
+    // 지점 관리자 역할 목록 반환
+    public static UserRole[] getBranchAdminRoles() {
+        return new UserRole[]{BRANCH_MANAGER, BRANCH_SUPER_ADMIN};
+    }
+    
+    // 지점 관리 역할 목록 반환 (모든 지점 관리 권한)
+    public static UserRole[] getBranchManagementRoles() {
+        return new UserRole[]{BRANCH_MANAGER, BRANCH_SUPER_ADMIN, ADMIN, SUPER_ADMIN};
+    }
+    
+    // 모든 관리자 역할 목록 반환
+    public static UserRole[] getAdminRoles() {
+        return new UserRole[]{ADMIN, SUPER_ADMIN, BRANCH_MANAGER, BRANCH_SUPER_ADMIN};
     }
     
     // 상담사 역할 목록 반환
@@ -113,6 +173,23 @@ public enum UserRole {
                 case "SUPERADMIN":
                 case "ROOT":
                     return SUPER_ADMIN;
+                case "HQ_ADMIN":
+                case "HEADQUARTERS_ADMIN":
+                case "HEADQUARTERSADMIN":
+                    return HQ_ADMIN;
+                case "SUPER_HQ_ADMIN":
+                case "SUPER_HEADQUARTERS_ADMIN":
+                case "SUPERHEADQUARTERSADMIN":
+                case "HEADQUARTERS_SUPER_ADMIN":
+                    return SUPER_HQ_ADMIN;
+                case "BRANCH_MANAGER":
+                case "BRANCHMANAGER":
+                case "MANAGER":
+                    return BRANCH_MANAGER;
+                case "BRANCH_SUPER_ADMIN":
+                case "BRANCHSUPERADMIN":
+                case "BRANCH_SUPERADMIN":
+                    return BRANCH_SUPER_ADMIN;
                 default:
                     // 알 수 없는 역할은 기본값으로
                     System.err.println("알 수 없는 역할: " + role + " -> CLIENT로 변환");

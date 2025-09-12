@@ -66,11 +66,28 @@ public class ErpController {
      * 모든 활성화된 아이템 조회
      */
     @GetMapping("/items")
-    public ResponseEntity<Map<String, Object>> getAllItems() {
+    public ResponseEntity<Map<String, Object>> getAllItems(HttpSession session) {
         try {
             log.info("모든 아이템 조회 요청");
             
-            List<Item> items = erpService.getAllActiveItems();
+            // 현재 로그인한 사용자의 지점코드 확인
+            User currentUser = (User) session.getAttribute("user");
+            String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+            log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+            
+            List<Item> allItems = erpService.getAllActiveItems();
+            
+            // 지점코드로 필터링
+            List<Item> items = allItems.stream()
+                .filter(item -> {
+                    if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
+                        return true; // 지점코드가 없으면 모든 아이템 조회
+                    }
+                    return currentBranchCode.equals(item.getBranchCode());
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            log.info("🔍 아이템 목록 조회 완료 - 전체: {}, 필터링 후: {}", allItems.size(), items.size());
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

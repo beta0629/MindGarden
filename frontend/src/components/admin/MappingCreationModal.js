@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { notification } from '../../utils/scripts';
+import { useSession } from '../../hooks/useSession';
 import { API_BASE_URL } from '../../constants/api';
 import { 
     MAPPING_CREATION_STEPS, 
@@ -25,6 +26,7 @@ import './MappingCreationModal.css';
  * @since 2024-12-19
  */
 const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
+    const { user } = useSession();
     const [step, setStep] = useState(MAPPING_CREATION_STEPS.CONSULTANT_SELECTION);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [selectedClient, setSelectedClient] = useState(null);
@@ -212,21 +214,21 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             }
 
             // 결제 방법 코드 로드
-            const paymentResponse = await apiGet('/api/admin/common-codes/values?groupCode=PAYMENT_METHOD');
+            const paymentResponse = await apiGet(`/api/admin/common-codes/values?groupCode=PAYMENT_METHOD&userRole=${user?.role || 'BRANCH_SUPER_ADMIN'}`);
             if (paymentResponse && paymentResponse.length > 0) {
                 const paymentOpts = paymentResponse.map(code => ({
-                    value: code.code,
-                    label: code.name
+                    value: code.codeValue,
+                    label: code.codeLabel
                 }));
                 setPaymentMethodOptions(paymentOpts);
             }
 
             // 담당 업무 코드 로드
-            const responsibilityResponse = await apiGet('/api/admin/common-codes/values?groupCode=RESPONSIBILITY');
+            const responsibilityResponse = await apiGet(`/api/admin/common-codes/values?groupCode=RESPONSIBILITY&userRole=${user?.role || 'BRANCH_SUPER_ADMIN'}`);
             if (responsibilityResponse && responsibilityResponse.length > 0) {
                 const responsibilityOpts = responsibilityResponse.map(code => ({
-                    value: code.code,
-                    label: code.name
+                    value: code.codeValue,
+                    label: code.codeLabel
                 }));
                 setResponsibilityOptions(responsibilityOpts);
             }

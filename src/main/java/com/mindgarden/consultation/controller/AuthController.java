@@ -7,16 +7,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.AuthRequest;
 import com.mindgarden.consultation.dto.AuthResponse;
+import com.mindgarden.consultation.dto.BranchLoginRequest;
+import com.mindgarden.consultation.dto.BranchLoginResponse;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.UserSocialAccount;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AuthService;
+import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.UserSessionService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +40,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final AuthService authService;
+    private final BranchService branchService;
     private final UserSessionService userSessionService;
     
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
@@ -89,6 +95,28 @@ public class AuthController {
             userInfo.put("name", decryptedName);
             userInfo.put("nickname", decryptedNickname);
             userInfo.put("role", user.getRole());
+            
+            // 지점 정보 추가
+            if (user.getBranch() != null) {
+                userInfo.put("branchId", user.getBranch().getId());
+                userInfo.put("branchName", user.getBranch().getBranchName());
+                userInfo.put("branchCode", user.getBranch().getBranchCode());
+                userInfo.put("needsBranchMapping", false);
+            } else {
+                // 지점이 없는 경우
+                userInfo.put("branchId", null);
+                userInfo.put("branchName", null);
+                userInfo.put("branchCode", null);
+                
+                // 지점 매핑 필요 조건:
+                // 1. 관리자/지점 관리자 역할이거나
+                // 2. 상담사 역할이거나
+                // 3. SNS 로그인한 사용자 (소셜 계정이 있는 경우)
+                boolean isSocialUser = !userSocialAccountRepository.findByUserIdAndIsDeletedFalse(user.getId()).isEmpty();
+                boolean needsMapping = user.getRole().isAdmin() || user.getRole().isBranchManager() || 
+                                     user.getRole().isConsultant() || isSocialUser;
+                userInfo.put("needsBranchMapping", needsMapping);
+            }
             
             // 소셜 계정 정보 조회하여 이미지 타입 구분
             List<UserSocialAccount> socialAccounts = userSocialAccountRepository.findByUserIdAndIsDeletedFalse(user.getId());
@@ -351,17 +379,20 @@ public class AuthController {
             System.out.println("🔐 authenticateWithSession 호출 완료: success=" + authResponse.isSuccess());
             
             if (authResponse.isSuccess()) {
-                // 사용자 정보 세션에 저장 (UserDto -> User 변환)
-                User sessionUser = new User();
-                sessionUser.setId(authResponse.getUser().getId());
-                sessionUser.setEmail(authResponse.getUser().getEmail());
-                sessionUser.setName(authResponse.getUser().getName());
-                sessionUser.setRole(UserRole.fromString(authResponse.getUser().getRole()));
+                // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장
+                User sessionUser = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
                 
                 SessionUtils.setCurrentUser(session, sessionUser);
                 
                 // 데이터베이스 세션 ID를 HTTP 세션에 저장 (중복 로그인 체크용)
                 session.setAttribute("sessionId", sessionId);
+                
+                // 사용자의 브랜치 코드를 세션에 저장
+                if (sessionUser.getBranchCode() != null) {
+                    session.setAttribute("branchCode", sessionUser.getBranchCode());
+                    log.info("🔧 세션에 브랜치 코드 저장: {}", sessionUser.getBranchCode());
+                }
                 
                 log.info("✅ 로그인 성공: {}", request.getEmail());
                 
@@ -904,6 +935,538 @@ public class AuthController {
         } catch (Exception e) {
             log.error("AWS SNS 발송 실패: {}", e.getMessage());
             return false;
+        }
+    }
+    
+    // === 지점별 로그인 API ===
+    
+    /**
+     * 지점별 로그인 API
+     */
+    @PostMapping("/branch-login")
+    public ResponseEntity<?> branchLogin(@RequestBody BranchLoginRequest request, HttpSession session, 
+                                       jakarta.servlet.http.HttpServletRequest httpRequest) {
+        try {
+            log.info("🏢 지점별 로그인 시도: email={}, branchCode={}, loginType={}", 
+                request.getEmail(), request.getBranchCode(), request.getLoginType());
+            
+            // 클라이언트 정보 추출
+            String clientIp = getClientIpAddress(httpRequest);
+            String userAgent = httpRequest.getHeader("User-Agent");
+            String sessionId = session.getId();
+            
+            // 지점 코드 유효성 검사
+            if (request.getLoginType() == BranchLoginRequest.LoginType.BRANCH) {
+                if (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty()) {
+                    return ResponseEntity.badRequest().body(BranchLoginResponse.builder()
+                        .success(false)
+                        .message("지점 로그인시 지점 코드는 필수입니다.")
+                        .build());
+                }
+                
+                // 지점 존재 여부 확인
+                try {
+                    branchService.getBranchByCode(request.getBranchCode());
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest().body(BranchLoginResponse.builder()
+                        .success(false)
+                        .message("존재하지 않는 지점 코드입니다: " + request.getBranchCode())
+                        .build());
+                }
+            }
+            
+            // 기존 인증 로직 사용
+            AuthResponse authResponse = authService.authenticateWithSession(
+                request.getEmail(), 
+                request.getPassword(), 
+                sessionId, 
+                clientIp, 
+                userAgent
+            );
+            
+            if (authResponse.isSuccess()) {
+                User user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                
+                // 지점 권한 검사
+                if (request.getLoginType() == BranchLoginRequest.LoginType.BRANCH) {
+                    // 지점 로그인인 경우, 사용자가 해당 지점에 소속되어 있는지 확인
+                    if (user.getBranch() == null || !user.getBranch().getBranchCode().equals(request.getBranchCode())) {
+                        return ResponseEntity.badRequest().body(BranchLoginResponse.builder()
+                            .success(false)
+                            .message("해당 지점에 소속되지 않은 사용자입니다.")
+                            .build());
+                    }
+                } else if (request.getLoginType() == BranchLoginRequest.LoginType.HEADQUARTERS) {
+                    // 본사 로그인인 경우, 본사 관리자 역할인지 확인
+                    if (!user.getRole().isHeadquartersAdmin()) {
+                        return ResponseEntity.badRequest().body(BranchLoginResponse.builder()
+                            .success(false)
+                            .message("본사 로그인은 본사 관리자만 가능합니다.")
+                            .build());
+                    }
+                }
+                
+                // 사용자 정보 세션에 저장
+                SessionUtils.setCurrentUser(session, user);
+                session.setAttribute("sessionId", sessionId);
+                session.setAttribute("loginType", request.getLoginType().name());
+                session.setAttribute("branchCode", request.getBranchCode());
+                
+                log.info("✅ 지점별 로그인 성공: email={}, branchCode={}, loginType={}", 
+                    request.getEmail(), request.getBranchCode(), request.getLoginType());
+                
+                // 응답 데이터 구성
+                BranchLoginResponse.UserInfo userInfo = BranchLoginResponse.UserInfo.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .name(user.getName())
+                    .role(user.getRole())
+                    .roleDescription(user.getRole().getDisplayName())
+                    .branchId(user.getBranch() != null ? user.getBranch().getId() : null)
+                    .branchName(user.getBranch() != null ? user.getBranch().getBranchName() : null)
+                    .branchCode(user.getBranch() != null ? user.getBranch().getBranchCode() : null)
+                    .build();
+                
+                BranchLoginResponse.BranchInfo branchInfo = null;
+                if (user.getBranch() != null) {
+                    try {
+                        var branchStats = branchService.getBranchStatistics(user.getBranch().getId());
+                        branchInfo = BranchLoginResponse.BranchInfo.builder()
+                            .id(user.getBranch().getId())
+                            .branchCode(user.getBranch().getBranchCode())
+                            .branchName(user.getBranch().getBranchName())
+                            .branchType(user.getBranch().getBranchType().name())
+                            .branchStatus(user.getBranch().getBranchStatus().name())
+                            .fullAddress(user.getBranch().getFullAddress())
+                            .phoneNumber(user.getBranch().getPhoneNumber())
+                            .managerName(user.getBranch().getManager() != null ? user.getBranch().getManager().getUsername() : null)
+                            .consultantCount((Integer) branchStats.get("consultantCount"))
+                            .clientCount((Integer) branchStats.get("clientCount"))
+                            .maxConsultants(user.getBranch().getMaxConsultants())
+                            .maxClients(user.getBranch().getMaxClients())
+                            .build();
+                    } catch (Exception e) {
+                        log.warn("지점 통계 조회 실패: {}", e.getMessage());
+                    }
+                }
+                
+                return ResponseEntity.ok(BranchLoginResponse.builder()
+                    .success(true)
+                    .message("로그인 성공")
+                    .sessionId(sessionId)
+                    .user(userInfo)
+                    .branch(branchInfo)
+                    .build());
+                
+            } else if (authResponse.isRequiresConfirmation()) {
+                return ResponseEntity.badRequest().body(BranchLoginResponse.builder()
+                    .success(false)
+                    .message(authResponse.getMessage())
+                    .requiresConfirmation(true)
+                    .responseType("duplicate_login_confirmation")
+                    .build());
+            } else {
+                return ResponseEntity.badRequest().body(BranchLoginResponse.builder()
+                    .success(false)
+                    .message(authResponse.getMessage())
+                    .build());
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 지점별 로그인 에러: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(BranchLoginResponse.builder()
+                .success(false)
+                .message("로그인 중 오류가 발생했습니다: " + e.getMessage())
+                .build());
+        }
+    }
+    
+    /**
+     * 지점 목록 조회 API (로그인 페이지용)
+     */
+    @GetMapping("/branches")
+    public ResponseEntity<?> getBranchesForLogin() {
+        try {
+            log.info("🏢 로그인용 지점 목록 조회 요청");
+            
+            var branches = branchService.getAllActiveBranches();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "branches", branches
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 지점 목록 조회 에러: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "지점 목록 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 지점별 로그인 페이지용 지점 정보 조회 API
+     * URL: /api/auth/branch/{branchCode}
+     */
+    @GetMapping("/branch/{branchCode}")
+    public ResponseEntity<?> getBranchInfoForLogin(@PathVariable String branchCode) {
+        try {
+            log.info("🏢 지점별 로그인 페이지용 지점 정보 조회: branchCode={}", branchCode);
+            
+            // 지점 정보 조회
+            var branch = branchService.getBranchByCode(branchCode);
+            if (branch == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "존재하지 않는 지점 코드입니다: " + branchCode
+                ));
+            }
+            
+            // 지점 통계 정보 조회
+            var branchStats = branchService.getBranchStatistics(branch.getId());
+            
+            Map<String, Object> branchInfo = new HashMap<>();
+            branchInfo.put("id", branch.getId());
+            branchInfo.put("branchCode", branch.getBranchCode());
+            branchInfo.put("branchName", branch.getBranchName());
+            branchInfo.put("branchType", branch.getBranchType().name());
+            branchInfo.put("branchStatus", branch.getBranchStatus().name());
+            branchInfo.put("fullAddress", branch.getFullAddress());
+            branchInfo.put("phoneNumber", branch.getPhoneNumber());
+            branchInfo.put("managerName", branch.getManager() != null ? branch.getManager().getUsername() : null);
+            branchInfo.put("consultantCount", branchStats.get("consultantCount"));
+            branchInfo.put("clientCount", branchStats.get("clientCount"));
+            branchInfo.put("maxConsultants", branch.getMaxConsultants());
+            branchInfo.put("maxClients", branch.getMaxClients());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "branch", branchInfo
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 지점 정보 조회 에러: branchCode={}, error={}", branchCode, e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "지점 정보 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 지점별 로그인 API (URL 파라미터 방식)
+     * URL: /api/auth/branch/{branchCode}/login
+     */
+    @PostMapping("/branch/{branchCode}/login")
+    public ResponseEntity<?> branchLoginWithUrl(@PathVariable String branchCode, 
+                                              @RequestBody Map<String, String> loginRequest, 
+                                              HttpSession session, 
+                                              jakarta.servlet.http.HttpServletRequest httpRequest) {
+        try {
+            String email = loginRequest.get("email");
+            String password = loginRequest.get("password");
+            
+            if (email == null || password == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "이메일과 비밀번호를 입력해주세요."
+                ));
+            }
+            
+            log.info("🏢 지점별 로그인 시도 (URL 방식): email={}, branchCode={}", email, branchCode);
+            
+            // 클라이언트 정보 추출
+            String clientIp = getClientIpAddress(httpRequest);
+            String userAgent = httpRequest.getHeader("User-Agent");
+            String sessionId = session.getId();
+            
+            // 지점 존재 여부 확인
+            try {
+                var branch = branchService.getBranchByCode(branchCode);
+                if (branch == null) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "존재하지 않는 지점 코드입니다: " + branchCode
+                    ));
+                }
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "존재하지 않는 지점 코드입니다: " + branchCode
+                ));
+            }
+            
+            // 기존 인증 로직 사용
+            AuthResponse authResponse = authService.authenticateWithSession(
+                email, password, sessionId, clientIp, userAgent
+            );
+            
+            if (authResponse.isSuccess()) {
+                User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                
+                // 사용자가 해당 지점에 소속되어 있는지 확인
+                if (user.getBranch() == null || !user.getBranch().getBranchCode().equals(branchCode)) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "해당 지점에 소속되지 않은 사용자입니다."
+                    ));
+                }
+                
+                // 사용자 정보 세션에 저장
+                SessionUtils.setCurrentUser(session, user);
+                session.setAttribute("sessionId", sessionId);
+                session.setAttribute("loginType", "BRANCH");
+                session.setAttribute("branchCode", branchCode);
+                
+                log.info("✅ 지점별 로그인 성공 (URL 방식): email={}, branchCode={}", email, branchCode);
+                
+                // 응답 데이터 구성
+                Map<String, Object> userInfo = new HashMap<>();
+                userInfo.put("id", user.getId());
+                userInfo.put("username", user.getUsername());
+                userInfo.put("email", user.getEmail());
+                userInfo.put("name", user.getName());
+                userInfo.put("role", user.getRole());
+                userInfo.put("roleDescription", user.getRole().getDisplayName());
+                userInfo.put("branchId", user.getBranch().getId());
+                userInfo.put("branchName", user.getBranch().getBranchName());
+                userInfo.put("branchCode", user.getBranch().getBranchCode());
+                
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "로그인 성공",
+                    "sessionId", sessionId,
+                    "user", userInfo
+                ));
+                
+            } else if (authResponse.isRequiresConfirmation()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", authResponse.getMessage(),
+                    "requiresConfirmation", true,
+                    "responseType", "duplicate_login_confirmation"
+                ));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", authResponse.getMessage()
+                ));
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 지점별 로그인 에러 (URL 방식): branchCode={}, error={}", branchCode, e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "로그인 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 본사 로그인 페이지용 정보 조회 API
+     * URL: /api/auth/headquarters
+     */
+    @GetMapping("/headquarters")
+    public ResponseEntity<?> getHeadquartersInfoForLogin() {
+        try {
+            log.info("🏢 본사 로그인 페이지용 정보 조회 요청");
+            
+            // 본사 정보 (시스템 전체 통계)
+            var allBranchesStats = branchService.getAllBranchesStatistics();
+            
+            Map<String, Object> headquartersInfo = new HashMap<>();
+            headquartersInfo.put("type", "HEADQUARTERS");
+            headquartersInfo.put("name", "본사");
+            headquartersInfo.put("description", "전체 지점 관리 시스템");
+            headquartersInfo.put("totalBranches", allBranchesStats.get("totalBranches"));
+            headquartersInfo.put("activeBranches", allBranchesStats.get("activeBranches"));
+            headquartersInfo.put("totalConsultants", allBranchesStats.get("totalConsultants"));
+            headquartersInfo.put("totalClients", allBranchesStats.get("totalClients"));
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "headquarters", headquartersInfo
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 본사 정보 조회 에러: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "본사 정보 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 본사 로그인 API
+     * URL: /api/auth/headquarters/login
+     */
+    @PostMapping("/headquarters/login")
+    public ResponseEntity<?> headquartersLogin(@RequestBody Map<String, String> loginRequest, 
+                                             HttpSession session, 
+                                             jakarta.servlet.http.HttpServletRequest httpRequest) {
+        try {
+            String email = loginRequest.get("email");
+            String password = loginRequest.get("password");
+            
+            if (email == null || password == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "이메일과 비밀번호를 입력해주세요."
+                ));
+            }
+            
+            log.info("🏢 본사 로그인 시도: email={}", email);
+            
+            // 클라이언트 정보 추출
+            String clientIp = getClientIpAddress(httpRequest);
+            String userAgent = httpRequest.getHeader("User-Agent");
+            String sessionId = session.getId();
+            
+            // 기존 인증 로직 사용
+            AuthResponse authResponse = authService.authenticateWithSession(
+                email, password, sessionId, clientIp, userAgent
+            );
+            
+            if (authResponse.isSuccess()) {
+                User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                
+                // 본사 관리자 역할인지 확인
+                if (!user.getRole().isHeadquartersAdmin()) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "본사 로그인은 본사 관리자만 가능합니다."
+                    ));
+                }
+                
+                // 사용자 정보 세션에 저장
+                SessionUtils.setCurrentUser(session, user);
+                session.setAttribute("sessionId", sessionId);
+                session.setAttribute("loginType", "HEADQUARTERS");
+                session.setAttribute("branchCode", null);
+                
+                log.info("✅ 본사 로그인 성공: email={}", email);
+                
+                // 응답 데이터 구성
+                Map<String, Object> userInfo = new HashMap<>();
+                userInfo.put("id", user.getId());
+                userInfo.put("username", user.getUsername());
+                userInfo.put("email", user.getEmail());
+                userInfo.put("name", user.getName());
+                userInfo.put("role", user.getRole());
+                userInfo.put("roleDescription", user.getRole().getDisplayName());
+                userInfo.put("branchId", null);
+                userInfo.put("branchName", null);
+                userInfo.put("branchCode", null);
+                
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "로그인 성공",
+                    "sessionId", sessionId,
+                    "user", userInfo
+                ));
+                
+            } else if (authResponse.isRequiresConfirmation()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", authResponse.getMessage(),
+                    "requiresConfirmation", true,
+                    "responseType", "duplicate_login_confirmation"
+                ));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", authResponse.getMessage()
+                ));
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 본사 로그인 에러: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "로그인 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 사용자 지점 매핑 API
+     */
+    @PostMapping("/map-branch")
+    @Transactional
+    public ResponseEntity<?> mapUserToBranch(@RequestBody Map<String, String> request, HttpSession session) {
+        try {
+            String branchCode = request.get("branchCode");
+            if (branchCode == null || branchCode.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "지점 코드를 입력해주세요."
+                ));
+            }
+            
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 지점 존재 여부 확인
+            try {
+                log.info("🔍 지점 조회 시도: branchCode={}", branchCode);
+                var branch = branchService.getBranchByCode(branchCode);
+                log.info("✅ 지점 조회 성공: branchId={}, branchName={}", branch.getId(), branch.getBranchName());
+                if (branch == null) {
+                    log.warn("❌ 지점이 null입니다: branchCode={}", branchCode);
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "존재하지 않는 지점 코드입니다: " + branchCode
+                    ));
+                }
+                
+                // 사용자를 다시 조회하여 동시성 문제 방지
+                User userToUpdate = userRepository.findById(currentUser.getId())
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                
+                // 사용자에 지점 할당
+                userToUpdate.setBranch(branch);
+                userToUpdate.setBranchCode(branchCode);
+                userRepository.save(userToUpdate);
+                
+                // 세션 업데이트
+                SessionUtils.setCurrentUser(session, userToUpdate);
+                
+                log.info("✅ 사용자 지점 매핑 완료: userId={}, branchCode={}, branchName={}", 
+                    userToUpdate.getId(), branchCode, branch.getBranchName());
+                
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "지점이 성공적으로 매핑되었습니다.",
+                    "branchId", branch.getId(),
+                    "branchName", branch.getBranchName(),
+                    "branchCode", branch.getBranchCode()
+                ));
+                
+            } catch (Exception e) {
+                log.error("❌ 지점 조회 실패: branchCode={}, error={}", branchCode, e.getMessage());
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "존재하지 않는 지점 코드입니다: " + branchCode
+                ));
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 지점 매핑 실패: error={}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "지점 매핑 중 오류가 발생했습니다: " + e.getMessage()
+            ));
         }
     }
 }

@@ -8,11 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.mindgarden.consultation.constant.AdminConstants;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
 import com.mindgarden.consultation.dto.ConsultantRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantTransferRequest;
+import com.mindgarden.consultation.entity.Branch;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
@@ -22,6 +24,7 @@ import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.AdminService;
+import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.service.ConsultationMessageService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
@@ -44,6 +47,7 @@ public class AdminServiceImpl implements AdminService {
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final ConsultantAvailabilityService consultantAvailabilityService;
     private final ConsultationMessageService consultationMessageService;
+    private final BranchService branchService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
@@ -52,6 +56,19 @@ public class AdminServiceImpl implements AdminService {
         if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
             encryptedPhone = encryptionUtil.encrypt(dto.getPhone());
             log.info("🔐 관리자 상담사 등록 시 전화번호 암호화 완료: {}", maskPhone(dto.getPhone()));
+        }
+        
+        // 지점코드 처리
+        Branch branch = null;
+        if (dto.getBranchCode() != null && !dto.getBranchCode().trim().isEmpty()) {
+            try {
+                branch = branchService.getBranchByCode(dto.getBranchCode());
+                log.info("🔐 관리자 상담사 등록 시 지점 할당: branchCode={}, branchName={}", 
+                    dto.getBranchCode(), branch.getBranchName());
+            } catch (Exception e) {
+                log.error("❌ 지점 코드 처리 중 오류: branchCode={}, error={}", dto.getBranchCode(), e.getMessage());
+                throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + dto.getBranchCode());
+            }
         }
         
         // 같은 username을 가진 삭제된 상담사가 있는지 확인
@@ -66,6 +83,8 @@ public class AdminServiceImpl implements AdminService {
             consultant.setPhone(encryptedPhone);
             consultant.setIsActive(true); // 활성화
             consultant.setSpecialization(dto.getSpecialization());
+            consultant.setBranch(branch); // 지점 할당
+            consultant.setBranchCode(dto.getBranchCode()); // 지점코드 저장
             
             // Consultant로 캐스팅하여 certification 설정
             if (consultant instanceof Consultant) {
@@ -83,6 +102,8 @@ public class AdminServiceImpl implements AdminService {
             consultant.setPhone(encryptedPhone);
             consultant.setRole(UserRole.CONSULTANT);
             consultant.setIsActive(true);
+            consultant.setBranch(branch); // 지점 할당
+            consultant.setBranchCode(dto.getBranchCode()); // 지점코드 저장
             
             // 상담사 전용 정보 설정
             consultant.setSpecialty(dto.getSpecialization());
@@ -101,6 +122,19 @@ public class AdminServiceImpl implements AdminService {
             log.info("🔐 관리자 내담자 등록 시 전화번호 암호화 완료: {}", maskPhone(dto.getPhone()));
         }
         
+        // 지점코드 처리
+        Branch branch = null;
+        if (dto.getBranchCode() != null && !dto.getBranchCode().trim().isEmpty()) {
+            try {
+                branch = branchService.getBranchByCode(dto.getBranchCode());
+                log.info("🔐 관리자 내담자 등록 시 지점 할당: branchCode={}, branchName={}", 
+                    dto.getBranchCode(), branch.getBranchName());
+            } catch (Exception e) {
+                log.error("❌ 지점 코드 처리 중 오류: branchCode={}, error={}", dto.getBranchCode(), e.getMessage());
+                throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + dto.getBranchCode());
+            }
+        }
+        
         // User 테이블에 CLIENT role로 저장
         User clientUser = User.builder()
                 .username(dto.getUsername())
@@ -110,6 +144,8 @@ public class AdminServiceImpl implements AdminService {
                 .phone(encryptedPhone)
                 .role(UserRole.CLIENT)
                 .isActive(true)
+                .branch(branch) // 지점 할당
+                .branchCode(dto.getBranchCode()) // 지점코드 저장
                 .build();
         
         User savedUser = userRepository.save(clientUser);
@@ -125,6 +161,7 @@ public class AdminServiceImpl implements AdminService {
         client.setIsDeleted(!savedUser.getIsActive());
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
+        client.setBranchCode(dto.getBranchCode()); // 지점코드 저장
         
         return client;
     }
@@ -163,6 +200,17 @@ public class AdminServiceImpl implements AdminService {
         mapping.setNotes(dto.getNotes());
         mapping.setResponsibility(dto.getResponsibility());
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
+        
+        // 지점코드 설정 (상담사의 지점코드 우선, 없으면 내담자의 지점코드 사용)
+        String branchCode = consultant.getBranchCode();
+        if (branchCode == null || branchCode.trim().isEmpty()) {
+            branchCode = clientUser.getBranchCode();
+        }
+        if (branchCode == null || branchCode.trim().isEmpty()) {
+            branchCode = AdminConstants.DEFAULT_BRANCH_CODE; // 기본값
+        }
+        mapping.setBranchCode(branchCode);
+        log.info("🔧 매핑 지점코드 설정: {}", branchCode);
 
         return mappingRepository.save(mapping);
     }
@@ -327,6 +375,7 @@ public class AdminServiceImpl implements AdminService {
                 
                 consultantData.put("role", consultant.getRole());
                 consultantData.put("isActive", consultant.getIsActive());
+                consultantData.put("branchCode", consultant.getBranchCode());
                 consultantData.put("createdAt", consultant.getCreatedAt());
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
                 
@@ -603,6 +652,7 @@ public class AdminServiceImpl implements AdminService {
                 
                 client.setBirthDate(user.getBirthDate());
                 client.setGender(user.getGender());
+                client.setBranchCode(user.getBranchCode()); // 지점코드 설정
                 client.setIsDeleted(user.getIsDeleted()); // isDeleted 필드 직접 사용
                 client.setCreatedAt(user.getCreatedAt());
                 client.setUpdatedAt(user.getUpdatedAt());
@@ -645,6 +695,7 @@ public class AdminServiceImpl implements AdminService {
                 clientData.put("isDeleted", user.getIsDeleted());
                 clientData.put("createdAt", user.getCreatedAt());
                 clientData.put("updatedAt", user.getUpdatedAt());
+                clientData.put("branchCode", user.getBranchCode()); // 브랜치 코드 추가
                 
                 // 해당 내담자의 매핑 정보들
                 List<Map<String, Object>> mappings = allMappings.stream()
@@ -832,6 +883,29 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId) {
         List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
+        
+        // 매핑된 사용자 정보 복호화
+        for (ConsultantClientMapping mapping : mappings) {
+            if (mapping.getConsultant() != null) {
+                decryptUserPersonalData(mapping.getConsultant());
+            }
+            if (mapping.getClient() != null) {
+                decryptUserPersonalData(mapping.getClient());
+            }
+        }
+        
+        return mappings;
+    }
+
+    @Override
+    public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId, String branchCode) {
+        log.info("🔍 상담사별 매핑 조회 - 상담사 ID: {}, 브랜치 코드: {}", consultantId, branchCode);
+        
+        // 브랜치 코드로 필터링된 매핑 조회
+        List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndBranchCodeAndStatusNot(
+            consultantId, branchCode, ConsultantClientMapping.MappingStatus.TERMINATED);
+        
+        log.info("🔍 브랜치 코드 필터링된 매핑 수: {}", mappings.size());
         
         // 매핑된 사용자 정보 복호화
         for (ConsultantClientMapping mapping : mappings) {

@@ -142,7 +142,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date, 
-                                          LocalTime startTime, LocalTime endTime, String title, String description, String consultationType) {
+                                          LocalTime startTime, LocalTime endTime, String title, String description, String consultationType, String branchCode) {
         log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}", consultantId, clientId, date, consultationType);
         
         // 1. 매핑 상태 검증 (임시로 우회)
@@ -172,6 +172,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setScheduleType(ScheduleConstants.TYPE_CONSULTATION);
         schedule.setStatus(ScheduleConstants.STATUS_BOOKED);
         schedule.setConsultationType(consultationType); // 상담 유형 설정
+        schedule.setBranchCode(branchCode); // 지점코드 설정
         
         Schedule savedSchedule = scheduleRepository.save(schedule);
         
@@ -837,8 +838,9 @@ public class ScheduleServiceImpl implements ScheduleService {
      * 관리자 역할 여부 확인
      */
     private boolean isAdminRole(String userRole) {
-        return ScheduleConstants.ROLE_ADMIN.equals(userRole) || ScheduleConstants.ROLE_SUPER_ADMIN.equals(userRole);
+        return ScheduleConstants.ROLE_ADMIN.equals(userRole) || ScheduleConstants.ROLE_SUPER_ADMIN.equals(userRole) || "BRANCH_SUPER_ADMIN".equals(userRole);
     }
+    
 
     /**
      * 상담사 역할 여부 확인

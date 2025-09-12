@@ -5,6 +5,7 @@ import java.util.Map;
 import com.mindgarden.consultation.dto.CommonCodeDto;
 import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.service.CommonCodeService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,9 +40,16 @@ public class CommonCodeController {
      * 코드 그룹별 코드 값 조회 (기존 API 호환성)
      */
     @GetMapping("/values")
-    public ResponseEntity<?> getCodeValuesByGroup(@RequestParam String groupCode) {
+    public ResponseEntity<?> getCodeValuesByGroup(@RequestParam String groupCode, @RequestParam(required = false) String userRole) {
         try {
-            log.info("📋 코드 값 목록 조회: 그룹={}", groupCode);
+            log.info("📋 코드 값 목록 조회: 그룹={}, 요청자 역할={}", groupCode, userRole);
+            
+            // 관리자 권한 확인 (userRole이 제공된 경우에만)
+            if (userRole != null && !"ADMIN".equals(userRole) && !"SUPER_ADMIN".equals(userRole) && !"BRANCH_SUPER_ADMIN".equals(userRole)) {
+                log.warn("❌ 관리자 권한 없음: {}", userRole);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            
             List<CommonCode> commonCodes = commonCodeService.getCommonCodesByGroup(groupCode);
             return ResponseEntity.ok(commonCodes);
         } catch (Exception e) {

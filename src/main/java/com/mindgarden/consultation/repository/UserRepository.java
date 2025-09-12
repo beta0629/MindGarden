@@ -334,6 +334,21 @@ public interface UserRepository extends BaseRepository<User, Long> {
     Object[] getUserStatistics();
     
     /**
+     * 지점코드별 사용자 통계 정보 조회
+     */
+    @Query("SELECT " +
+           "COUNT(u) as totalUsers, " +
+           "COUNT(CASE WHEN u.role = 'CLIENT' THEN 1 END) as clientCount, " +
+           "COUNT(CASE WHEN u.role = 'CONSULTANT' THEN 1 END) as consultantCount, " +
+           "COUNT(CASE WHEN u.role = 'ADMIN' THEN 1 END) as adminCount, " +
+           "COUNT(CASE WHEN u.isActive = true THEN 1 END) as activeCount, " +
+           "COUNT(CASE WHEN u.isEmailVerified = true THEN 1 END) as verifiedCount, " +
+           "AVG(u.experiencePoints) as avgExperiencePoints, " +
+           "AVG(u.totalConsultations) as avgConsultations " +
+           "FROM User u WHERE u.isDeleted = false AND u.branchCode = :branchCode")
+    Object[] getUserStatisticsByBranchCode(@Param("branchCode") String branchCode);
+    
+    /**
      * 역할별 사용자 통계 조회
      */
     @Query("SELECT u.role, COUNT(u) as count, AVG(u.experiencePoints) as avgExperience " +
@@ -358,4 +373,36 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u.ageGroup, COUNT(u) as count FROM User u WHERE u.isDeleted = false GROUP BY u.ageGroup")
     List<Object[]> getUserStatisticsByAgeGroup();
+    
+    // === Branch 관련 메서드 ===
+    
+    /**
+     * 지점과 역할로 사용자 조회
+     */
+    @Query("SELECT u FROM User u WHERE u.branch = ?1 AND u.role = ?2 AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUsername(com.mindgarden.consultation.entity.Branch branch, String role);
+    
+    /**
+     * 지점으로 사용자 조회
+     */
+    @Query("SELECT u FROM User u WHERE u.branch = ?1 AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByBranchAndIsDeletedFalseOrderByUsername(com.mindgarden.consultation.entity.Branch branch);
+    
+    /**
+     * 지점별 사용자 수 조회
+     */
+    @Query("SELECT u.branch.id, u.branch.branchName, COUNT(u) FROM User u WHERE u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName ORDER BY u.branch.branchName")
+    List<Object[]> countUsersByBranch();
+    
+    /**
+     * 지점이 없는 사용자들 조회
+     */
+    @Query("SELECT u FROM User u WHERE u.branch IS NULL AND u.isDeleted = false ORDER BY u.username")
+    List<User> findUsersWithoutBranch();
+    
+    /**
+     * 지점별 역할별 사용자 수 조회
+     */
+    @Query("SELECT u.branch.id, u.branch.branchName, u.role, COUNT(u) FROM User u WHERE u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName, u.role ORDER BY u.branch.branchName, u.role")
+    List<Object[]> countUsersByBranchAndRole();
 }

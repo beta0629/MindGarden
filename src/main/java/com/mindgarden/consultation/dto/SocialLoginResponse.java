@@ -77,6 +77,8 @@ public class SocialLoginResponse {
         private String nickname;
         private String role;
         private String profileImageUrl;
+        private com.mindgarden.consultation.entity.Branch branch;
+        private String branchCode;
     }
     
     /**

@@ -162,6 +162,14 @@
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
+.social-signup-modal .form-input.loading {
+  background-color: #f8fafc;
+  color: #64748b;
+  text-align: center;
+  font-style: italic;
+  cursor: not-allowed;
+}
+
 .error-message {
   color: #ef4444;
   font-size: 12px;

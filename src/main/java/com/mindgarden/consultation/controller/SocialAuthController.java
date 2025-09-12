@@ -2,15 +2,18 @@ package com.mindgarden.consultation.controller;
 
 import com.mindgarden.consultation.dto.SocialSignupRequest;
 import com.mindgarden.consultation.dto.SocialSignupResponse;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.SocialAuthService;
 import com.mindgarden.consultation.util.SessionManager;
+import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,10 +42,20 @@ public class SocialAuthController {
      * @return 회원가입 결과
      */
     @PostMapping("/signup")
-    public ResponseEntity<SocialSignupResponse> socialSignup(@RequestBody SocialSignupRequest request) {
+    public ResponseEntity<SocialSignupResponse> socialSignup(@RequestBody SocialSignupRequest request, HttpSession session) {
         log.info("소셜 회원가입 요청: {}", request.getEmail());
         
         try {
+            // 세션에서 현재 사용자의 지점 정보 가져오기 (관리자가 등록하는 경우)
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser != null && currentUser.getBranch() != null) {
+                // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
+                if (request.getBranchCode() == null || request.getBranchCode().trim().isEmpty()) {
+                    request.setBranchCode(currentUser.getBranch().getBranchCode());
+                    log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", request.getBranchCode());
+                }
+            }
+            
             SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
             
             if (response.isSuccess()) {

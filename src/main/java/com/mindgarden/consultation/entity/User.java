@@ -47,7 +47,7 @@ import lombok.NoArgsConstructor;
 public class User extends BaseEntity {
     
     @NotBlank(message = "사용자명은 필수입니다.")
-    @Size(min = 3, max = 50, message = "사용자명은 3자 이상 50자 이하여야 합니다.")
+    @Size(min = 2, max = 50, message = "사용자명은 2자 이상 50자 이하여야 합니다.")
     @Column(name = "username", nullable = false, unique = true, length = 50)
     private String username;
     
@@ -174,7 +174,18 @@ public class User extends BaseEntity {
     @JsonManagedReference
     private List<UserSocialAccount> userSocialAccounts;
     
-
+    /**
+     * 소속 지점
+     */
+    @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @jakarta.persistence.JoinColumn(name = "branch_id")
+    private Branch branch;
+    
+    /**
+     * 지점 코드 (등록 시 사용, 실제 지점 정보는 branch 필드에 저장)
+     */
+    @Column(name = "branch_code", length = 20)
+    private String branchCode;
     
     // 비즈니스 메서드
     /**

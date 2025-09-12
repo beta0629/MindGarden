@@ -72,6 +72,38 @@ const SimpleHeader = () => {
     }
   };
 
+  // 사용자 역할 표시명 변환
+  const getUserRoleDisplay = (role, branchName = null) => {
+    const roleDisplayMap = {
+      'HQ_ADMIN': '관리자 (본사)',
+      'SUPER_HQ_ADMIN': '수퍼관리자 (본사)',
+      'BRANCH_SUPER_ADMIN': branchName ? `수퍼관리자 (${branchName})` : '수퍼관리자 (지점)',
+      'ADMIN': branchName ? `관리자 (${branchName})` : '관리자 (지점)',
+      'BRANCH_MANAGER': branchName ? `지점장 (${branchName})` : '지점장',
+      'CONSULTANT': '상담사',
+      'CLIENT': '내담자',
+      // 기존 호환성
+      'SUPER_ADMIN': '수퍼관리자 (본사)'
+    };
+    return roleDisplayMap[role] || role;
+  };
+
+  // 사용자 역할 영문 표시명 변환
+  const getUserRoleDisplayEn = (role, branchName = null) => {
+    const roleDisplayMap = {
+      'HQ_ADMIN': 'HQ Admin',
+      'SUPER_HQ_ADMIN': 'Super HQ Admin',
+      'BRANCH_SUPER_ADMIN': branchName ? `Branch Super Admin (${branchName})` : 'Branch Super Admin',
+      'ADMIN': branchName ? `Admin (${branchName})` : 'Admin',
+      'BRANCH_MANAGER': branchName ? `Branch Manager (${branchName})` : 'Branch Manager',
+      'CONSULTANT': 'Consultant',
+      'CLIENT': 'Client',
+      // 기존 호환성
+      'SUPER_ADMIN': 'Super HQ Admin'
+    };
+    return roleDisplayMap[role] || role;
+  };
+
   const handleLogout = async () => {
     setShowLogoutModal(true);
   };
@@ -177,7 +209,8 @@ const SimpleHeader = () => {
                   <div className="simple-user-name">
                     {user.name || user.nickname || user.username || '사용자'}
                   </div>
-                  <div className="simple-user-role">{user.role}</div>
+                  <div className="simple-user-role">{getUserRoleDisplay(user.role, user.branchName)}</div>
+                  <div className="simple-user-role-en">{getUserRoleDisplayEn(user.role, user.branchName)}</div>
                 </div>
               </div>
 

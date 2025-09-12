@@ -16,7 +16,11 @@ const SessionState = {
     isOpen: false,
     message: '',
     loginData: null
-  } // 중복 로그인 확인 모달 상태 추가
+  }, // 중복 로그인 확인 모달 상태 추가
+  branchMappingModal: {
+    isOpen: false,
+    needsMapping: false
+  } // 지점 매핑 모달 상태 추가
 };
 
 // 액션 타입 정의
@@ -28,7 +32,8 @@ const SessionActionTypes = {
   CLEAR_SESSION: 'CLEAR_SESSION',
   SET_LAST_CHECK_TIME: 'SET_LAST_CHECK_TIME',
   SET_MODAL_OPEN: 'SET_MODAL_OPEN', // 모달 상태 액션 추가
-  SET_DUPLICATE_LOGIN_MODAL: 'SET_DUPLICATE_LOGIN_MODAL' // 중복 로그인 모달 액션 추가
+  SET_DUPLICATE_LOGIN_MODAL: 'SET_DUPLICATE_LOGIN_MODAL', // 중복 로그인 모달 액션 추가
+  SET_BRANCH_MAPPING_MODAL: 'SET_BRANCH_MAPPING_MODAL' // 지점 매핑 모달 액션 추가
 };
 
 // 리듀서 함수
@@ -89,6 +94,12 @@ const sessionReducer = (state, action) => {
         duplicateLoginModal: action.payload
       };
     
+    case SessionActionTypes.SET_BRANCH_MAPPING_MODAL:
+      return {
+        ...state,
+        branchMappingModal: action.payload
+      };
+    
     default:
       return state;
   }
@@ -137,6 +148,16 @@ export const SessionProvider = ({ children }) => {
         if (sessionInfo) {
           dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
         }
+        
+        // 지점 매핑 필요 여부 확인
+        if (user.needsBranchMapping) {
+          console.log('🏢 지점 매핑 필요:', user);
+          dispatch({ 
+            type: SessionActionTypes.SET_BRANCH_MAPPING_MODAL, 
+            payload: { isOpen: true, needsMapping: true }
+          });
+        }
+        
         console.log('✅ 중앙 세션 확인 완료:', user);
       } else {
         // 세션 확인 실패 시 기존 사용자 정보가 있으면 보존
@@ -332,6 +353,32 @@ export const SessionProvider = ({ children }) => {
     dispatch({ type: SessionActionTypes.SET_DUPLICATE_LOGIN_MODAL, payload: modalState });
   }, []);
 
+  // 지점 매핑 모달 상태 관리 함수
+  const setBranchMappingModal = useCallback((modalState) => {
+    dispatch({ type: SessionActionTypes.SET_BRANCH_MAPPING_MODAL, payload: modalState });
+  }, []);
+
+  // 지점 매핑 성공 처리
+  const handleBranchMappingSuccess = useCallback((mappingData) => {
+    // 사용자 정보 업데이트
+    const updatedUser = {
+      ...state.user,
+      branchId: mappingData.branchId,
+      branchName: mappingData.branchName,
+      branchCode: mappingData.branchCode,
+      needsBranchMapping: false
+    };
+    
+    dispatch({ type: SessionActionTypes.SET_USER, payload: updatedUser });
+    dispatch({ 
+      type: SessionActionTypes.SET_BRANCH_MAPPING_MODAL, 
+      payload: { isOpen: false, needsMapping: false }
+    });
+    
+    // sessionManager에도 업데이트
+    sessionManager.setUser(updatedUser);
+  }, [state.user]);
+
   const value = {
     // 상태
     user: state.user,
@@ -341,6 +388,7 @@ export const SessionProvider = ({ children }) => {
     error: state.error,
     isModalOpen: state.isModalOpen,
     duplicateLoginModal: state.duplicateLoginModal,
+    branchMappingModal: state.branchMappingModal,
     
     // 액션
     checkSession,
@@ -349,6 +397,8 @@ export const SessionProvider = ({ children }) => {
     logout,
     setModalOpen,
     setDuplicateLoginModal,
+    setBranchMappingModal,
+    handleBranchMappingSuccess,
     
     // 유틸리티
     hasRole: (role) => state.user?.role === role,

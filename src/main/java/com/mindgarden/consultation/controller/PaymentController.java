@@ -53,7 +53,7 @@ public class PaymentController {
     public ResponseEntity<?> createPayment(@Valid @RequestBody PaymentRequest request, HttpServletRequest httpRequest) {
         // 수퍼 어드민 권한 체크
         String userRole = (String) httpRequest.getAttribute("userRole");
-        if (!UserRole.SUPER_ADMIN.name().equals(userRole)) {
+        if (!UserRole.SUPER_ADMIN.name().equals(userRole) && !UserRole.BRANCH_SUPER_ADMIN.name().equals(userRole)) {
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);
             result.put("message", "결제 생성은 수퍼 어드민만 가능합니다.");

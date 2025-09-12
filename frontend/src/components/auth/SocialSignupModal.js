@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatPhoneNumber, isValidEmail, isValidPassword } from '../../utils/common';
 import { userAPI } from '../../utils/ajax';
+import notificationManager from '../../utils/notification';
 import '../../styles/auth/social-signup-modal.css';
 
 const SocialSignupModal = ({ 
@@ -17,12 +18,40 @@ const SocialSignupModal = ({
     nickname: '',
     password: '',
     confirmPassword: '',
-    phone: ''
+    phone: '',
+    branchCode: ''
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [branches, setBranches] = useState([]);
+  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+
+  // 지점 목록 로드
+  const loadBranches = async () => {
+    try {
+      setIsLoadingBranches(true);
+      const response = await fetch('/api/auth/branches', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('지점 목록을 불러오는데 실패했습니다.');
+      }
+
+      const data = await response.json();
+      setBranches(data.branches || []);
+    } catch (error) {
+      console.error('지점 목록 조회 오류:', error);
+      setErrors(prev => ({ ...prev, branch: '지점 목록을 불러오는데 실패했습니다.' }));
+    } finally {
+      setIsLoadingBranches(false);
+    }
+  };
 
   // SNS 사용자 정보로 폼 초기화
   useEffect(() => {
@@ -43,8 +72,12 @@ const SocialSignupModal = ({
         nickname: socialUser.nickname || '', // SNS에서 받은 닉네임 자동 입력
         password: '',
         confirmPassword: '',
-        phone: ''
+        phone: '',
+        branchCode: ''
       }));
+      
+      // 지점 목록 로드
+      loadBranches();
       
       console.log('✅ 폼 데이터 업데이트 완료');
     } else {
@@ -107,41 +140,49 @@ const SocialSignupModal = ({
       newErrors.email = '올바른 이메일 형식이 아닙니다.';
     }
 
-    // 이름 검사
-    if (!formData.name.trim()) {
-      newErrors.name = '이름을 입력해주세요.';
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = '이름은 2자 이상 입력해주세요.';
+    // 지점 매핑이 아닌 경우에만 추가 검사
+    if (!socialUser?.needsBranchMapping) {
+      // 이름 검사
+      if (!formData.name.trim()) {
+        newErrors.name = '이름을 입력해주세요.';
+      } else if (formData.name.trim().length < 2) {
+        newErrors.name = '이름은 2자 이상 입력해주세요.';
+      }
+
+      // 닉네임 검사
+      if (!formData.nickname.trim()) {
+        newErrors.nickname = '닉네임을 입력해주세요.';
+      } else if (formData.nickname.trim().length < 2) {
+        newErrors.nickname = '닉네임은 2자 이상 입력해주세요.';
+      }
+
+      // 비밀번호 검사
+      if (!formData.password) {
+        newErrors.password = '비밀번호를 입력해주세요.';
+      } else if (formData.password.length < 8) {
+        newErrors.password = '비밀번호는 8자 이상 입력해주세요.';
+      } else if (!isValidPassword(formData.password)) {
+        newErrors.password = '비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.';
+      }
+
+      // 비밀번호 확인 검사
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
+      } else if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+      }
+
+      // 휴대폰 번호 검사
+      if (!formData.phone.trim()) {
+        newErrors.phone = '휴대폰 번호를 입력해주세요.';
+      } else if (formData.phone.replace(/\D/g, '').length !== 11) {
+        newErrors.phone = '휴대폰 번호는 11자리여야 합니다.';
+      }
     }
 
-    // 닉네임 검사
-    if (!formData.nickname.trim()) {
-      newErrors.nickname = '닉네임을 입력해주세요.';
-    } else if (formData.nickname.trim().length < 2) {
-      newErrors.nickname = '닉네임은 2자 이상 입력해주세요.';
-    }
-
-    // 비밀번호 검사
-    if (!formData.password) {
-      newErrors.password = '비밀번호를 입력해주세요.';
-    } else if (formData.password.length < 8) {
-      newErrors.password = '비밀번호는 8자 이상 입력해주세요.';
-    } else if (!isValidPassword(formData.password)) {
-      newErrors.password = '비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.';
-    }
-
-    // 비밀번호 확인 검사
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = '비밀번호 확인을 입력해주세요.';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
-    }
-
-    // 휴대폰 번호 검사
-    if (!formData.phone.trim()) {
-      newErrors.phone = '휴대폰 번호를 입력해주세요.';
-    } else if (formData.phone.replace(/\D/g, '').length !== 11) {
-      newErrors.phone = '휴대폰 번호는 11자리여야 합니다.';
+    // 지점 선택 검사 (항상 필요)
+    if (!formData.branchCode) {
+      newErrors.branchCode = '지점을 선택해주세요.';
     }
 
     setErrors(newErrors);
@@ -170,15 +211,24 @@ const SocialSignupModal = ({
         nickname: formData.nickname,
         password: formData.password,
         phone: formData.phone,
-        providerProfileImage: socialUser.profileImageUrl
+        providerProfileImage: socialUser.profileImageUrl,
+        branchCode: formData.branchCode
       };
       
       const response = await userAPI.socialSignup(signupData);
       
       if (response.success) {
-        // 회원가입 성공
-        onSignupSuccess(response);
-        onClose();
+        // 지점 매핑이 필요한 경우 (기존 사용자)
+        if (socialUser.needsBranchMapping) {
+          notificationManager.show('지점이 성공적으로 매핑되었습니다. 다시 로그인해주세요.', 'success');
+          onClose();
+          // 로그인 페이지로 리다이렉트
+          window.location.href = '/login';
+        } else {
+          // 일반 회원가입 성공
+          onSignupSuccess(response);
+          onClose();
+        }
       } else {
         // 회원가입 실패
         setErrors({ submit: response.message || '회원가입에 실패했습니다.' });
@@ -216,8 +266,8 @@ const SocialSignupModal = ({
       <div className="social-signup-modal">
         <div className="modal-header">
           <h2 className="modal-title">
-            <i className="bi bi-person-plus"></i>
-            간편 회원가입
+            <i className={socialUser?.needsBranchMapping ? "bi bi-geo-alt" : "bi bi-person-plus"}></i>
+            {socialUser?.needsBranchMapping ? "지점 매핑" : "간편 회원가입"}
           </h2>
           <button className="modal-close" onClick={() => {
             onClose();
@@ -235,42 +285,51 @@ const SocialSignupModal = ({
                    style={{ color: socialUser?.provider === 'KAKAO' ? '#FEE500' : '#03C75A' }}></i>
               </span>
               <span className="provider-name">
-                {socialUser?.provider === 'KAKAO' ? '카카오' : '네이버'} 계정으로 가입
+                {socialUser?.provider === 'KAKAO' ? '카카오' : '네이버'} 계정으로 {socialUser?.needsBranchMapping ? '지점 매핑' : '가입'}
               </span>
             </div>
-            <p className="social-description">소셜 계정 정보로 간편하게 가입하세요</p>
+            <p className="social-description">
+              {socialUser?.needsBranchMapping 
+                ? '지점을 선택하여 계정을 활성화하세요' 
+                : '소셜 계정 정보로 간편하게 가입하세요'
+              }
+            </p>
           </div>
           
           <form onSubmit={handleSubmit} className="social-signup-form">
-            <div className="form-group">
-              <label htmlFor="socialName" className="form-label">이름 *</label>
-              <input
-                type="text"
-                id="socialName"
-                name="name"
-                className={`form-input ${errors.name ? 'error' : ''}`}
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                placeholder="이름을 입력하세요"
-              />
-              {errors.name && <span className="error-message">{errors.name}</span>}
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="socialNickname" className="form-label">닉네임 *</label>
-              <input
-                type="text"
-                id="socialNickname"
-                name="nickname"
-                className={`form-input ${errors.nickname ? 'error' : ''}`}
-                value={formData.nickname}
-                onChange={handleInputChange}
-                required
-                placeholder="닉네임을 입력하세요"
-              />
-              {errors.nickname && <span className="error-message">{errors.nickname}</span>}
-            </div>
+            {!socialUser?.needsBranchMapping && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="socialName" className="form-label">이름 *</label>
+                  <input
+                    type="text"
+                    id="socialName"
+                    name="name"
+                    className={`form-input ${errors.name ? 'error' : ''}`}
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="이름을 입력하세요"
+                  />
+                  {errors.name && <span className="error-message">{errors.name}</span>}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="socialNickname" className="form-label">닉네임 *</label>
+                  <input
+                    type="text"
+                    id="socialNickname"
+                    name="nickname"
+                    className={`form-input ${errors.nickname ? 'error' : ''}`}
+                    value={formData.nickname}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="닉네임을 입력하세요"
+                  />
+                  {errors.nickname && <span className="error-message">{errors.nickname}</span>}
+                </div>
+              </>
+            )}
             
             <div className="form-group">
               <label htmlFor="socialEmail" className="form-label">이메일 *</label>
@@ -287,71 +346,104 @@ const SocialSignupModal = ({
               <small className="form-help">소셜 계정의 이메일이 자동으로 입력됩니다</small>
             </div>
             
-            <div className="form-group">
-              <label htmlFor="socialPassword" className="form-label">비밀번호 *</label>
-              <div className="input-wrapper">
+            {!socialUser?.needsBranchMapping && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="socialPassword" className="form-label">비밀번호 *</label>
+                  <div className="input-wrapper">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="socialPassword"
+                      name="password"
+                      className={`form-input ${errors.password ? 'error' : ''}`}
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required
+                      minLength="8"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => togglePassword('password')}
+                    >
+                      <i className={`bi bi-${showPassword ? 'eye-slash' : 'eye'}`}></i>
+                    </button>
+                  </div>
+                  {errors.password && <span className="error-message">{errors.password}</span>}
+                  <small className="form-help">8자 이상의 안전한 비밀번호를 입력하세요</small>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="socialPasswordConfirm" className="form-label">비밀번호 확인 *</label>
+                  <div className="input-wrapper">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      id="socialPasswordConfirm"
+                      name="confirmPassword"
+                      className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      required
+                      minLength="8"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => togglePassword('confirmPassword')}
+                    >
+                      <i className={`bi bi-${showConfirmPassword ? 'eye-slash' : 'eye'}`}></i>
+                    </button>
+                  </div>
+                  {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+                  <small className="form-help">비밀번호를 한 번 더 입력하세요</small>
+                </div>
+              </>
+            )}
+            
+            {!socialUser?.needsBranchMapping && (
+              <div className="form-group">
+                <label htmlFor="socialPhone" className="form-label">휴대폰 번호 *</label>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  id="socialPassword"
-                  name="password"
-                  className={`form-input ${errors.password ? 'error' : ''}`}
-                  value={formData.password}
-                  onChange={handleInputChange}
+                  type="tel"
+                  id="socialPhone"
+                  name="phone"
+                  className={`form-input ${errors.phone ? 'error' : ''}`}
+                  value={formData.phone}
+                  onChange={handlePhoneChange}
                   required
-                  minLength="8"
+                  maxLength="13"
+                  placeholder="010-0000-0000"
                 />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => togglePassword('password')}
-                >
-                  <i className={`bi bi-${showPassword ? 'eye-slash' : 'eye'}`}></i>
-                </button>
+                {errors.phone && <span className="error-message">{errors.phone}</span>}
+                <small className="form-help">숫자만 입력하면 자동으로 하이픈이 추가됩니다</small>
               </div>
-              {errors.password && <span className="error-message">{errors.password}</span>}
-              <small className="form-help">8자 이상의 안전한 비밀번호를 입력하세요</small>
-            </div>
+            )}
             
             <div className="form-group">
-              <label htmlFor="socialPasswordConfirm" className="form-label">비밀번호 확인 *</label>
-              <div className="input-wrapper">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  id="socialPasswordConfirm"
-                  name="confirmPassword"
-                  className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
-                  value={formData.confirmPassword}
+              <label htmlFor="socialBranch" className="form-label">지점 선택 *</label>
+              {isLoadingBranches ? (
+                <div className="form-input loading">
+                  지점 목록을 불러오는 중...
+                </div>
+              ) : (
+                <select
+                  id="socialBranch"
+                  name="branchCode"
+                  className={`form-input ${errors.branchCode ? 'error' : ''}`}
+                  value={formData.branchCode}
                   onChange={handleInputChange}
                   required
-                  minLength="8"
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => togglePassword('confirmPassword')}
                 >
-                  <i className={`bi bi-${showConfirmPassword ? 'eye-slash' : 'eye'}`}></i>
-                </button>
-              </div>
-              {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
-              <small className="form-help">비밀번호를 한 번 더 입력하세요</small>
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="socialPhone" className="form-label">휴대폰 번호 *</label>
-              <input
-                type="tel"
-                id="socialPhone"
-                name="phone"
-                className={`form-input ${errors.phone ? 'error' : ''}`}
-                value={formData.phone}
-                onChange={handlePhoneChange}
-                required
-                maxLength="13"
-                placeholder="010-0000-0000"
-              />
-              {errors.phone && <span className="error-message">{errors.phone}</span>}
-              <small className="form-help">숫자만 입력하면 자동으로 하이픈이 추가됩니다</small>
+                  <option value="">지점을 선택해주세요</option>
+                  {branches.map((branch) => (
+                    <option key={branch.branchCode} value={branch.branchCode}>
+                      {branch.branchName} ({branch.branchCode})
+                    </option>
+                  ))}
+                </select>
+              )}
+              {errors.branchCode && <span className="error-message">{errors.branchCode}</span>}
+              <small className="form-help">회원가입 후 해당 지점의 서비스를 이용할 수 있습니다</small>
             </div>
             
             {/* 전체 에러 메시지 */}
@@ -370,7 +462,10 @@ const SocialSignupModal = ({
                 취소
               </button>
               <button type="submit" className="btn btn-primary" disabled={isLoading}>
-                {isLoading ? '가입 중...' : '회원가입 완료'}
+                {isLoading 
+                  ? (socialUser?.needsBranchMapping ? '매핑 중...' : '가입 중...') 
+                  : (socialUser?.needsBranchMapping ? '지점 매핑 완료' : '회원가입 완료')
+                }
               </button>
             </div>
           </form>

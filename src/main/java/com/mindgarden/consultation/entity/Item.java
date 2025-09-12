@@ -60,6 +60,9 @@ public class Item {
     @Column(length = 50)
     private String unit;
     
+    @Column(name = "branch_code", length = 20)
+    private String branchCode; // 지점코드
+    
     @Column(nullable = false)
     private Boolean isActive;
     

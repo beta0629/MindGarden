@@ -56,6 +56,9 @@ public final class AdminConstants {
     public static final int DEFAULT_PAGE_SIZE = 20;
     public static final int MAX_PAGE_SIZE = 100;
     
+    // === 지점 관리 ===
+    public static final String DEFAULT_BRANCH_CODE = "MAIN001"; // 기본 지점코드
+    
     private AdminConstants() {
         // 유틸리티 클래스이므로 인스턴스 생성 방지
         throw new UnsupportedOperationException("유틸리티 클래스입니다.");

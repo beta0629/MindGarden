@@ -12,6 +12,7 @@ import com.mindgarden.consultation.dto.ProfileImageInfo;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.BaseRepository;
 import com.mindgarden.consultation.repository.UserRepository;
+import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.CacheService;
 import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.UserService;
@@ -52,6 +53,9 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private CacheService cacheService;
+    
+    @Autowired
+    private BranchService branchService;
     
     // ==================== BaseService 구현 ====================
     
@@ -504,6 +508,14 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
+    public Object[] getUserStatisticsByBranchCode(String branchCode) {
+        if (branchCode == null || branchCode.trim().isEmpty()) {
+            return getUserStatistics(); // 지점코드가 없으면 전체 통계 반환
+        }
+        return userRepository.getUserStatisticsByBranchCode(branchCode);
+    }
+    
+    @Override
     public List<Object[]> getUserStatisticsByRole() {
         return userRepository.getUserStatisticsByRole();
     }
@@ -525,6 +537,25 @@ public class UserServiceImpl implements UserService {
     
     @Override
     public User registerUser(User user) {
+        // 지점코드가 있는 경우 지점 정보 설정
+        if (user.getBranchCode() != null && !user.getBranchCode().trim().isEmpty()) {
+            try {
+                // 지점 코드로 지점 조회
+                var branch = branchService.getBranchByCode(user.getBranchCode());
+                if (branch != null) {
+                    user.setBranch(branch);
+                    log.info("사용자 등록 시 지점 할당: userId={}, branchCode={}, branchName={}", 
+                        user.getId(), user.getBranchCode(), branch.getBranchName());
+                } else {
+                    log.warn("존재하지 않는 지점 코드로 사용자 등록 시도: branchCode={}", user.getBranchCode());
+                    throw new IllegalArgumentException("존재하지 않는 지점 코드입니다: " + user.getBranchCode());
+                }
+            } catch (Exception e) {
+                log.error("지점 코드 처리 중 오류: branchCode={}, error={}", user.getBranchCode(), e.getMessage());
+                throw new IllegalArgumentException("지점 코드 처리 중 오류가 발생했습니다: " + e.getMessage());
+            }
+        }
+        
         return save(user);
     }
     

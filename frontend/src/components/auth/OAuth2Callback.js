@@ -34,11 +34,16 @@ const OAuth2Callback = () => {
         const requiresAccountIntegration = searchParams.get('requiresAccountIntegration');
         const profileImageUrl = searchParams.get('profileImageUrl');
         const providerUserId = searchParams.get('providerUserId'); // 추가: SNS 사용자 ID
+        const branchId = searchParams.get('branchId');
+        const branchName = searchParams.get('branchName');
+        const branchCode = searchParams.get('branchCode');
+        const needsBranchMapping = searchParams.get('needsBranchMapping');
         const error = searchParams.get('error');
         const requiresSignup = searchParams.get('requiresSignup');
         
         console.log('📋 OAuth2 콜백 파라미터:', { 
-          success, provider, userId, email, name, nickname, role, profileImageUrl, providerUserId, error, requiresSignup
+          success, provider, userId, email, name, nickname, role, profileImageUrl, providerUserId, 
+          branchId, branchName, branchCode, needsBranchMapping, error, requiresSignup
         });
         
         if (error) {
@@ -129,8 +134,28 @@ const OAuth2Callback = () => {
             nickname: nickname,
             role: role,
             profileImageUrl: profileImageUrl,
-            provider: provider
+            provider: provider,
+            branchId: branchId ? parseInt(branchId) : null,
+            branchName: branchName,
+            branchCode: branchCode,
+            needsBranchMapping: needsBranchMapping === 'true'
           };
+          
+          // 지점 매핑이 필요한 경우 로그인하지 않고 모달 표시
+          if (userInfo.needsBranchMapping) {
+            console.log('🏢 지점 매핑 필요 - 로그인 중단하고 모달 표시');
+            setSocialUserData({
+              provider: provider,
+              email: email,
+              name: name,
+              nickname: nickname,
+              providerUserId: providerUserId,
+              profileImageUrl: profileImageUrl,
+              needsBranchMapping: true
+            });
+            setShowSignupModal(true);
+            return;
+          }
           
           // 중앙 세션에 사용자 정보 설정
           const loginSuccess = await login(userInfo, {

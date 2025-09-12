@@ -2,6 +2,7 @@ package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import com.mindgarden.consultation.constant.AdminConstants;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SocialLoginResponse;
 import com.mindgarden.consultation.dto.SocialUserInfo;
@@ -225,6 +226,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
                 .name(socialUserInfo.getName())
                 .email(socialUserInfo.getEmail())
                 .phone(socialUserInfo.getPhone())
+                .branchCode(AdminConstants.DEFAULT_BRANCH_CODE) // 소셜 로그인 사용자는 기본 본사 지점코드 사용
                 .isDeleted(false)
                 .build();
         
@@ -237,6 +239,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
         user.setEmail(client.getEmail());
         user.setName(client.getName());
         user.setRole(UserRole.CLIENT);
+        user.setBranchCode(AdminConstants.DEFAULT_BRANCH_CODE); // 소셜 로그인 사용자는 기본 본사 지점코드 사용
         
         UserSocialAccount socialAccount = UserSocialAccount.builder()
             .user(user)

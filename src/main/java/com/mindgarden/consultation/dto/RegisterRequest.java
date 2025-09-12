@@ -42,4 +42,9 @@ public class RegisterRequest {
      * 사용자 역할 (CLIENT, CONSULTANT, ADMIN)
      */
     private String role;
+    
+    /**
+     * 지점 코드 (지점별 사용자 등록 시)
+     */
+    private String branchCode;
 }

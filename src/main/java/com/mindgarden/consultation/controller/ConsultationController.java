@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.Consultation;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.ConsultationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -54,14 +56,27 @@ public class ConsultationController {
             @RequestParam(required = false) Boolean isEmergency,
             @RequestParam(required = false) Boolean isFirstSession,
             @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate) {
+            @RequestParam(required = false) LocalDate endDate,
+            HttpSession session) {
         
         log.info("상담 목록 조회 - clientId: {}, consultantId: {}, status: {}, priority: {}", 
                 clientId, consultantId, status, priority);
         
-        List<Consultation> consultations = consultationService.findByComplexCriteria(
+        // 현재 로그인한 사용자의 지점코드 확인
+        User currentUser = (User) session.getAttribute("user");
+        String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+        log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+        
+        List<Consultation> allConsultations = consultationService.findByComplexCriteria(
             clientId, consultantId, status, priority, riskLevel, consultationMethod, 
             isEmergency, isFirstSession, startDate, endDate);
+        
+        // 지점코드로 필터링 (상담은 상담사나 내담자의 지점코드로 필터링)
+        // TODO: Consultation 엔티티에 상담사와 내담자 정보를 직접 조회하는 로직이 필요함
+        // 현재는 모든 상담을 반환 (향후 개선 필요)
+        List<Consultation> consultations = allConsultations;
+        
+        log.info("🔍 상담 목록 조회 완료 - 전체: {}, 필터링 후: {}", allConsultations.size(), consultations.size());
         
         Map<String, Object> response = Map.of(
             "success", true,

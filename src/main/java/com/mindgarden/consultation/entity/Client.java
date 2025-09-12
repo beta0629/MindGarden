@@ -91,6 +91,12 @@ public class Client {
     @Column(name = "version")
     private Long version = 1L;
     
+    /**
+     * 지점 코드 (등록 시 사용)
+     */
+    @Column(name = "branch_code", length = 20)
+    private String branchCode;
+    
     // 비즈니스 메서드
     public void softDelete() {
         this.isDeleted = true;

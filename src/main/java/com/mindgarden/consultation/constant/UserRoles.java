@@ -14,22 +14,31 @@ public final class UserRoles {
     public static final String CONSULTANT = "CONSULTANT";
     public static final String ADMIN = "ADMIN";
     public static final String SUPER_ADMIN = "SUPER_ADMIN";
+    public static final String BRANCH_MANAGER = "BRANCH_MANAGER";
+    public static final String BRANCH_SUPER_ADMIN = "BRANCH_SUPER_ADMIN";
     
     // 역할 그룹
-    public static final String[] ALL_ROLES = {CLIENT, CONSULTANT, ADMIN, SUPER_ADMIN};
-    public static final String[] STAFF_ROLES = {CONSULTANT, ADMIN, SUPER_ADMIN};
+    public static final String[] ALL_ROLES = {CLIENT, CONSULTANT, ADMIN, SUPER_ADMIN, BRANCH_MANAGER, BRANCH_SUPER_ADMIN};
+    public static final String[] STAFF_ROLES = {CONSULTANT, ADMIN, SUPER_ADMIN, BRANCH_MANAGER, BRANCH_SUPER_ADMIN};
+    public static final String[] HEADQUARTERS_ROLES = {ADMIN, SUPER_ADMIN};
+    public static final String[] BRANCH_ROLES = {BRANCH_MANAGER, BRANCH_SUPER_ADMIN};
+    public static final String[] BRANCH_MANAGEMENT_ROLES = {BRANCH_MANAGER, BRANCH_SUPER_ADMIN, ADMIN, SUPER_ADMIN};
     
     // 역할 설명
     public static final String CLIENT_DESCRIPTION = "내담자";
     public static final String CONSULTANT_DESCRIPTION = "상담사";
-    public static final String ADMIN_DESCRIPTION = "관리자";
-    public static final String SUPER_ADMIN_DESCRIPTION = "최고관리자";
+    public static final String ADMIN_DESCRIPTION = "본사관리자";
+    public static final String SUPER_ADMIN_DESCRIPTION = "본사최고관리자";
+    public static final String BRANCH_MANAGER_DESCRIPTION = "지점장";
+    public static final String BRANCH_SUPER_ADMIN_DESCRIPTION = "지점최고관리자";
     
     // 역할별 권한 레벨
     public static final int CLIENT_LEVEL = 1;
     public static final int CONSULTANT_LEVEL = 2;
-    public static final int ADMIN_LEVEL = 3;
-    public static final int SUPER_ADMIN_LEVEL = 4;
+    public static final int BRANCH_MANAGER_LEVEL = 3;
+    public static final int BRANCH_SUPER_ADMIN_LEVEL = 4;
+    public static final int ADMIN_LEVEL = 5;
+    public static final int SUPER_ADMIN_LEVEL = 6;
     
     private UserRoles() {
         // 유틸리티 클래스이므로 인스턴스 생성 방지
@@ -54,6 +63,8 @@ public final class UserRoles {
         switch (role) {
             case CLIENT: return CLIENT_LEVEL;
             case CONSULTANT: return CONSULTANT_LEVEL;
+            case BRANCH_MANAGER: return BRANCH_MANAGER_LEVEL;
+            case BRANCH_SUPER_ADMIN: return BRANCH_SUPER_ADMIN_LEVEL;
             case ADMIN: return ADMIN_LEVEL;
             case SUPER_ADMIN: return SUPER_ADMIN_LEVEL;
             default: return 0;
@@ -67,6 +78,8 @@ public final class UserRoles {
         switch (role) {
             case CLIENT: return CLIENT_DESCRIPTION;
             case CONSULTANT: return CONSULTANT_DESCRIPTION;
+            case BRANCH_MANAGER: return BRANCH_MANAGER_DESCRIPTION;
+            case BRANCH_SUPER_ADMIN: return BRANCH_SUPER_ADMIN_DESCRIPTION;
             case ADMIN: return ADMIN_DESCRIPTION;
             case SUPER_ADMIN: return SUPER_ADMIN_DESCRIPTION;
             default: return "알 수 없음";

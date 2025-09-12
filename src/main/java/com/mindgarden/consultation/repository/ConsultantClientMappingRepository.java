@@ -52,6 +52,10 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.consultant.id = :consultantId AND m.status != :status")
     List<ConsultantClientMapping> findByConsultantIdAndStatusNot(@Param("consultantId") Long consultantId, @Param("status") ConsultantClientMapping.MappingStatus status);
     
+    // 상담사 ID와 브랜치 코드로 매핑 조회 (특정 상태 제외)
+    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.consultant.id = :consultantId AND m.branchCode = :branchCode AND m.status != :status")
+    List<ConsultantClientMapping> findByConsultantIdAndBranchCodeAndStatusNot(@Param("consultantId") Long consultantId, @Param("branchCode") String branchCode, @Param("status") ConsultantClientMapping.MappingStatus status);
+    
     // 내담자 ID로 매핑 조회 (특정 상태 제외)
     @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client WHERE m.client.id = :clientId AND m.status != :status")
     List<ConsultantClientMapping> findByClientIdAndStatusNot(@Param("clientId") Long clientId, @Param("status") ConsultantClientMapping.MappingStatus status);

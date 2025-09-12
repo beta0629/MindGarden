@@ -59,7 +59,7 @@ const TimeSlotGrid = ({
      */
     const loadConsultantInfo = async () => {
         try {
-            const response = await fetch(`/api/v1/consultants/${consultantId}`, {
+            const response = await fetch(`http://localhost:8080/api/v1/consultants/${consultantId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

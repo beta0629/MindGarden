@@ -183,6 +183,11 @@ public interface UserService extends BaseService<User, Long> {
     Object[] getUserStatistics();
     
     /**
+     * 지점코드별 사용자 통계 정보 조회
+     */
+    Object[] getUserStatisticsByBranchCode(String branchCode);
+    
+    /**
      * 역할별 사용자 통계 조회
      */
     List<Object[]> getUserStatisticsByRole();

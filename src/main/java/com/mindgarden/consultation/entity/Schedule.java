@@ -9,6 +9,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
 
 /**
  * 상담 일정 엔티티
@@ -24,6 +25,7 @@ import jakarta.validation.constraints.Size;
     @Index(name = "idx_schedules_status", columnList = "status"),
     @Index(name = "idx_schedules_is_deleted", columnList = "is_deleted")
 })
+@Data
 public class Schedule extends BaseEntity {
     
     @NotNull(message = "상담사 ID는 필수입니다.")
@@ -121,7 +123,20 @@ public class Schedule extends BaseEntity {
     
     @Column(name = "last_modified_by")
     private Long lastModifiedBy; // 마지막 수정자 ID
-    
+
+    @Size(max = 20, message = "지점코드는 20자 이하여야 합니다.")
+    @Column(name = "branch_code", length = 20)
+    private String branchCode; // 지점코드
+
+    // branchCode getter/setter
+    public String getBranchCode() {
+        return branchCode;
+    }
+
+    public void setBranchCode(String branchCode) {
+        this.branchCode = branchCode;
+    }
+
     // 생성자
     public Schedule() {
         super();

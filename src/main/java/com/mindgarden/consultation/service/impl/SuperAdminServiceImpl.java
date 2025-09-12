@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.mindgarden.consultation.constant.AdminConstants;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SuperAdminCreateRequest;
 import com.mindgarden.consultation.entity.User;
@@ -41,7 +42,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
      */
     @Override
     @Transactional
-    public User createSuperAdmin(SuperAdminCreateRequest request) {
+    public User createSuperAdmin(SuperAdminCreateRequest request, User currentUser) {
         log.info("수퍼어드민 계정 생성 시작: {}", request.getEmail());
         
         try {
@@ -52,6 +53,15 @@ public class SuperAdminServiceImpl implements SuperAdminService {
             String encryptedPhone = request.getPhone() != null && !request.getPhone().trim().isEmpty() 
                 ? encryptionUtil.encrypt(request.getPhone()) : null;
             
+            // 지점코드 결정 (현재 사용자의 지점코드 사용, 없으면 기본값)
+            String branchCode = AdminConstants.DEFAULT_BRANCH_CODE; // 기본값
+            if (currentUser != null && currentUser.getBranchCode() != null && !currentUser.getBranchCode().trim().isEmpty()) {
+                branchCode = currentUser.getBranchCode();
+                log.info("🔧 현재 사용자의 지점코드 사용: {}", branchCode);
+            } else {
+                log.info("🔧 기본 지점코드 사용: {}", branchCode);
+            }
+            
             // 수퍼어드민 사용자 생성
             User superAdmin = User.builder()
                 .email(request.getEmail())
@@ -61,6 +71,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
                 .nickname(encryptedNickname)
                 .phone(encryptedPhone)
                 .role(UserRole.SUPER_ADMIN)
+                .branchCode(branchCode)
                 .isActive(true)
                 .isEmailVerified(true) // 수퍼어드민은 이메일 인증 생략
                 .isSocialAccount(false)

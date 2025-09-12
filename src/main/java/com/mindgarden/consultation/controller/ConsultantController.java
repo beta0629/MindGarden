@@ -8,6 +8,7 @@ import java.util.Map;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.Consultant;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.ConsultantService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -52,12 +54,30 @@ public class ConsultantController {
             @RequestParam(required = false) String specialty,
             @RequestParam(required = false) Integer experience,
             @RequestParam(required = false) Double rating,
-            @RequestParam(required = false) Boolean available) {
+            @RequestParam(required = false) Boolean available,
+            HttpSession session) {
         
         log.info("상담사 목록 조회 - specialty: {}, experience: {}, rating: {}, available: {}", 
                 specialty, experience, rating, available);
         
-        List<Consultant> consultants = consultantService.findByComplexCriteria(specialty, experience, rating, available);
+        // 현재 로그인한 사용자의 지점코드 확인
+        User currentUser = (User) session.getAttribute("user");
+        String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+        log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+        
+        List<Consultant> allConsultants = consultantService.findByComplexCriteria(specialty, experience, rating, available);
+        
+        // 지점코드로 필터링
+        List<Consultant> consultants = allConsultants.stream()
+            .filter(consultant -> {
+                if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
+                    return true; // 지점코드가 없으면 모든 상담사 조회
+                }
+                return currentBranchCode.equals(consultant.getBranchCode());
+            })
+            .collect(java.util.stream.Collectors.toList());
+        
+        log.info("🔍 상담사 목록 조회 완료 - 전체: {}, 필터링 후: {}", allConsultants.size(), consultants.size());
         
         Map<String, Object> response = Map.of(
             "success", true,

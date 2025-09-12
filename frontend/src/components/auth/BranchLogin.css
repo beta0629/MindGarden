@@ -1,0 +1,574 @@
+/* 지점별 로그인 컴포넌트 스타일 */
+
+/* CSS 변수 정의 */
+:root {
+    --branch-login-primary: #2563eb;
+    --branch-login-success: #16a34a;
+    --branch-login-warning: #d97706;
+    --branch-login-error: #dc2626;
+    --branch-login-gray-100: #f3f4f6;
+    --branch-login-gray-200: #e5e7eb;
+    --branch-login-gray-300: #d1d5db;
+    --branch-login-gray-500: #6b7280;
+    --branch-login-gray-600: #4b5563;
+    --branch-login-gray-700: #374151;
+    --branch-login-gray-800: #1f2937;
+    --branch-login-gray-900: #111827;
+    --branch-login-white: #ffffff;
+    --branch-login-border-radius: 12px;
+    --branch-login-box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --branch-login-transition: all 0.2s ease-in-out;
+}
+
+/* 메인 컨테이너 */
+.branch-login-page {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.branch-login-container {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* 로그인 카드 */
+.login-card {
+    background: var(--branch-login-white);
+    border-radius: var(--branch-login-border-radius);
+    box-shadow: var(--branch-login-box-shadow);
+    padding: 40px;
+    text-align: center;
+}
+
+/* 로그인 헤더 */
+.login-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--branch-login-gray-900);
+    margin: 0 0 8px 0;
+}
+
+.login-header p {
+    font-size: 16px;
+    color: var(--branch-login-gray-600);
+    margin: 0 0 32px 0;
+}
+
+/* 로그인 유형 선택 */
+.login-type-selector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    background: var(--branch-login-gray-100);
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.type-button {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--branch-login-transition);
+    color: var(--branch-login-gray-600);
+}
+
+.type-button:hover {
+    background: var(--branch-login-white);
+    color: var(--branch-login-gray-800);
+}
+
+.type-button.active {
+    background: var(--branch-login-primary);
+    color: var(--branch-login-white);
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+/* 로그인 폼 */
+.login-form {
+    text-align: left;
+    margin-bottom: 32px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--branch-login-gray-700);
+    margin-bottom: 6px;
+}
+
+.form-input,
+.form-select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--branch-login-gray-200);
+    border-radius: 8px;
+    font-size: 16px;
+    transition: var(--branch-login-transition);
+    background: var(--branch-login-white);
+}
+
+.form-input:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--branch-login-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-input::placeholder {
+    color: var(--branch-login-gray-500);
+}
+
+/* 비밀번호 입력 그룹 */
+.password-input-group {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--branch-login-gray-500);
+    transition: var(--branch-login-transition);
+}
+
+.password-toggle:hover {
+    color: var(--branch-login-gray-700);
+}
+
+/* 로그인 버튼 */
+.login-button {
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--branch-login-primary);
+    color: var(--branch-login-white);
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--branch-login-transition);
+    margin-top: 8px;
+}
+
+.login-button:hover:not(:disabled) {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.login-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 로그인 정보 박스 */
+.login-info {
+    margin-bottom: 24px;
+}
+
+.info-box {
+    background: var(--branch-login-gray-100);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: left;
+}
+
+.info-box h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--branch-login-gray-800);
+    margin: 0 0 12px 0;
+}
+
+.info-box ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--branch-login-gray-600);
+}
+
+.info-box li {
+    margin-bottom: 4px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.headquarters-info {
+    border-left: 4px solid var(--branch-login-primary);
+}
+
+.branch-info {
+    border-left: 4px solid var(--branch-login-success);
+}
+
+/* 로그인 링크 */
+.login-links {
+    text-align: center;
+}
+
+.link-button {
+    background: none;
+    border: none;
+    color: var(--branch-login-primary);
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: var(--branch-login-transition);
+}
+
+.link-button:hover {
+    color: #1d4ed8;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .branch-login-page {
+        padding: 16px;
+    }
+    
+    .login-card {
+        padding: 24px;
+    }
+    
+    .login-header h2 {
+        font-size: 24px;
+    }
+    
+    .login-type-selector {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .type-button {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 20px;
+    }
+    
+    .login-header h2 {
+        font-size: 22px;
+    }
+    
+    .form-input,
+    .form-select {
+        font-size: 16px; /* iOS 줌 방지 */
+    }
+}
+
+/* 로딩 상태 */
+.login-button:disabled {
+    position: relative;
+}
+
+.login-button:disabled::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid var(--branch-login-white);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* 접근성 개선 */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* 포커스 스타일 개선 */
+button:focus,
+input:focus,
+select:focus {
+    outline: 2px solid var(--branch-login-primary);
+    outline-offset: 2px;
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+    :root {
+        --branch-login-gray-200: #000000;
+        --branch-login-gray-500: #000000;
+        --branch-login-gray-700: #000000;
+    }
+    
+    .form-input,
+    .form-select {
+        border-color: #000000;
+    }
+}
+
+/* 지점 정보 헤더 */
+.branch-info-header {
+    margin-bottom: 32px;
+    padding: 24px;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    border: 1px solid var(--branch-login-gray-200);
+}
+
+.branch-info h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--branch-login-gray-900);
+    margin: 0 0 8px 0;
+}
+
+.branch-code {
+    font-size: 14px;
+    color: var(--branch-login-gray-600);
+    margin: 0 0 8px 0;
+    font-weight: 500;
+}
+
+.branch-address {
+    font-size: 14px;
+    color: var(--branch-login-gray-500);
+    margin: 0 0 16px 0;
+}
+
+.branch-stats {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    font-size: 13px;
+    color: var(--branch-login-gray-600);
+    background: var(--branch-login-white);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--branch-login-gray-200);
+    font-weight: 500;
+}
+
+.headquarters-info .branch-info {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-left: 4px solid var(--branch-login-primary);
+}
+
+/* 로딩 스피너 */
+.loading-spinner {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--branch-login-gray-200);
+    border-top: 4px solid var(--branch-login-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px auto;
+}
+
+.loading-spinner p {
+    color: var(--branch-login-gray-600);
+    font-size: 16px;
+    margin: 0;
+}
+
+/* 에러 상태 */
+.error-state {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.error-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.error-state h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--branch-login-error);
+    margin: 0 0 8px 0;
+}
+
+.error-state p {
+    color: var(--branch-login-gray-600);
+    margin: 0 0 24px 0;
+    font-size: 14px;
+}
+
+.error-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.retry-button {
+    padding: 10px 20px;
+    background: var(--branch-login-primary);
+    color: var(--branch-login-white);
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--branch-login-transition);
+}
+
+.retry-button:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+/* 로그인 링크 그룹 */
+.login-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.login-links .link-button {
+    margin: 0;
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: var(--branch-login-gray-100);
+    border: 1px solid var(--branch-login-gray-200);
+    text-decoration: none;
+    transition: var(--branch-login-transition);
+    min-width: 120px;
+}
+
+.login-links .link-button:hover {
+    background: var(--branch-login-gray-200);
+    color: var(--branch-login-gray-800);
+    transform: translateY(-1px);
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+    .login-card {
+        background: var(--branch-login-gray-800);
+        color: var(--branch-login-white);
+    }
+    
+    .login-header h2 {
+        color: var(--branch-login-white);
+    }
+    
+    .login-header p {
+        color: var(--branch-login-gray-300);
+    }
+    
+    .form-input,
+    .form-select {
+        background: var(--branch-login-gray-700);
+        border-color: var(--branch-login-gray-600);
+        color: var(--branch-login-white);
+    }
+    
+    .form-input::placeholder {
+        color: var(--branch-login-gray-400);
+    }
+    
+    .info-box {
+        background: var(--branch-login-gray-700);
+    }
+    
+    .info-box h4 {
+        color: var(--branch-login-white);
+    }
+    
+    .info-box li {
+        color: var(--branch-login-gray-300);
+    }
+    
+    .branch-info-header {
+        background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+        border-color: var(--branch-login-gray-600);
+    }
+    
+    .branch-info h2 {
+        color: var(--branch-login-white);
+    }
+    
+    .branch-code {
+        color: var(--branch-login-gray-300);
+    }
+    
+    .branch-address {
+        color: var(--branch-login-gray-400);
+    }
+    
+    .stat-item {
+        background: var(--branch-login-gray-700);
+        border-color: var(--branch-login-gray-600);
+        color: var(--branch-login-gray-300);
+    }
+    
+    .headquarters-info .branch-info {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    }
+    
+    .loading-spinner p {
+        color: var(--branch-login-gray-300);
+    }
+    
+    .error-state h3 {
+        color: #fca5a5;
+    }
+    
+    .error-state p {
+        color: var(--branch-login-gray-400);
+    }
+    
+    .login-links .link-button {
+        background: var(--branch-login-gray-700);
+        border-color: var(--branch-login-gray-600);
+        color: var(--branch-login-gray-300);
+    }
+    
+    .login-links .link-button:hover {
+        background: var(--branch-login-gray-600);
+        color: var(--branch-login-white);
+    }
+}

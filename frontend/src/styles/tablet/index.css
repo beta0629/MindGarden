@@ -74,6 +74,27 @@
   letter-spacing: 0.5px;
 }
 
+.user-role-en {
+  font-size: 0.65rem;
+  color: var(--gray-400);
+  font-style: italic;
+  margin-top: 1px;
+}
+
+.user-branch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--gray-400);
+  margin-top: 2px;
+  opacity: 0.8;
+}
+
+.user-branch i {
+  font-size: 0.65rem;
+}
+
 .profile-edit-link {
   display: flex;
   align-items: center;

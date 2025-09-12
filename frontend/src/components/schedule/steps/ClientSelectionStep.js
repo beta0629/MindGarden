@@ -41,7 +41,7 @@ const ClientSelectionStep = ({
             console.log('👤 내담자 목록 로드 시작 - 상담사:', selectedConsultant.name);
             
             // 선택된 상담사와 매핑된 내담자만 조회
-            const response = await fetch(`/api/admin/mappings/consultant/${selectedConsultant.originalId || selectedConsultant.id}/clients`, {
+            const response = await fetch(`http://localhost:8080/api/admin/mappings/consultant/${selectedConsultant.originalId || selectedConsultant.id}/clients`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

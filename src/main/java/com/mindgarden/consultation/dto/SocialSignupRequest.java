@@ -72,4 +72,9 @@ public class SocialSignupRequest {
      * 소셜 계정 프로필 이미지 URL
      */
     private String providerProfileImage;
+    
+    /**
+     * 지점 코드 (지점별 사용자 등록 시)
+     */
+    private String branchCode;
 }

@@ -25,4 +25,5 @@ public class ClientRegistrationDto {
     private String emergencyPhone;
     private String notes;
     private String registeredBy;
+    private String branchCode;
 }

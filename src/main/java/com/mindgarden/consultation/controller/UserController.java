@@ -5,6 +5,7 @@ import java.util.List;
 import com.mindgarden.consultation.dto.ProfileImageInfo;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.UserService;
+import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -81,8 +83,25 @@ public class UserController implements BaseController<User, Long> {
      * 역할별 사용자 조회
      */
     @GetMapping("/role/{role}")
-    public ResponseEntity<List<User>> getByRole(@PathVariable String role) {
-        List<User> users = userService.findByRole(role);
+    public ResponseEntity<List<User>> getByRole(@PathVariable String role, HttpSession session) {
+        // 현재 로그인한 사용자의 지점코드 확인
+        User currentUser = (User) session.getAttribute("user");
+        String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+        log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+        
+        List<User> allUsers = userService.findByRole(role);
+        
+        // 지점코드로 필터링
+        List<User> users = allUsers.stream()
+            .filter(user -> {
+                if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
+                    return true; // 지점코드가 없으면 모든 사용자 조회
+                }
+                return currentBranchCode.equals(user.getBranchCode());
+            })
+            .collect(java.util.stream.Collectors.toList());
+        
+        log.info("🔍 역할별 사용자 조회 완료 - 전체: {}, 필터링 후: {}", allUsers.size(), users.size());
         return ResponseEntity.ok(users);
     }
     
@@ -316,9 +335,34 @@ public class UserController implements BaseController<User, Long> {
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(required = false) String gender,
             @RequestParam(required = false) String ageGroup,
-            Pageable pageable) {
+            Pageable pageable,
+            HttpSession session) {
         
-        Page<User> users = userService.findByComplexCriteria(name, email, role, grade, isActive, gender, ageGroup, pageable);
+        // 현재 로그인한 사용자의 지점코드 확인
+        User currentUser = (User) session.getAttribute("user");
+        String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+        log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+        
+        Page<User> allUsers = userService.findByComplexCriteria(name, email, role, grade, isActive, gender, ageGroup, pageable);
+        
+        // 지점코드로 필터링
+        List<User> filteredUsers = allUsers.getContent().stream()
+            .filter(user -> {
+                if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
+                    return true; // 지점코드가 없으면 모든 사용자 조회
+                }
+                return currentBranchCode.equals(user.getBranchCode());
+            })
+            .collect(java.util.stream.Collectors.toList());
+        
+        // 필터링된 결과로 새로운 Page 객체 생성
+        Page<User> users = new org.springframework.data.domain.PageImpl<>(
+            filteredUsers, 
+            pageable, 
+            filteredUsers.size()
+        );
+        
+        log.info("🔍 복합 조건 사용자 검색 완료 - 전체: {}, 필터링 후: {}", allUsers.getTotalElements(), filteredUsers.size());
         return ResponseEntity.ok(users);
     }
     
@@ -328,8 +372,13 @@ public class UserController implements BaseController<User, Long> {
      * 사용자 통계 정보 조회
      */
     @GetMapping("/statistics/overall")
-    public ResponseEntity<Object[]> getOverallStatistics() {
-        Object[] statistics = userService.getUserStatistics();
+    public ResponseEntity<Object[]> getOverallStatistics(HttpSession session) {
+        // 현재 로그인한 사용자의 지점코드 확인
+        User currentUser = (User) session.getAttribute("user");
+        String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+        log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+        
+        Object[] statistics = userService.getUserStatisticsByBranchCode(currentBranchCode);
         return ResponseEntity.ok(statistics);
     }
     
@@ -375,7 +424,17 @@ public class UserController implements BaseController<User, Long> {
      * 사용자 등록
      */
     @PostMapping("/register")
-    public ResponseEntity<User> registerUser(@RequestBody User user) {
+    public ResponseEntity<User> registerUser(@RequestBody User user, HttpSession session) {
+        // 세션에서 현재 사용자의 지점 정보 가져오기 (관리자가 등록하는 경우)
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser != null && currentUser.getBranch() != null) {
+            // 관리자가 지점에 소속되어 있으면 자동으로 지점코드 설정
+            if (user.getBranchCode() == null || user.getBranchCode().trim().isEmpty()) {
+                user.setBranchCode(currentUser.getBranch().getBranchCode());
+                log.info("🔧 세션에서 지점코드 자동 설정: branchCode={}", user.getBranchCode());
+            }
+        }
+        
         User registeredUser = userService.registerUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(registeredUser);
     }

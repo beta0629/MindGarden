@@ -5,6 +5,9 @@ import TabletHomepage from './components/homepage/Homepage';
 import TabletLogin from './components/auth/TabletLogin';
 import TabletRegister from './components/auth/TabletRegister';
 import OAuth2Callback from './components/auth/OAuth2Callback';
+import BranchLogin from './components/auth/BranchLogin';
+import BranchSpecificLogin from './components/auth/BranchSpecificLogin';
+import HeadquartersLogin from './components/auth/HeadquartersLogin';
 import CommonDashboard from './components/dashboard/CommonDashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
 import MyPage from './components/mypage/MyPage';
@@ -52,6 +55,7 @@ import { useSession } from './contexts/SessionContext';
 import { sessionManager } from './utils/sessionManager';
 import duplicateLoginManager from './utils/duplicateLoginManager';
 import DuplicateLoginAlert from './components/common/DuplicateLoginAlert';
+import BranchMappingModal from './components/common/BranchMappingModal';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -83,7 +87,7 @@ function QueryParamHandler({ children, onLoginSuccess }) {
 
 // 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
 function AppContent() {
-  const { user, sessionInfo, isLoading, checkSession, logout } = useSession();
+  const { user, sessionInfo, isLoading, checkSession, logout, branchMappingModal, handleBranchMappingSuccess } = useSession();
   
   // 통계 모달 상태
   const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);
@@ -185,6 +189,11 @@ function AppContent() {
             <Route path="/login" element={<TabletLogin />} />
             <Route path="/register" element={<TabletRegister />} />
             
+            {/* 지점별 로그인 라우트 */}
+            <Route path="/login/branch" element={<BranchLogin />} />
+            <Route path="/login/branch/:branchCode" element={<BranchSpecificLogin />} />
+            <Route path="/login/headquarters" element={<HeadquartersLogin />} />
+            
             {/* 일반 대시보드 라우트 */}
             <Route path="/dashboard" element={<CommonDashboard user={user} />} />
             
@@ -193,9 +202,18 @@ function AppContent() {
             <Route path="/consultant/dashboard" element={<CommonDashboard user={user} />} />
             <Route path="/admin/dashboard" element={<AdminDashboard user={user} />} />
             <Route path="/super_admin/dashboard" element={<AdminDashboard user={user} />} />
+            <Route path="/hq_admin/dashboard" element={<AdminDashboard user={user} />} />
+            <Route path="/super_hq_admin/dashboard" element={<AdminDashboard user={user} />} />
+            <Route path="/branch_super_admin/dashboard" element={<Navigate to="/super_admin/dashboard" replace />} />
+            <Route path="/branch_manager/dashboard" element={<AdminDashboard user={user} />} />
             <Route path="/client/mypage" element={<MyPage />} />
             <Route path="/consultant/mypage" element={<MyPage />} />
             <Route path="/admin/mypage" element={<MyPage />} />
+            <Route path="/super_admin/mypage" element={<MyPage />} />
+            <Route path="/hq_admin/mypage" element={<MyPage />} />
+            <Route path="/super_hq_admin/mypage" element={<MyPage />} />
+            <Route path="/branch_super_admin/mypage" element={<Navigate to="/super_admin/mypage" replace />} />
+            <Route path="/branch_manager/mypage" element={<MyPage />} />
             
             {/* 상담사 전용 라우트 */}
             <Route path="/consultant/schedule" element={<ConsultantSchedule />} />
@@ -221,6 +239,7 @@ function AppContent() {
             <Route path="/schedule" element={<SchedulePage user={user} />} />
             <Route path="/admin/schedule" element={<SchedulePage user={user} />} />
             <Route path="/consultant/schedule-new" element={<SchedulePage user={user} />} />
+            <Route path="/super_admin/schedule" element={<SchedulePage user={user} />} />
             
             {/* 관리자 전용 라우트 */}
             <Route path="/admin/consultant-comprehensive" element={<ConsultantComprehensiveManagement />} />
@@ -229,6 +248,7 @@ function AppContent() {
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<SessionManagement />} />
             <Route path="/admin/accounts" element={<AccountManagement />} />
+            
             <Route path="/admin/schedules" element={
               <SimpleLayout>
                 <ScheduleCalendar 
@@ -254,6 +274,7 @@ function AppContent() {
               </SimpleLayout>
             } />
             
+            
             {/* 시스템 관리 라우트 (준비중) */}
             <Route path="/admin/system" element={
               <ComingSoon 
@@ -268,6 +289,26 @@ function AppContent() {
               />
             } />
             <Route path="/admin/settings" element={
+              <ComingSoon 
+                title="관리자 설정"
+                description="관리자 설정 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            
+            {/* 지점 수퍼 어드민 시스템 관리 라우트 (준비중) */}
+            <Route path="/branch-super-admin/system" element={
+              <ComingSoon 
+                title="시스템 도구"
+                description="시스템 도구 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/branch-super-admin/logs" element={
+              <ComingSoon 
+                title="시스템 로그"
+                description="시스템 로그 조회 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/branch-super-admin/settings" element={
               <ComingSoon 
                 title="관리자 설정"
                 description="관리자 설정 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
@@ -352,6 +393,16 @@ function AppContent() {
             onConfirm={handleDuplicateLoginConfirm}
             onCancel={handleDuplicateLoginCancel}
             countdown={5}
+          />
+          
+          {/* 지점 매핑 모달 */}
+          <BranchMappingModal
+            isOpen={branchMappingModal.isOpen}
+            onClose={() => {
+              // 모달을 닫을 수 없도록 함 (필수 설정)
+              console.log('지점 매핑은 필수입니다.');
+            }}
+            onSuccess={handleBranchMappingSuccess}
           />
         </div>
       </QueryParamHandler>

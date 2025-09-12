@@ -67,6 +67,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                     .name(request.getName())
                     .email(request.getEmail())
                     .phone(phone)
+                    .branchCode(request.getBranchCode()) // 지점코드 추가
                     .isDeleted(false)
                     .build();
             
@@ -87,6 +88,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 user.setEmail(client.getEmail());
                 user.setName(client.getName());
                 user.setRole(UserRole.CLIENT);
+                user.setBranchCode(request.getBranchCode()); // 지점코드 설정
                 
                 UserSocialAccount socialAccount = UserSocialAccount.builder()
                     .user(user)

@@ -9,8 +9,8 @@ package com.mindgarden.consultation.constant;
  */
 public class OAuth2Constants {
     
-    // 프론트엔드 기본 URL (환경변수로 설정 가능)
-    public static final String FRONTEND_BASE_URL = System.getProperty("frontend.base.url", "http://localhost:3000");
+    // 프론트엔드 기본 URL (로컬 개발 환경용)
+    public static final String FRONTEND_BASE_URL = "http://localhost:3000";
     
     // 역할별 대시보드 경로
     public static final String CLIENT_DASHBOARD_PATH = "/client/dashboard";

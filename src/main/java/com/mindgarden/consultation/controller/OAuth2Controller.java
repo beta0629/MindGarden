@@ -53,6 +53,9 @@ public class OAuth2Controller {
     @Value("${spring.security.oauth2.client.registration.naver.scope:name,email}")
     private String naverScope;
     
+    @Value("${frontend.base-url:http://localhost:3000}")
+    private String frontendBaseUrl;
+    
     /**
      * 프론트엔드 URL 동적 감지
      * Referer 헤더에서 프론트엔드 URL을 추출
@@ -63,14 +66,17 @@ public class OAuth2Controller {
             try {
                 // Referer에서 프로토콜과 호스트 부분만 추출
                 java.net.URL url = new java.net.URL(referer);
-                return url.getProtocol() + "://" + url.getAuthority();
+                String frontendUrl = url.getProtocol() + "://" + url.getAuthority();
+                log.info("프론트엔드 URL 감지: {}", frontendUrl);
+                return frontendUrl;
             } catch (Exception e) {
                 log.warn("Referer URL 파싱 실패: {}", referer, e);
             }
         }
         
-        // Referer가 없거나 파싱 실패 시 기본값 사용
-        return OAuth2Constants.FRONTEND_BASE_URL;
+        // Referer가 없거나 파싱 실패 시 프로퍼티 값 사용
+        log.info("프로퍼티 프론트엔드 URL 사용: {}", frontendBaseUrl);
+        return frontendBaseUrl;
     }
 
     @GetMapping("/oauth2/kakao/authorize")
@@ -212,12 +218,12 @@ public class OAuth2Controller {
                                 currentUser.getId(), userInfo.getId());
                         
                         return ResponseEntity.status(302)
-                            .header("Location", OAuth2Constants.FRONTEND_BASE_URL + "/mypage?success=" + URLEncoder.encode("연동완료", StandardCharsets.UTF_8) + "&provider=NAVER")
+                            .header("Location", frontendBaseUrl + "/mypage?success=" + URLEncoder.encode("연동완료", StandardCharsets.UTF_8) + "&provider=NAVER")
                             .build();
                     } catch (Exception e) {
                         log.error("네이버 계정 연동 실패", e);
                         return ResponseEntity.status(302)
-                            .header("Location", OAuth2Constants.FRONTEND_BASE_URL + "/mypage?error=" + URLEncoder.encode("연동실패", StandardCharsets.UTF_8) + "&provider=NAVER")
+                            .header("Location", frontendBaseUrl + "/mypage?error=" + URLEncoder.encode("연동실패", StandardCharsets.UTF_8) + "&provider=NAVER")
                             .build();
                     }
                 } else {
@@ -301,13 +307,13 @@ public class OAuth2Controller {
                     .build();
             } else {
                 return ResponseEntity.status(302)
-                    .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode(response.getMessage(), StandardCharsets.UTF_8) + "&provider=NAVER")
+                    .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode(response.getMessage(), StandardCharsets.UTF_8) + "&provider=NAVER")
                     .build();
             }
         } catch (Exception e) {
             log.error("네이버 OAuth2 콜백 처리 실패", e);
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=NAVER")
+                .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=NAVER")
                 .build();
         }
     }
@@ -323,14 +329,14 @@ public class OAuth2Controller {
         
         if (error != null) {
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode(error, StandardCharsets.UTF_8) + "&provider=KAKAO")
+                .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode(error, StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
         
         if (code == null) {
             log.warn("카카오 OAuth2 콜백에서 인증 코드가 없습니다. error={}, state={}", error, state);
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode("인증코드없음", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode("인증코드없음", StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
         
@@ -338,7 +344,7 @@ public class OAuth2Controller {
         if (savedState != null && !savedState.equals(state)) {
             session.removeAttribute("oauth2_kakao_state");
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode("보안검증실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode("보안검증실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
         
@@ -360,7 +366,7 @@ public class OAuth2Controller {
                     if (currentUser == null) {
                         log.error("계정 연동 모드에서 세션 사용자를 찾을 수 없음");
                         return ResponseEntity.status(302)
-                            .header("Location", "http://localhost:3000/mypage?error=" + URLEncoder.encode("세션만료", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                            .header("Location", frontendBaseUrl + "/mypage?error=" + URLEncoder.encode("세션만료", StandardCharsets.UTF_8) + "&provider=KAKAO")
                             .build();
                     }
                     
@@ -382,12 +388,12 @@ public class OAuth2Controller {
                                 currentUser.getId(), userInfo.getId());
                         
                         return ResponseEntity.status(302)
-                            .header("Location", "http://localhost:3000/mypage?success=" + URLEncoder.encode("연동완료", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                            .header("Location", frontendBaseUrl + "/mypage?success=" + URLEncoder.encode("연동완료", StandardCharsets.UTF_8) + "&provider=KAKAO")
                             .build();
                     } catch (Exception e) {
                         log.error("카카오 계정 연동 실패", e);
                         return ResponseEntity.status(302)
-                            .header("Location", "http://localhost:3000/mypage?error=" + URLEncoder.encode("연동실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                            .header("Location", frontendBaseUrl + "/mypage?error=" + URLEncoder.encode("연동실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
                             .build();
                     }
                 } else {
@@ -458,7 +464,7 @@ public class OAuth2Controller {
                 log.info("카카오 OAuth2 간편 회원가입 필요: {}", response.getSocialUserInfo());
                 
                 // 소셜 사용자 정보를 URL 파라미터로 전달
-                String signupUrl = "http://localhost:3000/login?" +
+                String signupUrl = frontendBaseUrl + "/login?" +
                     "signup=required" +
                     "&provider=kakao" +
                     "&email=" + (response.getSocialUserInfo() != null ? response.getSocialUserInfo().getEmail() : "") +
@@ -470,13 +476,13 @@ public class OAuth2Controller {
                     .build();
             } else {
                 return ResponseEntity.status(302)
-                    .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode(response.getMessage(), StandardCharsets.UTF_8) + "&provider=KAKAO")
+                    .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode(response.getMessage(), StandardCharsets.UTF_8) + "&provider=KAKAO")
                     .build();
             }
         } catch (Exception e) {
             log.error("카카오 OAuth2 콜백 처리 실패", e);
             return ResponseEntity.status(302)
-                .header("Location", "http://localhost:3000/login?error=" + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
     }

@@ -210,3 +210,7 @@ consultation:
     dashboard:
       max-components: 12
       default-layout: "grid"
+
+# 프론트엔드 설정 (기본값)
+frontend:
+  base-url: http://localhost:3000

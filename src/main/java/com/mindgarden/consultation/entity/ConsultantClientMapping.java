@@ -57,7 +57,7 @@ public class ConsultantClientMapping extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50, nullable = false)
-    private MappingStatus status = MappingStatus.PENDING_PAYMENT;
+    private MappingStatus status = MappingStatus.PENDING_PAYMENT; // TEST WARNING
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", length = 50, nullable = false)

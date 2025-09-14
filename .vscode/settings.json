@@ -1,5 +1,5 @@
 {
-    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -Xmx4g -Xms2g -XX:MaxMetaspaceSize=512m -Djava.home=/opt/homebrew/opt/openjdk@17",
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -Xmx2g -Xms1g -XX:MaxMetaspaceSize=256m",
     "java.compile.nullAnalysis.mode": "automatic",
     "java.import.gradle.enabled": true,
     "java.import.maven.enabled": true,
@@ -15,6 +15,7 @@
             "default": true
         }
     ],
+    "java.home": "/opt/homebrew/opt/openjdk@17",
     "java.debug.settings.onBuildFailureProceed": true,
     "java.debug.settings.hotCodeReplace": "auto",
     "java.debug.settings.enableRunDebugCodeLens": true,
@@ -57,6 +58,7 @@
     "java.inlayHints.parameterNames.enabled": "all",
     "java.semanticHighlighting.enabled": true,
     "java.trace.server": "verbose",
+    "java.server.launchMode": "Standard",
     "problems.showCurrentInStatus": true,
     "editor.renderValidationDecorations": "on",
     "problems.decorations.enabled": true,
@@ -70,6 +72,5 @@
     "java.configuration.maven.notCoveredPluginExecutionSeverity": "ignore",
     "java.configuration.maven.downloadSources": true,
     "java.configuration.maven.updateSnapshots": false,
-    "java.server.launchMode": "Standard",
     "java.lombokSupport.enabled": true
 }

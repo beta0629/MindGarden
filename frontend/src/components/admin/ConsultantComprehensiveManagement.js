@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import { 
+    getUserStatusKoreanName,
+    getUserGradeKoreanName,
+    getUserGradeIcon,
+    getStatusColor
+} from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -487,16 +493,22 @@ const ConsultantComprehensiveManagement = () => {
     };
 
     /**
-     * 상태를 한글로 변환
+     * 상태를 한글로 변환 (동적 처리)
      */
-    const getStatusText = (status) => {
-        const statusMap = {
-            'ACTIVE': '활성',
-            'INACTIVE': '비활성',
-            'SUSPENDED': '일시정지',
-            'COMPLETED': '완료'
-        };
-        return statusMap[status] || status;
+    const getStatusText = async (status) => {
+        try {
+            return await getUserStatusKoreanName(status);
+        } catch (error) {
+            console.error(`상태 한글명 조회 실패: ${status}`, error);
+            // fallback 매핑
+            const statusMap = {
+                'ACTIVE': '활성',
+                'INACTIVE': '비활성',
+                'SUSPENDED': '일시정지',
+                'COMPLETED': '완료'
+            };
+            return statusMap[status] || status;
+        }
     };
 
     /**
@@ -525,9 +537,28 @@ const ConsultantComprehensiveManagement = () => {
     };
 
     /**
-     * 상태별 색상 반환
+     * 상태별 색상 반환 (동적 처리)
      */
-    const getStatusColor = (status) => {
+    const getStatusColorLocal = async (status) => {
+        try {
+            return await getStatusColor(status, 'USER_STATUS');
+        } catch (error) {
+            console.error(`상태 색상 조회 실패: ${status}`, error);
+            // fallback 매핑
+            const colorMap = {
+                'ACTIVE': '#10b981',
+                'INACTIVE': '#6b7280',
+                'SUSPENDED': '#f59e0b',
+                'COMPLETED': '#3b82f6'
+            };
+            return colorMap[status] || '#6b7280';
+        }
+    };
+
+    /**
+     * 상태별 색상 반환 (동기식 fallback)
+     */
+    const getStatusColorSync = (status) => {
         const colorMap = {
             'ACTIVE': '#10b981',
             'INACTIVE': '#6b7280',
@@ -768,7 +799,7 @@ const ConsultantComprehensiveManagement = () => {
                                                             <div className="mapping-status">
                                                                 <span
                                                                     className="status-badge"
-                                                                    style={{ backgroundColor: getStatusColor(mapping.status) }}
+                                                                    style={{ backgroundColor: getStatusColorSync(mapping.status) }}
                                                                 >
                                                                     {getStatusText(mapping.status)}
                                                                 </span>
@@ -840,7 +871,7 @@ const ConsultantComprehensiveManagement = () => {
                                                             <div className="client-status">
                                                                 <span
                                                                     className="status-badge"
-                                                                    style={{ backgroundColor: getStatusColor(mapping.status) }}
+                                                                    style={{ backgroundColor: getStatusColorSync(mapping.status) }}
                                                                 >
                                                                     {getStatusText(mapping.status)}
                                                                 </span>

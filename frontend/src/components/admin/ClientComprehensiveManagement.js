@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaUser } from 'react-icons/fa';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
+import { 
+    getUserStatusKoreanName,
+    getUserGradeKoreanName,
+    getUserGradeIcon,
+    getStatusColor
+} from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -285,70 +291,137 @@ const ClientComprehensiveManagement = () => {
     };
 
     /**
-     * 상태를 한글로 변환
+     * 상태를 한글로 변환 (동적 처리)
      */
-    const getStatusText = (status) => {
-        const statusMap = {
-            'ACTIVE': '활성',
-            'INACTIVE': '비활성',
-            'SUSPENDED': '일시정지',
-            'COMPLETED': '완료',
-            'PENDING': '대기중',
-            'APPROVED': '승인됨',
-            'REJECTED': '거부됨',
-            'PAYMENT_CONFIRMED': '결제확인',
-            'PAYMENT_PENDING': '결제대기',
-            'PAYMENT_REJECTED': '결제거부',
-            'TERMINATED': '종료됨',
-            'CLIENT_BRONZE': '브론즈',
-            'CLIENT_SILVER': '실버',
-            'CLIENT_GOLD': '골드',
-            'CLIENT_PLATINUM': '플래티넘',
-            'CONSULTANT_JUNIOR': '주니어',
-            'CONSULTANT_SENIOR': '시니어',
-            'CONSULTANT_EXPERT': '전문가',
-            'ADMIN': '관리자',
-            'BRANCH_SUPER_ADMIN': '수퍼관리자'
-        };
-        return statusMap[status] || status;
-    };
+    const getStatusText = useCallback(async (status) => {
+        try {
+            // 사용자 상태인지 등급인지 판단
+            if (status.startsWith('CLIENT_') || status.startsWith('CONSULTANT_') || 
+                status === 'ADMIN' || status === 'BRANCH_SUPER_ADMIN' || 
+                status === 'HQ_ADMIN' || status === 'SUPER_HQ_ADMIN' || status === 'HQ_MASTER') {
+                return await getUserGradeKoreanName(status);
+            } else {
+                return await getUserStatusKoreanName(status);
+            }
+        } catch (error) {
+            console.error(`상태 한글명 조회 실패: ${status}`, error);
+            // fallback 매핑
+            const statusMap = {
+                'ACTIVE': '활성',
+                'INACTIVE': '비활성',
+                'SUSPENDED': '일시정지',
+                'COMPLETED': '완료',
+                'PENDING': '대기중',
+                'APPROVED': '승인됨',
+                'REJECTED': '거부됨',
+                'PAYMENT_CONFIRMED': '결제확인',
+                'PAYMENT_PENDING': '결제대기',
+                'PAYMENT_REJECTED': '결제거부',
+                'TERMINATED': '종료됨',
+                'CLIENT_BRONZE': '브론즈',
+                'CLIENT_SILVER': '실버',
+                'CLIENT_GOLD': '골드',
+                'CLIENT_PLATINUM': '플래티넘',
+                'CONSULTANT_JUNIOR': '주니어',
+                'CONSULTANT_SENIOR': '시니어',
+                'CONSULTANT_EXPERT': '전문가',
+                'ADMIN': '관리자',
+                'BRANCH_SUPER_ADMIN': '수퍼관리자'
+            };
+            return statusMap[status] || status;
+        }
+    }, []);
 
     /**
-     * 등급을 한글로 변환
+     * 등급을 한글로 변환 (동적 처리)
      */
-    const getGradeText = (grade) => {
-        const gradeMap = {
-            'CLIENT_BRONZE': '브론즈',
-            'CLIENT_SILVER': '실버',
-            'CLIENT_GOLD': '골드',
-            'CLIENT_PLATINUM': '플래티넘',
-            'CLIENT_DIAMOND': '다이아몬드'
-        };
-        return gradeMap[grade] || grade || '브론즈';
-    };
+    const getGradeText = useCallback(async (grade) => {
+        try {
+            return await getUserGradeKoreanName(grade);
+        } catch (error) {
+            console.error(`등급 한글명 조회 실패: ${grade}`, error);
+            // fallback 매핑
+            const gradeMap = {
+                'CLIENT_BRONZE': '브론즈',
+                'CLIENT_SILVER': '실버',
+                'CLIENT_GOLD': '골드',
+                'CLIENT_PLATINUM': '플래티넘',
+                'CLIENT_DIAMOND': '다이아몬드'
+            };
+            return gradeMap[grade] || grade || '브론즈';
+        }
+    }, []);
 
     /**
-     * 등급 아이콘 반환
+     * 등급 아이콘 반환 (동적 처리)
      */
-    const getGradeIcon = (grade) => {
-        const iconMap = {
-            'CLIENT_BRONZE': '🥉',
-            'CLIENT_SILVER': '🥈',
-            'CLIENT_GOLD': '🥇',
-            'CLIENT_PLATINUM': '💎',
-            'CONSULTANT_JUNIOR': '⭐',
-            'CONSULTANT_SENIOR': '⭐⭐',
-            'CONSULTANT_EXPERT': '⭐⭐⭐',
-            'ADMIN': '👑',
-            'BRANCH_SUPER_ADMIN': '👑👑'
-        };
-        return iconMap[grade] || '🥉';
-    };
+    const getGradeIcon = useCallback(async (grade) => {
+        try {
+            return await getUserGradeIcon(grade);
+        } catch (error) {
+            console.error(`등급 아이콘 조회 실패: ${grade}`, error);
+            // fallback 매핑
+            const iconMap = {
+                'CLIENT_BRONZE': '🥉',
+                'CLIENT_SILVER': '🥈',
+                'CLIENT_GOLD': '🥇',
+                'CLIENT_PLATINUM': '💎',
+                'CONSULTANT_JUNIOR': '⭐',
+                'CONSULTANT_SENIOR': '⭐⭐',
+                'CONSULTANT_EXPERT': '⭐⭐⭐',
+                'ADMIN': '👑',
+                'BRANCH_SUPER_ADMIN': '👑👑'
+            };
+            return iconMap[grade] || '🥉';
+        }
+    }, []);
 
     /**
-     * 상태별 색상 반환
+     * 상태별 색상 반환 (동적 처리)
      */
-    const getStatusColor = (status) => {
+    const getStatusColorLocal = useCallback(async (status) => {
+        try {
+            // 사용자 상태인지 등급인지 판단
+            if (status.startsWith('CLIENT_') || status.startsWith('CONSULTANT_') || 
+                status === 'ADMIN' || status === 'BRANCH_SUPER_ADMIN' || 
+                status === 'HQ_ADMIN' || status === 'SUPER_HQ_ADMIN' || status === 'HQ_MASTER') {
+                return await getStatusColorSync(status, 'USER_GRADE');
+            } else {
+                return await getStatusColorSync(status, 'USER_STATUS');
+            }
+        } catch (error) {
+            console.error(`상태 색상 조회 실패: ${status}`, error);
+            // fallback 매핑
+            const colorMap = {
+                'ACTIVE': '#7bc87b',
+                'INACTIVE': '#a8e6a3',
+                'SUSPENDED': '#f59e0b',
+                'COMPLETED': '#7bc87b',
+                'PENDING': '#ffc107',
+                'APPROVED': '#28a745',
+                'REJECTED': '#dc3545',
+                'PAYMENT_CONFIRMED': '#28a745',
+                'PAYMENT_PENDING': '#ffc107',
+                'PAYMENT_REJECTED': '#dc3545',
+                'TERMINATED': '#dc3545',
+                'CLIENT_BRONZE': '#cd7f32',
+                'CLIENT_SILVER': '#c0c0c0',
+                'CLIENT_GOLD': '#ffd700',
+                'CLIENT_PLATINUM': '#e5e4e2',
+                'CONSULTANT_JUNIOR': '#17a2b8',
+                'CONSULTANT_SENIOR': '#6f42c1',
+                'CONSULTANT_EXPERT': '#fd7e14',
+                'ADMIN': '#6c757d',
+                'BRANCH_SUPER_ADMIN': '#343a40'
+            };
+            return colorMap[status] || '#a8e6a3';
+        }
+    }, []);
+
+    /**
+     * 상태별 색상 반환 (동기식 fallback)
+     */
+    const getStatusColorSync = (status) => {
         const colorMap = {
             'ACTIVE': '#7bc87b',
             'INACTIVE': '#a8e6a3',
@@ -912,7 +985,7 @@ const ClientComprehensiveManagement = () => {
                                                             fontSize: '12px',
                                                             fontWeight: '500',
                                                             color: 'white',
-                                                            backgroundColor: getStatusColor(mapping.status)
+                                                            backgroundColor: getStatusColorSync(mapping.status)
                                                         }}
                                                     >
                                                         {getStatusText(mapping.status)}
@@ -1137,7 +1210,7 @@ const ClientComprehensiveManagement = () => {
                                                     <span className="label">매핑 상태:</span>
                                                     <span
                                                         className="value status-badge"
-                                                        style={{ backgroundColor: getStatusColor(getClientMapping().status) }}
+                                                        style={{ backgroundColor: getStatusColorSync(getClientMapping().status) }}
                                                     >
                                                         {getStatusText(getClientMapping().status)}
                                                     </span>
@@ -1456,7 +1529,7 @@ const ClientComprehensiveManagement = () => {
                                                                 fontSize: '12px',
                                                                 fontWeight: '600',
                                                                 color: 'white',
-                                                                backgroundColor: getStatusColor(mapping.status)
+                                                                backgroundColor: getStatusColorSync(mapping.status)
                                                             }}>
                                                                 {getStatusText(mapping.status)}
                                                             </span>

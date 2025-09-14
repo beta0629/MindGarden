@@ -13,6 +13,8 @@ import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
+import com.mindgarden.consultation.service.FinancialTransactionService;
+import com.mindgarden.consultation.service.MenuService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +42,8 @@ public class AdminController {
     private final AdminService adminService;
     private final ScheduleService scheduleService;
     private final DynamicPermissionService dynamicPermissionService;
+    private final MenuService menuService;
+    private final FinancialTransactionService financialTransactionService;
 
     /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
@@ -1738,6 +1742,89 @@ public class AdminController {
                 return "Branch Manager";
             default:
                 return role.name();
+        }
+    }
+    
+    /**
+     * 메뉴 목록 조회 (사용자 역할별)
+     */
+    @GetMapping("/menus")
+    public ResponseEntity<Map<String, Object>> getMenus(HttpSession session) {
+        try {
+            log.info("🔍 메뉴 목록 조회");
+            
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(401).body(response);
+            }
+            
+            // 사용자 역할에 따른 메뉴 목록 반환
+            Map<String, Object> menuStructure = menuService.getMenuStructureByRole(currentUser.getRole());
+            List<Map<String, Object>> menus = (List<Map<String, Object>>) menuStructure.get("menus");
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", menus);
+            response.put("totalCount", menus.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 메뉴 목록 조회 실패: {}", e.getMessage(), e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "메뉴 목록 조회에 실패했습니다: " + e.getMessage());
+            
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    /**
+     * 재무 거래 목록 조회
+     */
+    @GetMapping("/financial-transactions")
+    public ResponseEntity<Map<String, Object>> getFinancialTransactions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpSession session) {
+        try {
+            log.info("🔍 재무 거래 목록 조회");
+            
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(401).body(response);
+            }
+            
+            // 재무 거래 목록 조회
+            var transactions = financialTransactionService.getTransactions(
+                org.springframework.data.domain.PageRequest.of(page, size)
+            );
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", transactions.getContent());
+            response.put("totalCount", transactions.getTotalElements());
+            response.put("totalPages", transactions.getTotalPages());
+            response.put("currentPage", transactions.getNumber());
+            response.put("size", transactions.getSize());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 재무 거래 목록 조회 실패: {}", e.getMessage(), e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "재무 거래 목록 조회에 실패했습니다: " + e.getMessage());
+            
+            return ResponseEntity.badRequest().body(response);
         }
     }
 }

@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-09-15] - ERP 시스템 구축 완료
+
+### ✨ 새로운 기능
+- **ERP 시스템 구축 완료**
+  - 구매 관리 페이지 (`/erp/purchase`) - 비품 구매 요청 및 주문 관리
+  - 재무 관리 페이지 (`/erp/financial`) - 재무 거래 및 회계 관리
+  - ERP 공통 CSS 시스템 - 격리된 네임스페이스로 CSS 충돌 방지
+  - ERP 메뉴 시스템 - CommonCode 기반 동적 메뉴 구조
+  - ERP 권한 시스템 - 역할별 세분화된 권한 관리
+
+### 🔧 개선사항
+- **AdminController 확장**
+  - FinancialTransaction API 추가 (`/api/admin/financial-transactions`)
+  - 메뉴 API 개선 (`/api/admin/menus`)
+- **데이터 정리**
+  - 결제 상태 코드 중복 데이터 정리 (7개 중복 항목 제거)
+- **권한 시스템 강화**
+  - HQ_MASTER: 모든 ERP 권한
+  - BRANCH_SUPER_ADMIN: 구매/재무 관리 권한
+  - BRANCH_ADMIN: 구매 관리 조회 권한
+
+### 🛠️ 기술적 개선
+- **CSS 격리**: `.erp-system` 네임스페이스로 CSS 충돌 방지
+- **권한 코드**: 8개 ERP 권한 코드 추가
+- **역할 매핑**: 8개 역할별 권한 매핑 추가
+- **메뉴 통합**: CommonCode 기반 ERP 메뉴 구조
+
 ## [2025-09-14] - 상담기록 시스템 개선 및 데이터 일관성 강화
 
 ### 🔧 상담기록 시스템 개선

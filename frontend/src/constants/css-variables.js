@@ -1,51 +1,59 @@
-// CSS 변수 및 디자인 시스템 상수
+/**
+ * CSS 변수 및 디자인 시스템 상수 (동적 처리)
+ * 
+ * @deprecated 하드코딩된 색상 값들은 getDynamicCSSVariables() 함수 사용 권장
+ * @see getDynamicCSSVariables() in cssThemeHelper.js
+ */
+import { getDynamicCSSVariables } from '../utils/cssThemeHelper';
+
+// 하드코딩된 CSS 변수 (fallback용)
 export const CSS_VARIABLES = {
-  // 색상 시스템
+  // 색상 시스템 (동적 처리로 변경됨)
   COLORS: {
-    // Primary Colors
+    // Primary Colors (fallback)
     PRIMARY: '#667eea',
     PRIMARY_DARK: '#764ba2',
     PRIMARY_GRADIENT: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     
-    // Secondary Colors
+    // Secondary Colors (fallback)
     SECONDARY: '#6c757d',
     SECONDARY_LIGHT: '#e9ecef',
     
-    // Success Colors
+    // Success Colors (fallback)
     SUCCESS: '#00b894',
     SUCCESS_LIGHT: '#d4edda',
     SUCCESS_DARK: '#00a085',
     SUCCESS_GRADIENT: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
     
-    // Danger Colors
+    // Danger Colors (fallback)
     DANGER: '#ff6b6b',
     DANGER_LIGHT: '#f8d7da',
     DANGER_DARK: '#ee5a24',
     DANGER_GRADIENT: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
     
-    // Info Colors
+    // Info Colors (fallback)
     INFO: '#74b9ff',
     INFO_LIGHT: '#d1ecf1',
     INFO_DARK: '#0984e3',
     INFO_GRADIENT: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
     
-    // Warning Colors
+    // Warning Colors (fallback)
     WARNING: '#f093fb',
     WARNING_LIGHT: '#fff3cd',
     WARNING_DARK: '#f5576c',
     WARNING_GRADIENT: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
     
-    // Consultant Colors
+    // Consultant Colors (fallback)
     CONSULTANT: '#a29bfe',
     CONSULTANT_DARK: '#6c5ce7',
     CONSULTANT_GRADIENT: 'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%)',
     
-    // Client Colors
+    // Client Colors (fallback)
     CLIENT: '#00b894',
     CLIENT_DARK: '#00a085',
     CLIENT_GRADIENT: 'linear-gradient(135deg, #00b894 0%, #00a085 100%)',
     
-    // Finance Colors
+    // Finance Colors (fallback)
     FINANCE: '#f39c12',
     FINANCE_DARK: '#e67e22',
     FINANCE_GRADIENT: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)',
@@ -686,4 +694,47 @@ export const HOMEPAGE_CONSTANTS = {
     MENU_WIDTH: '300px',
     PROFILE_MENU_WIDTH: '200px'
   }
+};
+
+/**
+ * 동적 CSS 변수 조회 함수
+ * @param {string} themeName 테마명 (기본값: 'default')
+ * @returns {Promise<Object>} 동적 CSS 변수 객체
+ */
+export const getDynamicCSSVariablesAsync = getDynamicCSSVariables;
+
+/**
+ * 동적 CSS 변수 조회 함수 (동기식 fallback)
+ * @param {string} themeName 테마명 (기본값: 'default')
+ * @returns {Object} CSS 변수 객체 (fallback 포함)
+ */
+export const getCSSVariablesSync = (themeName = 'default') => {
+  // 동적 조회 실패 시 fallback으로 하드코딩된 값 사용
+  return CSS_VARIABLES;
+};
+
+/**
+ * 특정 색상 값을 동적으로 조회하는 함수
+ * @param {string} colorKey 색상 키 (예: 'PRIMARY', 'SUCCESS')
+ * @param {string} themeName 테마명 (기본값: 'default')
+ * @returns {Promise<string>} 색상 값
+ */
+export const getDynamicColor = async (colorKey, themeName = 'default') => {
+  try {
+    const { getThemeColor } = await import('../utils/cssThemeHelper');
+    const color = await getThemeColor(themeName, colorKey);
+    return color || CSS_VARIABLES.COLORS[colorKey] || '#6b7280';
+  } catch (error) {
+    console.error(`🎨 동적 색상 조회 실패: ${colorKey}`, error);
+    return CSS_VARIABLES.COLORS[colorKey] || '#6b7280';
+  }
+};
+
+/**
+ * 특정 색상 값을 동적으로 조회하는 함수 (동기식 fallback)
+ * @param {string} colorKey 색상 키
+ * @returns {string} 색상 값 (fallback 포함)
+ */
+export const getColorSync = (colorKey) => {
+  return CSS_VARIABLES.COLORS[colorKey] || '#6b7280';
 };

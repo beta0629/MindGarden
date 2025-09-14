@@ -34,7 +34,7 @@ public class RateLimitingFilter implements Filter {
     private final ConcurrentHashMap<String, ClientRateLimit> rateLimiters = new ConcurrentHashMap<>();
     
     // 기본 Rate Limiting 설정
-    private static final int DEFAULT_RATE = 100; // 초당 100 요청
+    private static final int DEFAULT_RATE = 200; // 초당 200 요청 (개발 환경용)
     private static final long WINDOW_SIZE = 1000; // 1초 윈도우
     
     // Rate Limiter 정리 주기 (분)

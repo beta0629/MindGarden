@@ -26,19 +26,109 @@ const ClientSelector = ({
     const [loadingMappings, setLoadingMappings] = useState({});
 
     /**
-     * 컴포넌트 마운트 시 모든 내담자의 매핑 정보 로드
+     * 컴포넌트 마운트 시 모든 내담자의 매핑 정보 일괄 로드
      */
     useEffect(() => {
         if (clients && clients.length > 0 && selectedConsultant) {
             console.log('🚀 내담자 매핑 정보 일괄 로드 시작:', clients.length, '명');
-            clients.forEach(client => {
-                loadClientMapping(client);
-            });
+            loadAllClientMappings(clients);
         }
-    }, [clients, selectedConsultant]); // loadClientMapping 제거하여 무한 루프 방지
+    }, [clients, selectedConsultant]);
 
     /**
-     * 내담자 매핑 정보 미리 로드
+     * 모든 내담자의 매핑 정보를 일괄 로드
+     */
+    const loadAllClientMappings = useCallback(async (clientsList) => {
+        if (!selectedConsultant) return;
+        
+        try {
+            const consultantId = selectedConsultant.originalId || selectedConsultant.id;
+            console.log('📊 모든 내담자 매핑 정보 일괄 로드 시작:', { consultantId, clientCount: clientsList.length });
+            
+            // 상담사별 매핑 정보를 일괄 조회
+            const response = await fetch(`/api/admin/mappings/consultant/${consultantId}/clients`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const responseData = await response.json();
+                const mappingsData = responseData.data || [];
+                
+                // 매핑 데이터를 클라이언트 ID별로 정리
+                const mappingsByClientId = {};
+                mappingsData.forEach(mapping => {
+                    const clientId = mapping.clientId || mapping.client?.id;
+                    if (clientId) {
+                        mappingsByClientId[clientId] = {
+                            hasMapping: true,
+                            remainingSessions: mapping.remainingSessions || 0,
+                            packageName: mapping.packageName || '기본 패키지',
+                            mappingStatus: mapping.status || 'ACTIVE',
+                            lastSessionDate: mapping.lastSessionDate,
+                            totalSessions: mapping.totalSessions || 0,
+                            mappingId: mapping.id
+                        };
+                    }
+                });
+                
+                // 모든 클라이언트에 대해 매핑 정보 설정 (매핑이 없는 경우 기본값)
+                const allClientMappings = {};
+                clientsList.forEach(client => {
+                    const clientId = client.originalId || client.id;
+                    allClientMappings[clientId] = mappingsByClientId[clientId] || {
+                        hasMapping: false,
+                        remainingSessions: 0,
+                        packageName: '매핑 없음',
+                        mappingStatus: 'INACTIVE',
+                        lastSessionDate: null,
+                        totalSessions: 0
+                    };
+                });
+                
+                setClientMappings(allClientMappings);
+                console.log('📊 모든 내담자 매핑 정보 일괄 로드 완료:', allClientMappings);
+            } else {
+                console.error('❌ 매핑 정보 일괄 조회 실패:', response.status);
+                // 실패 시 기본값 설정
+                const defaultMappings = {};
+                clientsList.forEach(client => {
+                    const clientId = client.originalId || client.id;
+                    defaultMappings[clientId] = {
+                        hasMapping: false,
+                        remainingSessions: 0,
+                        packageName: '확인 불가',
+                        mappingStatus: 'INACTIVE',
+                        lastSessionDate: null,
+                        totalSessions: 0
+                    };
+                });
+                setClientMappings(defaultMappings);
+            }
+        } catch (error) {
+            console.error('❌ 내담자 매핑 정보 일괄 로드 오류:', error);
+            // 오류 시 기본값 설정
+            const defaultMappings = {};
+            clientsList.forEach(client => {
+                const clientId = client.originalId || client.id;
+                defaultMappings[clientId] = {
+                    hasMapping: false,
+                    remainingSessions: 0,
+                    packageName: '확인 불가',
+                    mappingStatus: 'INACTIVE',
+                    lastSessionDate: null,
+                    totalSessions: 0
+                };
+            });
+            setClientMappings(defaultMappings);
+        }
+    }, [selectedConsultant]);
+
+    /**
+     * 개별 내담자 매핑 정보 로드 (필요시에만 사용)
      */
     const loadClientMapping = useCallback(async (client) => {
         const clientId = client.originalId || client.id;

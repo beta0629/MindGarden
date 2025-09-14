@@ -1,5 +1,6 @@
 package com.mindgarden.consultation.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -380,14 +381,16 @@ public class CommonCodeController {
                 "success", true,
                 "groupName", groupName,
                 "groupMetadata", groupMetadata.orElse(null),
-                "codes", codes.stream().map(code -> Map.of(
-                    "codeValue", code.getCodeValue(),
-                    "codeLabel", code.getCodeLabel(),
-                    "icon", code.getIcon(),
-                    "colorCode", code.getColorCode(),
-                    "koreanName", code.getKoreanName(),
-                    "isActive", code.getIsActive()
-                )).toList(),
+                "codes", codes.stream().map(code -> {
+                    Map<String, Object> codeMap = new HashMap<>();
+                    codeMap.put("codeValue", code.getCodeValue());
+                    codeMap.put("codeLabel", code.getCodeLabel());
+                    codeMap.put("icon", code.getIcon() != null ? code.getIcon() : "");
+                    codeMap.put("colorCode", code.getColorCode() != null ? code.getColorCode() : "");
+                    codeMap.put("koreanName", code.getKoreanName() != null ? code.getKoreanName() : "");
+                    codeMap.put("isActive", code.getIsActive());
+                    return codeMap;
+                }).toList(),
                 "count", codes.size()
             );
             

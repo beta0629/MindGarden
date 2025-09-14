@@ -1,21 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-    MAPPING_STAT_ICONS, 
-    MAPPING_STAT_LABELS, 
-    MAPPING_STAT_COLORS, 
-    MAPPING_STAT_BG_COLORS 
-} from '../../../constants/mapping';
+    getMappingStatusKoreanName,
+    getStatusColor,
+    getStatusIcon
+} from '../../../utils/codeHelper';
 
 /**
- * 매핑 통계 컴포넌트
+ * 매핑 통계 컴포넌트 (동적 처리 지원)
  * - 매핑 상태별 통계 표시
  * - 시각적 통계 카드
+ * - 동적 색상/아이콘 조회
  * 
  * @author MindGarden
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2024-12-19
+ * @updated 2025-09-14 - 동적 처리로 변경
  */
 const MappingStats = ({ mappings = [], onStatCardClick }) => {
+    const [statCards, setStatCards] = useState([]);
+    const [loading, setLoading] = useState(true);
     // 통계 계산
     const stats = {
         pending: mappings.filter(m => m.status === 'PENDING_PAYMENT').length,
@@ -26,62 +29,187 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
         sessionsExhausted: mappings.filter(m => m.status === 'SESSIONS_EXHAUSTED').length
     };
 
-    const statCards = [
-        {
-            id: 'PENDING_PAYMENT',
-            icon: MAPPING_STAT_ICONS.PENDING,
-            label: MAPPING_STAT_LABELS.PENDING,
-            value: stats.pending,
-            color: MAPPING_STAT_COLORS.PENDING,
-            bgColor: MAPPING_STAT_BG_COLORS.PENDING,
-            action: 'payment' // 결제 확인 액션
-        },
-        {
-            id: 'ACTIVE',
-            icon: MAPPING_STAT_ICONS.ACTIVE,
-            label: MAPPING_STAT_LABELS.ACTIVE,
-            value: stats.active,
-            color: MAPPING_STAT_COLORS.ACTIVE,
-            bgColor: MAPPING_STAT_BG_COLORS.ACTIVE,
-            action: 'view' // 활성 매핑 조회
-        },
-        {
-            id: 'PAYMENT_CONFIRMED',
-            icon: MAPPING_STAT_ICONS.PAYMENT_CONFIRMED,
-            label: MAPPING_STAT_LABELS.PAYMENT_CONFIRMED,
-            value: stats.paymentConfirmed,
-            color: MAPPING_STAT_COLORS.PAYMENT_CONFIRMED,
-            bgColor: MAPPING_STAT_BG_COLORS.PAYMENT_CONFIRMED,
-            action: 'view' // 입금 확인된 매핑 조회
-        },
-        {
-            id: 'TOTAL',
-            icon: MAPPING_STAT_ICONS.TOTAL,
-            label: MAPPING_STAT_LABELS.TOTAL,
-            value: stats.total,
-            color: MAPPING_STAT_COLORS.TOTAL,
-            bgColor: MAPPING_STAT_BG_COLORS.TOTAL,
-            action: 'view_all' // 전체 매핑 조회
-        },
-        {
-            id: 'TERMINATED',
-            icon: MAPPING_STAT_ICONS.TERMINATED,
-            label: MAPPING_STAT_LABELS.TERMINATED,
-            value: stats.terminated,
-            color: MAPPING_STAT_COLORS.TERMINATED,
-            bgColor: MAPPING_STAT_BG_COLORS.TERMINATED,
-            action: 'view' // 종료된 매핑 조회
-        },
-        {
-            id: 'SESSIONS_EXHAUSTED',
-            icon: MAPPING_STAT_ICONS.SESSIONS_EXHAUSTED,
-            label: MAPPING_STAT_LABELS.SESSIONS_EXHAUSTED,
-            value: stats.sessionsExhausted,
-            color: MAPPING_STAT_COLORS.SESSIONS_EXHAUSTED,
-            bgColor: MAPPING_STAT_BG_COLORS.SESSIONS_EXHAUSTED,
-            action: 'view' // 회기 소진된 매핑 조회
-        }
-    ];
+    // 동적 통계 카드 데이터 로드
+    useEffect(() => {
+        const loadStatCards = async () => {
+            try {
+                setLoading(true);
+                
+                // 동적으로 색상, 아이콘, 라벨 조회
+                const cardData = await Promise.all([
+                    // PENDING_PAYMENT
+                    Promise.all([
+                        getMappingStatusKoreanName('PENDING_PAYMENT'),
+                        getStatusColor('PENDING_PAYMENT', 'MAPPING_STATUS'),
+                        getStatusIcon('PENDING_PAYMENT', 'MAPPING_STATUS')
+                    ]).then(([label, color, icon]) => ({
+                        id: 'PENDING_PAYMENT',
+                        icon: icon,
+                        label: label,
+                        value: stats.pending,
+                        color: color,
+                        bgColor: color + '20', // 투명도 추가
+                        action: 'payment'
+                    })),
+                    
+                    // ACTIVE
+                    Promise.all([
+                        getMappingStatusKoreanName('ACTIVE'),
+                        getStatusColor('ACTIVE', 'MAPPING_STATUS'),
+                        getStatusIcon('ACTIVE', 'MAPPING_STATUS')
+                    ]).then(([label, color, icon]) => ({
+                        id: 'ACTIVE',
+                        icon: icon,
+                        label: label,
+                        value: stats.active,
+                        color: color,
+                        bgColor: color + '20',
+                        action: 'view'
+                    })),
+                    
+                    // PAYMENT_CONFIRMED
+                    Promise.all([
+                        getMappingStatusKoreanName('PAYMENT_CONFIRMED'),
+                        getStatusColor('PAYMENT_CONFIRMED', 'MAPPING_STATUS'),
+                        getStatusIcon('PAYMENT_CONFIRMED', 'MAPPING_STATUS')
+                    ]).then(([label, color, icon]) => ({
+                        id: 'PAYMENT_CONFIRMED',
+                        icon: icon,
+                        label: label,
+                        value: stats.paymentConfirmed,
+                        color: color,
+                        bgColor: color + '20',
+                        action: 'view'
+                    })),
+                    
+                    // TOTAL (특별 처리)
+                    Promise.resolve({
+                        id: 'TOTAL',
+                        icon: '📊',
+                        label: '전체 매핑',
+                        value: stats.total,
+                        color: '#6f42c1',
+                        bgColor: '#6f42c120',
+                        action: 'view_all'
+                    }),
+                    
+                    // TERMINATED
+                    Promise.all([
+                        getMappingStatusKoreanName('TERMINATED'),
+                        getStatusColor('TERMINATED', 'MAPPING_STATUS'),
+                        getStatusIcon('TERMINATED', 'MAPPING_STATUS')
+                    ]).then(([label, color, icon]) => ({
+                        id: 'TERMINATED',
+                        icon: icon,
+                        label: label,
+                        value: stats.terminated,
+                        color: color,
+                        bgColor: color + '20',
+                        action: 'view'
+                    })),
+                    
+                    // SESSIONS_EXHAUSTED
+                    Promise.all([
+                        getMappingStatusKoreanName('SESSIONS_EXHAUSTED'),
+                        getStatusColor('SESSIONS_EXHAUSTED', 'MAPPING_STATUS'),
+                        getStatusIcon('SESSIONS_EXHAUSTED', 'MAPPING_STATUS')
+                    ]).then(([label, color, icon]) => ({
+                        id: 'SESSIONS_EXHAUSTED',
+                        icon: icon,
+                        label: label,
+                        value: stats.sessionsExhausted,
+                        color: color,
+                        bgColor: color + '20',
+                        action: 'view'
+                    }))
+                ]);
+                
+                setStatCards(cardData);
+                console.log('✅ 매핑 통계 카드 동적 로드 완료:', cardData);
+            } catch (error) {
+                console.error('매핑 통계 카드 로드 실패:', error);
+                // 오류 시 기본값 설정
+                setStatCards([
+                    {
+                        id: 'PENDING_PAYMENT',
+                        icon: '⏳',
+                        label: '결제 대기',
+                        value: stats.pending,
+                        color: '#ffc107',
+                        bgColor: '#ffc10720',
+                        action: 'payment'
+                    },
+                    {
+                        id: 'ACTIVE',
+                        icon: '✅',
+                        label: '활성 매핑',
+                        value: stats.active,
+                        color: '#28a745',
+                        bgColor: '#28a74520',
+                        action: 'view'
+                    },
+                    {
+                        id: 'PAYMENT_CONFIRMED',
+                        icon: '💰',
+                        label: '결제 확인',
+                        value: stats.paymentConfirmed,
+                        color: '#17a2b8',
+                        bgColor: '#17a2b820',
+                        action: 'view'
+                    },
+                    {
+                        id: 'TOTAL',
+                        icon: '📊',
+                        label: '전체 매핑',
+                        value: stats.total,
+                        color: '#6f42c1',
+                        bgColor: '#6f42c120',
+                        action: 'view_all'
+                    },
+                    {
+                        id: 'TERMINATED',
+                        icon: '❌',
+                        label: '종료됨',
+                        value: stats.terminated,
+                        color: '#dc3545',
+                        bgColor: '#dc354520',
+                        action: 'view'
+                    },
+                    {
+                        id: 'SESSIONS_EXHAUSTED',
+                        icon: '🔚',
+                        label: '회기 소진',
+                        value: stats.sessionsExhausted,
+                        color: '#fd7e14',
+                        bgColor: '#fd7e1420',
+                        action: 'view'
+                    }
+                ]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        loadStatCards();
+    }, [mappings]); // mappings가 변경될 때마다 재로드
+
+    if (loading) {
+        return (
+            <div style={{
+                background: 'white',
+                borderRadius: '12px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                marginBottom: '24px',
+                border: '1px solid #e1e8ed',
+                padding: '40px',
+                textAlign: 'center'
+            }}>
+                <div style={{ color: '#7B68EE', fontSize: '16px' }}>
+                    매핑 통계를 불러오는 중...
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div style={{

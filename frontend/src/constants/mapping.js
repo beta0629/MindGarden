@@ -1,9 +1,10 @@
 /**
- * 매핑 관련 상수 정의
+ * 매핑 관련 상수 정의 (동적 처리 지원)
  * 
  * @author MindGarden
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2024-12-19
+ * @updated 2025-09-14 - 하드코딩된 색상/아이콘 매핑을 동적 처리로 변경
  */
 
 // 매핑 상태 상수
@@ -17,18 +18,20 @@ export const MAPPING_STATUS = {
     SESSIONS_EXHAUSTED: 'SESSIONS_EXHAUSTED'
 };
 
-// 매핑 상태 한글명
+// 매핑 상태 한글명 (동적 처리로 변경 - getMappingStatusKoreanName 함수 사용)
+// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STATUS_LABELS = {
-    [MAPPING_STATUS.PENDING_PAYMENT]: '입금 대기',
-    [MAPPING_STATUS.PAYMENT_CONFIRMED]: '입금 확인',
+    [MAPPING_STATUS.PENDING_PAYMENT]: '결제 대기',
+    [MAPPING_STATUS.PAYMENT_CONFIRMED]: '결제 확인',
     [MAPPING_STATUS.ACTIVE]: '활성',
     [MAPPING_STATUS.INACTIVE]: '비활성',
-    [MAPPING_STATUS.SUSPENDED]: '중단',
-    [MAPPING_STATUS.TERMINATED]: '종료',
+    [MAPPING_STATUS.SUSPENDED]: '일시정지',
+    [MAPPING_STATUS.TERMINATED]: '종료됨',
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '회기 소진'
 };
 
-// 매핑 상태 색상
+// 매핑 상태 색상 (동적 처리로 변경 - getStatusColor 함수 사용)
+// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STATUS_COLORS = {
     [MAPPING_STATUS.PENDING_PAYMENT]: '#ffc107',
     [MAPPING_STATUS.PAYMENT_CONFIRMED]: '#17a2b8',
@@ -39,7 +42,8 @@ export const MAPPING_STATUS_COLORS = {
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#6f42c1'
 };
 
-// 매핑 상태 배경색
+// 매핑 상태 배경색 (동적 처리로 변경 - 색상 기반 자동 생성)
+// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STATUS_BG_COLORS = {
     [MAPPING_STATUS.PENDING_PAYMENT]: '#fff3cd',
     [MAPPING_STATUS.PAYMENT_CONFIRMED]: '#d1ecf1',
@@ -124,7 +128,8 @@ export const MAPPING_ACTION_BUTTONS = {
     }
 };
 
-// 매핑 통계 아이콘
+// 매핑 통계 아이콘 (동적 처리로 변경 - getStatusIcon 함수 사용)
+// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_ICONS = {
     PENDING: '⏳',
     ACTIVE: '✅',
@@ -134,17 +139,19 @@ export const MAPPING_STAT_ICONS = {
     SESSIONS_EXHAUSTED: '🔚'
 };
 
-// 매핑 통계 라벨
+// 매핑 통계 라벨 (동적 처리로 변경 - getMappingStatusKoreanName 함수 사용)
+// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_LABELS = {
-    PENDING: '승인 대기',
+    PENDING: '결제 대기',
     ACTIVE: '활성 매핑',
-    PAYMENT_CONFIRMED: '입금 확인',
+    PAYMENT_CONFIRMED: '결제 확인',
     TOTAL: '전체 매핑',
     TERMINATED: '종료됨',
     SESSIONS_EXHAUSTED: '회기 소진'
 };
 
-// 매핑 통계 색상
+// 매핑 통계 색상 (동적 처리로 변경 - getStatusColor 함수 사용)
+// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_COLORS = {
     PENDING: '#ffc107',
     ACTIVE: '#28a745',
@@ -154,7 +161,8 @@ export const MAPPING_STAT_COLORS = {
     SESSIONS_EXHAUSTED: '#fd7e14'
 };
 
-// 매핑 통계 배경색
+// 매핑 통계 배경색 (동적 처리로 변경 - 색상 기반 자동 생성)
+// @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_BG_COLORS = {
     PENDING: '#fff3cd',
     ACTIVE: '#d4edda',

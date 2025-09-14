@@ -1,17 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-    MAPPING_STATUS_LABELS, 
-    MAPPING_STATUS_COLORS 
-} from '../../../constants/mapping';
+    getMappingStatusKoreanName,
+    getStatusColor,
+    getStatusIcon
+} from '../../../utils/codeHelper';
 
 /**
- * 매핑 카드 컴포넌트
+ * 매핑 카드 컴포넌트 (동적 처리 지원)
  * - 개별 매핑 정보를 카드 형태로 표시
  * - 매핑 상태, 참여자 정보, 세션 정보 등 표시
+ * - 동적 색상/아이콘 조회
  * 
  * @author MindGarden
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2024-12-19
+ * @updated 2025-09-14 - 동적 처리로 변경
  */
 const MappingCard = ({ 
     mapping, 
@@ -23,14 +26,56 @@ const MappingCard = ({
     onTransfer,
     onViewTransferHistory
 }) => {
-    // 상태별 색상
+    const [statusInfo, setStatusInfo] = useState({
+        label: mapping.status,
+        color: '#6c757d',
+        icon: '📋'
+    });
+    const [loading, setLoading] = useState(true);
+
+    // 동적 상태 정보 로드
+    useEffect(() => {
+        const loadStatusInfo = async () => {
+            try {
+                setLoading(true);
+                
+                const [label, color, icon] = await Promise.all([
+                    getMappingStatusKoreanName(mapping.status),
+                    getStatusColor(mapping.status, 'MAPPING_STATUS'),
+                    getStatusIcon(mapping.status, 'MAPPING_STATUS')
+                ]);
+                
+                setStatusInfo({ label, color, icon });
+                console.log(`✅ 매핑 상태 정보 로드 완료: ${mapping.status}`, { label, color, icon });
+            } catch (error) {
+                console.error(`매핑 상태 정보 로드 실패: ${mapping.status}`, error);
+                // 오류 시 기본값 설정
+                setStatusInfo({
+                    label: mapping.status,
+                    color: '#6c757d',
+                    icon: '📋'
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        loadStatusInfo();
+    }, [mapping.status]);
+
+    // 상태별 색상 (동적)
     const getStatusColor = (status) => {
-        return MAPPING_STATUS_COLORS[status] || '#6c757d';
+        return statusInfo.color;
     };
 
-    // 상태별 한글명
+    // 상태별 한글명 (동적)
     const getStatusLabel = (status) => {
-        return MAPPING_STATUS_LABELS[status] || status;
+        return statusInfo.label;
+    };
+
+    // 상태별 아이콘 (동적)
+    const getStatusIcon = (status) => {
+        return statusInfo.icon;
     };
 
     return (
@@ -60,7 +105,9 @@ const MappingCard = ({
             }}>
                 <div>
                     <span style={{
-                        display: 'inline-block',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
                         padding: '4px 12px',
                         borderRadius: '20px',
                         color: 'white',
@@ -70,6 +117,7 @@ const MappingCard = ({
                         letterSpacing: '0.5px',
                         backgroundColor: getStatusColor(mapping.status)
                     }}>
+                        {loading ? '⏳' : getStatusIcon(mapping.status)}
                         {getStatusLabel(mapping.status)}
                     </span>
                 </div>

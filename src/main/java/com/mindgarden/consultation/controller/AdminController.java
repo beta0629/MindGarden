@@ -235,13 +235,28 @@ public class AdminController {
     @GetMapping("/mappings/consultant/{consultantId}/clients")
     public ResponseEntity<?> getClientsByConsultantMapping(@PathVariable Long consultantId, HttpSession session) {
         try {
-            // 세션에서 현재 사용자의 브랜치 코드 가져오기
-            String currentBranchCode = (String) session.getAttribute("branchCode");
-            if (currentBranchCode == null) {
-                log.warn("❌ 세션에서 브랜치 코드를 찾을 수 없습니다");
+            // 세션에서 현재 사용자 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다");
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", "브랜치 코드가 없습니다"
+                    "message", "로그인이 필요합니다"
+                ));
+            }
+            
+            // 사용자의 브랜치 코드 가져오기 (세션에서 또는 사용자 정보에서)
+            String currentBranchCode = (String) session.getAttribute("branchCode");
+            if (currentBranchCode == null && currentUser.getBranchCode() != null) {
+                currentBranchCode = currentUser.getBranchCode();
+                log.info("🔧 세션에 브랜치 코드가 없어 사용자 정보에서 가져옴: {}", currentBranchCode);
+            }
+            
+            if (currentBranchCode == null) {
+                log.warn("❌ 브랜치 코드를 찾을 수 없습니다");
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "브랜치 코드가 설정되지 않았습니다"
                 ));
             }
             
@@ -267,7 +282,9 @@ public class AdminController {
                                 "id", mapping.getClient().getId(),
                                 "name", mapping.getClient().getName(),
                                 "email", mapping.getClient().getEmail() != null ? mapping.getClient().getEmail() : "",
-                                "phone", mapping.getClient().getPhone() != null ? mapping.getClient().getPhone() : ""
+                                "phone", mapping.getClient().getPhone() != null ? mapping.getClient().getPhone() : "",
+                                "status", "ACTIVE", // Client 엔티티에 status 필드가 없으므로 기본값 사용
+                                "createdAt", mapping.getClient().getCreatedAt() != null ? mapping.getClient().getCreatedAt().toString() : ""
                             ));
                         }
                         

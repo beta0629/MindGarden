@@ -48,6 +48,9 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
       case 'wellness':
         navigate('/client/wellness');
         break;
+      case 'messages':
+        navigate('/client/messages');
+        break;
       default:
         console.log('Unknown action:', action);
     }

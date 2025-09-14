@@ -548,7 +548,7 @@ const ConsultationRecordScreen = () => {
           {isEditMode && <span style={{...styles.statusBadge, backgroundColor: '#17a2b8', color: '#fff'}}>수정 모드</span>}
         </h1>
         <p style={styles.headerSubtitle}>
-          상담사: {user.name} | 상담일: {consultation.startTime?.split('T')[0]} | 시간: {consultation.startTime?.split('T')[1]?.slice(0,5)} - {consultation.endTime?.split('T')[1]?.slice(0,5)}
+          상담사: {user?.name || '알 수 없음'} | 상담일: {consultation.startTime?.split('T')[0]} | 시간: {consultation.startTime?.split('T')[1]?.slice(0,5)} - {consultation.endTime?.split('T')[1]?.slice(0,5)}
         </p>
       </div>
 

@@ -44,6 +44,14 @@ const QuickActions = ({ user }) => {
     navigate('/consultation-report');
   };
 
+  const goToMessages = () => {
+    if (user?.role === 'CLIENT') {
+      navigate('/client/messages');
+    } else if (user?.role === 'CONSULTANT') {
+      navigate('/consultant/messages');
+    }
+  };
+
   return (
     <div className={QUICK_ACTIONS_CSS.CONTAINER}>
       <h3 className={QUICK_ACTIONS_CSS.SECTION_TITLE}>
@@ -59,6 +67,16 @@ const QuickActions = ({ user }) => {
           <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.SCHEDULE.ICON}`}></i>
           <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.SCHEDULE.LABEL}</span>
         </button>
+        
+        {/* 메시지 버튼 (내담자/상담사) */}
+        {(user?.role === 'CLIENT' || user?.role === 'CONSULTANT') && (
+          <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToMessages}>
+            <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} bi-chat-dots`}></i>
+            <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>
+              {user?.role === 'CLIENT' ? '상담사 메시지' : '메시지 관리'}
+            </span>
+          </button>
+        )}
         
         {/* 상담 내역 버튼 (모든 사용자) */}
         <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToConsultationHistory}>

@@ -282,6 +282,13 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.status = :status AND s.date <= :endDate AND s.isDeleted = false")
     long countByStatusAndDateLessThanEqual(@Param("status") String status, @Param("endDate") LocalDate endDate);
     
+    // ==================== 상담 ID별 스케줄 조회 ====================
+    
+    /**
+     * 상담 ID별 스케줄 조회
+     */
+    List<Schedule> findByConsultationId(Long consultationId);
+    
     // ==================== 상세 통계 ====================
     
     /**

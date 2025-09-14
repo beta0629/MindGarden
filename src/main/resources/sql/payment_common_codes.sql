@@ -140,6 +140,8 @@ INSERT INTO common_codes (code_group, code_value, code_label, code_description, 
 -- 13. 내담자 메뉴 (CLIENT_MENU)
 INSERT INTO common_codes (code_group, code_value, code_label, code_description, sort_order, is_active, extra_data, created_at, updated_at, is_deleted, version) VALUES
 ('CLIENT_MENU', 'CLIENT_MAIN', '내담자 기능', '내담자 전용 기능', 1, true, '{"icon": "bi-person", "type": "main", "hasSubMenu": true}', NOW(), NOW(), false, 1),
-('CLIENT_MENU', 'CLIENT_CONSULTATION', '상담 예약', '상담 예약 및 관리', 11, true, '{"icon": "bi-calendar-plus", "path": "/client/consultation", "parent": "CLIENT_MAIN", "type": "sub"}', NOW(), NOW(), false, 1),
-('CLIENT_MENU', 'CLIENT_HISTORY', '상담 내역', '나의 상담 내역', 12, true, '{"icon": "bi-clock-history", "path": "/client/history", "parent": "CLIENT_MAIN", "type": "sub"}', NOW(), NOW(), false, 1),
+-- 상담 예약 기능 비활성화 (내담자가 직접 예약할 수 없음)
+('CLIENT_MENU', 'CLIENT_CONSULTATION', '상담 예약', '상담 예약 및 관리', 11, false, '{"icon": "bi-calendar-plus", "path": "/client/consultation", "parent": "CLIENT_MAIN", "type": "sub"}', NOW(), NOW(), false, 1),
+-- 상담 내역 링크 수정 (실제 라우트 경로로 변경)
+('CLIENT_MENU', 'CLIENT_HISTORY', '상담 내역', '나의 상담 내역', 12, true, '{"icon": "bi-clock-history", "path": "/consultation-history", "parent": "CLIENT_MAIN", "type": "sub"}', NOW(), NOW(), false, 1),
 ('CLIENT_MENU', 'CLIENT_SETTINGS', '설정', '개인 설정', 13, true, '{"icon": "bi-gear", "path": "/client/settings", "parent": "CLIENT_MAIN", "type": "sub"}', NOW(), NOW(), false, 1);

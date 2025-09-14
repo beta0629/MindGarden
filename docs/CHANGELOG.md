@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-09-14] - 상담기록 시스템 개선 및 데이터 일관성 강화
+
+### 🔧 상담기록 시스템 개선
+- **상담기록 조회 전용 페이지 분리**
+  - `ConsultationRecordView.js` 새로 생성 - 조회 전용 페이지
+  - 작성용(`/consultant/consultation-record/:consultationId`)과 조회용(`/consultant/consultation-record-view/:recordId`) 라우팅 분리
+  - 상담기록 상세 조회 API 추가 (`GET /api/consultant/{consultantId}/consultation-records/{recordId}`)
+
+- **상태 필터 옵션 최적화**
+  - 상담기록에 적합한 상태만 필터링 (완료, 대기, 전체)
+  - 활성/비활성 등 부적절한 상태 옵션 제거
+  - 기본 선택 상태를 '완료'로 변경
+
+- **오류 처리 및 사용자 경험 개선**
+  - 구체적인 오류 메시지 제공 (401, 403, 404, 500 등)
+  - 재시도 기능 개선 (로딩 상태, 스피닝 애니메이션)
+  - React 오류 수정 (`Cannot read properties of null`)
+
+### 🛡️ 데이터 일관성 시스템 구축
+- **데이터 검증 및 정리 도구**
+  - 데이터 일관성 검증 API (`GET /api/consultant/{consultantId}/data-consistency-check`)
+  - 불일치 데이터 자동 정리 API (`POST /api/consultant/{consultantId}/cleanup-inconsistent-data`)
+  - 상담기록 생성 시 스케줄 검증 로직 추가
+
+- **상태 동기화 메커니즘**
+  - 상담 완료 시 스케줄 상태 자동 동기화
+  - `ScheduleRepository.findByConsultationId` 메서드 추가
+  - 데이터 불일치 방지 및 자동 복구 시스템
+
+### 🎨 UI/UX 개선
+- **상담기록 페이지 디자인 개선**
+  - 조회 전용 페이지로 명확한 역할 분리
+  - 깔끔한 상담기록 상세 표시 UI
+  - 상태별 버튼 및 배지 렌더링 개선
+
+- **필터링 시스템 최적화**
+  - 상담기록에 맞는 상태 옵션만 표시
+  - 프론트엔드 상태별 필터링 활성화
+  - 백엔드 필터링 제거로 유연성 증대
+
 ## [2025-09-14] - ERP 메뉴 시스템 구축 및 동적 역할 관리
 
 ### 🏢 새로운 기능

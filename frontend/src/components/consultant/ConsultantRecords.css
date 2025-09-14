@@ -5,6 +5,16 @@
   margin: 0 auto;
 }
 
+/* 스피닝 애니메이션 */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* 헤더 */
 .records-header {
   margin-bottom: 30px;
@@ -35,15 +45,20 @@
 /* 검색 및 필터 컨트롤 */
 .records-controls {
   display: flex;
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 15px;
+  margin-bottom: 25px;
   flex-wrap: wrap;
   align-items: center;
+  background: #fff;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
 }
 
 .search-section {
   flex: 1;
-  min-width: 300px;
+  min-width: 250px;
 }
 
 .search-input-group {
@@ -54,68 +69,53 @@
 
 .search-icon {
   position: absolute;
-  left: 15px;
+  left: 12px;
   color: #7f8c8d;
   z-index: 2;
+  font-size: 0.9rem;
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 15px 12px 45px;
-  border: 2px solid #e9ecef;
-  border-radius: 25px;
-  font-size: 1rem;
+  padding: 8px 12px 8px 35px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 0.9rem;
   transition: all 0.3s ease;
-  background: #fff;
+  background: #f8f9fa;
+  height: 36px;
 }
 
 .search-input:focus {
   outline: none;
   border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+  background: #fff;
 }
 
 .filter-section {
-  min-width: 150px;
+  min-width: 120px;
 }
 
 .filter-select {
   width: 100%;
-  padding: 12px 15px;
-  border: 2px solid #e9ecef;
-  border-radius: 25px;
-  font-size: 1rem;
-  background: #fff;
+  padding: 8px 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #f8f9fa;
   cursor: pointer;
   transition: all 0.3s ease;
+  height: 36px;
 }
 
 .filter-select:focus {
   outline: none;
   border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
-
-.date-filter-section {
-  min-width: 150px;
-}
-
-.date-filter-input {
-  width: 100%;
-  padding: 12px 15px;
-  border: 2px solid #e9ecef;
-  border-radius: 25px;
-  font-size: 1rem;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
   background: #fff;
-  cursor: pointer;
-  transition: all 0.3s ease;
 }
 
-.date-filter-input:focus {
-  outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
 
 /* 로딩 상태 */
 .loading-container {
@@ -213,6 +213,8 @@
 .record-status {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .status-badge {
@@ -227,8 +229,15 @@
 
 .record-date {
   font-size: 0.9rem;
-  color: #6c757d;
-  font-weight: 500;
+  color: #2c3e50;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(52, 152, 219, 0.1);
+  padding: 6px 12px;
+  border-radius: 15px;
+  border: 1px solid rgba(52, 152, 219, 0.2);
 }
 
 .record-card-body {

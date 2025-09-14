@@ -13,6 +13,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import MyPage from './components/mypage/MyPage';
 import ConsultantSchedule from './components/consultant/ConsultantSchedule';
 import ConsultationRecordScreen from './components/consultant/ConsultationRecordScreen';
+import ConsultationRecordView from './components/consultant/ConsultationRecordView';
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
@@ -39,6 +40,7 @@ import ConsultationReport from './components/consultation/ConsultationReport';
 import ConsultantClientList from './components/consultant/ConsultantClientList';
 import ConsultantAvailability from './components/consultant/ConsultantAvailability';
 import ConsultantRecords from './components/consultant/ConsultantRecords';
+import ConsultantMessages from './components/consultant/ConsultantMessages';
 import ErpDashboard from './components/erp/ErpDashboard';
 import PurchaseRequestForm from './components/erp/PurchaseRequestForm';
 import AdminApprovalDashboard from './components/erp/AdminApprovalDashboard';
@@ -218,10 +220,13 @@ function AppContent() {
             {/* 상담사 전용 라우트 */}
             <Route path="/consultant/schedule" element={<ConsultantSchedule />} />
             <Route path="/consultant/consultation-record/:consultationId" element={<ConsultationRecordScreen />} />
+            <Route path="/consultant/consultation-record-view/:recordId" element={<ConsultationRecordView />} />
             <Route path="/consultant/send-message/:consultationId" element={<ConsultantMessageScreen />} />
             <Route path="/consultant/clients" element={<ConsultantClientList />} />
             <Route path="/consultant/availability" element={<ConsultantAvailability />} />
             <Route path="/consultant/consultation-records" element={<ConsultantRecords />} />
+            <Route path="/consultant/reports" element={<ConsultantRecords />} />
+            <Route path="/consultant/messages" element={<ConsultantMessages />} />
             
             {/* 내담자 전용 라우트 */}
             <Route path="/client/messages" element={<ClientMessageScreen />} />

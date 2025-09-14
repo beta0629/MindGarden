@@ -16,6 +16,7 @@ import ClientMessageSection from './ClientMessageSection';
 import ErpPurchaseRequestPanel from './ErpPurchaseRequestPanel';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ClientPersonalizedMessages from './ClientPersonalizedMessages';
+import MotivationCard from '../common/MotivationCard';
 
 const CommonDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
@@ -670,6 +671,9 @@ const CommonDashboard = ({ user: propUser }) => {
             clientStatus={clientStatus}
           />
         )}
+        
+        {/* 동기부여 카드 (모든 사용자) */}
+        <MotivationCard userRole={user?.role} />
         
         {/* 요약 패널 섹션 (상담사/관리자 전용) */}
         {(user?.role === 'CONSULTANT' || user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (

@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.entity.ConsultationRecord;
 import com.mindgarden.consultation.repository.ConsultationRecordRepository;
+import com.mindgarden.consultation.repository.ConsultationRepository;
 import com.mindgarden.consultation.service.ConsultationRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     @Autowired
     private ConsultationRecordRepository consultationRecordRepository;
+    
+    @Autowired
+    private ConsultationRepository consultationRepository;
 
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
@@ -76,6 +80,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             if (consultationId == null || clientId == null || consultantId == null) {
                 throw new RuntimeException("필수 필드가 누락되었습니다: consultationId, clientId, consultantId");
             }
+            
+            // 스케줄 검증: 상담 예약이 실제로 존재하는지 확인
+            validateConsultationExists(consultationId, clientId, consultantId);
             
             record.setConsultationId(consultationId);
             record.setClientId(clientId);
@@ -421,5 +428,40 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             log.error("❌ 내담자별 상담일지 회기별 그룹화 조회 실패", e);
             throw new RuntimeException("내담자별 상담일지 회기별 그룹화 조회 중 오류가 발생했습니다: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 상담 예약 존재 여부 검증
+     */
+    private void validateConsultationExists(Long consultationId, Long clientId, Long consultantId) {
+        log.info("🔍 상담 예약 검증: consultationId={}, clientId={}, consultantId={}", 
+                consultationId, clientId, consultantId);
+        
+        Optional<com.mindgarden.consultation.entity.Consultation> consultation = 
+            consultationRepository.findById(consultationId);
+        
+        if (consultation.isEmpty()) {
+            throw new RuntimeException("상담 예약을 찾을 수 없습니다: " + consultationId);
+        }
+        
+        com.mindgarden.consultation.entity.Consultation consult = consultation.get();
+        
+        // 상담사와 내담자 ID 일치 확인
+        if (!consult.getConsultantId().equals(consultantId)) {
+            throw new RuntimeException("상담사 ID가 일치하지 않습니다. 예상: " + consultantId + 
+                    ", 실제: " + consult.getConsultantId());
+        }
+        
+        if (!consult.getClientId().equals(clientId)) {
+            throw new RuntimeException("내담자 ID가 일치하지 않습니다. 예상: " + clientId + 
+                    ", 실제: " + consult.getClientId());
+        }
+        
+        // 상담 상태 확인 (취소된 상담은 상담일지 작성 불가)
+        if ("CANCELLED".equals(consult.getStatus())) {
+            throw new RuntimeException("취소된 상담은 상담일지를 작성할 수 없습니다.");
+        }
+        
+        log.info("✅ 상담 예약 검증 완료: {}", consultationId);
     }
 }

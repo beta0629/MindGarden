@@ -73,6 +73,9 @@ public class ConsultationServiceImpl implements ConsultationService {
     @Autowired
     private EmailService emailService;
     
+    @Autowired
+    private com.mindgarden.consultation.repository.ScheduleRepository scheduleRepository;
+    
     // === BaseService 구현 메서드들 ===
     
     @Override
@@ -445,6 +448,9 @@ public class ConsultationServiceImpl implements ConsultationService {
         }
         
         Consultation savedConsultation = save(consultation);
+        
+        // 스케줄 상태 동기화
+        syncScheduleStatus(consultationId);
         
         // 상담 완료 알림 이메일 발송
         sendConsultationCompletionNotification(consultationId);
@@ -2454,5 +2460,33 @@ public class ConsultationServiceImpl implements ConsultationService {
     @Override
     public Optional<Consultation> findById(Long id) {
         return consultationRepository.findById(id);
+    }
+    
+    /**
+     * 상담 완료 시 스케줄 상태 동기화
+     */
+    private void syncScheduleStatus(Long consultationId) {
+        try {
+            log.info("🔄 스케줄 상태 동기화 시작: consultationId={}", consultationId);
+            
+            // 해당 상담과 연결된 스케줄 조회
+            List<com.mindgarden.consultation.entity.Schedule> schedules = 
+                scheduleRepository.findByConsultationId(consultationId);
+            
+            for (com.mindgarden.consultation.entity.Schedule schedule : schedules) {
+                if (!"COMPLETED".equals(schedule.getStatus())) {
+                    schedule.setStatus("COMPLETED");
+                    schedule.setUpdatedAt(java.time.LocalDateTime.now());
+                    scheduleRepository.save(schedule);
+                    log.info("✅ 스케줄 상태 업데이트 완료: scheduleId={}, status=COMPLETED", schedule.getId());
+                }
+            }
+            
+            log.info("✅ 스케줄 상태 동기화 완료: {}개 스케줄 처리", schedules.size());
+            
+        } catch (Exception e) {
+            log.error("❌ 스케줄 상태 동기화 실패: consultationId={}, error={}", consultationId, e.getMessage(), e);
+            // 동기화 실패해도 상담 완료는 진행 (비즈니스 로직 우선)
+        }
     }
 }

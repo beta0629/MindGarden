@@ -71,7 +71,8 @@ const SummaryPanels = ({ user, consultationData }) => {
                   {upcomingCount > 0 ? (
                     <div>
                       <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#495057' }}>{upcomingCount}건</div>
-                      {consultationData?.upcomingConsultations?.map((schedule, index) => (
+                      {/* 최근 3일치 상담만 표시 */}
+                      {consultationData?.upcomingConsultations?.slice(0, 3).map((schedule, index) => (
                         <div key={index} style={{ 
                           fontSize: '0.85em', 
                           color: '#6c757d', 
@@ -94,6 +95,34 @@ const SummaryPanels = ({ user, consultationData }) => {
                           </div>
                         </div>
                       ))}
+                      
+                      {/* 더 많은 상담이 있을 때 자세히 보기 링크 */}
+                      {upcomingCount > 3 && (
+                        <div style={{
+                          textAlign: 'center',
+                          marginTop: '8px',
+                          paddingTop: '8px',
+                          borderTop: '1px solid #fce7f3'
+                        }}>
+                          <a 
+                            href="/consultant/schedule" 
+                            style={{
+                              fontSize: '0.8em',
+                              color: '#667eea',
+                              textDecoration: 'none',
+                              fontWeight: '500'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.textDecoration = 'underline';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.textDecoration = 'none';
+                            }}
+                          >
+                            +{upcomingCount - 3}건 더 보기 →
+                          </a>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div style={{ color: '#adb5bd', fontStyle: 'italic' }}>{DASHBOARD_MESSAGES.NO_UPCOMING}</div>
@@ -148,45 +177,10 @@ const SummaryPanels = ({ user, consultationData }) => {
               <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.UPCOMING_CONSULTATIONS}</div>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
-                  {upcomingCount > 0 ? (
-                    <div>
-                      <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#495057' }}>{upcomingCount}건</div>
-                      {consultationData?.upcomingConsultations?.map((schedule, index) => (
-                        <div key={index} style={{ 
-                          fontSize: '0.85em', 
-                          color: '#6c757d', 
-                          marginTop: '6px',
-                          padding: '6px 10px',
-                          backgroundColor: '#fdf2f8',
-                          borderRadius: '6px',
-                          border: '1px solid #fce7f3',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}>
-                          <div style={{ fontWeight: '500', color: '#495057' }}>
-                            {new Date(schedule.date).toLocaleDateString('ko-KR')} {schedule.startTime} - {schedule.endTime}
-                          </div>
-                          <div style={{ 
-                            color: schedule.status === 'CONFIRMED' ? '#be185d' : '#6c757d',
-                            fontSize: '0.8em',
-                            marginTop: '2px'
-                          }}>
-                            {schedule.status === 'CONFIRMED' ? '확정' : schedule.status === 'BOOKED' ? '예약' : schedule.status}
-                          </div>
-                          {schedule.clientName && (
-                            <div style={{ 
-                              color: '#6c757d',
-                              fontSize: '0.8em',
-                              marginTop: '2px'
-                            }}>
-                              내담자: {schedule.clientName}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div style={{ color: '#adb5bd', fontStyle: 'italic' }}>{DASHBOARD_MESSAGES.NO_UPCOMING}</div>
-                  )}
+                  <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#495057' }}>{upcomingCount}건</div>
+                  <div style={{ fontSize: '0.85em', color: '#6c757d', marginTop: '4px' }}>
+                    예정된 상담 건수
+                  </div>
                 </div>
               </div>
             </div>

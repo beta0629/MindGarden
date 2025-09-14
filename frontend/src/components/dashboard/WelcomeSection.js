@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { WELCOME_SECTION_CSS } from '../../constants/css';
 import { DASHBOARD_MESSAGES } from '../../constants/dashboard';
-import './WelcomeSection.css';
+// import './WelcomeSection.css'; // 인라인 스타일로 변경
 
 const WelcomeSection = ({ user, currentTime, consultationData }) => {
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -60,24 +60,68 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
   const displayName = getUserDisplayName();
 
   return (
-    <div className={WELCOME_SECTION_CSS.CONTAINER}>
-      <div className="welcome-card">
-        <div className="welcome-profile">
-          <div className="profile-avatar">
+    <div className={WELCOME_SECTION_CSS.CONTAINER} style={{ marginBottom: '2rem' }}>
+      <div className="welcome-card" style={{
+        background: '#667eea',
+        borderRadius: '12px',
+        padding: '1.5rem',
+        color: 'white',
+        boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+        marginBottom: '1.5rem'
+      }}>
+        <div className="welcome-profile" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <div className="profile-avatar" style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            border: '2px solid rgba(255, 255, 255, 0.3)',
+            flexShrink: 0
+          }}>
             <img 
               src={profileImageUrl} 
               alt="프로필 이미지" 
               className="profile-image"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                borderRadius: '50%'
+              }}
               onError={() => setImageLoadError(true)}
             />
           </div>
-          <div className="welcome-content">
-            <h2 className="welcome-title">{getWelcomeTitle()}</h2>
-            <p className="welcome-message">
+          <div className="welcome-content" style={{ flex: 1 }}>
+            <h2 className="welcome-title" style={{
+              fontSize: '1.5rem',
+              fontWeight: '600',
+              margin: '0 0 0.5rem 0',
+              textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+            }}>{getWelcomeTitle()}</h2>
+            <p className="welcome-message" style={{
+              fontSize: '1rem',
+              margin: '0 0 0.5rem 0',
+              opacity: '0.9',
+              lineHeight: '1.4'
+            }}>
               {displayName}님, 오늘도 좋은 하루 되세요!
             </p>
-            <div className="welcome-time">
-              <i className="bi bi-clock"></i>
+            <div className="welcome-time" style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.9rem',
+              opacity: '0.8'
+            }}>
+              <i className="bi bi-clock" style={{ fontSize: '1rem' }}></i>
               <span>{currentTime}</span>
             </div>
           </div>
@@ -86,13 +130,42 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
       
       {/* 내담자 전용 - 오늘의 상담 정보 (큰 카드) */}
       {user?.role === 'CLIENT' && (
-        <div className="welcome-info-cards">
-          <div className="welcome-info-card today-consultation-card">
-            <div className="info-icon">
-              <i className="bi bi-calendar-check"></i>
+        <div className="welcome-info-cards" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          gap: '1rem'
+        }}>
+          <div className="welcome-info-card today-consultation-card" style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+            border: '1px solid #e9ecef',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+          }}>
+            <div className="info-icon" style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '8px',
+              background: '#667eea',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '1rem',
+              boxShadow: '0 2px 4px rgba(102, 126, 234, 0.2)'
+            }}>
+              <i className="bi bi-calendar-check" style={{
+                fontSize: '1.2rem',
+                color: 'white'
+              }}></i>
             </div>
             <div className="info-content">
-              <h3 className="info-title">오늘의 상담</h3>
+              <h3 className="info-title" style={{
+                fontSize: '1.1rem',
+                fontWeight: '600',
+                margin: '0 0 0.5rem 0',
+                color: '#2d3748'
+              }}>오늘의 상담</h3>
               <p className="info-value">
                 {consultationData?.upcomingConsultations?.length > 0 
                   ? `${consultationData.upcomingConsultations.length}건의 상담이 예정되어 있습니다`

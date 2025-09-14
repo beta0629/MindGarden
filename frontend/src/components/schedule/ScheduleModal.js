@@ -8,7 +8,7 @@ import notificationManager from '../../utils/notification';
 import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
-import './ScheduleModal.css';
+// import './ScheduleModal.css'; // 인라인 스타일로 변경
 
 /**
  * 새로운 디자인의 스케줄 생성 모달 컴포넌트
@@ -343,15 +343,52 @@ const ScheduleModalNew = ({
     if (!isOpen) return null;
 
     return (
-        <div className={COMPONENT_CSS.SCHEDULE_MODAL.OVERLAY} onClick={handleClose}>
-            <div className={COMPONENT_CSS.SCHEDULE_MODAL.MODAL} onClick={(e) => e.stopPropagation()}>
+        <div className={COMPONENT_CSS.SCHEDULE_MODAL.OVERLAY} onClick={handleClose} style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+        }}>
+            <div className={COMPONENT_CSS.SCHEDULE_MODAL.MODAL} onClick={(e) => e.stopPropagation()} style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+                width: '90%',
+                maxWidth: '800px',
+                maxHeight: '90vh',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
                 {/* 모달 헤더 */}
-                <div className={COMPONENT_CSS.SCHEDULE_MODAL.HEADER}>
+                <div className={COMPONENT_CSS.SCHEDULE_MODAL.HEADER} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '20px 24px',
+                    borderBottom: '1px solid #e9ecef',
+                    backgroundColor: '#f8f9fa'
+                }}>
                     <div className={COMPONENT_CSS.SCHEDULE_MODAL.HEADER_LEFT}>
-                        <h3 className={COMPONENT_CSS.SCHEDULE_MODAL.TITLE}>📅 스케줄 생성</h3>
+                        <h3 className={COMPONENT_CSS.SCHEDULE_MODAL.TITLE} style={{
+                            margin: 0,
+                            fontSize: '1.25rem',
+                            fontWeight: '600',
+                            color: '#495057'
+                        }}>📅 스케줄 생성</h3>
                     </div>
-                    <div className={COMPONENT_CSS.SCHEDULE_MODAL.HEADER_CENTER}>
-                        <div className={COMPONENT_CSS.SCHEDULE_MODAL.SELECTED_DATE}>
+                    <div className={COMPONENT_CSS.SCHEDULE_MODAL.HEADER_CENTER} style={{ flex: 1, textAlign: 'center' }}>
+                        <div className={COMPONENT_CSS.SCHEDULE_MODAL.SELECTED_DATE} style={{
+                            fontSize: '1rem',
+                            color: '#6c757d',
+                            fontWeight: '500'
+                        }}>
                             {selectedDate?.toLocaleDateString('ko-KR', {
                                 year: 'numeric',
                                 month: 'long',
@@ -365,6 +402,24 @@ const ScheduleModalNew = ({
                             className={COMPONENT_CSS.SCHEDULE_MODAL.CLOSE_BTN} 
                             onClick={handleClose}
                             aria-label="모달 닫기"
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '1.5rem',
+                                color: '#6c757d',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                borderRadius: '4px',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = '#e9ecef';
+                                e.target.style.color = '#495057';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'transparent';
+                                e.target.style.color = '#6c757d';
+                            }}
                         >
                             ✕
                         </button>
@@ -372,7 +427,11 @@ const ScheduleModalNew = ({
                 </div>
 
                 {/* 모달 콘텐츠 */}
-                <div className={COMPONENT_CSS.SCHEDULE_MODAL.CONTENT}>
+                <div className={COMPONENT_CSS.SCHEDULE_MODAL.CONTENT} style={{
+                    flex: 1,
+                    padding: '24px',
+                    overflow: 'auto'
+                }}>
                     <StepIndicator 
                         currentStep={step} 
                         totalSteps={4}
@@ -580,12 +639,31 @@ const ScheduleModalNew = ({
                 </div>
 
                 {/* 모달 푸터 */}
-                <div className={COMPONENT_CSS.SCHEDULE_MODAL.FOOTER}>
+                <div className={COMPONENT_CSS.SCHEDULE_MODAL.FOOTER} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '20px 24px',
+                    borderTop: '1px solid #e9ecef',
+                    backgroundColor: '#f8f9fa'
+                }}>
                     {step > 1 && (
                         <button 
                             className="btn btn-secondary" 
                             onClick={handlePrevStep}
                             disabled={loading}
+                            style={{
+                                padding: '10px 20px',
+                                border: '1px solid #6c757d',
+                                borderRadius: '6px',
+                                backgroundColor: '#6c757d',
+                                color: 'white',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                opacity: loading ? 0.6 : 1,
+                                transition: 'all 0.2s ease'
+                            }}
                         >
                             이전
                         </button>
@@ -604,6 +682,18 @@ const ScheduleModalNew = ({
                                 (step === 2 && !selectedClient) ||
                                 (step === 3 && !selectedTimeSlot)
                             }
+                            style={{
+                                padding: '10px 20px',
+                                border: '1px solid #007bff',
+                                borderRadius: '6px',
+                                backgroundColor: '#007bff',
+                                color: 'white',
+                                cursor: (step === 1 && !selectedConsultant) || (step === 2 && !selectedClient) || (step === 3 && !selectedTimeSlot) ? 'not-allowed' : 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                opacity: (step === 1 && !selectedConsultant) || (step === 2 && !selectedClient) || (step === 3 && !selectedTimeSlot) ? 0.6 : 1,
+                                transition: 'all 0.2s ease'
+                            }}
                         >
                             다음
                         </button>
@@ -612,6 +702,18 @@ const ScheduleModalNew = ({
                             className="btn btn-success" 
                             onClick={handleCreateSchedule}
                             disabled={loading}
+                            style={{
+                                padding: '10px 20px',
+                                border: '1px solid #28a745',
+                                borderRadius: '6px',
+                                backgroundColor: '#28a745',
+                                color: 'white',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                opacity: loading ? 0.6 : 1,
+                                transition: 'all 0.2s ease'
+                            }}
                         >
                             {loading ? '생성 중...' : '스케줄 생성'}
                         </button>

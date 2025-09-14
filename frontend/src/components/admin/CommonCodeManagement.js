@@ -25,6 +25,43 @@ const CommonCodeManagement = () => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingCode, setEditingCode] = useState(null);
 
+    // 코드그룹 한글명 매핑
+    const getGroupKoreanName = (groupName) => {
+        const groupNames = {
+            'GENDER': '성별',
+            'INCOME_CATEGORY': '수입 카테고리',
+            'EXPENSE_CATEGORY': '지출 카테고리',
+            'PACKAGE_TYPE': '패키지 유형',
+            'PAYMENT_METHOD': '결제 방법',
+            'PAYMENT_STATUS': '결제 상태',
+            'SPECIALTY': '전문분야',
+            'CONSULTATION_TYPE': '상담 유형',
+            'CONSULTATION_STATUS': '상담 상태',
+            'VACATION_TYPE': '휴가 유형',
+            'CONSULTATION_DURATION': '상담 시간',
+            'ADDRESS_TYPE': '주소 유형',
+            'ITEM_CATEGORY': '아이템 카테고리',
+            'MESSAGE_TYPE': '메시지 유형',
+            'USER_ROLE': '사용자 역할',
+            'NOTIFICATION_TYPE': '알림 유형',
+            'CONSULTATION_FEE': '상담료',
+            'REPORT_PERIOD': '보고서 기간',
+            'MAPPING_STATUS': '매핑 상태',
+            'CONSULTATION_SESSION': '상담 세션',
+            'PRIORITY': '우선순위',
+            'STATUS': '상태',
+            'BRANCH_TYPE': '지점 유형',
+            'WORK_STATUS': '근무 상태',
+            'EMPLOYMENT_TYPE': '고용 유형',
+            'EDUCATION_LEVEL': '학력',
+            'MARITAL_STATUS': '결혼 상태',
+            'LANGUAGE': '언어',
+            'TIMEZONE': '시간대',
+            'CURRENCY': '통화'
+        };
+        return groupNames[groupName] || groupName;
+    };
+
     // 새 코드 폼 데이터
     const [newCodeData, setNewCodeData] = useState({
         codeValue: '',
@@ -255,7 +292,8 @@ const CommonCodeManagement = () => {
                         >
                             <div className="group-card-header">
                                 <div className="group-icon">📁</div>
-                                <h3>{group}</h3>
+                                <h3>{getGroupKoreanName(group)}</h3>
+                                <span className="group-code">{group}</span>
                             </div>
                             <div className="group-card-body">
                                 <p>코드 그룹 관리</p>
@@ -283,8 +321,8 @@ const CommonCodeManagement = () => {
                     그룹 선택으로 돌아가기
                 </button>
                 <div className="header-content">
-                    <h2>📁 {selectedGroup} 그룹 관리</h2>
-                    <p>코드를 추가, 수정, 삭제할 수 있습니다.</p>
+                    <h2>📁 {getGroupKoreanName(selectedGroup)} 그룹 관리</h2>
+                    <p>{selectedGroup} - 코드를 추가, 수정, 삭제할 수 있습니다.</p>
                 </div>
                 <button 
                     className="btn btn-primary"

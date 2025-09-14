@@ -112,19 +112,25 @@
 
 .group-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
   padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .group-card {
   background: white;
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 12px;
+  padding: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 0.3s ease;
   border: 2px solid transparent;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .group-card:hover {
@@ -135,36 +141,36 @@
 
 .group-card-header {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   margin-bottom: 16px;
 }
 
 .group-icon {
-  font-size: 2rem;
-  margin-right: 16px;
+  font-size: 1.8rem;
+  margin-bottom: 8px;
 }
 
 .group-card-header h3 {
   color: #2c3e50;
-  margin: 0;
-  font-size: 1.4rem;
+  margin: 0 0 4px 0;
+  font-size: 1.2rem;
   font-weight: 600;
 }
 
 .group-code {
   color: #6c757d;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   background: #f8f9fa;
   padding: 2px 6px;
   border-radius: 4px;
   font-family: monospace;
-  margin-left: 8px;
 }
 
 .group-card-body p {
   color: #6c757d;
-  margin-bottom: 16px;
-  font-size: 1rem;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
 }
 
 .group-actions {
@@ -561,6 +567,20 @@
   .group-cards {
     grid-template-columns: 1fr;
     gap: 16px;
+    padding: 16px;
+  }
+  
+  .group-card {
+    min-height: 120px;
+    padding: 16px;
+  }
+  
+  .group-card-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .group-icon {
+    font-size: 1.5rem;
   }
   
   .form-row {

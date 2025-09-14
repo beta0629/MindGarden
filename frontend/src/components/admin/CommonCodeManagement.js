@@ -312,25 +312,82 @@ const CommonCodeManagement = () => {
     // 2단계: 코드 관리 화면
     const renderCodeManagement = () => (
         <div className="code-management">
-            <div className="step-header">
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '32px',
+                padding: '24px',
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                flexWrap: 'wrap',
+                gap: '16px',
+                minHeight: '80px'
+            }}>
                 <button 
-                    className="btn btn-outline-secondary back-btn"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 16px',
+                        border: '2px solid #6c757d',
+                        borderRadius: '8px',
+                        backgroundColor: 'transparent',
+                        color: '#6c757d',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        whiteSpace: 'nowrap'
+                    }}
                     onClick={handleBackToGroups}
                 >
-                    <i className="bi bi-arrow-left"></i>
-                    그룹 선택으로 돌아가기
+                    ← 그룹 선택으로 돌아가기
                 </button>
-                <div className="header-content">
-                    <h2>📁 {getGroupKoreanName(selectedGroup)} 그룹 관리</h2>
-                    <p>{selectedGroup} - 코드를 추가, 수정, 삭제할 수 있습니다.</p>
+                <div style={{
+                    flex: 1,
+                    minWidth: 0,
+                    margin: '0 16px'
+                }}>
+                    <h2 style={{
+                        color: '#2c3e50',
+                        margin: '0 0 4px 0',
+                        fontSize: '20px',
+                        fontWeight: '600',
+                        lineHeight: '1.3'
+                    }}>
+                        📁 {getGroupKoreanName(selectedGroup)} 그룹 관리
+                    </h2>
+                    <p style={{
+                        color: '#6c757d',
+                        margin: '0',
+                        fontSize: '14px',
+                        lineHeight: '1.4'
+                    }}>
+                        {selectedGroup} - 코드를 추가, 수정, 삭제할 수 있습니다.
+                    </p>
                 </div>
                 <button 
-                    className="btn btn-primary"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 16px',
+                        border: 'none',
+                        borderRadius: '8px',
+                        backgroundColor: '#007bff',
+                        color: 'white',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        whiteSpace: 'nowrap'
+                    }}
                     onClick={() => setShowAddForm(true)}
                     disabled={loading}
                 >
-                    <i className="bi bi-plus-circle"></i>
-                    새 코드 추가
+                    + 새 코드 추가
                 </button>
             </div>
 
@@ -436,50 +493,134 @@ const CommonCodeManagement = () => {
                         <p>새로운 코드를 추가해보세요.</p>
                     </div>
                 ) : (
-                    <div className="codes-grid">
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                        gap: '16px'
+                    }}>
                         {groupCodes.map((code) => (
-                            <div key={code.id} className={`code-card ${!code.isActive ? 'inactive' : ''}`}>
-                                <div className="code-card-header">
-                                    <div className="code-info">
-                                        <h4>{code.codeLabel}</h4>
-                                        <span className="code-value">{code.codeValue}</span>
-                                    </div>
-                                    <div className="code-status">
-                                        <span className={`status-badge ${code.isActive ? 'active' : 'inactive'}`}>
-                                            {code.isActive ? '활성' : '비활성'}
+                            <div 
+                                key={code.id} 
+                                style={{
+                                    backgroundColor: '#f8f9fa',
+                                    borderRadius: '12px',
+                                    padding: '20px',
+                                    border: '2px solid #e9ecef',
+                                    transition: 'all 0.3s ease',
+                                    opacity: !code.isActive ? 0.6 : 1
+                                }}
+                            >
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    marginBottom: '12px'
+                                }}>
+                                    <div>
+                                        <h4 style={{
+                                            color: '#2c3e50',
+                                            margin: '0 0 4px 0',
+                                            fontSize: '16px',
+                                            fontWeight: '600'
+                                        }}>
+                                            {code.codeLabel}
+                                        </h4>
+                                        <span style={{
+                                            color: '#6c757d',
+                                            fontSize: '12px',
+                                            background: '#e9ecef',
+                                            padding: '2px 6px',
+                                            borderRadius: '4px',
+                                            fontFamily: 'monospace'
+                                        }}>
+                                            {code.codeValue}
                                         </span>
                                     </div>
+                                    <span style={{
+                                        padding: '4px 12px',
+                                        borderRadius: '20px',
+                                        fontSize: '12px',
+                                        fontWeight: '500',
+                                        backgroundColor: code.isActive ? '#d4edda' : '#f8d7da',
+                                        color: code.isActive ? '#155724' : '#721c24'
+                                    }}>
+                                        {code.isActive ? '활성' : '비활성'}
+                                    </span>
                                 </div>
                                 {code.codeDescription && (
-                                    <div className="code-description">
-                                        <p>{code.codeDescription}</p>
+                                    <div style={{ marginBottom: '12px' }}>
+                                        <p style={{
+                                            color: '#6c757d',
+                                            margin: '0',
+                                            fontSize: '14px',
+                                            lineHeight: '1.4'
+                                        }}>
+                                            {code.codeDescription}
+                                        </p>
                                     </div>
                                 )}
-                                <div className="code-card-footer">
-                                    <div className="code-meta">
-                                        <span>정렬: {code.sortOrder}</span>
-                                    </div>
-                                    <div className="code-actions">
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between'
+                                }}>
+                                    <span style={{
+                                        color: '#6c757d',
+                                        fontSize: '12px'
+                                    }}>
+                                        정렬: {code.sortOrder}
+                                    </span>
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: '6px'
+                                    }}>
                                         <button 
-                                            className="btn btn-sm btn-outline-primary"
+                                            style={{
+                                                padding: '6px 10px',
+                                                border: '2px solid #007bff',
+                                                borderRadius: '6px',
+                                                backgroundColor: 'transparent',
+                                                color: '#007bff',
+                                                fontSize: '12px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s ease'
+                                            }}
                                             onClick={() => handleEditCode(code)}
                                             title="수정"
                                         >
-                                            <i className="bi bi-pencil"></i>
+                                            ✏️
                                         </button>
                                         <button 
-                                            className={`btn btn-sm ${code.isActive ? 'btn-outline-warning' : 'btn-outline-success'}`}
+                                            style={{
+                                                padding: '6px 10px',
+                                                border: `2px solid ${code.isActive ? '#ffc107' : '#28a745'}`,
+                                                borderRadius: '6px',
+                                                backgroundColor: 'transparent',
+                                                color: code.isActive ? '#ffc107' : '#28a745',
+                                                fontSize: '12px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s ease'
+                                            }}
                                             onClick={() => handleToggleStatus(code.id, code.isActive)}
                                             title={code.isActive ? '비활성화' : '활성화'}
                                         >
-                                            <i className={`bi ${code.isActive ? 'bi-pause' : 'bi-play'}`}></i>
+                                            {code.isActive ? '⏸️' : '▶️'}
                                         </button>
                                         <button 
-                                            className="btn btn-sm btn-outline-danger"
+                                            style={{
+                                                padding: '6px 10px',
+                                                border: '2px solid #dc3545',
+                                                borderRadius: '6px',
+                                                backgroundColor: 'transparent',
+                                                color: '#dc3545',
+                                                fontSize: '12px',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s ease'
+                                            }}
                                             onClick={() => handleDeleteCode(code.id)}
                                             title="삭제"
                                         >
-                                            <i className="bi bi-trash"></i>
+                                            🗑️
                                         </button>
                                     </div>
                                 </div>

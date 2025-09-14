@@ -28,36 +28,17 @@ const StepIndicator = ({
     return (
         <div className="step-indicator" style={{
             marginBottom: '2rem',
-            padding: '20px',
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+            padding: '24px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '16px',
             border: '1px solid #e9ecef'
         }}>
-            <div className="progress-bar" style={{
-                height: '4px',
-                backgroundColor: '#e9ecef',
-                borderRadius: '2px',
-                marginBottom: '20px',
-                overflow: 'hidden'
-            }}>
-                <div 
-                    className="progress-fill" 
-                    style={{ 
-                        width: `${progressPercentage}%`,
-                        height: '100%',
-                        backgroundColor: '#28a745',
-                        borderRadius: '2px',
-                        transition: 'width 0.3s ease'
-                    }}
-                />
-            </div>
-            
             <div className="steps-container" style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'flex-start',
-                gap: '10px'
+                justifyContent: 'space-between',
+                position: 'relative',
+                padding: '0 20px'
             }}>
                 {steps.map((step, index) => {
                     const isActive = currentStep >= step.id;
@@ -73,65 +54,78 @@ const StepIndicator = ({
                                 flexDirection: 'column',
                                 alignItems: 'center',
                                 flex: 1,
-                                position: 'relative'
+                                position: 'relative',
+                                zIndex: 2
                             }}
                         >
-                            <div className="step-icon" style={{
-                                width: '50px',
-                                height: '50px',
+                            {/* 단계 번호와 아이콘 */}
+                            <div style={{
+                                width: '48px',
+                                height: '48px',
                                 borderRadius: '50%',
-                                backgroundColor: isActive ? '#28a745' : '#e9ecef',
-                                border: `2px solid ${isActive ? '#28a745' : '#dee2e6'}`,
+                                backgroundColor: isActive ? '#007bff' : '#ffffff',
+                                border: `3px solid ${isActive ? '#007bff' : '#dee2e6'}`,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '20px',
-                                color: isActive ? 'white' : '#6c757d',
-                                marginBottom: '10px',
+                                marginBottom: '12px',
                                 transition: 'all 0.3s ease',
-                                position: 'relative',
-                                zIndex: 2
+                                boxShadow: isActive ? '0 4px 12px rgba(0, 123, 255, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)',
+                                position: 'relative'
                             }}>
-                                {isCompleted ? '✓' : step.icon}
+                                {isCompleted ? (
+                                    <span style={{
+                                        color: 'white',
+                                        fontSize: '18px',
+                                        fontWeight: 'bold'
+                                    }}>✓</span>
+                                ) : (
+                                    <span style={{
+                                        color: isActive ? 'white' : '#6c757d',
+                                        fontSize: '16px'
+                                    }}>
+                                        {step.icon}
+                                    </span>
+                                )}
+                                
+                                {/* 현재 단계 강조 효과 */}
+                                {isCurrent && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '-4px',
+                                        left: '-4px',
+                                        right: '-4px',
+                                        bottom: '-4px',
+                                        borderRadius: '50%',
+                                        border: '2px solid #007bff',
+                                        opacity: 0.6,
+                                        animation: 'pulse 2s infinite'
+                                    }} />
+                                )}
                             </div>
-                            <div className="step-content" style={{
-                                textAlign: 'center'
+                            
+                            {/* 단계 제목 */}
+                            <div style={{
+                                fontSize: '13px',
+                                fontWeight: isCurrent ? '600' : '500',
+                                color: isActive ? '#007bff' : '#6c757d',
+                                textAlign: 'center',
+                                lineHeight: '1.4',
+                                transition: 'all 0.3s ease'
                             }}>
-                                <div className="step-number" style={{
-                                    width: '24px',
-                                    height: '24px',
-                                    borderRadius: '50%',
-                                    backgroundColor: isActive ? '#28a745' : '#e9ecef',
-                                    color: isActive ? 'white' : '#6c757d',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '12px',
-                                    fontWeight: '600',
-                                    margin: '0 auto 8px auto',
-                                    transition: 'all 0.3s ease'
-                                }}>
-                                    {step.id}
-                                </div>
-                                <div className="step-title" style={{
-                                    fontSize: '14px',
-                                    fontWeight: '500',
-                                    color: isActive ? '#28a745' : '#6c757d',
-                                    transition: 'all 0.3s ease'
-                                }}>
-                                    {step.title}
-                                </div>
+                                {step.title}
                             </div>
                             
                             {/* 단계 간 연결선 */}
                             {index < steps.length - 1 && (
                                 <div style={{
                                     position: 'absolute',
-                                    top: '25px',
-                                    left: '75px',
-                                    right: '-25px',
-                                    height: '2px',
-                                    backgroundColor: isActive ? '#28a745' : '#dee2e6',
+                                    top: '24px',
+                                    left: 'calc(50% + 20px)',
+                                    right: 'calc(-50% + 20px)',
+                                    height: '3px',
+                                    backgroundColor: isActive ? '#007bff' : '#dee2e6',
+                                    borderRadius: '2px',
                                     zIndex: 1,
                                     transition: 'all 0.3s ease'
                                 }} />
@@ -139,6 +133,23 @@ const StepIndicator = ({
                         </div>
                     );
                 })}
+            </div>
+            
+            {/* 진행률 표시 */}
+            <div style={{
+                marginTop: '16px',
+                height: '6px',
+                backgroundColor: '#e9ecef',
+                borderRadius: '3px',
+                overflow: 'hidden'
+            }}>
+                <div style={{
+                    width: `${progressPercentage}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #007bff, #0056b3)',
+                    borderRadius: '3px',
+                    transition: 'width 0.5s ease'
+                }} />
             </div>
         </div>
     );

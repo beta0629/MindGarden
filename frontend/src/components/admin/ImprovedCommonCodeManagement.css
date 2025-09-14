@@ -4,6 +4,8 @@
   padding: 24px;
   background-color: #f8f9fa;
   min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .page-header {
@@ -196,8 +198,9 @@
 
 /* 2단계: 코드 관리 */
 .code-management {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+  padding: 0 20px;
 }
 
 .step-header {
@@ -212,6 +215,8 @@
   flex-wrap: wrap;
   gap: 20px;
   min-height: 100px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .back-btn {
@@ -234,6 +239,8 @@
 .header-content {
   flex: 1;
   min-width: 0;
+  max-width: calc(100% - 300px);
+  overflow: hidden;
 }
 
 .header-content h2 {
@@ -581,6 +588,11 @@
     text-align: left;
     padding: 20px;
     min-height: 120px;
+    align-items: flex-start;
+  }
+  
+  .header-content {
+    max-width: 100%;
   }
   
   .header-content h2 {

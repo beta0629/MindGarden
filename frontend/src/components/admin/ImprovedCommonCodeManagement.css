@@ -209,15 +209,19 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .back-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 8px;
   transition: all 0.3s ease;
+  white-space: nowrap;
+  font-size: 0.9rem;
 }
 
 .back-btn:hover {
@@ -225,16 +229,25 @@
   transform: translateX(-2px);
 }
 
+.header-content {
+  flex: 1;
+  min-width: 0;
+}
+
 .header-content h2 {
   color: #2c3e50;
   margin: 0;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 .header-content p {
   color: #6c757d;
   margin: 4px 0 0 0;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 /* 코드 추가 폼 */
@@ -451,17 +464,18 @@
 
 /* 버튼 스타일 */
 .btn {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .btn-primary {
@@ -561,7 +575,16 @@
   .step-header {
     flex-direction: column;
     gap: 16px;
-    text-align: center;
+    text-align: left;
+    padding: 16px;
+  }
+  
+  .header-content h2 {
+    font-size: 1.4rem;
+  }
+  
+  .header-content p {
+    font-size: 0.85rem;
   }
   
   .group-cards {

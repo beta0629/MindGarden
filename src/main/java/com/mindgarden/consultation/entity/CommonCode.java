@@ -59,6 +59,15 @@ public class CommonCode extends BaseEntity {
     @Column(name = "extra_data", length = 1000)
     private String extraData; // 추가 데이터 (JSON 형태로 저장)
 
+    @Column(name = "icon", length = 10)
+    private String icon; // 아이콘 (이모지 또는 아이콘 클래스명)
+
+    @Column(name = "color_code", length = 7)
+    private String colorCode; // 색상 코드 (예: #007bff)
+
+    @Column(name = "korean_name", length = 100)
+    private String koreanName; // 한글명 (코드그룹의 경우)
+
     @PrePersist
     protected void onCreate() {
         if (isActive == null) {

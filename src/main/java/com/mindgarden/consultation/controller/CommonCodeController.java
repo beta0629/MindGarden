@@ -2,9 +2,12 @@ package com.mindgarden.consultation.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.mindgarden.consultation.dto.CommonCodeDto;
 import com.mindgarden.consultation.entity.CommonCode;
+import com.mindgarden.consultation.entity.CodeGroupMetadata;
 import com.mindgarden.consultation.service.CommonCodeService;
+import com.mindgarden.consultation.repository.CodeGroupMetadataRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -35,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CommonCodeController {
 
     private final CommonCodeService commonCodeService;
+    private final CodeGroupMetadataRepository codeGroupMetadataRepository;
 
     /**
      * 코드 그룹별 코드 값 조회 (기존 API 호환성)
@@ -294,6 +298,159 @@ public class CommonCodeController {
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", "공통코드 일괄 생성에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 코드그룹 메타데이터 조회 (한글명, 아이콘, 색상 등)
+     */
+    @GetMapping("/group-metadata")
+    public ResponseEntity<?> getCodeGroupMetadata() {
+        try {
+            log.info("📋 코드그룹 메타데이터 조회");
+            List<CodeGroupMetadata> metadata = codeGroupMetadataRepository.findAllActiveOrderByDisplayOrder();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", metadata,
+                "count", metadata.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 코드그룹 메타데이터 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "코드그룹 메타데이터 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 특정 코드그룹의 한글명 조회
+     */
+    @GetMapping("/group/{groupName}/korean-name")
+    public ResponseEntity<?> getCodeGroupKoreanName(@PathVariable String groupName) {
+        try {
+            log.info("📋 코드그룹 한글명 조회: {}", groupName);
+            Optional<CodeGroupMetadata> metadata = codeGroupMetadataRepository.findByGroupNameAndIsActiveTrue(groupName);
+            
+            if (metadata.isPresent()) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "data", Map.of(
+                        "groupName", groupName,
+                        "koreanName", metadata.get().getKoreanName(),
+                        "icon", metadata.get().getIcon(),
+                        "colorCode", metadata.get().getColorCode(),
+                        "description", metadata.get().getDescription()
+                    )
+                ));
+            } else {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "data", Map.of(
+                        "groupName", groupName,
+                        "koreanName", groupName // 메타데이터가 없으면 원본 그룹명 반환
+                    )
+                ));
+            }
+        } catch (Exception e) {
+            log.error("❌ 코드그룹 한글명 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "코드그룹 한글명 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 코드그룹별 표시 옵션 조회 (색상, 아이콘 등)
+     */
+    @GetMapping("/group/{groupName}/display-options")
+    public ResponseEntity<?> getCodeGroupDisplayOptions(@PathVariable String groupName) {
+        try {
+            log.info("📋 코드그룹 표시 옵션 조회: {}", groupName);
+            
+            // 코드그룹 메타데이터 조회
+            Optional<CodeGroupMetadata> groupMetadata = codeGroupMetadataRepository.findByGroupNameAndIsActiveTrue(groupName);
+            
+            // 해당 그룹의 모든 코드 조회 (아이콘, 색상 포함)
+            List<CommonCode> codes = commonCodeService.getCommonCodesByGroup(groupName);
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "groupName", groupName,
+                "groupMetadata", groupMetadata.orElse(null),
+                "codes", codes.stream().map(code -> Map.of(
+                    "codeValue", code.getCodeValue(),
+                    "codeLabel", code.getCodeLabel(),
+                    "icon", code.getIcon(),
+                    "colorCode", code.getColorCode(),
+                    "koreanName", code.getKoreanName(),
+                    "isActive", code.getIsActive()
+                )).toList(),
+                "count", codes.size()
+            );
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("❌ 코드그룹 표시 옵션 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "코드그룹 표시 옵션 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 코드그룹 메타데이터 생성/수정
+     */
+    @PostMapping("/group-metadata")
+    public ResponseEntity<?> createOrUpdateGroupMetadata(@RequestBody CodeGroupMetadata metadata) {
+        try {
+            log.info("🔧 코드그룹 메타데이터 생성/수정: {}", metadata.getGroupName());
+            
+            CodeGroupMetadata savedMetadata = codeGroupMetadataRepository.save(metadata);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "코드그룹 메타데이터가 저장되었습니다",
+                "data", savedMetadata
+            ));
+        } catch (Exception e) {
+            log.error("❌ 코드그룹 메타데이터 저장 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "코드그룹 메타데이터 저장에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 코드그룹 메타데이터 삭제
+     */
+    @DeleteMapping("/group-metadata/{groupName}")
+    public ResponseEntity<?> deleteGroupMetadata(@PathVariable String groupName) {
+        try {
+            log.info("🗑️ 코드그룹 메타데이터 삭제: {}", groupName);
+            
+            Optional<CodeGroupMetadata> metadata = codeGroupMetadataRepository.findByGroupNameAndIsActiveTrue(groupName);
+            if (metadata.isPresent()) {
+                CodeGroupMetadata toDelete = metadata.get();
+                toDelete.setIsActive(false);
+                codeGroupMetadataRepository.save(toDelete);
+                
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "코드그룹 메타데이터가 삭제되었습니다"
+                ));
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            log.error("❌ 코드그룹 메타데이터 삭제 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "코드그룹 메타데이터 삭제에 실패했습니다: " + e.getMessage()
             ));
         }
     }

@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { notification } from '../../utils/scripts';
+import { 
+    loadCodeGroupMetadata, 
+    getCodeGroupKoreanName, 
+    getCodeGroupIcon,
+    getCodeGroupKoreanNameSync,
+    getCodeGroupIconSync
+} from '../../utils/codeHelper';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
 import './ImprovedCommonCodeManagement.css';
@@ -25,42 +32,31 @@ const CommonCodeManagement = () => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingCode, setEditingCode] = useState(null);
 
-    // 코드그룹 한글명 매핑
-    const getGroupKoreanName = (groupName) => {
-        const groupNames = {
-            'GENDER': '성별',
-            'INCOME_CATEGORY': '수입 카테고리',
-            'EXPENSE_CATEGORY': '지출 카테고리',
-            'PACKAGE_TYPE': '패키지 유형',
-            'PAYMENT_METHOD': '결제 방법',
-            'PAYMENT_STATUS': '결제 상태',
-            'SPECIALTY': '전문분야',
-            'CONSULTATION_TYPE': '상담 유형',
-            'CONSULTATION_STATUS': '상담 상태',
-            'VACATION_TYPE': '휴가 유형',
-            'CONSULTATION_DURATION': '상담 시간',
-            'ADDRESS_TYPE': '주소 유형',
-            'ITEM_CATEGORY': '아이템 카테고리',
-            'MESSAGE_TYPE': '메시지 유형',
-            'USER_ROLE': '사용자 역할',
-            'NOTIFICATION_TYPE': '알림 유형',
-            'CONSULTATION_FEE': '상담료',
-            'REPORT_PERIOD': '보고서 기간',
-            'MAPPING_STATUS': '매핑 상태',
-            'CONSULTATION_SESSION': '상담 세션',
-            'PRIORITY': '우선순위',
-            'STATUS': '상태',
-            'BRANCH_TYPE': '지점 유형',
-            'WORK_STATUS': '근무 상태',
-            'EMPLOYMENT_TYPE': '고용 유형',
-            'EDUCATION_LEVEL': '학력',
-            'MARITAL_STATUS': '결혼 상태',
-            'LANGUAGE': '언어',
-            'TIMEZONE': '시간대',
-            'CURRENCY': '통화'
-        };
-        return groupNames[groupName] || groupName;
-    };
+    // 코드그룹 메타데이터 상태
+    const [groupMetadata, setGroupMetadata] = useState([]);
+    const [metadataLoaded, setMetadataLoaded] = useState(false);
+
+    // 코드그룹 메타데이터 로드
+    const loadMetadata = useCallback(async () => {
+        try {
+            const metadata = await loadCodeGroupMetadata();
+            setGroupMetadata(metadata);
+            setMetadataLoaded(true);
+        } catch (error) {
+            console.error('코드그룹 메타데이터 로드 실패:', error);
+            setMetadataLoaded(true); // 실패해도 로딩 상태는 해제
+        }
+    }, []);
+
+    // 동적 코드그룹 한글명 조회
+    const getGroupKoreanName = useCallback((groupName) => {
+        return getCodeGroupKoreanNameSync(groupName);
+    }, []);
+
+    // 동적 코드그룹 아이콘 조회
+    const getGroupIcon = useCallback((groupName) => {
+        return getCodeGroupIconSync(groupName);
+    }, []);
 
     // 새 코드 폼 데이터
     const [newCodeData, setNewCodeData] = useState({
@@ -269,8 +265,9 @@ const CommonCodeManagement = () => {
 
     // 초기 로드
     useEffect(() => {
+        loadMetadata();
         loadCodeGroups();
-    }, [loadCodeGroups]);
+    }, [loadMetadata, loadCodeGroups]);
 
     // 1단계: 코드그룹 선택 화면
     const renderGroupSelection = () => (
@@ -291,7 +288,7 @@ const CommonCodeManagement = () => {
                             onClick={() => handleGroupSelect(group)}
                         >
                             <div className="group-card-header">
-                                <div className="group-icon">📁</div>
+                                <div className="group-icon">{getGroupIcon(group)}</div>
                                 <h3>{getGroupKoreanName(group)}</h3>
                                 <span className="group-code">{group}</span>
                             </div>
@@ -635,10 +632,10 @@ const CommonCodeManagement = () => {
     return (
         <SimpleLayout>
             <div className="improved-common-code-management">
-                <div className="page-header">
+            <div className="page-header">
                     <h1>📋 공통코드 관리</h1>
                     <p>시스템에서 사용되는 공통코드를 직관적으로 관리합니다.</p>
-                </div>
+            </div>
 
                 <div className="step-indicator">
                     <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>

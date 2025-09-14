@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
-import { notification } from '../../utils/scripts';
-import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import { apiGet, apiPost, apiPut, apiDelete } from '../../../utils/ajax';
+import { notification } from '../../../utils/scripts';
+import SimpleLayout from '../../layout/SimpleLayout';
+import LoadingSpinner from '../../common/LoadingSpinner';
 import './ImprovedCommonCodeManagement.css';
 
 /**
@@ -15,7 +15,7 @@ import './ImprovedCommonCodeManagement.css';
  * @version 2.0.0
  * @since 2025-09-13
  */
-const CommonCodeManagement = () => {
+const ImprovedCommonCodeManagement = () => {
     // 상태 관리
     const [currentStep, setCurrentStep] = useState(1); // 1: 그룹 선택, 2: 코드 관리
     const [selectedGroup, setSelectedGroup] = useState(null);
@@ -479,4 +479,4 @@ const CommonCodeManagement = () => {
     );
 };
 
-export default CommonCodeManagement;
+export default ImprovedCommonCodeManagement;

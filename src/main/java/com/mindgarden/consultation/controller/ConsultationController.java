@@ -8,6 +8,7 @@ import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.Consultation;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.ConsultationService;
+import com.mindgarden.consultation.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,9 @@ public class ConsultationController {
     
     @Autowired
     private ConsultationService consultationService;
+    
+    @Autowired
+    private UserService userService;
     
     // === 상담 조회 및 검색 ===
     
@@ -72,9 +76,7 @@ public class ConsultationController {
             isEmergency, isFirstSession, startDate, endDate);
         
         // 지점코드로 필터링 (상담은 상담사나 내담자의 지점코드로 필터링)
-        // TODO: Consultation 엔티티에 상담사와 내담자 정보를 직접 조회하는 로직이 필요함
-        // 현재는 모든 상담을 반환 (향후 개선 필요)
-        List<Consultation> consultations = allConsultations;
+        List<Consultation> consultations = filterConsultationsByBranch(allConsultations, currentUser.getBranchCode());
         
         log.info("🔍 상담 목록 조회 완료 - 전체: {}, 필터링 후: {}", allConsultations.size(), consultations.size());
         
@@ -645,5 +647,43 @@ public class ConsultationController {
         );
         
         return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 상담 목록을 지점코드로 필터링
+     * 
+     * @param consultations 상담 목록
+     * @param currentUserBranchCode 현재 사용자의 지점코드
+     * @return 필터링된 상담 목록
+     */
+    private List<Consultation> filterConsultationsByBranch(List<Consultation> consultations, String currentUserBranchCode) {
+        // 수퍼어드민이나 본사 관리자는 모든 상담 조회 가능
+        if (currentUserBranchCode == null || currentUserBranchCode.isEmpty()) {
+            return consultations;
+        }
+        
+        return consultations.stream()
+                .filter(consultation -> {
+                    try {
+                        // 상담사와 내담자 정보 조회
+                        User consultant = userService.findById(consultation.getConsultantId()).orElse(null);
+                        User client = userService.findById(consultation.getClientId()).orElse(null);
+                        
+                        // 상담사나 내담자 중 하나라도 현재 사용자와 같은 지점에 있으면 조회 가능
+                        boolean consultantMatch = consultant != null && 
+                                currentUserBranchCode.equals(consultant.getBranchCode());
+                        boolean clientMatch = client != null && 
+                                currentUserBranchCode.equals(client.getBranchCode());
+                        
+                        return consultantMatch || clientMatch;
+                        
+                    } catch (Exception e) {
+                        // 오류 발생 시 해당 상담은 제외
+                        log.warn("상담 필터링 중 오류 발생 - 상담 ID: {}, 오류: {}", 
+                                consultation.getId(), e.getMessage());
+                        return false;
+                    }
+                })
+                .collect(java.util.stream.Collectors.toList());
     }
 }

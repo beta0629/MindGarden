@@ -34,13 +34,36 @@ const ClientSettings = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // TODO: 실제 API 호출로 설정 저장
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setMessage('설정이 저장되었습니다.');
-      setTimeout(() => setMessage(''), 3000);
+      // 실제 API 호출로 설정 저장
+      const response = await fetch('/api/client/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage('설정이 성공적으로 저장되었습니다.');
+        console.log('✅ 클라이언트 설정 저장 성공:', data);
+        
+        // 성공 시 3초 후 메시지 제거
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        setMessage(data.message || '설정 저장에 실패했습니다.');
+        console.error('❌ 클라이언트 설정 저장 실패:', data);
+        
+        // 실패 시 5초 후 메시지 제거
+        setTimeout(() => setMessage(''), 5000);
+      }
     } catch (error) {
-      setMessage('설정 저장에 실패했습니다.');
-      setTimeout(() => setMessage(''), 3000);
+      console.error('❌ 클라이언트 설정 저장 오류:', error);
+      setMessage('설정 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+      
+      // 오류 시 5초 후 메시지 제거
+      setTimeout(() => setMessage(''), 5000);
     } finally {
       setLoading(false);
     }

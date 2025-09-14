@@ -5,11 +5,13 @@ import ErpButton from './common/ErpButton';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
+import { useSession } from '../../hooks/useSession';
 
 /**
  * 구매 요청 폼 컴포넌트
  */
 const PurchaseRequestForm = () => {
+  const { user } = useSession();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]); // 여러 아이템 선택을 위한 배열
@@ -94,8 +96,13 @@ const PurchaseRequestForm = () => {
       setLoading(true);
       setError('');
 
-      // 현재 사용자 ID (실제로는 인증 시스템에서 가져와야 함)
-      const requesterId = 1; // TODO: 실제 사용자 ID로 변경
+      // 현재 사용자 ID (세션에서 가져옴)
+      const requesterId = user?.id;
+      
+      if (!requesterId) {
+        setError('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+        return;
+      }
 
       // 여러 아이템에 대해 구매 요청 생성
       const requests = selectedItems.map(item => ({

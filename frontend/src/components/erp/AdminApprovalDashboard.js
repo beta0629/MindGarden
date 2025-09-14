@@ -5,11 +5,13 @@ import ErpButton from './common/ErpButton';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
+import { useSession } from '../../hooks/useSession';
 
 /**
  * 관리자 승인 대시보드 컴포넌트
  */
 const AdminApprovalDashboard = () => {
+  const { user } = useSession();
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -61,8 +63,13 @@ const AdminApprovalDashboard = () => {
       setProcessing(true);
       setError('');
 
-      // 현재 관리자 ID (실제로는 인증 시스템에서 가져와야 함)
-      const adminId = 1; // TODO: 실제 관리자 ID로 변경
+      // 현재 관리자 ID (세션에서 가져옴)
+      const adminId = user?.id;
+      
+      if (!adminId) {
+        setError('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+        return;
+      }
 
       const response = await fetch(`/api/erp/purchase-requests/${selectedRequest.id}/approve-admin`, {
         method: 'POST',
@@ -98,8 +105,13 @@ const AdminApprovalDashboard = () => {
       setProcessing(true);
       setError('');
 
-      // 현재 관리자 ID (실제로는 인증 시스템에서 가져와야 함)
-      const adminId = 1; // TODO: 실제 관리자 ID로 변경
+      // 현재 관리자 ID (세션에서 가져옴)
+      const adminId = user?.id;
+      
+      if (!adminId) {
+        setError('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+        return;
+      }
 
       const response = await fetch(`/api/erp/purchase-requests/${selectedRequest.id}/reject-admin`, {
         method: 'POST',

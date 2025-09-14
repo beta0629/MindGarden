@@ -1457,4 +1457,16 @@ public class AdminServiceImpl implements AdminService {
         
         return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public User getUserById(Long id) {
+        log.info("🔍 사용자 ID로 조회: {}", id);
+        try {
+            return userRepository.findById(id).orElse(null);
+        } catch (Exception e) {
+            log.error("❌ 사용자 조회 중 오류 발생: {}", e.getMessage(), e);
+            return null;
+        }
+    }
 }

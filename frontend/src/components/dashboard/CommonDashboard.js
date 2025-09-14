@@ -193,23 +193,17 @@ const CommonDashboard = ({ user: propUser }) => {
     try {
       console.log('📊 내담자 상태 데이터 로드 시작 - 사용자 ID:', userId);
       
-      // 임시로 매핑 API 호출을 비활성화하고 기본값 설정
-      // TODO: 백엔드 API 수정 후 활성화
-      /*
+      // 매핑 API 호출로 실제 데이터 조회
       const mappingResponse = await apiGet(`/api/admin/mappings/client`, { clientId: userId });
       
       let mappingStatus = 'NONE';
       let paymentStatus = 'NONE';
       
       if (mappingResponse?.success && mappingResponse?.data) {
-        mappingStatus = 'ACTIVE';
-        paymentStatus = 'NONE';
+        const mapping = mappingResponse.data;
+        mappingStatus = mapping.mappingStatus || 'ACTIVE';
+        paymentStatus = mapping.paymentStatus || 'NONE';
       }
-      */
-      
-      // 기본값으로 설정 (매핑 API 오류 임시 해결)
-      let mappingStatus = 'NONE';
-      let paymentStatus = 'NONE';
       
       setClientStatus({
         mappingStatus,

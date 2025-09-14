@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-09-14] - ERP 메뉴 시스템 구축 및 동적 역할 관리
+
+### 🏢 새로운 기능
+- **ERP 메뉴 시스템 구축**
+  - BRANCH_SUPER_ADMIN 전용 ERP 메뉴 그룹 생성
+  - 구매 관리, 예산 관리, 재무 관리, ERP 보고서 등 5개 서브메뉴 추가
+  - `/admin/erp/*` 경로로 ERP 페이지 라우팅 연결
+
+- **동적 역할 표시명 시스템**
+  - 하드코딩된 역할 표시명을 백엔드 API 기반 동적 로딩으로 전환
+  - `GET /api/admin/user-roles` 엔드포인트 추가
+  - 10분 캐싱 메커니즘 및 Fallback 처리 구현
+
+### 🔐 권한 시스템 고도화
+- **HQ_MASTER 전체 권한 부여**
+  - 최고 관리자에게 모든 메뉴 그룹 접근 권한 부여 (47개 메뉴)
+  - 다중 메뉴 그룹 지원으로 역할별 권한 세분화
+
+- **역할별 메뉴 분리**
+  - ADMIN_MENU, BRANCH_SUPER_ADMIN_MENU, HQ_ADMIN_MENU 등 역할별 메뉴 그룹 분리
+  - 권한 기반 메뉴 접근 제어 강화
+
+### 🐛 버그 수정
+- **API 엔드포인트 오류 해결**
+  - `/api/admin/users/{id}` 엔드포인트 추가로 500 오류 해결
+  - `/api/admin/users/{id}/social-accounts` 엔드포인트 추가
+
+- **Jackson 직렬화 오류 해결**
+  - Hibernate 프록시 객체 JSON 변환 오류 수정
+  - Branch 엔티티에 `@JsonIgnoreProperties` 어노테이션 추가
+
+- **역할 표시명 수정**
+  - `superadmin@mindgarden.com` 계정의 역할 표시명 "본점수퍼어드민"으로 수정
+  - 프론트엔드 하드코딩된 역할 매핑 제거
+
+- **날짜 선택기 개선**
+  - 상담 완료 통계 페이지의 날짜 변경 기능 디버깅 및 개선
+  - 현재 월 기본값 설정 및 API 응답 로깅 추가
+
 ## [2025-09-14] - 429 오류 해결 및 시스템 최적화
 
 ### 🐛 버그 수정

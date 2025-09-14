@@ -13,7 +13,7 @@ import './SimpleHamburgerMenu.css';
  * @version 1.0.0
  * @since 2025-09-14
  */
-const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
+const DynamicHamburgerMenu = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const user = sessionManager.getUser();
   const [expandedItems, setExpandedItems] = useState({});
@@ -93,19 +93,19 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
   // 로딩 상태 렌더링
   if (isLoading) {
     return (
-      <div className="simple-hamburger-overlay">
-        <div className="simple-hamburger-menu">
-          <div className="simple-hamburger-header">
+      <div className="hamburger-menu-overlay">
+        <div className="hamburger-menu">
+          <div className="hamburger-header">
             <div className="user-info">
               <div className="user-name">{user?.name || '사용자'}</div>
               <div className="user-role">{user?.role || 'USER'}</div>
             </div>
-            <button className="simple-hamburger-close" onClick={onClose}>
-              <i className="bi bi-x"></i>
+            <button className="close-btn" onClick={onClose}>
+              <i className="bi bi-x-lg"></i>
             </button>
           </div>
           
-          <div className="simple-hamburger-content">
+          <div className="menu-content">
             <div className="loading-message">
               <i className="bi bi-arrow-repeat spin"></i>
               <span>메뉴를 불러오는 중...</span>
@@ -119,19 +119,19 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
   // 오류 상태 렌더링
   if (error) {
     return (
-      <div className="simple-hamburger-overlay">
-        <div className="simple-hamburger-menu">
-          <div className="simple-hamburger-header">
+      <div className="hamburger-menu-overlay">
+        <div className="hamburger-menu">
+          <div className="hamburger-header">
             <div className="user-info">
               <div className="user-name">{user?.name || '사용자'}</div>
               <div className="user-role">{user?.role || 'USER'}</div>
             </div>
-            <button className="simple-hamburger-close" onClick={onClose}>
-              <i className="bi bi-x"></i>
+            <button className="close-btn" onClick={onClose}>
+              <i className="bi bi-x-lg"></i>
             </button>
           </div>
           
-          <div className="simple-hamburger-content">
+          <div className="menu-content">
             <div className="error-message">
               <i className="bi bi-exclamation-triangle text-warning"></i>
               <span>{error}</span>
@@ -149,24 +149,24 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
   }
 
   return (
-    <div className="simple-hamburger-overlay" onClick={onClose}>
-      <div className="simple-hamburger-menu" onClick={(e) => e.stopPropagation()}>
+    <div className="hamburger-menu-overlay">
+      <div className="hamburger-menu">
         {/* 헤더 영역 */}
-        <div className="simple-hamburger-header">
+        <div className="hamburger-header">
           <div className="user-info">
             <div className="user-name">{user?.name || '사용자'}</div>
             <div className="user-role">
               {menuStructure?.roleDisplayName || user?.role || 'USER'}
             </div>
           </div>
-          <button className="simple-hamburger-close" onClick={onClose}>
-            <i className="bi bi-x"></i>
+          <button className="close-btn" onClick={onClose}>
+            <i className="bi bi-x-lg"></i>
           </button>
         </div>
 
         {/* 메뉴 콘텐츠 */}
-        <div className="simple-hamburger-content">
-          <nav className="simple-hamburger-nav">
+        <div className="menu-content">
+          <nav className="menu-nav">
             {mainMenus.length === 0 ? (
               <div className="no-menu-message">
                 <i className="bi bi-info-circle"></i>
@@ -174,10 +174,10 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
               </div>
             ) : (
               mainMenus.map((item) => (
-                <div key={item.id} className="simple-menu-group">
+                <div key={item.id} className="menu-group">
                   {/* 메인 메뉴 아이템 */}
                   <div
-                    className={`simple-menu-item ${item.hasSubMenu ? 'has-submenu' : ''} ${expandedItems[item.id] ? 'expanded' : ''}`}
+                    className={`menu-item ${item.hasSubMenu ? 'has-submenu' : ''} ${expandedItems[item.id] ? 'expanded' : ''}`}
                     onClick={() => {
                       if (item.hasSubMenu) {
                         toggleExpanded(item.id);
@@ -186,29 +186,29 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
                       }
                     }}
                   >
-                    <div className="simple-menu-item-content">
-                      {item.icon && <i className={`${item.icon} simple-menu-icon`}></i>}
-                      <span className="simple-menu-label">{item.label}</span>
+                    <div className="menu-item-content">
+                      {item.icon && <i className={`${item.icon} menu-icon`}></i>}
+                      <span className="menu-label">{item.label}</span>
                       {!item.path && <span className="preparing-badge">준비중</span>}
                     </div>
                     
                     {item.hasSubMenu && (
-                      <i className={`bi ${expandedItems[item.id] ? 'bi-chevron-up' : 'bi-chevron-down'} simple-expand-icon`}></i>
+                      <i className={`bi ${expandedItems[item.id] ? 'bi-chevron-up' : 'bi-chevron-down'} expand-icon`}></i>
                     )}
                   </div>
 
                   {/* 서브 메뉴 */}
                   {item.hasSubMenu && expandedItems[item.id] && subMenus[item.id] && (
-                    <div className="simple-submenu">
+                    <div className="submenu">
                       {subMenus[item.id].map((subItem) => (
                         <div
                           key={subItem.id}
-                          className="simple-submenu-item"
+                          className="submenu-item"
                           onClick={() => handleMenuClick(subItem.path)}
                         >
-                          <div className="simple-submenu-item-content">
-                            {subItem.icon && <i className={`${subItem.icon} simple-submenu-icon`}></i>}
-                            <span className="simple-submenu-label">{subItem.label}</span>
+                          <div className="submenu-item-content">
+                            {subItem.icon && <i className={`${subItem.icon} submenu-icon`}></i>}
+                            <span className="submenu-label">{subItem.label}</span>
                             {!subItem.path && <span className="preparing-badge">준비중</span>}
                           </div>
                         </div>
@@ -222,8 +222,8 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         </div>
 
         {/* 푸터 영역 */}
-        <div className="simple-hamburger-footer">
-          <button className="simple-logout-btn" onClick={handleLogout}>
+        <div className="hamburger-footer">
+          <button className="logout-btn" onClick={handleLogout}>
             <i className="bi bi-box-arrow-right"></i>
             <span>로그아웃</span>
           </button>
@@ -255,4 +255,4 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
   );
 };
 
-export default SimpleHamburgerMenu;
+export default DynamicHamburgerMenu;

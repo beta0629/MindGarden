@@ -26,7 +26,7 @@ import './ScheduleList.css';
 
 const ScheduleList = ({ 
   userRole = 'ADMIN',
-  userId = 1,
+  userId = null, // 기본값 제거, 호출하는 컴포넌트에서 전달해야 함
   onScheduleView,
   onScheduleEdit,
   onScheduleDelete,

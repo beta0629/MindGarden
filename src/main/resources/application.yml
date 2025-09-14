@@ -214,3 +214,14 @@ consultation:
 # 프론트엔드 설정 (기본값)
 frontend:
   base-url: http://localhost:3000
+
+# SMS 인증 설정 (비용 절약을 위해 사용 여부 제어)
+sms:
+  auth:
+    enabled: ${SMS_AUTH_ENABLED:false}  # 기본값: 비활성화 (비용 절약)
+    provider: ${SMS_PROVIDER:nhn}  # nhn, twilio, aligo 등
+    api-key: ${SMS_API_KEY:}
+    api-secret: ${SMS_API_SECRET:}
+    sender-number: ${SMS_SENDER_NUMBER:}
+    test-mode: ${SMS_TEST_MODE:true}  # 테스트 모드 (실제 SMS 발송 안함)
+    mock-verification-code: ${SMS_MOCK_CODE:123456}  # 테스트용 고정 인증번호

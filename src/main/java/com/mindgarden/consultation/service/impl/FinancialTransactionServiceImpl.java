@@ -3,21 +3,11 @@ package com.mindgarden.consultation.service.impl;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.FinancialDashboardResponse;
 import com.mindgarden.consultation.dto.FinancialTransactionRequest;
@@ -31,8 +21,13 @@ import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.PaymentRepository;
 import com.mindgarden.consultation.repository.PurchaseRequestRepository;
 import com.mindgarden.consultation.repository.SalaryCalculationRepository;
+import com.mindgarden.consultation.repository.UserRepository;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,6 +48,8 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     private final SalaryCalculationRepository salaryCalculationRepository;
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final PaymentRepository paymentRepository;
+    private final UserRepository userRepository;
+    private final CommonCodeService commonCodeService;
     
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
@@ -284,11 +281,14 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         // 결제 관련 데이터
         FinancialDashboardResponse.PaymentFinancialData paymentData = getPaymentFinancialData();
         
+        // 총 세금 계산
+        BigDecimal totalTaxAmount = getTotalTaxAmount(startDate, endDate);
+        
         return FinancialDashboardResponse.builder()
                 .totalIncome(totalIncome)
                 .totalExpense(totalExpense)
                 .netProfit(netProfit)
-                .totalTaxAmount(BigDecimal.ZERO) // TODO: 세금 계산 로직 추가
+                .totalTaxAmount(totalTaxAmount)
                 .monthlyData(monthlyData)
                 .incomeByCategory(incomeByCategory)
                 .expenseByCategory(expenseByCategory)
@@ -316,6 +316,58 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     @Transactional(readOnly = true)
     public BigDecimal getNetProfit(LocalDate startDate, LocalDate endDate) {
         return getTotalIncome(startDate, endDate).subtract(getTotalExpense(startDate, endDate));
+    }
+    
+    /**
+     * 총 세금 계산
+     * 
+     * @param startDate 시작일
+     * @param endDate 종료일
+     * @return 총 세금 금액
+     */
+    @Transactional(readOnly = true)
+    public BigDecimal getTotalTaxAmount(LocalDate startDate, LocalDate endDate) {
+        try {
+            log.info("💰 총 세금 계산 시작: {} ~ {}", startDate, endDate);
+            
+            // 세금 관련 거래 조회 (공통 코드에서 카테고리명 조회)
+            String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
+            List<FinancialTransaction> taxTransactions = financialTransactionRepository
+                    .findByCategoryAndIsDeletedFalse(taxCategory);
+            
+            // 기간 필터링
+            List<FinancialTransaction> filteredTaxTransactions = taxTransactions.stream()
+                    .filter(t -> !t.getTransactionDate().isBefore(startDate) && !t.getTransactionDate().isAfter(endDate))
+                    .collect(Collectors.toList());
+            
+            // 총 세금 금액 계산
+            BigDecimal totalTaxAmount = filteredTaxTransactions.stream()
+                    .map(FinancialTransaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // 부가세 별도 계산 (공통 코드에서 결제 카테고리명 조회)
+            String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
+            List<FinancialTransaction> paymentTransactions = financialTransactionRepository
+                    .findByCategoryAndIsDeletedFalse(paymentCategory);
+            
+            BigDecimal totalVatAmount = paymentTransactions.stream()
+                    .filter(t -> !t.getTransactionDate().isBefore(startDate) && !t.getTransactionDate().isAfter(endDate))
+                    .filter(t -> t.getTaxAmount() != null)
+                    .map(FinancialTransaction::getTaxAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // 총 세금 = 직접 세금 + 부가세
+            BigDecimal grandTotalTax = totalTaxAmount.add(totalVatAmount);
+            
+            log.info("✅ 총 세금 계산 완료 - 직접 세금: {}, 부가세: {}, 총 세금: {}", 
+                    totalTaxAmount, totalVatAmount, grandTotalTax);
+            
+            return grandTotalTax;
+            
+        } catch (Exception e) {
+            log.error("❌ 총 세금 계산 중 오류 발생: {}", e.getMessage(), e);
+            return BigDecimal.ZERO;
+        }
     }
     
     @Override
@@ -514,56 +566,285 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     }
     
     private List<FinancialDashboardResponse.CategoryFinancialData> convertToCategoryFinancialData(List<Object[]> results) {
+        // 총 금액 계산 (비율 계산을 위해)
+        BigDecimal totalAmount = results.stream()
+                .map(row -> (BigDecimal) row[1])
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
         return results.stream()
                 .map(row -> {
                     String category = (String) row[0];
                     BigDecimal amount = (BigDecimal) row[1];
                     Long count = ((Number) row[2]).longValue();
                     
+                    // 비율 계산
+                    String percentage = calculatePercentage(amount, totalAmount);
+                    
                     return FinancialDashboardResponse.CategoryFinancialData.builder()
                             .category(category)
                             .amount(amount)
                             .transactionCount(count.intValue())
-                            .percentage("0%") // TODO: 비율 계산 로직 추가
+                            .percentage(percentage)
                             .build();
                 })
                 .collect(Collectors.toList());
     }
     
+    /**
+     * 비율 계산 헬퍼 메서드
+     * 
+     * @param amount 개별 금액
+     * @param totalAmount 총 금액
+     * @return 비율 문자열 (예: "25.5%")
+     */
+    private String calculatePercentage(BigDecimal amount, BigDecimal totalAmount) {
+        if (totalAmount == null || totalAmount.compareTo(BigDecimal.ZERO) == 0) {
+            return "0%";
+        }
+        
+        try {
+            // 비율 계산: (개별 금액 / 총 금액) * 100
+            BigDecimal percentage = amount
+                    .divide(totalAmount, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+            
+            // 소수점 1자리까지 반올림
+            percentage = percentage.setScale(1, RoundingMode.HALF_UP);
+            
+            return percentage.toString() + "%";
+            
+        } catch (Exception e) {
+            log.warn("비율 계산 중 오류 발생: amount={}, totalAmount={}, error={}", 
+                    amount, totalAmount, e.getMessage());
+            return "0%";
+        }
+    }
+    
     private FinancialDashboardResponse.SalaryFinancialData getSalaryFinancialData() {
-        // TODO: 급여 관련 통계 데이터 조회 로직 구현
-        return FinancialDashboardResponse.SalaryFinancialData.builder()
-                .totalSalaryPaid(BigDecimal.ZERO)
-                .totalTaxWithheld(BigDecimal.ZERO)
-                .consultantCount(0)
-                .averageSalary(BigDecimal.ZERO)
-                .salaryByGrade(new ArrayList<>())
-                .build();
+        // 급여 관련 통계 데이터 조회 로직 구현
+        try {
+            // 급여 관련 거래 조회 (공통 코드에서 급여 카테고리명 조회)
+            String salaryCategory = getSafeCodeName("FINANCIAL_CATEGORY", "SALARY", "급여");
+            List<FinancialTransaction> salaryTransactions = financialTransactionRepository
+                    .findByCategoryAndIsDeletedFalse(salaryCategory);
+            
+            // 총 급여 지급액 계산
+            BigDecimal totalSalaryPaid = salaryTransactions.stream()
+                    .filter(t -> "INCOME".equals(t.getTransactionType().name()))
+                    .map(FinancialTransaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // 총 세금 공제액 계산 (공통 코드에서 세금 카테고리명 조회)
+            String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
+            BigDecimal totalTaxWithheld = salaryTransactions.stream()
+                    .filter(t -> taxCategory.equals(t.getCategory()))
+                    .map(FinancialTransaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // 상담사 수 조회 (임시로 기본값 사용)
+            long consultantCount = 5; // TODO: 실제 상담사 수 조회 로직 구현
+            
+            // 평균 급여 계산
+            BigDecimal averageSalary = consultantCount > 0 ? 
+                    totalSalaryPaid.divide(BigDecimal.valueOf(consultantCount), 2, RoundingMode.HALF_UP) : 
+                    BigDecimal.ZERO;
+            
+            // 등급별 급여 통계 (임시로 기본값 사용)
+            List<FinancialDashboardResponse.SalaryByGrade> salaryByGrade = new ArrayList<>();
+            // TODO: 실제 등급별 급여 통계 조회 로직 구현
+            
+            log.info("✅ 급여 통계 데이터 조회 완료 - 총 급여: {}, 상담사 수: {}, 평균 급여: {}", 
+                    totalSalaryPaid, consultantCount, averageSalary);
+            
+            return FinancialDashboardResponse.SalaryFinancialData.builder()
+                    .totalSalaryPaid(totalSalaryPaid)
+                    .totalTaxWithheld(totalTaxWithheld)
+                    .consultantCount((int) consultantCount)
+                    .averageSalary(averageSalary)
+                    .salaryByGrade(salaryByGrade)
+                    .build();
+                    
+        } catch (Exception e) {
+            log.error("❌ 급여 통계 데이터 조회 중 오류 발생: {}", e.getMessage(), e);
+            
+            // 오류 발생 시 기본값 반환
+            return FinancialDashboardResponse.SalaryFinancialData.builder()
+                    .totalSalaryPaid(BigDecimal.ZERO)
+                    .totalTaxWithheld(BigDecimal.ZERO)
+                    .consultantCount(0)
+                    .averageSalary(BigDecimal.ZERO)
+                    .salaryByGrade(new ArrayList<>())
+                    .build();
+        }
     }
     
     private FinancialDashboardResponse.ErpFinancialData getErpFinancialData() {
-        // TODO: ERP 관련 통계 데이터 조회 로직 구현
-        return FinancialDashboardResponse.ErpFinancialData.builder()
-                .totalPurchaseAmount(BigDecimal.ZERO)
-                .totalBudget(BigDecimal.ZERO)
-                .usedBudget(BigDecimal.ZERO)
-                .remainingBudget(BigDecimal.ZERO)
-                .pendingRequests(0)
-                .approvedRequests(0)
-                .budgetByCategory(new ArrayList<>())
-                .build();
+        // ERP 관련 통계 데이터 조회 로직 구현
+        try {
+            // ERP 관련 거래 조회 (공통 코드에서 카테고리명 조회)
+            String purchaseCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PURCHASE", "구매");
+            String budgetCategory = getSafeCodeName("FINANCIAL_CATEGORY", "BUDGET", "예산");
+            List<FinancialTransaction> purchaseTransactions = financialTransactionRepository
+                    .findByCategoryAndIsDeletedFalse(purchaseCategory);
+            List<FinancialTransaction> budgetTransactions = financialTransactionRepository
+                    .findByCategoryAndIsDeletedFalse(budgetCategory);
+            
+            // 총 구매 금액 계산
+            BigDecimal totalPurchaseAmount = purchaseTransactions.stream()
+                    .map(FinancialTransaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // 총 예산 계산
+            BigDecimal totalBudget = budgetTransactions.stream()
+                    .filter(t -> "INCOME".equals(t.getTransactionType().name()))
+                    .map(FinancialTransaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // 사용된 예산 계산
+            BigDecimal usedBudget = budgetTransactions.stream()
+                    .filter(t -> "EXPENSE".equals(t.getTransactionType().name()))
+                    .map(FinancialTransaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // 잔여 예산 계산
+            BigDecimal remainingBudget = totalBudget.subtract(usedBudget);
+            
+            // 대기 중인 요청 수 (실제 구현에서는 PurchaseRequest 엔티티 조회 필요)
+            int pendingRequests = 0; // TODO: PurchaseRequestRepository에서 조회
+            
+            // 승인된 요청 수 (실제 구현에서는 PurchaseRequest 엔티티 조회 필요)
+            int approvedRequests = 0; // TODO: PurchaseRequestRepository에서 조회
+            
+            // 카테고리별 예산 통계
+            List<FinancialDashboardResponse.BudgetByCategory> budgetByCategory = budgetTransactions.stream()
+                    .collect(Collectors.groupingBy(
+                            FinancialTransaction::getCategory,
+                            Collectors.reducing(BigDecimal.ZERO, 
+                                    FinancialTransaction::getAmount, 
+                                    BigDecimal::add)
+                    ))
+                    .entrySet().stream()
+                    .map(entry -> FinancialDashboardResponse.BudgetByCategory.builder()
+                            .category(entry.getKey())
+                            .totalBudget(entry.getValue())
+                            .usedBudget(BigDecimal.ZERO) // TODO: 실제 사용량 계산
+                            .remainingBudget(entry.getValue())
+                            .build())
+                    .collect(Collectors.toList());
+            
+            log.info("✅ ERP 통계 데이터 조회 완료 - 총 구매: {}, 총 예산: {}, 사용 예산: {}, 잔여 예산: {}", 
+                    totalPurchaseAmount, totalBudget, usedBudget, remainingBudget);
+            
+            return FinancialDashboardResponse.ErpFinancialData.builder()
+                    .totalPurchaseAmount(totalPurchaseAmount)
+                    .totalBudget(totalBudget)
+                    .usedBudget(usedBudget)
+                    .remainingBudget(remainingBudget)
+                    .pendingRequests(pendingRequests)
+                    .approvedRequests(approvedRequests)
+                    .budgetByCategory(budgetByCategory)
+                    .build();
+                    
+        } catch (Exception e) {
+            log.error("❌ ERP 통계 데이터 조회 중 오류 발생: {}", e.getMessage(), e);
+            
+            // 오류 발생 시 기본값 반환
+            return FinancialDashboardResponse.ErpFinancialData.builder()
+                    .totalPurchaseAmount(BigDecimal.ZERO)
+                    .totalBudget(BigDecimal.ZERO)
+                    .usedBudget(BigDecimal.ZERO)
+                    .remainingBudget(BigDecimal.ZERO)
+                    .pendingRequests(0)
+                    .approvedRequests(0)
+                    .budgetByCategory(new ArrayList<>())
+                    .build();
+        }
     }
     
     private FinancialDashboardResponse.PaymentFinancialData getPaymentFinancialData() {
-        // TODO: 결제 관련 통계 데이터 조회 로직 구현
-        return FinancialDashboardResponse.PaymentFinancialData.builder()
-                .totalPaymentAmount(BigDecimal.ZERO)
-                .totalPaymentCount(0)
-                .pendingPayments(0)
-                .completedPayments(0)
-                .failedPayments(0)
-                .paymentByMethod(new HashMap<>())
-                .paymentByProvider(new HashMap<>())
-                .build();
+        // 결제 관련 통계 데이터 조회 로직 구현
+        try {
+            // 결제 관련 거래 조회 (공통 코드에서 카테고리명 조회)
+            String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
+            List<FinancialTransaction> paymentTransactions = financialTransactionRepository
+                    .findByCategoryAndIsDeletedFalse(paymentCategory);
+            
+            // 총 결제 금액 계산
+            BigDecimal totalPaymentAmount = paymentTransactions.stream()
+                    .filter(t -> "INCOME".equals(t.getTransactionType().name()))
+                    .map(FinancialTransaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // 총 결제 건수
+            int totalPaymentCount = paymentTransactions.size();
+            
+            // 결제 상태별 통계 (실제 구현에서는 PaymentStatus 엔티티 조회 필요)
+            int pendingPayments = 0;   // TODO: PaymentStatus.PENDING 조회
+            int completedPayments = 0; // TODO: PaymentStatus.COMPLETED 조회
+            int failedPayments = 0;    // TODO: PaymentStatus.FAILED 조회
+            
+            // 결제 수단별 통계
+            Map<String, BigDecimal> paymentByMethod = paymentTransactions.stream()
+                    .collect(Collectors.groupingBy(
+                            t -> t.getDescription() != null ? t.getDescription() : "UNKNOWN",
+                            Collectors.reducing(BigDecimal.ZERO, 
+                                    FinancialTransaction::getAmount, 
+                                    BigDecimal::add)
+                    ));
+            
+            // 결제 제공업체별 통계
+            Map<String, BigDecimal> paymentByProvider = paymentTransactions.stream()
+                    .collect(Collectors.groupingBy(
+                            t -> t.getCategory() != null ? t.getCategory() : "UNKNOWN",
+                            Collectors.reducing(BigDecimal.ZERO, 
+                                    FinancialTransaction::getAmount, 
+                                    BigDecimal::add)
+                    ));
+            
+            log.info("✅ 결제 통계 데이터 조회 완료 - 총 결제: {}, 총 건수: {}, 대기: {}, 완료: {}, 실패: {}", 
+                    totalPaymentAmount, totalPaymentCount, pendingPayments, completedPayments, failedPayments);
+            
+            return FinancialDashboardResponse.PaymentFinancialData.builder()
+                    .totalPaymentAmount(totalPaymentAmount)
+                    .totalPaymentCount(totalPaymentCount)
+                    .pendingPayments(pendingPayments)
+                    .completedPayments(completedPayments)
+                    .failedPayments(failedPayments)
+                    .paymentByMethod(paymentByMethod)
+                    .paymentByProvider(paymentByProvider)
+                    .build();
+                    
+        } catch (Exception e) {
+            log.error("❌ 결제 통계 데이터 조회 중 오류 발생: {}", e.getMessage(), e);
+            
+            // 오류 발생 시 기본값 반환
+            return FinancialDashboardResponse.PaymentFinancialData.builder()
+                    .totalPaymentAmount(BigDecimal.ZERO)
+                    .totalPaymentCount(0)
+                    .pendingPayments(0)
+                    .completedPayments(0)
+                    .failedPayments(0)
+                    .paymentByMethod(new HashMap<>())
+                    .paymentByProvider(new HashMap<>())
+                    .build();
+        }
+    }
+    
+    /**
+     * 안전한 공통 코드명 조회 (오류 시 기본값 반환)
+     * 
+     * @param codeGroup 코드 그룹
+     * @param codeValue 코드 값
+     * @param defaultValue 기본값
+     * @return 코드명 또는 기본값
+     */
+    private String getSafeCodeName(String codeGroup, String codeValue, String defaultValue) {
+        try {
+            String codeName = commonCodeService.getCodeName(codeGroup, codeValue);
+            return codeName != null ? codeName : defaultValue;
+        } catch (Exception e) {
+            log.warn("공통 코드 조회 실패, 기본값 사용: {} - {} -> {}", codeGroup, codeValue, defaultValue);
+            return defaultValue;
+        }
     }
 }

@@ -205,4 +205,9 @@ public interface AdminService {
      * 스케줄 자동 완료 처리 (상담일지 미작성 시 메시지 발송 포함)
      */
     Map<String, Object> autoCompleteSchedulesWithReminder();
+    
+    /**
+     * 사용자 ID로 사용자 조회
+     */
+    User getUserById(Long id);
 }

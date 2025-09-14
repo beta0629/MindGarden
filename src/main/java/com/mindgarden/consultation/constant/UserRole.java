@@ -22,7 +22,7 @@ public enum UserRole {
     SUPER_HQ_ADMIN("본사고급관리자"),
     
     // 지점 수퍼 관리자 역할
-    BRANCH_SUPER_ADMIN("지점수퍼관리자"),
+    BRANCH_SUPER_ADMIN("본점수퍼어드민"),
     
     // 지점 관리자 역할
     ADMIN("지점관리자"),

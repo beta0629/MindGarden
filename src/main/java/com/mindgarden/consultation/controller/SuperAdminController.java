@@ -6,6 +6,7 @@ import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SuperAdminCreateRequest;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.UserRepository;
+import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.SuperAdminService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
@@ -41,6 +42,7 @@ public class SuperAdminController {
     private final SuperAdminService superAdminService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FinancialTransactionService financialTransactionService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     
     /**
@@ -176,33 +178,41 @@ public class SuperAdminController {
             
             log.info("재무 대시보드 데이터 조회 요청: {}", currentUser.getEmail());
             
-            // TODO: 실제 재무 데이터 조회 로직 구현
-            // 현재는 테스트용 데이터 반환
+            // 실제 재무 데이터 조회 로직 구현
             Map<String, Object> financeData = new HashMap<>();
             
-            // 기본 통계
-            financeData.put("totalRevenue", 12500000);
-            financeData.put("totalExpenses", 8500000);
-            financeData.put("netProfit", 4000000);
-            
-            // 월별 수익 데이터
-            Map<String, Object>[] monthlyRevenue = new Map[6];
-            for (int i = 0; i < 6; i++) {
-                Map<String, Object> monthData = new HashMap<>();
-                monthData.put("month", (i + 1) + "월");
-                monthData.put("revenue", 1200000 + (i * 200000));
-                monthData.put("expenses", 800000 + (i * 100000));
-                monthlyRevenue[i] = monthData;
+            try {
+                // 재무 대시보드 데이터 조회 (현재 월 기준)
+                java.time.LocalDate startDate = java.time.LocalDate.now().withDayOfMonth(1);
+                java.time.LocalDate endDate = java.time.LocalDate.now();
+                var dashboardData = financialTransactionService.getFinancialDashboard(startDate, endDate);
+                
+                // 기본 통계 (실제 데이터 사용)
+                financeData.put("totalRevenue", dashboardData.getTotalIncome());
+                financeData.put("totalExpenses", dashboardData.getTotalExpense());
+                financeData.put("netProfit", dashboardData.getNetProfit());
+                
+                // 추가 재무 데이터
+                financeData.put("monthlyRevenue", dashboardData.getMonthlyData());
+                financeData.put("monthlyExpenses", dashboardData.getMonthlyData());
+                financeData.put("revenueByCategory", dashboardData.getIncomeByCategory());
+                financeData.put("expenseByCategory", dashboardData.getExpenseByCategory());
+                
+                log.info("✅ 재무 대시보드 데이터 조회 성공 - 총 수익: {}, 총 지출: {}, 순이익: {}", 
+                        dashboardData.getTotalIncome(), dashboardData.getTotalExpense(), dashboardData.getNetProfit());
+                        
+            } catch (Exception e) {
+                log.error("❌ 재무 데이터 조회 중 오류 발생: {}", e.getMessage(), e);
+                
+                // 오류 발생 시 기본값으로 폴백
+                financeData.put("totalRevenue", 0);
+                financeData.put("totalExpenses", 0);
+                financeData.put("netProfit", 0);
+                financeData.put("monthlyRevenue", new Object[0]);
+                financeData.put("monthlyExpenses", new Object[0]);
+                financeData.put("revenueByCategory", new Object[0]);
+                financeData.put("expenseByCategory", new Object[0]);
             }
-            financeData.put("monthlyRevenue", monthlyRevenue);
-            
-            // 결제 통계
-            Map<String, Object> paymentStats = new HashMap<>();
-            paymentStats.put("totalPayments", 156);
-            paymentStats.put("pendingPayments", 12);
-            paymentStats.put("completedPayments", 140);
-            paymentStats.put("failedPayments", 4);
-            financeData.put("paymentStats", paymentStats);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

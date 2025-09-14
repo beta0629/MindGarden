@@ -28,6 +28,7 @@ const TabletLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showSocialSignupModal, setShowSocialSignupModal] = useState(false);
   const [socialUserInfo, setSocialUserInfo] = useState(null);
+  const [isHamburgerMenuOpen, setIsHamburgerMenuOpen] = useState(false);
   
   // SMS 로그인 상태
   const [smsMode, setSmsMode] = useState(false);
@@ -234,7 +235,7 @@ const TabletLogin = () => {
         console.log('SMS 인증 성공:', data);
         notificationManager.success(MESSAGES.SMS_VERIFY_SUCCESS);
         // 인증 성공 후 처리 - 로그인 완료 또는 다음 단계로 진행
-        // TODO: SMS 인증 성공 후 로그인 처리 로직 구현
+        await handleSmsAuthSuccess();
       } else {
         console.error('SMS 인증 실패:', data.message);
         notificationManager.error(data.message || MESSAGES.SMS_VERIFY_FAILED);
@@ -242,6 +243,67 @@ const TabletLogin = () => {
     } catch (error) {
       console.error('SMS 검증 오류:', error);
       notificationManager.error(MESSAGES.SMS_VERIFY_FAILED);
+    }
+  };
+
+  // SMS 인증 성공 후 처리
+  const handleSmsAuthSuccess = async () => {
+    try {
+      console.log('✅ SMS 인증 성공 후 로그인 처리 시작');
+      
+      // SMS 인증 성공 시 자동 로그인 처리
+      // 전화번호로 사용자 조회 후 로그인
+      const loginData = {
+        phoneNumber: formData.phoneNumber,
+        loginType: 'SMS_AUTH'
+      };
+      
+      const response = await fetch('/api/auth/sms-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginData)
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('✅ SMS 인증 로그인 성공:', data);
+        notificationManager.success('SMS 인증 로그인에 성공했습니다.');
+        
+        // 로그인 성공 후 리다이렉트
+        if (data.user) {
+          // 사용자 정보 저장
+          sessionStorage.setItem('user', JSON.stringify(data.user));
+          sessionStorage.setItem('accessToken', data.accessToken);
+          
+          // 역할에 따른 리다이렉트
+          const userRole = data.user.role;
+          if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+            window.location.href = '/admin/dashboard';
+          } else if (userRole === 'CONSULTANT') {
+            window.location.href = '/consultant/dashboard';
+          } else if (userRole === 'CLIENT') {
+            window.location.href = '/client/dashboard';
+          } else {
+            window.location.href = '/dashboard';
+          }
+        }
+      } else {
+        console.error('❌ SMS 인증 로그인 실패:', data.message);
+        notificationManager.error(data.message || 'SMS 인증 로그인이 실패했습니다.');
+        
+        // 로그인 실패 시 회원가입 안내
+        if (data.message && data.message.includes('회원가입')) {
+          notificationManager.info('회원가입이 필요합니다. 회원가입을 진행해주세요.');
+          // 회원가입 모달 표시 또는 회원가입 페이지로 이동
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ SMS 인증 성공 후 처리 오류:', error);
+      notificationManager.error('SMS 인증 후 로그인 처리 중 오류가 발생했습니다.');
     }
   };
 
@@ -450,12 +512,69 @@ const TabletLogin = () => {
 
   const handleHamburgerToggle = () => {
     console.log('🍔 햄버거 메뉴 토글');
-    // TODO: 햄버거 메뉴 로직 구현
+    
+    // 햄버거 메뉴 상태 토글
+    setIsHamburgerMenuOpen(prev => !prev);
+    
+    // 햄버거 메뉴 애니메이션 효과
+    const hamburgerIcon = document.querySelector('.hamburger-icon');
+    if (hamburgerIcon) {
+      hamburgerIcon.classList.toggle('active');
+    }
+    
+    // 메뉴 항목들에 대한 접근성 처리
+    const menuItems = document.querySelectorAll('.hamburger-menu-item');
+    menuItems.forEach(item => {
+      if (isHamburgerMenuOpen) {
+        item.setAttribute('tabindex', '-1');
+        item.setAttribute('aria-hidden', 'true');
+      } else {
+        item.setAttribute('tabindex', '0');
+        item.setAttribute('aria-hidden', 'false');
+      }
+    });
   };
 
   const handleProfileClick = () => {
     console.log('👤 프로필 클릭');
-    // TODO: 프로필 페이지로 이동
+    
+    // 로그인 상태 확인
+    const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+    
+    if (user) {
+      // 로그인된 사용자의 경우 프로필 페이지로 이동
+      const userRole = user.role;
+      let profileUrl = '/profile';
+      
+      // 역할에 따른 프로필 페이지 설정
+      switch (userRole) {
+        case 'ADMIN':
+        case 'SUPER_ADMIN':
+          profileUrl = '/admin/profile';
+          break;
+        case 'CONSULTANT':
+          profileUrl = '/consultant/profile';
+          break;
+        case 'CLIENT':
+          profileUrl = '/client/profile';
+          break;
+        default:
+          profileUrl = '/profile';
+      }
+      
+      console.log(`👤 프로필 페이지로 이동: ${profileUrl}`);
+      window.location.href = profileUrl;
+      
+    } else {
+      // 로그인되지 않은 사용자의 경우 로그인 페이지로 이동
+      console.log('👤 로그인되지 않은 사용자 - 로그인 페이지로 이동');
+      notificationManager.info('로그인이 필요합니다.');
+      
+      // 현재 페이지가 이미 로그인 페이지인지 확인
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
   };
 
   return (

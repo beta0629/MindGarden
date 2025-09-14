@@ -4,7 +4,15 @@ import { apiGet } from '../../utils/ajax';
 const ConsultationCompletionStats = () => {
     const [statistics, setStatistics] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedPeriod, setSelectedPeriod] = useState('');
+    // 현재 월을 기본값으로 설정 (YYYY-MM 형식)
+    const getCurrentPeriod = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`;
+    };
+    
+    const [selectedPeriod, setSelectedPeriod] = useState(getCurrentPeriod());
     const [error, setError] = useState(null);
 
     // 기간 옵션 생성 (최근 12개월)
@@ -37,10 +45,13 @@ const ConsultationCompletionStats = () => {
                 : '/api/admin/statistics/consultation-completion';
             
             const response = await apiGet(url);
+            console.log('📊 상담 완료 통계 API 응답:', response);
             
             if (response && response.success) {
+                console.log('📊 통계 데이터:', response.data);
                 setStatistics(response.data || []);
             } else {
+                console.error('❌ API 응답 실패:', response);
                 setError('통계 데이터를 불러오는데 실패했습니다.');
             }
         } catch (err) {
@@ -51,9 +62,9 @@ const ConsultationCompletionStats = () => {
         }
     };
 
-    // 컴포넌트 마운트 시 데이터 로드
+    // 컴포넌트 마운트 시 데이터 로드 (현재 기간으로)
     useEffect(() => {
-        loadStatistics();
+        loadStatistics(selectedPeriod);
     }, []);
 
     // 기간 변경 핸들러

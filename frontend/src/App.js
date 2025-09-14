@@ -253,7 +253,7 @@ function AppContent() {
               <SimpleLayout>
                 <ScheduleCalendar 
                   userRole={user?.role || 'ADMIN'}
-                  userId={user?.id || 1}
+                  userId={user?.id}
                 />
               </SimpleLayout>
             } />
@@ -261,7 +261,7 @@ function AppContent() {
               <SimpleLayout>
                 <StatisticsDashboard 
                   userRole={user?.role || 'ADMIN'}
-                  userId={user?.id || 1}
+                  userId={user?.id}
                 />
               </SimpleLayout>
             } />
@@ -269,7 +269,7 @@ function AppContent() {
               <SimpleLayout>
                 <StatisticsDashboard 
                   userRole={user?.role || 'ADMIN'}
-                  userId={user?.id || 1}
+                  userId={user?.id}
                 />
               </SimpleLayout>
             } />
@@ -343,7 +343,7 @@ function AppContent() {
               />
             } />
             
-            {/* ERP 라우트 */}
+            {/* ERP 라우트 (기존) */}
             <Route path="/erp/dashboard" element={<ErpDashboard />} />
             <Route path="/erp/purchase-requests" element={<PurchaseRequestForm />} />
             <Route path="/erp/finance-dashboard" element={<IntegratedFinanceDashboard />} />
@@ -362,6 +362,23 @@ function AppContent() {
               <ComingSoon 
                 title="주문 관리"
                 description="주문 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            
+            {/* Admin ERP 라우트 (메뉴 연동용) */}
+            <Route path="/admin/erp/dashboard" element={<ErpDashboard />} />
+            <Route path="/admin/erp/purchase" element={<PurchaseRequestForm />} />
+            <Route path="/admin/erp/budget" element={
+              <ComingSoon 
+                title="예산 관리"
+                description="예산 관리 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
+              />
+            } />
+            <Route path="/admin/erp/financial" element={<IntegratedFinanceDashboard />} />
+            <Route path="/admin/erp/reports" element={
+              <ComingSoon 
+                title="ERP 보고서"
+                description="ERP 보고서 기능은 현재 개발 중입니다. 곧 출시될 예정입니다."
               />
             } />
             

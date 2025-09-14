@@ -1,14 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../../hooks/useSession';
+import { getRoleDisplayName, getRoleDisplayNameEn } from '../../utils/roleHelper';
 
 const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
   const { user: sessionUser } = useSession();
   const [imageLoadError, setImageLoadError] = useState(false);
+  const [roleDisplayName, setRoleDisplayName] = useState('');
+  const [roleDisplayNameEn, setRoleDisplayNameEn] = useState('');
   
   // 세션 사용자가 변경될 때 이미지 로드 에러 상태 초기화
   useEffect(() => {
     setImageLoadError(false);
   }, [sessionUser?.id, sessionUser?.profileImageUrl, sessionUser?.socialProfileImage]);
+
+  // 사용자 역할 표시명 동적 로드
+  useEffect(() => {
+    const loadRoleDisplayNames = async () => {
+      if (sessionUser?.role) {
+        try {
+          const koreanName = await getRoleDisplayName(sessionUser.role, sessionUser.branchName);
+          const englishName = await getRoleDisplayNameEn(sessionUser.role, sessionUser.branchName);
+          setRoleDisplayName(koreanName);
+          setRoleDisplayNameEn(englishName);
+        } catch (error) {
+          console.error('❌ 역할 표시명 로드 실패:', error);
+          setRoleDisplayName(sessionUser.role);
+          setRoleDisplayNameEn(sessionUser.role);
+        }
+      }
+    };
+
+    loadRoleDisplayNames();
+  }, [sessionUser?.role, sessionUser?.branchName]);
   
   // 디버깅: 세션 데이터 확인
   console.log('🔍 SessionUserProfile - 세션 데이터:', sessionUser);
@@ -63,37 +86,7 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
     console.log('🖼️ 프로필 이미지 로드 성공');
   };
 
-  // 사용자 역할 표시명 변환
-  const getUserRoleDisplay = (role, branchName = null) => {
-    const roleDisplayMap = {
-      'HQ_ADMIN': '관리자 (본사)',
-      'SUPER_HQ_ADMIN': '수퍼관리자 (본사)',
-      'BRANCH_BRANCH_SUPER_ADMIN': branchName ? `수퍼관리자 (${branchName})` : '수퍼관리자 (지점)',
-      'ADMIN': branchName ? `관리자 (${branchName})` : '관리자 (지점)',
-      'BRANCH_MANAGER': branchName ? `지점장 (${branchName})` : '지점장',
-      'CONSULTANT': '상담사',
-      'CLIENT': '내담자',
-      // 기존 호환성
-      'BRANCH_SUPER_ADMIN': '수퍼관리자 (본사)'
-    };
-    return roleDisplayMap[role] || role;
-  };
-
-  // 사용자 역할 영문 표시명 변환
-  const getUserRoleDisplayEn = (role, branchName = null) => {
-    const roleDisplayMap = {
-      'HQ_ADMIN': 'HQ Admin',
-      'SUPER_HQ_ADMIN': 'Super HQ Admin',
-      'BRANCH_BRANCH_SUPER_ADMIN': branchName ? `Branch Super Admin (${branchName})` : 'Branch Super Admin',
-      'ADMIN': branchName ? `Admin (${branchName})` : 'Admin',
-      'BRANCH_MANAGER': branchName ? `Branch Manager (${branchName})` : 'Branch Manager',
-      'CONSULTANT': 'Consultant',
-      'CLIENT': 'Client',
-      // 기존 호환성
-      'BRANCH_SUPER_ADMIN': 'Super HQ Admin'
-    };
-    return roleDisplayMap[role] || role;
-  };
+  // 하드코딩된 역할 매핑 함수 제거 - 동적 로딩 사용
 
   if (!sessionUser) {
     return null;
@@ -139,8 +132,8 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
         </div>
         <div className="user-details">
           <div className="user-name">{getUserDisplayName()}</div>
-          {showRole && <div className="user-role">{getUserRoleDisplay(sessionUser.role, sessionUser.branchName)}</div>}
-          {showRole && <div className="user-role-en">{getUserRoleDisplayEn(sessionUser.role, sessionUser.branchName)}</div>}
+          {showRole && <div className="user-role">{roleDisplayName || sessionUser.role}</div>}
+          {showRole && <div className="user-role-en">{roleDisplayNameEn || sessionUser.role}</div>}
         </div>
       </div>
     </div>

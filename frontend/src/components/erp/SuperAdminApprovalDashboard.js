@@ -5,11 +5,13 @@ import ErpButton from './common/ErpButton';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
+import { useSession } from '../../hooks/useSession';
 
 /**
  * 수퍼 관리자 승인 대시보드 컴포넌트
  */
 const SuperAdminApprovalDashboard = () => {
+  const { user } = useSession();
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -61,8 +63,13 @@ const SuperAdminApprovalDashboard = () => {
       setProcessing(true);
       setError('');
 
-      // 현재 수퍼 관리자 ID (실제로는 인증 시스템에서 가져와야 함)
-      const superAdminId = 1; // TODO: 실제 수퍼 관리자 ID로 변경
+      // 현재 수퍼 관리자 ID (세션에서 가져옴)
+      const superAdminId = user?.id;
+      
+      if (!superAdminId) {
+        setError('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+        return;
+      }
 
       const response = await fetch(`/api/erp/purchase-requests/${selectedRequest.id}/approve-super-admin`, {
         method: 'POST',
@@ -98,8 +105,13 @@ const SuperAdminApprovalDashboard = () => {
       setProcessing(true);
       setError('');
 
-      // 현재 수퍼 관리자 ID (실제로는 인증 시스템에서 가져와야 함)
-      const superAdminId = 1; // TODO: 실제 수퍼 관리자 ID로 변경
+      // 현재 수퍼 관리자 ID (세션에서 가져옴)
+      const superAdminId = user?.id;
+      
+      if (!superAdminId) {
+        setError('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+        return;
+      }
 
       const response = await fetch(`/api/erp/purchase-requests/${selectedRequest.id}/reject-super-admin`, {
         method: 'POST',

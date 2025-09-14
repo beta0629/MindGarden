@@ -1589,4 +1589,138 @@ public class AdminController {
             ));
         }
     }
+    
+    /**
+     * 사용자 상세 정보 조회
+     */
+    @GetMapping("/users/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long id, HttpSession session) {
+        try {
+            log.info("🔍 사용자 상세 정보 조회: ID={}", id);
+            
+            // 권한 확인
+            User currentUser = (User) session.getAttribute("user");
+            if (currentUser == null || (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster())) {
+                return ResponseEntity.status(403).body(Map.of("success", false, "message", "권한이 없습니다."));
+            }
+            
+            User user = adminService.getUserById(id);
+            if (user == null) {
+                return ResponseEntity.status(404).body(Map.of("success", false, "message", "사용자를 찾을 수 없습니다."));
+            }
+            
+            // 안전한 사용자 정보만 추출하여 반환
+            Map<String, Object> userData = Map.of(
+                "id", user.getId(),
+                "name", user.getName() != null ? user.getName() : "",
+                "email", user.getEmail() != null ? user.getEmail() : "",
+                "phone", user.getPhone() != null ? user.getPhone() : "",
+                "role", user.getRole() != null ? user.getRole().name() : "",
+                "roleDisplayName", user.getRole() != null ? user.getRole().getDisplayName() : "",
+                "branchCode", user.getBranchCode() != null ? user.getBranchCode() : "",
+                "isActive", user.getIsActive() != null ? user.getIsActive() : false,
+                "createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : ""
+            );
+            
+            log.info("✅ 사용자 상세 정보 조회 완료: {}({})", user.getName(), user.getRole());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", userData
+            ));
+        } catch (Exception e) {
+            log.error("❌ 사용자 상세 정보 조회 중 오류 발생: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", "사용자 정보 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 사용자 소셜 계정 정보 조회
+     */
+    @GetMapping("/users/{id}/social-accounts")
+    public ResponseEntity<?> getUserSocialAccounts(@PathVariable Long id, HttpSession session) {
+        try {
+            log.info("🔍 사용자 소셜 계정 정보 조회: ID={}", id);
+            
+            // 권한 확인
+            User currentUser = (User) session.getAttribute("user");
+            if (currentUser == null || (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster())) {
+                return ResponseEntity.status(403).body(Map.of("success", false, "message", "권한이 없습니다."));
+            }
+            
+            // 임시로 빈 데이터 반환 (실제 구현 필요)
+            Map<String, Object> socialAccounts = Map.of(
+                "kakao", Map.of("connected", false),
+                "naver", Map.of("connected", false),
+                "google", Map.of("connected", false)
+            );
+            
+            log.info("✅ 사용자 소셜 계정 정보 조회 완료: ID={}", id);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", socialAccounts
+            ));
+        } catch (Exception e) {
+            log.error("❌ 사용자 소셜 계정 정보 조회 중 오류 발생: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", "소셜 계정 정보 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 사용자 역할 정보 조회 (동적 표시명)
+     */
+    @GetMapping("/user-roles")
+    public ResponseEntity<?> getUserRoles() {
+        try {
+            log.info("🔍 사용자 역할 정보 조회");
+            
+            Map<String, Map<String, String>> roleInfo = new HashMap<>();
+            
+            for (UserRole role : UserRole.values()) {
+                Map<String, String> roleData = Map.of(
+                    "value", role.name(),
+                    "displayName", role.getDisplayName(),
+                    "displayNameEn", getEnglishDisplayName(role)
+                );
+                roleInfo.put(role.name(), roleData);
+            }
+            
+            log.info("✅ 사용자 역할 정보 조회 완료: {}개 역할", roleInfo.size());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", roleInfo
+            ));
+        } catch (Exception e) {
+            log.error("❌ 사용자 역할 정보 조회 중 오류 발생: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", "역할 정보 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 역할별 영문 표시명 매핑
+     */
+    private String getEnglishDisplayName(UserRole role) {
+        switch (role) {
+            case CLIENT:
+                return "Client";
+            case CONSULTANT:
+                return "Consultant";
+            case ADMIN:
+                return "Admin";
+            case BRANCH_SUPER_ADMIN:
+                return "Branch Super Admin";
+            case HQ_ADMIN:
+                return "HQ Admin";
+            case SUPER_HQ_ADMIN:
+                return "Super HQ Admin";
+            case HQ_MASTER:
+                return "HQ Master";
+            case BRANCH_MANAGER:
+                return "Branch Manager";
+            default:
+                return role.name();
+        }
+    }
 }

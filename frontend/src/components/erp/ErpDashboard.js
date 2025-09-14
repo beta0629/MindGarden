@@ -30,18 +30,20 @@ const ErpDashboard = () => {
       setLoading(true);
       
       // 병렬로 여러 API 호출
-      const [itemsRes, pendingRes, ordersRes, budgetsRes] = await Promise.all([
+      const [itemsRes, pendingRes, approvedRes, ordersRes, budgetsRes] = await Promise.all([
         fetch('/api/erp/items'),
         fetch('/api/erp/purchase-requests/pending-admin'),
+        fetch('/api/erp/purchase-requests/approved'), // 승인된 요청 조회 추가
         fetch('/api/erp/purchase-orders'),
         fetch('/api/erp/budgets')
       ]);
 
-      const [itemsData, pendingData, ordersData, budgetsData] = await Promise.all([
+      const [itemsData, pendingData, approvedData, ordersData, budgetsData] = await Promise.all([
         itemsRes.json(),
         pendingRes.json(),
+        approvedRes.json(),
         ordersRes.json(),
-        budgetsRes.json()
+        budgetsData.json()
       ]);
 
       // 예산 통계 계산
@@ -53,7 +55,7 @@ const ErpDashboard = () => {
       setStats({
         totalItems: itemsData.data?.length || 0,
         pendingRequests: pendingData.data?.length || 0,
-        approvedRequests: 0, // TODO: 승인된 요청 수 조회
+        approvedRequests: approvedData.data?.length || 0, // 승인된 요청 수 조회
         totalOrders: ordersData.data?.length || 0,
         totalBudget: totalBudget,
         usedBudget: usedBudget

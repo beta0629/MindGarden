@@ -27,7 +27,7 @@ import { SCHEDULE_API } from '../../constants/api';
 import { SCHEDULE_STATUS } from '../../constants/schedule';
 import './StatisticsDashboard.css';
 
-const StatisticsDashboard = ({ userRole = 'ADMIN', userId = 1 }) => {
+const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기본값 제거, 호출하는 컴포넌트에서 전달해야 함
   // 상태 관리
   const [statistics, setStatistics] = useState(null);
   const [schedules, setSchedules] = useState([]);

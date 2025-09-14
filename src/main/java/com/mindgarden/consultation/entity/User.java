@@ -187,6 +187,57 @@ public class User extends BaseEntity {
     @Column(name = "branch_code", length = 20)
     private String branchCode;
     
+    // === 사용자 설정 관련 필드들 ===
+    
+    /**
+     * 이메일 알림 설정
+     */
+    @Column(name = "email_notification")
+    @Builder.Default
+    private Boolean emailNotification = true;
+    
+    /**
+     * SMS 알림 설정
+     */
+    @Column(name = "sms_notification")
+    @Builder.Default
+    private Boolean smsNotification = false;
+    
+    /**
+     * 푸시 알림 설정
+     */
+    @Column(name = "push_notification")
+    @Builder.Default
+    private Boolean pushNotification = true;
+    
+    /**
+     * 프로필 공개 설정 (public, private, friends)
+     */
+    @Column(name = "profile_visibility", length = 20)
+    @Builder.Default
+    private String profileVisibility = "private";
+    
+    /**
+     * 데이터 공유 동의 여부
+     */
+    @Column(name = "data_sharing")
+    @Builder.Default
+    private Boolean dataSharing = false;
+    
+    /**
+     * 자동 알림 설정
+     */
+    @Column(name = "auto_reminder")
+    @Builder.Default
+    private Boolean autoReminder = true;
+    
+    /**
+     * 선호 상담 시간 (분)
+     */
+    @Column(name = "preferred_session_duration")
+    @Builder.Default
+    private Integer preferredSessionDuration = 50;
+    
     // 비즈니스 메서드
     /**
      * 경험치 추가

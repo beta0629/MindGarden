@@ -130,8 +130,9 @@ export const getStatusColor = async (codeValue, groupName) => {
         console.error('상태별 색상 조회 실패:', error);
     }
     
-    // 기본 색상 매핑 (fallback)
+    // 기본 색상 매핑 (fallback) - 확장된 매핑
     const defaultColorMap = {
+        // 스케줄 상태
         'AVAILABLE': '#e5e7eb',
         'BOOKED': '#3b82f6',
         'CONFIRMED': '#8b5cf6',
@@ -142,8 +143,25 @@ export const getStatusColor = async (codeValue, groupName) => {
         'UNDER_REVIEW': '#f97316',
         'VACATION': '#06b6d4',
         'NO_SHOW': '#dc2626',
-        'ACTIVE': '#10b981',
-        'INACTIVE': '#ef4444',
+        'MAINTENANCE': '#6b7280',
+        
+        // 매핑 상태
+        'PENDING_PAYMENT': '#ffc107',
+        'PAYMENT_CONFIRMED': '#17a2b8',
+        'ACTIVE': '#28a745',
+        'INACTIVE': '#6c757d',
+        'SUSPENDED': '#fd7e14',
+        'TERMINATED': '#dc3545',
+        'SESSIONS_EXHAUSTED': '#6f42c1',
+        
+        // 사용자 상태
+        'PENDING': '#6b7280',
+        'APPROVED': '#10b981',
+        'REJECTED': '#ef4444',
+        'PAYMENT_PENDING': '#ffc107',
+        'PAYMENT_REJECTED': '#dc3545',
+        
+        // 기타
         'true': '#10b981',
         'false': '#ef4444'
     };
@@ -167,8 +185,9 @@ export const getStatusIcon = async (codeValue, groupName) => {
         console.error('상태별 아이콘 조회 실패:', error);
     }
     
-    // 기본 아이콘 매핑 (fallback)
+    // 기본 아이콘 매핑 (fallback) - 확장된 매핑
     const defaultIconMap = {
+        // 스케줄 상태
         'AVAILABLE': '⚪',
         'BOOKED': '📅',
         'CONFIRMED': '✅',
@@ -179,8 +198,25 @@ export const getStatusIcon = async (codeValue, groupName) => {
         'UNDER_REVIEW': '🔍',
         'VACATION': '🏖️',
         'NO_SHOW': '👻',
+        'MAINTENANCE': '🔧',
+        
+        // 매핑 상태
+        'PENDING_PAYMENT': '⏳',
+        'PAYMENT_CONFIRMED': '💰',
         'ACTIVE': '✅',
-        'INACTIVE': '❌',
+        'INACTIVE': '⏸️',
+        'SUSPENDED': '⏸️',
+        'TERMINATED': '❌',
+        'SESSIONS_EXHAUSTED': '🔚',
+        
+        // 사용자 상태
+        'PENDING': '⏳',
+        'APPROVED': '✅',
+        'REJECTED': '❌',
+        'PAYMENT_PENDING': '⏳',
+        'PAYMENT_REJECTED': '❌',
+        
+        // 기타
         'true': '✅',
         'false': '❌'
     };
@@ -236,4 +272,140 @@ export const getCodeGroupIconSync = (groupName) => {
         }
     }
     return '📁';
+};
+
+/**
+ * 사용자 상태 한글명 조회 (동적)
+ */
+export const getUserStatusKoreanName = async (status) => {
+    try {
+        const response = await apiGet(`/api/admin/common-codes/group/USER_STATUS/display-options`);
+        if (response.success && response.data && response.data.codes) {
+            const code = response.data.codes.find(c => c.codeValue === status);
+            if (code && code.codeLabel) {
+                return code.codeLabel;
+            }
+        }
+    } catch (error) {
+        console.error('사용자 상태 한글명 조회 실패:', error);
+    }
+    
+    // 기본 매핑 (fallback)
+    const defaultStatusMap = {
+        'ACTIVE': '활성',
+        'INACTIVE': '비활성',
+        'SUSPENDED': '일시정지',
+        'COMPLETED': '완료',
+        'PENDING': '대기중',
+        'APPROVED': '승인됨',
+        'REJECTED': '거부됨',
+        'PAYMENT_CONFIRMED': '결제확인',
+        'PAYMENT_PENDING': '결제대기',
+        'PAYMENT_REJECTED': '결제거부',
+        'TERMINATED': '종료됨'
+    };
+    
+    return defaultStatusMap[status] || status;
+};
+
+/**
+ * 사용자 등급 한글명 조회 (동적)
+ */
+export const getUserGradeKoreanName = async (grade) => {
+    try {
+        const response = await apiGet(`/api/admin/common-codes/group/USER_GRADE/display-options`);
+        if (response.success && response.data && response.data.codes) {
+            const code = response.data.codes.find(c => c.codeValue === grade);
+            if (code && code.codeLabel) {
+                return code.codeLabel;
+            }
+        }
+    } catch (error) {
+        console.error('사용자 등급 한글명 조회 실패:', error);
+    }
+    
+    // 기본 매핑 (fallback)
+    const defaultGradeMap = {
+        'CLIENT_BRONZE': '브론즈',
+        'CLIENT_SILVER': '실버',
+        'CLIENT_GOLD': '골드',
+        'CLIENT_PLATINUM': '플래티넘',
+        'CLIENT_DIAMOND': '다이아몬드',
+        'CONSULTANT_JUNIOR': '주니어',
+        'CONSULTANT_SENIOR': '시니어',
+        'CONSULTANT_EXPERT': '전문가',
+        'ADMIN': '관리자',
+        'BRANCH_SUPER_ADMIN': '수퍼관리자',
+        'HQ_ADMIN': '본사 관리자',
+        'SUPER_HQ_ADMIN': '본사 수퍼 관리자',
+        'HQ_MASTER': '본사 총관리자'
+    };
+    
+    return defaultGradeMap[grade] || grade || '브론즈';
+};
+
+/**
+ * 사용자 등급 아이콘 조회 (동적)
+ */
+export const getUserGradeIcon = async (grade) => {
+    try {
+        const response = await apiGet(`/api/admin/common-codes/group/USER_GRADE/display-options`);
+        if (response.success && response.data && response.data.codes) {
+            const code = response.data.codes.find(c => c.codeValue === grade);
+            if (code && code.icon) {
+                return code.icon;
+            }
+        }
+    } catch (error) {
+        console.error('사용자 등급 아이콘 조회 실패:', error);
+    }
+    
+    // 기본 매핑 (fallback)
+    const defaultGradeIconMap = {
+        'CLIENT_BRONZE': '🥉',
+        'CLIENT_SILVER': '🥈',
+        'CLIENT_GOLD': '🥇',
+        'CLIENT_PLATINUM': '💎',
+        'CLIENT_DIAMOND': '💠',
+        'CONSULTANT_JUNIOR': '⭐',
+        'CONSULTANT_SENIOR': '⭐⭐',
+        'CONSULTANT_EXPERT': '⭐⭐⭐',
+        'ADMIN': '👑',
+        'BRANCH_SUPER_ADMIN': '👑👑',
+        'HQ_ADMIN': '🏢',
+        'SUPER_HQ_ADMIN': '🏢👑',
+        'HQ_MASTER': '👑🏢'
+    };
+    
+    return defaultGradeIconMap[grade] || '🥉';
+};
+
+/**
+ * 매핑 상태 한글명 조회 (동적)
+ */
+export const getMappingStatusKoreanName = async (status) => {
+    try {
+        const response = await apiGet(`/api/admin/common-codes/group/MAPPING_STATUS/display-options`);
+        if (response.success && response.data && response.data.codes) {
+            const code = response.data.codes.find(c => c.codeValue === status);
+            if (code && code.codeLabel) {
+                return code.codeLabel;
+            }
+        }
+    } catch (error) {
+        console.error('매핑 상태 한글명 조회 실패:', error);
+    }
+    
+    // 기본 매핑 (fallback)
+    const defaultMappingStatusMap = {
+        'PENDING_PAYMENT': '결제 대기',
+        'PAYMENT_CONFIRMED': '결제 확인',
+        'ACTIVE': '활성',
+        'INACTIVE': '비활성',
+        'SUSPENDED': '일시정지',
+        'TERMINATED': '종료됨',
+        'SESSIONS_EXHAUSTED': '회기 소진'
+    };
+    
+    return defaultMappingStatusMap[status] || status;
 };

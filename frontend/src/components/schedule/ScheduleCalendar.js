@@ -8,6 +8,7 @@ import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { apiGet } from '../../utils/ajax';
+import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import './ScheduleCalendar.css';
 
 /**
@@ -57,55 +58,36 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             console.log('📋 스케줄 상태 코드 응답:', response);
             
             if (response && Array.isArray(response) && response.length > 0) {
-                const statusOptions = response.map(code => {
-                    // 색상 매핑 (extraData에서 색상 정보 추출하거나 기본값 사용)
-                    const colorMap = {
-                        'AVAILABLE': '#e5e7eb',      // 연한 회색
-                        'BOOKED': '#3b82f6',         // 파란색
-                        'CONFIRMED': '#8b5cf6',      // 보라색
-                        'IN_PROGRESS': '#f59e0b',    // 주황색
-                        'COMPLETED': '#10b981',      // 초록색
-                        'CANCELLED': '#ef4444',      // 빨간색
-                        'BLOCKED': '#6b7280',        // 회색
-                        'UNDER_REVIEW': '#f97316',   // 주황색
-                        'VACATION': '#06b6d4',       // 청록색
-                        'NO_SHOW': '#dc2626'         // 진한 빨간색
-                    };
-                    
-                    let color = colorMap[code.codeValue] || '#6b7280'; // 기본 회색
-                    if (code.extraData) {
-                        try {
-                            const extraData = JSON.parse(code.extraData);
-                            color = extraData.color || color;
-                        } catch (e) {
-                            // JSON 파싱 실패 시 기본값 사용
-                        }
+                // 동적 색상/아이콘 처리로 변경
+                const statusOptions = await Promise.all(response.map(async (code) => {
+                    try {
+                        // 동적으로 색상과 아이콘 조회
+                        const [color, icon] = await Promise.all([
+                            getStatusColor(code.codeValue, 'SCHEDULE_STATUS'),
+                            getStatusIcon(code.codeValue, 'SCHEDULE_STATUS')
+                        ]);
+                        
+                        return {
+                            value: code.codeValue,
+                            label: code.codeLabel,
+                            color: color,
+                            icon: icon,
+                            description: code.codeDescription
+                        };
+                    } catch (error) {
+                        console.error(`스케줄 상태 ${code.codeValue} 처리 오류:`, error);
+                        // 오류 시 기본값 반환
+                        return {
+                            value: code.codeValue,
+                            label: code.codeLabel,
+                            color: '#6b7280',
+                            icon: '📋',
+                            description: code.codeDescription
+                        };
                     }
-                    
-                    // 아이콘 매핑
-                    const iconMap = {
-                        'AVAILABLE': '⚪',
-                        'BOOKED': '📅',
-                        'CONFIRMED': '✅',
-                        'IN_PROGRESS': '🔄',
-                        'COMPLETED': '🎉',
-                        'CANCELLED': '❌',
-                        'BLOCKED': '🚫',
-                        'UNDER_REVIEW': '🔍',
-                        'VACATION': '🏖️',
-                        'NO_SHOW': '👻'
-                    };
-                    
-                    return {
-                        value: code.codeValue,
-                        label: code.codeLabel,
-                        icon: iconMap[code.codeValue] || '📋',
-                        color: color,
-                        description: code.codeDescription
-                    };
-                });
+                }));
                 
-                console.log('📋 변환된 상태 옵션:', statusOptions);
+                console.log('📋 변환된 상태 옵션 (동적 처리):', statusOptions);
                 setScheduleStatusOptions(statusOptions);
             } else {
                 console.warn('📋 스케줄 상태 코드 데이터가 없습니다:', response);

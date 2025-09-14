@@ -446,19 +446,22 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         });
         console.log('📅 ScheduleCalendar 컴포넌트에서 날짜 클릭 처리');
         
-        // 과거 날짜 선택 방지
+        // 과거 날짜인지 확인
         const clickedDate = new Date(info.date);
         const today = new Date();
         today.setHours(0, 0, 0, 0); // 오늘 날짜의 시작 시간으로 설정
         clickedDate.setHours(0, 0, 0, 0); // 클릭한 날짜의 시작 시간으로 설정
         
-        if (clickedDate < today) {
-            alert('과거 날짜에는 스케줄을 등록할 수 없습니다.');
-            return;
-        }
+        const isPastDate = clickedDate < today;
         
         // 관리자 또는 상담사만 스케줄 생성 가능
         if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'CONSULTANT') {
+            // 과거 날짜인 경우 새로운 스케줄 등록 불가 알림
+            if (isPastDate) {
+                alert('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다.\n기존 스케줄을 클릭하여 조회하실 수 있습니다.');
+                return;
+            }
+            
             setSelectedDate(info.date);
             setSelectedInfo(info);
             console.log('📅 DateActionModal 열기 시도 - isDateActionModalOpen을 true로 설정');
@@ -754,9 +757,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 eventDrop={handleEventDrop}
                 editable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
                 droppable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
-                validRange={{
-                    start: new Date().toISOString().split('T')[0] // 오늘부터 선택 가능
-                }}
                 height="auto"
                 slotMinTime="08:00:00"
                 slotMaxTime="20:00:00"

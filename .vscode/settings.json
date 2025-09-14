@@ -1,0 +1,79 @@
+{
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -Xmx4g -Xms2g -XX:MaxMetaspaceSize=512m -Djava.home=/opt/homebrew/opt/openjdk@17",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.import.gradle.enabled": true,
+    "java.import.maven.enabled": true,
+    "java.autobuild.enabled": true,
+    "java.maxConcurrentBuilds": 4,
+    "java.errors.incompleteClasspath.severity": "warning",
+    "java.configuration.checkProjectSettingsExclusions": false,
+    "java.import.exclusions": [],
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-17",
+            "path": "/opt/homebrew/opt/openjdk@17",
+            "default": true
+        }
+    ],
+    "java.debug.settings.onBuildFailureProceed": true,
+    "java.debug.settings.hotCodeReplace": "auto",
+    "java.debug.settings.enableRunDebugCodeLens": true,
+    "java.completion.enabled": true,
+    "java.completion.importOrder": [
+        "java",
+        "javax",
+        "org",
+        "com"
+    ],
+    "java.format.enabled": true,
+    "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+    "java.saveActions.organizeImports": true,
+    "java.sources.organizeImports.starThreshold": 99,
+    "java.sources.organizeImports.staticStarThreshold": 99,
+    "files.exclude": {
+        "**/target": true,
+        "**/.classpath": true,
+        "**/.project": true,
+        "**/.settings": true,
+        "**/.factorypath": true
+    },
+    "java.project.sourcePaths": [
+        "src/main/java"
+    ],
+    "java.project.outputPath": "target/classes",
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar"
+    ],
+    "java.completion.overwrite": true,
+    "java.completion.guessMethodArguments": true,
+    "java.signatureHelp.enabled": true,
+    "java.contentProvider.preferred": "fernflower",
+    "java.eclipse.downloadSources": true,
+    "java.maven.downloadSources": true,
+    "java.references.includeDecompiledSources": true,
+    "java.sources.organizeImports.starThreshold": 99,
+    "java.sources.organizeImports.staticStarThreshold": 99,
+    "java.codeGeneration.toString.template": "${object.className} [${member.name()}=${member.value}, ${otherMembers}]",
+    "java.codeGeneration.useBlocks": true,
+    "java.format.settings.profile": "GoogleStyle",
+    "java.inlayHints.parameterNames.enabled": "all",
+    "java.semanticHighlighting.enabled": true,
+    "java.trace.server": "messages",
+    "problems.showCurrentInStatus": true,
+    "editor.renderValidationDecorations": "on",
+    "problems.decorations.enabled": true,
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.errors.incompleteClasspath.severity": "warning",
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.maven.offline": false,
+    "java.import.gradle.offline": false,
+    "java.import.gradle.wrapper.enabled": true,
+    "java.import.gradle.java.home": "/opt/homebrew/opt/openjdk@17",
+    "java.configuration.maven.userSettings": null,
+    "java.configuration.maven.globalSettings": null,
+    "java.configuration.maven.notCoveredPluginExecutionSeverity": "ignore",
+    "java.configuration.maven.downloadSources": true,
+    "java.configuration.maven.updateSnapshots": false,
+    "java.server.launchMode": "Standard",
+    "java.lombokSupport.enabled": true
+}

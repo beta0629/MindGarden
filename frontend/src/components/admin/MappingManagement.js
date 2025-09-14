@@ -40,10 +40,12 @@ const MappingManagement = () => {
     const [selectedClientId, setSelectedClientId] = useState(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [pendingMappings, setPendingMappings] = useState([]);
+    const [mappingStatusInfo, setMappingStatusInfo] = useState({});
 
     // 데이터 로드
     useEffect(() => {
         loadMappings();
+        loadMappingStatusInfo();
     }, []);
 
     const loadMappings = async () => {
@@ -65,6 +67,50 @@ const MappingManagement = () => {
             setMappings(getTestMappings());
         } finally {
             setLoading(false);
+        }
+    };
+
+    // 매핑 상태 정보 일괄 로드
+    const loadMappingStatusInfo = async () => {
+        try {
+            console.log('📊 매핑 상태 정보 일괄 로드 시작');
+            
+            const response = await apiGet('/api/admin/common-codes/group/MAPPING_STATUS/display-options');
+            if (response.success && response.data) {
+                const statusInfoMap = {};
+                
+                // 각 상태별 정보를 맵으로 정리
+                response.data.codes.forEach(code => {
+                    statusInfoMap[code.codeValue] = {
+                        label: code.koreanName || code.codeLabel,
+                        color: code.colorCode || '#6c757d',
+                        icon: code.icon || '📋'
+                    };
+                });
+                
+                setMappingStatusInfo(statusInfoMap);
+                console.log('📊 매핑 상태 정보 일괄 로드 완료:', statusInfoMap);
+            } else {
+                console.log('매핑 상태 정보 로드 실패, 기본값 사용');
+                // 기본값 설정
+                setMappingStatusInfo({
+                    'PENDING': { label: '대기중', color: '#ffc107', icon: '⏳' },
+                    'CONFIRMED': { label: '확인됨', color: '#28a745', icon: '✅' },
+                    'ACTIVE': { label: '활성', color: '#007bff', icon: '🟢' },
+                    'INACTIVE': { label: '비활성', color: '#6c757d', icon: '⚪' },
+                    'CANCELLED': { label: '취소됨', color: '#dc3545', icon: '❌' }
+                });
+            }
+        } catch (error) {
+            console.error('매핑 상태 정보 로드 오류:', error);
+            // 오류 시 기본값 설정
+            setMappingStatusInfo({
+                'PENDING': { label: '대기중', color: '#ffc107', icon: '⏳' },
+                'CONFIRMED': { label: '확인됨', color: '#28a745', icon: '✅' },
+                'ACTIVE': { label: '활성', color: '#007bff', icon: '🟢' },
+                'INACTIVE': { label: '비활성', color: '#6c757d', icon: '⚪' },
+                'CANCELLED': { label: '취소됨', color: '#dc3545', icon: '❌' }
+            });
         }
     };
 
@@ -380,6 +426,11 @@ const MappingManagement = () => {
                             <MappingCard
                                 key={mapping.id}
                                 mapping={mapping}
+                                statusInfo={mappingStatusInfo[mapping.status] || {
+                                    label: mapping.status,
+                                    color: '#6c757d',
+                                    icon: '📋'
+                                }}
                                 onApprove={handleApproveMapping}
                                 onReject={handleRejectMapping}
                                 onConfirmPayment={handleConfirmPayment}

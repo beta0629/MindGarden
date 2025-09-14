@@ -1,9 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    getMappingStatusKoreanName,
-    getStatusColor,
-    getStatusIcon
-} from '../../../utils/codeHelper';
+import React from 'react';
 
 /**
  * 매핑 카드 컴포넌트 (동적 처리 지원)
@@ -18,6 +13,11 @@ import {
  */
 const MappingCard = ({ 
     mapping, 
+    statusInfo = {
+        label: mapping?.status || 'UNKNOWN',
+        color: '#6c757d',
+        icon: '📋'
+    },
     onApprove, 
     onReject, 
     onConfirmPayment,
@@ -26,54 +26,17 @@ const MappingCard = ({
     onTransfer,
     onViewTransferHistory
 }) => {
-    const [statusInfo, setStatusInfo] = useState({
-        label: mapping.status,
-        color: '#6c757d',
-        icon: '📋'
-    });
-    const [loading, setLoading] = useState(true);
-
-    // 동적 상태 정보 로드
-    useEffect(() => {
-        const loadStatusInfo = async () => {
-            try {
-                setLoading(true);
-                
-                const [label, color, icon] = await Promise.all([
-                    getMappingStatusKoreanName(mapping.status),
-                    getStatusColor(mapping.status, 'MAPPING_STATUS'),
-                    getStatusIcon(mapping.status, 'MAPPING_STATUS')
-                ]);
-                
-                setStatusInfo({ label, color, icon });
-                console.log(`✅ 매핑 상태 정보 로드 완료: ${mapping.status}`, { label, color, icon });
-            } catch (error) {
-                console.error(`매핑 상태 정보 로드 실패: ${mapping.status}`, error);
-                // 오류 시 기본값 설정
-                setStatusInfo({
-                    label: mapping.status,
-                    color: '#6c757d',
-                    icon: '📋'
-                });
-            } finally {
-                setLoading(false);
-            }
-        };
-        
-        loadStatusInfo();
-    }, [mapping.status]);
-
-    // 상태별 색상 (동적)
+    // 상태별 색상 (props에서 받은 데이터 사용)
     const getStatusColor = (status) => {
         return statusInfo.color;
     };
 
-    // 상태별 한글명 (동적)
+    // 상태별 한글명 (props에서 받은 데이터 사용)
     const getStatusLabel = (status) => {
         return statusInfo.label;
     };
 
-    // 상태별 아이콘 (동적)
+    // 상태별 아이콘 (props에서 받은 데이터 사용)
     const getStatusIcon = (status) => {
         return statusInfo.icon;
     };
@@ -117,7 +80,7 @@ const MappingCard = ({
                         letterSpacing: '0.5px',
                         backgroundColor: getStatusColor(mapping.status)
                     }}>
-                        {loading ? '⏳' : getStatusIcon(mapping.status)}
+                        {getStatusIcon(mapping.status)}
                         {getStatusLabel(mapping.status)}
                     </span>
                 </div>

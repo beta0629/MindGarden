@@ -46,6 +46,11 @@ cp src/main/resources/application-prod.yml.backup src/main/resources/application
 - **컴포넌트 기반 구조**: 재사용 가능한 UI 컴포넌트
 - **실시간 업데이트**: WebSocket 지원 (구현 예정)
 
+### 🚀 성능 최적화
+- **API 호출 최적화**: 일괄 처리 패턴으로 429 오류 해결
+- **Rate Limiting**: 개발 환경용 임계값 조정
+- **컴포넌트 최적화**: 불필요한 API 호출 제거 및 Props 기반 데이터 전달
+
 ### 🏖️ 휴가 관리 시스템
 - **세밀한 휴가 유형**: 2시간 단위 반반차 휴가 지원
 - **관리자 휴가 등록**: 관리자가 상담사 휴가 직접 등록

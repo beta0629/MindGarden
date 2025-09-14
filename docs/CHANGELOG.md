@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-09-14] - 429 오류 해결 및 시스템 최적화
+
+### 🐛 버그 수정
+- **429 Too Many Requests 오류 완전 해결**
+  - ClientSelector 컴포넌트의 개별 내담자 API 호출 문제 해결
+  - MappingCard 컴포넌트의 개별 상태 정보 API 호출 문제 해결
+  - RateLimitingFilter 임계값을 초당 100 → 200 요청으로 증가 (개발 환경)
+
+### ⚡ 성능 개선
+- **API 호출 최적화**
+  - 개별 API 호출을 일괄 처리로 변경
+  - API 호출 횟수 대폭 감소 (N * 3번 → 1번)
+  - 네트워크 트래픽 최적화
+
+- **데이터 로딩 패턴 개선**
+  - ClientSelector: `loadAllClientMappings` 함수로 상담사별 매핑 정보 일괄 조회
+  - MappingManagement: `loadMappingStatusInfo` 함수로 매핑 상태 정보 일괄 로드
+  - Props 기반 데이터 전달 구조로 컴포넌트 간 효율적 데이터 공유
+
+### 🔧 기술적 개선
+- **에러 핸들링 강화**
+  - API 실패 시 기본값 설정 메커니즘
+  - 폴백 데이터 구조 개선
+  - 사용자 경험 향상을 위한 안정적인 동작 보장
+
+- **컴포넌트 구조 개선**
+  - MappingCard에서 개별 API 호출 제거
+  - 상태 정보를 props로 받아 사용하는 구조로 변경
+  - 불필요한 useEffect 및 useState 제거
+
 ## [2025-01-11] - 내담자 대시보드 개인화 및 UX 개선
 
 ### 🆕 새로운 기능

@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-public class CssThemeMetadata extends BaseEntity {
+public class CssThemeMetadata {
 
     @Id
     @Column(name = "theme_name", nullable = false, length = 50)

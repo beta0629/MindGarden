@@ -4,7 +4,7 @@
  * @deprecated 하드코딩된 색상 값들은 getDynamicCSSVariables() 함수 사용 권장
  * @see getDynamicCSSVariables() in cssThemeHelper.js
  */
-import { getDynamicCSSVariables } from '../utils/cssThemeHelper';
+// import { getDynamicCSSVariables } from '../utils/cssThemeHelper';
 
 // 하드코딩된 CSS 변수 (fallback용)
 export const CSS_VARIABLES = {
@@ -701,7 +701,7 @@ export const HOMEPAGE_CONSTANTS = {
  * @param {string} themeName 테마명 (기본값: 'default')
  * @returns {Promise<Object>} 동적 CSS 변수 객체
  */
-export const getDynamicCSSVariablesAsync = getDynamicCSSVariables;
+export const getDynamicCSSVariablesAsync = () => Promise.resolve(CSS_VARIABLES);
 
 /**
  * 동적 CSS 변수 조회 함수 (동기식 fallback)
@@ -720,14 +720,7 @@ export const getCSSVariablesSync = (themeName = 'default') => {
  * @returns {Promise<string>} 색상 값
  */
 export const getDynamicColor = async (colorKey, themeName = 'default') => {
-  try {
-    const { getThemeColor } = await import('../utils/cssThemeHelper');
-    const color = await getThemeColor(themeName, colorKey);
-    return color || CSS_VARIABLES.COLORS[colorKey] || '#6b7280';
-  } catch (error) {
-    console.error(`🎨 동적 색상 조회 실패: ${colorKey}`, error);
-    return CSS_VARIABLES.COLORS[colorKey] || '#6b7280';
-  }
+  return CSS_VARIABLES.COLORS[colorKey] || '#6b7280';
 };
 
 /**

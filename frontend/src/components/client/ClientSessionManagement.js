@@ -36,17 +36,17 @@ const ClientSessionManagement = () => {
       const mappings = mappingResponse.data || [];
 
       // 상담 기록 가져오기
-      const consultationResponse = await apiGet(`/api/consultation/records/client?clientId=${userId}`);
+      const consultationResponse = await apiGet(`/api/schedules/consultation-records/client/${userId}`);
       const consultations = consultationResponse.data || [];
 
       // 회기 사용 내역 계산
-      const usedSessions = consultations.filter(c => c.status === 'COMPLETED').length;
+      const usedSessions = consultations.filter(c => c.isSessionCompleted === true).length;
       const totalSessions = mappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
       const remainingSessions = totalSessions - usedSessions;
 
       // 최근 상담 기록 (최근 10개)
       const recentConsultations = consultations
-        .sort((a, b) => new Date(b.consultationDate) - new Date(a.consultationDate))
+        .sort((a, b) => new Date(b.sessionDate) - new Date(a.sessionDate))
         .slice(0, 10);
 
       setSessionData({
@@ -75,34 +75,12 @@ const ClientSessionManagement = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'COMPLETED':
-        return '#28a745';
-      case 'SCHEDULED':
-        return '#17a2b8';
-      case 'CANCELLED':
-        return '#dc3545';
-      case 'NO_SHOW':
-        return '#ffc107';
-      default:
-        return '#6c757d';
-    }
+  const getStatusColor = (isCompleted) => {
+    return isCompleted ? '#28a745' : '#ffc107';
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'COMPLETED':
-        return '완료';
-      case 'SCHEDULED':
-        return '예정';
-      case 'CANCELLED':
-        return '취소';
-      case 'NO_SHOW':
-        return '무단결석';
-      default:
-        return status || '알 수 없음';
-    }
+  const getStatusText = (isCompleted) => {
+    return isCompleted ? '완료' : '미완료';
   };
 
   if (isLoading) {
@@ -268,27 +246,27 @@ const ClientSessionManagement = () => {
             {sessionData.recentConsultations.map((consultation, index) => (
               <div key={index} className="consultation-item">
                 <div className="consultation-date">
-                  {formatDate(consultation.consultationDate)}
+                  {formatDate(consultation.sessionDate)}
                 </div>
                 <div className="consultation-info">
                   <div className="consultation-title">
-                    {consultation.consultant?.name || '상담사'}와의 상담
+                    {consultation.sessionNumber ? `${consultation.sessionNumber}회기` : '상담'} - 상담사 ID: {consultation.consultantId}
                   </div>
                   <div className="consultation-details">
                     <span className="consultation-duration">
-                      {consultation.duration || 50}분
+                      {consultation.sessionDurationMinutes || 50}분
                     </span>
                     <span className="consultation-status" style={{
-                      color: getStatusColor(consultation.status)
+                      color: getStatusColor(consultation.isSessionCompleted)
                     }}>
-                      {getStatusText(consultation.status)}
+                      {getStatusText(consultation.isSessionCompleted)}
                     </span>
                   </div>
                 </div>
-                {consultation.notes && (
+                {consultation.mainIssues && (
                   <div className="consultation-notes">
                     <i className="bi bi-chat-text"></i>
-                    <span>{consultation.notes}</span>
+                    <span>{consultation.mainIssues}</span>
                   </div>
                 )}
               </div>

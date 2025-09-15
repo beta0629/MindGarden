@@ -37,7 +37,7 @@ const ClientPaymentHistory = () => {
       const mappings = mappingResponse.data || [];
 
       // 상담 기록 가져오기
-      const consultationResponse = await apiGet(`/api/consultation/records/client?clientId=${userId}`);
+      const consultationResponse = await apiGet(`/api/schedules/consultation-records/client/${userId}`);
       const consultations = consultationResponse.data || [];
 
       // 결제 내역 생성 (매핑 정보에서)

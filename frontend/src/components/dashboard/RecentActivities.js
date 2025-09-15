@@ -1,9 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { RECENT_ACTIVITIES_CSS } from '../../constants/css';
 import './RecentActivities.css';
 
 const RecentActivities = ({ consultationData }) => {
+  const navigate = useNavigate();
   const getActivityIcon = (type) => {
     switch (type) {
       case 'profile':
@@ -19,15 +21,58 @@ const RecentActivities = ({ consultationData }) => {
     }
   };
 
+  const handleViewAll = () => {
+    // 상세 페이지로 이동 (예: 활동 내역 페이지)
+    navigate('/activities');
+  };
+
+  const activities = consultationData?.recentActivities || [];
+  const displayActivities = activities.slice(0, 5);
+  const hasMoreActivities = activities.length > 5;
+
   return (
     <div className={RECENT_ACTIVITIES_CSS.CONTAINER}>
-      <h3 className={RECENT_ACTIVITIES_CSS.SECTION_TITLE}>
-        <i className="bi bi-clock-history"></i>
-        최근 활동
-      </h3>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '20px'
+      }}>
+        <h3 className={RECENT_ACTIVITIES_CSS.SECTION_TITLE}>
+          <i className="bi bi-clock-history"></i>
+          최근 활동
+        </h3>
+        {hasMoreActivities && (
+          <button 
+            className="btn btn-outline-primary btn-sm"
+            onClick={handleViewAll}
+            style={{
+              fontSize: '14px',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              border: '1px solid #007bff',
+              background: 'transparent',
+              color: '#007bff',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#007bff';
+              e.target.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+              e.target.style.color = '#007bff';
+            }}
+          >
+            <i className="bi bi-arrow-right" style={{ marginRight: '4px' }}></i>
+            전체보기
+          </button>
+        )}
+      </div>
       <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_LIST}>
-        {consultationData?.recentActivities && consultationData.recentActivities.length > 0 ? (
-          consultationData.recentActivities.map((activity, index) => (
+        {displayActivities.length > 0 ? (
+          displayActivities.map((activity, index) => (
             <div key={index} className={RECENT_ACTIVITIES_CSS.ACTIVITY_ITEM}>
               <div className={RECENT_ACTIVITIES_CSS.ACTIVITY_ICON}>
                 <i className={`bi ${getActivityIcon(activity.type)}`}></i>

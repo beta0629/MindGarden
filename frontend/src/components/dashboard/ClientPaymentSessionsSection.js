@@ -95,28 +95,56 @@ const ClientPaymentSessionsSection = ({ userId }) => {
   };
 
   const getStatusColor = (status) => {
+    if (!status) {
+      return '#6c757d';
+    }
+    
     switch (status) {
-      case 'COMPLETED':
+      case 'CONFIRMED':
+        return '#ffc107';
+      case 'APPROVED':
         return '#28a745';
       case 'PENDING':
-        return '#ffc107';
+        return '#17a2b8';
+      case 'REJECTED':
+        return '#dc3545';
+      case 'REFUNDED':
+        return '#6f42c1';
+      case 'COMPLETED':
+        return '#28a745';
       case 'FAILED':
         return '#dc3545';
+      case 'CANCELLED':
+        return '#6c757d';
       default:
         return '#6c757d';
     }
   };
 
   const getStatusText = (status) => {
+    if (!status) {
+      return '미결제';
+    }
+    
     switch (status) {
+      case 'CONFIRMED':
+        return '입금확인';
+      case 'APPROVED':
+        return '승인완료';
+      case 'PENDING':
+        return '대기중';
+      case 'REJECTED':
+        return '거부됨';
+      case 'REFUNDED':
+        return '환불됨';
       case 'COMPLETED':
         return '완료';
-      case 'PENDING':
-        return '대기';
       case 'FAILED':
         return '실패';
+      case 'CANCELLED':
+        return '취소';
       default:
-        return '알 수 없음';
+        return status || '미결제';
     }
   };
 

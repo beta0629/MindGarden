@@ -413,18 +413,9 @@ export const SessionProvider = ({ children }) => {
     // 동적 권한 체크 (백엔드 API 호출)
     hasPermission: async (permission) => {
       try {
-        const response = await sessionManager.fetch('/api/admin/permissions/check-permission', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ permission })
-        });
-        
-        if (!response.ok) return false;
-        
-        const result = await response.json();
-        return result.success && result.data?.hasPermission === true;
+        const { apiPost } = await import('../utils/ajax');
+        const result = await apiPost('/api/admin/permissions/check-permission', { permission });
+        return result?.success && result?.data?.hasPermission === true;
       } catch (error) {
         console.error('권한 체크 오류:', error);
         return false;

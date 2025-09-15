@@ -36,9 +36,9 @@ const ClientPaymentHistory = () => {
       const mappingResponse = await apiGet(`/api/admin/mappings/client?clientId=${userId}`);
       const mappings = mappingResponse.data || [];
 
-      // 상담 기록 가져오기
-      const consultationResponse = await apiGet(`/api/schedules/consultation-records/client/${userId}`);
-      const consultations = consultationResponse.data || [];
+      // 상담 일정 가져오기 (상담일지가 아닌 기본 일정 정보만)
+      const scheduleResponse = await apiGet(`/api/schedules?userId=${userId}&userRole=CLIENT`);
+      const schedules = scheduleResponse.data || [];
 
       // 결제 내역 생성 (매핑 정보에서)
       const paymentHistory = mappings
@@ -71,7 +71,7 @@ const ClientPaymentHistory = () => {
         completedPayments,
         pendingPayments,
         mappings,
-        consultations
+        schedules
       });
     } catch (error) {
       console.error('결제 데이터 로드 실패:', error);

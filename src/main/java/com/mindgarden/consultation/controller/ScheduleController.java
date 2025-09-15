@@ -27,7 +27,6 @@ import com.mindgarden.consultation.dto.ScheduleCreateDto;
 import com.mindgarden.consultation.dto.ScheduleDto;
 import com.mindgarden.consultation.dto.ScheduleResponseDto;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
-import com.mindgarden.consultation.entity.ConsultationRecord;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.AdminService;
@@ -921,79 +920,6 @@ public class ScheduleController {
         }
     }
 
-    /**
-     * 내담자별 특정 회기 상담일지 조회
-     */
-    @GetMapping("/api/schedules/consultation-records/client/{clientId}/session/{sessionNumber}")
-    public ResponseEntity<Map<String, Object>> getConsultationRecordsByClientAndSession(
-            @PathVariable Long clientId,
-            @PathVariable Integer sessionNumber,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        try {
-            log.info("👤 내담자별 특정 회기 상담일지 조회 - 내담자ID: {}, 회기: {}", clientId, sessionNumber);
-            
-            Pageable pageable = Pageable.ofSize(size).withPage(page);
-            Page<ConsultationRecord> records = consultationRecordService.getConsultationRecordsByClientAndSession(clientId, sessionNumber, pageable);
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", records.getContent(),
-                "totalCount", records.getTotalElements(),
-                "totalPages", records.getTotalPages(),
-                "currentPage", records.getNumber(),
-                "size", records.getSize()
-            ));
-        } catch (Exception e) {
-            log.error("❌ 내담자별 특정 회기 상담일지 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "내담자별 특정 회기 상담일지 조회 중 오류가 발생했습니다: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * 내담자별 전체 상담일지 조회 (회기순)
-     */
-    @GetMapping("/api/schedules/consultation-records/client/{clientId}")
-    public ResponseEntity<Map<String, Object>> getConsultationRecordsByClient(@PathVariable Long clientId) {
-        try {
-            log.info("👤 내담자별 전체 상담일지 조회 - 내담자ID: {}", clientId);
-            
-            List<ConsultationRecord> records = consultationRecordService.getConsultationRecordsByClientOrderBySession(clientId);
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", records,
-                "totalCount", records.size()
-            ));
-        } catch (Exception e) {
-            log.error("❌ 내담자별 전체 상담일지 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "내담자별 전체 상담일지 조회 중 오류가 발생했습니다: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * 내담자별 상담일지 회기별 그룹화 조회
-     */
-    @GetMapping("/api/schedules/consultation-records/client/{clientId}/grouped")
-    public ResponseEntity<Map<String, Object>> getConsultationRecordsGroupedBySession(@PathVariable Long clientId) {
-        try {
-            log.info("👤 내담자별 상담일지 회기별 그룹화 조회 - 내담자ID: {}", clientId);
-            
-            Map<Integer, List<ConsultationRecord>> groupedRecords = consultationRecordService.getConsultationRecordsGroupedBySession(clientId);
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", groupedRecords,
-                "totalSessions", groupedRecords.size()
-            ));
-        } catch (Exception e) {
-            log.error("❌ 내담자별 상담일지 회기별 그룹화 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "내담자별 상담일지 회기별 그룹화 조회 중 오류가 발생했습니다: " + e.getMessage()));
-        }
-    }
     
     /**
      * 휴가 충돌 메시지 조회 (데이터베이스 코드 사용)

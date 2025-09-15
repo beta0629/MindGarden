@@ -35,27 +35,27 @@ const ClientSessionManagement = () => {
       const mappingResponse = await apiGet(`/api/admin/mappings/client?clientId=${userId}`);
       const mappings = mappingResponse.data || [];
 
-      // 상담 기록 가져오기
-      const consultationResponse = await apiGet(`/api/schedules/consultation-records/client/${userId}`);
-      const consultations = consultationResponse.data || [];
+      // 상담 일정 가져오기 (상담일지가 아닌 기본 일정 정보만)
+      const scheduleResponse = await apiGet(`/api/schedules?userId=${userId}&userRole=CLIENT`);
+      const schedules = scheduleResponse.data || [];
 
-      // 회기 사용 내역 계산
-      const usedSessions = consultations.filter(c => c.isSessionCompleted === true).length;
+      // 회기 사용 내역 계산 (완료된 상담만)
+      const usedSessions = schedules.filter(s => s.status === 'COMPLETED').length;
       const totalSessions = mappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
       const remainingSessions = totalSessions - usedSessions;
 
-      // 최근 상담 기록 (최근 10개)
-      const recentConsultations = consultations
-        .sort((a, b) => new Date(b.sessionDate) - new Date(a.sessionDate))
+      // 최근 상담 일정 (최근 10개)
+      const recentSchedules = schedules
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, 10);
 
       setSessionData({
         mappings,
-        consultations,
+        schedules,
         totalSessions,
         usedSessions,
         remainingSessions,
-        recentConsultations
+        recentSchedules
       });
     } catch (error) {
       console.error('회기 데이터 로드 실패:', error);
@@ -238,44 +238,38 @@ const ClientSessionManagement = () => {
         </div>
       </div>
 
-      {/* 최근 상담 기록 */}
+      {/* 최근 상담 일정 */}
       <div className="consultation-history">
-        <h3><i className="bi bi-list-ul"></i> 최근 상담 기록</h3>
-        {sessionData.recentConsultations.length > 0 ? (
+        <h3><i className="bi bi-calendar-event"></i> 최근 상담 일정</h3>
+        {sessionData.recentSchedules.length > 0 ? (
           <div className="consultation-list">
-            {sessionData.recentConsultations.map((consultation, index) => (
+            {sessionData.recentSchedules.map((schedule, index) => (
               <div key={index} className="consultation-item">
                 <div className="consultation-date">
-                  {formatDate(consultation.sessionDate)}
+                  {formatDate(schedule.date)}
                 </div>
                 <div className="consultation-info">
                   <div className="consultation-title">
-                    {consultation.sessionNumber ? `${consultation.sessionNumber}회기` : '상담'} - 상담사 ID: {consultation.consultantId}
+                    {schedule.title || '상담'}
                   </div>
                   <div className="consultation-details">
                     <span className="consultation-duration">
-                      {consultation.sessionDurationMinutes || 50}분
+                      {schedule.startTime} - {schedule.endTime}
                     </span>
                     <span className="consultation-status" style={{
-                      color: getStatusColor(consultation.isSessionCompleted)
+                      color: getStatusColor(schedule.status === 'COMPLETED')
                     }}>
-                      {getStatusText(consultation.isSessionCompleted)}
+                      {getStatusText(schedule.status === 'COMPLETED')}
                     </span>
                   </div>
                 </div>
-                {consultation.mainIssues && (
-                  <div className="consultation-notes">
-                    <i className="bi bi-chat-text"></i>
-                    <span>{consultation.mainIssues}</span>
-                  </div>
-                )}
               </div>
             ))}
           </div>
         ) : (
           <div className="no-consultations">
             <i className="bi bi-calendar-x"></i>
-            <p>아직 상담 기록이 없습니다.</p>
+            <p>아직 상담 일정이 없습니다.</p>
           </div>
         )}
       </div>

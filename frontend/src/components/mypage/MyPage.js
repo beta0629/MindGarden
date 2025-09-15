@@ -4,7 +4,6 @@ import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
 import { notification } from '../../utils/scripts';
 import SimpleLayout from '../layout/SimpleLayout';
-import PageHeader from '../common/PageHeader';
 import ProfileSection from './components/ProfileSection';
 import SettingsSection from './components/SettingsSection';
 import SecuritySection from './components/SecuritySection';
@@ -420,12 +419,8 @@ const MyPage = () => {
   // displayUser가 null이면 로딩 상태로 처리
   if (!displayUser) {
     return (
-      <SimpleLayout>
+      <SimpleLayout title="마이페이지">
         <div className="mypage-container">
-          <PageHeader 
-            title="마이페이지" 
-            icon="bi-person"
-          />
           <div className="mypage-content">
             <div className="loading-container">
               <div className="loading-spinner"></div>
@@ -438,12 +433,8 @@ const MyPage = () => {
   }
 
   return (
-    <SimpleLayout>
+    <SimpleLayout title="마이페이지">
       <div className={`mypage-container mypage ${isProfileEditing ? 'editing' : 'readonly'}`}>
-        <PageHeader 
-          title="마이페이지" 
-          icon="bi-person"
-        />
 
       <div className="mypage-content">
         <div className="mypage-top-nav">

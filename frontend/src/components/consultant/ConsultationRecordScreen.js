@@ -3,7 +3,6 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import LoadingSpinner from '../common/LoadingSpinner';
-import PageHeader from '../common/PageHeader';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 
@@ -542,10 +541,6 @@ const ConsultationRecordScreen = () => {
   return (
     <SimpleLayout title="상담일지 작성">
       <div style={styles.container}>
-        <PageHeader 
-          title="상담일지 작성" 
-          icon="bi-journal-text"
-        />
 
       {/* 내담자 정보 카드 */}
       <div style={styles.clientInfoCard}>

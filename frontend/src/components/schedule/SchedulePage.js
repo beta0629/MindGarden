@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
-import PageHeader from '../common/PageHeader';
 import ScheduleCalendar from './ScheduleCalendar';
 import ConsultantStatus from './ConsultantStatus';
 import TodayStats from './TodayStats';
@@ -115,12 +114,8 @@ const SchedulePage = ({ user: propUser }) => {
     }
 
     return (
-        <SimpleLayout>
+        <SimpleLayout title="스케줄 관리">
             <div className="schedule-page">
-                <PageHeader 
-                    title="스케줄 관리" 
-                    icon="bi-calendar"
-                />
 
             <div className="schedule-content">
                 <div className="schedule-main">

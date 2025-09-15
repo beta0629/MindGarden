@@ -13,6 +13,7 @@ import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.AdminService;
+import com.mindgarden.consultation.service.ConsultationRecordService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
@@ -43,6 +44,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final ScheduleService scheduleService;
+    private final ConsultationRecordService consultationRecordService;
     private final DynamicPermissionService dynamicPermissionService;
     private final MenuService menuService;
     private final FinancialTransactionService financialTransactionService;
@@ -1968,6 +1970,205 @@ public class AdminController {
             response.put("message", "세금 계산 항목 생성에 실패했습니다: " + e.getMessage());
             
             return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // ==================== 상담일지 관리 (관리자 전용) ====================
+
+    /**
+     * 관리자용 상담일지 목록 조회
+     */
+    @GetMapping("/consultation-records")
+    public ResponseEntity<Map<String, Object>> getConsultationRecords(
+            @RequestParam(required = false) Long consultantId,
+            @RequestParam(required = false) Long clientId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpSession session) {
+        try {
+            log.info("📝 관리자용 상담일지 목록 조회 - 상담사 ID: {}, 내담자 ID: {}", consultantId, clientId);
+            
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 관리자 권한 확인
+            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "관리자 권한이 필요합니다."
+                ));
+            }
+            
+            // 페이지네이션 설정
+            org.springframework.data.domain.Pageable pageable = 
+                org.springframework.data.domain.PageRequest.of(page, size);
+            
+            // 상담일지 조회
+            var consultationRecords = consultationRecordService.getConsultationRecords(consultantId, clientId, pageable);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", consultationRecords.getContent());
+            response.put("totalCount", consultationRecords.getTotalElements());
+            response.put("totalPages", consultationRecords.getTotalPages());
+            response.put("currentPage", consultationRecords.getNumber());
+            response.put("size", consultationRecords.getSize());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 관리자용 상담일지 목록 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "상담일지 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 관리자용 상담일지 상세 조회
+     */
+    @GetMapping("/consultation-records/{recordId}")
+    public ResponseEntity<Map<String, Object>> getConsultationRecord(
+            @PathVariable Long recordId,
+            HttpSession session) {
+        try {
+            log.info("📝 관리자용 상담일지 상세 조회 - 기록 ID: {}", recordId);
+            
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 관리자 권한 확인
+            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "관리자 권한이 필요합니다."
+                ));
+            }
+            
+            // 상담일지 조회
+            var record = consultationRecordService.getConsultationRecordById(recordId);
+            
+            if (record == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", record);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 관리자용 상담일지 상세 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "상담일지 상세 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 관리자용 상담일지 수정
+     */
+    @PutMapping("/consultation-records/{recordId}")
+    public ResponseEntity<Map<String, Object>> updateConsultationRecord(
+            @PathVariable Long recordId,
+            @RequestBody Map<String, Object> recordData,
+            HttpSession session) {
+        try {
+            log.info("📝 관리자용 상담일지 수정 - 기록 ID: {}", recordId);
+            
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 관리자 권한 확인
+            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "관리자 권한이 필요합니다."
+                ));
+            }
+            
+            // 상담일지 수정
+            var updatedRecord = consultationRecordService.updateConsultationRecord(recordId, recordData);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "상담일지가 성공적으로 수정되었습니다.");
+            response.put("data", updatedRecord);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 관리자용 상담일지 수정 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "상담일지 수정에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 관리자용 상담일지 삭제
+     */
+    @DeleteMapping("/consultation-records/{recordId}")
+    public ResponseEntity<Map<String, Object>> deleteConsultationRecord(
+            @PathVariable Long recordId,
+            HttpSession session) {
+        try {
+            log.info("📝 관리자용 상담일지 삭제 - 기록 ID: {}", recordId);
+            
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 관리자 권한 확인
+            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "관리자 권한이 필요합니다."
+                ));
+            }
+            
+            // 상담일지 삭제
+            consultationRecordService.deleteConsultationRecord(recordId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "상담일지가 성공적으로 삭제되었습니다.");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 관리자용 상담일지 삭제 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "상담일지 삭제에 실패했습니다: " + e.getMessage()
+            ));
         }
     }
 }

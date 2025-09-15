@@ -216,8 +216,8 @@
 .package-info {
   background: white;
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 30px;
+  padding: 24px;
+  margin: 20px 0 30px 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   max-height: 500px;
   overflow-y: auto;
@@ -251,8 +251,9 @@
 
 .package-grid {
   display: block;
-  padding-top: 0;
-  margin-top: 0;
+  padding: 0;
+  margin: 0;
+  width: 100%;
 }
 
 .package-card {
@@ -266,6 +267,7 @@
   margin-bottom: 16px;
   width: 100%;
   position: relative;
+  box-sizing: border-box;
 }
 
 .package-card:first-child {
@@ -312,6 +314,8 @@
   margin-top: 16px;
   flex-wrap: wrap;
   gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .detail-item {
@@ -321,6 +325,7 @@
   padding: 8px 12px;
   text-align: center;
   min-width: 80px;
+  box-sizing: border-box;
 }
 
 

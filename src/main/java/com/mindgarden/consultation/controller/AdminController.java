@@ -15,6 +15,7 @@ import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.MenuService;
+import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +45,7 @@ public class AdminController {
     private final DynamicPermissionService dynamicPermissionService;
     private final MenuService menuService;
     private final FinancialTransactionService financialTransactionService;
+    private final ErpService erpService;
 
     /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
@@ -1823,6 +1825,49 @@ public class AdminController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "재무 거래 목록 조회에 실패했습니다: " + e.getMessage());
+            
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    /**
+     * 예산 목록 조회
+     */
+    @GetMapping("/budgets")
+    public ResponseEntity<Map<String, Object>> getBudgets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpSession session) {
+        try {
+            log.info("🔍 예산 목록 조회");
+            
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(401).body(response);
+            }
+            
+            // 예산 목록 조회
+            var budgets = erpService.getAllActiveBudgets();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", budgets);
+            response.put("totalCount", budgets.size());
+            response.put("totalPages", 1);
+            response.put("currentPage", 0);
+            response.put("size", budgets.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 예산 목록 조회 실패: {}", e.getMessage(), e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "예산 목록 조회에 실패했습니다: " + e.getMessage());
             
             return ResponseEntity.badRequest().body(response);
         }

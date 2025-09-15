@@ -1,0 +1,552 @@
+import React, { useState, useEffect } from 'react';
+import { useSession } from '../../contexts/SessionContext';
+import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import SimpleLayout from '../layout/SimpleLayout';
+import './ErpCommon.css';
+
+/**
+ * ERP 예산 관리 페이지
+ * 예산 계획 및 관리
+ */
+const BudgetManagement = () => {
+  const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const [activeTab, setActiveTab] = useState('budgets');
+  const [budgets, setBudgets] = useState([]);
+  const [budgetCategories, setBudgetCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingBudget, setEditingBudget] = useState(null);
+
+  // 새 예산 폼 상태
+  const [newBudget, setNewBudget] = useState({
+    name: '',
+    category: '',
+    plannedAmount: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    department: ''
+  });
+
+  // 데이터 로드
+  useEffect(() => {
+    if (!sessionLoading && isLoggedIn && user?.id) {
+      loadData();
+    }
+  }, [sessionLoading, isLoggedIn, user?.id, activeTab]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      switch (activeTab) {
+        case 'budgets':
+          await loadBudgets();
+          break;
+        case 'categories':
+          await loadBudgetCategories();
+          break;
+        case 'reports':
+          await loadBudgetReports();
+          break;
+        default:
+          break;
+      }
+    } catch (err) {
+      console.error('데이터 로드 실패:', err);
+      setError('데이터를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadBudgets = async () => {
+    try {
+      const response = await apiGet('/api/erp/budgets');
+      if (response.success) {
+        setBudgets(response.data || []);
+      } else {
+        setError(response.message || '예산 목록을 불러올 수 없습니다.');
+      }
+    } catch (err) {
+      console.error('예산 로드 실패:', err);
+      setError('예산 목록을 불러오는 중 오류가 발생했습니다.');
+    }
+  };
+
+  const loadBudgetCategories = async () => {
+    try {
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=BUDGET_CATEGORY');
+      if (response.success) {
+        setBudgetCategories(response.data || []);
+      } else {
+        setError(response.message || '예산 카테고리를 불러올 수 없습니다.');
+      }
+    } catch (err) {
+      console.error('예산 카테고리 로드 실패:', err);
+      setError('예산 카테고리를 불러오는 중 오류가 발생했습니다.');
+    }
+  };
+
+  const loadBudgetReports = async () => {
+    try {
+      // 예산 보고서 데이터 로드 (향후 구현)
+      console.log('예산 보고서 데이터 로드');
+    } catch (err) {
+      console.error('예산 보고서 로드 실패:', err);
+      setError('예산 보고서를 불러오는 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleCreateBudget = async () => {
+    try {
+      setLoading(true);
+      const response = await apiPost('/api/erp/budgets', newBudget);
+      if (response.success) {
+        setShowCreateModal(false);
+        setNewBudget({
+          name: '',
+          category: '',
+          plannedAmount: '',
+          description: '',
+          startDate: '',
+          endDate: '',
+          department: ''
+        });
+        await loadBudgets();
+      } else {
+        setError(response.message || '예산 생성에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('예산 생성 실패:', err);
+      setError('예산 생성 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditBudget = async (budget) => {
+    try {
+      setLoading(true);
+      const response = await apiPut(`/api/erp/budgets/${budget.id}`, budget);
+      if (response.success) {
+        setEditingBudget(null);
+        await loadBudgets();
+      } else {
+        setError(response.message || '예산 수정에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('예산 수정 실패:', err);
+      setError('예산 수정 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteBudget = async (budgetId) => {
+    if (!window.confirm('정말로 이 예산을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await apiDelete(`/api/erp/budgets/${budgetId}`);
+      if (response.success) {
+        await loadBudgets();
+      } else {
+        setError(response.message || '예산 삭제에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('예산 삭제 실패:', err);
+      setError('예산 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    if (!amount) return '0원';
+    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('ko-KR');
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'ACTIVE': return 'success';
+      case 'PENDING': return 'warning';
+      case 'COMPLETED': return 'info';
+      case 'CANCELLED': return 'danger';
+      default: return 'secondary';
+    }
+  };
+
+  if (sessionLoading) {
+    return (
+      <SimpleLayout title="예산 관리">
+        <div className="erp-loading">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">로딩 중...</span>
+          </div>
+          <p>세션 정보를 불러오는 중...</p>
+        </div>
+      </SimpleLayout>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <SimpleLayout title="예산 관리">
+        <div className="erp-error">
+          <h3>로그인이 필요합니다.</h3>
+          <p>예산 관리 기능을 사용하려면 로그인해주세요.</p>
+        </div>
+      </SimpleLayout>
+    );
+  }
+
+  return (
+    <SimpleLayout title="예산 관리">
+      <div className="erp-system">
+        <div className="erp-container">
+          {/* 헤더 */}
+          <div className="erp-header">
+            <h1 className="erp-title">
+              <i className="bi bi-piggy-bank"></i>
+              예산 관리
+            </h1>
+            <p className="erp-subtitle">
+              예산 계획 및 관리를 할 수 있습니다.
+            </p>
+          </div>
+
+          {/* 탭 네비게이션 */}
+          <div className="erp-tabs">
+            <button
+              className={`erp-tab ${activeTab === 'budgets' ? 'active' : ''}`}
+              onClick={() => setActiveTab('budgets')}
+            >
+              <i className="bi bi-list-ul"></i>
+              예산 목록
+            </button>
+            <button
+              className={`erp-tab ${activeTab === 'categories' ? 'active' : ''}`}
+              onClick={() => setActiveTab('categories')}
+            >
+              <i className="bi bi-tags"></i>
+              카테고리
+            </button>
+            <button
+              className={`erp-tab ${activeTab === 'reports' ? 'active' : ''}`}
+              onClick={() => setActiveTab('reports')}
+            >
+              <i className="bi bi-graph-up"></i>
+              보고서
+            </button>
+          </div>
+
+          {/* 콘텐츠 영역 */}
+          <div className="erp-content">
+            {loading && (
+              <div className="erp-loading">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">로딩 중...</span>
+                </div>
+                <p>데이터를 불러오는 중...</p>
+              </div>
+            )}
+
+            {error && (
+              <div className="erp-error">
+                <div className="alert alert-danger" role="alert">
+                  <i className="bi bi-exclamation-triangle-fill"></i>
+                  {error}
+                </div>
+                <button className="btn btn-outline-primary" onClick={loadData}>
+                  <i className="bi bi-arrow-clockwise"></i>
+                  다시 시도
+                </button>
+              </div>
+            )}
+
+            {!loading && !error && (
+              <>
+                {activeTab === 'budgets' && (
+                  <div className="erp-section">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h2>예산 목록</h2>
+                      <button 
+                        className="btn btn-primary"
+                        onClick={() => setShowCreateModal(true)}
+                      >
+                        <i className="bi bi-plus"></i>
+                        예산 추가
+                      </button>
+                    </div>
+                    
+                    <div className="erp-table-container">
+                      <table className="erp-table">
+                        <thead>
+                          <tr>
+                            <th>예산명</th>
+                            <th>카테고리</th>
+                            <th>계획 금액</th>
+                            <th>사용 금액</th>
+                            <th>잔액</th>
+                            <th>상태</th>
+                            <th>기간</th>
+                            <th>액션</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {budgets.length > 0 ? (
+                            budgets.map((budget) => (
+                              <tr key={budget.id}>
+                                <td>
+                                  <div>
+                                    <strong>{budget.name}</strong>
+                                    {budget.description && (
+                                      <div className="text-muted small">{budget.description}</div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td>{budget.category}</td>
+                                <td className="text-end">{formatCurrency(budget.plannedAmount)}</td>
+                                <td className="text-end">{formatCurrency(budget.usedAmount || 0)}</td>
+                                <td className="text-end">
+                                  <span className={`fw-bold ${(budget.plannedAmount - (budget.usedAmount || 0)) >= 0 ? 'text-success' : 'text-danger'}`}>
+                                    {formatCurrency(budget.plannedAmount - (budget.usedAmount || 0))}
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className={`erp-status ${getStatusColor(budget.status)}`}>
+                                    {budget.status}
+                                  </span>
+                                </td>
+                                <td>
+                                  {formatDate(budget.startDate)} ~ {formatDate(budget.endDate)}
+                                </td>
+                                <td>
+                                  <div className="d-flex gap-1">
+                                    <button 
+                                      className="btn btn-sm btn-outline-primary"
+                                      onClick={() => setEditingBudget(budget)}
+                                    >
+                                      <i className="bi bi-pencil"></i>
+                                    </button>
+                                    <button 
+                                      className="btn btn-sm btn-outline-danger"
+                                      onClick={() => handleDeleteBudget(budget.id)}
+                                    >
+                                      <i className="bi bi-trash"></i>
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan="8" className="text-center py-4">
+                                <div className="text-muted">
+                                  <i className="bi bi-inbox" style={{ fontSize: '2rem' }}></i>
+                                  <p className="mt-2 mb-0">예산이 없습니다.</p>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'categories' && (
+                  <div className="erp-section">
+                    <h2>예산 카테고리</h2>
+                    <div className="erp-grid">
+                      {budgetCategories.map((category) => (
+                        <div key={category.id} className="erp-card">
+                          <div className="erp-card-header">
+                            <h3>{category.codeLabel}</h3>
+                            <span className="erp-status success">활성</span>
+                          </div>
+                          <div className="erp-card-body">
+                            <p className="erp-description">{category.codeDescription}</p>
+                            <div className="erp-details">
+                              <div className="erp-detail">
+                                <span className="erp-label">코드:</span>
+                                <span className="erp-value">{category.codeValue}</span>
+                              </div>
+                              <div className="erp-detail">
+                                <span className="erp-label">정렬:</span>
+                                <span className="erp-value">{category.sortOrder}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'reports' && (
+                  <div className="erp-section">
+                    <h2>예산 보고서</h2>
+                    <div className="row">
+                      <div className="col-md-4 mb-3">
+                        <div className="erp-card">
+                          <div className="erp-card-header">
+                            <h3>총 예산</h3>
+                            <i className="bi bi-currency-dollar text-primary"></i>
+                          </div>
+                          <div className="erp-card-body">
+                            <div className="h4 text-primary">₩0</div>
+                            <small className="text-muted">전체 예산</small>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="col-md-4 mb-3">
+                        <div className="erp-card">
+                          <div className="erp-card-header">
+                            <h3>사용된 예산</h3>
+                            <i className="bi bi-graph-up text-warning"></i>
+                          </div>
+                          <div className="erp-card-body">
+                            <div className="h4 text-warning">₩0</div>
+                            <small className="text-muted">사용 금액</small>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="col-md-4 mb-3">
+                        <div className="erp-card">
+                          <div className="erp-card-header">
+                            <h3>잔여 예산</h3>
+                            <i className="bi bi-piggy-bank text-success"></i>
+                          </div>
+                          <div className="erp-card-body">
+                            <div className="h4 text-success">₩0</div>
+                            <small className="text-muted">잔액</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* 예산 생성 모달 */}
+          {showCreateModal && (
+            <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <div className="modal-dialog">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title">새 예산 추가</h5>
+                    <button 
+                      type="button" 
+                      className="btn-close" 
+                      onClick={() => setShowCreateModal(false)}
+                    ></button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="mb-3">
+                      <label className="form-label">예산명</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={newBudget.name}
+                        onChange={(e) => setNewBudget({...newBudget, name: e.target.value})}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">카테고리</label>
+                      <select
+                        className="form-select"
+                        value={newBudget.category}
+                        onChange={(e) => setNewBudget({...newBudget, category: e.target.value})}
+                      >
+                        <option value="">카테고리 선택</option>
+                        {budgetCategories.map(category => (
+                          <option key={category.id} value={category.codeValue}>
+                            {category.codeLabel}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">계획 금액</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={newBudget.plannedAmount}
+                        onChange={(e) => setNewBudget({...newBudget, plannedAmount: e.target.value})}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">설명</label>
+                      <textarea
+                        className="form-control"
+                        rows="3"
+                        value={newBudget.description}
+                        onChange={(e) => setNewBudget({...newBudget, description: e.target.value})}
+                      ></textarea>
+                    </div>
+                    <div className="row">
+                      <div className="col-md-6">
+                        <div className="mb-3">
+                          <label className="form-label">시작일</label>
+                          <input
+                            type="date"
+                            className="form-control"
+                            value={newBudget.startDate}
+                            onChange={(e) => setNewBudget({...newBudget, startDate: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <div className="mb-3">
+                          <label className="form-label">종료일</label>
+                          <input
+                            type="date"
+                            className="form-control"
+                            value={newBudget.endDate}
+                            onChange={(e) => setNewBudget({...newBudget, endDate: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary" 
+                      onClick={() => setShowCreateModal(false)}
+                    >
+                      취소
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-primary" 
+                      onClick={handleCreateBudget}
+                      disabled={loading}
+                    >
+                      {loading ? '생성 중...' : '생성'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </SimpleLayout>
+  );
+};
+
+export default BudgetManagement;

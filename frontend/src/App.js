@@ -16,6 +16,7 @@ import ConsultationRecordScreen from './components/consultant/ConsultationRecord
 import ConsultationRecordView from './components/consultant/ConsultationRecordView';
 import PurchaseManagement from './components/erp/PurchaseManagement';
 import FinancialManagement from './components/erp/FinancialManagement';
+import BudgetManagement from './components/erp/BudgetManagement';
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
@@ -227,6 +228,7 @@ function AppContent() {
             {/* ERP 관리 */}
             <Route path="/erp/purchase" element={<PurchaseManagement />} />
             <Route path="/erp/financial" element={<FinancialManagement />} />
+            <Route path="/erp/budget" element={<BudgetManagement />} />
             <Route path="/consultant/send-message/:consultationId" element={<ConsultantMessageScreen />} />
             <Route path="/consultant/clients" element={<ConsultantClientList />} />
             <Route path="/consultant/availability" element={<ConsultantAvailability />} />

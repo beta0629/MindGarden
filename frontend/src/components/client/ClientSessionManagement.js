@@ -201,38 +201,179 @@ const ClientSessionManagement = () => {
       </div>
 
       {/* 패키지 정보 */}
-      <div className="package-info">
-        <div className="package-grid">
+      <div style={{
+        background: 'white',
+        borderRadius: '12px',
+        padding: '24px',
+        margin: '20px 0 30px 0',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+        maxHeight: '500px',
+        overflowY: 'auto',
+        position: 'relative'
+      }}>
+        <div style={{
+          display: 'block',
+          padding: '0',
+          margin: '0',
+          width: '100%'
+        }}>
           {sessionData.mappings
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .map((mapping, index) => (
-            <div key={index} className="package-card">
-              <div className="package-header">
-                <h4>{mapping.packageName || '상담 패키지'}</h4>
-                <span className="package-status">
+            <div key={index} style={{
+              border: '1px solid #e9ecef',
+              borderRadius: '12px',
+              padding: '20px',
+              transition: 'all 0.3s ease',
+              display: 'block',
+              minHeight: '100px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              marginBottom: '16px',
+              width: '100%',
+              position: 'relative',
+              boxSizing: 'border-box',
+              background: '#f8f9fa'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+                paddingBottom: '12px',
+                borderBottom: '1px solid #e9ecef'
+              }}>
+                <h4 style={{
+                  margin: '0',
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#2c3e50'
+                }}>{mapping.packageName || '상담 패키지'}</h4>
+                <span style={{
+                  padding: '4px 12px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  background: mapping.status === 'ACTIVE' ? '#d4edda' : '#f8d7da',
+                  color: mapping.status === 'ACTIVE' ? '#155724' : '#721c24',
+                  border: mapping.status === 'ACTIVE' ? '1px solid #c3e6cb' : '1px solid #f5c6cb'
+                }}>
                   {mapping.status === 'ACTIVE' ? '활성' : '비활성'}
                 </span>
               </div>
-              <div className="package-details">
-                <div className="detail-item">
-                  <span className="label">총 회기:</span>
-                  <span className="value">{mapping.totalSessions}회</span>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '16px',
+                flexWrap: 'wrap',
+                gap: '16px',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  textAlign: 'center',
+                  minWidth: '80px',
+                  boxSizing: 'border-box'
+                }}>
+                  <span style={{
+                    fontSize: '12px',
+                    color: '#6c757d',
+                    marginBottom: '4px',
+                    fontWeight: '500'
+                  }}>총 회기:</span>
+                  <span style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#2c3e50'
+                  }}>{mapping.totalSessions}회</span>
                 </div>
-                <div className="detail-item">
-                  <span className="label">사용 회기:</span>
-                  <span className="value">{mapping.usedSessions || 0}회</span>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  textAlign: 'center',
+                  minWidth: '80px',
+                  boxSizing: 'border-box'
+                }}>
+                  <span style={{
+                    fontSize: '12px',
+                    color: '#6c757d',
+                    marginBottom: '4px',
+                    fontWeight: '500'
+                  }}>사용 회기:</span>
+                  <span style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#2c3e50'
+                  }}>{mapping.usedSessions || 0}회</span>
                 </div>
-                <div className="detail-item">
-                  <span className="label">남은 회기:</span>
-                  <span className="value">{mapping.remainingSessions || 0}회</span>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  textAlign: 'center',
+                  minWidth: '80px',
+                  boxSizing: 'border-box'
+                }}>
+                  <span style={{
+                    fontSize: '12px',
+                    color: '#6c757d',
+                    marginBottom: '4px',
+                    fontWeight: '500'
+                  }}>남은 회기:</span>
+                  <span style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#2c3e50'
+                  }}>{mapping.remainingSessions || 0}회</span>
                 </div>
-                <div className="detail-item">
-                  <span className="label">상담사:</span>
-                  <span className="value">{mapping.consultant?.name || '미지정'}</span>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  textAlign: 'center',
+                  minWidth: '80px',
+                  boxSizing: 'border-box'
+                }}>
+                  <span style={{
+                    fontSize: '12px',
+                    color: '#6c757d',
+                    marginBottom: '4px',
+                    fontWeight: '500'
+                  }}>상담사:</span>
+                  <span style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#2c3e50'
+                  }}>{mapping.consultant?.name || '미지정'}</span>
                 </div>
-                <div className="detail-item">
-                  <span className="label">연결일:</span>
-                  <span className="value">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  textAlign: 'center',
+                  minWidth: '80px',
+                  boxSizing: 'border-box'
+                }}>
+                  <span style={{
+                    fontSize: '12px',
+                    color: '#6c757d',
+                    marginBottom: '4px',
+                    fontWeight: '500'
+                  }}>연결일:</span>
+                  <span style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#2c3e50'
+                  }}>
                     {mapping.createdAt ? formatDate(mapping.createdAt) : '알 수 없음'}
                   </span>
                 </div>
@@ -243,31 +384,102 @@ const ClientSessionManagement = () => {
       </div>
 
       {/* 최근 상담 일정 */}
-      <div className="consultation-history">
-        <h3><i className="bi bi-calendar-event"></i> 최근 상담 일정</h3>
+      <div style={{
+        background: 'white',
+        borderRadius: '12px',
+        padding: '24px',
+        marginTop: '20px',
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+      }}>
+        <h3 style={{
+          margin: '0 0 24px 0',
+          fontSize: '22px',
+          fontWeight: '700',
+          color: '#2c3e50',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          paddingBottom: '16px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <i className="bi bi-calendar-event" style={{ color: '#007bff', fontSize: '20px' }}></i> 
+          최근 상담 일정
+        </h3>
         {sessionData.recentSchedules.length > 0 ? (
-          <div className="consultation-list">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px'
+          }}>
             {sessionData.recentSchedules.map((schedule, index) => (
-              <div key={index} className="consultation-item">
-                <div className="consultation-header">
-                  <div className="consultation-date">
-                    <i className="bi bi-calendar3"></i>
+              <div key={index} style={{
+                border: '1px solid #e9ecef',
+                borderRadius: '12px',
+                padding: '20px',
+                transition: 'all 0.3s ease',
+                background: '#f8f9fa',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                  paddingBottom: '12px',
+                  borderBottom: '1px solid #e9ecef'
+                }}>
+                  <div style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#2c3e50',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <i className="bi bi-calendar3" style={{ color: '#007bff', fontSize: '16px' }}></i>
                     {formatDate(schedule.date)}
                   </div>
-                  <div className="consultation-status" style={{
-                    color: getStatusColor(schedule.status === '완료')
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    padding: '6px 12px',
+                    borderRadius: '20px',
+                    background: '#d4edda',
+                    color: '#155724',
+                    border: '1px solid #c3e6cb'
                   }}>
                     {getStatusText(schedule.status === '완료')}
                   </div>
                 </div>
-                <div className="consultation-content">
-                  <div className="consultation-title">
-                    <i className="bi bi-chat-dots"></i>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#2c3e50',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <i className="bi bi-chat-dots" style={{ color: '#28a745', fontSize: '16px' }}></i>
                     {schedule.title || '상담'}
                   </div>
-                  <div className="consultation-details">
-                    <span className="consultation-duration">
-                      <i className="bi bi-clock"></i>
+                  <div style={{
+                    display: 'flex',
+                    gap: '16px',
+                    alignItems: 'center'
+                  }}>
+                    <span style={{
+                      fontSize: '14px',
+                      color: '#6c757d',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 12px',
+                      background: '#e9ecef',
+                      borderRadius: '6px'
+                    }}>
+                      <i className="bi bi-clock" style={{ color: '#6c757d', fontSize: '14px' }}></i>
                       {schedule.startTime} - {schedule.endTime}
                     </span>
                   </div>
@@ -276,9 +488,20 @@ const ClientSessionManagement = () => {
             ))}
           </div>
         ) : (
-          <div className="no-consultations">
-            <i className="bi bi-calendar-x"></i>
-            <p>아직 상담 일정이 없습니다.</p>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '60px 20px',
+            textAlign: 'center',
+            color: '#6c757d',
+            background: '#f8f9fa',
+            borderRadius: '12px',
+            border: '2px dashed #dee2e6'
+          }}>
+            <i className="bi bi-calendar-x" style={{ fontSize: '64px', marginBottom: '20px', color: '#dee2e6' }}></i>
+            <p style={{ margin: '0', fontSize: '18px', fontWeight: '500' }}>아직 상담 일정이 없습니다.</p>
           </div>
         )}
       </div>

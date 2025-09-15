@@ -63,10 +63,14 @@ const SessionManagement = () => {
                     description: code.codeDescription
                 }));
                 
-                // 중복 제거: value 기준으로 중복 제거
-                const uniqueOptions = options.filter((option, index, self) => 
-                    index === self.findIndex(o => o.value === option.value)
-                );
+                // 중복 제거: value 기준으로 중복 제거 (더 강력한 로직)
+                const uniqueOptions = options.reduce((acc, current) => {
+                    const existingIndex = acc.findIndex(item => item.value === current.value);
+                    if (existingIndex === -1) {
+                        acc.push(current);
+                    }
+                    return acc;
+                }, []);
                 
                 setMappingStatusOptions(uniqueOptions);
             }
@@ -852,7 +856,7 @@ const SessionManagement = () => {
                         >
                             <option value="ALL">전체</option>
                             {mappingStatusOptions.map((status, index) => (
-                                <option key={`${status.value}-${index}`} value={status.value}>
+                                <option key={`mapping-status-${status.value}-${index}`} value={status.value}>
                                     {status.icon} {status.label}
                                 </option>
                             ))}

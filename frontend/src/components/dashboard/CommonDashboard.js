@@ -16,6 +16,7 @@ import ClientMessageSection from './ClientMessageSection';
 import ErpPurchaseRequestPanel from './ErpPurchaseRequestPanel';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ClientPersonalizedMessages from './ClientPersonalizedMessages';
+import ClientPaymentSessionsSection from './ClientPaymentSessionsSection';
 import MotivationCard from '../common/MotivationCard';
 
 const CommonDashboard = ({ user: propUser }) => {
@@ -670,6 +671,11 @@ const CommonDashboard = ({ user: propUser }) => {
             consultationData={consultationData}
             clientStatus={clientStatus}
           />
+        )}
+
+        {/* 내담자 결제 내역 및 회기 현황 (내담자 전용) */}
+        {user?.role === 'CLIENT' && (
+          <ClientPaymentSessionsSection userId={user.id} />
         )}
         
         {/* 동기부여 카드 (모든 사용자) */}

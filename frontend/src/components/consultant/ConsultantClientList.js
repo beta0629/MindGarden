@@ -93,8 +93,13 @@ const ConsultantClientList = () => {
               createdAt: item.assignedAt || item.client.createdAt || new Date().toISOString(),
               profileImage: item.client.profileImage || null,
               remainingSessions: item.remainingSessions,
+              totalSessions: item.totalSessions,
+              usedSessions: item.usedSessions,
               packageName: item.packageName,
-              paymentStatus: item.paymentStatus
+              packagePrice: item.packagePrice,
+              paymentStatus: item.paymentStatus,
+              paymentDate: item.paymentDate,
+              mappingId: item.id
             };
           }
           return null;
@@ -480,19 +485,59 @@ const ConsultantClientList = () => {
                           <i className="bi bi-calendar" style={{ width: '16px', color: '#3498db', flexShrink: '0' }}></i>
                           <span>가입일: {client.createdAt ? new Date(client.createdAt).toLocaleDateString() : '정보 없음'}</span>
                         </div>
+                        {/* 회기 현황 섹션 */}
                         <div 
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            color: '#6c757d',
-                            fontSize: '0.95rem',
-                            minHeight: '20px'
+                            background: '#f8f9fa',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            marginTop: '8px',
+                            border: '1px solid #e9ecef'
                           }}
                         >
-                          <i className="bi bi-clock" style={{ width: '16px', color: '#3498db', flexShrink: '0' }}></i>
-                          <span>남은 세션: {client.remainingSessions || 0}회</span>
+                          <div 
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              color: '#2c3e50',
+                              fontSize: '0.9rem',
+                              fontWeight: '600',
+                              marginBottom: '8px'
+                            }}
+                          >
+                            <i className="bi bi-graph-up" style={{ color: '#007bff' }}></i>
+                            <span>회기 현황</span>
+                          </div>
+                          <div 
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 1fr 1fr',
+                              gap: '8px',
+                              fontSize: '0.85rem'
+                            }}
+                          >
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ color: '#007bff', fontWeight: '600' }}>
+                                {client.totalSessions || 0}회
+                              </div>
+                              <div style={{ color: '#6c757d', fontSize: '0.75rem' }}>총 회기</div>
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ color: '#28a745', fontWeight: '600' }}>
+                                {client.usedSessions || 0}회
+                              </div>
+                              <div style={{ color: '#6c757d', fontSize: '0.75rem' }}>사용</div>
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ color: '#ffc107', fontWeight: '600' }}>
+                                {client.remainingSessions || 0}회
+                              </div>
+                              <div style={{ color: '#6c757d', fontSize: '0.75rem' }}>남은 회기</div>
+                            </div>
+                          </div>
                         </div>
+                        
                         <div 
                           style={{
                             display: 'flex',
@@ -500,12 +545,28 @@ const ConsultantClientList = () => {
                             gap: '10px',
                             color: '#6c757d',
                             fontSize: '0.95rem',
-                            minHeight: '20px'
+                            minHeight: '20px',
+                            marginTop: '8px'
                           }}
                         >
                           <i className="bi bi-box" style={{ width: '16px', color: '#3498db', flexShrink: '0' }}></i>
                           <span>패키지: {client.packageName || '정보 없음'}</span>
                         </div>
+                        {client.packagePrice && (
+                          <div 
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                              color: '#6c757d',
+                              fontSize: '0.95rem',
+                              minHeight: '20px'
+                            }}
+                          >
+                            <i className="bi bi-currency-dollar" style={{ width: '16px', color: '#3498db', flexShrink: '0' }}></i>
+                            <span>가격: {new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(client.packagePrice)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     

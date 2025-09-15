@@ -333,30 +333,47 @@ public class AdminController {
                 return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "매핑 정보가 없습니다",
-                    "data", null
+                    "data", new ArrayList<>()
                 ));
             }
             
-            // 가장 최근 활성 매핑 찾기
-            ConsultantClientMapping activeMapping = mappings.stream()
-                .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
-                .findFirst()
-                .orElse(mappings.get(0));
-            
-            // 상담사 정보 추출
-            Map<String, Object> consultantInfo = new HashMap<>();
-            if (activeMapping.getConsultant() != null) {
-                consultantInfo.put("consultantId", activeMapping.getConsultant().getId());
-                consultantInfo.put("consultantName", activeMapping.getConsultant().getName());
-                consultantInfo.put("specialty", activeMapping.getConsultant().getSpecialization());
-                consultantInfo.put("intro", "전문적이고 따뜻한 상담을 제공합니다.");
-                consultantInfo.put("profileImage", null);
-            }
+            // 매핑 정보를 상세하게 변환
+            List<Map<String, Object>> mappingData = mappings.stream()
+                .map(mapping -> {
+                    Map<String, Object> mappingInfo = new HashMap<>();
+                    mappingInfo.put("id", mapping.getId());
+                    mappingInfo.put("totalSessions", mapping.getTotalSessions());
+                    mappingInfo.put("usedSessions", mapping.getUsedSessions());
+                    mappingInfo.put("remainingSessions", mapping.getRemainingSessions());
+                    mappingInfo.put("packageName", mapping.getPackageName());
+                    mappingInfo.put("packagePrice", mapping.getPackagePrice());
+                    mappingInfo.put("paymentStatus", mapping.getPaymentStatus());
+                    mappingInfo.put("paymentMethod", mapping.getPaymentMethod());
+                    mappingInfo.put("paymentReference", mapping.getPaymentReference());
+                    mappingInfo.put("paymentDate", mapping.getPaymentDate());
+                    mappingInfo.put("status", mapping.getStatus());
+                    mappingInfo.put("createdAt", mapping.getCreatedAt());
+                    mappingInfo.put("assignedAt", mapping.getAssignedAt());
+                    
+                    // 상담사 정보
+                    if (mapping.getConsultant() != null) {
+                        Map<String, Object> consultantInfo = new HashMap<>();
+                        consultantInfo.put("consultantId", mapping.getConsultant().getId());
+                        consultantInfo.put("consultantName", mapping.getConsultant().getName());
+                        consultantInfo.put("specialty", mapping.getConsultant().getSpecialization());
+                        consultantInfo.put("intro", "전문적이고 따뜻한 상담을 제공합니다.");
+                        consultantInfo.put("profileImage", null);
+                        mappingInfo.put("consultant", consultantInfo);
+                    }
+                    
+                    return mappingInfo;
+                })
+                .collect(java.util.stream.Collectors.toList());
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "내담자별 매핑 조회 성공",
-                "data", consultantInfo
+                "data", mappingData
             ));
         } catch (Exception e) {
             log.error("❌ 내담자별 매핑 조회 실패", e);

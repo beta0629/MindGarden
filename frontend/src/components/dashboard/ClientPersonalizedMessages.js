@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import WeatherCard from './WeatherCard';
 import ConsultantListModal from '../common/ConsultantListModal';
+import ConsultationGuideModal from '../common/ConsultationGuideModal';
 
 /**
  * 내담자 상태에 따른 맞춤형 메시지 컴포넌트
@@ -11,6 +12,7 @@ import ConsultantListModal from '../common/ConsultantListModal';
 const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) => {
   const navigate = useNavigate();
   const [isConsultantModalOpen, setIsConsultantModalOpen] = useState(false);
+  const [isConsultationGuideModalOpen, setIsConsultationGuideModalOpen] = useState(false);
   
   // 카드 클릭 핸들러
   const handleCardClick = (action) => {
@@ -62,8 +64,8 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         navigate('/client/payment-history');
         break;
       case 'consultation-guide':
-        // 상담 가이드 페이지로 이동 (향후 구현)
-        alert('상담 가이드 페이지는 준비 중입니다.');
+        // 상담 가이드 모달 열기
+        setIsConsultationGuideModalOpen(true);
         break;
       default:
         console.log('Unknown action:', action);
@@ -411,6 +413,12 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         isOpen={isConsultantModalOpen}
         onClose={() => setIsConsultantModalOpen(false)}
         consultantList={consultationData?.consultantList || []}
+      />
+      
+      {/* 상담 가이드 모달 */}
+      <ConsultationGuideModal
+        isOpen={isConsultationGuideModalOpen}
+        onClose={() => setIsConsultationGuideModalOpen(false)}
       />
     </div>
   );

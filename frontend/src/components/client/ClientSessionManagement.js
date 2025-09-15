@@ -40,7 +40,7 @@ const ClientSessionManagement = () => {
       const schedules = scheduleResponse.data || [];
 
       // 회기 사용 내역 계산 (완료된 상담만)
-      const usedSessions = schedules.filter(s => s.status === 'COMPLETED').length;
+      const usedSessions = schedules.filter(s => s.status === '완료').length;
       const totalSessions = mappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
       const remainingSessions = totalSessions - usedSessions;
 
@@ -257,9 +257,9 @@ const ClientSessionManagement = () => {
                       {schedule.startTime} - {schedule.endTime}
                     </span>
                     <span className="consultation-status" style={{
-                      color: getStatusColor(schedule.status === 'COMPLETED')
+                      color: getStatusColor(schedule.status === '완료')
                     }}>
-                      {getStatusText(schedule.status === 'COMPLETED')}
+                      {getStatusText(schedule.status === '완료')}
                     </span>
                   </div>
                 </div>

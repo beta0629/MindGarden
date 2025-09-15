@@ -709,8 +709,8 @@ const SessionManagement = () => {
             {/* 회기 관리 탭 내용 */}
             {activeTab === 'mappings' && (
                 <>
-                    {/* 내담자 선택 섹션 */}
-                    <div className="session-mgmt-client-selection-section">
+            {/* 내담자 선택 섹션 */}
+            <div className="session-mgmt-client-selection-section">
                 <div className="session-mgmt-client-selection-header">
                     <h3>내담자 선택</h3>
                     <div className="session-mgmt-client-filters">
@@ -993,7 +993,7 @@ const SessionManagement = () => {
                                             : null;
                                         
                                         setNewSessionData({
-                                            ...newSessionData,
+                                        ...newSessionData,
                                             consultantId: consultantId,
                                             totalSessions: latestMapping?.totalSessions || 0,
                                             usedSessions: latestMapping?.usedSessions || 0,
@@ -1046,12 +1046,12 @@ const SessionManagement = () => {
                             
                             <div className="session-mgmt-form-group">
                                 <label>패키지명</label>
-                                <select 
+                                <select
                                     value={newSessionData.packageName}
                                     onChange={(e) => {
                                         const selectedPackage = packageOptions.find(pkg => pkg.value === e.target.value);
                                         setNewSessionData({
-                                            ...newSessionData,
+                                        ...newSessionData,
                                             packageName: e.target.value,
                                             packagePrice: selectedPackage ? selectedPackage.price.toString() : '',
                                             additionalSessions: selectedPackage ? selectedPackage.sessions : 5

@@ -235,6 +235,7 @@ function AppContent() {
             <Route path="/erp/tax" element={<ImprovedTaxManagement />} />
             <Route path="/consultant/send-message/:consultationId" element={<ConsultantMessageScreen />} />
             <Route path="/consultant/clients" element={<ConsultantClientList />} />
+            <Route path="/consultant/client/:id" element={<ConsultantClientList />} />
             <Route path="/consultant/availability" element={<ConsultantAvailability />} />
             <Route path="/consultant/consultation-records" element={<ConsultantRecords />} />
             <Route path="/consultant/reports" element={<ConsultantRecords />} />

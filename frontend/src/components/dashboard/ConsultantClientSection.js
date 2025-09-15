@@ -27,21 +27,51 @@ const ConsultantClientSection = ({ userId }) => {
       const response = await apiGet(`/api/admin/mappings/consultant/${userId}/clients`);
       const mappings = response.data || [];
       
-      // 매핑에서 클라이언트 정보 추출 및 매핑 정보 추가
-      const clientsWithMappingInfo = mappings.map(mapping => ({
-        id: mapping.client?.id || mapping.clientId,
-        name: mapping.client?.name || mapping.clientName,
-        email: mapping.client?.email || '',
-        mappingStatus: mapping.status,
-        totalSessions: mapping.totalSessions || 0,
-        usedSessions: mapping.usedSessions || 0,
-        remainingSessions: mapping.remainingSessions || 0,
-        lastConsultationDate: mapping.lastConsultationDate,
-        packageName: mapping.packageName,
-        packagePrice: mapping.packagePrice,
-        paymentStatus: mapping.paymentStatus,
-        createdAt: mapping.createdAt
-      }));
+      // 클라이언트별로 그룹화하여 누적 회기수 계산
+      const clientMap = new Map();
+      
+      mappings.forEach(mapping => {
+        const clientId = mapping.client?.id || mapping.clientId;
+        const clientStatus = mapping.client?.status || mapping.status;
+        
+        if (!clientMap.has(clientId)) {
+          clientMap.set(clientId, {
+            id: clientId,
+            name: mapping.client?.name || mapping.clientName,
+            email: mapping.client?.email || '',
+            mappingStatus: clientStatus,
+            totalSessions: 0,
+            usedSessions: 0,
+            remainingSessions: 0,
+            lastConsultationDate: mapping.lastConsultationDate,
+            packageName: mapping.packageName,
+            packagePrice: mapping.packagePrice,
+            paymentStatus: mapping.paymentStatus,
+            createdAt: mapping.createdAt,
+            packages: []
+          });
+        }
+        
+        const client = clientMap.get(clientId);
+        client.totalSessions += mapping.totalSessions || 0;
+        client.usedSessions += mapping.usedSessions || 0;
+        client.remainingSessions += mapping.remainingSessions || 0;
+        client.packages.push({
+          packageName: mapping.packageName,
+          totalSessions: mapping.totalSessions || 0,
+          usedSessions: mapping.usedSessions || 0,
+          remainingSessions: mapping.remainingSessions || 0
+        });
+        
+        // 가장 최근 상담일로 업데이트
+        if (mapping.lastConsultationDate && 
+            (!client.lastConsultationDate || 
+             new Date(mapping.lastConsultationDate) > new Date(client.lastConsultationDate))) {
+          client.lastConsultationDate = mapping.lastConsultationDate;
+        }
+      });
+      
+      const clientsWithMappingInfo = Array.from(clientMap.values());
       
       setClients(clientsWithMappingInfo);
 
@@ -65,6 +95,12 @@ const ConsultantClientSection = ({ userId }) => {
         return '#ffc107';
       case 'INACTIVE':
         return '#6c757d';
+      case 'COMPLETED':
+        return '#17a2b8';
+      case 'SUSPENDED':
+        return '#dc3545';
+      case 'DELETED':
+        return '#6c757d';
       default:
         return '#6c757d';
     }
@@ -78,8 +114,14 @@ const ConsultantClientSection = ({ userId }) => {
         return '대기';
       case 'INACTIVE':
         return '비활성';
+      case 'COMPLETED':
+        return '완료';
+      case 'SUSPENDED':
+        return '일시정지';
+      case 'DELETED':
+        return '삭제';
       default:
-        return '알 수 없음';
+        return status || '알 수 없음';
     }
   };
 

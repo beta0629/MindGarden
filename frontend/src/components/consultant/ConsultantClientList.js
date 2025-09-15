@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from '../../contexts/SessionContext';
+import { useParams, useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import './ConsultantClientList.css';
 import SimpleLayout from '../layout/SimpleLayout';
@@ -8,6 +9,8 @@ import LoadingSpinner from '../common/LoadingSpinner';
 
 const ConsultantClientList = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { id: clientIdFromUrl } = useParams();
+  const navigate = useNavigate();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,31 +20,103 @@ const ConsultantClientList = () => {
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [userStatusOptions, setUserStatusOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
+  const isModalOpeningRef = useRef(false);
+
+  // 기본 아이콘 반환 함수
+  const getDefaultIcon = (status) => {
+    const iconMap = {
+      'ACTIVE': '🟢',
+      'INACTIVE': '🔴',
+      'PENDING': '⏳',
+      'COMPLETED': '✅',
+      'SUSPENDED': '⏸️',
+      'DELETED': '🗑️',
+      'APPROVED': '✅',
+      'REJECTED': '❌',
+      'PAYMENT_CONFIRMED': '💳',
+      'PAYMENT_PENDING': '⏳',
+      'PAYMENT_REJECTED': '❌',
+      'TERMINATED': '🔚',
+      'REQUESTED': '📝',
+      'BOOKED': '📅',
+      'IN_PROGRESS': '🔄',
+      'CANCELLED': '❌',
+      'NO_SHOW': '🚫',
+      'RESCHEDULED': '🔄',
+      'AVAILABLE': '✅',
+      'CONFIRMED': '✅',
+      'WAITING': '⏳',
+      'EXPIRED': '⏰',
+      'BLOCKED': '🚫',
+      'MAINTENANCE': '🔧'
+    };
+    return iconMap[status] || '❓';
+  };
+
+  // 기본 색상 반환 함수
+  const getDefaultColor = (status) => {
+    const colorMap = {
+      'ACTIVE': '#10b981',
+      'INACTIVE': '#6b7280',
+      'PENDING': '#f59e0b',
+      'COMPLETED': '#059669',
+      'SUSPENDED': '#dc2626',
+      'DELETED': '#6b7280',
+      'APPROVED': '#10b981',
+      'REJECTED': '#ef4444',
+      'PAYMENT_CONFIRMED': '#10b981',
+      'PAYMENT_PENDING': '#f59e0b',
+      'PAYMENT_REJECTED': '#ef4444',
+      'TERMINATED': '#6b7280',
+      'REQUESTED': '#3b82f6',
+      'BOOKED': '#8b5cf6',
+      'IN_PROGRESS': '#f59e0b',
+      'CANCELLED': '#ef4444',
+      'NO_SHOW': '#dc2626',
+      'RESCHEDULED': '#8b5cf6',
+      'AVAILABLE': '#10b981',
+      'CONFIRMED': '#10b981',
+      'WAITING': '#f59e0b',
+      'EXPIRED': '#6b7280',
+      'BLOCKED': '#dc2626',
+      'MAINTENANCE': '#f59e0b'
+    };
+    return colorMap[status] || '#6b7280';
+  };
 
   // 사용자 상태 코드 로드
   const loadUserStatusCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
+      console.log('🔄 사용자 상태 코드 로드 시작...');
       const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
+      console.log('📡 API 응답:', response);
+      
       if (response && response.length > 0) {
-        setUserStatusOptions(response.map(code => ({
+        const mappedOptions = response.map(code => ({
           value: code.codeValue,
           label: code.codeLabel,
-          icon: code.icon,
-          color: code.colorCode,
+          icon: code.icon || getDefaultIcon(code.codeValue),
+          color: code.colorCode || getDefaultColor(code.codeValue),
           description: code.description
-        })));
+        }));
+        console.log('✅ 매핑된 상태 옵션:', mappedOptions);
+        setUserStatusOptions(mappedOptions);
+      } else {
+        console.warn('⚠️ API 응답이 비어있음');
       }
     } catch (error) {
-      console.error('사용자 상태 코드 로드 실패:', error);
+      console.error('❌ 사용자 상태 코드 로드 실패:', error);
       // 실패 시 기본값 설정
-      setUserStatusOptions([
+      const defaultOptions = [
         { value: 'ACTIVE', label: '활성', icon: '🟢', color: '#10b981', description: '활성 사용자' },
         { value: 'INACTIVE', label: '비활성', icon: '🔴', color: '#6b7280', description: '비활성 사용자' },
         { value: 'PENDING', label: '대기중', icon: '⏳', color: '#f59e0b', description: '대기 중인 사용자' },
         { value: 'COMPLETED', label: '완료', icon: '✅', color: '#059669', description: '완료된 사용자' },
         { value: 'SUSPENDED', label: '일시정지', icon: '⏸️', color: '#dc2626', description: '일시정지된 사용자' }
-      ]);
+      ];
+      console.log('🔄 기본값 설정:', defaultOptions);
+      setUserStatusOptions(defaultOptions);
     } finally {
       setLoadingCodes(false);
     }
@@ -54,6 +129,26 @@ const ConsultantClientList = () => {
       loadUserStatusCodes();
     }
   }, [isLoggedIn, user?.id, loadUserStatusCodes]);
+
+  // URL에서 클라이언트 ID가 있을 때 해당 클라이언트 모달 열기
+  useEffect(() => {
+    if (clientIdFromUrl && clients.length > 0 && !isModalOpeningRef.current) {
+      const client = clients.find(c => c.clientId === parseInt(clientIdFromUrl));
+      if (client && !showClientModal) {
+        isModalOpeningRef.current = true;
+        setSelectedClient(client);
+        setShowClientModal(true);
+        // 모달 열기 완료 후 플래그 리셋
+        setTimeout(() => {
+          isModalOpeningRef.current = false;
+        }, 100);
+      }
+    } else if (!clientIdFromUrl && showClientModal) {
+      // URL에 클라이언트 ID가 없으면 모달 닫기
+      setShowClientModal(false);
+      setSelectedClient(null);
+    }
+  }, [clientIdFromUrl, clients, showClientModal]);
 
   const loadClients = async () => {
     try {
@@ -72,9 +167,15 @@ const ConsultantClientList = () => {
         console.log('✅ 내담자 목록 로드 성공:', response.data);
         console.log('📊 내담자 수:', response.count);
         
-        // API 응답에서 내담자 정보 추출
+        // API 응답에서 내담자 정보 추출 및 최신순 정렬
         const clientData = response.data || [];
-        const clients = clientData.map((item, index) => {
+        const sortedData = clientData.sort((a, b) => {
+          const dateA = new Date(a.assignedAt || a.client.createdAt || 0);
+          const dateB = new Date(b.assignedAt || b.client.createdAt || 0);
+          return dateB - dateA; // 최신순 정렬
+        });
+        
+        const clients = sortedData.map((item, index) => {
           // API 응답 구조에 맞게 내담자 정보 변환
           if (item.client) {
             // 테스트를 위해 다양한 상태 시뮬레이션 (실제 API에서 상태를 받으면 제거)
@@ -85,7 +186,8 @@ const ConsultantClientList = () => {
             console.log(`🔄 상태 시뮬레이션 - 인덱스: ${index}, ID: ${item.client.id}, 할당된 상태: ${simulatedStatus}`);
             
             return {
-              id: item.client.id,
+              id: item.mappingId || item.id, // mappingId를 우선 사용하여 고유성 보장
+              clientId: item.client.id, // 실제 클라이언트 ID는 별도로 저장
               name: item.client.name,
               email: item.client.email,
               phone: item.client.phone,
@@ -144,12 +246,16 @@ const ConsultantClientList = () => {
   const handleViewClient = (client) => {
     setSelectedClient(client);
     setShowClientModal(true);
+    // URL 업데이트
+    navigate(`/consultant/client/${client.clientId}`);
   };
 
   // 내담자 상세 정보 모달 닫기
   const handleCloseModal = () => {
     setShowClientModal(false);
     setSelectedClient(null);
+    // URL을 클라이언트 목록으로 되돌리기 (replace로 히스토리 교체)
+    navigate('/consultant/clients', { replace: true });
   };
 
   // 내담자 정보 저장
@@ -205,8 +311,22 @@ const ConsultantClientList = () => {
       </div>
 
       {/* 검색 및 필터 */}
-      <div className="client-list-controls">
-        <div className="search-section">
+      <div 
+        className="client-list-controls"
+        style={{
+          display: 'flex',
+          gap: '20px',
+          marginBottom: '30px',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          background: '#fff',
+          padding: '20px',
+          borderRadius: '15px',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+          border: '1px solid #e9ecef'
+        }}
+      >
+        <div className="search-section" style={{ flex: '1', minWidth: '300px' }}>
           <div 
             className="search-input-group"
             style={{
@@ -252,20 +372,6 @@ const ConsultantClientList = () => {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             disabled={loadingCodes}
-            style={{
-              width: '100%',
-              padding: '12px 15px',
-              border: '2px solid #e9ecef',
-              borderRadius: '12px',
-              fontSize: '0.9rem',
-              background: '#f8f9fa',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              color: '#2c3e50',
-              fontWeight: '500',
-              maxHeight: '45px',
-              minWidth: '140px'
-            }}
           >
             <option value="ALL">전체 상태</option>
             <option value="ACTIVE">🟢 활성</option>
@@ -399,9 +505,13 @@ const ConsultantClientList = () => {
                       <div style={{ flexShrink: 0 }}>
                         <span 
                           style={{ 
-                            backgroundColor: statusInfo.color + '20', 
-                            color: statusInfo.color,
-                            padding: '4px 10px',
+                            backgroundColor: client.status === 'ACTIVE' ? '#10b981' : 
+                                          client.status === 'INACTIVE' ? '#ef4444' :
+                                          client.status === 'PENDING' ? '#f59e0b' :
+                                          client.status === 'COMPLETED' ? '#059669' :
+                                          client.status === 'SUSPENDED' ? '#dc2626' : '#6b7280',
+                            color: '#ffffff',
+                            padding: '6px 12px',
                             borderRadius: '15px',
                             fontSize: '0.8rem',
                             fontWeight: '600',
@@ -410,7 +520,8 @@ const ConsultantClientList = () => {
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px',
-                            whiteSpace: 'nowrap'
+                            whiteSpace: 'nowrap',
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
                           }}
                         >
                           {statusInfo.icon} {statusInfo.label}

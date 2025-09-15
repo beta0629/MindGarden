@@ -90,33 +90,59 @@
 }
 
 .filter-section {
-  min-width: 180px;
+  min-width: 300px !important;
+  position: relative;
+}
+
+.filter-section::before {
+  content: "⚙️";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #666;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .filter-select {
-  width: 100%;
-  padding: 14px 15px;
+  width: 100% !important;
+  padding: 14px 40px 14px 35px;
   border: 2px solid #e9ecef;
   border-radius: 12px;
   font-size: 1rem;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   cursor: pointer;
   transition: all 0.3s ease;
   color: #2c3e50;
   font-weight: 500;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 250px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: relative;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
 }
 
 .filter-select:focus {
   outline: none;
   border-color: #3498db;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 
 .filter-select:hover {
   border-color: #3498db;
-  background: #fff;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
 /* 로딩 상태 */

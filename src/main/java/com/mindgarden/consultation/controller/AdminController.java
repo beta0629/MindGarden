@@ -297,9 +297,15 @@ public class AdminController {
                             ));
                         }
                         
+                        data.put("totalSessions", mapping.getTotalSessions());
+                        data.put("usedSessions", mapping.getUsedSessions());
                         data.put("remainingSessions", mapping.getRemainingSessions());
                         data.put("packageName", mapping.getPackageName());
+                        data.put("packagePrice", mapping.getPackagePrice());
                         data.put("paymentStatus", mapping.getPaymentStatus().toString());
+                        data.put("paymentMethod", mapping.getPaymentMethod());
+                        data.put("paymentReference", mapping.getPaymentReference());
+                        data.put("paymentDate", mapping.getPaymentDate());
                         data.put("mappingId", mapping.getId());
                     } catch (Exception e) {
                         log.warn("매핑 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());

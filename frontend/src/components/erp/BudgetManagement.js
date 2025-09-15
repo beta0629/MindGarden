@@ -89,8 +89,11 @@ const BudgetManagement = () => {
 
   const loadBudgetCategories = async () => {
     try {
+      console.log('예산 카테고리 로드 시작 - 로그인 상태:', isLoggedIn, '사용자:', user?.id);
+      
       // 인증이 필요한 경우 기본 카테고리 사용
       if (!isLoggedIn || !user?.id) {
+        console.log('로그인 없이 기본 카테고리 사용');
         const defaultCategories = [
           { id: 607, codeValue: 'OPERATING', codeLabel: '운영비', codeDescription: '일반적인 운영 비용', sortOrder: 1 },
           { id: 608, codeValue: 'MARKETING', codeLabel: '마케팅', codeDescription: '마케팅 및 홍보 비용', sortOrder: 2 },
@@ -102,15 +105,19 @@ const BudgetManagement = () => {
           { id: 614, codeValue: 'OTHER', codeLabel: '기타', codeDescription: '기타 비용', sortOrder: 8 }
         ];
         setBudgetCategories(defaultCategories);
+        console.log('기본 카테고리 설정 완료:', defaultCategories.length, '개');
         return;
       }
 
+      console.log('로그인 상태에서 API 호출');
       const response = await apiGet('/api/admin/common-codes/values?groupCode=BUDGET_CATEGORY');
       if (response.success) {
         setBudgetCategories(response.data || []);
+        console.log('API에서 카테고리 로드 완료:', response.data?.length || 0, '개');
       } else {
         // API 응답은 성공했지만 데이터가 없는 경우
         setBudgetCategories([]);
+        console.log('API 응답 실패, 빈 배열 설정');
       }
     } catch (err) {
       console.error('예산 카테고리 로드 실패:', err);
@@ -126,6 +133,7 @@ const BudgetManagement = () => {
         { id: 614, codeValue: 'OTHER', codeLabel: '기타', codeDescription: '기타 비용', sortOrder: 8 }
       ];
       setBudgetCategories(defaultCategories);
+      console.log('API 실패 시 기본 카테고리 사용:', defaultCategories.length, '개');
     }
   };
 

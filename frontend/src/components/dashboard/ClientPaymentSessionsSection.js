@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -7,7 +6,6 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
  * 내담자 결제 내역 및 총회기수 섹션 컴포넌트
  */
 const ClientPaymentSessionsSection = ({ userId }) => {
-  const navigate = useNavigate();
   const [paymentData, setPaymentData] = useState({
     totalSessions: 0,
     usedSessions: 0,
@@ -182,12 +180,6 @@ const ClientPaymentSessionsSection = ({ userId }) => {
     <div className="client-payment-sessions-section">
       <div className="section-header">
         <h3><i className="bi bi-credit-card"></i> 결제 내역 및 회기 현황</h3>
-        <button 
-          className="btn btn-outline-primary btn-sm"
-          onClick={() => navigate('/client/payment')}
-        >
-          <i className="bi bi-arrow-right"></i> 상세보기
-        </button>
       </div>
 
       <div className="payment-sessions-content">

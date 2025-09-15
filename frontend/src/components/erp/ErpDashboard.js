@@ -180,7 +180,7 @@ const ErpDashboard = () => {
           <ErpButton
             variant="warning"
             size="large"
-            onClick={() => window.location.href = '/erp/budgets'}
+            onClick={() => window.location.href = '/erp/budget'}
             style={{ width: '100%' }}
           >
             예산 관리

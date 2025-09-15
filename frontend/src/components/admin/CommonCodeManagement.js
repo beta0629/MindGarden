@@ -6,7 +6,8 @@ import {
     getCodeGroupKoreanName, 
     getCodeGroupIcon,
     getCodeGroupKoreanNameSync,
-    getCodeGroupIconSync
+    getCodeGroupIconSync,
+    clearCodeGroupCache
 } from '../../utils/codeHelper';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -35,13 +36,20 @@ const CommonCodeManagement = () => {
     // 코드그룹 메타데이터 상태
     const [groupMetadata, setGroupMetadata] = useState([]);
     const [metadataLoaded, setMetadataLoaded] = useState(false);
+    
+    // 필터 상태
+    const [searchTerm, setSearchTerm] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('all');
 
     // 코드그룹 메타데이터 로드
     const loadMetadata = useCallback(async () => {
         try {
+            // 캐시 초기화 후 새 데이터 로드
+            clearCodeGroupCache();
             const metadata = await loadCodeGroupMetadata();
             setGroupMetadata(metadata);
             setMetadataLoaded(true);
+            console.log('코드그룹 메타데이터 로드 완료:', metadata.length, '개');
         } catch (error) {
             console.error('코드그룹 메타데이터 로드 실패:', error);
             setMetadataLoaded(true); // 실패해도 로딩 상태는 해제
@@ -117,6 +125,175 @@ const CommonCodeManagement = () => {
         setGroupCodes([]);
         setShowAddForm(false);
         setEditingCode(null);
+    };
+
+    // 필터링된 코드 그룹 반환
+    const getFilteredCodeGroups = () => {
+        let filtered = codeGroups;
+
+        // 검색어 필터링 (그룹명, 한글명, 변환된 한글명)
+        if (searchTerm) {
+            filtered = filtered.filter(group => {
+                const koreanName = getCodeGroupKoreanNameSync(group);
+                const convertedKorean = convertGroupNameToKorean(group);
+                const searchLower = searchTerm.toLowerCase();
+                
+                // 영문 그룹명 검색
+                const groupMatch = group.toLowerCase().includes(searchLower);
+                
+                // 메타데이터 한글명 검색
+                const koreanMatch = koreanName.toLowerCase().includes(searchLower);
+                
+                // 변환된 한글명 검색
+                const convertedMatch = convertedKorean.toLowerCase().includes(searchLower);
+                
+                return groupMatch || koreanMatch || convertedMatch;
+            });
+        }
+
+        // 카테고리 필터링 (메타데이터 기반)
+        if (categoryFilter !== 'all' && groupMetadata.length > 0) {
+            filtered = filtered.filter(group => {
+                const metadata = groupMetadata.find(m => m.groupName === group);
+                if (!metadata) return false;
+                
+                // 카테고리별 필터링 로직
+                switch (categoryFilter) {
+                    case 'user':
+                        return group.includes('USER') || group.includes('CLIENT') || group.includes('CONSULTANT');
+                    case 'system':
+                        return group.includes('STATUS') || group.includes('PRIORITY') || group.includes('MAPPING');
+                    case 'payment':
+                        return group.includes('PAYMENT') || group.includes('SALARY') || group.includes('BUDGET');
+                    case 'consultation':
+                        return group.includes('CONSULTATION') || group.includes('SCHEDULE') || group.includes('SESSION');
+                    case 'erp':
+                        return group.includes('ERP') || group.includes('PURCHASE') || group.includes('FINANCIAL');
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        return filtered;
+    };
+
+    // 코드 그룹명을 한글로 변환하는 함수 (fallback용)
+    const convertGroupNameToKorean = (groupName) => {
+        const koreanMappings = {
+            // 사용자 관련
+            'USER_ROLE': '사용자역할',
+            'USER_STATUS': '사용자상태',
+            'USER_GRADE': '사용자등급',
+            'CONSULTANT_GRADE': '상담사등급',
+            'CLIENT_STATUS': '내담자상태',
+            'GENDER': '성별',
+            'RESPONSIBILITY': '담당분야',
+            'SPECIALTY': '전문분야',
+            
+            // 시스템 관련
+            'STATUS': '상태',
+            'PRIORITY': '우선순위',
+            'MAPPING_STATUS': '매핑상태',
+            'ROLE': '역할',
+            'PERMISSION': '권한',
+            'ROLE_PERMISSION': '역할권한',
+            
+            // 결제/급여 관련
+            'PAYMENT_METHOD': '결제방법',
+            'PAYMENT_STATUS': '결제상태',
+            'PAYMENT_PROVIDER': '결제제공자',
+            'SALARY_TYPE': '급여유형',
+            'SALARY_PAY_DAY': '급여지급일',
+            'SALARY_OPTION_TYPE': '급여옵션유형',
+            'CONSULTANT_GRADE_SALARY': '상담사등급급여',
+            'FREELANCE_BASE_RATE': '프리랜서기본요율',
+            'BUDGET_CATEGORY': '예산카테고리',
+            'BUDGET_STATUS': '예산상태',
+            
+            // 상담 관련
+            'CONSULTATION_PACKAGE': '상담패키지',
+            'CONSULTATION_STATUS': '상담상태',
+            'CONSULTATION_TYPE': '상담유형',
+            'CONSULTATION_METHOD': '상담방법',
+            'CONSULTATION_LOCATION': '상담장소',
+            'CONSULTATION_SESSION': '상담세션',
+            'CONSULTATION_FEE': '상담료',
+            'CONSULTATION_MODE': '상담모드',
+            'SCHEDULE_STATUS': '스케줄상태',
+            'SCHEDULE_TYPE': '스케줄유형',
+            'SCHEDULE_FILTER': '스케줄필터',
+            'SCHEDULE_SORT': '스케줄정렬',
+            'SESSION_PACKAGE': '회기패키지',
+            'PACKAGE_TYPE': '패키지유형',
+            
+            // ERP 관련
+            'PURCHASE_STATUS': '구매상태',
+            'PURCHASE_CATEGORY': '구매카테고리',
+            'FINANCIAL_CATEGORY': '재무카테고리',
+            'TAX_CATEGORY': '세무카테고리',
+            'TAX_CALCULATION': '세금계산',
+            'VAT_APPLICABLE': '부가세적용',
+            'EXPENSE_CATEGORY': '지출카테고리',
+            'EXPENSE_SUBCATEGORY': '지출하위카테고리',
+            'INCOME_CATEGORY': '수입카테고리',
+            'INCOME_SUBCATEGORY': '수입하위카테고리',
+            'ITEM_CATEGORY': '항목카테고리',
+            'TRANSACTION_TYPE': '거래유형',
+            
+            // 휴가 관련
+            'VACATION_TYPE': '휴가유형',
+            'VACATION_STATUS': '휴가상태',
+            
+            // 보고서 관련
+            'REPORT_PERIOD': '보고서기간',
+            'YEAR_RANGE': '년도범위',
+            'MONTH_RANGE': '월범위',
+            'DATE_RANGE': '날짜범위',
+            'DATE_RANGE_FILTER': '날짜범위필터',
+            'CHART_TYPE_FILTER': '차트유형필터',
+            
+            // 메뉴 관련
+            'MENU': '메뉴',
+            'MENU_CATEGORY': '메뉴카테고리',
+            'ADMIN_MENU': '관리자메뉴',
+            'CLIENT_MENU': '내담자메뉴',
+            'CONSULTANT_MENU': '상담사메뉴',
+            'HQ_ADMIN_MENU': '본사관리자메뉴',
+            'BRANCH_SUPER_ADMIN_MENU': '지점수퍼관리자메뉴',
+            'COMMON_MENU': '공통메뉴',
+            
+            // 기타
+            'APPROVAL_STATUS': '승인상태',
+            'BANK': '은행',
+            'CURRENCY': '통화',
+            'LANGUAGE': '언어',
+            'TIMEZONE': '시간대',
+            'ADDRESS_TYPE': '주소유형',
+            'FILE_TYPE': '파일유형',
+            'MESSAGE_TYPE': '메시지유형',
+            'NOTIFICATION_TYPE': '알림유형',
+            'NOTIFICATION_CHANNEL': '알림채널',
+            'DURATION': '기간',
+            'SORT_OPTION': '정렬옵션',
+            'COMMON_CODE_GROUP': '공통코드그룹',
+            'PRIORITY_LEVEL': '우선순위레벨'
+        };
+        
+        return koreanMappings[groupName] || groupName;
+    };
+
+    // 카테고리명 반환
+    const getCategoryName = (category) => {
+        const categoryNames = {
+            'all': '전체',
+            'user': '사용자 관련',
+            'system': '시스템 관련',
+            'payment': '결제/급여',
+            'consultation': '상담 관련',
+            'erp': 'ERP 관련'
+        };
+        return categoryNames[category] || category;
     };
 
     // 새 코드 추가
@@ -277,11 +454,134 @@ const CommonCodeManagement = () => {
                 <p>관리하고자 하는 코드그룹을 선택하세요.</p>
             </div>
 
+            {/* 필터 UI */}
+            <div style={{
+                background: 'white',
+                padding: '20px',
+                borderRadius: '12px',
+                marginBottom: '20px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+                <div style={{
+                    display: 'flex',
+                    gap: '15px',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    marginBottom: '15px'
+                }}>
+                    {/* 검색 입력 */}
+                    <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
+                        <input
+                            type="text"
+                            placeholder="코드그룹명, 한글명, 영문명으로 검색..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '10px 40px 10px 12px',
+                                border: '2px solid #e1e5e9',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                outline: 'none',
+                                transition: 'border-color 0.2s ease',
+                                backgroundColor: '#f8f9fa'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                            onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+                        />
+                        <i className="bi bi-search" style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            color: '#6c757d',
+                            fontSize: '16px'
+                        }}></i>
+                    </div>
+                    
+                    {/* 카테고리 필터 */}
+                    <select
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        style={{
+                            padding: '10px 12px',
+                            border: '2px solid #e1e5e9',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            backgroundColor: '#f8f9fa',
+                            minWidth: '150px',
+                            outline: 'none',
+                            cursor: 'pointer',
+                            transition: 'border-color 0.2s ease'
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                        onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+                    >
+                        <option value="all">전체 카테고리</option>
+                        <option value="user">사용자 관련</option>
+                        <option value="system">시스템 관련</option>
+                        <option value="payment">결제/급여</option>
+                        <option value="consultation">상담 관련</option>
+                        <option value="erp">ERP 관련</option>
+                    </select>
+                    
+                    {/* 필터 초기화 */}
+                    {(searchTerm || categoryFilter !== 'all') && (
+                        <button
+                            onClick={() => {
+                                setSearchTerm('');
+                                setCategoryFilter('all');
+                            }}
+                            style={{
+                                padding: '10px 16px',
+                                backgroundColor: '#6c757d',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                                transition: 'background-color 0.2s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#5a6268'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
+                        >
+                            <i className="bi bi-x-circle"></i>
+                            초기화
+                        </button>
+                    )}
+                </div>
+                
+                {/* 필터 상태 표시 */}
+                <div style={{
+                    fontSize: '14px',
+                    color: '#6c757d',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                }}>
+                    <i className="bi bi-info-circle"></i>
+                    {searchTerm || categoryFilter !== 'all' ? (
+                        <span>
+                            검색 결과: <strong>{getFilteredCodeGroups().length}개</strong>
+                            {searchTerm && ` (검색어: "${searchTerm}")`}
+                            {categoryFilter !== 'all' && ` (카테고리: ${getCategoryName(categoryFilter)})`}
+                        </span>
+                    ) : (
+                        <span>
+                            전체 <strong>{codeGroups.length}개</strong> 코드그룹
+                        </span>
+                    )}
+                </div>
+            </div>
+
             {loading ? (
                 <LoadingSpinner text="코드그룹을 불러오는 중..." size="medium" />
             ) : (
                 <div className="group-cards">
-                    {codeGroups.map((group, index) => (
+                    {getFilteredCodeGroups().map((group, index) => (
                         <div 
                             key={group} 
                             className="group-card"
@@ -289,7 +589,7 @@ const CommonCodeManagement = () => {
                         >
                             <div className="group-card-header">
                                 <div className="group-icon">{getGroupIcon(group)}</div>
-                                <h3>{getGroupKoreanName(group)}</h3>
+                                <h3>{getGroupKoreanName(group) || convertGroupNameToKorean(group)}</h3>
                                 <span className="group-code">{group}</span>
                             </div>
                             <div className="group-card-body">
@@ -354,7 +654,7 @@ const CommonCodeManagement = () => {
                         fontWeight: '600',
                         lineHeight: '1.3'
                     }}>
-                        📁 {getGroupKoreanName(selectedGroup)} 그룹 관리
+                        📁 {getGroupKoreanName(selectedGroup) || convertGroupNameToKorean(selectedGroup)} 그룹 관리
                     </h2>
                     <p style={{
                         color: '#6c757d',
@@ -411,6 +711,11 @@ const CommonCodeManagement = () => {
                                     className="form-control"
                                     placeholder="예: ACTIVE, INACTIVE"
                                     required
+                                    style={{
+                                        color: '#000',
+                                        backgroundColor: '#fff',
+                                        border: '2px solid #e9ecef'
+                                    }}
                                 />
                             </div>
                             <div className="form-group">
@@ -423,6 +728,11 @@ const CommonCodeManagement = () => {
                                     className="form-control"
                                     placeholder="예: 활성, 비활성"
                                     required
+                                    style={{
+                                        color: '#000',
+                                        backgroundColor: '#fff',
+                                        border: '2px solid #e9ecef'
+                                    }}
                                 />
                             </div>
                         </div>
@@ -435,6 +745,11 @@ const CommonCodeManagement = () => {
                                 className="form-control"
                                 rows="3"
                                 placeholder="코드에 대한 설명을 입력하세요."
+                                style={{
+                                    color: '#000',
+                                    backgroundColor: '#fff',
+                                    border: '2px solid #e9ecef'
+                                }}
                             />
                         </div>
                         <div className="form-row">
@@ -447,6 +762,11 @@ const CommonCodeManagement = () => {
                                     onChange={(e) => setNewCodeData({...newCodeData, sortOrder: parseInt(e.target.value) || 0})}
                                     className="form-control"
                                     min="0"
+                                    style={{
+                                        color: '#000',
+                                        backgroundColor: '#fff',
+                                        border: '2px solid #e9ecef'
+                                    }}
                                 />
                             </div>
                             <div className="form-group">

@@ -308,6 +308,8 @@
   border: 2px solid #e9ecef;
   border-radius: 8px;
   font-size: 1rem;
+  color: #000;
+  background-color: #fff;
   transition: all 0.3s ease;
 }
 
@@ -315,6 +317,11 @@
   outline: none;
   border-color: #007bff;
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-control::placeholder {
+  color: #6c757d;
+  opacity: 1;
 }
 
 .checkbox-label {

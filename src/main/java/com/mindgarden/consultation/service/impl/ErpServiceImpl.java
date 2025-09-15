@@ -479,7 +479,7 @@ public class ErpServiceImpl implements ErpService {
         existingBudget.setYear(budget.getYear());
         existingBudget.setMonth(budget.getMonth());
         existingBudget.setManager(budget.getManager());
-        existingBudget.setIsActive(budget.getIsActive());
+        existingBudget.setStatus(budget.getStatus());
         
         return budgetRepository.save(existingBudget);
     }
@@ -490,7 +490,7 @@ public class ErpServiceImpl implements ErpService {
         Budget budget = budgetRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("예산을 찾을 수 없습니다: " + id));
         
-        budget.setIsActive(false);
+        budget.setStatus(Budget.BudgetStatus.INACTIVE);
         budgetRepository.save(budget);
         
         return true;

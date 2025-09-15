@@ -202,8 +202,7 @@ const ClientSessionManagement = () => {
 
       {/* 패키지 정보 */}
       <div className="package-info">
-        <h3><i className="bi bi-box"></i> 패키지 정보</h3>
-        <div className="package-list">
+        <div className="package-grid">
           {sessionData.mappings.map((mapping, index) => (
             <div key={index} className="package-card">
               <div className="package-header">

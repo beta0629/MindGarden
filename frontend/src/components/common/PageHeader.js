@@ -1,19 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PageHeader.css';
 
 /**
  * 공통 페이지 헤더 컴포넌트
- * 뒤로가기 버튼과 페이지 제목을 표시
+ * 뒤로가기 버튼, 페이지 제목, 햄버거 메뉴를 표시
  */
-const PageHeader = ({ title, icon, showBackButton = true, onBackClick }) => {
+const PageHeader = ({ title, icon, showBackButton = true, onBackClick, showHamburger = true, onHamburgerClick }) => {
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleBackClick = () => {
     if (onBackClick) {
       onBackClick();
     } else {
       navigate(-1);
+    }
+  };
+
+  const handleHamburgerClick = () => {
+    setIsMenuOpen(!isMenuOpen);
+    if (onHamburgerClick) {
+      onHamburgerClick(!isMenuOpen);
     }
   };
 
@@ -32,6 +40,14 @@ const PageHeader = ({ title, icon, showBackButton = true, onBackClick }) => {
           {icon && <i className={`bi ${icon}`}></i>}
           {title}
         </h1>
+        {showHamburger && (
+          <button 
+            className="btn btn-outline-secondary hamburger-btn"
+            onClick={handleHamburgerClick}
+          >
+            <i className={`bi ${isMenuOpen ? 'bi-x' : 'bi-list'}`}></i>
+          </button>
+        )}
       </div>
     </div>
   );

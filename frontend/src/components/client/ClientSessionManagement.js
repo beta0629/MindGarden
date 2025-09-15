@@ -14,6 +14,7 @@ const ClientSessionManagement = () => {
   const [sessionData, setSessionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     loadSessionData();
@@ -91,6 +92,30 @@ const ClientSessionManagement = () => {
     return isCompleted ? '완료' : '미완료';
   };
 
+  const handleHamburgerClick = (isOpen) => {
+    setIsMenuOpen(isOpen);
+  };
+
+  const handleMenuAction = (action) => {
+    setIsMenuOpen(false);
+    switch (action) {
+      case 'dashboard':
+        navigate('/dashboard');
+        break;
+      case 'session-management':
+        navigate('/client/session-management');
+        break;
+      case 'payment-history':
+        navigate('/client/payment-history');
+        break;
+      case 'consultation-guide':
+        alert('상담 가이드 페이지는 준비 중입니다.');
+        break;
+      default:
+        break;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="client-session-management">
@@ -140,7 +165,122 @@ const ClientSessionManagement = () => {
       <PageHeader 
         title="회기 관리" 
         icon="bi-clock-history"
+        onHamburgerClick={handleHamburgerClick}
       />
+      
+      {/* 햄버거 메뉴 드롭다운 */}
+      {isMenuOpen && (
+        <div style={{
+          position: 'fixed',
+          top: '80px',
+          right: '20px',
+          background: 'white',
+          border: '1px solid #e9ecef',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          zIndex: 1000,
+          minWidth: '200px',
+          padding: '8px 0'
+        }}>
+          <div style={{
+            padding: '12px 16px',
+            borderBottom: '1px solid #e9ecef',
+            fontWeight: '600',
+            color: '#2c3e50',
+            fontSize: '14px'
+          }}>
+            메뉴
+          </div>
+          <button 
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              border: 'none',
+              background: 'none',
+              textAlign: 'left',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              color: '#2c3e50',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            onClick={() => handleMenuAction('dashboard')}
+          >
+            <i className="bi bi-house"></i>
+            대시보드
+          </button>
+          <button 
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              border: 'none',
+              background: 'none',
+              textAlign: 'left',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              color: '#2c3e50',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            onClick={() => handleMenuAction('session-management')}
+          >
+            <i className="bi bi-clock-history"></i>
+            회기 관리
+          </button>
+          <button 
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              border: 'none',
+              background: 'none',
+              textAlign: 'left',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              color: '#2c3e50',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            onClick={() => handleMenuAction('payment-history')}
+          >
+            <i className="bi bi-credit-card"></i>
+            결제 내역
+          </button>
+          <button 
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              border: 'none',
+              background: 'none',
+              textAlign: 'left',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              color: '#2c3e50',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            onClick={() => handleMenuAction('consultation-guide')}
+          >
+            <i className="bi bi-book"></i>
+            상담 가이드
+          </button>
+        </div>
+      )}
 
       {/* 회기 현황 요약 */}
       <div className="session-summary">

@@ -19,6 +19,7 @@ import ClientPersonalizedMessages from './ClientPersonalizedMessages';
 import ClientPaymentSessionsSection from './ClientPaymentSessionsSection';
 import ConsultantClientSection from './ConsultantClientSection';
 import MotivationCard from '../common/MotivationCard';
+import ScheduleQuickAccess from './ScheduleQuickAccess';
 
 const CommonDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
@@ -686,6 +687,9 @@ const CommonDashboard = ({ user: propUser }) => {
         
         {/* 동기부여 카드 (모든 사용자) */}
         <MotivationCard userRole={user?.role} />
+        
+        {/* 스케줄 빠른 접근 (상담사 전용) */}
+        <ScheduleQuickAccess user={user} />
         
         {/* 요약 패널 섹션 (상담사/관리자 전용) */}
         {(user?.role === 'CONSULTANT' || user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (

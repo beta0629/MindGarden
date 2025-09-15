@@ -363,12 +363,60 @@
   background: white;
   border-radius: 12px;
   padding: 24px;
+  margin-top: 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .consultation-history h3 {
-  margin: 0 0 20px 0;
-  font-size: 18px;
+  margin: 0 0 24px 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.consultation-history h3 i {
+  color: #007bff;
+  font-size: 20px;
+}
+
+.consultation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.consultation-item {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.consultation-item:hover {
+  border-color: #007bff;
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.15);
+  transform: translateY(-2px);
+  background: #f0f8ff;
+}
+
+.consultation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.consultation-date {
+  font-size: 16px;
   font-weight: 600;
   color: #2c3e50;
   display: flex;
@@ -376,41 +424,28 @@
   gap: 8px;
 }
 
-.consultation-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.consultation-date i {
+  color: #007bff;
+  font-size: 16px;
 }
 
-.consultation-item {
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.3s ease;
-}
-
-.consultation-item:hover {
-  border-color: #007bff;
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
-}
-
-.consultation-date {
-  font-size: 12px;
-  color: #6c757d;
-  margin-bottom: 8px;
-}
-
-.consultation-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+.consultation-content {
+  flex: 1;
 }
 
 .consultation-title {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
   color: #2c3e50;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.consultation-title i {
+  color: #28a745;
+  font-size: 16px;
 }
 
 .consultation-details {
@@ -422,14 +457,27 @@
 .consultation-duration {
   font-size: 14px;
   color: #6c757d;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #e9ecef;
+  border-radius: 6px;
+}
+
+.consultation-duration i {
+  color: #6c757d;
+  font-size: 14px;
 }
 
 .consultation-status {
-  font-size: 12px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
 }
 
 .consultation-notes {
@@ -454,20 +502,24 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 60px 20px;
   text-align: center;
   color: #6c757d;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 2px dashed #dee2e6;
 }
 
 .no-consultations i {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 64px;
+  margin-bottom: 20px;
   color: #dee2e6;
 }
 
 .no-consultations p {
   margin: 0;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 500;
 }
 
 /* 반응형 디자인 */

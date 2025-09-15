@@ -249,21 +249,26 @@ const ClientSessionManagement = () => {
           <div className="consultation-list">
             {sessionData.recentSchedules.map((schedule, index) => (
               <div key={index} className="consultation-item">
-                <div className="consultation-date">
-                  {formatDate(schedule.date)}
+                <div className="consultation-header">
+                  <div className="consultation-date">
+                    <i className="bi bi-calendar3"></i>
+                    {formatDate(schedule.date)}
+                  </div>
+                  <div className="consultation-status" style={{
+                    color: getStatusColor(schedule.status === '완료')
+                  }}>
+                    {getStatusText(schedule.status === '완료')}
+                  </div>
                 </div>
-                <div className="consultation-info">
+                <div className="consultation-content">
                   <div className="consultation-title">
+                    <i className="bi bi-chat-dots"></i>
                     {schedule.title || '상담'}
                   </div>
                   <div className="consultation-details">
                     <span className="consultation-duration">
+                      <i className="bi bi-clock"></i>
                       {schedule.startTime} - {schedule.endTime}
-                    </span>
-                    <span className="consultation-status" style={{
-                      color: getStatusColor(schedule.status === '완료')
-                    }}>
-                      {getStatusText(schedule.status === '완료')}
                     </span>
                   </div>
                 </div>

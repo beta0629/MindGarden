@@ -23,6 +23,13 @@ const ClientSessionManagement = () => {
       setIsLoading(true);
       setError(null);
 
+      // 먼저 테스트 로그인 시도
+      try {
+        await apiGet('/api/auth/test-login');
+      } catch (loginError) {
+        console.log('테스트 로그인 실패, 기존 세션 사용:', loginError);
+      }
+
       // 사용자 정보 가져오기
       const userResponse = await apiGet('/api/auth/current-user');
       const userId = userResponse.data?.id;

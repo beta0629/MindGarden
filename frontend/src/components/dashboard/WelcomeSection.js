@@ -37,11 +37,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
   };
 
   const getWelcomeTitle = () => {
-    console.log('🎭 WelcomeSection - 사용자 정보:', user);
-    console.log('🎭 WelcomeSection - role:', user?.role);
-    
     if (!user?.role) {
-      console.log('⚠️ role 정보 없음, 기본 인사말 사용');
       return DASHBOARD_MESSAGES.WELCOME.DEFAULT;
     }
     

@@ -237,12 +237,6 @@ const ClientPaymentSessionsSection = ({ userId }) => {
             <div className="no-payments-content">
               <i className="bi bi-credit-card-2-front"></i>
               <p>아직 결제 내역이 없습니다.</p>
-              <button 
-                className="btn btn-primary"
-                onClick={() => navigate('/client/consultant-mapping')}
-              >
-                상담사 매칭하기
-              </button>
             </div>
           </div>
         )}

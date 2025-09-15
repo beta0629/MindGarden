@@ -91,37 +91,46 @@ const BudgetManagement = () => {
     try {
       console.log('예산 카테고리 로드 시작 - 로그인 상태:', isLoggedIn, '사용자:', user?.id);
       
+      // 기본 카테고리 정의
+      const defaultCategories = [
+        { id: 607, codeValue: 'OPERATING', codeLabel: '운영비', codeDescription: '일반적인 운영 비용', sortOrder: 1 },
+        { id: 608, codeValue: 'MARKETING', codeLabel: '마케팅', codeDescription: '마케팅 및 홍보 비용', sortOrder: 2 },
+        { id: 609, codeValue: 'TRAINING', codeLabel: '교육훈련', codeDescription: '직원 교육 및 훈련 비용', sortOrder: 3 },
+        { id: 610, codeValue: 'EQUIPMENT', codeLabel: '장비', codeDescription: '장비 구매 및 유지보수 비용', sortOrder: 4 },
+        { id: 611, codeValue: 'TRAVEL', codeLabel: '출장비', codeDescription: '출장 및 교통비', sortOrder: 5 },
+        { id: 612, codeValue: 'UTILITIES', codeLabel: '공과금', codeDescription: '전기, 가스, 수도 등 공과금', sortOrder: 6 },
+        { id: 613, codeValue: 'RENT', codeLabel: '임대료', codeDescription: '사무실 및 시설 임대료', sortOrder: 7 },
+        { id: 614, codeValue: 'OTHER', codeLabel: '기타', codeDescription: '기타 비용', sortOrder: 8 }
+      ];
+
       // 인증이 필요한 경우 기본 카테고리 사용
       if (!isLoggedIn || !user?.id) {
         console.log('로그인 없이 기본 카테고리 사용');
-        const defaultCategories = [
-          { id: 607, codeValue: 'OPERATING', codeLabel: '운영비', codeDescription: '일반적인 운영 비용', sortOrder: 1 },
-          { id: 608, codeValue: 'MARKETING', codeLabel: '마케팅', codeDescription: '마케팅 및 홍보 비용', sortOrder: 2 },
-          { id: 609, codeValue: 'TRAINING', codeLabel: '교육훈련', codeDescription: '직원 교육 및 훈련 비용', sortOrder: 3 },
-          { id: 610, codeValue: 'EQUIPMENT', codeLabel: '장비', codeDescription: '장비 구매 및 유지보수 비용', sortOrder: 4 },
-          { id: 611, codeValue: 'TRAVEL', codeLabel: '출장비', codeDescription: '출장 및 교통비', sortOrder: 5 },
-          { id: 612, codeValue: 'UTILITIES', codeLabel: '공과금', codeDescription: '전기, 가스, 수도 등 공과금', sortOrder: 6 },
-          { id: 613, codeValue: 'RENT', codeLabel: '임대료', codeDescription: '사무실 및 시설 임대료', sortOrder: 7 },
-          { id: 614, codeValue: 'OTHER', codeLabel: '기타', codeDescription: '기타 비용', sortOrder: 8 }
-        ];
         setBudgetCategories(defaultCategories);
         console.log('기본 카테고리 설정 완료:', defaultCategories.length, '개');
         return;
       }
 
-      console.log('로그인 상태에서 API 호출');
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=BUDGET_CATEGORY');
-      if (response.success) {
-        setBudgetCategories(response.data || []);
-        console.log('API에서 카테고리 로드 완료:', response.data?.length || 0, '개');
-      } else {
-        // API 응답은 성공했지만 데이터가 없는 경우
-        setBudgetCategories([]);
-        console.log('API 응답 실패, 빈 배열 설정');
+      console.log('로그인 상태에서 API 호출 시도');
+      try {
+        const response = await apiGet('/api/admin/common-codes/values?groupCode=BUDGET_CATEGORY');
+        console.log('API 응답:', response);
+        
+        if (response && response.success && response.data && response.data.length > 0) {
+          setBudgetCategories(response.data);
+          console.log('API에서 카테고리 로드 완료:', response.data.length, '개');
+        } else {
+          console.log('API 응답이 비어있거나 실패, 기본 카테고리 사용');
+          setBudgetCategories(defaultCategories);
+        }
+      } catch (apiError) {
+        console.error('API 호출 실패:', apiError);
+        console.log('API 실패 시 기본 카테고리 사용');
+        setBudgetCategories(defaultCategories);
       }
     } catch (err) {
-      console.error('예산 카테고리 로드 실패:', err);
-      // API 호출 실패 시 기본 카테고리 사용
+      console.error('예산 카테고리 로드 전체 실패:', err);
+      // 전체 실패 시에도 기본 카테고리 사용
       const defaultCategories = [
         { id: 607, codeValue: 'OPERATING', codeLabel: '운영비', codeDescription: '일반적인 운영 비용', sortOrder: 1 },
         { id: 608, codeValue: 'MARKETING', codeLabel: '마케팅', codeDescription: '마케팅 및 홍보 비용', sortOrder: 2 },
@@ -133,7 +142,7 @@ const BudgetManagement = () => {
         { id: 614, codeValue: 'OTHER', codeLabel: '기타', codeDescription: '기타 비용', sortOrder: 8 }
       ];
       setBudgetCategories(defaultCategories);
-      console.log('API 실패 시 기본 카테고리 사용:', defaultCategories.length, '개');
+      console.log('전체 실패 시 기본 카테고리 사용:', defaultCategories.length, '개');
     }
   };
 

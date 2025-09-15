@@ -203,7 +203,9 @@ const ClientSessionManagement = () => {
       {/* 패키지 정보 */}
       <div className="package-info">
         <div className="package-grid">
-          {sessionData.mappings.map((mapping, index) => (
+          {sessionData.mappings
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .map((mapping, index) => (
             <div key={index} className="package-card">
               <div className="package-header">
                 <h4>{mapping.packageName || '상담 패키지'}</h4>

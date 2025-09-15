@@ -242,7 +242,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         .client-payment-sessions-section {
           background: white;
           border-radius: 12px;

@@ -66,8 +66,10 @@ class SessionManager {
         }
         
         // 강제 확인이 아니고, 이미 체크 중이거나 최근에 체크했으면 스킵
-        if (!force && (this.checkInProgress || (now - this.lastCheckTime < this.minCheckInterval))) {
-            console.log('🔄 세션 체크 스킵 (중복 방지)');
+        // 페이지 이동 시에는 더 긴 간격 적용
+        const minInterval = this.isPageNavigation() ? this.minCheckInterval * 3 : this.minCheckInterval;
+        if (!force && (this.checkInProgress || (now - this.lastCheckTime < minInterval))) {
+            console.log('🔄 세션 체크 스킵 (중복 방지):', now - this.lastCheckTime, 'ms');
             return this.user !== null;
         }
         
@@ -127,23 +129,27 @@ class SessionManager {
                 this.user = newUser;
                 console.log('✅ 사용자 정보 로드 완료:', this.user);
                 
-                // 세션 정보는 선택적으로 가져오기
-                try {
-                    console.log('🔍 세션 정보 요청:', `${API_BASE_URL}/api/auth/session-info`);
-                    const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/session-info`, { 
-                        credentials: 'include',
-                        method: 'GET',
-                        mode: 'cors',
-                        headers: {
-                            'Accept': 'application/json'
+                // 세션 정보는 선택적으로 가져오기 (페이지 이동 시에는 스킵)
+                if (!this.isPageNavigation()) {
+                    try {
+                        console.log('🔍 세션 정보 요청:', `${API_BASE_URL}/api/auth/session-info`);
+                        const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/session-info`, { 
+                            credentials: 'include',
+                            method: 'GET',
+                            mode: 'cors',
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (sessionResponse.ok) {
+                            this.sessionInfo = await sessionResponse.json();
+                            console.log('✅ 세션 정보도 로드 완료:', this.sessionInfo);
                         }
-                    });
-                    if (sessionResponse.ok) {
-                        this.sessionInfo = await sessionResponse.json();
-                        console.log('✅ 세션 정보도 로드 완료:', this.sessionInfo);
+                    } catch (sessionError) {
+                        console.warn('⚠️ 세션 정보 로드 실패 (무시):', sessionError);
                     }
-                } catch (sessionError) {
-                    console.warn('⚠️ 세션 정보 로드 실패 (무시):', sessionError);
+                } else {
+                    console.log('🔄 세션 정보 요청 스킵 (페이지 이동 중)');
                 }
             } else {
                 // 401이 아닌 다른 오류만 로그에 표시
@@ -340,6 +346,11 @@ class SessionManager {
         } else {
             console.log(`⏳ 폼 제출 진행 중 (${this.formSubmitCount}개 남음)`);
         }
+    }
+    
+    // 페이지 이동 중인지 확인
+    isPageNavigation() {
+        return this.isFormSubmitting || this.isProfileEditing;
     }
 }
 

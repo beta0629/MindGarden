@@ -4,6 +4,7 @@ import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
 import { notification } from '../../utils/scripts';
 import SimpleLayout from '../layout/SimpleLayout';
+import PageHeader from '../common/PageHeader';
 import ProfileSection from './components/ProfileSection';
 import SettingsSection from './components/SettingsSection';
 import SecuritySection from './components/SecuritySection';
@@ -421,9 +422,10 @@ const MyPage = () => {
     return (
       <SimpleLayout>
         <div className="mypage-container">
-          <div className="mypage-header">
-            <h1>마이페이지</h1>
-          </div>
+          <PageHeader 
+            title="마이페이지" 
+            icon="bi-person"
+          />
           <div className="mypage-content">
             <div className="loading-container">
               <div className="loading-spinner"></div>
@@ -438,10 +440,10 @@ const MyPage = () => {
   return (
     <SimpleLayout>
       <div className={`mypage-container mypage ${isProfileEditing ? 'editing' : 'readonly'}`}>
-      <div className="mypage-header">
-        <h1>마이페이지</h1>
-        <p>{displayUser?.username || displayUser?.name || displayUser?.nickname || '사용자'}님의 정보를 관리하세요</p>
-      </div>
+        <PageHeader 
+          title="마이페이지" 
+          icon="bi-person"
+        />
 
       <div className="mypage-content">
         <div className="mypage-top-nav">

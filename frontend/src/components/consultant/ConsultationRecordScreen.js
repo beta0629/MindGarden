@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import LoadingSpinner from '../common/LoadingSpinner';
+import PageHeader from '../common/PageHeader';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 
@@ -541,16 +542,10 @@ const ConsultationRecordScreen = () => {
   return (
     <SimpleLayout title="상담일지 작성">
       <div style={styles.container}>
-      {/* 헤더 */}
-      <div style={styles.header}>
-        <h1 style={styles.headerTitle}>
-          📝 상담일지 작성
-          {isEditMode && <span style={{...styles.statusBadge, backgroundColor: '#17a2b8', color: '#fff'}}>수정 모드</span>}
-        </h1>
-        <p style={styles.headerSubtitle}>
-          상담사: {user?.name || '알 수 없음'} | 상담일: {consultation.startTime?.split('T')[0]} | 시간: {consultation.startTime?.split('T')[1]?.slice(0,5)} - {consultation.endTime?.split('T')[1]?.slice(0,5)}
-        </p>
-      </div>
+        <PageHeader 
+          title="상담일지 작성" 
+          icon="bi-journal-text"
+        />
 
       {/* 내담자 정보 카드 */}
       <div style={styles.clientInfoCard}>

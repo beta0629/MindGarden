@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
+import PageHeader from '../common/PageHeader';
 import ScheduleCalendar from './ScheduleCalendar';
 import ConsultantStatus from './ConsultantStatus';
 import TodayStats from './TodayStats';
@@ -116,43 +117,10 @@ const SchedulePage = ({ user: propUser }) => {
     return (
         <SimpleLayout>
             <div className="schedule-page">
-            <div className="page-header">
-                <div className="header-content">
-                    <h1>📅 스케줄 관리</h1>
-                    <div className="user-info">
-                        <span className="user-name">{displayUser?.name}</span>
-                        <span className="user-role">{userRole}</span>
-                    </div>
-                </div>
-                
-                <div className="page-actions">
-                    {isAdmin() && (
-                        <div className="admin-actions">
-                            <button 
-                                className="btn schedule-page-btn-primary"
-                                onClick={() => navigate('/admin/statistics')}
-                            >
-                                📊 통계 보기
-                            </button>
-                            <button 
-                                className="btn schedule-page-btn-secondary"
-                                onClick={() => navigate('/admin/schedules')}
-                            >
-                                📋 전체 스케줄
-                            </button>
-                        </div>
-                    )}
-                    
-                    <div className="view-controls">
-                        <button 
-                            className="btn schedule-page-btn-outline"
-                            onClick={() => window.location.reload()}
-                        >
-                            🔄 새로고침
-                        </button>
-                    </div>
-                </div>
-            </div>
+                <PageHeader 
+                    title="스케줄 관리" 
+                    icon="bi-calendar"
+                />
 
             <div className="schedule-content">
                 <div className="schedule-main">

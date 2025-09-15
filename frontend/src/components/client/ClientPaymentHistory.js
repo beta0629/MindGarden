@@ -24,20 +24,16 @@ const ClientPaymentHistory = () => {
       setIsLoading(true);
       setError(null);
 
-      // 먼저 테스트 로그인 시도
-      try {
-        await apiGet('/api/auth/test-login');
-      } catch (loginError) {
-        console.log('테스트 로그인 실패, 기존 세션 사용:', loginError);
-      }
+      // 기존 세션 확인
 
       // 사용자 정보 가져오기
       const userResponse = await apiGet('/api/auth/current-user');
-      const userId = userResponse.data?.id;
-
-      if (!userId) {
-        throw new Error('사용자 정보를 찾을 수 없습니다.');
+      
+      if (!userResponse || !userResponse.id) {
+        throw new Error('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
       }
+      
+      const userId = userResponse.id;
 
       // 매핑 정보 가져오기 (결제 내역 포함)
       const mappingResponse = await apiGet(`/api/admin/mappings/client?clientId=${userId}`);
@@ -82,7 +78,11 @@ const ClientPaymentHistory = () => {
       });
     } catch (error) {
       console.error('결제 데이터 로드 실패:', error);
-      setError('결제 데이터를 불러오는 중 오류가 발생했습니다.');
+      if (error.message.includes('로그인이 필요합니다')) {
+        setError('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
+      } else {
+        setError('결제 데이터를 불러오는 중 오류가 발생했습니다.');
+      }
     } finally {
       setIsLoading(false);
     }

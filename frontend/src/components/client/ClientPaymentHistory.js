@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
+import PageHeader from '../common/PageHeader';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './ClientPaymentHistory.css';
 
@@ -231,16 +232,11 @@ const ClientPaymentHistory = () => {
 
   return (
     <div className="client-payment-history">
-      {/* 헤더 */}
-      <div className="page-header">
-        <button 
-          className="btn btn-outline-secondary back-btn"
-          onClick={() => navigate(-1)}
-        >
-          <i className="bi bi-arrow-left"></i> 뒤로
-        </button>
-        <h1><i className="bi bi-credit-card"></i> 결제 내역</h1>
-      </div>
+      {/* 공통 헤더 */}
+      <PageHeader 
+        title="결제 내역" 
+        icon="bi-credit-card"
+      />
 
       {/* 결제 통계 */}
       <div className="payment-stats">

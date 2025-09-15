@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
+import PageHeader from '../common/PageHeader';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './ClientSessionManagement.css';
 
@@ -135,16 +136,11 @@ const ClientSessionManagement = () => {
 
   return (
     <div className="client-session-management">
-      {/* 헤더 */}
-      <div className="page-header">
-        <button 
-          className="btn btn-outline-secondary back-btn"
-          onClick={() => navigate(-1)}
-        >
-          <i className="bi bi-arrow-left"></i> 뒤로
-        </button>
-        <h1><i className="bi bi-clock-history"></i> 회기 관리</h1>
-      </div>
+      {/* 공통 헤더 */}
+      <PageHeader 
+        title="회기 관리" 
+        icon="bi-clock-history"
+      />
 
       {/* 회기 현황 요약 */}
       <div className="session-summary">
@@ -207,37 +203,43 @@ const ClientSessionManagement = () => {
       {/* 패키지 정보 */}
       <div className="package-info">
         <h3><i className="bi bi-box"></i> 패키지 정보</h3>
-        <div className="package-list">
+        <div className="package-grid">
           {sessionData.mappings.map((mapping, index) => (
             <div key={index} className="package-card">
               <div className="package-header">
                 <h4>{mapping.packageName || '상담 패키지'}</h4>
-                <span className="package-status">
+                <span className={`package-status ${mapping.status === 'ACTIVE' ? 'active' : 'inactive'}`}>
                   {mapping.status === 'ACTIVE' ? '활성' : '비활성'}
                 </span>
               </div>
               <div className="package-details">
-                <div className="detail-item">
-                  <span className="label">총 회기:</span>
-                  <span className="value">{mapping.totalSessions}회</span>
+                <div className="detail-row">
+                  <div className="detail-item">
+                    <span className="label">총 회기</span>
+                    <span className="value">{mapping.totalSessions}회</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">사용 회기</span>
+                    <span className="value used">{mapping.usedSessions || 0}회</span>
+                  </div>
                 </div>
-                <div className="detail-item">
-                  <span className="label">사용 회기:</span>
-                  <span className="value">{mapping.usedSessions || 0}회</span>
+                <div className="detail-row">
+                  <div className="detail-item">
+                    <span className="label">남은 회기</span>
+                    <span className="value remaining">{mapping.remainingSessions || 0}회</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="label">상담사</span>
+                    <span className="value">{mapping.consultant?.name || '미지정'}</span>
+                  </div>
                 </div>
-                <div className="detail-item">
-                  <span className="label">남은 회기:</span>
-                  <span className="value">{mapping.remainingSessions || 0}회</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">상담사:</span>
-                  <span className="value">{mapping.consultant?.name || '미지정'}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">연결일:</span>
-                  <span className="value">
-                    {mapping.createdAt ? formatDate(mapping.createdAt) : '알 수 없음'}
-                  </span>
+                <div className="detail-row full-width">
+                  <div className="detail-item">
+                    <span className="label">연결일</span>
+                    <span className="value">
+                      {mapping.createdAt ? formatDate(mapping.createdAt) : '알 수 없음'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

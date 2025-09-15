@@ -17,6 +17,7 @@ import ConsultationRecordView from './components/consultant/ConsultationRecordVi
 import PurchaseManagement from './components/erp/PurchaseManagement';
 import FinancialManagement from './components/erp/FinancialManagement';
 import BudgetManagement from './components/erp/BudgetManagement';
+import ImprovedTaxManagement from './components/erp/ImprovedTaxManagement';
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
@@ -229,6 +230,7 @@ function AppContent() {
             <Route path="/erp/purchase" element={<PurchaseManagement />} />
             <Route path="/erp/financial" element={<FinancialManagement />} />
             <Route path="/erp/budget" element={<BudgetManagement />} />
+            <Route path="/erp/tax" element={<ImprovedTaxManagement />} />
             <Route path="/consultant/send-message/:consultationId" element={<ConsultantMessageScreen />} />
             <Route path="/consultant/clients" element={<ConsultantClientList />} />
             <Route path="/consultant/availability" element={<ConsultantAvailability />} />

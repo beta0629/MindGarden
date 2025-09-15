@@ -1,5 +1,6 @@
 package com.mindgarden.consultation.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,9 +14,9 @@ import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
+import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.MenuService;
-import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
@@ -1868,6 +1869,86 @@ public class AdminController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "예산 목록 조회에 실패했습니다: " + e.getMessage());
+            
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    /**
+     * 세금 계산 목록 조회
+     */
+    @GetMapping("/tax/calculations")
+    public ResponseEntity<Map<String, Object>> getTaxCalculations(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpSession session) {
+        try {
+            log.info("🔍 세금 계산 목록 조회");
+            
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(401).body(response);
+            }
+            
+            // 세금 계산 목록 조회 (임시 데이터)
+            List<Map<String, Object>> taxCalculations = new ArrayList<>();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", taxCalculations);
+            response.put("totalCount", taxCalculations.size());
+            response.put("totalPages", 1);
+            response.put("currentPage", 0);
+            response.put("size", taxCalculations.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 세금 계산 목록 조회 실패: {}", e.getMessage(), e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "세금 계산 목록 조회에 실패했습니다: " + e.getMessage());
+            
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    /**
+     * 세금 계산 항목 생성
+     */
+    @PostMapping("/tax/calculations")
+    public ResponseEntity<Map<String, Object>> createTaxCalculation(
+            @RequestBody Map<String, Object> taxData,
+            HttpSession session) {
+        try {
+            log.info("🔍 세금 계산 항목 생성");
+            
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "로그인이 필요합니다.");
+                return ResponseEntity.status(401).body(response);
+            }
+            
+            // 세금 계산 항목 생성 로직 (향후 구현)
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "세금 계산 항목이 생성되었습니다.");
+            response.put("data", taxData);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 세금 계산 항목 생성 실패: {}", e.getMessage(), e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "세금 계산 항목 생성에 실패했습니다: " + e.getMessage());
             
             return ResponseEntity.badRequest().body(response);
         }

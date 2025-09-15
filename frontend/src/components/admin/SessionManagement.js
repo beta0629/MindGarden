@@ -24,6 +24,10 @@ const SessionManagement = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [clientSearchTerm, setClientSearchTerm] = useState('');
     const [clientFilterStatus, setClientFilterStatus] = useState('ALL');
+    
+    // 전체 회기 관리 현황 필터 상태
+    const [mappingSearchTerm, setMappingSearchTerm] = useState('');
+    const [mappingFilterStatus, setMappingFilterStatus] = useState('ALL');
     const [mappingStatusOptions, setMappingStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     const [statusOptions, setStatusOptions] = useState([]);
@@ -299,10 +303,53 @@ const SessionManagement = () => {
      * 필터링된 매핑 목록 반환
      */
     const getFilteredMappings = () => {
-        if (!selectedClient) {
-            return mappings; // 내담자가 선택되지 않으면 모든 매핑 표시
+        let filtered = mappings;
+
+        // 특정 내담자가 선택된 경우
+        if (selectedClient) {
+            filtered = filtered.filter(mapping => mapping.clientId === selectedClient.id);
+        } else {
+            // 전체 회기 관리 현황에서 필터 적용
+            // 검색어 필터링
+            if (mappingSearchTerm) {
+                filtered = filtered.filter(mapping => 
+                    (mapping.clientName && mapping.clientName.toLowerCase().includes(mappingSearchTerm.toLowerCase())) ||
+                    (mapping.consultantName && mapping.consultantName.toLowerCase().includes(mappingSearchTerm.toLowerCase())) ||
+                    (mapping.packageName && mapping.packageName.toLowerCase().includes(mappingSearchTerm.toLowerCase()))
+                );
+            }
+
+            // 상태별 필터링
+            if (mappingFilterStatus !== 'ALL') {
+                filtered = filtered.filter(mapping => {
+                    switch (mappingFilterStatus) {
+                        case 'ACTIVE':
+                            return mapping.status === 'ACTIVE';
+                        case 'INACTIVE':
+                            return mapping.status === 'INACTIVE';
+                        case 'PENDING':
+                            return mapping.status === 'PENDING';
+                        case 'COMPLETED':
+                            return mapping.status === 'COMPLETED';
+                        case 'SUSPENDED':
+                            return mapping.status === 'SUSPENDED';
+                        default:
+                            return true;
+                    }
+                });
+            }
+
+            // 필터가 적용되지 않은 경우 최근 10개만 표시
+            const hasActiveFilters = mappingSearchTerm || mappingFilterStatus !== 'ALL';
+            if (!hasActiveFilters) {
+                // 최근 생성된 매핑 10개만 반환 (createdAt 기준으로 정렬)
+                return filtered
+                    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+                    .slice(0, 10);
+            }
         }
-        return mappings.filter(mapping => mapping.clientId === selectedClient.id);
+
+        return filtered;
     };
 
     /**
@@ -925,18 +972,106 @@ const SessionManagement = () => {
 
             {/* 매핑 목록 */}
             <div className="session-mgmt-all-mappings-section">
-                <h3>
-                    {selectedClient ? `${selectedClient.name} 회기 관리 현황` : '전체 회기 관리 현황'}
-                    {selectedClient && (
-                        <button 
-                            className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-secondary"
-                            onClick={() => setSelectedClient(null)}
-                            style={{ marginLeft: '15px' }}
-                        >
-                            전체 보기
-                        </button>
+                <div className="session-mgmt-mappings-header">
+                    <div>
+                        <h3>
+                            {selectedClient ? `${selectedClient.name} 회기 관리 현황` : '전체 회기 관리 현황'}
+                            {selectedClient && (
+                                <button 
+                                    className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-secondary"
+                                    onClick={() => setSelectedClient(null)}
+                                    style={{ marginLeft: '15px' }}
+                                >
+                                    전체 보기
+                                </button>
+                            )}
+                        </h3>
+                        {!selectedClient && (() => {
+                            const hasActiveFilters = mappingSearchTerm || mappingFilterStatus !== 'ALL';
+                            const filteredCount = getFilteredMappings().length;
+                            const totalCount = mappings.length;
+                            
+                            if (hasActiveFilters) {
+                                return (
+                                    <p style={{ 
+                                        margin: '4px 0 0 0', 
+                                        fontSize: '14px', 
+                                        color: '#6b7280',
+                                        fontWeight: 'normal'
+                                    }}>
+                                        검색 결과: {filteredCount}개 (전체 {totalCount}개 중)
+                                    </p>
+                                );
+                            } else {
+                                return (
+                                    <p style={{ 
+                                        margin: '4px 0 0 0', 
+                                        fontSize: '14px', 
+                                        color: '#6b7280',
+                                        fontWeight: 'normal'
+                                    }}>
+                                        최근 매핑 {filteredCount}개 표시 (전체 {totalCount}개 중)
+                                    </p>
+                                );
+                            }
+                        })()}
+                    </div>
+                    
+                    {/* 전체 회기 관리 현황 필터 (특정 내담자 선택 시에는 숨김) */}
+                    {!selectedClient && (
+                        <div style={{
+                            display: 'flex',
+                            gap: '15px',
+                            alignItems: 'center',
+                            flexWrap: 'nowrap',
+                            marginTop: '15px'
+                        }}>
+                            <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+                                <input
+                                    type="text"
+                                    placeholder="내담자, 상담사, 패키지명 검색..."
+                                    value={mappingSearchTerm}
+                                    onChange={(e) => setMappingSearchTerm(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '6px',
+                                        fontSize: '14px',
+                                        outline: 'none',
+                                        transition: 'border-color 0.2s ease'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                                />
+                            </div>
+                            <select
+                                value={mappingFilterStatus}
+                                onChange={(e) => setMappingFilterStatus(e.target.value)}
+                                style={{
+                                    padding: '8px 12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    fontSize: '14px',
+                                    backgroundColor: 'white',
+                                    minWidth: '120px',
+                                    outline: 'none',
+                                    cursor: 'pointer',
+                                    transition: 'border-color 0.2s ease'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                            >
+                                <option value="ALL">전체 상태</option>
+                                <option value="ACTIVE">활성</option>
+                                <option value="INACTIVE">비활성</option>
+                                <option value="PENDING">대기</option>
+                                <option value="COMPLETED">완료</option>
+                                <option value="SUSPENDED">일시정지</option>
+                            </select>
+                        </div>
                     )}
-                </h3>
+                </div>
                 <div className="session-mgmt-mappings-grid">
                     {getFilteredMappings().map(mapping => (
                         <div key={mapping.id} className="session-mgmt-mapping-card">

@@ -241,7 +241,7 @@ const ConsultantClientSection = ({ userId }) => {
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
           gap: '16px'
         }}>
-          {clients.slice(0, 6).map((client, index) => (
+          {clients.slice(0, 5).map((client, index) => (
             <div
               key={`${client.id}-${index}`}
               style={{

@@ -139,6 +139,7 @@ const ClientComprehensiveManagement = () => {
                         email: client.email,
                         phone: client.phone,
                         role: client.role,
+                        grade: client.grade,
                         isActive: client.isActive,
                         createdAt: client.createdAt
                     });
@@ -250,16 +251,17 @@ const ClientComprehensiveManagement = () => {
     };
 
     /**
-     * 필터링된 내담자 목록
+     * 필터링된 내담자 목록 (최신순 10명 기본 노출, 필터 적용 시 전체 표시)
      */
     const getFilteredClients = () => {
         let filtered = clients;
 
-        // 검색어 필터링
+        // 검색어 필터링 (이름, 이메일, 전화번호)
         if (searchTerm) {
             filtered = filtered.filter(client =>
                 client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                client.phone?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
@@ -271,7 +273,16 @@ const ClientComprehensiveManagement = () => {
             });
         }
 
-        return filtered;
+        // 최신순 정렬 (createdAt 기준)
+        filtered = filtered.sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.registeredAt || 0);
+            const dateB = new Date(b.createdAt || b.registeredAt || 0);
+            return dateB - dateA; // 최신순
+        });
+
+        // 필터가 적용된 경우 전체 표시, 그렇지 않으면 최신 10명만 표시
+        const hasActiveFilter = searchTerm || filterStatus !== 'all';
+        return hasActiveFilter ? filtered : filtered.slice(0, 10);
     };
 
     /**
@@ -291,10 +302,56 @@ const ClientComprehensiveManagement = () => {
     };
 
     /**
+     * 상태를 한글로 변환 (동기식 fallback)
+     */
+    const getStatusTextSync = useCallback((status) => {
+        if (!status) {
+            return '알 수 없음';
+        }
+        
+        // fallback 매핑
+        const statusMap = {
+            'ACTIVE': '활성',
+            'INACTIVE': '비활성',
+            'SUSPENDED': '일시정지',
+            'COMPLETED': '완료',
+            'PENDING': '대기중',
+            'APPROVED': '승인됨',
+            'REJECTED': '거부됨',
+            'PAYMENT_CONFIRMED': '결제확인',
+            'PAYMENT_PENDING': '결제대기',
+            'PAYMENT_REJECTED': '결제거부',
+            'TERMINATED': '종료됨',
+            'CLIENT_BRONZE': '브론즈',
+            'CLIENT_SILVER': '실버',
+            'CLIENT_GOLD': '골드',
+            'CLIENT_PLATINUM': '플래티넘',
+            'CONSULTANT_JUNIOR': '주니어',
+            'CONSULTANT_SENIOR': '시니어',
+            'CONSULTANT_EXPERT': '전문가',
+            'ADMIN': '관리자',
+            'BRANCH_SUPER_ADMIN': '수퍼관리자',
+            'HQ_ADMIN': '본사 관리자',
+            'SUPER_HQ_ADMIN': '본사 슈퍼 관리자',
+            'HQ_MASTER': '본사 마스터',
+            'HAS_MAPPING': '매핑 있음',
+            'ACTIVE_MAPPING': '활성 매핑',
+            'NO_MAPPING': '매핑 없음',
+            'PENDING_MAPPING': '매핑 대기',
+            'INACTIVE_MAPPING': '비활성 매핑'
+        };
+        return statusMap[status] || status || '알 수 없음';
+    }, []);
+
+    /**
      * 상태를 한글로 변환 (동적 처리)
      */
     const getStatusText = useCallback(async (status) => {
         try {
+            if (!status) {
+                return '알 수 없음';
+            }
+            
             // 사용자 상태인지 등급인지 판단
             if (status.startsWith('CLIENT_') || status.startsWith('CONSULTANT_') || 
                 status === 'ADMIN' || status === 'BRANCH_SUPER_ADMIN' || 
@@ -305,31 +362,30 @@ const ClientComprehensiveManagement = () => {
             }
         } catch (error) {
             console.error(`상태 한글명 조회 실패: ${status}`, error);
-            // fallback 매핑
-            const statusMap = {
-                'ACTIVE': '활성',
-                'INACTIVE': '비활성',
-                'SUSPENDED': '일시정지',
-                'COMPLETED': '완료',
-                'PENDING': '대기중',
-                'APPROVED': '승인됨',
-                'REJECTED': '거부됨',
-                'PAYMENT_CONFIRMED': '결제확인',
-                'PAYMENT_PENDING': '결제대기',
-                'PAYMENT_REJECTED': '결제거부',
-                'TERMINATED': '종료됨',
-                'CLIENT_BRONZE': '브론즈',
-                'CLIENT_SILVER': '실버',
-                'CLIENT_GOLD': '골드',
-                'CLIENT_PLATINUM': '플래티넘',
-                'CONSULTANT_JUNIOR': '주니어',
-                'CONSULTANT_SENIOR': '시니어',
-                'CONSULTANT_EXPERT': '전문가',
-                'ADMIN': '관리자',
-                'BRANCH_SUPER_ADMIN': '수퍼관리자'
-            };
-            return statusMap[status] || status;
+            return getStatusTextSync(status);
         }
+    }, [getStatusTextSync]);
+
+    /**
+     * 등급을 한글로 변환 (동기식 fallback)
+     */
+    const getGradeTextSync = useCallback((grade) => {
+        if (!grade) {
+            return '브론즈';
+        }
+        
+        // fallback 매핑
+        const gradeMap = {
+            'CLIENT_BRONZE': '브론즈',
+            'CLIENT_SILVER': '실버',
+            'CLIENT_GOLD': '골드',
+            'CLIENT_PLATINUM': '플래티넘',
+            'CLIENT_DIAMOND': '다이아몬드',
+            'CONSULTANT_JUNIOR': '주니어',
+            'CONSULTANT_SENIOR': '시니어',
+            'CONSULTANT_EXPERT': '전문가'
+        };
+        return gradeMap[grade] || grade || '브론즈';
     }, []);
 
     /**
@@ -337,19 +393,41 @@ const ClientComprehensiveManagement = () => {
      */
     const getGradeText = useCallback(async (grade) => {
         try {
+            if (!grade) {
+                return '브론즈';
+            }
             return await getUserGradeKoreanName(grade);
         } catch (error) {
             console.error(`등급 한글명 조회 실패: ${grade}`, error);
-            // fallback 매핑
-            const gradeMap = {
-                'CLIENT_BRONZE': '브론즈',
-                'CLIENT_SILVER': '실버',
-                'CLIENT_GOLD': '골드',
-                'CLIENT_PLATINUM': '플래티넘',
-                'CLIENT_DIAMOND': '다이아몬드'
-            };
-            return gradeMap[grade] || grade || '브론즈';
+            return getGradeTextSync(grade);
         }
+    }, [getGradeTextSync]);
+
+    /**
+     * 등급 아이콘 반환 (동기식 fallback)
+     */
+    const getGradeIconSync = useCallback((grade) => {
+        if (!grade) {
+            return '🥉';
+        }
+        
+        // fallback 매핑
+        const iconMap = {
+            'CLIENT_BRONZE': '🥉',
+            'CLIENT_SILVER': '🥈',
+            'CLIENT_GOLD': '🥇',
+            'CLIENT_PLATINUM': '💎',
+            'CLIENT_DIAMOND': '💎',
+            'CONSULTANT_JUNIOR': '⭐',
+            'CONSULTANT_SENIOR': '⭐⭐',
+            'CONSULTANT_EXPERT': '⭐⭐⭐',
+            'ADMIN': '👑',
+            'BRANCH_SUPER_ADMIN': '👑👑',
+            'HQ_ADMIN': '👑👑👑',
+            'SUPER_HQ_ADMIN': '👑👑👑👑',
+            'HQ_MASTER': '👑👑👑👑👑'
+        };
+        return iconMap[grade] || '🥉';
     }, []);
 
     /**
@@ -357,24 +435,15 @@ const ClientComprehensiveManagement = () => {
      */
     const getGradeIcon = useCallback(async (grade) => {
         try {
+            if (!grade) {
+                return '🥉';
+            }
             return await getUserGradeIcon(grade);
         } catch (error) {
             console.error(`등급 아이콘 조회 실패: ${grade}`, error);
-            // fallback 매핑
-            const iconMap = {
-                'CLIENT_BRONZE': '🥉',
-                'CLIENT_SILVER': '🥈',
-                'CLIENT_GOLD': '🥇',
-                'CLIENT_PLATINUM': '💎',
-                'CONSULTANT_JUNIOR': '⭐',
-                'CONSULTANT_SENIOR': '⭐⭐',
-                'CONSULTANT_EXPERT': '⭐⭐⭐',
-                'ADMIN': '👑',
-                'BRANCH_SUPER_ADMIN': '👑👑'
-            };
-            return iconMap[grade] || '🥉';
+            return getGradeIconSync(grade);
         }
-    }, []);
+    }, [getGradeIconSync]);
 
     /**
      * 상태별 색상 반환 (동적 처리)
@@ -422,6 +491,10 @@ const ClientComprehensiveManagement = () => {
      * 상태별 색상 반환 (동기식 fallback)
      */
     const getStatusColorSync = (status) => {
+        if (!status) {
+            return '#a8e6a3'; // 기본 색상
+        }
+        
         const colorMap = {
             'ACTIVE': '#7bc87b',
             'INACTIVE': '#a8e6a3',
@@ -442,7 +515,15 @@ const ClientComprehensiveManagement = () => {
             'CONSULTANT_SENIOR': '#6f42c1',
             'CONSULTANT_EXPERT': '#fd7e14',
             'ADMIN': '#6c757d',
-            'BRANCH_SUPER_ADMIN': '#343a40'
+            'BRANCH_SUPER_ADMIN': '#343a40',
+            'HQ_ADMIN': '#6c757d',
+            'SUPER_HQ_ADMIN': '#343a40',
+            'HQ_MASTER': '#000000',
+            'HAS_MAPPING': '#28a745',
+            'ACTIVE_MAPPING': '#007bff',
+            'NO_MAPPING': '#dc3545',
+            'PENDING_MAPPING': '#ffc107',
+            'INACTIVE_MAPPING': '#6c757d'
         };
         return colorMap[status] || '#a8e6a3';
     };
@@ -876,47 +957,128 @@ const ClientComprehensiveManagement = () => {
                             fontWeight: '600',
                             color: '#2c3e50'
                         }}>내담자 목록</h3>
+                    </div>
+
+                    {/* 필터 UI */}
+                    <div style={{
+                        background: 'white',
+                        padding: '20px',
+                        borderRadius: '12px',
+                        marginBottom: '20px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}>
                         <div style={{
                             display: 'flex',
-                            gap: '12px',
-                            alignItems: 'center'
+                            gap: '15px',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            marginBottom: '15px'
                         }}>
-                            <input
-                                type="text"
-                                placeholder="내담자 검색..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                style={{
-                                    padding: '8px 12px',
-                                    border: '1px solid #dee2e6',
-                                    borderRadius: '6px',
-                                    fontSize: '14px',
-                                    width: '200px',
-                                    outline: 'none',
-                                    transition: 'border-color 0.2s ease'
-                                }}
-                            />
+                            {/* 검색 입력 */}
+                            <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
+                                <input
+                                    type="text"
+                                    placeholder="이름, 이메일, 전화번호로 검색..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 40px 10px 12px',
+                                        border: '2px solid #e1e5e9',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        outline: 'none',
+                                        transition: 'border-color 0.2s ease',
+                                        backgroundColor: '#f8f9fa'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                                    onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+                                />
+                                <i className="bi bi-search" style={{
+                                    position: 'absolute',
+                                    right: '12px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    color: '#6c757d',
+                                    fontSize: '16px'
+                                }}></i>
+                            </div>
+                            
+                            {/* 상태 필터 */}
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
-                                disabled={loadingCodes}
                                 style={{
-                                    padding: '8px 12px',
-                                    border: '1px solid #dee2e6',
-                                    borderRadius: '6px',
+                                    padding: '10px 12px',
+                                    border: '2px solid #e1e5e9',
+                                    borderRadius: '8px',
                                     fontSize: '14px',
-                                    backgroundColor: 'white',
+                                    backgroundColor: '#f8f9fa',
+                                    minWidth: '150px',
+                                    outline: 'none',
                                     cursor: 'pointer',
-                                    outline: 'none'
+                                    transition: 'border-color 0.2s ease'
                                 }}
+                                onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                                onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
                             >
                                 <option value="all">전체 상태</option>
-                                {userStatusOptions.map(option => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.icon} {option.label}
-                                    </option>
-                                ))}
+                                <option value="ACTIVE">활성</option>
+                                <option value="INACTIVE">비활성</option>
+                                <option value="SUSPENDED">일시정지</option>
+                                <option value="COMPLETED">완료</option>
+                                <option value="PENDING">대기중</option>
                             </select>
+                            
+                            {/* 필터 초기화 */}
+                            {(searchTerm || filterStatus !== 'all') && (
+                                <button
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                        setFilterStatus('all');
+                                    }}
+                                    style={{
+                                        padding: '10px 16px',
+                                        backgroundColor: '#6c757d',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        transition: 'background-color 0.2s ease',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}
+                                    onMouseEnter={(e) => e.target.style.backgroundColor = '#5a6268'}
+                                    onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
+                                >
+                                    <i className="bi bi-x-circle"></i>
+                                    초기화
+                                </button>
+                            )}
+                        </div>
+                        
+                        {/* 필터 상태 표시 */}
+                        <div style={{
+                            fontSize: '14px',
+                            color: '#6c757d',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px'
+                        }}>
+                            <i className="bi bi-info-circle"></i>
+                            {searchTerm || filterStatus !== 'all' ? (
+                                <span>
+                                    검색 결과: <strong>{getFilteredClients().length}명</strong>
+                                    {searchTerm && ` (검색어: "${searchTerm}")`}
+                                    {filterStatus !== 'all' && ` (상태: ${getStatusTextSync(filterStatus)})`}
+                                </span>
+                            ) : (
+                                <span>
+                                    최신 <strong>10명</strong> 표시 중 (전체 {clients.length}명)
+                                </span>
+                            )}
                         </div>
                     </div>
 
@@ -988,7 +1150,7 @@ const ClientComprehensiveManagement = () => {
                                                             backgroundColor: getStatusColorSync(mapping.status)
                                                         }}
                                                     >
-                                                        {getStatusText(mapping.status)}
+                                                        {getStatusTextSync(mapping.status)}
                                                     </span>
                                                 ) : (
                                                     <span style={{
@@ -1027,8 +1189,8 @@ const ClientComprehensiveManagement = () => {
                                             alignItems: 'center',
                                             gap: '4px'
                                         }}>
-                                            <span>{getGradeIcon(client.grade)}</span>
-                                            <span>등급: {getStatusText(client.grade) || '브론즈'}</span>
+                                            <span>{getGradeIconSync(client.grade)}</span>
+                                            <span>등급: {getGradeTextSync(client.grade) || '브론즈'}</span>
                                         </div>
                                         <div style={{
                                             fontSize: '12px',
@@ -1212,7 +1374,7 @@ const ClientComprehensiveManagement = () => {
                                                         className="value status-badge"
                                                         style={{ backgroundColor: getStatusColorSync(getClientMapping().status) }}
                                                     >
-                                                        {getStatusText(getClientMapping().status)}
+                                                        {getStatusTextSync(getClientMapping().status)}
                                                     </span>
                                                 </div>
                                                 <div className="info-item">
@@ -1330,70 +1492,130 @@ const ClientComprehensiveManagement = () => {
                             </button>
                         </div>
                         
-                        {/* 검색 및 필터 */}
-                        <div style={{ marginBottom: '25px' }}>
-                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                                <input
-                                    type="text"
-                                    placeholder="내담자 검색..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    style={{
-                                        width: '300px',
-                                        padding: '10px 16px',
-                                        border: '2px solid #e1e8ed',
-                                        borderRadius: '8px',
-                                        fontSize: '14px',
-                                        background: 'white',
-                                        color: '#495057',
-                                        transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
-                                    }}
-                                    onFocus={(e) => {
-                                        e.target.style.outline = 'none';
-                                        e.target.style.borderColor = '#a8e6a3';
-                                        e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = '#e1e8ed';
-                                        e.target.style.boxShadow = 'none';
-                                    }}
-                                    onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
-                                    onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
-                                />
+                        
+                        {/* 필터 UI */}
+                        <div style={{
+                            background: 'white',
+                            padding: '20px',
+                            borderRadius: '12px',
+                            marginBottom: '20px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        }}>
+                            <div style={{
+                                display: 'flex',
+                                gap: '15px',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                marginBottom: '15px'
+                            }}>
+                                {/* 검색 입력 */}
+                                <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="이름, 이메일, 전화번호로 검색..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 40px 10px 12px',
+                                            border: '2px solid #e1e5e9',
+                                            borderRadius: '8px',
+                                            fontSize: '14px',
+                                            outline: 'none',
+                                            transition: 'border-color 0.2s ease',
+                                            backgroundColor: '#f8f9fa'
+                                        }}
+                                        onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                                        onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+                                    />
+                                    <i className="bi bi-search" style={{
+                                        position: 'absolute',
+                                        right: '12px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        color: '#6c757d',
+                                        fontSize: '16px'
+                                    }}></i>
+                                </div>
+                                
+                                {/* 상태 필터 */}
                                 <select
                                     value={filterStatus}
                                     onChange={(e) => setFilterStatus(e.target.value)}
                                     style={{
-                                        padding: '10px 16px',
-                                        border: '2px solid #e1e8ed',
+                                        padding: '10px 12px',
+                                        border: '2px solid #e1e5e9',
                                         borderRadius: '8px',
                                         fontSize: '14px',
-                                        background: 'white',
-                                        color: '#495057',
-                                        transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
+                                        backgroundColor: '#f8f9fa',
+                                        minWidth: '150px',
+                                        outline: 'none',
+                                        cursor: 'pointer',
+                                        transition: 'border-color 0.2s ease'
                                     }}
-                                    onFocus={(e) => {
-                                        e.target.style.outline = 'none';
-                                        e.target.style.borderColor = '#a8e6a3';
-                                        e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = '#e1e8ed';
-                                        e.target.style.boxShadow = 'none';
-                                    }}
-                                    onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
-                                    onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
+                                    onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                                    onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
                                 >
                                     <option value="all">전체 상태</option>
-                                    {userStatusOptions.map(option => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.icon} {option.label}
-                                        </option>
-                                    ))}
+                                    <option value="ACTIVE">활성</option>
+                                    <option value="INACTIVE">비활성</option>
+                                    <option value="SUSPENDED">일시정지</option>
+                                    <option value="COMPLETED">완료</option>
+                                    <option value="PENDING">대기중</option>
                                 </select>
+                                
+                                {/* 필터 초기화 */}
+                                {(searchTerm || filterStatus !== 'all') && (
+                                    <button
+                                        onClick={() => {
+                                            setSearchTerm('');
+                                            setFilterStatus('all');
+                                        }}
+                                        style={{
+                                            padding: '10px 16px',
+                                            backgroundColor: '#6c757d',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            fontSize: '14px',
+                                            cursor: 'pointer',
+                                            transition: 'background-color 0.2s ease',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px'
+                                        }}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = '#5a6268'}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
+                                    >
+                                        <i className="bi bi-x-circle"></i>
+                                        초기화
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {/* 필터 상태 표시 */}
+                            <div style={{
+                                fontSize: '14px',
+                                color: '#6c757d',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px'
+                            }}>
+                                <i className="bi bi-info-circle"></i>
+                                {searchTerm || filterStatus !== 'all' ? (
+                                    <span>
+                                        검색 결과: <strong>{getFilteredClients().length}명</strong>
+                                        {searchTerm && ` (검색어: "${searchTerm}")`}
+                                        {filterStatus !== 'all' && ` (상태: ${getStatusTextSync(filterStatus)})`}
+                                    </span>
+                                ) : (
+                                    <span>
+                                        최신 <strong>10명</strong> 표시 중 (전체 {clients.length}명)
+                                    </span>
+                                )}
                             </div>
                         </div>
-                        
+
                         {/* 내담자 목록 카드 */}
                         <div style={{ marginTop: '20px' }}>
                             {getFilteredClients().length > 0 ? (
@@ -1506,7 +1728,7 @@ const ClientComprehensiveManagement = () => {
                                                             background: '#e3f2fd',
                                                             color: '#1976d2'
                                                         }}>
-                                                            {getGradeText(client.grade)}
+                                                            {getGradeTextSync(client.grade)}
                                                         </span>
                                                     </div>
 
@@ -1531,7 +1753,7 @@ const ClientComprehensiveManagement = () => {
                                                                 color: 'white',
                                                                 backgroundColor: getStatusColorSync(mapping.status)
                                                             }}>
-                                                                {getStatusText(mapping.status)}
+                                                                {getStatusTextSync(mapping.status)}
                                                             </span>
                                                         ) : (
                                                             <span style={{

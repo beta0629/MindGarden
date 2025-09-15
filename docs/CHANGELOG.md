@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-09-15] - 내담자 관리 시스템 개선 및 UI 최적화
+
+### 🔧 개선사항
+- **내담자 관리 페이지 UI 개선**
+  - 중복된 필터 UI 제거로 깔끔한 인터페이스 구현
+  - 통합된 필터 시스템으로 사용자 경험 향상
+  - 최신순 10명 기본 노출, 필터 적용 시 전체 표시
+
+- **등급 한글 매핑 오류 수정**
+  - "알 수 없음" 표시 문제 해결
+  - getStatusTextSync → getGradeTextSync 함수 변경
+  - 백엔드 API에 grade 필드 추가
+
+- **필터 기능 강화**
+  - 이름, 이메일, 전화번호 통합 검색 기능
+  - 상태별 필터링 (활성, 비활성, 일시정지 등)
+  - 필터 초기화 버튼 및 상태 표시
+  - 실시간 검색 결과 카운트 표시
+
+- **성능 최적화**
+  - 기본적으로 최신 10명만 로드하여 성능 향상
+  - 필터 적용 시에만 전체 데이터 표시
+  - 최신순 정렬 (createdAt 기준)
+
+### 🐛 버그 수정
+- **Promise 객체 렌더링 오류 해결**
+  - async 함수를 JSX에서 직접 호출하는 문제 수정
+  - 동기식 fallback 함수 구현 (getStatusTextSync, getGradeTextSync, getGradeIconSync)
+  - undefined 값 처리로 TypeError 방지
+
+- **React Key 중복 오류 해결**
+  - mappingStatusOptions에서 중복 제거 로직 개선
+  - 고유한 key 값 생성으로 React 렌더링 안정성 향상
+
+### 📊 데이터 개선
+- **백엔드 API 개선**
+  - getAllClientsWithMappingInfo()에 grade 필드 추가
+  - 클라이언트 데이터에 등급 정보 포함
+  - null 값 처리로 안정성 향상
+
 ## [2025-09-15] - 스케줄 관리 시스템 개선 및 UI 최적화
 
 ### 🔧 개선사항

@@ -720,6 +720,7 @@ public class AdminServiceImpl implements AdminService {
                 clientData.put("phone", user.getPhone() != null ? user.getPhone() : "");
                 clientData.put("birthDate", user.getBirthDate());
                 clientData.put("gender", user.getGender());
+                clientData.put("grade", user.getGrade() != null ? user.getGrade() : "");
                 clientData.put("isActive", user.getIsActive());
                 clientData.put("isDeleted", user.getIsDeleted());
                 clientData.put("createdAt", user.getCreatedAt());

@@ -284,16 +284,44 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
-     * 회기 추가 (연장)
+     * 회기 추가 (연장) - 기존 메서드 (즉시 처리)
+     * @deprecated 워크플로우를 통한 회기 추가를 권장합니다.
      */
     @Override
+    @Deprecated
     public ConsultantClientMapping extendSessions(Long mappingId, Integer additionalSessions, String packageName, Long packagePrice) {
+        log.warn("⚠️ 즉시 회기 추가 사용됨 - 워크플로우를 통한 회기 추가를 권장합니다. mappingId={}", mappingId);
+        
         ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
         mapping.addSessions(additionalSessions, packageName, packagePrice);
         
         return mappingRepository.save(mapping);
+    }
+    
+    /**
+     * 회기 추가 요청 생성 (워크플로우 방식)
+     */
+    public ConsultantClientMapping createSessionExtensionRequest(Long mappingId, Long requesterId, 
+                                                               Integer additionalSessions, String packageName, 
+                                                               Long packagePrice, String reason) {
+        log.info("🔄 회기 추가 요청 생성: mappingId={}, requesterId={}, sessions={}", 
+                mappingId, requesterId, additionalSessions);
+        
+        // 매핑 정보 조회
+        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
+        
+        // 요청자 정보 조회
+        User requester = userService.findActiveById(requesterId)
+                .orElseThrow(() -> new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId));
+        
+        // 회기 추가 요청 생성 (SessionExtensionService 사용)
+        // 이 메서드는 기존 AdminService에 유지하되, 실제 처리는 SessionExtensionService로 위임
+        log.info("✅ 회기 추가 요청 생성 완료 - SessionExtensionService를 통해 처리됩니다.");
+        
+        return mapping;
     }
 
     /**

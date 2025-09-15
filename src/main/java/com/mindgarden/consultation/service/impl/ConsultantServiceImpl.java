@@ -10,7 +10,10 @@ import java.util.Optional;
 import com.mindgarden.consultation.constant.ConsultantConstants;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.Consultant;
+import com.mindgarden.consultation.entity.ConsultantClientMapping;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.BaseRepository;
+import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.ConsultantRepository;
 import com.mindgarden.consultation.service.ConsultantService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
@@ -32,6 +35,9 @@ public class ConsultantServiceImpl implements ConsultantService {
     
     @Autowired
     private ConsultantRepository consultantRepository;
+    
+    @Autowired
+    private ConsultantClientMappingRepository mappingRepository;
     
     @Autowired
     private PersonalDataEncryptionUtil encryptionUtil;
@@ -280,8 +286,42 @@ public class ConsultantServiceImpl implements ConsultantService {
         // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 매핑을 통해 내담자 조회 (실제 구현에서는 매핑 테이블을 통해 조회)
-        return Page.empty(pageable);
+        // 매핑을 통해 내담자 조회
+        List<ConsultantClientMapping> mappings;
+        if (status != null && !status.trim().isEmpty()) {
+            // 특정 상태의 매핑만 조회
+            ConsultantClientMapping.MappingStatus mappingStatus = ConsultantClientMapping.MappingStatus.valueOf(status);
+            mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, 
+                mappingStatus == ConsultantClientMapping.MappingStatus.ACTIVE ? 
+                ConsultantClientMapping.MappingStatus.INACTIVE : ConsultantClientMapping.MappingStatus.ACTIVE);
+        } else {
+            // 모든 활성 매핑 조회
+            mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
+        }
+        
+        // 매핑에서 클라이언트 정보 추출 (User를 Client로 변환)
+        List<Client> clients = mappings.stream()
+                .map(mapping -> {
+                    User user = mapping.getClient();
+                    return Client.builder()
+                            .id(user.getId())
+                            .name(user.getName())
+                            .email(user.getEmail())
+                            .phone(user.getPhone())
+                            .branchCode(user.getBranchCode())
+                            .createdAt(user.getCreatedAt())
+                            .updatedAt(user.getUpdatedAt())
+                            .build();
+                })
+                .distinct()
+                .toList();
+        
+        // 페이지네이션 적용
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), clients.size());
+        List<Client> pageContent = clients.subList(start, end);
+        
+        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, clients.size());
     }
     
     @Override
@@ -295,8 +335,24 @@ public class ConsultantServiceImpl implements ConsultantService {
         // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 매핑을 통해 내담자 조회 (실제 구현에서는 매핑 테이블을 통해 조회)
-        return Optional.empty();
+        // 매핑을 통해 특정 내담자 조회
+        List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
+        
+        return mappings.stream()
+                .map(mapping -> {
+                    User user = mapping.getClient();
+                    return Client.builder()
+                            .id(user.getId())
+                            .name(user.getName())
+                            .email(user.getEmail())
+                            .phone(user.getPhone())
+                            .branchCode(user.getBranchCode())
+                            .createdAt(user.getCreatedAt())
+                            .updatedAt(user.getUpdatedAt())
+                            .build();
+                })
+                .filter(client -> client.getId().equals(clientId))
+                .findFirst();
     }
     
     @Override

@@ -23,8 +23,27 @@ const ConsultantClientSection = ({ userId }) => {
       setIsLoading(true);
       setError(null);
 
-      const response = await apiGet(`/api/v1/consultants/${userId}/clients?status=ACTIVE&page=0&size=10`);
-      setClients(response.data?.content || []);
+      // 매핑 정보를 포함한 내담자 목록 조회
+      const response = await apiGet(`/api/admin/mappings/consultant/${userId}/clients`);
+      const mappings = response.data || [];
+      
+      // 매핑에서 클라이언트 정보 추출 및 매핑 정보 추가
+      const clientsWithMappingInfo = mappings.map(mapping => ({
+        id: mapping.client?.id || mapping.clientId,
+        name: mapping.client?.name || mapping.clientName,
+        email: mapping.client?.email || '',
+        mappingStatus: mapping.status,
+        totalSessions: mapping.totalSessions || 0,
+        usedSessions: mapping.usedSessions || 0,
+        remainingSessions: mapping.remainingSessions || 0,
+        lastConsultationDate: mapping.lastConsultationDate,
+        packageName: mapping.packageName,
+        packagePrice: mapping.packagePrice,
+        paymentStatus: mapping.paymentStatus,
+        createdAt: mapping.createdAt
+      }));
+      
+      setClients(clientsWithMappingInfo);
 
     } catch (err) {
       console.error('내담자 목록 로드 실패:', err);
@@ -180,9 +199,9 @@ const ConsultantClientSection = ({ userId }) => {
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
           gap: '16px'
         }}>
-          {clients.slice(0, 6).map((client) => (
+          {clients.slice(0, 6).map((client, index) => (
             <div
-              key={client.id}
+              key={`${client.id}-${index}`}
               style={{
                 border: '1px solid #e9ecef',
                 borderRadius: '8px',

@@ -528,7 +528,19 @@ const ImprovedTaxManagement = () => {
                               </div>
                               <div className="erp-detail">
                                 <span className="erp-label">세율:</span>
-                                <span className="erp-value">{category.extraData ? JSON.parse(category.extraData).taxRate || 'N/A' : 'N/A'}%</span>
+                                <span className="erp-value">
+                                  {(() => {
+                                    try {
+                                      if (category.extraData) {
+                                        const extraData = JSON.parse(category.extraData);
+                                        return extraData.taxRate || 'N/A';
+                                      }
+                                      return 'N/A';
+                                    } catch (e) {
+                                      return 'N/A';
+                                    }
+                                  })()}%
+                                </span>
                               </div>
                             </div>
                           </div>

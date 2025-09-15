@@ -257,14 +257,14 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
             loadConsultants();
         }
-    }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole]);
+    }, [userRole, selectedConsultantId]);
 
     // 상담사 선택 변경 시 스케줄 다시 로드
     useEffect(() => {
         if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
             loadSchedules();
         }
-    }, [selectedConsultantId, loadSchedules, userRole]);
+    }, [selectedConsultantId, userRole]);
 
     /**
      * 휴가 데이터를 캘린더 이벤트로 변환
@@ -690,8 +690,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     });
                                 }
                                 return acc;
-                            }, []).map(consultant => (
-                                <div key={consultant.id} className="legend-item">
+                            }, []).map((consultant, index) => (
+                                <div key={`consultant-${consultant.id}-${index}`} className="legend-item">
                                     <span 
                                         className="legend-color" 
                                         style={{ backgroundColor: consultant.color }}

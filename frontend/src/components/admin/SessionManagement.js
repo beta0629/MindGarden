@@ -719,21 +719,49 @@ const SessionManagement = () => {
             <div className="session-mgmt-client-selection-section">
                 <div className="session-mgmt-client-selection-header">
                     <h3>내담자 선택</h3>
-                    <div className="session-mgmt-client-filters">
-                        <div className="session-mgmt-search-box">
+                    <div style={{
+                        display: 'flex',
+                        gap: '15px',
+                        alignItems: 'center',
+                        flexWrap: 'nowrap'
+                    }}>
+                        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
                             <input
                                 type="text"
                                 placeholder="내담자 이름 또는 이메일 검색..."
                                 value={clientSearchTerm}
                                 onChange={(e) => setClientSearchTerm(e.target.value)}
-                                className="session-mgmt-search-input"
+                                style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    fontSize: '14px',
+                                    outline: 'none',
+                                    transition: 'border-color 0.2s ease'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                             />
                         </div>
                         <select
                             value={clientFilterStatus}
                             onChange={(e) => setClientFilterStatus(e.target.value)}
-                            className="session-mgmt-filter-select"
                             disabled={loadingCodes}
+                            style={{
+                                padding: '8px 12px',
+                                border: '1px solid #d1d5db',
+                                borderRadius: '6px',
+                                fontSize: '14px',
+                                backgroundColor: 'white',
+                                minWidth: '120px',
+                                outline: 'none',
+                                cursor: loadingCodes ? 'not-allowed' : 'pointer',
+                                opacity: loadingCodes ? 0.6 : 1,
+                                transition: 'border-color 0.2s ease'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                            onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                         >
                             <option value="ALL">전체</option>
                             {mappingStatusOptions.map((status, index) => (

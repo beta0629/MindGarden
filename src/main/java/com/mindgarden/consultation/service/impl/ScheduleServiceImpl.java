@@ -22,6 +22,7 @@ import com.mindgarden.consultation.repository.VacationRepository;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.service.ScheduleService;
+import com.mindgarden.consultation.service.SessionSyncService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final VacationRepository vacationRepository;
     private final CommonCodeService commonCodeService;
     private final ConsultantAvailabilityService consultantAvailabilityService;
+    private final SessionSyncService sessionSyncService;
     
     // 상수는 ScheduleConstants 클래스에서 관리
 
@@ -822,6 +824,17 @@ public class ScheduleServiceImpl implements ScheduleService {
                 try {
                     mapping.useSession();
                     mappingRepository.save(mapping);
+                    
+                    // 🔄 회기 사용 후 전체 시스템 동기화
+                    try {
+                        sessionSyncService.syncAfterSessionUsage(mapping.getId(), consultantId, clientId);
+                        log.info("✅ 회기 사용 후 동기화 완료: mappingId={}", mapping.getId());
+                    } catch (Exception syncError) {
+                        log.error("❌ 회기 사용 후 동기화 실패: mappingId={}, error={}", 
+                                 mapping.getId(), syncError.getMessage(), syncError);
+                        // 동기화 실패해도 회기 사용은 완료된 상태로 유지
+                    }
+                    
                     log.info("✅ 회기 사용 완료: 남은 회기 수 {}", mapping.getRemainingSessions());
                 } catch (Exception e) {
                     log.error("❌ 회기 사용 처리 실패: {}", e.getMessage(), e);

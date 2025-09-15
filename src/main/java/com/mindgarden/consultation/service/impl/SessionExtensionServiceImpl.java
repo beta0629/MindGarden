@@ -6,6 +6,7 @@ import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.SessionExtensionRequestRepository;
 import com.mindgarden.consultation.service.SessionExtensionService;
+import com.mindgarden.consultation.service.SessionSyncService;
 import com.mindgarden.consultation.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     private final SessionExtensionRequestRepository requestRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final UserService userService;
+    private final SessionSyncService sessionSyncService;
     
     @Override
     public SessionExtensionRequest createRequest(Long mappingId, Long requesterId, 
@@ -141,6 +143,16 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         request.complete();
         
         SessionExtensionRequest savedRequest = requestRepository.save(request);
+        
+        // 🔄 회기 추가 후 전체 시스템 동기화
+        try {
+            sessionSyncService.syncAfterSessionExtension(savedRequest);
+            log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
+        } catch (Exception e) {
+            log.error("❌ 회기 추가 후 동기화 실패: requestId={}, error={}", 
+                     savedRequest.getId(), e.getMessage(), e);
+            // 동기화 실패해도 회기 추가는 완료된 상태로 유지
+        }
         
         log.info("✅ 회기 추가 완료: requestId={}, mappingId={}, sessions={}", 
                 savedRequest.getId(), mapping.getId(), request.getAdditionalSessions());

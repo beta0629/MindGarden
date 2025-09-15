@@ -542,6 +542,5 @@ const ClientPaymentHistory = () => {
       </div>
     </SimpleLayout>
   );
-};
 
 export default ClientPaymentHistory;

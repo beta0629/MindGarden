@@ -5,16 +5,12 @@ import SimpleLayout from '../layout/SimpleLayout';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './ClientPaymentHistory.css';
 
-/**
- * 내담자 결제 내역 상세 페이지
- * 결제 내역, 패키지 정보, 환불 내역 등을 상세히 표시
- */
 const ClientPaymentHistory = () => {
   const navigate = useNavigate();
   const [paymentData, setPaymentData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('all'); // all, completed, pending, refunded
+  const [filter, setFilter] = useState('all');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -26,19 +22,15 @@ const ClientPaymentHistory = () => {
       setIsLoading(true);
       setError(null);
 
-      // 사용자 정보 확인
       const userResponse = await apiGet('/api/auth/current-user');
       if (!userResponse || !userResponse.id) {
         throw new Error('로그인이 필요합니다.');
       }
 
       const userId = userResponse.id;
-
-      // 매핑 데이터 로드 (결제 내역 포함)
       const mappingsResponse = await apiGet(`/api/admin/mappings/client?clientId=${userId}`);
       const mappings = mappingsResponse.data || [];
 
-      // 통계 계산
       const totalAmount = mappings.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
       const totalSessions = mappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
       const completedPayments = mappings.filter(mapping => mapping.paymentStatus === 'CONFIRMED').length;
@@ -211,230 +203,230 @@ const ClientPaymentHistory = () => {
   return (
     <SimpleLayout title="결제 내역">
       <div className="client-payment-history">
-      
-      {/* 햄버거 메뉴 드롭다운 */}
-      {isMenuOpen && (
-        <div style={{
-          position: 'fixed',
-          top: '80px',
-          right: '20px',
-          backgroundColor: 'white',
-          border: '1px solid #ddd',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          zIndex: 1000,
-          minWidth: '200px'
-        }}>
-          <div style={{ padding: '8px 0' }}>
-            <button 
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: 'none',
-                background: 'none',
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-              onClick={() => handleMenuAction('dashboard')}
-            >
-              <i className="bi bi-house"></i>
-              대시보드
-            </button>
-            <button 
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: 'none',
-                background: 'none',
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-              onClick={() => handleMenuAction('session-management')}
-            >
-              <i className="bi bi-clock-history"></i>
-              회기 관리
-            </button>
-            <button 
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: 'none',
-                background: 'none',
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-              onClick={() => handleMenuAction('payment-history')}
-            >
-              <i className="bi bi-credit-card"></i>
-              결제 내역
-            </button>
-            <button 
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: 'none',
-                background: 'none',
-                textAlign: 'left',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-              onClick={() => handleMenuAction('consultation-guide')}
-            >
-              <i className="bi bi-book"></i>
-              상담 가이드
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 통계 카드 */}
-      <div className="stats-grid">
-        <div className="stat-card total">
-          <div className="stat-icon">
-            <i className="bi bi-currency-dollar"></i>
-          </div>
-          <div className="stat-content">
-            <h3>총 결제금액</h3>
-            <p className="stat-number">{formatCurrency(paymentData.totalAmount)}</p>
-          </div>
-        </div>
-
-        <div className="stat-card sessions">
-          <div className="stat-icon">
-            <i className="bi bi-calendar-check"></i>
-          </div>
-          <div className="stat-content">
-            <h3>총 회기</h3>
-            <p className="stat-number">{paymentData.totalSessions}</p>
-            <span className="stat-unit">회</span>
-          </div>
-        </div>
-
-        <div className="stat-card completed">
-          <div className="stat-icon">
-            <i className="bi bi-check-circle"></i>
-          </div>
-          <div className="stat-content">
-            <h3>결제완료</h3>
-            <p className="stat-number">{paymentData.completedPayments}</p>
-            <span className="stat-unit">건</span>
-          </div>
-        </div>
-
-        <div className="stat-card pending">
-          <div className="stat-icon">
-            <i className="bi bi-clock"></i>
-          </div>
-          <div className="stat-content">
-            <h3>결제대기</h3>
-            <p className="stat-number">{paymentData.pendingPayments}</p>
-            <span className="stat-unit">건</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 필터 버튼 */}
-      <div className="filter-section">
-        <h3>결제 내역</h3>
-        <div className="filter-buttons">
-          <button 
-            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            전체
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
-            onClick={() => setFilter('completed')}
-          >
-            결제완료
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'pending' ? 'active' : ''}`}
-            onClick={() => setFilter('pending')}
-          >
-            결제대기
-          </button>
-          <button 
-            className={`filter-btn ${filter === 'refunded' ? 'active' : ''}`}
-            onClick={() => setFilter('refunded')}
-          >
-            환불완료
-          </button>
-        </div>
-      </div>
-
-      {/* 결제 내역 목록 */}
-      <div className="payment-list">
-        {filteredMappings.map((mapping, index) => (
-          <div key={mapping.id || index} className="payment-item">
-            <div className="payment-header">
-              <div className="payment-title">
-                <h4>{mapping.packageName || '상담 패키지'}</h4>
-                <span className="payment-amount">{formatCurrency(mapping.packagePrice || 0)}</span>
-              </div>
-              <div 
-                className="payment-status"
-                style={{ color: getStatusColor(mapping.paymentStatus) }}
+        {/* 햄버거 메뉴 드롭다운 */}
+        {isMenuOpen && (
+          <div style={{
+            position: 'fixed',
+            top: '80px',
+            right: '20px',
+            backgroundColor: 'white',
+            border: '1px solid #ddd',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 1000,
+            minWidth: '200px'
+          }}>
+            <div style={{ padding: '8px 0' }}>
+              <button 
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: 'none',
+                  background: 'none',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onClick={() => handleMenuAction('dashboard')}
               >
-                {getStatusText(mapping.paymentStatus)}
-              </div>
+                <i className="bi bi-house"></i>
+                대시보드
+              </button>
+              <button 
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: 'none',
+                  background: 'none',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onClick={() => handleMenuAction('session-management')}
+              >
+                <i className="bi bi-clock-history"></i>
+                회기 관리
+              </button>
+              <button 
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: 'none',
+                  background: 'none',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onClick={() => handleMenuAction('payment-history')}
+              >
+                <i className="bi bi-credit-card"></i>
+                결제 내역
+              </button>
+              <button 
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: 'none',
+                  background: 'none',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onClick={() => handleMenuAction('consultation-guide')}
+              >
+                <i className="bi bi-book"></i>
+                상담 가이드
+              </button>
             </div>
+          </div>
+        )}
 
-            <div className="payment-details">
-              <div className="detail-row">
-                <span className="detail-label">회기 수:</span>
-                <span className="detail-value">{mapping.totalSessions || 0}회</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">상담사:</span>
-                <span className="detail-value">{mapping.consultant?.name || '미지정'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">결제일:</span>
-                <span className="detail-value">{formatDate(mapping.paymentDate)}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">결제방법:</span>
-                <span className="detail-value">{getMethodText(mapping.paymentMethod)}</span>
-              </div>
-              {mapping.paymentReference && (
-                <div className="detail-row">
-                  <span className="detail-label">참조번호:</span>
-                  <span className="detail-value">{mapping.paymentReference}</span>
+        {/* 통계 카드 */}
+        <div className="stats-grid">
+          <div className="stat-card total">
+            <div className="stat-icon">
+              <i className="bi bi-currency-dollar"></i>
+            </div>
+            <div className="stat-content">
+              <h3>총 결제금액</h3>
+              <p className="stat-number">{formatCurrency(paymentData.totalAmount)}</p>
+            </div>
+          </div>
+
+          <div className="stat-card sessions">
+            <div className="stat-icon">
+              <i className="bi bi-calendar-check"></i>
+            </div>
+            <div className="stat-content">
+              <h3>총 회기</h3>
+              <p className="stat-number">{paymentData.totalSessions}</p>
+              <span className="stat-unit">회</span>
+            </div>
+          </div>
+
+          <div className="stat-card completed">
+            <div className="stat-icon">
+              <i className="bi bi-check-circle"></i>
+            </div>
+            <div className="stat-content">
+              <h3>결제완료</h3>
+              <p className="stat-number">{paymentData.completedPayments}</p>
+              <span className="stat-unit">건</span>
+            </div>
+          </div>
+
+          <div className="stat-card pending">
+            <div className="stat-icon">
+              <i className="bi bi-clock"></i>
+            </div>
+            <div className="stat-content">
+              <h3>결제대기</h3>
+              <p className="stat-number">{paymentData.pendingPayments}</p>
+              <span className="stat-unit">건</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 필터 버튼 */}
+        <div className="filter-section">
+          <h3>결제 내역</h3>
+          <div className="filter-buttons">
+            <button 
+              className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+              onClick={() => setFilter('all')}
+            >
+              전체
+            </button>
+            <button 
+              className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
+              onClick={() => setFilter('completed')}
+            >
+              결제완료
+            </button>
+            <button 
+              className={`filter-btn ${filter === 'pending' ? 'active' : ''}`}
+              onClick={() => setFilter('pending')}
+            >
+              결제대기
+            </button>
+            <button 
+              className={`filter-btn ${filter === 'refunded' ? 'active' : ''}`}
+              onClick={() => setFilter('refunded')}
+            >
+              환불완료
+            </button>
+          </div>
+        </div>
+
+        {/* 결제 내역 목록 */}
+        <div className="payment-list">
+          {filteredMappings.map((mapping, index) => (
+            <div key={mapping.id || index} className="payment-item">
+              <div className="payment-header">
+                <div className="payment-title">
+                  <h4>{mapping.packageName || '상담 패키지'}</h4>
+                  <span className="payment-amount">{formatCurrency(mapping.packagePrice || 0)}</span>
                 </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+                <div 
+                  className="payment-status"
+                  style={{ color: getStatusColor(mapping.paymentStatus) }}
+                >
+                  {getStatusText(mapping.paymentStatus)}
+                </div>
+              </div>
 
-      {/* 환불 정책 */}
-      <div className="refund-policy">
-        <h3>환불 정책</h3>
-        <div className="policy-list">
-          <div className="policy-item">
-            <i className="bi bi-check-circle"></i>
-            <span>사용하지 않은 회기는 100% 환불 가능합니다.</span>
-          </div>
-          <div className="policy-item">
-            <i className="bi bi-clock"></i>
-            <span>환불 신청은 결제일로부터 7일 이내에 가능합니다.</span>
-          </div>
-          <div className="policy-item">
-            <i className="bi bi-phone"></i>
-            <span>환불 문의는 고객센터로 연락해주세요.</span>
+              <div className="payment-details">
+                <div className="detail-row">
+                  <span className="detail-label">회기 수:</span>
+                  <span className="detail-value">{mapping.totalSessions || 0}회</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">상담사:</span>
+                  <span className="detail-value">{mapping.consultant?.name || '미지정'}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">결제일:</span>
+                  <span className="detail-value">{formatDate(mapping.paymentDate)}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">결제방법:</span>
+                  <span className="detail-value">{getMethodText(mapping.paymentMethod)}</span>
+                </div>
+                {mapping.paymentReference && (
+                  <div className="detail-row">
+                    <span className="detail-label">참조번호:</span>
+                    <span className="detail-value">{mapping.paymentReference}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 환불 정책 */}
+        <div className="refund-policy">
+          <h3>환불 정책</h3>
+          <div className="policy-list">
+            <div className="policy-item">
+              <i className="bi bi-check-circle"></i>
+              <span>사용하지 않은 회기는 100% 환불 가능합니다.</span>
+            </div>
+            <div className="policy-item">
+              <i className="bi bi-clock"></i>
+              <span>환불 신청은 결제일로부터 7일 이내에 가능합니다.</span>
+            </div>
+            <div className="policy-item">
+              <i className="bi bi-phone"></i>
+              <span>환불 문의는 고객센터로 연락해주세요.</span>
+            </div>
           </div>
         </div>
       </div>

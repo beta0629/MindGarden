@@ -336,7 +336,7 @@ const ClientSessionManagement = () => {
                       fontSize: '16px',
                       fontWeight: '600',
                       color: '#2c3e50'
-                    }}>상담사: {mapping.consultant?.name || '미지정'}</span>
+                    }}>상담사: {mapping.consultant?.consultantName || '미지정'}</span>
                   </div>
                   <span style={{
                     padding: '4px 12px',
@@ -439,7 +439,7 @@ const ClientSessionManagement = () => {
                       fontSize: '16px',
                       fontWeight: '600',
                       color: '#2c3e50'
-                    }}>{mapping.consultant?.name || '미지정'}</span>
+                    }}>{mapping.consultant?.consultantName || '미지정'}</span>
                   </div>
                   <div style={{
                     display: 'flex',

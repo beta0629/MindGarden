@@ -390,7 +390,7 @@ const ClientPaymentHistory = () => {
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">상담사:</span>
-                  <span className="detail-value">{mapping.consultant?.name || '미지정'}</span>
+                  <span className="detail-value">{mapping.consultant?.consultantName || '미지정'}</span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">결제일:</span>

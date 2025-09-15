@@ -586,44 +586,173 @@ const BudgetManagement = () => {
 
                 {activeTab === 'reports' && (
                   <div className="erp-section">
-                    <h2>예산 보고서</h2>
-                    <div className="row">
-                      <div className="col-md-4 mb-3">
-                        <div className="erp-card">
-                          <div className="erp-card-header">
-                            <h3>총 예산</h3>
-                            <i className="bi bi-currency-dollar text-primary"></i>
+                    <div className="erp-section-header">
+                      <div className="erp-section-title">
+                        <h2>
+                          <i className="bi bi-graph-up"></i>
+                          예산 보고서
+                        </h2>
+                        <p>예산 사용 현황과 통계를 확인할 수 있습니다.</p>
+                      </div>
+                    </div>
+                    
+                    {/* 통계 카드 */}
+                    <div className="erp-stats-grid">
+                      <div className="erp-stat-card">
+                        <div className="erp-stat-icon">
+                          <i className="bi bi-currency-dollar"></i>
+                        </div>
+                        <div className="erp-stat-content">
+                          <h3>총 예산</h3>
+                          <div className="erp-stat-value text-primary">
+                            {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.totalBudget || 0), 0))}
                           </div>
-                          <div className="erp-card-body">
-                            <div className="h4 text-primary">₩0</div>
-                            <small className="text-muted">전체 예산</small>
-                          </div>
+                          <small className="text-muted">전체 예산</small>
                         </div>
                       </div>
-                      <div className="col-md-4 mb-3">
-                        <div className="erp-card">
-                          <div className="erp-card-header">
-                            <h3>사용된 예산</h3>
-                            <i className="bi bi-graph-up text-warning"></i>
+                      
+                      <div className="erp-stat-card">
+                        <div className="erp-stat-icon">
+                          <i className="bi bi-graph-up"></i>
+                        </div>
+                        <div className="erp-stat-content">
+                          <h3>사용된 예산</h3>
+                          <div className="erp-stat-value text-warning">
+                            {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.usedBudget || 0), 0))}
                           </div>
-                          <div className="erp-card-body">
-                            <div className="h4 text-warning">₩0</div>
-                            <small className="text-muted">사용 금액</small>
-                          </div>
+                          <small className="text-muted">사용 금액</small>
                         </div>
                       </div>
-                      <div className="col-md-4 mb-3">
-                        <div className="erp-card">
-                          <div className="erp-card-header">
-                            <h3>잔여 예산</h3>
-                            <i className="bi bi-piggy-bank text-success"></i>
+                      
+                      <div className="erp-stat-card">
+                        <div className="erp-stat-icon">
+                          <i className="bi bi-piggy-bank"></i>
+                        </div>
+                        <div className="erp-stat-content">
+                          <h3>잔여 예산</h3>
+                          <div className="erp-stat-value text-success">
+                            {formatCurrency(budgets.reduce((sum, budget) => sum + (budget.remainingBudget || 0), 0))}
                           </div>
-                          <div className="erp-card-body">
-                            <div className="h4 text-success">₩0</div>
-                            <small className="text-muted">잔액</small>
-                          </div>
+                          <small className="text-muted">잔액</small>
                         </div>
                       </div>
+                      
+                      <div className="erp-stat-card">
+                        <div className="erp-stat-icon">
+                          <i className="bi bi-percent"></i>
+                        </div>
+                        <div className="erp-stat-content">
+                          <h3>평균 사용률</h3>
+                          <div className="erp-stat-value text-info">
+                            {(() => {
+                              const totalBudget = budgets.reduce((sum, budget) => sum + (budget.totalBudget || 0), 0);
+                              const totalUsed = budgets.reduce((sum, budget) => sum + (budget.usedBudget || 0), 0);
+                              const usageRate = totalBudget > 0 ? (totalUsed / totalBudget) * 100 : 0;
+                              return `${usageRate.toFixed(1)}%`;
+                            })()}
+                          </div>
+                          <small className="text-muted">전체 사용률</small>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* 카테고리별 통계 */}
+                    <div className="erp-section">
+                      <div className="erp-section-header">
+                        <div className="erp-section-title">
+                          <h3>
+                            <i className="bi bi-pie-chart"></i>
+                            카테고리별 예산 현황
+                          </h3>
+                          <p>각 카테고리별 예산 사용 현황을 확인할 수 있습니다.</p>
+                        </div>
+                      </div>
+                      
+                      {budgets.length > 0 ? (
+                        <div className="erp-grid">
+                          {(() => {
+                            // 카테고리별로 그룹화
+                            const categoryStats = {};
+                            budgets.forEach(budget => {
+                              const category = budget.category || '기타';
+                              if (!categoryStats[category]) {
+                                categoryStats[category] = {
+                                  totalBudget: 0,
+                                  usedBudget: 0,
+                                  remainingBudget: 0,
+                                  count: 0
+                                };
+                              }
+                              categoryStats[category].totalBudget += budget.totalBudget || 0;
+                              categoryStats[category].usedBudget += budget.usedBudget || 0;
+                              categoryStats[category].remainingBudget += budget.remainingBudget || 0;
+                              categoryStats[category].count += 1;
+                            });
+                            
+                            return Object.entries(categoryStats).map(([category, stats]) => {
+                              const usageRate = stats.totalBudget > 0 ? (stats.usedBudget / stats.totalBudget) * 100 : 0;
+                              const isOverBudget = stats.usedBudget > stats.totalBudget;
+                              
+                              return (
+                                <div key={category} className="erp-card">
+                                  <div className="erp-card-header">
+                                    <h4>{category}</h4>
+                                    <span className={`erp-status ${isOverBudget ? 'danger' : 'success'}`}>
+                                      {isOverBudget ? '예산 초과' : '정상'}
+                                    </span>
+                                  </div>
+                                  <div className="erp-card-body">
+                                    <div className="erp-budget-amounts">
+                                      <div className="erp-budget-amount">
+                                        <span className="erp-amount-label">총 예산</span>
+                                        <span className="erp-amount-value">{formatCurrency(stats.totalBudget)}</span>
+                                      </div>
+                                      <div className="erp-budget-amount">
+                                        <span className="erp-amount-label">사용 금액</span>
+                                        <span className="erp-amount-value">{formatCurrency(stats.usedBudget)}</span>
+                                      </div>
+                                      <div className="erp-budget-amount">
+                                        <span className="erp-amount-label">잔여 금액</span>
+                                        <span className={`erp-amount-value ${isOverBudget ? 'text-danger' : 'text-success'}`}>
+                                          {formatCurrency(stats.remainingBudget)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="erp-budget-progress">
+                                      <div className="erp-progress-header">
+                                        <span>사용률</span>
+                                        <span className={`fw-bold ${isOverBudget ? 'text-danger' : 'text-primary'}`}>
+                                          {usageRate.toFixed(1)}%
+                                        </span>
+                                      </div>
+                                      <div className="erp-progress-bar">
+                                        <div 
+                                          className={`erp-progress-fill ${isOverBudget ? 'over-budget' : ''}`}
+                                          style={{ width: `${Math.min(usageRate, 100)}%` }}
+                                        ></div>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="erp-budget-count">
+                                      <i className="bi bi-list-ul"></i>
+                                      {stats.count}개 예산
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="erp-empty-state">
+                          <div className="erp-empty-icon">
+                            <i className="bi bi-pie-chart"></i>
+                          </div>
+                          <h3>예산 데이터가 없습니다</h3>
+                          <p>예산을 추가하면 카테고리별 통계를 확인할 수 있습니다.</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

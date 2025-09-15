@@ -227,8 +227,14 @@
   font-weight: 600;
   color: #2c3e50;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+  line-height: 1.2;
+}
+
+.package-info h3 i {
+  margin-top: 2px;
+  font-size: 16px;
 }
 
 .package-list {

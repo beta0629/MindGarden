@@ -25,75 +25,41 @@ const ClientSessionManagement = () => {
       setIsLoading(true);
       setError(null);
 
-      // 기존 세션 확인
-
-      // 사용자 정보 가져오기
+      // 사용자 정보 확인
       const userResponse = await apiGet('/api/auth/current-user');
-      
       if (!userResponse || !userResponse.id) {
-        throw new Error('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
+        throw new Error('로그인이 필요합니다.');
       }
-      
+
       const userId = userResponse.id;
 
-      // 매핑 정보 가져오기
-      const mappingResponse = await apiGet(`/api/admin/mappings/client?clientId=${userId}`);
-      const mappings = mappingResponse.data || [];
+      // 매핑 데이터 로드
+      const mappingsResponse = await apiGet(`/api/admin/mappings/client?clientId=${userId}`);
+      const mappings = mappingsResponse.data || [];
 
-      // 상담 일정 가져오기 (상담일지가 아닌 기본 일정 정보만)
-      const scheduleResponse = await apiGet(`/api/schedules?userId=${userId}&userRole=CLIENT`);
-      const schedules = scheduleResponse.data || [];
+      // 스케줄 데이터 로드
+      const schedulesResponse = await apiGet(`/api/schedules?userId=${userId}&userRole=CLIENT`);
+      const schedules = schedulesResponse.data || [];
 
-      // 회기 사용 내역 계산 (완료된 상담만)
-      const usedSessions = schedules.filter(s => s.status === '완료').length;
+      // 통계 계산
       const totalSessions = mappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
+      const usedSessions = schedules.filter(s => s.status === '완료').length;
       const remainingSessions = totalSessions - usedSessions;
 
-      // 최근 상담 일정 (최근 10개)
-      const recentSchedules = schedules
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 10);
-
       setSessionData({
-        mappings,
-        schedules,
         totalSessions,
         usedSessions,
         remainingSessions,
-        recentSchedules
+        mappings: mappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+        schedules: schedules.sort((a, b) => new Date(b.date) - new Date(a.date))
       });
-    } catch (error) {
-      console.error('회기 데이터 로드 실패:', error);
-      if (error.message.includes('로그인이 필요합니다')) {
-        setError('로그인이 필요합니다. 로그인 후 다시 시도해주세요.');
-      } else {
-        setError('회기 데이터를 불러오는 중 오류가 발생했습니다.');
-      }
+
+    } catch (err) {
+      console.error('회기 데이터 로드 실패:', err);
+      setError(err.message || '회기 데이터를 불러오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getStatusColor = (isCompleted) => {
-    return isCompleted ? '#28a745' : '#ffc107';
-  };
-
-  const getStatusText = (isCompleted) => {
-    return isCompleted ? '완료' : '미완료';
-  };
-
-  const handleHamburgerClick = (isOpen) => {
-    setIsMenuOpen(isOpen);
   };
 
   const handleMenuAction = (action) => {
@@ -116,46 +82,84 @@ const ClientSessionManagement = () => {
     }
   };
 
+  const handleHamburgerClick = (isOpen) => {
+    setIsMenuOpen(isOpen);
+  };
+
+  const getStatusText = (isCompleted) => {
+    return isCompleted ? '완료' : '예정';
+  };
+
+  const getStatusColor = (isCompleted) => {
+    return isCompleted ? '#28a745' : '#ffc107';
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '알 수 없음';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  };
+
   if (isLoading) {
     return (
-      <div className="client-session-management">
-        <div className="loading-container">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">로딩 중...</span>
+      <SimpleLayout title="회기 관리">
+        <div className="client-session-management">
+          <div className="loading-container">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">로딩 중...</span>
+            </div>
+            <p>회기 데이터를 불러오는 중...</p>
           </div>
-          <p>회기 데이터를 불러오는 중...</p>
         </div>
-      </div>
+      </SimpleLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="client-session-management">
-        <div className="error-container">
-          <i className="bi bi-exclamation-triangle"></i>
-          <h3>오류가 발생했습니다</h3>
-          <p>{error}</p>
-          <button className="btn btn-primary" onClick={loadSessionData}>
-            다시 시도
-          </button>
+      <SimpleLayout title="회기 관리">
+        <div className="client-session-management">
+          <div className="error-container">
+            <div className="error-icon">
+              <i className="bi bi-exclamation-triangle"></i>
+            </div>
+            <h3>오류가 발생했습니다</h3>
+            <p>{error}</p>
+            <button 
+              className="btn btn-primary"
+              onClick={loadSessionData}
+            >
+              다시 시도
+            </button>
+          </div>
         </div>
-      </div>
+      </SimpleLayout>
     );
   }
 
   if (!sessionData || sessionData.mappings.length === 0) {
     return (
-      <div className="client-session-management">
-        <div className="no-data-container">
-          <i className="bi bi-clock-history"></i>
-          <h3>회기 정보가 없습니다</h3>
-          <p>아직 상담사와 연결되지 않았습니다.</p>
-          <button className="btn btn-primary" onClick={() => navigate('/client/consultant-mapping')}>
-            상담사 연결하기
-          </button>
+      <SimpleLayout title="회기 관리">
+        <div className="client-session-management">
+          <div className="no-data-container">
+            <div className="no-data-icon">
+              <i className="bi bi-calendar-check"></i>
+            </div>
+            <h3>회기 정보가 없습니다</h3>
+            <p>아직 상담사와 연결된 패키지가 없습니다.</p>
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/dashboard')}
+            >
+              상담사 연결하기
+            </button>
+          </div>
         </div>
-      </div>
+      </SimpleLayout>
     );
   }
 
@@ -169,116 +173,88 @@ const ClientSessionManagement = () => {
           position: 'fixed',
           top: '80px',
           right: '20px',
-          background: 'white',
-          border: '1px solid #e9ecef',
+          backgroundColor: 'white',
+          border: '1px solid #ddd',
           borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           zIndex: 1000,
-          minWidth: '200px',
-          padding: '8px 0'
+          minWidth: '200px'
         }}>
-          <div style={{
-            padding: '12px 16px',
-            borderBottom: '1px solid #e9ecef',
-            fontWeight: '600',
-            color: '#2c3e50',
-            fontSize: '14px'
-          }}>
-            메뉴
+          <div style={{ padding: '8px 0' }}>
+            <button 
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: 'none',
+                background: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              onClick={() => handleMenuAction('dashboard')}
+            >
+              <i className="bi bi-house"></i>
+              대시보드
+            </button>
+            <button 
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: 'none',
+                background: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              onClick={() => handleMenuAction('session-management')}
+            >
+              <i className="bi bi-clock-history"></i>
+              회기 관리
+            </button>
+            <button 
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: 'none',
+                background: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              onClick={() => handleMenuAction('payment-history')}
+            >
+              <i className="bi bi-credit-card"></i>
+              결제 내역
+            </button>
+            <button 
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: 'none',
+                background: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+              onClick={() => handleMenuAction('consultation-guide')}
+            >
+              <i className="bi bi-book"></i>
+              상담 가이드
+            </button>
           </div>
-          <button 
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: 'none',
-              background: 'none',
-              textAlign: 'left',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '14px',
-              color: '#2c3e50',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-            onClick={() => handleMenuAction('dashboard')}
-          >
-            <i className="bi bi-house"></i>
-            대시보드
-          </button>
-          <button 
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: 'none',
-              background: 'none',
-              textAlign: 'left',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '14px',
-              color: '#2c3e50',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-            onClick={() => handleMenuAction('session-management')}
-          >
-            <i className="bi bi-clock-history"></i>
-            회기 관리
-          </button>
-          <button 
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: 'none',
-              background: 'none',
-              textAlign: 'left',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '14px',
-              color: '#2c3e50',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-            onClick={() => handleMenuAction('payment-history')}
-          >
-            <i className="bi bi-credit-card"></i>
-            결제 내역
-          </button>
-          <button 
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: 'none',
-              background: 'none',
-              textAlign: 'left',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '14px',
-              color: '#2c3e50',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-            onClick={() => handleMenuAction('consultation-guide')}
-          >
-            <i className="bi bi-book"></i>
-            상담 가이드
-          </button>
         </div>
       )}
 
-      {/* 회기 현황 요약 */}
-      <div className="session-summary">
+      {/* 요약 카드 */}
+      <div className="summary-cards">
         <div className="summary-card total">
           <div className="card-icon">
             <i className="bi bi-calendar-check"></i>
@@ -316,8 +292,8 @@ const ClientSessionManagement = () => {
       {/* 진행률 표시 */}
       <div className="progress-section">
         <div className="progress-header">
-          <h3>회기 사용 진행률</h3>
-          <span className="progress-text">
+          <span>회기 사용률</span>
+          <span className="progress-percentage">
             {sessionData.totalSessions > 0 
               ? Math.round((sessionData.usedSessions / sessionData.totalSessions) * 100)
               : 0}%
@@ -336,61 +312,49 @@ const ClientSessionManagement = () => {
       </div>
 
       {/* 패키지 정보 */}
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        margin: '20px 0 30px 0',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-        maxHeight: '500px',
-        overflowY: 'auto',
-        position: 'relative'
-      }}>
+      <div className="package-info">
         <div style={{
           display: 'block',
           padding: '0',
           margin: '0',
           width: '100%'
         }}>
-          {sessionData.mappings
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .map((mapping, index) => (
-            <div key={index} style={{
+          {sessionData.mappings.map((mapping, index) => (
+            <div key={mapping.id || index} style={{
+              backgroundColor: '#fff',
               border: '1px solid #e9ecef',
               borderRadius: '12px',
-              padding: '20px',
-              transition: 'all 0.3s ease',
-              display: 'block',
-              minHeight: '100px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-              marginBottom: '16px',
+              padding: '24px',
+              marginBottom: '12px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               width: '100%',
-              position: 'relative',
-              boxSizing: 'border-box',
-              background: '#f8f9fa'
+              boxSizing: 'border-box'
             }}>
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '16px',
-                paddingBottom: '12px',
-                borderBottom: '1px solid #e9ecef'
+                alignItems: 'flex-start',
+                marginBottom: '16px'
               }}>
-                <h4 style={{
-                  margin: '0',
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  color: '#2c3e50'
-                }}>{mapping.packageName || '상담 패키지'}</h4>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <i className="bi bi-person" style={{ color: '#007bff', fontSize: '18px' }}></i>
+                  <span style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#2c3e50'
+                  }}>상담사: {mapping.consultant?.name || '미지정'}</span>
+                </div>
                 <span style={{
                   padding: '4px 12px',
                   borderRadius: '20px',
                   fontSize: '12px',
-                  fontWeight: '600',
-                  background: mapping.status === 'ACTIVE' ? '#d4edda' : '#f8d7da',
-                  color: mapping.status === 'ACTIVE' ? '#155724' : '#721c24',
-                  border: mapping.status === 'ACTIVE' ? '1px solid #c3e6cb' : '1px solid #f5c6cb'
+                  fontWeight: '500',
+                  backgroundColor: mapping.status === 'ACTIVE' ? '#d4edda' : '#f8d7da',
+                  color: mapping.status === 'ACTIVE' ? '#155724' : '#721c24'
                 }}>
                   {mapping.status === 'ACTIVE' ? '활성' : '비활성'}
                 </span>
@@ -401,9 +365,7 @@ const ClientSessionManagement = () => {
                 alignItems: 'center',
                 marginTop: '16px',
                 flexWrap: 'wrap',
-                gap: '16px',
-                width: '100%',
-                boxSizing: 'border-box'
+                gap: '16px'
               }}>
                 <div style={{
                   display: 'flex',
@@ -419,7 +381,7 @@ const ClientSessionManagement = () => {
                     color: '#6c757d',
                     marginBottom: '4px',
                     fontWeight: '500'
-                  }}>총 회기:</span>
+                  }}>총 회기</span>
                   <span style={{
                     fontSize: '16px',
                     fontWeight: '600',
@@ -440,7 +402,7 @@ const ClientSessionManagement = () => {
                     color: '#6c757d',
                     marginBottom: '4px',
                     fontWeight: '500'
-                  }}>사용 회기:</span>
+                  }}>사용</span>
                   <span style={{
                     fontSize: '16px',
                     fontWeight: '600',
@@ -461,7 +423,7 @@ const ClientSessionManagement = () => {
                     color: '#6c757d',
                     marginBottom: '4px',
                     fontWeight: '500'
-                  }}>남은 회기:</span>
+                  }}>남은 회기</span>
                   <span style={{
                     fontSize: '16px',
                     fontWeight: '600',
@@ -482,7 +444,7 @@ const ClientSessionManagement = () => {
                     color: '#6c757d',
                     marginBottom: '4px',
                     fontWeight: '500'
-                  }}>상담사:</span>
+                  }}>상담사</span>
                   <span style={{
                     fontSize: '16px',
                     fontWeight: '600',
@@ -503,7 +465,7 @@ const ClientSessionManagement = () => {
                     color: '#6c757d',
                     marginBottom: '4px',
                     fontWeight: '500'
-                  }}>연결일:</span>
+                  }}>연결일</span>
                   <span style={{
                     fontSize: '16px',
                     fontWeight: '600',
@@ -520,101 +482,92 @@ const ClientSessionManagement = () => {
 
       {/* 최근 상담 일정 */}
       <div style={{
-        background: 'white',
+        backgroundColor: '#fff',
         borderRadius: '12px',
         padding: '24px',
-        marginTop: '20px',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        marginTop: '24px'
       }}>
         <h3 style={{
-          margin: '0 0 24px 0',
-          fontSize: '22px',
-          fontWeight: '700',
+          margin: '0 0 20px 0',
+          fontSize: '20px',
+          fontWeight: '600',
           color: '#2c3e50',
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
-          paddingBottom: '16px',
-          borderBottom: '2px solid #e9ecef'
+          gap: '8px'
         }}>
-          <i className="bi bi-calendar-event" style={{ color: '#007bff', fontSize: '20px' }}></i> 
+          <i className="bi bi-calendar3" style={{ color: '#007bff' }}></i>
           최근 상담 일정
         </h3>
-        {sessionData.recentSchedules.length > 0 ? (
+        {sessionData.schedules && sessionData.schedules.length > 0 ? (
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '20px'
+            gap: '12px'
           }}>
-            {sessionData.recentSchedules.map((schedule, index) => (
-              <div key={index} style={{
+            {sessionData.schedules.slice(0, 5).map((schedule, index) => (
+              <div key={schedule.id || index} style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '16px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '8px',
                 border: '1px solid #e9ecef',
-                borderRadius: '12px',
-                padding: '20px',
-                transition: 'all 0.3s ease',
-                background: '#f8f9fa',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+                transition: 'all 0.2s ease',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#e9ecef';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#f8f9fa';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
               }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '16px',
-                  paddingBottom: '12px',
-                  borderBottom: '1px solid #e9ecef'
-                }}>
+                <div style={{ flex: '0 0 auto', marginRight: '16px' }}>
                   <div style={{
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    color: '#2c3e50',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '8px',
+                    marginBottom: '4px'
                   }}>
                     <i className="bi bi-calendar3" style={{ color: '#007bff', fontSize: '16px' }}></i>
                     {formatDate(schedule.date)}
                   </div>
                   <div style={{
                     fontSize: '14px',
-                    fontWeight: '600',
-                    padding: '6px 12px',
-                    borderRadius: '20px',
-                    background: '#d4edda',
-                    color: '#155724',
-                    border: '1px solid #c3e6cb'
+                    color: getStatusColor(schedule.status === '완료'),
+                    fontWeight: '500'
                   }}>
                     {getStatusText(schedule.status === '완료')}
                   </div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{
-                    fontSize: '18px',
-                    fontWeight: '600',
-                    color: '#2c3e50',
-                    marginBottom: '12px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '8px',
+                    marginBottom: '4px'
                   }}>
                     <i className="bi bi-chat-dots" style={{ color: '#28a745', fontSize: '16px' }}></i>
                     {schedule.title || '상담'}
                   </div>
                   <div style={{
                     display: 'flex',
+                    alignItems: 'center',
                     gap: '16px',
-                    alignItems: 'center'
+                    fontSize: '14px',
+                    color: '#6c757d'
                   }}>
                     <span style={{
-                      fontSize: '14px',
-                      color: '#6c757d',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      padding: '6px 12px',
-                      background: '#e9ecef',
-                      borderRadius: '6px'
+                      gap: '4px'
                     }}>
-                      <i className="bi bi-clock" style={{ color: '#6c757d', fontSize: '14px' }}></i>
+                      <i className="bi bi-clock" style={{ fontSize: '12px' }}></i>
                       {schedule.startTime} - {schedule.endTime}
                     </span>
                   </div>
@@ -624,15 +577,11 @@ const ClientSessionManagement = () => {
           </div>
         ) : (
           <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '60px 20px',
             textAlign: 'center',
+            padding: '40px 20px',
             color: '#6c757d',
-            background: '#f8f9fa',
-            borderRadius: '12px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
             border: '2px dashed #dee2e6'
           }}>
             <i className="bi bi-calendar-x" style={{ fontSize: '64px', marginBottom: '20px', color: '#dee2e6' }}></i>

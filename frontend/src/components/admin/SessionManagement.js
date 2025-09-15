@@ -338,6 +338,15 @@ const SessionManagement = () => {
             });
         }
 
+        // 필터가 적용되지 않은 경우 최근 10명만 표시
+        const hasActiveFilters = clientSearchTerm || clientFilterStatus !== 'ALL';
+        if (!hasActiveFilters) {
+            // 최근 생성된 내담자 10명만 반환 (createdAt 기준으로 정렬)
+            return filtered
+                .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+                .slice(0, 10);
+        }
+
         return filtered;
     };
 
@@ -718,7 +727,38 @@ const SessionManagement = () => {
             {/* 내담자 선택 섹션 */}
             <div className="session-mgmt-client-selection-section">
                 <div className="session-mgmt-client-selection-header">
-                    <h3>내담자 선택</h3>
+                    <div>
+                        <h3>내담자 선택</h3>
+                        {(() => {
+                            const hasActiveFilters = clientSearchTerm || clientFilterStatus !== 'ALL';
+                            const filteredCount = getFilteredClients().length;
+                            const totalCount = clients.length;
+                            
+                            if (hasActiveFilters) {
+                                return (
+                                    <p style={{ 
+                                        margin: '4px 0 0 0', 
+                                        fontSize: '14px', 
+                                        color: '#6b7280',
+                                        fontWeight: 'normal'
+                                    }}>
+                                        검색 결과: {filteredCount}명 (전체 {totalCount}명 중)
+                                    </p>
+                                );
+                            } else {
+                                return (
+                                    <p style={{ 
+                                        margin: '4px 0 0 0', 
+                                        fontSize: '14px', 
+                                        color: '#6b7280',
+                                        fontWeight: 'normal'
+                                    }}>
+                                        최근 내담자 {filteredCount}명 표시 (전체 {totalCount}명 중)
+                                    </p>
+                                );
+                            }
+                        })()}
+                    </div>
                     <div style={{
                         display: 'flex',
                         gap: '15px',

@@ -16,7 +16,8 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
   const handleCardClick = (action) => {
     switch (action) {
       case 'schedule':
-        navigate('/client/schedule');
+        // 상담 일정은 상담사가 관리하므로 메시지로 안내
+        alert('상담 일정은 상담사가 관리합니다. 문의사항이 있으시면 메시지를 보내주세요.');
         break;
       case 'mapping':
         navigate('/client/consultant-mapping');
@@ -37,7 +38,8 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         // 대기 상태에서는 아무것도 하지 않음
         break;
       case 'continue':
-        navigate('/client/schedule');
+        // 상담 일정은 상담사가 관리하므로 메시지로 안내
+        alert('상담 일정은 상담사가 관리합니다. 문의사항이 있으시면 메시지를 보내주세요.');
         break;
       case 'general':
         navigate('/client/profile');
@@ -50,6 +52,18 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         break;
       case 'messages':
         navigate('/client/messages');
+        break;
+      case 'session-status':
+        // 회기 현황은 이미 대시보드에 표시되므로 스크롤
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        break;
+      case 'payment-history':
+        // 결제 내역은 이미 대시보드에 표시되므로 스크롤
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        break;
+      case 'consultation-guide':
+        // 상담 가이드 페이지로 이동 (향후 구현)
+        alert('상담 가이드 페이지는 준비 중입니다.');
         break;
       default:
         console.log('Unknown action:', action);
@@ -146,16 +160,16 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         title: '다가오는 상담',
         subtitle: `${nextConsultation.consultantName} 상담사와 ${new Date(nextConsultation.date).toLocaleDateString('ko-KR')} ${nextConsultation.startTime} 예정`,
         color: '#28a745',
-        action: 'schedule'
+        action: 'session-status'
       });
     } else if (status.hasActiveMapping && !status.hasUpcomingConsultations) {
       messages.push({
-        id: 'schedule-consultation',
-        icon: 'bi-calendar-plus',
-        title: '상담 예약',
-        subtitle: '연결된 상담사와 첫 상담을 예약해보세요',
-        color: '#2196f3',
-        action: 'schedule'
+        id: 'session-management',
+        icon: 'bi-clock-history',
+        title: '회기 관리',
+        subtitle: '남은 회기와 사용 내역을 확인하세요',
+        color: '#28a745',
+        action: 'session-status'
       });
     } else if (status.hasCompletedConsultations) {
       messages.push({
@@ -227,6 +241,34 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         action: 'wellness'
       });
     }
+
+    // 4. 내담자 전용 유용한 카드들 추가
+    messages.push({
+      id: 'session-status',
+      icon: 'bi-clock-history',
+      title: '회기 현황',
+      subtitle: '남은 회기와 사용 내역을 확인하세요',
+      color: '#28a745',
+      action: 'session-status'
+    });
+
+    messages.push({
+      id: 'payment-history',
+      icon: 'bi-credit-card',
+      title: '결제 내역',
+      subtitle: '결제 내역과 패키지 정보를 확인하세요',
+      color: '#6f42c1',
+      action: 'payment-history'
+    });
+
+    messages.push({
+      id: 'consultation-guide',
+      icon: 'bi-book',
+      title: '상담 가이드',
+      subtitle: '상담 전 알아두면 좋은 정보들',
+      color: '#17a2b8',
+      action: 'consultation-guide'
+    });
 
     // 4. 날씨 정보는 별도 컴포넌트로 추가
     messages.push({

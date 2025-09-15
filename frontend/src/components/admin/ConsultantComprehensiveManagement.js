@@ -541,7 +541,7 @@ const ConsultantComprehensiveManagement = () => {
      */
     const getStatusColorLocal = async (status) => {
         try {
-            return await getStatusColor(status, 'USER_STATUS');
+            return await getStatusColor(status, 'STATUS');
         } catch (error) {
             console.error(`상태 색상 조회 실패: ${status}`, error);
             // fallback 매핑

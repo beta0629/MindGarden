@@ -160,7 +160,7 @@ export const PIE_CHART_OPTIONS = {
 
 // ==================== 차트 데이터 타입 ====================
 export const CHART_DATA_TYPES = {
-  SCHEDULE_STATUS: 'schedule_status',
+  STATUS: 'schedule_status',
   MONTHLY_TREND: 'monthly_trend',
   CONSULTANT_PERFORMANCE: 'consultant_performance',
   CLIENT_DISTRIBUTION: 'client_distribution',
@@ -170,7 +170,7 @@ export const CHART_DATA_TYPES = {
 
 // ==================== 차트 라벨 ====================
 export const CHART_LABELS = {
-  SCHEDULE_STATUS: {
+  STATUS: {
     BOOKED: '예약됨',
     CONFIRMED: '확정됨',
     COMPLETED: '완료됨',

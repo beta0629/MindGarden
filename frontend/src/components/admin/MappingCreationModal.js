@@ -62,15 +62,27 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             setLoadingPackageCodes(true);
             const response = await apiGet('/api/admin/common-codes/values?groupCode=CONSULTATION_PACKAGE');
             if (response && response.length > 0) {
-                const options = response.map(code => ({
-                    value: code.codeValue,
-                    label: code.codeLabel,
-                    sessions: code.code === 'BASIC' ? 4 : code.code === 'STANDARD' ? 8 : code.code === 'PREMIUM' ? 12 : 20,
-                    price: code.code === 'BASIC' ? 200000 : code.code === 'STANDARD' ? 400000 : code.code === 'PREMIUM' ? 600000 : 1000000,
-                    icon: code.icon,
-                    color: code.colorCode,
-                    description: code.codeDescription
-                }));
+                const options = response.map(code => {
+                    let sessions = 20; // 기본값
+                    if (code.extraData) {
+                        try {
+                            const extraData = JSON.parse(code.extraData);
+                            sessions = extraData.sessions || 20;
+                        } catch (e) {
+                            console.warn('extraData 파싱 실패:', e);
+                        }
+                    }
+                    
+                    return {
+                        value: code.codeValue,
+                        label: code.codeLabel,
+                        sessions: sessions,
+                        price: code.codeDescription ? parseFloat(code.codeDescription) : 0,
+                        icon: code.icon,
+                        color: code.colorCode,
+                        description: code.codeDescription
+                    };
+                });
                 setPackageOptions(options);
             }
         } catch (error) {

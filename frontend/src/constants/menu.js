@@ -382,7 +382,7 @@ export const CLIENT_MENU_ITEMS = {
 };
 
 // 사용자 역할 상수
-export const USER_ROLES = {
+export const ROLES = {
   HQ_ADMIN: 'HQ_ADMIN',
   SUPER_HQ_ADMIN: 'SUPER_HQ_ADMIN',
   BRANCH_BRANCH_SUPER_ADMIN: 'BRANCH_BRANCH_SUPER_ADMIN',

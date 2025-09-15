@@ -87,7 +87,7 @@ const PaymentManagement = () => {
   const loadPaymentGatewayCodes = useCallback(async () => {
     try {
       setLoadingGatewayCodes(true);
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=PAYMENT_GATEWAY');
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=PAYMENT_METHOD');
       if (response && response.length > 0) {
         setPaymentGatewayOptions(response.map(code => ({
           value: code.codeValue,

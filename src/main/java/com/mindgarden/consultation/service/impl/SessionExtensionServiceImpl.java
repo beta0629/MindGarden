@@ -1,5 +1,11 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.SessionExtensionRequest;
 import com.mindgarden.consultation.entity.User;
@@ -8,17 +14,10 @@ import com.mindgarden.consultation.repository.SessionExtensionRequestRepository;
 import com.mindgarden.consultation.service.SessionExtensionService;
 import com.mindgarden.consultation.service.SessionSyncService;
 import com.mindgarden.consultation.service.UserService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 회기 추가 요청 서비스 구현체
@@ -72,12 +71,16 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     
     @Override
     public SessionExtensionRequest confirmPayment(Long requestId, String paymentMethod, String paymentReference) {
-        log.info("입금 확인 처리: requestId={}", requestId);
+        log.info("입금 확인 처리: requestId={}, paymentMethod={}, paymentReference={}", 
+                requestId, paymentMethod, paymentReference);
         
         SessionExtensionRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
         
-        request.confirmPayment();
+        // 현금 결제의 경우 참조번호를 null로 설정
+        String finalPaymentReference = "CASH".equals(paymentMethod) ? null : paymentReference;
+        
+        request.confirmPayment(paymentMethod, finalPaymentReference);
         
         SessionExtensionRequest savedRequest = requestRepository.save(request);
         
@@ -129,15 +132,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         SessionExtensionRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
         
-        // 실제 회기 추가 처리
-        ConsultantClientMapping mapping = request.getMapping();
-        mapping.addSessions(
-            request.getAdditionalSessions(),
-            request.getPackageName(),
-            request.getPackagePrice().longValue()
-        );
-        
-        mappingRepository.save(mapping);
+        // 회기 추가는 SessionSyncService에서 처리
         
         // 요청 완료 처리
         request.complete();
@@ -155,7 +150,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         }
         
         log.info("✅ 회기 추가 완료: requestId={}, mappingId={}, sessions={}", 
-                savedRequest.getId(), mapping.getId(), request.getAdditionalSessions());
+                savedRequest.getId(), savedRequest.getMapping().getId(), request.getAdditionalSessions());
         return savedRequest;
     }
     
@@ -165,6 +160,13 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         log.info("요청 상세 조회: requestId={}", requestId);
         return requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<SessionExtensionRequest> getAllRequests() {
+        log.info("전체 요청 목록 조회");
+        return requestRepository.findAllByOrderByCreatedAtDesc();
     }
     
     @Override

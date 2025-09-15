@@ -1098,7 +1098,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         if (status == null) return "알 수 없음";
         
         try {
-            return commonCodeService.getCodeName("SCHEDULE_STATUS", status);
+            return commonCodeService.getCodeName("STATUS", status);
         } catch (Exception e) {
             log.warn("상태값 변환 실패: {} -> 기본값 사용", status);
             return status;

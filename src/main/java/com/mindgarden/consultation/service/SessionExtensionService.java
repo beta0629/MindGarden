@@ -51,6 +51,11 @@ public interface SessionExtensionService {
     SessionExtensionRequest getRequestById(Long requestId);
     
     /**
+     * 전체 요청 목록 조회
+     */
+    List<SessionExtensionRequest> getAllRequests();
+    
+    /**
      * 상태별 요청 목록 조회
      */
     List<SessionExtensionRequest> getRequestsByStatus(SessionExtensionRequest.ExtensionStatus status);

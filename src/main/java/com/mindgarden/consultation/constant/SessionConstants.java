@@ -38,7 +38,7 @@ public final class SessionConstants {
     /**
      * 사용자 역할
      */
-    public static final String USER_ROLE = "USER_ROLE";
+    public static final String ROLE = "ROLE";
     
     /**
      * 로그인 시간

@@ -175,7 +175,7 @@ export const CONSULTATION_API = {
 export const ADMIN_API = {
   // 사용자 관리
   GET_ALL_USERS: '/api/admin/users',
-  UPDATE_USER_ROLE: '/api/admin/users/role',
+  UPDATE_ROLE: '/api/admin/users/role',
   DEACTIVATE_USER: '/api/admin/users/deactivate',
   
   // 상담사 승인

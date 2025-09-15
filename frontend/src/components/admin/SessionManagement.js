@@ -28,6 +28,22 @@ const SessionManagement = () => {
     const [loadingCodes, setLoadingCodes] = useState(false);
     const [statusOptions, setStatusOptions] = useState([]);
     const [loadingStatusCodes, setLoadingStatusCodes] = useState(false);
+    const [packageOptions, setPackageOptions] = useState([]);
+    const [loadingPackageCodes, setLoadingPackageCodes] = useState(false);
+    
+    // 회기 추가 요청 관련 상태
+    const [activeTab, setActiveTab] = useState('mappings'); // 'mappings' 또는 'extensions'
+    const [extensionRequests, setExtensionRequests] = useState([]);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showApprovalModal, setShowApprovalModal] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState(null);
+    const [paymentData, setPaymentData] = useState({
+        paymentMethod: '',
+        paymentReference: ''
+    });
+    const [approvalData, setApprovalData] = useState({
+        comment: ''
+    });
 
     // 매핑 상태 코드 로드
     const loadMappingStatusCodes = useCallback(async () => {
@@ -90,13 +106,58 @@ const SessionManagement = () => {
         }
     }, []);
 
+    // 패키지 코드 로드 (매핑 시스템과 동일한 CONSULTATION_PACKAGE 사용)
+    const loadPackageCodes = useCallback(async () => {
+        try {
+            setLoadingPackageCodes(true);
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=CONSULTATION_PACKAGE');
+            if (response && response.length > 0) {
+                const options = response.map(code => {
+                    let sessions = 20; // 기본값
+                    if (code.extraData) {
+                        try {
+                            const extraData = JSON.parse(code.extraData);
+                            sessions = extraData.sessions || 20;
+                        } catch (e) {
+                            console.warn('extraData 파싱 실패:', e);
+                        }
+                    }
+                    
+                    return {
+                        value: code.codeValue,
+                        label: code.codeLabel,
+                        description: code.codeDescription,
+                        price: code.codeDescription ? parseFloat(code.codeDescription) : 0,
+                        sessions: sessions,
+                        icon: code.icon,
+                        color: code.colorCode
+                    };
+                });
+                setPackageOptions(options);
+            }
+        } catch (error) {
+            console.error('패키지 코드 로드 실패:', error);
+            // 실패 시 기본값 설정
+            setPackageOptions([
+                { value: 'BASIC', label: '기본 패키지', description: '200000', price: 200000, sessions: 4 },
+                { value: 'STANDARD', label: '표준 패키지', description: '400000', price: 400000, sessions: 8 },
+                { value: 'PREMIUM', label: '프리미엄 패키지', description: '600000', price: 600000, sessions: 12 },
+                { value: 'VIP', label: 'VIP 패키지', description: '1000000', price: 1000000, sessions: 20 }
+            ]);
+        } finally {
+            setLoadingPackageCodes(false);
+        }
+    }, []);
+
     const [newSessionData, setNewSessionData] = useState({
         consultantId: '',
         clientId: '',
-        totalSessions: 10,
+        additionalSessions: 5,
+        totalSessions: 0,
         usedSessions: 0,
-        remainingSessions: 10,
-        status: 'ACTIVE',
+        remainingSessions: 0,
+        packageName: '',
+        packagePrice: '',
         notes: ''
     });
 
@@ -104,7 +165,33 @@ const SessionManagement = () => {
         loadData();
         loadMappingStatusCodes();
         loadStatusCodes();
-    }, [loadMappingStatusCodes, loadStatusCodes]);
+        loadPackageCodes();
+        loadExtensionRequests();
+    }, [loadMappingStatusCodes, loadStatusCodes, loadPackageCodes]);
+
+    // 결제 방법 변경 시 자동으로 참조번호 생성
+    useEffect(() => {
+        if (paymentData.paymentMethod && !paymentData.paymentReference) {
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            let autoReference = '';
+            if (paymentData.paymentMethod === 'CASH') {
+                autoReference = `CASH_${timestamp}`;
+            } else if (paymentData.paymentMethod === 'CARD') {
+                autoReference = `CARD_${timestamp}`;
+            } else if (paymentData.paymentMethod === 'BANK_TRANSFER') {
+                autoReference = `BANK_${timestamp}`;
+            } else {
+                autoReference = `${paymentData.paymentMethod}_${timestamp}`;
+            }
+            
+            setPaymentData(prev => ({
+                ...prev,
+                paymentReference: autoReference
+            }));
+        }
+    }, [paymentData.paymentMethod]);
 
     /**
      * 초기 데이터 로드
@@ -160,7 +247,7 @@ const SessionManagement = () => {
     const loadMappings = async () => {
         try {
             const response = await apiGet('/api/admin/mappings');
-            if (response.success) {
+            if (response && response.data) {
                 setMappings(response.data || []);
             }
         } catch (error) {
@@ -169,16 +256,34 @@ const SessionManagement = () => {
     };
 
     /**
+     * 회기 추가 요청 목록 로드
+     */
+    const loadExtensionRequests = async () => {
+        try {
+            const response = await apiGet('/api/admin/session-extensions/requests');
+            if (response.success) {
+                setExtensionRequests(response.data || []);
+            }
+        } catch (error) {
+            console.error('회기 추가 요청 목록 로드 실패:', error);
+        }
+    };
+
+    /**
      * 내담자 선택 처리
      */
     const handleClientSelect = (client) => {
         setSelectedClient(client);
-        // 해당 내담자의 매핑 정보 찾기
+        // 해당 내담자의 매핑 정보 찾기 (ACTIVE 상태 중 가장 최근 것)
         const clientMappings = mappings.filter(mapping => 
-            mapping.clientId === client.id
+            mapping.clientId === client.id &&
+            mapping.status === 'ACTIVE'
         );
+        
         if (clientMappings.length > 0) {
-            setSelectedMapping(clientMappings[0]);
+            // 가장 최근 매핑 선택
+            const latestMapping = clientMappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+            setSelectedMapping(latestMapping);
         } else {
             setSelectedMapping(null);
         }
@@ -238,58 +343,95 @@ const SessionManagement = () => {
             notificationManager.error('내담자를 먼저 선택해주세요.');
             return;
         }
+        
+        // 기존 매핑이 있으면 해당 상담사를 기본으로 선택 (ACTIVE 상태 중 가장 최근 것)
+        const clientMappings = mappings.filter(m => 
+            m.clientId === selectedClient.id && 
+            m.status === 'ACTIVE'
+        );
+        
+        const existingMapping = selectedMapping || 
+            (clientMappings.length > 0 
+                ? clientMappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
+                : null);
+        
+        const defaultConsultantId = existingMapping?.consultantId || '';
+        
         setNewSessionData({
-            consultantId: selectedMapping?.consultant?.id || '',
+            consultantId: defaultConsultantId,
             clientId: selectedClient.id,
-            totalSessions: 10,
-            usedSessions: selectedMapping?.usedSessions || 0,
-            remainingSessions: 10,
-            status: 'ACTIVE',
+            additionalSessions: 0, // 패키지 선택 시 자동 설정
+            totalSessions: existingMapping?.totalSessions || 0,
+            usedSessions: existingMapping?.usedSessions || 0,
+            remainingSessions: existingMapping?.remainingSessions || 0,
+            packageName: '',
+            packagePrice: '',
             notes: ''
         });
         setShowAddModal(true);
     };
 
     /**
-     * 회기 등록 처리
+     * 회기 추가 요청 생성 처리
      */
-    const handleCreateSession = async () => {
+    const handleCreateSessionExtensionRequest = async () => {
         if (!newSessionData.consultantId || !newSessionData.clientId) {
             notificationManager.error('상담사와 내담자를 모두 선택해주세요.');
             return;
         }
 
+        if (!newSessionData.packageName || !newSessionData.packagePrice) {
+            notificationManager.error('패키지를 선택해주세요.');
+            return;
+        }
+
         setLoading(true);
         try {
-            const response = await apiPost('/api/admin/mappings', {
-                consultantId: newSessionData.consultantId,
-                clientId: newSessionData.clientId,
-                totalSessions: newSessionData.totalSessions,
-                usedSessions: newSessionData.usedSessions,
-                remainingSessions: newSessionData.remainingSessions,
-                status: newSessionData.status,
-                notes: newSessionData.notes
+            // 먼저 해당 내담자와 상담사의 매핑을 찾습니다 (ACTIVE 상태 중 가장 최근 것)
+            const existingMappings = mappings.filter(mapping => 
+                mapping.consultantId === newSessionData.consultantId && 
+                mapping.clientId === newSessionData.clientId &&
+                mapping.status === 'ACTIVE'
+            );
+            
+            // 가장 최근 매핑 선택 (createdAt 기준으로 정렬)
+            const existingMapping = existingMappings.length > 0 
+                ? existingMappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
+                : null;
+
+            if (!existingMapping) {
+                notificationManager.error('해당 내담자와 상담사의 매핑을 찾을 수 없습니다. 먼저 매핑을 생성해주세요.');
+                return;
+            }
+
+            const response = await apiPost('/api/admin/session-extensions/requests', {
+                mappingId: existingMapping.id,
+                requesterId: 1, // 실제로는 현재 로그인한 사용자 ID
+                additionalSessions: newSessionData.additionalSessions,
+                packageName: newSessionData.packageName,
+                packagePrice: newSessionData.packagePrice,
+                reason: newSessionData.notes || '회기 추가 요청'
             });
 
             if (response.success) {
-                notificationManager.success('회기가 성공적으로 등록되었습니다.');
+                notificationManager.success('회기 추가 요청이 생성되었습니다. 입금 확인을 기다려주세요.');
                 setShowAddModal(false);
+                loadExtensionRequests();
                 loadMappings();
                 setNewSessionData({
                     consultantId: '',
                     clientId: '',
-                    totalSessions: 10,
-                    usedSessions: 0,
-                    remainingSessions: 10,
-                    status: 'ACTIVE',
+                    additionalSessions: 5,
+                    packageName: '',
+                    packagePrice: '',
                     notes: ''
                 });
             } else {
-                throw new Error(response.message || '회기 등록에 실패했습니다.');
+                throw new Error(response.message || '회기 추가 요청 생성에 실패했습니다.');
             }
         } catch (error) {
-            console.error('회기 등록 실패:', error);
-            notificationManager.error('회기 등록에 실패했습니다: ' + error.message);
+            console.error('회기 추가 요청 생성 실패:', error);
+            notificationManager.error('회기 추가 요청 생성에 실패했습니다: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -353,16 +495,222 @@ const SessionManagement = () => {
         return colorMap[status] || '#6b7280';
     };
 
+    /**
+     * 회기 추가 요청 상태를 한글로 변환
+     */
+    const getExtensionStatusText = (status) => {
+        const statusMap = {
+            'PENDING': '입금 대기',
+            'PAYMENT_CONFIRMED': '입금 확인됨',
+            'ADMIN_APPROVED': '관리자 승인됨',
+            'REJECTED': '거부됨',
+            'COMPLETED': '완료됨'
+        };
+        return statusMap[status] || status;
+    };
+
+    /**
+     * 회기 추가 요청 상태별 색상 반환
+     */
+    const getExtensionStatusColor = (status) => {
+        const colorMap = {
+            'PENDING': '#f97316',
+            'PAYMENT_CONFIRMED': '#22c55e',
+            'ADMIN_APPROVED': '#3b82f6',
+            'REJECTED': '#ef4444',
+            'COMPLETED': '#10b981'
+        };
+        return colorMap[status] || '#6b7280';
+    };
+
+    /**
+     * 요청 완료 처리
+     */
+    const handleCompleteRequest = async (requestId) => {
+        if (!window.confirm('이 요청을 완료하시겠습니까? 회기가 실제로 추가됩니다.')) {
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await apiPost(`/api/admin/session-extensions/requests/${requestId}/complete`);
+
+            if (response.success) {
+                notificationManager.success('요청이 완료되었습니다. 회기가 추가되었습니다.');
+                loadExtensionRequests();
+                loadMappings(); // 매핑 목록도 새로고침
+            } else {
+                throw new Error(response.message || '완료에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('완료 실패:', error);
+            notificationManager.error('완료에 실패했습니다: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    /**
+     * 입금 확인 모달 열기
+     */
+    const handlePaymentConfirm = (request) => {
+        setSelectedRequest(request);
+        setPaymentData({
+            paymentMethod: '',
+            paymentReference: ''
+        });
+        setShowPaymentModal(true);
+    };
+
+    /**
+     * 입금 확인 처리
+     */
+    const handlePaymentConfirmSubmit = async () => {
+        if (!selectedRequest || !paymentData.paymentMethod) {
+            notificationManager.error('결제 방법을 선택해주세요.');
+            return;
+        }
+        
+        // 결제 방법에 따라 자동으로 참조번호 생성
+        let finalPaymentReference = paymentData.paymentReference;
+        if (!paymentData.paymentReference || paymentData.paymentReference.trim() === '') {
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            if (paymentData.paymentMethod === 'CASH') {
+                finalPaymentReference = `CASH_${timestamp}`;
+            } else if (paymentData.paymentMethod === 'CARD') {
+                finalPaymentReference = `CARD_${timestamp}`;
+            } else if (paymentData.paymentMethod === 'BANK_TRANSFER') {
+                finalPaymentReference = `BANK_${timestamp}`;
+            } else {
+                finalPaymentReference = `${paymentData.paymentMethod}_${timestamp}`;
+            }
+        }
+
+        setLoading(true);
+        try {
+            const response = await apiPost(`/api/admin/session-extensions/requests/${selectedRequest.id}/confirm-payment`, {
+                paymentMethod: paymentData.paymentMethod,
+                paymentReference: finalPaymentReference
+            });
+
+            if (response.success) {
+                notificationManager.success('입금이 확인되었습니다.');
+                setShowPaymentModal(false);
+                loadExtensionRequests();
+            } else {
+                throw new Error(response.message || '입금 확인에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('입금 확인 실패:', error);
+            notificationManager.error('입금 확인에 실패했습니다: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    /**
+     * 관리자 승인 모달 열기
+     */
+    const handleAdminApproval = (request) => {
+        setSelectedRequest(request);
+        setApprovalData({
+            comment: ''
+        });
+        setShowApprovalModal(true);
+    };
+
+    /**
+     * 관리자 승인 처리
+     */
+    const handleAdminApprovalSubmit = async () => {
+        if (!selectedRequest) {
+            notificationManager.error('승인할 요청을 선택해주세요.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await apiPost(`/api/admin/session-extensions/requests/${selectedRequest.id}/approve`, {
+                adminId: 1, // 실제로는 세션에서 가져와야 함
+                comment: approvalData.comment
+            });
+
+            if (response.success) {
+                notificationManager.success('회기 추가 요청이 승인되었습니다.');
+                setShowApprovalModal(false);
+                loadExtensionRequests();
+                loadMappings(); // 매핑 목록도 새로고침
+            } else {
+                throw new Error(response.message || '승인에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('승인 실패:', error);
+            notificationManager.error('승인에 실패했습니다: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    /**
+     * 요청 거부 처리
+     */
+    const handleRejectRequest = async (requestId) => {
+        if (!window.confirm('이 요청을 거부하시겠습니까?')) {
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await apiPost(`/api/admin/session-extensions/requests/${requestId}/reject`, {
+                adminId: 1, // 실제로는 세션에서 가져와야 함
+                comment: '관리자에 의해 거부됨'
+            });
+
+            if (response.success) {
+                notificationManager.success('요청이 거부되었습니다.');
+                loadExtensionRequests();
+            } else {
+                throw new Error(response.message || '거부에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('거부 실패:', error);
+            notificationManager.error('거부에 실패했습니다: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <SimpleLayout>
             <div className="session-mgmt-container">
             <div className="session-mgmt-header">
                 <h2>📋 내담자 회기 관리</h2>
                 <p>내담자의 상담 회기를 등록하고 관리할 수 있습니다.</p>
+                
+                {/* 탭 메뉴 */}
+                <div className="session-mgmt-tabs">
+                    <button 
+                        className={`session-mgmt-tab ${activeTab === 'mappings' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('mappings')}
+                    >
+                        📊 회기 관리
+                    </button>
+                    <button 
+                        className={`session-mgmt-tab ${activeTab === 'extensions' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('extensions')}
+                    >
+                        ➕ 회기 추가 요청
+                    </button>
+                </div>
             </div>
 
-            {/* 내담자 선택 섹션 */}
-            <div className="session-mgmt-client-selection-section">
+            {/* 회기 관리 탭 내용 */}
+            {activeTab === 'mappings' && (
+                <>
+                    {/* 내담자 선택 섹션 */}
+                    <div className="session-mgmt-client-selection-section">
                 <div className="session-mgmt-client-selection-header">
                     <h3>내담자 선택</h3>
                     <div className="session-mgmt-client-filters">
@@ -469,7 +817,7 @@ const SessionManagement = () => {
                                     className="session-mgmt-btn session-mgmt-btn-primary"
                                     onClick={handleAddSession}
                                 >
-                                    회기 추가
+                                    회기 추가 요청
                                 </button>
                                 <button 
                                     className="session-mgmt-btn session-mgmt-btn-secondary"
@@ -494,7 +842,7 @@ const SessionManagement = () => {
                                 className="session-mgmt-btn session-mgmt-btn-primary"
                                 onClick={handleAddSession}
                             >
-                                새 회기 등록
+                                회기 추가 요청
                             </button>
                         </div>
                     )}
@@ -609,7 +957,7 @@ const SessionManagement = () => {
                                         setShowAddModal(true);
                                     }}
                                 >
-                                    회기 등록
+                                    회기 추가 요청
                                 </button>
                             </div>
                         </div>
@@ -617,12 +965,12 @@ const SessionManagement = () => {
                 </div>
             </div>
 
-            {/* 회기 등록 모달 */}
+            {/* 회기 추가 요청 모달 */}
             {showAddModal && (
                 <div className="session-mgmt-modal-overlay" onClick={() => setShowAddModal(false)}>
                     <div className="session-mgmt-modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="session-mgmt-modal-header">
-                            <h3>새 회기 등록</h3>
+                            <h3>회기 추가 요청</h3>
                             <button className="session-mgmt-close-btn" onClick={() => setShowAddModal(false)}>✕</button>
                         </div>
                         
@@ -631,10 +979,27 @@ const SessionManagement = () => {
                                 <label>상담사 선택</label>
                                 <select 
                                     value={newSessionData.consultantId}
-                                    onChange={(e) => setNewSessionData({
-                                        ...newSessionData,
-                                        consultantId: e.target.value
-                                    })}
+                                    onChange={(e) => {
+                                        const consultantId = e.target.value;
+                                        // 해당 상담사와 내담자의 매핑 찾기 (ACTIVE 상태 중 가장 최근 것)
+                                        const consultantMappings = mappings.filter(mapping => 
+                                            mapping.consultantId === consultantId && 
+                                            mapping.clientId === newSessionData.clientId &&
+                                            mapping.status === 'ACTIVE'
+                                        );
+                                        
+                                        const latestMapping = consultantMappings.length > 0 
+                                            ? consultantMappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
+                                            : null;
+                                        
+                                        setNewSessionData({
+                                            ...newSessionData,
+                                            consultantId: consultantId,
+                                            totalSessions: latestMapping?.totalSessions || 0,
+                                            usedSessions: latestMapping?.usedSessions || 0,
+                                            remainingSessions: latestMapping?.remainingSessions || 0
+                                        });
+                                    }}
                                 >
                                     <option value="">상담사를 선택하세요</option>
                                     {consultants.map(consultant => (
@@ -645,63 +1010,84 @@ const SessionManagement = () => {
                                 </select>
                             </div>
                             
+                            {/* 기존 회기 정보 표시 */}
                             <div className="session-mgmt-form-group">
-                                <label>총 회기 수</label>
-                                <input 
-                                    type="number"
-                                    value={newSessionData.totalSessions}
-                                    onChange={(e) => setNewSessionData({
-                                        ...newSessionData,
-                                        totalSessions: parseInt(e.target.value) || 0,
-                                        remainingSessions: parseInt(e.target.value) || 0
-                                    })}
-                                    min="1"
-                                    max="100"
-                                />
+                                <label>현재 회기 현황</label>
+                                <div className="session-mgmt-current-sessions">
+                                    <div className="session-mgmt-session-info">
+                                        <span className="session-mgmt-session-label">총 회기:</span>
+                                        <span className="session-mgmt-session-value">{newSessionData.totalSessions}회</span>
+                                    </div>
+                                    <div className="session-mgmt-session-info">
+                                        <span className="session-mgmt-session-label">사용 회기:</span>
+                                        <span className="session-mgmt-session-value">{newSessionData.usedSessions}회</span>
+                                    </div>
+                                    <div className="session-mgmt-session-info">
+                                        <span className="session-mgmt-session-label">남은 회기:</span>
+                                        <span className="session-mgmt-session-value">{newSessionData.remainingSessions}회</span>
+                                    </div>
+                                </div>
                             </div>
                             
                             <div className="session-mgmt-form-group">
-                                <label>사용된 회기 수</label>
+                                <label>추가할 회기 수</label>
                                 <input 
                                     type="number"
-                                    value={newSessionData.usedSessions}
-                                    onChange={(e) => setNewSessionData({
-                                        ...newSessionData,
-                                        usedSessions: parseInt(e.target.value) || 0
-                                    })}
-                                    min="0"
-                                    max={newSessionData.totalSessions}
+                                    value={newSessionData.additionalSessions || 0}
+                                    readOnly
+                                    disabled
+                                    className="readonly-input"
+                                    placeholder="패키지 선택 시 자동 설정"
                                 />
+                                <small className="form-text text-muted">
+                                    패키지 선택 시 자동으로 설정됩니다.
+                                </small>
                             </div>
                             
                             <div className="session-mgmt-form-group">
-                                <label>상태</label>
-                                <select
-                                    value={newSessionData.status}
-                                    onChange={(e) => setNewSessionData({
-                                        ...newSessionData,
-                                        status: e.target.value
-                                    })}
-                                    disabled={loadingStatusCodes}
+                                <label>패키지명</label>
+                                <select 
+                                    value={newSessionData.packageName}
+                                    onChange={(e) => {
+                                        const selectedPackage = packageOptions.find(pkg => pkg.value === e.target.value);
+                                        setNewSessionData({
+                                            ...newSessionData,
+                                            packageName: e.target.value,
+                                            packagePrice: selectedPackage ? selectedPackage.price.toString() : '',
+                                            additionalSessions: selectedPackage ? selectedPackage.sessions : 5
+                                        });
+                                    }}
+                                    disabled={loadingPackageCodes}
                                 >
-                                    <option value="">상태를 선택하세요</option>
-                                    {statusOptions.map(status => (
-                                        <option key={status.value} value={status.value} style={{color: status.color}}>
-                                            {status.icon} {status.label}
+                                    <option value="">패키지를 선택하세요</option>
+                                    {packageOptions.map(pkg => (
+                                        <option key={pkg.value} value={pkg.value}>
+                                            {pkg.label} ({pkg.sessions}회기, {pkg.price.toLocaleString()}원)
                                         </option>
                                     ))}
                                 </select>
                             </div>
                             
                             <div className="session-mgmt-form-group">
-                                <label>메모</label>
+                                <label>패키지 가격 (원)</label>
+                                <input 
+                                    type="number"
+                                    value={newSessionData.packagePrice}
+                                    readOnly
+                                    placeholder="패키지를 선택하면 자동으로 설정됩니다"
+                                    style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
+                                />
+                            </div>
+                            
+                            <div className="session-mgmt-form-group">
+                                <label>요청 사유</label>
                                 <textarea 
                                     value={newSessionData.notes}
                                     onChange={(e) => setNewSessionData({
                                         ...newSessionData,
                                         notes: e.target.value
                                     })}
-                                    placeholder="회기 등록 관련 메모를 입력하세요"
+                                    placeholder="회기 추가 요청 사유를 입력하세요"
                                     rows="3"
                                 />
                             </div>
@@ -716,10 +1102,245 @@ const SessionManagement = () => {
                             </button>
                             <button 
                                 className="session-mgmt-btn session-mgmt-btn-primary"
-                                onClick={handleCreateSession}
+                                onClick={handleCreateSessionExtensionRequest}
                                 disabled={loading}
                             >
-                                {loading ? '등록 중...' : '등록'}
+                                {loading ? '요청 중...' : '요청 생성'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+                </>
+            )}
+
+            {/* 회기 추가 요청 탭 내용 */}
+            {activeTab === 'extensions' && (
+                <div className="session-mgmt-extensions-section">
+                    <div className="session-mgmt-extensions-header">
+                        <h3>회기 추가 요청 관리</h3>
+                        <p>회기 추가 요청의 입금 확인 및 관리자 승인을 처리할 수 있습니다.</p>
+                    </div>
+
+                    <div className="session-mgmt-extensions-grid">
+                        {extensionRequests.map(request => (
+                            <div key={request.id} className="session-mgmt-extension-card">
+                                <div className="session-mgmt-card-header">
+                                    <div className="session-mgmt-card-title">
+                                        <h4>요청 #{request.id}</h4>
+                                        <span className="session-mgmt-card-subtitle">
+                                            {request.consultantName} → {request.clientName}
+                                        </span>
+                                    </div>
+                                    <span 
+                                        className="session-mgmt-status-badge"
+                                        style={{ backgroundColor: getExtensionStatusColor(request.status) }}
+                                    >
+                                        {getExtensionStatusText(request.status)}
+                                    </span>
+                                </div>
+                                
+                                <div className="session-mgmt-card-content">
+                                    <div className="session-mgmt-info-row">
+                                        <span className="session-mgmt-info-label">추가 회기:</span>
+                                        <span className="session-mgmt-info-value">{request.additionalSessions}회</span>
+                                    </div>
+                                    
+                                    <div className="session-mgmt-info-row">
+                                        <span className="session-mgmt-info-label">패키지:</span>
+                                        <span className="session-mgmt-info-value">{request.packageName}</span>
+                                    </div>
+                                    
+                                    <div className="session-mgmt-info-row">
+                                        <span className="session-mgmt-info-label">금액:</span>
+                                        <span className="session-mgmt-info-value">{request.packagePrice?.toLocaleString()}원</span>
+                                    </div>
+                                    
+                                    <div className="session-mgmt-info-row">
+                                        <span className="session-mgmt-info-label">요청일:</span>
+                                        <span className="session-mgmt-info-value">
+                                            {new Date(request.createdAt).toLocaleDateString('ko-KR')}
+                                        </span>
+                                    </div>
+                                    
+                                    {request.reason && (
+                                        <div className="session-mgmt-info-row">
+                                            <span className="session-mgmt-info-label">사유:</span>
+                                            <span className="session-mgmt-info-value">{request.reason}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <div className="session-mgmt-card-actions">
+                                    {request.status === 'PENDING' && (
+                                        <button 
+                                            className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-primary"
+                                            onClick={() => handlePaymentConfirm(request)}
+                                        >
+                                            💳 입금 확인
+                                        </button>
+                                    )}
+                                    
+                                    {request.status === 'PAYMENT_CONFIRMED' && (
+                                        <>
+                                            <button 
+                                                className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-success"
+                                                onClick={() => handleAdminApproval(request)}
+                                            >
+                                                ✅ 승인
+                                            </button>
+                                            <button 
+                                                className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-danger"
+                                                onClick={() => handleRejectRequest(request.id)}
+                                            >
+                                                ❌ 거부
+                                            </button>
+                                        </>
+                                    )}
+                                    
+                                    {request.status === 'ADMIN_APPROVED' && (
+                                        <button 
+                                            className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-warning"
+                                            onClick={() => handleCompleteRequest(request.id)}
+                                        >
+                                            ✅ 요청 완료
+                                        </button>
+                                    )}
+                                    
+                                    {request.status === 'REJECTED' && (
+                                        <span className="session-mgmt-status-text">거부됨</span>
+                                    )}
+                                    
+                                    {request.status === 'COMPLETED' && (
+                                        <span className="session-mgmt-status-text">완료됨</span>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {extensionRequests.length === 0 && (
+                        <div className="session-mgmt-no-results">
+                            <p>회기 추가 요청이 없습니다.</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* 입금 확인 모달 */}
+            {showPaymentModal && (
+                <div className="session-mgmt-modal-overlay" onClick={() => setShowPaymentModal(false)}>
+                    <div className="session-mgmt-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="session-mgmt-modal-header">
+                            <h3>입금 확인</h3>
+                            <button className="session-mgmt-close-btn" onClick={() => setShowPaymentModal(false)}>✕</button>
+                        </div>
+                        
+                        <div className="session-mgmt-modal-body">
+                            <div className="session-mgmt-form-group">
+                                <label>결제 방법</label>
+                                <select 
+                                    value={paymentData.paymentMethod}
+                                    onChange={(e) => setPaymentData({
+                                        ...paymentData,
+                                        paymentMethod: e.target.value,
+                                        paymentReference: e.target.value === 'CASH' ? '' : paymentData.paymentReference
+                                    })}
+                                >
+                                    <option value="">결제 방법을 선택하세요</option>
+                                    <option value="BANK_TRANSFER">계좌이체</option>
+                                    <option value="CARD">카드결제</option>
+                                    <option value="CASH">현금</option>
+                                </select>
+                            </div>
+                            
+                            <div className="session-mgmt-form-group">
+                                <label>결제 참조번호</label>
+                                <input 
+                                    type="text"
+                                    value={paymentData.paymentReference || (() => {
+                                        const now = new Date();
+                                        const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+                                        
+                                        if (paymentData.paymentMethod === 'CASH') {
+                                            return `CASH_${timestamp}`;
+                                        } else if (paymentData.paymentMethod === 'CARD') {
+                                            return `CARD_${timestamp}`;
+                                        } else if (paymentData.paymentMethod === 'BANK_TRANSFER') {
+                                            return `BANK_${timestamp}`;
+                                        } else if (paymentData.paymentMethod) {
+                                            return `${paymentData.paymentMethod}_${timestamp}`;
+                                        }
+                                        return '';
+                                    })()}
+                                    onChange={(e) => setPaymentData({
+                                        ...paymentData,
+                                        paymentReference: e.target.value
+                                    })}
+                                    placeholder="자동 생성됩니다 (수정 가능)"
+                                />
+                                <small className="form-text text-muted">
+                                    자동으로 참조번호가 생성됩니다. 필요시 수정할 수 있습니다.
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div className="session-mgmt-modal-footer">
+                            <button 
+                                className="session-mgmt-btn session-mgmt-btn-secondary"
+                                onClick={() => setShowPaymentModal(false)}
+                            >
+                                취소
+                            </button>
+                            <button 
+                                className="session-mgmt-btn session-mgmt-btn-primary"
+                                onClick={handlePaymentConfirmSubmit}
+                                disabled={loading}
+                            >
+                                {loading ? '확인 중...' : '입금 확인'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 관리자 승인 모달 */}
+            {showApprovalModal && (
+                <div className="session-mgmt-modal-overlay" onClick={() => setShowApprovalModal(false)}>
+                    <div className="session-mgmt-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="session-mgmt-modal-header">
+                            <h3>관리자 승인</h3>
+                            <button className="session-mgmt-close-btn" onClick={() => setShowApprovalModal(false)}>✕</button>
+                        </div>
+                        
+                        <div className="session-mgmt-modal-body">
+                            <div className="session-mgmt-form-group">
+                                <label>승인 코멘트</label>
+                                <textarea 
+                                    value={approvalData.comment}
+                                    onChange={(e) => setApprovalData({
+                                        ...approvalData,
+                                        comment: e.target.value
+                                    })}
+                                    placeholder="승인 관련 코멘트를 입력하세요 (선택사항)"
+                                    rows="3"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="session-mgmt-modal-footer">
+                            <button 
+                                className="session-mgmt-btn session-mgmt-btn-secondary"
+                                onClick={() => setShowApprovalModal(false)}
+                            >
+                                취소
+                            </button>
+                            <button 
+                                className="session-mgmt-btn session-mgmt-btn-success"
+                                onClick={handleAdminApprovalSubmit}
+                                disabled={loading}
+                            >
+                                {loading ? '승인 중...' : '승인'}
                             </button>
                         </div>
                     </div>

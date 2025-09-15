@@ -214,6 +214,31 @@ public class SessionExtensionController {
     }
     
     /**
+     * 전체 요청 목록 조회
+     */
+    @GetMapping("/requests")
+    public ResponseEntity<?> getAllRequests() {
+        try {
+            log.info("전체 회기 추가 요청 목록 조회");
+            
+            List<SessionExtensionRequest> requests = sessionExtensionService.getAllRequests();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", requests,
+                "count", requests.size(),
+                "message", "전체 요청 목록을 성공적으로 조회했습니다."
+            ));
+        } catch (Exception e) {
+            log.error("❌ 전체 요청 목록 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "전체 요청 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
      * 입금 확인 대기 중인 요청 목록
      */
     @GetMapping("/pending-payment")

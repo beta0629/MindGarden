@@ -9,9 +9,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { 
-  SCHEDULE_STATUS_LABELS, 
-  SCHEDULE_STATUS_COLORS, 
-  SCHEDULE_STATUS_TEXT_COLORS,
+  STATUS_LABELS, 
+  STATUS_COLORS, 
+  STATUS_TEXT_COLORS,
   SCHEDULE_ACTION_LABELS,
   SCHEDULE_ACTION_ICONS,
   DATE_FORMATS,
@@ -50,8 +50,8 @@ const ScheduleCard = ({
   // 상태별 스타일
   const getStatusStyle = (status) => {
     return {
-      backgroundColor: SCHEDULE_STATUS_COLORS[status] || 'var(--color-neutral)',
-      color: SCHEDULE_STATUS_TEXT_COLORS[status] || 'var(--color-text-primary)'
+      backgroundColor: STATUS_COLORS[status] || 'var(--color-neutral)',
+      color: STATUS_TEXT_COLORS[status] || 'var(--color-text-primary)'
     };
   };
 
@@ -153,7 +153,7 @@ const ScheduleCard = ({
             className="schedule-status-badge"
             style={getStatusStyle(schedule.status)}
           >
-            {SCHEDULE_STATUS_LABELS[schedule.status] || schedule.status}
+            {STATUS_LABELS[schedule.status] || schedule.status}
           </span>
         </div>
         <div className="schedule-card-actions">

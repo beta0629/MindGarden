@@ -279,7 +279,7 @@ export const getCodeGroupIconSync = (groupName) => {
  */
 export const getUserStatusKoreanName = async (status) => {
     try {
-        const response = await apiGet(`/api/admin/common-codes/group/USER_STATUS/display-options`);
+        const response = await apiGet(`/api/admin/common-codes/group/STATUS/display-options`);
         if (response.success && response.data && response.data.codes) {
             const code = response.data.codes.find(c => c.codeValue === status);
             if (code && code.codeLabel) {

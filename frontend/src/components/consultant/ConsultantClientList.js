@@ -22,7 +22,7 @@ const ConsultantClientList = () => {
   const loadUserStatusCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=USER_STATUS');
+      const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
       if (response && response.length > 0) {
         setUserStatusOptions(response.map(code => ({
           value: code.codeValue,

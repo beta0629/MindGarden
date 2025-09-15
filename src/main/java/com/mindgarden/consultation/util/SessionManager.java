@@ -58,7 +58,7 @@ public class SessionManager {
             // 로그인 세션 정보 설정
             session.setAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.USER_ID, user.getId());
             session.setAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.USER_EMAIL, user.getEmail());
-            session.setAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.USER_ROLE, user.getRole());
+            session.setAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.ROLE, user.getRole());
             session.setAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.LOGIN_TIME, LocalDateTime.now());
             session.setAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.LAST_ACTIVITY_TIME, LocalDateTime.now());
             session.setAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.IS_SOCIAL_LOGIN, isSocialLogin);
@@ -134,7 +134,7 @@ public class SessionManager {
             Map<String, Object> loginSession = new HashMap<>();
             loginSession.put(SessionConstants.USER_ID, session.getAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.USER_ID));
             loginSession.put(SessionConstants.USER_EMAIL, session.getAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.USER_EMAIL));
-            loginSession.put(SessionConstants.USER_ROLE, session.getAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.USER_ROLE));
+            loginSession.put(SessionConstants.ROLE, session.getAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.ROLE));
             loginSession.put(SessionConstants.LOGIN_TIME, session.getAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.LOGIN_TIME));
             loginSession.put(SessionConstants.LAST_ACTIVITY_TIME, session.getAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.LAST_ACTIVITY_TIME));
             loginSession.put(SessionConstants.IS_SOCIAL_LOGIN, session.getAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.IS_SOCIAL_LOGIN));

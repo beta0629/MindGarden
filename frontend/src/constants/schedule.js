@@ -7,7 +7,7 @@
  */
 
 // ==================== 스케줄 상태 ====================
-export const SCHEDULE_STATUS = {
+export const STATUS = {
   BOOKED: 'BOOKED',
   CONFIRMED: 'CONFIRMED',
   IN_PROGRESS: 'IN_PROGRESS',
@@ -16,30 +16,30 @@ export const SCHEDULE_STATUS = {
 };
 
 // ==================== 스케줄 상태 라벨 ====================
-export const SCHEDULE_STATUS_LABELS = {
-  [SCHEDULE_STATUS.BOOKED]: '예약됨',
-  [SCHEDULE_STATUS.CONFIRMED]: '확정됨',
-  [SCHEDULE_STATUS.IN_PROGRESS]: '진행중',
-  [SCHEDULE_STATUS.COMPLETED]: '완료됨',
-  [SCHEDULE_STATUS.CANCELLED]: '취소됨'
+export const STATUS_LABELS = {
+  [STATUS.BOOKED]: '예약됨',
+  [STATUS.CONFIRMED]: '확정됨',
+  [STATUS.IN_PROGRESS]: '진행중',
+  [STATUS.COMPLETED]: '완료됨',
+  [STATUS.CANCELLED]: '취소됨'
 };
 
 // ==================== 스케줄 상태 색상 ====================
-export const SCHEDULE_STATUS_COLORS = {
-  [SCHEDULE_STATUS.BOOKED]: 'var(--schedule-status-booked-bg)',
-  [SCHEDULE_STATUS.CONFIRMED]: 'var(--schedule-status-confirmed-bg)',
-  [SCHEDULE_STATUS.IN_PROGRESS]: 'var(--schedule-status-in-progress-bg)',
-  [SCHEDULE_STATUS.COMPLETED]: 'var(--schedule-status-completed-bg)',
-  [SCHEDULE_STATUS.CANCELLED]: 'var(--schedule-status-cancelled-bg)'
+export const STATUS_COLORS = {
+  [STATUS.BOOKED]: 'var(--schedule-status-booked-bg)',
+  [STATUS.CONFIRMED]: 'var(--schedule-status-confirmed-bg)',
+  [STATUS.IN_PROGRESS]: 'var(--schedule-status-in-progress-bg)',
+  [STATUS.COMPLETED]: 'var(--schedule-status-completed-bg)',
+  [STATUS.CANCELLED]: 'var(--schedule-status-cancelled-bg)'
 };
 
 // ==================== 스케줄 상태 텍스트 색상 ====================
-export const SCHEDULE_STATUS_TEXT_COLORS = {
-  [SCHEDULE_STATUS.BOOKED]: 'var(--schedule-status-booked-color)',
-  [SCHEDULE_STATUS.CONFIRMED]: 'var(--schedule-status-confirmed-color)',
-  [SCHEDULE_STATUS.IN_PROGRESS]: 'var(--schedule-status-in-progress-color)',
-  [SCHEDULE_STATUS.COMPLETED]: 'var(--schedule-status-completed-color)',
-  [SCHEDULE_STATUS.CANCELLED]: 'var(--schedule-status-cancelled-color)'
+export const STATUS_TEXT_COLORS = {
+  [STATUS.BOOKED]: 'var(--schedule-status-booked-color)',
+  [STATUS.CONFIRMED]: 'var(--schedule-status-confirmed-color)',
+  [STATUS.IN_PROGRESS]: 'var(--schedule-status-in-progress-color)',
+  [STATUS.COMPLETED]: 'var(--schedule-status-completed-color)',
+  [STATUS.CANCELLED]: 'var(--schedule-status-cancelled-color)'
 };
 
 // ==================== 스케줄 타입 ====================

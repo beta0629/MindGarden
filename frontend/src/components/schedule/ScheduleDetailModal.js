@@ -30,7 +30,7 @@ const ScheduleDetailModal = ({
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=SCHEDULE_STATUS');
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
             if (response && response.length > 0) {
                 setScheduleStatusOptions(response.map(code => ({
                     value: code.codeValue,

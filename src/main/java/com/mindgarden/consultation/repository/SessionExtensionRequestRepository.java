@@ -19,6 +19,11 @@ import java.util.List;
 public interface SessionExtensionRequestRepository extends JpaRepository<SessionExtensionRequest, Long> {
     
     /**
+     * 전체 회기 추가 요청 목록 조회 (생성일 내림차순)
+     */
+    List<SessionExtensionRequest> findAllByOrderByCreatedAtDesc();
+    
+    /**
      * 상태별 회기 추가 요청 목록 조회
      */
     List<SessionExtensionRequest> findByStatusOrderByCreatedAtDesc(SessionExtensionRequest.ExtensionStatus status);

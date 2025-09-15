@@ -1,16 +1,27 @@
 package com.mindgarden.consultation.entity;
 
-import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * 회기 추가 요청 엔티티
@@ -34,10 +45,12 @@ public class SessionExtensionRequest {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mapping_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private ConsultantClientMapping mapping;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requester_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User requester;
     
     @Column(nullable = false)
@@ -72,6 +85,15 @@ public class SessionExtensionRequest {
     @Column(length = 1000)
     private String rejectionReason;
     
+    @Column(name = "payment_method", length = 50)
+    private String paymentMethod; // 결제 방법 (CARD, BANK_TRANSFER, CASH 등)
+    
+    @Column(name = "payment_reference", length = 200)
+    private String paymentReference; // 결제 참조번호 (현금의 경우 null 허용)
+    
+    @Column(name = "payment_date")
+    private LocalDateTime paymentDate; // 결제일시
+    
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -104,11 +126,14 @@ public class SessionExtensionRequest {
     /**
      * 입금 확인 처리
      */
-    public void confirmPayment() {
+    public void confirmPayment(String paymentMethod, String paymentReference) {
         if (this.status != ExtensionStatus.PENDING) {
             throw new IllegalStateException("입금 확인할 수 없는 상태입니다: " + this.status);
         }
         this.status = ExtensionStatus.PAYMENT_CONFIRMED;
+        this.paymentMethod = paymentMethod;
+        this.paymentReference = paymentReference;
+        this.paymentDate = LocalDateTime.now();
     }
     
     /**

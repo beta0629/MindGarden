@@ -23,6 +23,9 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
         parentCodeValue: '',
         extraData: ''
     });
+    
+    // 패키지 전용 필드 (CONSULTATION_PACKAGE 그룹일 때만 사용)
+    const [packageSessions, setPackageSessions] = useState(20);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     
@@ -57,7 +60,7 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                 { value: 'STATUS', label: '상태', icon: '🔄', color: '#f97316', description: '일반적인 상태' },
                 { value: 'PRIORITY', label: '우선순위', icon: '⚡', color: '#dc2626', description: '우선순위 구분' },
                 { value: 'NOTIFICATION_TYPE', label: '알림 유형', icon: '🔔', color: '#7c3aed', description: '알림의 유형' },
-                { value: 'SCHEDULE_STATUS', label: '일정 상태', icon: '📅', color: '#059669', description: '일정의 상태' }
+                { value: 'STATUS', label: '일정 상태', icon: '📅', color: '#059669', description: '일정의 상태' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -78,6 +81,17 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                 parentCodeValue: code.parentCodeValue || '',
                 extraData: code.extraData || ''
             });
+            
+            // CONSULTATION_PACKAGE 그룹일 때 회기 수 파싱
+            if (code.codeGroup === 'CONSULTATION_PACKAGE' && code.extraData) {
+                try {
+                    const extraData = JSON.parse(code.extraData);
+                    setPackageSessions(extraData.sessions || 20);
+                } catch (e) {
+                    console.warn('extraData 파싱 실패:', e);
+                    setPackageSessions(20);
+                }
+            }
         }
     }, [code]);
 
@@ -139,7 +153,13 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
 
         setIsSubmitting(true);
         try {
-            await onSubmit(formData);
+            // CONSULTATION_PACKAGE 그룹일 때 회기 수를 extraData에 포함
+            let submitData = { ...formData };
+            if (formData.codeGroup === 'CONSULTATION_PACKAGE') {
+                submitData.extraData = JSON.stringify({ sessions: packageSessions });
+            }
+            
+            await onSubmit(submitData);
         } catch (error) {
             console.error('폼 제출 오류:', error);
         } finally {
@@ -318,6 +338,26 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                         </div>
                     </div>
 
+                    {/* CONSULTATION_PACKAGE 그룹일 때 회기 수 입력 필드 */}
+                    {formData.codeGroup === 'CONSULTATION_PACKAGE' && (
+                        <div className="form-group">
+                            <label htmlFor="packageSessions">회기 수</label>
+                            <input
+                                type="number"
+                                id="packageSessions"
+                                value={packageSessions}
+                                onChange={(e) => setPackageSessions(parseInt(e.target.value) || 20)}
+                                className="form-control"
+                                min="1"
+                                max="100"
+                                placeholder="20"
+                            />
+                            <small className="form-text text-muted">
+                                패키지에 포함된 상담 회기 수를 입력하세요.
+                            </small>
+                        </div>
+                    )}
+
                     <div className="form-group">
                         <label htmlFor="extraData">추가 데이터 (JSON)</label>
                         <textarea
@@ -328,7 +368,13 @@ const CommonCodeForm = ({ code, codeGroups, onSubmit, onClose }) => {
                             className="form-control"
                             rows="2"
                             placeholder='{"sessions": 10, "price": 500000}'
+                            disabled={formData.codeGroup === 'CONSULTATION_PACKAGE'}
                         />
+                        {formData.codeGroup === 'CONSULTATION_PACKAGE' && (
+                            <small className="form-text text-muted">
+                                패키지 그룹의 경우 회기 수 필드를 사용하세요.
+                            </small>
+                        )}
                     </div>
 
                     <div className="form-actions">

@@ -1,19 +1,18 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.SessionExtensionRequest;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.SessionExtensionRequestRepository;
 import com.mindgarden.consultation.service.SessionSyncService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 회기 동기화 서비스 구현체
@@ -40,16 +39,24 @@ public class SessionSyncServiceImpl implements SessionSyncService {
         try {
             ConsultantClientMapping mapping = extensionRequest.getMapping();
             
-            // 1. 매핑 상태 검증
+            // 1. 회기 추가 처리
+            mapping.addSessions(
+                extensionRequest.getAdditionalSessions(),
+                extensionRequest.getPackageName(),
+                extensionRequest.getPackagePrice().longValue()
+            );
+            mappingRepository.save(mapping);
+            
+            // 2. 매핑 상태 검증
             validateMappingStatus(mapping);
             
-            // 2. 회기 수 검증
+            // 3. 회기 수 검증
             validateSessionCounts(mapping);
             
-            // 3. 관련된 모든 매핑 동기화
+            // 4. 관련된 모든 매핑 동기화
             syncRelatedMappings(mapping);
             
-            // 4. 사용 로그 기록
+            // 5. 사용 로그 기록
             logSessionUsage(mapping.getId(), "EXTENSION", 
                           extensionRequest.getAdditionalSessions(), 
                           "회기 추가: " + extensionRequest.getReason());
@@ -238,9 +245,9 @@ public class SessionSyncServiceImpl implements SessionSyncService {
             long exhaustedMappings = mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED).size();
             
             // 회기 추가 요청 수
-            long pendingRequests = requestRepository.findByStatus(SessionExtensionRequest.ExtensionStatus.PENDING).size();
-            long confirmedRequests = requestRepository.findByStatus(SessionExtensionRequest.ExtensionStatus.PAYMENT_CONFIRMED).size();
-            long approvedRequests = requestRepository.findByStatus(SessionExtensionRequest.ExtensionStatus.ADMIN_APPROVED).size();
+            long pendingRequests = requestRepository.findByStatusOrderByCreatedAtDesc(SessionExtensionRequest.ExtensionStatus.PENDING).size();
+            long confirmedRequests = requestRepository.findByStatusOrderByCreatedAtDesc(SessionExtensionRequest.ExtensionStatus.PAYMENT_CONFIRMED).size();
+            long approvedRequests = requestRepository.findByStatusOrderByCreatedAtDesc(SessionExtensionRequest.ExtensionStatus.ADMIN_APPROVED).size();
             
             status.put("totalMappings", totalMappings);
             status.put("activeMappings", activeMappings);
@@ -300,12 +307,20 @@ public class SessionSyncServiceImpl implements SessionSyncService {
      * 관련된 모든 매핑 동기화
      */
     private void syncRelatedMappings(ConsultantClientMapping mapping) {
-        // 같은 상담사-내담자 조합의 다른 매핑들도 동기화
-        List<ConsultantClientMapping> relatedMappings = mappingRepository
-                .findByConsultantIdAndClientId(mapping.getConsultant().getId(), mapping.getClient().getId());
-        
-        for (ConsultantClientMapping relatedMapping : relatedMappings) {
-            if (!relatedMapping.getId().equals(mapping.getId())) {
+        try {
+            // 같은 상담사-내담자 조합의 다른 매핑들도 동기화
+            // 먼저 상담사 ID로 매핑들을 찾고, 그 중에서 같은 내담자 ID를 가진 것들을 필터링
+            List<ConsultantClientMapping> consultantMappings = mappingRepository
+                    .findByConsultantIdAndStatusNot(mapping.getConsultant().getId(), 
+                            ConsultantClientMapping.MappingStatus.TERMINATED);
+            
+            List<ConsultantClientMapping> relatedMappings = consultantMappings.stream()
+                    .filter(relatedMapping -> relatedMapping.getClient() != null && 
+                            relatedMapping.getClient().getId().equals(mapping.getClient().getId()))
+                    .filter(relatedMapping -> !relatedMapping.getId().equals(mapping.getId()))
+                    .collect(java.util.stream.Collectors.toList());
+            
+            for (ConsultantClientMapping relatedMapping : relatedMappings) {
                 try {
                     validateSessionCounts(relatedMapping);
                     validateMappingStatus(relatedMapping);
@@ -314,6 +329,8 @@ public class SessionSyncServiceImpl implements SessionSyncService {
                             relatedMapping.getId(), e.getMessage());
                 }
             }
+        } catch (Exception e) {
+            log.warn("⚠️ 관련 매핑 조회 실패: error={}", e.getMessage());
         }
     }
 }

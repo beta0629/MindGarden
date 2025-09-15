@@ -24,7 +24,7 @@ import {
   CHART_API
 } from '../../constants/charts';
 import { SCHEDULE_API } from '../../constants/api';
-import { SCHEDULE_STATUS } from '../../constants/schedule';
+import { STATUS } from '../../constants/schedule';
 import './StatisticsDashboard.css';
 
 const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기본값 제거, 호출하는 컴포넌트에서 전달해야 함
@@ -63,7 +63,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
   const loadScheduleStatusCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await fetch('/api/admin/common-codes/values?groupCode=SCHEDULE_STATUS');
+      const response = await fetch('/api/admin/common-codes/values?groupCode=STATUS');
       if (response.ok) {
         const data = await response.json();
         if (data && data.length > 0) {

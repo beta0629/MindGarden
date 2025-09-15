@@ -52,7 +52,7 @@ const ClientComprehensiveManagement = () => {
     const loadUserStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=USER_STATUS');
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
             if (response && response.length > 0) {
                 setUserStatusOptions(response.map(code => ({
                     value: code.codeValue,
@@ -387,7 +387,7 @@ const ClientComprehensiveManagement = () => {
                 status === 'HQ_ADMIN' || status === 'SUPER_HQ_ADMIN' || status === 'HQ_MASTER') {
                 return await getStatusColorSync(status, 'USER_GRADE');
             } else {
-                return await getStatusColorSync(status, 'USER_STATUS');
+                return await getStatusColorSync(status, 'STATUS');
             }
         } catch (error) {
             console.error(`상태 색상 조회 실패: ${status}`, error);

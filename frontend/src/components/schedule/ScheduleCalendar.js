@@ -54,7 +54,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=SCHEDULE_STATUS');
+            const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
             console.log('📋 스케줄 상태 코드 응답:', response);
             
             if (response && Array.isArray(response) && response.length > 0) {
@@ -63,8 +63,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     try {
                         // 동적으로 색상과 아이콘 조회
                         const [color, icon] = await Promise.all([
-                            getStatusColor(code.codeValue, 'SCHEDULE_STATUS'),
-                            getStatusIcon(code.codeValue, 'SCHEDULE_STATUS')
+                            getStatusColor(code.codeValue, 'STATUS'),
+                            getStatusIcon(code.codeValue, 'STATUS')
                         ]);
                         
                         return {

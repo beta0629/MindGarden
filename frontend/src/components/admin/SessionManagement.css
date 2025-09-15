@@ -190,6 +190,16 @@
     transform: translateY(-1px);
 }
 
+.session-mgmt-btn-warning {
+    background: #f39c12;
+    color: white;
+}
+
+.session-mgmt-btn-warning:hover {
+    background: #e67e22;
+    transform: translateY(-1px);
+}
+
 /* 모달 스타일 */
 .session-mgmt-modal-overlay {
     position: fixed;
@@ -578,6 +588,26 @@
     color: #2c3e50;
 }
 
+/* 읽기 전용 입력 필드 */
+.readonly-input {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
+    cursor: not-allowed !important;
+    border-color: #e9ecef !important;
+}
+
+.readonly-input:focus {
+    box-shadow: none !important;
+    border-color: #e9ecef !important;
+}
+
+.readonly-input:disabled {
+    background-color: #e9ecef !important;
+    color: #6c757d !important;
+    cursor: not-allowed !important;
+    opacity: 0.7 !important;
+}
+
 .session-mgmt-session-value.total {
     color: #3498db;
 }
@@ -765,6 +795,144 @@
     font-weight: bold;
 }
 
+/* 탭 스타일 */
+.session-mgmt-tabs {
+    display: flex;
+    gap: 0;
+    margin-top: 20px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.session-mgmt-tab {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    font-size: 16px;
+    font-weight: 500;
+    color: #6c757d;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.session-mgmt-tab:hover {
+    color: #3498db;
+    background: #f8f9fa;
+}
+
+.session-mgmt-tab.active {
+    color: #3498db;
+    border-bottom-color: #3498db;
+    background: #f8f9fa;
+}
+
+/* 회기 추가 요청 섹션 */
+.session-mgmt-extensions-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.session-mgmt-extensions-header {
+    margin-bottom: 25px;
+}
+
+.session-mgmt-extensions-header h3 {
+    color: #2c3e50;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.session-mgmt-extensions-header p {
+    color: #6c757d;
+    font-size: 14px;
+    margin: 0;
+}
+
+.session-mgmt-extensions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 20px;
+}
+
+/* 회기 추가 요청 카드 */
+.session-mgmt-extension-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.session-mgmt-extension-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.session-mgmt-extension-card .session-mgmt-card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+}
+
+.session-mgmt-extension-card .session-mgmt-card-title h4 {
+    color: #2c3e50;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+}
+
+.session-mgmt-extension-card .session-mgmt-card-subtitle {
+    font-size: 12px;
+    color: #6c757d;
+    background: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.session-mgmt-extension-card .session-mgmt-card-content {
+    padding: 20px;
+}
+
+.session-mgmt-extension-card .session-mgmt-card-actions {
+    display: flex;
+    gap: 8px;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    justify-content: flex-end;
+}
+
+.session-mgmt-extension-card .session-mgmt-btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 80px;
+}
+
+.session-mgmt-btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.session-mgmt-btn-success:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+.session-mgmt-status-text {
+    font-size: 12px;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    text-align: center;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .session-mgmt-client-selection-header {
@@ -810,4 +978,57 @@
         flex-direction: column;
         align-items: stretch;
     }
+    
+    .session-mgmt-extensions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .session-mgmt-extension-card .session-mgmt-card-actions {
+        flex-direction: column;
+    }
+    
+    .session-mgmt-extension-card .session-mgmt-btn-sm {
+        width: 100%;
+    }
+    
+    .session-mgmt-current-sessions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .session-mgmt-session-info {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+/* 현재 회기 현황 스타일 */
+.session-mgmt-current-sessions {
+    display: flex;
+    gap: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.session-mgmt-session-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.session-mgmt-session-label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.session-mgmt-session-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
 }

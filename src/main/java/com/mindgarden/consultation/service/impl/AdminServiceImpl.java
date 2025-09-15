@@ -313,9 +313,10 @@ public class AdminServiceImpl implements AdminService {
         ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
         
-        // 요청자 정보 조회
-        User requester = userService.findActiveById(requesterId)
-                .orElseThrow(() -> new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId));
+        // 요청자 정보 검증
+        if (!userRepository.existsById(requesterId)) {
+            throw new RuntimeException("요청자를 찾을 수 없습니다: " + requesterId);
+        }
         
         // 회기 추가 요청 생성 (SessionExtensionService 사용)
         // 이 메서드는 기존 AdminService에 유지하되, 실제 처리는 SessionExtensionService로 위임

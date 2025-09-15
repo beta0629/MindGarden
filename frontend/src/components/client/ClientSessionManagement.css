@@ -127,18 +127,18 @@
 }
 
 .summary-card.total .card-icon {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #e8e2ff;
+  color: #8b5cf6;
 }
 
 .summary-card.used .card-icon {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
+  background: #fce7f3;
+  color: #ec4899;
 }
 
 .summary-card.remaining .card-icon {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: white;
+  background: #dbeafe;
+  color: #3b82f6;
 }
 
 .card-icon i {
@@ -207,7 +207,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+  background: #22c55e;
   border-radius: 6px;
   transition: width 0.5s ease;
 }

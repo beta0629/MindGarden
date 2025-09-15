@@ -127,23 +127,23 @@
 }
 
 .stat-card.total-amount .card-icon {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #e8e2ff;
+  color: #8b5cf6;
 }
 
 .stat-card.total-sessions .card-icon {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
+  background: #fce7f3;
+  color: #ec4899;
 }
 
 .stat-card.completed-payments .card-icon {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: white;
+  background: #dbeafe;
+  color: #3b82f6;
 }
 
 .stat-card.pending-payments .card-icon {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  color: white;
+  background: #dcfce7;
+  color: #22c55e;
 }
 
 .card-icon i {

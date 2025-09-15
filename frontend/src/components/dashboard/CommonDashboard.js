@@ -8,6 +8,7 @@ import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/s
 // import '../../styles/dashboard/dashboard.css'; // 인라인 스타일로 변경
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
 import SimpleLayout from '../layout/SimpleLayout';
+import PageHeader from '../common/PageHeader';
 import WelcomeSection from './WelcomeSection';
 import SummaryPanels from './SummaryPanels';
 import QuickActions from './QuickActions';
@@ -28,6 +29,41 @@ const CommonDashboard = ({ user: propUser }) => {
   const [consultationData, setConsultationData] = useState(DASHBOARD_DEFAULT_DATA.consultationData);
   const [clientStatus, setClientStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // 햄버거 메뉴 핸들러
+  const handleHamburgerClick = (isOpen) => {
+    setIsMenuOpen(isOpen);
+  };
+
+  const handleMenuAction = (action) => {
+    setIsMenuOpen(false);
+    switch (action) {
+      case 'dashboard':
+        navigate('/dashboard');
+        break;
+      case 'session-management':
+        navigate('/client/session-management');
+        break;
+      case 'payment-history':
+        navigate('/client/payment-history');
+        break;
+      case 'consultation-guide':
+        alert('상담 가이드 페이지는 준비 중입니다.');
+        break;
+      case 'schedule':
+        navigate('/schedule');
+        break;
+      case 'consultation-records':
+        navigate('/consultation-records');
+        break;
+      case 'mypage':
+        navigate('/mypage');
+        break;
+      default:
+        break;
+    }
+  };
 
   // 세션 데이터 및 상담 데이터 로드
   useEffect(() => {
@@ -656,6 +692,128 @@ const CommonDashboard = ({ user: propUser }) => {
         background: '#f8f9fa',
         minHeight: '100vh'
       }}>
+        
+        {/* 공통 헤더 */}
+        <PageHeader 
+          title="대시보드" 
+          icon="bi-house"
+          showBackButton={false}
+          onHamburgerClick={handleHamburgerClick}
+        />
+        
+        {/* 햄버거 메뉴 드롭다운 */}
+        {isMenuOpen && (
+          <div style={{
+            position: 'fixed',
+            top: '80px',
+            right: '20px',
+            background: 'white',
+            border: '1px solid #e9ecef',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            zIndex: 1000,
+            minWidth: '200px',
+            padding: '8px 0'
+          }}>
+            <div style={{
+              padding: '12px 16px',
+              borderBottom: '1px solid #e9ecef',
+              fontWeight: '600',
+              color: '#2c3e50',
+              fontSize: '14px'
+            }}>
+              메뉴
+            </div>
+            <button 
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: 'none',
+                background: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                color: '#2c3e50',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              onClick={() => handleMenuAction('dashboard')}
+            >
+              <i className="bi bi-house"></i>
+              대시보드
+            </button>
+            <button 
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: 'none',
+                background: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                color: '#2c3e50',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              onClick={() => handleMenuAction('schedule')}
+            >
+              <i className="bi bi-calendar"></i>
+              일정 관리
+            </button>
+            <button 
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: 'none',
+                background: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                color: '#2c3e50',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              onClick={() => handleMenuAction('consultation-records')}
+            >
+              <i className="bi bi-journal-text"></i>
+              상담 기록
+            </button>
+            <button 
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: 'none',
+                background: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                color: '#2c3e50',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+              onClick={() => handleMenuAction('mypage')}
+            >
+              <i className="bi bi-person"></i>
+              마이페이지
+            </button>
+          </div>
+        )}
         
         {/* 웰컴 섹션 */}
         <WelcomeSection 

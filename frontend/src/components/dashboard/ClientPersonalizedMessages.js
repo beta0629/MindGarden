@@ -243,14 +243,6 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
     }
 
     // 4. 내담자 전용 유용한 카드들 추가
-    messages.push({
-      id: 'session-status',
-      icon: 'bi-clock-history',
-      title: '회기 현황',
-      subtitle: '남은 회기와 사용 내역을 확인하세요',
-      color: '#28a745',
-      action: 'session-status'
-    });
 
     messages.push({
       id: 'payment-history',

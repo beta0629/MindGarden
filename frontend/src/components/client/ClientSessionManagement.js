@@ -24,7 +24,7 @@ const ClientSessionManagement = () => {
       setError(null);
 
       // 사용자 정보 가져오기
-      const userResponse = await apiGet('/api/user/me');
+      const userResponse = await apiGet('/api/auth/current-user');
       const userId = userResponse.data?.id;
 
       if (!userId) {

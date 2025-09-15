@@ -54,12 +54,12 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         navigate('/client/messages');
         break;
       case 'session-status':
-        // 회기 현황은 이미 대시보드에 표시되므로 스크롤
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // 회기 관리 상세 페이지로 이동
+        navigate('/client/session-management');
         break;
       case 'payment-history':
-        // 결제 내역은 이미 대시보드에 표시되므로 스크롤
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // 결제 내역 상세 페이지로 이동
+        navigate('/client/payment-history');
         break;
       case 'consultation-guide':
         // 상담 가이드 페이지로 이동 (향후 구현)

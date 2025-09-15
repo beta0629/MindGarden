@@ -259,13 +259,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, [userRole, selectedConsultantId]);
 
-    // 상담사 선택 변경 시 스케줄 다시 로드
-    useEffect(() => {
-        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
-            loadSchedules();
-        }
-    }, [selectedConsultantId, userRole]);
-
     /**
      * 휴가 데이터를 캘린더 이벤트로 변환
      */

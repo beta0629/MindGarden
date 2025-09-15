@@ -58,7 +58,13 @@ const SessionManagement = () => {
                     color: code.colorCode,
                     description: code.codeDescription
                 }));
-                setMappingStatusOptions(options);
+                
+                // 중복 제거: value 기준으로 중복 제거
+                const uniqueOptions = options.filter((option, index, self) => 
+                    index === self.findIndex(o => o.value === option.value)
+                );
+                
+                setMappingStatusOptions(uniqueOptions);
             }
         } catch (error) {
             console.error('매핑 상태 코드 로드 실패:', error);
@@ -730,8 +736,8 @@ const SessionManagement = () => {
                             disabled={loadingCodes}
                         >
                             <option value="ALL">전체</option>
-                            {mappingStatusOptions.map(status => (
-                                <option key={status.value} value={status.value}>
+                            {mappingStatusOptions.map((status, index) => (
+                                <option key={`${status.value}-${index}`} value={status.value}>
                                     {status.icon} {status.label}
                                 </option>
                             ))}

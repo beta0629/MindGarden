@@ -941,12 +941,18 @@
     }
     
     .session-mgmt-client-filters {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
     }
     
     .session-mgmt-search-input {
-        width: 100%;
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .session-mgmt-filter-select {
+        min-width: 120px;
     }
     
     .session-mgmt-client-list {

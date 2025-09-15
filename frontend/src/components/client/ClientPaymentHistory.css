@@ -116,7 +116,7 @@
   transform: translateY(-2px);
 }
 
-.card-icon {
+.stat-icon {
   width: 60px;
   height: 60px;
   border-radius: 12px;
@@ -126,27 +126,27 @@
   flex-shrink: 0;
 }
 
-.stat-card.total-amount .card-icon {
+.stat-card.total .stat-icon {
   background: #e8e2ff;
   color: #8b5cf6;
 }
 
-.stat-card.total-sessions .card-icon {
+.stat-card.sessions .stat-icon {
   background: #fce7f3;
   color: #ec4899;
 }
 
-.stat-card.completed-payments .card-icon {
+.stat-card.completed .stat-icon {
   background: #dbeafe;
   color: #3b82f6;
 }
 
-.stat-card.pending-payments .card-icon {
+.stat-card.pending .stat-icon {
   background: #dcfce7;
   color: #22c55e;
 }
 
-.card-icon i {
+.stat-icon i {
   font-size: 24px;
 }
 

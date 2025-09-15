@@ -50,29 +50,39 @@ const ConsultantSchedule = () => {
   // 세션 체크 및 권한 확인
   useEffect(() => {
     if (sessionLoading) {
-      console.log('⏳ 세션 로딩 중...');
       return;
     }
 
     if (!isLoggedIn) {
-      console.log('❌ 로그인되지 않음, 로그인 페이지로 이동');
       navigate('/login', { replace: true });
       return;
     }
 
-    // 동적 권한 시스템으로 스케줄 권한 확인
+    // 상담사는 기본적으로 스케줄 접근 권한이 있음
+    if (user?.role === 'CONSULTANT') {
+      return;
+    }
+
+    // 동적 권한 시스템으로 스케줄 권한 확인 (관리자만)
     const checkSchedulePermission = async () => {
-      const hasScheduleAccess = await hasPermission('REGISTER_SCHEDULER') || user?.role === 'CONSULTANT';
-      
-      if (!hasScheduleAccess) {
-        console.log('❌ 스케줄 권한 없음, 대시보드로 이동');
-        navigate('/dashboard', { replace: true });
-        return;
+      try {
+        const hasScheduleAccess = await hasPermission('REGISTER_SCHEDULER');
+        
+        if (!hasScheduleAccess) {
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error('권한 체크 오류:', error);
+        // 권한 체크 실패 시 상담사가 아니면 대시보드로 이동
+        if (user?.role !== 'CONSULTANT') {
+          navigate('/dashboard', { replace: true });
+        }
       }
     };
     
     checkSchedulePermission();
-  }, [isLoggedIn, sessionLoading, user, navigate]);
+  }, [isLoggedIn, sessionLoading, user?.role, navigate]);
 
   // 사용자 권한 확인
   const userRole = user?.role || 'CONSULTANT';
@@ -82,17 +92,14 @@ const ConsultantSchedule = () => {
   // 실제 매핑된 내담자 데이터 로드
   useEffect(() => {
     if (!user?.id) {
-      console.log('❌ 사용자 ID가 없습니다.');
       return;
     }
 
     const currentConsultantId = user.id;
-    console.log('👤 상담사 ID:', currentConsultantId);
 
     // 실제 API에서 매핑된 내담자 데이터 가져오기
     const loadMappedClients = async () => {
       try {
-        console.log('👤 매핑된 내담자 목록 로드 시작 - 상담사 ID:', currentConsultantId);
         
         const response = await fetch(`/api/admin/mappings/consultant/${currentConsultantId}/clients`, {
           method: 'GET',
@@ -104,7 +111,6 @@ const ConsultantSchedule = () => {
 
         if (response.ok) {
           const responseData = await response.json();
-          console.log('👤 API 응답 데이터:', responseData);
           
           // 백엔드 API 응답 구조: { success: true, data: [...], count: ... }
           const mappingsData = responseData.data || [];
@@ -142,7 +148,6 @@ const ConsultantSchedule = () => {
           }));
           
           setClients(mappedClients);
-          console.log('👤 매핑된 내담자 목록 로드 완료:', mappedClients);
           
           return mappedClients;
         } else {
@@ -276,12 +281,8 @@ const ConsultantSchedule = () => {
   // 이벤트 로드 함수
   const loadEvents = async () => {
     if (!user?.id) {
-      console.log('📅 사용자 ID가 없어서 이벤트 로드 건너뜀');
       return;
     }
-    
-    console.log('📅 이벤트 로드 시작:', user.id);
-    console.log('🔍 현재 사용자 정보:', user);
     
     try {
       // 스케줄 데이터 로드

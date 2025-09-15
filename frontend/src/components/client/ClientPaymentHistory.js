@@ -203,6 +203,38 @@ const ClientPaymentHistory = () => {
   return (
     <SimpleLayout title="결제 내역">
       <div className="client-payment-history">
+        {/* 페이지 헤드라인 */}
+        <div style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          padding: '40px 32px',
+          borderRadius: '16px',
+          marginBottom: '32px',
+          textAlign: 'center',
+          boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)'
+        }}>
+          <h1 style={{
+            margin: '0 0 12px 0',
+            fontSize: '32px',
+            fontWeight: '700',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px'
+          }}>
+            <i className="bi bi-credit-card" style={{ fontSize: '28px' }}></i>
+            결제 내역
+          </h1>
+          <p style={{
+            margin: '0',
+            fontSize: '18px',
+            opacity: '0.9',
+            fontWeight: '400'
+          }}>
+            결제 내역과 패키지 정보를 확인하세요
+          </p>
+        </div>
+
         {/* 햄버거 메뉴 드롭다운 */}
         {isMenuOpen && (
           <div style={{

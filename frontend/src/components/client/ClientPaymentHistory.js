@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
-import PageHeader from '../common/PageHeader';
+import SimpleLayout from '../layout/SimpleLayout';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './ClientPaymentHistory.css';
 
@@ -256,13 +256,8 @@ const ClientPaymentHistory = () => {
   }
 
   return (
-    <div className="client-payment-history">
-      {/* 공통 헤더 */}
-      <PageHeader 
-        title="결제 내역" 
-        icon="bi-credit-card"
-        onHamburgerClick={handleHamburgerClick}
-      />
+    <SimpleLayout title="결제 내역">
+      <div className="client-payment-history">
       
       {/* 햄버거 메뉴 드롭다운 */}
       {isMenuOpen && (
@@ -545,7 +540,7 @@ const ClientPaymentHistory = () => {
           </div>
         </div>
       </div>
-    </div>
+    </SimpleLayout>
   );
 };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
-import PageHeader from '../common/PageHeader';
+import SimpleLayout from '../layout/SimpleLayout';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './ClientSessionManagement.css';
 
@@ -160,13 +160,8 @@ const ClientSessionManagement = () => {
   }
 
   return (
-    <div className="client-session-management">
-      {/* 공통 헤더 */}
-      <PageHeader 
-        title="회기 관리" 
-        icon="bi-clock-history"
-        onHamburgerClick={handleHamburgerClick}
-      />
+    <SimpleLayout title="회기 관리">
+      <div className="client-session-management">
       
       {/* 햄버거 메뉴 드롭다운 */}
       {isMenuOpen && (
@@ -645,7 +640,7 @@ const ClientSessionManagement = () => {
           </div>
         )}
       </div>
-    </div>
+    </SimpleLayout>
   );
 };
 

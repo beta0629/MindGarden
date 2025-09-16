@@ -316,18 +316,21 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                 }
               </p>
               {todayConsultations.length > 0 ? (
-                <div className="consultation-details" style={{
-                  flex: 1,
-                  overflowY: 'auto',
+                <div style={{
+                  flex: '1 1 auto',
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
                   maxHeight: '380px',
-                  paddingRight: '8px',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: '12px',
-                  alignItems: 'start'
+                  paddingBottom: '8px',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'flex-start',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  WebkitOverflowScrolling: 'touch'
                 }}>
                   {todayConsultations.map((consultation, index) => (
-                    <div key={index} className="consultation-item" style={{
+                    <div key={index} style={{
                       background: '#f8f9fa',
                       borderRadius: '12px',
                       padding: '14px',
@@ -335,9 +338,15 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                       transition: 'all 0.2s ease',
                       cursor: 'pointer',
                       minHeight: '120px',
+                      flexShrink: '0',
                       display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'space-between'
+                      justifyContent: 'space-between',
+                      minWidth: '250px',
+                      maxWidth: '300px',
+                      width: '250px',
+                      boxSizing: 'border-box',
+                      marginRight: '12px'
                     }}
                     onMouseEnter={(e) => {
                       e.target.style.background = '#e3f2fd';
@@ -410,13 +419,13 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               )}
               
               {/* 오늘 상담이 많을 때 자세히 보기 버튼 */}
-              {todayConsultations.length > 6 && (
+              {todayConsultations.length > 4 && (
                 <div style={{
                   textAlign: 'center',
                   marginTop: '16px',
                   paddingTop: '16px',
                   borderTop: '1px solid #e9ecef',
-                  gridColumn: 'span 2'
+                  width: '100%'
                 }}>
                   <button 
                     onClick={() => handleCardClick('schedule')}
@@ -440,7 +449,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                       e.target.style.color = '#667eea';
                     }}
                   >
-                    +{todayConsultations.length - 6}건 더 보기
+                    +{todayConsultations.length - 4}건 더 보기
                   </button>
                 </div>
               )}

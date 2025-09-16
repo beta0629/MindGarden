@@ -46,7 +46,7 @@ public class ScheduleResponseDto {
                 .date(schedule.getDate())
                 .startTime(schedule.getStartTime())
                 .endTime(schedule.getEndTime())
-                .status(schedule.getStatus())
+                .status(schedule.getStatus().name())
                 .scheduleType(schedule.getScheduleType())
                 .consultationType(koreanConsultationType)
                 .title(schedule.getTitle())

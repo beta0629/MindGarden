@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaToggleOff, FaCompressAlt } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
 import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
@@ -144,6 +144,47 @@ const AdminDashboard = ({ user: propUser }) => {
         } catch (error) {
             console.error('스케줄 자동 완료 처리 및 알림 실패:', error);
             showToast('스케줄 자동 완료 처리 및 알림에 실패했습니다.', 'danger');
+        }
+    };
+
+    // 중복 매핑 통합 처리
+    const handleMergeDuplicateMappings = async () => {
+        try {
+            // 먼저 중복 매핑 조회
+            const checkResponse = await fetch('/api/admin/duplicate-mappings');
+            if (!checkResponse.ok) {
+                showToast('중복 매핑 조회에 실패했습니다.', 'danger');
+                return;
+            }
+            
+            const checkResult = await checkResponse.json();
+            if (checkResult.count === 0) {
+                showToast('중복된 매핑이 없습니다.');
+                return;
+            }
+            
+            // 사용자 확인
+            const confirmMessage = `중복된 매핑이 ${checkResult.count}개 발견되었습니다. 통합하시겠습니까?`;
+            if (!window.confirm(confirmMessage)) {
+                return;
+            }
+            
+            // 중복 매핑 통합 실행
+            const response = await fetch('/api/admin/merge-duplicate-mappings', {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                showToast(result.message || '중복 매핑 통합이 완료되었습니다.');
+                loadStats(); // 통계 새로고침
+            } else {
+                const error = await response.json();
+                showToast(error.message || '중복 매핑 통합에 실패했습니다.', 'danger');
+            }
+        } catch (error) {
+            console.error('중복 매핑 통합 실패:', error);
+            showToast('중복 매핑 통합에 실패했습니다.', 'danger');
         }
     };
 
@@ -445,6 +486,16 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
                             <h3>공통코드 관리</h3>
                             <p>시스템 공통코드를 관리합니다</p>
+                        </div>
+                    </div>
+                    
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={handleMergeDuplicateMappings}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} merge`}>
+                            <FaCompressAlt />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>중복 매핑 통합</h3>
+                            <p>중복된 상담사-내담자 매핑을 통합합니다</p>
                         </div>
                     </div>
                 </div>

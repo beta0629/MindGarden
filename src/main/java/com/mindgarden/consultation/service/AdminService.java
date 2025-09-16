@@ -210,4 +210,14 @@ public interface AdminService {
      * 사용자 ID로 사용자 조회
      */
     User getUserById(Long id);
+    
+    /**
+     * 중복 매핑 통합
+     */
+    Map<String, Object> mergeDuplicateMappings();
+    
+    /**
+     * 중복 매핑 조회
+     */
+    List<Map<String, Object>> findDuplicateMappings();
 }

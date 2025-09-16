@@ -46,6 +46,12 @@ cp src/main/resources/application-prod.yml.backup src/main/resources/application
 - **컴포넌트 기반 구조**: 재사용 가능한 UI 컴포넌트
 - **실시간 업데이트**: WebSocket 지원 (구현 예정)
 
+### 🎨 UI/UX 개선
+- **스케줄 등록 시스템**: 직관적인 시간 선택 그리드 및 드롭다운
+- **한글 인코딩 지원**: UTF-8 완전 지원으로 한글 텍스트 정상 표시
+- **인라인 스타일링**: CSS 충돌 방지 및 안정적인 UI 렌더링
+- **색상 원 아이콘**: 이모지 대신 색상 원으로 상태 표시
+
 ### 🚀 성능 최적화
 - **API 호출 최적화**: 일괄 처리 패턴으로 429 오류 해결
 - **Rate Limiting**: 개발 환경용 임계값 조정

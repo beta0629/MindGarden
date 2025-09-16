@@ -625,15 +625,15 @@ const TimeSlotGrid = ({
     };
 
     /**
-     * 슬롯 상태 아이콘
+     * 슬롯 상태 아이콘 (색상 원으로 대체)
      */
     const getSlotIcon = (slot) => {
-        if (slot.vacation) return '🏖️';
-        if (slot.past) return '⏰';
-        if (slot.selected) return '✅';
-        if (slot.conflict) return '❌';
-        if (!slot.available) return '🚫';
-        return '🕐';
+        if (slot.vacation) return { color: '#ffc107', text: '휴' };
+        if (slot.past) return { color: '#6c757d', text: '과' };
+        if (slot.selected) return { color: '#28a745', text: '선' };
+        if (slot.conflict) return { color: '#dc3545', text: '충' };
+        if (!slot.available) return { color: '#6c757d', text: '불' };
+        return { color: '#28a745', text: '가' };
     };
 
     /**
@@ -653,9 +653,22 @@ const TimeSlotGrid = ({
 
     if (loading) {
         return (
-            <div className="time-slot-grid">
-                <div className="loading-time-slots">
-                    <div className="loading-spinner">시간 로딩 중...</div>
+            <div style={{ width: '100%', maxHeight: '500px', overflowY: 'auto' }}>
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    minHeight: '200px' 
+                }}>
+                    <div style={{ 
+                        padding: '20px 40px', 
+                        background: '#fff', 
+                        borderRadius: '8px', 
+                        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)', 
+                        fontSize: '16px', 
+                        color: '#495057', 
+                        textAlign: 'center' 
+                    }}>시간 로딩 중...</div>
                 </div>
             </div>
         );
@@ -664,91 +677,336 @@ const TimeSlotGrid = ({
     const groupedSlots = groupSlotsByHour();
 
     return (
-        <div className="time-slot-grid">
-            <div className="grid-header">
-                <h5>시간 선택</h5>
-                <div className="duration-info">
+        <div style={{ width: '100%', maxHeight: '500px', overflowY: 'auto' }}>
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                marginBottom: '16px', 
+                paddingBottom: '12px', 
+                borderBottom: '2px solid #e9ecef' 
+            }}>
+                <h5 style={{ 
+                    margin: '0', 
+                    color: '#2c3e50', 
+                    fontSize: '18px', 
+                    fontWeight: '600',
+                    fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
+                }}>시간 선택</h5>
+                <div style={{ 
+                    fontSize: '12px', 
+                    color: '#6c757d', 
+                    backgroundColor: '#f8f9fa', 
+                    padding: '4px 8px', 
+                    borderRadius: '4px', 
+                    fontWeight: '500' 
+                }}>
                     상담 시간: {duration}분 (휴식 10분 포함)
                 </div>
             </div>
 
-            <div className="time-legend">
-                <div className="legend-item">
-                    <span className="legend-icon">🕐</span>
+            <div style={{ 
+                display: 'flex', 
+                gap: '16px', 
+                marginBottom: '16px', 
+                padding: '12px', 
+                backgroundColor: '#f8f9fa', 
+                borderRadius: '6px', 
+                flexWrap: 'wrap' 
+            }}>
+                <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px', 
+                    fontSize: '12px', 
+                    color: '#495057' 
+                }}>
+                    <span style={{ 
+                        width: '12px', 
+                        height: '12px', 
+                        backgroundColor: '#28a745', 
+                        borderRadius: '50%',
+                        display: 'inline-block'
+                    }}></span>
                     <span>사용 가능</span>
                 </div>
-                <div className="legend-item">
-                    <span className="legend-icon">🏖️</span>
+                <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px', 
+                    fontSize: '12px', 
+                    color: '#495057' 
+                }}>
+                    <span style={{ 
+                        width: '12px', 
+                        height: '12px', 
+                        backgroundColor: '#ffc107', 
+                        borderRadius: '50%',
+                        display: 'inline-block'
+                    }}></span>
                     <span>휴가 시간</span>
                 </div>
-                <div className="legend-item">
-                    <span className="legend-icon">❌</span>
+                <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px', 
+                    fontSize: '12px', 
+                    color: '#495057' 
+                }}>
+                    <span style={{ 
+                        width: '12px', 
+                        height: '12px', 
+                        backgroundColor: '#dc3545', 
+                        borderRadius: '50%',
+                        display: 'inline-block'
+                    }}></span>
                     <span>충돌</span>
                 </div>
-                <div className="legend-item">
-                    <span className="legend-icon">🚫</span>
+                <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px', 
+                    fontSize: '12px', 
+                    color: '#495057' 
+                }}>
+                    <span style={{ 
+                        width: '12px', 
+                        height: '12px', 
+                        backgroundColor: '#6c757d', 
+                        borderRadius: '50%',
+                        display: 'inline-block'
+                    }}></span>
                     <span>사용 불가</span>
                 </div>
-                <div className="legend-item">
-                    <span className="legend-icon">✅</span>
+                <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px', 
+                    fontSize: '12px', 
+                    color: '#495057' 
+                }}>
+                    <span style={{ 
+                        width: '12px', 
+                        height: '12px', 
+                        backgroundColor: '#28a745', 
+                        borderRadius: '50%',
+                        display: 'inline-block'
+                    }}></span>
                     <span>선택됨</span>
                 </div>
             </div>
 
-            <div className="slots-container">
+            <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '12px' 
+            }}>
                 {Object.keys(groupedSlots)
                     .sort((a, b) => parseInt(a) - parseInt(b))
                     .map(hour => (
-                    <div key={hour} className="hour-group">
-                        <div className="hour-label">{hour}:00</div>
-                        <div className="slots-row">
-                            {groupedSlots[hour].map(slot => (
-                                <div
-                                    key={slot.id}
-                                    className={getSlotClassName(slot)}
-                                    onClick={() => handleSlotClick(slot)}
-                                    title={`${slot.time} - ${slot.endTime} (${duration}분)`}
-                                    role="button"
-                                    tabIndex="0"
-                                    onKeyPress={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            handleSlotClick(slot);
-                                        }
-                                    }}
-                                >
-                                    <div className="slot-icon">
-                                        {getSlotIcon(slot)}
+                    <div key={hour} style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '12px' 
+                    }}>
+                        <div style={{ 
+                            minWidth: '60px', 
+                            fontSize: '14px', 
+                            fontWeight: '600', 
+                            color: '#495057', 
+                            textAlign: 'center', 
+                            backgroundColor: '#e9ecef', 
+                            padding: '8px 4px', 
+                            borderRadius: '4px' 
+                        }}>{hour}:00</div>
+                        <div style={{ 
+                            display: 'flex', 
+                            gap: '8px', 
+                            flexWrap: 'wrap' 
+                        }}>
+                            {groupedSlots[hour].map(slot => {
+                                // 인라인 스타일 정의
+                                const getSlotStyle = (slot) => {
+                                    let baseStyle = {
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '12px 8px',
+                                        border: '2px solid #e9ecef',
+                                        borderRadius: '8px',
+                                        backgroundColor: '#fff',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        minWidth: '80px',
+                                        textAlign: 'center',
+                                        position: 'relative',
+                                        fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
+                                    };
+
+                                    // 상태별 스타일 적용
+                                    if (slot.vacation) {
+                                        baseStyle.borderColor = '#ffc107';
+                                        baseStyle.backgroundColor = '#fff8e1';
+                                        baseStyle.cursor = 'not-allowed';
+                                    } else if (slot.past) {
+                                        baseStyle.backgroundColor = '#e9ecef';
+                                        baseStyle.color = '#adb5bd';
+                                        baseStyle.cursor = 'not-allowed';
+                                        baseStyle.opacity = '0.5';
+                                        baseStyle.border = '1px solid #dee2e6';
+                                    } else if (slot.selected) {
+                                        baseStyle.borderColor = '#28a745';
+                                        baseStyle.backgroundColor = '#f8fff9';
+                                        baseStyle.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.25)';
+                                        baseStyle.transform = 'translateY(-2px)';
+                                        baseStyle.fontWeight = '600';
+                                    } else if (slot.conflict) {
+                                        baseStyle.borderColor = '#dc3545';
+                                        baseStyle.backgroundColor = '#fff5f5';
+                                    } else if (!slot.available) {
+                                        baseStyle.opacity = '0.5';
+                                        baseStyle.cursor = 'not-allowed';
+                                        baseStyle.backgroundColor = '#f8f9fa';
+                                    }
+
+                                    return baseStyle;
+                                };
+
+                                const getHoverStyle = (slot) => {
+                                    if (slot.vacation || slot.past || !slot.available) {
+                                        return {};
+                                    }
+                                    return {
+                                        borderColor: '#007bff',
+                                        backgroundColor: '#f8f9ff',
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: '0 4px 8px rgba(0, 123, 255, 0.15)'
+                                    };
+                                };
+
+                                return (
+                                    <div
+                                        key={slot.id}
+                                        style={getSlotStyle(slot)}
+                                        onClick={() => handleSlotClick(slot)}
+                                        title={`${slot.time} - ${slot.endTime} (${duration}분)`}
+                                        role="button"
+                                        tabIndex="0"
+                                        onKeyPress={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                handleSlotClick(slot);
+                                            }
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!slot.vacation && !slot.past && slot.available) {
+                                                Object.assign(e.target.style, getHoverStyle(slot));
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!slot.vacation && !slot.past && slot.available) {
+                                                const originalStyle = getSlotStyle(slot);
+                                                Object.assign(e.target.style, originalStyle);
+                                            }
+                                        }}
+                                    >
+                                        <div style={{ 
+                                            width: '20px', 
+                                            height: '20px', 
+                                            backgroundColor: getSlotIcon(slot).color, 
+                                            borderRadius: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '10px',
+                                            color: 'white',
+                                            fontWeight: 'bold',
+                                            lineHeight: '1'
+                                        }}>
+                                            {getSlotIcon(slot).text}
+                                        </div>
+                                        <div style={{ 
+                                            fontSize: '12px', 
+                                            fontWeight: '600', 
+                                            color: slot.selected ? '#28a745' : '#495057',
+                                            lineHeight: '1'
+                                        }}>
+                                            {slot.time}
+                                        </div>
+                                        <div style={{ 
+                                            fontSize: '10px', 
+                                            color: '#6c757d',
+                                            lineHeight: '1'
+                                        }}>
+                                            {duration}분
+                                        </div>
                                     </div>
-                                    <div className="slot-time">
-                                        {slot.time}
-                                    </div>
-                                    <div className="slot-duration">
-                                        {duration}분
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 ))}
             </div>
 
             {timeSlots.length === 0 && (
-                <div className="no-slots">
-                    <p>사용 가능한 시간이 없습니다.</p>
-                    <small>상담 시간과 휴식 시간을 고려한 결과입니다.</small>
+                <div style={{ 
+                    textAlign: 'center', 
+                    padding: '40px 20px', 
+                    color: '#6c757d' 
+                }}>
+                    <p style={{ 
+                        margin: '0 0 8px 0', 
+                        fontSize: '16px', 
+                        fontWeight: '500' 
+                    }}>사용 가능한 시간이 없습니다.</p>
+                    <small style={{ 
+                        fontSize: '14px', 
+                        opacity: '0.8' 
+                    }}>상담 시간과 휴식 시간을 고려한 결과입니다.</small>
                 </div>
             )}
 
             {existingSchedules.length > 0 && (
-                <div className="existing-schedules">
-                    <h6>기존 스케줄</h6>
-                    <div className="schedule-list">
+                <div style={{ 
+                    marginTop: '20px', 
+                    padding: '16px', 
+                    backgroundColor: '#f8f9fa', 
+                    borderRadius: '8px', 
+                    border: '1px solid #e9ecef' 
+                }}>
+                    <h6 style={{ 
+                        margin: '0 0 12px 0', 
+                        color: '#495057', 
+                        fontSize: '14px', 
+                        fontWeight: '600' 
+                    }}>기존 스케줄</h6>
+                    <div style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '8px' 
+                    }}>
                         {existingSchedules.map(schedule => (
-                            <div key={schedule.id} className="existing-schedule">
-                                <span className="schedule-time">
+                            <div key={schedule.id} style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                padding: '8px 12px', 
+                                backgroundColor: '#fff', 
+                                borderRadius: '6px', 
+                                border: '1px solid #e9ecef', 
+                                fontSize: '12px' 
+                            }}>
+                                <span style={{ 
+                                    color: '#007bff', 
+                                    fontWeight: '600', 
+                                    fontFamily: 'monospace' 
+                                }}>
                                     {schedule.startTime} - {schedule.endTime}
                                 </span>
-                                <span className="schedule-title">
+                                <span style={{ 
+                                    color: '#495057', 
+                                    fontWeight: '500' 
+                                }}>
                                     {schedule.title}
                                 </span>
                             </div>

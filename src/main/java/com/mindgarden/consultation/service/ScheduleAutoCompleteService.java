@@ -2,6 +2,7 @@ package com.mindgarden.consultation.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import com.mindgarden.consultation.constant.ScheduleStatus;
 import com.mindgarden.consultation.entity.Schedule;
@@ -32,37 +33,71 @@ public class ScheduleAutoCompleteService {
      * 매 10분마다 시간이 지난 스케줄을 자동 완료 처리 및 상담일지 미작성 알림
      * cron: 초 분 시 일 월 요일
      */
-    @Scheduled(cron = "0 */10 * * * *")
+    @Scheduled(cron = "0 */1 * * * *") // 1분마다 실행 (테스트용)
     public void autoCompleteExpiredSchedules() {
         try {
             log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 시작 (스케줄러)");
             
-            // 1. 지난 스케줄 중 완료되지 않은 것들 조회
-            List<Schedule> expiredSchedules = scheduleRepository.findByDateBeforeAndStatus(
-                LocalDate.now(), ScheduleStatus.BOOKED.name());
+            LocalDateTime now = LocalDateTime.now();
+            LocalDate today = now.toLocalDate();
+            LocalTime currentTime = now.toLocalTime();
             
             int completedCount = 0;
             int reminderSentCount = 0;
             
-            for (Schedule schedule : expiredSchedules) {
+            // 1. 오늘 날짜의 시간이 지난 스케줄 조회
+            List<Schedule> todayExpiredSchedules = scheduleRepository.findExpiredConfirmedSchedules(today, currentTime);
+            for (Schedule schedule : todayExpiredSchedules) {
                 try {
-                    // 스케줄을 완료 상태로 변경
-                    schedule.setStatus(ScheduleStatus.COMPLETED);
-                    schedule.setUpdatedAt(LocalDateTime.now());
-                    scheduleRepository.save(schedule);
-                    completedCount++;
-                    
-                    // 상담일지 작성 여부 확인
-                    boolean hasConsultationRecord = checkConsultationRecord(schedule);
-                    
-                    if (!hasConsultationRecord) {
-                        // 상담일지 미작성 시 상담사에게 메시지 발송
-                        sendConsultationReminderMessage(schedule);
-                        reminderSentCount++;
+                    if (ScheduleStatus.BOOKED.equals(schedule.getStatus()) || ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
+                        schedule.setStatus(ScheduleStatus.COMPLETED);
+                        schedule.setUpdatedAt(LocalDateTime.now());
+                        scheduleRepository.save(schedule);
+                        completedCount++;
+                        
+                        log.info("✅ 오늘 스케줄 자동 완료: ID={}, 제목={}, 시간={}", 
+                            schedule.getId(), schedule.getTitle(), schedule.getStartTime());
                     }
-                    
                 } catch (Exception e) {
-                    log.error("❌ 스케줄 ID {} 자동 완료 처리 실패: {}", schedule.getId(), e.getMessage());
+                    log.error("❌ 오늘 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
+                }
+            }
+            
+            // 2. 지난 날짜의 예약된/확정된 스케줄 조회
+            List<Schedule> pastBookedSchedules = scheduleRepository.findByDateBeforeAndStatus(
+                today, ScheduleStatus.BOOKED);
+            List<Schedule> pastConfirmedSchedules = scheduleRepository.findByDateBeforeAndStatus(
+                today, ScheduleStatus.CONFIRMED);
+            
+            for (Schedule schedule : pastBookedSchedules) {
+                try {
+                    if (ScheduleStatus.BOOKED.equals(schedule.getStatus())) {
+                        schedule.setStatus(ScheduleStatus.COMPLETED);
+                        schedule.setUpdatedAt(LocalDateTime.now());
+                        scheduleRepository.save(schedule);
+                        completedCount++;
+                        
+                        log.info("✅ 지난 예약 스케줄 자동 완료: ID={}, 제목={}, 날짜={}", 
+                            schedule.getId(), schedule.getTitle(), schedule.getDate());
+                    }
+                } catch (Exception e) {
+                    log.error("❌ 지난 예약 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
+                }
+            }
+            
+            for (Schedule schedule : pastConfirmedSchedules) {
+                try {
+                    if (ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
+                        schedule.setStatus(ScheduleStatus.COMPLETED);
+                        schedule.setUpdatedAt(LocalDateTime.now());
+                        scheduleRepository.save(schedule);
+                        completedCount++;
+                        
+                        log.info("✅ 지난 확정 스케줄 자동 완료: ID={}, 제목={}, 날짜={}", 
+                            schedule.getId(), schedule.getTitle(), schedule.getDate());
+                    }
+                } catch (Exception e) {
+                    log.error("❌ 지난 확정 스케줄 자동 완료 실패: ID={}, 오류={}", schedule.getId(), e.getMessage());
                 }
             }
             

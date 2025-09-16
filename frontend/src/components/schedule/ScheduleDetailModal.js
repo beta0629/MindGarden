@@ -25,6 +25,7 @@ const ScheduleDetailModal = ({
     const [adminNote, setAdminNote] = useState('');
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
+    
 
     // 일정 상태 코드 로드
     const loadScheduleStatusCodes = useCallback(async () => {
@@ -32,25 +33,60 @@ const ScheduleDetailModal = ({
             setLoadingCodes(true);
             const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
             if (response && response.length > 0) {
-                setScheduleStatusOptions(response.map(code => ({
-                    value: code.codeValue,
-                    label: code.codeLabel,
-                    icon: code.icon,
-                    color: code.colorCode,
-                    description: code.codeDescription
-                })));
+                // 우리가 원하는 6개 상태만 필터링
+                const allowedStatuses = ['AVAILABLE', 'BOOKED', 'CONFIRMED', 'VACATION', 'COMPLETED', 'CANCELLED'];
+                const filteredResponse = response.filter(code => allowedStatuses.includes(code.codeValue));
+                
+                setScheduleStatusOptions(filteredResponse.map(code => {
+                    let icon = '📋';
+                    let color = '#6b7280';
+                    
+                    switch (code.codeValue) {
+                        case 'AVAILABLE':
+                            icon = '✅';
+                            color = '#28a745';
+                            break;
+                        case 'BOOKED':
+                            icon = '📅';
+                            color = '#007bff';
+                            break;
+                        case 'CONFIRMED':
+                            icon = '✅';
+                            color = '#17a2b8';
+                            break;
+                        case 'VACATION':
+                            icon = '🏖️';
+                            color = '#ffc107';
+                            break;
+                        case 'COMPLETED':
+                            icon = '✅';
+                            color = '#6c757d';
+                            break;
+                        case 'CANCELLED':
+                            icon = '❌';
+                            color = '#dc3545';
+                            break;
+                    }
+                    
+                    return {
+                        value: code.codeValue,
+                        label: code.codeLabel,
+                        icon: icon,
+                        color: color,
+                        description: code.codeDescription
+                    };
+                }));
             }
         } catch (error) {
             console.error('일정 상태 코드 로드 실패:', error);
-            // 실패 시 기본값 설정
+            // 실패 시 기본값 설정 (enum 6개 상태만)
             setScheduleStatusOptions([
-                { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#3b82f6', description: '예약된 일정' },
-                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: '#8b5cf6', description: '확정된 일정' },
-                { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#f59e0b', description: '진행 중인 일정' },
-                { value: 'COMPLETED', label: '완료됨', icon: '🎉', color: '#059669', description: '완료된 일정' },
-                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: '#ef4444', description: '취소된 일정' },
-                { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#6b7280', description: '차단된 시간' },
-                { value: 'VACATION', label: '휴가', icon: '🏖️', color: '#8b5cf6', description: '휴가 중' }
+                { value: 'AVAILABLE', label: '가능', icon: '✅', color: '#28a745', description: '예약 가능한 시간대' },
+                { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#007bff', description: '예약된 일정' },
+                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: '#17a2b8', description: '확정된 일정' },
+                { value: 'VACATION', label: '휴가', icon: '🏖️', color: '#ffc107', description: '휴가로 인한 비활성' },
+                { value: 'COMPLETED', label: '완료', icon: '✅', color: '#6c757d', description: '완료된 일정' },
+                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: '#dc3545', description: '취소된 일정' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -281,7 +317,10 @@ const ScheduleDetailModal = ({
 
     return (
         <div className="schedule-detail-modal-overlay" onClick={onClose}>
-            <div className="schedule-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div 
+                className="schedule-detail-modal" 
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className="schedule-detail-modal-header">
                     <h3>📋 스케줄 상세 정보</h3>
                     <button className="schedule-detail-close-btn" onClick={onClose}>✕</button>

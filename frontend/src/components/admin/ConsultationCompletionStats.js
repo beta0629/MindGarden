@@ -87,18 +87,41 @@ const ConsultationCompletionStats = () => {
 
     // 전문분야를 한글로 변환
     const convertSpecialtyToKorean = (specialty) => {
+        if (!specialty) return '전문분야 미설정';
+        
         const specialtyMap = {
-            'INDIVIDUAL_THERAPY': '개인상담',
-            'FAMILY_THERAPY': '가족상담',
-            'COUPLE_THERAPY': '부부상담',
-            'GROUP_THERAPY': '그룹상담',
-            'CHILD_THERAPY': '아동상담',
-            'ADOLESCENT_THERAPY': '청소년상담',
-            'ELDERLY_THERAPY': '노인상담',
-            'TRAUMA_THERAPY': '트라우마상담',
-            'ADDICTION_THERAPY': '중독상담',
-            'EATING_DISORDER_THERAPY': '섭식장애상담'
+            'DEPRESSION': '우울증',
+            'ANXIETY': '불안장애',
+            'TRAUMA': '트라우마',
+            'RELATIONSHIP': '관계상담',
+            'FAMILY': '가족상담',
+            'COUPLE': '부부상담',
+            'CHILD': '아동상담',
+            'ADOLESCENT': '청소년상담',
+            'ADDICTION': '중독상담',
+            'EATING_DISORDER': '섭식장애',
+            'PERSONALITY': '성격장애',
+            'BIPOLAR': '양극성장애',
+            'OCD': '강박장애',
+            'PTSD': '외상후스트레스장애',
+            'GRIEF': '상실상담',
+            'CAREER': '진로상담',
+            'STRESS': '스트레스관리',
+            'SLEEP': '수면장애',
+            'ANGER': '분노조절',
+            'SELF_ESTEEM': '자존감',
+            'INDIVIDUAL': '개인상담',
+            'GROUP': '그룹상담',
+            'INITIAL': '초기상담'
         };
+        
+        // 콤마로 구분된 여러 전문분야 처리
+        if (specialty.includes(',')) {
+            const specialties = specialty.split(',').map(s => s.trim());
+            const koreanSpecialties = specialties.map(s => specialtyMap[s] || s);
+            return koreanSpecialties.join(', ');
+        }
+        
         return specialtyMap[specialty] || specialty;
     };
 

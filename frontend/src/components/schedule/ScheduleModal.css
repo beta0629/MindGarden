@@ -89,8 +89,8 @@
   left: 50% !important;
   transform: translateX(-50%) !important;
   flex-shrink: 0;
-  border: none;
-  outline: none;
+  border: none !important;
+  outline: none !important;
 }
 
 /* 모달 헤더 */

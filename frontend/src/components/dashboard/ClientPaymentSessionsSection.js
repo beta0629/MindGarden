@@ -32,10 +32,11 @@ const ClientPaymentSessionsSection = ({ userId }) => {
       if (mappingResponse.success && mappingResponse.data) {
         const mappings = mappingResponse.data;
         
-        // 총 회기수 계산
-        const totalSessions = mappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
-        const usedSessions = mappings.reduce((sum, mapping) => sum + (mapping.usedSessions || 0), 0);
-        const remainingSessions = mappings.reduce((sum, mapping) => sum + (mapping.remainingSessions || 0), 0);
+        // 총 회기수 계산 (ACTIVE 상태의 매핑만)
+        const activeMappings = mappings.filter(mapping => mapping.status === 'ACTIVE');
+        const totalSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
+        const usedSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.usedSessions || 0), 0);
+        const remainingSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.remainingSessions || 0), 0);
         const totalAmount = mappings.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
 
         // 최근 결제 내역 (최근 5개)

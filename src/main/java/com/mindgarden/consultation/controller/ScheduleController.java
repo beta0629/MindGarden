@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.AdminConstants;
 import com.mindgarden.consultation.constant.ScheduleStatus;
@@ -1197,10 +1196,10 @@ public class ScheduleController {
                 "success", true,
                 "data", scheduleDtos,
                 "count", scheduleDtos.size(),
-                "consultantId", consultantId,
-                "status", status,
-                "startDate", startDate,
-                "endDate", endDate,
+                "consultantId", consultantId != null ? consultantId : "",
+                "status", status != null ? status : "",
+                "startDate", startDate != null ? startDate : "",
+                "endDate", endDate != null ? endDate : "",
                 "message", "스케줄 조회 성공"
             );
             
@@ -1219,21 +1218,10 @@ public class ScheduleController {
      */
     private boolean isAdminUser(User user) {
         try {
-            // 공통코드에서 관리자 역할 조회
-            List<CommonCode> adminRoles = commonCodeService.getCommonCodesByGroup("ROLE");
-            
-            // 관리자 역할 코드들
-            Set<String> adminRoleCodes = adminRoles.stream()
-                .filter(code -> code.getCodeLabel().contains("ADMIN") || 
-                               code.getCodeLabel().contains("MASTER") ||
-                               code.getCodeLabel().contains("HQ"))
-                .map(code -> code.getCodeValue())
-                .collect(Collectors.toSet());
-            
-            // 사용자 역할이 관리자 역할에 포함되는지 확인
-            boolean isAdmin = adminRoleCodes.contains(user.getRole().name());
-            log.info("🔍 관리자 권한 확인: userRole={}, adminRoleCodes={}, isAdmin={}", 
-                user.getRole().name(), adminRoleCodes, isAdmin);
+            // UserRole enum의 isAdmin() 메서드 사용 (동적 권한 확인)
+            boolean isAdmin = user.getRole().isAdmin();
+            log.info("🔍 관리자 권한 확인 (UserRole.isAdmin): userRole={}, isAdmin={}", 
+                user.getRole().name(), isAdmin);
             return isAdmin;
         } catch (Exception e) {
             log.error("❌ 관리자 권한 확인 실패: error={}", e.getMessage(), e);
@@ -1241,6 +1229,7 @@ public class ScheduleController {
             boolean isAdmin = "ADMIN".equals(user.getRole().name()) || 
                    "HQ_MASTER".equals(user.getRole().name()) || 
                    "BRANCH_HQ_MASTER".equals(user.getRole().name()) ||
+                   "BRANCH_SUPER_ADMIN".equals(user.getRole().name()) ||
                    "HQ_ADMIN".equals(user.getRole().name()) ||
                    "SUPER_HQ_ADMIN".equals(user.getRole().name());
             log.info("🔍 관리자 권한 확인 (fallback): userRole={}, isAdmin={}", 
@@ -1281,7 +1270,7 @@ public class ScheduleController {
             .date(schedule.getDate())
             .startTime(schedule.getStartTime())
             .endTime(schedule.getEndTime())
-            .status(schedule.getStatus().name())
+            .status(schedule.getStatus() != null ? schedule.getStatus().name() : "UNKNOWN")
             .scheduleType(schedule.getScheduleType())
             .consultationType(schedule.getConsultationType())
             .title(schedule.getTitle())

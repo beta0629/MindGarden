@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mindgarden.consultation.constant.ScheduleStatus;
 import com.mindgarden.consultation.dto.FinancialTransactionRequest;
 import com.mindgarden.consultation.dto.FinancialTransactionResponse;
 import com.mindgarden.consultation.entity.CommonCode;
@@ -817,7 +818,7 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
             
             // 완료된 스케줄만 필터링
             List<Schedule> completedSchedules = scheduleRepository.findByConsultantIdAndStatusAndDateBetween(
-                consultantId, "COMPLETED", startDate, endDate);
+                consultantId, ScheduleStatus.COMPLETED, startDate, endDate);
             log.info("📊 상담사 {} 완료 스케줄 건수: {}건 (기간: {} ~ {})", 
                 consultantId, completedSchedules.size(), startDate, endDate);
             return completedSchedules.size();
@@ -836,7 +837,7 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         try {
             // 완료된 상담 스케줄 조회
             List<Schedule> completedSchedules = scheduleRepository.findByConsultantIdAndStatusAndDateBetween(
-                consultantId, "COMPLETED", startDate, endDate);
+                consultantId, ScheduleStatus.COMPLETED, startDate, endDate);
             
             // 상담 유형별 옵션 금액 조회
             Map<String, BigDecimal> optionRates = getConsultationTypeOptionRates();

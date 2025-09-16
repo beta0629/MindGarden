@@ -10,6 +10,7 @@
 export const STATUS = {
   AVAILABLE: 'AVAILABLE',     // 가능
   BOOKED: 'BOOKED',           // 예약됨
+  CONFIRMED: 'CONFIRMED',     // 확정됨
   VACATION: 'VACATION',       // 휴가
   COMPLETED: 'COMPLETED',     // 완료
   CANCELLED: 'CANCELLED'      // 취소됨
@@ -19,6 +20,7 @@ export const STATUS = {
 export const STATUS_LABELS = {
   [STATUS.AVAILABLE]: '가능',
   [STATUS.BOOKED]: '예약됨',
+  [STATUS.CONFIRMED]: '확정됨',
   [STATUS.VACATION]: '휴가',
   [STATUS.COMPLETED]: '완료',
   [STATUS.CANCELLED]: '취소됨'
@@ -28,8 +30,9 @@ export const STATUS_LABELS = {
 export const STATUS_COLORS = {
   [STATUS.AVAILABLE]: '#28a745',    // 초록색
   [STATUS.BOOKED]: '#007bff',       // 파란색
+  [STATUS.CONFIRMED]: '#17a2b8',    // 청록색
   [STATUS.VACATION]: '#ffc107',     // 노란색
-  [STATUS.COMPLETED]: '#6c757d',    // 회색
+  [STATUS.COMPLETED]: '#b8b8b8',    // 연한 회색 (완료된 상태)
   [STATUS.CANCELLED]: '#dc3545'     // 빨간색
 };
 
@@ -37,6 +40,7 @@ export const STATUS_COLORS = {
 export const STATUS_ICONS = {
   [STATUS.AVAILABLE]: '✅',
   [STATUS.BOOKED]: '📅',
+  [STATUS.CONFIRMED]: '✅',
   [STATUS.VACATION]: '🏖️',
   [STATUS.COMPLETED]: '✅',
   [STATUS.CANCELLED]: '❌'
@@ -46,7 +50,8 @@ export const STATUS_ICONS = {
 export const STATUS_TEXT_COLORS = {
   [STATUS.AVAILABLE]: '#ffffff',
   [STATUS.BOOKED]: '#ffffff',
-  [STATUS.VACATION]: '#000000',
+  [STATUS.CONFIRMED]: '#ffffff',
+  [STATUS.VACATION]: '#ffffff',
   [STATUS.COMPLETED]: '#ffffff',
   [STATUS.CANCELLED]: '#ffffff'
 };
@@ -117,6 +122,7 @@ export const FILTER_OPTIONS = {
   THIS_MONTH: 'this_month',
   AVAILABLE: 'available',
   BOOKED: 'booked',
+  CONFIRMED: 'confirmed',
   VACATION: 'vacation',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled'
@@ -130,6 +136,7 @@ export const FILTER_OPTION_LABELS = {
   [FILTER_OPTIONS.THIS_MONTH]: '이번 달',
   [FILTER_OPTIONS.AVAILABLE]: '가능',
   [FILTER_OPTIONS.BOOKED]: '예약됨',
+  [FILTER_OPTIONS.CONFIRMED]: '확정됨',
   [FILTER_OPTIONS.VACATION]: '휴가',
   [FILTER_OPTIONS.COMPLETED]: '완료',
   [FILTER_OPTIONS.CANCELLED]: '취소됨'

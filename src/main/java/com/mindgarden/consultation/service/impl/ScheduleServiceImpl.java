@@ -307,7 +307,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = findById(scheduleId);
         
         // 예약 확정 상태로 변경
-        schedule.setStatus(ScheduleStatus.BOOKED);
+        schedule.setStatus(ScheduleStatus.CONFIRMED);
         
         // 관리자 메모 추가
         String currentDescription = schedule.getDescription() != null ? schedule.getDescription() : "";
@@ -656,9 +656,9 @@ public class ScheduleServiceImpl implements ScheduleService {
             LocalDate today = LocalDate.now();
             log.info("📊 오늘의 통계 조회 중... (날짜: {})", today);
             long totalToday = scheduleRepository.countByDate(today);
-            long bookedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.BOOKED.name());
-            long completedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.COMPLETED.name());
-            long cancelledToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.CANCELLED.name());
+            long bookedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.BOOKED);
+            long completedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.COMPLETED);
+            long cancelledToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.CANCELLED);
             long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             
             statistics.put("totalToday", totalToday);
@@ -752,7 +752,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         statistics.put("totalToday", totalToday);
         
         // 오늘의 완료된 상담 수
-        long completedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.COMPLETED.name());
+        long completedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.COMPLETED);
         statistics.put("completedToday", completedToday);
         
         // 오늘의 진행중인 상담 수
@@ -760,15 +760,19 @@ public class ScheduleServiceImpl implements ScheduleService {
         statistics.put("inProgressToday", inProgressToday);
         
         // 오늘의 취소된 상담 수
-        long cancelledToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.CANCELLED.name());
+        long cancelledToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.CANCELLED);
         statistics.put("cancelledToday", cancelledToday);
         
         // 오늘의 예약된 상담 수
-        long bookedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.BOOKED.name());
+        long bookedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.BOOKED);
         statistics.put("bookedToday", bookedToday);
         
-        log.info("✅ 오늘의 스케줄 통계 조회 완료: 총 {}개, 완료 {}개, 진행중 {}개, 취소 {}개", 
-                totalToday, completedToday, inProgressToday, cancelledToday);
+        // 오늘의 확인된 상담 수
+        long confirmedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.CONFIRMED);
+        statistics.put("confirmedToday", confirmedToday);
+        
+        log.info("✅ 오늘의 스케줄 통계 조회 완료: 총 {}개, 완료 {}개, 진행중 {}개, 취소 {}개, 예약 {}개, 확인 {}개", 
+                totalToday, completedToday, inProgressToday, cancelledToday, bookedToday, confirmedToday);
         
         return statistics;
     }
@@ -849,6 +853,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                ScheduleConstants.ROLE_HQ_MASTER.equals(userRole) || 
                ScheduleConstants.ROLE_BRANCH_HQ_MASTER.equals(userRole) ||
                ScheduleConstants.ROLE_BRANCH_MANAGER.equals(userRole) ||
+               ScheduleConstants.ROLE_BRANCH_SUPER_ADMIN.equals(userRole) ||
                ScheduleConstants.ROLE_HQ_ADMIN.equals(userRole) ||
                ScheduleConstants.ROLE_SUPER_HQ_ADMIN.equals(userRole);
     }
@@ -1078,7 +1083,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             .date(schedule.getDate())
             .startTime(schedule.getStartTime())
             .endTime(schedule.getEndTime())
-            .status(convertStatusToKorean(schedule.getStatus().name()))
+            .status(schedule.getStatus().name())
             .scheduleType(convertScheduleTypeToKorean(schedule.getScheduleType()))
             .consultationType(convertConsultationTypeToKorean(schedule.getConsultationType()))
             .title(schedule.getTitle())
@@ -1170,8 +1175,8 @@ public class ScheduleServiceImpl implements ScheduleService {
             }
             
             // 2. 지난 날짜의 예약된/확정된 스케줄 조회 (오늘 이전)
-            List<Schedule> pastBookedSchedules = scheduleRepository.findByDateBeforeAndStatus(today, ScheduleConstants.STATUS_BOOKED);
-            List<Schedule> pastConfirmedSchedules = scheduleRepository.findByDateBeforeAndStatus(today, ScheduleConstants.STATUS_CONFIRMED);
+            List<Schedule> pastBookedSchedules = scheduleRepository.findByDateBeforeAndStatus(today, ScheduleStatus.BOOKED);
+            List<Schedule> pastConfirmedSchedules = scheduleRepository.findByDateBeforeAndStatus(today, ScheduleStatus.CONFIRMED);
             
             // 예약됨 상태의 지난 스케줄 처리
             for (Schedule schedule : pastBookedSchedules) {

@@ -123,6 +123,27 @@
 
 .schedule-content {
   min-height: 200px;
+  max-height: 600px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.schedule-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.schedule-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.schedule-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.schedule-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .schedule-loading {

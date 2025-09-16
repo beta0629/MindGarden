@@ -71,24 +71,35 @@ const ScheduleModalNew = ({
                 setLoadingCodes(true);
                 const response = await apiGet('/api/admin/common-codes/values?groupCode=CONSULTATION_TYPE');
                 if (response && response.length > 0) {
-                    const options = response.map(code => ({
-                        value: code.codeValue,
-                        label: code.codeLabel,
-                        icon: code.icon,
-                        color: code.colorCode,
-                        durationMinutes: code.durationMinutes
-                    }));
+                    const options = response.map(code => {
+                        let durationMinutes = 50; // 기본값
+                        if (code.extraData) {
+                            try {
+                                const extraData = JSON.parse(code.extraData);
+                                durationMinutes = extraData.durationMinutes || 50;
+                            } catch (e) {
+                                console.warn('extraData 파싱 실패:', code.extraData);
+                            }
+                        }
+                        return {
+                            value: code.codeValue,
+                            label: code.codeLabel,
+                            icon: null,
+                            color: code.colorCode || '#3b82f6',
+                            durationMinutes: durationMinutes
+                        };
+                    });
                     setConsultationTypeOptions(options);
                 }
             } catch (error) {
                 console.error('상담 유형 코드 로드 실패:', error);
                 // 실패 시 기본값 설정
                 setConsultationTypeOptions([
-                    { value: 'INDIVIDUAL', label: '개인상담', icon: '👤', color: '#3b82f6', durationMinutes: 50 },
-                    { value: 'FAMILY', label: '가족상담', icon: '👨‍👩‍👧‍👦', color: '#10b981', durationMinutes: 100 },
-                    { value: 'INITIAL', label: '초기상담', icon: '🎯', color: '#f59e0b', durationMinutes: 60 },
-                    { value: 'COUPLE', label: '부부상담', icon: '👫', color: '#ec4899', durationMinutes: 80 },
-                    { value: 'GROUP', label: '집단상담', icon: '👥', color: '#8b5cf6', durationMinutes: 90 }
+                    { value: 'INDIVIDUAL', label: '개인상담', icon: null, color: '#3b82f6', durationMinutes: 50 },
+                    { value: 'FAMILY', label: '가족상담', icon: null, color: '#10b981', durationMinutes: 100 },
+                    { value: 'INITIAL', label: '초기상담', icon: null, color: '#f59e0b', durationMinutes: 60 },
+                    { value: 'COUPLE', label: '부부상담', icon: null, color: '#ec4899', durationMinutes: 80 },
+                    { value: 'GROUP', label: '집단상담', icon: null, color: '#8b5cf6', durationMinutes: 90 }
                 ]);
             } finally {
                 setLoadingCodes(false);
@@ -105,14 +116,28 @@ const ScheduleModalNew = ({
                 setLoadingCodes(true);
                 const response = await apiGet('/api/admin/common-codes/values?groupCode=DURATION');
                 if (response && response.length > 0) {
-                    const options = response.map(code => ({
-                        value: code.codeValue,
-                        label: code.codeLabel,
-                        icon: code.icon,
-                        color: code.colorCode,
-                        durationMinutes: code.durationMinutes || parseInt(code.codeValue.replace('_MIN', '')),
-                        description: code.codeDescription
-                    }));
+                    const options = response.map(code => {
+                        let durationMinutes = 60; // 기본값
+                        if (code.extraData) {
+                            try {
+                                const extraData = JSON.parse(code.extraData);
+                                durationMinutes = extraData.durationMinutes || parseInt(code.codeValue.replace('_MIN', '')) || 60;
+                            } catch (e) {
+                                console.warn('extraData 파싱 실패:', code.extraData);
+                                durationMinutes = parseInt(code.codeValue.replace('_MIN', '')) || 60;
+                            }
+                        } else {
+                            durationMinutes = parseInt(code.codeValue.replace('_MIN', '')) || 60;
+                        }
+                        return {
+                            value: code.codeValue,
+                            label: code.codeLabel,
+                            icon: null,
+                            color: code.colorCode || '#3b82f6',
+                            durationMinutes: durationMinutes,
+                            description: code.codeDescription
+                        };
+                    });
                     setDurationOptions(options);
                     // 기본값 설정
                     if (!selectedDuration && options.length > 0) {
@@ -123,14 +148,14 @@ const ScheduleModalNew = ({
                 console.error('상담 시간 코드 로드 실패:', error);
                 // 실패 시 기본값 설정
                 const defaultOptions = [
-                    { value: '30_MIN', label: '30분', icon: '⏰', color: '#f59e0b', durationMinutes: 30, description: '30분 상담' },
-                    { value: '50_MIN', label: '50분', icon: '⏰', color: '#3b82f6', durationMinutes: 50, description: '50분 상담' },
-                    { value: '60_MIN', label: '60분', icon: '⏰', color: '#10b981', durationMinutes: 60, description: '60분 상담' },
-                    { value: '80_MIN', label: '80분', icon: '⏰', color: '#ec4899', durationMinutes: 80, description: '80분 상담' },
-                    { value: '90_MIN', label: '90분', icon: '⏰', color: '#8b5cf6', durationMinutes: 90, description: '90분 상담' },
-                    { value: '100_MIN', label: '100분', icon: '⏰', color: '#f97316', durationMinutes: 100, description: '100분 상담' },
-                    { value: '120_MIN', label: '120분', icon: '⏰', color: '#ef4444', durationMinutes: 120, description: '120분 상담' },
-                    { value: 'CUSTOM', label: '사용자 정의', icon: '⚙️', color: '#6b7280', durationMinutes: 0, description: '사용자가 직접 설정하는 상담 시간' }
+                    { value: '30_MIN', label: '30분', icon: null, color: '#f59e0b', durationMinutes: 30, description: '30분 상담' },
+                    { value: '50_MIN', label: '50분', icon: null, color: '#3b82f6', durationMinutes: 50, description: '50분 상담' },
+                    { value: '60_MIN', label: '60분', icon: null, color: '#10b981', durationMinutes: 60, description: '60분 상담' },
+                    { value: '80_MIN', label: '80분', icon: null, color: '#ec4899', durationMinutes: 80, description: '80분 상담' },
+                    { value: '90_MIN', label: '90분', icon: null, color: '#8b5cf6', durationMinutes: 90, description: '90분 상담' },
+                    { value: '100_MIN', label: '100분', icon: null, color: '#f97316', durationMinutes: 100, description: '100분 상담' },
+                    { value: '120_MIN', label: '120분', icon: null, color: '#ef4444', durationMinutes: 120, description: '120분 상담' },
+                    { value: 'CUSTOM', label: '사용자 정의', icon: null, color: '#6b7280', durationMinutes: 0, description: '사용자가 직접 설정하는 상담 시간' }
                 ];
                 setDurationOptions(defaultOptions);
                 // 기본값 설정
@@ -471,37 +496,132 @@ const ScheduleModalNew = ({
 
                     {/* 3단계: 시간 선택 */}
                     {step === 3 && (
-                        <div className="time-selection">
-                            <h4>⏰ 시간을 선택하세요</h4>
-                            <div className="consultation-type-selector">
-                                <label>상담 유형:</label>
-                                <select 
-                                    value={consultationType} 
-                                    onChange={(e) => setConsultationType(e.target.value)}
-                                    disabled={loadingCodes}
-                                >
-                                    {consultationTypeOptions.map(option => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.icon} {option.label} ({option.value})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                        <div style={{
+                            width: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '20px'
+                        }}>
+                            <h4 style={{
+                                margin: '0 0 16px 0',
+                                fontSize: '1.25rem',
+                                fontWeight: '600',
+                                color: '#2c3e50',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>⏰ 시간을 선택하세요</h4>
+                            
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '12px',
+                                padding: '16px',
+                                backgroundColor: '#f8f9fa',
+                                borderRadius: '8px',
+                                border: '1px solid #e9ecef'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px'
+                                }}>
+                                    <label style={{
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        color: '#495057',
+                                        margin: '0'
+                                    }}>상담 유형:</label>
+                                    <select 
+                                        value={consultationType} 
+                                        onChange={(e) => setConsultationType(e.target.value)}
+                                        disabled={loadingCodes}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 16px',
+                                            border: '2px solid #e9ecef',
+                                            borderRadius: '8px',
+                                            fontSize: '14px',
+                                            color: '#495057',
+                                            backgroundColor: '#ffffff',
+                                            outline: 'none',
+                                            transition: 'all 0.2s ease',
+                                            fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
+                                        }}
+                                        onFocus={(e) => {
+                                            e.target.style.borderColor = '#667eea';
+                                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                        }}
+                                        onBlur={(e) => {
+                                            e.target.style.borderColor = '#e9ecef';
+                                            e.target.style.boxShadow = 'none';
+                                        }}
+                                    >
+                                        {consultationTypeOptions.map(option => (
+                                            <option key={option.value} value={option.value} style={{
+                                                padding: '8px',
+                                                fontSize: '14px',
+                                                color: '#495057',
+                                                backgroundColor: '#ffffff',
+                                                fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
+                                            }}>
+                                                {option.label} ({option.value})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                            <div className="duration-selector">
-                                <label>상담 시간:</label>
-                                <select 
-                                    value={selectedDuration} 
-                                    onChange={(e) => setSelectedDuration(e.target.value)}
-                                    disabled={loadingCodes}
-                                >
-                                    {durationOptions.map(option => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.icon} {option.label} ({option.durationMinutes}분) ({option.value})
-                                        </option>
-                                    ))}
-                                </select>
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px'
+                                }}>
+                                    <label style={{
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        color: '#495057',
+                                        margin: '0'
+                                    }}>상담 시간:</label>
+                                    <select 
+                                        value={selectedDuration} 
+                                        onChange={(e) => setSelectedDuration(e.target.value)}
+                                        disabled={loadingCodes}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 16px',
+                                            border: '2px solid #e9ecef',
+                                            borderRadius: '8px',
+                                            fontSize: '14px',
+                                            color: '#495057',
+                                            backgroundColor: '#ffffff',
+                                            outline: 'none',
+                                            transition: 'all 0.2s ease',
+                                            fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
+                                        }}
+                                        onFocus={(e) => {
+                                            e.target.style.borderColor = '#667eea';
+                                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                                        }}
+                                        onBlur={(e) => {
+                                            e.target.style.borderColor = '#e9ecef';
+                                            e.target.style.boxShadow = 'none';
+                                        }}
+                                    >
+                                        {durationOptions.map(option => (
+                                            <option key={option.value} value={option.value} style={{
+                                                padding: '8px',
+                                                fontSize: '14px',
+                                                color: '#495057',
+                                                backgroundColor: '#ffffff',
+                                                fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
+                                            }}>
+                                                {option.label} ({option.durationMinutes}분) ({option.value})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
+                            
                             <TimeSlotGrid
                                 date={selectedDate}
                                 consultantId={selectedConsultant?.originalId || selectedConsultant?.id}

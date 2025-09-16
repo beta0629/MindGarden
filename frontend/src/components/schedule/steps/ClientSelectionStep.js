@@ -62,17 +62,41 @@ const ClientSelectionStep = ({
                     return;
                 }
                 
-                // 매핑 데이터에서 내담자 정보 추출
-                const availableClients = mappingsData.map((mapping, index) => ({
-                    ...mapping.client,
-                    id: `client-${mapping.client.id}-${mapping.id}`, // 매핑 ID 포함하여 고유성 보장
-                    originalId: mapping.client.id,
-                    type: 'client',
-                    mappingId: mapping.id,
-                    remainingSessions: mapping.remainingSessions,
-                    packageName: mapping.packageName,
-                    paymentStatus: mapping.paymentStatus
-                }));
+                // 매핑 데이터에서 내담자 정보 추출 (중복 제거)
+                const clientMap = new Map();
+                
+                mappingsData.forEach((mapping) => {
+                    const clientId = mapping.client.id;
+                    
+                    if (!clientMap.has(clientId)) {
+                        // 새로운 내담자 - 첫 번째 매핑 정보 사용
+                        clientMap.set(clientId, {
+                            ...mapping.client,
+                            id: `client-${clientId}`,
+                            originalId: clientId,
+                            type: 'client',
+                            mappingId: mapping.id,
+                            remainingSessions: mapping.remainingSessions,
+                            packageName: mapping.packageName,
+                            paymentStatus: mapping.paymentStatus,
+                            totalSessions: mapping.totalSessions,
+                            usedSessions: mapping.usedSessions
+                        });
+                    } else {
+                        // 기존 내담자 - 회기수 합산
+                        const existingClient = clientMap.get(clientId);
+                        existingClient.remainingSessions += mapping.remainingSessions;
+                        existingClient.totalSessions = (existingClient.totalSessions || 0) + (mapping.totalSessions || 0);
+                        existingClient.usedSessions = (existingClient.usedSessions || 0) + (mapping.usedSessions || 0);
+                        
+                        // 여러 매핑이 있는 경우 메모에 표시
+                        if (existingClient.packageName !== mapping.packageName) {
+                            existingClient.packageName = `${existingClient.packageName}, ${mapping.packageName}`;
+                        }
+                    }
+                });
+                
+                const availableClients = Array.from(clientMap.values());
                 
                 setClients(availableClients);
                 console.log('👤 내담자 목록 로드 완료 - 상담사별 필터링:', availableClients.length, '명');
@@ -111,24 +135,50 @@ const ClientSelectionStep = ({
                 
                 if (Array.isArray(mappings)) {
                     // 선택된 상담사와 매핑된 내담자만 필터링
-                    const availableClients = mappings
-                        .filter(mapping => 
-                            mapping.consultant && 
-                            mapping.consultant.id === (selectedConsultant.originalId || selectedConsultant.id) &&
-                            mapping.paymentStatus === 'APPROVED' && 
-                            mapping.remainingSessions > 0
-                        )
-                        .map((mapping, index) => ({
-                            ...mapping.client,
-                            id: `client-${mapping.client.id}-${mapping.id}`,
-                            originalId: mapping.client.id,
-                            type: 'client',
-                            mappingId: mapping.id,
-                            remainingSessions: mapping.remainingSessions,
-                            packageName: mapping.packageName
-                        }));
+                    const filteredMappings = mappings.filter(mapping => 
+                        mapping.consultant && 
+                        mapping.consultant.id === (selectedConsultant.originalId || selectedConsultant.id) &&
+                        mapping.paymentStatus === 'APPROVED' && 
+                        mapping.remainingSessions > 0
+                    );
+                    
+                    // 중복 제거 로직 적용
+                    const clientMap = new Map();
+                    
+                    filteredMappings.forEach((mapping) => {
+                        const clientId = mapping.client.id;
+                        
+                        if (!clientMap.has(clientId)) {
+                            // 새로운 내담자 - 첫 번째 매핑 정보 사용
+                            clientMap.set(clientId, {
+                                ...mapping.client,
+                                id: `client-${clientId}`,
+                                originalId: clientId,
+                                type: 'client',
+                                mappingId: mapping.id,
+                                remainingSessions: mapping.remainingSessions,
+                                packageName: mapping.packageName,
+                                paymentStatus: mapping.paymentStatus,
+                                totalSessions: mapping.totalSessions,
+                                usedSessions: mapping.usedSessions
+                            });
+                        } else {
+                            // 기존 내담자 - 회기수 합산
+                            const existingClient = clientMap.get(clientId);
+                            existingClient.remainingSessions += mapping.remainingSessions;
+                            existingClient.totalSessions = (existingClient.totalSessions || 0) + (mapping.totalSessions || 0);
+                            existingClient.usedSessions = (existingClient.usedSessions || 0) + (mapping.usedSessions || 0);
+                            
+                            // 여러 매핑이 있는 경우 메모에 표시
+                            if (existingClient.packageName !== mapping.packageName) {
+                                existingClient.packageName = `${existingClient.packageName}, ${mapping.packageName}`;
+                            }
+                        }
+                    });
+                    
+                    const availableClients = Array.from(clientMap.values());
                     setClients(availableClients);
-                    console.log('👤 전체 매핑에서 필터링 완료:', availableClients.length, '명');
+                    console.log('👤 전체 매핑에서 필터링 완료 (중복 제거):', availableClients.length, '명');
                 }
             }
         } catch (error) {

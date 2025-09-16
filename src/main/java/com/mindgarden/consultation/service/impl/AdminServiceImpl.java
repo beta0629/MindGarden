@@ -3,6 +3,7 @@ package com.mindgarden.consultation.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -176,10 +177,104 @@ public class AdminServiceImpl implements AdminService {
         User clientUser = userRepository.findById(dto.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client not found"));
 
-        // 매핑 객체를 직접 생성하여 저장
+        // 지점코드 설정 (상담사의 지점코드 우선, 없으면 내담자의 지점코드 사용)
+        String branchCode = consultant.getBranchCode();
+        if (branchCode == null || branchCode.trim().isEmpty()) {
+            branchCode = clientUser.getBranchCode();
+        }
+        if (branchCode == null || branchCode.trim().isEmpty()) {
+            branchCode = AdminConstants.DEFAULT_BRANCH_CODE; // 기본값
+        }
+        
+        // 기존 활성 매핑이 있는지 확인 (같은 지점 내에서)
+        Optional<ConsultantClientMapping> existingMapping = mappingRepository
+            .findByConsultantAndClient(consultant, clientUser);
+        
+        if (existingMapping.isPresent()) {
+            ConsultantClientMapping existing = existingMapping.get();
+            
+            // 활성 상태인지 확인
+            if (existing.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
+                log.warn("⚠️ 비활성 매핑 발견, 새 매핑 생성: 상태={}", existing.getStatus());
+                // 비활성 상태면 새 매핑 생성으로 진행
+            } else if (!branchCode.equals(existing.getBranchCode())) {
+                log.warn("⚠️ 다른 지점의 매핑 발견, 새 매핑 생성: 기존 지점={}, 새 지점={}", 
+                    existing.getBranchCode(), branchCode);
+                // 다른 지점이면 새 매핑 생성으로 진행
+            } else {
+                // 같은 지점의 활성 매핑이 있으면 합산
+                log.info("🔍 기존 활성 매핑 발견, 합산 처리: 상담사={}, 내담자={}, 지점={}", 
+                    consultant.getName(), clientUser.getName(), branchCode);
+            
+                // 회기수 합산
+                int newTotalSessions = dto.getTotalSessions() != null ? dto.getTotalSessions() : 10;
+                int newRemainingSessions = dto.getRemainingSessions() != null ? dto.getRemainingSessions() : newTotalSessions;
+                
+                int updatedTotalSessions = existing.getTotalSessions() + newTotalSessions;
+                int updatedRemainingSessions = existing.getRemainingSessions() + newRemainingSessions;
+                
+                // 기존 매핑 업데이트
+                existing.setTotalSessions(updatedTotalSessions);
+                existing.setRemainingSessions(updatedRemainingSessions);
+                
+                // 새로운 정보로 업데이트 (패키지명, 가격 등)
+                if (dto.getPackageName() != null && !dto.getPackageName().trim().isEmpty()) {
+                    existing.setPackageName(dto.getPackageName());
+                }
+                if (dto.getPackagePrice() != null) {
+                    existing.setPackagePrice(dto.getPackagePrice());
+                }
+                if (dto.getPaymentMethod() != null) {
+                    existing.setPaymentMethod(dto.getPaymentMethod());
+                }
+                if (dto.getPaymentReference() != null) {
+                    existing.setPaymentReference(dto.getPaymentReference());
+                }
+                if (dto.getPaymentAmount() != null) {
+                    existing.setPaymentAmount(dto.getPaymentAmount());
+                }
+                if (dto.getNotes() != null && !dto.getNotes().trim().isEmpty()) {
+                    String currentNotes = existing.getNotes() != null ? existing.getNotes() : "";
+                    String newNotes = currentNotes + (currentNotes.isEmpty() ? "" : "\n") + 
+                        "[추가 매핑] " + dto.getNotes();
+                    existing.setNotes(newNotes);
+                }
+                if (dto.getSpecialConsiderations() != null && !dto.getSpecialConsiderations().trim().isEmpty()) {
+                    existing.setSpecialConsiderations(dto.getSpecialConsiderations());
+                }
+                
+                // 상태 업데이트 (새로운 상태가 더 우선순위가 높으면)
+                if (dto.getStatus() != null) {
+                    ConsultantClientMapping.MappingStatus newStatus = ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus());
+                    if (newStatus == ConsultantClientMapping.MappingStatus.ACTIVE) {
+                        existing.setStatus(newStatus);
+                    }
+                }
+                
+                // 결제 상태 업데이트 (새로운 상태가 더 우선순위가 높으면)
+                if (dto.getPaymentStatus() != null) {
+                    ConsultantClientMapping.PaymentStatus newPaymentStatus = ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus());
+                    if (newPaymentStatus == ConsultantClientMapping.PaymentStatus.APPROVED) {
+                        existing.setPaymentStatus(newPaymentStatus);
+                    }
+                }
+                
+                existing.setUpdatedAt(LocalDateTime.now());
+                
+                log.info("✅ 기존 매핑 합산 완료: 총 회기수={}, 남은 회기수={}", 
+                    updatedTotalSessions, updatedRemainingSessions);
+                
+                return mappingRepository.save(existing);
+            }
+        }
+        
+        // 새로운 매핑 생성 (기존 매핑이 없거나 다른 지점인 경우)
+        log.info("🆕 새로운 매핑 생성: 상담사={}, 내담자={}, 지점={}", 
+            consultant.getName(), clientUser.getName(), branchCode);
+            
         ConsultantClientMapping mapping = new ConsultantClientMapping();
         mapping.setConsultant(consultant);
-        mapping.setClient(clientUser); // User 객체를 직접 사용
+        mapping.setClient(clientUser);
         mapping.setStartDate(dto.getStartDate() != null ? 
             dto.getStartDate().atStartOfDay() : 
             LocalDateTime.now());
@@ -201,16 +296,8 @@ public class AdminServiceImpl implements AdminService {
         mapping.setNotes(dto.getNotes());
         mapping.setResponsibility(dto.getResponsibility());
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
-        
-        // 지점코드 설정 (상담사의 지점코드 우선, 없으면 내담자의 지점코드 사용)
-        String branchCode = consultant.getBranchCode();
-        if (branchCode == null || branchCode.trim().isEmpty()) {
-            branchCode = clientUser.getBranchCode();
-        }
-        if (branchCode == null || branchCode.trim().isEmpty()) {
-            branchCode = AdminConstants.DEFAULT_BRANCH_CODE; // 기본값
-        }
         mapping.setBranchCode(branchCode);
+        
         log.info("🔧 매핑 지점코드 설정: {}", branchCode);
 
         return mappingRepository.save(mapping);
@@ -1331,7 +1418,7 @@ public class AdminServiceImpl implements AdminService {
             
             // 1. 지난 스케줄 중 완료되지 않은 것들 조회
             List<Schedule> expiredSchedules = scheduleRepository.findByDateBeforeAndStatus(
-                LocalDate.now(), ScheduleStatus.BOOKED.name());
+                LocalDate.now(), ScheduleStatus.BOOKED);
             
             int completedCount = 0;
             int reminderSentCount = 0;
@@ -1454,7 +1541,7 @@ public class AdminServiceImpl implements AdminService {
     private int getCompletedScheduleCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
         try {
             List<Schedule> completedSchedules = scheduleRepository.findByConsultantIdAndStatusAndDateBetween(
-                consultantId, ScheduleStatus.COMPLETED.name(), startDate, endDate);
+                consultantId, ScheduleStatus.COMPLETED, startDate, endDate);
             return completedSchedules.size();
         } catch (Exception e) {
             log.warn("상담사 {} 완료 스케줄 건수 조회 실패: {}", consultantId, e.getMessage());
@@ -1499,5 +1586,141 @@ public class AdminServiceImpl implements AdminService {
             log.error("❌ 사용자 조회 중 오류 발생: {}", e.getMessage(), e);
             return null;
         }
+    }
+    
+    @Override
+    public Map<String, Object> mergeDuplicateMappings() {
+        Map<String, Object> result = new HashMap<>();
+        int mergedCount = 0;
+        int deletedCount = 0;
+        
+        try {
+            log.info("🔄 중복 매핑 통합 시작");
+            
+            // 모든 활성 매핑 조회
+            List<ConsultantClientMapping> allMappings = mappingRepository
+                .findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+            
+            // 상담사-내담자 조합별로 그룹화
+            Map<String, List<ConsultantClientMapping>> groupedMappings = allMappings.stream()
+                .collect(Collectors.groupingBy(mapping -> 
+                    mapping.getConsultant().getId() + "-" + mapping.getClient().getId()));
+            
+            for (Map.Entry<String, List<ConsultantClientMapping>> entry : groupedMappings.entrySet()) {
+                List<ConsultantClientMapping> mappings = entry.getValue();
+                
+                if (mappings.size() > 1) {
+                    log.info("🔍 중복 매핑 발견: 상담사={}, 내담자={}, 개수={}", 
+                        mappings.get(0).getConsultant().getName(),
+                        mappings.get(0).getClient().getName(),
+                        mappings.size());
+                    
+                    // 가장 최근 매핑을 기준으로 통합
+                    ConsultantClientMapping primaryMapping = mappings.stream()
+                        .max(Comparator.comparing(ConsultantClientMapping::getCreatedAt))
+                        .orElse(mappings.get(0));
+                    
+                    // 나머지 매핑들의 정보를 통합
+                    int totalSessions = mappings.stream()
+                        .mapToInt(ConsultantClientMapping::getTotalSessions)
+                        .sum();
+                    int usedSessions = mappings.stream()
+                        .mapToInt(ConsultantClientMapping::getUsedSessions)
+                        .sum();
+                    int remainingSessions = totalSessions - usedSessions;
+                    
+                    // 통합된 정보로 업데이트
+                    primaryMapping.setTotalSessions(totalSessions);
+                    primaryMapping.setUsedSessions(usedSessions);
+                    primaryMapping.setRemainingSessions(remainingSessions);
+                    primaryMapping.setNotes("중복 매핑 통합으로 생성됨");
+                    
+                    mappingRepository.save(primaryMapping);
+                    mergedCount++;
+                    
+                    // 나머지 매핑들 삭제
+                    List<ConsultantClientMapping> toDelete = mappings.stream()
+                        .filter(m -> !m.getId().equals(primaryMapping.getId()))
+                        .collect(Collectors.toList());
+                    
+                    for (ConsultantClientMapping mapping : toDelete) {
+                        mapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
+                        mapping.setNotes("중복 매핑 통합으로 종료됨");
+                        mappingRepository.save(mapping);
+                        deletedCount++;
+                    }
+                    
+                    log.info("✅ 중복 매핑 통합 완료: 상담사={}, 내담자={}, 통합된 회기수={}", 
+                        primaryMapping.getConsultant().getName(),
+                        primaryMapping.getClient().getName(),
+                        totalSessions);
+                }
+            }
+            
+            result.put("success", true);
+            result.put("mergedCount", mergedCount);
+            result.put("deletedCount", deletedCount);
+            result.put("message", String.format("중복 매핑 통합 완료: %d개 그룹 통합, %d개 매핑 종료", 
+                mergedCount, deletedCount));
+            
+            log.info("✅ 중복 매핑 통합 완료: {}개 그룹 통합, {}개 매핑 종료", mergedCount, deletedCount);
+            
+        } catch (Exception e) {
+            log.error("❌ 중복 매핑 통합 실패", e);
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        
+        return result;
+    }
+    
+    @Override
+    public List<Map<String, Object>> findDuplicateMappings() {
+        List<Map<String, Object>> duplicates = new ArrayList<>();
+        
+        try {
+            log.info("🔍 중복 매핑 조회 시작");
+            
+            // 모든 활성 매핑 조회
+            List<ConsultantClientMapping> allMappings = mappingRepository
+                .findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+            
+            // 상담사-내담자 조합별로 그룹화
+            Map<String, List<ConsultantClientMapping>> groupedMappings = allMappings.stream()
+                .collect(Collectors.groupingBy(mapping -> 
+                    mapping.getConsultant().getId() + "-" + mapping.getClient().getId()));
+            
+            for (Map.Entry<String, List<ConsultantClientMapping>> entry : groupedMappings.entrySet()) {
+                List<ConsultantClientMapping> mappings = entry.getValue();
+                
+                if (mappings.size() > 1) {
+                    Map<String, Object> duplicateGroup = new HashMap<>();
+                    duplicateGroup.put("consultantId", mappings.get(0).getConsultant().getId());
+                    duplicateGroup.put("consultantName", mappings.get(0).getConsultant().getName());
+                    duplicateGroup.put("clientId", mappings.get(0).getClient().getId());
+                    duplicateGroup.put("clientName", mappings.get(0).getClient().getName());
+                    duplicateGroup.put("mappingCount", mappings.size());
+                    duplicateGroup.put("mappings", mappings.stream().map(mapping -> {
+                        Map<String, Object> mappingInfo = new HashMap<>();
+                        mappingInfo.put("id", mapping.getId());
+                        mappingInfo.put("totalSessions", mapping.getTotalSessions());
+                        mappingInfo.put("usedSessions", mapping.getUsedSessions());
+                        mappingInfo.put("remainingSessions", mapping.getRemainingSessions());
+                        mappingInfo.put("createdAt", mapping.getCreatedAt());
+                        mappingInfo.put("status", mapping.getStatus());
+                        return mappingInfo;
+                    }).collect(Collectors.toList()));
+                    
+                    duplicates.add(duplicateGroup);
+                }
+            }
+            
+            log.info("🔍 중복 매핑 조회 완료: {}개 그룹", duplicates.size());
+            
+        } catch (Exception e) {
+            log.error("❌ 중복 매핑 조회 실패", e);
+        }
+        
+        return duplicates;
     }
 }

@@ -269,8 +269,8 @@ public class AdminController {
                 ));
             }
             
-            log.info("🔍 상담사별 매핑된 내담자 목록 조회 - 상담사 ID: {}, 브랜치 코드: {}", consultantId, currentBranchCode);
-            List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantId(consultantId, currentBranchCode);
+            log.info("🔍 상담사별 매핑된 내담자 목록 조회 - 상담사 ID: {}", consultantId);
+            List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantId(consultantId);
             
             // 결제 승인되고 세션이 남은 매핑만 필터링 (PENDING도 포함)
             List<Map<String, Object>> activeMappings = mappings.stream()
@@ -393,30 +393,34 @@ public class AdminController {
     }
 
     /**
-     * 매핑 목록 조회
+     * 매핑 목록 조회 (중앙화 - 모든 매핑 조회)
      */
     @GetMapping("/mappings")
     public ResponseEntity<?> getAllMappings(HttpSession session) {
         try {
-            log.info("🔍 매핑 목록 조회");
+            log.info("🔍 매핑 목록 조회 (중앙화)");
             
-            // 현재 로그인한 사용자의 지점코드 확인
+            // 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
-            String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
             
-            List<ConsultantClientMapping> allMappings = adminService.getAllMappings();
+            // 관리자 권한 확인
+            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "관리자 권한이 필요합니다."
+                ));
+            }
             
-            // 지점코드로 필터링
-            List<ConsultantClientMapping> mappings = allMappings.stream()
-                .filter(mapping -> {
-                    if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
-                        return true; // 지점코드가 없으면 모든 매핑 조회
-                    }
-                    return currentBranchCode.equals(mapping.getBranchCode());
-                })
-                .collect(java.util.stream.Collectors.toList());
+            // 모든 매핑 조회 (지점 필터링 제거)
+            List<ConsultantClientMapping> mappings = adminService.getAllMappings();
             
-            log.info("🔍 매핑 목록 조회 완료 - 전체: {}, 필터링 후: {}", allMappings.size(), mappings.size());
+            log.info("🔍 매핑 목록 조회 완료 - 총 {}개", mappings.size());
 
             // 직렬화 문제를 피하기 위해 필요한 정보만 추출 (안전한 방식)
             List<Map<String, Object>> mappingData = mappings.stream()
@@ -2174,6 +2178,86 @@ public class AdminController {
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "상담일지 삭제에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 중복 매핑 조회
+     */
+    @GetMapping("/duplicate-mappings")
+    public ResponseEntity<?> findDuplicateMappings(HttpSession session) {
+        try {
+            log.info("🔍 중복 매핑 조회");
+            
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 관리자 권한 확인
+            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "관리자 권한이 필요합니다."
+                ));
+            }
+            
+            List<Map<String, Object>> duplicates = adminService.findDuplicateMappings();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", duplicates,
+                "count", duplicates.size()
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 중복 매핑 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "중복 매핑 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 중복 매핑 통합
+     */
+    @PostMapping("/merge-duplicate-mappings")
+    public ResponseEntity<?> mergeDuplicateMappings(HttpSession session) {
+        try {
+            log.info("🔄 중복 매핑 통합 시작");
+            
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 관리자 권한 확인
+            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "관리자 권한이 필요합니다."
+                ));
+            }
+            
+            Map<String, Object> result = adminService.mergeDuplicateMappings();
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("❌ 중복 매핑 통합 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "중복 매핑 통합에 실패했습니다: " + e.getMessage()
             ));
         }
     }

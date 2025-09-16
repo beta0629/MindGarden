@@ -3,6 +3,7 @@ package com.mindgarden.consultation.repository;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import com.mindgarden.consultation.constant.ScheduleStatus;
 import com.mindgarden.consultation.entity.Schedule;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -123,7 +124,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     /**
      * 상담사별 상태별 날짜 범위 스케줄 조회
      */
-    List<Schedule> findByConsultantIdAndStatusAndDateBetween(Long consultantId, String status, LocalDate startDate, LocalDate endDate);
+    List<Schedule> findByConsultantIdAndStatusAndDateBetween(Long consultantId, ScheduleStatus status, LocalDate startDate, LocalDate endDate);
     
     /**
      * 내담자별 상태별 스케줄 조회
@@ -221,7 +222,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
            "AND s.isDeleted = false")
     List<Schedule> findByDateBeforeAndStatus(
         @Param("date") LocalDate date,
-        @Param("status") String status
+        @Param("status") ScheduleStatus status
     );
 
     // ==================== 오늘의 통계 ====================
@@ -230,7 +231,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
      * 특정 날짜의 특정 상태 스케줄 개수 조회
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.date = :date AND s.status = :status AND s.isDeleted = false")
-    long countByDateAndStatus(@Param("date") LocalDate date, @Param("status") String status);
+    long countByDateAndStatus(@Param("date") LocalDate date, @Param("status") ScheduleStatus status);
     
     /**
      * 특정 날짜의 스케줄 개수 조회

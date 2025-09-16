@@ -70,34 +70,50 @@ const UnifiedScheduleComponent = ({
             console.log('📋 스케줄 상태 코드 응답:', response);
             
             if (response && Array.isArray(response) && response.length > 0) {
-                // 동적 색상/아이콘 처리로 변경
-                const statusOptions = await Promise.all(response.map(async (code) => {
-                    try {
-                        // 동적으로 색상과 아이콘 조회
-                        const [color, icon] = await Promise.all([
-                            getStatusColor(code.codeValue, 'STATUS'),
-                            getStatusIcon(code.codeValue, 'STATUS')
-                        ]);
-                        
-                        return {
-                            value: code.codeValue,
-                            label: code.codeLabel,
-                            color: color,
-                            icon: icon,
-                            description: code.codeDescription
-                        };
-                    } catch (error) {
-                        console.error(`스케줄 상태 ${code.codeValue} 처리 오류:`, error);
-                        // 오류 시 기본값 반환
-                        return {
-                            value: code.codeValue,
-                            label: code.codeLabel,
-                            color: '#6b7280',
-                            icon: '📋',
-                            description: code.codeDescription
-                        };
+                // 우리가 원하는 6개 상태만 필터링
+                const allowedStatuses = ['AVAILABLE', 'BOOKED', 'CONFIRMED', 'VACATION', 'COMPLETED', 'CANCELLED'];
+                const filteredResponse = response.filter(code => allowedStatuses.includes(code.codeValue));
+                
+                // 하드코딩된 색상/아이콘 사용
+                const statusOptions = filteredResponse.map(code => {
+                    let icon = '📋';
+                    let color = '#6b7280';
+                    
+                    switch (code.codeValue) {
+                        case 'AVAILABLE':
+                            icon = '✅';
+                            color = '#28a745';
+                            break;
+                        case 'BOOKED':
+                            icon = '📅';
+                            color = '#007bff';
+                            break;
+                        case 'CONFIRMED':
+                            icon = '✅';
+                            color = '#17a2b8';
+                            break;
+                        case 'VACATION':
+                            icon = '🏖️';
+                            color = '#ffc107';
+                            break;
+                        case 'COMPLETED':
+                            icon = '✅';
+                            color = '#6c757d';
+                            break;
+                        case 'CANCELLED':
+                            icon = '❌';
+                            color = '#dc3545';
+                            break;
                     }
-                }));
+                    
+                    return {
+                        value: code.codeValue,
+                        label: code.codeLabel,
+                        color: color,
+                        icon: icon,
+                        description: code.codeDescription
+                    };
+                });
                 
                 console.log('📋 변환된 상태 옵션 (동적 처리):', statusOptions);
                 setScheduleStatusOptions(statusOptions);
@@ -106,14 +122,14 @@ const UnifiedScheduleComponent = ({
             }
         } catch (error) {
             console.error('일정 상태 코드 로드 실패:', error);
-            // 실패 시 기본값 설정
+            // 실패 시 기본값 설정 (enum 6개 상태만)
             setScheduleStatusOptions([
-                { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#3b82f6', description: '예약된 일정' },
-                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: '#8b5cf6', description: '확정된 일정' },
-                { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#f59e0b', description: '진행 중인 일정' },
-                { value: 'COMPLETED', label: '완료됨', icon: '🎉', color: '#059669', description: '완료된 일정' },
-                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: '#ef4444', description: '취소된 일정' },
-                { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#6b7280', description: '차단된 시간' }
+                { value: 'AVAILABLE', label: '가능', icon: '✅', color: '#28a745', description: '예약 가능한 시간대' },
+                { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#007bff', description: '예약된 일정' },
+                { value: 'CONFIRMED', label: '확정됨', icon: '✅', color: '#17a2b8', description: '확정된 일정' },
+                { value: 'VACATION', label: '휴가', icon: '🏖️', color: '#ffc107', description: '휴가로 인한 비활성' },
+                { value: 'COMPLETED', label: '완료', icon: '✅', color: '#6c757d', description: '완료된 일정' },
+                { value: 'CANCELLED', label: '취소됨', icon: '❌', color: '#dc3545', description: '취소된 일정' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -188,13 +204,17 @@ const UnifiedScheduleComponent = ({
                             hasConsultantName: !!schedule.consultantName,
                             scheduleData: schedule
                         });
+                        // 휴가는 노란색, 나머지는 상담사별 색상 사용
+                        const isVacation = schedule.status === 'VACATION';
+                        const eventColor = isVacation ? getEventColor(schedule.status) : getConsultantColor(schedule.consultantId);
+                        
                         return {
                             id: schedule.id,
                             title: schedule.title || '상담',
                             start: `${schedule.date}T${schedule.startTime}`,
                             end: `${schedule.date}T${schedule.endTime}`,
-                            backgroundColor: getConsultantColor(schedule.consultantId),
-                            borderColor: getConsultantColor(schedule.consultantId),
+                            backgroundColor: eventColor,
+                            borderColor: eventColor,
                             className: `schedule-event status-${schedule.status?.toLowerCase()}`,
                             extendedProps: {
                                 id: schedule.id,
@@ -434,16 +454,18 @@ const UnifiedScheduleComponent = ({
      */
     const getEventColor = (status) => {
         switch (status) {
+            case 'AVAILABLE':
+                return '#28a745'; // 초록색 - 가능
             case 'BOOKED':
                 return '#007bff'; // 파란색 - 예약됨
-            case 'IN_PROGRESS':
-                return '#28a745'; // 초록색 - 진행중
+            case 'CONFIRMED':
+                return '#17a2b8'; // 청록색 - 확정됨
+            case 'VACATION':
+                return '#ffc107'; // 노란색 - 휴가
             case 'COMPLETED':
                 return '#6c757d'; // 회색 - 완료
             case 'CANCELLED':
                 return '#dc3545'; // 빨간색 - 취소
-            case 'BLOCKED':
-                return '#ffc107'; // 노란색 - 차단
             default:
                 return '#007bff';
         }
@@ -521,13 +543,21 @@ const UnifiedScheduleComponent = ({
     };
 
     /**
-     * 기존 이벤트 클릭 이벤트 핸들러
+     * 이벤트 클릭 이벤트 핸들러 - 바로 상세 모달 표시
      */
     const handleEventClick = (info) => {
         console.log('📋 이벤트 클릭:', info.event.title);
         console.log('📋 이벤트 extendedProps:', info.event.extendedProps);
         
         const event = info.event;
+        showDetailModal(event);
+    };
+    
+    
+    /**
+     * 상세 모달 표시 함수
+     */
+    const showDetailModal = (event) => {
         
         // 휴가 이벤트인지 확인
         if (event.extendedProps.type === 'vacation') {
@@ -701,7 +731,8 @@ const UnifiedScheduleComponent = ({
     }, [loadSchedules]);
 
     return (
-        <SimpleLayout title="스케줄 관리">
+        <>
+            <SimpleLayout title="스케줄 관리">
             <div className="schedule-calendar">
             <div className="calendar-header">
                 <div className="header-actions">
@@ -827,7 +858,7 @@ const UnifiedScheduleComponent = ({
                 locale="ko"
                 selectable={true}
                 selectMirror={true}
-                dayMaxEvents={true}
+                dayMaxEvents={false}
                 weekends={true}
                 events={events}
                 dateClick={handleDateClick}
@@ -1026,6 +1057,8 @@ const UnifiedScheduleComponent = ({
             )}
             </div>
         </SimpleLayout>
+        
+        </>
     );
 };
 
@@ -1267,6 +1300,54 @@ const styles = `
 .fc-day-today .fc-daygrid-day-number {
     color: #d97706;
     font-weight: 600;
+}
+
+/* 툴팁 스타일 */
+.event-tooltip {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    max-width: 300px;
+    animation: tooltipFadeIn 0.3s ease-out;
+}
+
+.tooltip-content h4 {
+    margin: 0 0 12px 0;
+    color: #667eea;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.tooltip-content p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #374151;
+}
+
+.tooltip-hint {
+    font-style: italic;
+    color: #6b7280;
+    font-size: 12px;
+    margin-top: 12px;
+    text-align: center;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
 }
 
 /* 반응형 디자인 */

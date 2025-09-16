@@ -145,8 +145,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             let url = `/api/schedules?userId=${userId}&userRole=${userRole}`;
             
             // 어드민인 경우 상담사 필터링 지원
-            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
-                url = '/api/admin/schedules';
+            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
+                url = '/api/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
                     console.log('🔍 상담사 필터링 적용:', selectedConsultantId);

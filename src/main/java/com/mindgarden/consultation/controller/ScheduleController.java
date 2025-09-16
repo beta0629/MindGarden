@@ -1216,15 +1216,21 @@ public class ScheduleController {
                 .collect(Collectors.toSet());
             
             // 사용자 역할이 관리자 역할에 포함되는지 확인
-            return adminRoleCodes.contains(user.getRole().name());
+            boolean isAdmin = adminRoleCodes.contains(user.getRole().name());
+            log.info("🔍 관리자 권한 확인: userRole={}, adminRoleCodes={}, isAdmin={}", 
+                user.getRole().name(), adminRoleCodes, isAdmin);
+            return isAdmin;
         } catch (Exception e) {
             log.error("❌ 관리자 권한 확인 실패: error={}", e.getMessage(), e);
             // 기본값으로 하드코딩된 역할 확인 (fallback)
-            return "ADMIN".equals(user.getRole().name()) || 
+            boolean isAdmin = "ADMIN".equals(user.getRole().name()) || 
                    "HQ_MASTER".equals(user.getRole().name()) || 
                    "BRANCH_HQ_MASTER".equals(user.getRole().name()) ||
                    "HQ_ADMIN".equals(user.getRole().name()) ||
                    "SUPER_HQ_ADMIN".equals(user.getRole().name());
+            log.info("🔍 관리자 권한 확인 (fallback): userRole={}, isAdmin={}", 
+                user.getRole().name(), isAdmin);
+            return isAdmin;
         }
     }
 

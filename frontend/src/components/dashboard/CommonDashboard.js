@@ -51,13 +51,7 @@ const CommonDashboard = ({ user: propUser }) => {
         }
         
         // 3. 사용자 정보 가져오기 (propUser 또는 sessionManager)
-        let currentUser = propUser;
-        
-        // propUser가 없으면 중앙 세션에서 가져오기
-        if (!currentUser) {
-          currentUser = sessionUser;
-          console.log('🔍 CommonDashboard - 중앙 세션 사용자:', currentUser);
-        }
+        let currentUser = propUser || sessionUser;
         
         console.log('👤 propUser:', propUser);
         console.log('👤 currentUser:', currentUser);
@@ -65,38 +59,15 @@ const CommonDashboard = ({ user: propUser }) => {
         console.log('🔐 로그인 상태:', isLoggedIn);
         console.log('⏳ 세션 로딩 상태:', sessionLoading);
         
-        // 4. 로그인 상태이지만 사용자 정보가 없는 경우 (세션 동기화 중)
-        if (isLoggedIn && !currentUser && !sessionUser) {
-          console.log('⏳ 로그인 상태이지만 사용자 정보 동기화 대기...');
-          setTimeout(() => {
-            console.log('🔄 사용자 정보 동기화 재시도');
-            loadDashboardData();
-          }, 1000);
+        // 4. 사용자 정보가 없는 경우 처리
+        if (!currentUser) {
+          console.log('⏳ 사용자 정보 없음, 잠시 대기...');
           return;
-        }
-        
-        // currentUser가 없으면 sessionUser 사용
-        if (!currentUser && sessionUser) {
-          console.log('🔄 propUser 없음, sessionUser 사용:', sessionUser);
-          currentUser = sessionUser;
         }
         
         // 사용자 정보 변경 감지
         if (currentUser && currentUser.role) {
           console.log('👤 현재 사용자 role:', currentUser.role, '이름:', currentUser.name || currentUser.nickname || currentUser.username);
-        }
-        
-        // 여전히 currentUser가 없으면 잠시 대기 후 재시도
-        if (!currentUser) {
-          console.log('⏳ 사용자 정보 없음, 잠시 대기 후 재시도...');
-          setTimeout(() => {
-            console.log('🔄 재시도 - 사용자 정보 확인');
-            if (!sessionUser) {
-              console.log('❌ 재시도 후에도 사용자 정보 없음, 로그인 페이지로 이동');
-              navigate('/login', { replace: true });
-            }
-          }, 2000);
-          return;
         }
         
         console.log('✅ 사용자 정보 설정:', currentUser);
@@ -138,7 +109,7 @@ const CommonDashboard = ({ user: propUser }) => {
     };
 
     loadDashboardData();
-  }, [propUser, sessionUser, isLoggedIn, sessionLoading]);
+  }, [isLoggedIn, sessionLoading]); // propUser, sessionUser 제거하여 무한루프 방지
 
   // 현재 시간 업데이트
   useEffect(() => {

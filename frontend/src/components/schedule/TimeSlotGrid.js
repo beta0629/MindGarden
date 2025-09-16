@@ -45,7 +45,7 @@ const TimeSlotGrid = ({
         if (consultantInfo) {
             generateTimeSlots();
         }
-    }, [consultantInfo, duration, vacationInfo]);
+    }, [consultantInfo, duration, vacationInfo, existingSchedules]);
 
     // 선택된 시간 슬롯이 변경될 때마다 슬롯 가용성 업데이트
     useEffect(() => {
@@ -214,13 +214,19 @@ const TimeSlotGrid = ({
                     // 현재 시간과 비교하여 지난 시간인지 확인
                     const isPastTime = isTimeInPast(timeString, selectedDate);
                     
+                    // 기존 스케줄과의 충돌 확인
+                    const hasConflict = checkTimeConflict({
+                        time: timeString,
+                        endTime: slotEndTime
+                    }, existingSchedules);
+                    
                     slots.push({
                         id: `slot-${timeString}`,
                         time: timeString,
                         endTime: slotEndTime,
                         duration: duration,
-                        available: !isVacationTime && !isPastTime,
-                        conflict: false,
+                        available: !isVacationTime && !isPastTime && !hasConflict,
+                        conflict: hasConflict,
                         vacation: isVacationTime,
                         past: isPastTime
                     });
@@ -353,6 +359,13 @@ const TimeSlotGrid = ({
      * 기존 스케줄 로드
      */
     const loadExistingSchedules = async () => {
+        // consultantId가 유효하지 않으면 요청하지 않음
+        if (!consultantId || consultantId === 'undefined' || consultantId === 'null') {
+            console.warn('⚠️ TimeSlotGrid: consultantId가 유효하지 않음:', consultantId);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
             // 날짜를 로컬 시간대로 처리하여 시간대 변환 문제 방지
@@ -360,6 +373,13 @@ const TimeSlotGrid = ({
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             const dateStr = `${year}-${month}-${day}`;
+            
+            console.log('🔍 TimeSlotGrid: 스케줄 로드 요청:', {
+                consultantId,
+                dateStr,
+                url: `/api/schedules/consultant/${consultantId}/date?date=${dateStr}`
+            });
+            
             const response = await fetch(
                 `/api/schedules/consultant/${consultantId}/date?date=${dateStr}`,
                 {
@@ -371,10 +391,15 @@ const TimeSlotGrid = ({
                 }
             );
 
+            console.log('📥 TimeSlotGrid: 응답 상태:', response.status, response.statusText);
+
             if (response.ok) {
                 const schedules = await response.json();
+                console.log('✅ TimeSlotGrid: 스케줄 로드 성공:', schedules);
                 setExistingSchedules(schedules);
                 updateSlotAvailability(schedules);
+            } else {
+                console.error('❌ TimeSlotGrid: 스케줄 로드 실패:', response.status, response.statusText);
             }
         } catch (error) {
             console.error('기존 스케줄 로드 실패:', error);

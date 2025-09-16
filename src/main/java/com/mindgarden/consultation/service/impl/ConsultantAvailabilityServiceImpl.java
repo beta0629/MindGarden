@@ -11,8 +11,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.dto.ConsultantAvailabilityDto;
 import com.mindgarden.consultation.entity.ConsultantAvailability;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.Vacation;
 import com.mindgarden.consultation.repository.ConsultantAvailabilityRepository;
+import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.VacationRepository;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
@@ -31,6 +33,7 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
     
     private final ConsultantAvailabilityRepository availabilityRepository;
     private final VacationRepository vacationRepository;
+    private final UserRepository userRepository;
     private final CommonCodeService commonCodeService;
     
     // 휴무 정보를 메모리에 저장 (실제 프로덕션에서는 데이터베이스 사용 권장)
@@ -270,6 +273,17 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
                 String consultantId = vacation.getConsultantId().toString();
                 String vacationDate = vacation.getVacationDate().toString();
                 
+                // 상담사 이름 조회
+                String consultantName = "알 수 없음";
+                try {
+                    User consultant = userRepository.findById(vacation.getConsultantId()).orElse(null);
+                    if (consultant != null) {
+                        consultantName = consultant.getName();
+                    }
+                } catch (Exception e) {
+                    log.warn("상담사 이름 조회 실패: consultantId={}, error={}", consultantId, e.getMessage());
+                }
+                
                 Map<String, Object> vacationData = new HashMap<>();
                 vacationData.put("type", vacation.getVacationType().name());
                 vacationData.put("typeName", getVacationTypeName(vacation.getVacationType().name()));
@@ -278,6 +292,7 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
                 vacationData.put("endTime", vacation.getEndTime() != null ? vacation.getEndTime().toString() : null);
                 vacationData.put("isApproved", vacation.getIsApproved());
                 vacationData.put("status", getVacationStatusName(vacation.getIsApproved()));
+                vacationData.put("consultantName", consultantName);
                 
                 consultantVacations.computeIfAbsent(consultantId, k -> new HashMap<>())
                     .put(vacationDate, vacationData);

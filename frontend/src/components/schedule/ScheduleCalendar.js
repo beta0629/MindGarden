@@ -170,6 +170,12 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 if (Array.isArray(schedules)) {
                     scheduleEvents = schedules.map(schedule => {
                         console.log('📅 스케줄 데이터 처리:', schedule);
+                        console.log('👤 상담사 정보:', {
+                            consultantId: schedule.consultantId,
+                            consultantName: schedule.consultantName,
+                            hasConsultantName: !!schedule.consultantName,
+                            scheduleData: schedule
+                        });
                         return {
                             id: schedule.id,
                             title: schedule.title || '상담',
@@ -223,6 +229,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                             Object.entries(vacationResult.data).forEach(([consultantId, consultantVacations]) => {
                                 console.log('🏖️ 상담사 휴가 데이터:', consultantId, consultantVacations);
                                 Object.entries(consultantVacations).forEach(([date, vacationData]) => {
+                                    // 상담사 이름을 휴가 데이터에 추가 (이미 백엔드에서 제공됨)
+                                    if (!vacationData.consultantName) {
+                                        vacationData.consultantName = `상담사 ${consultantId}`;
+                                    }
                                     const vacationEvent = convertVacationToEvent(vacationData, consultantId, date);
                                     if (vacationEvent) {
                                         vacationEvents.push(vacationEvent);
@@ -263,7 +273,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
      * 휴가 데이터를 캘린더 이벤트로 변환
      */
     const convertVacationToEvent = (vacationData, consultantId, date) => {
-        const { type, reason, startTime, endTime } = vacationData;
+        const { type, reason, startTime, endTime, consultantName } = vacationData;
         const startDate = new Date(date + 'T00:00:00+09:00');
         let endDate, title, backgroundColor, allDay = true;
         
@@ -363,7 +373,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 date: date,
                 startTime: startTime,
                 endTime: endTime,
-                consultantId: consultantId
+                consultantId: consultantId,
+                consultantName: consultantName
             }
         };
     };
@@ -500,10 +511,19 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             console.log('🏖️ 휴가 이벤트 클릭');
             
             // 휴가 이벤트용 데이터 설정
+            let consultantName = event.extendedProps.consultantName;
+            if (!consultantName || consultantName === 'undefined' || consultantName === '알 수 없음') {
+                if (event.extendedProps.consultantId && event.extendedProps.consultantId !== 'undefined') {
+                    consultantName = `상담사 ${event.extendedProps.consultantId}`;
+                } else {
+                    consultantName = '상담사 정보 없음';
+                }
+            }
+            
             const scheduleData = {
                 id: event.extendedProps.consultantId,
                 title: event.title,
-                consultantName: event.extendedProps.consultantName || `상담사 ${event.extendedProps.consultantId}`,
+                consultantName: consultantName,
                 clientName: '휴가',
                 consultationType: 'VACATION',
                 startTime: event.allDay ? '하루 종일' : formatTime(event.start),
@@ -522,13 +542,43 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         
         // 일반 스케줄 이벤트 처리
         console.log('📋 상담 유형 원본:', event.extendedProps.consultationType);
+        console.log('👤 이벤트 상담사 정보:', {
+            consultantId: event.extendedProps.consultantId,
+            consultantName: event.extendedProps.consultantName,
+            hasConsultantName: !!event.extendedProps.consultantName,
+            allExtendedProps: event.extendedProps
+        });
         
         const koreanStatus = event.extendedProps.statusKorean || convertStatusToKorean(event.extendedProps.status);
         const koreanConsultationType = convertConsultationTypeToKorean(event.extendedProps.consultationType);
-        const consultantName = event.extendedProps.consultantName || `상담사 ${event.extendedProps.consultantId}`;
-        const clientName = event.extendedProps.clientName || `클라이언트 ${event.extendedProps.clientId}`;
+        
+        // 상담사 이름이 없거나 undefined인 경우 처리
+        let consultantName = event.extendedProps.consultantName;
+        const consultantId = event.extendedProps.consultantId;
+        
+        if (!consultantName || consultantName === 'undefined' || consultantName === '알 수 없음') {
+            if (consultantId && consultantId !== 'undefined') {
+                consultantName = `상담사 ${consultantId}`;
+            } else {
+                consultantName = '상담사 정보 없음';
+            }
+            console.warn('⚠️ 상담사 이름이 없음, ID로 대체:', consultantName);
+        }
+        
+        // 클라이언트 이름 처리
+        let clientName = event.extendedProps.clientName;
+        const clientId = event.extendedProps.clientId;
+        
+        if (!clientName || clientName === 'undefined' || clientName === '알 수 없음') {
+            if (clientId && clientId !== 'undefined') {
+                clientName = `클라이언트 ${clientId}`;
+            } else {
+                clientName = '클라이언트 정보 없음';
+            }
+        }
 
         console.log('📋 변환된 상담 유형:', koreanConsultationType);
+        console.log('👤 최종 상담사 이름:', consultantName);
 
         // 스케줄 상세 정보 설정
         const scheduleData = {

@@ -203,19 +203,56 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               </p>
               {todayConsultations.length > 0 && (
                 <div className="consultation-details">
-                  {todayConsultations.slice(0, 2).map((consultation, index) => (
-                    <div key={index} className="consultation-item">
-                      <div className="consultation-time">
+                  {todayConsultations.slice(0, 3).map((consultation, index) => (
+                    <div key={index} className="consultation-item" style={{
+                      background: '#f8f9fa',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      marginBottom: '8px',
+                      border: '1px solid #e9ecef'
+                    }}>
+                      <div className="consultation-time" style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#495057',
+                        marginBottom: '4px'
+                      }}>
                         {new Date(consultation.date).toLocaleDateString('ko-KR')} {consultation.startTime} - {consultation.endTime}
                       </div>
-                      <div className="consultation-consultant">
+                      <div className="consultation-consultant" style={{
+                        fontSize: '13px',
+                        color: '#6c757d',
+                        marginBottom: '4px'
+                      }}>
                         {consultation.consultantName} 상담사
                       </div>
-                      <div className="consultation-status">
+                      <div className="consultation-status" style={{
+                        fontSize: '12px',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        display: 'inline-block',
+                        background: consultation.status === 'CONFIRMED' ? '#d4edda' : '#fff3cd',
+                        color: consultation.status === 'CONFIRMED' ? '#155724' : '#856404'
+                      }}>
                         {consultation.status === 'CONFIRMED' ? '확정' : consultation.status === 'BOOKED' ? '예약' : consultation.status}
                       </div>
                     </div>
                   ))}
+                  
+                  {/* 더 많은 상담이 있을 때 표시 */}
+                  {todayConsultations.length > 3 && (
+                    <div style={{
+                      textAlign: 'center',
+                      marginTop: '12px',
+                      padding: '8px',
+                      background: '#e9ecef',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      color: '#6c757d'
+                    }}>
+                      +{todayConsultations.length - 3}건의 추가 상담이 있습니다
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -238,7 +275,11 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
             border: '1px solid #e9ecef',
             transition: 'all 0.3s ease',
-            gridColumn: 'span 2'
+            gridColumn: 'span 2',
+            maxHeight: '500px',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             <div className="info-icon" style={{
               width: '48px',
@@ -274,76 +315,133 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                   : '오늘 예정된 상담이 없습니다'
                 }
               </p>
-              {todayConsultations.length > 0 && (
-                <div className="consultation-details">
-                  {/* 오늘의 상담만 표시 */}
+              {todayConsultations.length > 0 ? (
+                <div className="consultation-details" style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  maxHeight: '380px',
+                  paddingRight: '8px',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '12px',
+                  alignItems: 'start'
+                }}>
                   {todayConsultations.map((consultation, index) => (
                     <div key={index} className="consultation-item" style={{
                       background: '#f8f9fa',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      marginBottom: '8px',
-                      border: '1px solid #e9ecef'
+                      borderRadius: '12px',
+                      padding: '14px',
+                      border: '1px solid #e9ecef',
+                      transition: 'all 0.2s ease',
+                      cursor: 'pointer',
+                      minHeight: '120px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#e3f2fd';
+                      e.target.style.borderColor = '#2196f3';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = '#f8f9fa';
+                      e.target.style.borderColor = '#e9ecef';
                     }}>
-                      <div className="consultation-time" style={{
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        color: '#495057',
-                        marginBottom: '4px'
-                      }}>
-                        {new Date(consultation.date).toLocaleDateString('ko-KR')} {consultation.startTime} - {consultation.endTime}
-                      </div>
-                      <div className="consultation-consultant" style={{
-                        fontSize: '13px',
-                        color: '#6c757d',
-                        marginBottom: '4px'
-                      }}>
-                        {consultation.consultantName} 상담사
-                      </div>
-                      <div className="consultation-status" style={{
-                        fontSize: '12px',
-                        color: consultation.status === 'CONFIRMED' ? '#28a745' : '#ffc107',
-                        fontWeight: '500'
-                      }}>
-                        {consultation.status === 'CONFIRMED' ? '확정' : consultation.status === 'BOOKED' ? '예약' : consultation.status}
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                          <div className="consultation-time" style={{
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            color: '#495057',
+                            lineHeight: '1.2'
+                          }}>
+                            {consultation.startTime} - {consultation.endTime}
+                          </div>
+                          <div className="consultation-status" style={{
+                            fontSize: '10px',
+                            padding: '3px 6px',
+                            borderRadius: '10px',
+                            display: 'inline-block',
+                            background: consultation.status === 'CONFIRMED' ? '#d4edda' : '#fff3cd',
+                            color: consultation.status === 'CONFIRMED' ? '#155724' : '#856404',
+                            fontWeight: '500',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {consultation.status === 'CONFIRMED' ? '확정' : consultation.status === 'BOOKED' ? '예약' : consultation.status}
+                          </div>
+                        </div>
+                        <div className="consultation-consultant" style={{
+                          fontSize: '13px',
+                          color: '#6c757d',
+                          fontWeight: '500',
+                          marginBottom: '4px'
+                        }}>
+                          👤 {consultation.consultantName} 상담사
+                        </div>
+                        {consultation.clientName && (
+                          <div className="consultation-client" style={{
+                            fontSize: '12px',
+                            color: '#868e96'
+                          }}>
+                            👥 {consultation.clientName}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
                   
-                  {/* 오늘 상담이 많을 때 자세히 보기 버튼 */}
-                  {todayConsultations.length > 3 && (
-                    <div style={{
-                      textAlign: 'center',
-                      marginTop: '12px',
-                      paddingTop: '12px',
-                      borderTop: '1px solid #e9ecef'
-                    }}>
-                      <button 
-                        onClick={() => handleCardClick('schedule')}
-                        style={{
-                          background: 'transparent',
-                          border: '1px solid #667eea',
-                          borderRadius: '6px',
-                          padding: '8px 16px',
-                          color: '#667eea',
-                          fontSize: '12px',
-                          fontWeight: '500',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.background = '#667eea';
-                          e.target.style.color = 'white';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.background = 'transparent';
-                          e.target.style.color = '#667eea';
-                        }}
-                      >
-                        +{todayConsultations.length - 3}건 더 보기
-                      </button>
-                    </div>
-                  )}
+                </div>
+              ) : (
+                <div style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#6c757d',
+                  fontSize: '14px',
+                  textAlign: 'center',
+                  padding: '40px 20px'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
+                    <div>오늘 예정된 상담이 없습니다</div>
+                  </div>
+                </div>
+              )}
+              
+              {/* 오늘 상담이 많을 때 자세히 보기 버튼 */}
+              {todayConsultations.length > 6 && (
+                <div style={{
+                  textAlign: 'center',
+                  marginTop: '16px',
+                  paddingTop: '16px',
+                  borderTop: '1px solid #e9ecef',
+                  gridColumn: 'span 2'
+                }}>
+                  <button 
+                    onClick={() => handleCardClick('schedule')}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid #667eea',
+                      borderRadius: '6px',
+                      padding: '8px 16px',
+                      color: '#667eea',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#667eea';
+                      e.target.style.color = 'white';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'transparent';
+                      e.target.style.color = '#667eea';
+                    }}
+                  >
+                    +{todayConsultations.length - 6}건 더 보기
+                  </button>
                 </div>
               )}
             </div>

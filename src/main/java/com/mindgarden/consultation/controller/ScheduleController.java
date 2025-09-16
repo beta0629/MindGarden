@@ -572,33 +572,6 @@ public class ScheduleController {
 
     // ==================== 상담사별 스케줄 관리 ====================
 
-    /**
-     * 상담사별 스케줄 조회 (관리자만 접근 가능)
-     */
-    @GetMapping("/consultant/{consultantId}")
-    public ResponseEntity<List<Schedule>> getSchedulesByConsultant(
-            @PathVariable Long consultantId,
-            @RequestParam(required = false) String userRole) {
-        
-        log.info("👨‍⚕️ 상담사별 스케줄 조회: 상담사 {}, 요청자 역할 {}", consultantId, userRole);
-        
-        // 관리자 권한 확인 (userRole이 제공된 경우에만)
-        if (userRole != null && !"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
-            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
-            log.warn("❌ 관리자 권한 없음: {}", userRole);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        
-        try {
-            List<Schedule> schedules = scheduleService.findByConsultantId(consultantId);
-            log.info("✅ 상담사별 스케줄 조회 완료: {}개", schedules.size());
-            return ResponseEntity.ok(schedules);
-        } catch (Exception e) {
-            log.error("❌ 상담사별 스케줄 조회 실패: {}", e.getMessage());
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
     // ==================== 내담자별 스케줄 관리 ====================
 
     /**

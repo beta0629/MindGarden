@@ -483,6 +483,7 @@ public class AdminServiceImpl implements AdminService {
                     consultantData.put("vacationReason", vacationInfo.get("reason"));
                     consultantData.put("vacationStartTime", vacationInfo.get("startTime"));
                     consultantData.put("vacationEndTime", vacationInfo.get("endTime"));
+                    consultantData.put("vacationConsultantName", vacationInfo.get("consultantName"));
                     
                     // 휴무 상태 구분
                     consultantData.put("busy", true); // 휴가 중이므로 바쁨

@@ -253,10 +253,27 @@ const CommonDashboard = ({ user: propUser }) => {
         endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
         
         // 오늘의 상담
-        const todaySchedules = schedules.filter(schedule => {
-          const scheduleDate = new Date(schedule.date);
-          return scheduleDate.toDateString() === today.toDateString();
+        console.log('📅 오늘의 상담 필터링 시작 (내담자):', {
+          today: today.toDateString(),
+          schedules: schedules.map(s => ({ date: s.date, title: s.title }))
         });
+        
+        const todaySchedules = schedules.filter(schedule => {
+          // 날짜 문자열을 직접 비교 (시간대 문제 방지)
+          const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+          const scheduleDateStr = schedule.date; // 이미 YYYY-MM-DD 형식
+          const isToday = scheduleDateStr === todayStr;
+          
+          console.log('📅 스케줄 날짜 비교 (내담자):', {
+            scheduleDate: scheduleDateStr,
+            today: todayStr,
+            isToday,
+            title: schedule.title
+          });
+          return isToday;
+        });
+        
+        console.log('📅 오늘의 상담 결과 (내담자):', todaySchedules);
         
         // 이번 주 상담
         const weeklySchedules = schedules.filter(schedule => {
@@ -340,7 +357,7 @@ const CommonDashboard = ({ user: propUser }) => {
         
         setConsultationData(prev => ({
           ...prev,
-          upcomingConsultations: upcomingSchedules,
+          upcomingConsultations: [...todaySchedules, ...upcomingSchedules], // 오늘의 상담도 포함
           weeklyConsultations: weeklySchedules.length,
           todayConsultations: todaySchedules.length,
           recentActivities: recentActivities,
@@ -396,10 +413,27 @@ const CommonDashboard = ({ user: propUser }) => {
         endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
         
         // 오늘의 상담
-        const todaySchedules = schedules.filter(schedule => {
-          const scheduleDate = new Date(schedule.date);
-          return scheduleDate.toDateString() === today.toDateString();
+        console.log('📅 오늘의 상담 필터링 시작 (상담사):', {
+          today: today.toDateString(),
+          schedules: schedules.map(s => ({ date: s.date, title: s.title }))
         });
+        
+        const todaySchedules = schedules.filter(schedule => {
+          // 날짜 문자열을 직접 비교 (시간대 문제 방지)
+          const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+          const scheduleDateStr = schedule.date; // 이미 YYYY-MM-DD 형식
+          const isToday = scheduleDateStr === todayStr;
+          
+          console.log('📅 스케줄 날짜 비교 (상담사):', {
+            scheduleDate: scheduleDateStr,
+            today: todayStr,
+            isToday,
+            title: schedule.title
+          });
+          return isToday;
+        });
+        
+        console.log('📅 오늘의 상담 결과 (상담사):', todaySchedules);
         
         // 이번 주 상담
         const weeklySchedules = schedules.filter(schedule => {
@@ -467,7 +501,7 @@ const CommonDashboard = ({ user: propUser }) => {
           monthlyConsultations: monthlySchedules.length,
           todayConsultations: todaySchedules.length,
           weeklyConsultations: weeklySchedules.length,
-          upcomingConsultations: upcomingSchedules,
+          upcomingConsultations: [...todaySchedules, ...upcomingSchedules], // 오늘의 상담도 포함
           recentActivities: recentActivities
         }));
         

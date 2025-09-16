@@ -159,59 +159,6 @@ const SummaryPanels = ({ user, consultationData }) => {
         </div>
       )}
       
-      
-      {/* 상담 일정 (상담사 전용) */}
-      {user?.role === 'CONSULTANT' && (
-        <div className={`${SUMMARY_PANELS_CSS.PANEL} consultation-schedule`}>
-          <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
-            <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
-              <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} ${DASHBOARD_ICONS.CALENDAR}`}></i>
-              {DASHBOARD_LABELS.CONSULTATION_SCHEDULE}
-            </h3>
-          </div>
-          <div className={SUMMARY_PANELS_CSS.PANEL_CONTENT}>
-            <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
-              <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-                <i className={DASHBOARD_ICONS.CLOCK}></i>
-              </div>
-              <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
-                <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.UPCOMING_CONSULTATIONS}</div>
-                <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
-                  <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#495057' }}>{upcomingCount}건</div>
-                  <div style={{ fontSize: '0.85em', color: '#6c757d', marginTop: '4px' }}>
-                    예정된 상담 건수
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
-              <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-                <i className={DASHBOARD_ICONS.CALENDAR_CHECK}></i>
-              </div>
-              <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
-                <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.THIS_WEEK_CONSULTATIONS}</div>
-                <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
-                  <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#495057' }}>{weeklyCount}건</div>
-                  {consultationData?.weeklyConsultations > 0 && (
-                    <div style={{ 
-                      fontSize: '0.85em', 
-                      color: '#6c757d', 
-                      marginTop: '6px',
-                      padding: '6px 10px',
-                      backgroundColor: '#fdf2f8',
-                      borderRadius: '6px',
-                      border: '1px solid #fce7f3',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                    }}>
-                      이번 주 상담 일정
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 상담 통계 (상담사 전용) */}
       {user?.role === 'CONSULTANT' && (

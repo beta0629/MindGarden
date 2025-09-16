@@ -136,7 +136,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setTitle(title);
         schedule.setDescription(description);
         schedule.setScheduleType(ScheduleConstants.TYPE_CONSULTATION);
-        schedule.setStatus(ScheduleConstants.STATUS_BOOKED);
+        schedule.setStatus(ScheduleStatus.BOOKED);
         
         Schedule savedSchedule = scheduleRepository.save(schedule);
         
@@ -177,7 +177,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setTitle(title);
         schedule.setDescription(description);
         schedule.setScheduleType(ScheduleConstants.TYPE_CONSULTATION);
-        schedule.setStatus(ScheduleConstants.STATUS_BOOKED);
+        schedule.setStatus(ScheduleStatus.BOOKED);
         schedule.setConsultationType(consultationType); // 상담 유형 설정
         schedule.setBranchCode(branchCode); // 지점코드 설정
         
@@ -225,7 +225,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         schedule.setTitle(title);
         schedule.setDescription(description);
         schedule.setScheduleType(ScheduleConstants.TYPE_CONSULTATION);
-        schedule.setStatus(ScheduleConstants.STATUS_BOOKED);
+        schedule.setStatus(ScheduleStatus.BOOKED);
         schedule.setNotes("상담 유형: " + consultationType.getDisplayName() + " (" + consultationType.getDefaultDurationMinutes() + "분)");
         
         Schedule savedSchedule = scheduleRepository.save(schedule);
@@ -296,7 +296,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     public Schedule cancelSchedule(Long scheduleId, String reason) {
         log.info("❌ 스케줄 취소: ID {}, 사유: {}", scheduleId, reason);
         Schedule schedule = findById(scheduleId);
-        schedule.setStatus(ScheduleConstants.STATUS_CANCELLED);
+        schedule.setStatus(ScheduleStatus.CANCELLED);
         schedule.setDescription(reason);
         return scheduleRepository.save(schedule);
     }
@@ -468,7 +468,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         // 이미 예약된 시간 계산
         List<Schedule> existingSchedules = findByConsultantIdAndDate(consultantId, date);
         int usedMinutes = existingSchedules.stream()
-            .filter(s -> ScheduleConstants.STATUS_BOOKED.equals(s.getStatus()) || ScheduleConstants.STATUS_IN_PROGRESS.equals(s.getStatus()))
+            .filter(s -> ScheduleStatus.BOOKED.equals(s.getStatus()))
             .mapToInt(s -> {
                 if (s.getStartTime() != null && s.getEndTime() != null) {
                     return (int) ChronoUnit.MINUTES.between(s.getStartTime(), s.getEndTime());
@@ -490,9 +490,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalSchedules", schedules.size());
-        stats.put("bookedSchedules", schedules.stream().filter(s -> ScheduleConstants.STATUS_BOOKED.equals(s.getStatus())).count());
-        stats.put("completedSchedules", schedules.stream().filter(s -> ScheduleConstants.STATUS_COMPLETED.equals(s.getStatus())).count());
-        stats.put("cancelledSchedules", schedules.stream().filter(s -> ScheduleConstants.STATUS_CANCELLED.equals(s.getStatus())).count());
+        stats.put("bookedSchedules", schedules.stream().filter(s -> ScheduleStatus.BOOKED.equals(s.getStatus())).count());
+        stats.put("completedSchedules", schedules.stream().filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus())).count());
+        stats.put("cancelledSchedules", schedules.stream().filter(s -> ScheduleStatus.CANCELLED.equals(s.getStatus())).count());
         
         return stats;
     }
@@ -505,9 +505,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalSchedules", schedules.size());
-        stats.put("bookedSchedules", schedules.stream().filter(s -> ScheduleConstants.STATUS_BOOKED.equals(s.getStatus())).count());
-        stats.put("completedSchedules", schedules.stream().filter(s -> ScheduleConstants.STATUS_COMPLETED.equals(s.getStatus())).count());
-        stats.put("cancelledSchedules", schedules.stream().filter(s -> ScheduleConstants.STATUS_CANCELLED.equals(s.getStatus())).count());
+        stats.put("bookedSchedules", schedules.stream().filter(s -> ScheduleStatus.BOOKED.equals(s.getStatus())).count());
+        stats.put("completedSchedules", schedules.stream().filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus())).count());
+        stats.put("cancelledSchedules", schedules.stream().filter(s -> ScheduleStatus.CANCELLED.equals(s.getStatus())).count());
         
         return stats;
     }
@@ -620,62 +620,55 @@ public class ScheduleServiceImpl implements ScheduleService {
             
             // 상태별 스케줄 수 (날짜 범위 적용)
             log.info("📊 상태별 스케줄 수 조회 중...");
-            long bookedSchedules, confirmedSchedules, completedSchedules, cancelledSchedules, inProgressSchedules;
+            long bookedSchedules, completedSchedules, cancelledSchedules, inProgressSchedules;
             
             if (start != null && end != null) {
-                bookedSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_BOOKED, start, end);
-                confirmedSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_CONFIRMED, start, end);
-                completedSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_COMPLETED, start, end);
-                cancelledSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_CANCELLED, start, end);
-                inProgressSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_IN_PROGRESS, start, end);
+                bookedSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.BOOKED.name(), start, end);
+                completedSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.COMPLETED.name(), start, end);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.CANCELLED.name(), start, end);
+                inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else if (start != null) {
-                bookedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleConstants.STATUS_BOOKED, start);
-                confirmedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleConstants.STATUS_CONFIRMED, start);
-                completedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleConstants.STATUS_COMPLETED, start);
-                cancelledSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleConstants.STATUS_CANCELLED, start);
-                inProgressSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleConstants.STATUS_IN_PROGRESS, start);
+                bookedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleStatus.BOOKED.name(), start);
+                completedSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleStatus.COMPLETED.name(), start);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateGreaterThanEqual(ScheduleStatus.CANCELLED.name(), start);
+                inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else if (end != null) {
-                bookedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleConstants.STATUS_BOOKED, end);
-                confirmedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleConstants.STATUS_CONFIRMED, end);
-                completedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleConstants.STATUS_COMPLETED, end);
-                cancelledSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleConstants.STATUS_CANCELLED, end);
-                inProgressSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleConstants.STATUS_IN_PROGRESS, end);
+                bookedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleStatus.BOOKED.name(), end);
+                completedSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleStatus.COMPLETED.name(), end);
+                cancelledSchedules = scheduleRepository.countByStatusAndDateLessThanEqual(ScheduleStatus.CANCELLED.name(), end);
+                inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             } else {
-                bookedSchedules = scheduleRepository.countByStatus(ScheduleConstants.STATUS_BOOKED);
-                confirmedSchedules = scheduleRepository.countByStatus(ScheduleConstants.STATUS_CONFIRMED);
-                completedSchedules = scheduleRepository.countByStatus(ScheduleConstants.STATUS_COMPLETED);
-                cancelledSchedules = scheduleRepository.countByStatus(ScheduleConstants.STATUS_CANCELLED);
-                inProgressSchedules = scheduleRepository.countByStatus(ScheduleConstants.STATUS_IN_PROGRESS);
+                bookedSchedules = scheduleRepository.countByStatus(ScheduleStatus.BOOKED.name());
+                completedSchedules = scheduleRepository.countByStatus(ScheduleStatus.COMPLETED.name());
+                cancelledSchedules = scheduleRepository.countByStatus(ScheduleStatus.CANCELLED.name());
+                inProgressSchedules = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             }
             
             statistics.put("bookedSchedules", bookedSchedules);
-            statistics.put("confirmedSchedules", confirmedSchedules);
             statistics.put("completedSchedules", completedSchedules);
             statistics.put("cancelledSchedules", cancelledSchedules);
             statistics.put("inProgressSchedules", inProgressSchedules);
             
-            log.info("📊 상태별 스케줄 수 - 예약: {}, 확정: {}, 완료: {}, 취소: {}, 진행중: {}", 
-                    bookedSchedules, confirmedSchedules, completedSchedules, cancelledSchedules, inProgressSchedules);
+            log.info("📊 상태별 스케줄 수 - 예약: {}, 완료: {}, 취소: {}, 진행중: {}", 
+                    bookedSchedules, completedSchedules, cancelledSchedules, inProgressSchedules);
             
             // 오늘의 통계
             LocalDate today = LocalDate.now();
             log.info("📊 오늘의 통계 조회 중... (날짜: {})", today);
             long totalToday = scheduleRepository.countByDate(today);
-            long bookedToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_BOOKED);
-            long confirmedToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_CONFIRMED);
-            long completedToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_COMPLETED);
-            long cancelledToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_CANCELLED);
-            long inProgressToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_IN_PROGRESS);
+            long bookedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.BOOKED.name());
+            long completedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.COMPLETED.name());
+            long cancelledToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.CANCELLED.name());
+            long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
             
             statistics.put("totalToday", totalToday);
             statistics.put("bookedToday", bookedToday);
-            statistics.put("confirmedToday", confirmedToday);
             statistics.put("completedToday", completedToday);
             statistics.put("cancelledToday", cancelledToday);
             statistics.put("inProgressToday", inProgressToday);
             
-            log.info("📊 오늘의 통계 - 총: {}, 예약: {}, 확정: {}, 완료: {}, 취소: {}, 진행중: {}", 
-                    totalToday, bookedToday, confirmedToday, completedToday, cancelledToday, inProgressToday);
+            log.info("📊 오늘의 통계 - 총: {}, 예약: {}, 완료: {}, 취소: {}, 진행중: {}", 
+                    totalToday, bookedToday, completedToday, cancelledToday, inProgressToday);
             
             // 추가 상세 통계
             log.info("📊 추가 상세 통계 조회 중...");
@@ -708,7 +701,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             
             // 상담 완료율 통계
             long totalSchedulesInPeriod = scheduleRepository.countByDateBetween(thisMonthStart, today);
-            long completedSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_COMPLETED, thisMonthStart, today);
+            long completedSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.COMPLETED.name(), thisMonthStart, today);
             double completionRate = totalSchedulesInPeriod > 0 ? ((double) completedSchedulesInPeriod / totalSchedulesInPeriod) * 100 : 0;
             
             statistics.put("totalSchedulesInPeriod", totalSchedulesInPeriod);
@@ -716,7 +709,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             statistics.put("completionRate", Math.round(completionRate * 100.0) / 100.0);
             
             // 취소율 통계
-            long cancelledSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_CANCELLED, thisMonthStart, today);
+            long cancelledSchedulesInPeriod = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.CANCELLED.name(), thisMonthStart, today);
             double cancellationRate = totalSchedulesInPeriod > 0 ? ((double) cancelledSchedulesInPeriod / totalSchedulesInPeriod) * 100 : 0;
             
             statistics.put("cancelledSchedulesInPeriod", cancelledSchedulesInPeriod);
@@ -725,8 +718,8 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 주간 통계 (최근 7일)
             LocalDate weekAgo = today.minusDays(7);
             long weeklySchedules = scheduleRepository.countByDateBetween(weekAgo, today);
-            long weeklyCompleted = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_COMPLETED, weekAgo, today);
-            long weeklyCancelled = scheduleRepository.countByStatusAndDateBetween(ScheduleConstants.STATUS_CANCELLED, weekAgo, today);
+            long weeklyCompleted = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.COMPLETED.name(), weekAgo, today);
+            long weeklyCancelled = scheduleRepository.countByStatusAndDateBetween(ScheduleStatus.CANCELLED.name(), weekAgo, today);
             
             statistics.put("weeklySchedules", weeklySchedules);
             statistics.put("weeklyCompleted", weeklyCompleted);
@@ -759,24 +752,20 @@ public class ScheduleServiceImpl implements ScheduleService {
         statistics.put("totalToday", totalToday);
         
         // 오늘의 완료된 상담 수
-        long completedToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_COMPLETED);
+        long completedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.COMPLETED.name());
         statistics.put("completedToday", completedToday);
         
         // 오늘의 진행중인 상담 수
-        long inProgressToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_IN_PROGRESS);
+        long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
         statistics.put("inProgressToday", inProgressToday);
         
         // 오늘의 취소된 상담 수
-        long cancelledToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_CANCELLED);
+        long cancelledToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.CANCELLED.name());
         statistics.put("cancelledToday", cancelledToday);
         
         // 오늘의 예약된 상담 수
-        long bookedToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_BOOKED);
+        long bookedToday = scheduleRepository.countByDateAndStatus(today, ScheduleStatus.BOOKED.name());
         statistics.put("bookedToday", bookedToday);
-        
-        // 오늘의 확정된 상담 수
-        long confirmedToday = scheduleRepository.countByDateAndStatus(today, ScheduleConstants.STATUS_CONFIRMED);
-        statistics.put("confirmedToday", confirmedToday);
         
         log.info("✅ 오늘의 스케줄 통계 조회 완료: 총 {}개, 완료 {}개, 진행중 {}개, 취소 {}개", 
                 totalToday, completedToday, inProgressToday, cancelledToday);
@@ -1089,7 +1078,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             .date(schedule.getDate())
             .startTime(schedule.getStartTime())
             .endTime(schedule.getEndTime())
-            .status(convertStatusToKorean(schedule.getStatus()))
+            .status(convertStatusToKorean(schedule.getStatus().name()))
             .scheduleType(convertScheduleTypeToKorean(schedule.getScheduleType()))
             .consultationType(convertConsultationTypeToKorean(schedule.getConsultationType()))
             .title(schedule.getTitle())
@@ -1166,8 +1155,8 @@ public class ScheduleServiceImpl implements ScheduleService {
                 try {
                     // 최신 버전으로 다시 조회하여 버전 충돌 방지
                     Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleConstants.STATUS_CONFIRMED.equals(latestSchedule.getStatus())) {
-                        latestSchedule.setStatus(ScheduleConstants.STATUS_COMPLETED);
+                    if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
+                        latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                         latestSchedule.setUpdatedAt(LocalDateTime.now());
                         scheduleRepository.save(latestSchedule);
                         completedCount++;
@@ -1206,8 +1195,8 @@ public class ScheduleServiceImpl implements ScheduleService {
             for (Schedule schedule : pastConfirmedSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleConstants.STATUS_CONFIRMED.equals(latestSchedule.getStatus())) {
-                        latestSchedule.setStatus(ScheduleConstants.STATUS_COMPLETED);
+                    if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
+                        latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                         latestSchedule.setUpdatedAt(LocalDateTime.now());
                         scheduleRepository.save(latestSchedule);
                         completedCount++;

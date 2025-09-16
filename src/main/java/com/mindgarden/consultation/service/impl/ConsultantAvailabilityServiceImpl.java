@@ -384,6 +384,14 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
                     }
                     break;
                     
+                case MORNING_HALF_DAY:
+                    // 오전반차: 09:00-14:00
+                    if (startTime.isBefore(java.time.LocalTime.of(14, 0))) {
+                        log.warn("🚫 오전반차: 상담사 {}, 날짜 {}, 시간 {}", consultantId, date, startTime);
+                        return true;
+                    }
+                    break;
+                    
                 case MORNING_HALF_1:
                     // 오전 반반차 1: 09:00-11:00
                     if (startTime.isBefore(java.time.LocalTime.of(11, 0))) {
@@ -404,6 +412,14 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
                     // 오후 휴가: 14:00-18:00
                     if (!startTime.isBefore(java.time.LocalTime.of(14, 0))) {
                         log.warn("🚫 오후 휴가: 상담사 {}, 날짜 {}, 시간 {}", consultantId, date, startTime);
+                        return true;
+                    }
+                    break;
+                    
+                case AFTERNOON_HALF_DAY:
+                    // 오후반차: 14:00-18:00
+                    if (!startTime.isBefore(java.time.LocalTime.of(14, 0))) {
+                        log.warn("🚫 오후반차: 상담사 {}, 날짜 {}, 시간 {}", consultantId, date, startTime);
                         return true;
                     }
                     break;
@@ -464,12 +480,16 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
         switch (typeCode) {
             case "MORNING":
                 return "오전 휴가 (09:00-13:00)";
+            case "MORNING_HALF_DAY":
+                return "오전반차 (09:00-14:00)";
             case "MORNING_HALF_1":
                 return "오전 반반차 1 (09:00-11:00)";
             case "MORNING_HALF_2":
                 return "오전 반반차 2 (11:00-13:00)";
             case "AFTERNOON":
                 return "오후 휴가 (14:00-18:00)";
+            case "AFTERNOON_HALF_DAY":
+                return "오후반차 (14:00-18:00)";
             case "AFTERNOON_HALF_1":
                 return "오후 반반차 1 (14:00-16:00)";
             case "AFTERNOON_HALF_2":

@@ -84,9 +84,11 @@ public class Vacation {
      */
     public enum VacationType {
         MORNING("오전 휴가 (09:00-13:00)"),
+        MORNING_HALF_DAY("오전반차 (09:00-14:00)"),
         MORNING_HALF_1("오전 반반차 1 (09:00-11:00)"),
         MORNING_HALF_2("오전 반반차 2 (11:00-13:00)"),
         AFTERNOON("오후 휴가 (14:00-18:00)"),
+        AFTERNOON_HALF_DAY("오후반차 (14:00-18:00)"),
         AFTERNOON_HALF_1("오후 반반차 1 (14:00-16:00)"),
         AFTERNOON_HALF_2("오후 반반차 2 (16:00-18:00)"),
         CUSTOM_TIME("사용자 정의 휴가"),

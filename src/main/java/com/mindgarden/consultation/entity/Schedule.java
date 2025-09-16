@@ -3,6 +3,7 @@ package com.mindgarden.consultation.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import com.mindgarden.consultation.constant.ScheduleStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,7 +13,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import com.mindgarden.consultation.constant.ScheduleStatus;
 
 /**
  * 상담 일정 엔티티
@@ -143,7 +143,7 @@ public class Schedule extends BaseEntity {
     // 생성자
     public Schedule() {
         super();
-        this.status = "AVAILABLE";
+        this.status = ScheduleStatus.AVAILABLE;
         this.priority = "NORMAL";
         this.isRecurring = false;
         this.isAllDay = false;
@@ -156,7 +156,7 @@ public class Schedule extends BaseEntity {
      * 일정 예약
      */
     public void book(Long consultationId, Long clientId) {
-        this.status = "BOOKED";
+        this.status = ScheduleStatus.BOOKED;
         this.consultationId = consultationId;
         this.clientId = clientId;
     }
@@ -165,7 +165,7 @@ public class Schedule extends BaseEntity {
      * 일정 차단 (상담 불가)
      */
     public void block(String reason) {
-        this.status = "BLOCKED";
+        this.status = ScheduleStatus.VACATION;
         this.description = reason;
     }
     
@@ -173,7 +173,7 @@ public class Schedule extends BaseEntity {
      * 휴식 시간 설정
      */
     public void setBreak(String title, String description) {
-        this.status = "BREAK";
+        this.status = ScheduleStatus.VACATION;
         this.scheduleType = "BREAK";
         this.title = title;
         this.description = description;
@@ -193,28 +193,28 @@ public class Schedule extends BaseEntity {
      * 일정 가능 여부 확인
      */
     public boolean isAvailable() {
-        return "AVAILABLE".equals(status);
+        return ScheduleStatus.AVAILABLE.equals(status);
     }
     
     /**
      * 일정 예약 여부 확인
      */
     public boolean isBooked() {
-        return "BOOKED".equals(status);
+        return ScheduleStatus.BOOKED.equals(status);
     }
     
     /**
      * 일정 차단 여부 확인
      */
     public boolean isBlocked() {
-        return "BLOCKED".equals(status);
+        return ScheduleStatus.VACATION.equals(status);
     }
     
     /**
      * 휴식 시간 여부 확인
      */
     public boolean isBreak() {
-        return "BREAK".equals(status);
+        return ScheduleStatus.VACATION.equals(status) && "BREAK".equals(scheduleType);
     }
     
     /**
@@ -275,11 +275,11 @@ public class Schedule extends BaseEntity {
         this.endTime = endTime;
     }
     
-    public String getStatus() {
+    public ScheduleStatus getStatus() {
         return status;
     }
     
-    public void setStatus(String status) {
+    public void setStatus(ScheduleStatus status) {
         this.status = status;
     }
     
@@ -468,7 +468,7 @@ public class Schedule extends BaseEntity {
                 ", date=" + date +
                 ", startTime=" + startTime +
                 ", endTime=" + endTime +
-                ", status='" + status + '\'' +
+                ", status=" + status +
                 ", title='" + title + '\'' +
                 ", scheduleType='" + scheduleType + '\'' +
                 ", isRecurring=" + isRecurring +

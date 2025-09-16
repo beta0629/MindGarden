@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
-import ScheduleCalendar from './ScheduleCalendar';
+import UnifiedScheduleComponent from './UnifiedScheduleComponent';
 import ConsultantStatus from './ConsultantStatus';
 import TodayStats from './TodayStats';
 import { useSession } from '../../contexts/SessionContext';
@@ -119,7 +119,8 @@ const SchedulePage = ({ user: propUser }) => {
 
             <div className="schedule-content">
                 <div className="schedule-main">
-                    <ScheduleCalendar 
+                    <UnifiedScheduleComponent 
+                        user={displayUser}
                         userRole={userRole}
                         userId={isAdmin() ? 0 : userId}
                     />

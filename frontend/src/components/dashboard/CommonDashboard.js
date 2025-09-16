@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
@@ -33,6 +33,8 @@ const CommonDashboard = ({ user: propUser }) => {
 
   // 세션 데이터 및 상담 데이터 로드
   useEffect(() => {
+    let isMounted = true; // 컴포넌트 마운트 상태 추적
+    
     const loadDashboardData = async () => {
       try {
         console.log('🔍 대시보드 데이터 로드 시작...');
@@ -70,8 +72,11 @@ const CommonDashboard = ({ user: propUser }) => {
           console.log('👤 현재 사용자 role:', currentUser.role, '이름:', currentUser.name || currentUser.nickname || currentUser.username);
         }
         
-        console.log('✅ 사용자 정보 설정:', currentUser);
-        setUser(currentUser);
+        // 컴포넌트가 마운트된 상태에서만 상태 업데이트
+        if (isMounted) {
+          console.log('✅ 사용자 정보 설정:', currentUser);
+          setUser(currentUser);
+        }
         
         // 역할별 리다이렉션 체크 (CLIENT, CONSULTANT만 CommonDashboard 사용)
         if (currentUser?.role && !['CLIENT', 'CONSULTANT'].includes(currentUser.role)) {
@@ -103,13 +108,20 @@ const CommonDashboard = ({ user: propUser }) => {
       } catch (error) {
         console.error('❌ 대시보드 데이터 로드 오류:', error);
       } finally {
-        console.log('🏁 데이터 로딩 상태 해제');
-        setIsLoading(false);
+        if (isMounted) {
+          console.log('🏁 데이터 로딩 상태 해제');
+          setIsLoading(false);
+        }
       }
     };
 
     loadDashboardData();
-  }, [isLoggedIn, sessionLoading]); // propUser, sessionUser 제거하여 무한루프 방지
+    
+    // cleanup 함수
+    return () => {
+      isMounted = false;
+    };
+  }, [isLoggedIn, sessionLoading, propUser, sessionUser, loadClientConsultationData, loadConsultantConsultationData, loadAdminSystemData]); // 메모이제이션된 함수들 포함
 
   // 현재 시간 업데이트
   useEffect(() => {
@@ -202,7 +214,7 @@ const CommonDashboard = ({ user: propUser }) => {
   };
 
   // 내담자 상담 데이터 로드
-  const loadClientConsultationData = async (userId) => {
+  const loadClientConsultationData = useCallback(async (userId) => {
     try {
       console.log('📊 내담자 상담 데이터 로드 시작 - 사용자 ID:', userId);
       
@@ -359,10 +371,10 @@ const CommonDashboard = ({ user: propUser }) => {
         }
       }));
     }
-  };
+  }, []);
 
   // 상담사 상담 데이터 로드
-  const loadConsultantConsultationData = async (userId) => {
+  const loadConsultantConsultationData = useCallback(async (userId) => {
     try {
       console.log('📊 상담사 상담 데이터 로드 시작 - 사용자 ID:', userId);
       
@@ -517,10 +529,10 @@ const CommonDashboard = ({ user: propUser }) => {
         rating: 0
       }));
     }
-  };
+  }, []);
 
   // 관리자 시스템 데이터 로드
-  const loadAdminSystemData = async () => {
+  const loadAdminSystemData = useCallback(async () => {
     try {
       console.log('📊 관리자 시스템 데이터 로드 시작');
       
@@ -623,8 +635,7 @@ const CommonDashboard = ({ user: propUser }) => {
         activeMappings: 0
       }));
     }
-  };
-
+  }, []);
 
   // 일정 새로고침
   const refreshSchedule = async () => {

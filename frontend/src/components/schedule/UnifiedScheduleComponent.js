@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -82,7 +82,7 @@ const UnifiedScheduleComponent = ({
   };
 
   // 스케줄 데이터 로드
-  const loadSchedules = async () => {
+  const loadSchedules = useCallback(async () => {
     if (!userId) return;
     
     try {
@@ -112,10 +112,10 @@ const UnifiedScheduleComponent = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, userRole]);
 
   // 휴가 데이터 로드
-  const loadVacations = async () => {
+  const loadVacations = useCallback(async () => {
     if (!canManageVacation()) return;
     
     try {
@@ -126,10 +126,10 @@ const UnifiedScheduleComponent = ({
     } catch (error) {
       console.error('휴가 데이터 로드 오류:', error);
     }
-  };
+  }, [userRole]);
 
   // 클라이언트 데이터 로드
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     if (!canViewClientInfo()) return;
     
     try {
@@ -140,7 +140,7 @@ const UnifiedScheduleComponent = ({
     } catch (error) {
       console.error('클라이언트 데이터 로드 오류:', error);
     }
-  };
+  }, [userRole]);
 
   // 초기화
   useEffect(() => {
@@ -157,7 +157,7 @@ const UnifiedScheduleComponent = ({
     };
     
     initialize();
-  }, [userId, userRole, sessionLoading]);
+  }, [sessionLoading, loadSchedules, loadVacations, loadClients]);
 
   // 이벤트 핸들러들
   const handleDateClick = async (info) => {

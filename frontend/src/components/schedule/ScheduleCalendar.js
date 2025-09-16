@@ -267,7 +267,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
             loadConsultants();
         }
-    }, [userRole, selectedConsultantId]);
+    }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole, selectedConsultantId]);
 
     /**
      * 휴가 데이터를 캘린더 이벤트로 변환

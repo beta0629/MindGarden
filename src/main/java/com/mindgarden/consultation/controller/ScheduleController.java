@@ -476,9 +476,18 @@ public class ScheduleController {
             // 상태 업데이트
             if (updateData.containsKey("status")) {
                 String newStatus = (String) updateData.get("status");
-                existingSchedule.setStatus(newStatus);
-                existingSchedule.setUpdatedAt(java.time.LocalDateTime.now());
-                log.info("📝 스케줄 상태 변경: {} -> {}", existingSchedule.getStatus(), newStatus);
+                try {
+                    ScheduleStatus statusEnum = ScheduleStatus.valueOf(newStatus);
+                    existingSchedule.setStatus(statusEnum);
+                    existingSchedule.setUpdatedAt(java.time.LocalDateTime.now());
+                    log.info("📝 스케줄 상태 변경: {} -> {}", existingSchedule.getStatus(), statusEnum);
+                } catch (IllegalArgumentException e) {
+                    log.warn("⚠️ 유효하지 않은 스케줄 상태: {}", newStatus);
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "유효하지 않은 스케줄 상태입니다: " + newStatus
+                    ));
+                }
             }
             
             // 상담 유형 업데이트
@@ -1099,7 +1108,12 @@ public class ScheduleController {
             schedule.setDescription(data.get("description").toString());
         }
         if (data.get("status") != null) {
-            schedule.setStatus(data.get("status").toString());
+            try {
+                schedule.setStatus(ScheduleStatus.valueOf(data.get("status").toString()));
+            } catch (IllegalArgumentException e) {
+                log.warn("⚠️ 유효하지 않은 스케줄 상태: {}", data.get("status"));
+                schedule.setStatus(ScheduleStatus.AVAILABLE); // 기본값으로 설정
+            }
         }
         
         return schedule;
@@ -1150,7 +1164,7 @@ public class ScheduleController {
                 // 유효한 상태인지 공통코드로 확인
                 if (isValidScheduleStatus(status)) {
                     schedules = schedules.stream()
-                        .filter(schedule -> status.equals(schedule.getStatus()))
+                        .filter(schedule -> status.equals(schedule.getStatus().name()))
                         .collect(Collectors.toList());
                 } else {
                     log.warn("⚠️ 유효하지 않은 스케줄 상태: {}", status);
@@ -1267,7 +1281,7 @@ public class ScheduleController {
             .date(schedule.getDate())
             .startTime(schedule.getStartTime())
             .endTime(schedule.getEndTime())
-            .status(schedule.getStatus())
+            .status(schedule.getStatus().name())
             .scheduleType(schedule.getScheduleType())
             .consultationType(schedule.getConsultationType())
             .title(schedule.getTitle())

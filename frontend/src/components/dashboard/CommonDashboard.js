@@ -189,7 +189,7 @@ const CommonDashboard = ({ user: propUser }) => {
         }
       }));
     }
-  }, []);
+  }, [user?.id]);
 
   // 상담사 상담 데이터 로드
   const loadConsultantConsultationData = useCallback(async (userId) => {
@@ -347,7 +347,7 @@ const CommonDashboard = ({ user: propUser }) => {
         rating: 0
       }));
     }
-  }, []);
+  }, [user?.id]);
 
   // 관리자 시스템 데이터 로드
   const loadAdminSystemData = useCallback(async () => {
@@ -453,7 +453,7 @@ const CommonDashboard = ({ user: propUser }) => {
         activeMappings: 0
       }));
     }
-  }, []);
+  }, [user?.id]);
 
   // 세션 데이터 및 상담 데이터 로드
   useEffect(() => {
@@ -519,7 +519,9 @@ const CommonDashboard = ({ user: propUser }) => {
         } else if (currentUser?.role === 'CONSULTANT') {
           console.log('📊 상담사 상담 데이터 로드 시작');
           await loadConsultantConsultationData(currentUser.id);
-        } else if (currentUser?.role === 'ADMIN' || currentUser?.role === 'BRANCH_SUPER_ADMIN') {
+        } else if (currentUser?.role === 'ADMIN' || currentUser?.role === 'BRANCH_SUPER_ADMIN' || 
+                   currentUser?.role === 'BRANCH_MANAGER' || currentUser?.role === 'HQ_ADMIN' || 
+                   currentUser?.role === 'SUPER_HQ_ADMIN' || currentUser?.role === 'HQ_MASTER') {
           console.log('📊 관리자 시스템 데이터 로드 시작');
           await loadAdminSystemData();
         }
@@ -545,7 +547,7 @@ const CommonDashboard = ({ user: propUser }) => {
     return () => {
       isMounted = false;
     };
-  }, [isLoggedIn, sessionLoading, propUser, sessionUser, loadClientConsultationData, loadConsultantConsultationData, loadAdminSystemData]); // 메모이제이션된 함수들 포함
+  }, [isLoggedIn, sessionLoading, propUser?.id, sessionUser?.id, propUser?.role, sessionUser?.role, loadClientConsultationData, loadConsultantConsultationData, loadAdminSystemData]); // 함수 의존성 추가
 
   // 현재 시간 업데이트
   useEffect(() => {
@@ -563,7 +565,7 @@ const CommonDashboard = ({ user: propUser }) => {
     const interval = setInterval(updateTime, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, []); // 빈 의존성 배열로 변경 (시간 업데이트는 독립적)
 
   // 역할별 대시보드 제목
   const getDashboardTitle = () => {

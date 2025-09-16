@@ -7,30 +7,18 @@ import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import LoadingSpinner from '../common/LoadingSpinner';
-import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import './ScheduleCalendar.css';
 
 /**
- * 통합된 스케줄 관리 컴포넌트
- * - 모든 역할(상담사, 관리자, 클라이언트)에서 사용
- * - 역할별 권한에 따른 기능 제한
- * - 중앙화된 스케줄 관리
+ * FullCalendar 기반 스케줄 관리 컴포넌트
  * 
  * @author MindGarden
- * @version 2.0.0
- * @since 2025-09-16
+ * @version 1.0.0
+ * @since 2024-12-19
  */
-const UnifiedScheduleComponent = ({ 
-  user: propUser, 
-  userRole: propUserRole, 
-  userId: propUserId,
-  view = 'calendar' // 'calendar', 'list'
-}) => {
-  // 사용자 정보 결정 (prop > null)
-  const userRole = propUserRole || 'CLIENT';
-  const userId = propUserId;
+const ScheduleCalendar = ({ userRole, userId }) => {
     const [events, setEvents] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedInfo, setSelectedInfo] = useState(null);
@@ -460,7 +448,7 @@ const UnifiedScheduleComponent = ({
             isModalOpen, 
             isVacationModalOpen 
         });
-        console.log('📅 UnifiedScheduleComponent 컴포넌트에서 날짜 클릭 처리');
+        console.log('📅 ScheduleCalendar 컴포넌트에서 날짜 클릭 처리');
         
         // 과거 날짜인지 확인
         const clickedDate = new Date(info.date);
@@ -470,20 +458,9 @@ const UnifiedScheduleComponent = ({
         
         const isPastDate = clickedDate < today;
         
-        // 상담사는 휴가 등록만 가능
-        if (userRole === 'CONSULTANT') {
-            if (isPastDate) {
-                alert('과거 날짜에는 휴가를 등록할 수 없습니다.');
-                return;
-            }
-            
-            setSelectedDate(info.date);
-            setSelectedInfo(info);
-            console.log('📅 휴가 등록 모달 열기');
-            setIsVacationModalOpen(true);
-        }
-        // 관리자는 스케줄과 휴가 모두 등록 가능
-        else if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
+        // 관리자 또는 상담사만 스케줄 생성 가능
+        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'CONSULTANT') {
+            // 과거 날짜인 경우 새로운 스케줄 등록 불가 알림
             if (isPastDate) {
                 alert('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다.\n기존 스케줄을 클릭하여 조회하실 수 있습니다.');
                 return;
@@ -701,21 +678,10 @@ const UnifiedScheduleComponent = ({
     }, [loadSchedules]);
 
     return (
-        <SimpleLayout title="스케줄 관리">
-            <div className="schedule-calendar">
+        <div className="schedule-calendar">
             <div className="calendar-header">
+                <h2>📅 스케줄 관리</h2>
                 <div className="header-actions">
-                    {/* 상담사용 휴가 등록 버튼 */}
-                    {userRole === 'CONSULTANT' && (
-                        <button 
-                            onClick={() => setIsVacationModalOpen(true)}
-                            className="vacation-button"
-                            title="휴가 등록"
-                        >
-                            🏖️ 휴가 등록
-                        </button>
-                    )}
-                    
                     {/* 상담사 선택 (어드민/수퍼어드민만) */}
                     {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
                         <select
@@ -1015,7 +981,7 @@ const UnifiedScheduleComponent = ({
                 <VacationManagementModal
                     isOpen={isVacationModalOpen}
                     onClose={() => setIsVacationModalOpen(false)}
-                    selectedConsultant={userRole === 'CONSULTANT' ? { id: userId, name: '나' } : null}
+                    selectedConsultant={null}
                     userRole={userRole}
                     selectedDate={selectedDate}
                     onVacationUpdated={() => {
@@ -1024,12 +990,11 @@ const UnifiedScheduleComponent = ({
                     }}
                 />
             )}
-            </div>
-        </SimpleLayout>
+        </div>
     );
 };
 
-export default UnifiedScheduleComponent;
+export default ScheduleCalendar;
 
 // CSS 스타일
 const styles = `
@@ -1072,29 +1037,6 @@ const styles = `
 
 .refresh-button:active {
     background: #1d4ed8;
-    transform: translateY(0);
-}
-
-.vacation-button {
-    background: #f59e0b;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-right: 10px;
-}
-
-.vacation-button:hover {
-    background: #d97706;
-    transform: translateY(-1px);
-}
-
-.vacation-button:active {
-    background: #b45309;
     transform: translateY(0);
 }
 

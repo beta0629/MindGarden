@@ -242,10 +242,12 @@ const ROLE_DASHBOARD_MAP = {
   'CLIENT': '/client/dashboard',
   'CONSULTANT': '/consultant/dashboard',
   'ADMIN': '/admin/dashboard',
-  'BRANCH_BRANCH_SUPER_ADMIN': '/super_admin/dashboard',  // 지점 수퍼 관리자는 수퍼 어드민 대시보드로
+  'BRANCH_SUPER_ADMIN': '/super_admin/dashboard',  // 지점 수퍼 관리자는 수퍼 어드민 대시보드로
+  'BRANCH_MANAGER': '/admin/dashboard',  // 지점장은 관리자 대시보드로
   'HQ_ADMIN': '/erp/dashboard',  // 본사 관리자는 ERP 대시보드로
   'SUPER_HQ_ADMIN': '/super_admin/dashboard',  // 본사 고급 관리자는 수퍼 어드민 대시보드로
-  'HQ_MASTER': '/super_admin/dashboard'  // 본사 총관리자는 수퍼 어드민 대시보드로
+  'HQ_MASTER': '/super_admin/dashboard',  // 본사 총관리자는 수퍼 어드민 대시보드로
+  'HQ_SUPER_ADMIN': '/super_admin/dashboard'  // 본사 최고관리자는 수퍼 어드민 대시보드로
 };
 
 /**

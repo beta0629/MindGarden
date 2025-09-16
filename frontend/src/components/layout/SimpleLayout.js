@@ -12,6 +12,11 @@ const SimpleLayout = ({ children, title }) => {
       
       <main className="simple-main">
         <div className="simple-container">
+          {title && (
+            <div className="page-header">
+              <h1 className="page-title">{title}</h1>
+            </div>
+          )}
           {children}
         </div>
       </main>

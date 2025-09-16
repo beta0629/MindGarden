@@ -369,3 +369,22 @@
     text-align: center;
     margin-top: 8px;
 }
+
+/* 상담사용 안내 메시지 */
+.consultant-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #f0f9ff;
+    border: 1px solid #0ea5e9;
+    border-radius: 8px;
+    color: #0369a1;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.consultant-info i {
+    font-size: 16px;
+    color: #0ea5e9;
+}

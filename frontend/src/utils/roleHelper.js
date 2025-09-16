@@ -53,12 +53,13 @@ const getFallbackRoleData = () => {
     return {
         'CLIENT': { displayName: '내담자', displayNameEn: 'Client' },
         'CONSULTANT': { displayName: '상담사', displayNameEn: 'Consultant' },
-        'ADMIN': { displayName: '관리자', displayNameEn: 'Admin' },
+        'ADMIN': { displayName: '지점관리자', displayNameEn: 'Admin' },
         'BRANCH_SUPER_ADMIN': { displayName: '본점수퍼어드민', displayNameEn: 'Branch Super Admin' },
+        'BRANCH_MANAGER': { displayName: '지점장', displayNameEn: 'Branch Manager' },
         'HQ_ADMIN': { displayName: '헤드쿼터어드민', displayNameEn: 'HQ Admin' },
         'SUPER_HQ_ADMIN': { displayName: '본사고급관리자', displayNameEn: 'Super HQ Admin' },
         'HQ_MASTER': { displayName: '본사총관리자', displayNameEn: 'HQ Master' },
-        'BRANCH_MANAGER': { displayName: '지점장', displayNameEn: 'Branch Manager' }
+        'HQ_SUPER_ADMIN': { displayName: '본사최고관리자', displayNameEn: 'HQ Super Admin' }
     };
 };
 

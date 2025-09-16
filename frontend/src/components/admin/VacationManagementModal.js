@@ -54,7 +54,29 @@ const VacationManagementModal = ({
                 setLoadingCodes(true);
                 const response = await apiGet('/api/admin/common-codes/values?groupCode=VACATION_TYPE');
                 if (response && response.length > 0) {
-                    const options = response.map(code => ({
+                    // 원하는 휴가 유형만 필터링 (시간이 표시된 구체적인 옵션만)
+                    const allowedTypes = [
+                        'MORNING_HALF_DAY',  // 오전반차 (09:00-14:00)
+                        'AFTERNOON_HALF_DAY', // 오후반차 (14:00-18:00)
+                        'MORNING_HALF_1',    // 오전 반반차 1 (09:00-11:00)
+                        'MORNING_HALF_2',    // 오전 반반차 2 (11:00-13:00)
+                        'AFTERNOON_HALF_1',  // 오후 반반차 1 (14:00-16:00)
+                        'AFTERNOON_HALF_2',  // 오후 반반차 2 (16:00-18:00)
+                        'CUSTOM_TIME',       // 사용자 지정
+                        'ALL_DAY'            // 휴가 (하루 종일)
+                    ];
+                    
+                    const uniqueCodes = response.filter(code => 
+                        allowedTypes.includes(code.codeValue)
+                    );
+                    
+                    // 시간 순서대로 정렬
+                    const sortedCodes = uniqueCodes.sort((a, b) => {
+                        const order = allowedTypes.indexOf(a.codeValue) - allowedTypes.indexOf(b.codeValue);
+                        return order;
+                    });
+                    
+                    const options = sortedCodes.map(code => ({
                         value: code.codeValue,
                         label: code.codeLabel,
                         icon: code.icon,
@@ -65,16 +87,16 @@ const VacationManagementModal = ({
                 }
             } catch (error) {
                 console.error('휴가 유형 코드 로드 실패:', error);
-                // 실패 시 기본값 설정
+                // 실패 시 기본값 설정 (시간이 표시된 구체적인 옵션만)
                 setVacationTypeOptions([
-                    { value: 'ALL_DAY', label: '하루 종일', icon: '🏖️', color: '#ef4444', description: '하루 종일 휴가' },
-                    { value: 'MORNING', label: '오전 휴가', icon: '🌅', color: '#f59e0b', description: '오전 시간대 휴가 (09:00-13:00)' },
-                    { value: 'AFTERNOON', label: '오후 휴가', icon: '🌆', color: '#3b82f6', description: '오후 시간대 휴가 (14:00-18:00)' },
-                    { value: 'MORNING_HALF_1', label: '오전 반반차 1', icon: '☀️', color: '#fbbf24', description: '오전 첫 번째 반반차 (09:00-11:00)' },
-                    { value: 'MORNING_HALF_2', label: '오전 반반차 2', icon: '🌞', color: '#f59e0b', description: '오전 두 번째 반반차 (11:00-13:00)' },
-                    { value: 'AFTERNOON_HALF_1', label: '오후 반반차 1', icon: '🌤️', color: '#60a5fa', description: '오후 첫 번째 반반차 (14:00-16:00)' },
-                    { value: 'AFTERNOON_HALF_2', label: '오후 반반차 2', icon: '🌅', color: '#3b82f6', description: '오후 두 번째 반반차 (16:00-18:00)' },
-                    { value: 'CUSTOM_TIME', label: '사용자 정의', icon: '⏰', color: '#8b5cf6', description: '사용자가 직접 시간을 설정하는 휴가' }
+                    { value: 'MORNING_HALF_DAY', label: '오전반차 (09:00-14:00)', icon: '🌅', color: '#f59e0b', description: '오전반차 - 5시간' },
+                    { value: 'AFTERNOON_HALF_DAY', label: '오후반차 (14:00-18:00)', icon: '🌆', color: '#3b82f6', description: '오후반차 - 4시간' },
+                    { value: 'MORNING_HALF_1', label: '오전 반반차 1 (09:00-11:00)', icon: '☀️', color: '#fbbf24', description: '오전 첫 번째 반반차 (09:00-11:00)' },
+                    { value: 'MORNING_HALF_2', label: '오전 반반차 2 (11:00-13:00)', icon: '🌞', color: '#f59e0b', description: '오전 두 번째 반반차 (11:00-13:00)' },
+                    { value: 'AFTERNOON_HALF_1', label: '오후 반반차 1 (14:00-16:00)', icon: '🌤️', color: '#60a5fa', description: '오후 첫 번째 반반차 (14:00-16:00)' },
+                    { value: 'AFTERNOON_HALF_2', label: '오후 반반차 2 (16:00-18:00)', icon: '🌅', color: '#3b82f6', description: '오후 두 번째 반반차 (16:00-18:00)' },
+                    { value: 'CUSTOM_TIME', label: '사용자 지정', icon: '⏰', color: '#8b5cf6', description: '사용자가 직접 시간을 설정하는 휴가' },
+                    { value: 'ALL_DAY', label: '휴가', icon: '🏖️', color: '#ef4444', description: '하루 종일 휴가' }
                 ]);
             } finally {
                 setLoadingCodes(false);
@@ -164,13 +186,22 @@ const VacationManagementModal = ({
     useEffect(() => {
         if (isOpen) {
             console.log('🏖️ 모달이 열림 - 상담사 목록 로드 시작');
-            loadConsultants();
-            if (selectedConsultant) {
+            
+            // 상담사인 경우 자신의 ID를 자동 설정
+            if (userRole === 'CONSULTANT' && selectedConsultant) {
+                console.log('🏖️ 상담사 모드 - 자신의 ID 설정:', selectedConsultant.id);
                 setSelectedConsultantId(selectedConsultant.id);
                 loadVacations(selectedConsultant.id);
+            } else {
+                // 관리자인 경우 상담사 목록 로드
+                loadConsultants();
+                if (selectedConsultant) {
+                    setSelectedConsultantId(selectedConsultant.id);
+                    loadVacations(selectedConsultant.id);
+                }
             }
         }
-    }, [isOpen, selectedConsultant]);
+    }, [isOpen, selectedConsultant, userRole]);
 
     useEffect(() => {
         if (selectedConsultantId) {
@@ -178,10 +209,10 @@ const VacationManagementModal = ({
         }
     }, [selectedConsultantId]);
 
-    // 관리자 권한 확인
-    console.log('🏖️ 권한 확인:', { userRole, isAdmin: userRole === 'ADMIN', isSuperAdmin: userRole === 'BRANCH_SUPER_ADMIN' });
+    // 권한 확인 (관리자 또는 상담사)
+    console.log('🏖️ 권한 확인:', { userRole, isAdmin: userRole === 'ADMIN', isSuperAdmin: userRole === 'BRANCH_SUPER_ADMIN', isConsultant: userRole === 'CONSULTANT' });
     
-    if (userRole !== 'ADMIN' && userRole !== 'BRANCH_SUPER_ADMIN') {
+    if (userRole !== 'ADMIN' && userRole !== 'BRANCH_SUPER_ADMIN' && userRole !== 'CONSULTANT') {
         console.log('🏖️ 권한 없음 - 모달 렌더링하지 않음');
         return null;
     }
@@ -446,22 +477,34 @@ const VacationManagementModal = ({
                 </div>
 
                 <div className="modal-content">
-                    {/* 상담사 선택 */}
-                    <div className="form-group">
-                        <label>상담사 선택</label>
-                        <select
-                            value={selectedConsultantId || ''}
-                            onChange={(e) => setSelectedConsultantId(Number(e.target.value))}
-                            disabled={loading}
-                        >
-                            <option value="">상담사를 선택하세요</option>
-                            {consultants.map(consultant => (
-                                <option key={consultant.id} value={consultant.id}>
-                                    {consultant.name} ({consultant.email})
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    {/* 상담사 선택 (관리자만) */}
+                    {userRole !== 'CONSULTANT' && (
+                        <div className="form-group">
+                            <label>상담사 선택</label>
+                            <select
+                                value={selectedConsultantId || ''}
+                                onChange={(e) => setSelectedConsultantId(Number(e.target.value))}
+                                disabled={loading}
+                            >
+                                <option value="">상담사를 선택하세요</option>
+                                {consultants.map(consultant => (
+                                    <option key={consultant.id} value={consultant.id}>
+                                        {consultant.name} ({consultant.email})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                    
+                    {/* 상담사용 안내 메시지 */}
+                    {userRole === 'CONSULTANT' && (
+                        <div className="form-group">
+                            <div className="consultant-info">
+                                <i className="bi bi-person-circle"></i>
+                                <span>본인의 휴가를 등록합니다</span>
+                            </div>
+                        </div>
+                    )}
 
                     {selectedConsultantId && (
                         <>

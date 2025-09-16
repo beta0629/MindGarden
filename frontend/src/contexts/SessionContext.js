@@ -404,8 +404,8 @@ export const SessionProvider = ({ children }) => {
     hasRole: (role) => state.user?.role === role,
     hasAnyRole: (roles) => roles.includes(state.user?.role),
     isAdmin: () => state.user?.role === 'ADMIN' || state.user?.role === 'BRANCH_SUPER_ADMIN' || 
-              state.user?.role === 'BRANCH_BRANCH_SUPER_ADMIN' || state.user?.role === 'BRANCH_MANAGER' ||
-              state.user?.role === 'HQ_ADMIN' || state.user?.role === 'SUPER_HQ_ADMIN',
+              state.user?.role === 'BRANCH_MANAGER' || state.user?.role === 'HQ_ADMIN' || 
+              state.user?.role === 'SUPER_HQ_ADMIN' || state.user?.role === 'HQ_MASTER',
     isSuperAdmin: () => state.user?.role === 'BRANCH_SUPER_ADMIN' || state.user?.role === 'SUPER_HQ_ADMIN',
     isConsultant: () => state.user?.role === 'CONSULTANT',
     isClient: () => state.user?.role === 'CLIENT',

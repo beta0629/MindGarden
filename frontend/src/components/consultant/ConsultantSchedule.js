@@ -17,7 +17,7 @@ const ConsultantSchedule = () => {
   return (
     <UnifiedScheduleComponent 
       user={user}
-      userRole="CONSULTANT"
+          userRole="CONSULTANT"
       userId={user?.id}
     />
   );

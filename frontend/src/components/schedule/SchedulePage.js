@@ -50,15 +50,15 @@ const SchedulePage = ({ user: propUser }) => {
     /**
      * 권한 확인 (동적 권한 시스템 사용)
      */
-    const hasSchedulePermission = async () => {
-        return await hasPermission('REGISTER_SCHEDULER') || userRole === 'CONSULTANT';
+    const hasSchedulePermission = () => {
+        return hasPermission('REGISTER_SCHEDULER') || userRole === 'CONSULTANT';
     };
 
     /**
      * 관리자 권한 확인 (동적 권한 시스템 사용)
      */
-    const isAdmin = async () => {
-        return await hasPermission('REGISTER_SCHEDULER');
+    const isAdmin = () => {
+        return hasPermission('REGISTER_SCHEDULER');
     };
 
     if (loading || sessionLoading) {

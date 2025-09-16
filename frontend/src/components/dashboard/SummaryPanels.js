@@ -96,6 +96,33 @@ const SummaryPanels = ({ user, consultationData }) => {
                         </div>
                       ))}
                       
+                      {/* 더 많은 상담이 있을 때 자세히 보기 링크 */}
+                      {upcomingCount > 3 && (
+                        <div style={{
+                          textAlign: 'center',
+                          marginTop: '8px',
+                          paddingTop: '8px',
+                          borderTop: '1px solid #fce7f3'
+                        }}>
+                          <a 
+                            href="/consultant/schedule" 
+                            style={{
+                              fontSize: '0.8em',
+                              color: '#667eea',
+                              textDecoration: 'none',
+                              fontWeight: '500'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.textDecoration = 'underline';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.textDecoration = 'none';
+                            }}
+                          >
+                            +{upcomingCount - 3}건 더 보기 →
+                          </a>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div style={{ color: '#adb5bd', fontStyle: 'italic' }}>{DASHBOARD_MESSAGES.NO_UPCOMING}</div>

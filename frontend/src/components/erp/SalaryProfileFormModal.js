@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
+import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 
 const SalaryProfileFormModal = ({ 
     isOpen, 
@@ -26,26 +27,32 @@ const SalaryProfileFormModal = ({
     const [loading, setLoading] = useState(false);
     const [gradeTableData, setGradeTableData] = useState([]);
 
-    // 등급을 한글로 변환
-    const convertGradeToKorean = (grade) => {
-        const gradeMap = {
-            'CONSULTANT_JUNIOR': '주니어 상담사',
-            'CONSULTANT_SENIOR': '시니어 상담사',
-            'CONSULTANT_EXPERT': '엑스퍼트 상담사',
-            'CONSULTANT_MASTER': '마스터 상담사'
-        };
-        return gradeMap[grade] || grade;
+    // 등급을 한글로 변환 (공통 코드에서 동적 조회)
+    const convertGradeToKorean = async (grade) => {
+        try {
+            return await getGradeKoreanName(grade);
+        } catch (error) {
+            console.error('등급 한글명 조회 실패:', error);
+            // 기본값 반환
+            const defaultMap = {
+                'CONSULTANT_JUNIOR': '주니어 상담사',
+                'CONSULTANT_SENIOR': '시니어 상담사',
+                'CONSULTANT_EXPERT': '엑스퍼트 상담사',
+                'CONSULTANT_MASTER': '마스터 상담사'
+            };
+            return defaultMap[grade] || grade;
+        }
     };
 
-    // 등급별 기본 급여 설정
-    const getGradeBaseSalary = (grade) => {
-        const gradeSalaryMap = {
-            'CONSULTANT_JUNIOR': 30000,
-            'CONSULTANT_SENIOR': 35000,
-            'CONSULTANT_EXPERT': 40000,
-            'CONSULTANT_MASTER': 45000
-        };
-        return gradeSalaryMap[grade] || 30000;
+    // 등급별 기본 급여 설정 (공통 코드에서 동적 조회)
+    const getGradeBaseSalary = async (grade) => {
+        try {
+            const gradeSalaryMap = await getGradeSalaryMap();
+            return gradeSalaryMap[grade] || 30000;
+        } catch (error) {
+            console.error('등급별 급여 조회 실패:', error);
+            return 30000; // 오류 시 기본값
+        }
     };
 
     // 등급별 옵션 자동 추가

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
+import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 
 const ConsultantProfileModal = ({ 
     isOpen, 
@@ -132,19 +133,17 @@ const ConsultantProfileModal = ({
         }
     };
 
-    // 등급별 기본급여 계산
-    const calculateBaseSalaryByGrade = (grade) => {
+    // 등급별 기본급여 계산 (공통 코드에서 동적 조회)
+    const calculateBaseSalaryByGrade = async (grade) => {
         if (!grade) return '';
         
-        // 등급별 기본급여 매핑 (실제 요구사항에 맞게 설정)
-        const gradeSalaryMap = {
-            'CONSULTANT_JUNIOR': 30000,    // 주니어: 30,000원
-            'CONSULTANT_SENIOR': 35000,    // 시니어: 35,000원
-            'CONSULTANT_EXPERT': 40000,    // 엑스퍼트: 40,000원
-            'CONSULTANT_MASTER': 45000     // 마스터: 45,000원
-        };
-        
-        return gradeSalaryMap[grade] || 30000; // 기본값 30,000원
+        try {
+            const gradeSalaryMap = await getGradeSalaryMap();
+            return gradeSalaryMap[grade] || 30000; // 기본값 30,000원
+        } catch (error) {
+            console.error('등급별 급여 조회 실패:', error);
+            return 30000; // 오류 시 기본값
+        }
     };
 
     // 급여 유형 조회

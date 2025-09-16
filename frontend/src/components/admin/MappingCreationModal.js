@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { notification } from '../../utils/scripts';
 import { useSession } from '../../hooks/useSession';
+import { getPackageOptions } from '../../utils/commonCodeUtils';
 import { API_BASE_URL } from '../../constants/api';
 import { 
     MAPPING_CREATION_STEPS, 
@@ -169,61 +170,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     // 코드 옵션 로드
     const loadCodeOptions = async () => {
         try {
-            // 패키지 타입 코드 로드
-            const packageResponse = await apiGet('/api/admin/common-codes/values?groupCode=PACKAGE_TYPE');
-            if (packageResponse && packageResponse.length > 0) {
-                const packageOpts = packageResponse.map(code => {
-                    // 코드별 세션 수와 가격 매핑
-                    let sessions = 10;
-                    let price = 500000;
-                    
-                    switch (code.code) {
-                        case 'basic_10':
-                            sessions = 10;
-                            price = 500000;
-                            break;
-                        case 'basic_20':
-                            sessions = 20;
-                            price = 900000;
-                            break;
-                        case 'premium_10':
-                            sessions = 10;
-                            price = 700000;
-                            break;
-                        case 'premium_20':
-                            sessions = 20;
-                            price = 1200000;
-                            break;
-                        case 'intensive_5':
-                            sessions = 5;
-                            price = 300000;
-                            break;
-                        case 'intensive_15':
-                            sessions = 15;
-                            price = 750000;
-                            break;
-                        case 'family_10':
-                            sessions = 10;
-                            price = 600000;
-                            break;
-                        case 'couple_8':
-                            sessions = 8;
-                            price = 480000;
-                            break;
-                        default:
-                            sessions = 10;
-                            price = 500000;
-                    }
-                    
-                    return {
-                        value: code.code,
-                        label: code.name,
-                        sessions: sessions,
-                        price: price
-                    };
-                });
-                setPackageOptions(packageOpts);
-            }
+            // 패키지 타입 코드 로드 (공통 코드 유틸리티 사용)
+            const packageOpts = await getPackageOptions();
+            setPackageOptions(packageOpts);
 
             // 결제 방법 코드 로드
             const paymentResponse = await apiGet(`/api/admin/common-codes/values?groupCode=PAYMENT_METHOD&userRole=${user?.role || 'BRANCH_SUPER_ADMIN'}`);

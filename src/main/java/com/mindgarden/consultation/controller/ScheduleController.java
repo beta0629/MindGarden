@@ -7,20 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import com.mindgarden.consultation.constant.AdminConstants;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ScheduleCreateDto;
@@ -36,6 +22,21 @@ import com.mindgarden.consultation.service.ConsultationRecordService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.utils.SessionUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -316,7 +317,10 @@ public class ScheduleController {
             
             List<ScheduleDto> schedules;
             if (startDate != null && endDate != null) {
-                schedules = scheduleService.findSchedulesByUserRoleAndDateBetween(consultantId, "CONSULTANT", startDate, endDate);
+                List<Schedule> scheduleList = scheduleService.findSchedulesByUserRoleAndDateBetween(consultantId, "CONSULTANT", startDate, endDate);
+                schedules = scheduleList.stream()
+                    .map(schedule -> convertToScheduleDto(schedule))
+                    .collect(java.util.stream.Collectors.toList());
             } else {
                 schedules = scheduleService.findSchedulesWithNamesByUserRole(consultantId, "CONSULTANT");
             }
@@ -1122,5 +1126,27 @@ public class ScheduleController {
         }
         
         return schedule;
+    }
+    
+    /**
+     * Schedule 엔티티를 ScheduleDto로 변환하는 헬퍼 메서드
+     */
+    private ScheduleDto convertToScheduleDto(Schedule schedule) {
+        return ScheduleDto.builder()
+            .id(schedule.getId())
+            .consultantId(schedule.getConsultantId())
+            .clientId(schedule.getClientId())
+            .date(schedule.getDate())
+            .startTime(schedule.getStartTime())
+            .endTime(schedule.getEndTime())
+            .status(schedule.getStatus())
+            .scheduleType(schedule.getScheduleType())
+            .consultationType(schedule.getConsultationType())
+            .title(schedule.getTitle())
+            .description(schedule.getDescription())
+            .notes(schedule.getNotes())
+            .createdAt(schedule.getCreatedAt())
+            .updatedAt(schedule.getUpdatedAt())
+            .build();
     }
 }

@@ -8,13 +8,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.ConsultationType;
 import com.mindgarden.consultation.constant.ScheduleConstants;
 import com.mindgarden.consultation.dto.ScheduleDto;
+import com.mindgarden.consultation.entity.Branch;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.Vacation;
+import com.mindgarden.consultation.repository.BranchRepository;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
@@ -47,6 +50,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ConsultantClientMappingRepository mappingRepository;
     private final UserRepository userRepository;
     private final VacationRepository vacationRepository;
+    private final BranchRepository branchRepository;
     private final CommonCodeService commonCodeService;
     private final ConsultantAvailabilityService consultantAvailabilityService;
     private final SessionSyncService sessionSyncService;
@@ -1255,8 +1259,13 @@ public class ScheduleServiceImpl implements ScheduleService {
         log.info("🏢 지점별 스케줄 조회: branchId={}, startDate={}, endDate={}", branchId, startDate, endDate);
         
         try {
+            // 지점 조회
+            Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
+            
             // 지점의 상담사들 조회
-            List<User> consultants = userRepository.findByBranchIdAndRole(branchId, "CONSULTANT");
+            List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
+                branch, "CONSULTANT");
             if (consultants.isEmpty()) {
                 log.warn("지점에 상담사가 없습니다: branchId={}", branchId);
                 return new ArrayList<>();
@@ -1362,8 +1371,13 @@ public class ScheduleServiceImpl implements ScheduleService {
         log.info("📅 지점별 상담사 스케줄 현황 조회: branchId={}, date={}", branchId, date);
         
         try {
+            // 지점 조회
+            Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
+            
             // 지점의 상담사들 조회
-            List<User> consultants = userRepository.findByBranchIdAndRole(branchId, "CONSULTANT");
+            List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
+                branch, "CONSULTANT");
             
             Map<String, Object> status = new HashMap<>();
             status.put("branchId", branchId);

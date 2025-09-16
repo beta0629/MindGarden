@@ -1247,4 +1247,341 @@ public class ScheduleServiceImpl implements ScheduleService {
     public String getConsultationTypeInKorean(String consultationType) {
         return convertConsultationTypeToKorean(consultationType);
     }
+    
+    // ==================== 지점별 스케줄 관리 ====================
+    
+    @Override
+    public List<Schedule> getBranchSchedules(Long branchId, LocalDate startDate, LocalDate endDate) {
+        log.info("🏢 지점별 스케줄 조회: branchId={}, startDate={}, endDate={}", branchId, startDate, endDate);
+        
+        try {
+            // 지점의 상담사들 조회
+            List<User> consultants = userRepository.findByBranchIdAndRole(branchId, "CONSULTANT");
+            if (consultants.isEmpty()) {
+                log.warn("지점에 상담사가 없습니다: branchId={}", branchId);
+                return new ArrayList<>();
+            }
+            
+            // 상담사들의 스케줄 조회
+            List<Schedule> allSchedules = new ArrayList<>();
+            for (User consultant : consultants) {
+                List<Schedule> consultantSchedules = scheduleRepository.findByConsultantIdAndDateBetween(
+                    consultant.getId(), startDate, endDate);
+                allSchedules.addAll(consultantSchedules);
+            }
+            
+            log.info("지점별 스케줄 조회 완료: branchId={}, 상담사 수={}, 스케줄 수={}", 
+                    branchId, consultants.size(), allSchedules.size());
+            
+            return allSchedules;
+            
+        } catch (Exception e) {
+            log.error("지점별 스케줄 조회 실패: branchId={}, error={}", branchId, e.getMessage(), e);
+            throw new RuntimeException("지점별 스케줄 조회 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public List<Schedule> getBranchConsultantSchedules(Long branchId, Long consultantId, LocalDate startDate, LocalDate endDate) {
+        log.info("🏢 지점별 상담사 스케줄 조회: branchId={}, consultantId={}, startDate={}, endDate={}", 
+                branchId, consultantId, startDate, endDate);
+        
+        try {
+            // 상담사가 해당 지점에 속하는지 확인
+            User consultant = userRepository.findById(consultantId)
+                .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
+            
+            if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+                throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + consultantId + ", branchId=" + branchId);
+            }
+            
+            // 상담사의 스케줄 조회
+            List<Schedule> schedules = scheduleRepository.findByConsultantIdAndDateBetween(consultantId, startDate, endDate);
+            
+            log.info("지점별 상담사 스케줄 조회 완료: branchId={}, consultantId={}, 스케줄 수={}", 
+                    branchId, consultantId, schedules.size());
+            
+            return schedules;
+            
+        } catch (Exception e) {
+            log.error("지점별 상담사 스케줄 조회 실패: branchId={}, consultantId={}, error={}", 
+                    branchId, consultantId, e.getMessage(), e);
+            throw new RuntimeException("지점별 상담사 스케줄 조회 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public Map<String, Object> getBranchScheduleStatistics(Long branchId, LocalDate startDate, LocalDate endDate) {
+        log.info("📊 지점별 스케줄 통계 조회: branchId={}, startDate={}, endDate={}", branchId, startDate, endDate);
+        
+        try {
+            List<Schedule> schedules = getBranchSchedules(branchId, startDate, endDate);
+            
+            Map<String, Object> statistics = new HashMap<>();
+            statistics.put("branchId", branchId);
+            statistics.put("startDate", startDate);
+            statistics.put("endDate", endDate);
+            statistics.put("totalSchedules", schedules.size());
+            
+            // 상태별 통계
+            long completedCount = schedules.stream()
+                .filter(s -> "완료".equals(s.getStatus()))
+                .count();
+            long pendingCount = schedules.stream()
+                .filter(s -> "대기".equals(s.getStatus()))
+                .count();
+            long cancelledCount = schedules.stream()
+                .filter(s -> "취소".equals(s.getStatus()))
+                .count();
+            
+            statistics.put("completedSchedules", completedCount);
+            statistics.put("pendingSchedules", pendingCount);
+            statistics.put("cancelledSchedules", cancelledCount);
+            
+            // 상담사별 통계
+            Map<Long, Long> consultantStats = schedules.stream()
+                .collect(Collectors.groupingBy(
+                    Schedule::getConsultantId,
+                    Collectors.counting()
+                ));
+            statistics.put("consultantStatistics", consultantStats);
+            
+            log.info("지점별 스케줄 통계 완료: branchId={}, 총 스케줄={}, 완료={}, 대기={}, 취소={}", 
+                    branchId, schedules.size(), completedCount, pendingCount, cancelledCount);
+            
+            return statistics;
+            
+        } catch (Exception e) {
+            log.error("지점별 스케줄 통계 조회 실패: branchId={}, error={}", branchId, e.getMessage(), e);
+            throw new RuntimeException("지점별 스케줄 통계 조회 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public Map<String, Object> getBranchConsultantScheduleStatus(Long branchId, LocalDate date) {
+        log.info("📅 지점별 상담사 스케줄 현황 조회: branchId={}, date={}", branchId, date);
+        
+        try {
+            // 지점의 상담사들 조회
+            List<User> consultants = userRepository.findByBranchIdAndRole(branchId, "CONSULTANT");
+            
+            Map<String, Object> status = new HashMap<>();
+            status.put("branchId", branchId);
+            status.put("date", date);
+            status.put("totalConsultants", consultants.size());
+            
+            List<Map<String, Object>> consultantStatus = new ArrayList<>();
+            for (User consultant : consultants) {
+                List<Schedule> daySchedules = scheduleRepository.findByConsultantIdAndDate(consultant.getId(), date);
+                
+                Map<String, Object> consultantInfo = new HashMap<>();
+                consultantInfo.put("consultantId", consultant.getId());
+                consultantInfo.put("consultantName", consultant.getUsername());
+                consultantInfo.put("scheduleCount", daySchedules.size());
+                consultantInfo.put("schedules", daySchedules);
+                
+                consultantStatus.add(consultantInfo);
+            }
+            
+            status.put("consultantStatus", consultantStatus);
+            
+            log.info("지점별 상담사 스케줄 현황 완료: branchId={}, 상담사 수={}", branchId, consultants.size());
+            
+            return status;
+            
+        } catch (Exception e) {
+            log.error("지점별 상담사 스케줄 현황 조회 실패: branchId={}, error={}", branchId, e.getMessage(), e);
+            throw new RuntimeException("지점별 상담사 스케줄 현황 조회 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public Schedule createBranchSchedule(Long branchId, Schedule schedule) {
+        log.info("🏢 지점별 스케줄 생성: branchId={}, schedule={}", branchId, schedule.getTitle());
+        
+        try {
+            // 상담사가 해당 지점에 속하는지 확인
+            if (schedule.getConsultantId() != null) {
+                User consultant = userRepository.findById(schedule.getConsultantId())
+                    .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + schedule.getConsultantId()));
+                
+                if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+                    throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + schedule.getConsultantId() + ", branchId=" + branchId);
+                }
+            }
+            
+            // 스케줄 생성
+            Schedule savedSchedule = scheduleRepository.save(schedule);
+            
+            log.info("지점별 스케줄 생성 완료: branchId={}, scheduleId={}", branchId, savedSchedule.getId());
+            
+            return savedSchedule;
+            
+        } catch (Exception e) {
+            log.error("지점별 스케줄 생성 실패: branchId={}, error={}", branchId, e.getMessage(), e);
+            throw new RuntimeException("지점별 스케줄 생성 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public Schedule updateBranchSchedule(Long branchId, Long scheduleId, Schedule schedule) {
+        log.info("🏢 지점별 스케줄 수정: branchId={}, scheduleId={}", branchId, scheduleId);
+        
+        try {
+            // 기존 스케줄 조회
+            Schedule existingSchedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new IllegalArgumentException("스케줄을 찾을 수 없습니다: " + scheduleId));
+            
+            // 상담사가 해당 지점에 속하는지 확인
+            if (existingSchedule.getConsultantId() != null) {
+                User consultant = userRepository.findById(existingSchedule.getConsultantId())
+                    .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + existingSchedule.getConsultantId()));
+                
+                if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+                    throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + existingSchedule.getConsultantId() + ", branchId=" + branchId);
+                }
+            }
+            
+            // 스케줄 수정
+            Schedule updatedSchedule = updateSchedule(scheduleId, schedule);
+            
+            log.info("지점별 스케줄 수정 완료: branchId={}, scheduleId={}", branchId, scheduleId);
+            
+            return updatedSchedule;
+            
+        } catch (Exception e) {
+            log.error("지점별 스케줄 수정 실패: branchId={}, scheduleId={}, error={}", branchId, scheduleId, e.getMessage(), e);
+            throw new RuntimeException("지점별 스케줄 수정 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public void deleteBranchSchedule(Long branchId, Long scheduleId) {
+        log.info("🏢 지점별 스케줄 삭제: branchId={}, scheduleId={}", branchId, scheduleId);
+        
+        try {
+            // 기존 스케줄 조회
+            Schedule existingSchedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new IllegalArgumentException("스케줄을 찾을 수 없습니다: " + scheduleId));
+            
+            // 상담사가 해당 지점에 속하는지 확인
+            if (existingSchedule.getConsultantId() != null) {
+                User consultant = userRepository.findById(existingSchedule.getConsultantId())
+                    .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + existingSchedule.getConsultantId()));
+                
+                if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+                    throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + existingSchedule.getConsultantId() + ", branchId=" + branchId);
+                }
+            }
+            
+            // 스케줄 삭제
+            scheduleRepository.deleteById(scheduleId);
+            
+            log.info("지점별 스케줄 삭제 완료: branchId={}, scheduleId={}", branchId, scheduleId);
+            
+        } catch (Exception e) {
+            log.error("지점별 스케줄 삭제 실패: branchId={}, scheduleId={}, error={}", branchId, scheduleId, e.getMessage(), e);
+            throw new RuntimeException("지점별 스케줄 삭제 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public boolean isScheduleConflict(Long branchId, Long consultantId, LocalDateTime startTime, LocalDateTime endTime) {
+        log.debug("🔍 지점별 스케줄 중복 확인: branchId={}, consultantId={}, startTime={}, endTime={}", 
+                branchId, consultantId, startTime, endTime);
+        
+        try {
+            // 상담사가 해당 지점에 속하는지 확인
+            User consultant = userRepository.findById(consultantId)
+                .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
+            
+            if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+                throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + consultantId + ", branchId=" + branchId);
+            }
+            
+            // 시간대 중복 확인
+            LocalDate date = startTime.toLocalDate();
+            List<Schedule> existingSchedules = scheduleRepository.findByConsultantIdAndDate(consultantId, date);
+            
+            for (Schedule existingSchedule : existingSchedules) {
+                if (isTimeOverlap(startTime, endTime, 
+                    existingSchedule.getDate().atTime(existingSchedule.getStartTime()),
+                    existingSchedule.getDate().atTime(existingSchedule.getEndTime()))) {
+                    return true;
+                }
+            }
+            
+            return false;
+            
+        } catch (Exception e) {
+            log.error("지점별 스케줄 중복 확인 실패: branchId={}, consultantId={}, error={}", 
+                    branchId, consultantId, e.getMessage(), e);
+            throw new RuntimeException("지점별 스케줄 중복 확인 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public List<Map<String, Object>> getAvailableTimeSlots(Long branchId, Long consultantId, LocalDate date) {
+        log.info("⏰ 지점별 스케줄 가능 시간 조회: branchId={}, consultantId={}, date={}", branchId, consultantId, date);
+        
+        try {
+            // 상담사가 해당 지점에 속하는지 확인
+            User consultant = userRepository.findById(consultantId)
+                .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
+            
+            if (consultant.getBranch() == null || !consultant.getBranch().getId().equals(branchId)) {
+                throw new IllegalArgumentException("상담사가 해당 지점에 속하지 않습니다: consultantId=" + consultantId + ", branchId=" + branchId);
+            }
+            
+            // 기존 스케줄 조회
+            List<Schedule> existingSchedules = scheduleRepository.findByConsultantIdAndDate(consultantId, date);
+            
+            // 가능한 시간대 계산 (9시-18시, 1시간 단위)
+            List<Map<String, Object>> availableSlots = new ArrayList<>();
+            LocalTime startHour = LocalTime.of(9, 0);
+            LocalTime endHour = LocalTime.of(18, 0);
+            
+            for (LocalTime time = startHour; time.isBefore(endHour); time = time.plusHours(1)) {
+                LocalTime slotEnd = time.plusHours(1);
+                LocalDateTime slotStart = date.atTime(time);
+                LocalDateTime slotEndDateTime = date.atTime(slotEnd);
+                
+                // 중복 확인
+                boolean isConflict = false;
+                for (Schedule existingSchedule : existingSchedules) {
+                    if (isTimeOverlap(slotStart, slotEndDateTime,
+                        existingSchedule.getDate().atTime(existingSchedule.getStartTime()),
+                        existingSchedule.getDate().atTime(existingSchedule.getEndTime()))) {
+                        isConflict = true;
+                        break;
+                    }
+                }
+                
+                if (!isConflict) {
+                    Map<String, Object> slot = new HashMap<>();
+                    slot.put("startTime", time.toString());
+                    slot.put("endTime", slotEnd.toString());
+                    slot.put("available", true);
+                    availableSlots.add(slot);
+                }
+            }
+            
+            log.info("지점별 스케줄 가능 시간 조회 완료: branchId={}, consultantId={}, 가능한 시간대={}개", 
+                    branchId, consultantId, availableSlots.size());
+            
+            return availableSlots;
+            
+        } catch (Exception e) {
+            log.error("지점별 스케줄 가능 시간 조회 실패: branchId={}, consultantId={}, error={}", 
+                    branchId, consultantId, e.getMessage(), e);
+            throw new RuntimeException("지점별 스케줄 가능 시간 조회 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 시간대 중복 확인 헬퍼 메서드
+     */
+    private boolean isTimeOverlap(LocalDateTime start1, LocalDateTime end1, LocalDateTime start2, LocalDateTime end2) {
+        return start1.isBefore(end2) && start2.isBefore(end1);
+    }
 }

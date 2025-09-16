@@ -210,11 +210,15 @@ public class ConsultantController {
     }
     
     // === 스케줄 관리 ===
+    // 스케줄 관련 API는 ScheduleController로 이동됨
+    // 기존 API는 하위 호환성을 위해 리다이렉트 처리
     
     /**
-     * 상담사 스케줄 등록
+     * 상담사 스케줄 등록 (리다이렉트)
      * POST /api/v1/consultants/{id}/schedule
+     * @deprecated ScheduleController 사용 권장
      */
+    @Deprecated
     @PostMapping("/{id}/schedule")
     public ResponseEntity<Map<String, Object>> registerSchedule(
             @PathVariable Long id,
@@ -222,22 +226,23 @@ public class ConsultantController {
             @RequestParam LocalTime startTime,
             @RequestParam LocalTime endTime) {
         
-        log.info("상담사 스케줄 등록 - ID: {}, date: {}, time: {} - {}", id, date, startTime, endTime);
-        
-        // consultantService.registerSchedule(id, date, startTime, endTime);
+        log.warn("⚠️ 사용 중단된 API 호출: /api/v1/consultants/{}/schedule -> /api/schedules/consultant 사용 권장", id);
         
         Map<String, Object> response = Map.of(
-            "success", true,
-            "message", "스케줄이 성공적으로 등록되었습니다."
+            "success", false,
+            "message", "이 API는 사용 중단되었습니다. /api/schedules/consultant를 사용해주세요.",
+            "redirectUrl", "/api/schedules/consultant"
         );
         
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).body(response);
     }
     
     /**
-     * 상담사 스케줄 수정
+     * 상담사 스케줄 수정 (리다이렉트)
      * PUT /api/v1/consultants/{id}/schedule/{scheduleId}
+     * @deprecated ScheduleController 사용 권장
      */
+    @Deprecated
     @PutMapping("/{id}/schedule/{scheduleId}")
     public ResponseEntity<Map<String, Object>> updateSchedule(
             @PathVariable Long id,
@@ -246,38 +251,39 @@ public class ConsultantController {
             @RequestParam LocalTime startTime,
             @RequestParam LocalTime endTime) {
         
-        log.info("상담사 스케줄 수정 - ID: {}, scheduleId: {}, date: {}, time: {} - {}", 
-                id, scheduleId, date, startTime, endTime);
-        
-        consultantService.updateSchedule(id, scheduleId, date, startTime, endTime);
+        log.warn("⚠️ 사용 중단된 API 호출: /api/v1/consultants/{}/schedule/{} -> /api/schedules/consultant/{}/{} 사용 권장", 
+                id, scheduleId, id, scheduleId);
         
         Map<String, Object> response = Map.of(
-            "success", true,
-            "message", "스케줄이 성공적으로 수정되었습니다."
+            "success", false,
+            "message", "이 API는 사용 중단되었습니다. /api/schedules/consultant/" + id + "/" + scheduleId + "를 사용해주세요.",
+            "redirectUrl", "/api/schedules/consultant/" + id + "/" + scheduleId
         );
         
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).body(response);
     }
     
     /**
-     * 상담사 스케줄 삭제
+     * 상담사 스케줄 삭제 (리다이렉트)
      * DELETE /api/v1/consultants/{id}/schedule/{scheduleId}
+     * @deprecated ScheduleController 사용 권장
      */
+    @Deprecated
     @DeleteMapping("/{id}/schedule/{scheduleId}")
     public ResponseEntity<Map<String, Object>> deleteSchedule(
             @PathVariable Long id,
             @PathVariable Long scheduleId) {
         
-        log.info("상담사 스케줄 삭제 - ID: {}, scheduleId: {}", id, scheduleId);
-        
-        consultantService.deleteSchedule(id, scheduleId);
+        log.warn("⚠️ 사용 중단된 API 호출: /api/v1/consultants/{}/schedule/{} -> /api/schedules/consultant/{}/{} 사용 권장", 
+                id, scheduleId, id, scheduleId);
         
         Map<String, Object> response = Map.of(
-            "success", true,
-            "message", "스케줄이 성공적으로 삭제되었습니다."
+            "success", false,
+            "message", "이 API는 사용 중단되었습니다. /api/schedules/consultant/" + id + "/" + scheduleId + "를 사용해주세요.",
+            "redirectUrl", "/api/schedules/consultant/" + id + "/" + scheduleId
         );
         
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).body(response);
     }
     
     // === 상담 관리 ===

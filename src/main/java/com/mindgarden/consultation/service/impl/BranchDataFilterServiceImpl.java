@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.service.impl;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.Branch;
@@ -8,6 +9,7 @@ import com.mindgarden.consultation.entity.ConsultationRecord;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.BranchDataFilterService;
+import com.mindgarden.consultation.service.CommonCodeService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class BranchDataFilterServiceImpl implements BranchDataFilterService {
+    
+    private final CommonCodeService commonCodeService;
     
     
     @Override
@@ -209,7 +213,7 @@ public class BranchDataFilterServiceImpl implements BranchDataFilterService {
     }
     
     /**
-     * 본사 관리자인지 확인
+     * 본사 관리자인지 확인 (공통 코드 기반)
      * @param user 사용자
      * @return 본사 관리자 여부
      */
@@ -218,7 +222,33 @@ public class BranchDataFilterServiceImpl implements BranchDataFilterService {
             return false;
         }
         
-        UserRole role = user.getRole();
-        return role.isHeadquartersAdmin() || role.isMaster();
+        try {
+            // 공통 코드에서 본사 관리자 역할들 조회
+            List<Map<String, Object>> hqAdminRoles = commonCodeService.getActiveCodesByGroup("ROLE");
+            
+            for (Map<String, Object> roleCode : hqAdminRoles) {
+                String codeValue = (String) roleCode.get("codeValue");
+                if ("HQ_MASTER".equals(codeValue) || 
+                    "HQ_ADMIN".equals(codeValue) || 
+                    "SUPER_HQ_ADMIN".equals(codeValue) ||
+                    "HQ_SUPER_ADMIN".equals(codeValue)) {
+                    
+                    // 사용자의 역할과 비교
+                    if (user.getRole().name().equals(codeValue)) {
+                        return true;
+                    }
+                }
+            }
+            
+            // 기존 enum 방식도 유지 (호환성)
+            UserRole role = user.getRole();
+            return role.isHeadquartersAdmin() || role.isMaster();
+            
+        } catch (Exception e) {
+            log.warn("공통 코드에서 본사 관리자 역할 확인 실패, 기본 방식 사용: {}", e.getMessage());
+            // 기본 enum 방식 사용
+            UserRole role = user.getRole();
+            return role.isHeadquartersAdmin() || role.isMaster();
+        }
     }
 }

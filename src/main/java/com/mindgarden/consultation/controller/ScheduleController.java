@@ -281,6 +281,62 @@ public class ScheduleController {
         }
     }
 
+    // ==================== 상담사별 스케줄 관리 ====================
+    
+    /**
+     * 상담사별 스케줄 조회
+     * GET /api/schedules/consultant/{consultantId}
+     */
+    @GetMapping("/consultant/{consultantId}")
+    public ResponseEntity<Map<String, Object>> getConsultantSchedules(
+            @PathVariable Long consultantId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            HttpSession session) {
+        
+        log.info("📅 상담사별 스케줄 조회: consultantId={}, startDate={}, endDate={}", consultantId, startDate, endDate);
+        
+        try {
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 상담사는 자신의 스케줄만 조회 가능, 관리자는 모든 스케줄 조회 가능
+            if (!currentUser.getRole().isAdmin() && !currentUser.getId().equals(consultantId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "다른 상담사의 스케줄을 조회할 권한이 없습니다."
+                ));
+            }
+            
+            List<ScheduleDto> schedules;
+            if (startDate != null && endDate != null) {
+                schedules = scheduleService.findSchedulesByUserRoleAndDateBetween(consultantId, "CONSULTANT", startDate, endDate);
+            } else {
+                schedules = scheduleService.findSchedulesWithNamesByUserRole(consultantId, "CONSULTANT");
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", schedules);
+            response.put("totalCount", schedules.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 상담사별 스케줄 조회 실패: consultantId={}, error={}", consultantId, e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "스케줄 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
     /**
      * 상담사 스케줄 생성
      * POST /api/schedules/consultant
@@ -937,5 +993,134 @@ public class ScheduleController {
         
         // 데이터베이스에서 찾지 못한 경우 기본값 사용
         return "해당 시간대에 상담사가 휴무 상태입니다. 다른 시간을 선택해주세요.";
+    }
+    
+    /**
+     * 상담사 스케줄 수정
+     * PUT /api/schedules/consultant/{consultantId}/{scheduleId}
+     */
+    @PutMapping("/consultant/{consultantId}/{scheduleId}")
+    public ResponseEntity<Map<String, Object>> updateConsultantSchedule(
+            @PathVariable Long consultantId,
+            @PathVariable Long scheduleId,
+            @RequestBody Map<String, Object> updateData,
+            HttpSession session) {
+        
+        log.info("📝 상담사 스케줄 수정: consultantId={}, scheduleId={}", consultantId, scheduleId);
+        
+        try {
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 상담사는 자신의 스케줄만 수정 가능, 관리자는 모든 스케줄 수정 가능
+            if (!currentUser.getRole().isAdmin() && !currentUser.getId().equals(consultantId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "다른 상담사의 스케줄을 수정할 권한이 없습니다."
+                ));
+            }
+            
+            // 스케줄 수정
+            Schedule updatedSchedule = scheduleService.updateSchedule(scheduleId, 
+                convertMapToSchedule(updateData));
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "스케줄이 성공적으로 수정되었습니다.");
+            response.put("data", updatedSchedule);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 상담사 스케줄 수정 실패: consultantId={}, scheduleId={}, error={}", 
+                    consultantId, scheduleId, e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "스케줄 수정에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 상담사 스케줄 삭제
+     * DELETE /api/schedules/consultant/{consultantId}/{scheduleId}
+     */
+    @DeleteMapping("/consultant/{consultantId}/{scheduleId}")
+    public ResponseEntity<Map<String, Object>> deleteConsultantSchedule(
+            @PathVariable Long consultantId,
+            @PathVariable Long scheduleId,
+            HttpSession session) {
+        
+        log.info("🗑️ 상담사 스케줄 삭제: consultantId={}, scheduleId={}", consultantId, scheduleId);
+        
+        try {
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 상담사는 자신의 스케줄만 삭제 가능, 관리자는 모든 스케줄 삭제 가능
+            if (!currentUser.getRole().isAdmin() && !currentUser.getId().equals(consultantId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "다른 상담사의 스케줄을 삭제할 권한이 없습니다."
+                ));
+            }
+            
+            // 스케줄 삭제
+            scheduleService.deleteSchedule(scheduleId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "스케줄이 성공적으로 삭제되었습니다.");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 상담사 스케줄 삭제 실패: consultantId={}, scheduleId={}, error={}", 
+                    consultantId, scheduleId, e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "스케줄 삭제에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Map을 Schedule 엔티티로 변환하는 헬퍼 메서드
+     */
+    private Schedule convertMapToSchedule(Map<String, Object> data) {
+        Schedule schedule = new Schedule();
+        
+        if (data.get("date") != null) {
+            schedule.setDate(LocalDate.parse(data.get("date").toString()));
+        }
+        if (data.get("startTime") != null) {
+            schedule.setStartTime(LocalTime.parse(data.get("startTime").toString()));
+        }
+        if (data.get("endTime") != null) {
+            schedule.setEndTime(LocalTime.parse(data.get("endTime").toString()));
+        }
+        if (data.get("title") != null) {
+            schedule.setTitle(data.get("title").toString());
+        }
+        if (data.get("description") != null) {
+            schedule.setDescription(data.get("description").toString());
+        }
+        if (data.get("status") != null) {
+            schedule.setStatus(data.get("status").toString());
+        }
+        
+        return schedule;
     }
 }

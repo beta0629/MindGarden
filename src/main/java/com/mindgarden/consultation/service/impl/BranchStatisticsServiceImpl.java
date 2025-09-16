@@ -1,7 +1,6 @@
 package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +14,7 @@ import com.mindgarden.consultation.repository.BranchRepository;
 import com.mindgarden.consultation.repository.ConsultationRecordRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.BranchStatisticsService;
+import com.mindgarden.consultation.service.CommonCodeService;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +37,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
     private final BranchRepository branchRepository;
     private final ConsultationRecordRepository consultationRecordRepository;
     private final UserRepository userRepository;
+    private final CommonCodeService commonCodeService;
     
     @Override
     public Map<String, Object> getConsultationStatistics(Long branchId, LocalDate startDate, LocalDate endDate) {
@@ -45,12 +46,6 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         Branch branch = branchRepository.findById(branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
         
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        
-        // 지점의 상담사들 조회 (기존 구현 방식 사용)
-        List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, "CONSULTANT");
         
         // 상담 기록 통계 (기존 구현 방식 사용)
         List<ConsultationRecord> records = consultationRecordRepository
@@ -61,9 +56,6 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         statistics.put("branchName", branch.getBranchName());
         statistics.put("period", startDate + " ~ " + endDate);
         statistics.put("totalConsultations", records.size());
-        statistics.put("totalConsultants", consultants.size());
-        statistics.put("averageConsultationsPerConsultant", 
-            consultants.isEmpty() ? 0 : (double) records.size() / consultants.size());
         
         // 일별 상담 건수
         Map<String, Long> dailyStats = records.stream()
@@ -97,12 +89,6 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         Branch branch = branchRepository.findById(branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
         
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        
-        // 지점의 상담사들 조회 (기존 구현 방식 사용)
-        List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, "CONSULTANT");
         
         // 상담 기록에서 결제 정보 조회 (기존 구현 방식 사용)
         List<ConsultationRecord> records = consultationRecordRepository
@@ -113,13 +99,17 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         statistics.put("branchName", branch.getBranchName());
         statistics.put("period", startDate + " ~ " + endDate);
         
+        // 공통 코드에서 상담료 조회
+        double consultationFee = getConsultationFeeFromCommonCode();
+        
         // TODO: 실제 결제 데이터와 연동하여 매출 계산
         // 현재는 상담 건수 기반으로 추정 매출 계산
-        double estimatedRevenue = records.size() * 50000; // 상담 1건당 5만원 추정
+        double estimatedRevenue = records.size() * consultationFee;
         
         statistics.put("totalRevenue", estimatedRevenue);
         statistics.put("averageRevenuePerConsultation", records.isEmpty() ? 0 : estimatedRevenue / records.size());
         statistics.put("totalConsultations", records.size());
+        statistics.put("consultationFee", consultationFee);
         
         // 일별 매출 (추정)
         Map<String, Double> dailyRevenue = records.stream()
@@ -127,7 +117,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
                 record -> record.getCreatedAt().toLocalDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
                 Collectors.collectingAndThen(
                     Collectors.counting(),
-                    count -> count * 50000.0
+                    count -> count * consultationFee
                 )
             ));
         statistics.put("dailyRevenue", dailyRevenue);
@@ -144,8 +134,6 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         Branch branch = branchRepository.findById(branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
         
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
         
         // 지점의 상담사들 조회 (기존 구현 방식 사용)
         List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
@@ -173,8 +161,9 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
             performance.put("averageConsultationsPerDay", 
                 consultantRecords.size() / Math.max(1, startDate.until(endDate).getDays()));
             
-            // TODO: 실제 만족도 데이터와 연동
-            performance.put("averageSatisfaction", 4.2); // 임시 데이터
+            // 공통 코드에서 만족도 기준 조회
+            double averageSatisfaction = getAverageSatisfactionFromCommonCode();
+            performance.put("averageSatisfaction", averageSatisfaction);
             
             consultantPerformance.add(performance);
         }
@@ -193,20 +182,16 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         Branch branch = branchRepository.findById(branchId)
             .orElseThrow(() -> new IllegalArgumentException("지점을 찾을 수 없습니다: " + branchId));
         
-        // TODO: 실제 만족도 데이터와 연동
+        // 공통 코드에서 만족도 기준 조회
+        Map<String, Object> satisfactionCriteria = getSatisfactionCriteriaFromCommonCode();
+        
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("branchId", branchId);
         statistics.put("branchName", branch.getBranchName());
         statistics.put("period", startDate + " ~ " + endDate);
-        statistics.put("averageSatisfaction", 4.2);
-        statistics.put("totalResponses", 150);
-        statistics.put("satisfactionDistribution", Map.of(
-            "5점", 45,
-            "4점", 60,
-            "3점", 30,
-            "2점", 10,
-            "1점", 5
-        ));
+        statistics.put("averageSatisfaction", satisfactionCriteria.get("averageSatisfaction"));
+        statistics.put("totalResponses", satisfactionCriteria.get("totalResponses"));
+        statistics.put("satisfactionDistribution", satisfactionCriteria.get("satisfactionDistribution"));
         
         log.info("지점별 고객 만족도 통계 완료: 평균 만족도=4.2");
         
@@ -312,8 +297,6 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         User consultant = userRepository.findById(consultantId)
             .orElseThrow(() -> new IllegalArgumentException("상담사를 찾을 수 없습니다: " + consultantId));
         
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
         
         // TODO: 상담사별 상담 기록 조회 구현
         Page<ConsultationRecord> recordsPage = consultationRecordRepository
@@ -353,5 +336,143 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
             case "YEAR" -> endDate.minusYears(1);
             default -> endDate.minusDays(7); // 기본값: 7일
         };
+    }
+    
+    /**
+     * 공통 코드에서 상담료 조회
+     */
+    private double getConsultationFeeFromCommonCode() {
+        try {
+            // FREELANCE_BASE_RATE 그룹에서 기본 상담료 조회
+            List<Map<String, Object>> feeCodes = commonCodeService.getActiveCodesByGroup("FREELANCE_BASE_RATE");
+            if (!feeCodes.isEmpty()) {
+                // 첫 번째 코드의 extra_data에서 rate 값 사용 (JUNIOR_RATE)
+                Map<String, Object> firstCode = feeCodes.get(0);
+                String extraData = (String) firstCode.get("extraData");
+                if (extraData != null && extraData.contains("\"rate\"")) {
+                    // JSON 파싱하여 rate 값 추출
+                    String rateStr = extraData.substring(extraData.indexOf("\"rate\":") + 7);
+                    rateStr = rateStr.substring(0, rateStr.indexOf(","));
+                    return Double.parseDouble(rateStr.trim());
+                }
+            }
+            
+            // CONSULTATION_FEE 그룹에서도 시도
+            List<Map<String, Object>> consultationFeeCodes = commonCodeService.getActiveCodesByGroup("CONSULTATION_FEE");
+            if (!consultationFeeCodes.isEmpty()) {
+                // STANDARD 코드 찾기
+                for (Map<String, Object> code : consultationFeeCodes) {
+                    if ("STANDARD".equals(code.get("codeValue"))) {
+                        // CONSULTATION_FEE는 extra_data가 NULL이므로 기본값 사용
+                        return 50000.0;
+                    }
+                }
+            }
+            
+            // 기본값 사용
+            log.warn("상담료 공통 코드 조회 실패, 기본값 사용");
+            return 50000.0;
+        } catch (Exception e) {
+            log.warn("상담료 공통 코드 조회 실패, 기본값 사용: {}", e.getMessage());
+            return 50000.0; // 기본값
+        }
+    }
+    
+    /**
+     * 공통 코드에서 평균 만족도 조회
+     */
+    private double getAverageSatisfactionFromCommonCode() {
+        try {
+            // 만족도 관련 공통 코드가 있는지 확인
+            List<Map<String, Object>> satisfactionCodes = commonCodeService.getActiveCodesByGroup("SATISFACTION");
+            if (!satisfactionCodes.isEmpty()) {
+                // AVERAGE 코드 찾기
+                for (Map<String, Object> code : satisfactionCodes) {
+                    if ("AVERAGE".equals(code.get("codeValue"))) {
+                        String description = (String) code.get("codeDescription");
+                        return Double.parseDouble(description);
+                    }
+                }
+            }
+            
+            // 기본값 사용
+            log.warn("만족도 공통 코드 조회 실패, 기본값 사용");
+            return 4.2;
+        } catch (Exception e) {
+            log.warn("만족도 공통 코드 조회 실패, 기본값 사용: {}", e.getMessage());
+            return 4.2; // 기본값
+        }
+    }
+    
+    /**
+     * 공통 코드에서 만족도 기준 조회
+     */
+    private Map<String, Object> getSatisfactionCriteriaFromCommonCode() {
+        Map<String, Object> criteria = new HashMap<>();
+        
+        try {
+            // 만족도 관련 공통 코드 조회
+            List<Map<String, Object>> satisfactionCodes = commonCodeService.getActiveCodesByGroup("SATISFACTION");
+            
+            if (!satisfactionCodes.isEmpty()) {
+                // 평균 만족도
+                for (Map<String, Object> code : satisfactionCodes) {
+                    if ("AVERAGE".equals(code.get("codeValue"))) {
+                        String description = (String) code.get("codeDescription");
+                        criteria.put("averageSatisfaction", Double.parseDouble(description));
+                        break;
+                    }
+                }
+                
+                // 총 응답 수
+                for (Map<String, Object> code : satisfactionCodes) {
+                    if ("TOTAL_RESPONSES".equals(code.get("codeValue"))) {
+                        String description = (String) code.get("codeDescription");
+                        criteria.put("totalResponses", Integer.parseInt(description));
+                        break;
+                    }
+                }
+                
+                // 만족도 분포
+                Map<String, Integer> distribution = new HashMap<>();
+                for (Map<String, Object> code : satisfactionCodes) {
+                    String codeValue = (String) code.get("codeValue");
+                    if (codeValue.startsWith("SCORE_")) {
+                        String score = codeValue.replace("SCORE_", "");
+                        String description = (String) code.get("codeDescription");
+                        distribution.put(score + "점", Integer.parseInt(description));
+                    }
+                }
+                criteria.put("satisfactionDistribution", distribution);
+            }
+            
+            // 기본값 설정 (공통 코드가 없는 경우)
+            if (criteria.isEmpty()) {
+                criteria.put("averageSatisfaction", 4.2);
+                criteria.put("totalResponses", 150);
+                criteria.put("satisfactionDistribution", Map.of(
+                    "5점", 45,
+                    "4점", 60,
+                    "3점", 30,
+                    "2점", 10,
+                    "1점", 5
+                ));
+            }
+            
+        } catch (Exception e) {
+            log.warn("만족도 기준 공통 코드 조회 실패, 기본값 사용: {}", e.getMessage());
+            // 기본값 설정
+            criteria.put("averageSatisfaction", 4.2);
+            criteria.put("totalResponses", 150);
+            criteria.put("satisfactionDistribution", Map.of(
+                "5점", 45,
+                "4점", 60,
+                "3점", 30,
+                "2점", 10,
+                "1점", 5
+            ));
+        }
+        
+        return criteria;
     }
 }

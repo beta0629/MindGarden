@@ -7,11 +7,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.AdminConstants;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ScheduleCreateDto;
 import com.mindgarden.consultation.dto.ScheduleDto;
 import com.mindgarden.consultation.dto.ScheduleResponseDto;
+import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
@@ -1146,7 +1149,7 @@ public class ScheduleController {
                 // 유효한 상태인지 공통코드로 확인
                 if (isValidScheduleStatus(status)) {
                     schedules = schedules.stream()
-                        .filter(schedule -> status.equals(schedule.getStatus().name()))
+                        .filter(schedule -> status.equals(schedule.getStatus()))
                         .collect(Collectors.toList());
                 } else {
                     log.warn("⚠️ 유효하지 않은 스케줄 상태: {}", status);
@@ -1230,22 +1233,22 @@ public class ScheduleController {
             
             // 관리자 역할 코드들
             Set<String> adminRoleCodes = adminRoles.stream()
-                .filter(code -> code.getCodeName().contains("ADMIN") || 
-                               code.getCodeName().contains("MASTER") ||
-                               code.getCodeName().contains("HQ"))
-                .map(CommonCode::getCode)
+                .filter(code -> code.getCodeLabel().contains("ADMIN") || 
+                               code.getCodeLabel().contains("MASTER") ||
+                               code.getCodeLabel().contains("HQ"))
+                .map(code -> code.getCodeValue())
                 .collect(Collectors.toSet());
             
             // 사용자 역할이 관리자 역할에 포함되는지 확인
-            return adminRoleCodes.contains(user.getRole());
+            return adminRoleCodes.contains(user.getRole().name());
         } catch (Exception e) {
             log.error("❌ 관리자 권한 확인 실패: error={}", e.getMessage(), e);
             // 기본값으로 하드코딩된 역할 확인 (fallback)
-            return "ADMIN".equals(user.getRole()) || 
-                   "HQ_MASTER".equals(user.getRole()) || 
-                   "BRANCH_HQ_MASTER".equals(user.getRole()) ||
-                   "HQ_ADMIN".equals(user.getRole()) ||
-                   "SUPER_HQ_ADMIN".equals(user.getRole());
+            return "ADMIN".equals(user.getRole().name()) || 
+                   "HQ_MASTER".equals(user.getRole().name()) || 
+                   "BRANCH_HQ_MASTER".equals(user.getRole().name()) ||
+                   "HQ_ADMIN".equals(user.getRole().name()) ||
+                   "SUPER_HQ_ADMIN".equals(user.getRole().name());
         }
     }
 
@@ -1258,7 +1261,7 @@ public class ScheduleController {
             List<CommonCode> statusCodes = commonCodeService.getCommonCodesByGroup("STATUS");
             
             return statusCodes.stream()
-                .anyMatch(code -> code.getCode().equals(status));
+                .anyMatch(code -> code.getCodeValue().equals(status));
         } catch (Exception e) {
             log.error("❌ 스케줄 상태 확인 실패: error={}", e.getMessage(), e);
             // 기본값으로 하드코딩된 상태 확인 (fallback)

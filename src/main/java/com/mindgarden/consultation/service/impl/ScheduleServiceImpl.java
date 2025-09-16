@@ -1177,8 +1177,8 @@ public class ScheduleServiceImpl implements ScheduleService {
             for (Schedule schedule : pastBookedSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleConstants.STATUS_BOOKED.equals(latestSchedule.getStatus())) {
-                        latestSchedule.setStatus(ScheduleConstants.STATUS_COMPLETED);
+                    if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
+                        latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                         latestSchedule.setUpdatedAt(LocalDateTime.now());
                         scheduleRepository.save(latestSchedule);
                         completedCount++;

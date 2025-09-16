@@ -17,14 +17,6 @@ const ScheduleQuickAccess = ({ user }) => {
     navigate('/consultant/schedule');
   };
 
-  const handleTodayScheduleClick = () => {
-    navigate('/consultant/schedule?view=today');
-  };
-
-  const handleUpcomingScheduleClick = () => {
-    navigate('/consultant/schedule?view=upcoming');
-  };
-
   return (
     <div style={{
       background: 'white',
@@ -82,218 +74,79 @@ const ScheduleQuickAccess = ({ user }) => {
         </button>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '16px'
-      }}>
-        {/* 오늘의 스케줄 */}
-        <div
-          style={{
-            border: '1px solid #e9ecef',
-            borderRadius: '8px',
-            padding: '16px',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-          onClick={handleTodayScheduleClick}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'translateY(-2px)';
-            e.target.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = 'none';
-          }}
-        >
+      {/* 통합 스케줄 카드 */}
+      <div
+        style={{
+          border: '1px solid #e9ecef',
+          borderRadius: '12px',
+          padding: '24px',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          position: 'relative',
+          overflow: 'hidden',
+          textAlign: 'center'
+        }}
+        onClick={handleScheduleClick}
+        onMouseEnter={(e) => {
+          e.target.style.transform = 'translateY(-2px)';
+          e.target.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.3)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = 'translateY(0)';
+          e.target.style.boxShadow = 'none';
+        }}
+      >
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
           <div style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.2)',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
-            marginBottom: '8px'
+            justifyContent: 'center',
+            fontSize: '24px'
           }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: 'rgba(255, 255, 255, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px'
+            <i className="bi bi-calendar-check"></i>
+          </div>
+          <div>
+            <h4 style={{
+              margin: 0,
+              fontSize: '20px',
+              fontWeight: '600',
+              marginBottom: '8px'
             }}>
-              <i className="bi bi-calendar-day"></i>
-            </div>
-            <div>
-              <h4 style={{
-                margin: 0,
-                fontSize: '16px',
-                fontWeight: '600'
-              }}>
-                오늘의 스케줄
-              </h4>
-              <p style={{
-                margin: 0,
-                fontSize: '14px',
-                opacity: 0.9
-              }}>
-                오늘 예정된 상담
-              </p>
-            </div>
+              스케줄 관리
+            </h4>
+            <p style={{
+              margin: 0,
+              fontSize: '16px',
+              opacity: 0.9,
+              lineHeight: '1.4'
+            }}>
+              오늘의 스케줄, 다가오는 상담, 새 일정 등록
+            </p>
           </div>
           <div style={{
-            fontSize: '12px',
+            fontSize: '14px',
             opacity: 0.8,
             display: 'flex',
             alignItems: 'center',
-            gap: '4px'
+            gap: '6px',
+            padding: '8px 16px',
+            background: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '20px',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
-            <i className="bi bi-clock"></i>
-            바로가기
-          </div>
-        </div>
-
-        {/* 다가오는 스케줄 */}
-        <div
-          style={{
-            border: '1px solid #e9ecef',
-            borderRadius: '8px',
-            padding: '16px',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-            color: 'white',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-          onClick={handleUpcomingScheduleClick}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'translateY(-2px)';
-            e.target.style.boxShadow = '0 4px 12px rgba(240, 147, 251, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = 'none';
-          }}
-        >
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            marginBottom: '8px'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: 'rgba(255, 255, 255, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px'
-            }}>
-              <i className="bi bi-calendar-week"></i>
-            </div>
-            <div>
-              <h4 style={{
-                margin: 0,
-                fontSize: '16px',
-                fontWeight: '600'
-              }}>
-                다가오는 스케줄
-              </h4>
-              <p style={{
-                margin: 0,
-                fontSize: '14px',
-                opacity: 0.9
-              }}>
-                예정된 상담 일정
-              </p>
-            </div>
-          </div>
-          <div style={{
-            fontSize: '12px',
-            opacity: 0.8,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-            <i className="bi bi-clock"></i>
-            바로가기
-          </div>
-        </div>
-
-        {/* 스케줄 등록 */}
-        <div
-          style={{
-            border: '1px solid #e9ecef',
-            borderRadius: '8px',
-            padding: '16px',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
-            background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-            color: 'white',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-          onClick={() => navigate('/consultant/schedule/new')}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'translateY(-2px)';
-            e.target.style.boxShadow = '0 4px 12px rgba(79, 172, 254, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = 'none';
-          }}
-        >
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            marginBottom: '8px'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: 'rgba(255, 255, 255, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px'
-            }}>
-              <i className="bi bi-plus-circle"></i>
-            </div>
-            <div>
-              <h4 style={{
-                margin: 0,
-                fontSize: '16px',
-                fontWeight: '600'
-              }}>
-                스케줄 등록
-              </h4>
-              <p style={{
-                margin: 0,
-                fontSize: '14px',
-                opacity: 0.9
-              }}>
-                새로운 상담 일정
-              </p>
-            </div>
-          </div>
-          <div style={{
-            fontSize: '12px',
-            opacity: 0.8,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-            <i className="bi bi-plus"></i>
-            새로 등록
+            <i className="bi bi-arrow-right"></i>
+            스케줄 페이지로 이동
           </div>
         </div>
       </div>

@@ -1198,30 +1198,6 @@ public class ScheduleController {
         }
     }
 
-    /**
-     * 스케줄 자동 완료 처리 (수동 실행)
-     * POST /api/schedules/auto-complete
-     */
-    @PostMapping("/auto-complete")
-    public ResponseEntity<?> autoCompleteSchedules() {
-        try {
-            log.info("🔄 스케줄 자동 완료 처리 수동 실행");
-            
-            scheduleService.autoCompleteExpiredSchedules();
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "스케줄 자동 완료 처리가 실행되었습니다."
-            ));
-            
-        } catch (Exception e) {
-            log.error("❌ 스케줄 자동 완료 처리 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "success", false,
-                "message", "스케줄 자동 완료 처리에 실패했습니다: " + e.getMessage()
-            ));
-        }
-    }
 
     /**
      * 공통코드를 사용한 관리자 권한 확인

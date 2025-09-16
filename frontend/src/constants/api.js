@@ -188,14 +188,17 @@ export const ADMIN_API = {
   GET_SYSTEM_LOGS: '/api/admin/system/logs'
 };
 
-// 스케줄 관련 API
+// 스케줄 관련 API (중앙화)
 export const SCHEDULE_API = {
-  // 스케줄 조회
+  // 기본 스케줄 조회
   SCHEDULES: '/api/schedules',
   SCHEDULES_BY_DATE: '/api/schedules/date',
   SCHEDULES_BY_DATE_RANGE: '/api/schedules/date-range',
   SCHEDULES_BY_CONSULTANT: '/api/schedules/consultant',
   SCHEDULES_BY_CLIENT: '/api/schedules/client',
+  
+  // 관리자용 스케줄 조회 (통합)
+  ADMIN_SCHEDULES: '/api/schedules/admin',
   
   // 스케줄 관리
   SCHEDULE_DETAIL: '/api/schedules',
@@ -206,11 +209,11 @@ export const SCHEDULE_API = {
   SCHEDULE_CANCEL: '/api/schedules',
   SCHEDULE_COMPLETE: '/api/schedules',
   
-  // 자동 완료 처리
+  // 자동 완료 처리 (통합)
   AUTO_COMPLETE: '/api/schedules/auto-complete',
   
   // 통계
-  STATISTICS: '/api/schedules/admin/statistics',
+  STATISTICS: '/api/schedules/statistics',
   TODAY_STATISTICS: '/api/schedules/today/statistics',
   
   // 페이지네이션

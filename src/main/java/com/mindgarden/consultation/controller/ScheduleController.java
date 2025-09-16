@@ -1102,6 +1102,174 @@ public class ScheduleController {
     }
     
     /**
+     * 관리자용 스케줄 조회 (필터링)
+     * GET /api/schedules/admin
+     */
+    @GetMapping("/admin")
+    public ResponseEntity<?> getSchedulesForAdmin(
+            @RequestParam(required = false) Long consultantId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            HttpSession session) {
+        try {
+            log.info("📅 관리자 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}", 
+                    consultantId, status, startDate, endDate);
+            
+            // 현재 사용자 정보 조회
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    Map.of("success", false, "message", "로그인이 필요합니다.")
+                );
+            }
+            
+            // 권한 확인 - 공통코드에서 관리자 역할 조회
+            if (!isAdminUser(currentUser)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    Map.of("success", false, "message", "관리자 권한이 필요합니다.")
+                );
+            }
+            
+            List<Schedule> schedules;
+            
+            if (consultantId != null) {
+                // 특정 상담사의 스케줄만 조회
+                schedules = scheduleService.findByConsultantId(consultantId);
+            } else {
+                // 모든 스케줄 조회
+                schedules = scheduleService.findAll();
+            }
+            
+            // 상태 필터링 - 공통코드에서 상태 조회
+            if (status != null && !status.isEmpty() && !"ALL".equals(status)) {
+                // 유효한 상태인지 공통코드로 확인
+                if (isValidScheduleStatus(status)) {
+                    schedules = schedules.stream()
+                        .filter(schedule -> status.equals(schedule.getStatus().name()))
+                        .collect(Collectors.toList());
+                } else {
+                    log.warn("⚠️ 유효하지 않은 스케줄 상태: {}", status);
+                    return ResponseEntity.badRequest().body(
+                        Map.of("success", false, "message", "유효하지 않은 스케줄 상태입니다: " + status)
+                    );
+                }
+            }
+            
+            // 날짜 필터링
+            if (startDate != null && !startDate.isEmpty()) {
+                LocalDate start = LocalDate.parse(startDate);
+                schedules = schedules.stream()
+                    .filter(schedule -> schedule.getDate().isAfter(start) || schedule.getDate().isEqual(start))
+                    .collect(Collectors.toList());
+            }
+            
+            if (endDate != null && !endDate.isEmpty()) {
+                LocalDate end = LocalDate.parse(endDate);
+                schedules = schedules.stream()
+                    .filter(schedule -> schedule.getDate().isBefore(end) || schedule.getDate().isEqual(end))
+                    .collect(Collectors.toList());
+            }
+            
+            List<ScheduleDto> scheduleDtos = schedules.stream()
+                .map(this::convertToScheduleDto)
+                .collect(Collectors.toList());
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "data", scheduleDtos,
+                "count", scheduleDtos.size(),
+                "consultantId", consultantId,
+                "status", status,
+                "startDate", startDate,
+                "endDate", endDate,
+                "message", "스케줄 조회 성공"
+            );
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("❌ 관리자 스케줄 조회 실패: error={}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                Map.of("success", false, "message", "스케줄 조회 실패: " + e.getMessage())
+            );
+        }
+    }
+
+    /**
+     * 스케줄 자동 완료 처리 (수동 실행)
+     * POST /api/schedules/auto-complete
+     */
+    @PostMapping("/auto-complete")
+    public ResponseEntity<?> autoCompleteSchedules() {
+        try {
+            log.info("🔄 스케줄 자동 완료 처리 수동 실행");
+            
+            scheduleService.autoCompleteExpiredSchedules();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "스케줄 자동 완료 처리가 실행되었습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 스케줄 자동 완료 처리 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "스케줄 자동 완료 처리에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 공통코드를 사용한 관리자 권한 확인
+     */
+    private boolean isAdminUser(User user) {
+        try {
+            // 공통코드에서 관리자 역할 조회
+            List<CommonCode> adminRoles = commonCodeService.getCommonCodesByGroup("ROLE");
+            
+            // 관리자 역할 코드들
+            Set<String> adminRoleCodes = adminRoles.stream()
+                .filter(code -> code.getCodeName().contains("ADMIN") || 
+                               code.getCodeName().contains("MASTER") ||
+                               code.getCodeName().contains("HQ"))
+                .map(CommonCode::getCode)
+                .collect(Collectors.toSet());
+            
+            // 사용자 역할이 관리자 역할에 포함되는지 확인
+            return adminRoleCodes.contains(user.getRole());
+        } catch (Exception e) {
+            log.error("❌ 관리자 권한 확인 실패: error={}", e.getMessage(), e);
+            // 기본값으로 하드코딩된 역할 확인 (fallback)
+            return "ADMIN".equals(user.getRole()) || 
+                   "HQ_MASTER".equals(user.getRole()) || 
+                   "BRANCH_HQ_MASTER".equals(user.getRole()) ||
+                   "HQ_ADMIN".equals(user.getRole()) ||
+                   "SUPER_HQ_ADMIN".equals(user.getRole());
+        }
+    }
+
+    /**
+     * 공통코드를 사용한 스케줄 상태 확인
+     */
+    private boolean isValidScheduleStatus(String status) {
+        try {
+            // 공통코드에서 스케줄 상태 조회
+            List<CommonCode> statusCodes = commonCodeService.getCommonCodesByGroup("STATUS");
+            
+            return statusCodes.stream()
+                .anyMatch(code -> code.getCode().equals(status));
+        } catch (Exception e) {
+            log.error("❌ 스케줄 상태 확인 실패: error={}", e.getMessage(), e);
+            // 기본값으로 하드코딩된 상태 확인 (fallback)
+            return "CONFIRMED".equals(status) || 
+                   "BOOKED".equals(status) || 
+                   "CANCELLED".equals(status) || 
+                   "COMPLETED".equals(status);
+        }
+    }
+
+    /**
      * Schedule 엔티티를 ScheduleDto로 변환하는 헬퍼 메서드
      */
     private ScheduleDto convertToScheduleDto(Schedule schedule) {

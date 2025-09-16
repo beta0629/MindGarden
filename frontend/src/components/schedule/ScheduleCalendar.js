@@ -789,6 +789,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 }}
                 initialView="dayGridMonth"
+                defaultView="dayGridMonth"
                 locale="ko"
                 selectable={true}
                 selectMirror={true}

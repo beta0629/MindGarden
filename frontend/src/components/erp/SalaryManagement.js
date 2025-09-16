@@ -15,6 +15,7 @@ const SalaryManagement = () => {
     const [salaryProfiles, setSalaryProfiles] = useState([]);
     const [salaryCalculations, setSalaryCalculations] = useState([]);
     const [taxCalculations, setTaxCalculations] = useState([]);
+    const [taxStatistics, setTaxStatistics] = useState(null);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isProfileFormOpen, setIsProfileFormOpen] = useState(false);
@@ -202,12 +203,25 @@ const SalaryManagement = () => {
     const loadTaxStatistics = async (period) => {
         try {
             setLoading(true);
+            
+            // 기간이 선택되지 않은 경우 경고
+            if (!period || period.trim() === '') {
+                showNotification('세금 통계를 조회하려면 기간을 먼저 선택해주세요.', 'warning');
+                setLoading(false);
+                return;
+            }
+            
+            console.log('🔍 세금 통계 로드 시작:', period);
             const response = await apiGet(`/api/admin/salary/tax/statistics?period=${period}`);
+            console.log('📊 세금 통계 응답:', response);
             if (response && response.success) {
-                setTaxCalculations(response.data);
+                console.log('✅ 세금 통계 데이터:', response.data);
+                setTaxStatistics(response.data);
+            } else {
+                console.error('❌ 세금 통계 응답 실패:', response);
             }
         } catch (error) {
-            console.error('세금 통계 로드 실패:', error);
+            console.error('❌ 세금 통계 로드 실패:', error);
             showNotification('세금 통계를 불러오는데 실패했습니다.', 'error');
         } finally {
             setLoading(false);
@@ -239,13 +253,20 @@ const SalaryManagement = () => {
                 <div className="header-actions">
                     <select 
                         value={selectedPeriod} 
-                        onChange={(e) => setSelectedPeriod(e.target.value)}
+                        onChange={(e) => {
+                            setSelectedPeriod(e.target.value);
+                            // 기간 선택 시 자동으로 세금 통계 로드
+                            if (e.target.value && activeTab === 'tax') {
+                                loadTaxStatistics(e.target.value);
+                            }
+                        }}
                         className="period-select"
                     >
                         <option value="">기간 선택</option>
                         <option value="2025-01">2025년 1월</option>
                         <option value="2025-02">2025년 2월</option>
                         <option value="2025-03">2025년 3월</option>
+                        <option value="2025-09">2025년 9월</option>
                     </select>
                 </div>
             </div>
@@ -265,7 +286,13 @@ const SalaryManagement = () => {
                 </button>
                 <button 
                     className={`tab-button ${activeTab === 'tax' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('tax')}
+                    onClick={() => {
+                        setActiveTab('tax');
+                        // 세금 관리 탭으로 전환 시 기간이 선택되어 있으면 자동으로 세금 통계 로드
+                        if (selectedPeriod) {
+                            loadTaxStatistics(selectedPeriod);
+                        }
+                    }}
                 >
                     세금 관리
                 </button>
@@ -461,26 +488,113 @@ const SalaryManagement = () => {
                             세금 통계 조회
                         </button>
                     </div>
-                    <div className="tax-statistics">
-                        {taxCalculations && (
-                            <div className="statistics-card">
-                                <h4>세금 통계</h4>
-                                <div className="statistics-grid">
-                                    <div className="stat-item">
-                                        <span className="stat-label">총 세금액</span>
-                                        <span className="stat-value">
-                                            {formatCurrency(taxCalculations.totalTaxAmount || 0)}
+                    <div className="tax-calculations-history">
+                        <h4>세금 통계 내역</h4>
+                        <div className="tax-calculations-list">
+                            {taxStatistics ? (
+                                <div className="tax-calculation-card">
+                                    <div className="calculation-header">
+                                        <h4>{selectedPeriod || '2025-09'}</h4>
+                                        <span className="status status-calculated">
+                                            CALCULATED
                                         </span>
                                     </div>
-                                    <div className="stat-item">
-                                        <span className="stat-label">세금 건수</span>
-                                        <span className="stat-value">
-                                            {taxCalculations.taxCount || 0}건
-                                        </span>
+                                    <div className="calculation-details">
+                                        <div className="detail-row">
+                                            <span>총 세금액:</span>
+                                            <span style={{color: '#dc3545', fontWeight: 'bold'}}>
+                                                {formatCurrency(taxStatistics.totalTaxAmount || 0)}
+                                            </span>
+                                        </div>
+                                        <div className="detail-row">
+                                            <span>세금 건수:</span>
+                                            <span>{taxStatistics.taxCount || 0}건</span>
+                                        </div>
+                                        {/* 원천징수세 (모든 프리랜서) */}
+                                        {(taxStatistics.withholdingTax > 0 || taxStatistics.localIncomeTax > 0) && (
+                                            <>
+                                                <div className="detail-row">
+                                                    <span>원천징수세 (3.3%):</span>
+                                                    <span style={{color: '#dc3545'}}>
+                                                        -{formatCurrency(taxStatistics.withholdingTax || 0)}
+                                                    </span>
+                                                </div>
+                                                <div className="detail-row">
+                                                    <span>지방소득세 (0.33%):</span>
+                                                    <span style={{color: '#dc3545'}}>
+                                                        -{formatCurrency(taxStatistics.localIncomeTax || 0)}
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )}
+                                        
+                                        {/* 부가가치세 (사업자 등록 시에만) */}
+                                        {taxStatistics.vat > 0 && (
+                                            <div className="detail-row">
+                                                <span>부가가치세 (10%):</span>
+                                                <span style={{color: '#dc3545'}}>
+                                                    -{formatCurrency(taxStatistics.vat || 0)}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div className="detail-row">
+                                            <span>국민연금 (4.5%):</span>
+                                            <span style={{color: '#dc3545'}}>
+                                                -{formatCurrency(taxStatistics.nationalPension || 0)}
+                                            </span>
+                                        </div>
+                                        <div className="detail-row">
+                                            <span>건강보험 (3.545%):</span>
+                                            <span style={{color: '#dc3545'}}>
+                                                -{formatCurrency(taxStatistics.healthInsurance || 0)}
+                                            </span>
+                                        </div>
+                                        <div className="detail-row">
+                                            <span>장기요양보험 (0.545%):</span>
+                                            <span style={{color: '#dc3545'}}>
+                                                -{formatCurrency(taxStatistics.longTermCare || 0)}
+                                            </span>
+                                        </div>
+                                        <div className="detail-row">
+                                            <span>고용보험 (0.9%):</span>
+                                            <span style={{color: '#dc3545'}}>
+                                                -{formatCurrency(taxStatistics.employmentInsurance || 0)}
+                                            </span>
+                                        </div>
+                                        <div className="detail-row total">
+                                            <span>총 공제액:</span>
+                                            <span style={{color: '#dc3545', fontWeight: 'bold', fontSize: '16px'}}>
+                                                -{formatCurrency(taxStatistics.totalTaxAmount || 0)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="calculation-actions">
+                                        <button 
+                                            className="btn-secondary"
+                                            onClick={() => {
+                                                // 세금 상세 내역 모달 열기
+                                                console.log('세금 상세 내역 보기');
+                                            }}
+                                        >
+                                            세금 상세 내역 보기
+                                        </button>
+                                        <button 
+                                            className="btn-primary"
+                                            onClick={() => {
+                                                // 세금 통계 출력
+                                                console.log('세금 통계 출력');
+                                            }}
+                                        >
+                                            출력
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="no-data">
+                                    <p>세금 통계를 조회하려면 "세금 통계 조회" 버튼을 클릭하세요.</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

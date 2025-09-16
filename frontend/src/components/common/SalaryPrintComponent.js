@@ -1,4 +1,4 @@
-import React, { useRef, forwardRef } from 'react';
+import React from 'react';
 import PrintComponent from './PrintComponent';
 
 /**
@@ -21,7 +21,6 @@ const SalaryPrintComponent = ({
   includeTaxDetails = true,
   includeCalculationDetails = true
 }) => {
-  const printRef = useRef();
 
   if (!salaryData) {
     return <div>급여 데이터가 없습니다.</div>;
@@ -39,7 +38,6 @@ const SalaryPrintComponent = ({
 
   return (
     <PrintComponent
-      ref={printRef}
       title={`급여 계산서 - ${consultantName}`}
       printStyle={{
         '@media print': {

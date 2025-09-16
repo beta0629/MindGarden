@@ -205,6 +205,9 @@ public class SalaryManagementController {
                 profileData.put("salaryType", profile.getSalaryType());
                 profileData.put("baseSalary", profile.getBaseSalary());
                 profileData.put("contractTerms", profile.getContractTerms());
+                profileData.put("isBusinessRegistered", profile.getIsBusinessRegistered());
+                profileData.put("businessRegistrationNumber", profile.getBusinessRegistrationNumber());
+                profileData.put("businessName", profile.getBusinessName());
                 profileData.put("isActive", profile.getIsActive());
                 profileData.put("createdAt", profile.getCreatedAt());
                 profileData.put("updatedAt", profile.getUpdatedAt());
@@ -249,6 +252,8 @@ public class SalaryManagementController {
             BigDecimal baseSalary = new BigDecimal(request.get("baseSalary").toString());
             String contractTerms = request.get("contractTerms").toString();
             Boolean isBusinessRegistered = Boolean.valueOf(request.getOrDefault("isBusinessRegistered", "false").toString());
+            String businessRegistrationNumber = request.getOrDefault("businessRegistrationNumber", "").toString();
+            String businessName = request.getOrDefault("businessName", "").toString();
             
             log.info("🔧 급여 프로필 생성 요청: 상담사ID={}, 급여유형={}", consultantId, salaryType);
             
@@ -267,7 +272,7 @@ public class SalaryManagementController {
             }
             
             ConsultantSalaryProfile profile = salaryCalculationService.createSalaryProfile(
-                consultantId, salaryType, baseSalary, contractTerms, isBusinessRegistered);
+                consultantId, salaryType, baseSalary, contractTerms, isBusinessRegistered, businessRegistrationNumber, businessName);
             
             // 옵션들은 상담 완료 시 자동으로 추가되므로 여기서는 처리하지 않음
             

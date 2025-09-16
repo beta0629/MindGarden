@@ -5,7 +5,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import com.mindgarden.consultation.entity.ConsultantSalaryProfile;
+import com.mindgarden.consultation.entity.SalaryCalculation;
 import com.mindgarden.consultation.entity.SalaryTaxCalculation;
+import com.mindgarden.consultation.repository.ConsultantSalaryProfileRepository;
+import com.mindgarden.consultation.repository.SalaryCalculationRepository;
 import com.mindgarden.consultation.repository.SalaryTaxCalculationRepository;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.TaxCalculationService;
@@ -28,6 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 public class TaxCalculationServiceImpl implements TaxCalculationService {
     
     private final SalaryTaxCalculationRepository taxCalculationRepository;
+    private final SalaryCalculationRepository salaryCalculationRepository;
+    private final ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
     private final CommonCodeService commonCodeService;
     
     // ==================== 세금 계산 ====================
@@ -204,23 +211,132 @@ public class TaxCalculationServiceImpl implements TaxCalculationService {
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("period", period);
         
-        // 세금 유형별 총액 조회
-        List<Object[]> taxTypeTotals = taxCalculationRepository.getTotalTaxAmountByTaxType();
-        Map<String, BigDecimal> taxTypeMap = new HashMap<>();
-        BigDecimal totalTaxAmount = BigDecimal.ZERO;
+        // 해당 기간의 급여 계산 내역 조회
+        List<SalaryCalculation> calculations = salaryCalculationRepository.findByCalculationPeriodOrderByCreatedAtDesc(period);
+        log.info("📊 조회된 급여 계산 건수: {} 건", calculations.size());
         
-        for (Object[] result : taxTypeTotals) {
-            String taxType = (String) result[0];
-            BigDecimal amount = (BigDecimal) result[1];
-            taxTypeMap.put(taxType, amount);
-            totalTaxAmount = totalTaxAmount.add(amount);
+        if (calculations.isEmpty()) {
+            log.warn("⚠️ 해당 기간({})의 급여 계산 데이터가 없습니다.", period);
         }
         
-        statistics.put("taxByType", taxTypeMap);
+        BigDecimal totalGrossAmount = BigDecimal.ZERO;
+        BigDecimal totalWithholdingTax = BigDecimal.ZERO;
+        BigDecimal totalLocalIncomeTax = BigDecimal.ZERO;
+        BigDecimal totalVAT = BigDecimal.ZERO; // 부가가치세
+        BigDecimal totalNationalPension = BigDecimal.ZERO;
+        BigDecimal totalHealthInsurance = BigDecimal.ZERO;
+        BigDecimal totalLongTermCare = BigDecimal.ZERO;
+        BigDecimal totalEmploymentInsurance = BigDecimal.ZERO;
+        BigDecimal totalAdditionalDeduction = BigDecimal.ZERO;
+        BigDecimal totalOtherDeductions = BigDecimal.ZERO;
+        
+        for (SalaryCalculation calculation : calculations) {
+            BigDecimal grossAmount = calculation.getTotalSalary();
+            totalGrossAmount = totalGrossAmount.add(grossAmount);
+            
+            // 상담사의 급여 프로필 조회하여 세금 방식 결정
+            Optional<ConsultantSalaryProfile> profileOpt = consultantSalaryProfileRepository
+                .findByConsultantIdAndActive(calculation.getConsultantId());
+            
+            boolean isBusinessRegistered = profileOpt
+                .map(ConsultantSalaryProfile::getIsBusinessRegistered)
+                .orElse(false);
+            
+            if (isBusinessRegistered) {
+                // 사업자 등록 시: 부가가치세 (10%) + 원천징수세 (3.3% + 0.33%)
+                BigDecimal vat = grossAmount.multiply(new BigDecimal("0.10"));
+                BigDecimal withholdingTax = grossAmount.multiply(new BigDecimal("0.033"));
+                BigDecimal localIncomeTax = grossAmount.multiply(new BigDecimal("0.0033"));
+                
+                totalVAT = totalVAT.add(vat);
+                totalWithholdingTax = totalWithholdingTax.add(withholdingTax);
+                totalLocalIncomeTax = totalLocalIncomeTax.add(localIncomeTax);
+            } else {
+                // 일반 프리랜서: 원천징수세만 (3.3% + 0.33%)
+                BigDecimal withholdingTax = grossAmount.multiply(new BigDecimal("0.033"));
+                BigDecimal localIncomeTax = grossAmount.multiply(new BigDecimal("0.0033"));
+                
+                totalWithholdingTax = totalWithholdingTax.add(withholdingTax);
+                totalLocalIncomeTax = totalLocalIncomeTax.add(localIncomeTax);
+            }
+            
+            // 4대보험 (연간 1,200만원 이상 시)
+            BigDecimal nationalPension = calculateNationalPension(grossAmount);
+            BigDecimal healthInsurance = calculateHealthInsurance(grossAmount);
+            BigDecimal longTermCare = calculateLongTermCare(grossAmount);
+            BigDecimal employmentInsurance = calculateEmploymentInsurance(grossAmount);
+            
+            totalNationalPension = totalNationalPension.add(nationalPension);
+            totalHealthInsurance = totalHealthInsurance.add(healthInsurance);
+            totalLongTermCare = totalLongTermCare.add(longTermCare);
+            totalEmploymentInsurance = totalEmploymentInsurance.add(employmentInsurance);
+        }
+        
+        // 총 세금액 계산
+        BigDecimal totalTaxAmount = totalWithholdingTax
+            .add(totalLocalIncomeTax)
+            .add(totalVAT)
+            .add(totalNationalPension)
+            .add(totalHealthInsurance)
+            .add(totalLongTermCare)
+            .add(totalEmploymentInsurance)
+            .add(totalAdditionalDeduction)
+            .add(totalOtherDeductions);
+        
+        statistics.put("totalGrossAmount", totalGrossAmount);
+        statistics.put("withholdingTax", totalWithholdingTax);
+        statistics.put("localIncomeTax", totalLocalIncomeTax);
+        statistics.put("vat", totalVAT); // 부가가치세
+        statistics.put("nationalPension", totalNationalPension);
+        statistics.put("healthInsurance", totalHealthInsurance);
+        statistics.put("longTermCare", totalLongTermCare);
+        statistics.put("employmentInsurance", totalEmploymentInsurance);
+        statistics.put("additionalDeduction", totalAdditionalDeduction);
+        statistics.put("otherDeductions", totalOtherDeductions);
         statistics.put("totalTaxAmount", totalTaxAmount);
-        statistics.put("taxCount", taxTypeTotals.size());
+        statistics.put("taxCount", calculations.size());
         
         return statistics;
+    }
+    
+    /**
+     * 국민연금 계산 (연간 1,200만원 이상 시 4.5%)
+     */
+    private BigDecimal calculateNationalPension(BigDecimal annualIncome) {
+        if (annualIncome.compareTo(new BigDecimal("12000000")) < 0) {
+            return BigDecimal.ZERO; // 1,200만원 미만은 국민연금 면제
+        }
+        return annualIncome.multiply(new BigDecimal("0.045"));
+    }
+    
+    /**
+     * 건강보험료 계산 (연간 1,200만원 이상 시 3.545%)
+     */
+    private BigDecimal calculateHealthInsurance(BigDecimal annualIncome) {
+        if (annualIncome.compareTo(new BigDecimal("12000000")) < 0) {
+            return BigDecimal.ZERO; // 1,200만원 미만은 건강보험료 면제
+        }
+        return annualIncome.multiply(new BigDecimal("0.03545"));
+    }
+    
+    /**
+     * 장기요양보험료 계산 (연간 1,200만원 이상 시 0.545%)
+     */
+    private BigDecimal calculateLongTermCare(BigDecimal annualIncome) {
+        if (annualIncome.compareTo(new BigDecimal("12000000")) < 0) {
+            return BigDecimal.ZERO; // 1,200만원 미만은 장기요양보험료 면제
+        }
+        return annualIncome.multiply(new BigDecimal("0.00545"));
+    }
+    
+    /**
+     * 고용보험료 계산 (연간 1,200만원 이상 시 0.9%)
+     */
+    private BigDecimal calculateEmploymentInsurance(BigDecimal annualIncome) {
+        if (annualIncome.compareTo(new BigDecimal("12000000")) < 0) {
+            return BigDecimal.ZERO; // 1,200만원 미만은 고용보험료 면제
+        }
+        return annualIncome.multiply(new BigDecimal("0.009"));
     }
     
     // ==================== 세금 관리 ====================

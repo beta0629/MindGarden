@@ -15,7 +15,9 @@ const SalaryProfileFormModal = ({
         contractTerms: '',
         isActive: true,
         grade: '', // 상담사 등급
-        isBusinessRegistered: false // 사업자 등록 여부
+        isBusinessRegistered: false, // 사업자 등록 여부
+        businessRegistrationNumber: '', // 사업자 등록번호
+        businessName: '' // 사업자명
     });
     
     const [salaryTypes, setSalaryTypes] = useState([]);
@@ -256,9 +258,37 @@ const SalaryProfileFormModal = ({
         setSelectedOptions(prev => prev.filter((_, i) => i !== index));
     };
 
+    // 사업자 등록번호 유효성 검사
+    const validateBusinessRegistrationNumber = (number) => {
+        // 123-45-67890 형식 검사
+        const pattern = /^\d{3}-\d{2}-\d{5}$/;
+        return pattern.test(number);
+    };
+
     const handleSave = async () => {
         try {
             setLoading(true);
+
+            // 사업자 등록 시 필수 필드 검사
+            if (formData.isBusinessRegistered) {
+                if (!formData.businessRegistrationNumber) {
+                    showNotification('사업자 등록번호를 입력해주세요.', 'error');
+                    setLoading(false);
+                    return;
+                }
+                
+                if (!validateBusinessRegistrationNumber(formData.businessRegistrationNumber)) {
+                    showNotification('사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)', 'error');
+                    setLoading(false);
+                    return;
+                }
+                
+                if (!formData.businessName) {
+                    showNotification('사업자명을 입력해주세요.', 'error');
+                    setLoading(false);
+                    return;
+                }
+            }
 
             const profileData = {
                 ...formData,
@@ -579,6 +609,38 @@ const SalaryProfileFormModal = ({
                                 • 사업자 등록: 원천징수 3.3% + 부가세 10% 적용
                             </div>
                         </div>
+                    )}
+
+                    {/* 사업자 등록 시 추가 필드 */}
+                    {formData.salaryType === 'FREELANCE' && formData.isBusinessRegistered && (
+                        <>
+                            <div style={formGroupStyle}>
+                                <label style={labelStyle}>사업자 등록번호 *</label>
+                                <input
+                                    type="text"
+                                    style={inputStyle}
+                                    value={formData.businessRegistrationNumber}
+                                    onChange={(e) => handleInputChange('businessRegistrationNumber', e.target.value)}
+                                    placeholder="123-45-67890"
+                                />
+                                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                                    사업자 등록번호를 입력하세요 (예: 123-45-67890)
+                                </div>
+                            </div>
+                            <div style={formGroupStyle}>
+                                <label style={labelStyle}>사업자명 *</label>
+                                <input
+                                    type="text"
+                                    style={inputStyle}
+                                    value={formData.businessName}
+                                    onChange={(e) => handleInputChange('businessName', e.target.value)}
+                                    placeholder="사업자명을 입력하세요"
+                                />
+                                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                                    사업자 등록증에 기재된 사업자명을 입력하세요
+                                </div>
+                            </div>
+                        </>
                     )}
 
                     {/* 계약 조건 */}

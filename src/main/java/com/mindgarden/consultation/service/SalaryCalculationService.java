@@ -23,6 +23,7 @@ public interface SalaryCalculationService {
      */
     ConsultantSalaryProfile createSalaryProfile(Long consultantId, String salaryType, BigDecimal baseSalary, String contractTerms);
     ConsultantSalaryProfile createSalaryProfile(Long consultantId, String salaryType, BigDecimal baseSalary, String contractTerms, Boolean isBusinessRegistered);
+    ConsultantSalaryProfile createSalaryProfile(Long consultantId, String salaryType, BigDecimal baseSalary, String contractTerms, Boolean isBusinessRegistered, String businessRegistrationNumber, String businessName);
     
     /**
      * 상담사 급여 프로필 조회

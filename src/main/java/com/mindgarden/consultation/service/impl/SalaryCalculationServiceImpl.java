@@ -180,8 +180,14 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
     
     @Override
     public ConsultantSalaryProfile createSalaryProfile(Long consultantId, String salaryType, BigDecimal baseSalary, String contractTerms, Boolean isBusinessRegistered) {
+        return createSalaryProfile(consultantId, salaryType, baseSalary, contractTerms, isBusinessRegistered, "", "");
+    }
+    
+    @Override
+    public ConsultantSalaryProfile createSalaryProfile(Long consultantId, String salaryType, BigDecimal baseSalary, String contractTerms, Boolean isBusinessRegistered, String businessRegistrationNumber, String businessName) {
         validateSuperAdminAccess();
-        log.info("🔧 상담사 급여 프로필 생성: 상담사ID={}, 급여유형={}, 기본급여={}, 사업자등록={}", consultantId, salaryType, baseSalary, isBusinessRegistered);
+        log.info("🔧 상담사 급여 프로필 생성: 상담사ID={}, 급여유형={}, 기본급여={}, 사업자등록={}, 사업자등록번호={}, 사업자명={}", 
+                consultantId, salaryType, baseSalary, isBusinessRegistered, businessRegistrationNumber, businessName);
         
         // 기존 프로필 비활성화
         deactivateSalaryProfile(consultantId);
@@ -192,6 +198,8 @@ public class SalaryCalculationServiceImpl implements SalaryCalculationService {
         profile.setBaseSalary(baseSalary);
         profile.setContractTerms(contractTerms);
         profile.setIsBusinessRegistered(isBusinessRegistered);
+        profile.setBusinessRegistrationNumber(businessRegistrationNumber);
+        profile.setBusinessName(businessName);
         profile.setIsActive(true);
         profile.setCreatedAt(LocalDateTime.now());
         profile.setUpdatedAt(LocalDateTime.now());

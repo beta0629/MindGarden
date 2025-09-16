@@ -74,6 +74,14 @@ public class ConsultantSalaryProfile {
     @Column(name = "is_business_registered")
     private Boolean isBusinessRegistered = false; // 사업자 등록 여부
     
+    @Size(max = 20, message = "사업자 등록번호는 20자 이하여야 합니다.")
+    @Column(name = "business_registration_number", length = 20)
+    private String businessRegistrationNumber; // 사업자 등록번호 (예: 123-45-67890)
+    
+    @Size(max = 100, message = "사업자명은 100자 이하여야 합니다.")
+    @Column(name = "business_name", length = 100)
+    private String businessName; // 사업자명
+    
     @Column(name = "is_active")
     private Boolean isActive = true; // 활성화 여부
     

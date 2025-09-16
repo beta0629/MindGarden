@@ -15,7 +15,9 @@ const ConsultantProfileModal = ({
         grade: '',
         baseSalary: '',
         optionTypes: [],
-        isBusinessRegistered: false
+        isBusinessRegistered: false,
+        businessRegistrationNumber: '',
+        businessName: ''
     });
     const [optionTypes, setOptionTypes] = useState([]);
     const [grades, setGrades] = useState([]);
@@ -54,7 +56,9 @@ const ConsultantProfileModal = ({
                     grade: grade,
                     baseSalary: response.data.baseSalary || '',
                     optionTypes: response.data.optionTypes || [],
-                    isBusinessRegistered: response.data.isBusinessRegistered || false
+                    isBusinessRegistered: response.data.isBusinessRegistered || false,
+                    businessRegistrationNumber: response.data.businessRegistrationNumber || '',
+                    businessName: response.data.businessName || ''
                 });
             } else {
                 setSalaryProfile(null);
@@ -77,7 +81,9 @@ const ConsultantProfileModal = ({
                 grade: '',
                 baseSalary: '',
                 optionTypes: [],
-                isBusinessRegistered: false
+                isBusinessRegistered: false,
+                businessRegistrationNumber: '',
+                businessName: ''
             });
         } finally {
             setLoading(false);
@@ -158,11 +164,39 @@ const ConsultantProfileModal = ({
         }
     };
 
+    // 사업자 등록번호 유효성 검사
+    const validateBusinessRegistrationNumber = (number) => {
+        // 123-45-67890 형식 검사
+        const pattern = /^\d{3}-\d{2}-\d{5}$/;
+        return pattern.test(number);
+    };
+
     // 급여 프로필 생성/수정
     const handleSalaryProfileSubmit = async (e) => {
         e.preventDefault();
         try {
             setLoading(true);
+            
+            // 사업자 등록 시 필수 필드 검사
+            if (salaryFormData.isBusinessRegistered) {
+                if (!salaryFormData.businessRegistrationNumber) {
+                    alert('사업자 등록번호를 입력해주세요.');
+                    setLoading(false);
+                    return;
+                }
+                
+                if (!validateBusinessRegistrationNumber(salaryFormData.businessRegistrationNumber)) {
+                    alert('사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)');
+                    setLoading(false);
+                    return;
+                }
+                
+                if (!salaryFormData.businessName) {
+                    alert('사업자명을 입력해주세요.');
+                    setLoading(false);
+                    return;
+                }
+            }
             
             // 등급에 따른 기본 급여 계산 (이미 계산된 값 사용)
             const calculatedBaseSalary = salaryFormData.baseSalary || calculateBaseSalaryByGrade(salaryFormData.grade);
@@ -173,7 +207,10 @@ const ConsultantProfileModal = ({
                 baseSalary: calculatedBaseSalary,
                 contractTerms: salaryFormData.contractTerms,
                 grade: salaryFormData.grade,
-                optionTypes: salaryFormData.optionTypes
+                optionTypes: salaryFormData.optionTypes,
+                isBusinessRegistered: salaryFormData.isBusinessRegistered,
+                businessRegistrationNumber: salaryFormData.businessRegistrationNumber,
+                businessName: salaryFormData.businessName
             };
 
             const response = await apiPost('/api/admin/salary/profiles', profileData);
@@ -480,10 +517,9 @@ const ConsultantProfileModal = ({
                                         >
                                             <option value="">등급 선택</option>
                                             {grades.map(grade => {
-                                                const isSelected = grade.codeValue === salaryFormData.grade;
-                                                console.log('등급 옵션:', grade.codeValue, grade.codeLabel, '선택됨:', isSelected);
+                                                console.log('등급 옵션:', grade.codeValue, grade.codeLabel);
                                                 return (
-                                                    <option key={grade.codeValue} value={grade.codeValue} selected={isSelected}>
+                                                    <option key={grade.codeValue} value={grade.codeValue}>
                                                         {grade.codeLabel}
                                                     </option>
                                                 );
@@ -520,6 +556,38 @@ const ConsultantProfileModal = ({
                                             사업자 등록 여부에 따라 세금 계산이 달라집니다
                                         </small>
                                     </div>
+                                    
+                                    {/* 사업자 등록 시 추가 필드 */}
+                                    {salaryFormData.isBusinessRegistered && (
+                                        <>
+                                            <div style={infoItemStyle}>
+                                                <label style={labelStyle}>사업자 등록번호 *</label>
+                                                <input
+                                                    type="text"
+                                                    value={salaryFormData.businessRegistrationNumber}
+                                                    onChange={(e) => setSalaryFormData({...salaryFormData, businessRegistrationNumber: e.target.value})}
+                                                    placeholder="123-45-67890"
+                                                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px' }}
+                                                />
+                                                <small style={{ color: '#6c757d', fontSize: '12px' }}>
+                                                    사업자 등록번호를 입력하세요 (예: 123-45-67890)
+                                                </small>
+                                            </div>
+                                            <div style={infoItemStyle}>
+                                                <label style={labelStyle}>사업자명 *</label>
+                                                <input
+                                                    type="text"
+                                                    value={salaryFormData.businessName}
+                                                    onChange={(e) => setSalaryFormData({...salaryFormData, businessName: e.target.value})}
+                                                    placeholder="사업자명을 입력하세요"
+                                                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px' }}
+                                                />
+                                                <small style={{ color: '#6c757d', fontSize: '12px' }}>
+                                                    사업자 등록증에 기재된 사업자명을 입력하세요
+                                                </small>
+                                            </div>
+                                        </>
+                                    )}
                                     <div style={infoItemStyle}>
                                         <label style={labelStyle}>옵션 유형</label>
                                         <div style={{ 

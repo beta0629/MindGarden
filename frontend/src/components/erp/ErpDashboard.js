@@ -41,7 +41,7 @@ const ErpDashboard = () => {
         itemsRes.json(),
         pendingRes.json(),
         ordersRes.json(),
-        budgetsData.json()
+        budgetsRes.json()
       ]);
 
       // 예산 통계 계산

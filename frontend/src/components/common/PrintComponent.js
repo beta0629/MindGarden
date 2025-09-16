@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, forwardRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 
 /**
@@ -15,15 +15,16 @@ import { useReactToPrint } from 'react-to-print';
  * @version 1.0.0
  * @since 2025-01-11
  */
-const PrintComponent = ({ 
+const PrintComponent = forwardRef(({ 
   children, 
   title = "문서 출력",
   printStyle = {},
   onBeforePrint,
   onAfterPrint,
   pageStyle = {}
-}) => {
-  const printRef = useRef();
+}, ref) => {
+  const internalRef = useRef();
+  const printRef = ref || internalRef;
   
   // 프린트 스타일 기본값
   const defaultPrintStyle = {
@@ -167,6 +168,8 @@ const PrintComponent = ({
       </div>
     </div>
   );
-};
+});
+
+PrintComponent.displayName = 'PrintComponent';
 
 export default PrintComponent;

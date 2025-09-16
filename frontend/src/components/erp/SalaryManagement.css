@@ -1,4 +1,118 @@
 /* 급여 관리 컴포넌트 스타일 */
+
+/* 세금 통계 섹션 */
+.tax-statistics {
+    margin-top: 20px;
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.no-data p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* 세금 명세서 스타일 */
+.tax-specification {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 16px;
+    width: 100%;
+}
+
+.spec-header {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1.5fr;
+    background: #495057;
+    color: white;
+    font-weight: 600;
+    padding: 12px 20px;
+    font-size: 14px;
+}
+
+.spec-section {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.spec-section:last-of-type {
+    border-bottom: none;
+}
+
+.section-title {
+    background: #6c757d;
+    color: white;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.spec-item {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1.5fr;
+    padding: 12px 20px;
+    border-bottom: 1px solid #f1f3f4;
+    align-items: center;
+    font-size: 14px;
+}
+
+.spec-item:last-child {
+    border-bottom: none;
+}
+
+.item-name {
+    font-weight: 500;
+    color: #495057;
+}
+
+.item-rate {
+    text-align: center;
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.item-amount {
+    text-align: right;
+    font-weight: 600;
+    color: #dc3545;
+    font-family: 'Courier New', monospace;
+}
+
+.spec-total {
+    background: #e9ecef;
+    border-top: 2px solid #495057;
+}
+
+.total-item {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1.5fr;
+    padding: 16px 20px;
+    align-items: center;
+}
+
+.total-label {
+    font-weight: 700;
+    font-size: 16px;
+    color: #212529;
+}
+
+.total-amount {
+    text-align: right;
+    font-weight: 700;
+    font-size: 18px;
+    color: #dc3545;
+    font-family: 'Courier New', monospace;
+}
 .salary-management {
     padding: 24px;
     background-color: #f8f9fa;
@@ -262,10 +376,34 @@
 }
 
 /* 세금 관리 섹션 */
-.tax-statistics {
+.tax-calculations-history {
+    margin-top: 24px;
+}
+
+.tax-calculations-history h4 {
+    margin: 0 0 16px 0;
+    color: #2c3e50;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.tax-calculations-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 20px;
+}
+
+.tax-calculation-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tax-calculation-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .statistics-card {

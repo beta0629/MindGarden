@@ -39,7 +39,7 @@ public class ScheduleAutoCompleteService {
             
             // 1. 지난 스케줄 중 완료되지 않은 것들 조회
             List<Schedule> expiredSchedules = scheduleRepository.findByDateBeforeAndStatus(
-                LocalDate.now(), ScheduleStatus.BOOKED);
+                LocalDate.now(), ScheduleStatus.BOOKED.name());
             
             int completedCount = 0;
             int reminderSentCount = 0;

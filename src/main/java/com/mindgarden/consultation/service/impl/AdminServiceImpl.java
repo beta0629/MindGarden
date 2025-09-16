@@ -1294,7 +1294,7 @@ public class AdminServiceImpl implements AdminService {
             // 상태별 카운트
             Map<String, Long> statusCount = allSchedules.stream()
                 .collect(Collectors.groupingBy(
-                    schedule -> schedule.getStatus() != null ? schedule.getStatus() : "UNKNOWN",
+                    schedule -> schedule.getStatus() != null ? schedule.getStatus().name() : "UNKNOWN",
                     Collectors.counting()
                 ));
             
@@ -1331,7 +1331,7 @@ public class AdminServiceImpl implements AdminService {
             
             // 1. 지난 스케줄 중 완료되지 않은 것들 조회
             List<Schedule> expiredSchedules = scheduleRepository.findByDateBeforeAndStatus(
-                LocalDate.now(), ScheduleStatus.BOOKED);
+                LocalDate.now(), ScheduleStatus.BOOKED.name());
             
             int completedCount = 0;
             int reminderSentCount = 0;
@@ -1454,7 +1454,7 @@ public class AdminServiceImpl implements AdminService {
     private int getCompletedScheduleCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
         try {
             List<Schedule> completedSchedules = scheduleRepository.findByConsultantIdAndStatusAndDateBetween(
-                consultantId, ScheduleStatus.COMPLETED, startDate, endDate);
+                consultantId, ScheduleStatus.COMPLETED.name(), startDate, endDate);
             return completedSchedules.size();
         } catch (Exception e) {
             log.warn("상담사 {} 완료 스케줄 건수 조회 실패: {}", consultantId, e.getMessage());

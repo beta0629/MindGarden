@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.AdminConstants;
+import com.mindgarden.consultation.constant.ScheduleStatus;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ScheduleCreateDto;
 import com.mindgarden.consultation.dto.ScheduleDto;
@@ -1247,10 +1248,11 @@ public class ScheduleController {
         } catch (Exception e) {
             log.error("❌ 스케줄 상태 확인 실패: error={}", e.getMessage(), e);
             // 기본값으로 하드코딩된 상태 확인 (fallback)
-            return "CONFIRMED".equals(status) || 
-                   "BOOKED".equals(status) || 
-                   "CANCELLED".equals(status) || 
-                   "COMPLETED".equals(status);
+            return ScheduleStatus.AVAILABLE.name().equals(status) || 
+                   ScheduleStatus.BOOKED.name().equals(status) || 
+                   ScheduleStatus.VACATION.name().equals(status) || 
+                   ScheduleStatus.COMPLETED.name().equals(status) || 
+                   ScheduleStatus.CANCELLED.name().equals(status);
         }
     }
 

@@ -5,11 +5,14 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import com.mindgarden.consultation.constant.ScheduleStatus;
 
 /**
  * 상담 일정 엔티티
@@ -44,9 +47,9 @@ public class Schedule extends BaseEntity {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
     
-    @Size(max = 20, message = "일정 상태는 20자 이하여야 합니다.")
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private String status = "AVAILABLE"; // AVAILABLE, BOOKED, BLOCKED, BREAK
+    private ScheduleStatus status = ScheduleStatus.AVAILABLE;
     
     @Size(max = 100, message = "일정 유형은 100자 이하여야 합니다.")
     @Column(name = "schedule_type", length = 100)

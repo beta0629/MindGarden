@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.ConsultationType;
 import com.mindgarden.consultation.constant.ScheduleConstants;
+import com.mindgarden.consultation.constant.ScheduleStatus;
 import com.mindgarden.consultation.dto.ScheduleDto;
 import com.mindgarden.consultation.entity.Branch;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
@@ -306,7 +307,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = findById(scheduleId);
         
         // 예약 확정 상태로 변경
-        schedule.setStatus(ScheduleConstants.STATUS_CONFIRMED);
+        schedule.setStatus(ScheduleStatus.BOOKED);
         
         // 관리자 메모 추가
         String currentDescription = schedule.getDescription() != null ? schedule.getDescription() : "";
@@ -322,7 +323,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     public Schedule completeSchedule(Long scheduleId) {
         log.info("✅ 스케줄 완료: ID {}", scheduleId);
         Schedule schedule = findById(scheduleId);
-        schedule.setStatus(ScheduleConstants.STATUS_COMPLETED);
+        schedule.setStatus(ScheduleStatus.COMPLETED);
         return scheduleRepository.save(schedule);
     }
 
@@ -330,7 +331,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     public Schedule blockSchedule(Long scheduleId, String reason) {
         log.info("🚫 스케줄 차단: ID {}, 사유: {}", scheduleId, reason);
         Schedule schedule = findById(scheduleId);
-        schedule.block(reason);
+        schedule.setStatus(ScheduleStatus.VACATION);
         return scheduleRepository.save(schedule);
     }
 

@@ -1,45 +1,54 @@
 /**
- * 스케줄 관련 상수 정의
+ * 스케줄 관련 상수 정의 (간소화된 버전)
  * 
  * @author MindGarden
- * @version 1.0.0
- * @since 2025-09-05
+ * @version 2.0.0
+ * @since 2025-09-16
  */
 
-// ==================== 스케줄 상태 ====================
+// ==================== 간소화된 스케줄 상태 ====================
 export const STATUS = {
-  BOOKED: 'BOOKED',
-  CONFIRMED: 'CONFIRMED',
-  IN_PROGRESS: 'IN_PROGRESS',
-  COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED'
+  AVAILABLE: 'AVAILABLE',     // 가능
+  BOOKED: 'BOOKED',           // 예약됨
+  VACATION: 'VACATION',       // 휴가
+  COMPLETED: 'COMPLETED',     // 완료
+  CANCELLED: 'CANCELLED'      // 취소됨
 };
 
 // ==================== 스케줄 상태 라벨 ====================
 export const STATUS_LABELS = {
+  [STATUS.AVAILABLE]: '가능',
   [STATUS.BOOKED]: '예약됨',
-  [STATUS.CONFIRMED]: '확정됨',
-  [STATUS.IN_PROGRESS]: '진행중',
-  [STATUS.COMPLETED]: '완료됨',
+  [STATUS.VACATION]: '휴가',
+  [STATUS.COMPLETED]: '완료',
   [STATUS.CANCELLED]: '취소됨'
 };
 
 // ==================== 스케줄 상태 색상 ====================
 export const STATUS_COLORS = {
-  [STATUS.BOOKED]: 'var(--schedule-status-booked-bg)',
-  [STATUS.CONFIRMED]: 'var(--schedule-status-confirmed-bg)',
-  [STATUS.IN_PROGRESS]: 'var(--schedule-status-in-progress-bg)',
-  [STATUS.COMPLETED]: 'var(--schedule-status-completed-bg)',
-  [STATUS.CANCELLED]: 'var(--schedule-status-cancelled-bg)'
+  [STATUS.AVAILABLE]: '#28a745',    // 초록색
+  [STATUS.BOOKED]: '#007bff',       // 파란색
+  [STATUS.VACATION]: '#ffc107',     // 노란색
+  [STATUS.COMPLETED]: '#6c757d',    // 회색
+  [STATUS.CANCELLED]: '#dc3545'     // 빨간색
+};
+
+// ==================== 스케줄 상태 아이콘 ====================
+export const STATUS_ICONS = {
+  [STATUS.AVAILABLE]: '✅',
+  [STATUS.BOOKED]: '📅',
+  [STATUS.VACATION]: '🏖️',
+  [STATUS.COMPLETED]: '✅',
+  [STATUS.CANCELLED]: '❌'
 };
 
 // ==================== 스케줄 상태 텍스트 색상 ====================
 export const STATUS_TEXT_COLORS = {
-  [STATUS.BOOKED]: 'var(--schedule-status-booked-color)',
-  [STATUS.CONFIRMED]: 'var(--schedule-status-confirmed-color)',
-  [STATUS.IN_PROGRESS]: 'var(--schedule-status-in-progress-color)',
-  [STATUS.COMPLETED]: 'var(--schedule-status-completed-color)',
-  [STATUS.CANCELLED]: 'var(--schedule-status-cancelled-color)'
+  [STATUS.AVAILABLE]: '#ffffff',
+  [STATUS.BOOKED]: '#ffffff',
+  [STATUS.VACATION]: '#000000',
+  [STATUS.COMPLETED]: '#ffffff',
+  [STATUS.CANCELLED]: '#ffffff'
 };
 
 // ==================== 스케줄 타입 ====================
@@ -106,8 +115,9 @@ export const FILTER_OPTIONS = {
   TODAY: 'today',
   THIS_WEEK: 'this_week',
   THIS_MONTH: 'this_month',
+  AVAILABLE: 'available',
   BOOKED: 'booked',
-  CONFIRMED: 'confirmed',
+  VACATION: 'vacation',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled'
 };
@@ -118,9 +128,10 @@ export const FILTER_OPTION_LABELS = {
   [FILTER_OPTIONS.TODAY]: '오늘',
   [FILTER_OPTIONS.THIS_WEEK]: '이번 주',
   [FILTER_OPTIONS.THIS_MONTH]: '이번 달',
+  [FILTER_OPTIONS.AVAILABLE]: '가능',
   [FILTER_OPTIONS.BOOKED]: '예약됨',
-  [FILTER_OPTIONS.CONFIRMED]: '확정됨',
-  [FILTER_OPTIONS.COMPLETED]: '완료됨',
+  [FILTER_OPTIONS.VACATION]: '휴가',
+  [FILTER_OPTIONS.COMPLETED]: '완료',
   [FILTER_OPTIONS.CANCELLED]: '취소됨'
 };
 
@@ -147,7 +158,7 @@ export const SCHEDULE_ACTIONS = {
   VIEW: 'view',
   EDIT: 'edit',
   DELETE: 'delete',
-  CONFIRM: 'confirm',
+  BOOK: 'book',
   CANCEL: 'cancel',
   COMPLETE: 'complete'
 };
@@ -157,7 +168,7 @@ export const SCHEDULE_ACTION_LABELS = {
   [SCHEDULE_ACTIONS.VIEW]: '보기',
   [SCHEDULE_ACTIONS.EDIT]: '수정',
   [SCHEDULE_ACTIONS.DELETE]: '삭제',
-  [SCHEDULE_ACTIONS.CONFIRM]: '확정',
+  [SCHEDULE_ACTIONS.BOOK]: '예약',
   [SCHEDULE_ACTIONS.CANCEL]: '취소',
   [SCHEDULE_ACTIONS.COMPLETE]: '완료'
 };
@@ -167,7 +178,7 @@ export const SCHEDULE_ACTION_ICONS = {
   [SCHEDULE_ACTIONS.VIEW]: 'bi-eye',
   [SCHEDULE_ACTIONS.EDIT]: 'bi-pencil',
   [SCHEDULE_ACTIONS.DELETE]: 'bi-trash',
-  [SCHEDULE_ACTIONS.CONFIRM]: 'bi-check-circle',
+  [SCHEDULE_ACTIONS.BOOK]: 'bi-calendar-plus',
   [SCHEDULE_ACTIONS.CANCEL]: 'bi-x-circle',
   [SCHEDULE_ACTIONS.COMPLETE]: 'bi-check2-circle'
 };
@@ -197,7 +208,7 @@ export const SCHEDULE_SUCCESS_MESSAGES = {
   SAVE_SUCCESS: '스케줄이 성공적으로 저장되었습니다.',
   DELETE_SUCCESS: '스케줄이 성공적으로 삭제되었습니다.',
   UPDATE_SUCCESS: '스케줄이 성공적으로 수정되었습니다.',
-  CONFIRM_SUCCESS: '스케줄이 확정되었습니다.',
+  BOOK_SUCCESS: '스케줄이 예약되었습니다.',
   CANCEL_SUCCESS: '스케줄이 취소되었습니다.',
   COMPLETE_SUCCESS: '스케줄이 완료되었습니다.'
 };

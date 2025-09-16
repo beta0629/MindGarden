@@ -4,7 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import com.mindgarden.consultation.entity.Schedule;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.ConsultationRecordService;
+import com.mindgarden.consultation.service.ScheduleService;
+import com.mindgarden.consultation.service.UserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 public class ConsultantRecordsController {
     
     private final ConsultationRecordService consultationRecordService;
+    private final UserService userService;
+    private final ScheduleService scheduleService;
     
     /**
      * 상담사별 상담 기록 목록 조회
@@ -51,7 +58,9 @@ public class ConsultantRecordsController {
                         Map<String, Object> recordMap = new HashMap<>();
                         recordMap.put("id", record.getId());
                         recordMap.put("title", "상담일지 #" + record.getSessionNumber());
-                        recordMap.put("clientName", "내담자 ID: " + record.getClientId()); // TODO: 실제 내담자 이름 조회
+                        // 실제 내담자 이름 조회
+                        String clientName = getClientName(record.getClientId());
+                        recordMap.put("clientName", clientName);
                         recordMap.put("consultationDate", record.getSessionDate().toString()); // ISO 날짜 문자열로 변환
                         
                         // 상담 시간 설정 (완료 시간이 있으면 사용, 없으면 기본 상담 시간 사용)
@@ -157,7 +166,9 @@ public class ConsultantRecordsController {
             Map<String, Object> recordMap = new HashMap<>();
             recordMap.put("id", record.getId());
             recordMap.put("title", "상담일지 #" + record.getSessionNumber());
-            recordMap.put("clientName", "내담자 ID: " + record.getClientId());
+            // 실제 내담자 이름 조회
+            String clientName = getClientName(record.getClientId());
+            recordMap.put("clientName", clientName);
             recordMap.put("consultationDate", record.getSessionDate().toString());
             
             // 상담 시간 설정
@@ -206,8 +217,8 @@ public class ConsultantRecordsController {
         try {
             Map<String, Object> result = new HashMap<>();
             
-            // 1. 스케줄 데이터 조회 (향후 구현 예정)
-            // TODO: 실제 스케줄 조회 로직 구현
+            // 1. 스케줄 데이터 조회 (기존 메서드 사용)
+            List<Schedule> schedules = scheduleService.findSchedulesByUserRole(consultantId, "CONSULTANT");
             
             // 2. 상담기록 데이터 조회
             Pageable pageable = PageRequest.of(0, 100);
@@ -218,13 +229,17 @@ public class ConsultantRecordsController {
             
             for (var record : consultationRecords.getContent()) {
                 if (record.getIsSessionCompleted() == null || !record.getIsSessionCompleted()) {
-                    // 대기 중인 상담기록이지만 실제 스케줄이 없는 경우
-                    inconsistencies.add(Map.of(
-                        "type", "PENDING_RECORD_WITHOUT_SCHEDULE",
-                        "recordId", record.getId(),
-                        "sessionDate", record.getSessionDate(),
-                        "description", "대기 중인 상담기록이지만 해당 날짜에 예약된 스케줄이 없습니다."
-                    ));
+                    // 실제 스케줄 존재 여부 확인
+                    boolean hasSchedule = hasScheduleForRecord(record, schedules);
+                    if (!hasSchedule) {
+                        // 대기 중인 상담기록이지만 실제 스케줄이 없는 경우
+                        inconsistencies.add(Map.of(
+                            "type", "PENDING_RECORD_WITHOUT_SCHEDULE",
+                            "recordId", record.getId(),
+                            "sessionDate", record.getSessionDate(),
+                            "description", "대기 중인 상담기록이지만 해당 날짜에 예약된 스케줄이 없습니다."
+                        ));
+                    }
                 }
             }
             
@@ -260,29 +275,34 @@ public class ConsultantRecordsController {
             Map<String, Object> result = new HashMap<>();
             List<Map<String, Object>> cleanedRecords = new ArrayList<>();
             
-            // 1. 불일치 데이터 조회
+            // 1. 스케줄 데이터 조회 (기존 메서드 사용)
+            List<Schedule> schedules = scheduleService.findSchedulesByUserRole(consultantId, "CONSULTANT");
+            
+            // 2. 불일치 데이터 조회
             Pageable pageable = PageRequest.of(0, 100);
             var consultationRecords = consultationRecordService.getConsultationRecords(consultantId, null, pageable);
             
-            // 2. 대기 중인 상담기록 중 실제 상담 예약이 없는 것들 찾기
+            // 3. 대기 중인 상담기록 중 실제 상담 예약이 없는 것들 찾기
             for (var record : consultationRecords.getContent()) {
                 if (record.getIsSessionCompleted() == null || !record.getIsSessionCompleted()) {
-                    // TODO: 실제 상담 예약 존재 여부 확인
-                    // 현재는 임시로 완료 상태로 변경
-                    // 상담기록을 완료 상태로 변경
-                    Map<String, Object> updateData = new HashMap<>();
-                    updateData.put("isSessionCompleted", true);
-                    updateData.put("consultantObservations", 
-                        (record.getConsultantObservations() != null ? record.getConsultantObservations() : "") + 
-                        "\n[시스템 정리] 불일치 데이터 복구 - " + java.time.LocalDateTime.now()
-                    );
-                    consultationRecordService.updateConsultationRecord(record.getId(), updateData);
-                    
-                    cleanedRecords.add(Map.of(
-                        "recordId", record.getId(),
-                        "sessionDate", record.getSessionDate(),
-                        "action", "COMPLETED"
-                    ));
+                    // 실제 상담 예약 존재 여부 확인
+                    boolean hasSchedule = hasScheduleForRecord(record, schedules);
+                    if (!hasSchedule) {
+                        // 상담 예약이 없는 경우에만 완료 상태로 변경
+                        Map<String, Object> updateData = new HashMap<>();
+                        updateData.put("isSessionCompleted", true);
+                        updateData.put("consultantObservations", 
+                            (record.getConsultantObservations() != null ? record.getConsultantObservations() : "") + 
+                            "\n[시스템 정리] 불일치 데이터 복구 - " + java.time.LocalDateTime.now()
+                        );
+                        consultationRecordService.updateConsultationRecord(record.getId(), updateData);
+                        
+                        cleanedRecords.add(Map.of(
+                            "recordId", record.getId(),
+                            "sessionDate", record.getSessionDate(),
+                            "action", "COMPLETED"
+                        ));
+                    }
                 }
             }
             
@@ -304,5 +324,37 @@ public class ConsultantRecordsController {
             
             return ResponseEntity.badRequest().body(response);
         }
+    }
+    
+    /**
+     * 내담자 이름 조회 헬퍼 메서드
+     */
+    private String getClientName(Long clientId) {
+        try {
+            Optional<User> client = userService.findById(clientId);
+            if (client.isPresent()) {
+                return client.get().getUsername() != null ? client.get().getUsername() : "내담자 ID: " + clientId;
+            }
+        } catch (Exception e) {
+            log.warn("내담자 이름 조회 실패: clientId={}, error={}", clientId, e.getMessage());
+        }
+        return "내담자 ID: " + clientId;
+    }
+    
+    /**
+     * 상담 기록에 해당하는 스케줄 존재 여부 확인 헬퍼 메서드
+     */
+    private boolean hasScheduleForRecord(com.mindgarden.consultation.entity.ConsultationRecord record, List<Schedule> schedules) {
+        if (schedules == null || schedules.isEmpty()) {
+            return false;
+        }
+        
+        return schedules.stream()
+            .anyMatch(schedule -> 
+                schedule.getConsultantId() != null && 
+                schedule.getConsultantId().equals(record.getConsultantId()) &&
+                schedule.getDate() != null &&
+                schedule.getDate().equals(record.getSessionDate())
+            );
     }
 }

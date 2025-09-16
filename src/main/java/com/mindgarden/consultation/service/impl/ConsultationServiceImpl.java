@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.mindgarden.consultation.constant.EmailConstants;
+import com.mindgarden.consultation.constant.ScheduleStatus;
 import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.Consultant;
@@ -2474,8 +2475,8 @@ public class ConsultationServiceImpl implements ConsultationService {
                 scheduleRepository.findByConsultationId(consultationId);
             
             for (com.mindgarden.consultation.entity.Schedule schedule : schedules) {
-                if (!"COMPLETED".equals(schedule.getStatus())) {
-                    schedule.setStatus("COMPLETED");
+                if (!ScheduleStatus.COMPLETED.equals(schedule.getStatus())) {
+                    schedule.setStatus(ScheduleStatus.COMPLETED);
                     schedule.setUpdatedAt(java.time.LocalDateTime.now());
                     scheduleRepository.save(schedule);
                     log.info("✅ 스케줄 상태 업데이트 완료: scheduleId={}, status=COMPLETED", schedule.getId());

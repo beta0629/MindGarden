@@ -3,6 +3,7 @@ package com.mindgarden.consultation.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.mindgarden.consultation.constant.ScheduleStatus;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -38,7 +39,7 @@ public class ScheduleAutoCompleteService {
             
             // 1. 지난 스케줄 중 완료되지 않은 것들 조회
             List<Schedule> expiredSchedules = scheduleRepository.findByDateBeforeAndStatus(
-                LocalDate.now(), "CONFIRMED");
+                LocalDate.now(), ScheduleStatus.BOOKED);
             
             int completedCount = 0;
             int reminderSentCount = 0;
@@ -46,7 +47,7 @@ public class ScheduleAutoCompleteService {
             for (Schedule schedule : expiredSchedules) {
                 try {
                     // 스케줄을 완료 상태로 변경
-                    schedule.setStatus("COMPLETED");
+                    schedule.setStatus(ScheduleStatus.COMPLETED);
                     schedule.setUpdatedAt(LocalDateTime.now());
                     scheduleRepository.save(schedule);
                     completedCount++;

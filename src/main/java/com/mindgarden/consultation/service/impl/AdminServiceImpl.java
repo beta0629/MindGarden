@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.AdminConstants;
+import com.mindgarden.consultation.constant.ScheduleStatus;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
@@ -1299,7 +1300,7 @@ public class AdminServiceImpl implements AdminService {
             
             // 상담사별 완료 건수 (스케줄 기준)
             Map<Long, Long> consultantCompletedCount = allSchedules.stream()
-                .filter(schedule -> "COMPLETED".equals(schedule.getStatus()))
+                .filter(schedule -> ScheduleStatus.COMPLETED.equals(schedule.getStatus()))
                 .filter(schedule -> schedule.getConsultantId() != null)
                 .collect(Collectors.groupingBy(
                     Schedule::getConsultantId,
@@ -1310,12 +1311,11 @@ public class AdminServiceImpl implements AdminService {
             statistics.put("totalSchedules", allSchedules.size());
             statistics.put("statusCount", statusCount);
             statistics.put("consultantCompletedCount", consultantCompletedCount);
-            statistics.put("completedSchedules", statusCount.getOrDefault("COMPLETED", 0L));
-            statistics.put("bookedSchedules", statusCount.getOrDefault("BOOKED", 0L));
-            statistics.put("confirmedSchedules", statusCount.getOrDefault("CONFIRMED", 0L));
-            statistics.put("cancelledSchedules", statusCount.getOrDefault("CANCELLED", 0L));
+            statistics.put("completedSchedules", statusCount.getOrDefault(ScheduleStatus.COMPLETED.name(), 0L));
+            statistics.put("bookedSchedules", statusCount.getOrDefault(ScheduleStatus.BOOKED.name(), 0L));
+            statistics.put("cancelledSchedules", statusCount.getOrDefault(ScheduleStatus.CANCELLED.name(), 0L));
             
-            log.info("✅ 스케줄 통계 조회 완료: 총 {}개, 완료 {}개", allSchedules.size(), statusCount.getOrDefault("COMPLETED", 0L));
+            log.info("✅ 스케줄 통계 조회 완료: 총 {}개, 완료 {}개", allSchedules.size(), statusCount.getOrDefault(ScheduleStatus.COMPLETED.name(), 0L));
             return statistics;
             
         } catch (Exception e) {
@@ -1331,7 +1331,7 @@ public class AdminServiceImpl implements AdminService {
             
             // 1. 지난 스케줄 중 완료되지 않은 것들 조회
             List<Schedule> expiredSchedules = scheduleRepository.findByDateBeforeAndStatus(
-                LocalDate.now(), "CONFIRMED");
+                LocalDate.now(), ScheduleStatus.BOOKED);
             
             int completedCount = 0;
             int reminderSentCount = 0;
@@ -1340,7 +1340,7 @@ public class AdminServiceImpl implements AdminService {
             for (Schedule schedule : expiredSchedules) {
                 try {
                     // 스케줄을 완료 상태로 변경
-                    schedule.setStatus("COMPLETED");
+                    schedule.setStatus(ScheduleStatus.COMPLETED);
                     schedule.setUpdatedAt(LocalDateTime.now());
                     scheduleRepository.save(schedule);
                     completedCount++;
@@ -1454,7 +1454,7 @@ public class AdminServiceImpl implements AdminService {
     private int getCompletedScheduleCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
         try {
             List<Schedule> completedSchedules = scheduleRepository.findByConsultantIdAndStatusAndDateBetween(
-                consultantId, "COMPLETED", startDate, endDate);
+                consultantId, ScheduleStatus.COMPLETED, startDate, endDate);
             return completedSchedules.size();
         } catch (Exception e) {
             log.warn("상담사 {} 완료 스케줄 건수 조회 실패: {}", consultantId, e.getMessage());

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.mindgarden.consultation.constant.ScheduleStatus;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.IntegrationTestResult;
 import com.mindgarden.consultation.dto.SystemHealthStatus;
@@ -276,7 +277,7 @@ public class IntegrationTestController {
             result.addTestResult("스케줄 조회", true, "총 스케줄 수: " + schedules.size());
             
             // 스케줄 상태별 통계 테스트
-            Map<String, Long> statusCounts = schedules.stream()
+            Map<ScheduleStatus, Long> statusCounts = schedules.stream()
                 .collect(Collectors.groupingBy(Schedule::getStatus, Collectors.counting()));
             result.addTestResult("스케줄 상태 통계", true, "상태별 통계: " + statusCounts);
             

@@ -979,7 +979,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         dto.setDate(vacation.getVacationDate());
         dto.setStartTime(vacation.getStartTime() != null ? vacation.getStartTime() : LocalTime.of(0, 0));
         dto.setEndTime(vacation.getEndTime() != null ? vacation.getEndTime() : LocalTime.of(23, 59));
-        dto.setStatus("VACATION"); // 휴가 상태
+        dto.setStatus(ScheduleStatus.VACATION.name()); // 휴가 상태
         dto.setScheduleType("VACATION");
         dto.setConsultationType("VACATION");
         dto.setVacationType(vacation.getVacationType().name()); // 휴가 유형 추가

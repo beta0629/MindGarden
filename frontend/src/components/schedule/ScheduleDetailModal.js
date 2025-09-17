@@ -326,52 +326,108 @@ const ScheduleDetailModal = ({
                     <button className="schedule-detail-close-btn" onClick={onClose}>✕</button>
                 </div>
 
-                <div className="schedule-detail-modal-content">
-                    <div className="schedule-info">
-                        <div className="info-row">
-                            <span className="label">이벤트:</span>
-                            <span className="value">{scheduleData.title}</span>
+                <div className="schedule-detail-modal-content" style={{ textAlign: 'center' }}>
+                    <div className="schedule-info" style={{ textAlign: 'center' }}>
+                        <div className="info-row" style={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            alignItems: 'center', 
+                            textAlign: 'center',
+                            gap: '10px',
+                            marginBottom: '12px'
+                        }}>
+                            <span className="label" style={{ textAlign: 'center', fontWeight: 'bold' }}>이벤트:</span>
+                            <span className="value" style={{ textAlign: 'center' }}>{scheduleData.title}</span>
                         </div>
-                        <div className="info-row">
-                            <span className="label">상담사:</span>
-                            <span className="value">{scheduleData.consultantName}</span>
+                        <div className="info-row" style={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            alignItems: 'center', 
+                            textAlign: 'center',
+                            gap: '10px',
+                            marginBottom: '12px'
+                        }}>
+                            <span className="label" style={{ textAlign: 'center', fontWeight: 'bold' }}>상담사:</span>
+                            <span className="value" style={{ textAlign: 'center' }}>{scheduleData.consultantName}</span>
                         </div>
                         
                         {isVacationEvent() ? (
                             // 휴가 이벤트인 경우
                             <>
-                                <div className="info-row">
-                                    <span className="label">휴가 사유:</span>
-                                    <span className="value">{scheduleData.description || scheduleData.reason || '사유 없음'}</span>
+                                <div className="info-row" style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'center', 
+                                    alignItems: 'center', 
+                                    textAlign: 'center',
+                                    gap: '10px',
+                                    marginBottom: '12px'
+                                }}>
+                                    <span className="label" style={{ textAlign: 'center', fontWeight: 'bold' }}>휴가 사유:</span>
+                                    <span className="value" style={{ textAlign: 'center' }}>{scheduleData.description || scheduleData.reason || '사유 없음'}</span>
                                 </div>
-                                <div className="info-row">
-                                    <span className="label">휴가 유형:</span>
-                                    <span className="value">{getVacationTypeDisplay(scheduleData.vacationType)}</span>
+                                <div className="info-row" style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'center', 
+                                    alignItems: 'center', 
+                                    textAlign: 'center',
+                                    gap: '10px',
+                                    marginBottom: '12px'
+                                }}>
+                                    <span className="label" style={{ textAlign: 'center', fontWeight: 'bold' }}>휴가 유형:</span>
+                                    <span className="value" style={{ textAlign: 'center' }}>{getVacationTypeDisplay(scheduleData.vacationType)}</span>
                                 </div>
                             </>
                         ) : (
                             // 일반 스케줄인 경우
                             <>
-                                <div className="info-row">
-                                    <span className="label">내담자:</span>
-                                    <span className="value">{scheduleData.clientName}</span>
+                                <div className="info-row" style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'center', 
+                                    alignItems: 'center', 
+                                    textAlign: 'center',
+                                    gap: '10px',
+                                    marginBottom: '12px'
+                                }}>
+                                    <span className="label" style={{ textAlign: 'center', fontWeight: 'bold' }}>내담자:</span>
+                                    <span className="value" style={{ textAlign: 'center' }}>{scheduleData.clientName}</span>
                                 </div>
-                                <div className="info-row">
-                                    <span className="label">상담 유형:</span>
-                                    <span className="value">{convertConsultationTypeToKorean(scheduleData.consultationType)}</span>
+                                <div className="info-row" style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'center', 
+                                    alignItems: 'center', 
+                                    textAlign: 'center',
+                                    gap: '10px',
+                                    marginBottom: '12px'
+                                }}>
+                                    <span className="label" style={{ textAlign: 'center', fontWeight: 'bold' }}>상담 유형:</span>
+                                    <span className="value" style={{ textAlign: 'center' }}>{convertConsultationTypeToKorean(scheduleData.consultationType)}</span>
                                 </div>
                             </>
                         )}
                         
-                        <div className="info-row">
-                            <span className="label">시간:</span>
-                            <span className="value">
+                        <div className="info-row" style={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            alignItems: 'center', 
+                            textAlign: 'center',
+                            gap: '10px',
+                            marginBottom: '12px'
+                        }}>
+                            <span className="label" style={{ textAlign: 'center', fontWeight: 'bold' }}>시간:</span>
+                            <span className="value" style={{ textAlign: 'center' }}>
                                 {scheduleData.startTime} - {scheduleData.endTime}
                             </span>
                         </div>
-                        <div className="info-row">
-                            <span className="label">상태:</span>
-                            <span className={`value status-${scheduleData.status?.toLowerCase()}`}>
+                        <div className="info-row" style={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            alignItems: 'center', 
+                            textAlign: 'center',
+                            gap: '10px',
+                            marginBottom: '12px'
+                        }}>
+                            <span className="label" style={{ textAlign: 'center', fontWeight: 'bold' }}>상태:</span>
+                            <span className={`value status-${scheduleData.status?.toLowerCase()}`} style={{ textAlign: 'center' }}>
                                 {convertStatusToKorean(scheduleData.status)}
                             </span>
                         </div>
@@ -380,11 +436,22 @@ const ScheduleDetailModal = ({
                     <div className="action-buttons">
                         {isVacationEvent() ? (
                             // 휴가 이벤트인 경우 - 휴가 관련 정보 표시
-                            <div className="vacation-info">
-                                <p className="vacation-notice">
+                            <div className="vacation-info" style={{ textAlign: 'center' }}>
+                                <p className="vacation-notice" style={{ 
+                                    textAlign: 'center',
+                                    fontSize: '16px',
+                                    fontWeight: 'bold',
+                                    color: '#f59e0b',
+                                    marginBottom: '10px'
+                                }}>
                                     🏖️ 이 이벤트는 상담사의 휴가입니다.
                                 </p>
-                                <p className="vacation-details">
+                                <p className="vacation-details" style={{ 
+                                    textAlign: 'center',
+                                    fontSize: '14px',
+                                    color: '#6b7280',
+                                    marginBottom: '0'
+                                }}>
                                     해당 시간대에는 상담이 불가능합니다.
                                 </p>
                             </div>

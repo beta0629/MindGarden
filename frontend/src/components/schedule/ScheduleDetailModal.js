@@ -380,11 +380,29 @@ const ScheduleDetailModal = ({
                     <div className="action-buttons">
                         {isVacationEvent() ? (
                             // 휴가 이벤트인 경우 - 휴가 관련 정보 표시
-                            <div className="vacation-info">
-                                <p className="vacation-notice">
+                            <div className="vacation-info" style={{ 
+                                textAlign: 'center',
+                                padding: '20px',
+                                backgroundColor: '#fef3c7',
+                                borderRadius: '8px',
+                                margin: '20px 0'
+                            }}>
+                                <p className="vacation-notice" style={{ 
+                                    textAlign: 'center',
+                                    fontSize: '16px',
+                                    fontWeight: 'bold',
+                                    color: '#f59e0b',
+                                    marginBottom: '10px',
+                                    margin: '0 0 10px 0'
+                                }}>
                                     🏖️ 이 이벤트는 상담사의 휴가입니다.
                                 </p>
-                                <p className="vacation-details">
+                                <p className="vacation-details" style={{ 
+                                    textAlign: 'center',
+                                    fontSize: '14px',
+                                    color: '#92400e',
+                                    margin: '0'
+                                }}>
                                     해당 시간대에는 상담이 불가능합니다.
                                 </p>
                             </div>

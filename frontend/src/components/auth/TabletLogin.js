@@ -152,11 +152,17 @@ const TabletLogin = () => {
     try {
       console.log('🔐 로그인 요청 데이터:', formData);
       
-      // 중앙 세션의 로그인 함수 사용 (API 호출 포함)
-      const result = await login(formData);
+      // 직접 API 호출 (SessionContext 로딩 상태 영향 방지)
+      const result = await authAPI.login(formData);
       
       if (result.success) {
         console.log('✅ 로그인 성공:', result.user);
+        
+        // sessionManager에 사용자 정보 설정 (SessionContext 로딩 상태 영향 없이)
+        sessionManager.setUser(result.user, {
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken
+        });
         
         // 로그인 성공 알림
         showTooltip('로그인에 성공했습니다.', 'success');
@@ -169,9 +175,11 @@ const TabletLogin = () => {
         console.log('✅ 로그인 성공, 대시보드로 이동:', result.user.role);
         redirectToDashboardWithFallback(result.user.role, navigate);
       } else if (result.requiresConfirmation) {
-        // 중복 로그인 확인 요청 - 모달은 SessionContext에서 자동으로 처리됨
+        // 중복 로그인 확인 요청
         console.log('🔔 중복 로그인 확인 요청:', result.message);
-        // 모달은 SessionContext에서 자동으로 표시되므로 여기서는 아무것도 하지 않음
+        setIsLoading(false);
+        // 중복 로그인 모달 표시 (SessionContext 사용)
+        // 이 부분은 SessionContext의 모달 시스템을 사용해야 함
       } else {
         console.log('❌ 로그인 실패:', result.message);
         // 로딩 해제 후 알림 표시

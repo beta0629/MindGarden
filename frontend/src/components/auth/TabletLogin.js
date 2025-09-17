@@ -37,6 +37,22 @@ const TabletLogin = () => {
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
+  // 인라인 알림 상태 (CSS 충돌 방지용)
+  const [inlineNotification, setInlineNotification] = useState({
+    show: false,
+    message: '',
+    type: 'info'
+  });
+
+  // 인라인 알림 표시 함수
+  const showInlineNotification = (message, type = 'info') => {
+    setInlineNotification({ show: true, message, type });
+    // 4초 후 자동 숨김
+    setTimeout(() => {
+      setInlineNotification(prev => ({ ...prev, show: false }));
+    }, 4000);
+  };
+
   useEffect(() => {
     getOAuth2Config();
     checkOAuthCallback();
@@ -109,7 +125,7 @@ const TabletLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email || !formData.password) {
-      notificationManager.show('이메일과 비밀번호를 입력해주세요.', 'warning');
+      showInlineNotification('이메일과 비밀번호를 입력해주세요.', 'warning');
       return;
     }
 
@@ -124,7 +140,7 @@ const TabletLogin = () => {
         console.log('✅ 로그인 성공:', result.user);
         
         // 로그인 성공 알림
-        notificationManager.show('로그인에 성공했습니다.', 'success');
+        showInlineNotification('로그인에 성공했습니다.', 'success');
         
         // 세션 설정 완료 후 잠시 대기 (시간 단축)
         console.log('⏳ 세션 설정 완료, 잠시 대기...');
@@ -140,13 +156,13 @@ const TabletLogin = () => {
       } else {
         console.log('❌ 로그인 실패:', result.message);
         // 메모리에 따라 로그인 실패 시 공통 메시지 사용
-        notificationManager.show('아이디 또는 비밀번호 틀림', 'error');
+        showInlineNotification('아이디 또는 비밀번호 틀림', 'error');
       }
     } catch (error) {
       console.error('❌ 로그인 오류:', error);
       console.error('❌ 오류 상세:', error.message);
       // 공통 알림 시스템 사용 - 로그인 실패 시 공통 메시지
-      notificationManager.show('아이디 또는 비밀번호 틀림', 'error');
+      showInlineNotification('아이디 또는 비밀번호 틀림', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -789,8 +805,167 @@ const TabletLogin = () => {
         socialUser={socialUserInfo}
         onSignupSuccess={handleSocialSignupSuccess}
       />
+
+      {/* 인라인 알림 (CSS 충돌 방지용) */}
+      {inlineNotification.show && (
+        <>
+          <style>{getInlineNotificationStyles()}</style>
+          <div style={getInlineNotificationContainerStyle()}>
+            <div
+              style={getInlineNotificationStyle(inlineNotification.type)}
+              onClick={() => setInlineNotification(prev => ({ ...prev, show: false }))}
+            >
+              <div style={getInlineNotificationContentStyle()}>
+                <div style={getInlineNotificationIconStyle()}>
+                  {getInlineNotificationIcon(inlineNotification.type)}
+                </div>
+                <div style={getInlineNotificationMessageStyle()}>
+                  {inlineNotification.message}
+                </div>
+                <button 
+                  style={getInlineNotificationCloseStyle()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setInlineNotification(prev => ({ ...prev, show: false }));
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#f5f5f5';
+                    e.target.style.color = '#666';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                    e.target.style.color = '#999';
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              <div style={getInlineNotificationProgressStyle()}>
+                <div style={getInlineNotificationProgressBarStyle(inlineNotification.type)} />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
+};
+
+// 인라인 알림 스타일 함수들 (CSS 충돌 방지용)
+const getInlineNotificationStyles = () => `
+  @keyframes loginNotificationProgress {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+  }
+`;
+
+const getInlineNotificationContainerStyle = () => ({
+  position: 'fixed',
+  top: '20px',
+  right: '20px',
+  zIndex: 10000,
+  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+});
+
+const getInlineNotificationStyle = (type) => {
+  const borderColors = {
+    success: '#28a745',
+    error: '#dc3545',
+    warning: '#ffc107',
+    info: '#17a2b8'
+  };
+
+  return {
+    background: '#fff',
+    borderRadius: '8px',
+    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.25)',
+    overflow: 'hidden',
+    cursor: 'pointer',
+    borderLeft: `5px solid ${borderColors[type] || '#17a2b8'}`,
+    minWidth: '320px',
+    maxWidth: '400px',
+    display: 'flex',
+    flexDirection: 'column',
+    transition: 'all 0.3s ease',
+    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
+    border: '1px solid rgba(0,0,0,0.1)',
+    animation: 'slideInRight 0.3s ease-out'
+  };
+};
+
+const getInlineNotificationContentStyle = () => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: '16px',
+  gap: '12px'
+});
+
+const getInlineNotificationIconStyle = () => ({
+  fontSize: '24px',
+  flexShrink: 0
+});
+
+const getInlineNotificationMessageStyle = () => ({
+  flex: 1,
+  fontSize: '16px',
+  lineHeight: '1.4',
+  color: '#333',
+  fontWeight: '600',
+  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+});
+
+const getInlineNotificationCloseStyle = () => ({
+  background: 'none',
+  border: 'none',
+  fontSize: '20px',
+  color: '#999',
+  cursor: 'pointer',
+  padding: '0',
+  width: '24px',
+  height: '24px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: '50%',
+  transition: 'all 0.2s ease',
+  flexShrink: 0
+});
+
+const getInlineNotificationProgressStyle = () => ({
+  height: '3px',
+  backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  overflow: 'hidden'
+});
+
+const getInlineNotificationProgressBarStyle = (type) => {
+  const progressColors = {
+    success: 'linear-gradient(90deg, #28a745, #1e7e34)',
+    error: 'linear-gradient(90deg, #dc3545, #c82333)',
+    warning: 'linear-gradient(90deg, #ffc107, #e0a800)',
+    info: 'linear-gradient(90deg, #17a2b8, #138496)'
+  };
+
+  return {
+    height: '100%',
+    background: progressColors[type] || progressColors.info,
+    animation: 'loginNotificationProgress 4000ms linear forwards',
+    transformOrigin: 'left'
+  };
+};
+
+const getInlineNotificationIcon = (type) => {
+  switch (type) {
+    case 'success':
+      return '✅';
+    case 'error':
+      return '❌';
+    case 'warning':
+      return '⚠️';
+    case 'info':
+      return 'ℹ️';
+    default:
+      return '📢';
+  }
 };
 
 export default TabletLogin;

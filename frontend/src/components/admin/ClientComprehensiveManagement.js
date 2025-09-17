@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaUser } from 'react-icons/fa';
-import { apiGet, apiPost, apiPut } from '../../utils/ajax';
+import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { 
     getUserStatusKoreanName,
     getUserGradeKoreanName,
@@ -588,16 +588,16 @@ const ClientComprehensiveManagement = () => {
     };
 
     /**
-     * 내담자 삭제 상태 확인
+     * 내담자 삭제 가능 여부 확인
      */
     const checkClientDeletionStatus = async (clientId) => {
         try {
-            const response = await fetch(`/api/admin/clients/${clientId}/deletion-status`);
-            if (!response.ok) {
-                throw new Error('내담자 삭제 상태 확인에 실패했습니다.');
+            const response = await apiGet(`/api/admin/clients/${clientId}/deletion-status`);
+            if (response.success && response.data) {
+                return response.data;
+            } else {
+                throw new Error(response.message || '삭제 상태 확인 실패');
             }
-            const result = await response.json();
-            return result.data;
         } catch (error) {
             console.error('내담자 삭제 상태 확인 실패:', error);
             throw error;

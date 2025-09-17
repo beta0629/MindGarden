@@ -1272,6 +1272,28 @@ public class AdminController {
     }
 
     /**
+     * 내담자 삭제 가능 여부 확인
+     */
+    @GetMapping("/clients/{id}/deletion-status")
+    public ResponseEntity<?> checkClientDeletionStatus(@PathVariable Long id) {
+        try {
+            log.info("🔍 내담자 삭제 가능 여부 확인: ID={}", id);
+            Map<String, Object> status = adminService.checkClientDeletionStatus(id);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", status
+            ));
+        } catch (Exception e) {
+            log.error("❌ 내담자 삭제 가능 여부 확인 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "내담자 삭제 가능 여부 확인에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 매핑 삭제 (비활성화)
      */
     @DeleteMapping("/mappings/{id}")

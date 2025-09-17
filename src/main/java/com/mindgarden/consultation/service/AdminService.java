@@ -103,6 +103,11 @@ public interface AdminService {
      * 내담자 삭제
      */
     void deleteClient(Long id);
+    
+    /**
+     * 내담자 삭제 가능 여부 확인
+     */
+    Map<String, Object> checkClientDeletionStatus(Long clientId);
 
     /**
      * 매핑 삭제

@@ -1198,11 +1198,168 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteClient(Long id) {
-        User clientUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
-        clientUser.setIsActive(false);
-        userRepository.save(clientUser);
+        log.info("🗑️ 내담자 삭제 처리 시작: ID={}", id);
+        
+        User client = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
+        
+        if (client.getRole() != UserRole.CLIENT) {
+            throw new RuntimeException("내담자가 아닌 사용자는 삭제할 수 없습니다.");
+        }
+        
+        // 1. 해당 내담자의 활성 매핑 조회
+        List<ConsultantClientMapping> activeMappings = mappingRepository
+                .findByClientIdAndStatusNot(id, ConsultantClientMapping.MappingStatus.TERMINATED);
+        
+        // 2. 남은 회기가 있는 매핑 확인
+        List<ConsultantClientMapping> mappingsWithRemainingSessions = activeMappings.stream()
+                .filter(mapping -> mapping.getRemainingSessions() > 0)
+                .collect(Collectors.toList());
+        
+        if (!mappingsWithRemainingSessions.isEmpty()) {
+            int totalRemainingSessions = mappingsWithRemainingSessions.stream()
+                    .mapToInt(ConsultantClientMapping::getRemainingSessions)
+                    .sum();
+            
+            log.warn("⚠️ 내담자에게 {} 개의 활성 매핑에서 총 {} 회기가 남아있습니다.", 
+                    mappingsWithRemainingSessions.size(), totalRemainingSessions);
+            
+            throw new RuntimeException(String.format(
+                "내담자에게 %d 개의 활성 매핑에서 총 %d 회기가 남아있습니다. 회기 소진 또는 환불 처리 후 삭제해주세요.", 
+                mappingsWithRemainingSessions.size(), totalRemainingSessions));
+        }
+        
+        // 3. 결제 대기 중인 매핑 확인
+        List<ConsultantClientMapping> pendingPaymentMappings = activeMappings.stream()
+                .filter(mapping -> mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.PENDING)
+                .collect(Collectors.toList());
+        
+        if (!pendingPaymentMappings.isEmpty()) {
+            log.warn("⚠️ 내담자에게 {} 개의 결제 대기 중인 매핑이 있습니다.", pendingPaymentMappings.size());
+            throw new RuntimeException(String.format(
+                "내담자에게 %d 개의 결제 대기 중인 매핑이 있습니다. 결제 처리 완료 후 삭제해주세요.", 
+                pendingPaymentMappings.size()));
+        }
+        
+        // 4. 해당 내담자의 예정된 스케줄 조회 (오늘 포함)
+        List<Schedule> futureSchedules = scheduleRepository.findByClientIdAndDateGreaterThanEqual(id, LocalDate.now());
+        
+        if (!futureSchedules.isEmpty()) {
+            log.warn("⚠️ 내담자에게 {} 개의 예정된 스케줄이 있습니다.", futureSchedules.size());
+            throw new RuntimeException(String.format(
+                "내담자에게 %d 개의 예정된 스케줄이 있습니다. 스케줄 완료 또는 취소 후 삭제해주세요.", 
+                futureSchedules.size()));
+        }
+        
+        // 5. 내담자 비활성화
+        client.setIsActive(false);
+        userRepository.save(client);
+        
+        log.info("✅ 내담자 삭제 완료: ID={}, 이름={}", id, client.getName());
+    }
+
+    @Override
+    public Map<String, Object> checkClientDeletionStatus(Long clientId) {
+        log.info("🔍 내담자 삭제 가능 여부 확인: ID={}", clientId);
+        
+        User client = userRepository.findById(clientId)
+                .orElseThrow(() -> new RuntimeException("내담자를 찾을 수 없습니다."));
+        
+        if (client.getRole() != UserRole.CLIENT) {
+            throw new RuntimeException("내담자가 아닌 사용자입니다.");
+        }
+        
+        // 1. 활성 매핑 조회
+        List<ConsultantClientMapping> activeMappings = mappingRepository
+                .findByClientIdAndStatusNot(clientId, ConsultantClientMapping.MappingStatus.TERMINATED);
+        
+        // 2. 남은 회기가 있는 매핑 확인
+        List<ConsultantClientMapping> mappingsWithRemainingSessions = activeMappings.stream()
+                .filter(mapping -> mapping.getRemainingSessions() > 0)
+                .collect(Collectors.toList());
+        
+        // 3. 결제 대기 중인 매핑 확인
+        List<ConsultantClientMapping> pendingPaymentMappings = activeMappings.stream()
+                .filter(mapping -> mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.PENDING)
+                .collect(Collectors.toList());
+        
+        // 4. 예정된 스케줄 조회 (오늘 포함)
+        List<Schedule> futureSchedules = scheduleRepository.findByClientIdAndDateGreaterThanEqual(clientId, LocalDate.now());
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("clientId", clientId);
+        result.put("clientName", client.getName());
+        
+        boolean canDeleteDirectly = mappingsWithRemainingSessions.isEmpty() && 
+                                  pendingPaymentMappings.isEmpty() && 
+                                  futureSchedules.isEmpty();
+        
+        result.put("canDeleteDirectly", canDeleteDirectly);
+        result.put("requiresCleanup", !canDeleteDirectly);
+        
+        // 상세 정보
+        Map<String, Object> details = new HashMap<>();
+        details.put("activeMappingCount", activeMappings.size());
+        details.put("remainingSessionCount", mappingsWithRemainingSessions.stream()
+                .mapToInt(ConsultantClientMapping::getRemainingSessions).sum());
+        details.put("pendingPaymentCount", pendingPaymentMappings.size());
+        details.put("futureScheduleCount", futureSchedules.size());
+        
+        // 남은 회기가 있는 매핑 정보
+        List<Map<String, Object>> sessionMappings = mappingsWithRemainingSessions.stream()
+                .map(mapping -> {
+                    Map<String, Object> mappingInfo = new HashMap<>();
+                    mappingInfo.put("mappingId", mapping.getId());
+                    mappingInfo.put("consultantName", mapping.getConsultant().getName());
+                    mappingInfo.put("remainingSessions", mapping.getRemainingSessions());
+                    mappingInfo.put("totalSessions", mapping.getTotalSessions());
+                    mappingInfo.put("packageName", mapping.getPackageName());
+                    return mappingInfo;
+                })
+                .collect(Collectors.toList());
+        details.put("sessionMappings", sessionMappings);
+        
+        // 결제 대기 매핑 정보
+        List<Map<String, Object>> paymentMappings = pendingPaymentMappings.stream()
+                .map(mapping -> {
+                    Map<String, Object> mappingInfo = new HashMap<>();
+                    mappingInfo.put("mappingId", mapping.getId());
+                    mappingInfo.put("consultantName", mapping.getConsultant().getName());
+                    mappingInfo.put("packageName", mapping.getPackageName());
+                    mappingInfo.put("packagePrice", mapping.getPackagePrice());
+                    return mappingInfo;
+                })
+                .collect(Collectors.toList());
+        details.put("paymentMappings", paymentMappings);
+        
+        result.put("details", details);
+        
+        // 메시지 생성
+        StringBuilder message = new StringBuilder();
+        if (canDeleteDirectly) {
+            message.append("해당 내담자는 안전하게 삭제할 수 있습니다.");
+        } else {
+            message.append("다음 사유로 인해 삭제할 수 없습니다:\n");
+            if (!mappingsWithRemainingSessions.isEmpty()) {
+                int totalSessions = mappingsWithRemainingSessions.stream()
+                        .mapToInt(ConsultantClientMapping::getRemainingSessions).sum();
+                message.append("• 남은 회기: ").append(totalSessions).append("회\n");
+            }
+            if (!pendingPaymentMappings.isEmpty()) {
+                message.append("• 결제 대기: ").append(pendingPaymentMappings.size()).append("개\n");
+            }
+            if (!futureSchedules.isEmpty()) {
+                message.append("• 예정 스케줄: ").append(futureSchedules.size()).append("개");
+            }
+        }
+        result.put("message", message.toString());
+        
+        log.info("✅ 내담자 삭제 가능 여부 확인 완료: ID={}, 직접삭제가능={}, 정리필요={}", 
+                clientId, result.get("canDeleteDirectly"), result.get("requiresCleanup"));
+        
+        return result;
     }
 
     @Override

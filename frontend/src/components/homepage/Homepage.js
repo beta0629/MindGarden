@@ -276,73 +276,330 @@ const TabletHomepage = () => {
         
         <main className="tablet-main">
           <div className="tablet-container">
-            <div className={`welcome-section ${isLoaded ? 'fade-in-up' : ''}`}>
-              <div className="welcome-content">
-                <h1 className="welcome-title">MindGarden에 오신 것을 환영합니다</h1>
-                <p className="welcome-subtitle">
-                  마음의 정원을 가꾸는 상담 서비스
-                </p>
-                <p className="welcome-description">
-                  전문 상담사와 함께 마음의 평화를 찾아보세요.<br />
-                  언제 어디서나 편리하게 상담을 받을 수 있습니다.
+            <div style={{
+              textAlign: 'center',
+              padding: '80px 20px 60px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              borderRadius: '0 0 40px 40px',
+              marginBottom: '60px',
+              position: 'relative',
+              overflow: 'hidden',
+              opacity: isLoaded ? 1 : 0,
+              transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
+              transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}>
+              {/* 배경 장식 */}
+              <div style={{
+                position: 'absolute',
+                top: '-50%',
+                right: '-20%',
+                width: '300px',
+                height: '300px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '50%',
+                filter: 'blur(100px)'
+              }} />
+              <div style={{
+                position: 'absolute',
+                bottom: '-30%',
+                left: '-10%',
+                width: '200px',
+                height: '200px',
+                background: 'rgba(255, 255, 255, 0.08)',
+                borderRadius: '50%',
+                filter: 'blur(80px)'
+              }} />
+              
+              <div style={{ position: 'relative', zIndex: 2 }}>
+                <div style={{
+                  display: 'inline-block',
+                  padding: '8px 24px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '50px',
+                  marginBottom: '24px',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)'
+                }}>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: 'rgba(255, 255, 255, 0.95)',
+                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                  }}>
+                    🌿 전문 심리상담 플랫폼
+                  </span>
+                </div>
+                
+                <h1 style={{
+                  fontSize: '48px',
+                  fontWeight: '700',
+                  marginBottom: '20px',
+                  lineHeight: '1.2',
+                  background: 'linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                }}>
+                  마음의 평화를<br />찾아가는 여정
+                </h1>
+                
+                <p style={{
+                  fontSize: '20px',
+                  lineHeight: '1.6',
+                  marginBottom: '40px',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  maxWidth: '600px',
+                  margin: '0 auto 40px',
+                  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                }}>
+                  전문 상담사와 함께 안전하고 편안한 환경에서<br />
+                  당신만의 속도로 마음을 돌보세요
                 </p>
               </div>
             </div>
 
-            <div className={`action-section ${isLoaded ? 'fade-in-up' : ''}`} style={{ animationDelay: '0.2s' }}>
-              <div className="action-cards">
-                <div className="action-card login-card">
-                  <div className="card-icon">🔐</div>
-                  <h3 className="card-title">로그인</h3>
-                  <p className="card-description">
-                    기존 계정으로 로그인하여 서비스를 이용하세요
-                  </p>
-                  <button 
-                    className="action-button primary" 
-                    onClick={handleLogin}
-                  >
-                    로그인하기
-                  </button>
-                </div>
 
-                <div className="action-card register-card">
-                  <div className="card-icon">📝</div>
-                  <h3 className="card-title">회원가입</h3>
-                  <p className="card-description">
-                    새로운 계정을 만들어 상담 서비스를 시작하세요
-                  </p>
-                  <button 
-                    className="action-button secondary" 
-                    onClick={handleRegister}
-                  >
-                    회원가입하기
-                  </button>
-                </div>
+            <div style={{
+              padding: '80px 20px',
+              background: '#ffffff',
+              opacity: isLoaded ? 1 : 0,
+              transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
+              transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+              transitionDelay: '0.4s'
+            }}>
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '60px'
+              }}>
+                <h2 style={{
+                  fontSize: '36px',
+                  fontWeight: '700',
+                  color: '#2d3748',
+                  marginBottom: '16px',
+                  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                }}>
+                  전문적이고 안전한 상담 서비스
+                </h2>
+                <p style={{
+                  fontSize: '18px',
+                  color: '#718096',
+                  lineHeight: '1.6',
+                  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                }}>
+                  당신의 마음 건강을 위한 체계적인 관리 시스템
+                </p>
               </div>
-            </div>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '32px',
+                maxWidth: '1200px',
+                margin: '0 auto'
+              }}>
+                <div style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  padding: '40px 32px',
+                  borderRadius: '20px',
+                  color: 'white',
+                  textAlign: 'center',
+                  boxShadow: '0 20px 40px rgba(102, 126, 234, 0.3)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 30px 60px rgba(102, 126, 234, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(102, 126, 234, 0.3)';
+                }}
+                >
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '28px',
+                    margin: '0 auto 24px',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    🧠
+                  </div>
+                  <h4 style={{
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    marginBottom: '12px',
+                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                  }}>
+                    전문 상담
+                  </h4>
+                  <p style={{
+                    fontSize: '16px',
+                    lineHeight: '1.5',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                  }}>
+                    경험 많은 상담사와의 1:1 상담
+                  </p>
+                </div>
 
-            <div className={`features-section ${isLoaded ? 'fade-in-up' : ''}`} style={{ animationDelay: '0.4s' }}>
-              <h2 className="features-title">주요 서비스</h2>
-              <div className="features-grid">
-                <div className="feature-item">
-                  <div className="feature-icon">🧠</div>
-                  <h4>전문 상담</h4>
-                  <p>경험 많은 상담사와의 1:1 상담</p>
+                <div style={{
+                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                  padding: '40px 32px',
+                  borderRadius: '20px',
+                  color: 'white',
+                  textAlign: 'center',
+                  boxShadow: '0 20px 40px rgba(240, 147, 251, 0.3)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 30px 60px rgba(240, 147, 251, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(240, 147, 251, 0.3)';
+                }}
+                >
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '28px',
+                    margin: '0 auto 24px',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    📱
+                  </div>
+                  <h4 style={{
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    marginBottom: '12px',
+                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                  }}>
+                    편리한 접근
+                  </h4>
+                  <p style={{
+                    fontSize: '16px',
+                    lineHeight: '1.5',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                  }}>
+                    언제 어디서나 상담 예약 및 진행
+                  </p>
                 </div>
-                <div className="feature-item">
-                  <div className="feature-icon">📱</div>
-                  <h4>편리한 접근</h4>
-                  <p>언제 어디서나 상담 예약 및 진행</p>
+
+                <div style={{
+                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                  padding: '40px 32px',
+                  borderRadius: '20px',
+                  color: 'white',
+                  textAlign: 'center',
+                  boxShadow: '0 20px 40px rgba(79, 172, 254, 0.3)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 30px 60px rgba(79, 172, 254, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(79, 172, 254, 0.3)';
+                }}
+                >
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '28px',
+                    margin: '0 auto 24px',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    🔒
+                  </div>
+                  <h4 style={{
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    marginBottom: '12px',
+                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                  }}>
+                    안전한 보안
+                  </h4>
+                  <p style={{
+                    fontSize: '16px',
+                    lineHeight: '1.5',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                  }}>
+                    개인정보 보호 및 암호화
+                  </p>
                 </div>
-                <div className="feature-item">
-                  <div className="feature-icon">🔒</div>
-                  <h4>안전한 보안</h4>
-                  <p>개인정보 보호 및 암호화</p>
-                </div>
-                <div className="feature-item">
-                  <div className="feature-icon">💬</div>
-                  <h4>실시간 채팅</h4>
-                  <p>상담사와의 즉시 소통</p>
+
+                <div style={{
+                  background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                  padding: '40px 32px',
+                  borderRadius: '20px',
+                  color: 'white',
+                  textAlign: 'center',
+                  boxShadow: '0 20px 40px rgba(250, 112, 154, 0.3)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.boxShadow = '0 30px 60px rgba(250, 112, 154, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(250, 112, 154, 0.3)';
+                }}
+                >
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '28px',
+                    margin: '0 auto 24px',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    💬
+                  </div>
+                  <h4 style={{
+                    fontSize: '20px',
+                    fontWeight: '600',
+                    marginBottom: '12px',
+                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                  }}>
+                    실시간 채팅
+                  </h4>
+                  <p style={{
+                    fontSize: '16px',
+                    lineHeight: '1.5',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
+                  }}>
+                    상담사와의 즉시 소통
+                  </p>
                 </div>
               </div>
             </div>

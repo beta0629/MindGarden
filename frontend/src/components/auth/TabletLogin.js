@@ -717,6 +717,38 @@ const TabletLogin = () => {
                   '로그인'
                 )}
               </button>
+              
+              {/* 비밀번호 찾기 링크 */}
+              <div style={{
+                textAlign: 'center',
+                marginTop: '16px',
+                paddingTop: '16px',
+                borderTop: '1px solid #e2e8f0'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => navigate('/forgot-password')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#667eea',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
+                    transition: 'color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.color = '#5a67d8';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.color = '#667eea';
+                  }}
+                >
+                  비밀번호를 잊으셨나요?
+                </button>
+              </div>
             </form>
           ) : (
             /* SMS 로그인 폼 */
@@ -817,15 +849,6 @@ const TabletLogin = () => {
                 onClick={() => navigate('/register')}
               >
                 회원가입
-              </button>
-            </p>
-            <p className="forgot-password">
-              <button
-                type="button"
-                className={TABLET_LOGIN_CSS.FOOTER_LINK}
-                onClick={() => alert('비밀번호 찾기 기능은 준비 중입니다.')}
-              >
-                비밀번호를 잊으셨나요?
               </button>
             </p>
           </div>

@@ -4,6 +4,8 @@ import './styles/index.css';
 import TabletHomepage from './components/homepage/Homepage';
 import TabletLogin from './components/auth/TabletLogin';
 import TabletRegister from './components/auth/TabletRegister';
+import ForgotPassword from './components/auth/ForgotPassword';
+import ResetPassword from './components/auth/ResetPassword';
 import OAuth2Callback from './components/auth/OAuth2Callback';
 import BranchLogin from './components/auth/BranchLogin';
 import BranchSpecificLogin from './components/auth/BranchSpecificLogin';
@@ -197,6 +199,9 @@ function AppContent() {
             <Route path="/" element={<TabletHomepage />} />
             <Route path="/login" element={<TabletLogin />} />
             <Route path="/register" element={<TabletRegister />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/oauth2/callback" element={<OAuth2Callback />} />
             
             {/* 지점별 로그인 라우트 */}
             <Route path="/login/branch" element={<BranchLogin />} />

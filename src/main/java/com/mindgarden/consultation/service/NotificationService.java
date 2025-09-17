@@ -97,4 +97,15 @@ public interface NotificationService {
      * @return 발송 성공 여부
      */
     boolean sendPaymentCompleted(User user, long paymentAmount, String packageName, String consultantName);
+    
+    /**
+     * 이메일 알림 발송 (일반 목적)
+     * 
+     * @param userId 사용자 ID
+     * @param subject 제목
+     * @param content 내용
+     * @param type 알림 타입
+     * @return 발송 성공 여부
+     */
+    boolean sendEmailNotification(Long userId, String subject, String content, String type);
 }

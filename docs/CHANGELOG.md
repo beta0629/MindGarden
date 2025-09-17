@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-09-17] - 비밀번호 찾기/재설정 시스템 구현
+
+### ✨ 새로운 기능
+- **비밀번호 찾기/재설정 시스템 구현**
+  - 이메일 기반 비밀번호 재설정 링크 발송
+  - 보안 토큰 시스템 (24시간 만료, 일회성 사용)
+  - 사용자 친화적인 단계별 안내 UI
+  - 기존 EmailService 연동으로 안정적인 이메일 발송
+
+- **백엔드 API 구현**
+  - PasswordResetToken 엔티티 및 Repository
+  - PasswordResetService 및 구현체
+  - REST API 엔드포인트 3개
+    - POST /api/password-reset/send-email: 재설정 이메일 발송
+    - GET /api/password-reset/validate-token: 토큰 유효성 검증
+    - POST /api/password-reset/reset: 비밀번호 재설정
+
+- **프론트엔드 컴포넌트 구현**
+  - ForgotPassword 컴포넌트: 이메일 입력 및 발송 요청
+  - ResetPassword 컴포넌트: 토큰 검증 및 새 비밀번호 설정
+  - FormInput 공통 컴포넌트: 재사용 가능한 폼 입력 요소
+  - 반응형 디자인 및 인라인 스타일로 CSS 충돌 방지
+
+- **보안 강화**
+  - 이메일 존재 여부 숨김 처리 (보안상 이유)
+  - 토큰 만료 시간 설정 (기본 24시간)
+  - 사용된 토큰 자동 무효화
+  - 비활성화된 사용자 접근 차단
+
+### 🔧 기술적 개선
+- **baseUrl 적용**: 하드코딩된 localhost 대신 환경변수 사용
+- **기존 인프라 활용**: EmailService 연동으로 새로운 의존성 최소화
+- **사용자 경험 개선**: 로딩 상태, 에러 처리, 단계별 피드백
+- **라우팅 개선**: /forgot-password, /reset-password 라우트 추가
+- **UI 일관성**: 로그인 페이지에 비밀번호 찾기 링크 통합
+
+### 🐛 버그 수정
+- 로그인 페이지 중복 비밀번호 찾기 링크 정리
+- 비작동 링크 수정 및 네비게이션 연결
+
 ## [2025-09-17] - 상담사 하트 평가 시스템 및 카카오 알림톡 구현
 
 ### ✨ 새로운 기능

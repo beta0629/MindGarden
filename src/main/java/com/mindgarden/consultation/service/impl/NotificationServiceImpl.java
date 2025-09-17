@@ -374,4 +374,26 @@ public class NotificationServiceImpl implements NotificationService {
         
         return phoneNumber.substring(0, 3) + "****" + phoneNumber.substring(phoneNumber.length() - 4);
     }
+    
+    @Override
+    public boolean sendEmailNotification(Long userId, String subject, String content, String type) {
+        try {
+            log.info("📧 이메일 알림 발송: 사용자ID={}, 제목={}, 타입={}", userId, subject, type);
+            
+            // TODO: 실제 이메일 발송 구현 (SMTP 서버 설정 필요)
+            // 현재는 시뮬레이션 모드로 로그만 출력
+            log.info("📧 이메일 발송 시뮬레이션:");
+            log.info("  - 수신자 ID: {}", userId);
+            log.info("  - 제목: {}", subject);
+            log.info("  - 내용: {}", content);
+            log.info("  - 타입: {}", type);
+            
+            // 시뮬레이션에서는 항상 성공으로 처리
+            return true;
+            
+        } catch (Exception e) {
+            log.error("❌ 이메일 알림 발송 실패: 사용자ID={}, 오류: {}", userId, e.getMessage(), e);
+            return false;
+        }
+    }
 }

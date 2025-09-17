@@ -34,6 +34,12 @@ cp src/main/resources/application-prod.yml.backup src/main/resources/application
 - **세션 기반 인증**: Spring Security + HttpSession
 - **개인정보 암호화**: AES 암호화로 사용자 데이터 보호
 - **CORS 설정**: 프론트엔드-백엔드 간 안전한 통신
+- **비밀번호 찾기/재설정 시스템 (NEW!)**:
+  - 이메일 기반 보안 토큰 시스템 (24시간 만료, 일회성 사용)
+  - 단계별 안내 UI (이메일 입력 → 링크 발송 → 비밀번호 재설정)
+  - 보안 강화 (이메일 존재 여부 숨김, 사용된 토큰 자동 무효화)
+  - 기존 EmailService 연동으로 안정적인 이메일 발송
+  - 반응형 디자인 및 사용자 친화적 인터페이스
 
 ### 👥 사용자 관리
 - **역할 기반 접근 제어**: CLIENT, CONSULTANT, ADMIN, SUPER_ADMIN

@@ -196,6 +196,7 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-align: center !important;
 }
 
 .fc-event:hover {
@@ -205,6 +206,8 @@
 
 .fc-event-title {
     font-weight: 600;
+    text-align: center !important;
+    width: 100%;
 }
 
 .fc-timegrid-event {

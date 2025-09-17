@@ -1274,6 +1274,7 @@ const styles = `
     padding: 2px 6px;
     font-size: 12px;
     font-weight: 500;
+    text-align: center !important;
 }
 
 .fc-timegrid-event {
@@ -1282,10 +1283,13 @@ const styles = `
     padding: 2px 6px;
     font-size: 12px;
     font-weight: 500;
+    text-align: center !important;
 }
 
 .fc-event-title {
     font-weight: 500;
+    text-align: center !important;
+    width: 100%;
 }
 
 .fc-timegrid-slot {

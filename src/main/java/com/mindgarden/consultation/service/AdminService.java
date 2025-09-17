@@ -123,6 +123,16 @@ public interface AdminService {
      * 환불 통계 조회
      */
     Map<String, Object> getRefundStatistics(String period);
+    
+    /**
+     * 환불 이력 조회
+     */
+    Map<String, Object> getRefundHistory(int page, int size, String period, String status);
+    
+    /**
+     * ERP 동기화 상태 확인
+     */
+    Map<String, Object> getErpSyncStatus();
 
     // ==================== 입금 승인 시스템 ====================
 

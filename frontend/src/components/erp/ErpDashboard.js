@@ -215,6 +215,20 @@ const ErpDashboard = () => {
           >
             📊 통합 회계 시스템
           </ErpButton>
+          
+          <ErpButton
+            variant="danger"
+            size="large"
+            onClick={() => navigate('/erp/refund-management')}
+            style={{ 
+              width: '100%', 
+              backgroundColor: '#dc3545', 
+              borderColor: '#dc3545',
+              color: 'white'
+            }}
+          >
+            💸 환불 관리 시스템
+          </ErpButton>
         </div>
       </ErpCard>
 

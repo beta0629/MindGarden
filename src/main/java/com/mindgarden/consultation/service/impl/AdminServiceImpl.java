@@ -1600,6 +1600,173 @@ public class AdminServiceImpl implements AdminService {
         return result;
     }
 
+    @Override
+    public Map<String, Object> getRefundHistory(int page, int size, String period, String status) {
+        log.info("📋 환불 이력 조회: page={}, size={}, period={}, status={}", page, size, period, status);
+        
+        LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
+        LocalDateTime endDate = LocalDateTime.now();
+        
+        // 환불된 매핑 조회 (강제 종료된 매핑)
+        List<ConsultantClientMapping> allRefundedMappings = mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED)
+                .filter(mapping -> mapping.getTerminatedAt() != null)
+                .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
+                .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
+                .sorted((a, b) -> b.getTerminatedAt().compareTo(a.getTerminatedAt()))
+                .collect(Collectors.toList());
+        
+        // 페이징 처리
+        int totalElements = allRefundedMappings.size();
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, totalElements);
+        
+        List<ConsultantClientMapping> pagedMappings = allRefundedMappings.subList(startIndex, endIndex);
+        
+        // 환불 이력 데이터 구성
+        List<Map<String, Object>> refundHistory = pagedMappings.stream()
+                .map(mapping -> {
+                    Map<String, Object> refund = new HashMap<>();
+                    refund.put("mappingId", mapping.getId());
+                    refund.put("clientName", mapping.getClient().getName());
+                    refund.put("consultantName", mapping.getConsultant().getName());
+                    refund.put("packageName", mapping.getPackageName());
+                    refund.put("originalAmount", mapping.getPackagePrice());
+                    refund.put("totalSessions", mapping.getTotalSessions());
+                    refund.put("usedSessions", mapping.getUsedSessions());
+                    refund.put("refundedSessions", mapping.getTotalSessions() - mapping.getUsedSessions());
+                    
+                    // 환불 금액 계산
+                    long refundAmount = 0;
+                    if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
+                        int refundedSessions = mapping.getTotalSessions() - mapping.getUsedSessions();
+                        refundAmount = (mapping.getPackagePrice() * refundedSessions) / mapping.getTotalSessions();
+                    }
+                    refund.put("refundAmount", refundAmount);
+                    
+                    refund.put("terminatedAt", mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                    refund.put("branchCode", mapping.getBranchCode());
+                    
+                    // 환불 사유 추출
+                    String notes = mapping.getNotes();
+                    String reason = "기타";
+                    if (notes != null && notes.contains("강제 종료]")) {
+                        String[] parts = notes.split("강제 종료] ");
+                        if (parts.length > 1) {
+                            String fullReason = parts[1].split("\n")[0];
+                            // 환불 정보 부분 제거하고 사유만 추출
+                            if (fullReason.contains(" (환불:")) {
+                                reason = fullReason.split(" \\(환불:")[0];
+                            } else {
+                                reason = fullReason;
+                            }
+                        }
+                    }
+                    refund.put("refundReason", reason);
+                    refund.put("standardizedReason", standardizeRefundReason(reason));
+                    
+                    // ERP 전송 상태 (모의)
+                    refund.put("erpStatus", "SENT");
+                    refund.put("erpReference", "ERP_" + mapping.getId() + "_" + mapping.getTerminatedAt().toLocalDate().toString().replace("-", ""));
+                    
+                    return refund;
+                })
+                .collect(Collectors.toList());
+        
+        // 페이징 정보
+        Map<String, Object> pageInfo = new HashMap<>();
+        pageInfo.put("currentPage", page);
+        pageInfo.put("pageSize", size);
+        pageInfo.put("totalElements", totalElements);
+        pageInfo.put("totalPages", (int) Math.ceil((double) totalElements / size));
+        pageInfo.put("hasNext", endIndex < totalElements);
+        pageInfo.put("hasPrevious", page > 0);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("refundHistory", refundHistory);
+        result.put("pageInfo", pageInfo);
+        result.put("period", period);
+        result.put("status", status);
+        
+        log.info("✅ 환불 이력 조회 완료: 총 {}건, 페이지 {}/{}", totalElements, page + 1, pageInfo.get("totalPages"));
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> getErpSyncStatus() {
+        log.info("🔄 ERP 동기화 상태 확인");
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // ERP 시스템 연결 상태 확인
+            boolean erpAvailable = checkErpConnection();
+            result.put("erpSystemAvailable", erpAvailable);
+            
+            // 최근 환불 처리 건수 (24시간 내)
+            LocalDateTime yesterday = LocalDateTime.now().minusHours(24);
+            List<ConsultantClientMapping> recentRefunds = mappingRepository.findAll().stream()
+                    .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED)
+                    .filter(mapping -> mapping.getTerminatedAt() != null)
+                    .filter(mapping -> mapping.getTerminatedAt().isAfter(yesterday))
+                    .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
+                    .collect(Collectors.toList());
+            
+            result.put("recentRefundCount", recentRefunds.size());
+            result.put("lastSyncTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            
+            // ERP 전송 성공률 (모의)
+            result.put("erpSuccessRate", 95.5);
+            result.put("pendingErpRequests", 2);
+            result.put("failedErpRequests", 1);
+            
+            // 회계 처리 상태
+            Map<String, Object> accountingStatus = new HashMap<>();
+            accountingStatus.put("processedToday", recentRefunds.size());
+            accountingStatus.put("pendingApproval", 0);
+            accountingStatus.put("totalRefundAmount", recentRefunds.stream()
+                    .mapToLong(mapping -> {
+                        if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
+                            int refundedSessions = mapping.getTotalSessions() - mapping.getUsedSessions();
+                            return (mapping.getPackagePrice() * refundedSessions) / mapping.getTotalSessions();
+                        }
+                        return 0;
+                    }).sum());
+            
+            result.put("accountingStatus", accountingStatus);
+            result.put("lastChecked", LocalDateTime.now());
+            
+        } catch (Exception e) {
+            log.error("❌ ERP 동기화 상태 확인 실패", e);
+            result.put("error", e.getMessage());
+            result.put("erpSystemAvailable", false);
+        }
+        
+        log.info("✅ ERP 동기화 상태 확인 완료: ERP 연결={}", result.get("erpSystemAvailable"));
+        return result;
+    }
+
+    /**
+     * ERP 시스템 연결 상태 확인
+     */
+    private boolean checkErpConnection() {
+        try {
+            // 실제 ERP 시스템 연결 확인 로직
+            // 현재는 모의 처리
+            String erpUrl = getErpRefundApiUrl();
+            log.info("🔍 ERP 연결 확인: URL={}", erpUrl);
+            
+            // 실제 구현 시 HTTP 헬스체크 호출
+            // return restTemplate.getForEntity(erpUrl + "/health", String.class).getStatusCode() == HttpStatus.OK;
+            
+            return true; // 모의 연결 성공
+            
+        } catch (Exception e) {
+            log.warn("⚠️ ERP 연결 확인 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+
     /**
      * 환불 통계 기간에 따른 시작 날짜 계산 (공통 코드 기반)
      */

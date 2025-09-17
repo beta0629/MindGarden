@@ -310,4 +310,26 @@ public interface ErpService {
      * 기간별 재무 트렌드 분석
      */
     Map<String, Object> getFinanceTrendAnalysis(String startDate, String endDate, String periodType);
+    
+    // ==================== 환불 관리 ====================
+    
+    /**
+     * 환불 이력 조회 (페이징)
+     */
+    Map<String, Object> getRefundHistory(int page, int size, String period, String status);
+    
+    /**
+     * 환불 통계 조회 (ERP 연동 기반)
+     */
+    Map<String, Object> getRefundStatistics(String period);
+    
+    /**
+     * ERP 동기화 상태 확인
+     */
+    Map<String, Object> getErpSyncStatus();
+    
+    /**
+     * 환불 회계 처리 현황
+     */
+    Map<String, Object> getRefundAccountingStatus(String period);
 }

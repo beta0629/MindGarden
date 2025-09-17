@@ -53,6 +53,7 @@ import ItemManagement from './components/erp/ItemManagement';
 import SalaryManagement from './components/erp/SalaryManagement';
 import TaxManagement from './components/erp/TaxManagement';
 import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
+import RefundManagement from './components/erp/RefundManagement';
 import ClientSchedule from './components/client/ClientSchedule';
 import ClientSessionManagement from './components/client/ClientSessionManagement';
 import ClientPaymentHistory from './components/client/ClientPaymentHistory';
@@ -367,6 +368,7 @@ function AppContent() {
             <Route path="/erp/dashboard" element={<ErpDashboard />} />
             <Route path="/erp/purchase-requests" element={<PurchaseRequestForm />} />
             <Route path="/erp/finance-dashboard" element={<IntegratedFinanceDashboard />} />
+            <Route path="/erp/refund-management" element={<RefundManagement />} />
             <Route path="/erp/approvals" element={<AdminApprovalDashboard />} />
             <Route path="/erp/super-approvals" element={<SuperAdminApprovalDashboard />} />
             <Route path="/erp/items" element={<ItemManagement />} />

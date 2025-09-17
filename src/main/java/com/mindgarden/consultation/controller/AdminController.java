@@ -1358,6 +1358,54 @@ public class AdminController {
         }
     }
 
+    /**
+     * 환불 이력 조회
+     */
+    @GetMapping("/refund-history")
+    public ResponseEntity<?> getRefundHistory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) String status) {
+        try {
+            log.info("📋 환불 이력 조회: page={}, size={}, period={}, status={}", page, size, period, status);
+            Map<String, Object> result = adminService.getRefundHistory(page, size, period, status);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", result
+            ));
+        } catch (Exception e) {
+            log.error("❌ 환불 이력 조회 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "환불 이력 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * ERP 동기화 상태 확인
+     */
+    @GetMapping("/erp-sync-status")
+    public ResponseEntity<?> getErpSyncStatus() {
+        try {
+            log.info("🔄 ERP 동기화 상태 확인");
+            Map<String, Object> status = adminService.getErpSyncStatus();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", status
+            ));
+        } catch (Exception e) {
+            log.error("❌ ERP 동기화 상태 확인 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "ERP 동기화 상태 확인에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
     // ==================== 상담사 변경 시스템 ====================
 
     /**

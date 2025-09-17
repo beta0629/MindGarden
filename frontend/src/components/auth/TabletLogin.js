@@ -186,12 +186,12 @@ const TabletLogin = () => {
     const { SMS, VALIDATION, MESSAGES } = TABLET_LOGIN_CONSTANTS;
     
     if (!phoneNumber || phoneNumber.length !== SMS.PHONE_LENGTH) {
-      notificationManager.error(MESSAGES.PHONE_INVALID);
+      showInlineNotification(MESSAGES.PHONE_INVALID, 'error');
       return;
     }
 
     if (!phoneNumber.match(VALIDATION.PHONE_REGEX)) {
-      notificationManager.error(MESSAGES.PHONE_INVALID);
+      showInlineNotification(MESSAGES.PHONE_INVALID, 'error');
       return;
     }
 
@@ -210,14 +210,14 @@ const TabletLogin = () => {
         console.log('SMS 인증 코드 전송 성공:', data);
         setIsCodeSent(true);
         setCountdown(SMS.COUNTDOWN_DURATION);
-        notificationManager.success(MESSAGES.SMS_SENT);
+        showInlineNotification(MESSAGES.SMS_SENT, 'success');
       } else {
         console.error('SMS 전송 실패:', data.message);
-        notificationManager.error(data.message || MESSAGES.SMS_SEND_FAILED);
+        showInlineNotification(data.message || MESSAGES.SMS_SEND_FAILED, 'error');
       }
     } catch (error) {
       console.error('SMS 전송 오류:', error);
-      notificationManager.error(MESSAGES.SMS_SEND_FAILED);
+      showInlineNotification(MESSAGES.SMS_SEND_FAILED, 'error');
     }
   };
 
@@ -225,12 +225,12 @@ const TabletLogin = () => {
     const { SMS, VALIDATION, MESSAGES } = TABLET_LOGIN_CONSTANTS;
     
     if (!verificationCode || verificationCode.length !== SMS.CODE_LENGTH) {
-      notificationManager.error(MESSAGES.CODE_INVALID);
+      showInlineNotification(MESSAGES.CODE_INVALID, 'error');
       return;
     }
 
     if (!verificationCode.match(VALIDATION.PHONE_REGEX)) {
-      notificationManager.error(MESSAGES.CODE_INVALID);
+      showInlineNotification(MESSAGES.CODE_INVALID, 'error');
       return;
     }
 
@@ -250,16 +250,16 @@ const TabletLogin = () => {
 
       if (data.success) {
         console.log('SMS 인증 성공:', data);
-        notificationManager.success(MESSAGES.SMS_VERIFY_SUCCESS);
+        showInlineNotification(MESSAGES.SMS_VERIFY_SUCCESS, 'success');
         // 인증 성공 후 처리 - 로그인 완료 또는 다음 단계로 진행
         await handleSmsAuthSuccess();
       } else {
         console.error('SMS 인증 실패:', data.message);
-        notificationManager.error(data.message || MESSAGES.SMS_VERIFY_FAILED);
+        showInlineNotification(data.message || MESSAGES.SMS_VERIFY_FAILED, 'error');
       }
     } catch (error) {
       console.error('SMS 검증 오류:', error);
-      notificationManager.error(MESSAGES.SMS_VERIFY_FAILED);
+      showInlineNotification(MESSAGES.SMS_VERIFY_FAILED, 'error');
     }
   };
 
@@ -287,7 +287,7 @@ const TabletLogin = () => {
       
       if (data.success) {
         console.log('✅ SMS 인증 로그인 성공:', data);
-        notificationManager.success('SMS 인증 로그인에 성공했습니다.');
+        showInlineNotification('SMS 인증 로그인에 성공했습니다.', 'success');
         
         // 로그인 성공 후 리다이렉트
         if (data.user) {
@@ -309,18 +309,18 @@ const TabletLogin = () => {
         }
       } else {
         console.error('❌ SMS 인증 로그인 실패:', data.message);
-        notificationManager.error(data.message || 'SMS 인증 로그인이 실패했습니다.');
+        showInlineNotification(data.message || 'SMS 인증 로그인이 실패했습니다.', 'error');
         
         // 로그인 실패 시 회원가입 안내
         if (data.message && data.message.includes('회원가입')) {
-          notificationManager.info('회원가입이 필요합니다. 회원가입을 진행해주세요.');
+          showInlineNotification('회원가입이 필요합니다. 회원가입을 진행해주세요.', 'info');
           // 회원가입 모달 표시 또는 회원가입 페이지로 이동
         }
       }
       
     } catch (error) {
       console.error('❌ SMS 인증 성공 후 처리 오류:', error);
-      notificationManager.error('SMS 인증 후 로그인 처리 중 오류가 발생했습니다.');
+      showInlineNotification('SMS 인증 후 로그인 처리 중 오류가 발생했습니다.', 'error');
     }
   };
 
@@ -392,7 +392,7 @@ const TabletLogin = () => {
         console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
         
         // 알림 표시
-        notificationManager.show(`${socialUserInfo.provider === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
+        showInlineNotification(`${socialUserInfo.provider === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
         
         setSocialUserInfo(socialUserInfo);
         setShowSocialSignupModal(true);
@@ -400,7 +400,7 @@ const TabletLogin = () => {
         console.log('📋 모달 상태 설정 완료 - showSocialSignupModal: true');
       } else {
         // 일반 에러는 토스트로만 표시
-        notificationManager.show(decodedError, 'error');
+        showInlineNotification(decodedError, 'error');
       }
       
       // URL에서 에러 파라미터 제거
@@ -436,7 +436,7 @@ const TabletLogin = () => {
       console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
       
       // 알림 표시
-      notificationManager.show(`${provider.toUpperCase() === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
+      showInlineNotification(`${provider.toUpperCase() === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
       
       console.log('📋 모달 상태 설정 시작 - socialUserInfo:', socialUserInfo);
       setSocialUserInfo(socialUserInfo);
@@ -476,7 +476,7 @@ const TabletLogin = () => {
           errorMessage = '소셜 인증에 실패했습니다. 다시 시도해주세요.';
         }
         
-        notificationManager.show(errorMessage, 'error');
+        showInlineNotification(errorMessage, 'error');
         
         // URL에서 OAuth2 파라미터 제거
         window.history.replaceState({}, document.title, '/login');
@@ -585,7 +585,7 @@ const TabletLogin = () => {
     } else {
       // 로그인되지 않은 사용자의 경우 로그인 페이지로 이동
       console.log('👤 로그인되지 않은 사용자 - 로그인 페이지로 이동');
-      notificationManager.info('로그인이 필요합니다.');
+      showInlineNotification('로그인이 필요합니다.', 'info');
       
       // 현재 페이지가 이미 로그인 페이지인지 확인
       if (!window.location.pathname.includes('/login')) {

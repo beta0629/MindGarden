@@ -1314,6 +1314,28 @@ public class AdminController {
         }
     }
 
+    /**
+     * 매핑 강제 종료 (환불 처리)
+     */
+    @PostMapping("/mappings/{id}/terminate")
+    public ResponseEntity<?> terminateMapping(@PathVariable Long id, @RequestBody Map<String, Object> requestBody) {
+        try {
+            log.info("🔧 매핑 강제 종료: ID={}", id);
+            String reason = (String) requestBody.get("reason");
+            adminService.terminateMapping(id, reason);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "매핑이 성공적으로 종료되었습니다"
+            ));
+        } catch (Exception e) {
+            log.error("❌ 매핑 강제 종료 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "매핑 강제 종료에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
     // ==================== 상담사 변경 시스템 ====================
 
     /**

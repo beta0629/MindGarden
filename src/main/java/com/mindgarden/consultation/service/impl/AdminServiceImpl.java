@@ -2,6 +2,7 @@ package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1369,6 +1370,42 @@ public class AdminServiceImpl implements AdminService {
         mapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
         mapping.setTerminatedAt(LocalDateTime.now());
         mappingRepository.save(mapping);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void terminateMapping(Long id, String reason) {
+        log.info("🔧 매핑 강제 종료 처리 시작: ID={}, 사유={}", id, reason);
+        
+        ConsultantClientMapping mapping = mappingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다."));
+        
+        if (mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED) {
+            throw new RuntimeException("이미 종료된 매핑입니다.");
+        }
+        
+        // 매핑 종료 처리
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
+        mapping.setTerminatedAt(LocalDateTime.now());
+        
+        // 종료 사유 추가
+        String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
+        String terminationNote = String.format("[%s 강제 종료] %s", 
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), 
+                reason != null ? reason : "관리자 요청");
+        
+        String updatedNotes = currentNotes.isEmpty() ? terminationNote : currentNotes + "\n" + terminationNote;
+        mapping.setNotes(updatedNotes);
+        
+        // 남은 회기를 0으로 설정 (환불 처리됨을 의미)
+        int refundedSessions = mapping.getRemainingSessions();
+        mapping.setRemainingSessions(0);
+        mapping.setUsedSessions(mapping.getTotalSessions()); // 전체를 사용한 것으로 처리하지 않고 실제 사용한 만큼만
+        
+        mappingRepository.save(mapping);
+        
+        log.info("✅ 매핑 강제 종료 완료: ID={}, 환불 회기={}, 상담사={}, 내담자={}", 
+                id, refundedSessions, mapping.getConsultant().getName(), mapping.getClient().getName());
     }
 
     @Override

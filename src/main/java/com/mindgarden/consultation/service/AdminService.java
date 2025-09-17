@@ -113,6 +113,11 @@ public interface AdminService {
      * 매핑 삭제
      */
     void deleteMapping(Long id);
+    
+    /**
+     * 매핑 강제 종료 (환불 처리)
+     */
+    void terminateMapping(Long id, String reason);
 
     // ==================== 입금 승인 시스템 ====================
 

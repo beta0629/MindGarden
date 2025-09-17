@@ -37,20 +37,20 @@ const TabletLogin = () => {
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
-  // 인라인 알림 상태 (CSS 충돌 방지용)
-  const [inlineNotification, setInlineNotification] = useState({
+  // 간단한 툴팁 상태 (CSS 충돌 방지용)
+  const [tooltip, setTooltip] = useState({
     show: false,
     message: '',
-    type: 'info'
+    type: 'error'
   });
 
-  // 인라인 알림 표시 함수
-  const showInlineNotification = (message, type = 'info') => {
-    setInlineNotification({ show: true, message, type });
-    // 4초 후 자동 숨김
+  // 간단한 툴팁 표시 함수
+  const showTooltip = (message, type = 'error') => {
+    setTooltip({ show: true, message, type });
+    // 3초 후 자동 숨김
     setTimeout(() => {
-      setInlineNotification(prev => ({ ...prev, show: false }));
-    }, 4000);
+      setTooltip({ show: false, message: '', type: 'error' });
+    }, 3000);
   };
 
   useEffect(() => {
@@ -125,7 +125,7 @@ const TabletLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email || !formData.password) {
-      showInlineNotification('이메일과 비밀번호를 입력해주세요.', 'warning');
+      showTooltip('이메일과 비밀번호를 입력해주세요.', 'warning');
       return;
     }
 
@@ -140,7 +140,7 @@ const TabletLogin = () => {
         console.log('✅ 로그인 성공:', result.user);
         
         // 로그인 성공 알림
-        showInlineNotification('로그인에 성공했습니다.', 'success');
+        showTooltip('로그인에 성공했습니다.', 'success');
         
         // 세션 설정 완료 후 잠시 대기 (시간 단축)
         console.log('⏳ 세션 설정 완료, 잠시 대기...');
@@ -156,13 +156,13 @@ const TabletLogin = () => {
       } else {
         console.log('❌ 로그인 실패:', result.message);
         // 메모리에 따라 로그인 실패 시 공통 메시지 사용
-        showInlineNotification('아이디 또는 비밀번호 틀림', 'error');
+        showTooltip('아이디 또는 비밀번호 틀림', 'error');
       }
     } catch (error) {
       console.error('❌ 로그인 오류:', error);
       console.error('❌ 오류 상세:', error.message);
       // 공통 알림 시스템 사용 - 로그인 실패 시 공통 메시지
-      showInlineNotification('아이디 또는 비밀번호 틀림', 'error');
+      showTooltip('아이디 또는 비밀번호 틀림', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -186,12 +186,12 @@ const TabletLogin = () => {
     const { SMS, VALIDATION, MESSAGES } = TABLET_LOGIN_CONSTANTS;
     
     if (!phoneNumber || phoneNumber.length !== SMS.PHONE_LENGTH) {
-      showInlineNotification(MESSAGES.PHONE_INVALID, 'error');
+      showTooltip(MESSAGES.PHONE_INVALID, 'error');
       return;
     }
 
     if (!phoneNumber.match(VALIDATION.PHONE_REGEX)) {
-      showInlineNotification(MESSAGES.PHONE_INVALID, 'error');
+      showTooltip(MESSAGES.PHONE_INVALID, 'error');
       return;
     }
 
@@ -210,14 +210,14 @@ const TabletLogin = () => {
         console.log('SMS 인증 코드 전송 성공:', data);
         setIsCodeSent(true);
         setCountdown(SMS.COUNTDOWN_DURATION);
-        showInlineNotification(MESSAGES.SMS_SENT, 'success');
+        showTooltip(MESSAGES.SMS_SENT, 'success');
       } else {
         console.error('SMS 전송 실패:', data.message);
-        showInlineNotification(data.message || MESSAGES.SMS_SEND_FAILED, 'error');
+        showTooltip(data.message || MESSAGES.SMS_SEND_FAILED, 'error');
       }
     } catch (error) {
       console.error('SMS 전송 오류:', error);
-      showInlineNotification(MESSAGES.SMS_SEND_FAILED, 'error');
+      showTooltip(MESSAGES.SMS_SEND_FAILED, 'error');
     }
   };
 
@@ -225,12 +225,12 @@ const TabletLogin = () => {
     const { SMS, VALIDATION, MESSAGES } = TABLET_LOGIN_CONSTANTS;
     
     if (!verificationCode || verificationCode.length !== SMS.CODE_LENGTH) {
-      showInlineNotification(MESSAGES.CODE_INVALID, 'error');
+      showTooltip(MESSAGES.CODE_INVALID, 'error');
       return;
     }
 
     if (!verificationCode.match(VALIDATION.PHONE_REGEX)) {
-      showInlineNotification(MESSAGES.CODE_INVALID, 'error');
+      showTooltip(MESSAGES.CODE_INVALID, 'error');
       return;
     }
 
@@ -250,16 +250,16 @@ const TabletLogin = () => {
 
       if (data.success) {
         console.log('SMS 인증 성공:', data);
-        showInlineNotification(MESSAGES.SMS_VERIFY_SUCCESS, 'success');
+        showTooltip(MESSAGES.SMS_VERIFY_SUCCESS, 'success');
         // 인증 성공 후 처리 - 로그인 완료 또는 다음 단계로 진행
         await handleSmsAuthSuccess();
       } else {
         console.error('SMS 인증 실패:', data.message);
-        showInlineNotification(data.message || MESSAGES.SMS_VERIFY_FAILED, 'error');
+        showTooltip(data.message || MESSAGES.SMS_VERIFY_FAILED, 'error');
       }
     } catch (error) {
       console.error('SMS 검증 오류:', error);
-      showInlineNotification(MESSAGES.SMS_VERIFY_FAILED, 'error');
+      showTooltip(MESSAGES.SMS_VERIFY_FAILED, 'error');
     }
   };
 
@@ -287,7 +287,7 @@ const TabletLogin = () => {
       
       if (data.success) {
         console.log('✅ SMS 인증 로그인 성공:', data);
-        showInlineNotification('SMS 인증 로그인에 성공했습니다.', 'success');
+        showTooltip('SMS 인증 로그인에 성공했습니다.', 'success');
         
         // 로그인 성공 후 리다이렉트
         if (data.user) {
@@ -309,18 +309,18 @@ const TabletLogin = () => {
         }
       } else {
         console.error('❌ SMS 인증 로그인 실패:', data.message);
-        showInlineNotification(data.message || 'SMS 인증 로그인이 실패했습니다.', 'error');
+        showTooltip(data.message || 'SMS 인증 로그인이 실패했습니다.', 'error');
         
         // 로그인 실패 시 회원가입 안내
         if (data.message && data.message.includes('회원가입')) {
-          showInlineNotification('회원가입이 필요합니다. 회원가입을 진행해주세요.', 'info');
+          showTooltip('회원가입이 필요합니다. 회원가입을 진행해주세요.', 'info');
           // 회원가입 모달 표시 또는 회원가입 페이지로 이동
         }
       }
       
     } catch (error) {
       console.error('❌ SMS 인증 성공 후 처리 오류:', error);
-      showInlineNotification('SMS 인증 후 로그인 처리 중 오류가 발생했습니다.', 'error');
+      showTooltip('SMS 인증 후 로그인 처리 중 오류가 발생했습니다.', 'error');
     }
   };
 
@@ -392,7 +392,7 @@ const TabletLogin = () => {
         console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
         
         // 알림 표시
-        showInlineNotification(`${socialUserInfo.provider === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
+        showTooltip(`${socialUserInfo.provider === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
         
         setSocialUserInfo(socialUserInfo);
         setShowSocialSignupModal(true);
@@ -400,7 +400,7 @@ const TabletLogin = () => {
         console.log('📋 모달 상태 설정 완료 - showSocialSignupModal: true');
       } else {
         // 일반 에러는 토스트로만 표시
-        showInlineNotification(decodedError, 'error');
+        showTooltip(decodedError, 'error');
       }
       
       // URL에서 에러 파라미터 제거
@@ -436,7 +436,7 @@ const TabletLogin = () => {
       console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
       
       // 알림 표시
-      showInlineNotification(`${provider.toUpperCase() === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
+      showTooltip(`${provider.toUpperCase() === 'KAKAO' ? '카카오' : '네이버'} 로그인: 간편 회원가입이 필요합니다.`, 'warning');
       
       console.log('📋 모달 상태 설정 시작 - socialUserInfo:', socialUserInfo);
       setSocialUserInfo(socialUserInfo);
@@ -476,7 +476,7 @@ const TabletLogin = () => {
           errorMessage = '소셜 인증에 실패했습니다. 다시 시도해주세요.';
         }
         
-        showInlineNotification(errorMessage, 'error');
+        showTooltip(errorMessage, 'error');
         
         // URL에서 OAuth2 파라미터 제거
         window.history.replaceState({}, document.title, '/login');
@@ -585,7 +585,7 @@ const TabletLogin = () => {
     } else {
       // 로그인되지 않은 사용자의 경우 로그인 페이지로 이동
       console.log('👤 로그인되지 않은 사용자 - 로그인 페이지로 이동');
-      showInlineNotification('로그인이 필요합니다.', 'info');
+      showTooltip('로그인이 필요합니다.', 'info');
       
       // 현재 페이지가 이미 로그인 페이지인지 확인
       if (!window.location.pathname.includes('/login')) {
@@ -806,166 +806,44 @@ const TabletLogin = () => {
         onSignupSuccess={handleSocialSignupSuccess}
       />
 
-      {/* 인라인 알림 (CSS 충돌 방지용) */}
-      {inlineNotification.show && (
-        <>
-          <style>{getInlineNotificationStyles()}</style>
-          <div style={getInlineNotificationContainerStyle()}>
-            <div
-              style={getInlineNotificationStyle(inlineNotification.type)}
-              onClick={() => setInlineNotification(prev => ({ ...prev, show: false }))}
-            >
-              <div style={getInlineNotificationContentStyle()}>
-                <div style={getInlineNotificationIconStyle()}>
-                  {getInlineNotificationIcon(inlineNotification.type)}
-                </div>
-                <div style={getInlineNotificationMessageStyle()}>
-                  {inlineNotification.message}
-                </div>
-                <button 
-                  style={getInlineNotificationCloseStyle()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setInlineNotification(prev => ({ ...prev, show: false }));
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#f5f5f5';
-                    e.target.style.color = '#666';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = 'transparent';
-                    e.target.style.color = '#999';
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-              <div style={getInlineNotificationProgressStyle()}>
-                <div style={getInlineNotificationProgressBarStyle(inlineNotification.type)} />
-              </div>
-            </div>
+      {/* 간단한 툴팁 (CSS 충돌 방지용) */}
+      {tooltip.show && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: tooltip.type === 'error' ? '#dc3545' : 
+                           tooltip.type === 'success' ? '#28a745' : 
+                           tooltip.type === 'warning' ? '#ffc107' : '#17a2b8',
+            color: 'white',
+            padding: '16px 24px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            zIndex: 10000,
+            fontSize: '16px',
+            fontWeight: '600',
+            fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
+            maxWidth: '400px',
+            textAlign: 'center',
+            cursor: 'pointer',
+            border: '2px solid rgba(255, 255, 255, 0.3)'
+          }}
+          onClick={() => setTooltip({ show: false, message: '', type: 'error' })}
+        >
+          <div style={{ marginBottom: '4px', fontSize: '20px' }}>
+            {tooltip.type === 'error' ? '❌' : 
+             tooltip.type === 'success' ? '✅' : 
+             tooltip.type === 'warning' ? '⚠️' : 'ℹ️'}
           </div>
-        </>
+          {tooltip.message}
+        </div>
       )}
     </div>
   );
 };
 
-// 인라인 알림 스타일 함수들 (CSS 충돌 방지용)
-const getInlineNotificationStyles = () => `
-  @keyframes loginNotificationProgress {
-    from { transform: scaleX(1); }
-    to { transform: scaleX(0); }
-  }
-`;
-
-const getInlineNotificationContainerStyle = () => ({
-  position: 'fixed',
-  top: '20px',
-  right: '20px',
-  zIndex: 10000,
-  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-});
-
-const getInlineNotificationStyle = (type) => {
-  const borderColors = {
-    success: '#28a745',
-    error: '#dc3545',
-    warning: '#ffc107',
-    info: '#17a2b8'
-  };
-
-  return {
-    background: '#fff',
-    borderRadius: '8px',
-    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.25)',
-    overflow: 'hidden',
-    cursor: 'pointer',
-    borderLeft: `5px solid ${borderColors[type] || '#17a2b8'}`,
-    minWidth: '320px',
-    maxWidth: '400px',
-    display: 'flex',
-    flexDirection: 'column',
-    transition: 'all 0.3s ease',
-    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
-    border: '1px solid rgba(0,0,0,0.1)',
-    animation: 'slideInRight 0.3s ease-out'
-  };
-};
-
-const getInlineNotificationContentStyle = () => ({
-  display: 'flex',
-  alignItems: 'center',
-  padding: '16px',
-  gap: '12px'
-});
-
-const getInlineNotificationIconStyle = () => ({
-  fontSize: '24px',
-  flexShrink: 0
-});
-
-const getInlineNotificationMessageStyle = () => ({
-  flex: 1,
-  fontSize: '16px',
-  lineHeight: '1.4',
-  color: '#333',
-  fontWeight: '600',
-  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-});
-
-const getInlineNotificationCloseStyle = () => ({
-  background: 'none',
-  border: 'none',
-  fontSize: '20px',
-  color: '#999',
-  cursor: 'pointer',
-  padding: '0',
-  width: '24px',
-  height: '24px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: '50%',
-  transition: 'all 0.2s ease',
-  flexShrink: 0
-});
-
-const getInlineNotificationProgressStyle = () => ({
-  height: '3px',
-  backgroundColor: 'rgba(0, 0, 0, 0.1)',
-  overflow: 'hidden'
-});
-
-const getInlineNotificationProgressBarStyle = (type) => {
-  const progressColors = {
-    success: 'linear-gradient(90deg, #28a745, #1e7e34)',
-    error: 'linear-gradient(90deg, #dc3545, #c82333)',
-    warning: 'linear-gradient(90deg, #ffc107, #e0a800)',
-    info: 'linear-gradient(90deg, #17a2b8, #138496)'
-  };
-
-  return {
-    height: '100%',
-    background: progressColors[type] || progressColors.info,
-    animation: 'loginNotificationProgress 4000ms linear forwards',
-    transformOrigin: 'left'
-  };
-};
-
-const getInlineNotificationIcon = (type) => {
-  switch (type) {
-    case 'success':
-      return '✅';
-    case 'error':
-      return '❌';
-    case 'warning':
-      return '⚠️';
-    case 'info':
-      return 'ℹ️';
-    default:
-      return '📢';
-  }
-};
+// 간단한 툴팁 전용 (CSS 충돌 완전 방지)
 
 export default TabletLogin;

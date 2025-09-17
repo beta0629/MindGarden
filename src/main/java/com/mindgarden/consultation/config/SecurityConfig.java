@@ -55,6 +55,7 @@ public class SecurityConfig {
                     "/api/auth/**", 
                     "/oauth2/**",
                     "/api/password-reset/**",  // 비밀번호 재설정 API
+                    "/api/admin/common-codes/**",  // 공통 코드 조회 (드롭다운 등에 필요)
                     "/api/test/email/**",
                     "/api/test/notification/**",  // 알림톡 테스트 API
                     "/error",
@@ -62,8 +63,13 @@ public class SecurityConfig {
                     "/actuator/info"
                 ).permitAll();
                 
-                // 모든 환경에서 인증 필요 (운영 모드로 변경)
-                authz.anyRequest().authenticated();
+                // 운영 환경에서는 나머지 API 인증 필요
+                if (isProductionEnvironment()) {
+                    authz.anyRequest().authenticated();
+                } else {
+                    // 개발 환경에서는 모든 요청 허용 (개발 편의성)
+                    authz.anyRequest().permitAll();
+                }
             })
             
             // 폼 로그인 비활성화

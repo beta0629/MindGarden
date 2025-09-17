@@ -87,7 +87,12 @@ const RefundManagement = () => {
 
     return (
         <SimpleLayout>
-            <div className="erp-system">
+            <div className="erp-system" style={{ 
+                padding: '20px',
+                paddingLeft: '40px',
+                maxWidth: '1400px',
+                margin: '0 auto'
+            }}>
                 <ErpHeader 
                     title="환불 관리 시스템"
                     subtitle="상담 환불 현황 및 ERP 연동 관리"

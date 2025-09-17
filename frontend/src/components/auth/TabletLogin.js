@@ -186,7 +186,7 @@ const TabletLogin = () => {
         setIsLoading(false);
         // 메모리에 따라 로그인 실패 시 공통 메시지 사용
         setTimeout(() => {
-          showTooltip('아이디 또는 비밀번호 틀림', 'error');
+          showTooltip('아이디 또는 비밀번호가 틀리니 다시 확인하시고 입력해주세요', 'error');
         }, 100); // 로딩 해제 후 알림 표시
         return; // finally 블록 실행 방지
       }
@@ -197,7 +197,7 @@ const TabletLogin = () => {
       setIsLoading(false);
       // 공통 알림 시스템 사용 - 로그인 실패 시 공통 메시지
       setTimeout(() => {
-        showTooltip('아이디 또는 비밀번호 틀림', 'error');
+        showTooltip('아이디 또는 비밀번호가 틀리니 다시 한번 확인 부탁해요', 'error');
       }, 100); // 로딩 해제 후 알림 표시
       return; // finally 블록 실행 방지
     } finally {

@@ -196,10 +196,6 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    text-align: center !important;
-    justify-content: center !important;
-    display: flex !important;
-    align-items: center !important;
 }
 
 .fc-event:hover {
@@ -209,32 +205,6 @@
 
 .fc-event-title {
     font-weight: 600;
-    text-align: center !important;
-    width: 100%;
-    display: block !important;
-}
-
-.fc-event-main {
-    text-align: center !important;
-    width: 100% !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-}
-
-.fc-event-title-container {
-    text-align: center !important;
-    width: 100% !important;
-}
-
-.fc-daygrid-event .fc-event-main {
-    text-align: center !important;
-    justify-content: center !important;
-}
-
-.fc-timegrid-event .fc-event-main {
-    text-align: center !important;
-    justify-content: center !important;
 }
 
 .fc-timegrid-event {
@@ -331,40 +301,6 @@
     }
 }
 
-/* 강제 중앙정렬 - 모든 우선순위 오버라이드 */
-.fc .fc-event,
-.fc .fc-daygrid-event,
-.fc .fc-timegrid-event,
-.fc-event,
-.fc-daygrid-event,
-.fc-timegrid-event {
-    text-align: center !important;
-    justify-content: center !important;
-    display: flex !important;
-    align-items: center !important;
-}
-
-.fc .fc-event-main,
-.fc .fc-event-title,
-.fc .fc-event-title-container,
-.fc-event-main,
-.fc-event-title,
-.fc-event-title-container {
-    text-align: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-}
-
-/* 휴가 이벤트 강제 중앙정렬 */
-.fc-event.vacation-event,
-.fc-daygrid-event.vacation-event,
-.fc-timegrid-event.vacation-event {
-    text-align: center !important;
-    justify-content: center !important;
-    display: flex !important;
-    align-items: center !important;
-}
-
 /* 확정된 스케줄 특별 스타일 */
 .fc-event.status-confirmed {
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
@@ -374,10 +310,6 @@
     font-weight: 600 !important;
     color: white !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-    text-align: center !important;
-    justify-content: center !important;
-    display: flex !important;
-    align-items: center !important;
 }
 
 /* 휴가 이벤트 스타일 */

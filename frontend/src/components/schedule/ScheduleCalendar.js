@@ -858,37 +858,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 eventDisplay="block"
                 displayEventTime={true}
                 displayEventEnd={true}
-                eventDidMount={(info) => {
-                    // 모든 이벤트에 강제 중앙정렬 인라인 스타일 적용
-                    const eventEl = info.el;
-                    eventEl.style.textAlign = 'center';
-                    eventEl.style.justifyContent = 'center';
-                    eventEl.style.display = 'flex';
-                    eventEl.style.alignItems = 'center';
-                    
-                    // 이벤트 내부 요소들도 중앙정렬
-                    const titleEl = eventEl.querySelector('.fc-event-title');
-                    if (titleEl) {
-                        titleEl.style.textAlign = 'center';
-                        titleEl.style.width = '100%';
-                        titleEl.style.display = 'block';
-                    }
-                    
-                    const mainEl = eventEl.querySelector('.fc-event-main');
-                    if (mainEl) {
-                        mainEl.style.textAlign = 'center';
-                        mainEl.style.justifyContent = 'center';
-                        mainEl.style.display = 'flex';
-                        mainEl.style.alignItems = 'center';
-                        mainEl.style.width = '100%';
-                    }
-                    
-                    const containerEl = eventEl.querySelector('.fc-event-title-container');
-                    if (containerEl) {
-                        containerEl.style.textAlign = 'center';
-                        containerEl.style.width = '100%';
-                    }
-                }}
             />
 
             {/* 스케줄 생성/수정 모달 */}
@@ -1247,10 +1216,6 @@ const styles = `
     padding: 2px 6px;
     font-size: 12px;
     font-weight: 500;
-    text-align: center !important;
-    justify-content: center !important;
-    display: flex !important;
-    align-items: center !important;
 }
 
 .fc-timegrid-event {
@@ -1259,40 +1224,10 @@ const styles = `
     padding: 2px 6px;
     font-size: 12px;
     font-weight: 500;
-    text-align: center !important;
-    justify-content: center !important;
-    display: flex !important;
-    align-items: center !important;
 }
 
 .fc-event-title {
     font-weight: 500;
-    text-align: center !important;
-    width: 100%;
-    display: block !important;
-}
-
-.fc-event-main {
-    text-align: center !important;
-    width: 100% !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-}
-
-.fc-event-title-container {
-    text-align: center !important;
-    width: 100% !important;
-}
-
-.fc-daygrid-event .fc-event-main {
-    text-align: center !important;
-    justify-content: center !important;
-}
-
-.fc-timegrid-event .fc-event-main {
-    text-align: center !important;
-    justify-content: center !important;
 }
 
 .fc-timegrid-slot {
@@ -1366,39 +1301,6 @@ const styles = `
     }
 }
 
-/* 강제 중앙정렬 - 모든 우선순위 오버라이드 */
-.fc .fc-event,
-.fc .fc-daygrid-event,
-.fc .fc-timegrid-event,
-.fc-event,
-.fc-daygrid-event,
-.fc-timegrid-event {
-    text-align: center !important;
-    justify-content: center !important;
-    display: flex !important;
-    align-items: center !important;
-}
-
-.fc .fc-event-main,
-.fc .fc-event-title,
-.fc .fc-event-title-container,
-.fc-event-main,
-.fc-event-title,
-.fc-event-title-container {
-    text-align: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-}
-
-/* 휴가 이벤트 강제 중앙정렬 */
-.fc-event.vacation-event,
-.fc-daygrid-event.vacation-event,
-.fc-timegrid-event.vacation-event {
-    text-align: center !important;
-    justify-content: center !important;
-    display: flex !important;
-    align-items: center !important;
-}
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {

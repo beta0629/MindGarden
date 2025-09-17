@@ -810,37 +810,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 eventDisplay="block"
                 displayEventTime={true}
                 displayEventEnd={true}
-                eventDidMount={(info) => {
-                    // 모든 이벤트에 강제 중앙정렬 인라인 스타일 적용
-                    const eventEl = info.el;
-                    eventEl.style.textAlign = 'center';
-                    eventEl.style.justifyContent = 'center';
-                    eventEl.style.display = 'flex';
-                    eventEl.style.alignItems = 'center';
-                    
-                    // 이벤트 내부 요소들도 중앙정렬
-                    const titleEl = eventEl.querySelector('.fc-event-title');
-                    if (titleEl) {
-                        titleEl.style.textAlign = 'center';
-                        titleEl.style.width = '100%';
-                        titleEl.style.display = 'block';
-                    }
-                    
-                    const mainEl = eventEl.querySelector('.fc-event-main');
-                    if (mainEl) {
-                        mainEl.style.textAlign = 'center';
-                        mainEl.style.justifyContent = 'center';
-                        mainEl.style.display = 'flex';
-                        mainEl.style.alignItems = 'center';
-                        mainEl.style.width = '100%';
-                    }
-                    
-                    const containerEl = eventEl.querySelector('.fc-event-title-container');
-                    if (containerEl) {
-                        containerEl.style.textAlign = 'center';
-                        containerEl.style.width = '100%';
-                    }
-                }}
             />
 
             {/* 스케줄 생성/수정 모달 */}

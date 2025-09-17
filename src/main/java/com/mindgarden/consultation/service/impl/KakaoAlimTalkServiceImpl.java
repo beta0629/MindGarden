@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,9 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
     
     @Value("${kakao.alimtalk.enabled:false}")
     private boolean alimTalkEnabled;
+    
+    @Value("${kakao.alimtalk.simulation-mode:true}")
+    private boolean simulationMode;
     
     @Value("${kakao.alimtalk.api-key:}")
     private String apiKey;
@@ -57,8 +61,8 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             return false;
         }
         
-        if (apiKey == null || apiKey.isEmpty() || senderKey == null || senderKey.isEmpty()) {
-            log.warn("⚠️ 카카오 알림톡 API 키 또는 발신자 키가 설정되지 않았습니다");
+        if (!simulationMode && (apiKey == null || apiKey.isEmpty() || senderKey == null || senderKey.isEmpty())) {
+            log.warn("⚠️ 실제 모드에서 카카오 알림톡 API 키 또는 발신자 키가 설정되지 않았습니다");
             return false;
         }
         
@@ -139,9 +143,25 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
     
     @Override
     public boolean isServiceAvailable() {
-        return alimTalkEnabled && 
-               apiKey != null && !apiKey.isEmpty() && 
-               senderKey != null && !senderKey.isEmpty();
+        if (!alimTalkEnabled) {
+            return false;
+        }
+        
+        if (simulationMode) {
+            // 시뮬레이션 모드에서는 항상 사용 가능
+            log.debug("🎭 시뮬레이션 모드: 알림톡 서비스 사용 가능");
+            return true;
+        }
+        
+        // 실제 모드에서는 API 키 확인
+        boolean hasKeys = apiKey != null && !apiKey.isEmpty() && 
+                         senderKey != null && !senderKey.isEmpty();
+        
+        if (!hasKeys) {
+            log.warn("⚠️ 카카오 알림톡 API 키 또는 발신자 키가 설정되지 않았습니다");
+        }
+        
+        return hasKeys;
     }
     
     /**
@@ -242,24 +262,34 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
      */
     private boolean sendToKakaoApi(HttpEntity<Map<String, Object>> request) {
         try {
-            // 실제 카카오 알림톡 API 호출
-            // 현재는 시뮬레이션 (실제 API 키 설정 후 주석 해제)
+            if (simulationMode) {
+                // 시뮬레이션 모드
+                log.info("🎭 [시뮬레이션 모드] 카카오 알림톡 발송 성공 - 실제 API 호출 없음");
+                log.debug("📋 시뮬레이션 요청 데이터: {}", request.getBody());
+                return true;
+            }
             
-            /*
-            // 실제 카카오 알림톡 API 호출 (API 키 설정 후 주석 해제)
+            // 실제 카카오 알림톡 API 호출
+            log.info("📡 실제 카카오 알림톡 API 호출 시작");
+            
             String url = apiUrl + "/v2/sender/send";
             ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
             
-            if (response.getStatusCode() == HttpStatus.OK) {
+            if (response.getStatusCode().is2xxSuccessful()) {
                 Map<String, Object> responseBody = response.getBody();
-                return "0000".equals(responseBody.get("resultCode")); // 카카오 성공 코드
+                boolean success = "0000".equals(responseBody.get("resultCode")); // 카카오 성공 코드
+                
+                if (success) {
+                    log.info("✅ 카카오 알림톡 API 호출 성공");
+                } else {
+                    log.warn("⚠️ 카카오 알림톡 API 응답 오류: {}", responseBody);
+                }
+                
+                return success;
+            } else {
+                log.error("❌ 카카오 알림톡 API HTTP 오류: {}", response.getStatusCode());
+                return false;
             }
-            return false;
-            */
-            
-            // 시뮬레이션 모드 (RestTemplate 사용 확인용)
-            log.info("🎭 카카오 알림톡 시뮬레이션 발송 성공 - RestTemplate 준비됨: {}", restTemplate != null);
-            return true;
             
         } catch (Exception e) {
             log.error("❌ 카카오 알림톡 API 호출 실패", e);

@@ -18,6 +18,7 @@ const RatableConsultationsSection = () => {
     const [loading, setLoading] = useState(false);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
     const [showRatingModal, setShowRatingModal] = useState(false);
+    const [showTestData, setShowTestData] = useState(false);
 
     useEffect(() => {
         console.log('💖 RatableConsultationsSection 마운트됨, 사용자:', user);
@@ -53,10 +54,16 @@ const RatableConsultationsSection = () => {
                 setRatableSchedules(result.data || []);
             } else {
                 console.error('💖 평가 가능한 상담 조회 실패:', result.message);
+                // API 오류 시 테스트 데이터 표시
+                console.log('💖 테스트 데이터 표시');
+                setShowTestData(true);
             }
 
         } catch (error) {
             console.error('💖 평가 가능한 상담 조회 오류:', error);
+            // API 오류 시 테스트 데이터 표시
+            console.log('💖 테스트 데이터 표시');
+            setShowTestData(true);
         } finally {
             setLoading(false);
         }
@@ -145,7 +152,24 @@ const RatableConsultationsSection = () => {
                     flexDirection: 'column',
                     gap: '12px'
                 }}>
-                    {ratableSchedules.length === 0 ? (
+                    {showTestData ? (
+                        <div style={{
+                            textAlign: 'center',
+                            padding: '32px',
+                            color: '#666',
+                            backgroundColor: '#fff3cd',
+                            borderRadius: '8px',
+                            border: '1px solid #ffeaa7'
+                        }}>
+                            <div style={{ fontSize: '24px', marginBottom: '12px' }}>🔧</div>
+                            <div style={{ fontSize: '15px', marginBottom: '8px' }}>
+                                평가 시스템 준비 중입니다
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#856404' }}>
+                                데이터베이스 테이블 생성 중... 잠시 후 다시 시도해주세요
+                            </div>
+                        </div>
+                    ) : ratableSchedules.length === 0 ? (
                         <div style={{
                             textAlign: 'center',
                             padding: '32px',

@@ -127,12 +127,24 @@ public class ConsultantRatingController {
     }
 
     /**
+     * 테스트용 - 간단한 응답
+     */
+    @GetMapping("/test")
+    public ResponseEntity<?> test() {
+        return ResponseEntity.ok(Map.of("success", true, "message", "평가 API 테스트 성공"));
+    }
+
+    /**
      * 내담자용 - 평가 가능한 상담 목록
      */
     @GetMapping("/client/{clientId}/ratable-schedules")
     public ResponseEntity<?> getRatableSchedules(@PathVariable Long clientId) {
+        log.info("💖 평가 가능한 스케줄 조회 API 호출: clientId={}", clientId);
+        
         try {
+            // 실제 서비스 호출 - 완료되었지만 아직 평가하지 않은 상담만 조회
             List<Map<String, Object>> schedules = ratingService.getRatableSchedules(clientId);
+            log.info("💖 평가 가능한 스케줄 조회 API 성공: clientId={}, count={}", clientId, schedules.size());
 
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -141,7 +153,7 @@ public class ConsultantRatingController {
             ));
 
         } catch (Exception e) {
-            log.error("평가 가능한 스케줄 조회 실패", e);
+            log.error("💖 평가 가능한 스케줄 조회 실패: clientId={}", clientId, e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", e.getMessage()

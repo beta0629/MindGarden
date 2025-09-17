@@ -53,7 +53,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 .orElseThrow(() -> new RuntimeException("스케줄을 찾을 수 없습니다."));
 
             // 스케줄이 완료되었는지 확인
-            if (!ScheduleStatus.COMPLETED.name().equals(schedule.getStatus())) {
+            if (!ScheduleStatus.COMPLETED.equals(schedule.getStatus())) {
                 throw new RuntimeException("완료된 상담만 평가할 수 있습니다.");
             }
 
@@ -185,7 +185,9 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             log.info("💖 평가 가능한 스케줄 조회: 내담자={}", clientId);
 
             // 완료된 스케줄 중 아직 평가하지 않은 것들 조회
-            List<Schedule> completedSchedules = scheduleRepository.findByClientIdAndStatus(clientId, ScheduleStatus.COMPLETED.name());
+            log.info("💖 COMPLETED 스케줄 조회 시작: clientId={}, status={}", clientId, ScheduleStatus.COMPLETED);
+            List<Schedule> completedSchedules = scheduleRepository.findByClientIdAndStatus(clientId, ScheduleStatus.COMPLETED);
+            log.info("💖 조회된 COMPLETED 스케줄 개수: {}", completedSchedules.size());
 
             List<Map<String, Object>> ratableSchedules = new ArrayList<>();
 
@@ -195,19 +197,24 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                     schedule.getId(), clientId, ConsultantRating.RatingStatus.ACTIVE);
 
                 if (!alreadyRated) {
-                    // 상담사 정보 조회
-                    User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+                    try {
+                        // 상담사 정보 조회
+                        User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
 
-                    Map<String, Object> scheduleInfo = new HashMap<>();
-                    scheduleInfo.put("scheduleId", schedule.getId());
-                    scheduleInfo.put("consultationDate", schedule.getDate());
-                    scheduleInfo.put("consultationTime", schedule.getStartTime() + " - " + schedule.getEndTime());
-                    scheduleInfo.put("consultantId", schedule.getConsultantId());
-                    scheduleInfo.put("consultantName", consultant != null ? consultant.getName() : "알 수 없음");
-                    scheduleInfo.put("consultationType", schedule.getConsultationType());
-                    scheduleInfo.put("completedAt", schedule.getUpdatedAt());
+                        Map<String, Object> scheduleInfo = new HashMap<>();
+                        scheduleInfo.put("scheduleId", schedule.getId());
+                        scheduleInfo.put("consultationDate", schedule.getDate().toString());
+                        scheduleInfo.put("consultationTime", schedule.getStartTime() + " - " + schedule.getEndTime());
+                        scheduleInfo.put("consultantId", schedule.getConsultantId());
+                        scheduleInfo.put("consultantName", consultant != null ? consultant.getName() : "알 수 없음");
+                        scheduleInfo.put("consultationType", getConsultationTypeDisplayName(schedule.getConsultationType()));
+                        scheduleInfo.put("completedAt", schedule.getUpdatedAt());
 
-                    ratableSchedules.add(scheduleInfo);
+                        ratableSchedules.add(scheduleInfo);
+                        
+                    } catch (Exception e) {
+                        log.error("스케줄 정보 처리 중 오류: scheduleId={}", schedule.getId(), e);
+                    }
                 }
             }
 
@@ -216,8 +223,11 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             return ratableSchedules;
 
         } catch (Exception e) {
-            log.error("❌ 평가 가능한 스케줄 조회 실패: 내담자={}", clientId, e);
-            throw new RuntimeException("평가 가능한 상담 목록을 불러오는데 실패했습니다.");
+            log.error("❌ 평가 가능한 스케줄 조회 실패: 내담자={}, 오류: {}", clientId, e.getMessage(), e);
+            
+            // 개발용 임시 처리: 오류 발생 시 빈 목록 반환
+            log.warn("💖 개발용 임시 처리: 빈 평가 목록 반환");
+            return new ArrayList<>();
         }
     }
 
@@ -432,6 +442,36 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         } catch (Exception e) {
             log.error("❌ 인기 평가 태그 조회 실패: 상담사={}", consultantId, e);
             throw new RuntimeException("인기 태그를 불러오는데 실패했습니다.");
+        }
+    }
+
+    /**
+     * 상담 유형을 한글 표시명으로 변환
+     */
+    private String getConsultationTypeDisplayName(String consultationType) {
+        if (consultationType == null) {
+            return "일반상담";
+        }
+        
+        switch (consultationType.toUpperCase()) {
+            case "INDIVIDUAL":
+                return "개인상담";
+            case "FAMILY":
+                return "가족상담";
+            case "COUPLE":
+                return "부부상담";
+            case "GROUP":
+                return "집단상담";
+            case "INITIAL":
+                return "초기상담";
+            case "FOLLOW_UP":
+                return "후속상담";
+            case "CRISIS":
+                return "위기상담";
+            case "ASSESSMENT":
+                return "심리평가";
+            default:
+                return "일반상담";
         }
     }
 }

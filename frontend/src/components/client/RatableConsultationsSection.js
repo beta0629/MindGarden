@@ -97,13 +97,7 @@ const RatableConsultationsSection = () => {
         );
     }
 
-    // 디버깅을 위해 항상 섹션 표시
-    console.log('💖 렌더링 체크:', { 
-        loading, 
-        ratableSchedulesLength: ratableSchedules.length, 
-        user: user?.id,
-        userRole: user?.role 
-    });
+    // 렌더링 체크 로그 제거 (성능 최적화)
 
     return (
         <>

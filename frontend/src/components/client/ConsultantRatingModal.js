@@ -62,7 +62,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                 },
                 credentials: 'include',
                 body: JSON.stringify({
-                    scheduleId: schedule.id,
+                    scheduleId: schedule.scheduleId,
                     clientId: user.id,
                     heartScore: heartScore,
                     comment: comment.trim() || null,
@@ -153,10 +153,13 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         marginBottom: '24px'
                     }}>
                         <div style={{ fontSize: '14px', color: '#495057', marginBottom: '4px' }}>
-                            📅 상담일: {schedule.date} {schedule.startTime}-{schedule.endTime}
+                            📅 상담일: {schedule.consultationDate} {schedule.consultationTime}
+                        </div>
+                        <div style={{ fontSize: '14px', color: '#495057', marginBottom: '4px' }}>
+                            👩‍⚕️ 상담사: {schedule.consultantName}님
                         </div>
                         <div style={{ fontSize: '14px', color: '#495057' }}>
-                            👩‍⚕️ 상담사: {schedule.consultantName}님
+                            💼 상담 유형: {schedule.consultationType}
                         </div>
                     </div>
 

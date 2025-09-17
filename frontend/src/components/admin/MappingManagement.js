@@ -59,17 +59,23 @@ const MappingManagement = () => {
             // 실제 API 호출 시도
             const response = await apiGet(MAPPING_API_ENDPOINTS.LIST);
             if (response.success) {
+                console.log('🔍 매핑 데이터 로드 성공:', response.data);
+                console.log('🔍 첫 번째 매핑 데이터:', response.data?.[0]);
                 setMappings(response.data || []);
             } else {
                 // API 실패 시 테스트 데이터 사용
                 console.log('API 실패, 테스트 데이터 사용');
-                setMappings(getTestMappings());
+                const testData = getTestMappings();
+                console.log('🔍 테스트 데이터:', testData);
+                setMappings(testData);
             }
         } catch (error) {
             console.error('매핑 목록 로드 실패:', error);
             // 오류 시 테스트 데이터 사용
             console.log('오류 발생, 테스트 데이터 사용');
-            setMappings(getTestMappings());
+            const testData = getTestMappings();
+            console.log('🔍 테스트 데이터 (오류 시):', testData);
+            setMappings(testData);
         } finally {
             setLoading(false);
         }
@@ -175,6 +181,42 @@ const MappingManagement = () => {
                 packagePrice: 400000,
                 startDate: '2024-11-01T00:00:00',
                 notes: '상담 완료, 회기 소진'
+            },
+            {
+                id: 4,
+                consultant: { id: 4, name: '테스트상담사', email: 'test-consultant@mindgarden.com' },
+                client: { id: 4, name: '테스트내담자001', email: 'test-client001@mindgarden.com' },
+                clientId: 4,
+                consultantId: 4,
+                consultantName: '테스트상담사',
+                clientName: '테스트내담자001',
+                status: 'ACTIVE',
+                paymentStatus: 'APPROVED',
+                totalSessions: 10,
+                remainingSessions: 8,
+                usedSessions: 2,
+                packageName: '테스트 패키지',
+                packagePrice: 500000,
+                startDate: '2024-12-01T00:00:00',
+                notes: '테스트용 매핑'
+            },
+            {
+                id: 5,
+                consultant: { id: 5, name: '박상담사', email: 'park-consultant@mindgarden.com' },
+                client: { id: 5, name: '테스트내담자002', email: 'test-client002@mindgarden.com' },
+                clientId: 5,
+                consultantId: 5,
+                consultantName: '박상담사',
+                clientName: '테스트내담자002',
+                status: 'ACTIVE',
+                paymentStatus: 'APPROVED',
+                totalSessions: 15,
+                remainingSessions: 12,
+                usedSessions: 3,
+                packageName: '표준 패키지',
+                packagePrice: 750000,
+                startDate: '2024-12-05T00:00:00',
+                notes: '정기 상담 진행 중'
             }
         ];
     };
@@ -441,8 +483,24 @@ const MappingManagement = () => {
     const filteredMappings = mappings.filter(mapping => {
         const matchesStatus = filterStatus === 'ALL' || mapping.status === filterStatus;
         const matchesSearch = searchTerm === '' || 
-            mapping.consultant?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            mapping.client?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+            (mapping.consultantName && mapping.consultantName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (mapping.clientName && mapping.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (mapping.packageName && mapping.packageName.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        // 디버깅 로그 (검색어가 있을 때만)
+        if (searchTerm) {
+            console.log('🔍 필터링 디버깅:', {
+                searchTerm,
+                mappingId: mapping.id,
+                consultantName: mapping.consultantName,
+                clientName: mapping.clientName,
+                packageName: mapping.packageName,
+                matchesStatus,
+                matchesSearch,
+                finalResult: matchesStatus && matchesSearch
+            });
+        }
+        
         return matchesStatus && matchesSearch;
     });
 

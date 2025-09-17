@@ -674,7 +674,7 @@ const ClientComprehensiveManagement = () => {
      */
     const deleteClientDirect = async (clientId) => {
         try {
-            const response = await apiPost(`/api/admin/clients/${clientId}/delete`);
+            const response = await apiDelete(`/api/admin/clients/${clientId}`);
 
             if (response.success) {
                 notificationManager.success('내담자가 성공적으로 삭제되었습니다.');

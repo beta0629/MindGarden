@@ -1057,8 +1057,15 @@ public class ScheduleServiceImpl implements ScheduleService {
         String consultantName = "알 수 없음";
         String clientName = "알 수 없음";
         
+        log.info("🔍 스케줄 변환 시작: scheduleId={}, consultantId={}, clientId={}", 
+                schedule.getId(), schedule.getConsultantId(), schedule.getClientId());
+        
         try {
             User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+            log.info("👤 상담사 조회 결과: consultant={}, isActive={}", 
+                    consultant != null ? consultant.getName() : "null", 
+                    consultant != null ? consultant.getIsActive() : "null");
+            
             if (consultant != null && consultant.getIsActive()) {
                 consultantName = consultant.getName();
             } else if (consultant != null && !consultant.getIsActive()) {
@@ -1068,6 +1075,10 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 클라이언트 정보가 있다면 조회
             if (schedule.getClientId() != null) {
                 User client = userRepository.findById(schedule.getClientId()).orElse(null);
+                log.info("👥 내담자 조회 결과: client={}, isActive={}", 
+                        client != null ? client.getName() : "null", 
+                        client != null ? client.getIsActive() : "null");
+                
                 if (client != null && client.getIsActive()) {
                     clientName = client.getName();
                 } else if (client != null && !client.getIsActive()) {
@@ -1077,6 +1088,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         } catch (Exception e) {
             log.warn("상담사/클라이언트 정보 조회 실패: {}", e.getMessage());
         }
+        
+        log.info("✅ 최종 변환 결과: consultantName={}, clientName={}", consultantName, clientName);
         
         return ScheduleDto.builder()
             .id(schedule.getId())

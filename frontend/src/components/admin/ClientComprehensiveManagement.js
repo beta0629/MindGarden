@@ -727,13 +727,25 @@ const ClientComprehensiveManagement = () => {
      * 환불 처리 실행
      */
     const handleRefundProcess = async () => {
+        // 상세한 유효성 검사와 피드백
         if (selectedMappings.length === 0) {
-            notificationManager.warning('환불할 매핑을 선택해주세요.');
+            notificationManager.warning('⚠️ 환불할 매핑을 최소 1개 이상 선택해주세요.');
             return;
         }
 
         if (!refundReason.trim()) {
-            notificationManager.warning('환불 사유를 입력해주세요.');
+            notificationManager.warning('⚠️ 환불 사유를 반드시 입력해주세요.\n\n환불 사유는 ERP 시스템에 전송되며, 회계 처리에 필요한 중요한 정보입니다.');
+            return;
+        }
+
+        if (refundReason.trim().length < 5) {
+            notificationManager.warning('⚠️ 환불 사유를 5자 이상 상세히 입력해주세요.');
+            return;
+        }
+
+        // 최종 확인
+        const confirmMessage = `다음 ${selectedMappings.length}개의 매핑을 환불 처리하시겠습니까?\n\n환불 사유: ${refundReason.trim()}\n\n이 작업은 되돌릴 수 없습니다.`;
+        if (!window.confirm(confirmMessage)) {
             return;
         }
 
@@ -2554,6 +2566,16 @@ const ClientComprehensiveManagement = () => {
                                         </div>
                                     </div>
                                 ))}
+                                {selectedMappings.length === 0 && (
+                                    <div style={{
+                                        color: '#dc3545',
+                                        fontSize: '12px',
+                                        marginTop: '8px',
+                                        fontWeight: '500'
+                                    }}>
+                                        ⚠️ 환불할 매핑을 최소 1개 이상 선택해주세요.
+                                    </div>
+                                )}
                             </div>
 
                             {/* 환불 사유 입력 */}
@@ -2574,7 +2596,7 @@ const ClientComprehensiveManagement = () => {
                                     style={{
                                         width: '100%',
                                         padding: '12px',
-                                        border: '2px solid #e9ecef',
+                                        border: `2px solid ${!refundReason.trim() ? '#dc3545' : '#e9ecef'}`,
                                         borderRadius: '8px',
                                         fontSize: '14px',
                                         fontFamily: 'inherit',
@@ -2582,6 +2604,16 @@ const ClientComprehensiveManagement = () => {
                                         minHeight: '80px'
                                     }}
                                 />
+                                {!refundReason.trim() && (
+                                    <div style={{
+                                        color: '#dc3545',
+                                        fontSize: '12px',
+                                        marginTop: '4px',
+                                        fontWeight: '500'
+                                    }}>
+                                        ⚠️ 환불 사유를 반드시 입력해주세요.
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -2615,19 +2647,30 @@ const ClientComprehensiveManagement = () => {
                                 취소
                             </button>
                             <button
-                                onClick={handleRefundProcess}
-                                disabled={loading || selectedMappings.length === 0 || !refundReason.trim()}
+                                onClick={(e) => {
+                                    // 비활성화된 상태에서 클릭 시 안내 메시지
+                                    if (selectedMappings.length === 0) {
+                                        notificationManager.warning('⚠️ 환불할 매핑을 먼저 선택해주세요.');
+                                        return;
+                                    }
+                                    if (!refundReason.trim()) {
+                                        notificationManager.warning('⚠️ 환불 사유를 먼저 입력해주세요.');
+                                        return;
+                                    }
+                                    handleRefundProcess();
+                                }}
+                                disabled={loading}
                                 style={{
                                     padding: '12px 24px',
-                                    backgroundColor: '#dc3545',
-                                    border: '2px solid #dc3545',
+                                    backgroundColor: (selectedMappings.length === 0 || !refundReason.trim()) ? '#6c757d' : '#dc3545',
+                                    border: `2px solid ${(selectedMappings.length === 0 || !refundReason.trim()) ? '#6c757d' : '#dc3545'}`,
                                     borderRadius: '8px',
                                     fontSize: '14px',
                                     fontWeight: '600',
                                     color: 'white',
-                                    cursor: (loading || selectedMappings.length === 0 || !refundReason.trim()) ? 'not-allowed' : 'pointer',
+                                    cursor: loading ? 'not-allowed' : 'pointer',
                                     transition: 'all 0.2s',
-                                    opacity: (loading || selectedMappings.length === 0 || !refundReason.trim()) ? 0.6 : 1
+                                    opacity: loading ? 0.6 : 1
                                 }}
                                 onMouseEnter={(e) => {
                                     if (!loading && selectedMappings.length > 0 && refundReason.trim()) {

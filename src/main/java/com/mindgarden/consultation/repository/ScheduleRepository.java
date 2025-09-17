@@ -85,6 +85,11 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
      * 내담자별 특정 날짜 이후 스케줄 조회 (해당 날짜 포함)
      */
     List<Schedule> findByClientIdAndDateGreaterThanEqual(Long clientId, LocalDate date);
+    
+    /**
+     * 상담사와 내담자별 특정 날짜 이후 스케줄 조회 (해당 날짜 포함)
+     */
+    List<Schedule> findByConsultantIdAndClientIdAndDateGreaterThanEqual(Long consultantId, Long clientId, LocalDate date);
 
     // ==================== 시간 충돌 검사 ====================
     

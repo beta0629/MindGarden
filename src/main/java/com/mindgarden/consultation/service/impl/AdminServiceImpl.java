@@ -1426,6 +1426,34 @@ public class AdminServiceImpl implements AdminService {
         
         mappingRepository.save(mapping);
         
+        // 관련된 미래 스케줄들 취소 처리
+        try {
+            List<Schedule> futureSchedules = scheduleRepository.findByConsultantIdAndClientIdAndDateGreaterThanEqual(
+                mapping.getConsultantId(), 
+                mapping.getClientId(), 
+                LocalDate.now()
+            );
+            
+            int cancelledScheduleCount = 0;
+            for (Schedule schedule : futureSchedules) {
+                if (schedule.getStatus() == ScheduleStatus.BOOKED || schedule.getStatus() == ScheduleStatus.CONFIRMED) {
+                    schedule.setStatus(ScheduleStatus.CANCELLED);
+                    schedule.setNotes(schedule.getNotes() != null ? 
+                        schedule.getNotes() + "\n[환불 처리로 인한 자동 취소] " + reason :
+                        "[환불 처리로 인한 자동 취소] " + reason);
+                    schedule.setUpdatedAt(LocalDateTime.now());
+                    scheduleRepository.save(schedule);
+                    cancelledScheduleCount++;
+                }
+            }
+            
+            log.info("📅 환불 처리로 인한 스케줄 자동 취소: {}개", cancelledScheduleCount);
+            
+        } catch (Exception e) {
+            log.error("❌ 관련 스케줄 취소 처리 실패: MappingID={}", id, e);
+            // 스케줄 취소 실패해도 매핑 종료는 완료된 상태로 유지
+        }
+        
         log.info("✅ 매핑 강제 종료 완료: ID={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
                 id, refundedSessions, refundAmount, mapping.getConsultant().getName(), mapping.getClient().getName());
     }

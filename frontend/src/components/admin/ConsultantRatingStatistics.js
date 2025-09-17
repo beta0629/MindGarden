@@ -199,8 +199,7 @@ const ConsultantRatingStatistics = () => {
                                 justifyContent: 'space-between',
                                 padding: '12px 16px',
                                 backgroundColor: index === 0 ? '#fff3e0' : '#f8f9fa',
-                                borderRadius: '8px',
-                                border: index === 0 ? '2px solid #ff9800' : '1px solid #e9ecef'
+                                borderRadius: '8px'
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     <div style={{

@@ -23,6 +23,13 @@ All notable changes to this project will be documented in this file.
   - 하트 점수 선택 인터페이스 (호버 효과 포함)
   - 평가 태그 다중 선택 및 추가 의견 작성
   - 평가 완료 후 자동 목록 갱신
+
+- **관리자 평가 통계 대시보드**
+  - 전체 평가 현황 통계 (총 평가 수, 평균 점수, 평가받은 상담사 수)
+  - TOP 5 상담사 랭킹 시스템 (평균 점수 기준, 1위 골드 강조)
+  - 최근 7일 평가 동향 차트 (일별 평가 개수 시각화)
+  - 활성 상담사만 집계하여 정확한 통계 제공
+  - 실시간 새로고침 기능
 - **카카오 알림톡 시스템 구현**
   - KakaoAlimTalkService 및 NotificationService 구현
   - 공통 코드 기반 템플릿 관리 (ALIMTALK_TEMPLATE)

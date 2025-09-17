@@ -77,8 +77,8 @@ public interface ConsultantRatingRepository extends JpaRepository<ConsultantRati
     List<ConsultantRating> findHighRatingsByConsultant(@Param("consultantId") Long consultantId, @Param("status") ConsultantRating.RatingStatus status, Pageable pageable);
 
     /**
-     * 전체 상담사 평균 점수 랭킹
+     * 전체 상담사 평균 점수 랭킹 (활성 상담사만)
      */
-    @Query("SELECT r.consultant, AVG(r.heartScore) as avgScore, COUNT(r) as totalCount FROM ConsultantRating r WHERE r.status = :status GROUP BY r.consultant ORDER BY avgScore DESC, totalCount DESC")
+    @Query("SELECT r.consultant, AVG(r.heartScore) as avgScore, COUNT(r) as totalCount FROM ConsultantRating r WHERE r.status = :status AND r.consultant.isActive = true GROUP BY r.consultant ORDER BY avgScore DESC, totalCount DESC")
     List<Object[]> getConsultantRankingByAverageScore(@Param("status") ConsultantRating.RatingStatus status, Pageable pageable);
 }

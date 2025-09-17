@@ -199,19 +199,26 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
 
                 if (!alreadyRated) {
                     try {
-                        // 상담사 정보 조회
-                        User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+                        // 활성 상담사 정보 조회
+                        User consultant = userRepository.findById(schedule.getConsultantId())
+                            .filter(user -> user.getIsActive() != null && user.getIsActive())
+                            .orElse(null);
 
-                        Map<String, Object> scheduleInfo = new HashMap<>();
-                        scheduleInfo.put("scheduleId", schedule.getId());
-                        scheduleInfo.put("consultationDate", schedule.getDate().toString());
-                        scheduleInfo.put("consultationTime", schedule.getStartTime() + " - " + schedule.getEndTime());
-                        scheduleInfo.put("consultantId", schedule.getConsultantId());
-                        scheduleInfo.put("consultantName", consultant != null ? consultant.getName() : "알 수 없음");
-                        scheduleInfo.put("consultationType", getConsultationTypeDisplayName(schedule.getConsultationType()));
-                        scheduleInfo.put("completedAt", schedule.getUpdatedAt());
+                        // 활성 상담사인 경우만 평가 목록에 추가
+                        if (consultant != null) {
+                            Map<String, Object> scheduleInfo = new HashMap<>();
+                            scheduleInfo.put("scheduleId", schedule.getId());
+                            scheduleInfo.put("consultationDate", schedule.getDate().toString());
+                            scheduleInfo.put("consultationTime", schedule.getStartTime() + " - " + schedule.getEndTime());
+                            scheduleInfo.put("consultantId", schedule.getConsultantId());
+                            scheduleInfo.put("consultantName", consultant.getName());
+                            scheduleInfo.put("consultationType", getConsultationTypeDisplayName(schedule.getConsultationType()));
+                            scheduleInfo.put("completedAt", schedule.getUpdatedAt());
 
-                        ratableSchedules.add(scheduleInfo);
+                            ratableSchedules.add(scheduleInfo);
+                        } else {
+                            log.warn("비활성 상담사 스케줄 제외: consultantId={}", schedule.getConsultantId());
+                        }
                         
                     } catch (Exception e) {
                         log.error("스케줄 정보 처리 중 오류: scheduleId={}", schedule.getId(), e);

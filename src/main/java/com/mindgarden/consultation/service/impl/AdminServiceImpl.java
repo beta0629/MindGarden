@@ -2778,9 +2778,9 @@ public class AdminServiceImpl implements AdminService {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 기간 설정
+            // 기간 설정 (미래 휴가도 포함)
             LocalDate startDate = getVacationPeriodStartDate(period);
-            LocalDate endDate = LocalDate.now();
+            LocalDate endDate = LocalDate.now().plusMonths(1); // 미래 1개월까지 포함
             
             log.info("📅 휴가 통계 조회 기간: {} ~ {} (period={})", startDate, endDate, period);
             

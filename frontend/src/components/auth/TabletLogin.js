@@ -47,13 +47,24 @@ const TabletLogin = () => {
   // 전문적인 알림 표시 함수
   const showTooltip = (message, type = 'error') => {
     console.log('🔔 로그인 알림 표시:', { message, type });
+    
+    // 즉시 상태 업데이트
     setTooltip({ show: true, message, type });
     
-    // 4초 후 자동 숨김
+    // 디버깅을 위한 추가 로그
+    console.log('🔔 툴팁 상태 설정 완료:', { show: true, message, type });
+    
+    // 6초 후 자동 숨김 (더 길게)
     setTimeout(() => {
+      console.log('🔔 툴팁 자동 숨김');
       setTooltip({ show: false, message: '', type: 'error' });
-    }, 4000);
+    }, 6000);
   };
+
+  // 툴팁 상태 디버깅
+  useEffect(() => {
+    console.log('🔔 툴팁 상태 변경:', tooltip);
+  }, [tooltip]);
 
   useEffect(() => {
     getOAuth2Config();
@@ -157,16 +168,29 @@ const TabletLogin = () => {
         // 모달은 SessionContext에서 자동으로 표시되므로 여기서는 아무것도 하지 않음
       } else {
         console.log('❌ 로그인 실패:', result.message);
+        // 로딩 해제 후 알림 표시
+        setIsLoading(false);
         // 메모리에 따라 로그인 실패 시 공통 메시지 사용
-        showTooltip('아이디 또는 비밀번호 틀림', 'error');
+        setTimeout(() => {
+          showTooltip('아이디 또는 비밀번호 틀림', 'error');
+        }, 100); // 로딩 해제 후 알림 표시
+        return; // finally 블록 실행 방지
       }
     } catch (error) {
       console.error('❌ 로그인 오류:', error);
       console.error('❌ 오류 상세:', error.message);
-      // 공통 알림 시스템 사용 - 로그인 실패 시 공통 메시지
-      showTooltip('아이디 또는 비밀번호 틀림', 'error');
-    } finally {
+      // 로딩 해제 후 알림 표시
       setIsLoading(false);
+      // 공통 알림 시스템 사용 - 로그인 실패 시 공통 메시지
+      setTimeout(() => {
+        showTooltip('아이디 또는 비밀번호 틀림', 'error');
+      }, 100); // 로딩 해제 후 알림 표시
+      return; // finally 블록 실행 방지
+    } finally {
+      // 성공한 경우에만 로딩 해제 (실패는 위에서 이미 처리)
+      if (!tooltip.show) {
+        setIsLoading(false);
+      }
     }
   };
 

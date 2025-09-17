@@ -32,6 +32,7 @@ import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.service.ConsultationMessageService;
+import com.mindgarden.consultation.service.NotificationService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -57,6 +58,7 @@ public class AdminServiceImpl implements AdminService {
     private final ConsultantAvailabilityService consultantAvailabilityService;
     private final ConsultationMessageService consultationMessageService;
     private final BranchService branchService;
+    private final NotificationService notificationService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
@@ -1512,6 +1514,25 @@ public class AdminServiceImpl implements AdminService {
         } catch (Exception e) {
             log.error("❌ 관련 스케줄 취소 처리 실패: MappingID={}", id, e);
             // 스케줄 취소 실패해도 매핑 종료는 완료된 상태로 유지
+        }
+        
+        // 내담자에게 환불 완료 알림 발송
+        try {
+            User client = mapping.getClient();
+            if (client != null) {
+                log.info("📤 환불 완료 알림 발송 시작: 내담자={}", client.getName());
+                
+                boolean notificationSent = notificationService.sendRefundCompleted(client, refundedSessions, refundAmount);
+                
+                if (notificationSent) {
+                    log.info("✅ 환불 완료 알림 발송 성공: 내담자={}", client.getName());
+                } else {
+                    log.warn("⚠️ 환불 완료 알림 발송 실패: 내담자={}", client.getName());
+                }
+            }
+        } catch (Exception e) {
+            log.error("❌ 환불 완료 알림 발송 중 오류: MappingID={}", id, e);
+            // 알림 발송 실패해도 환불 처리는 완료된 상태로 유지
         }
         
         log.info("✅ 매핑 강제 종료 완료: ID={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 

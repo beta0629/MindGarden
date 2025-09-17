@@ -211,6 +211,19 @@ public class User extends BaseEntity {
     private Boolean pushNotification = true;
     
     /**
+     * 카카오 알림톡 설정
+     */
+    @Column(name = "kakao_alimtalk_notification")
+    @Builder.Default
+    private Boolean kakaoAlimTalkNotification = true;
+    
+    /**
+     * 알림 설정 (JSON 형태로 저장)
+     */
+    @Column(name = "notification_preferences", columnDefinition = "TEXT")
+    private String notificationPreferences;
+    
+    /**
      * 프로필 공개 설정 (public, private, friends)
      */
     @Column(name = "profile_visibility", length = 20)

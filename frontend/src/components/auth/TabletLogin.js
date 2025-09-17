@@ -46,8 +46,11 @@ const TabletLogin = () => {
 
   // 간단한 툴팁 표시 함수
   const showTooltip = (message, type = 'error') => {
+    // 우선 alert로 확실히 표시
+    alert(message);
+    
+    // 동시에 툴팁도 표시 (CSS가 작동하면)
     setTooltip({ show: true, message, type });
-    // 3초 후 자동 숨김
     setTimeout(() => {
       setTooltip({ show: false, message: '', type: 'error' });
     }, 3000);

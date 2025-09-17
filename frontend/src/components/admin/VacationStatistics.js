@@ -47,8 +47,20 @@ const VacationStatistics = ({ className = "" }) => {
 
             if (response.ok) {
                 const data = await response.json();
+                console.log('🏖️ 휴가 통계 API 응답:', data);
                 
                 if (data.success) {
+                    console.log('📊 상담사별 휴가 데이터:', data.consultantStats);
+                    
+                    // 각 상담사의 vacationDaysByType 데이터 확인
+                    data.consultantStats?.forEach(consultant => {
+                        console.log(`👤 ${consultant.consultantName}:`, {
+                            vacationDays: consultant.vacationDays,
+                            vacationByType: consultant.vacationByType,
+                            vacationDaysByType: consultant.vacationDaysByType
+                        });
+                    });
+                    
                     setVacationStats({
                         summary: data.summary || {
                             totalConsultants: 0,

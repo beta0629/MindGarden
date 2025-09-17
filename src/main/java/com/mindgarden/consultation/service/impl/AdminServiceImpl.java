@@ -2907,17 +2907,28 @@ public class AdminServiceImpl implements AdminService {
         }
         
         switch (vacationType.toUpperCase()) {
-            case "QUARTER": // 반반차
+            // 반반차 (0.25일)
+            case "MORNING_HALF_1": // 오전 반반차 1
+            case "MORNING_HALF_2": // 오전 반반차 2  
+            case "AFTERNOON_HALF_1": // 오후 반반차 1
+            case "AFTERNOON_HALF_2": // 오후 반반차 2
+            case "QUARTER": 
             case "QUARTER_DAY":
                 return 0.25;
-            case "HALF": // 반차  
-            case "HALF_DAY":
+                
+            // 반차 (0.5일)
             case "MORNING": // 오전 반차
             case "AFTERNOON": // 오후 반차
+            case "MORNING_HALF_DAY": // 오전반차
+            case "AFTERNOON_HALF_DAY": // 오후반차
+            case "HALF": 
+            case "HALF_DAY":
                 return 0.5;
-            case "FULL": // 종일
-            case "FULL_DAY":
-            case "ALL_DAY":
+                
+            // 종일 휴가 (1.0일)
+            case "ALL_DAY": // 하루 종일
+            case "FULL_DAY": // 종일
+            case "FULL":
             default:
                 return 1.0;
         }
@@ -2941,6 +2952,13 @@ public class AdminServiceImpl implements AdminService {
             for (Map<String, Object> vacation : vacations) {
                 if (Boolean.TRUE.equals(vacation.get("isApproved"))) {
                     String typeName = (String) vacation.get("typeName");
+                    String type = (String) vacation.get("type");
+                    
+                    // typeName이 없으면 type으로부터 생성
+                    if (typeName == null && type != null) {
+                        typeName = mapVacationTypeToCategory(type);
+                    }
+                    
                     if (typeName != null) {
                         vacationByType.merge(typeName, 1, Integer::sum);
                     }
@@ -2949,7 +2967,8 @@ public class AdminServiceImpl implements AdminService {
             
             // 기본 휴가 유형들이 없으면 0으로 설정
             if (!vacationByType.containsKey("연차")) vacationByType.put("연차", 0);
-            if (!vacationByType.containsKey("병가")) vacationByType.put("병가", 0);
+            if (!vacationByType.containsKey("반차")) vacationByType.put("반차", 0);
+            if (!vacationByType.containsKey("반반차")) vacationByType.put("반반차", 0);
             if (!vacationByType.containsKey("개인사정")) vacationByType.put("개인사정", 0);
             
         } catch (Exception e) {
@@ -2983,6 +3002,11 @@ public class AdminServiceImpl implements AdminService {
                     String type = (String) vacation.get("type");
                     double weight = getVacationWeight(type);
                     
+                    // typeName이 없으면 type으로부터 생성
+                    if (typeName == null && type != null) {
+                        typeName = mapVacationTypeToCategory(type);
+                    }
+                    
                     if (typeName != null) {
                         vacationDaysByType.merge(typeName, weight, Double::sum);
                     }
@@ -2991,7 +3015,8 @@ public class AdminServiceImpl implements AdminService {
             
             // 기본 휴가 유형들이 없으면 0으로 설정
             if (!vacationDaysByType.containsKey("연차")) vacationDaysByType.put("연차", 0.0);
-            if (!vacationDaysByType.containsKey("병가")) vacationDaysByType.put("병가", 0.0);
+            if (!vacationDaysByType.containsKey("반차")) vacationDaysByType.put("반차", 0.0);
+            if (!vacationDaysByType.containsKey("반반차")) vacationDaysByType.put("반반차", 0.0);
             if (!vacationDaysByType.containsKey("개인사정")) vacationDaysByType.put("개인사정", 0.0);
             
         } catch (Exception e) {
@@ -3034,6 +3059,41 @@ public class AdminServiceImpl implements AdminService {
         } catch (Exception e) {
             log.error("최근 휴가 일자 조회 실패: consultantId={}", consultantId, e);
             return null;
+        }
+    }
+    
+    /**
+     * 휴가 유형을 카테고리로 매핑
+     */
+    private String mapVacationTypeToCategory(String vacationType) {
+        if (vacationType == null) {
+            return "연차";
+        }
+        
+        switch (vacationType.toUpperCase()) {
+            // 반반차
+            case "MORNING_HALF_1":
+            case "MORNING_HALF_2":
+            case "AFTERNOON_HALF_1":
+            case "AFTERNOON_HALF_2":
+                return "반반차";
+                
+            // 반차
+            case "MORNING":
+            case "AFTERNOON":
+            case "MORNING_HALF_DAY":
+            case "AFTERNOON_HALF_DAY":
+                return "반차";
+                
+            // 개인사정
+            case "CUSTOM_TIME":
+                return "개인사정";
+                
+            // 연차 (종일)
+            case "ALL_DAY":
+            case "FULL_DAY":
+            default:
+                return "연차";
         }
     }
 }

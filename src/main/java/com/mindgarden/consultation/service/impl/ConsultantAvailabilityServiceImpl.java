@@ -522,30 +522,32 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
             log.warn("휴가 타입 코드 조회 실패: {} -> 기본값 사용", typeCode);
         }
         
-        // 데이터베이스에서 찾지 못한 경우 기본값 사용
+        // 데이터베이스에서 찾지 못한 경우 기본값 사용 (간단한 한글명)
         switch (typeCode) {
             case "MORNING":
-                return "오전 휴가 (09:00-13:00)";
+                return "오전반차";
             case "MORNING_HALF_DAY":
-                return "오전반차 (09:00-14:00)";
+                return "오전반차";
             case "MORNING_HALF_1":
-                return "오전 반반차 1 (09:00-11:00)";
+                return "오전반반차";
             case "MORNING_HALF_2":
-                return "오전 반반차 2 (11:00-13:00)";
+                return "오전반반차";
             case "AFTERNOON":
-                return "오후 휴가 (14:00-18:00)";
+                return "오후반차";
             case "AFTERNOON_HALF_DAY":
-                return "오후반차 (14:00-18:00)";
+                return "오후반차";
             case "AFTERNOON_HALF_1":
-                return "오후 반반차 1 (14:00-16:00)";
+                return "오후반반차";
             case "AFTERNOON_HALF_2":
-                return "오후 반반차 2 (16:00-18:00)";
+                return "오후반반차";
             case "CUSTOM_TIME":
-                return "사용자 정의 휴가";
+                return "개인사정";
             case "ALL_DAY":
+                return "연차";
             case "FULL_DAY":
+                return "연차";
             default:
-                return "하루 종일 휴가";
+                return "연차";
         }
     }
     

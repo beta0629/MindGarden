@@ -2,6 +2,61 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-09-17] - 환불 관리 및 ERP 연동 시스템 구현
+
+### ✨ 새로운 기능
+- **내담자 안전 삭제 시스템**
+  - 회기 소진 또는 환불 처리 전까지 내담자 삭제 방지
+  - 남은 회기, 결제 상태, 예정 스케줄 종합 확인
+  - 삭제 불가 사유 상세 안내 및 환불 처리 옵션 제공
+
+- **회기 환불 처리 시스템**
+  - 매핑 강제 종료 API (`POST /api/admin/mappings/{id}/terminate`)
+  - 환불 사유 기록 및 회기 수 조정
+  - 다중 매핑 선택적 환불 처리 UI
+
+- **ERP 연동 환불 시스템**
+  - 환불 처리 시 자동 ERP 데이터 전송
+  - 환불 통계 API (`GET /api/admin/refund-statistics`)
+  - 환불 이력 조회 API (`GET /api/admin/refund-history`)
+  - ERP 동기화 상태 확인 API (`GET /api/admin/erp-sync-status`)
+
+- **ERP 환불 관리 화면**
+  - 전용 환불 관리 페이지 (`/erp/refund-management`)
+  - 실시간 환불 통계 대시보드
+  - 환불 이력 테이블 (페이징 지원)
+  - ERP 동기화 상태 모니터링
+
+### 🔧 개선사항
+- **공통 코드 시스템 확장**
+  - REFUND_PERIOD: 환불 통계 조회 기간 설정
+  - REFUND_REASON: 표준화된 환불 사유 관리
+  - REFUND_STATUS: 환불 처리 상태 관리
+  - 하이버네이트 기반 자동 초기화
+
+- **관리자 대시보드 확장**
+  - 환불 현황 섹션 추가 (최근 1개월 기준)
+  - 환불 건수, 금액, 회기, 평균 환불액 실시간 표시
+
+### 🛠️ 기술적 개선
+- **컴포넌트화 완료**
+  - RefundStatsCards: 환불 통계 카드
+  - RefundFilters: 필터 및 제어
+  - RefundHistoryTable: 환불 이력 테이블
+  - RefundReasonStats: 환불 사유별 통계
+  - ErpSyncStatus: ERP 동기화 상태
+  - RefundAccountingStatus: 회계 처리 현황
+
+- **ERP 연동 아키텍처**
+  - 기존 ERP 시스템과 완벽 통합
+  - RESTful API 기반 환불 데이터 전송
+  - 모의 처리 및 실제 연동 모드 지원
+
+### 🐛 버그 수정
+- 내담자 삭제 시 데이터 무결성 검증 강화
+- 환불 처리 시 회기 수 정확한 계산
+- ERP 전송 실패 시에도 내부 처리 계속 진행
+
 ## [2025-09-17] - 상담사 삭제 및 이전 시스템 구현
 
 ### 🔄 상담사 삭제 및 이전 기능

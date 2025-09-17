@@ -19,10 +19,12 @@ import com.mindgarden.consultation.dto.ConsultantRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantTransferRequest;
 import com.mindgarden.consultation.entity.Branch;
 import com.mindgarden.consultation.entity.Client;
+import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.entity.Consultant;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.repository.CommonCodeRepository;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
@@ -46,6 +48,7 @@ public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final ScheduleRepository scheduleRepository;
+    private final CommonCodeRepository commonCodeRepository;
     private final PasswordEncoder passwordEncoder;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final ConsultantAvailabilityService consultantAvailabilityService;
@@ -1406,6 +1409,344 @@ public class AdminServiceImpl implements AdminService {
         
         log.info("✅ 매핑 강제 종료 완료: ID={}, 환불 회기={}, 상담사={}, 내담자={}", 
                 id, refundedSessions, mapping.getConsultant().getName(), mapping.getClient().getName());
+    }
+
+    @Override
+    public Map<String, Object> getRefundStatistics(String period) {
+        log.info("📊 환불 통계 조회 시작: period={}", period);
+        
+        // 환불 관련 공통 코드 초기화 (없으면 생성)
+        initializeRefundCommonCodes();
+        
+        LocalDateTime startDate;
+        LocalDateTime endDate = LocalDateTime.now();
+        
+        // 공통 코드에서 기간 설정 정보 조회
+        startDate = getRefundPeriodStartDate(period);
+        
+        // 환불된 매핑 조회 (강제 종료된 매핑)
+        List<ConsultantClientMapping> refundedMappings = mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED)
+                .filter(mapping -> mapping.getTerminatedAt() != null)
+                .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
+                .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
+                .collect(Collectors.toList());
+        
+        // 기본 통계
+        int totalRefundCount = refundedMappings.size();
+        int totalRefundedSessions = refundedMappings.stream()
+                .mapToInt(mapping -> {
+                    // 노트에서 환불 회기 수 추출 (실제로는 총 회기수에서 사용된 회기수를 뺀 값)
+                    return mapping.getTotalSessions() - mapping.getUsedSessions();
+                })
+                .sum();
+        
+        long totalRefundAmount = refundedMappings.stream()
+                .mapToLong(mapping -> {
+                    // 환불 금액 계산 (패키지 가격 기준으로 비례 계산)
+                    if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
+                        int refundedSessions = mapping.getTotalSessions() - mapping.getUsedSessions();
+                        return (mapping.getPackagePrice() * refundedSessions) / mapping.getTotalSessions();
+                    }
+                    return 0;
+                })
+                .sum();
+        
+        // 상담사별 환불 통계
+        Map<String, Map<String, Object>> consultantRefundStats = refundedMappings.stream()
+                .collect(Collectors.groupingBy(
+                    mapping -> mapping.getConsultant().getName(),
+                    Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        mappings -> {
+                            Map<String, Object> stats = new HashMap<>();
+                            stats.put("refundCount", mappings.size());
+                            stats.put("refundedSessions", mappings.stream()
+                                    .mapToInt(m -> m.getTotalSessions() - m.getUsedSessions()).sum());
+                            stats.put("refundAmount", mappings.stream()
+                                    .mapToLong(m -> {
+                                        if (m.getPackagePrice() != null && m.getTotalSessions() > 0) {
+                                            int refunded = m.getTotalSessions() - m.getUsedSessions();
+                                            return (m.getPackagePrice() * refunded) / m.getTotalSessions();
+                                        }
+                                        return 0;
+                                    }).sum());
+                            return stats;
+                        }
+                    )
+                ));
+        
+        // 월별 환불 추이 (최근 6개월)
+        List<Map<String, Object>> monthlyTrend = new ArrayList<>();
+        for (int i = 5; i >= 0; i--) {
+            LocalDate monthStart = LocalDate.now().minusMonths(i).withDayOfMonth(1);
+            LocalDate monthEnd = monthStart.plusMonths(1).minusDays(1);
+            
+            List<ConsultantClientMapping> monthlyRefunds = refundedMappings.stream()
+                    .filter(mapping -> {
+                        LocalDate terminatedDate = mapping.getTerminatedAt().toLocalDate();
+                        return !terminatedDate.isBefore(monthStart) && !terminatedDate.isAfter(monthEnd);
+                    })
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> monthData = new HashMap<>();
+            monthData.put("month", monthStart.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            monthData.put("refundCount", monthlyRefunds.size());
+            monthData.put("refundedSessions", monthlyRefunds.stream()
+                    .mapToInt(m -> m.getTotalSessions() - m.getUsedSessions()).sum());
+            monthData.put("refundAmount", monthlyRefunds.stream()
+                    .mapToLong(m -> {
+                        if (m.getPackagePrice() != null && m.getTotalSessions() > 0) {
+                            int refunded = m.getTotalSessions() - m.getUsedSessions();
+                            return (m.getPackagePrice() * refunded) / m.getTotalSessions();
+                        }
+                        return 0;
+                    }).sum());
+            
+            monthlyTrend.add(monthData);
+        }
+        
+        // 환불 사유별 통계 (공통 코드 기반 표준화)
+        Map<String, Integer> refundReasonStats = refundedMappings.stream()
+                .collect(Collectors.groupingBy(
+                    mapping -> {
+                        // 노트에서 환불 사유 추출
+                        String notes = mapping.getNotes();
+                        String rawReason = "기타";
+                        if (notes != null && notes.contains("강제 종료]")) {
+                            String[] parts = notes.split("강제 종료] ");
+                            if (parts.length > 1) {
+                                rawReason = parts[1].split("\n")[0];
+                            }
+                        }
+                        // 공통 코드 기반으로 표준화
+                        return standardizeRefundReason(rawReason);
+                    },
+                    Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)
+                ));
+        
+        // 최근 환불 목록 (최근 10건)
+        List<Map<String, Object>> recentRefunds = refundedMappings.stream()
+                .sorted((a, b) -> b.getTerminatedAt().compareTo(a.getTerminatedAt()))
+                .limit(10)
+                .map(mapping -> {
+                    Map<String, Object> refund = new HashMap<>();
+                    refund.put("mappingId", mapping.getId());
+                    refund.put("clientName", mapping.getClient().getName());
+                    refund.put("consultantName", mapping.getConsultant().getName());
+                    refund.put("packageName", mapping.getPackageName());
+                    refund.put("refundedSessions", mapping.getTotalSessions() - mapping.getUsedSessions());
+                    refund.put("refundAmount", mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0 
+                            ? (mapping.getPackagePrice() * (mapping.getTotalSessions() - mapping.getUsedSessions())) / mapping.getTotalSessions()
+                            : 0);
+                    refund.put("terminatedAt", mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                    
+                    // 환불 사유 추출
+                    String notes = mapping.getNotes();
+                    String reason = "기타";
+                    if (notes != null && notes.contains("강제 종료]")) {
+                        String[] parts = notes.split("강제 종료] ");
+                        if (parts.length > 1) {
+                            reason = parts[1].split("\n")[0];
+                        }
+                    }
+                    refund.put("reason", reason);
+                    
+                    return refund;
+                })
+                .collect(Collectors.toList());
+        
+        // 결과 구성
+        Map<String, Object> result = new HashMap<>();
+        result.put("period", period);
+        result.put("startDate", startDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        result.put("endDate", endDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        
+        // 전체 통계
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalRefundCount", totalRefundCount);
+        summary.put("totalRefundedSessions", totalRefundedSessions);
+        summary.put("totalRefundAmount", totalRefundAmount);
+        summary.put("averageRefundPerCase", totalRefundCount > 0 ? totalRefundAmount / totalRefundCount : 0);
+        result.put("summary", summary);
+        
+        result.put("consultantStats", consultantRefundStats);
+        result.put("monthlyTrend", monthlyTrend);
+        result.put("refundReasonStats", refundReasonStats);
+        result.put("recentRefunds", recentRefunds);
+        
+        log.info("✅ 환불 통계 조회 완료: 총 {}건, 환불 회기 {}회, 환불 금액 {}원", 
+                totalRefundCount, totalRefundedSessions, totalRefundAmount);
+        
+        return result;
+    }
+
+    /**
+     * 환불 통계 기간에 따른 시작 날짜 계산 (공통 코드 기반)
+     */
+    private LocalDateTime getRefundPeriodStartDate(String period) {
+        try {
+            // 공통 코드에서 REFUND_PERIOD 그룹 조회
+            List<CommonCode> periodCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_PERIOD");
+            
+            for (CommonCode code : periodCodes) {
+                if (code.getCodeValue().equalsIgnoreCase(period)) {
+                    // extra_data에서 일수/개월수 정보 추출
+                    String extraData = code.getExtraData();
+                    if (extraData != null && !extraData.isEmpty()) {
+                        try {
+                            // JSON 파싱
+                            if (extraData.contains("\"days\"")) {
+                                int days = Integer.parseInt(extraData.replaceAll(".*\"days\":(\\d+).*", "$1"));
+                                return LocalDate.now().minusDays(days - 1).atStartOfDay();
+                            } else if (extraData.contains("\"months\"")) {
+                                int months = Integer.parseInt(extraData.replaceAll(".*\"months\":(\\d+).*", "$1"));
+                                return LocalDate.now().minusMonths(months).atStartOfDay();
+                            } else if (extraData.contains("\"years\"")) {
+                                int years = Integer.parseInt(extraData.replaceAll(".*\"years\":(\\d+).*", "$1"));
+                                return LocalDate.now().minusYears(years).atStartOfDay();
+                            }
+                        } catch (Exception e) {
+                            log.warn("환불 기간 설정 파싱 실패: period={}, extraData={}", period, extraData);
+                        }
+                    }
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            log.error("환불 기간 공통 코드 조회 실패: period={}", period, e);
+        }
+        
+        // 기본값: 1개월
+        return LocalDate.now().minusMonths(1).atStartOfDay();
+    }
+
+    /**
+     * 환불 사유 표준화 (공통 코드 기반)
+     */
+    private String standardizeRefundReason(String rawReason) {
+        if (rawReason == null || rawReason.trim().isEmpty()) {
+            return "기타";
+        }
+        
+        try {
+            // 공통 코드에서 REFUND_REASON 그룹 조회
+            List<CommonCode> reasonCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_REASON");
+            
+            for (CommonCode code : reasonCodes) {
+                String codeLabel = code.getCodeLabel();
+                String codeValue = code.getCodeValue();
+                
+                // 키워드 매칭으로 표준화
+                if (rawReason.contains(codeLabel) || rawReason.contains(codeValue)) {
+                    return codeLabel;
+                }
+                
+                // extra_data에 키워드가 있으면 매칭
+                String extraData = code.getExtraData();
+                if (extraData != null && extraData.contains("\"keywords\"")) {
+                    try {
+                        // 간단한 키워드 추출 (정규식 사용)
+                        String keywords = extraData.replaceAll(".*\"keywords\":\\s*\"([^\"]+)\".*", "$1");
+                        String[] keywordArray = keywords.split(",");
+                        for (String keyword : keywordArray) {
+                            if (rawReason.contains(keyword.trim())) {
+                                return codeLabel;
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.debug("환불 사유 키워드 파싱 무시: {}", e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("환불 사유 공통 코드 조회 실패: rawReason={}", rawReason, e);
+        }
+        
+        // 기본값: 원본 사유를 20자로 제한
+        return rawReason.length() > 20 ? rawReason.substring(0, 20) + "..." : rawReason;
+    }
+
+    /**
+     * 환불 관련 공통 코드 초기화 (없으면 자동 생성)
+     */
+    private void initializeRefundCommonCodes() {
+        try {
+            // REFUND_PERIOD 그룹 확인 및 생성
+            List<CommonCode> periodCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_PERIOD");
+            if (periodCodes.isEmpty()) {
+                log.info("🔧 REFUND_PERIOD 공통 코드 그룹 생성 중...");
+                
+                // 환불 통계 기간 코드들 생성
+                createCommonCode("REFUND_PERIOD", "TODAY", "오늘", "{\"days\":1}", 1);
+                createCommonCode("REFUND_PERIOD", "WEEK", "최근 7일", "{\"days\":7}", 2);
+                createCommonCode("REFUND_PERIOD", "MONTH", "최근 1개월", "{\"months\":1}", 3);
+                createCommonCode("REFUND_PERIOD", "QUARTER", "최근 3개월", "{\"months\":3}", 4);
+                createCommonCode("REFUND_PERIOD", "YEAR", "최근 1년", "{\"years\":1}", 5);
+                
+                log.info("✅ REFUND_PERIOD 공통 코드 생성 완료");
+            }
+            
+            // REFUND_REASON 그룹 확인 및 생성
+            List<CommonCode> reasonCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_REASON");
+            if (reasonCodes.isEmpty()) {
+                log.info("🔧 REFUND_REASON 공통 코드 그룹 생성 중...");
+                
+                // 환불 사유 코드들 생성
+                createCommonCode("REFUND_REASON", "CUSTOMER_REQUEST", "고객 요청", "{\"keywords\":\"고객,요청,개인사정\"}", 1);
+                createCommonCode("REFUND_REASON", "SERVICE_UNSATISFIED", "서비스 불만족", "{\"keywords\":\"불만족,서비스,품질\"}", 2);
+                createCommonCode("REFUND_REASON", "CONSULTANT_CHANGE", "상담사 변경", "{\"keywords\":\"상담사,변경,교체\"}", 3);
+                createCommonCode("REFUND_REASON", "SCHEDULE_CONFLICT", "일정 충돌", "{\"keywords\":\"일정,시간,충돌\"}", 4);
+                createCommonCode("REFUND_REASON", "HEALTH_ISSUE", "건강상 이유", "{\"keywords\":\"건강,병원,치료\"}", 5);
+                createCommonCode("REFUND_REASON", "RELOCATION", "이사/이전", "{\"keywords\":\"이사,이전,거리\"}", 6);
+                createCommonCode("REFUND_REASON", "FINANCIAL_DIFFICULTY", "경제적 어려움", "{\"keywords\":\"경제,재정,돈\"}", 7);
+                createCommonCode("REFUND_REASON", "ADMIN_DECISION", "관리자 결정", "{\"keywords\":\"관리자,결정,정책\"}", 8);
+                createCommonCode("REFUND_REASON", "OTHER", "기타", "{\"keywords\":\"기타,etc\"}", 9);
+                
+                log.info("✅ REFUND_REASON 공통 코드 생성 완료");
+            }
+            
+            // REFUND_STATUS 그룹 확인 및 생성
+            List<CommonCode> statusCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_STATUS");
+            if (statusCodes.isEmpty()) {
+                log.info("🔧 REFUND_STATUS 공통 코드 그룹 생성 중...");
+                
+                // 환불 상태 코드들 생성
+                createCommonCode("REFUND_STATUS", "REQUESTED", "환불 요청", "{\"color\":\"#ffc107\"}", 1);
+                createCommonCode("REFUND_STATUS", "APPROVED", "환불 승인", "{\"color\":\"#28a745\"}", 2);
+                createCommonCode("REFUND_STATUS", "PROCESSING", "환불 처리중", "{\"color\":\"#17a2b8\"}", 3);
+                createCommonCode("REFUND_STATUS", "COMPLETED", "환불 완료", "{\"color\":\"#6f42c1\"}", 4);
+                createCommonCode("REFUND_STATUS", "REJECTED", "환불 거부", "{\"color\":\"#dc3545\"}", 5);
+                
+                log.info("✅ REFUND_STATUS 공통 코드 생성 완료");
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 환불 관련 공통 코드 초기화 실패", e);
+        }
+    }
+
+    /**
+     * 공통 코드 생성 헬퍼 메서드
+     */
+    private void createCommonCode(String codeGroup, String codeValue, String codeLabel, String extraData, int sortOrder) {
+        try {
+            CommonCode commonCode = new CommonCode();
+            commonCode.setCodeGroup(codeGroup);
+            commonCode.setCodeValue(codeValue);
+            commonCode.setCodeLabel(codeLabel);
+            commonCode.setExtraData(extraData);
+            commonCode.setSortOrder(sortOrder);
+            commonCode.setIsActive(true);
+            commonCode.setCreatedAt(LocalDateTime.now());
+            commonCode.setUpdatedAt(LocalDateTime.now());
+            
+            commonCodeRepository.save(commonCode);
+            log.debug("📝 공통 코드 생성: {}:{} = {}", codeGroup, codeValue, codeLabel);
+            
+        } catch (Exception e) {
+            log.error("❌ 공통 코드 생성 실패: {}:{}", codeGroup, codeValue, e);
+        }
     }
 
     @Override

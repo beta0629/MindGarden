@@ -1336,6 +1336,28 @@ public class AdminController {
         }
     }
 
+    /**
+     * 환불 통계 조회
+     */
+    @GetMapping("/refund-statistics")
+    public ResponseEntity<?> getRefundStatistics(@RequestParam(defaultValue = "month") String period) {
+        try {
+            log.info("📊 환불 통계 조회: period={}", period);
+            Map<String, Object> statistics = adminService.getRefundStatistics(period);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", statistics
+            ));
+        } catch (Exception e) {
+            log.error("❌ 환불 통계 조회 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "환불 통계 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
     // ==================== 상담사 변경 시스템 ====================
 
     /**

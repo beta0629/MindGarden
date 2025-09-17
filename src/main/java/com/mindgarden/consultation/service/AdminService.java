@@ -118,6 +118,11 @@ public interface AdminService {
      * 매핑 강제 종료 (환불 처리)
      */
     void terminateMapping(Long id, String reason);
+    
+    /**
+     * 환불 통계 조회
+     */
+    Map<String, Object> getRefundStatistics(String period);
 
     // ==================== 입금 승인 시스템 ====================
 

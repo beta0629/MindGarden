@@ -54,19 +54,16 @@ public class SecurityConfig {
                 authz.requestMatchers(
                     "/api/auth/**", 
                     "/oauth2/**",
+                    "/api/password-reset/**",  // 비밀번호 재설정 API
                     "/api/test/email/**",
+                    "/api/test/notification/**",  // 알림톡 테스트 API
                     "/error",
                     "/actuator/health",
                     "/actuator/info"
                 ).permitAll();
                 
-                // 운영 환경에서는 나머지 API 인증 필요
-                if (isProductionEnvironment()) {
-                    authz.anyRequest().authenticated();
-                } else {
-                    // 개발 환경에서는 모든 요청 허용
-                    authz.anyRequest().permitAll();
-                }
+                // 모든 환경에서 인증 필요 (운영 모드로 변경)
+                authz.anyRequest().authenticated();
             })
             
             // 폼 로그인 비활성화
@@ -81,7 +78,12 @@ public class SecurityConfig {
      */
     private boolean isProductionEnvironment() {
         String activeProfile = System.getProperty("spring.profiles.active");
-        return "prod".equals(activeProfile) || "production".equals(activeProfile);
+        String envProfile = System.getenv("SPRING_PROFILES_ACTIVE");
+        
+        // 시스템 프로퍼티 또는 환경변수에서 프로파일 확인
+        String profile = activeProfile != null ? activeProfile : envProfile;
+        
+        return "prod".equals(profile) || "production".equals(profile);
     }
     
     /**
@@ -91,8 +93,15 @@ public class SecurityConfig {
     public SessionAuthenticationStrategy sessionAuthenticationStrategy() {
         ConcurrentSessionControlAuthenticationStrategy concurrentSessionControl = 
             new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry());
-        concurrentSessionControl.setMaximumSessions(1);
-        concurrentSessionControl.setExceptionIfMaximumExceeded(false);
+        
+        // 운영 환경에서는 더 엄격한 세션 제어
+        if (isProductionEnvironment()) {
+            concurrentSessionControl.setMaximumSessions(1);  // 동시 세션 1개만 허용
+            concurrentSessionControl.setExceptionIfMaximumExceeded(true);  // 초과 시 예외 발생
+        } else {
+            concurrentSessionControl.setMaximumSessions(3);  // 개발 환경에서는 3개까지 허용
+            concurrentSessionControl.setExceptionIfMaximumExceeded(false);
+        }
         
         RegisterSessionAuthenticationStrategy registerSession = 
             new RegisterSessionAuthenticationStrategy(sessionRegistry());
@@ -110,14 +119,8 @@ public class SecurityConfig {
         return new org.springframework.security.core.session.SessionRegistryImpl();
     }
     
-    // TODO: 운영 환경에서는 JWT 인증 필터 Bean 활성화 필요
-    // /**
-    //  * JWT 인증 필터
-    //  */
-    // @Bean
-    // public JwtAuthenticationFilter jwtAuthenticationFilter() {
-    //     return new JwtAuthenticationFilter();
-    // }
+    // 참고: 현재는 세션 기반 인증을 사용하고 있음
+    // JWT 인증이 필요한 경우 JwtAuthenticationFilter를 구현하여 사용
     
     /**
      * CORS 설정 (환경별 설정)

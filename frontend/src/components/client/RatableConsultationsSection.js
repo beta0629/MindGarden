@@ -20,8 +20,12 @@ const RatableConsultationsSection = () => {
     const [showRatingModal, setShowRatingModal] = useState(false);
 
     useEffect(() => {
+        console.log('💖 RatableConsultationsSection 마운트됨, 사용자:', user);
         if (user?.id) {
+            console.log('💖 평가 가능한 상담 로드 시작, 사용자 ID:', user.id);
             loadRatableSchedules();
+        } else {
+            console.log('💖 사용자 정보 없음, 평가 섹션 대기 중');
         }
     }, [user]);
 
@@ -30,6 +34,8 @@ const RatableConsultationsSection = () => {
 
         setLoading(true);
         try {
+            console.log('💖 API 호출 시작:', `${API_BASE_URL}/api/ratings/client/${user.id}/ratable-schedules`);
+            
             const response = await fetch(`${API_BASE_URL}/api/ratings/client/${user.id}/ratable-schedules`, {
                 method: 'GET',
                 headers: {
@@ -38,16 +44,19 @@ const RatableConsultationsSection = () => {
                 credentials: 'include'
             });
 
+            console.log('💖 API 응답 상태:', response.status);
             const result = await response.json();
+            console.log('💖 API 응답 데이터:', result);
 
             if (result.success) {
+                console.log('💖 평가 가능한 상담 개수:', result.data?.length || 0);
                 setRatableSchedules(result.data || []);
             } else {
-                console.error('평가 가능한 상담 조회 실패:', result.message);
+                console.error('💖 평가 가능한 상담 조회 실패:', result.message);
             }
 
         } catch (error) {
-            console.error('평가 가능한 상담 조회 오류:', error);
+            console.error('💖 평가 가능한 상담 조회 오류:', error);
         } finally {
             setLoading(false);
         }
@@ -81,9 +90,13 @@ const RatableConsultationsSection = () => {
         );
     }
 
-    if (ratableSchedules.length === 0) {
-        return null; // 평가할 상담이 없으면 섹션 숨김
-    }
+    // 디버깅을 위해 항상 섹션 표시
+    console.log('💖 렌더링 체크:', { 
+        loading, 
+        ratableSchedulesLength: ratableSchedules.length, 
+        user: user?.id,
+        userRole: user?.role 
+    });
 
     return (
         <>
@@ -132,7 +145,25 @@ const RatableConsultationsSection = () => {
                     flexDirection: 'column',
                     gap: '12px'
                 }}>
-                    {ratableSchedules.map(schedule => (
+                    {ratableSchedules.length === 0 ? (
+                        <div style={{
+                            textAlign: 'center',
+                            padding: '32px',
+                            color: '#666',
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: '8px',
+                            border: '1px solid #e9ecef'
+                        }}>
+                            <div style={{ fontSize: '24px', marginBottom: '12px' }}>💭</div>
+                            <div style={{ fontSize: '15px', marginBottom: '8px' }}>
+                                평가 가능한 상담이 없습니다
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#999' }}>
+                                상담을 완료하시면 평가할 수 있어요
+                            </div>
+                        </div>
+                    ) : (
+                        ratableSchedules.map(schedule => (
                         <div
                             key={schedule.scheduleId}
                             style={{
@@ -200,7 +231,8 @@ const RatableConsultationsSection = () => {
                                 </button>
                             </div>
                         </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
 

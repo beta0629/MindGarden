@@ -38,7 +38,7 @@ const LoadingSpinner = ({
       default:
         return (
           <div className={`loading-spinner-icon loading-spinner-${size}`}>
-            <div className="loading-spinner-inner"></div>
+            {/* loading-spinner-inner 제거 - 스케줄 스타일은 border만 사용 */}
           </div>
         );
     }
@@ -55,14 +55,39 @@ const LoadingSpinner = ({
 
   return (
     <div className={containerClass}>
-      {renderSpinner()}
-      {showText && (
-        <div className="loading-spinner-text" style={{
-          fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-        }}>
-          {text}
+      <div style={{ 
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative'
+      }}>
+        {/* 스피너는 별도 컨테이너에서 회전 */}
+        <div style={{ position: 'relative' }}>
+          {renderSpinner()}
         </div>
-      )}
+        
+        {/* 텍스트는 완전히 분리된 영역에 배치 (회전하지 않음) */}
+        {showText && (
+          <div 
+            className="loading-spinner-text" 
+            style={{
+              fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif',
+              position: 'static',
+              transform: 'none',
+              animation: 'none',
+              marginTop: '16px',
+              fontSize: '16px',
+              color: '#6b7280',
+              fontWeight: '500',
+              textAlign: 'center',
+              lineHeight: '1.5'
+            }}
+          >
+            {text}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

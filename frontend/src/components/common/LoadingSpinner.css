@@ -143,20 +143,22 @@
 .loading-bars .bar:nth-child(3) { animation-delay: -0.9s; }
 .loading-bars .bar:nth-child(4) { animation-delay: -0.8s; }
 
-/* 로딩 텍스트 - 스케줄 정확한 스타일 (텍스트 회전 방지) */
+/* 로딩 텍스트 - 완전히 분리된 스타일 (절대 회전하지 않음) */
 .loading-spinner-text {
-  font-size: 16px;
-  color: #6b7280;
-  font-weight: 500;
-  margin: 0;
-  margin-top: 16px;
-  position: static; /* 텍스트 회전 방지 */
-  z-index: 1;
-  text-align: center;
-  line-height: 1.5;
-  font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  font-size: 16px !important;
+  color: #6b7280 !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+  margin-top: 16px !important;
+  position: static !important; /* 텍스트 회전 방지 */
+  z-index: 1000 !important;
+  text-align: center !important;
+  line-height: 1.5 !important;
+  font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif !important;
   transform: none !important; /* 텍스트 변형 강제 방지 */
   animation: none !important; /* 텍스트 애니메이션 강제 방지 */
+  will-change: auto !important; /* GPU 가속 방지 */
+  backface-visibility: visible !important;
 }
 
 /* ==================== 애니메이션 ==================== */

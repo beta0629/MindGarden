@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.dto.ConsultantAvailabilityDto;
 import com.mindgarden.consultation.entity.ConsultantAvailability;
@@ -38,38 +37,86 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
     
     // 휴무 정보는 데이터베이스(vacationRepository)에 저장
     
-    // 테스트용 휴무 데이터 초기화
+    // 테스트용 휴무 데이터 초기화 (데이터베이스 사용)
     public void initializeTestVacationData() {
-        log.info("테스트용 휴무 데이터 초기화 시작");
+        log.info("테스트용 휴무 데이터 초기화 시작 (데이터베이스 저장)");
         
-        // 상담사 43번의 9월 26일 휴무 설정
-        String consultantKey = "43";
-        Map<String, Object> consultantVacations = vacationStorage.computeIfAbsent(consultantKey, k -> new ConcurrentHashMap<>());
-        
-        Map<String, Object> vacationData = new HashMap<>();
-        vacationData.put("type", "FULL_DAY");
-        vacationData.put("reason", "개인 사정");
-        vacationData.put("startTime", "09:00");
-        vacationData.put("endTime", "18:00");
-        vacationData.put("isApproved", true);
-        
-        consultantVacations.put("2025-09-26", vacationData);
-        
-        log.info("테스트용 휴무 데이터 초기화 완료: 상담사 {}, 휴무일 {}", consultantKey, "2025-09-26");
-        log.info("전체 vacationStorage 상태: {}", vacationStorage.keySet());
+        try {
+            // 상담사 43번의 9월 26일 휴무 설정
+            Long consultantId = 43L;
+            LocalDate vacationDate = LocalDate.of(2025, 9, 26);
+            
+            // 기존 휴가 데이터가 있는지 확인
+            Vacation existingVacation = vacationRepository.findByConsultantIdAndVacationDateAndIsDeletedFalse(consultantId, vacationDate);
+            
+            if (existingVacation == null) {
+                // 새 휴가 데이터 생성
+                Vacation vacation = Vacation.builder()
+                    .consultantId(consultantId)
+                    .vacationDate(vacationDate)
+                    .vacationType(Vacation.VacationType.FULL_DAY)
+                    .reason("개인 사정")
+                    .startTime(LocalTime.of(9, 0))
+                    .endTime(LocalTime.of(18, 0))
+                    .isApproved(true)
+                    .isDeleted(false)
+                    .build();
+                
+                vacationRepository.save(vacation);
+                log.info("테스트용 휴무 데이터 생성 완료: 상담사 {}, 휴무일 {}", consultantId, vacationDate);
+            } else {
+                log.info("테스트용 휴무 데이터 이미 존재: 상담사 {}, 휴무일 {}", consultantId, vacationDate);
+            }
+        } catch (Exception e) {
+            log.error("테스트용 휴무 데이터 초기화 실패: {}", e.getMessage(), e);
+        }
     }
     
-    // 휴무 데이터 직접 설정 (테스트용)
+    // 휴무 데이터 직접 설정 (데이터베이스 사용)
     public void setVacationData(Long consultantId, String date, Map<String, Object> vacationData) {
         log.info("휴무 데이터 직접 설정: consultantId={}, date={}, data={}", consultantId, date, vacationData);
         
-        String consultantKey = consultantId.toString();
-        Map<String, Object> consultantVacations = vacationStorage.computeIfAbsent(consultantKey, k -> new ConcurrentHashMap<>());
-        
-        consultantVacations.put(date, vacationData);
-        
-        log.info("휴무 데이터 설정 완료: consultantId={}, date={}", consultantId, date);
-        log.info("전체 vacationStorage 상태: {}", vacationStorage.keySet());
+        try {
+            LocalDate vacationDate = LocalDate.parse(date);
+            String type = (String) vacationData.get("type");
+            String reason = (String) vacationData.get("reason");
+            String startTimeStr = (String) vacationData.get("startTime");
+            String endTimeStr = (String) vacationData.get("endTime");
+            Boolean isApproved = (Boolean) vacationData.get("isApproved");
+            
+            // 기존 휴가 데이터 확인
+            Vacation existingVacation = vacationRepository.findByConsultantIdAndVacationDateAndIsDeletedFalse(consultantId, vacationDate);
+            
+            Vacation vacation;
+            if (existingVacation != null) {
+                // 기존 휴가 수정
+                vacation = existingVacation;
+                vacation.setVacationType(Vacation.VacationType.valueOf(type));
+                vacation.setReason(reason);
+                vacation.setStartTime(startTimeStr != null ? LocalTime.parse(startTimeStr) : null);
+                vacation.setEndTime(endTimeStr != null ? LocalTime.parse(endTimeStr) : null);
+                vacation.setIsApproved(isApproved != null ? isApproved : true);
+                vacation.setUpdatedAt(LocalDateTime.now());
+            } else {
+                // 새 휴가 생성
+                vacation = Vacation.builder()
+                    .consultantId(consultantId)
+                    .vacationDate(vacationDate)
+                    .vacationType(Vacation.VacationType.valueOf(type))
+                    .reason(reason)
+                    .startTime(startTimeStr != null ? LocalTime.parse(startTimeStr) : null)
+                    .endTime(endTimeStr != null ? LocalTime.parse(endTimeStr) : null)
+                    .isApproved(isApproved != null ? isApproved : true)
+                    .isDeleted(false)
+                    .build();
+            }
+            
+            vacationRepository.save(vacation);
+            log.info("휴무 데이터 설정 완료: consultantId={}, date={}, id={}", consultantId, date, vacation.getId());
+            
+        } catch (Exception e) {
+            log.error("휴무 데이터 설정 실패: consultantId={}, date={}, error={}", consultantId, date, e.getMessage(), e);
+        }
     }
     
     @Override

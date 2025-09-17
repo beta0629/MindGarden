@@ -119,15 +119,26 @@ const VacationStatistics = ({ className = "" }) => {
     };
 
     /**
-     * 휴가 유형별 색상
+     * 휴가 유형별 파스텔 색상
      */
     const getVacationTypeColor = (type) => {
         const colors = {
-            '연차': '#28a745',
-            '병가': '#dc3545',
-            '개인사정': '#ffc107'
+            '연차': '#E8F5E8',        // 연한 초록 (연차)
+            '반차': '#FFF2CC',        // 연한 노랑 (반차) 
+            '반반차': '#E6F3FF',      // 연한 파랑 (반반차)
+            '개인사정': '#F5E6FF',    // 연한 보라 (개인사정)
+            '병가': '#FFE6E6',        // 연한 빨강 (병가)
+            '하루 종일 휴가': '#E8F5E8',  // 연한 초록 (종일 휴가)
+            '사용자 정의 휴가': '#F0F8FF', // 연한 하늘색 (사용자 정의)
+            // 상세 유형별 색상
+            '오전 반반차 1 (09:00-11:00)': '#E6F3FF',
+            '오전 반반차 2 (11:00-13:00)': '#E6F3FF', 
+            '오후 반반차 1 (14:00-16:00)': '#E6F3FF',
+            '오후 반반차 2 (16:00-18:00)': '#E6F3FF',
+            '오전반차': '#FFF2CC',
+            '오후반차': '#FFF2CC'
         };
-        return colors[type] || '#6c757d';
+        return colors[type] || '#F8F9FA'; // 기본 연한 회색
     };
 
     if (loading) {
@@ -249,7 +260,17 @@ const VacationStatistics = ({ className = "" }) => {
                                                 <span 
                                                     key={type}
                                                     className="type-badge"
-                                                    style={{ backgroundColor: getVacationTypeColor(type) }}
+                                                    style={{ 
+                                                        backgroundColor: getVacationTypeColor(type),
+                                                        color: '#374151',
+                                                        fontWeight: '500',
+                                                        border: '1px solid rgba(0,0,0,0.1)',
+                                                        borderRadius: '12px',
+                                                        padding: '4px 8px',
+                                                        fontSize: '12px',
+                                                        margin: '2px',
+                                                        display: 'inline-block'
+                                                    }}
                                                     title={`${type}: ${days.toFixed(1)}일`}
                                                 >
                                                     {type} {days.toFixed(1)}일
@@ -262,7 +283,17 @@ const VacationStatistics = ({ className = "" }) => {
                                                 <span 
                                                     key={type}
                                                     className="type-badge"
-                                                    style={{ backgroundColor: getVacationTypeColor(type) }}
+                                                    style={{ 
+                                                        backgroundColor: getVacationTypeColor(type),
+                                                        color: '#374151',
+                                                        fontWeight: '500',
+                                                        border: '1px solid rgba(0,0,0,0.1)',
+                                                        borderRadius: '12px',
+                                                        padding: '4px 8px',
+                                                        fontSize: '12px',
+                                                        margin: '2px',
+                                                        display: 'inline-block'
+                                                    }}
                                                 >
                                                     {type} {count}회
                                                 </span>

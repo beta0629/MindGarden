@@ -156,6 +156,25 @@ public class AdminController {
     }
 
     /**
+     * 상담사별 휴가 통계 조회
+     */
+    @GetMapping("/vacation-statistics")
+    public ResponseEntity<?> getConsultantVacationStats(@RequestParam(defaultValue = "month") String period) {
+        try {
+            log.info("📊 상담사별 휴가 통계 조회: period={}", period);
+            Map<String, Object> vacationStats = adminService.getConsultantVacationStats(period);
+            
+            return ResponseEntity.ok(vacationStats);
+        } catch (Exception e) {
+            log.error("❌ 상담사별 휴가 통계 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "휴가 통계 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 내담자 목록 조회
      */
     @GetMapping("/clients")

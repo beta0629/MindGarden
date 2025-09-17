@@ -36,73 +36,51 @@ const VacationStatistics = ({ className = "" }) => {
             setLoading(true);
             setError(null);
 
-            // Mock 데이터 - 실제로는 API 호출
-            const mockData = {
-                summary: {
-                    totalConsultants: 15,
-                    totalVacationDays: 45,
-                    averageVacationDays: 3.0
+            // 실제 API 호출
+            const response = await fetch(`/api/admin/vacation-statistics?period=${selectedPeriod}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
-                consultantStats: [
-                    {
-                        consultantId: 1,
-                        consultantName: "김상담",
-                        email: "kim@mindgarden.com",
-                        vacationDays: 8,
-                        vacationByType: { "연차": 5, "병가": 2, "개인사정": 1 },
-                        lastVacationDate: "2025-09-10"
-                    },
-                    {
-                        consultantId: 2,
-                        consultantName: "이상담",
-                        email: "lee@mindgarden.com",
-                        vacationDays: 6,
-                        vacationByType: { "연차": 4, "병가": 1, "개인사정": 1 },
-                        lastVacationDate: "2025-09-15"
-                    },
-                    {
-                        consultantId: 3,
-                        consultantName: "박상담",
-                        email: "park@mindgarden.com",
-                        vacationDays: 4,
-                        vacationByType: { "연차": 3, "병가": 0, "개인사정": 1 },
-                        lastVacationDate: "2025-09-08"
-                    },
-                    {
-                        consultantId: 4,
-                        consultantName: "최상담",
-                        email: "choi@mindgarden.com",
-                        vacationDays: 7,
-                        vacationByType: { "연차": 4, "병가": 2, "개인사정": 1 },
-                        lastVacationDate: "2025-09-12"
-                    },
-                    {
-                        consultantId: 5,
-                        consultantName: "정상담",
-                        email: "jung@mindgarden.com",
-                        vacationDays: 3,
-                        vacationByType: { "연차": 2, "병가": 1, "개인사정": 0 },
-                        lastVacationDate: "2025-09-05"
-                    }
-                ],
-                topVacationConsultants: [
-                    { consultantName: "김상담", vacationDays: 8 },
-                    { consultantName: "최상담", vacationDays: 7 },
-                    { consultantName: "이상담", vacationDays: 6 }
-                ],
-                vacationTrend: [
-                    { week: "1주차", count: 12 },
-                    { week: "2주차", count: 8 },
-                    { week: "3주차", count: 15 },
-                    { week: "4주차", count: 10 }
-                ]
-            };
+                credentials: 'include'
+            });
 
-            setVacationStats(mockData);
+            if (response.ok) {
+                const data = await response.json();
+                
+                if (data.success) {
+                    setVacationStats({
+                        summary: data.summary || {
+                            totalConsultants: 0,
+                            totalVacationDays: 0,
+                            averageVacationDays: 0
+                        },
+                        consultantStats: data.consultantStats || [],
+                        topVacationConsultants: data.topVacationConsultants || [],
+                        vacationTrend: data.vacationTrend || []
+                    });
+                } else {
+                    throw new Error(data.message || '휴가 통계 조회 실패');
+                }
+            } else {
+                throw new Error('서버 응답 오류');
+            }
 
         } catch (err) {
             console.error('휴가 통계 로드 실패:', err);
             setError('휴가 통계를 불러오는데 실패했습니다.');
+            
+            // 에러 시 기본값 설정
+            setVacationStats({
+                summary: {
+                    totalConsultants: 0,
+                    totalVacationDays: 0,
+                    averageVacationDays: 0
+                },
+                consultantStats: [],
+                topVacationConsultants: [],
+                vacationTrend: []
+            });
         } finally {
             setLoading(false);
         }

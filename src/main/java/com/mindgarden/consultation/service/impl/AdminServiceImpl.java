@@ -2807,6 +2807,10 @@ public class AdminServiceImpl implements AdminService {
                 Map<String, Double> vacationDaysByType = getVacationDaysByType(consultant.getId(), startDate, endDate);
                 consultantData.put("vacationDaysByType", vacationDaysByType);
                 
+                // 디버깅 로그 추가
+                log.info("🏖️ 상담사 {} 휴가 통계: 총 {}일, 유형별 개수={}, 유형별 일수={}", 
+                    consultant.getName(), vacationCount, vacationByType, vacationDaysByType);
+                
                 // 최근 휴가 일자
                 LocalDate lastVacationDate = getLastVacationDate(consultant.getId());
                 consultantData.put("lastVacationDate", lastVacationDate != null ? lastVacationDate.toString() : null);
@@ -2996,7 +3000,11 @@ public class AdminServiceImpl implements AdminService {
             );
             
             // 휴가 유형별로 그룹화하여 일수 계산 (가중치 적용)
+            log.info("🔍 상담사 {} 휴가 데이터 분석 시작: 총 {}개 휴가", consultantId, vacations.size());
+            
             for (Map<String, Object> vacation : vacations) {
+                log.info("📋 휴가 데이터: {}", vacation);
+                
                 if (Boolean.TRUE.equals(vacation.get("isApproved"))) {
                     String typeName = (String) vacation.get("typeName");
                     String type = (String) vacation.get("type");
@@ -3007,11 +3015,17 @@ public class AdminServiceImpl implements AdminService {
                         typeName = mapVacationTypeToCategory(type);
                     }
                     
+                    log.info("✅ 휴가 처리: type={}, typeName={}, weight={}", type, typeName, weight);
+                    
                     if (typeName != null) {
                         vacationDaysByType.merge(typeName, weight, Double::sum);
                     }
+                } else {
+                    log.warn("⚠️ 미승인 휴가 스킵: {}", vacation);
                 }
             }
+            
+            log.info("📊 최종 휴가 유형별 일수: {}", vacationDaysByType);
             
             // 기본 휴가 유형들이 없으면 0으로 설정
             if (!vacationDaysByType.containsKey("연차")) vacationDaysByType.put("연차", 0.0);

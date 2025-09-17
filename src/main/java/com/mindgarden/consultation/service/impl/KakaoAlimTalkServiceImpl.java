@@ -14,7 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -26,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
     
     @Value("${kakao.alimtalk.enabled:false}")
@@ -42,10 +40,11 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
     private String apiUrl;
     
     private final CommonCodeRepository commonCodeRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
     
     public KakaoAlimTalkServiceImpl(CommonCodeRepository commonCodeRepository) {
         this.commonCodeRepository = commonCodeRepository;
+        this.restTemplate = new RestTemplate();
         
         // 알림톡 관련 공통 코드 초기화
         initializeAlimTalkCommonCodes();
@@ -247,6 +246,7 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             // 현재는 시뮬레이션 (실제 API 키 설정 후 주석 해제)
             
             /*
+            // 실제 카카오 알림톡 API 호출 (API 키 설정 후 주석 해제)
             String url = apiUrl + "/v2/sender/send";
             ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
             
@@ -254,10 +254,11 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                 Map<String, Object> responseBody = response.getBody();
                 return "0000".equals(responseBody.get("resultCode")); // 카카오 성공 코드
             }
+            return false;
             */
             
-            // 시뮬레이션 모드
-            log.info("🎭 카카오 알림톡 시뮬레이션 발송 성공");
+            // 시뮬레이션 모드 (RestTemplate 사용 확인용)
+            log.info("🎭 카카오 알림톡 시뮬레이션 발송 성공 - RestTemplate 준비됨: {}", restTemplate != null);
             return true;
             
         } catch (Exception e) {

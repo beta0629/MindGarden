@@ -2787,7 +2787,7 @@ public class AdminServiceImpl implements AdminService {
             
             // 상담사별 휴가 통계
             List<Map<String, Object>> consultantStats = new ArrayList<>();
-            int totalVacationDays = 0;
+            double totalVacationDays = 0.0;
             
             for (User consultant : activeConsultants) {
                 Map<String, Object> consultantData = new HashMap<>();
@@ -2795,13 +2795,17 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("consultantName", consultant.getName());
                 consultantData.put("email", consultant.getEmail());
                 
-                // 해당 기간의 휴가 조회 (consultantAvailabilityService 사용)
-                int vacationCount = getConsultantVacationCount(consultant.getId(), startDate, endDate);
+                // 해당 기간의 휴가 조회 (가중치 적용)
+                double vacationCount = getConsultantVacationCount(consultant.getId(), startDate, endDate);
                 consultantData.put("vacationDays", vacationCount);
                 
-                // 휴가 유형별 분석 (예: 연차, 병가, 개인사정 등)
+                // 휴가 유형별 분석 (개수 기준)
                 Map<String, Integer> vacationByType = getVacationCountByType(consultant.getId(), startDate, endDate);
                 consultantData.put("vacationByType", vacationByType);
+                
+                // 휴가 유형별 일수 분석 (가중치 적용)
+                Map<String, Double> vacationDaysByType = getVacationDaysByType(consultant.getId(), startDate, endDate);
+                consultantData.put("vacationDaysByType", vacationDaysByType);
                 
                 // 최근 휴가 일자
                 LocalDate lastVacationDate = getLastVacationDate(consultant.getId());
@@ -2820,7 +2824,7 @@ public class AdminServiceImpl implements AdminService {
             
             // 휴가 많은 상담사 TOP 3
             List<Map<String, Object>> topVacationConsultants = consultantStats.stream()
-                .sorted((a, b) -> Integer.compare((Integer) b.get("vacationDays"), (Integer) a.get("vacationDays")))
+                .sorted((a, b) -> Double.compare((Double) b.get("vacationDays"), (Double) a.get("vacationDays")))
                 .limit(3)
                 .collect(Collectors.toList());
             
@@ -2868,9 +2872,9 @@ public class AdminServiceImpl implements AdminService {
     }
     
     /**
-     * 상담사의 특정 기간 휴가 개수 조회
+     * 상담사의 특정 기간 휴가 일수 조회 (가중치 적용)
      */
-    private int getConsultantVacationCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
+    private double getConsultantVacationCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
         try {
             // consultantAvailabilityService를 통해 실제 휴가 정보 조회
             List<Map<String, Object>> vacations = consultantAvailabilityService.getVacations(
@@ -2879,17 +2883,43 @@ public class AdminServiceImpl implements AdminService {
                 endDate.toString()
             );
             
-            // 승인된 휴가만 카운트
-            int count = (int) vacations.stream()
+            // 승인된 휴가만 가중치 적용하여 계산
+            double totalDays = vacations.stream()
                 .filter(vacation -> Boolean.TRUE.equals(vacation.get("isApproved")))
-                .count();
+                .mapToDouble(vacation -> getVacationWeight((String) vacation.get("type")))
+                .sum();
             
-            log.debug("상담사 {} 휴가 개수: {}일 ({}~{})", consultantId, count, startDate, endDate);
-            return count;
+            log.debug("상담사 {} 휴가 일수: {}일 ({}~{})", consultantId, totalDays, startDate, endDate);
+            return totalDays;
             
         } catch (Exception e) {
-            log.error("상담사 휴가 개수 조회 실패: consultantId={}", consultantId, e);
-            return 0;
+            log.error("상담사 휴가 일수 조회 실패: consultantId={}", consultantId, e);
+            return 0.0;
+        }
+    }
+    
+    /**
+     * 휴가 유형별 가중치 반환
+     */
+    private double getVacationWeight(String vacationType) {
+        if (vacationType == null) {
+            return 1.0; // 기본값: 종일
+        }
+        
+        switch (vacationType.toUpperCase()) {
+            case "QUARTER": // 반반차
+            case "QUARTER_DAY":
+                return 0.25;
+            case "HALF": // 반차  
+            case "HALF_DAY":
+            case "MORNING": // 오전 반차
+            case "AFTERNOON": // 오후 반차
+                return 0.5;
+            case "FULL": // 종일
+            case "FULL_DAY":
+            case "ALL_DAY":
+            default:
+                return 1.0;
         }
     }
     
@@ -2930,6 +2960,48 @@ public class AdminServiceImpl implements AdminService {
         }
         
         return vacationByType;
+    }
+    
+    /**
+     * 휴가 유형별 일수 조회 (가중치 적용)
+     */
+    private Map<String, Double> getVacationDaysByType(Long consultantId, LocalDate startDate, LocalDate endDate) {
+        Map<String, Double> vacationDaysByType = new HashMap<>();
+        
+        try {
+            // consultantAvailabilityService를 통해 실제 휴가 정보 조회
+            List<Map<String, Object>> vacations = consultantAvailabilityService.getVacations(
+                consultantId, 
+                startDate.toString(), 
+                endDate.toString()
+            );
+            
+            // 휴가 유형별로 그룹화하여 일수 계산 (가중치 적용)
+            for (Map<String, Object> vacation : vacations) {
+                if (Boolean.TRUE.equals(vacation.get("isApproved"))) {
+                    String typeName = (String) vacation.get("typeName");
+                    String type = (String) vacation.get("type");
+                    double weight = getVacationWeight(type);
+                    
+                    if (typeName != null) {
+                        vacationDaysByType.merge(typeName, weight, Double::sum);
+                    }
+                }
+            }
+            
+            // 기본 휴가 유형들이 없으면 0으로 설정
+            if (!vacationDaysByType.containsKey("연차")) vacationDaysByType.put("연차", 0.0);
+            if (!vacationDaysByType.containsKey("병가")) vacationDaysByType.put("병가", 0.0);
+            if (!vacationDaysByType.containsKey("개인사정")) vacationDaysByType.put("개인사정", 0.0);
+            
+        } catch (Exception e) {
+            log.error("휴가 유형별 일수 조회 실패: consultantId={}", consultantId, e);
+            vacationDaysByType.put("연차", 0.0);
+            vacationDaysByType.put("병가", 0.0);
+            vacationDaysByType.put("개인사정", 0.0);
+        }
+        
+        return vacationDaysByType;
     }
     
     /**

@@ -189,7 +189,11 @@ const VacationStatistics = ({ className = "" }) => {
                     </div>
                     <div className="card-content">
                         <h4>총 휴가일수</h4>
-                        <div className="card-value">{vacationStats.summary.totalVacationDays}일</div>
+                        <div className="card-value">
+                            {typeof vacationStats.summary.totalVacationDays === 'number' 
+                                ? vacationStats.summary.totalVacationDays.toFixed(1)
+                                : vacationStats.summary.totalVacationDays}일
+                        </div>
                     </div>
                 </div>
                 
@@ -219,19 +223,36 @@ const VacationStatistics = ({ className = "" }) => {
                                     <div className="consultant-email">{consultant.email}</div>
                                 </div>
                                 <div className="vacation-info">
-                                    <div className="vacation-days">
-                                        <span className="days-count">{consultant.vacationDays}</span>
-                                        <span className="days-label">일</span>
-                                    </div>
+                                <div className="vacation-days">
+                                    <span className="days-count">
+                                        {typeof consultant.vacationDays === 'number' 
+                                            ? consultant.vacationDays.toFixed(1)
+                                            : consultant.vacationDays}
+                                    </span>
+                                    <span className="days-label">일</span>
+                                </div>
                                     <div className="vacation-types">
-                                        {Object.entries(consultant.vacationByType).map(([type, count]) => (
+                                        {consultant.vacationDaysByType && Object.entries(consultant.vacationDaysByType).map(([type, days]) => (
+                                            days > 0 && (
+                                                <span 
+                                                    key={type}
+                                                    className="type-badge"
+                                                    style={{ backgroundColor: getVacationTypeColor(type) }}
+                                                    title={`${type}: ${days.toFixed(1)}일`}
+                                                >
+                                                    {type} {days.toFixed(1)}일
+                                                </span>
+                                            )
+                                        ))}
+                                        {/* 백업: 가중치 데이터가 없으면 개수로 표시 */}
+                                        {!consultant.vacationDaysByType && consultant.vacationByType && Object.entries(consultant.vacationByType).map(([type, count]) => (
                                             count > 0 && (
                                                 <span 
                                                     key={type}
                                                     className="type-badge"
                                                     style={{ backgroundColor: getVacationTypeColor(type) }}
                                                 >
-                                                    {type} {count}
+                                                    {type} {count}회
                                                 </span>
                                             )
                                         ))}
@@ -259,7 +280,11 @@ const VacationStatistics = ({ className = "" }) => {
                                     {index + 1}
                                 </div>
                                 <div className="consultant-name">{consultant.consultantName}</div>
-                                <div className="vacation-count">{consultant.vacationDays}일</div>
+                                <div className="vacation-count">
+                                    {typeof consultant.vacationDays === 'number' 
+                                        ? consultant.vacationDays.toFixed(1)
+                                        : consultant.vacationDays}일
+                                </div>
                             </div>
                         ))}
                     </div>

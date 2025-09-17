@@ -36,8 +36,7 @@ public class ConsultantAvailabilityServiceImpl implements ConsultantAvailability
     private final UserRepository userRepository;
     private final CommonCodeService commonCodeService;
     
-    // 휴무 정보를 메모리에 저장 (실제 프로덕션에서는 데이터베이스 사용 권장)
-    private final Map<String, Map<String, Object>> vacationStorage = new ConcurrentHashMap<>();
+    // 휴무 정보는 데이터베이스(vacationRepository)에 저장
     
     // 테스트용 휴무 데이터 초기화
     public void initializeTestVacationData() {

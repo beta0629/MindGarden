@@ -2872,10 +2872,21 @@ public class AdminServiceImpl implements AdminService {
      */
     private int getConsultantVacationCount(Long consultantId, LocalDate startDate, LocalDate endDate) {
         try {
-            // consultantAvailabilityService를 통해 휴가 정보 조회
-            // 실제 구현에서는 해당 서비스의 메서드를 사용
-            // 여기서는 mock 데이터로 대체
-            return (int) (Math.random() * 10); // 0-9일 랜덤 (실제로는 DB 조회)
+            // consultantAvailabilityService를 통해 실제 휴가 정보 조회
+            List<Map<String, Object>> vacations = consultantAvailabilityService.getVacations(
+                consultantId, 
+                startDate.toString(), 
+                endDate.toString()
+            );
+            
+            // 승인된 휴가만 카운트
+            int count = (int) vacations.stream()
+                .filter(vacation -> Boolean.TRUE.equals(vacation.get("isApproved")))
+                .count();
+            
+            log.debug("상담사 {} 휴가 개수: {}일 ({}~{})", consultantId, count, startDate, endDate);
+            return count;
+            
         } catch (Exception e) {
             log.error("상담사 휴가 개수 조회 실패: consultantId={}", consultantId, e);
             return 0;
@@ -2887,10 +2898,37 @@ public class AdminServiceImpl implements AdminService {
      */
     private Map<String, Integer> getVacationCountByType(Long consultantId, LocalDate startDate, LocalDate endDate) {
         Map<String, Integer> vacationByType = new HashMap<>();
-        // 실제 구현에서는 휴가 유형별로 DB 조회
-        vacationByType.put("연차", (int) (Math.random() * 5));
-        vacationByType.put("병가", (int) (Math.random() * 3));
-        vacationByType.put("개인사정", (int) (Math.random() * 2));
+        
+        try {
+            // consultantAvailabilityService를 통해 실제 휴가 정보 조회
+            List<Map<String, Object>> vacations = consultantAvailabilityService.getVacations(
+                consultantId, 
+                startDate.toString(), 
+                endDate.toString()
+            );
+            
+            // 휴가 유형별로 그룹화하여 카운트
+            for (Map<String, Object> vacation : vacations) {
+                if (Boolean.TRUE.equals(vacation.get("isApproved"))) {
+                    String typeName = (String) vacation.get("typeName");
+                    if (typeName != null) {
+                        vacationByType.merge(typeName, 1, Integer::sum);
+                    }
+                }
+            }
+            
+            // 기본 휴가 유형들이 없으면 0으로 설정
+            if (!vacationByType.containsKey("연차")) vacationByType.put("연차", 0);
+            if (!vacationByType.containsKey("병가")) vacationByType.put("병가", 0);
+            if (!vacationByType.containsKey("개인사정")) vacationByType.put("개인사정", 0);
+            
+        } catch (Exception e) {
+            log.error("휴가 유형별 개수 조회 실패: consultantId={}", consultantId, e);
+            vacationByType.put("연차", 0);
+            vacationByType.put("병가", 0);
+            vacationByType.put("개인사정", 0);
+        }
+        
         return vacationByType;
     }
     
@@ -2899,10 +2937,30 @@ public class AdminServiceImpl implements AdminService {
      */
     private LocalDate getLastVacationDate(Long consultantId) {
         try {
-            // 실제 구현에서는 해당 상담사의 최근 휴가 일자를 DB에서 조회
-            // 여기서는 mock 데이터로 대체
-            return LocalDate.now().minusDays((int) (Math.random() * 30));
+            // 전체 기간에서 최근 휴가 조회
+            List<Map<String, Object>> vacations = consultantAvailabilityService.getVacations(
+                consultantId, 
+                null, // 전체 기간
+                null
+            );
+            
+            // 승인된 휴가 중 가장 최근 날짜 찾기
+            return vacations.stream()
+                .filter(vacation -> Boolean.TRUE.equals(vacation.get("isApproved")))
+                .map(vacation -> {
+                    try {
+                        String dateStr = (String) vacation.get("date");
+                        return LocalDate.parse(dateStr);
+                    } catch (Exception e) {
+                        return null;
+                    }
+                })
+                .filter(date -> date != null)
+                .max(LocalDate::compareTo)
+                .orElse(null);
+                
         } catch (Exception e) {
+            log.error("최근 휴가 일자 조회 실패: consultantId={}", consultantId, e);
             return null;
         }
     }

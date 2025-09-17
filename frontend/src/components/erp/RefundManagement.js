@@ -102,7 +102,7 @@ const RefundManagement = () => {
                 <div style={{ marginBottom: '20px' }}>
                     <ErpButton
                         variant="secondary"
-                        onClick={() => navigate('/erp')}
+                        onClick={() => navigate('/erp/dashboard')}
                         icon={<FaArrowLeft />}
                     >
                         ERP 대시보드로 돌아가기

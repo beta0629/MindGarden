@@ -868,94 +868,83 @@ const TabletLogin = () => {
           <div
             style={{
               position: 'fixed',
-              top: '30%',
+              top: '35%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              backgroundColor: '#ffffff',
-              color: '#333',
-              padding: '28px 36px',
-              borderRadius: '20px',
-              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.2), 0 15px 30px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+              backgroundColor: '#fefefe',
+              color: '#4a4a4a',
+              padding: '32px 40px',
+              borderRadius: '12px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04)',
               zIndex: 10001,
               fontSize: '16px',
-              fontWeight: '500',
+              fontWeight: '400',
               fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
-              maxWidth: '450px',
-              minWidth: '320px',
+              maxWidth: '400px',
+              minWidth: '300px',
               textAlign: 'center',
               cursor: 'pointer',
-              border: 'none',
-              animation: 'loginNotificationSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              backdropFilter: 'blur(8px)',
-              background: `linear-gradient(135deg, #ffffff 0%, ${
-                tooltip.type === 'error' ? '#fef5f5' : 
-                tooltip.type === 'success' ? '#f0f9f0' : 
-                tooltip.type === 'warning' ? '#fffbf0' : '#f0f8ff'
-              } 100%)`
+              border: `1px solid ${
+                tooltip.type === 'error' ? '#f8d7da' : 
+                tooltip.type === 'success' ? '#d4edda' : 
+                tooltip.type === 'warning' ? '#fff3cd' : '#d1ecf1'
+              }`,
+              animation: 'loginNotificationSlideIn 0.6s ease-out',
+              background: `${
+                tooltip.type === 'error' ? '#fef9f9' : 
+                tooltip.type === 'success' ? '#f8fdf8' : 
+                tooltip.type === 'warning' ? '#fefef8' : '#f8fcfe'
+              }`
             }}
             onClick={() => setTooltip({ show: false, message: '', type: 'error' })}
           >
-            {/* 상단 장식 라인 */}
-            <div style={{
-              position: 'absolute',
-              top: '0',
-              left: '0',
-              right: '0',
-              height: '5px',
-              background: `linear-gradient(90deg, ${
-                tooltip.type === 'error' ? '#dc3545, #ff6b6b' : 
-                tooltip.type === 'success' ? '#28a745, #4caf50' : 
-                tooltip.type === 'warning' ? '#ffc107, #ffeb3b' : '#17a2b8, #2196f3'
-              })`,
-              borderRadius: '20px 20px 0 0'
-            }} />
             
             {/* 아이콘 */}
             <div style={{ 
               fontSize: '36px', 
-              marginBottom: '16px',
-              filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.15))',
-              animation: 'loginNotificationPulse 2s ease-in-out infinite'
+              marginBottom: '18px',
+              filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.05))'
             }}>
-              {tooltip.type === 'error' ? '🚫' : 
-               tooltip.type === 'success' ? '🎉' : 
-               tooltip.type === 'warning' ? '⚠️' : '💡'}
+              {tooltip.type === 'error' ? '🌸' : 
+               tooltip.type === 'success' ? '🌿' : 
+               tooltip.type === 'warning' ? '🌱' : '💙'}
             </div>
             
             {/* 제목 */}
             <div style={{ 
-              fontSize: '20px',
-              fontWeight: '700',
-              marginBottom: '8px',
-              color: tooltip.type === 'error' ? '#dc3545' : 
-                     tooltip.type === 'success' ? '#28a745' : 
-                     tooltip.type === 'warning' ? '#f57c00' : '#1976d2',
-              letterSpacing: '-0.5px'
+              fontSize: '18px',
+              fontWeight: '600',
+              marginBottom: '12px',
+              color: tooltip.type === 'error' ? '#8b5a5a' : 
+                     tooltip.type === 'success' ? '#5a8b5a' : 
+                     tooltip.type === 'warning' ? '#8b7a5a' : '#5a7a8b',
+              letterSpacing: '-0.3px'
             }}>
-              {tooltip.type === 'error' ? '로그인 실패' : 
-               tooltip.type === 'success' ? '로그인 성공' : 
-               tooltip.type === 'warning' ? '입력 확인' : '알림'}
+              {tooltip.type === 'error' ? '로그인 안내' : 
+               tooltip.type === 'success' ? '로그인 완료' : 
+               tooltip.type === 'warning' ? '입력 안내' : '안내'}
             </div>
             
             {/* 메시지 */}
             <div style={{ 
-              fontSize: '16px',
-              fontWeight: '500',
-              marginBottom: '16px',
-              color: '#555',
-              lineHeight: '1.5'
+              fontSize: '15px',
+              fontWeight: '400',
+              marginBottom: '20px',
+              color: '#666',
+              lineHeight: '1.6',
+              letterSpacing: '0.3px'
             }}>
               {tooltip.message}
             </div>
             
             {/* 닫기 안내 */}
             <div style={{ 
-              fontSize: '13px',
-              color: '#888',
-              fontWeight: '400',
-              opacity: 0.8
+              fontSize: '12px',
+              color: '#999',
+              fontWeight: '300',
+              opacity: 0.7
             }}>
-              화면을 클릭하여 닫기
+              터치하여 닫기
             </div>
           </div>
           
@@ -967,9 +956,9 @@ const TabletLogin = () => {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              backgroundColor: 'rgba(0, 0, 0, 0.15)',
               zIndex: 10000,
-              backdropFilter: 'blur(2px)'
+              backdropFilter: 'blur(1px)'
             }}
             onClick={() => setTooltip({ show: false, message: '', type: 'error' })}
           />

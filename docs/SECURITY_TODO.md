@@ -48,14 +48,15 @@
 ## ⚠️ **중간 우선순위** (1-2주 내 수정)
 
 ### **4. URL 하드코딩 제거**
-- [ ] **프론트엔드 URL 상수화**
-  - 모든 `http://localhost:8080` 하드코딩 제거
-  - `API_BASE_URL` 상수 사용
-  - 영향 파일들:
-    - `frontend/src/components/admin/VacationManagementModal.js`
-    - `frontend/src/components/admin/TodayStatistics.js`
-    - `frontend/src/components/schedule/TimeSlotGrid.js`
-    - `frontend/src/components/schedule/steps/ClientSelectionStep.js`
+- [x] **프론트엔드 URL 상수화**
+  - 모든 `http://localhost:8080` 하드코딩 제거 ✅
+  - `API_BASE_URL` 상수 사용 ✅
+  - 수정 완료된 파일들:
+    - `frontend/src/components/admin/VacationManagementModal.js` ✅
+    - `frontend/src/components/admin/TodayStatistics.js` ✅
+    - `frontend/src/components/schedule/TimeSlotGrid.js` ✅
+    - `frontend/src/components/schedule/steps/ClientSelectionStep.js` ✅
+    - `frontend/src/components/common/StatisticsModal.js` ✅
 
 - [ ] **백엔드 URL 상수화**
   - OAuth2 리다이렉트 URI 상수화

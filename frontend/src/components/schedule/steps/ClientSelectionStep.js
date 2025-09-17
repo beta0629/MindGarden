@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ClientSelector from '../ClientSelector';
 import MappingCreationModal from '../../admin/MappingCreationModal';
+import { API_BASE_URL } from '../../../constants/api';
 import './ClientSelectionStep.css';
 
 /**
@@ -41,7 +42,7 @@ const ClientSelectionStep = ({
             console.log('👤 내담자 목록 로드 시작 - 상담사:', selectedConsultant.name);
             
             // 선택된 상담사와 매핑된 내담자만 조회
-            const response = await fetch(`http://localhost:8080/api/admin/mappings/consultant/${selectedConsultant.originalId || selectedConsultant.id}/clients`, {
+            const response = await fetch(`${API_BASE_URL}/api/admin/mappings/consultant/${selectedConsultant.originalId || selectedConsultant.id}/clients`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

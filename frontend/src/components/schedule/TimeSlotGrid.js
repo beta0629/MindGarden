@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './TimeSlotGrid.css';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { API_BASE_URL } from '../../constants/api';
 import { 
   BUSINESS_HOURS, 
   TIME_SLOT_INTERVAL, 
@@ -60,7 +61,7 @@ const TimeSlotGrid = ({
      */
     const loadConsultantInfo = async () => {
         try {
-            const response = await fetch(`http://localhost:8080/api/v1/consultants/${consultantId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/v1/consultants/${consultantId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

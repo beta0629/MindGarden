@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaChartLine, FaSync } from 'react-icons/fa';
+import { API_BASE_URL } from '../../constants/api';
 import './TodayStatistics.css';
 
 /**
@@ -33,7 +34,7 @@ const TodayStatistics = ({ userRole, userId, onShowStatistics }) => {
         try {
             console.log('📊 오늘의 통계 로드 시작:', { userId, userRole });
             
-            const response = await fetch(`http://localhost:8080/api/schedules/today/statistics?userRole=${userRole}`, {
+            const response = await fetch(`${API_BASE_URL}/api/schedules/today/statistics?userRole=${userRole}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

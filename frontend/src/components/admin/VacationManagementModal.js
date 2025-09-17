@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
+import { API_BASE_URL } from '../../constants/api';
 import './VacationManagementModal.css';
 
 /**
@@ -113,7 +114,7 @@ const VacationManagementModal = ({
         console.log('🏖️ 활성 상담사 목록 로드 시작');
         try {
             // 활성 상담사만 조회하는 API 사용
-            const response = await fetch('http://localhost:8080/api/admin/consultants', {
+            const response = await fetch(`${API_BASE_URL}/api/admin/consultants`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -153,7 +154,7 @@ const VacationManagementModal = ({
         
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:8080/api/consultant/${consultantId}/vacation`, {
+            const response = await fetch(`${API_BASE_URL}/api/consultant/${consultantId}/vacation`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -275,7 +276,7 @@ const VacationManagementModal = ({
         });
 
         try {
-            const response = await fetch(`http://localhost:8080/api/consultant/${selectedConsultantId}/vacation`, {
+            const response = await fetch(`${API_BASE_URL}/api/consultant/${selectedConsultantId}/vacation`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -335,7 +336,7 @@ const VacationManagementModal = ({
 
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:8080/api/consultant/${selectedConsultantId}/vacation/${date}`, {
+            const response = await fetch(`${API_BASE_URL}/api/consultant/${selectedConsultantId}/vacation/${date}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

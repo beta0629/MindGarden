@@ -9,7 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { apiGet } from '../../utils/ajax';
-import { SCHEDULE_API } from '../../constants/api';
+import { SCHEDULE_API, API_BASE_URL } from '../../constants/api';
 import { STATS_LOADING_STATES, STATS_ERROR_MESSAGES } from '../../constants/stats';
 import StatisticsGrid from './StatisticsGrid';
 import './StatisticsModal.css';
@@ -81,7 +81,7 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
       console.log('🍪 현재 쿠키:', document.cookie);
       
       // 직접 fetch를 사용해서 더 자세한 로깅
-      const url = `http://localhost:8080${SCHEDULE_API.TODAY_STATISTICS}?userRole=${userRole}`;
+      const url = `${API_BASE_URL}${SCHEDULE_API.TODAY_STATISTICS}?userRole=${userRole}`;
       console.log('🔗 요청 URL:', url);
       
       const response = await fetch(url, {

@@ -176,6 +176,63 @@ tcpdump -i lo0 -A port 8080 | grep -E "(POST|GET|PUT|DELETE)"
 - [ ] 침투 테스트 수행
 - [ ] 보안 정책 업데이트
 
+## 📱 카카오 알림톡 보안 (NEW!)
+
+### 1. API 키 보안
+- **환경 변수 관리**: API 키를 환경 변수로 관리
+```yaml
+# application-prod.yml
+kakao:
+  alimtalk:
+    api-key: ${KAKAO_ALIMTALK_API_KEY:}  # 환경 변수 필수
+    sender-key: ${KAKAO_ALIMTALK_SENDER_KEY:}  # 환경 변수 필수
+```
+
+- **로그 보안**: API 키 노출 방지
+```java
+// API 키는 로그에 기록하지 않음
+log.info("카카오 알림톡 발송 시작: 수신자={}", maskPhoneNumber(phoneNumber));
+```
+
+### 2. 개인정보 보호
+- **전화번호 마스킹**: 로그에서 전화번호 마스킹 처리
+```java
+// 010-1234-5678 → 010****5678
+private String maskPhoneNumber(String phoneNumber)
+```
+
+- **암호화 연동**: 기존 개인정보 암호화 시스템 활용
+```java
+// 복호화된 전화번호는 메모리에 최소 시간만 보관
+String phoneNumber = encryptionUtil.decrypt(user.getPhone());
+```
+
+### 3. 템플릿 보안
+- **공통 코드 기반**: SQL 인젝션 방지
+- **파라미터 검증**: 템플릿 파라미터 유효성 검사
+- **길이 제한**: 메시지 내용 길이 제한
+
+### 4. 테스트 API 보안
+- **개발 환경 전용**: 프로덕션에서 비활성화 권장
+```yaml
+# application-prod.yml에서 테스트 API 비활성화
+management:
+  endpoints:
+    web:
+      exposure:
+        exclude: "*test*"
+```
+
+### 5. 시뮬레이션 모드 보안
+- **환경별 분리**: 로컬(시뮬레이션), 운영(실제)
+- **실수 방지**: 시뮬레이션 모드에서 실제 발송 불가
+- **로그 구분**: 시뮬레이션/실제 모드 명확히 구분
+
+### 6. 알림 발송 제한
+- **Rate Limiting**: 과도한 알림 발송 방지
+- **사용자 동의**: 알림 수신 동의 확인
+- **스팸 방지**: 동일 내용 중복 발송 방지
+
 ---
 
 **⚠️ 중요**: 이 가이드는 기본적인 보안 조치를 다룹니다. 실제 프로덕션 환경에서는 추가적인 보안 조치가 필요할 수 있습니다.

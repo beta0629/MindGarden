@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
  * 알림 테스트 컨트롤러
  * - 카카오 알림톡, SMS, 이메일 테스트
  * - 개발/테스트 환경에서만 사용
+ * - 프로덕션 환경에서는 비활성화 권장
  * 
  * @author MindGarden
  * @version 1.0.0

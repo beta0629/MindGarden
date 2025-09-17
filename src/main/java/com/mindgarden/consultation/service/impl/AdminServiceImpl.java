@@ -3077,14 +3077,17 @@ public class AdminServiceImpl implements AdminService {
     }
     
     /**
-     * 휴가 유형을 카테고리로 매핑
+     * 휴가 유형을 카테고리로 매핑 (한글명도 처리)
      */
     private String mapVacationTypeToCategory(String vacationType) {
         if (vacationType == null) {
             return "연차";
         }
         
-        switch (vacationType.toUpperCase()) {
+        String type = vacationType.toUpperCase();
+        
+        // 영문 코드 매핑
+        switch (type) {
             // 반반차
             case "MORNING_HALF_1":
             case "MORNING_HALF_2":
@@ -3106,8 +3109,21 @@ public class AdminServiceImpl implements AdminService {
             // 연차 (종일)
             case "ALL_DAY":
             case "FULL_DAY":
-            default:
                 return "연차";
         }
+        
+        // 한글명 매핑 (ConsultantAvailabilityServiceImpl에서 반환하는 한글명 처리)
+        if (vacationType.contains("반반차") || vacationType.contains("HALF_1") || vacationType.contains("HALF_2")) {
+            return "반반차";
+        } else if (vacationType.contains("반차") || vacationType.contains("오전") || vacationType.contains("오후")) {
+            return "반차";
+        } else if (vacationType.contains("개인") || vacationType.contains("사용자") || vacationType.contains("CUSTOM")) {
+            return "개인사정";
+        } else if (vacationType.contains("종일") || vacationType.contains("하루") || vacationType.contains("ALL") || vacationType.contains("FULL")) {
+            return "연차";
+        }
+        
+        // 기본값
+        return "연차";
     }
 }

@@ -39,6 +39,7 @@ public class ConsultantRatingController {
             Long clientId = Long.valueOf(request.get("clientId").toString());
             Integer heartScore = (Integer) request.get("heartScore");
             String comment = (String) request.get("comment");
+            @SuppressWarnings("unchecked")
             List<String> ratingTags = (List<String>) request.get("ratingTags");
             Boolean isAnonymous = (Boolean) request.get("isAnonymous");
 
@@ -72,6 +73,7 @@ public class ConsultantRatingController {
         try {
             Integer heartScore = (Integer) request.get("heartScore");
             String comment = (String) request.get("comment");
+            @SuppressWarnings("unchecked")
             List<String> ratingTags = (List<String>) request.get("ratingTags");
 
             ConsultantRating rating = ratingService.updateRating(ratingId, heartScore, comment, ratingTags);

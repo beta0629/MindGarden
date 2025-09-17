@@ -1,7 +1,6 @@
 package com.mindgarden.consultation.repository;
 
 import com.mindgarden.consultation.entity.ConsultantRating;
-import com.mindgarden.consultation.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -53,7 +53,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 .orElseThrow(() -> new RuntimeException("스케줄을 찾을 수 없습니다."));
 
             // 스케줄이 완료되었는지 확인
-            if (schedule.getStatus() != ScheduleStatus.COMPLETED) {
+            if (!ScheduleStatus.COMPLETED.name().equals(schedule.getStatus())) {
                 throw new RuntimeException("완료된 상담만 평가할 수 있습니다.");
             }
 
@@ -185,7 +185,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             log.info("💖 평가 가능한 스케줄 조회: 내담자={}", clientId);
 
             // 완료된 스케줄 중 아직 평가하지 않은 것들 조회
-            List<Schedule> completedSchedules = scheduleRepository.findByClientIdAndStatus(clientId, ScheduleStatus.COMPLETED);
+            List<Schedule> completedSchedules = scheduleRepository.findByClientIdAndStatus(clientId, ScheduleStatus.COMPLETED.name());
 
             List<Map<String, Object>> ratableSchedules = new ArrayList<>();
 
@@ -271,6 +271,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 // 태그 파싱
                 if (rating.getRatingTags() != null) {
                     try {
+                        @SuppressWarnings("unchecked")
                         List<String> tags = objectMapper.readValue(rating.getRatingTags(), List.class);
                         ratingInfo.put("tags", tags);
                     } catch (JsonProcessingException e) {
@@ -330,7 +331,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 rankingInfo.put("consultantName", consultant.getName());
                 rankingInfo.put("averageHeartScore", Math.round(avgScore * 10.0) / 10.0);
                 rankingInfo.put("totalRatingCount", totalCount);
-                rankingInfo.put("specialty", consultant.getSpecialty());
+                rankingInfo.put("specialty", "전문분야"); // TODO: User 엔티티에 specialty 필드 추가 필요
 
                 rankingList.add(rankingInfo);
             }
@@ -401,6 +402,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             for (ConsultantRating rating : ratings) {
                 if (rating.getRatingTags() != null) {
                     try {
+                        @SuppressWarnings("unchecked")
                         List<String> tags = objectMapper.readValue(rating.getRatingTags(), List.class);
                         for (String tag : tags) {
                             tagCount.put(tag, tagCount.getOrDefault(tag, 0L) + 1);
@@ -415,10 +417,12 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             List<Map<String, Object>> popularTags = tagCount.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .limit(10) // 상위 10개만
-                .map(entry -> Map.of(
-                    "tag", entry.getKey(),
-                    "count", entry.getValue()
-                ))
+                .map(entry -> {
+                    Map<String, Object> tagInfo = new HashMap<>();
+                    tagInfo.put("tag", entry.getKey());
+                    tagInfo.put("count", entry.getValue());
+                    return tagInfo;
+                })
                 .collect(Collectors.toList());
 
             log.info("✅ 인기 평가 태그 조회 완료: 상담사={}, 태그수={}", consultantId, popularTags.size());

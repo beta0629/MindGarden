@@ -759,9 +759,27 @@ const ClientComprehensiveManagement = () => {
                 });
             }
 
-            notificationManager.success(`${selectedMappings.length}개의 매핑이 환불 처리되었습니다.`);
+            notificationManager.success(`${selectedMappings.length}개의 매핑이 환불 처리되었습니다. 관련 스케줄도 자동으로 취소됩니다.`);
             handleCloseRefundModal();
-            loadAllData(); // 데이터 새로고침
+            
+            // 데이터 새로고침 및 스케줄 컴포넌트 알림
+            await loadAllData();
+            
+            // 백엔드 처리 완료를 위한 지연 후 추가 새로고침
+            setTimeout(async () => {
+                await loadAllData();
+                console.log('🔄 환불 처리 후 추가 데이터 새로고침 완료');
+            }, 1000);
+            
+            // 스케줄 컴포넌트에 환불 처리 완료 이벤트 발송
+            window.dispatchEvent(new CustomEvent('refundProcessed', {
+                detail: {
+                    clientId: refundClient.id,
+                    clientName: refundClient.name,
+                    mappingIds: selectedMappings,
+                    reason: refundReason
+                }
+            }));
 
         } catch (error) {
             console.error('환불 처리 실패:', error);

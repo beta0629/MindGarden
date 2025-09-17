@@ -850,8 +850,8 @@ const UnifiedScheduleComponent = ({
                 <LoadingSpinner 
                     text="스케줄을 불러오는 중..." 
                     size="large" 
-                    variant="pulse"
-                    className="loading-spinner-fullscreen"
+                    variant="default"
+                    fullscreen={true}
                 />
             )}
 

@@ -43,17 +43,17 @@ export const PageLoading = ({ text = "페이지를 불러오는 중..." }) => (
     </div>
 );
 
-// 작은 로딩 (버튼 내부용)
+// 작은 로딩 (버튼 내부용, 스케줄 스타일)
 export const ButtonLoading = ({ text = "처리 중..." }) => (
     <LoadingSpinner 
         text={text}
         size="small"
-        variant="dots"
+        variant="default"
         showText={false}
     />
 );
 
-// 데이터 로딩 (테이블/리스트용)
+// 데이터 로딩 (테이블/리스트용, 스케줄 스타일)
 export const DataLoading = ({ text = "데이터를 불러오는 중..." }) => (
     <div style={{ 
         display: 'flex', 
@@ -65,17 +65,17 @@ export const DataLoading = ({ text = "데이터를 불러오는 중..." }) => (
         <LoadingSpinner 
             text={text}
             size="medium"
-            variant="pulse"
+            variant="default"
             inline={true}
         />
     </div>
 );
 
-// 기본 로딩 (일반적인 용도)
+// 기본 로딩 (일반적인 용도, 스케줄 스타일)
 const CommonLoading = ({ 
     text = "로딩 중...", 
     size = "medium", 
-    variant = "pulse",
+    variant = "default",
     type = "inline" // fullscreen, page, inline, data, button
 }) => {
     switch (type) {

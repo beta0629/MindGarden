@@ -8,7 +8,7 @@
   padding: 20px;
 }
 
-/* 기본 로딩 스피너 아이콘 - 스케줄 스타일 적용 */
+/* 기본 로딩 스피너 아이콘 - 스케줄 정확한 스타일 적용 */
 .loading-spinner-icon {
   position: relative;
   border-radius: 50%;
@@ -16,14 +16,15 @@
   border-top: 4px solid #3b82f6;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
+  flex-shrink: 0; /* 크기 고정 */
 }
 
-/* 로딩 스피너 내부 - 사용하지 않음 (스케줄 스타일 적용) */
+/* 로딩 스피너 내부 - 사용하지 않음 */
 .loading-spinner-inner {
   display: none;
 }
 
-/* 크기별 스타일 - 스케줄 스타일 적용 */
+/* 크기별 스타일 - 스케줄 정확한 크기 적용 */
 .loading-spinner-small {
   width: 32px;
   height: 32px;
@@ -31,12 +32,12 @@
 
 .loading-spinner-medium {
   width: 60px;
-  height: 60px;
+  height: 40px; /* 스케줄과 정확히 동일한 크기 */
 }
 
 .loading-spinner-large {
-  width: 80px;
-  height: 80px;
+  width: 60px; /* 스케줄과 정확히 동일한 크기 */
+  height: 40px;
 }
 
 /* ==================== 도트 로딩 ==================== */
@@ -142,18 +143,20 @@
 .loading-bars .bar:nth-child(3) { animation-delay: -0.9s; }
 .loading-bars .bar:nth-child(4) { animation-delay: -0.8s; }
 
-/* 로딩 텍스트 - 스케줄 스타일 적용 */
+/* 로딩 텍스트 - 스케줄 정확한 스타일 (텍스트 회전 방지) */
 .loading-spinner-text {
   font-size: 16px;
   color: #6b7280;
   font-weight: 500;
   margin: 0;
   margin-top: 16px;
-  position: relative;
+  position: static; /* 텍스트 회전 방지 */
   z-index: 1;
   text-align: center;
   line-height: 1.5;
   font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  transform: none !important; /* 텍스트 변형 강제 방지 */
+  animation: none !important; /* 텍스트 애니메이션 강제 방지 */
 }
 
 /* ==================== 애니메이션 ==================== */
@@ -224,7 +227,7 @@
   justify-content: center;
 }
 
-/* 컨테이너 내 로딩 - 스케줄 스타일 적용 */
+/* 컨테이너 내 로딩 - 스케줄 정확한 스타일 적용 */
 .loading-spinner-inline {
   display: flex;
   flex-direction: column;
@@ -236,6 +239,7 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   min-width: 200px;
   font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  text-align: center; /* 텍스트 중앙 정렬 보장 */
 }
 
 /* 반응형 - 개선된 모바일 지원 */
@@ -245,13 +249,13 @@
   }
   
   .loading-spinner-medium {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 32px; /* 스케줄 스타일 비율 유지 */
   }
   
   .loading-spinner-large {
-    width: 56px;
-    height: 56px;
+    width: 50px;
+    height: 32px; /* 스케줄 스타일 비율 유지 */
   }
   
   .loading-spinner-text {
@@ -288,8 +292,8 @@
   }
   
   .loading-spinner-medium {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 28px; /* 스케줄 스타일 비율 유지 */
   }
   
   .loading-spinner-text {

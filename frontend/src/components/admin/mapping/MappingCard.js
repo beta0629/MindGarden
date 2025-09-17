@@ -24,7 +24,8 @@ const MappingCard = ({
     onEdit, 
     onView,
     onTransfer,
-    onViewTransferHistory
+    onViewTransferHistory,
+    onRefund
 }) => {
     // 상태별 색상 (props에서 받은 데이터 사용)
     const getStatusColor = (status) => {
@@ -445,6 +446,35 @@ const MappingCard = ({
                         >
                             <i className="bi bi-arrow-left-right"></i> 상담사 변경
                         </button>
+                        {mapping.remainingSessions > 0 && (
+                            <button 
+                                style={{
+                                    padding: '4px 8px',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    fontSize: '11px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    backgroundColor: '#dc3545',
+                                    color: 'white'
+                                }}
+                                onClick={() => onRefund?.(mapping)}
+                                onMouseEnter={(e) => {
+                                    e.target.style.backgroundColor = '#c82333';
+                                    e.target.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.backgroundColor = '#dc3545';
+                                    e.target.style.transform = 'translateY(0)';
+                                }}
+                            >
+                                <i className="bi bi-cash-coin"></i> 환불 처리
+                            </button>
+                        )}
                     </>
                 )}
                 <button 

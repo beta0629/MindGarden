@@ -41,6 +41,11 @@ const MappingManagement = () => {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [pendingMappings, setPendingMappings] = useState([]);
     const [mappingStatusInfo, setMappingStatusInfo] = useState({});
+    
+    // 환불 처리 관련 상태
+    const [showRefundModal, setShowRefundModal] = useState(false);
+    const [refundMapping, setRefundMapping] = useState(null);
+    const [refundReason, setRefundReason] = useState('');
 
     // 데이터 로드
     useEffect(() => {
@@ -296,6 +301,81 @@ const MappingManagement = () => {
         setSelectedClientId(null);
     };
 
+    // 환불 처리 핸들러
+    const handleRefundMapping = (mapping) => {
+        // ACTIVE 상태이고 남은 회기가 있는 매핑만 환불 가능
+        if (mapping.status !== 'ACTIVE') {
+            notificationManager.warning('활성 상태의 매핑만 환불 처리할 수 있습니다.');
+            return;
+        }
+        
+        if (mapping.remainingSessions <= 0) {
+            notificationManager.warning('남은 회기가 없는 매핑은 환불 처리할 수 없습니다.');
+            return;
+        }
+        
+        setRefundMapping(mapping);
+        setRefundReason('');
+        setShowRefundModal(true);
+    };
+
+    // 환불 모달 닫기
+    const handleCloseRefundModal = () => {
+        setShowRefundModal(false);
+        setRefundMapping(null);
+        setRefundReason('');
+    };
+
+    // 환불 처리 실행
+    const handleRefundProcess = async () => {
+        if (!refundReason.trim()) {
+            notificationManager.warning('⚠️ 환불 사유를 반드시 입력해주세요.');
+            return;
+        }
+
+        if (refundReason.trim().length < 5) {
+            notificationManager.warning('⚠️ 환불 사유를 5자 이상 상세히 입력해주세요.');
+            return;
+        }
+
+        const confirmMessage = `${refundMapping.clientName}과의 매핑을 환불 처리하시겠습니까?\n\n환불 회기: ${refundMapping.remainingSessions}회\n환불 사유: ${refundReason.trim()}\n\n이 작업은 되돌릴 수 없습니다.`;
+        if (!window.confirm(confirmMessage)) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const response = await apiPost(`/api/admin/mappings/${refundMapping.id}/terminate`, {
+                reason: refundReason.trim()
+            });
+
+            if (response.success) {
+                notificationManager.success('매핑이 환불 처리되었습니다. 관련 스케줄도 자동으로 취소됩니다.');
+                handleCloseRefundModal();
+                loadMappings(); // 데이터 새로고침
+                
+                // 스케줄 컴포넌트에 환불 처리 완료 이벤트 발송
+                window.dispatchEvent(new CustomEvent('refundProcessed', {
+                    detail: {
+                        mappingId: refundMapping.id,
+                        clientName: refundMapping.clientName,
+                        consultantName: refundMapping.consultantName,
+                        reason: refundReason.trim()
+                    }
+                }));
+            } else {
+                notificationManager.error(response.message || '환불 처리에 실패했습니다.');
+            }
+
+        } catch (error) {
+            console.error('환불 처리 실패:', error);
+            notificationManager.error('환불 처리에 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // 필터 핸들러들
     const handleStatusChange = (status) => {
         setFilterStatus(status);
@@ -442,6 +522,7 @@ const MappingManagement = () => {
                                 }}
                                 onTransfer={handleTransferConsultant}
                                 onViewTransferHistory={handleViewTransferHistory}
+                                onRefund={handleRefundMapping}
                             />
                         ))}
                     </div>
@@ -477,6 +558,189 @@ const MappingManagement = () => {
                 mappings={pendingMappings}
                 onPaymentConfirmed={handlePaymentConfirmed}
             />
+
+            {/* 환불 처리 모달 */}
+            {showRefundModal && refundMapping && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '16px',
+                        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+                        maxWidth: '500px',
+                        width: '90%',
+                        maxHeight: '80vh',
+                        overflow: 'auto'
+                    }}>
+                        {/* 모달 헤더 */}
+                        <div style={{
+                            padding: '20px 24px',
+                            borderBottom: '1px solid #e9ecef',
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: '16px 16px 0 0'
+                        }}>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between'
+                            }}>
+                                <h3 style={{
+                                    margin: 0,
+                                    fontSize: '18px',
+                                    fontWeight: '600',
+                                    color: '#343a40'
+                                }}>
+                                    🔄 매핑 환불 처리
+                                </h3>
+                                <button
+                                    onClick={handleCloseRefundModal}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        fontSize: '24px',
+                                        cursor: 'pointer',
+                                        color: '#6c757d',
+                                        padding: '0',
+                                        width: '30px',
+                                        height: '30px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 모달 내용 */}
+                        <div style={{
+                            padding: '24px',
+                            maxHeight: '60vh',
+                            overflowY: 'auto'
+                        }}>
+                            {/* 매핑 정보 */}
+                            <div style={{
+                                backgroundColor: '#f8f9fa',
+                                padding: '16px',
+                                borderRadius: '8px',
+                                marginBottom: '20px'
+                            }}>
+                                <h4 style={{
+                                    margin: '0 0 12px 0',
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    color: '#343a40'
+                                }}>
+                                    환불 대상 매핑 정보
+                                </h4>
+                                <div style={{ fontSize: '14px', color: '#6c757d', lineHeight: '1.5' }}>
+                                    <p><strong>상담사:</strong> {refundMapping.consultantName}</p>
+                                    <p><strong>내담자:</strong> {refundMapping.clientName}</p>
+                                    <p><strong>패키지:</strong> {refundMapping.packageName}</p>
+                                    <p><strong>총 회기:</strong> {refundMapping.totalSessions}회</p>
+                                    <p><strong>사용 회기:</strong> {refundMapping.usedSessions}회</p>
+                                    <p style={{ color: '#dc3545', fontWeight: '600' }}>
+                                        <strong>환불 회기:</strong> {refundMapping.remainingSessions}회
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* 환불 사유 입력 */}
+                            <div>
+                                <h4 style={{
+                                    margin: '0 0 12px 0',
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    color: '#343a40'
+                                }}>
+                                    환불 사유 <span style={{ color: '#dc3545' }}>*</span>
+                                </h4>
+                                <textarea
+                                    value={refundReason}
+                                    onChange={(e) => setRefundReason(e.target.value)}
+                                    placeholder="환불 사유를 상세히 입력해주세요..."
+                                    rows={4}
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: `2px solid ${!refundReason.trim() ? '#dc3545' : '#e9ecef'}`,
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        fontFamily: 'inherit',
+                                        resize: 'vertical',
+                                        minHeight: '80px'
+                                    }}
+                                />
+                                {!refundReason.trim() && (
+                                    <div style={{
+                                        color: '#dc3545',
+                                        fontSize: '12px',
+                                        marginTop: '4px',
+                                        fontWeight: '500'
+                                    }}>
+                                        ⚠️ 환불 사유를 반드시 입력해주세요.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 모달 푸터 */}
+                        <div style={{
+                            padding: '20px 24px',
+                            borderTop: '1px solid #e9ecef',
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: '12px'
+                        }}>
+                            <button
+                                onClick={handleCloseRefundModal}
+                                disabled={loading}
+                                style={{
+                                    padding: '12px 24px',
+                                    backgroundColor: 'white',
+                                    border: '2px solid #6c757d',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    color: '#6c757d',
+                                    cursor: loading ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleRefundProcess}
+                                disabled={loading}
+                                style={{
+                                    padding: '12px 24px',
+                                    backgroundColor: !refundReason.trim() ? '#6c757d' : '#dc3545',
+                                    border: `2px solid ${!refundReason.trim() ? '#6c757d' : '#dc3545'}`,
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    color: 'white',
+                                    cursor: loading ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                {loading ? '처리 중...' : '환불 처리'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             </div>
         </SimpleLayout>
     );

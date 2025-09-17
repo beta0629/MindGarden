@@ -2782,8 +2782,11 @@ public class AdminServiceImpl implements AdminService {
             LocalDate startDate = getVacationPeriodStartDate(period);
             LocalDate endDate = LocalDate.now();
             
+            log.info("📅 휴가 통계 조회 기간: {} ~ {} (period={})", startDate, endDate, period);
+            
             // 활성 상담사 목록 조회
             List<User> activeConsultants = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
+            log.info("👥 활성 상담사 수: {}명", activeConsultants.size());
             
             // 상담사별 휴가 통계
             List<Map<String, Object>> consultantStats = new ArrayList<>();

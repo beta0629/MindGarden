@@ -1,0 +1,294 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { FaCalendarAlt, FaUserTie, FaChartBar, FaClock } from 'react-icons/fa';
+import LoadingSpinner from '../common/LoadingSpinner';
+import './VacationStatistics.css';
+
+/**
+ * 휴가 통계 컴포넌트
+ * - 상담사별 휴가 사용 현황
+ * - 휴가 유형별 통계
+ * - 최근 휴가 동향
+ * 
+ * @author MindGarden
+ * @version 1.0.0
+ * @since 2025-09-17
+ */
+const VacationStatistics = ({ className = "" }) => {
+    const [vacationStats, setVacationStats] = useState({
+        summary: {
+            totalConsultants: 0,
+            totalVacationDays: 0,
+            averageVacationDays: 0
+        },
+        consultantStats: [],
+        topVacationConsultants: [],
+        vacationTrend: []
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [selectedPeriod, setSelectedPeriod] = useState('month');
+
+    /**
+     * 휴가 통계 데이터 로드
+     */
+    const loadVacationStats = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Mock 데이터 - 실제로는 API 호출
+            const mockData = {
+                summary: {
+                    totalConsultants: 15,
+                    totalVacationDays: 45,
+                    averageVacationDays: 3.0
+                },
+                consultantStats: [
+                    {
+                        consultantId: 1,
+                        consultantName: "김상담",
+                        email: "kim@mindgarden.com",
+                        vacationDays: 8,
+                        vacationByType: { "연차": 5, "병가": 2, "개인사정": 1 },
+                        lastVacationDate: "2025-09-10"
+                    },
+                    {
+                        consultantId: 2,
+                        consultantName: "이상담",
+                        email: "lee@mindgarden.com",
+                        vacationDays: 6,
+                        vacationByType: { "연차": 4, "병가": 1, "개인사정": 1 },
+                        lastVacationDate: "2025-09-15"
+                    },
+                    {
+                        consultantId: 3,
+                        consultantName: "박상담",
+                        email: "park@mindgarden.com",
+                        vacationDays: 4,
+                        vacationByType: { "연차": 3, "병가": 0, "개인사정": 1 },
+                        lastVacationDate: "2025-09-08"
+                    },
+                    {
+                        consultantId: 4,
+                        consultantName: "최상담",
+                        email: "choi@mindgarden.com",
+                        vacationDays: 7,
+                        vacationByType: { "연차": 4, "병가": 2, "개인사정": 1 },
+                        lastVacationDate: "2025-09-12"
+                    },
+                    {
+                        consultantId: 5,
+                        consultantName: "정상담",
+                        email: "jung@mindgarden.com",
+                        vacationDays: 3,
+                        vacationByType: { "연차": 2, "병가": 1, "개인사정": 0 },
+                        lastVacationDate: "2025-09-05"
+                    }
+                ],
+                topVacationConsultants: [
+                    { consultantName: "김상담", vacationDays: 8 },
+                    { consultantName: "최상담", vacationDays: 7 },
+                    { consultantName: "이상담", vacationDays: 6 }
+                ],
+                vacationTrend: [
+                    { week: "1주차", count: 12 },
+                    { week: "2주차", count: 8 },
+                    { week: "3주차", count: 15 },
+                    { week: "4주차", count: 10 }
+                ]
+            };
+
+            setVacationStats(mockData);
+
+        } catch (err) {
+            console.error('휴가 통계 로드 실패:', err);
+            setError('휴가 통계를 불러오는데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    }, [selectedPeriod]);
+
+    useEffect(() => {
+        loadVacationStats();
+    }, [loadVacationStats]);
+
+    /**
+     * 기간 변경 핸들러
+     */
+    const handlePeriodChange = (period) => {
+        setSelectedPeriod(period);
+    };
+
+    /**
+     * 날짜 포맷팅
+     */
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ko-KR');
+    };
+
+    /**
+     * 휴가 유형별 색상
+     */
+    const getVacationTypeColor = (type) => {
+        const colors = {
+            '연차': '#28a745',
+            '병가': '#dc3545',
+            '개인사정': '#ffc107'
+        };
+        return colors[type] || '#6c757d';
+    };
+
+    if (loading) {
+        return (
+            <div className={`vacation-statistics ${className}`}>
+                <LoadingSpinner 
+                    text="휴가 통계를 불러오는 중..." 
+                    size="medium"
+                    inline={true}
+                />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className={`vacation-statistics ${className}`}>
+                <div className="vacation-error">
+                    <FaCalendarAlt className="error-icon" />
+                    <p>{error}</p>
+                    <button 
+                        className="retry-button"
+                        onClick={loadVacationStats}
+                    >
+                        다시 시도
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className={`vacation-statistics ${className}`}>
+            {/* 헤더 */}
+            <div className="vacation-header">
+                <div className="header-title">
+                    <FaCalendarAlt className="title-icon" />
+                    <h3>휴가 현황</h3>
+                </div>
+                <div className="period-selector">
+                    {['week', 'month', 'quarter', 'year'].map(period => (
+                        <button
+                            key={period}
+                            className={`period-button ${selectedPeriod === period ? 'active' : ''}`}
+                            onClick={() => handlePeriodChange(period)}
+                        >
+                            {period === 'week' && '1주일'}
+                            {period === 'month' && '1개월'}
+                            {period === 'quarter' && '3개월'}
+                            {period === 'year' && '1년'}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* 요약 통계 */}
+            <div className="vacation-summary">
+                <div className="summary-card">
+                    <div className="card-icon consultant-icon">
+                        <FaUserTie />
+                    </div>
+                    <div className="card-content">
+                        <h4>전체 상담사</h4>
+                        <div className="card-value">{vacationStats.summary.totalConsultants}명</div>
+                    </div>
+                </div>
+                
+                <div className="summary-card">
+                    <div className="card-icon vacation-icon">
+                        <FaCalendarAlt />
+                    </div>
+                    <div className="card-content">
+                        <h4>총 휴가일수</h4>
+                        <div className="card-value">{vacationStats.summary.totalVacationDays}일</div>
+                    </div>
+                </div>
+                
+                <div className="summary-card">
+                    <div className="card-icon average-icon">
+                        <FaChartBar />
+                    </div>
+                    <div className="card-content">
+                        <h4>평균 휴가일수</h4>
+                        <div className="card-value">{vacationStats.summary.averageVacationDays.toFixed(1)}일</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 상담사별 휴가 현황 */}
+            <div className="vacation-details">
+                <div className="details-section">
+                    <h4 className="section-title">
+                        <FaUserTie className="section-icon" />
+                        상담사별 휴가 현황
+                    </h4>
+                    <div className="consultant-list">
+                        {vacationStats.consultantStats.map(consultant => (
+                            <div key={consultant.consultantId} className="consultant-item">
+                                <div className="consultant-info">
+                                    <div className="consultant-name">{consultant.consultantName}</div>
+                                    <div className="consultant-email">{consultant.email}</div>
+                                </div>
+                                <div className="vacation-info">
+                                    <div className="vacation-days">
+                                        <span className="days-count">{consultant.vacationDays}</span>
+                                        <span className="days-label">일</span>
+                                    </div>
+                                    <div className="vacation-types">
+                                        {Object.entries(consultant.vacationByType).map(([type, count]) => (
+                                            count > 0 && (
+                                                <span 
+                                                    key={type}
+                                                    className="type-badge"
+                                                    style={{ backgroundColor: getVacationTypeColor(type) }}
+                                                >
+                                                    {type} {count}
+                                                </span>
+                                            )
+                                        ))}
+                                    </div>
+                                    <div className="last-vacation">
+                                        <FaClock className="clock-icon" />
+                                        <span>최근: {formatDate(consultant.lastVacationDate)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 휴가 많은 상담사 TOP 3 */}
+                <div className="top-vacation-section">
+                    <h4 className="section-title">
+                        <FaChartBar className="section-icon" />
+                        휴가 사용 TOP 3
+                    </h4>
+                    <div className="top-list">
+                        {vacationStats.topVacationConsultants.map((consultant, index) => (
+                            <div key={index} className="top-item">
+                                <div className="rank-badge">
+                                    {index + 1}
+                                </div>
+                                <div className="consultant-name">{consultant.consultantName}</div>
+                                <div className="vacation-count">{consultant.vacationDays}일</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default VacationStatistics;

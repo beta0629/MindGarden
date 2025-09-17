@@ -133,6 +133,13 @@ public interface AdminService {
      * ERP 동기화 상태 확인
      */
     Map<String, Object> getErpSyncStatus();
+    
+    // ==================== 휴가 통계 ====================
+    
+    /**
+     * 상담사별 휴가 통계 조회
+     */
+    Map<String, Object> getConsultantVacationStats(String period);
 
     // ==================== 입금 승인 시스템 ====================
 

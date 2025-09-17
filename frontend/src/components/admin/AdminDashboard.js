@@ -9,6 +9,7 @@ import SystemStatus from './system/SystemStatus';
 import SystemTools from './system/SystemTools';
 import StatisticsModal from '../common/StatisticsModal';
 import ConsultationCompletionStats from './ConsultationCompletionStats';
+import VacationStatistics from './VacationStatistics';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
 import './AdminDashboard.css';
@@ -426,6 +427,9 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                 </div>
+
+                {/* 휴가 통계 섹션 */}
+                <VacationStatistics />
 
                 {/* 환불 통계 섹션 */}
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>

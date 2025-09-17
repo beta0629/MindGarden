@@ -6,7 +6,9 @@ const LoadingSpinner = ({
   size = "medium",
   showText = true,
   className = "",
-  variant = "default" // default, dots, pulse, bars
+  variant = "pulse", // default, dots, pulse, bars
+  fullscreen = false,
+  inline = false
 }) => {
   const renderSpinner = () => {
     switch (variant) {
@@ -42,11 +44,22 @@ const LoadingSpinner = ({
     }
   };
 
+  // 컨테이너 클래스 결정
+  let containerClass = `loading-spinner-container ${className}`;
+  
+  if (fullscreen) {
+    containerClass += ' loading-spinner-fullscreen';
+  } else if (inline) {
+    containerClass += ' loading-spinner-inline';
+  }
+
   return (
-    <div className={`loading-spinner-container ${className}`}>
+    <div className={containerClass}>
       {renderSpinner()}
       {showText && (
-        <div className="loading-spinner-text">
+        <div className="loading-spinner-text" style={{
+          fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
+        }}>
           {text}
         </div>
       )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './TimeSlotGrid.css';
+import LoadingSpinner from '../common/LoadingSpinner';
 import { 
   BUSINESS_HOURS, 
   TIME_SLOT_INTERVAL, 
@@ -660,15 +661,12 @@ const TimeSlotGrid = ({
                     alignItems: 'center', 
                     minHeight: '200px' 
                 }}>
-                    <div style={{ 
-                        padding: '20px 40px', 
-                        background: '#fff', 
-                        borderRadius: '8px', 
-                        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)', 
-                        fontSize: '16px', 
-                        color: '#495057', 
-                        textAlign: 'center' 
-                    }}>시간 로딩 중...</div>
+                    <LoadingSpinner 
+                        text="시간 로딩 중..." 
+                        size="medium" 
+                        variant="pulse"
+                        className="loading-spinner-inline"
+                    />
                 </div>
             </div>
         );

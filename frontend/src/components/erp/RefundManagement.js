@@ -86,7 +86,11 @@ const RefundManagement = () => {
     };
 
     return (
-        <SimpleLayout>
+        <SimpleLayout 
+            loading={loading}
+            loadingText="환불 데이터를 불러오는 중..."
+            loadingVariant="pulse"
+        >
             <div className="erp-system" style={{ 
                 padding: '20px',
                 paddingLeft: '40px',
@@ -108,8 +112,6 @@ const RefundManagement = () => {
                         ERP 대시보드로 돌아가기
                     </ErpButton>
                 </div>
-
-                {loading && <LoadingSpinner />}
 
                 {/* 환불 통계 카드 */}
                 <RefundStatsCards 

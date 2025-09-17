@@ -107,12 +107,13 @@ const VacationManagementModal = ({
     }, []);
 
     /**
-     * 상담사 목록 로드
+     * 상담사 목록 로드 (활성 상담사만)
      */
     const loadConsultants = async () => {
-        console.log('🏖️ 상담사 목록 로드 시작');
+        console.log('🏖️ 활성 상담사 목록 로드 시작');
         try {
-            const response = await fetch('http://localhost:8080/api/users', {
+            // 활성 상담사만 조회하는 API 사용
+            const response = await fetch('http://localhost:8080/api/admin/consultants', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -120,33 +121,26 @@ const VacationManagementModal = ({
                 credentials: 'include'
             });
 
-            console.log('🏖️ 상담사 API 응답:', response.status);
+            console.log('🏖️ 활성 상담사 API 응답:', response.status);
             
             if (response.ok) {
                 const result = await response.json();
-                console.log('🏖️ 상담사 API 결과:', result);
+                console.log('🏖️ 활성 상담사 API 결과:', result);
                 
-                // API 응답이 배열 형태로 직접 반환됨
-                if (Array.isArray(result)) {
-                    // 상담사만 필터링 (role이 CONSULTANT인 사용자)
-                    const consultantList = result.filter(user => user.role === 'CONSULTANT');
-                    console.log('🏖️ 필터링된 상담사 목록:', consultantList);
-                    setConsultants(consultantList);
-                } else if (result.success && result.data) {
-                    // 기존 구조도 지원
-                    const consultantList = result.data.filter(user => user.role === 'CONSULTANT');
-                    console.log('🏖️ 필터링된 상담사 목록:', consultantList);
-                    setConsultants(consultantList);
+                if (result.success && result.data) {
+                    // 이미 활성 상담사만 반환되므로 추가 필터링 불필요
+                    console.log('🏖️ 활성 상담사 목록:', result.data);
+                    setConsultants(result.data);
                 } else {
-                    console.log('🏖️ 상담사 데이터 없음');
+                    console.log('🏖️ 활성 상담사 데이터 없음');
                     setConsultants([]);
                 }
             } else {
-                console.log('🏖️ 상담사 API 실패:', response.status);
+                console.log('🏖️ 활성 상담사 API 실패:', response.status);
                 setConsultants([]);
             }
         } catch (error) {
-            console.error('🏖️ 상담사 목록 로드 실패:', error);
+            console.error('🏖️ 활성 상담사 목록 로드 실패:', error);
             setConsultants([]);
         }
     };

@@ -2,9 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2025-09-17] - 매핑 관리 환불 처리 및 데이터 정합성 개선
+## [2025-09-17] - 카카오 알림톡 시스템 구현 및 매핑 관리 개선
 
 ### ✨ 새로운 기능
+- **카카오 알림톡 시스템 구현**
+  - KakaoAlimTalkService 및 NotificationService 구현
+  - 공통 코드 기반 템플릿 관리 (ALIMTALK_TEMPLATE)
+  - 시뮬레이션 모드 지원으로 키 없이도 개발/테스트 가능
+  - 환경별 설정 분리 (로컬: 시뮬레이션, 운영: 실제 API)
+
+- **통합 알림 시스템 구현**
+  - 우선순위별 알림 발송 (HIGH: 알림톡→SMS, MEDIUM: SMS→알림톡)
+  - 사용자별 알림 설정 지원 (카카오 로그인 사용자 자동 감지)
+  - 대체 발송 시스템 (알림톡 실패 시 SMS, SMS 실패 시 이메일)
+  - 환불 처리 시 자동 알림 발송 연동
+
+- **알림톡 테스트 API 구현**
+  - GET /api/test/notification/alimtalk/status: 서비스 상태 확인
+  - POST /api/test/notification/refund-completed: 환불 완료 알림 테스트
+  - POST /api/test/notification/consultation-confirmed: 상담 확정 알림 테스트
+  - POST /api/test/notification/all-methods: 모든 알림 방식 통합 테스트
+
 - **매핑 관리 직접 환불 처리**
   - 매핑 카드에서 개별 환불 처리 버튼 추가
   - 활성 매핑(ACTIVE)이고 남은 회기가 있는 경우에만 환불 가능
@@ -29,6 +47,12 @@ All notable changes to this project will be documented in this file.
   - 상세한 로깅으로 환불 과정 추적 가능
 
 ### 🛠️ 기술적 개선
+- **공통 코드 기반 알림 시스템**
+  - ALIMTALK_TEMPLATE: 알림톡 템플릿 관리 (상담 확정, 환불 완료, 일정 변경 등)
+  - ALIMTALK_CONFIG: 알림톡 설정 관리 (활성화, SMS 대체, 재시도 등)
+  - 파라미터 치환 시스템 (#{변수명} → 실제 값)
+  - 하이버네이트 기반 자동 초기화
+
 - **공통 코드 기반 환불 시스템**
   - REFUND_PERIOD: 환불 통계 기간 (오늘/주/월/분기/년)
   - REFUND_REASON: 표준화된 환불 사유 (키워드 매칭)
@@ -39,6 +63,11 @@ All notable changes to this project will be documented in this file.
   - 환불 처리 시 관련 스케줄 자동 취소
   - 비활성 상담사와의 스케줄 처리
   - 트랜잭션으로 원자성 보장
+
+- **환경별 설정 관리**
+  - 시뮬레이션 모드: 개발/테스트 환경용 (API 키 없이 테스트 가능)
+  - 실제 모드: 운영 환경용 (실제 알림톡 발송)
+  - 환경 변수 기반 API 키 관리
 
 ## [2025-09-16] - 환불 관리 및 ERP 연동 시스템 구현
 

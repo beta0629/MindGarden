@@ -1428,15 +1428,26 @@ public class AdminServiceImpl implements AdminService {
         
         // 관련된 미래 스케줄들 취소 처리
         try {
+            log.info("🔍 환불 처리 관련 스케줄 조회 시작: 상담사ID={}, 내담자ID={}, 오늘날짜={}", 
+                    mapping.getConsultant().getId(), mapping.getClient().getId(), LocalDate.now());
+            
             List<Schedule> futureSchedules = scheduleRepository.findByConsultantIdAndClientIdAndDateGreaterThanEqual(
-                mapping.getConsultantId(), 
-                mapping.getClientId(), 
+                mapping.getConsultant().getId(), 
+                mapping.getClient().getId(), 
                 LocalDate.now()
             );
             
+            log.info("📅 조회된 미래 스케줄: {}개", futureSchedules.size());
+            
             int cancelledScheduleCount = 0;
             for (Schedule schedule : futureSchedules) {
+                log.info("📋 스케줄 확인: ID={}, 날짜={}, 시간={}-{}, 상태={}, 상담사ID={}, 내담자ID={}", 
+                        schedule.getId(), schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(), 
+                        schedule.getStatus(), schedule.getConsultantId(), schedule.getClientId());
+                
                 if (schedule.getStatus() == ScheduleStatus.BOOKED || schedule.getStatus() == ScheduleStatus.CONFIRMED) {
+                    log.info("🚫 스케줄 취소 처리: ID={}, 기존상태={}", schedule.getId(), schedule.getStatus());
+                    
                     schedule.setStatus(ScheduleStatus.CANCELLED);
                     schedule.setNotes(schedule.getNotes() != null ? 
                         schedule.getNotes() + "\n[환불 처리로 인한 자동 취소] " + reason :
@@ -1444,6 +1455,10 @@ public class AdminServiceImpl implements AdminService {
                     schedule.setUpdatedAt(LocalDateTime.now());
                     scheduleRepository.save(schedule);
                     cancelledScheduleCount++;
+                    
+                    log.info("✅ 스케줄 취소 완료: ID={}, 새상태={}", schedule.getId(), schedule.getStatus());
+                } else {
+                    log.info("⏭️ 스케줄 취소 스킵: ID={}, 상태={} (BOOKED/CONFIRMED가 아님)", schedule.getId(), schedule.getStatus());
                 }
             }
             
@@ -1949,7 +1964,7 @@ public class AdminServiceImpl implements AdminService {
             // ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
             
             // 현재는 모의 처리 (실제 ERP 연동 시 주석 해제하고 위 코드 사용)
-            log.info("🎭 모의 ERP 전송: URL={}, Data={}", url, data.get("requestId"));
+            log.info("🎭 모의 ERP 전송: URL={}, Data={}, Request={}", url, data.get("requestId"), request != null ? "준비됨" : "null");
             return true;
             
         } catch (Exception e) {

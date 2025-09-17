@@ -139,13 +139,14 @@ const TabletLogin = () => {
         // 모달은 SessionContext에서 자동으로 표시되므로 여기서는 아무것도 하지 않음
       } else {
         console.log('❌ 로그인 실패:', result.message);
-        notificationManager.show(result.message, 'error');
+        // 메모리에 따라 로그인 실패 시 공통 메시지 사용
+        notificationManager.show('아이디 또는 비밀번호 틀림', 'error');
       }
     } catch (error) {
       console.error('❌ 로그인 오류:', error);
       console.error('❌ 오류 상세:', error.message);
-      // 공통 알림 시스템 사용
-      notificationManager.show(`로그인 처리 중 오류가 발생했습니다: ${error.message}`, 'error');
+      // 공통 알림 시스템 사용 - 로그인 실패 시 공통 메시지
+      notificationManager.show('아이디 또는 비밀번호 틀림', 'error');
     } finally {
       setIsLoading(false);
     }

@@ -1059,15 +1059,19 @@ public class ScheduleServiceImpl implements ScheduleService {
         
         try {
             User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
-            if (consultant != null) {
+            if (consultant != null && consultant.getIsActive()) {
                 consultantName = consultant.getName();
+            } else if (consultant != null && !consultant.getIsActive()) {
+                consultantName = consultant.getName() + " (비활성)";
             }
             
             // 클라이언트 정보가 있다면 조회
             if (schedule.getClientId() != null) {
                 User client = userRepository.findById(schedule.getClientId()).orElse(null);
-                if (client != null) {
+                if (client != null && client.getIsActive()) {
                     clientName = client.getName();
+                } else if (client != null && !client.getIsActive()) {
+                    clientName = client.getName() + " (비활성)";
                 }
             }
         } catch (Exception e) {

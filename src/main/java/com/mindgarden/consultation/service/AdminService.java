@@ -88,6 +88,16 @@ public interface AdminService {
      * 상담사 삭제
      */
     void deleteConsultant(Long id);
+    
+    /**
+     * 상담사 삭제 (다른 상담사로 이전 포함)
+     */
+    void deleteConsultantWithTransfer(Long consultantId, Long transferToConsultantId, String reason);
+    
+    /**
+     * 상담사 삭제 가능 여부 확인
+     */
+    Map<String, Object> checkConsultantDeletionStatus(Long consultantId);
 
     /**
      * 내담자 삭제

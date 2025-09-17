@@ -1202,6 +1202,55 @@ public class AdminController {
     }
 
     /**
+     * 상담사 삭제 (다른 상담사로 이전 포함)
+     */
+    @PostMapping("/consultants/{id}/delete-with-transfer")
+    public ResponseEntity<?> deleteConsultantWithTransfer(
+            @PathVariable Long id, 
+            @RequestBody Map<String, Object> request) {
+        try {
+            Long transferToConsultantId = Long.valueOf(request.get("transferToConsultantId").toString());
+            String reason = (String) request.get("reason");
+            
+            log.info("🔄 상담사 이전 삭제: ID={}, 이전 대상={}, 사유={}", id, transferToConsultantId, reason);
+            adminService.deleteConsultantWithTransfer(id, transferToConsultantId, reason);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "상담사가 성공적으로 이전 처리되어 삭제되었습니다"
+            ));
+        } catch (Exception e) {
+            log.error("❌ 상담사 이전 삭제 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "상담사 이전 삭제에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 상담사 삭제 가능 여부 확인
+     */
+    @GetMapping("/consultants/{id}/deletion-status")
+    public ResponseEntity<?> checkConsultantDeletionStatus(@PathVariable Long id) {
+        try {
+            log.info("🔍 상담사 삭제 가능 여부 확인: ID={}", id);
+            Map<String, Object> status = adminService.checkConsultantDeletionStatus(id);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", status
+            ));
+        } catch (Exception e) {
+            log.error("❌ 상담사 삭제 가능 여부 확인 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "상담사 삭제 가능 여부 확인에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 내담자 삭제 (비활성화)
      */
     @DeleteMapping("/clients/{id}")

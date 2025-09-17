@@ -301,6 +301,23 @@ const UnifiedScheduleComponent = ({
         }
     }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole, selectedConsultantId]);
 
+    // 상담사 이전 이벤트 감지하여 스케줄 새로고침
+    useEffect(() => {
+        const handleConsultantTransferred = (event) => {
+            console.log('🔄 상담사 이전 감지 - 스케줄 새로고침:', event.detail);
+            loadSchedules();
+            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
+                loadConsultants(); // 상담사 목록도 새로고침
+            }
+        };
+
+        window.addEventListener('consultantTransferred', handleConsultantTransferred);
+        
+        return () => {
+            window.removeEventListener('consultantTransferred', handleConsultantTransferred);
+        };
+    }, [loadSchedules, loadConsultants, userRole]);
+
     /**
      * 휴가 데이터를 캘린더 이벤트로 변환
      */
@@ -786,23 +803,15 @@ const UnifiedScheduleComponent = ({
                     <div className="legend-section">
                         <div className="legend-title">상담사별 색상</div>
                         <div className="legend-items consultant-legend">
-                            {events.reduce((acc, event) => {
-                                const consultantId = event.extendedProps?.consultantId;
-                                const consultantName = event.extendedProps?.consultantName;
-                                
-                                if (consultantId && !acc.find(item => item.id === consultantId)) {
-                                    acc.push({
-                                        id: consultantId,
-                                        name: consultantName || `상담사 ${consultantId}`,
-                                        color: getConsultantColor(consultantId)
-                                    });
-                                }
-                                return acc;
-                            }, []).map((consultant, index) => (
+                            {consultants.filter(consultant => 
+                                // 활성 상담사이면서 실제 스케줄이 있는 경우만 표시
+                                consultant.isActive !== false && 
+                                events.some(event => event.extendedProps?.consultantId === consultant.id)
+                            ).map((consultant, index) => (
                                 <div key={`consultant-${consultant.id}-${index}`} className="legend-item">
                                     <span 
                                         className="legend-color" 
-                                        style={{ backgroundColor: consultant.color }}
+                                        style={{ backgroundColor: getConsultantColor(consultant.id) }}
                                     ></span>
                                     <span>{consultant.name}</span>
                                 </div>

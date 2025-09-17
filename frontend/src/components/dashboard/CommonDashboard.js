@@ -257,12 +257,40 @@ const CommonDashboard = ({ user: propUser }) => {
         // 최근 활동 데이터 생성
         const recentActivities = [];
         
-        // 최근 스케줄을 활동으로 변환
+        // 최근 스케줄을 활동으로 변환 (유효한 데이터만 필터링)
         const recentSchedules = schedules
+          .filter(schedule => {
+            // 기본 데이터 유효성 검사
+            if (!schedule.date || !schedule.startTime || !schedule.endTime) {
+              return false;
+            }
+            
+            // 클라이언트나 상담사 이름이 유효한지 확인
+            const hasValidClientName = schedule.clientName && 
+              schedule.clientName !== 'null' && 
+              schedule.clientName !== 'undefined' && 
+              schedule.clientName.trim() !== '';
+              
+            const hasValidConsultantName = schedule.consultantName && 
+              schedule.consultantName !== 'null' && 
+              schedule.consultantName !== 'undefined' && 
+              schedule.consultantName.trim() !== '';
+              
+            const hasValidTitle = schedule.title && 
+              schedule.title.trim() !== '';
+            
+            return hasValidClientName || hasValidConsultantName || hasValidTitle;
+          })
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
           .slice(0, 5); // 최근 5개만
         
         recentSchedules.forEach(schedule => {
+          // 스케줄 데이터 유효성 검사
+          if (!schedule.date || !schedule.startTime || !schedule.endTime) {
+            console.warn('⚠️ 유효하지 않은 스케줄 데이터:', schedule);
+            return;
+          }
+          
           const scheduleDate = new Date(schedule.date);
           const now = new Date();
           const timeDiff = now - scheduleDate;
@@ -279,12 +307,26 @@ const CommonDashboard = ({ user: propUser }) => {
             timeAgo = `${Math.floor(daysDiff / 7)}주 전`;
           }
           
-          recentActivities.push({
-            type: 'schedule',
-            title: `${schedule.clientName}과의 상담 일정 ${schedule.status === 'CONFIRMED' ? '확정' : '등록'}`,
-            time: timeAgo,
-            details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
-          });
+          // 클라이언트/상담사 이름 처리 (안전한 fallback)
+          let displayName = '내담자';
+          
+          if (schedule.clientName && schedule.clientName !== 'null' && schedule.clientName !== 'undefined' && schedule.clientName.trim() !== '') {
+            displayName = schedule.clientName;
+          } else if (schedule.consultantName && schedule.consultantName !== 'null' && schedule.consultantName !== 'undefined' && schedule.consultantName.trim() !== '') {
+            displayName = `상담사 ${schedule.consultantName}`;
+          } else if (schedule.title && schedule.title.trim() !== '') {
+            displayName = schedule.title;
+          }
+          
+          // 유효한 이름이 있는 경우만 활동에 추가
+          if (displayName !== '내담자' || schedule.clientId) {
+            recentActivities.push({
+              type: 'schedule',
+              title: `${displayName}과의 상담 일정 ${schedule.status === 'CONFIRMED' ? '확정' : '등록'}`,
+              time: timeAgo,
+              details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
+            });
+          }
         });
         
         // 최근 활동이 없을 때만 기본 메시지 표시

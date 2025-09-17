@@ -88,6 +88,12 @@ public interface UserRepository extends BaseRepository<User, Long> {
     List<User> findByRole(UserRole role);
     
     /**
+     * 역할별 활성 사용자 조회
+     */
+    @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isActive = true AND u.isDeleted = false")
+    List<User> findByRoleAndIsActiveTrue(UserRole role);
+    
+    /**
      * 역할별 사용자 페이징 조회 (활성 상태만)
      */
     @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isDeleted = false")

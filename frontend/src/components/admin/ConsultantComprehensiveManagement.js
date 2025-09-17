@@ -48,6 +48,12 @@ const ConsultantComprehensiveManagement = () => {
         password: ''
     });
     
+    // 상담사 이전 관련 상태
+    const [availableConsultants, setAvailableConsultants] = useState([]);
+    const [transferToConsultantId, setTransferToConsultantId] = useState('');
+    const [transferReason, setTransferReason] = useState('');
+    const [deletionStatus, setDeletionStatus] = useState(null);
+    
     // 공통 코드 상태
     const [specialtyCodes, setSpecialtyCodes] = useState([]);
 
@@ -320,19 +326,82 @@ const ConsultantComprehensiveManagement = () => {
      */
     const deleteConsultant = withFormSubmit(async () => {
         try {
-            const response = await apiDelete(`/api/admin/consultants/${editingConsultant.id}`);
-            if (response.success) {
-                notificationManager.success('상담사가 성공적으로 삭제되었습니다.');
-                handleCloseModal();
-                loadConsultants();
+            // 이전 대상 상담사가 선택된 경우 이전 처리
+            if (transferToConsultantId && transferReason) {
+                const response = await apiPost(`/api/admin/consultants/${editingConsultant.id}/delete-with-transfer`, {
+                    transferToConsultantId: parseInt(transferToConsultantId),
+                    reason: transferReason
+                });
+                
+                if (response.success) {
+                    notificationManager.success('상담사가 성공적으로 이전 처리되어 삭제되었습니다.');
+                    handleCloseModal();
+                    loadConsultants();
+                    
+                    // 스케줄 컴포넌트 강제 새로고침을 위한 이벤트 발생
+                    window.dispatchEvent(new CustomEvent('consultantTransferred', {
+                        detail: {
+                            fromConsultantId: editingConsultant.id,
+                            toConsultantId: parseInt(transferToConsultantId),
+                            reason: transferReason
+                        }
+                    }));
+                } else {
+                    notificationManager.error(response.message || '상담사 이전 삭제에 실패했습니다.');
+                }
             } else {
-                notificationManager.error(response.message || '상담사 삭제에 실패했습니다.');
+                // 일반 삭제 (기존 방식)
+                const response = await apiDelete(`/api/admin/consultants/${editingConsultant.id}`);
+                if (response.success) {
+                    notificationManager.success('상담사가 성공적으로 삭제되었습니다.');
+                    handleCloseModal();
+                    loadConsultants();
+                } else {
+                    notificationManager.error(response.message || '상담사 삭제에 실패했습니다.');
+                }
             }
         } catch (error) {
             console.error('상담사 삭제 실패:', error);
-            notificationManager.error('상담사 삭제에 실패했습니다.');
+            notificationManager.error(error.message || '상담사 삭제에 실패했습니다.');
         }
     });
+
+    /**
+     * 상담사 삭제 상태 확인
+     */
+    const checkConsultantDeletionStatus = async (consultantId) => {
+        try {
+            const response = await apiGet(`/api/admin/consultants/${consultantId}/deletion-status`);
+            if (response.success && response.data) {
+                setDeletionStatus(response.data);
+                return response.data;
+            }
+        } catch (error) {
+            console.error('상담사 삭제 상태 확인 실패:', error);
+            setDeletionStatus(null);
+            return null;
+        }
+    };
+
+    /**
+     * 사용 가능한 상담사 목록 로드 (이전용)
+     */
+    const loadAvailableConsultants = async (excludeConsultantId) => {
+        try {
+            const response = await apiGet('/api/admin/consultants');
+            if (response.success && response.data) {
+                // 삭제할 상담사를 제외하고 활성 상담사만 필터링
+                const available = response.data.filter(consultant => 
+                    consultant.id !== excludeConsultantId && 
+                    consultant.isActive !== false
+                );
+                setAvailableConsultants(available);
+            }
+        } catch (error) {
+            console.error('사용 가능한 상담사 목록 로드 실패:', error);
+            setAvailableConsultants([]);
+        }
+    };
 
     /**
      * 모달 열기
@@ -366,9 +435,90 @@ const ConsultantComprehensiveManagement = () => {
                 specialty: [],
                 password: ''
             });
+        } else if (type === 'delete' && consultant) {
+            // 삭제 모달일 때 먼저 상담사 상태 확인
+            handleConsultantDeletion(consultant);
+            return; // 모달은 상태 확인 후 열림
         }
         
         setShowModal(true);
+    };
+
+    /**
+     * 상담사 삭제 처리
+     */
+    const handleConsultantDeletion = async (consultant) => {
+        try {
+            setLoading(true);
+            
+            // 1. 상담사 삭제 상태 확인
+            const status = await checkConsultantDeletionStatus(consultant.id);
+            
+            if (!status) {
+                notificationManager.error('상담사 삭제 상태를 확인할 수 없습니다.');
+                return;
+            }
+            
+            // 2. 직접 삭제 가능한 경우
+            if (status.canDeleteDirectly) {
+                setModalType('delete');
+                setEditingConsultant(consultant);
+                setTransferToConsultantId('');
+                setTransferReason('');
+                setShowModal(true);
+                return;
+            }
+            
+            // 3. 이전이 필요한 경우
+            if (status.requiresTransfer) {
+                // 사용 가능한 상담사 목록 로드
+                await loadAvailableConsultants(consultant.id);
+                
+                // 상세 정보와 함께 모달 열기
+                setModalType('delete');
+                setEditingConsultant(consultant);
+                setTransferToConsultantId(''); // 이전 필수이므로 빈 값으로 시작
+                setTransferReason('');
+                setShowModal(true);
+                
+                // 이전이 필요하다는 메시지 표시
+                const details = status.details;
+                let warningMessage = `⚠️ 다음 사유로 인해 다른 상담사로 이전이 필요합니다:\n\n`;
+                
+                if (details.activeMappingCount > 0) {
+                    warningMessage += `• 활성 매핑: ${details.activeMappingCount}개\n`;
+                    if (details.mappedClients && details.mappedClients.length > 0) {
+                        warningMessage += `  - 매핑된 내담자: ${details.mappedClients.map(c => c.clientName).join(', ')}\n`;
+                    }
+                }
+                
+                if (details.todayScheduleCount > 0) {
+                    warningMessage += `• 오늘 스케줄: ${details.todayScheduleCount}개\n`;
+                }
+                
+                if (details.futureScheduleCount > 0) {
+                    warningMessage += `• 예정 스케줄: ${details.futureScheduleCount}개\n`;
+                    if (details.upcomingSchedules && details.upcomingSchedules.length > 0) {
+                        warningMessage += `  - 가까운 일정: ${details.upcomingSchedules.slice(0, 3).map(s => 
+                            `${s.date} ${s.startTime} (${s.title || '상담'})`
+                        ).join(', ')}\n`;
+                    }
+                }
+                
+                warningMessage += `\n이전 대상 상담사를 선택해주세요.`;
+                
+                // 약간의 지연 후 메시지 표시 (모달이 열린 후)
+                setTimeout(() => {
+                    notificationManager.warning(warningMessage);
+                }, 500);
+            }
+            
+        } catch (error) {
+            console.error('상담사 삭제 처리 실패:', error);
+            notificationManager.error('상담사 삭제 처리에 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     /**
@@ -446,6 +596,23 @@ const ConsultantComprehensiveManagement = () => {
         } else if (modalType === 'edit') {
             updateConsultant();
         } else if (modalType === 'delete') {
+            // 이전이 필수인 경우 검사
+            if (deletionStatus?.requiresTransfer) {
+                if (!transferToConsultantId) {
+                    notificationManager.error('이전 대상 상담사를 선택해주세요.');
+                    return;
+                }
+                if (!transferReason.trim()) {
+                    notificationManager.error('이전 사유를 입력해주세요.');
+                    return;
+                }
+            } else {
+                // 이전이 선택사항인 경우, 선택했으면 사유도 필수
+                if (transferToConsultantId && !transferReason.trim()) {
+                    notificationManager.error('이전 사유를 입력해주세요.');
+                    return;
+                }
+            }
             deleteConsultant();
         }
     };
@@ -986,24 +1153,225 @@ const ConsultantComprehensiveManagement = () => {
 
             {/* 모달 */}
             {showModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h3>
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
+                }}>
+                    <div style={{
+                        background: 'white',
+                        borderRadius: '16px',
+                        padding: '0',
+                        maxWidth: '500px',
+                        width: '90%',
+                        maxHeight: '80vh',
+                        overflow: 'hidden',
+                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '20px 24px',
+                            borderBottom: '1px solid #e9ecef',
+                            backgroundColor: '#f8f9fa'
+                        }}>
+                            <h3 style={{
+                                margin: 0,
+                                fontSize: '18px',
+                                fontWeight: '600',
+                                color: '#2c3e50'
+                            }}>
                                 {modalType === 'create' && '새 상담사 등록'}
                                 {modalType === 'edit' && '상담사 정보 수정'}
                                 {modalType === 'delete' && '상담사 삭제'}
                             </h3>
-                            <button className="modal-close" onClick={handleCloseModal}>
+                            <button 
+                                onClick={handleCloseModal}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '24px',
+                                    cursor: 'pointer',
+                                    color: '#6c757d',
+                                    padding: '4px',
+                                    borderRadius: '4px',
+                                    transition: 'all 0.2s ease',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.backgroundColor = '#e9ecef';
+                                    e.target.style.color = '#495057';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.backgroundColor = 'transparent';
+                                    e.target.style.color = '#6c757d';
+                                }}
+                            >
                                 ×
                             </button>
                         </div>
                         
-                        <div className="modal-body">
+                        <div style={{
+                            padding: '24px',
+                            flex: 1,
+                            overflow: 'auto'
+                        }}>
                             {modalType === 'delete' ? (
-                                <div className="delete-confirmation">
-                                    <p>정말로 <strong>{editingConsultant?.name}</strong> 상담사를 삭제하시겠습니까?</p>
-                                    <p className="warning-text">이 작업은 되돌릴 수 없습니다.</p>
+                                <div style={{ padding: '20px 0' }}>
+                                    <div style={{
+                                        textAlign: 'center',
+                                        marginBottom: '24px'
+                                    }}>
+                                        <p style={{
+                                            fontSize: '16px',
+                                            color: '#495057',
+                                            margin: '0 0 16px 0',
+                                            lineHeight: '1.5'
+                                        }}>
+                                            정말로 <strong style={{ color: '#dc3545' }}>{editingConsultant?.name}</strong> 상담사를 삭제하시겠습니까?
+                                        </p>
+                                        <p style={{
+                                            fontSize: '14px',
+                                            color: '#dc3545',
+                                            margin: '0 0 24px 0',
+                                            fontWeight: '500'
+                                        }}>
+                                            이 작업은 되돌릴 수 없습니다.
+                                        </p>
+                                    </div>
+
+                                    {availableConsultants.length > 0 && (
+                                        <div style={{
+                                            backgroundColor: deletionStatus?.requiresTransfer ? '#fff3cd' : '#f8f9fa',
+                                            padding: '20px',
+                                            borderRadius: '8px',
+                                            marginBottom: '16px',
+                                            border: deletionStatus?.requiresTransfer ? '1px solid #ffeaa7' : 'none'
+                                        }}>
+                                            <h4 style={{
+                                                fontSize: '14px',
+                                                fontWeight: '600',
+                                                color: deletionStatus?.requiresTransfer ? '#856404' : '#495057',
+                                                margin: '0 0 16px 0'
+                                            }}>
+                                                {deletionStatus?.requiresTransfer ? '⚠️ 매핑 및 스케줄 이전 (필수)' : '📋 매핑 및 스케줄 이전 (선택사항)'}
+                                            </h4>
+                                            
+                                            {deletionStatus?.requiresTransfer && (
+                                                <div style={{
+                                                    backgroundColor: '#fff',
+                                                    padding: '12px',
+                                                    borderRadius: '6px',
+                                                    marginBottom: '16px',
+                                                    fontSize: '13px',
+                                                    color: '#856404'
+                                                }}>
+                                                    <strong>이전이 필요한 데이터:</strong><br/>
+                                                    {deletionStatus.details.activeMappingCount > 0 && (
+                                                        <>• 활성 매핑: {deletionStatus.details.activeMappingCount}개<br/></>
+                                                    )}
+                                                    {deletionStatus.details.todayScheduleCount > 0 && (
+                                                        <>• 오늘 스케줄: {deletionStatus.details.todayScheduleCount}개<br/></>
+                                                    )}
+                                                    {deletionStatus.details.futureScheduleCount > 0 && (
+                                                        <>• 예정 스케줄: {deletionStatus.details.futureScheduleCount}개<br/></>
+                                                    )}
+                                                </div>
+                                            )}
+                                            
+                                            <div style={{ marginBottom: '16px' }}>
+                                                <label style={{
+                                                    display: 'block',
+                                                    fontSize: '14px',
+                                                    fontWeight: '500',
+                                                    color: '#374151',
+                                                    marginBottom: '8px'
+                                                }}>
+                                                    이전 대상 상담사
+                                                </label>
+                                                <select
+                                                    value={transferToConsultantId}
+                                                    onChange={(e) => setTransferToConsultantId(e.target.value)}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '10px 12px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '14px',
+                                                        fontFamily: 'inherit',
+                                                        backgroundColor: '#ffffff'
+                                                    }}
+                                                >
+                                                    <option value="">
+                                                        {deletionStatus?.requiresTransfer ? '이전 대상 상담사를 선택해주세요' : '선택하지 않음 (단순 삭제)'}
+                                                    </option>
+                                                    {availableConsultants.map(consultant => (
+                                                        <option key={consultant.id} value={consultant.id}>
+                                                            {consultant.name} ({consultant.email})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            
+                                            {transferToConsultantId && (
+                                                <div>
+                                                    <label style={{
+                                                        display: 'block',
+                                                        fontSize: '14px',
+                                                        fontWeight: '500',
+                                                        color: '#374151',
+                                                        marginBottom: '8px'
+                                                    }}>
+                                                        이전 사유 *
+                                                    </label>
+                                                    <textarea
+                                                        value={transferReason}
+                                                        onChange={(e) => setTransferReason(e.target.value)}
+                                                        placeholder="상담사 삭제 사유를 입력해주세요"
+                                                        rows={3}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '10px 12px',
+                                                            border: '1px solid #d1d5db',
+                                                            borderRadius: '6px',
+                                                            fontSize: '14px',
+                                                            fontFamily: 'inherit',
+                                                            backgroundColor: '#ffffff',
+                                                            resize: 'vertical'
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                            
+                                            {transferToConsultantId && (
+                                                <div style={{
+                                                    marginTop: '16px',
+                                                    padding: '12px',
+                                                    backgroundColor: '#e3f2fd',
+                                                    borderRadius: '6px',
+                                                    fontSize: '13px',
+                                                    color: '#1565c0'
+                                                }}>
+                                                    💡 선택된 상담사로 모든 활성 매핑과 예정된 스케줄이 자동으로 이전됩니다.
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <form className="consultant-form">
@@ -1193,16 +1561,61 @@ const ConsultantComprehensiveManagement = () => {
                             )}
                         </div>
                         
-                        <div className="modal-footer">
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: '12px',
+                            padding: '20px 24px',
+                            borderTop: '1px solid #e9ecef',
+                            backgroundColor: '#f8f9fa'
+                        }}>
                             <button 
-                                className="btn btn-secondary"
                                 onClick={handleCloseModal}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: '1px solid #6c757d',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#ffffff',
+                                    color: '#6c757d',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    fontFamily: 'inherit'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.backgroundColor = '#6c757d';
+                                    e.target.style.color = '#ffffff';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.backgroundColor = '#ffffff';
+                                    e.target.style.color = '#6c757d';
+                                }}
                             >
                                 취소
                             </button>
                             <button 
-                                className={`btn ${modalType === 'delete' ? 'btn-danger' : 'btn-primary'}`}
                                 onClick={handleModalSubmit}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    backgroundColor: modalType === 'delete' ? '#dc3545' : '#007bff',
+                                    color: '#ffffff',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    fontFamily: 'inherit'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.backgroundColor = modalType === 'delete' ? '#c82333' : '#0056b3';
+                                    e.target.style.transform = 'translateY(-1px)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.backgroundColor = modalType === 'delete' ? '#dc3545' : '#007bff';
+                                    e.target.style.transform = 'translateY(0)';
+                                }}
                             >
                                 {modalType === 'create' && '등록'}
                                 {modalType === 'edit' && '수정'}

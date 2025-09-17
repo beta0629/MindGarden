@@ -447,7 +447,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<User> getAllConsultants() {
-        List<User> consultants = userRepository.findByRole(UserRole.CONSULTANT);
+        List<User> consultants = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
         
         // 각 상담사의 전화번호 복호화
         consultants.forEach(consultant -> {
@@ -468,7 +468,7 @@ public class AdminServiceImpl implements AdminService {
     
     @Override
     public List<Map<String, Object>> getAllConsultantsWithSpecialty() {
-        List<User> consultants = userRepository.findByRole(UserRole.CONSULTANT);
+        List<User> consultants = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
         
         return consultants.stream()
             .map(consultant -> {
@@ -518,7 +518,7 @@ public class AdminServiceImpl implements AdminService {
     public List<Map<String, Object>> getAllConsultantsWithVacationInfo(String date) {
         log.info("휴무 정보를 포함한 상담사 목록 조회: date={}", date);
         
-        List<User> consultants = userRepository.findByRole(UserRole.CONSULTANT);
+        List<User> consultants = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
         
         // 모든 상담사의 휴무 정보 조회
         Map<String, Object> allVacations = consultantAvailabilityService.getAllConsultantsVacations(date);
@@ -730,8 +730,8 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<Client> getAllClients() {
-        // User 테이블에서 CLIENT role 사용자들을 조회하고 Client 정보와 조인
-        List<User> clientUsers = userRepository.findByRole(UserRole.CLIENT);
+        // User 테이블에서 활성 CLIENT role 사용자들을 조회하고 Client 정보와 조인
+        List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(UserRole.CLIENT);
         
         log.info("🔍 내담자 조회 - 총 {}명", clientUsers.size());
         
@@ -789,8 +789,8 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("🔍 통합 내담자 데이터 조회 시작");
             
-            // 모든 내담자 조회
-            List<User> clientUsers = userRepository.findByRole(UserRole.CLIENT);
+            // 활성 내담자만 조회
+            List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(UserRole.CLIENT);
             log.info("🔍 내담자 수: {}", clientUsers.size());
             
             // 모든 매핑 조회
@@ -975,11 +975,226 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteConsultant(Long id) {
+        log.info("🗑️ 상담사 삭제 처리 시작: ID={}", id);
+        
         User consultant = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Consultant not found"));
+                .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
+        
+        if (consultant.getRole() != UserRole.CONSULTANT) {
+            throw new RuntimeException("상담사가 아닌 사용자는 삭제할 수 없습니다.");
+        }
+        
+        // 1. 해당 상담사의 활성 매핑 조회
+        List<ConsultantClientMapping> activeMappings = mappingRepository
+                .findByConsultantIdAndStatusNot(id, ConsultantClientMapping.MappingStatus.TERMINATED);
+        
+        if (!activeMappings.isEmpty()) {
+            log.warn("⚠️ 상담사에게 {} 개의 활성 매핑이 있습니다. 다른 상담사로 이전이 필요합니다.", activeMappings.size());
+            throw new RuntimeException(String.format(
+                "상담사에게 %d 개의 활성 매핑이 있습니다. 먼저 다른 상담사로 이전 처리해주세요.", 
+                activeMappings.size()));
+        }
+        
+        // 2. 해당 상담사의 예정된 스케줄 조회 (오늘 포함)
+        List<Schedule> futureSchedules = scheduleRepository.findByConsultantIdAndDateGreaterThanEqual(id, LocalDate.now());
+        
+        if (!futureSchedules.isEmpty()) {
+            log.warn("⚠️ 상담사에게 {} 개의 예정된 스케줄이 있습니다. 다른 상담사로 이전이 필요합니다.", futureSchedules.size());
+            throw new RuntimeException(String.format(
+                "상담사에게 %d 개의 예정된 스케줄이 있습니다. 먼저 다른 상담사로 이전 처리해주세요.", 
+                futureSchedules.size()));
+        }
+        
+        // 3. 상담사 비활성화
         consultant.setIsActive(false);
         userRepository.save(consultant);
+        
+        log.info("✅ 상담사 삭제 완료: ID={}, 이름={}", id, consultant.getName());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteConsultantWithTransfer(Long consultantId, Long transferToConsultantId, String reason) {
+        log.info("🔄 상담사 삭제 및 이전 처리 시작: 삭제 상담사 ID={}, 이전 대상 상담사 ID={}", 
+                consultantId, transferToConsultantId);
+        
+        // 1. 삭제할 상담사와 이전 대상 상담사 검증
+        User consultantToDelete = userRepository.findById(consultantId)
+                .orElseThrow(() -> new RuntimeException("삭제할 상담사를 찾을 수 없습니다."));
+        
+        User transferToConsultant = userRepository.findById(transferToConsultantId)
+                .orElseThrow(() -> new RuntimeException("이전 대상 상담사를 찾을 수 없습니다."));
+        
+        if (consultantToDelete.getRole() != UserRole.CONSULTANT) {
+            throw new RuntimeException("삭제 대상이 상담사가 아닙니다.");
+        }
+        
+        if (transferToConsultant.getRole() != UserRole.CONSULTANT) {
+            throw new RuntimeException("이전 대상이 상담사가 아닙니다.");
+        }
+        
+        if (!transferToConsultant.getIsActive()) {
+            throw new RuntimeException("이전 대상 상담사가 비활성 상태입니다.");
+        }
+        
+        // 2. 활성 매핑들을 새로운 상담사로 이전
+        List<ConsultantClientMapping> activeMappings = mappingRepository
+                .findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
+        
+        for (ConsultantClientMapping mapping : activeMappings) {
+            // 기존 매핑 종료
+            String transferReason = String.format("상담사 삭제로 인한 이전: %s -> %s. 사유: %s", 
+                    consultantToDelete.getName(), transferToConsultant.getName(), reason);
+            
+            mapping.transferToNewConsultant(transferReason, "SYSTEM_AUTO_TRANSFER");
+            mappingRepository.save(mapping);
+            
+            // 새로운 매핑 생성
+            ConsultantClientMapping newMapping = new ConsultantClientMapping();
+            newMapping.setConsultant(transferToConsultant);
+            newMapping.setClient(mapping.getClient());
+            newMapping.setBranchCode(mapping.getBranchCode());
+            newMapping.setStartDate(mapping.getStartDate()); // 기존 시작일 유지
+            newMapping.setTotalSessions(mapping.getTotalSessions());
+            newMapping.setRemainingSessions(mapping.getRemainingSessions());
+            newMapping.setUsedSessions(mapping.getUsedSessions());
+            newMapping.setPackageName(mapping.getPackageName());
+            newMapping.setPackagePrice(mapping.getPackagePrice());
+            newMapping.setPaymentAmount(mapping.getPaymentAmount());
+            newMapping.setPaymentDate(mapping.getPaymentDate()); // 결제일도 유지
+            newMapping.setPaymentMethod(mapping.getPaymentMethod());
+            newMapping.setPaymentReference(mapping.getPaymentReference()); // 결제 참조번호도 유지
+            newMapping.setStatus(mapping.getStatus());
+            newMapping.setPaymentStatus(mapping.getPaymentStatus());
+            newMapping.setNotes("상담사 이전: " + transferReason);
+            newMapping.setAssignedAt(LocalDateTime.now());
+            newMapping.setAssignedBy("SYSTEM_AUTO_TRANSFER"); // 배정자 정보도 추가
+            
+            mappingRepository.save(newMapping);
+            
+            log.info("📋 매핑 이전 완료: 내담자 {} -> 새 상담사 {}", 
+                    mapping.getClient().getName(), transferToConsultant.getName());
+        }
+        
+        // 3. 예정된 스케줄들을 새로운 상담사로 이전 (오늘 포함)
+        List<Schedule> futureSchedules = scheduleRepository.findByConsultantIdAndDateGreaterThanEqual(consultantId, LocalDate.now());
+        
+        for (Schedule schedule : futureSchedules) {
+            schedule.setConsultantId(transferToConsultantId);
+            schedule.setDescription((schedule.getDescription() != null ? schedule.getDescription() + "\n" : "") + 
+                    "[상담사 이전] " + consultantToDelete.getName() + " -> " + transferToConsultant.getName());
+            scheduleRepository.save(schedule);
+            
+            log.info("📅 스케줄 이전 완료: 스케줄 ID {} -> 새 상담사 {}", 
+                    schedule.getId(), transferToConsultant.getName());
+        }
+        
+        // 4. 상담사 비활성화
+        consultantToDelete.setIsActive(false);
+        userRepository.save(consultantToDelete);
+        
+        log.info("✅ 상담사 삭제 및 이전 완료: 삭제된 상담사={}, 이전 대상 상담사={}, 이전된 매핑 수={}, 이전된 스케줄 수={}", 
+                consultantToDelete.getName(), transferToConsultant.getName(), 
+                activeMappings.size(), futureSchedules.size());
+    }
+
+    @Override
+    public Map<String, Object> checkConsultantDeletionStatus(Long consultantId) {
+        log.info("🔍 상담사 삭제 가능 여부 확인: ID={}", consultantId);
+        
+        User consultant = userRepository.findById(consultantId)
+                .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다."));
+        
+        if (consultant.getRole() != UserRole.CONSULTANT) {
+            throw new RuntimeException("상담사가 아닌 사용자입니다.");
+        }
+        
+        // 1. 활성 매핑 조회
+        List<ConsultantClientMapping> activeMappings = mappingRepository
+                .findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
+        
+        // 2. 예정된 스케줄 조회 (오늘 포함, 활성 상태만)
+        List<Schedule> futureSchedules = scheduleRepository.findByConsultantIdAndDateGreaterThanEqual(consultantId, LocalDate.now())
+                .stream()
+                .filter(schedule -> schedule.getStatus() == ScheduleStatus.BOOKED || 
+                                  schedule.getStatus() == ScheduleStatus.CONFIRMED)
+                .collect(Collectors.toList());
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("consultantId", consultantId);
+        result.put("consultantName", consultant.getName());
+        result.put("canDeleteDirectly", activeMappings.isEmpty() && futureSchedules.isEmpty());
+        result.put("requiresTransfer", !activeMappings.isEmpty() || !futureSchedules.isEmpty());
+        
+        // 상세 정보
+        Map<String, Object> details = new HashMap<>();
+        details.put("activeMappingCount", activeMappings.size());
+        details.put("futureScheduleCount", futureSchedules.size());
+        
+        // 오늘과 미래 스케줄을 분리하여 표시
+        long todayScheduleCount = futureSchedules.stream()
+                .filter(schedule -> schedule.getDate().equals(LocalDate.now()))
+                .count();
+        details.put("todayScheduleCount", (int) todayScheduleCount);
+        
+        // 활성 매핑된 내담자 목록
+        List<Map<String, Object>> mappedClients = activeMappings.stream()
+                .map(mapping -> {
+                    Map<String, Object> clientInfo = new HashMap<>();
+                    clientInfo.put("clientId", mapping.getClient().getId());
+                    clientInfo.put("clientName", mapping.getClient().getName());
+                    clientInfo.put("remainingSessions", mapping.getRemainingSessions());
+                    clientInfo.put("totalSessions", mapping.getTotalSessions());
+                    return clientInfo;
+                })
+                .collect(Collectors.toList());
+        details.put("mappedClients", mappedClients);
+        
+        // 예정된 스케줄 목록 (최대 5개만)
+        List<Map<String, Object>> upcomingSchedules = futureSchedules.stream()
+                .limit(5)
+                .map(schedule -> {
+                    Map<String, Object> scheduleInfo = new HashMap<>();
+                    scheduleInfo.put("scheduleId", schedule.getId());
+                    scheduleInfo.put("date", schedule.getDate());
+                    scheduleInfo.put("startTime", schedule.getStartTime());
+                    scheduleInfo.put("endTime", schedule.getEndTime());
+                    scheduleInfo.put("title", schedule.getTitle());
+                    scheduleInfo.put("status", schedule.getStatus());
+                    return scheduleInfo;
+                })
+                .collect(Collectors.toList());
+        details.put("upcomingSchedules", upcomingSchedules);
+        
+        result.put("details", details);
+        
+        // 메시지 생성
+        StringBuilder message = new StringBuilder();
+        if (activeMappings.isEmpty() && futureSchedules.isEmpty()) {
+            message.append("해당 상담사는 안전하게 삭제할 수 있습니다.");
+        } else {
+            message.append("다음 사유로 인해 다른 상담사로 이전이 필요합니다:\n");
+            if (!activeMappings.isEmpty()) {
+                message.append("• 활성 매핑: ").append(activeMappings.size()).append("개\n");
+            }
+            if (todayScheduleCount > 0) {
+                message.append("• 오늘 스케줄: ").append(todayScheduleCount).append("개\n");
+            }
+            if (!futureSchedules.isEmpty()) {
+                long futureOnlyCount = futureSchedules.size() - todayScheduleCount;
+                if (futureOnlyCount > 0) {
+                    message.append("• 향후 스케줄: ").append(futureOnlyCount).append("개");
+                }
+            }
+        }
+        result.put("message", message.toString());
+        
+        log.info("✅ 상담사 삭제 가능 여부 확인 완료: ID={}, 직접삭제가능={}, 이전필요={}", 
+                consultantId, result.get("canDeleteDirectly"), result.get("requiresTransfer"));
+        
+        return result;
     }
 
     @Override
@@ -1224,8 +1439,8 @@ public class AdminServiceImpl implements AdminService {
         try {
             log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
             
-            // 모든 상담사 조회
-            List<User> consultants = userRepository.findByRole(UserRole.CONSULTANT);
+            // 활성 상담사만 조회
+            List<User> consultants = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
             
             List<Map<String, Object>> statistics = new ArrayList<>();
             
@@ -1317,8 +1532,11 @@ public class AdminServiceImpl implements AdminService {
                         if (schedule.getConsultantId() != null) {
                             try {
                                 User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
-                                if (consultant != null) {
+                                if (consultant != null && consultant.getIsActive()) {
                                     scheduleMap.put("consultantName", consultant.getName());
+                                    scheduleMap.put("consultantEmail", consultant.getEmail());
+                                } else if (consultant != null && !consultant.getIsActive()) {
+                                    scheduleMap.put("consultantName", consultant.getName() + " (삭제됨)");
                                     scheduleMap.put("consultantEmail", consultant.getEmail());
                                 } else {
                                     scheduleMap.put("consultantName", "미지정");

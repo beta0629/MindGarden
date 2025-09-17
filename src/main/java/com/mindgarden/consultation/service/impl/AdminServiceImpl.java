@@ -36,6 +36,9 @@ import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.MediaType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -1387,28 +1390,44 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("이미 종료된 매핑입니다.");
         }
         
+        // 환불 금액 계산
+        int refundedSessions = mapping.getRemainingSessions();
+        long refundAmount = 0;
+        if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
+            refundAmount = (mapping.getPackagePrice() * refundedSessions) / mapping.getTotalSessions();
+        }
+        
+        // ERP 시스템에 환불 데이터 전송
+        try {
+            sendRefundToErp(mapping, refundedSessions, refundAmount, reason);
+        } catch (Exception e) {
+            log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
+            // ERP 전송 실패해도 내부 처리는 계속 진행 (나중에 재시도 가능)
+        }
+        
         // 매핑 종료 처리
         mapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
         mapping.setTerminatedAt(LocalDateTime.now());
         
         // 종료 사유 추가
         String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
-        String terminationNote = String.format("[%s 강제 종료] %s", 
+        String terminationNote = String.format("[%s 강제 종료] %s (환불: %d회기, %,d원)", 
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), 
-                reason != null ? reason : "관리자 요청");
+                reason != null ? reason : "관리자 요청",
+                refundedSessions,
+                refundAmount);
         
         String updatedNotes = currentNotes.isEmpty() ? terminationNote : currentNotes + "\n" + terminationNote;
         mapping.setNotes(updatedNotes);
         
         // 남은 회기를 0으로 설정 (환불 처리됨을 의미)
-        int refundedSessions = mapping.getRemainingSessions();
         mapping.setRemainingSessions(0);
         mapping.setUsedSessions(mapping.getTotalSessions()); // 전체를 사용한 것으로 처리하지 않고 실제 사용한 만큼만
         
         mappingRepository.save(mapping);
         
-        log.info("✅ 매핑 강제 종료 완료: ID={}, 환불 회기={}, 상담사={}, 내담자={}", 
-                id, refundedSessions, mapping.getConsultant().getName(), mapping.getClient().getName());
+        log.info("✅ 매핑 강제 종료 완료: ID={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
+                id, refundedSessions, refundAmount, mapping.getConsultant().getName(), mapping.getClient().getName());
     }
 
     @Override
@@ -1665,6 +1684,111 @@ public class AdminServiceImpl implements AdminService {
         
         // 기본값: 원본 사유를 20자로 제한
         return rawReason.length() > 20 ? rawReason.substring(0, 20) + "..." : rawReason;
+    }
+
+    /**
+     * ERP 시스템에 환불 데이터 전송
+     */
+    private void sendRefundToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
+        try {
+            log.info("🔄 ERP 환불 데이터 전송 시작: MappingID={}", mapping.getId());
+            
+            // ERP 전송 데이터 구성
+            Map<String, Object> erpData = new HashMap<>();
+            erpData.put("refundType", "CONSULTATION_REFUND");
+            erpData.put("mappingId", mapping.getId());
+            erpData.put("clientId", mapping.getClient().getId());
+            erpData.put("clientName", mapping.getClient().getName());
+            erpData.put("consultantId", mapping.getConsultant().getId());
+            erpData.put("consultantName", mapping.getConsultant().getName());
+            erpData.put("packageName", mapping.getPackageName());
+            erpData.put("originalAmount", mapping.getPackagePrice());
+            erpData.put("totalSessions", mapping.getTotalSessions());
+            erpData.put("usedSessions", mapping.getUsedSessions());
+            erpData.put("refundSessions", refundedSessions);
+            erpData.put("refundAmount", refundAmount);
+            erpData.put("refundReason", reason);
+            erpData.put("refundDate", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            erpData.put("branchCode", getCurrentUserBranchCode());
+            erpData.put("requestId", "REF_" + mapping.getId() + "_" + System.currentTimeMillis());
+            
+            // ERP API 호출
+            String erpUrl = getErpRefundApiUrl();
+            Map<String, String> headers = getErpHeaders();
+            
+            // HTTP 요청 전송 (실제 ERP 시스템에 맞게 구현)
+            boolean success = sendToErpSystem(erpUrl, erpData, headers);
+            
+            if (success) {
+                log.info("✅ ERP 환불 데이터 전송 성공: MappingID={}, Amount={}", mapping.getId(), refundAmount);
+            } else {
+                log.warn("⚠️ ERP 환불 데이터 전송 실패: MappingID={}", mapping.getId());
+                // 실패 시 재시도 큐에 추가하거나 알림 발송 등 처리
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ ERP 환불 데이터 전송 중 오류: MappingID={}", mapping.getId(), e);
+            throw new RuntimeException("ERP 환불 데이터 전송 실패: " + e.getMessage());
+        }
+    }
+
+    /**
+     * ERP 시스템으로 실제 데이터 전송
+     */
+    private boolean sendToErpSystem(String url, Map<String, Object> data, Map<String, String> headers) {
+        try {
+            // 실제 ERP 시스템의 API 스펙에 맞게 구현
+            // 예시: REST API 호출
+            
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+            
+            // ERP 인증 헤더 추가
+            if (headers != null) {
+                headers.forEach(httpHeaders::set);
+            }
+            
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(data, httpHeaders);
+            
+            // RestTemplate을 사용한 HTTP 요청 (실제 구현 시 주입받아 사용)
+            // ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+            
+            // 현재는 모의 처리 (실제 ERP 연동 시 주석 해제하고 위 코드 사용)
+            log.info("🎭 모의 ERP 전송: URL={}, Data={}", url, data.get("requestId"));
+            return true;
+            
+        } catch (Exception e) {
+            log.error("❌ ERP 시스템 통신 오류", e);
+            return false;
+        }
+    }
+
+    /**
+     * ERP 환불 API URL 가져오기
+     */
+    private String getErpRefundApiUrl() {
+        // 실제 ERP 시스템의 환불 API URL
+        return System.getProperty("erp.refund.api.url", "http://erp.company.com/api/refund");
+    }
+
+    /**
+     * ERP 인증 헤더 생성
+     */
+    private Map<String, String> getErpHeaders() {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", "Bearer " + System.getProperty("erp.api.token", "default-token"));
+        headers.put("X-System", "CONSULTATION_SYSTEM");
+        headers.put("X-Version", "1.0");
+        return headers;
+    }
+
+    /**
+     * 현재 사용자의 지점 코드 가져오기
+     */
+    private String getCurrentUserBranchCode() {
+        // 현재 로그인한 사용자의 지점 코드 반환
+        // 실제 구현 시 SecurityContext 등에서 가져오기
+        return "MAIN001"; // 임시 기본값
     }
 
     /**

@@ -83,8 +83,14 @@ const TabletLogin = () => {
     };
   }, [countdown]);
 
-  // 세션이 있으면 대시보드로 리다이렉트
+  // 세션이 있으면 대시보드로 리다이렉트 (로그인 시도 중이거나 알림 표시 중에는 제외)
   useEffect(() => {
+    // 로그인 시도 중이거나 알림 표시 중에는 세션 확인 안 함
+    if (isLoading || tooltip.show) {
+      console.log('🚫 세션 확인 스킵: 로딩 중이거나 알림 표시 중');
+      return;
+    }
+
     const checkExistingSession = async () => {
       try {
         console.log('🔍 로그인 페이지 - 기존 세션 확인 중...');
@@ -112,7 +118,7 @@ const TabletLogin = () => {
       // 즉시 실행
       checkExistingSession();
     }
-  }, [checkSession, navigate]);
+  }, [checkSession, navigate, isLoading, tooltip.show]);
 
   const getOAuth2Config = async () => {
     try {

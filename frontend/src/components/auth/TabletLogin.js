@@ -868,81 +868,48 @@ const TabletLogin = () => {
           <div
             style={{
               position: 'fixed',
-              top: '35%',
+              top: '20%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              backgroundColor: '#fefefe',
-              color: '#4a4a4a',
-              padding: '32px 40px',
+              backgroundColor: '#ffffff',
+              color: '#333333',
+              padding: '28px 56px',
               borderRadius: '12px',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
               zIndex: 10001,
-              fontSize: '16px',
+              fontSize: '15px',
               fontWeight: '400',
               fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
-              maxWidth: '400px',
-              minWidth: '300px',
+              width: '520px',
+              maxWidth: '85vw',
               textAlign: 'center',
               cursor: 'pointer',
-              border: `1px solid ${
-                tooltip.type === 'error' ? '#f8d7da' : 
-                tooltip.type === 'success' ? '#d4edda' : 
-                tooltip.type === 'warning' ? '#fff3cd' : '#d1ecf1'
-              }`,
-              animation: 'loginNotificationSlideIn 0.6s ease-out',
-              background: `${
-                tooltip.type === 'error' ? '#fef9f9' : 
-                tooltip.type === 'success' ? '#f8fdf8' : 
-                tooltip.type === 'warning' ? '#fefef8' : '#f8fcfe'
-              }`
+              border: '1px solid #e9ecef',
+              animation: 'loginNotificationSlideIn 0.4s ease-out'
             }}
             onClick={() => setTooltip({ show: false, message: '', type: 'error' })}
           >
             
-            {/* 아이콘 */}
-            <div style={{ 
-              fontSize: '36px', 
-              marginBottom: '18px',
-              filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.05))'
-            }}>
-              {tooltip.type === 'error' ? '🌸' : 
-               tooltip.type === 'success' ? '🌿' : 
-               tooltip.type === 'warning' ? '🌱' : '💙'}
-            </div>
-            
-            {/* 제목 */}
-            <div style={{ 
-              fontSize: '18px',
-              fontWeight: '600',
-              marginBottom: '12px',
-              color: tooltip.type === 'error' ? '#8b5a5a' : 
-                     tooltip.type === 'success' ? '#5a8b5a' : 
-                     tooltip.type === 'warning' ? '#8b7a5a' : '#5a7a8b',
-              letterSpacing: '-0.3px'
-            }}>
-              {tooltip.type === 'error' ? '로그인 안내' : 
-               tooltip.type === 'success' ? '로그인 완료' : 
-               tooltip.type === 'warning' ? '입력 안내' : '안내'}
-            </div>
             
             {/* 메시지 */}
             <div style={{ 
-              fontSize: '15px',
-              fontWeight: '400',
-              marginBottom: '20px',
-              color: '#666',
-              lineHeight: '1.6',
-              letterSpacing: '0.3px'
+              fontSize: '16px',
+              fontWeight: '500',
+              marginBottom: '8px',
+              color: '#495057',
+              lineHeight: '1.5',
+              letterSpacing: '0.2px'
             }}>
               {tooltip.message}
             </div>
             
             {/* 닫기 안내 */}
             <div style={{ 
-              fontSize: '12px',
-              color: '#999',
-              fontWeight: '300',
-              opacity: 0.7
+              fontSize: '13px',
+              color: '#6c757d',
+              fontWeight: '400',
+              opacity: 0.8,
+              marginTop: '12px'
             }}>
               터치하여 닫기
             </div>
@@ -956,9 +923,9 @@ const TabletLogin = () => {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.15)',
+              backgroundColor: 'rgba(0, 0, 0, 0.1)',
               zIndex: 10000,
-              backdropFilter: 'blur(1px)'
+              backdropFilter: 'blur(0.5px)'
             }}
             onClick={() => setTooltip({ show: false, message: '', type: 'error' })}
           />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
+import LoadingSpinner from '../common/LoadingSpinner';
 import './ErpCommon.css';
 
 /**
@@ -94,14 +95,11 @@ const PurchaseManagement = () => {
 
   if (sessionLoading) {
     return (
-      <SimpleLayout title="구매 관리">
-        <div className="erp-loading">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">로딩 중...</span>
-          </div>
-          <p>세션 정보를 불러오는 중...</p>
-        </div>
-      </SimpleLayout>
+      <SimpleLayout 
+        title="구매 관리"
+        loading={true}
+        loadingText="세션 정보를 불러오는 중..."
+      />
     );
   }
 
@@ -159,11 +157,18 @@ const PurchaseManagement = () => {
         {/* 콘텐츠 영역 */}
         <div className="erp-content">
           {loading && (
-            <div className="erp-loading">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">로딩 중...</span>
-              </div>
-              <p>데이터를 불러오는 중...</p>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              padding: '40px'
+            }}>
+              <LoadingSpinner 
+                text="데이터를 불러오는 중..."
+                size="medium"
+                variant="default"
+                inline={true}
+              />
             </div>
           )}
 

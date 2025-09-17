@@ -5,27 +5,27 @@ import LoadingSpinner from './LoadingSpinner';
  * 공통 로딩 컴포넌트 - 간편 사용을 위한 래퍼
  */
 
-// 전체 화면 로딩
+// 전체 화면 로딩 (스케줄 스타일)
 export const FullscreenLoading = ({ text = "로딩 중..." }) => (
     <LoadingSpinner 
         text={text}
         size="large"
-        variant="pulse"
+        variant="default"
         fullscreen={true}
     />
 );
 
-// 인라인 로딩 (카드 내부용)
+// 인라인 로딩 (카드 내부용, 스케줄 스타일)
 export const InlineLoading = ({ text = "로딩 중...", size = "medium" }) => (
     <LoadingSpinner 
         text={text}
         size={size}
-        variant="pulse"
+        variant="default"
         inline={true}
     />
 );
 
-// 페이지 로딩 (페이지 중앙)
+// 페이지 로딩 (페이지 중앙, 스케줄 스타일)
 export const PageLoading = ({ text = "페이지를 불러오는 중..." }) => (
     <div style={{ 
         display: 'flex', 
@@ -37,7 +37,7 @@ export const PageLoading = ({ text = "페이지를 불러오는 중..." }) => (
         <LoadingSpinner 
             text={text}
             size="large"
-            variant="pulse"
+            variant="default"
             inline={true}
         />
     </div>

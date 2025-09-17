@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Alert } from 'react-bootstrap';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaToggleOff, FaCompressAlt } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
+import LoadingSpinner from '../common/LoadingSpinner';
 import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
 import SystemTools from './system/SystemTools';
@@ -345,9 +346,18 @@ const AdminDashboard = ({ user: propUser }) => {
     if (sessionLoading) {
         return (
             <div className="admin-dashboard">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>세션 확인 중...</p>
+                <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    minHeight: '400px'
+                }}>
+                    <LoadingSpinner 
+                        text="세션 확인 중..."
+                        size="large"
+                        variant="default"
+                        inline={true}
+                    />
                 </div>
             </div>
         );

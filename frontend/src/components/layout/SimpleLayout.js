@@ -12,7 +12,7 @@ const SimpleLayout = ({
   title, 
   loading = false, 
   loadingText = "페이지를 불러오는 중...",
-  loadingVariant = "pulse"
+  loadingVariant = "default"
 }) => {
   return (
     <div className="simple-layout">

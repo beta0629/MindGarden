@@ -89,7 +89,7 @@ const RefundManagement = () => {
         <SimpleLayout 
             loading={loading}
             loadingText="환불 데이터를 불러오는 중..."
-            loadingVariant="pulse"
+            loadingVariant="default"
         >
             <div className="erp-system" style={{ 
                 padding: '20px',

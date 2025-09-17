@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
+import LoadingSpinner from '../common/LoadingSpinner';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import ConsultantProfileModal from './ConsultantProfileModal';
@@ -600,8 +601,24 @@ const SalaryManagement = () => {
             )}
 
             {loading && (
-                <div className="loading-overlay">
-                    <div className="loading-spinner"></div>
+                <div style={{ 
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 9999
+                }}>
+                    <LoadingSpinner 
+                        text="급여 데이터를 처리하는 중..."
+                        size="large"
+                        variant="default"
+                        inline={true}
+                    />
                 </div>
             )}
 

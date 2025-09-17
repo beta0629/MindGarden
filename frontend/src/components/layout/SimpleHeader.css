@@ -198,7 +198,6 @@
 
 /* 버튼 스타일 */
 .simple-menu-toggle,
-.simple-session-refresh,
 .simple-login-button {
   display: flex;
   align-items: center;
@@ -223,14 +222,6 @@
   background: #e9ecef;
 }
 
-.simple-session-refresh {
-  background: #007bff;
-  color: white;
-}
-
-.simple-session-refresh:hover {
-  background: #0056b3;
-}
 
 .simple-login-button {
   background: #6c5ce7;
@@ -303,7 +294,6 @@
   }
   
   .simple-menu-toggle,
-  .simple-session-refresh,
   .simple-login-button {
     padding: 6px 12px;
     font-size: 13px;

@@ -122,11 +122,6 @@ const SimpleHeader = () => {
     setIsHamburgerOpen(!isHamburgerOpen);
   };
 
-  const handleSessionRefresh = () => {
-    console.log('🔄 세션 새로고침 시도...');
-    // 단순히 페이지 새로고침으로 세션 상태 갱신
-    window.location.reload();
-  };
 
   // 프로필 이미지 우선순위: 사용자 업로드 > 소셜 > 기본 아이콘
   const getProfileImageUrl = () => {
@@ -220,14 +215,6 @@ const SimpleHeader = () => {
           ) : (
             <>
               {/* 로그인 버튼 */}
-              <button 
-                className="simple-session-refresh"
-                onClick={handleSessionRefresh}
-                title="세션 새로고침"
-              >
-                <i className="bi bi-arrow-clockwise"></i>
-                세션 새로고침
-              </button>
               <a href="/login" className="simple-login-button">
                 <i className="bi bi-box-arrow-in-right"></i>
                 로그인

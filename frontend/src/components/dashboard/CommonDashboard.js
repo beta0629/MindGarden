@@ -20,6 +20,8 @@ import ClientPaymentSessionsSection from './ClientPaymentSessionsSection';
 import ConsultantClientSection from './ConsultantClientSection';
 import MotivationCard from '../common/MotivationCard';
 import ScheduleQuickAccess from './ScheduleQuickAccess';
+import RatableConsultationsSection from '../client/RatableConsultationsSection';
+import ConsultantRatingDisplay from '../consultant/ConsultantRatingDisplay';
 
 const CommonDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
@@ -740,9 +742,19 @@ const CommonDashboard = ({ user: propUser }) => {
           <ClientPaymentSessionsSection userId={user.id} />
         )}
 
+        {/* 상담사 평가 섹션 (내담자 전용) */}
+        {user?.role === 'CLIENT' && (
+          <RatableConsultationsSection />
+        )}
+
         {/* 상담사 내담자 섹션 (상담사 전용) */}
         {user?.role === 'CONSULTANT' && (
           <ConsultantClientSection userId={user.id} />
+        )}
+
+        {/* 상담사 평가 표시 섹션 (상담사 전용) */}
+        {user?.role === 'CONSULTANT' && (
+          <ConsultantRatingDisplay consultantId={user.id} />
         )}
         
         {/* 동기부여 카드 (모든 사용자) */}

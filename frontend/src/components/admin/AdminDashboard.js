@@ -24,6 +24,13 @@ const AdminDashboard = ({ user: propUser }) => {
         activeMappings: 0
     });
     
+    const [refundStats, setRefundStats] = useState({
+        totalRefundCount: 0,
+        totalRefundedSessions: 0,
+        totalRefundAmount: 0,
+        averageRefundPerCase: 0
+    });
+    
     const [loading, setLoading] = useState(false);
     const [showToastState, setShowToastState] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
@@ -105,6 +112,25 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, [showToast]);
 
+    const loadRefundStats = useCallback(async () => {
+        try {
+            const response = await fetch('/api/admin/refund-statistics?period=month');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data.summary) {
+                    setRefundStats({
+                        totalRefundCount: data.data.summary.totalRefundCount || 0,
+                        totalRefundedSessions: data.data.summary.totalRefundedSessions || 0,
+                        totalRefundAmount: data.data.summary.totalRefundAmount || 0,
+                        averageRefundPerCase: data.data.summary.averageRefundPerCase || 0
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('환불 통계 로드 실패:', error);
+        }
+    }, []);
+
     // 스케줄 자동 완료 처리
     const handleAutoCompleteSchedules = async () => {
         try {
@@ -178,6 +204,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 const result = await response.json();
                 showToast(result.message || '중복 매핑 통합이 완료되었습니다.');
                 loadStats(); // 통계 새로고침
+                loadRefundStats(); // 환불 통계 새로고침
             } else {
                 const error = await response.json();
                 showToast(error.message || '중복 매핑 통합에 실패했습니다.', 'danger');
@@ -190,7 +217,8 @@ const AdminDashboard = ({ user: propUser }) => {
 
     useEffect(() => {
         loadStats();
-    }, [loadStats]);
+        loadRefundStats();
+    }, [loadStats, loadRefundStats]);
 
     const createTestData = async () => {
         try {
@@ -385,6 +413,63 @@ const AdminDashboard = ({ user: propUser }) => {
                             <h3>활성 매핑</h3>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{stats.activeMappings}개</div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>활성 상태</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 환불 통계 섹션 */}
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                        <i className="bi bi-arrow-return-left"></i>
+                        환불 현황 (최근 1개월)
+                    </h2>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARDS}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} refund-count`} style={{ backgroundColor: '#dc3545' }}>
+                                <FaReceipt />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                                <h3>환불 건수</h3>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{refundStats.totalRefundCount}건</div>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>환불 처리 건수</div>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} refund-sessions`} style={{ backgroundColor: '#fd7e14' }}>
+                                <FaCalendarAlt />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                                <h3>환불 회기</h3>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{refundStats.totalRefundedSessions}회</div>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>환불된 회기수</div>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} refund-amount`} style={{ backgroundColor: '#6f42c1' }}>
+                                <FaDollarSign />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                                <h3>환불 금액</h3>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>
+                                    {refundStats.totalRefundAmount.toLocaleString()}원
+                                </div>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>총 환불 금액</div>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} refund-average`} style={{ backgroundColor: '#20c997' }}>
+                                <FaChartLine />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                                <h3>평균 환불액</h3>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>
+                                    {refundStats.averageRefundPerCase.toLocaleString()}원
+                                </div>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>건당 평균</div>
+                            </div>
                         </div>
                     </div>
                 </div>

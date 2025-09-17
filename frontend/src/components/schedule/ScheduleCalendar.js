@@ -1217,6 +1217,9 @@ const styles = `
     font-size: 12px;
     font-weight: 500;
     text-align: center !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
 .fc-timegrid-event {
@@ -1226,12 +1229,39 @@ const styles = `
     font-size: 12px;
     font-weight: 500;
     text-align: center !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
 .fc-event-title {
     font-weight: 500;
     text-align: center !important;
     width: 100%;
+    display: block !important;
+}
+
+.fc-event-main {
+    text-align: center !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.fc-event-title-container {
+    text-align: center !important;
+    width: 100% !important;
+}
+
+.fc-daygrid-event .fc-event-main {
+    text-align: center !important;
+    justify-content: center !important;
+}
+
+.fc-timegrid-event .fc-event-main {
+    text-align: center !important;
+    justify-content: center !important;
 }
 
 .fc-timegrid-slot {
@@ -1303,6 +1333,40 @@ const styles = `
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
     }
+}
+
+/* 강제 중앙정렬 - 모든 우선순위 오버라이드 */
+.fc .fc-event,
+.fc .fc-daygrid-event,
+.fc .fc-timegrid-event,
+.fc-event,
+.fc-daygrid-event,
+.fc-timegrid-event {
+    text-align: center !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.fc .fc-event-main,
+.fc .fc-event-title,
+.fc .fc-event-title-container,
+.fc-event-main,
+.fc-event-title,
+.fc-event-title-container {
+    text-align: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+}
+
+/* 휴가 이벤트 강제 중앙정렬 */
+.fc-event.vacation-event,
+.fc-daygrid-event.vacation-event,
+.fc-timegrid-event.vacation-event {
+    text-align: center !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
 /* 반응형 디자인 */

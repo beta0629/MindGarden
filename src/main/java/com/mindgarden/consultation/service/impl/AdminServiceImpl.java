@@ -1253,18 +1253,59 @@ public class AdminServiceImpl implements AdminService {
         // 4. 해당 내담자의 예정된 스케줄 조회 (오늘 포함)
         List<Schedule> futureSchedules = scheduleRepository.findByClientIdAndDateGreaterThanEqual(id, LocalDate.now());
         
-        if (!futureSchedules.isEmpty()) {
-            log.warn("⚠️ 내담자에게 {} 개의 예정된 스케줄이 있습니다.", futureSchedules.size());
+        // 활성 스케줄만 필터링 (BOOKED, CONFIRMED 상태)
+        List<Schedule> activeSchedules = futureSchedules.stream()
+                .filter(schedule -> schedule.getStatus() == ScheduleStatus.BOOKED || 
+                                  schedule.getStatus() == ScheduleStatus.CONFIRMED)
+                .collect(Collectors.toList());
+        
+        if (!activeSchedules.isEmpty()) {
+            log.warn("⚠️ 내담자에게 {} 개의 예정된 스케줄이 있습니다.", activeSchedules.size());
+            
+            // 스케줄 상세 정보 로깅
+            for (Schedule schedule : activeSchedules) {
+                User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+                log.warn("📅 예정 스케줄: ID={}, 날짜={}, 시간={}-{}, 상담사={} (활성:{})", 
+                    schedule.getId(), schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(),
+                    consultant != null ? consultant.getName() : "알 수 없음",
+                    consultant != null ? consultant.getIsActive() : "알 수 없음");
+            }
+            
             throw new RuntimeException(String.format(
-                "내담자에게 %d 개의 예정된 스케줄이 있습니다. 스케줄 완료 또는 취소 후 삭제해주세요.", 
-                futureSchedules.size()));
+                "내담자에게 %d 개의 예정된 스케줄이 있습니다. 회기 소진, 환불 처리, 또는 스케줄 완료 후 다시 시도해주세요.", 
+                activeSchedules.size()));
         }
         
-        // 5. 내담자 비활성화
+        // 5. 모든 미래 스케줄 취소 (삭제된 상담사와의 스케줄 포함)
+        List<Schedule> allFutureSchedules = scheduleRepository.findByClientIdAndDateGreaterThanEqual(id, LocalDate.now());
+        int cancelledScheduleCount = 0;
+        
+        for (Schedule schedule : allFutureSchedules) {
+            if (schedule.getStatus() == ScheduleStatus.BOOKED || schedule.getStatus() == ScheduleStatus.CONFIRMED) {
+                User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+                
+                log.info("📅 내담자 삭제로 인한 스케줄 취소: ID={}, 날짜={}, 상담사={} (활성:{})", 
+                    schedule.getId(), schedule.getDate(), 
+                    consultant != null ? consultant.getName() : "알 수 없음",
+                    consultant != null ? consultant.getIsActive() : "알 수 없음");
+                
+                schedule.setStatus(ScheduleStatus.CANCELLED);
+                schedule.setNotes(schedule.getNotes() != null ? 
+                    schedule.getNotes() + "\n[내담자 삭제로 인한 자동 취소]" :
+                    "[내담자 삭제로 인한 자동 취소]");
+                schedule.setUpdatedAt(LocalDateTime.now());
+                scheduleRepository.save(schedule);
+                cancelledScheduleCount++;
+            }
+        }
+        
+        log.info("📅 내담자 삭제로 인한 스케줄 자동 취소: {}개", cancelledScheduleCount);
+        
+        // 6. 내담자 비활성화
         client.setIsActive(false);
         userRepository.save(client);
         
-        log.info("✅ 내담자 삭제 완료: ID={}, 이름={}", id, client.getName());
+        log.info("✅ 내담자 삭제 완료: ID={}, 이름={}, 취소된 스케줄={}개", id, client.getName(), cancelledScheduleCount);
     }
 
     @Override
@@ -1292,8 +1333,12 @@ public class AdminServiceImpl implements AdminService {
                 .filter(mapping -> mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.PENDING)
                 .collect(Collectors.toList());
         
-        // 4. 예정된 스케줄 조회 (오늘 포함)
-        List<Schedule> futureSchedules = scheduleRepository.findByClientIdAndDateGreaterThanEqual(clientId, LocalDate.now());
+        // 4. 예정된 스케줄 조회 (오늘 포함, 활성 스케줄만)
+        List<Schedule> futureSchedules = scheduleRepository.findByClientIdAndDateGreaterThanEqual(clientId, LocalDate.now())
+                .stream()
+                .filter(schedule -> schedule.getStatus() == ScheduleStatus.BOOKED || 
+                                  schedule.getStatus() == ScheduleStatus.CONFIRMED)
+                .collect(Collectors.toList());
         
         Map<String, Object> result = new HashMap<>();
         result.put("clientId", clientId);

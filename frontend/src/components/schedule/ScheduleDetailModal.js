@@ -380,29 +380,55 @@ const ScheduleDetailModal = ({
                     <div className="action-buttons">
                         {isVacationEvent() ? (
                             // 휴가 이벤트인 경우 - 휴가 관련 정보 표시
-                            <div className="vacation-info" style={{ 
-                                textAlign: 'center',
-                                padding: '20px',
-                                backgroundColor: '#fef3c7',
-                                borderRadius: '8px',
-                                margin: '20px 0'
-                            }}>
-                                <p className="vacation-notice" style={{ 
-                                    textAlign: 'center',
-                                    fontSize: '16px',
-                                    fontWeight: 'bold',
-                                    color: '#f59e0b',
-                                    marginBottom: '10px',
-                                    margin: '0 0 10px 0'
-                                }}>
+                            <div 
+                                ref={(el) => {
+                                    if (el) {
+                                        el.style.setProperty('text-align', 'center', 'important');
+                                        el.style.setProperty('display', 'flex', 'important');
+                                        el.style.setProperty('flex-direction', 'column', 'important');
+                                        el.style.setProperty('align-items', 'center', 'important');
+                                        el.style.setProperty('justify-content', 'center', 'important');
+                                    }
+                                }}
+                                style={{ 
+                                    padding: '20px',
+                                    backgroundColor: '#fef3c7',
+                                    borderRadius: '8px',
+                                    margin: '20px 0',
+                                    width: '100%'
+                                }}
+                            >
+                                <p 
+                                    ref={(el) => {
+                                        if (el) {
+                                            el.style.setProperty('text-align', 'center', 'important');
+                                            el.style.setProperty('display', 'block', 'important');
+                                            el.style.setProperty('width', '100%', 'important');
+                                        }
+                                    }}
+                                    style={{ 
+                                        fontSize: '16px',
+                                        fontWeight: 'bold',
+                                        color: '#f59e0b',
+                                        margin: '0 0 10px 0'
+                                    }}
+                                >
                                     🏖️ 이 이벤트는 상담사의 휴가입니다.
                                 </p>
-                                <p className="vacation-details" style={{ 
-                                    textAlign: 'center',
-                                    fontSize: '14px',
-                                    color: '#92400e',
-                                    margin: '0'
-                                }}>
+                                <p 
+                                    ref={(el) => {
+                                        if (el) {
+                                            el.style.setProperty('text-align', 'center', 'important');
+                                            el.style.setProperty('display', 'block', 'important');
+                                            el.style.setProperty('width', '100%', 'important');
+                                        }
+                                    }}
+                                    style={{ 
+                                        fontSize: '14px',
+                                        color: '#92400e',
+                                        margin: '0'
+                                    }}
+                                >
                                     해당 시간대에는 상담이 불가능합니다.
                                 </p>
                             </div>

@@ -18,6 +18,7 @@ import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.ConsultantRatingService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -442,6 +443,62 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         } catch (Exception e) {
             log.error("❌ 인기 평가 태그 조회 실패: 상담사={}", consultantId, e);
             throw new RuntimeException("인기 태그를 불러오는데 실패했습니다.");
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getAdminRatingStatistics() {
+        try {
+            log.info("💖 관리자 평가 통계 조회 시작");
+
+            Map<String, Object> stats = new HashMap<>();
+
+            // 전체 평가 개수
+            Long totalRatings = ratingRepository.count();
+            stats.put("totalRatings", totalRatings != null ? totalRatings : 0L);
+
+            // 전체 평균 점수
+            List<ConsultantRating> allRatings = ratingRepository.findAll();
+            double averageScore = allRatings.stream()
+                .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)
+                .mapToInt(ConsultantRating::getHeartScore)
+                .average()
+                .orElse(0.0);
+            stats.put("averageScore", Math.round(averageScore * 10.0) / 10.0);
+
+            // 상담사 랭킹 (TOP 10)
+            List<Map<String, Object>> topConsultants = getConsultantRanking(PageRequest.of(0, 10));
+            stats.put("topConsultants", topConsultants);
+
+            // 최근 7일 평가 동향
+            
+            List<Map<String, Object>> recentTrends = new ArrayList<>();
+            for (int i = 6; i >= 0; i--) {
+                LocalDateTime dayStart = LocalDateTime.now().minusDays(i).withHour(0).withMinute(0).withSecond(0);
+                LocalDateTime dayEnd = dayStart.withHour(23).withMinute(59).withSecond(59);
+                
+                // 해당 날짜의 모든 평가 개수 조회
+                long dayCount = ratingRepository.findAll().stream()
+                    .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)
+                    .filter(rating -> rating.getRatedAt().isAfter(dayStart) && rating.getRatedAt().isBefore(dayEnd))
+                    .count();
+                
+                Map<String, Object> dayTrend = new HashMap<>();
+                dayTrend.put("date", dayStart.toLocalDate().toString().substring(5)); // MM-dd 형식
+                dayTrend.put("count", dayCount);
+                recentTrends.add(dayTrend);
+            }
+            stats.put("recentTrends", recentTrends);
+
+            log.info("✅ 관리자 평가 통계 조회 완료: 총평가={}, 평균점수={}, 상담사수={}", 
+                totalRatings, averageScore, topConsultants.size());
+
+            return stats;
+
+        } catch (Exception e) {
+            log.error("❌ 관리자 평가 통계 조회 실패", e);
+            throw new RuntimeException("평가 통계를 불러오는데 실패했습니다.");
         }
     }
 

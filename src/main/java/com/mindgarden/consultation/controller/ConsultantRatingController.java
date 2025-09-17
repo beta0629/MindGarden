@@ -135,6 +135,31 @@ public class ConsultantRatingController {
     }
 
     /**
+     * 관리자용 - 전체 평가 통계
+     */
+    @GetMapping("/admin/statistics")
+    public ResponseEntity<?> getAdminRatingStatistics() {
+        try {
+            log.info("💖 관리자 평가 통계 조회 시작");
+            
+            // 전체 평가 통계 조회
+            Map<String, Object> stats = ratingService.getAdminRatingStatistics();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", stats
+            ));
+
+        } catch (Exception e) {
+            log.error("관리자 평가 통계 조회 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 내담자용 - 평가 가능한 상담 목록
      */
     @GetMapping("/client/{clientId}/ratable-schedules")

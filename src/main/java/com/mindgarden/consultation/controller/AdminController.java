@@ -19,6 +19,7 @@ import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.MenuService;
 import com.mindgarden.consultation.service.ScheduleService;
+import com.mindgarden.consultation.service.ConsultantRatingService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -49,6 +50,7 @@ public class AdminController {
     private final MenuService menuService;
     private final FinancialTransactionService financialTransactionService;
     private final ErpService erpService;
+    private final ConsultantRatingService consultantRatingService;
 
     /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
@@ -2440,6 +2442,48 @@ public class AdminController {
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "중복 매핑 통합에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 관리자용 상담사 평가 통계 조회
+     */
+    @GetMapping("/consultant-rating-stats")
+    public ResponseEntity<?> getConsultantRatingStatistics(HttpSession session) {
+        try {
+            log.info("💖 관리자 평가 통계 조회 요청");
+            
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 관리자 권한 확인
+            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "관리자 권한이 필요합니다."
+                ));
+            }
+            
+            // 평가 통계 조회
+            Map<String, Object> statistics = consultantRatingService.getAdminRatingStatistics();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", statistics
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 관리자 평가 통계 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "평가 통계 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }

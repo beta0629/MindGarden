@@ -117,4 +117,11 @@ public interface ConsultantRatingService {
      * @return 인기 태그 목록
      */
     List<Map<String, Object>> getPopularRatingTags(Long consultantId);
+
+    /**
+     * 관리자용 전체 평가 통계
+     * 
+     * @return 전체 평가 통계 정보
+     */
+    Map<String, Object> getAdminRatingStatistics();
 }

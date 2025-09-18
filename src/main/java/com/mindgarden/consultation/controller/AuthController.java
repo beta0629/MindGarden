@@ -107,9 +107,10 @@ public class AuthController {
             
             // 지점 정보 추가 (단순화)
             userInfo.put("branchId", null);
-            userInfo.put("branchName", user.getBranchCode());
             userInfo.put("branchCode", user.getBranchCode());
             userInfo.put("needsBranchMapping", user.getBranchCode() == null);
+            
+            userInfo.put("branchName", user.getBranchCode()); // 임시로 코드명 사용
             
             // 소셜 계정 정보 조회하여 이미지 타입 구분
             List<UserSocialAccount> socialAccounts = userSocialAccountRepository.findByUserIdAndIsDeletedFalse(user.getId());

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.MenuService;
+import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,8 +40,8 @@ public class MenuController {
         try {
             log.info("📋 사용자 메뉴 구조 조회");
             
-            // 세션에서 사용자 정보 조회
-            User currentUser = (User) session.getAttribute("user");
+            // 세션에서 사용자 정보 조회 (AuthController와 동일한 방식)
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 log.warn("❌ 인증되지 않은 사용자");
                 return ResponseEntity.status(401)

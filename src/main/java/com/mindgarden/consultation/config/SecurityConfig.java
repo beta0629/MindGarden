@@ -21,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Spring Security 설정 클래스
@@ -64,13 +65,8 @@ public class SecurityConfig {
                     "/actuator/info"
                 ).permitAll();
                 
-                // 운영 환경에서는 나머지 API 인증 필요
-                if (isProductionEnvironment()) {
-                    authz.anyRequest().authenticated();
-                } else {
-                    // 개발 환경에서는 모든 요청 허용 (개발 편의성)
-                    authz.anyRequest().permitAll();
-                }
+                // 운영 환경에서도 인증된 사용자는 API 접근 허용 (역할별 권한은 컨트롤러에서 처리)
+                authz.anyRequest().authenticated();
             })
             
             // 폼 로그인 비활성화
@@ -211,9 +207,10 @@ public class SecurityConfig {
     }
     
     /**
-     * RestTemplate Bean (모든 프로파일에서 사용)
+     * RestTemplate Bean (prod 프로파일에서만 사용)
      */
     @Bean
+    @Profile("prod")
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }

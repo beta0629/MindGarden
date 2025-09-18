@@ -2,6 +2,7 @@ package com.mindgarden.consultation.controller;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import com.mindgarden.consultation.constant.OAuth2Constants;
@@ -16,6 +17,9 @@ import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -295,6 +299,9 @@ public class OAuth2Controller {
                     
                     SessionUtils.setCurrentUser(session, user);
                     
+                    // SpringSecurity 인증 컨텍스트에도 사용자 정보 설정
+                    setSpringSecurityAuthentication(user);
+                    
                     log.info("네이버 OAuth2 로그인 성공: userId={}, role={}, profileImage={}", 
                             user.getId(), user.getRole(), user.getProfileImageUrl());
                     
@@ -482,6 +489,9 @@ public class OAuth2Controller {
                     
                     SessionUtils.setCurrentUser(session, user);
                     
+                    // SpringSecurity 인증 컨텍스트에도 사용자 정보 설정
+                    setSpringSecurityAuthentication(user);
+                    
                     log.info("카카오 OAuth2 로그인 성공: userId={}, role={}, profileImage={}", 
                             user.getId(), user.getRole(), user.getProfileImageUrl());
                     
@@ -522,6 +532,36 @@ public class OAuth2Controller {
             return ResponseEntity.status(302)
                 .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
+        }
+    }
+    
+    /**
+     * SpringSecurity 인증 컨텍스트에 사용자 정보 설정
+     * OAuth2 로그인 후 API 호출 시 인증이 유지되도록 함
+     */
+    private void setSpringSecurityAuthentication(User user) {
+        try {
+            // 사용자 권한 설정
+            List<SimpleGrantedAuthority> authorities = List.of(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+            );
+            
+            // Authentication 객체 생성
+            UsernamePasswordAuthenticationToken authentication = 
+                new UsernamePasswordAuthenticationToken(
+                    user.getEmail(), 
+                    null, 
+                    authorities
+                );
+            
+            // SecurityContext에 설정
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            
+            log.info("SpringSecurity 인증 컨텍스트 설정 완료: email={}, role={}", 
+                    user.getEmail(), user.getRole());
+            
+        } catch (Exception e) {
+            log.error("SpringSecurity 인증 컨텍스트 설정 실패: {}", e.getMessage(), e);
         }
     }
 }

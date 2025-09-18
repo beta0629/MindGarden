@@ -53,7 +53,12 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
     }
   }, [isOpen, user]);
 
-  if (!isOpen) return null;
+  console.log('🔍 isOpen 상태 체크:', { isOpen, user });
+  if (!isOpen) {
+    console.log('❌ 햄버거 메뉴 닫혀있음 - 렌더링 중단');
+    return null;
+  }
+  console.log('✅ 햄버거 메뉴 열려있음 - 렌더링 계속');
 
   const handleMenuClick = (path) => {
     if (path && path !== '준비중') {
@@ -92,6 +97,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
 
   // 로딩 상태 렌더링
   if (isLoading) {
+    console.log('🔄 햄버거 메뉴 로딩 중 - 로딩 화면 표시');
     return (
       <div className="simple-hamburger-overlay">
         <div className="simple-hamburger-menu">
@@ -148,6 +154,8 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
     );
   }
 
+  console.log('🔍 SimpleHamburgerMenu 렌더링 시작:', { isOpen, user, menuStructure });
+  
   return (
     <div className="simple-hamburger-overlay" onClick={onClose}>
       <div className="simple-hamburger-menu" onClick={(e) => e.stopPropagation()}>
@@ -223,7 +231,9 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
 
         {/* 푸터 영역 */}
         <div className="simple-hamburger-footer">
+          {console.log('🔍 푸터 영역 렌더링됨 - simple-hamburger-footer')}
           <button className="simple-logout-btn" onClick={handleLogout}>
+            {console.log('🔍 로그아웃 버튼 렌더링됨 - simple-logout-btn')}
             <i className="bi bi-box-arrow-right"></i>
             <span>로그아웃</span>
           </button>

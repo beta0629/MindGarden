@@ -119,7 +119,9 @@ const SimpleHeader = () => {
   };
 
   const toggleHamburger = () => {
+    console.log('🔍 햄버거 버튼 클릭됨:', { 현재상태: isHamburgerOpen, 변경될상태: !isHamburgerOpen });
     setIsHamburgerOpen(!isHamburgerOpen);
+    console.log('✅ 햄버거 상태 변경 완료:', !isHamburgerOpen);
   };
 
 

@@ -205,6 +205,16 @@ const SimpleHeader = () => {
                 </div>
               </div>
 
+              {/* 로그아웃 버튼 */}
+              <button 
+                className="simple-logout-button" 
+                onClick={handleLogout}
+                title="로그아웃"
+              >
+                <i className="bi bi-box-arrow-right"></i>
+                <span>로그아웃</span>
+              </button>
+
               {/* 햄버거 메뉴 버튼 */}
               <button 
                 className="simple-hamburger-toggle" 

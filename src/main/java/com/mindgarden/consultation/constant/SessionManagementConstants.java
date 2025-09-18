@@ -24,7 +24,7 @@ public final class SessionManagementConstants {
     /**
      * 최대 동시 세션 수 (사용자당)
      */
-    public static final int MAX_CONCURRENT_SESSIONS = 1;
+    public static final int MAX_CONCURRENT_SESSIONS = 3;
     
     /**
      * 세션 만료 체크 간격 (분)
@@ -80,7 +80,7 @@ public final class SessionManagementConstants {
     /**
      * 중복 로그인 허용 여부
      */
-    public static final boolean ALLOW_DUPLICATE_LOGIN = false;
+    public static final boolean ALLOW_DUPLICATE_LOGIN = true;
     
     /**
      * 중복 로그인 시 기존 세션 종료 여부

@@ -5,6 +5,9 @@ import notificationManager from '../../utils/notification';
 
 const DuplicateLoginModal = () => {
   const { duplicateLoginModal, setDuplicateLoginModal } = useSession();
+  
+  // 디버깅용 로그
+  console.log('🔍 DuplicateLoginModal 렌더링:', duplicateLoginModal);
 
   const handleConfirm = async () => {
     if (!duplicateLoginModal.loginData) {

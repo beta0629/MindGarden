@@ -183,13 +183,15 @@ const TabletLogin = () => {
         setIsLoading(false);
         
         // 중복 로그인 모달 표시
-        setDuplicateLoginModal({
+        const modalData = {
           isOpen: true,
           message: result.message || '다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?',
           loginData: formData
-        });
+        };
         
-        console.log('🔔 중복 로그인 모달 표시 완료');
+        console.log('🔔 중복 로그인 모달 데이터:', modalData);
+        setDuplicateLoginModal(modalData);
+        console.log('🔔 중복 로그인 모달 설정 완료');
       } else {
         console.log('❌ 로그인 실패:', result.message);
         // 로딩 해제 후 알림 표시

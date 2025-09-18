@@ -293,6 +293,11 @@ export const SessionProvider = ({ children }) => {
       dispatch({ type: SessionActionTypes.CLEAR_SESSION });
       
       console.log('✅ 중앙 세션 로그아웃 완료');
+      
+      // 로그인 페이지로 리다이렉트
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 100);
       return true;
     } catch (error) {
       console.error('❌ 중앙 세션 로그아웃 실패:', error);

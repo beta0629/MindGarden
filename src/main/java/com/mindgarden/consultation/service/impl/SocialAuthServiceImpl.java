@@ -151,9 +151,10 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             log.info("User 엔티티 저장 완료: userId={}, branchId={}, branchCode={}", 
                 user.getId(), user.getBranch() != null ? user.getBranch().getId() : "null", user.getBranchCode());
             
-            // Client 엔티티 생성 (독립적인 엔티티)
+            // Client 엔티티 생성 (User ID를 외래키로 사용)
             log.info("Client 엔티티 생성 시작");
             Client client = Client.builder()
+                    .id(user.getId()) // User ID를 외래키로 설정
                     .name(user.getName())
                     .email(user.getEmail())
                     .phone(user.getPhone())

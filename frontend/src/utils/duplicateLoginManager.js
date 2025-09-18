@@ -75,7 +75,7 @@ class DuplicateLoginManager {
 
             const response = await ajax.get('/api/auth/check-duplicate-login');
             
-            if (response.success) {
+            if (response && response.success) {
                 if (response.hasDuplicateLogin) {
                     console.warn('⚠️ 중복 로그인 감지됨');
                     this.handleDuplicateLogin();

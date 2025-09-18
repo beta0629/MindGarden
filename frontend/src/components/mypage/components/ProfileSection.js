@@ -147,11 +147,17 @@ const ProfileSection = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // onSave 호출 제거 - 크롭된 이미지는 백엔드에 저장하지 않음
-      console.log('프로필 정보 저장 (이미지 제외)');
+      console.log('🚀 프로필 정보 저장 시작 (주소 포함)');
+      
+      // onSave 호출하여 백엔드에 저장
+      if (onSave) {
+        await onSave(e, formData);
+        console.log('✅ 프로필 정보 저장 완료');
+      }
+      
       setIsEditing(false);
     } catch (error) {
-      console.error('프로필 업데이트 실패:', error);
+      console.error('❌ 프로필 업데이트 실패:', error);
     }
   };
 

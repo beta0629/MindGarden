@@ -1,20 +1,88 @@
-/* 간단한 헤더 스타일 */
+/* SimpleHeader 컴포넌트 최적화된 스타일 - CSS 변수 사용 */
+:root {
+  /* Header 색상 변수 */
+  --header-bg: #ffffff;
+  --header-border: #e0e0e0;
+  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --header-primary: #6c5ce7;
+  --header-primary-light: rgba(108, 92, 231, 0.1);
+  --header-primary-hover: rgba(108, 92, 231, 0.2);
+  --header-text-primary: #333;
+  --header-text-secondary: #666;
+  --header-text-muted: #999;
+  --header-bg-light: #f5f5f5;
+  --header-bg-hover: rgba(0, 0, 0, 0.05);
+  --header-danger: #dc3545;
+  --header-danger-hover: #c82333;
+  --header-neutral: #f8f9fa;
+  --header-neutral-hover: #e9ecef;
+  --header-border-light: #dee2e6;
+  
+  /* Header 크기 변수 */
+  --header-height: 60px;
+  --header-height-mobile: 56px;
+  --header-max-width: 1200px;
+  --header-padding: 20px;
+  --header-padding-mobile: 15px;
+  --header-button-size: 40px;
+  --header-button-size-mobile: 36px;
+  --header-avatar-size: 36px;
+  --header-avatar-size-mobile: 32px;
+  --header-border-radius: 8px;
+  --header-border-radius-large: 12px;
+  --header-border-radius-round: 50%;
+  --header-gap: 12px;
+  --header-gap-mobile: 8px;
+  
+  /* Header 폰트 변수 */
+  --header-logo-size: 1.2rem;
+  --header-logo-size-mobile: 1.1rem;
+  --header-logo-icon-size: 1.5rem;
+  --header-logo-icon-size-mobile: 1.3rem;
+  --header-user-name-size: 14px;
+  --header-user-name-size-mobile: 13px;
+  --header-user-role-size: 12px;
+  --header-user-role-size-mobile: 11px;
+  --header-user-role-en-size: 10px;
+  --header-user-role-en-size-mobile: 9px;
+  --header-branch-size: 11px;
+  --header-branch-size-mobile: 10px;
+  --header-loading-size: 14px;
+  --header-button-font-size: 14px;
+  --header-button-font-size-mobile: 13px;
+  --header-icon-size: 16px;
+  --header-icon-size-large: 18px;
+  --header-icon-size-mobile: 14px;
+  --header-avatar-icon-size: 24px;
+  --header-avatar-icon-size-mobile: 20px;
+  
+  /* Header 애니메이션 변수 */
+  --header-transition: 0.2s ease;
+  --header-transition-slow: 0.3s ease;
+  --header-spin-duration: 1s;
+  --header-pulse-duration: 2s;
+  
+  /* Header Z-index 변수 */
+  --header-z-index: 1000;
+  --header-logout-z-index: 99999;
+}
+
 .simple-header {
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--header-border);
+  box-shadow: var(--header-shadow);
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: var(--header-z-index);
 }
 
 .simple-header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  height: 60px;
-  max-width: 1200px;
+  padding: 0 var(--header-padding);
+  height: var(--header-height);
+  max-width: var(--header-max-width);
   margin: 0 auto;
 }
 
@@ -22,7 +90,7 @@
 .simple-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--header-gap);
 }
 
 /* 뒤로가기 버튼 */
@@ -30,19 +98,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--header-button-size);
+  height: var(--header-button-size);
   border: none;
-  border-radius: 8px;
-  background: rgba(108, 92, 231, 0.1);
-  color: #6c5ce7;
+  border-radius: var(--header-border-radius);
+  background: var(--header-primary-light);
+  color: var(--header-primary);
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 16px;
+  transition: all var(--header-transition);
+  font-size: var(--header-icon-size);
 }
 
 .simple-back-button:hover {
-  background: rgba(108, 92, 231, 0.2);
+  background: var(--header-primary-hover);
   transform: translateX(-2px);
 }
 
@@ -60,36 +128,36 @@
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: #333;
+  color: var(--header-text-primary);
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: var(--header-logo-size);
 }
 
 .simple-header-logo-link i {
-  font-size: 1.5rem;
-  color: #6c5ce7;
-  margin-right: 8px;
+  font-size: var(--header-logo-icon-size);
+  color: var(--header-primary);
+  margin-right: var(--header-gap-mobile);
 }
 
 /* 오른쪽 영역 */
 .simple-header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--header-gap);
 }
 
 /* 로딩 상태 */
 .simple-loading {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  color: #666;
-  font-size: 14px;
+  gap: var(--header-gap-mobile);
+  padding: var(--header-gap-mobile) var(--header-icon-size);
+  color: var(--header-text-secondary);
+  font-size: var(--header-loading-size);
 }
 
 .simple-loading i {
-  animation: spin 1s linear infinite;
+  animation: spin var(--header-spin-duration) linear infinite;
 }
 
 @keyframes spin {
@@ -101,26 +169,26 @@
 .simple-user-info {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: var(--header-gap-mobile) var(--header-gap);
+  border-radius: var(--header-border-radius);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--header-transition);
 }
 
 .simple-user-info:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--header-bg-hover);
 }
 
 .simple-user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: var(--header-avatar-size);
+  height: var(--header-avatar-size);
+  border-radius: var(--header-border-radius-round);
   overflow: hidden;
-  margin-right: 8px;
+  margin-right: var(--header-gap-mobile);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: var(--header-bg-light);
 }
 
 .simple-profile-image {
@@ -130,8 +198,8 @@
 }
 
 .simple-user-avatar i {
-  font-size: 24px;
-  color: #9e9e9e;
+  font-size: var(--header-avatar-icon-size);
+  color: var(--header-text-muted);
 }
 
 .simple-user-details {
@@ -141,21 +209,21 @@
 
 .simple-user-name {
   font-weight: 600;
-  color: #333;
-  font-size: 14px;
+  color: var(--header-text-primary);
+  font-size: var(--header-user-name-size);
   line-height: 1.2;
 }
 
 .simple-user-role {
-  font-size: 12px;
-  color: #666;
+  font-size: var(--header-user-role-size);
+  color: var(--header-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .simple-user-role-en {
-  font-size: 10px;
-  color: #999;
+  font-size: var(--header-user-role-en-size);
+  color: var(--header-text-muted);
   font-style: italic;
   margin-top: 1px;
 }
@@ -164,14 +232,14 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
-  color: #999;
+  font-size: var(--header-branch-size);
+  color: var(--header-text-muted);
   margin-top: 2px;
   opacity: 0.7;
 }
 
 .simple-user-branch i {
-  font-size: 10px;
+  font-size: var(--header-branch-size-mobile);
 }
 
 /* 로그아웃 버튼 - 강제 표시 */
@@ -228,20 +296,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--header-button-size);
+  height: var(--header-button-size);
   border: none;
-  border-radius: 8px;
-  background: #f8f9fa;
-  color: #333;
+  border-radius: var(--header-border-radius);
+  background: var(--header-neutral);
+  color: var(--header-text-primary);
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 18px;
-  border: 1px solid #dee2e6;
+  transition: all var(--header-transition);
+  font-size: var(--header-icon-size-large);
+  border: 1px solid var(--header-border-light);
 }
 
 .simple-hamburger-toggle:hover {
-  background: #e9ecef;
+  background: var(--header-neutral-hover);
   transform: scale(1.05);
 }
 
@@ -251,29 +319,28 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: var(--header-gap-mobile) var(--header-icon-size);
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--header-button-font-size);
   font-weight: 500;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all var(--header-transition);
 }
 
 .simple-menu-toggle {
-  background: #f8f9fa;
-  color: #333;
-  border: 1px solid #dee2e6;
+  background: var(--header-neutral);
+  color: var(--header-text-primary);
+  border: 1px solid var(--header-border-light);
 }
 
 .simple-menu-toggle:hover {
-  background: #e9ecef;
+  background: var(--header-neutral-hover);
 }
 
-
 .simple-login-button {
-  background: #6c5ce7;
+  background: var(--header-primary);
   color: white;
 }
 
@@ -282,26 +349,26 @@
   color: white;
 }
 
-/* 반응형 */
+/* 반응형 디자인 - CSS 변수 사용 */
 @media (max-width: 768px) {
   .simple-header-content {
-    padding: 0 15px;
-    height: 56px;
+    padding: 0 var(--header-padding-mobile);
+    height: var(--header-height-mobile);
   }
   
   .simple-header-left {
-    gap: 8px;
+    gap: var(--header-gap-mobile);
   }
   
   .simple-back-button {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
+    width: var(--header-button-size-mobile);
+    height: var(--header-button-size-mobile);
+    font-size: var(--header-icon-size-mobile);
   }
   
   .simple-logout-button {
     padding: 6px 10px;
-    font-size: 13px;
+    font-size: var(--header-button-font-size-mobile);
     margin-right: 6px;
   }
   
@@ -310,51 +377,51 @@
   }
   
   .simple-hamburger-toggle {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
+    width: var(--header-button-size-mobile);
+    height: var(--header-button-size-mobile);
+    font-size: var(--header-icon-size);
   }
   
   .simple-header-logo-link {
-    font-size: 1.1rem;
+    font-size: var(--header-logo-size-mobile);
   }
   
   .simple-header-logo-link i {
-    font-size: 1.3rem;
+    font-size: var(--header-logo-icon-size-mobile);
   }
   
   .simple-user-avatar {
-    width: 32px;
-    height: 32px;
+    width: var(--header-avatar-size-mobile);
+    height: var(--header-avatar-size-mobile);
   }
   
   .simple-user-avatar i {
-    font-size: 20px;
+    font-size: var(--header-avatar-icon-size-mobile);
   }
   
   .simple-user-name {
-    font-size: 13px;
+    font-size: var(--header-user-name-size-mobile);
   }
   
   .simple-user-role {
-    font-size: 11px;
+    font-size: var(--header-user-role-size-mobile);
   }
   
   .simple-user-role-en {
-    font-size: 9px;
+    font-size: var(--header-user-role-en-size-mobile);
   }
   
   .simple-user-branch {
-    font-size: 10px;
+    font-size: var(--header-branch-size-mobile);
   }
   
   .simple-user-branch i {
-    font-size: 9px;
+    font-size: var(--header-branch-size-mobile);
   }
   
   .simple-menu-toggle,
   .simple-login-button {
-    padding: 6px 12px;
-    font-size: 13px;
+    padding: 6px var(--header-gap);
+    font-size: var(--header-button-font-size-mobile);
   }
 }

@@ -4,6 +4,12 @@ import { useSession } from '../../contexts/SessionContext';
 import { getRoleDisplayName, getRoleDisplayNameEn } from '../../utils/roleHelper';
 import SimpleHamburgerMenu from './SimpleHamburgerMenu';
 import ConfirmModal from '../common/ConfirmModal';
+import { 
+  HEADER_CSS_CLASSES, 
+  HEADER_TEXTS, 
+  HEADER_ICONS, 
+  HEADER_DEFAULTS 
+} from '../../constants/css/headerConstants';
 import './SimpleHeader.css';
 
 /**
@@ -51,25 +57,17 @@ const SimpleHeader = () => {
     loadRoleDisplayNames();
   }, [user?.role, user?.branchName]);
 
-  // 뒤로가기 버튼을 표시할지 결정하는 함수
+  // 뒤로가기 버튼을 표시할지 결정하는 함수 - 상수 사용
   const shouldShowBackButton = () => {
     const currentPath = location.pathname;
-    const rootPaths = ['/', '/login', '/register'];
     
     // 홈페이지, 로그인, 회원가입 페이지에서는 뒤로가기 버튼을 표시하지 않음
-    if (rootPaths.includes(currentPath)) {
+    if (HEADER_DEFAULTS.SHOW_BACK_BUTTON_PATHS.includes(currentPath)) {
       return false;
     }
     
     // 각 역할의 메인 대시보드에서는 뒤로가기 버튼을 표시하지 않음
-    const mainDashboardPaths = [
-      '/admin/dashboard',
-      '/consultant/dashboard', 
-      '/client/dashboard',
-      '/super_admin/dashboard'
-    ];
-    
-    if (mainDashboardPaths.includes(currentPath)) {
+    if (HEADER_DEFAULTS.MAIN_DASHBOARD_PATHS.includes(currentPath)) {
       return false;
     }
     
@@ -148,78 +146,106 @@ const SimpleHeader = () => {
 
   return (
     <>
-      <header className="simple-header">
-      <div className="simple-header-content">
+      <header className={HEADER_CSS_CLASSES.HEADER}>
+      <div className={HEADER_CSS_CLASSES.HEADER_CONTENT}>
         {/* 왼쪽 영역 - 뒤로가기 버튼과 로고 */}
-        <div className="simple-header-left">
+        <div className={HEADER_CSS_CLASSES.HEADER_LEFT}>
           {/* 뒤로가기 버튼 (조건부 표시) */}
           {shouldShowBackButton() && (
             <button 
-              className="simple-back-button" 
+              className={HEADER_CSS_CLASSES.BACK_BUTTON} 
               onClick={handleBackClick}
-              title="뒤로가기"
+              title={HEADER_TEXTS.BACK_TITLE}
             >
-              <i className="bi bi-arrow-left"></i>
+              <i className={`bi ${HEADER_ICONS.BACK}`}></i>
             </button>
           )}
           
           {/* 로고 */}
-          <div className="simple-header-logo">
-            <a href="/" className="simple-header-logo-link">
-              <i className="bi bi-flower1"></i>
-              <span>MindGarden</span>
+          <div className={HEADER_CSS_CLASSES.HEADER_LOGO}>
+            <a href="/" className={HEADER_CSS_CLASSES.HEADER_LOGO_LINK}>
+              <i className={`bi ${HEADER_ICONS.LOGO}`}></i>
+              <span>{HEADER_TEXTS.BRAND_NAME}</span>
             </a>
           </div>
         </div>
         
         {/* 오른쪽 영역 */}
-        <div className="simple-header-right">
+        <div className={HEADER_CSS_CLASSES.HEADER_RIGHT}>
           {isLoading ? (
-            <div className="simple-loading">
-              <i className="bi bi-hourglass-split"></i>
-              <span>로딩 중...</span>
+            <div className={HEADER_CSS_CLASSES.LOADING}>
+              <i className={`bi ${HEADER_ICONS.LOADING}`}></i>
+              <span>{HEADER_TEXTS.LOADING}</span>
             </div>
           ) : isLoggedIn && user ? (
             <>
               {/* 사용자 정보 */}
-              <div className="simple-user-info" onClick={handleProfileClick}>
-                <div className="simple-user-avatar">
+              <div className={HEADER_CSS_CLASSES.USER_INFO} onClick={handleProfileClick}>
+                <div className={HEADER_CSS_CLASSES.USER_AVATAR}>
                   {getProfileImageUrl() ? (
                     <img 
                       src={getProfileImageUrl()} 
                       alt="프로필" 
-                      className="simple-profile-image"
+                      className={HEADER_CSS_CLASSES.PROFILE_IMAGE}
                       onError={handleImageError}
                       onLoad={handleImageLoad}
                     />
                   ) : (
-                    <i className="bi bi-person-circle"></i>
+                    <i className={`bi ${HEADER_ICONS.USER_DEFAULT}`}></i>
                   )}
                 </div>
-                <div className="simple-user-details">
-                  <div className="simple-user-name">
-                    {user.name || user.nickname || user.username || '사용자'}
+                <div className={HEADER_CSS_CLASSES.USER_DETAILS}>
+                  <div className={HEADER_CSS_CLASSES.USER_NAME}>
+                    {user.name || user.nickname || user.username || HEADER_TEXTS.DEFAULT_USER}
                   </div>
-                  <div className="simple-user-role">{roleDisplayName || user.role}</div>
-                  <div className="simple-user-role-en">{roleDisplayNameEn || user.role}</div>
+                  <div className={HEADER_CSS_CLASSES.USER_ROLE}>{roleDisplayName || user.role}</div>
+                  <div className={HEADER_CSS_CLASSES.USER_ROLE_EN}>{roleDisplayNameEn || user.role}</div>
                 </div>
               </div>
 
+              {/* 로그아웃 버튼 */}
+              <button 
+                className="simple-header-logout-button"
+                onClick={handleLogout}
+                title="로그아웃"
+                style={{
+                  marginLeft: '12px',
+                  marginRight: '8px',
+                  padding: '8px 12px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#c82333'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#dc3545'}
+              >
+                <i className="bi bi-box-arrow-right"></i>
+                <span>로그아웃</span>
+              </button>
+
               {/* 햄버거 메뉴 버튼 */}
               <button 
-                className="simple-hamburger-toggle" 
+                className={HEADER_CSS_CLASSES.HAMBURGER_TOGGLE} 
                 onClick={toggleHamburger}
-                title="메뉴"
+                title={HEADER_TEXTS.MENU_TITLE}
               >
-                <i className="bi bi-list"></i>
+                <i className={`bi ${HEADER_ICONS.HAMBURGER}`}></i>
               </button>
             </>
           ) : (
             <>
               {/* 로그인 버튼 */}
-              <a href="/login" className="simple-login-button">
-                <i className="bi bi-box-arrow-in-right"></i>
-                로그인
+              <a href="/login" className={HEADER_CSS_CLASSES.LOGIN_BUTTON}>
+                <i className={`bi ${HEADER_ICONS.LOGIN}`}></i>
+                {HEADER_TEXTS.LOGIN}
               </a>
             </>
           )}
@@ -238,9 +264,9 @@ const SimpleHeader = () => {
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
         onConfirm={confirmLogout}
-        title="로그아웃"
+        title={HEADER_TEXTS.LOGOUT}
         message="로그아웃 하시겠습니까?"
-        confirmText="로그아웃"
+        confirmText={HEADER_TEXTS.LOGOUT}
         cancelText="취소"
         type="danger"
       />

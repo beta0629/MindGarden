@@ -117,14 +117,14 @@ export const PROFILE_API = {
     MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/user/profile/${userId}/social-account`
   },
 
-  // 관리자용
+  // 관리자용 (MyPageService 사용)
   ADMIN: {
-    GET_INFO: (userId) => `/api/admin/users/${userId}`,
-    UPDATE_INFO: (userId) => `/api/admin/users/${userId}`,
-    CHANGE_PASSWORD: (userId) => `/api/admin/users/${userId}/password`,
-    UPLOAD_IMAGE: (userId) => `/api/admin/users/${userId}/image`,
-    GET_SOCIAL_ACCOUNTS: (userId) => `/api/admin/users/${userId}/social-accounts`,
-    MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/admin/users/${userId}/social-account`
+    GET_INFO: (userId) => `/api/client/profile`,
+    UPDATE_INFO: (userId) => `/api/client/profile`,
+    CHANGE_PASSWORD: (userId) => `/api/client/profile/password`,
+    UPLOAD_IMAGE: (userId) => `/api/client/profile/image`,
+    GET_SOCIAL_ACCOUNTS: (userId) => `/api/client/social-accounts`,
+    MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/client/social-account`
   }
 };
 

@@ -146,9 +146,19 @@ jobs:
           ps aux | grep -E "(mindgarden|app\.jar|8080)" | grep -v grep || echo "✅ 모든 프로세스 정리됨"
           
           # systemd 재로드 및 서비스 재시작
+          echo "🔄 systemd 재로드..."
           sudo systemctl daemon-reload
           sudo systemctl enable mindgarden.service
+          
+          echo "🚀 서비스 시작..."
           sudo systemctl start mindgarden.service
+          
+          # 서비스 시작 실패 시 재시도
+          if ! sudo systemctl is-active --quiet mindgarden.service; then
+            echo "⚠️  첫 번째 시작 실패, 재시도..."
+            sleep 5
+            sudo systemctl start mindgarden.service
+          fi
           
           # 서비스 상태 확인
           echo "⏳ 서비스 시작 대기 중..."
@@ -166,6 +176,15 @@ jobs:
           
           echo "🔍 프로세스 확인..."
           ps aux | grep -E "(mindgarden|app\.jar)" | grep -v grep || echo "프로세스 없음"
+          
+          echo "🔍 서비스 재시작 확인..."
+          if sudo systemctl is-active --quiet mindgarden.service; then
+            echo "✅ 서비스 정상 시작됨"
+            echo "🕐 서비스 시작 시간: $(sudo systemctl show mindgarden.service --property=ActiveEnterTimestamp --value)"
+          else
+            echo "❌ 서비스 시작 실패"
+            sudo systemctl status mindgarden.service --no-pager -l
+          fi
           
           # Nginx 설정 테스트 및 재로드
           sudo nginx -t

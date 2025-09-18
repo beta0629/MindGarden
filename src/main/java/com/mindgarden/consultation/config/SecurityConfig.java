@@ -55,6 +55,25 @@ public class SecurityConfig {
             
             // 환경별 인증 설정
             .authorizeHttpRequests(authz -> {
+                // 정적 리소스 (CSS, JS, 이미지 등) - 항상 허용
+                authz.requestMatchers(
+                    "/static/**",
+                    "/css/**", 
+                    "/js/**",
+                    "/images/**",
+                    "/fonts/**",
+                    "/favicon.ico",
+                    "/robots.txt",
+                    "/manifest.json",
+                    "/*.png",
+                    "/*.jpg",
+                    "/*.jpeg",
+                    "/*.gif",
+                    "/*.svg",
+                    "/*.css",
+                    "/*.js"
+                ).permitAll();
+                
                 // 공개 API (모든 환경에서 허용)
                 authz.requestMatchers(
                     "/api/auth/**", 

@@ -126,14 +126,24 @@ jobs:
           # 권한 설정
           chmod +x app.jar
           
-          # 기존 서비스 완전 정지
+          # 기존 서비스 완전 정지 (강화된 버전)
+          echo "🛑 서비스 정지 시작..."
           sudo systemctl stop mindgarden.service || true
+          sleep 5
+          
+          echo "🔍 남은 프로세스 확인 및 강제 종료..."
+          # Java 프로세스 강제 종료
+          sudo pkill -9 -f "mindgarden" || true
+          sudo pkill -9 -f "app.jar" || true
+          sudo pkill -9 -f "consultation-management-system" || true
+          sudo pkill -9 -f "spring.profiles.active=prod" || true
+          
+          # 포트 8080 사용 프로세스 강제 종료
+          sudo fuser -k 8080/tcp || true
           sleep 3
           
-          # 혹시 남은 프로세스 강제 종료
-          sudo pkill -f "mindgarden" || true
-          sudo pkill -f "app.jar" || true
-          sleep 2
+          echo "🔍 프로세스 정리 확인..."
+          ps aux | grep -E "(mindgarden|app\.jar|8080)" | grep -v grep || echo "✅ 모든 프로세스 정리됨"
           
           # systemd 재로드 및 서비스 재시작
           sudo systemctl daemon-reload

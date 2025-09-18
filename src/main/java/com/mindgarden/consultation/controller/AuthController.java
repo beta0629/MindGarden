@@ -105,58 +105,11 @@ public class AuthController {
             userInfo.put("nickname", decryptedNickname);
             userInfo.put("role", user.getRole());
             
-            // 지점 정보 추가
-            if (user.getBranch() != null) {
-                userInfo.put("branchId", user.getBranch().getId());
-                userInfo.put("branchName", user.getBranch().getBranchName());
-                userInfo.put("branchCode", user.getBranch().getBranchCode());
-                userInfo.put("needsBranchMapping", false);
-            } else {
-                // Branch 엔티티는 없지만 branchCode가 있을 수 있음
-                log.info("🔍 Branch 엔티티 없음, branchCode로 공통코드 조회: {}", user.getBranchCode());
-                
-                if (user.getBranchCode() != null) {
-                    try {
-                        // 공통코드에서 지점 정보 조회
-                        var branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
-                        var branchInfo = branchCodes.stream()
-                            .filter(code -> code.getCodeValue().equals(user.getBranchCode()))
-                            .findFirst()
-                            .orElse(null);
-                        
-                        if (branchInfo != null) {
-                            userInfo.put("branchId", null); // CommonCode ID를 branchId로 사용하지 않음
-                            userInfo.put("branchName", branchInfo.getCodeLabel());
-                            userInfo.put("branchCode", user.getBranchCode());
-                            log.info("✅ 공통코드에서 지점 정보 조회 성공: {}", branchInfo.getCodeLabel());
-                        } else {
-                            userInfo.put("branchId", null);
-                            userInfo.put("branchName", user.getBranchCode()); // fallback
-                            userInfo.put("branchCode", user.getBranchCode());
-                            log.warn("⚠️ 공통코드에서 지점 정보 없음: {}", user.getBranchCode());
-                        }
-                    } catch (Exception e) {
-                        log.error("❌ 지점 정보 조회 실패: {}", e.getMessage());
-                        userInfo.put("branchId", null);
-                        userInfo.put("branchName", user.getBranchCode());
-                        userInfo.put("branchCode", user.getBranchCode());
-                    }
-                } else {
-                    userInfo.put("branchId", null);
-                    userInfo.put("branchName", null);
-                    userInfo.put("branchCode", null);
-                }
-                
-                // 지점 매핑 필요 조건:
-                // 1. 관리자/지점 관리자 역할이거나
-                // 2. 상담사 역할이거나
-                // 3. SNS 로그인한 사용자이지만 지점코드가 없는 경우
-                boolean isSocialUser = !userSocialAccountRepository.findByUserIdAndIsDeletedFalse(user.getId()).isEmpty();
-                boolean hasBranchCode = user.getBranchCode() != null && !user.getBranchCode().trim().isEmpty();
-                boolean needsMapping = (user.getRole().isAdmin() || user.getRole().isBranchManager() || 
-                                     user.getRole().isConsultant() || isSocialUser) && !hasBranchCode;
-                userInfo.put("needsBranchMapping", needsMapping);
-            }
+            // 지점 정보 추가 (단순화)
+            userInfo.put("branchId", null);
+            userInfo.put("branchName", user.getBranchCode());
+            userInfo.put("branchCode", user.getBranchCode());
+            userInfo.put("needsBranchMapping", user.getBranchCode() == null);
             
             // 소셜 계정 정보 조회하여 이미지 타입 구분
             List<UserSocialAccount> socialAccounts = userSocialAccountRepository.findByUserIdAndIsDeletedFalse(user.getId());

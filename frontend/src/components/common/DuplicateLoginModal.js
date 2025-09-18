@@ -2,6 +2,7 @@ import React from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import { sessionManager } from '../../utils/sessionManager';
 
 const DuplicateLoginModal = () => {
   const { duplicateLoginModal, setDuplicateLoginModal } = useSession();
@@ -33,6 +34,13 @@ const DuplicateLoginModal = () => {
           isOpen: false,
           message: '',
           loginData: null
+        });
+        
+        // 세션에 사용자 정보 설정
+        console.log('🔐 세션에 사용자 정보 설정:', response.user);
+        sessionManager.setUser(response.user, {
+          accessToken: response.accessToken || 'duplicate_login_token',
+          refreshToken: response.refreshToken || 'duplicate_login_refresh_token'
         });
         
         // 성공 알림

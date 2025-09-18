@@ -105,10 +105,10 @@ public class AuthController {
                 userInfo.put("branchCode", user.getBranch().getBranchCode());
                 userInfo.put("needsBranchMapping", false);
             } else {
-                // 지점이 없는 경우
+                // Branch 엔티티는 없지만 branchCode가 있을 수 있음
                 userInfo.put("branchId", null);
                 userInfo.put("branchName", null);
-                userInfo.put("branchCode", null);
+                userInfo.put("branchCode", user.getBranchCode());
                 
                 // 지점 매핑 필요 조건:
                 // 1. 관리자/지점 관리자 역할이거나

@@ -67,6 +67,7 @@ import { sessionManager } from './utils/sessionManager';
 import duplicateLoginManager from './utils/duplicateLoginManager';
 import DuplicateLoginAlert from './components/common/DuplicateLoginAlert';
 import BranchMappingModal from './components/common/BranchMappingModal';
+import DuplicateLoginModal from './components/common/DuplicateLoginModal';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -448,6 +449,9 @@ function AppContent() {
             }}
             onSuccess={handleBranchMappingSuccess}
           />
+          
+          {/* 중복 로그인 모달 */}
+          <DuplicateLoginModal />
         </div>
       </QueryParamHandler>
     </Router>

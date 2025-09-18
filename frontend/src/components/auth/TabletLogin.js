@@ -19,7 +19,7 @@ import '../../styles/auth/TabletLogin.css';
 const TabletLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, testLogin: centralTestLogin, checkSession } = useSession();
+  const { login, testLogin: centralTestLogin, checkSession, setDuplicateLoginModal } = useSession();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -181,8 +181,15 @@ const TabletLogin = () => {
         // 중복 로그인 확인 요청
         console.log('🔔 중복 로그인 확인 요청:', result.message);
         setIsLoading(false);
-        // 중복 로그인 모달 표시 (SessionContext 사용)
-        // 이 부분은 SessionContext의 모달 시스템을 사용해야 함
+        
+        // 중복 로그인 모달 표시
+        setDuplicateLoginModal({
+          isOpen: true,
+          message: result.message || '다른 곳에서 로그인되어 있습니다. 기존 세션을 종료하고 새로 로그인하시겠습니까?',
+          loginData: formData
+        });
+        
+        console.log('🔔 중복 로그인 모달 표시 완료');
       } else {
         console.log('❌ 로그인 실패:', result.message);
         // 로딩 해제 후 알림 표시

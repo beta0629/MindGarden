@@ -69,10 +69,17 @@ public class AuthController {
 
     @GetMapping("/current-user")
     public ResponseEntity<?> getCurrentUser(HttpSession session) {
-        User sessionUser = SessionUtils.getCurrentUser(session);
+        log.info("🔍 /api/auth/current-user API 호출 시작");
+        try {
+            User sessionUser = SessionUtils.getCurrentUser(session);
+            log.info("🔍 세션 사용자 조회 결과: {}", sessionUser != null ? sessionUser.getEmail() : "null");
         if (sessionUser != null) {
+            log.info("🔍 데이터베이스에서 사용자 정보 조회 시작: userId={}", sessionUser.getId());
             // 세션에 저장된 사용자 ID로 데이터베이스에서 최신 정보 조회
             User user = userRepository.findById(sessionUser.getId()).orElse(sessionUser);
+            log.info("🔍 사용자 정보 조회 완료: email={}, role={}, branchCode={}", 
+                    user.getEmail(), user.getRole(), user.getBranchCode());
+            
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("id", user.getId());
             userInfo.put("email", user.getEmail());
@@ -106,9 +113,39 @@ public class AuthController {
                 userInfo.put("needsBranchMapping", false);
             } else {
                 // Branch 엔티티는 없지만 branchCode가 있을 수 있음
-                userInfo.put("branchId", null);
-                userInfo.put("branchName", null);
-                userInfo.put("branchCode", user.getBranchCode());
+                log.info("🔍 Branch 엔티티 없음, branchCode로 공통코드 조회: {}", user.getBranchCode());
+                
+                if (user.getBranchCode() != null) {
+                    try {
+                        // 공통코드에서 지점 정보 조회
+                        var branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
+                        var branchInfo = branchCodes.stream()
+                            .filter(code -> code.getCodeValue().equals(user.getBranchCode()))
+                            .findFirst()
+                            .orElse(null);
+                        
+                        if (branchInfo != null) {
+                            userInfo.put("branchId", branchInfo.getId());
+                            userInfo.put("branchName", branchInfo.getCodeLabel());
+                            userInfo.put("branchCode", user.getBranchCode());
+                            log.info("✅ 공통코드에서 지점 정보 조회 성공: {}", branchInfo.getCodeLabel());
+                        } else {
+                            userInfo.put("branchId", null);
+                            userInfo.put("branchName", user.getBranchCode()); // fallback
+                            userInfo.put("branchCode", user.getBranchCode());
+                            log.warn("⚠️ 공통코드에서 지점 정보 없음: {}", user.getBranchCode());
+                        }
+                    } catch (Exception e) {
+                        log.error("❌ 지점 정보 조회 실패: {}", e.getMessage());
+                        userInfo.put("branchId", null);
+                        userInfo.put("branchName", user.getBranchCode());
+                        userInfo.put("branchCode", user.getBranchCode());
+                    }
+                } else {
+                    userInfo.put("branchId", null);
+                    userInfo.put("branchName", null);
+                    userInfo.put("branchCode", null);
+                }
                 
                 // 지점 매핑 필요 조건:
                 // 1. 관리자/지점 관리자 역할이거나
@@ -147,9 +184,19 @@ public class AuthController {
             userInfo.put("socialProfileImage", socialProfileImage);
             userInfo.put("socialProvider", socialProvider);
             
+            log.info("✅ current-user API 응답 완료: userId={}", user.getId());
             return ResponseEntity.ok(userInfo);
         }
+        log.warn("❌ 세션에 사용자 정보 없음");
         return ResponseEntity.status(401).build();
+        } catch (Exception e) {
+            log.error("❌ /api/auth/current-user API 오류: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "message", "서버 내부 오류가 발생했습니다: " + e.getMessage(),
+                "errorCode", "INTERNAL_SERVER_ERROR"
+            ));
+        }
     }
     
     @PostMapping("/logout")

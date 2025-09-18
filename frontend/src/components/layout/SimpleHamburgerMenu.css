@@ -329,6 +329,14 @@
   color: #495057;
 }
 
+/* 햄버거 메뉴 푸터 영역 */
+.simple-hamburger-footer {
+  margin-top: auto;
+  padding: 1rem;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
 /* 푸터 버튼 스타일 */
 .simple-logout-btn {
   display: flex;

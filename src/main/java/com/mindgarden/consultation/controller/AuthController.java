@@ -1393,49 +1393,49 @@ public class AuthController {
                 ));
             }
             
-            // 지점 존재 여부 확인
-            try {
-                log.info("🔍 지점 조회 시도: branchCode={}", branchCode);
-                var branch = branchService.getBranchByCode(branchCode);
-                log.info("✅ 지점 조회 성공: branchId={}, branchName={}", branch.getId(), branch.getBranchName());
-                if (branch == null) {
-                    log.warn("❌ 지점이 null입니다: branchCode={}", branchCode);
-                    return ResponseEntity.badRequest().body(Map.of(
-                        "success", false,
-                        "message", "존재하지 않는 지점 코드입니다: " + branchCode
-                    ));
-                }
-                
-                // 사용자를 다시 조회하여 동시성 문제 방지
-                User userToUpdate = userRepository.findById(currentUser.getId())
-                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-                
-                // 사용자에 지점 할당
-                userToUpdate.setBranch(branch);
-                userToUpdate.setBranchCode(branchCode);
-                userRepository.save(userToUpdate);
-                
-                // 세션 업데이트
-                SessionUtils.setCurrentUser(session, userToUpdate);
-                
-                log.info("✅ 사용자 지점 매핑 완료: userId={}, branchCode={}, branchName={}", 
-                    userToUpdate.getId(), branchCode, branch.getBranchName());
-                
-                return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "지점이 성공적으로 매핑되었습니다.",
-                    "branchId", branch.getId(),
-                    "branchName", branch.getBranchName(),
-                    "branchCode", branch.getBranchCode()
-                ));
-                
-            } catch (Exception e) {
-                log.error("❌ 지점 조회 실패: branchCode={}, error={}", branchCode, e.getMessage());
+            // 지점 존재 여부 확인 (공통코드 기반)
+            log.info("🔍 지점 코드 유효성 검사: branchCode={}", branchCode);
+            
+            // 공통코드에서 지점 정보 조회
+            var branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
+            var branchCodeExists = branchCodes.stream()
+                .anyMatch(code -> code.getCodeValue().equals(branchCode));
+            
+            if (!branchCodeExists) {
+                log.warn("❌ 존재하지 않는 지점 코드: branchCode={}", branchCode);
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "존재하지 않는 지점 코드입니다: " + branchCode
                 ));
             }
+            
+            // 지점 정보 가져오기
+            var branchInfo = branchCodes.stream()
+                .filter(code -> code.getCodeValue().equals(branchCode))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("지점 정보를 찾을 수 없습니다."));
+            
+            // 사용자를 다시 조회하여 동시성 문제 방지
+            User userToUpdate = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            
+            // 사용자에 지점 코드만 할당 (Branch 엔티티는 사용하지 않음)
+            userToUpdate.setBranchCode(branchCode);
+            userRepository.save(userToUpdate);
+            
+            // 세션 업데이트
+            SessionUtils.setCurrentUser(session, userToUpdate);
+            
+            log.info("✅ 사용자 지점 매핑 완료: userId={}, branchCode={}, branchName={}", 
+                userToUpdate.getId(), branchCode, branchInfo.getCodeLabel());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "지점이 성공적으로 매핑되었습니다.",
+                "branchId", branchInfo.getId(),
+                "branchName", branchInfo.getCodeLabel(),
+                "branchCode", branchCode
+            ));
             
         } catch (Exception e) {
             log.error("❌ 지점 매핑 실패: error={}", e.getMessage(), e);

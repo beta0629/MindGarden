@@ -37,11 +37,12 @@ const DuplicateLoginModal = () => {
         });
         
         // 세션에 사용자 정보 설정
-        console.log('🔐 세션에 사용자 정보 설정:', response.user);
+        console.log('🔐 중복 로그인 성공 - 세션에 사용자 정보 설정 시작:', response.user);
         sessionManager.setUser(response.user, {
           accessToken: response.accessToken || 'duplicate_login_token',
           refreshToken: response.refreshToken || 'duplicate_login_refresh_token'
         });
+        console.log('✅ 세션 설정 완료 - 사용자 정보 저장됨');
         
         // 성공 알림
         notificationManager.show('로그인에 성공했습니다.', 'success');

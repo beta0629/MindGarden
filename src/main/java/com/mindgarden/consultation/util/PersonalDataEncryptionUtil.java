@@ -21,10 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class PersonalDataEncryptionUtil {
 
-    @Value("${encryption.personal-data.key:}")
+    @Value("${encryption.personal-data.key:MindGarden2025SecretKey!@#}")
     private String encryptionKey;
     
-    @Value("${encryption.personal-data.iv:}")
+    @Value("${encryption.personal-data.iv:MindGarden2025IV!@#789}")
     private String encryptionIv;
     
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding";

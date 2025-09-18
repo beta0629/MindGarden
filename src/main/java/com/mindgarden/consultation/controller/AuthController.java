@@ -105,12 +105,29 @@ public class AuthController {
             userInfo.put("nickname", decryptedNickname);
             userInfo.put("role", user.getRole());
             
-            // 지점 정보 추가 (단순화)
+            // 지점 정보 추가 (공통코드 기반)
             userInfo.put("branchId", null);
             userInfo.put("branchCode", user.getBranchCode());
             userInfo.put("needsBranchMapping", user.getBranchCode() == null);
             
-            userInfo.put("branchName", user.getBranchCode()); // 임시로 코드명 사용
+            // 지점명 한글 표시 (공통코드에서 조회)
+            String branchName = user.getBranchCode();
+            if (user.getBranchCode() != null) {
+                try {
+                    var branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
+                    var branchInfo = branchCodes.stream()
+                        .filter(code -> code.getCodeValue().equals(user.getBranchCode()))
+                        .findFirst();
+                    
+                    if (branchInfo.isPresent()) {
+                        branchName = branchInfo.get().getCodeLabel(); // 한글명 사용
+                        log.info("✅ 지점명 한글 변환: {} -> {}", user.getBranchCode(), branchName);
+                    }
+                } catch (Exception e) {
+                    log.warn("⚠️ 지점명 한글 변환 실패: {}", e.getMessage());
+                }
+            }
+            userInfo.put("branchName", branchName);
             
             // 소셜 계정 정보 조회하여 이미지 타입 구분
             List<UserSocialAccount> socialAccounts = userSocialAccountRepository.findByUserIdAndIsDeletedFalse(user.getId());

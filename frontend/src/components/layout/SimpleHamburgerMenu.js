@@ -29,7 +29,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         setIsLoading(true);
         setError(null);
         
-        console.log('🍔 동적 햄버거 메뉴 로딩 시작');
+        console.log('🍔 동적 햄버거 메뉴 로딩 시작 (v2.0)');
         const structure = await loadMenuStructure();
         
         setMenuStructure(structure);
@@ -163,8 +163,32 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         <div className="simple-hamburger-header">
           <div className="user-info">
             <div className="user-name">{user?.name || '사용자'}</div>
-            <div className="user-role">
-              {menuStructure?.roleDisplayName || user?.role || 'USER'}
+            <div className="user-role-with-logout">
+              <div className="user-role">
+                {menuStructure?.roleDisplayName || user?.role || 'USER'}
+              </div>
+              <button 
+                className="hamburger-test-button"
+                onClick={() => alert('테스트 버튼이 작동합니다!')}
+                title="테스트"
+                style={{
+                  marginLeft: '8px',
+                  padding: '4px 8px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px'
+                }}
+              >
+                <i className="bi bi-check-circle" style={{fontSize: '10px'}}></i>
+                테스트
+              </button>
             </div>
           </div>
           <button className="simple-hamburger-close" onClick={onClose}>
@@ -265,4 +289,4 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
   );
 };
 
-export default SimpleHamburgerMenu;
+export default SimpleHamburgerMenu;// 캐시 무효화를 위한 더미 주석 Thu Sep 18 22:25:36 KST 2025

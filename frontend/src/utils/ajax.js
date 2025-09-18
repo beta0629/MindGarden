@@ -226,13 +226,20 @@ export const authAPI = {
         credentials: 'include' // 세션 쿠키 포함
       });
       
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('로그인 실패 응답:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        // requiresConfirmation이 있는 경우는 정상 응답으로 처리
+        if (responseData.requiresConfirmation) {
+          console.log('🔔 중복 로그인 확인 요청 응답:', responseData);
+          return responseData;
+        }
+        
+        console.error('로그인 실패 응답:', responseData);
+        throw new Error(`HTTP ${response.status}: ${JSON.stringify(responseData)}`);
       }
       
-      return await response.json();
+      return responseData;
     } catch (error) {
       console.error('로그인 요청 오류:', error);
       throw error;

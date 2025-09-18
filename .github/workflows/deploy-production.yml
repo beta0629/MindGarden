@@ -126,14 +126,36 @@ jobs:
           # 권한 설정
           chmod +x app.jar
           
-          # systemd 재로드 및 서비스 시작
+          # 기존 서비스 완전 정지
+          sudo systemctl stop mindgarden.service || true
+          sleep 3
+          
+          # 혹시 남은 프로세스 강제 종료
+          sudo pkill -f "mindgarden" || true
+          sudo pkill -f "app.jar" || true
+          sleep 2
+          
+          # systemd 재로드 및 서비스 재시작
           sudo systemctl daemon-reload
-          sudo systemctl start mindgarden.service
           sudo systemctl enable mindgarden.service
+          sudo systemctl start mindgarden.service
           
           # 서비스 상태 확인
+          echo "⏳ 서비스 시작 대기 중..."
           sleep 15
-          sudo systemctl status mindgarden.service --no-pager | head -10
+          
+          echo "🔍 서비스 상태 확인..."
+          sudo systemctl status mindgarden.service --no-pager | head -15
+          
+          echo "🔍 서비스 활성화 상태 확인..."
+          sudo systemctl is-active mindgarden.service
+          sudo systemctl is-enabled mindgarden.service
+          
+          echo "🔍 최근 로그 확인..."
+          sudo journalctl -u mindgarden.service -n 20 --no-pager | tail -10
+          
+          echo "🔍 프로세스 확인..."
+          ps aux | grep -E "(mindgarden|app\.jar)" | grep -v grep || echo "프로세스 없음"
           
           # Nginx 설정 테스트 및 재로드
           sudo nginx -t

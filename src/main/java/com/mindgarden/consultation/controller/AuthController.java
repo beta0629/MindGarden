@@ -125,7 +125,7 @@ public class AuthController {
                             .orElse(null);
                         
                         if (branchInfo != null) {
-                            userInfo.put("branchId", branchInfo.getId());
+                            userInfo.put("branchId", null); // CommonCode ID를 branchId로 사용하지 않음
                             userInfo.put("branchName", branchInfo.getCodeLabel());
                             userInfo.put("branchCode", user.getBranchCode());
                             log.info("✅ 공통코드에서 지점 정보 조회 성공: {}", branchInfo.getCodeLabel());

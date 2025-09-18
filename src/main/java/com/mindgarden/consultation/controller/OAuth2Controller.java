@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -557,8 +558,12 @@ public class OAuth2Controller {
             // SecurityContext에 설정
             SecurityContextHolder.getContext().setAuthentication(authentication);
             
-            log.info("SpringSecurity 인증 컨텍스트 설정 완료: email={}, role={}", 
-                    user.getEmail(), user.getRole());
+            // 세션에 SecurityContext 저장 (명시적으로)
+            SecurityContext securityContext = SecurityContextHolder.getContext();
+            
+            log.info("🔐 SpringSecurity 인증 컨텍스트 설정 완료: email={}, role={}, authorities={}", 
+                    user.getEmail(), user.getRole(), authorities);
+            log.info("🔐 SecurityContext 저장됨: {}", securityContext.getAuthentication() != null);
             
         } catch (Exception e) {
             log.error("SpringSecurity 인증 컨텍스트 설정 실패: {}", e.getMessage(), e);

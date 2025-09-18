@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -21,7 +22,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.context.annotation.Profile;
 
 /**
  * Spring Security 설정 클래스
@@ -48,6 +48,9 @@ public class SecurityConfig {
             // 세션 관리 활성화
             .sessionManagement(session -> session
                 .sessionAuthenticationStrategy(sessionAuthenticationStrategy())
+                .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
+                .maximumSessions(3)
+                .sessionRegistry(sessionRegistry())
             )
             
             // 환경별 인증 설정
@@ -65,7 +68,7 @@ public class SecurityConfig {
                     "/actuator/info"
                 ).permitAll();
                 
-                // 운영 환경에서도 인증된 사용자는 API 접근 허용 (역할별 권한은 컨트롤러에서 처리)
+                // 인증된 사용자만 API 접근 허용 (세션 기반)
                 authz.anyRequest().authenticated();
             })
             
@@ -138,7 +141,7 @@ public class SecurityConfig {
             if (System.getenv("ALLOWED_ORIGINS") != null) {
                 configuration.setAllowedOrigins(Arrays.asList(System.getenv("ALLOWED_ORIGINS").split(",")));
             } else {
-                configuration.setAllowedOrigins(List.of("https://yourdomain.com", "https://www.yourdomain.com"));
+                configuration.setAllowedOrigins(List.of("http://m-garden.co.kr", "https://m-garden.co.kr"));
             }
         } else {
             // 개발 환경: localhost 허용

@@ -149,8 +149,8 @@ export const SessionProvider = ({ children }) => {
           dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
         }
         
-        // 지점 매핑 필요 여부 확인
-        if (user.needsBranchMapping) {
+        // 지점 매핑 필요 여부 확인 (branchCode가 없으면 매핑 필요)
+        if (user.needsBranchMapping || !user.branchCode) {
           console.log('🏢 지점 매핑 필요:', user);
           dispatch({ 
             type: SessionActionTypes.SET_BRANCH_MAPPING_MODAL, 

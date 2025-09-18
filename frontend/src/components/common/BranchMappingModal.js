@@ -21,7 +21,9 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
 
   // === 초기 로딩 ===
   useEffect(() => {
+    console.log('🔍 BranchMappingModal useEffect 실행:', { isOpen });
     if (isOpen) {
+      console.log('🔄 지점 목록 로드 시작...');
       loadBranches();
     }
   }, [isOpen]);
@@ -33,29 +35,37 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
    */
   const loadBranches = async () => {
     try {
+      console.log('🔄 loadBranches 함수 시작');
       setIsLoadingBranches(true);
       setError(null);
       
-      const response = await fetch('/api/branches/active', {
+      console.log('📡 API 호출 시작: /api/auth/branches');
+      const response = await fetch('/api/auth/branches', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         }
       });
 
+      console.log('📡 API 응답 상태:', response.status);
       if (!response.ok) {
         throw new Error('지점 목록을 불러오는데 실패했습니다.');
       }
 
       const data = await response.json();
-      // API 응답이 배열 형태이므로 직접 사용
-      setBranches(Array.isArray(data) ? data : []);
+      console.log('📡 API 응답 데이터:', data);
+      console.log('📡 지점 배열:', data.branches);
+      
+      // AuthController API 응답 형태에 맞게 수정
+      setBranches(data.branches || []);
+      console.log('✅ 지점 목록 설정 완료:', data.branches?.length || 0, '개');
     } catch (error) {
-      console.error('지점 목록 조회 오류:', error);
+      console.error('❌ 지점 목록 조회 오류:', error);
       setError('지점 목록을 불러오는데 실패했습니다.');
       notificationManager.show('지점 목록을 불러오는데 실패했습니다.', 'error');
     } finally {
       setIsLoadingBranches(false);
+      console.log('🏁 loadBranches 함수 완료');
     }
   };
 

@@ -98,7 +98,7 @@ function QueryParamHandler({ children, onLoginSuccess }) {
 
 // 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
 function AppContent() {
-  const { user, sessionInfo, isLoading, checkSession, logout, branchMappingModal, handleBranchMappingSuccess } = useSession();
+  const { user, sessionInfo, isLoading, checkSession, logout, branchMappingModal, setBranchMappingModal, handleBranchMappingSuccess } = useSession();
   
   // 통계 모달 상태
   const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);
@@ -440,11 +440,11 @@ function AppContent() {
           />
           
           {/* 지점 매핑 모달 */}
+          {console.log('🔍 BranchMappingModal 상태:', branchMappingModal)}
           <BranchMappingModal
             isOpen={branchMappingModal.isOpen}
             onClose={() => {
-              // 모달을 닫을 수 없도록 함 (필수 설정)
-              console.log('지점 매핑은 필수입니다.');
+              setBranchMappingModal({ isOpen: false, needsMapping: false });
             }}
             onSuccess={handleBranchMappingSuccess}
           />

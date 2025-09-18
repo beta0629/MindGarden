@@ -84,3 +84,4 @@ sudo systemctl start mindgarden.service
 ---
 
 **🎉 설정 완료 후 `git push origin main`으로 자동 배포를 테스트해보세요!**
+# GitHub Actions 자동 배포 테스트 완료

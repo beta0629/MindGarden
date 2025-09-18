@@ -38,8 +38,21 @@ const DuplicateLoginModal = () => {
         // 성공 알림
         notificationManager.show('로그인에 성공했습니다.', 'success');
         
-        // 페이지 새로고침하여 세션 상태 업데이트
-        window.location.reload();
+        // 역할에 따른 대시보드로 리다이렉트
+        const userRole = response.user.role;
+        console.log('🎯 중복 로그인 성공 후 리다이렉트:', userRole);
+        
+        setTimeout(() => {
+          if (userRole === 'ADMIN') {
+            window.location.href = '/admin/dashboard';
+          } else if (userRole === 'SUPER_ADMIN') {
+            window.location.href = '/super-admin/dashboard';
+          } else if (userRole === 'CONSULTANT') {
+            window.location.href = '/consultant/dashboard';
+          } else {
+            window.location.href = '/client/dashboard';
+          }
+        }, 1000); // 1초 후 리다이렉트
       } else {
         console.log('❌ 중복 로그인 확인 후 로그인 실패:', response?.message);
         notificationManager.show(response?.message || '로그인에 실패했습니다.', 'error');

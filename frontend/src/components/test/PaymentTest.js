@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import { PAYMENT_TEST_CSS } from '../../constants/css';
 import { API_BASE_URL } from '../../constants/api';
+import ENV from '../../constants/environment';
 import { 
   PAYMENT_TEST_API,
   HTTP_METHODS,
@@ -77,9 +78,9 @@ const PaymentTest = () => {
       branchId: DEFAULT_TEST_DATA.BRANCH_ID,
       description: `테스트 결제 - ${testData.method} ${testData.provider}`,
       timeoutMinutes: DEFAULT_TEST_DATA.TIMEOUT_MINUTES,
-      successUrl: 'http://localhost:3000/payment/success',
-      failUrl: 'http://localhost:3000/payment/fail',
-      cancelUrl: 'http://localhost:3000/payment/cancel'
+      successUrl: `${ENV.FRONTEND_URL}/payment/success`,
+      failUrl: `${ENV.FRONTEND_URL}/payment/fail`,
+      cancelUrl: `${ENV.FRONTEND_URL}/payment/cancel`
     };
 
     const response = await fetch(`${API_BASE_URL}${PAYMENT_TEST_API.CREATE_PAYMENT}`, {

@@ -11,9 +11,9 @@ import com.mindgarden.consultation.dto.SocialUserInfo;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.OAuth2FactoryService;
 import com.mindgarden.consultation.service.OAuth2Service;
+import com.mindgarden.consultation.util.DashboardRedirectUtil;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
-import com.mindgarden.consultation.util.DashboardRedirectUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -40,7 +40,7 @@ public class OAuth2Controller {
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
     private String kakaoClientId;
     
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:http://localhost:8080/api/auth/kakao/callback}")
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${OAUTH2_BASE_URL:http://m-garden.co.kr}/api/auth/kakao/callback}")
     private String kakaoRedirectUri;
     
     @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,account_email}")
@@ -49,13 +49,13 @@ public class OAuth2Controller {
     @Value("${spring.security.oauth2.client.registration.naver.client-id:dummy}")
     private String naverClientId;
     
-    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:http://localhost:8080/api/auth/naver/callback}")
+    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:${OAUTH2_BASE_URL:http://m-garden.co.kr}/api/auth/naver/callback}")
     private String naverRedirectUri;
     
     @Value("${spring.security.oauth2.client.registration.naver.scope:name,email}")
     private String naverScope;
     
-    @Value("${frontend.base-url:http://localhost:3000}")
+    @Value("${frontend.base-url:${FRONTEND_BASE_URL:http://m-garden.co.kr}}")
     private String frontendBaseUrl;
     
     @PostConstruct
@@ -90,8 +90,16 @@ public class OAuth2Controller {
         // Referer가 없거나 파싱 실패 시 프로퍼티 값 사용
         log.info("프로퍼티 프론트엔드 URL 사용: {}", frontendBaseUrl);
         
-        // 프로퍼티 값도 null인 경우 기본값 사용
+        // 프로퍼티 값도 null인 경우 환경에 따른 기본값 사용
         if (frontendBaseUrl == null || frontendBaseUrl.trim().isEmpty()) {
+            // 환경변수에서 프론트엔드 URL 확인
+            String envFrontendUrl = System.getenv("FRONTEND_BASE_URL");
+            if (envFrontendUrl != null && !envFrontendUrl.trim().isEmpty()) {
+                log.info("환경변수에서 프론트엔드 URL 사용: {}", envFrontendUrl);
+                return envFrontendUrl;
+            }
+            
+            // 모든 설정이 없으면 기본값 (개발환경)
             String defaultUrl = "http://localhost:3000";
             log.warn("프론트엔드 URL이 설정되지 않음, 기본값 사용: {}", defaultUrl);
             return defaultUrl;
@@ -205,6 +213,9 @@ public class OAuth2Controller {
         try {
             SocialLoginResponse response = oauth2FactoryService.authenticateWithProvider("NAVER", code);
             
+            log.info("네이버 OAuth2 응답: success={}, requiresSignup={}, message={}", 
+                response.isSuccess(), response.isRequiresSignup(), response.getMessage());
+            
             if (response.isSuccess()) {
                 // SocialLoginResponse에서 이미 완성된 UserInfo 사용 (공통 SNS 처리 로직 활용)
                 SocialLoginResponse.UserInfo userInfo = response.getUserInfo();
@@ -311,6 +322,8 @@ public class OAuth2Controller {
                     "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8) +
                     "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8) +
                     "&nickname=" + URLEncoder.encode(nickname, StandardCharsets.UTF_8);
+                
+                log.info("네이버 OAuth2 회원가입 리다이렉트 URL: {}", signupUrl);
                 
                 return ResponseEntity.status(302)
                     .header("Location", signupUrl)

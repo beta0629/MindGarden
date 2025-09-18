@@ -15,6 +15,7 @@ import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AuthService;
 import com.mindgarden.consultation.service.BranchService;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.UserSessionService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
@@ -41,6 +42,7 @@ public class AuthController {
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final AuthService authService;
     private final BranchService branchService;
+    private final CommonCodeService commonCodeService;
     private final UserSessionService userSessionService;
     
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
@@ -1052,7 +1054,20 @@ public class AuthController {
         try {
             log.info("🏢 로그인용 지점 목록 조회 요청");
             
-            var branches = branchService.getAllActiveBranches();
+            // 공통코드에서 지점 정보 조회
+            var branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
+            
+            // 지점 정보를 API 응답 형태로 변환
+            var branches = branchCodes.stream()
+                .map(code -> Map.of(
+                    "id", code.getId(),
+                    "branchCode", code.getCodeValue(),
+                    "branchName", code.getCodeLabel(),
+                    "description", code.getCodeDescription() != null ? code.getCodeDescription() : code.getCodeLabel()
+                ))
+                .collect(java.util.stream.Collectors.toList());
+            
+            log.info("🏢 지점 목록 조회 완료: {}개", branches.size());
             
             return ResponseEntity.ok(Map.of(
                 "success", true,

@@ -32,8 +32,8 @@ export const NAVER_OAUTH2_CONFIG = {
 
 // 구글 OAuth2 설정
 export const GOOGLE_OAUTH2_CONFIG = {
-  clientId: process.env.REACT_APP_GOOGLE_CLIENT_ID || 'your_google_client_id',
-  redirectUri: process.env.REACT_APP_GOOGLE_REDIRECT_URI || 'http://localhost:3000/login',
+  clientId: ENV.GOOGLE.CLIENT_ID,
+  redirectUri: ENV.GOOGLE.REDIRECT_URI,
   authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
   tokenUrl: 'https://oauth2.googleapis.com/token',
   userInfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo',
@@ -44,8 +44,8 @@ export const GOOGLE_OAUTH2_CONFIG = {
 
 // 페이스북 OAuth2 설정
 export const FACEBOOK_OAUTH2_CONFIG = {
-  clientId: process.env.REACT_APP_FACEBOOK_CLIENT_ID || 'your_facebook_client_id',
-  redirectUri: process.env.REACT_APP_FACEBOOK_REDIRECT_URI || 'http://localhost:3000/login',
+  clientId: ENV.FACEBOOK.CLIENT_ID,
+  redirectUri: ENV.FACEBOOK.REDIRECT_URI,
   authUrl: 'https://www.facebook.com/v18.0/dialog/oauth',
   tokenUrl: 'https://graph.facebook.com/v18.0/oauth/access_token',
   userInfoUrl: 'https://graph.facebook.com/v18.0/me',

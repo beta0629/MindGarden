@@ -12,6 +12,7 @@ import com.mindgarden.consultation.dto.PaymentWebhookRequest;
 import com.mindgarden.consultation.entity.Payment;
 import com.mindgarden.consultation.service.BankTransferService;
 import com.mindgarden.consultation.service.PaymentService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +39,28 @@ public class PaymentTestController {
     private final BankTransferService bankTransferService;
     private final Random random = new Random();
     
+    @Value("${frontend.base-url:${FRONTEND_BASE_URL:http://localhost:3000}}")
+    private String frontendBaseUrl;
+    
+    /**
+     * 프론트엔드 기본 URL 반환
+     */
+    private String getFrontendBaseUrl() {
+        // 환경변수 우선 확인
+        String envUrl = System.getenv("FRONTEND_BASE_URL");
+        if (envUrl != null && !envUrl.trim().isEmpty()) {
+            return envUrl;
+        }
+        
+        // 프로퍼티 값 사용
+        if (frontendBaseUrl != null && !frontendBaseUrl.trim().isEmpty()) {
+            return frontendBaseUrl;
+        }
+        
+        // 기본값
+        return "http://localhost:3000";
+    }
+    
     /**
      * 테스트 결제 생성
      */
@@ -59,9 +82,9 @@ public class PaymentTestController {
                     .branchId(1L) // 테스트 지점
                     .description("테스트 결제 - " + method + " " + provider)
                     .timeoutMinutes(30)
-                    .successUrl("http://localhost:3000/payment/success")
-                    .failUrl("http://localhost:3000/payment/fail")
-                    .cancelUrl("http://localhost:3000/payment/cancel")
+                    .successUrl(getFrontendBaseUrl() + "/payment/success")
+                    .failUrl(getFrontendBaseUrl() + "/payment/fail")
+                    .cancelUrl(getFrontendBaseUrl() + "/payment/cancel")
                     .build();
             
             var response = paymentService.createPayment(request);

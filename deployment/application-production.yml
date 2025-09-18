@@ -1,0 +1,212 @@
+# MindGarden 운영 환경 설정
+# 서버: beta74.cafe24.com (211.37.179.204)
+# 도메인: https://m-garden.co.kr
+
+spring:
+  profiles:
+    active: production
+  
+  application:
+    name: mindgarden-consultation-system
+  
+  # 운영 데이터베이스 설정
+  datasource:
+    url: jdbc:mysql://localhost:3306/mindgarden_prod?useSSL=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=false&requireSSL=true
+    username: ${DB_USERNAME:mindgarden_prod}
+    password: ${DB_PASSWORD:MindGarden2025!@#}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+  
+  # JPA 운영 설정
+  jpa:
+    hibernate:
+      ddl-auto: validate  # 운영에서는 검증만
+    show-sql: false  # SQL 로그 비활성화
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+        use_sql_comments: false
+        jdbc:
+          batch_size: 50
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+    database-platform: org.hibernate.dialect.MySQLDialect
+  
+  # 이메일 설정 (운영용 SMTP)
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:mindgarden1013@gmail.com}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            trust: ${SMTP_HOST:smtp.gmail.com}
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+        debug: false  # 운영에서는 디버그 비활성화
+
+  # OAuth2 운영 설정
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID:cbb457cfb5f9351fd495be4af2b11a34}
+            client-secret: ${KAKAO_CLIENT_SECRET:LH53SXuqZk7iEVeDkKfQuKxW0sdxYmEG}
+            redirect-uri: "${OAUTH2_BASE_URL:http://m-garden.co.kr}/api/auth/kakao/callback"
+            client-authentication-method: post
+            authorization-grant-type: authorization_code
+            scope: profile_nickname,account_email
+            client-name: Kakao
+          naver:
+            client-id: ${NAVER_CLIENT_ID:vTKNlxYKIfo1uCCXaDfk}
+            client-secret: ${NAVER_CLIENT_SECRET:V_b3omW5pu}
+            redirect-uri: "${OAUTH2_BASE_URL:http://m-garden.co.kr}/api/auth/naver/callback"
+            client-authentication-method: post
+            authorization-grant-type: authorization_code
+            scope: name,email
+            client-name: Naver
+
+# 서버 운영 설정
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      force: true
+    session:
+      cookie:
+        http-only: true
+        secure: true  # HTTPS에서만 쿠키 전송
+        same-site: strict
+        max-age: 3600  # 1시간
+        domain: m-garden.co.kr
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+  ssl:
+    enabled: true
+    key-store: ${SSL_KEYSTORE_PATH:/etc/ssl/mindgarden/keystore.p12}
+    key-store-password: ${SSL_KEYSTORE_PASSWORD:}
+    key-store-type: PKCS12
+    key-alias: ${SSL_KEY_ALIAS:mindgarden}
+
+# JWT 운영 설정
+jwt:
+  secret: ${JWT_SECRET:}
+  expiration: 3600000   # 1시간
+  refresh-expiration: 604800000  # 7일
+
+# 개인정보 암호화 운영 설정
+encryption:
+  personal-data:
+    key: ${PERSONAL_DATA_ENCRYPTION_KEY:}
+    iv: ${PERSONAL_DATA_ENCRYPTION_IV:}
+    algorithm: AES-256
+    transformation: AES/CBC/PKCS5Padding
+
+# 결제 시스템 운영 설정
+payment:
+  toss:
+    secret-key: ${PAYMENT_TOSS_SECRET_KEY:}
+    base-url: https://api.tosspayments.com
+    simulation-mode: false  # 운영에서는 실제 결제
+  iamport:
+    api-key: ${PAYMENT_IAMPORT_API_KEY:}
+    api-secret: ${PAYMENT_IAMPORT_API_SECRET:}
+    base-url: https://api.iamport.kr
+    simulation-mode: false
+
+# 카카오 알림톡 운영 설정
+kakao:
+  alimtalk:
+    api-key: ${KAKAO_ALIMTALK_API_KEY:}
+    sender-key: ${KAKAO_ALIMTALK_SENDER_KEY:}
+    base-url: https://alimtalk-api.bizmsg.kr
+    simulation-mode: false  # 운영에서는 실제 발송
+
+# SMS 운영 설정
+sms:
+  auth:
+    enabled: true
+    provider: nhn
+    api-key: ${SMS_API_KEY:}
+    api-secret: ${SMS_API_SECRET:}
+    sender-number: ${SMS_SENDER_NUMBER:}
+    test-mode: false  # 운영에서는 실제 발송
+
+# 프론트엔드 운영 설정
+app:
+  frontend:
+    base-url: https://m-garden.co.kr
+  password-reset:
+    token-expiry-hours: 24
+
+# 로깅 운영 설정
+logging:
+  level:
+    com.mindgarden: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    root: WARN
+  
+  file:
+    name: /var/log/mindgarden/application.log
+    max-size: 100MB
+    max-history: 30
+  
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator 운영 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# 파일 업로드 운영 설정
+file:
+  upload:
+    max-size: 10MB
+    allowed-types: jpg,jpeg,png,gif,pdf,doc,docx
+    upload-dir: /var/mindgarden/uploads
+
+# 상담 시스템 운영 설정
+consultation:
+  system:
+    name: "MindGarden 상담관리 시스템"
+    version: "1.0.0"
+    max-clients-per-consultant: 50  # 운영에서는 더 많이
+    session-timeout: 30
+    notification:
+      enabled: true
+      real-time: true
+    dashboard:
+      max-components: 12
+      default-layout: "grid"

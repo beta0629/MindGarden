@@ -10,9 +10,9 @@ import com.mindgarden.consultation.entity.UserSocialAccount;
 import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
-import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.SocialAuthService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,8 +36,28 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final PersonalDataEncryptionUtil encryptionUtil;
-    private final BranchService branchService;
-
+    
+    @Value("${frontend.base-url:${FRONTEND_BASE_URL:http://localhost:3000}}")
+    private String frontendBaseUrl;
+    
+    /**
+     * 프론트엔드 기본 URL 반환
+     */
+    private String getFrontendBaseUrl() {
+        // 환경변수 우선 확인
+        String envUrl = System.getenv("FRONTEND_BASE_URL");
+        if (envUrl != null && !envUrl.trim().isEmpty()) {
+            return envUrl;
+        }
+        
+        // 프로퍼티 값 사용
+        if (frontendBaseUrl != null && !frontendBaseUrl.trim().isEmpty()) {
+            return frontendBaseUrl;
+        }
+        
+        // 기본값
+        return "http://localhost:3000";
+    }
 
     @Override
     @Transactional
@@ -93,18 +113,21 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             // username 생성 (이메일 기반)
             String username = generateUsernameFromEmail(request.getEmail());
             
-            // 지점 정보 조회
+            // 지점 정보 검증 (BranchCode enum 사용)
             Branch branch = null;
-            if (request.getBranchCode() != null && !request.getBranchCode().trim().isEmpty()) {
-                try {
-                    branch = branchService.getBranchByCode(request.getBranchCode());
-                    log.info("지점 정보 조회 성공: branchCode={}, branchName={}", 
-                        request.getBranchCode(), branch.getBranchName());
-                } catch (Exception e) {
-                    log.warn("지점 정보 조회 실패: branchCode={}, error={}", 
-                        request.getBranchCode(), e.getMessage());
-                    // 지점 조회 실패 시에도 계속 진행 (branch는 null로 유지)
-                }
+            String validatedBranchCode = request.getBranchCode();
+            if (validatedBranchCode != null && !validatedBranchCode.trim().isEmpty()) {
+                // BranchCode enum으로 유효성 검사
+           if (com.mindgarden.consultation.enums.BranchCode.isValidCode(validatedBranchCode)) {
+               log.info("유효한 지점 코드 설정: branchCode={}", validatedBranchCode);
+           } else {
+               log.warn("유효하지 않은 지점 코드, 기본값(MAIN001)으로 설정: branchCode={}", validatedBranchCode);
+               validatedBranchCode = com.mindgarden.consultation.enums.BranchCode.MAIN001.getCode();
+           }
+            } else {
+                // 기본값 설정
+                validatedBranchCode = com.mindgarden.consultation.enums.BranchCode.MAIN001.getCode();
+                log.info("지점 코드 없음, 기본값(MAIN001)으로 설정");
             }
             
             User user = User.builder()
@@ -114,7 +137,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                     .email(request.getEmail())
                     .phone(phone)
                     .role(UserRole.CLIENT)
-                    .branchCode(request.getBranchCode()) // 지점코드 추가
+                    .branchCode(validatedBranchCode) // 검증된 지점코드 추가
                     .branch(branch) // 지점 객체 추가
                     .profileImageUrl(request.getProviderProfileImage()) // 소셜 계정 프로필 이미지 설정
                     .build();
@@ -184,7 +207,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
                 .email(client.getEmail())
                 .name(encryptionUtil.safeDecrypt(client.getName()))
                 .nickname(null) // Client 엔티티에는 nickname 필드가 없음
-                .redirectUrl("http://localhost:3000/login?signup=success&email=" + client.getEmail())
+                .redirectUrl(getFrontendBaseUrl() + "/login?signup=success&email=" + client.getEmail())
                 .canApplyConsultant(canApplyConsultant)
                 .consultantApplicationMessage(consultantApplicationMessage)
                 .profileCompletionRate(profileCompletionRate)

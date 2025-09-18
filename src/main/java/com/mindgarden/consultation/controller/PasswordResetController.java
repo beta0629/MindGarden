@@ -24,7 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/password-reset")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "https://mindgarden.co.kr"})
+@CrossOrigin(origins = "*")
 public class PasswordResetController {
     
     private final PasswordResetService passwordResetService;

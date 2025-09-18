@@ -17,6 +17,7 @@ import org.springframework.security.web.authentication.session.CompositeSessionA
 import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -207,5 +208,13 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+    }
+    
+    /**
+     * RestTemplate Bean (모든 프로파일에서 사용)
+     */
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 }

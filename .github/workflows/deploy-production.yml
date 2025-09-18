@@ -1,0 +1,147 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
+
+  # 수동 실행도 가능
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🚀 배포 시작
+      run: echo "MindGarden 운영 서버 배포 시작..."
+
+    - name: 📥 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: ☕ Java 17 설정
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: 📦 Maven 캐시
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: 🔨 백엔드 빌드
+      run: mvn clean package -DskipTests
+
+    - name: 📱 Node.js 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: 🎨 프론트엔드 빌드
+      run: |
+        cd frontend
+        npm ci
+        REACT_APP_API_BASE_URL=http://m-garden.co.kr npm run build
+        cd ..
+
+    - name: 📤 서버 배포
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          # 기존 애플리케이션 중지 (systemd service)
+          sudo systemctl stop mindgarden.service || true
+          sleep 5
+          
+          # 백업 생성
+          mkdir -p /var/www/mindgarden-backup/$(date +%Y%m%d_%H%M%S)
+          cp /var/www/mindgarden/app.jar /var/www/mindgarden-backup/$(date +%Y%m%d_%H%M%S)/ 2>/dev/null || true
+          
+          # 디렉토리 준비
+          mkdir -p /var/www/mindgarden
+          cd /var/www/mindgarden
+
+    - name: 📁 파일 업로드
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        source: |
+          target/consultation-management-system-*.jar
+          frontend/build/*
+          deployment/application-production.yml
+          deployment/memory-management.sh
+          deployment/oauth2-callback-test.sh
+          deployment/deploy-common-codes.sh
+          deployment/complete-common-codes-migration.sql
+        target: /var/www/mindgarden/
+        strip_components: 1
+
+    - name: 🔄 애플리케이션 재시작
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /var/www/mindgarden
+          
+          # JAR 파일 이름 변경
+          mv consultation-management-system-*.jar app.jar 2>/dev/null || true
+          
+          # 프론트엔드 파일 배포
+          sudo cp -r build/* /var/www/html/ 2>/dev/null || true
+          
+          # 공통코드 배포
+          chmod +x deployment/deploy-common-codes.sh
+          ./deployment/deploy-common-codes.sh || echo "⚠️ 공통코드 배포 실패 (계속 진행)"
+          
+          # systemd service 재시작
+          sudo systemctl daemon-reload
+          sudo systemctl start mindgarden.service
+          sudo systemctl enable mindgarden.service
+          
+          # 시작 대기
+          sleep 15
+          
+          # 상태 확인
+          if curl -f http://localhost:8081/actuator/health; then
+            echo "✅ 애플리케이션 시작 성공"
+          else
+            echo "❌ 애플리케이션 시작 실패"
+            sudo systemctl status mindgarden.service --no-pager
+            tail -n 50 /var/www/mindgarden/app.log || sudo journalctl -u mindgarden.service -n 50 --no-pager
+            exit 1
+          fi
+
+    - name: 🔍 배포 검증
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /var/www/mindgarden
+          ./oauth2-callback-test.sh || echo "OAuth2 테스트 스크립트를 찾을 수 없음"
+          ./memory-management.sh check || echo "메모리 관리 스크립트를 찾을 수 없음"
+          
+          # 최종 서비스 상태 확인
+          sudo systemctl is-active mindgarden.service
+          echo "🔍 MindGarden 서비스 상태: $(sudo systemctl is-active mindgarden.service)"
+
+    - name: 📢 배포 완료 알림
+      run: |
+        echo "🎉 MindGarden 운영 서버 배포 완료!"
+        echo "🌐 접속 URL: http://m-garden.co.kr"
+        echo "🔍 API 상태: http://m-garden.co.kr/api/actuator/health"

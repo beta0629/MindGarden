@@ -29,7 +29,7 @@ public class HomeController {
         model.addAttribute("description", "전문적인 상담 관리와 내담자 관리를 위한 통합 시스템");
         model.addAttribute("keywords", "상담관리, 내담자관리, 상담사, 심리상담, 통합시스템");
         model.addAttribute("bodyClass", "homepage");
-        model.addAttribute("currentUrl", "http://localhost:8080");
+        model.addAttribute("currentUrl", "http://m-garden.co.kr");
         model.addAttribute("isTablet", false); // 기본값은 데스크톱
         
         // 브레드크럼 설정
@@ -69,7 +69,7 @@ public class HomeController {
         model.addAttribute("description", "전문적인 상담 관리와 내담자 관리를 위한 통합 시스템");
         model.addAttribute("keywords", "상담관리, 내담자관리, 상담사, 심리상담, 통합시스템");
         model.addAttribute("bodyClass", "homepage");
-        model.addAttribute("currentUrl", "http://localhost:8080");
+        model.addAttribute("currentUrl", "http://m-garden.co.kr");
         model.addAttribute("isTablet", false);
         
         // 통계 데이터 설정

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleHeader from '../layout/SimpleHeader';
 import SocialSignupModal from './SocialSignupModal';
@@ -18,6 +18,7 @@ import '../../styles/auth/TabletLogin.css';
 
 const TabletLogin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, testLogin: centralTestLogin, checkSession } = useSession();
   const [formData, setFormData] = useState({
     email: '',
@@ -69,8 +70,10 @@ const TabletLogin = () => {
   useEffect(() => {
     getOAuth2Config();
     checkOAuthCallback();
-    
-    // 카운트다운 타이머
+  }, [location]); // location 변경 시 OAuth 콜백 체크
+  
+  // 카운트다운 타이머 (별도 useEffect)
+  useEffect(() => {
     let timer;
     if (countdown > 0) {
       timer = setInterval(() => {
@@ -488,8 +491,10 @@ const TabletLogin = () => {
         socialUserInfo: socialUserInfo 
       });
       
-      // URL에서 파라미터 제거
-      window.history.replaceState({}, document.title, '/login');
+      // URL에서 파라미터 제거 (모달이 표시된 후에 제거)
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, '/login');
+      }, 100);
       return;
     }
     

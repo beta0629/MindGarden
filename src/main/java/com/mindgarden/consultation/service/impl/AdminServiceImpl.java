@@ -737,6 +737,39 @@ public class AdminServiceImpl implements AdminService {
         return true;
     }
 
+    /**
+     * 전화번호 하이픈 포맷팅
+     * 01012345678 -> 010-1234-5678
+     */
+    private String formatPhoneNumber(String phone) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return phone;
+        }
+        
+        // 숫자만 추출
+        String numbers = phone.replaceAll("[^0-9]", "");
+        
+        // 11자리 휴대폰 번호 형식 (010-1234-5678)
+        if (numbers.length() == 11 && numbers.startsWith("01")) {
+            return numbers.substring(0, 3) + "-" + numbers.substring(3, 7) + "-" + numbers.substring(7);
+        }
+        // 10자리 전화번호 형식 (02-1234-5678, 031-123-4567 등)
+        else if (numbers.length() == 10) {
+            if (numbers.startsWith("02")) {
+                return numbers.substring(0, 2) + "-" + numbers.substring(2, 6) + "-" + numbers.substring(6);
+            } else {
+                return numbers.substring(0, 3) + "-" + numbers.substring(3, 6) + "-" + numbers.substring(6);
+            }
+        }
+        // 8자리 전화번호 형식 (031-123-4567의 앞자리 생략 등)
+        else if (numbers.length() == 8) {
+            return numbers.substring(0, 4) + "-" + numbers.substring(4);
+        }
+        
+        // 형식이 맞지 않는 경우 원본 반환
+        return phone;
+    }
+
     @Override
     public List<Client> getAllClients() {
         // User 테이블에서 활성 CLIENT role 사용자들을 조회하고 Client 정보와 조인
@@ -779,6 +812,9 @@ public class AdminServiceImpl implements AdminService {
                 String phone = user.getPhone();
                 if (phone == null || phone.trim().isEmpty()) {
                     phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
+                } else {
+                    // 전화번호 하이픈 포맷팅 (010-1234-5678)
+                    phone = formatPhoneNumber(phone);
                 }
                 client.setPhone(phone);
                 
@@ -828,6 +864,9 @@ public class AdminServiceImpl implements AdminService {
                 String phone = decryptedUser.getPhone();
                 if (phone == null || phone.trim().isEmpty()) {
                     phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
+                } else {
+                    // 전화번호 하이픈 포맷팅 (010-1234-5678)
+                    phone = formatPhoneNumber(phone);
                 }
                 clientData.put("phone", phone);
                 

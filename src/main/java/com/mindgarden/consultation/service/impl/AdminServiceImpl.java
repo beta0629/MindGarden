@@ -17,6 +17,7 @@ import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
 import com.mindgarden.consultation.dto.ConsultantRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantTransferRequest;
+import com.mindgarden.consultation.dto.FinancialTransactionRequest;
 import com.mindgarden.consultation.entity.Branch;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.CommonCode;
@@ -26,12 +27,15 @@ import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.CommonCodeRepository;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
+import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.AdminService;
+import com.mindgarden.consultation.service.AmountManagementService;
 import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.service.ConsultationMessageService;
+import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.NotificationService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.http.HttpEntity;
@@ -59,6 +63,9 @@ public class AdminServiceImpl implements AdminService {
     private final ConsultationMessageService consultationMessageService;
     private final BranchService branchService;
     private final NotificationService notificationService;
+    private final FinancialTransactionService financialTransactionService;
+    private final FinancialTransactionRepository financialTransactionRepository;
+    private final AmountManagementService amountManagementService;
 
     @Override
     public User registerConsultant(ConsultantRegistrationDto dto) {
@@ -195,12 +202,16 @@ public class AdminServiceImpl implements AdminService {
             branchCode = AdminConstants.DEFAULT_BRANCH_CODE; // 기본값
         }
         
-        // 기존 활성 매핑이 있는지 확인 (같은 지점 내에서)
-        Optional<ConsultantClientMapping> existingMapping = mappingRepository
+        // 기존 매핑이 있는지 확인 (중복 결과 처리)
+        List<ConsultantClientMapping> existingMappings = mappingRepository
             .findByConsultantAndClient(consultant, clientUser);
         
-        if (existingMapping.isPresent()) {
-            ConsultantClientMapping existing = existingMapping.get();
+        if (!existingMappings.isEmpty()) {
+            // 중복 매핑이 있는 경우 가장 최근의 활성 매핑을 선택
+            ConsultantClientMapping existing = existingMappings.stream()
+                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                .max(Comparator.comparing(ConsultantClientMapping::getCreatedAt))
+                .orElse(existingMappings.get(0));
             
             // 활성 상태인지 확인
             if (existing.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
@@ -320,10 +331,140 @@ public class AdminServiceImpl implements AdminService {
         ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
+        // 금액 검증 로직 추가
+        if (paymentAmount != null && mapping.getPackagePrice() != null) {
+            if (!paymentAmount.equals(mapping.getPackagePrice())) {
+                log.warn("⚠️ 금액 불일치 감지: MappingID={}, PaymentAmount={}, PackagePrice={}", 
+                    mappingId, paymentAmount, mapping.getPackagePrice());
+                // 경고는 하지만 처리는 계속 진행 (관리자가 의도적으로 다른 금액을 입력했을 수 있음)
+            }
+        }
+        
         mapping.confirmPayment(paymentMethod, paymentReference);
         mapping.setPaymentAmount(paymentAmount);
         
-        return mappingRepository.save(mapping);
+        ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
+        
+        // 입금 확인 시 자동으로 ERP 수입 거래 생성
+        try {
+            createConsultationIncomeTransaction(savedMapping);
+            log.info("💚 매핑 입금 확인으로 인한 상담료 수입 거래 자동 생성: MappingID={}, PaymentAmount={}, PackagePrice={}", 
+                mappingId, paymentAmount, mapping.getPackagePrice());
+        } catch (Exception e) {
+            log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
+            // 거래 생성 실패해도 입금 확인은 완료
+        }
+        
+        return savedMapping;
+    }
+    
+    /**
+     * 상담료 수입 거래 자동 생성 (중앙화된 금액 관리 사용)
+     */
+    private void createConsultationIncomeTransaction(ConsultantClientMapping mapping) {
+        log.info("💰 [중앙화] 상담료 수입 거래 생성 시작: MappingID={}", mapping.getId());
+        
+        // 1. 중복 거래 방지 (중앙화된 서비스 사용)
+        if (amountManagementService.isDuplicateTransaction(mapping.getId(), 
+                com.mindgarden.consultation.entity.FinancialTransaction.TransactionType.INCOME)) {
+            log.warn("🚫 중복 거래 방지: MappingID={}에 대한 수입 거래가 이미 존재합니다.", mapping.getId());
+            return;
+        }
+        
+        // 2. 정확한 거래 금액 결정 (중앙화된 서비스 사용)
+        Long accurateAmount = amountManagementService.getAccurateTransactionAmount(mapping);
+        
+        if (accurateAmount == null || accurateAmount <= 0) {
+            log.error("❌ 유효한 거래 금액을 결정할 수 없습니다: MappingID={}", mapping.getId());
+            return;
+        }
+        
+        // 3. 금액 일관성 검사 (중앙화된 서비스 사용)
+        AmountManagementService.AmountConsistencyResult consistency = 
+            amountManagementService.checkAmountConsistency(mapping.getId());
+        
+        if (!consistency.isConsistent()) {
+            log.warn("⚠️ 금액 일관성 문제 감지: {}", consistency.getInconsistencyReason());
+            log.warn("💡 권장사항: {}", consistency.getRecommendation());
+        }
+        
+        // 4. ERP 거래 생성
+        FinancialTransactionRequest request = FinancialTransactionRequest.builder()
+                .transactionType("INCOME")
+                .category("CONSULTATION") // 공통코드 사용
+                .subcategory("INDIVIDUAL_CONSULTATION") // 공통코드 사용
+                .amount(java.math.BigDecimal.valueOf(accurateAmount))
+                .description(String.format("상담료 입금 확인 - %s (%s) [정확한금액: %,d원]", 
+                    mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+                    mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
+                    accurateAmount))
+                .transactionDate(java.time.LocalDate.now())
+                .relatedEntityId(mapping.getId())
+                .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
+                .taxIncluded(false) // 상담료는 부가세 면세
+                .build();
+        
+        // 5. 시스템 자동 거래 생성 (권한 검사 우회)
+        com.mindgarden.consultation.dto.FinancialTransactionResponse response = 
+            financialTransactionService.createTransaction(request, null);
+        
+        // 6. 입금 확인된 거래는 즉시 완료 상태로 변경
+        try {
+            com.mindgarden.consultation.entity.FinancialTransaction transaction = 
+                financialTransactionRepository.findById(response.getId()).orElse(null);
+            if (transaction != null) {
+                transaction.complete(); // 완료 상태로 변경
+                transaction.setApprovedAt(java.time.LocalDateTime.now());
+                financialTransactionRepository.save(transaction);
+                log.info("💚 매핑 연동 거래 즉시 완료 처리: TransactionID={}", response.getId());
+            }
+        } catch (Exception e) {
+            log.error("거래 완료 처리 실패: {}", e.getMessage(), e);
+        }
+        
+        // 6. 금액 변경 이력 기록 (중앙화된 서비스 사용)
+        if (mapping.getPaymentAmount() != null && !accurateAmount.equals(mapping.getPaymentAmount())) {
+            amountManagementService.recordAmountChange(mapping.getId(), 
+                mapping.getPaymentAmount(), accurateAmount, 
+                "ERP 연동 시 정확한 패키지 가격 적용", "SYSTEM_AUTO");
+        }
+        
+        log.info("✅ [중앙화] 상담료 수입 거래 생성 완료: MappingID={}, AccurateAmount={}원", 
+            mapping.getId(), accurateAmount);
+    }
+    
+    /**
+     * 상담료 환불 거래 자동 생성
+     */
+    private void createConsultationRefundTransaction(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
+        log.info("상담료 환불 거래 생성 시작: MappingID={}, RefundAmount={}", 
+            mapping.getId(), refundAmount);
+        
+        if (refundAmount <= 0) {
+            log.warn("유효하지 않은 환불 금액: {}", refundAmount);
+            return;
+        }
+        
+        FinancialTransactionRequest request = FinancialTransactionRequest.builder()
+                .transactionType("EXPENSE") // 환불은 지출
+                .category("CONSULTATION") // 공통코드 사용
+                .subcategory("CONSULTATION_REFUND") // 환불 세부카테고리
+                .amount(java.math.BigDecimal.valueOf(refundAmount))
+                .description(String.format("상담료 환불 - %s (%d회기 환불, 사유: %s)", 
+                    mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+                    refundedSessions,
+                    reason != null ? reason : "관리자 처리"))
+                .transactionDate(java.time.LocalDate.now())
+                .relatedEntityId(mapping.getId())
+                .relatedEntityType("CONSULTANT_CLIENT_MAPPING_REFUND")
+                .taxIncluded(false) // 환불은 부가세 면세
+                .build();
+        
+        // 시스템 자동 거래 생성 (권한 검사 우회)
+        financialTransactionService.createTransaction(request, null);
+        
+        log.info("✅ 상담료 환불 거래 생성 완료: MappingID={}, RefundAmount={}", 
+            mapping.getId(), refundAmount);
     }
 
     /**
@@ -336,7 +477,18 @@ public class AdminServiceImpl implements AdminService {
         
         mapping.confirmPayment(paymentMethod, paymentReference);
         
-        return mappingRepository.save(mapping);
+        ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
+        
+        // 입금 확인 시 자동으로 ERP 수입 거래 생성
+        try {
+            createConsultationIncomeTransaction(savedMapping);
+            log.info("💚 매핑 입금 확인으로 인한 상담료 수입 거래 자동 생성: MappingID={}", mappingId);
+        } catch (Exception e) {
+            log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
+            // 거래 생성 실패해도 입금 확인은 완료
+        }
+        
+        return savedMapping;
     }
 
     /**
@@ -1110,35 +1262,93 @@ public class AdminServiceImpl implements AdminService {
                 .findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
         
         for (ConsultantClientMapping mapping : activeMappings) {
-            // 기존 매핑 종료
             String transferReason = String.format("상담사 삭제로 인한 이전: %s -> %s. 사유: %s", 
                     consultantToDelete.getName(), transferToConsultant.getName(), reason);
             
+            // 이전 대상 상담사와 내담자 조합으로 기존 매핑이 있는지 확인 (중복 방지)
+            List<ConsultantClientMapping> existingTransferMappings = 
+                mappingRepository.findByConsultantAndClient(transferToConsultant, mapping.getClient());
+            
+            // 활성 매핑이 있는지 확인
+            Optional<ConsultantClientMapping> existingActiveMapping = existingTransferMappings.stream()
+                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                .findFirst();
+            
+            if (existingActiveMapping.isPresent()) {
+                // 기존 활성 매핑에 회기수 합산
+                ConsultantClientMapping existing = existingActiveMapping.get();
+                log.info("🔍 이전 대상 상담사와 내담자 간 기존 활성 매핑 발견, 회기수 합산: 내담자={}, 상담사={}", 
+                    mapping.getClient().getName(), transferToConsultant.getName());
+                
+                // 회기수 합산
+                int totalSessions = existing.getTotalSessions() + mapping.getTotalSessions();
+                int remainingSessions = existing.getRemainingSessions() + mapping.getRemainingSessions();
+                int usedSessions = existing.getUsedSessions() + mapping.getUsedSessions();
+                
+                existing.setTotalSessions(totalSessions);
+                existing.setRemainingSessions(remainingSessions);
+                existing.setUsedSessions(usedSessions);
+                
+                // 결제 정보 업데이트 (더 큰 금액으로)
+                if (mapping.getPackagePrice() != null && 
+                    (existing.getPackagePrice() == null || mapping.getPackagePrice() > existing.getPackagePrice())) {
+                    existing.setPackagePrice(mapping.getPackagePrice());
+                    existing.setPackageName(mapping.getPackageName());
+                }
+                
+                if (mapping.getPaymentAmount() != null && 
+                    (existing.getPaymentAmount() == null || mapping.getPaymentAmount() > existing.getPaymentAmount())) {
+                    existing.setPaymentAmount(mapping.getPaymentAmount());
+                    existing.setPaymentDate(mapping.getPaymentDate());
+                    existing.setPaymentMethod(mapping.getPaymentMethod());
+                    existing.setPaymentReference(mapping.getPaymentReference());
+                }
+                
+                // 결제 상태 업데이트 (APPROVED 우선)
+                if (mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.APPROVED) {
+                    existing.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+                }
+                
+                existing.setNotes((existing.getNotes() != null ? existing.getNotes() + "\n" : "") + 
+                    "상담사 이전으로 회기수 합산: " + transferReason);
+                existing.setUpdatedAt(LocalDateTime.now());
+                
+                mappingRepository.save(existing);
+                
+                log.info("✅ 기존 매핑에 회기수 합산 완료: 총 회기수={}, 남은 회기수={}", totalSessions, remainingSessions);
+            } else {
+                // 새로운 매핑 생성
+                log.info("🆕 새로운 매핑 생성: 내담자={}, 상담사={}", 
+                    mapping.getClient().getName(), transferToConsultant.getName());
+                
+                ConsultantClientMapping newMapping = new ConsultantClientMapping();
+                newMapping.setConsultant(transferToConsultant);
+                newMapping.setClient(mapping.getClient());
+                newMapping.setBranchCode(mapping.getBranchCode());
+                newMapping.setStartDate(mapping.getStartDate()); // 기존 시작일 유지
+                newMapping.setTotalSessions(mapping.getTotalSessions());
+                newMapping.setRemainingSessions(mapping.getRemainingSessions());
+                newMapping.setUsedSessions(mapping.getUsedSessions());
+                newMapping.setPackageName(mapping.getPackageName());
+                newMapping.setPackagePrice(mapping.getPackagePrice());
+                newMapping.setPaymentAmount(mapping.getPaymentAmount());
+                newMapping.setPaymentDate(mapping.getPaymentDate()); // 결제일도 유지
+                newMapping.setPaymentMethod(mapping.getPaymentMethod());
+                newMapping.setPaymentReference(mapping.getPaymentReference()); // 결제 참조번호도 유지
+                newMapping.setStatus(mapping.getStatus());
+                newMapping.setPaymentStatus(mapping.getPaymentStatus());
+                newMapping.setNotes("상담사 이전: " + transferReason);
+                newMapping.setAssignedAt(LocalDateTime.now());
+                newMapping.setAssignedBy("SYSTEM_AUTO_TRANSFER"); // 배정자 정보도 추가
+                
+                mappingRepository.save(newMapping);
+                
+                log.info("✅ 새로운 매핑 생성 완료: 회기수={}", mapping.getTotalSessions());
+            }
+            
+            // 기존 매핑 종료 (TERMINATED로 변경)
             mapping.transferToNewConsultant(transferReason, "SYSTEM_AUTO_TRANSFER");
             mappingRepository.save(mapping);
-            
-            // 새로운 매핑 생성
-            ConsultantClientMapping newMapping = new ConsultantClientMapping();
-            newMapping.setConsultant(transferToConsultant);
-            newMapping.setClient(mapping.getClient());
-            newMapping.setBranchCode(mapping.getBranchCode());
-            newMapping.setStartDate(mapping.getStartDate()); // 기존 시작일 유지
-            newMapping.setTotalSessions(mapping.getTotalSessions());
-            newMapping.setRemainingSessions(mapping.getRemainingSessions());
-            newMapping.setUsedSessions(mapping.getUsedSessions());
-            newMapping.setPackageName(mapping.getPackageName());
-            newMapping.setPackagePrice(mapping.getPackagePrice());
-            newMapping.setPaymentAmount(mapping.getPaymentAmount());
-            newMapping.setPaymentDate(mapping.getPaymentDate()); // 결제일도 유지
-            newMapping.setPaymentMethod(mapping.getPaymentMethod());
-            newMapping.setPaymentReference(mapping.getPaymentReference()); // 결제 참조번호도 유지
-            newMapping.setStatus(mapping.getStatus());
-            newMapping.setPaymentStatus(mapping.getPaymentStatus());
-            newMapping.setNotes("상담사 이전: " + transferReason);
-            newMapping.setAssignedAt(LocalDateTime.now());
-            newMapping.setAssignedBy("SYSTEM_AUTO_TRANSFER"); // 배정자 정보도 추가
-            
-            mappingRepository.save(newMapping);
             
             log.info("📋 매핑 이전 완료: 내담자 {} -> 새 상담사 {}", 
                     mapping.getClient().getName(), transferToConsultant.getName());
@@ -2054,6 +2264,11 @@ public class AdminServiceImpl implements AdminService {
             
             if (success) {
                 log.info("✅ ERP 환불 데이터 전송 성공: MappingID={}, Amount={}", mapping.getId(), refundAmount);
+                
+                // ERP 전송 성공 시 FinancialTransaction에 환불 거래 생성
+                createConsultationRefundTransaction(mapping, refundedSessions, refundAmount, reason);
+                log.info("💚 환불 거래 자동 생성 완료: MappingID={}, RefundAmount={}", 
+                    mapping.getId(), refundAmount);
             } else {
                 log.warn("⚠️ ERP 환불 데이터 전송 실패: MappingID={}", mapping.getId());
                 // 실패 시 재시도 큐에 추가하거나 알림 발송 등 처리

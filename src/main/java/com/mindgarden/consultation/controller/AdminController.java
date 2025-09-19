@@ -1557,23 +1557,14 @@ public class AdminController {
             log.info("결제 확인 처리: mappingIds={}, method={}, amount={}, note={}", 
                 mappingIds, paymentMethod, amount, note);
             
-            // 매핑 상태 업데이트
+            // 매핑 상태 업데이트 및 ERP 연동
             for (Long mappingId : mappingIds) {
                 try {
-                    ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
-                    if (mapping != null) {
-                        // 결제 상태를 확인됨으로 변경
-                        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
-                        mapping.setPaymentMethod(paymentMethod);
-                        mapping.setPaymentAmount(amount != null ? amount.longValue() : 0L);
-                        mapping.setPaymentReference("ADMIN_CONFIRMED_" + System.currentTimeMillis());
-                        mapping.setPaymentDate(java.time.LocalDateTime.now());
-                        mapping.setUpdatedAt(java.time.LocalDateTime.now());
-                        
-                        // 매핑 저장 (AdminService의 updateMapping은 DTO를 받으므로 직접 저장)
-                        // adminService.updateMapping(mappingId, mapping);
-                        log.info("매핑 ID {} 결제 확인 완료", mappingId);
-                    }
+                    // AdminService의 confirmPayment 메서드 사용 (ERP 연동 포함)
+                    adminService.confirmPayment(mappingId, paymentMethod, 
+                        "ADMIN_CONFIRMED_" + System.currentTimeMillis(), 
+                        amount != null ? amount.longValue() : 0L);
+                    log.info("매핑 ID {} 결제 확인 및 ERP 연동 완료", mappingId);
                 } catch (Exception e) {
                     log.error("매핑 ID {} 결제 확인 실패: {}", mappingId, e.getMessage());
                 }

@@ -1,20 +1,24 @@
 package com.mindgarden.consultation.service.impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import com.mindgarden.consultation.dto.FinancialTransactionRequest;
 import com.mindgarden.consultation.dto.FinancialTransactionResponse;
 import com.mindgarden.consultation.entity.Budget;
+import com.mindgarden.consultation.entity.FinancialTransaction;
 import com.mindgarden.consultation.entity.Item;
 import com.mindgarden.consultation.entity.PurchaseOrder;
 import com.mindgarden.consultation.entity.PurchaseRequest;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.BudgetRepository;
+import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.ItemRepository;
 import com.mindgarden.consultation.repository.PurchaseOrderRepository;
 import com.mindgarden.consultation.repository.PurchaseRequestRepository;
@@ -45,6 +49,7 @@ public class ErpServiceImpl implements ErpService {
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final BudgetRepository budgetRepository;
+    private final FinancialTransactionRepository financialTransactionRepository;
     private final UserService userService;
     private final FinancialTransactionService financialTransactionService;
     private final CommonCodeService commonCodeService;
@@ -793,15 +798,17 @@ public class ErpServiceImpl implements ErpService {
                 financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 1000))
                     .getContent();
             
-            // 수입 총계 (INCOME 타입)
+            // 수입 총계 (INCOME 타입, PENDING과 COMPLETED 모두 포함)
             BigDecimal totalIncome = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
+                .filter(t -> !"REJECTED".equals(t.getStatus()) && !"CANCELLED".equals(t.getStatus())) // 거부/취소 제외
                 .map(com.mindgarden.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 지출 총계 (EXPENSE 타입)
+            // 지출 총계 (EXPENSE 타입, PENDING과 COMPLETED 모두 포함)
             BigDecimal totalExpense = transactions.stream()
                 .filter(t -> "EXPENSE".equals(t.getTransactionType()))
+                .filter(t -> !"REJECTED".equals(t.getStatus()) && !"CANCELLED".equals(t.getStatus())) // 거부/취소 제외
                 .map(com.mindgarden.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
@@ -813,6 +820,11 @@ public class ErpServiceImpl implements ErpService {
             Map<String, BigDecimal> expenseByCategory = new HashMap<>();
             
             transactions.forEach(t -> {
+                // 거부/취소된 거래는 제외
+                if ("REJECTED".equals(t.getStatus()) || "CANCELLED".equals(t.getStatus())) {
+                    return;
+                }
+                
                 String category = t.getCategory();
                 BigDecimal amount = t.getAmount();
                 
@@ -1265,13 +1277,13 @@ public class ErpServiceImpl implements ErpService {
             
             BigDecimal consultationRevenue = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
-                .filter(t -> "상담료".equals(t.getCategory()) || "CONSULTATION".equals(t.getCategory()))
+                .filter(t -> "CONSULTATION".equals(t.getCategory()))
                 .map(com.mindgarden.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
             BigDecimal otherRevenue = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
-                .filter(t -> !"상담료".equals(t.getCategory()) && !"CONSULTATION".equals(t.getCategory()))
+                .filter(t -> !"CONSULTATION".equals(t.getCategory()))
                 .map(com.mindgarden.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
@@ -1305,15 +1317,15 @@ public class ErpServiceImpl implements ErpService {
                     expenseByCategory.merge(category, amount, BigDecimal::add);
                 });
             
-            expenses.put("salaryExpense", expenseByCategory.getOrDefault("급여", BigDecimal.ZERO));
-            expenses.put("rentExpense", expenseByCategory.getOrDefault("임대료", BigDecimal.ZERO));
-            expenses.put("utilityExpense", expenseByCategory.getOrDefault("관리비", BigDecimal.ZERO));
-            expenses.put("officeExpense", expenseByCategory.getOrDefault("사무용품", BigDecimal.ZERO));
-            expenses.put("taxExpense", expenseByCategory.getOrDefault("세금", BigDecimal.ZERO));
+            expenses.put("salaryExpense", expenseByCategory.getOrDefault("SALARY", BigDecimal.ZERO));
+            expenses.put("rentExpense", expenseByCategory.getOrDefault("RENT", BigDecimal.ZERO));
+            expenses.put("utilityExpense", expenseByCategory.getOrDefault("UTILITY", BigDecimal.ZERO));
+            expenses.put("officeExpense", expenseByCategory.getOrDefault("OFFICE_SUPPLIES", BigDecimal.ZERO));
+            expenses.put("taxExpense", expenseByCategory.getOrDefault("TAX", BigDecimal.ZERO));
             
             // 기타 비용 (급여, 임대료, 관리비, 사무용품, 세금 제외)
             BigDecimal otherExpense = expenseByCategory.entrySet().stream()
-                .filter(entry -> !Arrays.asList("급여", "임대료", "관리비", "사무용품", "세금").contains(entry.getKey()))
+                .filter(entry -> !Arrays.asList("SALARY", "RENT", "UTILITY", "OFFICE_SUPPLIES", "TAX").contains(entry.getKey()))
                 .map(Map.Entry::getValue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             expenses.put("otherExpense", otherExpense);
@@ -1345,29 +1357,66 @@ public class ErpServiceImpl implements ErpService {
     public Map<String, Object> getDailyFinanceReport(String reportDate) {
         log.info("일단위 재무 리포트 조회: {}", reportDate);
         
+        LocalDate targetDate = LocalDate.parse(reportDate);
         Map<String, Object> dailyReport = new HashMap<>();
         dailyReport.put("reportDate", reportDate);
         dailyReport.put("reportType", "일간");
         
-        // 일일 수입
+        // 해당 날짜의 실제 거래 데이터 조회
+        List<FinancialTransaction> dailyTransactions = financialTransactionRepository
+            .findByTransactionDateAndIsDeletedFalse(targetDate);
+        
+        // 일일 수입 (실제 데이터 기반)
         Map<String, Object> dailyIncome = new HashMap<>();
-        dailyIncome.put("consultationFees", BigDecimal.valueOf(500000)); // 상담료
-        dailyIncome.put("otherIncome", BigDecimal.valueOf(50000)); // 기타수입
-        BigDecimal totalDailyIncome = dailyIncome.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal consultationFees = dailyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
+            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal otherIncome = dailyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
+            .filter(t -> !"CONSULTATION".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        dailyIncome.put("consultationFees", consultationFees);
+        dailyIncome.put("otherIncome", otherIncome);
+        BigDecimal totalDailyIncome = consultationFees.add(otherIncome);
         dailyIncome.put("total", totalDailyIncome);
         dailyReport.put("dailyIncome", dailyIncome);
         
-        // 일일 지출
+        // 일일 지출 (실제 데이터 기반)
         Map<String, Object> dailyExpenses = new HashMap<>();
-        dailyExpenses.put("salary", BigDecimal.valueOf(200000)); // 급여
-        dailyExpenses.put("officeSupplies", BigDecimal.valueOf(30000)); // 사무용품
-        dailyExpenses.put("utilities", BigDecimal.valueOf(10000)); // 관리비
-        dailyExpenses.put("otherExpenses", BigDecimal.valueOf(20000)); // 기타지출
-        BigDecimal totalDailyExpenses = dailyExpenses.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal salary = dailyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "SALARY".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal officeSupplies = dailyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal utilities = dailyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "UTILITY".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal otherExpenses = dailyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> !"SALARY".equals(t.getCategory()) && !"OFFICE_SUPPLIES".equals(t.getCategory()) && !"UTILITY".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        dailyExpenses.put("salary", salary);
+        dailyExpenses.put("officeSupplies", officeSupplies);
+        dailyExpenses.put("utilities", utilities);
+        dailyExpenses.put("otherExpenses", otherExpenses);
+        BigDecimal totalDailyExpenses = salary.add(officeSupplies).add(utilities).add(otherExpenses);
         dailyExpenses.put("total", totalDailyExpenses);
         dailyReport.put("dailyExpenses", dailyExpenses);
         
@@ -1375,11 +1424,27 @@ public class ErpServiceImpl implements ErpService {
         BigDecimal dailyNetIncome = totalDailyIncome.subtract(totalDailyExpenses);
         dailyReport.put("dailyNetIncome", dailyNetIncome);
         
-        // 일일 거래 건수
+        // 일일 거래 건수 (실제 데이터 기반)
         Map<String, Object> transactionCount = new HashMap<>();
-        transactionCount.put("consultations", 10);
-        transactionCount.put("purchases", 3);
-        transactionCount.put("payments", 8);
+        
+        // 상담 건수 (상담료 거래 건수로 추정)
+        long consultations = dailyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
+            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .count();
+            
+        // 구매 건수 (구매 관련 지출 거래 건수로 추정)
+        long purchases = dailyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory()) || "EQUIPMENT".equals(t.getCategory()))
+            .count();
+            
+        // 전체 결제 건수
+        long payments = dailyTransactions.size();
+        
+        transactionCount.put("consultations", (int) consultations);
+        transactionCount.put("purchases", (int) purchases);
+        transactionCount.put("payments", (int) payments);
         dailyReport.put("transactionCount", transactionCount);
         
         return dailyReport;
@@ -1390,33 +1455,88 @@ public class ErpServiceImpl implements ErpService {
     public Map<String, Object> getMonthlyFinanceReport(String year, String month) {
         log.info("월단위 재무 리포트 조회: {}-{}", year, month);
         
+        // 해당 월의 시작일과 종료일 계산
+        int yearInt = Integer.parseInt(year);
+        int monthInt = Integer.parseInt(month);
+        LocalDate startDate = LocalDate.of(yearInt, monthInt, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        
         Map<String, Object> monthlyReport = new HashMap<>();
         monthlyReport.put("year", year);
         monthlyReport.put("month", month);
         monthlyReport.put("reportType", "월간");
         
-        // 월간 수입
+        // 해당 월의 실제 거래 데이터 조회
+        List<FinancialTransaction> monthlyTransactions = financialTransactionRepository
+            .findByTransactionDateBetweenAndIsDeletedFalse(startDate, endDate);
+        
+        // 월간 수입 (실제 데이터 기반)
         Map<String, Object> monthlyIncome = new HashMap<>();
-        monthlyIncome.put("consultationRevenue", BigDecimal.valueOf(15000000)); // 상담수익
-        monthlyIncome.put("salaryIncome", BigDecimal.valueOf(0)); // 급여수입 (지출이므로 0)
-        monthlyIncome.put("otherRevenue", BigDecimal.valueOf(500000)); // 기타수익
-        BigDecimal totalMonthlyIncome = monthlyIncome.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal consultationRevenue = monthlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
+            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal otherRevenue = monthlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
+            .filter(t -> !"CONSULTATION".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        monthlyIncome.put("consultationRevenue", consultationRevenue);
+        monthlyIncome.put("salaryIncome", BigDecimal.ZERO); // 급여는 지출 항목
+        monthlyIncome.put("otherRevenue", otherRevenue);
+        BigDecimal totalMonthlyIncome = consultationRevenue.add(otherRevenue);
         monthlyIncome.put("total", totalMonthlyIncome);
         monthlyReport.put("monthlyIncome", monthlyIncome);
         
-        // 월간 지출
+        // 월간 지출 (실제 데이터 기반)
         Map<String, Object> monthlyExpenses = new HashMap<>();
-        monthlyExpenses.put("salaryExpense", BigDecimal.valueOf(6000000)); // 급여지출
-        monthlyExpenses.put("rentExpense", BigDecimal.valueOf(1200000)); // 임대료
-        monthlyExpenses.put("utilityExpense", BigDecimal.valueOf(300000)); // 관리비
-        monthlyExpenses.put("officeExpense", BigDecimal.valueOf(800000)); // 사무용품비
-        monthlyExpenses.put("taxExpense", BigDecimal.valueOf(1500000)); // 세금
-        monthlyExpenses.put("purchaseExpense", BigDecimal.valueOf(1000000)); // 구매비용
-        BigDecimal totalMonthlyExpenses = monthlyExpenses.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal salaryExpense = monthlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "SALARY".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal rentExpense = monthlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "RENT".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal utilityExpense = monthlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "UTILITY".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal officeExpense = monthlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal taxExpense = monthlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "TAX".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal purchaseExpense = monthlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "EQUIPMENT".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        monthlyExpenses.put("salaryExpense", salaryExpense);
+        monthlyExpenses.put("rentExpense", rentExpense);
+        monthlyExpenses.put("utilityExpense", utilityExpense);
+        monthlyExpenses.put("officeExpense", officeExpense);
+        monthlyExpenses.put("taxExpense", taxExpense);
+        monthlyExpenses.put("purchaseExpense", purchaseExpense);
+        BigDecimal totalMonthlyExpenses = salaryExpense.add(rentExpense).add(utilityExpense)
+            .add(officeExpense).add(taxExpense).add(purchaseExpense);
         monthlyExpenses.put("total", totalMonthlyExpenses);
         monthlyReport.put("monthlyExpenses", monthlyExpenses);
         
@@ -1424,13 +1544,32 @@ public class ErpServiceImpl implements ErpService {
         BigDecimal monthlyNetIncome = totalMonthlyIncome.subtract(totalMonthlyExpenses);
         monthlyReport.put("monthlyNetIncome", monthlyNetIncome);
         
-        // 월간 통계
+        // 월간 통계 (실제 데이터 기반)
         Map<String, Object> monthlyStats = new HashMap<>();
-        monthlyStats.put("totalConsultations", 300);
-        monthlyStats.put("totalPurchases", 25);
-        monthlyStats.put("totalPayments", 250);
-        monthlyStats.put("averageDailyIncome", totalMonthlyIncome.divide(BigDecimal.valueOf(30), 0, java.math.RoundingMode.HALF_UP));
-        monthlyStats.put("averageDailyExpense", totalMonthlyExpenses.divide(BigDecimal.valueOf(30), 0, java.math.RoundingMode.HALF_UP));
+        
+        // 상담 건수 (상담료 거래 건수로 추정)
+        long totalConsultations = monthlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
+            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .count();
+            
+        // 구매 건수 (구매 관련 지출 거래 건수로 추정)
+        long totalPurchases = monthlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory()) || "EQUIPMENT".equals(t.getCategory()))
+            .count();
+            
+        // 전체 결제 건수
+        long totalPayments = monthlyTransactions.size();
+        
+        int daysInMonth = endDate.getDayOfMonth();
+        monthlyStats.put("totalConsultations", (int) totalConsultations);
+        monthlyStats.put("totalPurchases", (int) totalPurchases);
+        monthlyStats.put("totalPayments", (int) totalPayments);
+        monthlyStats.put("averageDailyIncome", 
+            daysInMonth > 0 ? totalMonthlyIncome.divide(BigDecimal.valueOf(daysInMonth), 0, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
+        monthlyStats.put("averageDailyExpense", 
+            daysInMonth > 0 ? totalMonthlyExpenses.divide(BigDecimal.valueOf(daysInMonth), 0, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
         monthlyReport.put("monthlyStats", monthlyStats);
         
         return monthlyReport;
@@ -1441,32 +1580,94 @@ public class ErpServiceImpl implements ErpService {
     public Map<String, Object> getYearlyFinanceReport(String year) {
         log.info("년단위 재무 리포트 조회: {}", year);
         
+        // 해당 년도의 시작일과 종료일 계산
+        int yearInt = Integer.parseInt(year);
+        LocalDate startDate = LocalDate.of(yearInt, 1, 1);
+        LocalDate endDate = LocalDate.of(yearInt, 12, 31);
+        
         Map<String, Object> yearlyReport = new HashMap<>();
         yearlyReport.put("year", year);
         yearlyReport.put("reportType", "년간");
         
-        // 연간 수입
+        // 해당 년도의 실제 거래 데이터 조회
+        List<FinancialTransaction> yearlyTransactions = financialTransactionRepository
+            .findByTransactionDateBetweenAndIsDeletedFalse(startDate, endDate);
+        
+        // 연간 수입 (실제 데이터 기반)
         Map<String, Object> yearlyIncome = new HashMap<>();
-        yearlyIncome.put("consultationRevenue", BigDecimal.valueOf(180000000)); // 상담수익
-        yearlyIncome.put("otherRevenue", BigDecimal.valueOf(6000000)); // 기타수익
-        BigDecimal totalYearlyIncome = yearlyIncome.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal consultationRevenue = yearlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
+            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal otherRevenue = yearlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
+            .filter(t -> !"CONSULTATION".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        yearlyIncome.put("consultationRevenue", consultationRevenue);
+        yearlyIncome.put("otherRevenue", otherRevenue);
+        BigDecimal totalYearlyIncome = consultationRevenue.add(otherRevenue);
         yearlyIncome.put("total", totalYearlyIncome);
         yearlyReport.put("yearlyIncome", yearlyIncome);
         
-        // 연간 지출
+        // 연간 지출 (실제 데이터 기반)
         Map<String, Object> yearlyExpenses = new HashMap<>();
-        yearlyExpenses.put("salaryExpense", BigDecimal.valueOf(72000000)); // 급여지출
-        yearlyExpenses.put("rentExpense", BigDecimal.valueOf(14400000)); // 임대료
-        yearlyExpenses.put("utilityExpense", BigDecimal.valueOf(3600000)); // 관리비
-        yearlyExpenses.put("officeExpense", BigDecimal.valueOf(9600000)); // 사무용품비
-        yearlyExpenses.put("taxExpense", BigDecimal.valueOf(18000000)); // 세금
-        yearlyExpenses.put("purchaseExpense", BigDecimal.valueOf(12000000)); // 구매비용
-        yearlyExpenses.put("otherExpense", BigDecimal.valueOf(2400000)); // 기타지출
-        BigDecimal totalYearlyExpenses = yearlyExpenses.values().stream()
-                .map(amount -> (BigDecimal) amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal salaryExpense = yearlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "SALARY".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal rentExpense = yearlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "RENT".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal utilityExpense = yearlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "UTILITY".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal officeExpense = yearlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal taxExpense = yearlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "TAX".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal purchaseExpense = yearlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "EQUIPMENT".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal otherExpense = yearlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> !"SALARY".equals(t.getCategory()) && !"RENT".equals(t.getCategory()) && 
+                         !"UTILITY".equals(t.getCategory()) && !"OFFICE_SUPPLIES".equals(t.getCategory()) && 
+                         !"TAX".equals(t.getCategory()) && !"EQUIPMENT".equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        yearlyExpenses.put("salaryExpense", salaryExpense);
+        yearlyExpenses.put("rentExpense", rentExpense);
+        yearlyExpenses.put("utilityExpense", utilityExpense);
+        yearlyExpenses.put("officeExpense", officeExpense);
+        yearlyExpenses.put("taxExpense", taxExpense);
+        yearlyExpenses.put("purchaseExpense", purchaseExpense);
+        yearlyExpenses.put("otherExpense", otherExpense);
+        BigDecimal totalYearlyExpenses = salaryExpense.add(rentExpense).add(utilityExpense)
+            .add(officeExpense).add(taxExpense).add(purchaseExpense).add(otherExpense);
         yearlyExpenses.put("total", totalYearlyExpenses);
         yearlyReport.put("yearlyExpenses", yearlyExpenses);
         
@@ -1474,24 +1675,59 @@ public class ErpServiceImpl implements ErpService {
         BigDecimal yearlyNetIncome = totalYearlyIncome.subtract(totalYearlyExpenses);
         yearlyReport.put("yearlyNetIncome", yearlyNetIncome);
         
-        // 연간 통계
+        // 연간 통계 (실제 데이터 기반)
         Map<String, Object> yearlyStats = new HashMap<>();
-        yearlyStats.put("totalConsultations", 3600);
-        yearlyStats.put("totalPurchases", 300);
-        yearlyStats.put("totalPayments", 3000);
+        
+        // 상담 건수 (상담료 거래 건수로 추정)
+        long totalConsultations = yearlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
+            .filter(t -> "CONSULTATION".equals(t.getCategory()))
+            .count();
+            
+        // 구매 건수 (구매 관련 지출 거래 건수로 추정)
+        long totalPurchases = yearlyTransactions.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory()) || "EQUIPMENT".equals(t.getCategory()))
+            .count();
+            
+        // 전체 결제 건수
+        long totalPayments = yearlyTransactions.size();
+        
+        yearlyStats.put("totalConsultations", (int) totalConsultations);
+        yearlyStats.put("totalPurchases", (int) totalPurchases);
+        yearlyStats.put("totalPayments", (int) totalPayments);
         yearlyStats.put("averageMonthlyIncome", totalYearlyIncome.divide(BigDecimal.valueOf(12), 0, java.math.RoundingMode.HALF_UP));
         yearlyStats.put("averageMonthlyExpense", totalYearlyExpenses.divide(BigDecimal.valueOf(12), 0, java.math.RoundingMode.HALF_UP));
         yearlyStats.put("profitMargin", totalYearlyIncome.compareTo(BigDecimal.ZERO) > 0 ? 
             yearlyNetIncome.divide(totalYearlyIncome, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)) : BigDecimal.ZERO);
         yearlyReport.put("yearlyStats", yearlyStats);
         
-        // 월별 추이
+        // 월별 추이 (실제 데이터 기반)
         Map<String, Object> monthlyTrend = new HashMap<>();
         for (int i = 1; i <= 12; i++) {
+            LocalDate monthStart = LocalDate.of(yearInt, i, 1);
+            LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+            
+            List<FinancialTransaction> monthTransactions = yearlyTransactions.stream()
+                .filter(t -> !t.getTransactionDate().isBefore(monthStart) && !t.getTransactionDate().isAfter(monthEnd))
+                .collect(Collectors.toList());
+            
+            BigDecimal monthIncome = monthTransactions.stream()
+                .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
+                .map(FinancialTransaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                
+            BigDecimal monthExpense = monthTransactions.stream()
+                .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+                .map(FinancialTransaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                
+            BigDecimal monthProfit = monthIncome.subtract(monthExpense);
+            
             String monthKey = String.format("%02d", i);
-            monthlyTrend.put(monthKey + "월수입", BigDecimal.valueOf(15000000));
-            monthlyTrend.put(monthKey + "월지출", BigDecimal.valueOf(12000000));
-            monthlyTrend.put(monthKey + "월순이익", BigDecimal.valueOf(3000000));
+            monthlyTrend.put(monthKey + "월수입", monthIncome);
+            monthlyTrend.put(monthKey + "월지출", monthExpense);
+            monthlyTrend.put(monthKey + "월순이익", monthProfit);
         }
         yearlyReport.put("monthlyTrend", monthlyTrend);
         

@@ -3,13 +3,13 @@ package com.mindgarden.consultation.repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import com.mindgarden.consultation.entity.FinancialTransaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import com.mindgarden.consultation.entity.FinancialTransaction;
 
 /**
  * 회계 거래 Repository
@@ -169,4 +169,15 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
            "WHERE f.relatedEntityType = 'PAYMENT' AND f.isDeleted = false " +
            "ORDER BY f.transactionDate DESC")
     List<FinancialTransaction> findPaymentTransactions();
+    
+    /**
+     * 특정 날짜의 거래 조회
+     */
+    List<FinancialTransaction> findByTransactionDateAndIsDeletedFalse(LocalDate transactionDate);
+    
+    /**
+     * 중복 거래 방지를 위한 존재 여부 확인
+     */
+    boolean existsByRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+        Long relatedEntityId, String relatedEntityType, FinancialTransaction.TransactionType transactionType);
 }

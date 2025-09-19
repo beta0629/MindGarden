@@ -56,9 +56,16 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         log.info("💼 회계 거래 생성: 유형={}, 금액={}, 카테고리={}", 
                 request.getTransactionType(), request.getAmount(), request.getCategory());
         
-        // 권한 확인 (수퍼어드민 또는 어드민만 거래 생성 가능)
-        if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && !UserRole.ADMIN.equals(currentUser.getRole())) {
-            throw new RuntimeException("회계 거래 생성 권한이 없습니다.");
+        // 권한 확인 (시스템 자동 처리가 아닌 경우에만)
+        if (currentUser != null) {
+            if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole())) {
+                throw new RuntimeException("회계 거래 생성 권한이 없습니다.");
+            }
+            log.info("💼 사용자 권한 확인 완료: {}", currentUser.getRole());
+        } else {
+            log.info("💼 시스템 자동 거래 생성 (권한 검사 우회)");
         }
         
         FinancialTransaction transaction = FinancialTransaction.builder()
@@ -90,7 +97,9 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         log.info("💼 회계 거래 수정: ID={}", id);
         
         // 권한 확인
-        if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && !UserRole.ADMIN.equals(currentUser.getRole())) {
+        if (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+            !UserRole.ADMIN.equals(currentUser.getRole()) && 
+            !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole())) {
             throw new RuntimeException("회계 거래 수정 권한이 없습니다.");
         }
         

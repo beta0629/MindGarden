@@ -1,7 +1,6 @@
 package com.mindgarden.consultation.repository;
 
 import java.util.List;
-import java.util.Optional;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,8 +20,8 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     // 활성 상태의 매핑만 조회
     List<ConsultantClientMapping> findByStatus(ConsultantClientMapping.MappingStatus status);
     
-    // 상담사와 내담자로 특정 매핑 조회
-    Optional<ConsultantClientMapping> findByConsultantAndClient(User consultant, User client);
+    // 상담사와 내담자로 특정 매핑 조회 (중복 결과 방지를 위해 List로 변경)
+    List<ConsultantClientMapping> findByConsultantAndClient(User consultant, User client);
     
     // 상담사와 내담자로 활성 상태의 매핑 존재 여부 확인
     boolean existsByConsultantAndClientAndStatus(User consultant, User client, ConsultantClientMapping.MappingStatus status);

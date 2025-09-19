@@ -1525,11 +1525,13 @@ public class ErpController {
             @RequestParam(required = false) String reportDate,
             HttpSession session) {
         try {
-            // 수퍼어드민 권한 확인
+            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
+            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
             
             log.info("대차대조표 조회 요청: {}", reportDate);
@@ -1559,11 +1561,13 @@ public class ErpController {
             @RequestParam(required = false) String endDate,
             HttpSession session) {
         try {
-            // 수퍼어드민 권한 확인
+            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
+            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
             
             log.info("손익계산서 조회 요청: {} ~ {}", startDate, endDate);
@@ -1594,11 +1598,13 @@ public class ErpController {
             @Valid @RequestBody FinancialTransactionRequest request,
             HttpSession session) {
         try {
-            // 수퍼어드민 권한 확인
+            // 관리자 권한 확인 (HQ_MASTER 또는 BRANCH_SUPER_ADMIN)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
+            if (currentUser == null || 
+                (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                 !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()))) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
             
             log.info("수입/지출 거래 등록 요청: {}", request);

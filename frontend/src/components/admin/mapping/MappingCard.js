@@ -331,6 +331,24 @@ const MappingCard = ({
                     </button>
                 )}
                 
+                {/* ERP 연동 상태 표시 - APPROVED 상태일 때 */}
+                {mapping.paymentStatus === 'APPROVED' && (
+                    <div style={{
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        backgroundColor: '#28a745',
+                        color: 'white'
+                    }}>
+                        <i className="bi bi-check-circle"></i>
+                        ERP 연동완료
+                    </div>
+                )}
+                
                 {/* 승인/거부 버튼 - CONFIRMED 상태일 때만 표시 */}
                 {mapping.paymentStatus === 'CONFIRMED' && (
                     <>

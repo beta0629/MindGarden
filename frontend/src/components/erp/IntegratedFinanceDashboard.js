@@ -167,6 +167,23 @@ const IntegratedFinanceDashboard = () => {
             💰 거래 등록
           </button>
           <button
+            onClick={() => window.location.href = '/erp/financial'}
+            style={{
+              padding: '12px 20px',
+              background: 'linear-gradient(135deg, #74b9ff, #0984e3)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              boxShadow: '0 4px 15px rgba(116,185,255,0.3)',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            📋 상세 내역 보기
+          </button>
+          <button
             onClick={fetchDashboardData}
             style={{
               padding: '12px 20px',
@@ -335,6 +352,111 @@ const OverviewTab = ({ data }) => {
           color="#e74c3c"
           icon="💰"
         />
+      </div>
+      
+      {/* 매핑 연동 상태 섹션 */}
+      <div style={{
+        backgroundColor: '#f8f9fa',
+        borderRadius: '12px',
+        padding: '20px',
+        marginBottom: '30px',
+        border: '1px solid #e9ecef'
+      }}>
+        <h3 style={{ 
+          marginBottom: '16px', 
+          color: '#495057',
+          fontSize: '18px',
+          fontWeight: '600',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <i className="bi bi-link-45deg" style={{ color: '#007bff' }}></i>
+          매핑시스템 연동 상태
+        </h3>
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px'
+        }}>
+          <div style={{
+            padding: '16px',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            border: '1px solid #dee2e6',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#28a745' }}>
+              {financialData.incomeByCategory?.CONSULTATION ? 
+                `₩${formatNumber(financialData.incomeByCategory.CONSULTATION)}` : '₩0'}
+            </div>
+            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+              💰 매핑 입금확인 수입
+            </div>
+          </div>
+          
+          <div style={{
+            padding: '16px',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            border: '1px solid #dee2e6',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc3545' }}>
+              {financialData.expenseByCategory?.CONSULTATION ? 
+                `₩${formatNumber(financialData.expenseByCategory.CONSULTATION)}` : '₩0'}
+            </div>
+            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+              📤 매핑 환불처리 지출
+            </div>
+          </div>
+          
+          <div style={{
+            padding: '16px',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            border: '1px solid #dee2e6',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#007bff' }}>
+              {financialData.transactionCount || 0}
+            </div>
+            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+              🔄 총 연동 거래 건수
+            </div>
+          </div>
+          
+          <div style={{
+            padding: '16px',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            border: '1px solid #dee2e6',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#17a2b8' }}>
+              실시간 연동
+            </div>
+            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+              ✅ 매핑 ↔ ERP 자동 동기화
+            </div>
+            <button
+              style={{
+                marginTop: '8px',
+                padding: '4px 8px',
+                fontSize: '10px',
+                border: '1px solid #17a2b8',
+                borderRadius: '4px',
+                backgroundColor: 'transparent',
+                color: '#17a2b8',
+                cursor: 'pointer'
+              }}
+              onClick={() => window.location.href = '/branch_super_admin/mapping-management'}
+            >
+              📋 매핑시스템 확인
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 수입/지출 요약 */}
@@ -587,10 +709,10 @@ const BalanceSheetTab = () => {
           {balanceSheetData?.summary?.isBalanced ? '✅ 대차대조표 균형' : '❌ 대차대조표 불균형'}
         </h4>
         <div style={{ fontSize: '15px', lineHeight: '1.6', opacity: '0.9' }}>
-          자산 총계: <strong>{formatCurrency(340000000)}</strong> = 부채 + 자본: <strong>{formatCurrency(265000000)}</strong>
+          자산 총계: <strong>{formatCurrency(balanceSheetData?.summary?.totalAssets || 0)}</strong> = 부채 + 자본: <strong>{formatCurrency(balanceSheetData?.summary?.totalLiabilitiesAndEquity || 0)}</strong>
           {!balanceSheetData?.summary?.isBalanced && (
             <div style={{ marginTop: '8px', fontWeight: '600' }}>
-              ⚠️ 차이: {formatCurrency(75000000)}
+              ⚠️ 차이: {formatCurrency(balanceSheetData?.summary?.difference || 0)}
             </div>
           )}
         </div>
@@ -644,16 +766,16 @@ const IncomeStatementTab = () => {
           <div style={{ fontSize: '15px', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>상담 수익:</span>
-              <span style={{ fontWeight: '600' }}>{formatCurrency(150000000)}</span>
+              <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.revenue?.consultationRevenue || 0)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>기타 수익:</span>
-              <span style={{ fontWeight: '600' }}>{formatCurrency(5000000)}</span>
+              <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.revenue?.otherRevenue || 0)}</span>
             </div>
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '12px', marginTop: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px' }}>
                 <span>수익 총계:</span>
-                <span>{formatCurrency(155000000)}</span>
+                <span>{formatCurrency(incomeStatementData?.revenue?.total || 0)}</span>
               </div>
             </div>
           </div>
@@ -671,32 +793,32 @@ const IncomeStatementTab = () => {
           <div style={{ fontSize: '15px', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>급여비용:</span>
-              <span style={{ fontWeight: '600' }}>{formatCurrency(60000000)}</span>
+              <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.expenses?.salaryExpense || 0)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>임대료:</span>
-              <span style={{ fontWeight: '600' }}>{formatCurrency(12000000)}</span>
+              <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.expenses?.rentExpense || 0)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>관리비:</span>
-              <span style={{ fontWeight: '600' }}>{formatCurrency(3000000)}</span>
+              <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.expenses?.utilityExpense || 0)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>사무용품비:</span>
-              <span style={{ fontWeight: '600' }}>{formatCurrency(8000000)}</span>
+              <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.expenses?.officeExpense || 0)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>세금:</span>
-              <span style={{ fontWeight: '600' }}>{formatCurrency(15000000)}</span>
+              <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.expenses?.taxExpense || 0)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>기타비용:</span>
-              <span style={{ fontWeight: '600' }}>{formatCurrency(2000000)}</span>
+              <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.expenses?.otherExpense || 0)}</span>
             </div>
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '12px', marginTop: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px' }}>
                 <span>비용 총계:</span>
-                <span>{formatCurrency(100000000)}</span>
+                <span>{formatCurrency(incomeStatementData?.expenses?.total || 0)}</span>
               </div>
             </div>
           </div>
@@ -735,7 +857,7 @@ const IncomeStatementTab = () => {
         }}></div>
         <h3 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: '600', position: 'relative', zIndex: 1 }}>💙 당기순이익</h3>
         <div style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
-          {formatCurrency(55000000)}
+          {formatCurrency(incomeStatementData?.netIncome || 0)}
         </div>
         <div style={{ fontSize: '16px', opacity: '0.9', position: 'relative', zIndex: 1 }}>
           수익 총계 - 비용 총계

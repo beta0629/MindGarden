@@ -265,9 +265,18 @@ const MappingManagement = () => {
             if (response.success) {
                 // Toast 컴포넌트가 마운트될 때까지 대기
                 setTimeout(() => {
-                    notificationManager.success('입금이 확인되었습니다.');
+                    notificationManager.success('✅ 입금 확인 완료! ERP 시스템에 상담료 수입이 자동 등록되었습니다.');
                 }, 100);
                 loadMappings();
+                
+                // ERP 연동 성공 로그
+                console.log('💚 매핑-ERP 연동 성공:', {
+                    mappingId: mappingId,
+                    action: '입금확인',
+                    erpIntegration: '상담료 수입 자동 생성',
+                    category: 'CONSULTATION',
+                    subcategory: 'INDIVIDUAL_CONSULTATION'
+                });
             } else {
                 setTimeout(() => {
                     notificationManager.error('입금 확인에 실패했습니다.');

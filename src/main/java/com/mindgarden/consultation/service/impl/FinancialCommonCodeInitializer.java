@@ -2,11 +2,11 @@ package com.mindgarden.consultation.service.impl;
 
 import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.repository.CommonCodeRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 재무 거래 관련 공통 코드 초기화 서비스
@@ -221,6 +221,7 @@ public class FinancialCommonCodeInitializer implements CommandLineRunner {
             {"FURNITURE", "가구", "사무용 가구", "EQUIPMENT"},
             {"LICENSE", "소프트웨어라이선스", "소프트웨어 라이선스", "SOFTWARE"},
             {"EXTERNAL_CONSULTING", "외부컨설팅", "외부 컨설팅", "CONSULTING"},
+            {"CONSULTATION_REFUND", "상담료환불", "상담료 환불", "CONSULTATION"},
             {"OTHER_EXPENSE", "기타", "기타 지출", "OTHER"}
         };
 

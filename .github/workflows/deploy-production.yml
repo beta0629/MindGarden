@@ -54,7 +54,7 @@ jobs:
         username: ${{ secrets.PRODUCTION_USER }}
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
         port: 22
-        timeout: 30
+        timeout: 30s
         script: |
           echo "SSH 연결 테스트 성공: $(date)"
           echo "서버 정보: $(uname -a)"
@@ -66,8 +66,8 @@ jobs:
         username: ${{ secrets.PRODUCTION_USER }}
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
         port: 22
-        timeout: 120
-        command_timeout: 1800
+        timeout: 120s
+        command_timeout: 30m
         script: |
           # 배포 디렉토리로 이동
           cd /var/www/mindgarden
@@ -104,6 +104,8 @@ jobs:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
         source: "frontend/build/*"
         target: "/var/www/html/"
         strip_components: 2
@@ -116,8 +118,8 @@ jobs:
         username: ${{ secrets.PRODUCTION_USER }}
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
         port: 22
-        timeout: 120
-        command_timeout: 600
+        timeout: 120s
+        command_timeout: 10m
         script: |
           # 프론트엔드 파일 권한 설정
           sudo chown -R www-data:www-data /var/www/html/

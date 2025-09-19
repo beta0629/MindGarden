@@ -16,6 +16,7 @@ import ConsultantTransferModal from './mapping/ConsultantTransferModal';
 import ConsultantTransferHistory from './mapping/ConsultantTransferHistory';
 import PartialRefundModal from './mapping/PartialRefundModal';
 import PaymentConfirmationModal from './PaymentConfirmationModal';
+import MappingDetailModal from './mapping/MappingDetailModal';
 import './MappingManagement.css';
 
 /**
@@ -51,6 +52,10 @@ const MappingManagement = () => {
     // 부분 환불 관련 상태
     const [showPartialRefundModal, setShowPartialRefundModal] = useState(false);
     const [partialRefundMapping, setPartialRefundMapping] = useState(null);
+    
+    // 상세보기 관련 상태
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [detailMapping, setDetailMapping] = useState(null);
 
     // 데이터 로드
     useEffect(() => {
@@ -381,6 +386,12 @@ const MappingManagement = () => {
         setRefundReason('');
         setShowRefundModal(true);
     };
+    
+    // 상세보기 핸들러
+    const handleViewMapping = (mapping) => {
+        setDetailMapping(mapping);
+        setShowDetailModal(true);
+    };
 
     // 환불 모달 닫기
     const handleCloseRefundModal = () => {
@@ -596,9 +607,7 @@ const MappingManagement = () => {
                                 onEdit={(mapping) => {
                                     notificationManager.info('매핑 수정 기능은 준비 중입니다.');
                                 }}
-                                onView={(mapping) => {
-                                    notificationManager.info('매핑 상세보기 기능은 준비 중입니다.');
-                                }}
+                                onView={handleViewMapping}
                                 onTransfer={handleTransferConsultant}
                                 onViewTransferHistory={handleViewTransferHistory}
                                 onRefund={handleRefundMapping}
@@ -648,6 +657,16 @@ const MappingManagement = () => {
                 }}
                 onSuccess={() => {
                     loadMappings(); // 데이터 새로고침
+                }}
+            />
+
+            {/* 상세보기 모달 */}
+            <MappingDetailModal
+                mapping={detailMapping}
+                isOpen={showDetailModal}
+                onClose={() => {
+                    setShowDetailModal(false);
+                    setDetailMapping(null);
                 }}
             />
 

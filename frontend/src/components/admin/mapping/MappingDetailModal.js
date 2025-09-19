@@ -1,0 +1,434 @@
+import React, { useState, useEffect } from 'react';
+import { apiGet } from '../../../utils/ajax';
+import './MappingDetailModal.css';
+
+/**
+ * 매핑 상세보기 모달 컴포넌트
+ * - 매핑의 모든 정보를 상세히 표시
+ * - ERP 연동 상태, 금액 일관성 등 확인
+ * - 거래 내역, 변경 이력 등 표시
+ */
+const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
+    const [detailInfo, setDetailInfo] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState('basic');
+
+    useEffect(() => {
+        if (isOpen && mapping) {
+            loadDetailInfo();
+        }
+    }, [isOpen, mapping]);
+
+    const loadDetailInfo = async () => {
+        if (!mapping?.id) return;
+        
+        setLoading(true);
+        try {
+            const response = await apiGet(`/api/admin/amount-management/mappings/${mapping.id}/amount-info`);
+            if (response.success) {
+                setDetailInfo(response.data);
+            }
+        } catch (error) {
+            console.error('매핑 상세 정보 로드 실패:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatCurrency = (amount) => {
+        if (!amount) return '0원';
+        return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        try {
+            return new Date(dateString).toLocaleString('ko-KR');
+        } catch (error) {
+            return dateString;
+        }
+    };
+
+    const getStatusBadge = (status) => {
+        const statusConfig = {
+            'ACTIVE': { label: '활성', color: '#28a745' },
+            'PENDING_PAYMENT': { label: '입금대기', color: '#ffc107' },
+            'PAYMENT_CONFIRMED': { label: '입금확인', color: '#17a2b8' },
+            'TERMINATED': { label: '종료', color: '#dc3545' },
+            'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6c757d' }
+        };
+        
+        const config = statusConfig[status] || { label: status, color: '#6c757d' };
+        return (
+            <span style={{
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: 'white',
+                backgroundColor: config.color
+            }}>
+                {config.label}
+            </span>
+        );
+    };
+
+    const getPaymentStatusBadge = (paymentStatus) => {
+        const statusConfig = {
+            'PENDING': { label: '결제대기', color: '#ffc107' },
+            'APPROVED': { label: '결제완료', color: '#28a745' },
+            'REJECTED': { label: '결제거부', color: '#dc3545' }
+        };
+        
+        const config = statusConfig[paymentStatus] || { label: paymentStatus, color: '#6c757d' };
+        return (
+            <span style={{
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: 'white',
+                backgroundColor: config.color
+            }}>
+                {config.label}
+            </span>
+        );
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="mapping-detail-modal-overlay">
+            <div className="mapping-detail-modal">
+                <div className="mapping-detail-header">
+                    <h2>
+                        <i className="bi bi-info-circle"></i>
+                        매핑 상세 정보
+                    </h2>
+                    <button 
+                        className="mapping-detail-close-btn"
+                        onClick={onClose}
+                    >
+                        <i className="bi bi-x-lg"></i>
+                    </button>
+                </div>
+
+                {loading ? (
+                    <div className="mapping-detail-loading">
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                        <p>상세 정보를 불러오는 중...</p>
+                    </div>
+                ) : (
+                    <div className="mapping-detail-content">
+                        {/* 탭 네비게이션 */}
+                        <div className="mapping-detail-tabs">
+                            <button 
+                                className={`tab-btn ${activeTab === 'basic' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('basic')}
+                            >
+                                <i className="bi bi-person-lines-fill"></i>
+                                기본 정보
+                            </button>
+                            <button 
+                                className={`tab-btn ${activeTab === 'payment' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('payment')}
+                            >
+                                <i className="bi bi-credit-card"></i>
+                                결제 정보
+                            </button>
+                            <button 
+                                className={`tab-btn ${activeTab === 'sessions' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('sessions')}
+                            >
+                                <i className="bi bi-calendar-check"></i>
+                                회기 정보
+                            </button>
+                            <button 
+                                className={`tab-btn ${activeTab === 'erp' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('erp')}
+                            >
+                                <i className="bi bi-graph-up"></i>
+                                ERP 연동
+                            </button>
+                            <button 
+                                className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('history')}
+                            >
+                                <i className="bi bi-clock-history"></i>
+                                변경 이력
+                            </button>
+                        </div>
+
+                        {/* 탭 컨텐츠 */}
+                        <div className="mapping-detail-tab-content">
+                            {activeTab === 'basic' && (
+                                <div className="basic-info-tab">
+                                    <div className="info-section">
+                                        <h4><i className="bi bi-person"></i> 매핑 기본 정보</h4>
+                                        <div className="info-grid">
+                                            <div className="info-item">
+                                                <label>매핑 ID</label>
+                                                <span>#{mapping?.id}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <label>상태</label>
+                                                <span>{getStatusBadge(mapping?.status)}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <label>결제 상태</label>
+                                                <span>{getPaymentStatusBadge(mapping?.paymentStatus)}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <label>지점</label>
+                                                <span>{mapping?.branchCode || '-'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="info-section">
+                                        <h4><i className="bi bi-people"></i> 참여자 정보</h4>
+                                        <div className="participants-info">
+                                            <div className="participant-card consultant">
+                                                <div className="participant-header">
+                                                    <i className="bi bi-person-badge"></i>
+                                                    <span>상담사</span>
+                                                </div>
+                                                <div className="participant-details">
+                                                    <p><strong>{mapping?.consultantName}</strong></p>
+                                                    <p className="text-muted">ID: {mapping?.consultantId}</p>
+                                                </div>
+                                            </div>
+                                            <div className="participant-card client">
+                                                <div className="participant-header">
+                                                    <i className="bi bi-person"></i>
+                                                    <span>내담자</span>
+                                                </div>
+                                                <div className="participant-details">
+                                                    <p><strong>{mapping?.clientName}</strong></p>
+                                                    <p className="text-muted">ID: {mapping?.clientId}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="info-section">
+                                        <h4><i className="bi bi-calendar-event"></i> 일정 정보</h4>
+                                        <div className="info-grid">
+                                            <div className="info-item">
+                                                <label>시작일</label>
+                                                <span>{formatDate(mapping?.startDate)}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <label>생성일</label>
+                                                <span>{formatDate(mapping?.createdAt)}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <label>수정일</label>
+                                                <span>{formatDate(mapping?.updatedAt)}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <label>종료일</label>
+                                                <span>{formatDate(mapping?.endDate)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'payment' && (
+                                <div className="payment-info-tab">
+                                    <div className="info-section">
+                                        <h4><i className="bi bi-credit-card"></i> 결제 정보</h4>
+                                        <div className="info-grid">
+                                            <div className="info-item">
+                                                <label>패키지명</label>
+                                                <span>{mapping?.packageName || '-'}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <label>패키지 가격</label>
+                                                <span className="amount-highlight">
+                                                    {formatCurrency(mapping?.packagePrice)}
+                                                </span>
+                                            </div>
+                                            <div className="info-item">
+                                                <label>실제 결제 금액</label>
+                                                <span className="amount-highlight">
+                                                    {formatCurrency(mapping?.paymentAmount)}
+                                                </span>
+                                            </div>
+                                            <div className="info-item">
+                                                <label>결제 방법</label>
+                                                <span>{mapping?.paymentMethod || '-'}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <label>결제 참조번호</label>
+                                                <span>{mapping?.paymentReference || '-'}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <label>결제일</label>
+                                                <span>{formatDate(mapping?.paymentDate)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {detailInfo && (
+                                        <div className="info-section">
+                                            <h4><i className="bi bi-check-circle"></i> 금액 일관성 검사</h4>
+                                            <div className="consistency-check">
+                                                {detailInfo.isConsistent ? (
+                                                    <div className="consistency-success">
+                                                        <i className="bi bi-check-circle-fill"></i>
+                                                        <span>모든 금액이 일관적입니다</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="consistency-warning">
+                                                        <i className="bi bi-exclamation-triangle-fill"></i>
+                                                        <div>
+                                                            <p><strong>문제:</strong> {detailInfo.consistencyMessage}</p>
+                                                            <p><strong>권장사항:</strong> {detailInfo.consistencyRecommendation}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'sessions' && (
+                                <div className="sessions-info-tab">
+                                    <div className="info-section">
+                                        <h4><i className="bi bi-calendar-check"></i> 회기 현황</h4>
+                                        <div className="sessions-summary">
+                                            <div className="session-card total">
+                                                <div className="session-number">{mapping?.totalSessions || 0}</div>
+                                                <div className="session-label">총 회기</div>
+                                            </div>
+                                            <div className="session-card used">
+                                                <div className="session-number">{mapping?.usedSessions || 0}</div>
+                                                <div className="session-label">사용 회기</div>
+                                            </div>
+                                            <div className="session-card remaining">
+                                                <div className="session-number">{mapping?.remainingSessions || 0}</div>
+                                                <div className="session-label">남은 회기</div>
+                                            </div>
+                                        </div>
+                                        
+                                        {detailInfo && (
+                                            <div className="session-details">
+                                                <div className="info-item">
+                                                    <label>회기당 단가</label>
+                                                    <span>{formatCurrency(detailInfo.pricePerSession)}</span>
+                                                </div>
+                                                <div className="progress-section">
+                                                    <label>진행률</label>
+                                                    <div className="session-progress">
+                                                        <div className="progress-bar">
+                                                            <div 
+                                                                className="progress-fill"
+                                                                style={{
+                                                                    width: `${(mapping?.usedSessions || 0) / (mapping?.totalSessions || 1) * 100}%`
+                                                                }}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="progress-text">
+                                                            {Math.round((mapping?.usedSessions || 0) / (mapping?.totalSessions || 1) * 100)}%
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'erp' && (
+                                <div className="erp-info-tab">
+                                    <div className="info-section">
+                                        <h4><i className="bi bi-graph-up"></i> ERP 연동 상태</h4>
+                                        {detailInfo?.relatedTransactions && detailInfo.relatedTransactions.length > 0 ? (
+                                            <div className="erp-transactions">
+                                                {detailInfo.relatedTransactions.map((transaction, index) => (
+                                                    <div key={index} className="transaction-card">
+                                                        <div className="transaction-header">
+                                                            <span className={`transaction-type ${transaction.type.toLowerCase()}`}>
+                                                                {transaction.type === 'INCOME' ? '수입' : '지출'}
+                                                            </span>
+                                                            <span className={`transaction-status ${transaction.status.toLowerCase()}`}>
+                                                                {transaction.status}
+                                                            </span>
+                                                        </div>
+                                                        <div className="transaction-details">
+                                                            <div className="transaction-amount">
+                                                                {formatCurrency(transaction.amount)}
+                                                            </div>
+                                                            <div className="transaction-date">
+                                                                {formatDate(transaction.createdAt)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="no-erp-data">
+                                                <i className="bi bi-exclamation-circle"></i>
+                                                <p>연동된 ERP 거래가 없습니다</p>
+                                                <small>입금 확인 후 자동으로 ERP 거래가 생성됩니다</small>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'history' && (
+                                <div className="history-info-tab">
+                                    <div className="info-section">
+                                        <h4><i className="bi bi-clock-history"></i> 변경 이력</h4>
+                                        {mapping?.notes ? (
+                                            <div className="notes-content">
+                                                {mapping.notes.split('\n').map((note, index) => (
+                                                    <div key={index} className="note-item">
+                                                        <div className="note-bullet"></div>
+                                                        <div className="note-text">{note}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="no-history">
+                                                <i className="bi bi-info-circle"></i>
+                                                <p>변경 이력이 없습니다</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {mapping?.specialConsiderations && (
+                                        <div className="info-section">
+                                            <h4><i className="bi bi-exclamation-triangle"></i> 특별 고려사항</h4>
+                                            <div className="special-considerations">
+                                                {mapping.specialConsiderations}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                <div className="mapping-detail-footer">
+                    <button 
+                        className="btn-secondary"
+                        onClick={onClose}
+                    >
+                        <i className="bi bi-x-circle"></i>
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default MappingDetailModal;

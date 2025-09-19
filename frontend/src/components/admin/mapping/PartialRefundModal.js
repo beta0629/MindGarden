@@ -11,28 +11,10 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!reason.trim()) {
-      showNotification('⚠️ 환불 사유를 반드시 입력해주세요.', 'warning');
-      return;
-    }
-
-    if (reason.trim().length < 5) {
-      showNotification('⚠️ 환불 사유를 5자 이상 상세히 입력해주세요.', 'warning');
-      return;
-    }
-
-    const maxRefundSessions = Math.min(mapping.remainingSessions, lastAddedPackage.sessions);
-    
-    if (refundSessions <= 0 || refundSessions > maxRefundSessions) {
-      showNotification(`⚠️ 환불 회기수는 1~${maxRefundSessions} 사이여야 합니다. (최근 추가 패키지 기준)`, 'warning');
-      return;
-    }
-
   // 최근 추가된 패키지 정보 추정
   const getLastAddedPackageInfo = () => {
+    if (!mapping) return { sessions: 0, price: 0, packageName: '패키지 없음' };
+    
     // 표준 패키지 단위 (10회, 20회) 기준으로 추정
     const totalSessions = mapping.totalSessions || 0;
     
@@ -64,6 +46,26 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
   // 환불 금액 계산 (최근 추가 패키지 기준)
   const refundAmount = lastAddedPackage.sessions > 0 ? 
     Math.round((lastAddedPackage.price * refundSessions) / lastAddedPackage.sessions) : 0;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!reason.trim()) {
+      showNotification('⚠️ 환불 사유를 반드시 입력해주세요.', 'warning');
+      return;
+    }
+
+    if (reason.trim().length < 5) {
+      showNotification('⚠️ 환불 사유를 5자 이상 상세히 입력해주세요.', 'warning');
+      return;
+    }
+
+    const maxRefundSessions = Math.min(mapping.remainingSessions, lastAddedPackage.sessions);
+    
+    if (refundSessions <= 0 || refundSessions > maxRefundSessions) {
+      showNotification(`⚠️ 환불 회기수는 1~${maxRefundSessions} 사이여야 합니다. (최근 추가 패키지 기준)`, 'warning');
+      return;
+    }
 
     const confirmMessage = `${mapping.clientName}의 ${refundSessions}회기를 환불 처리하시겠습니까?\n\n` +
       `📦 환불 대상: ${lastAddedPackage.packageName}\n` +
@@ -143,8 +145,6 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
   };
 
   const withdrawalCheck = checkWithdrawalPeriod();
-  const refundAmount = lastAddedPackage.sessions > 0 ? 
-    Math.round((lastAddedPackage.price * refundSessions) / lastAddedPackage.sessions) : 0;
 
   return (
     <div style={{

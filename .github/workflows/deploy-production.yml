@@ -137,6 +137,9 @@ jobs:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        command_timeout: 5m
         script: |
           cd /var/www/mindgarden
           
@@ -148,108 +151,25 @@ jobs:
           # 권한 설정
           chmod +x app.jar
           
-          # 기존 서비스 완전 정지 (극강화 버전)
-          echo "🛑 서비스 완전 정지 시작..."
-          
-          # 1단계: systemd 서비스 정지
-          echo "1️⃣ systemd 서비스 정지..."
+          # 간단한 서비스 재시작
+          echo "🔄 서비스 재시작..."
           sudo systemctl stop mindgarden.service || true
-          sudo systemctl disable mindgarden.service || true
-          sleep 3
-          
-          # 2단계: 모든 Java 프로세스 강제 종료 (여러 번 시도)
-          echo "2️⃣ Java 프로세스 강제 종료 (1차)..."
-          sudo pkill -9 -f "mindgarden" || true
-          sudo pkill -9 -f "app.jar" || true
-          sudo pkill -9 -f "consultation-management-system" || true
-          sudo pkill -9 -f "spring.profiles.active=prod" || true
-          sudo pkill -9 -f "server.port=8080" || true
-          sudo pkill -9 -f "java.*8080" || true
-          sleep 2
-          
-          # 3단계: 포트 점유 프로세스 강제 종료
-          echo "3️⃣ 포트 점유 프로세스 강제 종료..."
-          sudo fuser -k 8080/tcp || true
-          sudo fuser -k 8081/tcp || true
-          sudo netstat -tlnp | grep :8080 | awk '{print $7}' | cut -d'/' -f1 | xargs -r sudo kill -9 || true
-          sleep 2
-          
-          # 4단계: 재확인 및 2차 강제 종료
-          echo "4️⃣ 남은 프로세스 2차 강제 종료..."
-          sudo pkill -9 -f "java" | grep -E "(mindgarden|app\.jar|8080)" || true
-          sudo killall -9 java || true
-          sleep 3
-          
-          echo "🔍 프로세스 정리 확인..."
-          ps aux | grep -E "(mindgarden|app\.jar|8080)" | grep -v grep || echo "✅ 모든 프로세스 정리됨"
-          
-          # systemd 완전 재시작 (극강화 버전)
-          echo "🔄 systemd 완전 재시작..."
-          
-          # 1단계: systemd 재로드
-          echo "1️⃣ systemd 재로드..."
-          sudo systemctl daemon-reload
-          sleep 2
-          
-          # 2단계: 서비스 활성화
-          echo "2️⃣ 서비스 활성화..."
-          sudo systemctl enable mindgarden.service
-          sleep 1
-          
-          # 3단계: 서비스 시작 (최대 3번 시도)
-          echo "3️⃣ 서비스 시작 시도..."
-          for i in {1..3}; do
-            echo "🚀 서비스 시작 시도 $i/3..."
-            sudo systemctl start mindgarden.service
-            sleep 10
-            
-            if sudo systemctl is-active --quiet mindgarden.service; then
-              echo "✅ 서비스 시작 성공! (시도 $i/3)"
-              break
-            else
-              echo "❌ 서비스 시작 실패 (시도 $i/3)"
-              if [ $i -lt 3 ]; then
-                echo "🔄 5초 후 재시도..."
-                sudo systemctl stop mindgarden.service || true
-                sleep 5
-              fi
-            fi
-          done
+          sleep 5
+          sudo systemctl start mindgarden.service
+          sleep 10
           
           # 서비스 상태 확인
-          echo "⏳ 서비스 시작 대기 중..."
-          sleep 15
-          
           echo "🔍 서비스 상태 확인..."
-          sudo systemctl status mindgarden.service --no-pager | head -15
+          sudo systemctl status mindgarden.service --no-pager | head -10
           
-          echo "🔍 서비스 활성화 상태 확인..."
-          sudo systemctl is-active mindgarden.service
-          sudo systemctl is-enabled mindgarden.service
-          
-          echo "🔍 최근 로그 확인..."
-          sudo journalctl -u mindgarden.service -n 20 --no-pager | tail -10
-          
-          echo "🔍 프로세스 확인..."
-          ps aux | grep -E "(mindgarden|app\.jar)" | grep -v grep || echo "프로세스 없음"
-          
-          echo "🔍 서비스 재시작 확인..."
+          # 서비스 활성화 상태 확인
           if sudo systemctl is-active --quiet mindgarden.service; then
             echo "✅ 서비스 정상 시작됨"
-            echo "🕐 서비스 시작 시간: $(sudo systemctl show mindgarden.service --property=ActiveEnterTimestamp --value)"
           else
-            echo "❌ 서비스 시작 실패"
-            sudo systemctl status mindgarden.service --no-pager -l
+            echo "❌ 서비스 시작 실패 - 재시도..."
+            sudo systemctl restart mindgarden.service
+            sleep 10
           fi
-          
-          # Nginx 설정 테스트 및 재로드
-          sudo nginx -t
-          sudo nginx -s reload
-          
-          # 정적 파일 서빙 확인
-          echo "🔍 정적 파일 확인..."
-          ls -la /var/www/html/static/css/ | head -5 || echo "CSS 디렉토리 없음"
-          ls -la /var/www/html/static/js/ | head -5 || echo "JS 디렉토리 없음"
           
     - name: 🏥 헬스체크
       uses: appleboy/ssh-action@v1.1.0

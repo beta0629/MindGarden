@@ -47,12 +47,27 @@ jobs:
         cd frontend
         npm run build:ci
         
-    - name: 🚀 서버 배포
-      uses: appleboy/ssh-action@v1.0.3
+    - name: 🔍 SSH 연결 테스트
+      uses: appleboy/ssh-action@v1.1.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 30
+        script: |
+          echo "SSH 연결 테스트 성공: $(date)"
+          echo "서버 정보: $(uname -a)"
+          
+    - name: 🚀 서버 배포
+      uses: appleboy/ssh-action@v1.1.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120
+        command_timeout: 1800
         script: |
           # 배포 디렉토리로 이동
           cd /var/www/mindgarden
@@ -71,18 +86,20 @@ jobs:
           fi
           
     - name: 📤 백엔드 파일 업로드
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v0.1.8
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
         source: "target/consultation-management-system-1.0.0.jar"
         target: "/var/www/mindgarden/"
         strip_components: 1
         overwrite: true
         
     - name: 📤 프론트엔드 파일 업로드
-      uses: appleboy/scp-action@v0.1.7
+      uses: appleboy/scp-action@v0.1.8
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -93,11 +110,14 @@ jobs:
         overwrite: true
         
     - name: 🔧 프론트엔드 파일 권한 설정
-      uses: appleboy/ssh-action@v1.0.3
+      uses: appleboy/ssh-action@v1.1.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120
+        command_timeout: 600
         script: |
           # 프론트엔드 파일 권한 설정
           sudo chown -R www-data:www-data /var/www/html/
@@ -110,7 +130,7 @@ jobs:
           echo "✅ 프론트엔드 파일 권한 설정 완료"
         
     - name: 🔄 서비스 재시작
-      uses: appleboy/ssh-action@v1.0.3
+      uses: appleboy/ssh-action@v1.1.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -230,7 +250,7 @@ jobs:
           ls -la /var/www/html/static/js/ | head -5 || echo "JS 디렉토리 없음"
           
     - name: 🏥 헬스체크
-      uses: appleboy/ssh-action@v1.0.3
+      uses: appleboy/ssh-action@v1.1.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -268,7 +288,7 @@ jobs:
           echo "🎉 배포 완료!"
           
     - name: 🧹 메모리 정리
-      uses: appleboy/ssh-action@v1.0.3
+      uses: appleboy/ssh-action@v1.1.0
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}

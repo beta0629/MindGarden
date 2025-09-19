@@ -14,6 +14,7 @@ import MappingFilters from './mapping/MappingFilters';
 import MappingStats from './mapping/MappingStats';
 import ConsultantTransferModal from './mapping/ConsultantTransferModal';
 import ConsultantTransferHistory from './mapping/ConsultantTransferHistory';
+import PartialRefundModal from './mapping/PartialRefundModal';
 import PaymentConfirmationModal from './PaymentConfirmationModal';
 import './MappingManagement.css';
 
@@ -46,6 +47,10 @@ const MappingManagement = () => {
     const [showRefundModal, setShowRefundModal] = useState(false);
     const [refundMapping, setRefundMapping] = useState(null);
     const [refundReason, setRefundReason] = useState('');
+    
+    // 부분 환불 관련 상태
+    const [showPartialRefundModal, setShowPartialRefundModal] = useState(false);
+    const [partialRefundMapping, setPartialRefundMapping] = useState(null);
 
     // 데이터 로드
     useEffect(() => {
@@ -352,7 +357,7 @@ const MappingManagement = () => {
         setSelectedClientId(null);
     };
 
-    // 환불 처리 핸들러
+    // 환불 처리 핸들러 (부분 환불)
     const handleRefundMapping = (mapping) => {
         // ACTIVE 상태이고 남은 회기가 있는 매핑만 환불 가능
         if (mapping.status !== 'ACTIVE') {
@@ -364,7 +369,14 @@ const MappingManagement = () => {
             notificationManager.warning('남은 회기가 없는 매핑은 환불 처리할 수 없습니다.');
             return;
         }
-        
+
+        // 부분 환불 모달 열기
+        setPartialRefundMapping(mapping);
+        setShowPartialRefundModal(true);
+    };
+
+    // 전체 환불 처리 핸들러 (기존 로직 유지)
+    const handleFullRefundMapping = (mapping) => {
         setRefundMapping(mapping);
         setRefundReason('');
         setShowRefundModal(true);
@@ -624,6 +636,19 @@ const MappingManagement = () => {
                 onClose={handlePaymentModalClose}
                 mappings={pendingMappings}
                 onPaymentConfirmed={handlePaymentConfirmed}
+            />
+
+            {/* 부분 환불 모달 */}
+            <PartialRefundModal
+                mapping={partialRefundMapping}
+                isOpen={showPartialRefundModal}
+                onClose={() => {
+                    setShowPartialRefundModal(false);
+                    setPartialRefundMapping(null);
+                }}
+                onSuccess={() => {
+                    loadMappings(); // 데이터 새로고침
+                }}
             />
 
             {/* 환불 처리 모달 */}

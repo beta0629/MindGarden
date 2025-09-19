@@ -88,18 +88,77 @@ const MappingCard = ({
                 <div style={{
                     fontSize: '12px',
                     color: '#6c757d',
-                    fontWeight: '500'
+                    fontWeight: '500',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '2px'
                 }}>
-                    {mapping.startDate ? 
-                        (() => {
-                            try {
-                                return new Date(mapping.startDate).toLocaleDateString('ko-KR');
-                            } catch (error) {
-                                return '날짜 정보 없음';
+                    {/* 시작일 */}
+                    {mapping.startDate ? (
+                        <div>
+                            <span style={{ fontWeight: '600', color: '#495057' }}>시작일:</span> {
+                                (() => {
+                                    try {
+                                        return new Date(mapping.startDate).toLocaleDateString('ko-KR');
+                                    } catch (error) {
+                                        return '날짜 오류';
+                                    }
+                                })()
                             }
-                        })() : 
-                        '날짜 정보 없음'
-                    }
+                        </div>
+                    ) : null}
+                    
+                    {/* 생성일 (매핑 생성일) */}
+                    {mapping.createdAt ? (
+                        <div>
+                            <span style={{ fontWeight: '600', color: '#495057' }}>생성일:</span> {
+                                (() => {
+                                    try {
+                                        return new Date(mapping.createdAt).toLocaleDateString('ko-KR');
+                                    } catch (error) {
+                                        return '날짜 오류';
+                                    }
+                                })()
+                            }
+                        </div>
+                    ) : null}
+                    
+                    {/* 승인일 */}
+                    {mapping.adminApprovalDate ? (
+                        <div>
+                            <span style={{ fontWeight: '600', color: '#28a745' }}>승인일:</span> {
+                                (() => {
+                                    try {
+                                        return new Date(mapping.adminApprovalDate).toLocaleDateString('ko-KR');
+                                    } catch (error) {
+                                        return '날짜 오류';
+                                    }
+                                })()
+                            }
+                        </div>
+                    ) : null}
+                    
+                    {/* 결제일 */}
+                    {mapping.paymentDate ? (
+                        <div>
+                            <span style={{ fontWeight: '600', color: '#007bff' }}>결제일:</span> {
+                                (() => {
+                                    try {
+                                        return new Date(mapping.paymentDate).toLocaleDateString('ko-KR');
+                                    } catch (error) {
+                                        return '날짜 오류';
+                                    }
+                                })()
+                            }
+                        </div>
+                    ) : null}
+                    
+                    {/* 날짜 정보가 없는 경우 */}
+                    {!mapping.startDate && !mapping.createdAt && !mapping.adminApprovalDate && !mapping.paymentDate && (
+                        <div style={{ color: '#dc3545', fontStyle: 'italic' }}>
+                            날짜 정보 없음
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -58,7 +58,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
             'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6c757d' }
         };
         
-        const config = statusConfig[status] || { label: status, color: '#6c757d' };
+        const config = statusConfig[status] || { label: status || 'UNKNOWN', color: '#6c757d' };
         return (
             <span style={{
                 padding: '4px 8px',
@@ -80,7 +80,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
             'REJECTED': { label: '결제거부', color: '#dc3545' }
         };
         
-        const config = statusConfig[paymentStatus] || { label: paymentStatus, color: '#6c757d' };
+        const config = statusConfig[paymentStatus] || { label: paymentStatus || 'UNKNOWN', color: '#6c757d' };
         return (
             <span style={{
                 padding: '4px 8px',
@@ -329,12 +329,12 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                             <div 
                                                                 className="progress-fill"
                                                                 style={{
-                                                                    width: `${(mapping?.usedSessions || 0) / (mapping?.totalSessions || 1) * 100}%`
+                                                                    width: `${Math.min(100, Math.max(0, ((mapping?.usedSessions || 0) / Math.max(1, mapping?.totalSessions || 1)) * 100))}%`
                                                                 }}
                                                             ></div>
                                                         </div>
                                                         <span className="progress-text">
-                                                            {Math.round((mapping?.usedSessions || 0) / (mapping?.totalSessions || 1) * 100)}%
+                                                            {Math.round(Math.min(100, Math.max(0, ((mapping?.usedSessions || 0) / Math.max(1, mapping?.totalSessions || 1)) * 100)))}%
                                                         </span>
                                                     </div>
                                                 </div>
@@ -353,16 +353,16 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                 {detailInfo.relatedTransactions.map((transaction, index) => (
                                                     <div key={index} className="transaction-card">
                                                         <div className="transaction-header">
-                                                            <span className={`transaction-type ${transaction.type.toLowerCase()}`}>
+                                                            <span className={`transaction-type ${transaction.type ? transaction.type.toLowerCase() : 'unknown'}`}>
                                                                 {transaction.type === 'INCOME' ? '수입' : '지출'}
                                                             </span>
-                                                            <span className={`transaction-status ${transaction.status.toLowerCase()}`}>
-                                                                {transaction.status}
+                                                            <span className={`transaction-status ${transaction.status ? transaction.status.toLowerCase() : 'unknown'}`}>
+                                                                {transaction.status || 'UNKNOWN'}
                                                             </span>
                                                         </div>
                                                         <div className="transaction-details">
                                                             <div className="transaction-amount">
-                                                                {formatCurrency(transaction.amount)}
+                                                                {formatCurrency(transaction.amount || 0)}
                                                             </div>
                                                             <div className="transaction-date">
                                                                 {formatDate(transaction.createdAt)}

@@ -171,6 +171,7 @@ public class FinancialCommonCodeInitializer implements CommandLineRunner {
         String[][] incomeSubcategories = {
             {"INDIVIDUAL_CONSULTATION", "개인상담", "개인 상담 서비스", "CONSULTATION"},
             {"GROUP_CONSULTATION", "그룹상담", "그룹 상담 서비스", "CONSULTATION"},
+            {"ADDITIONAL_CONSULTATION", "추가상담", "추가 회기 상담 서비스", "CONSULTATION"},
             {"BASIC_PACKAGE", "기본패키지", "기본 상담 패키지", "PACKAGE"},
             {"PREMIUM_PACKAGE", "프리미엄패키지", "프리미엄 상담 패키지", "PACKAGE"},
             {"OTHER_INCOME", "기타수입", "기타 수입 항목", "OTHER"}

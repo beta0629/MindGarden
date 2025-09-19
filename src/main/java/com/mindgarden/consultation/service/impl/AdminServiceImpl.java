@@ -263,21 +263,22 @@ public class AdminServiceImpl implements AdminService {
                     existing.setSpecialConsiderations(dto.getSpecialConsiderations());
                 }
                 
-                // 상태 업데이트 (새로운 상태가 더 우선순위가 높으면)
-                if (dto.getStatus() != null) {
-                    ConsultantClientMapping.MappingStatus newStatus = ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus());
-                    if (newStatus == ConsultantClientMapping.MappingStatus.ACTIVE) {
-                        existing.setStatus(newStatus);
-                    }
+                // 추가 매핑 시 입금 확인 절차 필요 (ERP 연동을 위해)
+                // 기존 매핑이 ACTIVE 상태라도 추가 결제에 대해서는 입금 확인이 필요
+                boolean needsPaymentConfirmation = (dto.getPaymentAmount() != null && dto.getPaymentAmount() > 0) ||
+                                                 (dto.getPackagePrice() != null && dto.getPackagePrice() > 0);
+                
+                if (needsPaymentConfirmation) {
+                    // 추가 결제가 있는 경우 입금 확인 대기 상태로 설정
+                    existing.setPaymentStatus(ConsultantClientMapping.PaymentStatus.PENDING);
+                    log.info("💰 추가 매핑 시 입금 확인 필요: 추가금액={}원", 
+                        dto.getPaymentAmount() != null ? dto.getPaymentAmount() : dto.getPackagePrice());
+                } else {
+                    // 추가 결제가 없는 경우 (무료 회기 추가 등) 기존 상태 유지
+                    log.info("🆓 무료 회기 추가: 입금 확인 불필요");
                 }
                 
-                // 결제 상태 업데이트 (새로운 상태가 더 우선순위가 높으면)
-                if (dto.getPaymentStatus() != null) {
-                    ConsultantClientMapping.PaymentStatus newPaymentStatus = ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus());
-                    if (newPaymentStatus == ConsultantClientMapping.PaymentStatus.APPROVED) {
-                        existing.setPaymentStatus(newPaymentStatus);
-                    }
-                }
+                // 상태는 기존 ACTIVE 상태 유지 (회기 추가는 기존 매핑 확장이므로)
                 
                 existing.setUpdatedAt(LocalDateTime.now());
                 
@@ -298,9 +299,10 @@ public class AdminServiceImpl implements AdminService {
         mapping.setStartDate(dto.getStartDate() != null ? 
             dto.getStartDate().atStartOfDay() : 
             LocalDateTime.now());
+        // 새 매핑은 입금 확인 후 활성화되도록 설정
         mapping.setStatus(dto.getStatus() != null ? 
             ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus()) : 
-            ConsultantClientMapping.MappingStatus.ACTIVE);
+            ConsultantClientMapping.MappingStatus.PENDING_PAYMENT);
         mapping.setPaymentStatus(dto.getPaymentStatus() != null ? 
             ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus()) : 
             ConsultantClientMapping.PaymentStatus.PENDING);
@@ -347,9 +349,20 @@ public class AdminServiceImpl implements AdminService {
         
         // 입금 확인 시 자동으로 ERP 수입 거래 생성
         try {
-            createConsultationIncomeTransaction(savedMapping);
-            log.info("💚 매핑 입금 확인으로 인한 상담료 수입 거래 자동 생성: MappingID={}, PaymentAmount={}, PackagePrice={}", 
-                mappingId, paymentAmount, mapping.getPackagePrice());
+            // 추가 매핑인지 확인
+            boolean isAdditionalMapping = savedMapping.getNotes() != null && 
+                                        savedMapping.getNotes().contains("[추가 매핑]");
+            
+            if (isAdditionalMapping) {
+                log.info("🔄 추가 매핑 입금 확인 - 추가 회기에 대한 ERP 거래 생성");
+                createAdditionalSessionIncomeTransaction(savedMapping, paymentAmount);
+            } else {
+                log.info("🆕 신규 매핑 입금 확인 - 전체 패키지에 대한 ERP 거래 생성");
+                createConsultationIncomeTransaction(savedMapping);
+            }
+            
+            log.info("💚 매핑 입금 확인으로 인한 상담료 수입 거래 자동 생성 완료: MappingID={}, PaymentAmount={}, 추가매핑={}", 
+                mappingId, paymentAmount, isAdditionalMapping);
         } catch (Exception e) {
             log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
             // 거래 생성 실패해도 입금 확인은 완료
@@ -434,6 +447,92 @@ public class AdminServiceImpl implements AdminService {
     }
     
     /**
+     * 추가 회기 수입 거래 자동 생성 (추가 매핑용)
+     */
+    private void createAdditionalSessionIncomeTransaction(ConsultantClientMapping mapping, Long additionalPaymentAmount) {
+        log.info("💰 [중앙화] 추가 회기 수입 거래 생성 시작: MappingID={}, AdditionalAmount={}", 
+            mapping.getId(), additionalPaymentAmount);
+        
+        // 추가 결제 금액 사용 (전체 패키지 가격이 아닌 실제 추가 결제 금액)
+        Long transactionAmount = additionalPaymentAmount != null ? additionalPaymentAmount : 0L;
+        
+        if (transactionAmount <= 0) {
+            log.warn("❌ 유효한 추가 결제 금액이 없습니다: MappingID={}", mapping.getId());
+            return;
+        }
+        
+        // 추가 회기수 추출 시도
+        int additionalSessions = extractAdditionalSessionsFromNotes(mapping.getNotes());
+        
+        // ERP 거래 생성
+        FinancialTransactionRequest request = FinancialTransactionRequest.builder()
+                .transactionType("INCOME")
+                .category("CONSULTATION") // 공통코드 사용
+                .subcategory("ADDITIONAL_CONSULTATION") // 추가 회기 세부카테고리
+                .amount(java.math.BigDecimal.valueOf(transactionAmount))
+                .description(String.format("추가 회기 상담료 입금 확인 - %s (%d회 추가, %s) [추가금액: %,d원]", 
+                    mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+                    additionalSessions,
+                    mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
+                    transactionAmount))
+                .transactionDate(java.time.LocalDate.now())
+                .relatedEntityId(mapping.getId())
+                .relatedEntityType("CONSULTANT_CLIENT_MAPPING_ADDITIONAL")
+                .taxIncluded(false) // 상담료는 부가세 면세
+                .build();
+        
+        // 시스템 자동 거래 생성 (권한 검사 우회)
+        com.mindgarden.consultation.dto.FinancialTransactionResponse response = 
+            financialTransactionService.createTransaction(request, null);
+        
+        // 입금 확인된 거래는 즉시 완료 상태로 변경
+        try {
+            com.mindgarden.consultation.entity.FinancialTransaction transaction = 
+                financialTransactionRepository.findById(response.getId()).orElse(null);
+            if (transaction != null) {
+                transaction.complete(); // 완료 상태로 변경
+                transaction.setApprovedAt(java.time.LocalDateTime.now());
+                financialTransactionRepository.save(transaction);
+                log.info("💚 추가 회기 거래 즉시 완료 처리: TransactionID={}", response.getId());
+            }
+        } catch (Exception e) {
+            log.error("추가 회기 거래 완료 처리 실패: {}", e.getMessage(), e);
+        }
+        
+        log.info("✅ [중앙화] 추가 회기 수입 거래 생성 완료: MappingID={}, AdditionalAmount={}원, AdditionalSessions={}회", 
+            mapping.getId(), transactionAmount, additionalSessions);
+    }
+    
+    /**
+     * Notes에서 추가 회기수 추출
+     */
+    private int extractAdditionalSessionsFromNotes(String notes) {
+        if (notes == null || notes.trim().isEmpty()) {
+            return 0;
+        }
+        
+        try {
+            // "[추가 매핑]" 다음에 있는 숫자 추출 시도
+            String[] lines = notes.split("\n");
+            for (String line : lines) {
+                if (line.contains("[추가 매핑]")) {
+                    // "10회", "20회" 같은 패턴에서 숫자 추출
+                    if (line.matches(".*\\d+회.*")) {
+                        String sessionStr = line.replaceAll(".*?(\\d+)회.*", "$1");
+                        return Integer.parseInt(sessionStr);
+                    }
+                    // 기본값으로 10회 반환
+                    return 10;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Notes에서 추가 회기수 추출 실패: {}", e.getMessage());
+        }
+        
+        return 10; // 기본값
+    }
+    
+    /**
      * 상담료 환불 거래 자동 생성
      */
     private void createConsultationRefundTransaction(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
@@ -465,6 +564,84 @@ public class AdminServiceImpl implements AdminService {
         
         log.info("✅ 상담료 환불 거래 생성 완료: MappingID={}, RefundAmount={}", 
             mapping.getId(), refundAmount);
+    }
+    
+    /**
+     * 부분 환불 상담료 거래 자동 생성 (중앙화된 금액 관리 사용)
+     */
+    private void createPartialConsultationRefundTransaction(ConsultantClientMapping mapping, int refundSessions, long refundAmount, String reason) {
+        log.info("💰 [중앙화] 부분 환불 거래 생성 시작: MappingID={}, RefundSessions={}, RefundAmount={}", 
+            mapping.getId(), refundSessions, refundAmount);
+        
+        if (refundAmount <= 0) {
+            log.warn("유효하지 않은 부분 환불 금액: {}", refundAmount);
+            return;
+        }
+        
+        // 1. 중복 거래 방지 (부분 환불은 여러 번 가능하므로 중복 체크 스킵)
+        // 부분 환불은 여러 번 발생할 수 있으므로 중복 체크를 하지 않음
+        
+        // 2. 금액 일관성 검사 (중앙화된 서비스 사용)
+        AmountManagementService.AmountConsistencyResult consistency = 
+            amountManagementService.checkAmountConsistency(mapping.getId());
+        
+        if (!consistency.isConsistent()) {
+            log.warn("⚠️ 부분 환불 시 금액 일관성 문제 감지: {}", consistency.getInconsistencyReason());
+            log.warn("💡 권장사항: {}", consistency.getRecommendation());
+        }
+        
+        // 3. ERP 환불 거래 생성
+        FinancialTransactionRequest request = FinancialTransactionRequest.builder()
+                .transactionType("EXPENSE") // 환불은 지출
+                .category("CONSULTATION") // 공통코드 사용
+                .subcategory("CONSULTATION_PARTIAL_REFUND") // 부분 환불 세부카테고리
+                .amount(java.math.BigDecimal.valueOf(refundAmount))
+                .description(String.format("상담료 부분 환불 - %s (%d회기 부분 환불, 사유: %s) [남은회기: %d회]", 
+                    mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+                    refundSessions,
+                    reason != null ? reason : "관리자 처리",
+                    mapping.getRemainingSessions() - refundSessions))
+                .transactionDate(java.time.LocalDate.now())
+                .relatedEntityId(mapping.getId())
+                .relatedEntityType("CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND")
+                .taxIncluded(false) // 환불은 부가세 면세
+                .build();
+        
+        // 4. 시스템 자동 거래 생성 (권한 검사 우회)
+        com.mindgarden.consultation.dto.FinancialTransactionResponse response = 
+            financialTransactionService.createTransaction(request, null);
+        
+        // 5. 부분 환불 거래는 즉시 완료 상태로 변경
+        try {
+            com.mindgarden.consultation.entity.FinancialTransaction transaction = 
+                financialTransactionRepository.findById(response.getId()).orElse(null);
+            if (transaction != null) {
+                transaction.complete(); // 완료 상태로 변경
+                transaction.setApprovedAt(java.time.LocalDateTime.now());
+                financialTransactionRepository.save(transaction);
+                log.info("💚 부분 환불 거래 즉시 완료 처리: TransactionID={}", response.getId());
+            }
+        } catch (Exception e) {
+            log.error("부분 환불 거래 완료 처리 실패: {}", e.getMessage(), e);
+        }
+        
+        // 6. 금액 변경 이력 기록 (중앙화된 서비스 사용)
+        try {
+            Long originalAmount = mapping.getPackagePrice();
+            Long newEffectiveAmount = originalAmount != null ? originalAmount - refundAmount : null;
+            
+            if (originalAmount != null && newEffectiveAmount != null) {
+                amountManagementService.recordAmountChange(mapping.getId(), 
+                    originalAmount, newEffectiveAmount, 
+                    String.format("부분 환불로 인한 유효 금액 감소 (%d회기 환불)", refundSessions), 
+                    "SYSTEM_PARTIAL_REFUND");
+            }
+        } catch (Exception e) {
+            log.error("부분 환불 금액 변경 이력 기록 실패: {}", e.getMessage(), e);
+        }
+        
+        log.info("✅ [중앙화] 부분 환불 거래 생성 완료: MappingID={}, RefundSessions={}, RefundAmount={}원", 
+            mapping.getId(), refundSessions, refundAmount);
     }
 
     /**
@@ -1804,6 +1981,159 @@ public class AdminServiceImpl implements AdminService {
         
         log.info("✅ 매핑 강제 종료 완료: ID={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
                 id, refundedSessions, refundAmount, mapping.getConsultant().getName(), mapping.getClient().getName());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void partialRefundMapping(Long id, int refundSessions, String reason) {
+        log.info("🔧 부분 환불 처리 시작: ID={}, 환불회기={}, 사유={}", id, refundSessions, reason);
+        
+        ConsultantClientMapping mapping = mappingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다."));
+        
+        if (mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED) {
+            throw new RuntimeException("이미 종료된 매핑입니다.");
+        }
+        
+        // 가장 최근 추가된 패키지 정보 추출
+        Map<String, Object> lastAddedPackage = getLastAddedPackageInfo(mapping);
+        int lastAddedSessions = (Integer) lastAddedPackage.getOrDefault("sessions", 0);
+        Long lastAddedPrice = (Long) lastAddedPackage.getOrDefault("price", 0L);
+        String lastAddedPackageName = (String) lastAddedPackage.getOrDefault("packageName", "");
+        
+        log.info("📦 가장 최근 추가된 패키지 정보: 회기수={}, 가격={}, 패키지명={}", 
+                lastAddedSessions, lastAddedPrice, lastAddedPackageName);
+        
+        // 환불 가능한 회기수 검증
+        if (refundSessions <= 0) {
+            throw new RuntimeException("환불 회기수는 1 이상이어야 합니다.");
+        }
+        
+        if (refundSessions > mapping.getRemainingSessions()) {
+            throw new RuntimeException(String.format(
+                "환불 요청 회기수(%d)가 남은 회기수(%d)보다 많습니다.", 
+                refundSessions, mapping.getRemainingSessions()));
+        }
+        
+        // 청약 철회 기간 검증 (15일 이후 환불 제한)
+        if (mapping.getPaymentDate() != null) {
+            LocalDateTime paymentDate = mapping.getPaymentDate();
+            LocalDateTime now = LocalDateTime.now();
+            long daysSincePayment = java.time.Duration.between(paymentDate, now).toDays();
+            
+            if (daysSincePayment > 15) {
+                log.warn("⚠️ 청약 철회 기간 초과: 결제일={}, 현재일={}, 경과일수={}일", 
+                        paymentDate.toLocalDate(), now.toLocalDate(), daysSincePayment);
+                throw new RuntimeException(String.format(
+                    "청약 철회 기간이 초과되었습니다. 결제일로부터 %d일이 경과했습니다. (15일 이내만 환불 가능)", 
+                    daysSincePayment));
+            } else {
+                log.info("✅ 청약 철회 기간 내 환불: 결제일={}, 경과일수={}일 (15일 이내)", 
+                        paymentDate.toLocalDate(), daysSincePayment);
+            }
+        } else {
+            log.warn("⚠️ 결제일 정보가 없어 청약 철회 기간을 확인할 수 없습니다.");
+        }
+        
+        // 최근 추가분 기준 환불 권장 (강제하지 않음)
+        if (lastAddedSessions > 0 && refundSessions > lastAddedSessions) {
+            log.warn("⚠️ 환불 요청 회기수({})가 최근 추가분({})보다 많습니다. 단회기 또는 임의 회기수 환불로 처리됩니다.", 
+                    refundSessions, lastAddedSessions);
+        }
+        
+        // 환불 금액 계산 (유연한 방식)
+        long refundAmount = 0;
+        String calculationMethod = "";
+        
+        if (lastAddedSessions > 0 && lastAddedPrice > 0 && refundSessions <= lastAddedSessions) {
+            // 최근 추가된 패키지 범위 내에서 환불하는 경우
+            refundAmount = (lastAddedPrice * refundSessions) / lastAddedSessions;
+            calculationMethod = "최근 추가 패키지 기준";
+            log.info("💰 최근 추가 패키지 기준 환불: 추가가격={}, 추가회기={}, 환불회기={}, 환불금액={}", 
+                    lastAddedPrice, lastAddedSessions, refundSessions, refundAmount);
+        } else if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
+            // 전체 패키지 기준으로 비례 계산 (단회기, 임의 회기수, 패키지 초과 환불)
+            refundAmount = (mapping.getPackagePrice() * refundSessions) / mapping.getTotalSessions();
+            calculationMethod = "전체 패키지 비례 계산";
+            log.info("💰 전체 패키지 비례 계산: 전체가격={}, 전체회기={}, 환불회기={}, 환불금액={}", 
+                    mapping.getPackagePrice(), mapping.getTotalSessions(), refundSessions, refundAmount);
+        } else {
+            log.warn("❌ 환불 금액 계산 불가: 패키지 가격 정보 없음");
+            throw new RuntimeException("환불 금액을 계산할 수 없습니다. 패키지 가격 정보가 없습니다.");
+        }
+        
+        log.info("💰 부분 환불 금액 계산 완료: 환불회기={}, 계산방식={}, 환불금액={}원", 
+                refundSessions, calculationMethod, refundAmount);
+        
+        // ERP 시스템에 환불 데이터 전송
+        try {
+            sendRefundToErp(mapping, refundSessions, refundAmount, reason);
+            log.info("💚 부분 환불 ERP 전송 성공: MappingID={}, RefundSessions={}, RefundAmount={}", 
+                id, refundSessions, refundAmount);
+        } catch (Exception e) {
+            log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
+            // ERP 전송 실패해도 내부 처리는 계속 진행 (나중에 재시도 가능)
+        }
+        
+        // 부분 환불 ERP 거래 생성 (수익 감소 반영)
+        try {
+            createPartialConsultationRefundTransaction(mapping, refundSessions, refundAmount, reason);
+            log.info("💚 부분 환불 거래 자동 생성 완료: MappingID={}, RefundSessions={}, RefundAmount={}", 
+                id, refundSessions, refundAmount);
+        } catch (Exception e) {
+            log.error("❌ 부분 환불 거래 자동 생성 실패: {}", e.getMessage(), e);
+            // 거래 생성 실패해도 부분 환불 처리는 완료
+        }
+        
+        // 회기수 조정 (부분 환불이므로 매핑은 유지)
+        mapping.setRemainingSessions(mapping.getRemainingSessions() - refundSessions);
+        mapping.setTotalSessions(mapping.getTotalSessions() - refundSessions);
+        
+        // 환불 처리 노트 추가
+        String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
+        String refundNote = String.format("[부분 환불] %s - 사유: %s, 환불 회기: %d회, 환불 금액: %,d원, 남은 회기: %d회", 
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), 
+                reason != null ? reason : "관리자 요청",
+                refundSessions,
+                refundAmount,
+                mapping.getRemainingSessions());
+        
+        String updatedNotes = currentNotes.isEmpty() ? refundNote : currentNotes + "\n" + refundNote;
+        mapping.setNotes(updatedNotes);
+        
+        // 매핑 상태는 유지 (전체 환불이 아니므로)
+        // 단, 남은 회기가 0이 되면 자동으로 회기 소진 처리
+        if (mapping.getRemainingSessions() <= 0) {
+            mapping.setStatus(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED);
+            mapping.setEndDate(LocalDateTime.now());
+            log.info("🎯 부분 환불 후 회기 소진: 남은 회기가 0이 되어 상태를 SESSIONS_EXHAUSTED로 변경");
+        }
+        
+        mappingRepository.save(mapping);
+        
+        // 내담자에게 부분 환불 완료 알림 발송
+        try {
+            User client = mapping.getClient();
+            if (client != null) {
+                log.info("📤 부분 환불 완료 알림 발송 시작: 내담자={}", client.getName());
+                
+                // 기존 알림 서비스 활용 (부분 환불 메시지로 수정)
+                boolean notificationSent = notificationService.sendRefundCompleted(client, refundSessions, refundAmount);
+                
+                if (notificationSent) {
+                    log.info("✅ 부분 환불 완료 알림 발송 성공: 내담자={}", client.getName());
+                } else {
+                    log.warn("⚠️ 부분 환불 완료 알림 발송 실패: 내담자={}", client.getName());
+                }
+            }
+        } catch (Exception e) {
+            log.error("❌ 부분 환불 완료 알림 발송 중 오류: MappingID={}", id, e);
+            // 알림 발송 실패해도 환불 처리는 완료된 상태로 유지
+        }
+        
+        log.info("✅ 부분 환불 완료: ID={}, 환불회기={}, 환불금액={}, 남은회기={}, 총회기={}, 상담사={}, 내담자={}", 
+                id, refundSessions, refundAmount, mapping.getRemainingSessions(), mapping.getTotalSessions(),
+                mapping.getConsultant().getName(), mapping.getClient().getName());
     }
 
     @Override
@@ -3509,5 +3839,94 @@ public class AdminServiceImpl implements AdminService {
         
         // 기본값
         return "연차";
+    }
+    
+    /**
+     * 매핑의 notes에서 가장 최근 추가된 패키지 정보 추출
+     */
+    private Map<String, Object> getLastAddedPackageInfo(ConsultantClientMapping mapping) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("sessions", 0);
+        result.put("price", 0L);
+        result.put("packageName", "");
+        
+        String notes = mapping.getNotes();
+        if (notes == null || notes.trim().isEmpty()) {
+            log.info("📋 매핑 notes가 없어서 최근 추가 패키지 정보를 찾을 수 없습니다.");
+            return result;
+        }
+        
+        try {
+            // notes에서 추가 매핑이나 회기 추가 관련 정보 추출
+            String[] noteLines = notes.split("\n");
+            
+            // 가장 최근 추가 정보를 찾기 위해 역순으로 검색
+            for (int i = noteLines.length - 1; i >= 0; i--) {
+                String line = noteLines[i].trim();
+                
+                // "[추가 매핑]" 패턴 검색
+                if (line.contains("[추가 매핑]")) {
+                    // 추가 매핑 시 기본 패키지 정보 사용
+                    result.put("sessions", 10); // 기본 패키지 회기수
+                    result.put("price", mapping.getPackagePrice() != null ? mapping.getPackagePrice() : 0L);
+                    result.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName() : "추가 패키지");
+                    log.info("📦 추가 매핑 정보 발견: {}", line);
+                    break;
+                }
+                
+                // "회기 추가" 패턴 검색
+                if (line.contains("회기 추가") || line.contains("EXTENSION")) {
+                    // 회기 추가 로그에서 정보 추출 시도
+                    try {
+                        // "회기 추가: 10회" 같은 패턴에서 숫자 추출
+                        if (line.matches(".*\\d+회.*")) {
+                            String sessionStr = line.replaceAll(".*?(\\d+)회.*", "$1");
+                            int sessions = Integer.parseInt(sessionStr);
+                            result.put("sessions", sessions);
+                            
+                            // 가격 정보도 추출 시도
+                            if (line.matches(".*\\d+원.*")) {
+                                String priceStr = line.replaceAll(".*?(\\d+)원.*", "$1");
+                                Long price = Long.parseLong(priceStr.replaceAll(",", ""));
+                                result.put("price", price);
+                            }
+                            
+                            log.info("📦 회기 추가 정보 발견: 회기수={}, 라인={}", sessions, line);
+                            break;
+                        }
+                    } catch (Exception e) {
+                        log.warn("회기 추가 정보 파싱 실패: {}", line, e);
+                    }
+                }
+            }
+            
+            // 추가 정보가 없으면 표준 패키지 단위로 추정
+            if ((Integer) result.get("sessions") == 0) {
+                // 총 회기수가 10의 배수라면 가장 최근 10회 단위로 추정
+                int totalSessions = mapping.getTotalSessions();
+                if (totalSessions >= 10) {
+                    int estimatedLastPackage = totalSessions % 10 == 0 ? 10 : totalSessions % 10;
+                    if (estimatedLastPackage == 0) estimatedLastPackage = 10; // 10의 배수면 10회 패키지
+                    
+                    result.put("sessions", estimatedLastPackage);
+                    
+                    // 비례 계산으로 가격 추정
+                    if (mapping.getPackagePrice() != null && totalSessions > 0) {
+                        Long estimatedPrice = (mapping.getPackagePrice() * estimatedLastPackage) / totalSessions;
+                        result.put("price", estimatedPrice);
+                    }
+                    
+                    result.put("packageName", estimatedLastPackage + "회 패키지 (추정)");
+                    
+                    log.info("📦 표준 패키지 단위로 추정: 총회기수={}, 추정최근패키지={}회", 
+                            totalSessions, estimatedLastPackage);
+                }
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 최근 추가 패키지 정보 추출 실패", e);
+        }
+        
+        return result;
     }
 }

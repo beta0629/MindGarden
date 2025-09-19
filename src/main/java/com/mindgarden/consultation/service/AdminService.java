@@ -120,6 +120,11 @@ public interface AdminService {
     void terminateMapping(Long id, String reason);
     
     /**
+     * 부분 환불 처리 (지정된 회기수만 환불)
+     */
+    void partialRefundMapping(Long id, int refundSessions, String reason);
+    
+    /**
      * 환불 통계 조회
      */
     Map<String, Object> getRefundStatistics(String period);

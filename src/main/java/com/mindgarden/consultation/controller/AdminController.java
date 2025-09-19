@@ -328,6 +328,11 @@ public class AdminController {
                         data.put("paymentReference", mapping.getPaymentReference());
                         data.put("paymentDate", mapping.getPaymentDate());
                         data.put("mappingId", mapping.getId());
+                        data.put("startDate", mapping.getStartDate());
+                        data.put("endDate", mapping.getEndDate());
+                        data.put("status", mapping.getStatus());
+                        data.put("createdAt", mapping.getCreatedAt());
+                        data.put("assignedAt", mapping.getAssignedAt());
                     } catch (Exception e) {
                         log.warn("매핑 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());
                     }
@@ -483,6 +488,8 @@ public class AdminController {
                         data.put("approvedBy", mapping.getApprovedBy());
                         data.put("assignedAt", mapping.getAssignedAt());
                         data.put("createdAt", mapping.getCreatedAt());
+                        data.put("startDate", mapping.getStartDate());
+                        data.put("endDate", mapping.getEndDate());
                     } catch (Exception e) {
                         log.warn("매핑 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());
                         data.put("id", mapping.getId());
@@ -1336,7 +1343,7 @@ public class AdminController {
     }
 
     /**
-     * 매핑 강제 종료 (환불 처리)
+     * 매핑 강제 종료 (전체 환불 처리)
      */
     @PostMapping("/mappings/{id}/terminate")
     public ResponseEntity<?> terminateMapping(@PathVariable Long id, @RequestBody Map<String, Object> requestBody) {
@@ -1353,6 +1360,47 @@ public class AdminController {
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", "매핑 강제 종료에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 매핑 부분 환불 처리 (지정된 회기수만 환불)
+     */
+    @PostMapping("/mappings/{id}/partial-refund")
+    public ResponseEntity<?> partialRefundMapping(@PathVariable Long id, @RequestBody Map<String, Object> requestBody) {
+        try {
+            log.info("🔧 매핑 부분 환불: ID={}", id);
+            String reason = (String) requestBody.get("reason");
+            Object refundSessionsObj = requestBody.get("refundSessions");
+            
+            if (refundSessionsObj == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "환불할 회기수를 지정해주세요."
+                ));
+            }
+            
+            int refundSessions;
+            try {
+                refundSessions = Integer.parseInt(refundSessionsObj.toString());
+            } catch (NumberFormatException e) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "환불 회기수는 숫자여야 합니다."
+                ));
+            }
+            
+            adminService.partialRefundMapping(id, refundSessions, reason);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", String.format("%d회기 부분 환불이 성공적으로 처리되었습니다", refundSessions)
+            ));
+        } catch (Exception e) {
+            log.error("❌ 매핑 부분 환불 실패", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "부분 환불 처리에 실패했습니다: " + e.getMessage()
             ));
         }
     }

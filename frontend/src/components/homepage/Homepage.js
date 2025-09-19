@@ -276,19 +276,7 @@ const TabletHomepage = () => {
         
         <main className="tablet-main">
           <div className="tablet-container">
-            <div style={{
-              textAlign: 'center',
-              padding: '80px 20px 60px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              borderRadius: '0 0 40px 40px',
-              marginBottom: '60px',
-              position: 'relative',
-              overflow: 'hidden',
-              opacity: isLoaded ? 1 : 0,
-              transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
-              transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}>
+            <div className={`hero-section-mobile ${isLoaded ? 'loaded' : ''}`}>
               {/* 배경 장식 */}
               <div style={{
                 position: 'absolute',
@@ -331,275 +319,67 @@ const TabletHomepage = () => {
                   </span>
                 </div>
                 
-                <h1 style={{
-                  fontSize: '48px',
-                  fontWeight: '700',
-                  marginBottom: '20px',
-                  lineHeight: '1.2',
-                  background: 'linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                }}>
+                <h1 className="hero-title-mobile">
                   마음의 평화를<br />찾아가는 여정
                 </h1>
                 
-                <p style={{
-                  fontSize: '20px',
-                  lineHeight: '1.6',
-                  marginBottom: '40px',
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  maxWidth: '600px',
-                  margin: '0 auto 40px',
-                  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                }}>
+                <p className="hero-subtitle-mobile">
                   전문 상담사와 함께 안전하고 편안한 환경에서<br />
                   당신만의 속도로 마음을 돌보세요
                 </p>
+                
+                {!user && (
+                  <div className="hero-buttons-mobile">
+                    <button className="hero-btn hero-btn-primary" onClick={handleLogin}>
+                      <i className="bi bi-box-arrow-in-right"></i>
+                      로그인
+                    </button>
+                    <button className="hero-btn hero-btn-secondary" onClick={handleRegister}>
+                      <i className="bi bi-person-plus"></i>
+                      회원가입
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
 
-            <div style={{
-              padding: '80px 20px',
-              background: '#ffffff',
-              opacity: isLoaded ? 1 : 0,
-              transform: isLoaded ? 'translateY(0)' : 'translateY(30px)',
-              transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-              transitionDelay: '0.4s'
-            }}>
+            <div className={`services-section-mobile ${isLoaded ? 'loaded' : ''}`}>
               <div style={{
                 textAlign: 'center',
                 marginBottom: '60px'
               }}>
-                <h2 style={{
-                  fontSize: '36px',
-                  fontWeight: '700',
-                  color: '#2d3748',
-                  marginBottom: '16px',
-                  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                }}>
+                <h2 className="services-title-mobile">
                   전문적이고 안전한 상담 서비스
                 </h2>
-                <p style={{
-                  fontSize: '18px',
-                  color: '#718096',
-                  lineHeight: '1.6',
-                  fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                }}>
+                <p className="services-subtitle-mobile">
                   당신의 마음 건강을 위한 체계적인 관리 시스템
                 </p>
               </div>
               
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '32px',
-                maxWidth: '1200px',
-                margin: '0 auto'
-              }}>
-                <div style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  padding: '40px 32px',
-                  borderRadius: '20px',
-                  color: 'white',
-                  textAlign: 'center',
-                  boxShadow: '0 20px 40px rgba(102, 126, 234, 0.3)',
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 30px 60px rgba(102, 126, 234, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(102, 126, 234, 0.3)';
-                }}
-                >
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '28px',
-                    margin: '0 auto 24px',
-                    backdropFilter: 'blur(10px)'
-                  }}>
-                    🧠
-                  </div>
-                  <h4 style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    marginBottom: '12px',
-                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                  }}>
-                    전문 상담
-                  </h4>
-                  <p style={{
-                    fontSize: '16px',
-                    lineHeight: '1.5',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                  }}>
-                    경험 많은 상담사와의 1:1 상담
-                  </p>
+              <div className="services-grid-mobile">
+                <div className="service-card service-card-brain">
+                  <div className="service-icon">🧠</div>
+                  <h4 className="service-title">전문 상담</h4>
+                  <p className="service-description">경험 많은 상담사와의 1:1 상담</p>
                 </div>
 
-                <div style={{
-                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                  padding: '40px 32px',
-                  borderRadius: '20px',
-                  color: 'white',
-                  textAlign: 'center',
-                  boxShadow: '0 20px 40px rgba(240, 147, 251, 0.3)',
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 30px 60px rgba(240, 147, 251, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(240, 147, 251, 0.3)';
-                }}
-                >
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '28px',
-                    margin: '0 auto 24px',
-                    backdropFilter: 'blur(10px)'
-                  }}>
-                    📱
-                  </div>
-                  <h4 style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    marginBottom: '12px',
-                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                  }}>
-                    편리한 접근
-                  </h4>
-                  <p style={{
-                    fontSize: '16px',
-                    lineHeight: '1.5',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                  }}>
-                    언제 어디서나 상담 예약 및 진행
-                  </p>
+                <div className="service-card service-card-mobile">
+                  <div className="service-icon">📱</div>
+                  <h4 className="service-title">편리한 접근</h4>
+                  <p className="service-description">언제 어디서나 상담 예약 및 진행</p>
                 </div>
 
-                <div style={{
-                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                  padding: '40px 32px',
-                  borderRadius: '20px',
-                  color: 'white',
-                  textAlign: 'center',
-                  boxShadow: '0 20px 40px rgba(79, 172, 254, 0.3)',
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 30px 60px rgba(79, 172, 254, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(79, 172, 254, 0.3)';
-                }}
-                >
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '28px',
-                    margin: '0 auto 24px',
-                    backdropFilter: 'blur(10px)'
-                  }}>
-                    🔒
-                  </div>
-                  <h4 style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    marginBottom: '12px',
-                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                  }}>
-                    안전한 보안
-                  </h4>
-                  <p style={{
-                    fontSize: '16px',
-                    lineHeight: '1.5',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                  }}>
-                    개인정보 보호 및 암호화
-                  </p>
+                <div className="service-card service-card-security">
+                  <div className="service-icon">🔒</div>
+                  <h4 className="service-title">안전한 보안</h4>
+                  <p className="service-description">개인정보 보호 및 암호화</p>
                 </div>
 
-                <div style={{
-                  background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                  padding: '40px 32px',
-                  borderRadius: '20px',
-                  color: 'white',
-                  textAlign: 'center',
-                  boxShadow: '0 20px 40px rgba(250, 112, 154, 0.3)',
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 30px 60px rgba(250, 112, 154, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 20px 40px rgba(250, 112, 154, 0.3)';
-                }}
-                >
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '28px',
-                    margin: '0 auto 24px',
-                    backdropFilter: 'blur(10px)'
-                  }}>
-                    💬
-                  </div>
-                  <h4 style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    marginBottom: '12px',
-                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                  }}>
-                    실시간 채팅
-                  </h4>
-                  <p style={{
-                    fontSize: '16px',
-                    lineHeight: '1.5',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-                  }}>
-                    상담사와의 즉시 소통
-                  </p>
+                <div className="service-card service-card-chat">
+                  <div className="service-icon">💬</div>
+                  <h4 className="service-title">실시간 채팅</h4>
+                  <p className="service-description">상담사와의 즉시 소통</p>
                 </div>
               </div>
             </div>

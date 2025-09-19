@@ -221,7 +221,7 @@
 /* 모바일 홈페이지 스타일 */
 .hero-section-mobile {
   text-align: center;
-  padding: 60px 20px 40px;
+  padding: 60px 16px 40px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border-radius: 0 0 30px 30px;
@@ -231,6 +231,8 @@
   opacity: 0;
   transform: translateY(30px);
   transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hero-section-mobile.loaded {
@@ -261,12 +263,14 @@
 }
 
 .services-section-mobile {
-  padding: 60px 20px;
+  padding: 60px 16px;
   background: #ffffff;
   opacity: 0;
   transform: translateY(30px);
   transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   transition-delay: 0.4s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .services-section-mobile.loaded {
@@ -296,8 +300,10 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
-  max-width: 400px;
+  max-width: 100%;
   margin: 0 auto;
+  padding: 0 8px;
+  box-sizing: border-box;
 }
 
 /* 태블릿 반응형 */
@@ -407,36 +413,66 @@
   }
   
   .hero-section-mobile {
-    padding: 40px 16px 30px;
+    padding: 40px 12px 30px;
     margin-bottom: 30px;
+    margin-left: 0;
+    margin-right: 0;
   }
   
   .hero-title-mobile {
     font-size: 26px;
     margin-bottom: 12px;
+    word-break: keep-all;
   }
   
   .hero-subtitle-mobile {
     font-size: 14px;
     margin-bottom: 24px;
+    padding: 0 8px;
+    word-break: keep-all;
   }
   
   .services-section-mobile {
-    padding: 40px 16px;
+    padding: 40px 12px;
+    margin-left: 0;
+    margin-right: 0;
   }
   
   .services-title-mobile {
     font-size: 24px;
+    word-break: keep-all;
   }
   
   .services-subtitle-mobile {
     font-size: 14px;
     margin-bottom: 30px;
+    padding: 0 8px;
+    word-break: keep-all;
   }
   
   .services-grid-mobile {
     gap: 16px;
     max-width: 100%;
+    padding: 0 4px;
+  }
+  
+  /* 전체 컨테이너 오버플로우 방지 */
+  .tablet-homepage {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  .tablet-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  
+  .tablet-main {
+    width: 100%;
+    overflow-x: hidden;
   }
 }
 
@@ -502,8 +538,11 @@
 /* 모바일 전용 스타일 */
 @media (max-width: 480px) {
   .service-card {
-    padding: 24px 20px;
+    padding: 24px 16px;
     border-radius: 16px;
+    margin: 0 4px;
+    width: calc(100% - 8px);
+    box-sizing: border-box;
   }
   
   .service-icon {
@@ -516,10 +555,13 @@
   .service-title {
     font-size: 16px;
     margin-bottom: 8px;
+    word-break: keep-all;
   }
   
   .service-description {
     font-size: 13px;
+    word-break: keep-all;
+    padding: 0 4px;
   }
 }
 
@@ -574,8 +616,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 280px;
+  max-width: 100%;
   margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .hero-btn {

@@ -43,9 +43,11 @@ jobs:
         npm ci
         
     - name: 🏗️ 프론트엔드 빌드
+      env:
+        CI: false
       run: |
         cd frontend
-        CI=false npm run build
+        npm run build
         
     - name: 🚀 서버 배포
       uses: appleboy/ssh-action@v1.0.3

@@ -3,6 +3,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
+import FinancialCalendarView from './FinancialCalendarView';
 import './ErpCommon.css';
 
 /**
@@ -36,6 +37,14 @@ const FinancialManagement = () => {
   // 선택된 거래 상세 정보 모달
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  
+  // 대시보드 통계 상태
+  const [dashboardStats, setDashboardStats] = useState({
+    totalIncome: 0,
+    totalExpense: 0,
+    netProfit: 0,
+    transactionCount: 0
+  });
 
   // 데이터 로드
   useEffect(() => {
@@ -122,6 +131,9 @@ const FinancialManagement = () => {
           totalPages: response.totalPages || 0,
           totalElements: response.totalCount || 0
         }));
+        
+        // 대시보드 통계 계산 (이번 달 기준)
+        calculateDashboardStats(filteredTransactions);
       } else {
         setError(response.message || '재무 거래 목록을 불러올 수 없습니다.');
       }
@@ -129,6 +141,44 @@ const FinancialManagement = () => {
       console.error('재무 거래 로드 실패:', err);
       setError('재무 거래 목록을 불러오는 중 오류가 발생했습니다.');
     }
+  };
+
+  // 대시보드 통계 계산 함수
+  const calculateDashboardStats = (transactionData) => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
+    // 이번 달 거래만 필터링
+    const thisMonthTransactions = transactionData.filter(transaction => {
+      const transactionDate = new Date(transaction.transactionDate);
+      return transactionDate.getFullYear() === currentYear && 
+             transactionDate.getMonth() + 1 === currentMonth &&
+             transaction.status !== 'REJECTED' && 
+             transaction.status !== 'CANCELLED';
+    });
+    
+    const totalIncome = thisMonthTransactions
+      .filter(t => t.transactionType === 'INCOME')
+      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+    
+    const totalExpense = thisMonthTransactions
+      .filter(t => t.transactionType === 'EXPENSE')
+      .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+    
+    setDashboardStats({
+      totalIncome,
+      totalExpense,
+      netProfit: totalIncome - totalExpense,
+      transactionCount: thisMonthTransactions.length
+    });
+    
+    console.log('📊 대시보드 통계 업데이트:', {
+      이번달거래수: thisMonthTransactions.length,
+      총수입: totalIncome,
+      총지출: totalExpense,
+      순이익: totalIncome - totalExpense
+    });
   };
 
   const loadDashboard = async () => {
@@ -204,6 +254,13 @@ const FinancialManagement = () => {
             거래 내역
           </button>
           <button
+            className={`erp-tab ${activeTab === 'calendar' ? 'active' : ''}`}
+            onClick={() => setActiveTab('calendar')}
+          >
+            <i className="bi bi-calendar3"></i>
+            달력 뷰
+          </button>
+          <button
             className={`erp-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('dashboard')}
           >
@@ -245,6 +302,12 @@ const FinancialManagement = () => {
 
           {!loading && !error && (
             <>
+              {activeTab === 'calendar' && (
+                <div className="erp-section">
+                  <FinancialCalendarView />
+                </div>
+              )}
+
               {activeTab === 'transactions' && (
                 <div className="erp-section">
                   <div className="d-flex justify-content-between align-items-center mb-3">
@@ -577,7 +640,7 @@ const FinancialManagement = () => {
                           <i className="bi bi-arrow-up-circle text-success"></i>
                         </div>
                         <div className="erp-card-body">
-                          <div className="h4 text-success">₩0</div>
+                          <div className="h4 text-success">{formatCurrency(dashboardStats.totalIncome)}</div>
                           <small className="text-muted">이번 달</small>
                         </div>
                       </div>
@@ -589,7 +652,7 @@ const FinancialManagement = () => {
                           <i className="bi bi-arrow-down-circle text-danger"></i>
                         </div>
                         <div className="erp-card-body">
-                          <div className="h4 text-danger">₩0</div>
+                          <div className="h4 text-danger">{formatCurrency(dashboardStats.totalExpense)}</div>
                           <small className="text-muted">이번 달</small>
                         </div>
                       </div>
@@ -601,7 +664,9 @@ const FinancialManagement = () => {
                           <i className="bi bi-graph-up text-primary"></i>
                         </div>
                         <div className="erp-card-body">
-                          <div className="h4 text-primary">₩0</div>
+                          <div className={`h4 ${dashboardStats.netProfit >= 0 ? 'text-primary' : 'text-danger'}`}>
+{formatCurrency(Math.abs(dashboardStats.netProfit))}
+                          </div>
                           <small className="text-muted">이번 달</small>
                         </div>
                       </div>
@@ -613,10 +678,89 @@ const FinancialManagement = () => {
                           <i className="bi bi-list-ul text-info"></i>
                         </div>
                         <div className="erp-card-body">
-                          <div className="h4 text-info">{pagination.totalElements}</div>
-                          <small className="text-muted">전체</small>
+                          <div className="h4 text-info">{dashboardStats.transactionCount}건</div>
+                          <small className="text-muted">이번 달</small>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                  
+                  {/* 매핑 연동 현황 */}
+                  <div className="mt-4">
+                    <h3>📊 매핑 연동 현황</h3>
+                    <div className="row">
+                      <div className="col-md-6 mb-3">
+                        <div className="erp-card">
+                          <div className="erp-card-header">
+                            <h4>매핑 연동 수입</h4>
+                            <i className="bi bi-link-45deg text-success"></i>
+                          </div>
+                          <div className="erp-card-body">
+                            <div className="h5 text-success">
+{formatCurrency(
+                                transactions
+                                  .filter(t => t.transactionType === 'INCOME' && 
+                                          (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' || 
+                                           t.description?.includes('상담료 입금 확인')))
+                                  .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
+                              )}
+                            </div>
+                            <small className="text-muted">자동 생성된 상담료 수입</small>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="col-md-6 mb-3">
+                        <div className="erp-card">
+                          <div className="erp-card-header">
+                            <h4>매핑 연동 환불</h4>
+                            <i className="bi bi-arrow-left-circle text-warning"></i>
+                          </div>
+                          <div className="erp-card-body">
+                            <div className="h5 text-warning">
+{formatCurrency(
+                                transactions
+                                  .filter(t => t.transactionType === 'EXPENSE' && 
+                                          (t.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' || 
+                                           t.description?.includes('상담료 환불')))
+                                  .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
+                              )}
+                            </div>
+                            <small className="text-muted">자동 생성된 환불 지출</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 빠른 액션 */}
+                  <div className="mt-4">
+                    <h3>⚡ 빠른 액션</h3>
+                    <div className="d-flex gap-2 flex-wrap">
+                      <button 
+                        className="btn btn-primary"
+                        onClick={() => setActiveTab('transactions')}
+                      >
+                        📋 거래 내역 보기
+                      </button>
+                      <button 
+                        className="btn btn-success"
+                        onClick={() => setActiveTab('calendar')}
+                      >
+                        📅 달력 뷰 보기
+                      </button>
+                      <button 
+                        className="btn btn-info"
+                        onClick={() => window.location.href = '/branch_super_admin/mapping-management'}
+                      >
+                        🔗 매핑 시스템 확인
+                      </button>
+                      <button 
+                        className="btn btn-secondary"
+                        onClick={() => window.location.href = '/erp/finance-dashboard'}
+                      >
+                        🏢 통합 재무 대시보드
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -664,11 +808,6 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (amount) => {
-    if (!amount) return '0원';
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
   };
 
   const formatDate = (dateString) => {

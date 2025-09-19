@@ -91,11 +91,7 @@ export const BRANCH_SUPER_ADMIN_MENU_ITEMS = {
       label: '시스템 관리',
       icon: 'bi-tools'
     },
-    FINANCE: {
-      id: 'finance',
-      label: '자금 관리',
-      icon: 'bi-currency-dollar'
-    },
+    // FINANCE는 ERP로 통합되어 제거됨
     ERP: {
       id: 'erp',
       label: 'ERP 관리',
@@ -122,15 +118,7 @@ export const BRANCH_SUPER_ADMIN_MENU_ITEMS = {
       { id: 'admin-logs', label: '시스템 로그', path: '/admin/logs', icon: 'bi-file-text' },
       { id: 'admin-integration-test', label: '통합 테스트', path: '/test/integration', icon: 'bi-check-circle' }
     ],
-    finance: [
-      { id: 'finance-dashboard', label: '자금 대시보드', path: '/super-admin/finance', icon: 'bi-graph-up-arrow' },
-      { id: 'finance-revenue', label: '수익 관리', path: '/super-admin/revenue', icon: 'bi-cash-stack' },
-      { id: 'finance-expenses', label: '지출 관리', path: '/super-admin/expenses', icon: 'bi-receipt' },
-      { id: 'finance-payments', label: '결제 관리', path: '/super-admin/payments', icon: 'bi-credit-card' },
-      { id: 'finance-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' },
-      { id: 'finance-reports', label: '재무 보고서', path: '/super-admin/finance-reports', icon: 'bi-file-earmark-bar-graph' },
-      { id: 'finance-settings', label: '자금 설정', path: '/super-admin/finance-settings', icon: 'bi-gear' }
-    ],
+    // finance 메뉴는 ERP로 통합되어 제거됨
     erp: [
       { id: 'erp-dashboard', label: 'ERP 대시보드', path: '/erp/dashboard', icon: 'bi-speedometer2' },
       { id: 'erp-purchase-requests', label: '구매 요청', path: '/erp/purchase-requests', icon: 'bi-cart-plus' },
@@ -236,11 +224,7 @@ export const SUPER_HQ_ADMIN_MENU_ITEMS = {
       label: '지점 관리',
       icon: 'bi-shop'
     },
-    FINANCE: {
-      id: 'finance',
-      label: '자금 관리',
-      icon: 'bi-currency-dollar'
-    },
+    // FINANCE는 ERP로 통합되어 제거됨
     ERP: {
       id: 'erp',
       label: 'ERP 관리',
@@ -271,13 +255,7 @@ export const SUPER_HQ_ADMIN_MENU_ITEMS = {
       { id: 'super-hq-branch-managers', label: '지점장 관리', path: '/admin/branch-managers', icon: 'bi-person-badge' },
       { id: 'super-hq-branch-hierarchy', label: '지점 계층 관리', path: '/admin/branch-hierarchy', icon: 'bi-diagram-3' }
     ],
-    finance: [
-      { id: 'super-hq-finance-dashboard', label: '자금 대시보드', path: '/super_admin/finance', icon: 'bi-graph-up-arrow' },
-      { id: 'super-hq-revenue', label: '수익 관리', path: '/super_admin/revenue', icon: 'bi-cash-stack' },
-      { id: 'super-hq-expenses', label: '지출 관리', path: '/super_admin/expenses', icon: 'bi-receipt' },
-      { id: 'super-hq-payments', label: '결제 관리', path: '/super_admin/payments', icon: 'bi-credit-card' },
-      { id: 'super-hq-reports', label: '재무 보고서', path: '/super_admin/finance-reports', icon: 'bi-file-earmark-bar-graph' }
-    ],
+    // finance 메뉴는 ERP로 통합되어 제거됨
     erp: [
       { id: 'super-hq-erp-dashboard', label: 'ERP 대시보드', path: '/erp/dashboard', icon: 'bi-speedometer2' },
       { id: 'super-hq-purchase-requests', label: '구매 요청', path: '/erp/purchase-requests', icon: 'bi-cart-plus' },
@@ -302,11 +280,7 @@ export const BRANCH_BRANCH_SUPER_ADMIN_MENU_ITEMS = {
       label: '사용자 관리',
       icon: 'bi-people'
     },
-    FINANCE: {
-      id: 'finance',
-      label: '자금 관리',
-      icon: 'bi-currency-dollar'
-    },
+    // FINANCE는 ERP로 통합되어 제거됨
     ERP: {
       id: 'erp',
       label: 'ERP 관리',
@@ -324,11 +298,7 @@ export const BRANCH_BRANCH_SUPER_ADMIN_MENU_ITEMS = {
       { id: 'branch-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
       { id: 'branch-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' }
     ],
-    finance: [
-      { id: 'branch-finance-dashboard', label: '자금 대시보드', path: '/super_admin/finance', icon: 'bi-graph-up-arrow' },
-      { id: 'branch-payments', label: '결제 관리', path: '/super_admin/payments', icon: 'bi-credit-card' },
-      { id: 'branch-reports', label: '재무 보고서', path: '/super_admin/finance-reports', icon: 'bi-file-earmark-bar-graph' }
-    ],
+    // finance 메뉴는 ERP로 통합되어 제거됨
     erp: [
       { id: 'branch-erp-dashboard', label: 'ERP 대시보드', path: '/erp/dashboard', icon: 'bi-speedometer2' },
       { id: 'branch-purchase-requests', label: '구매 요청', path: '/erp/purchase-requests', icon: 'bi-cart-plus' },

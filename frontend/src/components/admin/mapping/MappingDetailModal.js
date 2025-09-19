@@ -58,7 +58,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
             'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6c757d' }
         };
         
-        const config = statusConfig[status] || { label: status || 'UNKNOWN', color: '#6c757d' };
+        const config = statusConfig[status] || { label: status || '알 수 없음', color: '#6c757d' };
         return (
             <span style={{
                 padding: '4px 8px',
@@ -80,7 +80,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
             'REJECTED': { label: '결제거부', color: '#dc3545' }
         };
         
-        const config = statusConfig[paymentStatus] || { label: paymentStatus || 'UNKNOWN', color: '#6c757d' };
+        const config = statusConfig[paymentStatus] || { label: paymentStatus || '알 수 없음', color: '#6c757d' };
         return (
             <span style={{
                 padding: '4px 8px',
@@ -357,7 +357,10 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                                 {transaction.type === 'INCOME' ? '수입' : '지출'}
                                                             </span>
                                                             <span className={`transaction-status ${transaction.status ? transaction.status.toLowerCase() : 'unknown'}`}>
-                                                                {transaction.status || 'UNKNOWN'}
+                                                                {transaction.status === 'PENDING' ? '대기중' : 
+                                                                 transaction.status === 'COMPLETED' ? '완료' :
+                                                                 transaction.status === 'REJECTED' ? '거부' :
+                                                                 transaction.status || '알 수 없음'}
                                                             </span>
                                                         </div>
                                                         <div className="transaction-details">

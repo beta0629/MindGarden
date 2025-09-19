@@ -26,7 +26,7 @@ export const MAPPING_STATUS_LABELS = {
     [MAPPING_STATUS.ACTIVE]: '활성',
     [MAPPING_STATUS.INACTIVE]: '비활성',
     [MAPPING_STATUS.SUSPENDED]: '일시정지',
-    [MAPPING_STATUS.TERMINATED]: '종료됨',
+    [MAPPING_STATUS.TERMINATED]: '종료',
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '회기 소진'
 };
 
@@ -146,7 +146,7 @@ export const MAPPING_STAT_LABELS = {
     ACTIVE: '활성 매핑',
     PAYMENT_CONFIRMED: '결제 확인',
     TOTAL: '전체 매핑',
-    TERMINATED: '종료됨',
+    TERMINATED: '종료',
     SESSIONS_EXHAUSTED: '회기 소진'
 };
 

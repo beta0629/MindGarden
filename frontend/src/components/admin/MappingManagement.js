@@ -115,22 +115,28 @@ const MappingManagement = () => {
                 console.log('매핑 상태 정보 로드 실패, 기본값 사용');
                 // 기본값 설정
                 setMappingStatusInfo({
-                    'PENDING': { label: '대기중', color: '#ffc107', icon: '⏳' },
-                    'CONFIRMED': { label: '확인됨', color: '#28a745', icon: '✅' },
-                    'ACTIVE': { label: '활성', color: '#007bff', icon: '🟢' },
+                    'PENDING_PAYMENT': { label: '입금대기', color: '#ffc107', icon: '⏳' },
+                    'PAYMENT_CONFIRMED': { label: '입금확인', color: '#17a2b8', icon: '💰' },
+                    'ACTIVE': { label: '활성', color: '#28a745', icon: '✅' },
+                    'TERMINATED': { label: '종료', color: '#dc3545', icon: '❌' },
+                    'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6f42c1', icon: '🔚' },
                     'INACTIVE': { label: '비활성', color: '#6c757d', icon: '⚪' },
-                    'CANCELLED': { label: '취소됨', color: '#dc3545', icon: '❌' }
+                    'SUSPENDED': { label: '일시정지', color: '#fd7e14', icon: '⏸️' },
+                    'CANCELLED': { label: '취소', color: '#dc3545', icon: '🚫' }
                 });
             }
         } catch (error) {
             console.error('매핑 상태 정보 로드 오류:', error);
             // 오류 시 기본값 설정
             setMappingStatusInfo({
-                'PENDING': { label: '대기중', color: '#ffc107', icon: '⏳' },
-                'CONFIRMED': { label: '확인됨', color: '#28a745', icon: '✅' },
-                'ACTIVE': { label: '활성', color: '#007bff', icon: '🟢' },
+                'PENDING_PAYMENT': { label: '입금대기', color: '#ffc107', icon: '⏳' },
+                'PAYMENT_CONFIRMED': { label: '입금확인', color: '#17a2b8', icon: '💰' },
+                'ACTIVE': { label: '활성', color: '#28a745', icon: '✅' },
+                'TERMINATED': { label: '종료', color: '#dc3545', icon: '❌' },
+                'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6f42c1', icon: '🔚' },
                 'INACTIVE': { label: '비활성', color: '#6c757d', icon: '⚪' },
-                'CANCELLED': { label: '취소됨', color: '#dc3545', icon: '❌' }
+                'SUSPENDED': { label: '일시정지', color: '#fd7e14', icon: '⏸️' },
+                'CANCELLED': { label: '취소', color: '#dc3545', icon: '🚫' }
             });
         }
     };

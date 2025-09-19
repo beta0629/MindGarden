@@ -790,6 +790,12 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
   const [mappingDetail, setMappingDetail] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // 통화 포맷팅 함수 (컴포넌트 내부)
+  const formatCurrency = (amount) => {
+    if (!amount) return '0원';
+    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+  };
+
   useEffect(() => {
     if (transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && transaction.relatedEntityId) {
       loadMappingDetail();

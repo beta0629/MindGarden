@@ -744,11 +744,16 @@ public class AdminServiceImpl implements AdminService {
         
         log.info("🔍 내담자 조회 - 총 {}명", clientUsers.size());
         
-        // 각 내담자 정보를 상세히 로깅
+        // 각 내담자 정보를 상세히 로깅 (복호화 전)
         for (User user : clientUsers) {
             log.info("👤 내담자 원본 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 활성상태: {}, 삭제상태: {}, 역할: {}", 
                 user.getId(), user.getName(), user.getEmail(), user.getPhone(), user.getIsActive(), user.getIsDeleted(), user.getRole());
         }
+        
+        // 각 내담자의 개인정보 복호화
+        clientUsers = clientUsers.stream()
+            .map(user -> decryptUserPersonalData(user))
+            .collect(Collectors.toList());
         
         // 삭제된 사용자도 포함해서 전체 조회해보기
         List<User> allUsers = userRepository.findAll();
@@ -770,10 +775,10 @@ public class AdminServiceImpl implements AdminService {
                 client.setName(user.getName());
                 client.setEmail(user.getEmail());
                 
-                // 전화번호 처리 - null이거나 빈 문자열인 경우 기본값 설정
+                // 전화번호 처리 - null이거나 빈 문자열인 경우 기본값 설정 (SNS 가입자 고려)
                 String phone = user.getPhone();
                 if (phone == null || phone.trim().isEmpty()) {
-                    phone = "전화번호 없음";
+                    phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
                 }
                 client.setPhone(phone);
                 
@@ -784,7 +789,7 @@ public class AdminServiceImpl implements AdminService {
                 client.setCreatedAt(user.getCreatedAt());
                 client.setUpdatedAt(user.getUpdatedAt());
                 
-                // 디버깅을 위한 로깅
+                // 디버깅을 위한 로깅 (복호화 후)
                 log.info("👤 내담자 최종 데이터 - ID: {}, 이름: '{}', 이메일: '{}', 전화번호: '{}', 삭제상태: {}", 
                     user.getId(), user.getName(), user.getEmail(), phone, user.getIsDeleted());
                 
@@ -809,25 +814,38 @@ public class AdminServiceImpl implements AdminService {
             List<Map<String, Object>> result = new ArrayList<>();
             
             for (User user : clientUsers) {
+                // 개인정보 복호화
+                User decryptedUser = decryptUserPersonalData(user);
+                
                 Map<String, Object> clientData = new HashMap<>();
                 
-                // 기본 내담자 정보
-                clientData.put("id", user.getId());
-                clientData.put("name", user.getName());
-                clientData.put("email", user.getEmail() != null ? user.getEmail() : "");
-                clientData.put("phone", user.getPhone() != null ? user.getPhone() : "");
-                clientData.put("birthDate", user.getBirthDate());
-                clientData.put("gender", user.getGender());
-                clientData.put("grade", user.getGrade() != null ? user.getGrade() : "");
-                clientData.put("isActive", user.getIsActive());
-                clientData.put("isDeleted", user.getIsDeleted());
-                clientData.put("createdAt", user.getCreatedAt());
-                clientData.put("updatedAt", user.getUpdatedAt());
-                clientData.put("branchCode", user.getBranchCode()); // 브랜치 코드 추가
+                // 기본 내담자 정보 (복호화된 데이터 사용)
+                clientData.put("id", decryptedUser.getId());
+                clientData.put("name", decryptedUser.getName());
+                clientData.put("email", decryptedUser.getEmail() != null ? decryptedUser.getEmail() : "");
+                
+                // 전화번호 복호화 처리 (SNS 가입자 고려)
+                String phone = decryptedUser.getPhone();
+                if (phone == null || phone.trim().isEmpty()) {
+                    phone = "-"; // SNS 가입자는 전화번호가 없을 수 있음
+                }
+                clientData.put("phone", phone);
+                
+                clientData.put("birthDate", decryptedUser.getBirthDate());
+                clientData.put("gender", decryptedUser.getGender());
+                clientData.put("grade", decryptedUser.getGrade() != null ? decryptedUser.getGrade() : "");
+                clientData.put("isActive", decryptedUser.getIsActive());
+                clientData.put("isDeleted", decryptedUser.getIsDeleted());
+                clientData.put("createdAt", decryptedUser.getCreatedAt());
+                clientData.put("updatedAt", decryptedUser.getUpdatedAt());
+                clientData.put("branchCode", decryptedUser.getBranchCode()); // 브랜치 코드 추가
+                
+                log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'", 
+                    decryptedUser.getId(), decryptedUser.getName(), phone);
                 
                 // 해당 내담자의 매핑 정보들
                 List<Map<String, Object>> mappings = allMappings.stream()
-                    .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId().equals(user.getId()))
+                    .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId().equals(decryptedUser.getId()))
                     .map(mapping -> {
                         Map<String, Object> mappingData = new HashMap<>();
                         mappingData.put("mappingId", mapping.getId());

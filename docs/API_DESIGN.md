@@ -1761,7 +1761,178 @@ GET /api/schedules/consultation-type-korean
 }
 ```
 
-## 13. 현재 구현된 API 상태 (업데이트: 2025년 9월) ✅
+## 13. 매핑 관리 API (신규 추가: 2025년 1월) ✅
+
+### 13.1 매핑 관리 API
+
+#### **부분 환불 처리** ✅
+```
+POST /api/admin/mappings/{id}/partial-refund
+```
+
+**Path Parameters:**
+- `id`: 매핑 ID
+
+**Request Body:**
+```json
+{
+  "refundSessions": 3,
+  "reason": "내담자 요청에 의한 부분 환불"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "부분 환불이 성공적으로 처리되었습니다.",
+  "data": {
+    "mappingId": 123,
+    "refundedSessions": 3,
+    "refundAmount": 150000,
+    "remainingSessions": 7,
+    "newStatus": "ACTIVE",
+    "calculationMethod": "최근 패키지 기반"
+  }
+}
+```
+
+**기능 설명:**
+- 최근 추가된 회기만 환불 처리
+- 15일 청약 철회 기간 검증
+- 패키지/단회기/임의 회기 모든 형태 지원
+- ERP 자동 연동으로 환불 거래 생성
+- 매핑 상태 자동 업데이트
+
+#### **매핑 상세 정보 조회 (날짜 정보 포함)** ✅
+```
+GET /api/admin/mappings/{id}
+```
+
+**Path Parameters:**
+- `id`: 매핑 ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 123,
+    "consultantId": 25,
+    "consultantName": "김상담",
+    "clientId": 23,
+    "clientName": "이재학",
+    "totalSessions": 10,
+    "remainingSessions": 7,
+    "usedSessions": 3,
+    "status": "ACTIVE",
+    "paymentStatus": "CONFIRMED",
+    "startDate": "2025-01-01",
+    "endDate": "2025-06-30",
+    "createdAt": "2025-01-01T10:00:00",
+    "adminApprovalDate": "2025-01-01T11:00:00",
+    "paymentDate": "2025-01-01T12:00:00",
+    "packageName": "프리미엄 패키지",
+    "packagePrice": 500000,
+    "notes": "추가 5회기 결제 완료"
+  }
+}
+```
+
+#### **상담사별 매핑 조회 (날짜 정보 포함)** ✅
+```
+GET /api/admin/mappings/consultant/{consultantId}/clients
+```
+
+**Path Parameters:**
+- `consultantId`: 상담사 ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 123,
+      "clientId": 23,
+      "clientName": "이재학",
+      "totalSessions": 10,
+      "remainingSessions": 7,
+      "status": "ACTIVE",
+      "startDate": "2025-01-01",
+      "endDate": "2025-06-30",
+      "createdAt": "2025-01-01T10:00:00"
+    }
+  ]
+}
+```
+
+### 13.2 ERP 연동 API
+
+#### **추가 회기 수입 거래 생성** ✅
+```
+POST /api/erp/financial/additional-session-income
+```
+
+**Request Body:**
+```json
+{
+  "mappingId": 123,
+  "additionalSessions": 5,
+  "amount": 250000,
+  "paymentMethod": "CARD",
+  "paymentReference": "CARD_20250117_143000"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "추가 회기 수입 거래가 생성되었습니다.",
+  "data": {
+    "transactionId": 456,
+    "type": "INCOME",
+    "category": "CONSULTATION",
+    "subcategory": "ADDITIONAL_CONSULTATION",
+    "amount": 250000,
+    "description": "추가 회기 5회기 수입"
+  }
+}
+```
+
+#### **부분 환불 거래 생성** ✅
+```
+POST /api/erp/financial/partial-refund
+```
+
+**Request Body:**
+```json
+{
+  "mappingId": 123,
+  "refundSessions": 3,
+  "refundAmount": 150000,
+  "reason": "내담자 요청에 의한 부분 환불"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "부분 환불 거래가 생성되었습니다.",
+  "data": {
+    "transactionId": 457,
+    "type": "EXPENSE",
+    "category": "REFUND",
+    "subcategory": "PARTIAL_REFUND",
+    "amount": 150000,
+    "description": "매핑 ID 123 부분 환불 (3회기)"
+  }
+}
+```
+
+## 14. 현재 구현된 API 상태 (업데이트: 2025년 1월) ✅
 
 ### 13.1 구현 완료된 API 엔드포인트
 

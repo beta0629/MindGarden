@@ -1,0 +1,88 @@
+/* HQDashboard.css */
+
+.branch-card {
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+}
+
+.branch-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.branch-card.inactive {
+    opacity: 0.7;
+    background-color: #f8f9fa;
+}
+
+.branch-card.inactive:hover {
+    opacity: 0.8;
+}
+
+/* 통계 카드 스타일 */
+.card.border-primary {
+    border-left: 4px solid #007bff !important;
+}
+
+.card.border-success {
+    border-left: 4px solid #28a745 !important;
+}
+
+.card.border-info {
+    border-left: 4px solid #17a2b8 !important;
+}
+
+.card.border-warning {
+    border-left: 4px solid #ffc107 !important;
+}
+
+/* 빠른 액션 버튼 스타일 */
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+    border-radius: 8px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .branch-card {
+        margin-bottom: 1rem;
+    }
+    
+    .btn-lg {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .card .row .col-xs-3 {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* 지점 카드 내 통계 스타일 */
+.branch-card .row .col-xs-3 div {
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.branch-card:hover .row .col-xs-3 div {
+    background-color: rgba(0, 123, 255, 0.1);
+}

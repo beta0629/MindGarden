@@ -8,7 +8,7 @@ import {
 import { 
     FaBuilding, FaUsers, FaUserTie, FaUser, FaCrown, 
     FaSearch, FaFilter, FaExchangeAlt, FaPlus, FaEdit,
-    FaChartBar, FaMapMarkerAlt
+    FaChartBar, FaMapMarkerAlt, FaEye
 } from 'react-icons/fa';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';

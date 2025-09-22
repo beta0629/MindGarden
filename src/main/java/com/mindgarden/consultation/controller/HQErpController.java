@@ -5,9 +5,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.CommonCode;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/hq/erp")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('HQ_MASTER') or hasRole('SUPER_HQ_ADMIN') or hasRole('HQ_ADMIN') or hasRole('ADMIN')")
 public class HQErpController {
     
     private final FinancialTransactionService financialTransactionService;
@@ -44,9 +46,35 @@ public class HQErpController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String transactionType) {
+            @RequestParam(required = false) String transactionType,
+            HttpSession session) {
         
         try {
+            log.info("🏦 지점별 재무 현황 조회 요청: branchCode={}", branchCode);
+            
+            // 세션에서 사용자 정보 확인
+            User currentUser = (User) session.getAttribute("user");
+            if (currentUser == null) {
+                log.warn("❌ 인증되지 않은 사용자");
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "인증이 필요합니다."
+                ));
+            }
+            
+            // 권한 확인
+            UserRole role = currentUser.getRole();
+            if (role != UserRole.ADMIN && role != UserRole.HQ_MASTER && 
+                role != UserRole.SUPER_HQ_ADMIN && role != UserRole.HQ_ADMIN && 
+                role != UserRole.HQ_SUPER_ADMIN) {
+                log.warn("❌ 권한 없음: 현재 역할={}", role);
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "접근 권한이 없습니다."
+                ));
+            }
+            
+            log.info("✅ 권한 확인 완료: 현재 역할={}", role);
             log.info("🏢 지점별 재무 현황 조회: 지점={}, 시작일={}, 종료일={}, 카테고리={}, 유형={}", 
                     branchCode, startDate, endDate, category, transactionType);
             

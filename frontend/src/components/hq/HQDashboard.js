@@ -5,7 +5,8 @@ import {
     FaBuilding, FaUsers, FaChartBar, FaMapMarkerAlt, 
     FaCog, FaExchangeAlt, FaPlus, FaEdit, FaEye,
     FaUserTie, FaUser, FaCrown, FaTachometerAlt,
-    FaCalendarCheck, FaFileAlt, FaBox
+    FaCalendarCheck, FaFileAlt, FaBox, FaDollarSign,
+    FaCalculator, FaChartLine
 } from 'react-icons/fa';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
@@ -295,6 +296,50 @@ const HQDashboard = ({ user: propUser }) => {
                                                 ERP 관리
                                             </Button>
                                             <small className="text-muted text-center">구매 및 예산 관리</small>
+                                        </div>
+                                    </Col>
+                                </Row>
+                                <Row className="mt-3">
+                                    <Col md={4}>
+                                        <div className="d-grid">
+                                            <Button 
+                                                variant="warning" 
+                                                size="lg"
+                                                onClick={() => navigate('/hq/erp/branch-financial')}
+                                                className="mb-2"
+                                            >
+                                                <FaDollarSign className="me-2" />
+                                                지점별 재무관리
+                                            </Button>
+                                            <small className="text-muted text-center">지점별 수익/지출 분석</small>
+                                        </div>
+                                    </Col>
+                                    <Col md={4}>
+                                        <div className="d-grid">
+                                            <Button 
+                                                variant="danger" 
+                                                size="lg"
+                                                onClick={() => navigate('/hq/erp/consolidated')}
+                                                className="mb-2"
+                                            >
+                                                <FaCalculator className="me-2" />
+                                                통합 재무현황
+                                            </Button>
+                                            <small className="text-muted text-center">전사 재무 통합 분석</small>
+                                        </div>
+                                    </Col>
+                                    <Col md={4}>
+                                        <div className="d-grid">
+                                            <Button 
+                                                variant="dark" 
+                                                size="lg"
+                                                onClick={() => navigate('/hq/erp/reports')}
+                                                className="mb-2"
+                                            >
+                                                <FaChartLine className="me-2" />
+                                                재무 보고서
+                                            </Button>
+                                            <small className="text-muted text-center">월별/연별 재무 리포트</small>
                                         </div>
                                     </Col>
                                 </Row>

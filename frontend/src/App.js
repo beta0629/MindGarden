@@ -43,6 +43,7 @@ import AccountManagement from './components/admin/AccountManagement';
 import UserManagement from './components/admin/UserManagement';
 import BranchManagement from './components/hq/BranchManagement';
 import HQDashboard from './components/hq/HQDashboard';
+import BranchFinancialManagement from './components/hq/BranchFinancialManagement';
 import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
 import ConsultantClientList from './components/consultant/ConsultantClientList';
@@ -280,6 +281,7 @@ function AppContent() {
             <Route path="/admin/user-management" element={<UserManagement />} />
             <Route path="/hq/branch-management" element={<BranchManagement />} />
             <Route path="/hq/dashboard" element={<HQDashboard />} />
+            <Route path="/hq/erp/branch-financial" element={<BranchFinancialManagement />} />
             
             <Route path="/admin/schedules" element={
               <SimpleLayout>

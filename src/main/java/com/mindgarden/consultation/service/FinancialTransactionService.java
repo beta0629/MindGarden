@@ -3,6 +3,7 @@ package com.mindgarden.consultation.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.mindgarden.consultation.dto.FinancialDashboardResponse;
@@ -127,4 +128,10 @@ public interface FinancialTransactionService {
      * 세금 거래 생성
      */
     FinancialTransactionResponse createTaxTransaction(BigDecimal amount, LocalDate transactionDate, String description);
+    
+    /**
+     * 지점별 재무 데이터 조회
+     */
+    Map<String, Object> getBranchFinancialData(String branchCode, LocalDate startDate, LocalDate endDate, 
+                                             String category, String transactionType);
 }

@@ -1,0 +1,178 @@
+/* 지점별 재무관리 컴포넌트 스타일 */
+
+.branch-financial-management {
+    padding: 1rem 0;
+}
+
+.branch-financial-management h2 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.branch-financial-management .card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.branch-financial-management .card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.branch-financial-management .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-weight: 500;
+}
+
+.branch-financial-management .card-header h5 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* 재무 요약 카드 스타일 */
+.branch-financial-management .border-success {
+    border-left: 4px solid #28a745 !important;
+}
+
+.branch-financial-management .border-danger {
+    border-left: 4px solid #dc3545 !important;
+}
+
+.branch-financial-management .border-primary {
+    border-left: 4px solid #007bff !important;
+}
+
+.branch-financial-management .border-info {
+    border-left: 4px solid #17a2b8 !important;
+}
+
+/* 테이블 스타일 */
+.branch-financial-management .table {
+    font-size: 0.9rem;
+}
+
+.branch-financial-management .table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-top: none;
+    color: #495057;
+}
+
+.branch-financial-management .table td {
+    vertical-align: middle;
+}
+
+/* 필터 섹션 */
+.branch-financial-management .form-label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.branch-financial-management .form-control,
+.branch-financial-management .form-select {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.branch-financial-management .form-control:focus,
+.branch-financial-management .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* 탭 스타일 */
+.branch-financial-management .nav-tabs .nav-link {
+    color: #495057;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-weight: 500;
+}
+
+.branch-financial-management .nav-tabs .nav-link:hover {
+    border-bottom-color: #dee2e6;
+}
+
+.branch-financial-management .nav-tabs .nav-link.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background-color: transparent;
+}
+
+/* 배지 스타일 */
+.branch-financial-management .badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+}
+
+/* 버튼 스타일 */
+.branch-financial-management .btn {
+    font-weight: 500;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+}
+
+.branch-financial-management .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 알림 스타일 */
+.branch-financial-management .alert {
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .branch-financial-management {
+        padding: 0.5rem;
+    }
+    
+    .branch-financial-management h2 {
+        font-size: 1.5rem;
+    }
+    
+    .branch-financial-management .table {
+        font-size: 0.8rem;
+    }
+}
+
+/* 로딩 상태 */
+.branch-financial-management .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.branch-financial-management .card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* 통계 카드 호버 효과 */
+.branch-financial-management .card.border-success:hover,
+.branch-financial-management .card.border-danger:hover,
+.branch-financial-management .card.border-primary:hover,
+.branch-financial-management .card.border-info:hover {
+    border-left-width: 6px !important;
+}

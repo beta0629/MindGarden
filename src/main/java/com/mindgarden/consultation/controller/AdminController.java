@@ -22,6 +22,7 @@ import com.mindgarden.consultation.service.MenuService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -1846,12 +1847,14 @@ public class AdminController {
      * 스케줄 상태별 통계 조회
      */
     @GetMapping("/schedules/statistics")
-    public ResponseEntity<?> getScheduleStatistics() {
+    @PreAuthorize("hasRole('ADMIN') or hasRole('HQ_MASTER') or hasRole('SUPER_HQ_ADMIN') or hasRole('HQ_ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<?> getScheduleStatistics(@RequestParam(required = false) String userRole) {
         try {
-            log.info("📊 스케줄 상태별 통계 조회");
+            log.info("📊 스케줄 상태별 통계 조회 요청 - 사용자 역할: {}", userRole);
             
             Map<String, Object> statistics = adminService.getScheduleStatistics();
             
+            log.info("✅ 스케줄 통계 조회 완료 - 총 스케줄: {}", statistics.get("totalSchedules"));
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "data", statistics

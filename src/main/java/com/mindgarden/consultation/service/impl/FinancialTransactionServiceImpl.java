@@ -839,6 +839,111 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         }
     }
     
+    @Override
+    public Map<String, Object> getBranchFinancialData(String branchCode, LocalDate startDate, LocalDate endDate, 
+                                                     String category, String transactionType) {
+        try {
+            log.info("🏢 지점별 재무 데이터 조회: 지점={}, 시작일={}, 종료일={}, 카테고리={}, 유형={}", 
+                    branchCode, startDate, endDate, category, transactionType);
+            
+            // 지점별 거래 내역 조회
+            List<FinancialTransaction> transactions = financialTransactionRepository.findAll()
+                    .stream()
+                    .filter(t -> branchCode.equals(t.getBranchCode()))
+                    .filter(t -> !startDate.isAfter(t.getTransactionDate()) && !endDate.isBefore(t.getTransactionDate()))
+                    .filter(t -> category == null || category.isEmpty() || category.equals(t.getCategory()))
+                    .filter(t -> transactionType == null || transactionType.isEmpty() || 
+                            transactionType.equals(t.getTransactionType().name()))
+                    .collect(Collectors.toList());
+            
+            // 수익/지출 계산
+            BigDecimal totalRevenue = transactions.stream()
+                    .filter(t -> FinancialTransaction.TransactionType.INCOME.equals(t.getTransactionType()))
+                    .map(FinancialTransaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            BigDecimal totalExpenses = transactions.stream()
+                    .filter(t -> FinancialTransaction.TransactionType.EXPENSE.equals(t.getTransactionType()))
+                    .map(FinancialTransaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            BigDecimal netProfit = totalRevenue.subtract(totalExpenses);
+            
+            // 거래 내역 변환
+            List<Map<String, Object>> transactionList = transactions.stream()
+                    .map(this::convertTransactionToMap)
+                    .collect(Collectors.toList());
+            
+            // 카테고리별 분석
+            Map<String, BigDecimal> categoryBreakdown = transactions.stream()
+                    .collect(Collectors.groupingBy(
+                            t -> t.getCategory() != null ? t.getCategory() : "기타",
+                            Collectors.reducing(BigDecimal.ZERO, 
+                                    FinancialTransaction::getAmount, 
+                                    BigDecimal::add)
+                    ));
+            
+            // 월별 통계 (간단한 형태로)
+            Map<String, BigDecimal> monthlyStats = transactions.stream()
+                    .collect(Collectors.groupingBy(
+                            t -> t.getTransactionDate().getYear() + "-" + 
+                                 String.format("%02d", t.getTransactionDate().getMonthValue()),
+                            Collectors.reducing(BigDecimal.ZERO, 
+                                    FinancialTransaction::getAmount, 
+                                    BigDecimal::add)
+                    ));
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("summary", Map.of(
+                "totalRevenue", totalRevenue.longValue(),
+                "totalExpenses", totalExpenses.longValue(),
+                "netProfit", netProfit.longValue(),
+                "transactionCount", transactions.size()
+            ));
+            result.put("transactions", transactionList);
+            result.put("categoryBreakdown", categoryBreakdown);
+            result.put("monthlyStats", monthlyStats);
+            
+            log.info("✅ 지점별 재무 데이터 조회 완료: 지점={}, 수익={}, 지출={}, 순이익={}", 
+                    branchCode, totalRevenue, totalExpenses, netProfit);
+            
+            return result;
+            
+        } catch (Exception e) {
+            log.error("❌ 지점별 재무 데이터 조회 실패: 지점={}, 오류={}", branchCode, e.getMessage(), e);
+            
+            // 오류 시 기본값 반환
+            Map<String, Object> result = new HashMap<>();
+            result.put("summary", Map.of(
+                "totalRevenue", 0L,
+                "totalExpenses", 0L,
+                "netProfit", 0L,
+                "transactionCount", 0
+            ));
+            result.put("transactions", List.of());
+            result.put("categoryBreakdown", Map.of());
+            result.put("monthlyStats", Map.of());
+            
+            return result;
+        }
+    }
+    
+    /**
+     * FinancialTransaction을 Map으로 변환
+     */
+    private Map<String, Object> convertTransactionToMap(FinancialTransaction transaction) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", transaction.getId());
+        map.put("date", transaction.getTransactionDate().toString());
+        map.put("type", transaction.getTransactionType().name());
+        map.put("category", transaction.getCategory());
+        map.put("subcategory", transaction.getSubcategory());
+        map.put("description", transaction.getDescription());
+        map.put("amount", transaction.getAmount().longValue());
+        map.put("status", transaction.getStatus() != null ? transaction.getStatus().name() : "UNKNOWN");
+        return map;
+    }
+    
     /**
      * 안전한 공통 코드명 조회 (오류 시 기본값 반환)
      * 

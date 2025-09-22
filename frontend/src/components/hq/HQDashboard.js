@@ -129,15 +129,21 @@ const HQDashboard = ({ user: propUser }) => {
                 ...totalStats
             };
 
-            setDashboardData({
+            const newDashboardData = {
                 branchStats,
                 branchList: enrichedBranches,
                 recentActivities: [] // 추후 구현
-            });
+            };
+            
+            console.log('📊 설정할 dashboardData:', newDashboardData);
+            console.log('📊 설정할 branchStats.totalAdmins:', newDashboardData.branchStats.totalAdmins);
+            
+            setDashboardData(newDashboardData);
 
             console.log('✅ 본사 대시보드 데이터 로드 완료');
             console.log('📊 전사 통계:', branchStats);
             console.log('📊 totalAdmins 확인:', branchStats.totalAdmins);
+            console.log('📊 dashboardData 설정 전 branchStats:', branchStats);
             console.log('📊 지점별 데이터:', enrichedBranches);
 
         } catch (error) {

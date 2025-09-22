@@ -147,8 +147,19 @@ const BranchManagement = () => {
             console.log('📤 지점 이동 요청 데이터:', requestData);
             console.log('📤 selectedUsers 타입:', typeof selectedUsers[0], selectedUsers);
             
-            const response = await apiPost('/api/hq/branch-management/users/bulk-transfer', requestData);
+            // 임시로 직접 fetch 사용하여 상세 오류 확인
+            const fetchResponse = await fetch('/api/hq/branch-management/users/bulk-transfer', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify(requestData)
+            });
             
+            console.log('📥 fetch 응답 상태:', fetchResponse.status, fetchResponse.statusText);
+            
+            const response = await fetchResponse.json();
             console.log('📥 지점 이동 응답:', response);
             
             if (response.success) {

@@ -213,8 +213,8 @@ export const SCHEDULE_API = {
   AUTO_COMPLETE: '/api/schedules/auto-complete',
   
   // 통계
-  STATISTICS: '/api/schedules/statistics',
-  TODAY_STATISTICS: '/api/schedules/today/statistics',
+  STATISTICS: '/api/admin/schedules/statistics',
+  TODAY_STATISTICS: '/api/admin/schedules/today/statistics',
   
   // 페이지네이션
   PAGED_SCHEDULES: '/api/schedules/paged',

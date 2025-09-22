@@ -3128,26 +3128,42 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Map<String, Object> getScheduleStatistics() {
         try {
-            log.info("📊 스케줄 상태별 통계 조회");
+            log.info("📊 스케줄 상태별 통계 조회 시작");
             
             // 모든 스케줄 조회
+            log.debug("🔍 모든 스케줄 조회 중...");
             List<Schedule> allSchedules = scheduleRepository.findAll();
+            log.info("📋 조회된 스케줄 수: {}", allSchedules.size());
             
             // 상태별 카운트
+            log.debug("📊 상태별 카운트 계산 중...");
             Map<String, Long> statusCount = allSchedules.stream()
                 .collect(Collectors.groupingBy(
-                    schedule -> schedule.getStatus() != null ? schedule.getStatus().name() : "UNKNOWN",
+                    schedule -> {
+                        String status = schedule.getStatus() != null ? schedule.getStatus().name() : "UNKNOWN";
+                        log.trace("스케줄 ID {}: 상태 = {}", schedule.getId(), status);
+                        return status;
+                    },
                     Collectors.counting()
                 ));
+            log.info("📊 상태별 카운트: {}", statusCount);
             
             // 상담사별 완료 건수 (스케줄 기준)
+            log.debug("👥 상담사별 완료 건수 계산 중...");
             Map<Long, Long> consultantCompletedCount = allSchedules.stream()
-                .filter(schedule -> ScheduleStatus.COMPLETED.equals(schedule.getStatus()))
+                .filter(schedule -> {
+                    boolean isCompleted = ScheduleStatus.COMPLETED.equals(schedule.getStatus());
+                    if (isCompleted) {
+                        log.trace("완료된 스케줄 ID {}: 상담사 ID = {}", schedule.getId(), schedule.getConsultantId());
+                    }
+                    return isCompleted;
+                })
                 .filter(schedule -> schedule.getConsultantId() != null)
                 .collect(Collectors.groupingBy(
                     Schedule::getConsultantId,
                     Collectors.counting()
                 ));
+            log.info("👥 상담사별 완료 건수: {}", consultantCompletedCount);
             
             Map<String, Object> statistics = new HashMap<>();
             statistics.put("totalSchedules", allSchedules.size());
@@ -3157,12 +3173,16 @@ public class AdminServiceImpl implements AdminService {
             statistics.put("bookedSchedules", statusCount.getOrDefault(ScheduleStatus.BOOKED.name(), 0L));
             statistics.put("cancelledSchedules", statusCount.getOrDefault(ScheduleStatus.CANCELLED.name(), 0L));
             
-            log.info("✅ 스케줄 통계 조회 완료: 총 {}개, 완료 {}개", allSchedules.size(), statusCount.getOrDefault(ScheduleStatus.COMPLETED.name(), 0L));
+            log.info("✅ 스케줄 통계 조회 완료: 총 {}개, 완료 {}개, 예약 {}개, 취소 {}개", 
+                    allSchedules.size(), 
+                    statusCount.getOrDefault(ScheduleStatus.COMPLETED.name(), 0L),
+                    statusCount.getOrDefault(ScheduleStatus.BOOKED.name(), 0L),
+                    statusCount.getOrDefault(ScheduleStatus.CANCELLED.name(), 0L));
             return statistics;
             
         } catch (Exception e) {
-            log.error("❌ 스케줄 통계 조회 실패", e);
-            return new HashMap<>();
+            log.error("❌ 스케줄 통계 조회 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("스케줄 통계 조회 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
     }
     

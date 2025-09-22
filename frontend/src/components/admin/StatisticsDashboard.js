@@ -761,7 +761,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // ê¸°ë
       <StatsCardGrid 
         statistics={statistics} 
         loading={loading}
-        error={error}
+        error={!!error}
         showChange={false}
       />
 

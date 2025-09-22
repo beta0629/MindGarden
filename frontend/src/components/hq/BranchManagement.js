@@ -10,8 +10,8 @@ import {
     FaSearch, FaFilter, FaExchangeAlt, FaPlus, FaEdit,
     FaChartBar, FaMapMarkerAlt
 } from 'react-icons/fa';
-import { toast } from 'react-toastify';
 import { apiGet, apiPost } from '../../utils/ajax';
+import { showNotification } from '../../utils/notification';
 import LoadingSpinner from '../common/LoadingSpinner';
 import SimpleLayout from '../layout/SimpleLayout';
 
@@ -68,7 +68,7 @@ const BranchManagement = () => {
             }
         } catch (error) {
             console.error('지점 목록 로드 실패:', error);
-            toast.error('지점 목록을 불러오는데 실패했습니다.');
+            showNotification('지점 목록을 불러오는데 실패했습니다.', 'error');
         } finally {
             setLoading(false);
         }
@@ -96,7 +96,7 @@ const BranchManagement = () => {
             setBranchUsers(response.data?.users || []);
         } catch (error) {
             console.error('지점 사용자 목록 로드 실패:', error);
-            toast.error('사용자 목록을 불러오는데 실패했습니다.');
+            showNotification('사용자 목록을 불러오는데 실패했습니다.', 'error');
         } finally {
             setLoading(false);
         }
@@ -123,12 +123,12 @@ const BranchManagement = () => {
     // 사용자 지점 이동
     const handleBulkTransfer = async () => {
         if (selectedUsers.length === 0) {
-            toast.warning('이동할 사용자를 선택해주세요.');
+            showNotification('이동할 사용자를 선택해주세요.', 'warning');
             return;
         }
         
         if (!transferForm.targetBranchCode) {
-            toast.warning('대상 지점을 선택해주세요.');
+            showNotification('대상 지점을 선택해주세요.', 'warning');
             return;
         }
         
@@ -140,18 +140,18 @@ const BranchManagement = () => {
             });
             
             if (response.success) {
-                toast.success(response.message);
+                showNotification(response.message, 'success');
                 setShowTransferModal(false);
                 setSelectedUsers([]);
                 setTransferForm({ targetBranchCode: '', reason: '' });
                 loadBranchUsers(selectedBranch.code);
                 loadBranchStatistics(selectedBranch.code);
             } else {
-                toast.error(response.message);
+                showNotification(response.message, 'error');
             }
         } catch (error) {
             console.error('사용자 일괄 이동 실패:', error);
-            toast.error('사용자 이동에 실패했습니다.');
+            showNotification('사용자 이동에 실패했습니다.', 'error');
         }
     };
     

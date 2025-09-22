@@ -76,15 +76,31 @@ const UserManagement = ({ onUpdate, showToast }) => {
 
     const handleRoleChange = async (e) => {
         e.preventDefault();
+        
+        // 내담자→상담사 변경 시 확인 메시지
+        if (selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT') {
+            const confirmed = window.confirm(
+                `${selectedUser.name}님을 상담사로 변경하시겠습니까?\n\n` +
+                '이 변경으로 인해:\n' +
+                '• 상담사 메뉴와 기능에 접근 가능\n' +
+                '• 내담자 관리, 스케줄 관리 권한 부여\n' +
+                '• 필요시 다시 내담자로 되돌릴 수 있음'
+            );
+            if (!confirmed) return;
+        }
+        
         try {
-            const response = await fetch(`/api/admin/users/${selectedUser.id}/role`, {
+            const response = await fetch(`/api/admin/users/${selectedUser.id}/role?newRole=${form.newRole}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ newRole: form.newRole })
+                credentials: 'include'
             });
 
             if (response.ok) {
-                showToast('사용자 역할이 성공적으로 변경되었습니다.');
+                const message = selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' 
+                    ? `${selectedUser.name}님이 상담사로 성공적으로 변경되었습니다.`
+                    : '사용자 역할이 성공적으로 변경되었습니다.';
+                showToast(message, 'success');
                 setShowRoleModal(false);
                 setForm({ newRole: '' });
                 loadData();
@@ -152,6 +168,23 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                     </div>
                                 </div>
                                 <div className="d-flex gap-1">
+                                    {/* 내담자→상담사 빠른 변경 버튼 */}
+                                    {user.role === 'CLIENT' && (
+                                        <Button 
+                                            size="sm" 
+                                            variant="success"
+                                            onClick={() => {
+                                                setSelectedUser(user);
+                                                setForm({ newRole: 'CONSULTANT' });
+                                                setShowRoleModal(true);
+                                            }}
+                                            title="내담자를 상담사로 변경"
+                                        >
+                                            <i className="bi bi-person-plus"></i>
+                                        </Button>
+                                    )}
+                                    
+                                    {/* 일반 역할 변경 버튼 */}
                                     <Button 
                                         size="sm" 
                                         variant="outline-primary"
@@ -160,6 +193,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                             setForm({ newRole: user.role });
                                             setShowRoleModal(true);
                                         }}
+                                        title="역할 변경"
                                     >
                                         <FaEdit />
                                     </Button>
@@ -178,9 +212,12 @@ const UserManagement = ({ onUpdate, showToast }) => {
             </div>
 
             {/* 역할 변경 모달 */}
-            <Modal show={showRoleModal} onHide={() => setShowRoleModal(false)}>
+            <Modal show={showRoleModal} onHide={() => setShowRoleModal(false)} size="lg">
                 <Modal.Header closeButton>
-                    <Modal.Title>사용자 역할 변경</Modal.Title>
+                    <Modal.Title>
+                        <i className="bi bi-person-gear me-2"></i>
+                        사용자 역할 변경
+                    </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     {selectedUser && (
@@ -194,6 +231,20 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                     {getRoleDisplayName(selectedUser.role)}
                                 </Badge>
                             </div>
+                            
+                            {/* 내담자→상담사 변경 시 특별 안내 */}
+                            {selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' && (
+                                <div className="alert alert-info mb-3">
+                                    <h6><i className="bi bi-info-circle me-2"></i>상담사 역할 변경 안내</h6>
+                                    <ul className="mb-0">
+                                        <li>사용자가 상담사 역할로 변경됩니다.</li>
+                                        <li>상담사 메뉴와 기능에 접근할 수 있게 됩니다.</li>
+                                        <li>내담자 관리, 스케줄 관리 등의 권한이 부여됩니다.</li>
+                                        <li>변경 후에는 다시 내담자로 되돌릴 수 있습니다.</li>
+                                    </ul>
+                                </div>
+                            )}
+                            
                             <Form.Group className="mb-3">
                                 <Form.Label>새로운 역할</Form.Label>
                                 <Form.Select
@@ -209,12 +260,20 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                     ))}
                                 </Form.Select>
                             </Form.Group>
+                            
                             <div className="d-flex justify-content-end gap-2">
                                 <Button variant="secondary" onClick={() => setShowRoleModal(false)}>
                                     취소
                                 </Button>
-                                <Button variant="primary" type="submit">
-                                    변경
+                                <Button 
+                                    variant="primary" 
+                                    type="submit"
+                                    disabled={form.newRole === selectedUser.role}
+                                >
+                                    <i className="bi bi-check-lg me-2"></i>
+                                    {selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' 
+                                        ? '상담사로 변경' 
+                                        : '역할 변경'}
                                 </Button>
                             </div>
                         </Form>

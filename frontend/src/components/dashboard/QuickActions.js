@@ -86,8 +86,8 @@ const QuickActions = ({ user }) => {
           </button>
         )}
         
-        {/* 상담사 신청 버튼 (내담자 전용) */}
-        {user?.role === 'CLIENT' && (
+        {/* 상담사 신청 버튼 (내담자 전용) - 임시 비활성화 */}
+        {false && user?.role === 'CLIENT' && (
           <button 
             className={`${QUICK_ACTIONS_CSS.ACTION_BUTTON} consultant-application-btn`}
             onClick={() => setShowConsultantApplicationModal(true)}

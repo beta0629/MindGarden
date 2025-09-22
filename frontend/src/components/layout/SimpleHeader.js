@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { getRoleDisplayName, getRoleDisplayNameEn } from '../../utils/roleHelper';
+import { getDashboardPath } from '../../utils/session';
 import SimpleHamburgerMenu from './SimpleHamburgerMenu';
 import ConfirmModal from '../common/ConfirmModal';
 import { 
@@ -82,12 +83,8 @@ const SimpleHeader = () => {
     } else {
       // 사용자 역할에 따른 기본 대시보드로 이동
       if (user?.role) {
-        const role = user.role.toLowerCase();
-        if (role === 'super_admin') {
-          navigate('/super_admin/dashboard');
-        } else {
-          navigate(`/${role}/dashboard`);
-        }
+        const dashboardPath = getDashboardPath(user.role);
+        navigate(dashboardPath);
       } else {
         navigate('/');
       }

@@ -7,6 +7,7 @@ import { Modal } from '../common/Modal';
 import { LoadingBar } from '../common/LoadingBar';
 import { showAlert } from '../../utils/alert';
 import { useSession } from '../../contexts/SessionContext';
+import { getDashboardPath } from '../../utils/session';
 import './BranchManagement.css';
 
 /**
@@ -33,7 +34,7 @@ const BranchManagement = () => {
             
             if (!hasPermissionResult) {
                 showAlert('접근 권한이 없습니다.', 'error');
-                navigate('/admin/dashboard');
+                navigate(getDashboardPath(user?.role || 'ADMIN'));
                 return;
             }
         };

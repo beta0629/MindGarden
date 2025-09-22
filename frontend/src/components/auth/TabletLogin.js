@@ -102,7 +102,7 @@ const TabletLogin = () => {
         if (isLoggedIn) {
           const user = sessionManager.getUser();
           if (user && user.role) {
-            const dashboardPath = `/${user.role.toLowerCase()}/dashboard`;
+            const dashboardPath = getDashboardPath(user.role);
             console.log('✅ 기존 세션 발견, 대시보드로 리다이렉트:', dashboardPath);
             console.log('👤 사용자 정보:', user);
             navigate(dashboardPath, { replace: true });
@@ -349,15 +349,8 @@ const TabletLogin = () => {
           
           // 역할에 따른 리다이렉트
           const userRole = data.user.role;
-          if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
-            window.location.href = '/admin/dashboard';
-          } else if (userRole === 'CONSULTANT') {
-            window.location.href = '/consultant/dashboard';
-          } else if (userRole === 'CLIENT') {
-            window.location.href = '/client/dashboard';
-          } else {
-            window.location.href = '/dashboard';
-          }
+          const dashboardPath = getDashboardPath(userRole);
+          window.location.href = dashboardPath;
         }
       } else {
         console.error('❌ SMS 인증 로그인 실패:', data.message);

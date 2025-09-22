@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getDashboardPath } from '../../utils/session';
 
 const TabletBottomNavigation = ({ userRole }) => {
   const navigate = useNavigate();
@@ -9,21 +10,21 @@ const TabletBottomNavigation = ({ userRole }) => {
     switch (role) {
       case 'CLIENT':
         return [
-          { path: '/client/dashboard', icon: 'bi-house', label: '홈' },
+          { path: getDashboardPath('CLIENT'), icon: 'bi-house', label: '홈' },
           { path: '/client/consultations', icon: 'bi-calendar-check', label: '상담' },
           { path: '/client/tasks', icon: 'bi-list-task', label: '과제' },
           { path: '/client/profile', icon: 'bi-person', label: '프로필' }
         ];
       case 'CONSULTANT':
         return [
-          { path: '/consultant/dashboard', icon: 'bi-house', label: '홈' },
+          { path: getDashboardPath('CONSULTANT'), icon: 'bi-house', label: '홈' },
           { path: '/consultant/schedule', icon: 'bi-calendar-week', label: '일정' },
           { path: '/consultant/clients', icon: 'bi-people', label: '내담자' },
           { path: '/consultant/profile', icon: 'bi-person', label: '프로필' }
         ];
       case 'ADMIN':
         return [
-          { path: '/admin/dashboard', icon: 'bi-house', label: '홈' },
+          { path: getDashboardPath('ADMIN'), icon: 'bi-house', label: '홈' },
           { path: '/admin/users', icon: 'bi-people', label: '사용자' },
           { path: '/admin/system', icon: 'bi-gear', label: '설정' },
           { path: '/admin/profile', icon: 'bi-person', label: '프로필' }

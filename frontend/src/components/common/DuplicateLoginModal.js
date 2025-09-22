@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
+import { getDashboardPath } from '../../utils/session';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 
@@ -52,15 +53,8 @@ const DuplicateLoginModal = () => {
         console.log('🎯 중복 로그인 성공 후 리다이렉트:', userRole);
         
         setTimeout(() => {
-          if (userRole === 'ADMIN') {
-            window.location.href = '/admin/dashboard';
-          } else if (userRole === 'SUPER_ADMIN') {
-            window.location.href = '/super-admin/dashboard';
-          } else if (userRole === 'CONSULTANT') {
-            window.location.href = '/consultant/dashboard';
-          } else {
-            window.location.href = '/client/dashboard';
-          }
+          const dashboardPath = getDashboardPath(userRole);
+          window.location.href = dashboardPath;
         }, 1000); // 1초 후 리다이렉트
       } else {
         console.log('❌ 중복 로그인 확인 후 로그인 실패:', response?.message);

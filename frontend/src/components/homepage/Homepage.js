@@ -5,6 +5,7 @@ import SimpleHeader from '../layout/SimpleHeader';
 import TabletBottomNavigation from '../layout/TabletBottomNavigation';
 import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
+import { getDashboardPath } from '../../utils/session';
 import notificationManager from '../../utils/notification';
 
 const TabletHomepage = () => {
@@ -108,7 +109,7 @@ const TabletHomepage = () => {
     switch (menuItem) {
       case PROFILE_MENU_ITEMS.DASHBOARD:
         // 사용자 역할에 따른 대시보드로 이동
-        const dashboardPath = user?.role ? `/${user.role.toLowerCase()}/dashboard` : '/dashboard';
+        const dashboardPath = user?.role ? getDashboardPath(user.role) : '/dashboard';
         navigate(dashboardPath);
         break;
       case PROFILE_MENU_ITEMS.PROFILE:

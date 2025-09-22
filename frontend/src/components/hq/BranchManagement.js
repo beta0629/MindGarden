@@ -138,25 +138,35 @@ const BranchManagement = () => {
         }
         
         try {
-            const response = await apiPost('/api/hq/branch-management/users/bulk-transfer', {
+            const requestData = {
                 userIds: selectedUsers,
                 targetBranchCode: transferForm.targetBranchCode,
                 reason: transferForm.reason
-            });
+            };
+            
+            console.log('📤 지점 이동 요청 데이터:', requestData);
+            console.log('📤 selectedUsers 타입:', typeof selectedUsers[0], selectedUsers);
+            
+            const response = await apiPost('/api/hq/branch-management/users/bulk-transfer', requestData);
+            
+            console.log('📥 지점 이동 응답:', response);
             
             if (response.success) {
                 showNotification(response.message, 'success');
                 setShowTransferModal(false);
                 setSelectedUsers([]);
                 setTransferForm({ targetBranchCode: '', reason: '' });
-                loadBranchUsers(selectedBranch.code);
-                loadBranchStatistics(selectedBranch.code);
+                if (selectedBranch) {
+                    loadBranchUsers(selectedBranch.code);
+                    loadBranchStatistics(selectedBranch.code);
+                }
             } else {
-                showNotification(response.message, 'error');
+                showNotification(response.message || '지점 이동에 실패했습니다.', 'error');
             }
         } catch (error) {
             console.error('사용자 일괄 이동 실패:', error);
-            showNotification('사용자 이동에 실패했습니다.', 'error');
+            console.error('오류 상세:', error.message, error.stack);
+            showNotification('사용자 이동에 실패했습니다: ' + (error.message || '알 수 없는 오류'), 'error');
         }
     };
     

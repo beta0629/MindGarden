@@ -20,12 +20,8 @@ import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.MenuService;
 import com.mindgarden.consultation.service.ScheduleService;
-import com.mindgarden.consultation.constant.UserRole;
-import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -1868,7 +1864,7 @@ public class AdminController {
             UserRole role = currentUser.getRole();
             if (role != UserRole.ADMIN && role != UserRole.HQ_MASTER && 
                 role != UserRole.SUPER_HQ_ADMIN && role != UserRole.HQ_ADMIN && 
-                role != UserRole.SUPER_ADMIN) {
+                role != UserRole.HQ_SUPER_ADMIN) {
                 log.warn("❌ 권한 없음: 현재 역할={}", role);
                 return ResponseEntity.status(403).body(Map.of(
                     "success", false,
@@ -2047,6 +2043,7 @@ public class AdminController {
             
             // 사용자 역할에 따른 메뉴 목록 반환
             Map<String, Object> menuStructure = menuService.getMenuStructureByRole(currentUser.getRole());
+            @SuppressWarnings("unchecked")
             List<Map<String, Object>> menus = (List<Map<String, Object>>) menuStructure.get("menus");
             
             Map<String, Object> response = new HashMap<>();

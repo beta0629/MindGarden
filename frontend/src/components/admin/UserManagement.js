@@ -20,6 +20,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRole, setSelectedRole] = useState('');
+    const [includeInactive, setIncludeInactive] = useState(false);
     const [form, setForm] = useState({
         newRole: ''
     });
@@ -57,7 +58,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
         setLoading(true);
         try {
             const [usersRes, rolesRes] = await Promise.all([
-                fetch('/api/admin/users'),
+                fetch(`/api/admin/users?includeInactive=${includeInactive}`),
                 fetch('/api/admin/users/roles')
             ]);
 
@@ -75,7 +76,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [includeInactive]);
 
     useEffect(() => {
         loadData();
@@ -100,8 +101,13 @@ const UserManagement = ({ onUpdate, showToast }) => {
             );
         }
 
+        // 비활성 사용자 포함 옵션이 꺼져있으면 활성 사용자만 표시
+        if (!includeInactive) {
+            filtered = filtered.filter(user => user.isActive !== false);
+        }
+
         setFilteredUsers(filtered);
-    }, [users, selectedRole, searchTerm]);
+    }, [users, selectedRole, searchTerm, includeInactive]);
 
     const handleRoleChange = async (e) => {
         e.preventDefault();
@@ -193,7 +199,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                             <Card.Body>
                                 {/* 필터 및 검색 */}
                                 <Row className="mb-4">
-                                    <Col md={6}>
+                                    <Col md={5}>
                                         <InputGroup>
                                             <InputGroup.Text>
                                                 <FaSearch />
@@ -206,7 +212,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                             />
                                         </InputGroup>
                                     </Col>
-                                    <Col md={4}>
+                                    <Col md={3}>
                                         <Form.Select
                                             value={selectedRole}
                                             onChange={(e) => setSelectedRole(e.target.value)}
@@ -218,13 +224,23 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                             <option value="BRANCH_SUPER_ADMIN">최고관리자</option>
                                         </Form.Select>
                                     </Col>
-                                    <Col md={2}>
+                                    <Col md={3}>
+                                        <Form.Check
+                                            type="checkbox"
+                                            id="includeInactive"
+                                            label="비활성 사용자 포함"
+                                            checked={includeInactive}
+                                            onChange={(e) => setIncludeInactive(e.target.checked)}
+                                        />
+                                    </Col>
+                                    <Col md={1}>
                                         <Button 
                                             variant="outline-secondary" 
                                             size="sm" 
                                             onClick={() => {
                                                 setSearchTerm('');
                                                 setSelectedRole('');
+                                                setIncludeInactive(false);
                                             }}
                                         >
                                             <FaFilter className="me-1" />
@@ -249,7 +265,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                     <Row>
                         {filteredUsers.map((user) => (
                             <Col key={user.id} md={6} lg={4} xl={3} className="mb-3">
-                                <Card className="h-100 user-card">
+                                <Card className={`h-100 user-card ${user.isActive === false ? 'inactive-user' : ''}`}>
                                     <Card.Body className="d-flex flex-column">
                                         <div className="d-flex align-items-center mb-3">
                                             <div className="user-avatar me-3">
@@ -266,9 +282,16 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                         </div>
                                         
                                         <div className="mb-3">
-                                            <Badge bg={getRoleBadgeVariant(user.role)} className="w-100">
-                                                {getRoleDisplayName(user.role)}
-                                            </Badge>
+                                            <div className="d-flex gap-2 mb-2">
+                                                <Badge bg={getRoleBadgeVariant(user.role)} className="flex-fill">
+                                                    {getRoleDisplayName(user.role)}
+                                                </Badge>
+                                                {user.isActive === false && (
+                                                    <Badge bg="secondary" className="flex-shrink-0">
+                                                        비활성
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </div>
                                         
                                         <div className="mt-auto">

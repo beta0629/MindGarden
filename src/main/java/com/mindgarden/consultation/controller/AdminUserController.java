@@ -44,14 +44,18 @@ public class AdminUserController {
     
     /**
      * 전체 사용자 목록 조회 (관리자 전용)
+     * @param includeInactive 비활성 사용자 포함 여부 (기본값: false)
      */
     @GetMapping("")
-    public ResponseEntity<Map<String, Object>> getAllUsers() {
+    public ResponseEntity<Map<String, Object>> getAllUsers(
+            @RequestParam(value = "includeInactive", defaultValue = "false") boolean includeInactive) {
         try {
-            log.info("전체 사용자 목록 조회 요청");
+            log.info("전체 사용자 목록 조회 요청 - 비활성 포함: {}", includeInactive);
             
-            // UserService를 통해 전체 사용자 조회
-            List<User> users = userService.findAllActive();
+            // UserService를 통해 사용자 조회 (활성/전체 선택 가능)
+            List<User> users = includeInactive ? 
+                userService.getRepository().findAll() : 
+                userService.findAllActive();
             
             // 사용자 정보를 Map으로 변환
             List<Map<String, Object>> userList = new ArrayList<>();

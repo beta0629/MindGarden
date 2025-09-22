@@ -202,8 +202,9 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
     setError(null);
     
     try {
-      const data = await apiGet(`${SCHEDULE_API.STATISTICS}?userRole=${userRole}`);
-      setStatistics(data);
+      const response = await apiGet(`${SCHEDULE_API.STATISTICS}?userRole=${userRole}`);
+      console.log('📊 통계 API 응답:', response);
+      setStatistics(response.data || response);
     } catch (err) {
       console.error('통계 로드 실패:', err);
       setError(err.message);

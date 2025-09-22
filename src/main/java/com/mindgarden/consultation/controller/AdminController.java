@@ -1879,10 +1879,14 @@ public class AdminController {
             log.info("🔍 AdminService.getScheduleStatistics() 호출 완료: {}", statistics != null ? statistics.size() : "null");
             
             log.info("✅ 스케줄 통계 조회 완료 - 총 스케줄: {}", statistics.get("totalSchedules"));
-            return ResponseEntity.ok(Map.of(
+            
+            Map<String, Object> response = Map.of(
                 "success", true,
                 "data", statistics
-            ));
+            );
+            log.info("📤 최종 응답 데이터: {}", response);
+            
+            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("❌ 스케줄 통계 조회 실패", e);

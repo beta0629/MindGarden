@@ -10,7 +10,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -18,12 +17,12 @@ import org.springframework.security.web.authentication.session.CompositeSessionA
 import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import com.mindgarden.consultation.config.CustomAuthenticationEntryPoint;
-import com.mindgarden.consultation.config.CustomAccessDeniedHandler;
 
 /**
  * Spring Security 설정 클래스
@@ -43,9 +42,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // CORS 및 CSRF 설정
-            .csrf(AbstractHttpConfigurer::disable)
+            // CORS 설정
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            
+            // CSRF 보호 설정
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(csrfTokenRepository())
+                .ignoringRequestMatchers(
+                    "/api/auth/**",  // 인증 관련 API는 CSRF 제외
+                    "/oauth2/**",    // OAuth2 콜백
+                    "/api/password-reset/**",  // 비밀번호 재설정
+                    "/api/test-simple/**",  // 간단한 테스트 API
+                    "/api/health/**",  // 헬스체크
+                    "/error"
+                )
+            )
             
             // 세션 관리 활성화
             .sessionManagement(session -> session
@@ -309,6 +320,17 @@ public class SecurityConfig {
         return new CompositeSessionAuthenticationStrategy(
             Arrays.asList(concurrentSessionControl, registerSession)
         );
+    }
+    
+    /**
+     * CSRF 토큰 리포지토리
+     */
+    @Bean
+    public CsrfTokenRepository csrfTokenRepository() {
+        HttpSessionCsrfTokenRepository repository = new HttpSessionCsrfTokenRepository();
+        repository.setHeaderName("X-XSRF-TOKEN");
+        repository.setParameterName("_csrf");
+        return repository;
     }
     
     /**

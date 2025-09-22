@@ -20,6 +20,7 @@ import com.mindgarden.consultation.service.UserSessionService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -167,6 +169,42 @@ public class AuthController {
                 "message", "서버 내부 오류가 발생했습니다: " + e.getMessage(),
                 "errorCode", "INTERNAL_SERVER_ERROR"
             ));
+        }
+    }
+    
+    /**
+     * CSRF 토큰 조회
+     */
+    @GetMapping("/csrf-token")
+    public ResponseEntity<Map<String, Object>> getCsrfToken(HttpServletRequest request) {
+        try {
+            log.info("🔒 CSRF 토큰 조회 요청");
+            
+            // Spring Security에서 CSRF 토큰 가져오기
+            CsrfToken csrfToken = (CsrfToken) request.getAttribute("_csrf");
+            
+            if (csrfToken != null) {
+                log.info("✅ CSRF 토큰 조회 성공");
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "token", csrfToken.getToken(),
+                    "headerName", csrfToken.getHeaderName(),
+                    "parameterName", csrfToken.getParameterName(),
+                    "message", "CSRF 토큰 조회 성공"
+                ));
+            } else {
+                log.warn("⚠️ CSRF 토큰이 없습니다.");
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "token", "",
+                    "message", "CSRF 토큰이 없습니다."
+                ));
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ CSRF 토큰 조회 중 오류 발생: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
+                .body(Map.of("success", false, "message", "CSRF 토큰 조회 중 오류가 발생했습니다."));
         }
     }
     

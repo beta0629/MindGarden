@@ -51,11 +51,13 @@ const BranchManagement = () => {
     }, []);
     
     useEffect(() => {
+        console.log('🔍 useEffect 트리거 - selectedBranch:', selectedBranch);
         if (selectedBranch) {
+            console.log(`📊 지점 ${selectedBranch.code} 선택됨, 데이터 로드 시작`);
             loadBranchStatistics(selectedBranch.code);
             loadBranchUsers(selectedBranch.code);
         }
-    }, [selectedBranch, selectedRole, includeInactive]);
+    }, [selectedBranch, selectedRole, includeInactive, loadBranchStatistics, loadBranchUsers]);
     
     // 지점 목록 로드
     const loadBranches = useCallback(async () => {
@@ -469,23 +471,159 @@ const BranchManagement = () => {
                     <Tab eventKey="transfer" title={
                         <span><FaExchangeAlt className="me-2" />지점 이동</span>
                     }>
-                        <Card>
-                            <Card.Header>
-                                <h5 className="mb-0">
-                                    <FaExchangeAlt className="me-2" />
-                                    사용자 지점 이동 관리
-                                </h5>
-                            </Card.Header>
-                            <Card.Body>
-                                <Alert variant="info">
-                                    <strong>지점 이동 기능</strong><br />
-                                    • 여러 사용자를 한 번에 다른 지점으로 이동할 수 있습니다<br />
-                                    • 이동 시 기존 데이터는 유지됩니다<br />
-                                    • 이동 사유를 기록하여 추후 관리에 활용할 수 있습니다
-                                </Alert>
-                                <p className="text-muted">지점 목록 탭에서 사용자를 선택하고 이동 버튼을 클릭하세요.</p>
-                            </Card.Body>
-                        </Card>
+                        <Row>
+                            <Col md={6}>
+                                <Card>
+                                    <Card.Header>
+                                        <h5 className="mb-0">
+                                            <FaUsers className="me-2" />
+                                            전체 사용자 목록
+                                        </h5>
+                                    </Card.Header>
+                                    <Card.Body>
+                                        {/* 검색 및 필터 */}
+                                        <Row className="mb-3">
+                                            <Col md={6}>
+                                                <InputGroup size="sm">
+                                                    <InputGroup.Text>
+                                                        <FaSearch />
+                                                    </InputGroup.Text>
+                                                    <FormControl
+                                                        placeholder="이름 또는 이메일로 검색..."
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                    />
+                                                </InputGroup>
+                                            </Col>
+                                            <Col md={6}>
+                                                <FormSelect
+                                                    size="sm"
+                                                    value={selectedRole}
+                                                    onChange={(e) => setSelectedRole(e.target.value)}
+                                                >
+                                                    <option value="">모든 역할</option>
+                                                    <option value="CLIENT">내담자</option>
+                                                    <option value="CONSULTANT">상담사</option>
+                                                    <option value="ADMIN">관리자</option>
+                                                </FormSelect>
+                                            </Col>
+                                        </Row>
+                                        
+                                        {/* 지점별 사용자 목록 */}
+                                        <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                                            {branches.map((branch) => (
+                                                <Card key={branch.id} className="mb-3">
+                                                    <Card.Header className="py-2">
+                                                        <div className="d-flex justify-content-between align-items-center">
+                                                            <strong>{branch.name} ({branch.code})</strong>
+                                                            <Badge bg={branch.isActive ? 'success' : 'secondary'}>
+                                                                {branch.isActive ? '활성' : '비활성'}
+                                                            </Badge>
+                                                        </div>
+                                                    </Card.Header>
+                                                    <Card.Body className="py-2">
+                                                        <div className="text-center py-2">
+                                                            <Button
+                                                                variant="outline-primary"
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    setSelectedBranch(branch);
+                                                                    setActiveTab('branches');
+                                                                }}
+                                                            >
+                                                                <FaEye className="me-1" />
+                                                                사용자 보기
+                                                            </Button>
+                                                        </div>
+                                                    </Card.Body>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                            
+                            <Col md={6}>
+                                <Card>
+                                    <Card.Header>
+                                        <h5 className="mb-0">
+                                            <FaExchangeAlt className="me-2" />
+                                            지점 이동 실행
+                                        </h5>
+                                    </Card.Header>
+                                    <Card.Body>
+                                        <Alert variant="info">
+                                            <strong>지점 이동 기능</strong><br />
+                                            • 여러 사용자를 한 번에 다른 지점으로 이동할 수 있습니다<br />
+                                            • 이동 시 기존 데이터는 유지됩니다<br />
+                                            • 이동 사유를 기록하여 추후 관리에 활용할 수 있습니다
+                                        </Alert>
+                                        
+                                        {selectedUsers.length > 0 ? (
+                                            <div>
+                                                <Alert variant="success">
+                                                    <strong>{selectedUsers.length}명</strong>의 사용자가 선택되었습니다.
+                                                </Alert>
+                                                
+                                                <Form>
+                                                    <Row>
+                                                        <Col md={12} className="mb-3">
+                                                            <Form.Label>대상 지점</Form.Label>
+                                                            <FormSelect
+                                                                value={transferForm.targetBranchCode}
+                                                                onChange={(e) => setTransferForm(prev => ({
+                                                                    ...prev,
+                                                                    targetBranchCode: e.target.value
+                                                                }))}
+                                                                required
+                                                            >
+                                                                <option value="">지점을 선택하세요</option>
+                                                                {branches.map(branch => (
+                                                                    <option key={branch.id} value={branch.code}>
+                                                                        {branch.name} ({branch.code})
+                                                                    </option>
+                                                                ))}
+                                                            </FormSelect>
+                                                        </Col>
+                                                        <Col md={12} className="mb-3">
+                                                            <Form.Label>이동 사유</Form.Label>
+                                                            <FormControl
+                                                                type="text"
+                                                                placeholder="이동 사유를 입력하세요 (선택사항)"
+                                                                value={transferForm.reason}
+                                                                onChange={(e) => setTransferForm(prev => ({
+                                                                    ...prev,
+                                                                    reason: e.target.value
+                                                                }))}
+                                                            />
+                                                        </Col>
+                                                        <Col md={12}>
+                                                            <div className="d-grid">
+                                                                <Button 
+                                                                    variant="primary" 
+                                                                    size="lg"
+                                                                    onClick={handleBulkTransfer}
+                                                                    disabled={!transferForm.targetBranchCode}
+                                                                >
+                                                                    <FaExchangeAlt className="me-2" />
+                                                                    {selectedUsers.length}명 이동 실행
+                                                                </Button>
+                                                            </div>
+                                                        </Col>
+                                                    </Row>
+                                                </Form>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-4 text-muted">
+                                                <FaUsers className="mb-3" style={{ fontSize: '2rem' }} />
+                                                <p>이동할 사용자를 선택해주세요.</p>
+                                                <small>왼쪽에서 사용자를 선택하면 이동 기능을 사용할 수 있습니다.</small>
+                                            </div>
+                                        )}
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        </Row>
                     </Tab>
                 </Tabs>
                 

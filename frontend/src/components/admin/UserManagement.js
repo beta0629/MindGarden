@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button, Modal, Form, Badge } from 'react-bootstrap';
+import { Button, Modal, Form, Badge, Container, Row, Col, Card } from 'react-bootstrap';
 import { FaUsers, FaEdit } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
+import { showNotification } from '../../utils/notification';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const UserManagement = ({ onUpdate, showToast }) => {
+    // showToast가 없으면 기본 notification 사용
+    const toast = showToast || showNotification;
     const [users, setUsers] = useState([]);
     const [roles, setRoles] = useState([]);
     const [roleOptions, setRoleOptions] = useState([]);
@@ -100,18 +103,18 @@ const UserManagement = ({ onUpdate, showToast }) => {
                 const message = selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' 
                     ? `${selectedUser.name}님이 상담사로 성공적으로 변경되었습니다.`
                     : '사용자 역할이 성공적으로 변경되었습니다.';
-                showToast(message, 'success');
+                toast(message, 'success');
                 setShowRoleModal(false);
                 setForm({ newRole: '' });
                 loadData();
                 onUpdate();
             } else {
                 const error = await response.json();
-                showToast(error.message || '역할 변경에 실패했습니다.', 'danger');
+                toast(error.message || '역할 변경에 실패했습니다.', 'danger');
             }
         } catch (error) {
             console.error('역할 변경 실패:', error);
-            showToast('역할 변경에 실패했습니다.', 'danger');
+            toast('역할 변경에 실패했습니다.', 'danger');
         }
     };
 
@@ -136,14 +139,17 @@ const UserManagement = ({ onUpdate, showToast }) => {
     };
 
     return (
-        <div className="user-management">
-            <div className="panel-header">
-                <h3 className="panel-title">
-                    <i className="bi bi-people-fill"></i>
-                    사용자 관리
-                </h3>
-            </div>
-            <div className="panel-content">
+        <Container fluid className="py-4">
+            <Row>
+                <Col>
+                    <Card>
+                        <Card.Header>
+                            <h5 className="mb-0">
+                                <i className="bi bi-people-fill me-2"></i>
+                                사용자 관리
+                            </h5>
+                        </Card.Header>
+                        <Card.Body>
                 {loading ? (
                     <LoadingSpinner text="사용자 목록을 불러오는 중..." size="medium" />
                 ) : users.length === 0 ? (
@@ -209,7 +215,10 @@ const UserManagement = ({ onUpdate, showToast }) => {
                         )}
                     </div>
                 )}
-            </div>
+                        </Card.Body>
+                    </Card>
+                </Col>
+            </Row>
 
             {/* 역할 변경 모달 */}
             <Modal show={showRoleModal} onHide={() => setShowRoleModal(false)} size="lg">
@@ -280,7 +289,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                     )}
                 </Modal.Body>
             </Modal>
-        </div>
+        </Container>
     );
 };
 

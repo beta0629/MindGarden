@@ -40,6 +40,7 @@ import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
 import IntegrationTest from './components/test/IntegrationTest';
 import AccountManagement from './components/admin/AccountManagement';
+import UserManagement from './components/admin/UserManagement';
 import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
 import ConsultantClientList from './components/consultant/ConsultantClientList';
@@ -274,6 +275,7 @@ function AppContent() {
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<SessionManagement />} />
             <Route path="/admin/accounts" element={<AccountManagement />} />
+            <Route path="/admin/user-management" element={<UserManagement />} />
             
             <Route path="/admin/schedules" element={
               <SimpleLayout>

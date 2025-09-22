@@ -56,6 +56,7 @@
     --admin-color-primary: #E8E0FF;
     --admin-color-consultants: #E8E0FF;
     --admin-color-clients: #FFE0DB;
+    --admin-color-user-management: #F0F8FF;
     --admin-color-mappings: #E3F2FD;
     --admin-color-active: #D4F1E0;
     --admin-color-schedule: #FFE8D1;
@@ -225,6 +226,11 @@
 
 .management-icon.clients {
     background: var(--admin-color-client-mgmt);
+}
+
+.management-icon.user-management {
+    background: var(--admin-color-user-management);
+    color: #4A90E2;
 }
 
 .management-icon.mappings {

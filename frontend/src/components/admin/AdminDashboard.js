@@ -572,6 +572,16 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                     
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/user-management')}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} user-management`}>
+                            <FaUserCog />
+                        </div>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>사용자 관리</h3>
+                            <p>사용자 역할 변경 및 권한 관리</p>
+                        </div>
+                    </div>
+                    
                     <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/mapping-management')}>
                         <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} mappings`}>
                             <FaLink />

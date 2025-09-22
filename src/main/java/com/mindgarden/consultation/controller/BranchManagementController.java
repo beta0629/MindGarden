@@ -3,6 +3,7 @@ package com.mindgarden.consultation.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.entity.User;
@@ -87,12 +88,15 @@ public class BranchManagementController {
             // 지점별 사용자 통계 계산
             List<User> branchUsers = userService.findByBranchCode(branchCode);
             
+            // 관리자 역할 목록 (지점별로 다름)
+            Set<String> adminRoles = Set.of("ADMIN", "HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER", "HQ_SUPER_ADMIN");
+            
             Map<String, Object> statistics = new HashMap<>();
             statistics.put("branchCode", branchCode);
             statistics.put("totalUsers", branchUsers.size());
             statistics.put("clients", branchUsers.stream().filter(u -> u.getRole().name().equals("CLIENT")).count());
             statistics.put("consultants", branchUsers.stream().filter(u -> u.getRole().name().equals("CONSULTANT")).count());
-            statistics.put("admins", branchUsers.stream().filter(u -> u.getRole().name().equals("ADMIN")).count());
+            statistics.put("admins", branchUsers.stream().filter(u -> adminRoles.contains(u.getRole().name())).count());
             statistics.put("activeUsers", branchUsers.stream().filter(u -> !u.getIsDeleted()).count());
             statistics.put("inactiveUsers", branchUsers.stream().filter(u -> u.getIsDeleted()).count());
             

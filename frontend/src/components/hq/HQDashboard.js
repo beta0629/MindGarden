@@ -81,21 +81,30 @@ const HQDashboard = ({ user: propUser }) => {
             
             console.log('📍 지점 목록 로드 완료:', branches.length, '개');
 
-            // 2. 각 지점별 통계 병렬 로드
+            // 2. 각 지점별 사용자 목록 로드하여 통계 계산
             const branchStatsPromises = branches.map(async (branch) => {
                 try {
-                    const statsResponse = await apiGet(`/api/hq/branch-management/branches/${branch.code}/statistics`);
+                    console.log(`📊 지점 ${branch.code} 사용자 목록 로드 중...`);
+                    const usersResponse = await apiGet(`/api/hq/branch-management/branches/${branch.code}/users?includeInactive=false`);
+                    const users = usersResponse.users || [];
+                    
+                    console.log(`📊 지점 ${branch.code} 사용자 수:`, users.length);
+                    
+                    const userStats = {
+                        total: users.length,
+                        consultants: users.filter(u => u.role === 'CONSULTANT').length,
+                        clients: users.filter(u => u.role === 'CLIENT').length,
+                        admins: users.filter(u => ['ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN'].includes(u.role)).length
+                    };
+                    
+                    console.log(`📊 지점 ${branch.code} 통계:`, userStats);
+                    
                     return {
                         ...branch,
-                        userStats: {
-                            total: statsResponse.totalUsers || 0,
-                            consultants: statsResponse.consultants || 0,
-                            clients: statsResponse.clients || 0,
-                            admins: statsResponse.admins || 0
-                        }
+                        userStats
                     };
                 } catch (error) {
-                    console.error(`❌ 지점 ${branch.code} 통계 로드 실패:`, error);
+                    console.error(`❌ 지점 ${branch.code} 데이터 로드 실패:`, error);
                     return {
                         ...branch,
                         userStats: { total: 0, consultants: 0, clients: 0, admins: 0 }

@@ -90,7 +90,7 @@ const Chart = ({
       },
       onClick: onDataPointClick,
       onHover: (event, elements) => {
-        if (chartRef.current) {
+        if (chartRef.current && chartRef.current.style) {
           chartRef.current.style.cursor = elements.length > 0 ? 'pointer' : 'default';
         }
       }

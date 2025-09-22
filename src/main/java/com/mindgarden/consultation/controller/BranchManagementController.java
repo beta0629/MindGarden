@@ -91,16 +91,21 @@ public class BranchManagementController {
             // 관리자 역할 목록 (지점별로 다름)
             Set<String> adminRoles = Set.of("ADMIN", "HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER", "HQ_SUPER_ADMIN");
             
+            // 활성 사용자만 필터링
+            List<User> activeUsers = branchUsers.stream()
+                    .filter(u -> !u.getIsDeleted())
+                    .collect(Collectors.toList());
+            
             Map<String, Object> statistics = new HashMap<>();
             statistics.put("branchCode", branchCode);
-            statistics.put("totalUsers", branchUsers.size());
-            statistics.put("clients", branchUsers.stream().filter(u -> u.getRole().name().equals("CLIENT")).count());
-            statistics.put("consultants", branchUsers.stream().filter(u -> u.getRole().name().equals("CONSULTANT")).count());
-            statistics.put("admins", branchUsers.stream().filter(u -> adminRoles.contains(u.getRole().name())).count());
-            statistics.put("activeUsers", branchUsers.stream().filter(u -> !u.getIsDeleted()).count());
+            statistics.put("totalUsers", activeUsers.size());
+            statistics.put("clients", activeUsers.stream().filter(u -> u.getRole().name().equals("CLIENT")).count());
+            statistics.put("consultants", activeUsers.stream().filter(u -> u.getRole().name().equals("CONSULTANT")).count());
+            statistics.put("admins", activeUsers.stream().filter(u -> adminRoles.contains(u.getRole().name())).count());
+            statistics.put("activeUsers", activeUsers.size());
             statistics.put("inactiveUsers", branchUsers.stream().filter(u -> u.getIsDeleted()).count());
             
-            log.info("지점 통계 조회 완료: branchCode={}, totalUsers={}", branchCode, branchUsers.size());
+            log.info("지점 통계 조회 완료: branchCode={}, activeUsers={}, totalUsers={}", branchCode, activeUsers.size(), branchUsers.size());
             return ResponseEntity.ok(statistics);
             
         } catch (Exception e) {

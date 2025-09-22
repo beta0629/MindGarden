@@ -314,10 +314,11 @@ const UserManagement = ({ onUpdate, showToast }) => {
                         ))}
                     </Row>
                 )}
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
+                            </Card.Body>
+                        </Card>
+                    </Col>
+                </Row>
+            </Container>
 
             {/* 역할 변경 모달 */}
             <Modal show={showRoleModal} onHide={() => setShowRoleModal(false)} size="lg">
@@ -388,7 +389,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                     )}
                 </Modal.Body>
             </Modal>
-        </Container>
+        </SimpleLayout>
     );
 };
 

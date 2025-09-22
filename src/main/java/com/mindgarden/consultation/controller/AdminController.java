@@ -22,6 +22,7 @@ import com.mindgarden.consultation.service.MenuService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,6 +56,7 @@ public class AdminController {
     /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     @GetMapping("/consultants")
     public ResponseEntity<?> getAllConsultants(HttpSession session) {
         try {

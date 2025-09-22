@@ -33,12 +33,12 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         
         Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("success", false);
+        errorResponse.put("message", "접근 권한이 없습니다.");
+        errorResponse.put("redirectToLogin", true);
         errorResponse.put("path", request.getRequestURI());
         errorResponse.put("method", request.getMethod());
-        errorResponse.put("error", "Forbidden");
-        errorResponse.put("message", "접근 권한이 없습니다.");
         errorResponse.put("timestamp", System.currentTimeMillis());
-        errorResponse.put("status", 403);
         
         ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(response.getOutputStream(), errorResponse);

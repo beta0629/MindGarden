@@ -26,6 +26,7 @@ import com.mindgarden.consultation.service.RecurringExpenseService;
 import com.mindgarden.consultation.util.SecurityUtils;
 import com.mindgarden.consultation.util.TaxCalculationUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -69,6 +70,7 @@ public class ErpController {
     /**
      * 모든 활성화된 아이템 조회
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     @GetMapping("/items")
     public ResponseEntity<Map<String, Object>> getAllItems(HttpSession session) {
         try {
@@ -1346,6 +1348,7 @@ public class ErpController {
      * 통합 재무 대시보드 데이터 조회 (수입/지출 통합)
      * 지점별 데이터 필터링 적용
      */
+    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     @GetMapping("/finance/dashboard")
     public ResponseEntity<Map<String, Object>> getFinanceDashboard(
             @RequestParam(required = false) String branchCode,

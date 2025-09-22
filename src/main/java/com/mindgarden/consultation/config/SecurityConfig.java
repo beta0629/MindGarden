@@ -22,6 +22,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.mindgarden.consultation.config.CustomAuthenticationEntryPoint;
+import com.mindgarden.consultation.config.CustomAccessDeniedHandler;
 
 /**
  * Spring Security 설정 클래스
@@ -79,21 +81,85 @@ public class SecurityConfig {
                     "/api/auth/**", 
                     "/oauth2/**",
                     "/api/password-reset/**",  // 비밀번호 재설정 API
-                    "/api/admin/common-codes/**",  // 공통 코드 조회 (드롭다운 등에 필요)
-                    "/api/test/email/**",
-                    "/api/test/notification/**",  // 알림톡 테스트 API
+                    "/api/test-simple/**",  // 간단한 테스트 API
+                    "/api/health/**",  // 시스템 헬스체크
                     "/error",
                     "/actuator/health",
                     "/actuator/info"
                 ).permitAll();
                 
-                // 임시: 모든 요청 허용 (SpringSecurity 인증 문제 해결 전까지)
-                authz.anyRequest().permitAll();
+                // 공통 코드 조회 (드롭다운 등에 필요) - 인증 필요
+                authz.requestMatchers("/api/admin/common-codes/**").authenticated();
+                
+                // 테스트 API - 인증 필요
+                authz.requestMatchers(
+                    "/api/test/**",
+                    "/api/test/email/**",
+                    "/api/test/notification/**",
+                    "/api/integration-test/**"
+                ).authenticated();
+                
+                // 관리자 전용 API
+                authz.requestMatchers(
+                    "/api/admin/**",
+                    "/api/super-admin/**"
+                ).hasAnyRole("ADMIN", "BRANCH_SUPER_ADMIN", "HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER");
+                
+                // 본사 관리자 전용 API
+                authz.requestMatchers(
+                    "/api/hq/**"
+                ).hasAnyRole("HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER");
+                
+                // ERP 관련 API - 지점 관리자 이상
+                authz.requestMatchers(
+                    "/api/erp/**"
+                ).hasAnyRole("ADMIN", "BRANCH_SUPER_ADMIN", "HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER");
+                
+                // 결제 관련 API - 관리자 이상
+                authz.requestMatchers(
+                    "/api/payments/**"
+                ).hasAnyRole("ADMIN", "BRANCH_SUPER_ADMIN", "HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER");
+                
+                // 계좌 관리 API - 관리자 이상
+                authz.requestMatchers(
+                    "/api/accounts/**"
+                ).hasAnyRole("ADMIN", "BRANCH_SUPER_ADMIN", "HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER");
+                
+                // 사용자 관리 API - 인증된 사용자
+                authz.requestMatchers(
+                    "/api/users/**",
+                    "/api/user/**",
+                    "/api/client/**",
+                    "/api/consultant/**",
+                    "/api/v1/consultants/**",
+                    "/api/v1/consultations/**",
+                    "/api/consultation-messages/**",
+                    "/api/schedules/**",
+                    "/api/ratings/**",
+                    "/api/motivation/**"
+                ).authenticated();
+                
+                // 메뉴 API - 인증된 사용자
+                authz.requestMatchers("/api/menu/**").authenticated();
+                
+                // 지점 관련 API - 인증된 사용자
+                authz.requestMatchers("/api/branches/**").authenticated();
+                
+                // SMS 인증 API - 공개
+                authz.requestMatchers("/api/sms-auth/**").permitAll();
+                
+                // 태블릿 관련 API - 인증된 사용자
+                authz.requestMatchers("/tablet/**").authenticated();
+                
+                // 기타 모든 요청 - 인증 필요
+                authz.anyRequest().authenticated();
             })
             
-            // 폼 로그인 비활성화
-            .formLogin(AbstractHttpConfigurer::disable)
-            .httpBasic(AbstractHttpConfigurer::disable);
+            // 인증 실패 시 로그인 페이지로 리다이렉트
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint(customAuthenticationEntryPoint())
+                .accessDeniedHandler(customAccessDeniedHandler())
+            );
         
         return http.build();
     }
@@ -111,38 +177,6 @@ public class SecurityConfig {
         return "prod".equals(profile) || "production".equals(profile);
     }
     
-    /**
-     * 세션 인증 전략 설정
-     */
-    @Bean
-    public SessionAuthenticationStrategy sessionAuthenticationStrategy() {
-        ConcurrentSessionControlAuthenticationStrategy concurrentSessionControl = 
-            new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry());
-        
-        // 운영 환경에서는 더 엄격한 세션 제어
-        if (isProductionEnvironment()) {
-            concurrentSessionControl.setMaximumSessions(1);  // 동시 세션 1개만 허용
-            concurrentSessionControl.setExceptionIfMaximumExceeded(true);  // 초과 시 예외 발생
-        } else {
-            concurrentSessionControl.setMaximumSessions(3);  // 개발 환경에서는 3개까지 허용
-            concurrentSessionControl.setExceptionIfMaximumExceeded(false);
-        }
-        
-        RegisterSessionAuthenticationStrategy registerSession = 
-            new RegisterSessionAuthenticationStrategy(sessionRegistry());
-        
-        return new CompositeSessionAuthenticationStrategy(
-            Arrays.asList(concurrentSessionControl, registerSession)
-        );
-    }
-    
-    /**
-     * 세션 레지스트리
-     */
-    @Bean
-    public org.springframework.security.core.session.SessionRegistry sessionRegistry() {
-        return new org.springframework.security.core.session.SessionRegistryImpl();
-    }
     
     // 참고: 현재는 세션 기반 인증을 사용하고 있음
     // JWT 인증이 필요한 경우 JwtAuthenticationFilter를 구현하여 사용
@@ -226,6 +260,55 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+    }
+    
+    /**
+     * 커스텀 인증 진입점
+     */
+    @Bean
+    public CustomAuthenticationEntryPoint customAuthenticationEntryPoint() {
+        return new CustomAuthenticationEntryPoint();
+    }
+    
+    /**
+     * 커스텀 접근 거부 핸들러
+     */
+    @Bean
+    public CustomAccessDeniedHandler customAccessDeniedHandler() {
+        return new CustomAccessDeniedHandler();
+    }
+    
+    /**
+     * 세션 레지스트리
+     */
+    @Bean
+    public org.springframework.security.core.session.SessionRegistry sessionRegistry() {
+        return new org.springframework.security.core.session.SessionRegistryImpl();
+    }
+    
+    /**
+     * 세션 인증 전략 (환경별 설정)
+     */
+    @Bean
+    public SessionAuthenticationStrategy sessionAuthenticationStrategy() {
+        ConcurrentSessionControlAuthenticationStrategy concurrentSessionControl = 
+            new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry());
+        
+        // 운영 환경에서는 더 엄격한 세션 제어
+        if (isProductionEnvironment()) {
+            concurrentSessionControl.setMaximumSessions(1);  // 동시 세션 1개만 허용
+            concurrentSessionControl.setExceptionIfMaximumExceeded(true);  // 초과 시 예외 발생
+        } else {
+            concurrentSessionControl.setMaximumSessions(3);  // 개발 환경에서는 3개까지 허용
+            concurrentSessionControl.setExceptionIfMaximumExceeded(false);
+        }
+        
+        RegisterSessionAuthenticationStrategy registerSession = 
+            new RegisterSessionAuthenticationStrategy(sessionRegistry());
+        
+        return new CompositeSessionAuthenticationStrategy(
+            Arrays.asList(concurrentSessionControl, registerSession)
+        );
     }
     
     /**

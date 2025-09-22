@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.util;
 
 import java.util.Map;
+import com.mindgarden.consultation.constant.PermissionMatrix;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.utils.SessionUtils;
@@ -195,5 +196,90 @@ public class SecurityUtils {
      */
     public static ResponseEntity<Map<String, Object>> checkBranchAdminPermission(HttpSession session) {
         return checkPermission(session, UserRole.BRANCH_SUPER_ADMIN, UserRole.ADMIN);
+    }
+    
+    /**
+     * 메뉴 접근 권한 체크
+     * 
+     * @param session HTTP 세션
+     * @param menuGroup 메뉴 그룹
+     * @return 권한 있으면 null, 없으면 FORBIDDEN 응답
+     */
+    public static ResponseEntity<Map<String, Object>> checkMenuPermission(HttpSession session, String menuGroup) {
+        User user = getAuthenticatedUser(session);
+        if (user == null) {
+            return createUnauthorizedResponse();
+        }
+        
+        if (!PermissionMatrix.hasMenuAccess(user.getRole(), menuGroup)) {
+            return createForbiddenResponse("해당 메뉴에 접근할 권한이 없습니다.");
+        }
+        
+        return null;
+    }
+    
+    /**
+     * API 접근 권한 체크
+     * 
+     * @param session HTTP 세션
+     * @param apiPath API 경로
+     * @return 권한 있으면 null, 없으면 FORBIDDEN 응답
+     */
+    public static ResponseEntity<Map<String, Object>> checkApiPermission(HttpSession session, String apiPath) {
+        User user = getAuthenticatedUser(session);
+        if (user == null) {
+            return createUnauthorizedResponse();
+        }
+        
+        if (!PermissionMatrix.hasApiAccess(user.getRole(), apiPath)) {
+            return createForbiddenResponse("해당 API에 접근할 권한이 없습니다.");
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 기능 사용 권한 체크
+     * 
+     * @param session HTTP 세션
+     * @param feature 기능명
+     * @return 권한 있으면 null, 없으면 FORBIDDEN 응답
+     */
+    public static ResponseEntity<Map<String, Object>> checkFeaturePermission(HttpSession session, String feature) {
+        User user = getAuthenticatedUser(session);
+        if (user == null) {
+            return createUnauthorizedResponse();
+        }
+        
+        if (!PermissionMatrix.hasFeature(user.getRole(), feature)) {
+            return createForbiddenResponse("해당 기능을 사용할 권한이 없습니다.");
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 사용자 권한 정보 조회
+     * 
+     * @param session HTTP 세션
+     * @return 사용자 권한 정보
+     */
+    public static Map<String, Object> getUserPermissions(HttpSession session) {
+        User user = getAuthenticatedUser(session);
+        if (user == null) {
+            return Map.of("authenticated", false);
+        }
+        
+        Map<String, Object> permissions = PermissionMatrix.getRolePermissions(user.getRole());
+        permissions.put("authenticated", true);
+        permissions.put("user", Map.of(
+            "id", user.getId(),
+            "email", user.getEmail(),
+            "name", user.getName(),
+            "role", user.getRole().name(),
+            "branchCode", user.getBranchCode()
+        ));
+        
+        return permissions;
     }
 }

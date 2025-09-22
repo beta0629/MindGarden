@@ -33,12 +33,12 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         
         Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("success", false);
+        errorResponse.put("message", "인증이 필요합니다. 로그인해주세요.");
+        errorResponse.put("redirectToLogin", true);
         errorResponse.put("path", request.getRequestURI());
         errorResponse.put("method", request.getMethod());
-        errorResponse.put("error", "Unauthorized");
-        errorResponse.put("message", "인증이 필요합니다. 로그인해주세요.");
         errorResponse.put("timestamp", System.currentTimeMillis());
-        errorResponse.put("status", 401);
         
         ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(response.getOutputStream(), errorResponse);

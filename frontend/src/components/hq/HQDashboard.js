@@ -137,6 +137,7 @@ const HQDashboard = ({ user: propUser }) => {
 
             console.log('✅ 본사 대시보드 데이터 로드 완료');
             console.log('📊 전사 통계:', branchStats);
+            console.log('📊 totalAdmins 확인:', branchStats.totalAdmins);
             console.log('📊 지점별 데이터:', enrichedBranches);
 
         } catch (error) {

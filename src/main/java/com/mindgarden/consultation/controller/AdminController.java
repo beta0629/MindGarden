@@ -1874,7 +1874,9 @@ public class AdminController {
             
             log.info("✅ 권한 확인 완료: 현재 역할={}", role);
             
+            log.info("🔍 AdminService.getScheduleStatistics() 호출 시작");
             Map<String, Object> statistics = adminService.getScheduleStatistics();
+            log.info("🔍 AdminService.getScheduleStatistics() 호출 완료: {}", statistics != null ? statistics.size() : "null");
             
             log.info("✅ 스케줄 통계 조회 완료 - 총 스케줄: {}", statistics.get("totalSchedules"));
             return ResponseEntity.ok(Map.of(

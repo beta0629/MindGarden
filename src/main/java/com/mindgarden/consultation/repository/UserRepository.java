@@ -417,4 +417,10 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.branchCode = ?1 ORDER BY u.username")
     List<User> findByBranchCode(String branchCode);
+    
+    /**
+     * 여러 역할로 사용자 조회
+     */
+    @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByRoleIn(@Param("roles") List<String> roles);
 }

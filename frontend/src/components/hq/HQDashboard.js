@@ -100,6 +100,9 @@ const HQDashboard = ({ user: propUser }) => {
                         admins: statsResponse.admins || 0
                     };
                     
+                    console.log(`📊 지점 ${branch.code} 파싱된 통계:`, userStats);
+                    console.log(`📊 상담사: ${userStats.consultants}, 내담자: ${userStats.clients}, 관리자: ${userStats.admins}`);
+                    
                     console.log(`📊 지점 ${branch.code} 최종 통계:`, userStats);
                     
                     enrichedBranches.push({

@@ -144,23 +144,7 @@ const BranchManagement = () => {
                 reason: transferForm.reason
             };
             
-            console.log('📤 지점 이동 요청 데이터:', requestData);
-            console.log('📤 selectedUsers 타입:', typeof selectedUsers[0], selectedUsers);
-            
-            // 임시로 직접 fetch 사용하여 상세 오류 확인
-            const fetchResponse = await fetch('/api/hq/branch-management/users/bulk-transfer', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify(requestData)
-            });
-            
-            console.log('📥 fetch 응답 상태:', fetchResponse.status, fetchResponse.statusText);
-            
-            const response = await fetchResponse.json();
-            console.log('📥 지점 이동 응답:', response);
+            const response = await apiPost('/api/hq/branch-management/users/bulk-transfer', requestData);
             
             if (response.success) {
                 showNotification(response.message, 'success');
@@ -176,7 +160,6 @@ const BranchManagement = () => {
             }
         } catch (error) {
             console.error('사용자 일괄 이동 실패:', error);
-            console.error('오류 상세:', error.message, error.stack);
             showNotification('사용자 이동에 실패했습니다: ' + (error.message || '알 수 없는 오류'), 'error');
         }
     };

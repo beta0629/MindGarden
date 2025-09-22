@@ -5,9 +5,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
-import com.mindgarden.consultation.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,7 +34,6 @@ public class HQErpController {
     
     private final FinancialTransactionService financialTransactionService;
     private final CommonCodeService commonCodeService;
-    private final UserService userService;
     
     /**
      * 지점별 재무 현황 조회
@@ -99,7 +98,7 @@ public class HQErpController {
                 LocalDate.now();
             
             // 모든 지점 목록 조회
-            var branches = commonCodeService.getCodesByGroup("BRANCH");
+            List<CommonCode> branches = commonCodeService.getCommonCodesByGroup("BRANCH");
             
             // 각 지점별 재무 데이터 조회 및 통합
             Map<String, Object> consolidatedData = new HashMap<>();
@@ -109,7 +108,7 @@ public class HQErpController {
             
             Map<String, Map<String, Object>> branchBreakdown = new HashMap<>();
             
-            for (var branch : branches) {
+            for (CommonCode branch : branches) {
                 try {
                     Map<String, Object> branchData = financialTransactionService
                         .getBranchFinancialData(branch.getCodeValue(), start, end, null, null);
@@ -184,7 +183,7 @@ public class HQErpController {
             
             // 기본값 설정
             String type = reportType != null ? reportType : "monthly";
-            String targetPeriod = period != null ? period : LocalDate.now().format(DateTimeFormatter.of("yyyy-MM"));
+            String targetPeriod = period != null ? period : LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
             
             Map<String, Object> reportData = new HashMap<>();
             

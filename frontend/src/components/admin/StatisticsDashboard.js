@@ -202,19 +202,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
     setError(null);
     
     try {
-      const response = await fetch(`${SCHEDULE_API.STATISTICS}?userRole=${userRole}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
+      const data = await apiGet(`${SCHEDULE_API.STATISTICS}?userRole=${userRole}`);
       setStatistics(data);
     } catch (err) {
       console.error('통계 로드 실패:', err);
@@ -238,19 +226,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
         sort: getSortParam(sortBy)
       });
       
-      const response = await fetch(`${SCHEDULE_API.PAGED_SCHEDULES}?${params}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
+      const data = await apiGet(`${SCHEDULE_API.PAGED_SCHEDULES}?${params}`);
       setSchedules(data.content || []);
       setTableData(data.content || []);
     } catch (err) {

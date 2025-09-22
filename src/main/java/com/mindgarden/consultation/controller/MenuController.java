@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.MenuService;
+import com.mindgarden.consultation.util.SecurityUtils;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,6 +37,7 @@ public class MenuController {
      * @param session HTTP 세션
      * @return 권한별 메뉴 구조
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/structure")
     public ResponseEntity<?> getMenuStructure(HttpSession session) {
         try {
@@ -69,10 +72,38 @@ public class MenuController {
     }
     
     /**
+     * 현재 사용자 권한 정보 조회
+     * 
+     * @param session HTTP 세션
+     * @return 사용자 권한 정보
+     */
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/permissions")
+    public ResponseEntity<?> getUserPermissions(HttpSession session) {
+        try {
+            log.info("🔒 사용자 권한 정보 조회");
+            
+            Map<String, Object> permissions = SecurityUtils.getUserPermissions(session);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", permissions,
+                "message", "사용자 권한 정보 조회 성공"
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 사용자 권한 정보 조회 중 오류 발생: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
+                .body(Map.of("success", false, "message", "권한 정보 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
      * 공통 메뉴 조회 (모든 역할에서 공통으로 사용)
      * 
      * @return 공통 메뉴 목록
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/common")
     public ResponseEntity<?> getCommonMenus() {
         try {

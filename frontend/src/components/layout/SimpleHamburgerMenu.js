@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
 import ConfirmModal from '../common/ConfirmModal';
 import { loadMenuStructure, transformMenuStructure, debugMenuStructure } from '../../utils/menuHelper';
+import { hasMenuAccess, validateMenuPath, logPermissionCheck } from '../../utils/menuPermissionValidator';
 import './SimpleHamburgerMenu.css';
 
 /**
@@ -60,8 +61,21 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
   }
   console.log('✅ 햄버거 메뉴 열려있음 - 렌더링 계속');
 
-  const handleMenuClick = (path) => {
+  const handleMenuClick = (path, menuGroup = null) => {
     if (path && path !== '준비중') {
+      // 메뉴 그룹 권한 검증
+      if (menuGroup && !hasMenuAccess(menuGroup)) {
+        logPermissionCheck('메뉴 접근', menuGroup, false);
+        return;
+      }
+      
+      // 메뉴 경로 유효성 검증
+      if (!validateMenuPath(path)) {
+        console.warn(`🚫 유효하지 않은 메뉴 경로: ${path}`);
+        return;
+      }
+      
+      logPermissionCheck('메뉴 접근', path, true);
       navigate(path);
       onClose();
     }

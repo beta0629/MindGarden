@@ -49,7 +49,7 @@ public class BranchCodeInitService {
                 hqCode.setIsDeleted(false);
                 hqCode.setCreatedAt(LocalDateTime.now());
                 hqCode.setUpdatedAt(LocalDateTime.now());
-                hqCode.setVersion(0);
+                hqCode.setVersion(0L);
                 hqCode.setExtraData("{\"type\": \"headquarters\", \"address\": \"서울특별시 강남구 테헤란로 456\", \"phone\": \"02-1234-5678\", \"email\": \"hq@mindgarden.com\"}");
                 
                 commonCodeRepository.save(hqCode);

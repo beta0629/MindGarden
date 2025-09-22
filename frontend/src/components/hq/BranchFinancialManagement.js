@@ -68,11 +68,18 @@ const BranchFinancialManagement = () => {
         try {
             setLoading(true);
             const response = await apiGet('/api/hq/branch-management/branches');
+            console.log('🏢 지점 목록 API 응답:', response);
             
-            if (response.success && response.branches) {
-                setBranches(response.branches);
-                if (response.branches.length > 0 && !selectedBranch) {
-                    setSelectedBranch(response.branches[0]);
+            if (response.success && response.data) {
+                setBranches(response.data);
+                if (response.data.length > 0 && !selectedBranch) {
+                    setSelectedBranch(response.data[0]);
+                }
+            } else if (response.data) {
+                // 백워드 호환성
+                setBranches(response.data);
+                if (response.data.length > 0 && !selectedBranch) {
+                    setSelectedBranch(response.data[0]);
                 }
             }
         } catch (error) {
@@ -167,7 +174,7 @@ const BranchFinancialManagement = () => {
 
     return (
         <SimpleLayout>
-            <Container fluid className="branch-financial-management">
+            <Container className="branch-financial-management" style={{ maxWidth: '100%', padding: '0 15px' }}>
                 <Row className="mb-4">
                     <Col>
                         <div className="d-flex justify-content-between align-items-center">
@@ -194,8 +201,8 @@ const BranchFinancialManagement = () => {
                                 </h5>
                             </Card.Header>
                             <Card.Body>
-                                <Row>
-                                    <Col md={3}>
+                                <Row className="g-3">
+                                    <Col lg={3} md={6} sm={12}>
                                         <Form.Group>
                                             <Form.Label>지점 선택</Form.Label>
                                             <Form.Select 
@@ -214,7 +221,7 @@ const BranchFinancialManagement = () => {
                                             </Form.Select>
                                         </Form.Group>
                                     </Col>
-                                    <Col md={2}>
+                                    <Col lg={2} md={6} sm={6}>
                                         <Form.Group>
                                             <Form.Label>시작일</Form.Label>
                                             <Form.Control 
@@ -224,7 +231,7 @@ const BranchFinancialManagement = () => {
                                             />
                                         </Form.Group>
                                     </Col>
-                                    <Col md={2}>
+                                    <Col lg={2} md={6} sm={6}>
                                         <Form.Group>
                                             <Form.Label>종료일</Form.Label>
                                             <Form.Control 
@@ -234,7 +241,7 @@ const BranchFinancialManagement = () => {
                                             />
                                         </Form.Group>
                                     </Col>
-                                    <Col md={2}>
+                                    <Col lg={2} md={6} sm={6}>
                                         <Form.Group>
                                             <Form.Label>거래 유형</Form.Label>
                                             <Form.Select 
@@ -247,7 +254,7 @@ const BranchFinancialManagement = () => {
                                             </Form.Select>
                                         </Form.Group>
                                     </Col>
-                                    <Col md={2}>
+                                    <Col lg={2} md={6} sm={6}>
                                         <Form.Group>
                                             <Form.Label>카테고리</Form.Label>
                                             <Form.Select 
@@ -264,7 +271,7 @@ const BranchFinancialManagement = () => {
                                             </Form.Select>
                                         </Form.Group>
                                     </Col>
-                                    <Col md={1}>
+                                    <Col lg={1} md={6} sm={6}>
                                         <Form.Group>
                                             <Form.Label>&nbsp;</Form.Label>
                                             <div className="d-grid">
@@ -272,7 +279,9 @@ const BranchFinancialManagement = () => {
                                                     variant="primary"
                                                     onClick={handleApplyFilters}
                                                     disabled={!selectedBranch}
+                                                    size="sm"
                                                 >
+                                                    <FaEye className="me-1" />
                                                     조회
                                                 </Button>
                                             </div>
@@ -343,7 +352,8 @@ const BranchFinancialManagement = () => {
                                     <Card.Body>
                                         <Tabs defaultActiveKey="transactions" className="mb-3">
                                             <Tab eventKey="transactions" title="거래 내역">
-                                                <Table striped bordered hover responsive>
+                                                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                                    <Table striped bordered hover responsive size="sm">
                                                     <thead>
                                                         <tr>
                                                             <th>날짜</th>
@@ -384,7 +394,8 @@ const BranchFinancialManagement = () => {
                                                             </tr>
                                                         )}
                                                     </tbody>
-                                                </Table>
+                                                    </Table>
+                                                </div>
                                             </Tab>
                                             <Tab eventKey="monthly" title="월별 통계">
                                                 <Alert variant="info">

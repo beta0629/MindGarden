@@ -77,10 +77,13 @@ const BranchManagement = () => {
     // 지점 통계 로드
     const loadBranchStatistics = useCallback(async (branchCode) => {
         try {
+            console.log(`📊 지점 ${branchCode} 통계 로드 중...`);
             const response = await apiGet(`/api/hq/branch-management/branches/${branchCode}/statistics`);
-            setBranchStatistics(response.data || {});
+            console.log(`📊 지점 ${branchCode} 통계 응답:`, response);
+            setBranchStatistics(response || {});
         } catch (error) {
             console.error('지점 통계 로드 실패:', error);
+            setBranchStatistics({});
         }
     }, []);
     

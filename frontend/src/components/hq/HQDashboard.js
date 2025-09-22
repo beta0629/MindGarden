@@ -82,30 +82,40 @@ const HQDashboard = ({ user: propUser }) => {
             const branches = branchesResponse.data || [];
             console.log('📍 지점 목록 로드 완료:', branches.length, '개', branches);
 
-            // 2. 임시로 하드코딩된 통계 데이터 사용 (테스트용)
-            const enrichedBranches = branches.map(branch => {
-                let userStats = { total: 0, consultants: 0, clients: 0, admins: 0 };
-                
-                // 알려진 데이터로 임시 설정
-                if (branch.code === 'MAIN001') {
-                    userStats = { total: 34, consultants: 16, clients: 16, admins: 2 };
-                } else if (branch.code === 'HQ') {
-                    userStats = { total: 1, consultants: 0, clients: 0, admins: 1 };
-                } else if (branch.code === 'GANGNAM') {
-                    userStats = { total: 5, consultants: 2, clients: 3, admins: 0 };
-                } else if (branch.code === 'HONGDAE') {
-                    userStats = { total: 3, consultants: 1, clients: 2, admins: 0 };
-                } else if (branch.code === 'JAMSIL') {
-                    userStats = { total: 2, consultants: 1, clients: 1, admins: 0 };
-                } else if (branch.code === 'SINCHON') {
-                    userStats = { total: 1, consultants: 0, clients: 1, admins: 0 };
+            // 2. 각 지점별 사용자 목록 로드하여 통계 계산
+            const enrichedBranches = [];
+            
+            for (const branch of branches) {
+                try {
+                    console.log(`📊 지점 ${branch.code} (${branch.name}) 사용자 목록 로드 중...`);
+                    
+                    const usersResponse = await apiGet(`/api/hq/branch-management/branches/${branch.code}/users?includeInactive=false`);
+                    console.log(`📊 지점 ${branch.code} API 응답:`, usersResponse);
+                    
+                    const users = usersResponse.users || [];
+                    console.log(`📊 지점 ${branch.code} 사용자 배열:`, users);
+                    
+                    const userStats = {
+                        total: users.length,
+                        consultants: users.filter(u => u.role === 'CONSULTANT').length,
+                        clients: users.filter(u => u.role === 'CLIENT').length,
+                        admins: users.filter(u => ['ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN'].includes(u.role)).length
+                    };
+                    
+                    console.log(`📊 지점 ${branch.code} 계산된 통계:`, userStats);
+                    
+                    enrichedBranches.push({
+                        ...branch,
+                        userStats
+                    });
+                } catch (error) {
+                    console.error(`❌ 지점 ${branch.code} 데이터 로드 실패:`, error);
+                    enrichedBranches.push({
+                        ...branch,
+                        userStats: { total: 0, consultants: 0, clients: 0, admins: 0 }
+                    });
                 }
-                
-                return {
-                    ...branch,
-                    userStats
-                };
-            });
+            }
             
             // 3. 전사 통계 계산
             const totalStats = enrichedBranches.reduce((acc, branch) => ({

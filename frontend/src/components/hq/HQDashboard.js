@@ -75,44 +75,49 @@ const HQDashboard = ({ user: propUser }) => {
         try {
             console.log('📊 본사 대시보드 데이터 로드 시작');
 
-            // 병렬로 데이터 로드
-            const [branchesResponse, statsResponse] = await Promise.all([
-                apiGet('/api/hq/branch-management/branches'),
-                apiGet('/api/admin/users?includeInactive=false')
-            ]);
-
-            // 지점 데이터 처리
+            // 1. 지점 목록 먼저 로드
+            const branchesResponse = await apiGet('/api/hq/branch-management/branches');
             const branches = branchesResponse.data || [];
-            const users = statsResponse.data?.users || [];
+            
+            console.log('📍 지점 목록 로드 완료:', branches.length, '개');
 
-            // 지점별 통계 계산
+            // 2. 각 지점별 통계 병렬 로드
+            const branchStatsPromises = branches.map(async (branch) => {
+                try {
+                    const statsResponse = await apiGet(`/api/hq/branch-management/branches/${branch.code}/statistics`);
+                    return {
+                        ...branch,
+                        userStats: {
+                            total: statsResponse.totalUsers || 0,
+                            consultants: statsResponse.consultants || 0,
+                            clients: statsResponse.clients || 0,
+                            admins: statsResponse.admins || 0
+                        }
+                    };
+                } catch (error) {
+                    console.error(`❌ 지점 ${branch.code} 통계 로드 실패:`, error);
+                    return {
+                        ...branch,
+                        userStats: { total: 0, consultants: 0, clients: 0, admins: 0 }
+                    };
+                }
+            });
+
+            const enrichedBranches = await Promise.all(branchStatsPromises);
+            
+            // 3. 전사 통계 계산
+            const totalStats = enrichedBranches.reduce((acc, branch) => ({
+                totalUsers: acc.totalUsers + branch.userStats.total,
+                totalConsultants: acc.totalConsultants + branch.userStats.consultants,
+                totalClients: acc.totalClients + branch.userStats.clients,
+                totalAdmins: acc.totalAdmins + branch.userStats.admins
+            }), { totalUsers: 0, totalConsultants: 0, totalClients: 0, totalAdmins: 0 });
+
             const branchStats = {
                 totalBranches: branches.length,
                 activeBranches: branches.filter(b => b.isActive).length,
-                totalUsers: users.length,
-                totalConsultants: users.filter(u => u.role === 'CONSULTANT').length,
-                totalClients: users.filter(u => u.role === 'CLIENT').length,
-                totalAdmins: users.filter(u => ['ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN'].includes(u.role)).length
+                ...totalStats
             };
-
-            // 지점별 사용자 수 계산
-            const branchUserCounts = {};
-            users.forEach(user => {
-                const branchCode = user.branchCode || 'UNKNOWN';
-                if (!branchUserCounts[branchCode]) {
-                    branchUserCounts[branchCode] = { total: 0, consultants: 0, clients: 0, admins: 0 };
-                }
-                branchUserCounts[branchCode].total++;
-                if (user.role === 'CONSULTANT') branchUserCounts[branchCode].consultants++;
-                else if (user.role === 'CLIENT') branchUserCounts[branchCode].clients++;
-                else if (['ADMIN', 'BRANCH_SUPER_ADMIN'].includes(user.role)) branchUserCounts[branchCode].admins++;
-            });
-
-            // 지점 목록에 사용자 수 정보 추가
-            const enrichedBranches = branches.map(branch => ({
-                ...branch,
-                userStats: branchUserCounts[branch.code] || { total: 0, consultants: 0, clients: 0, admins: 0 }
-            }));
 
             setDashboardData({
                 branchStats,
@@ -121,6 +126,8 @@ const HQDashboard = ({ user: propUser }) => {
             });
 
             console.log('✅ 본사 대시보드 데이터 로드 완료');
+            console.log('📊 전사 통계:', branchStats);
+            console.log('🏢 지점별 데이터:', enrichedBranches);
 
         } catch (error) {
             console.error('❌ 본사 대시보드 데이터 로드 실패:', error);

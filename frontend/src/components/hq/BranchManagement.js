@@ -93,7 +93,7 @@ const BranchManagement = () => {
             if (includeInactive) params.append('includeInactive', 'true');
             
             const response = await apiGet(`/api/hq/branch-management/branches/${branchCode}/users?${params}`);
-            setBranchUsers(response.data?.users || []);
+            setBranchUsers(response.users || []);
         } catch (error) {
             console.error('지점 사용자 목록 로드 실패:', error);
             showNotification('사용자 목록을 불러오는데 실패했습니다.', 'error');

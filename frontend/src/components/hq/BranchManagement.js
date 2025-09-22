@@ -198,15 +198,15 @@ const BranchManagement = () => {
                         <span><FaBuilding className="me-2" />지점 목록</span>
                     }>
                         <Row>
-                            <Col md={4}>
-                                <Card>
+                            <Col md={3}>
+                                <Card className="h-100">
                                     <Card.Header>
                                         <h5 className="mb-0">
                                             <FaBuilding className="me-2" />
                                             지점 목록 ({branches.length}개)
                                         </h5>
                                     </Card.Header>
-                                    <Card.Body>
+                                    <Card.Body style={{ maxHeight: '600px', overflowY: 'auto' }}>
                                         {loading ? (
                                             <LoadingSpinner text="지점 목록을 불러오는 중..." size="small" />
                                         ) : (
@@ -235,7 +235,7 @@ const BranchManagement = () => {
                                 </Card>
                             </Col>
                             
-                            <Col md={8}>
+                            <Col md={9}>
                                 {selectedBranch && (
                                     <>
                                         {/* 지점 통계 */}
@@ -294,30 +294,37 @@ const BranchManagement = () => {
                                         
                                         {/* 사용자 목록 */}
                                         <Card>
-                                            <Card.Header className="d-flex justify-content-between align-items-center">
-                                                <h5 className="mb-0">
-                                                    <FaUsers className="me-2" />
-                                                    {selectedBranch.name} 사용자 목록
-                                                </h5>
-                                                <ButtonGroup>
-                                                    <Button
-                                                        variant="outline-primary"
-                                                        size="sm"
-                                                        onClick={() => setShowTransferModal(true)}
-                                                        disabled={selectedUsers.length === 0}
-                                                    >
-                                                        <FaExchangeAlt className="me-1" />
-                                                        지점 이동 ({selectedUsers.length})
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline-secondary"
-                                                        size="sm"
-                                                        onClick={() => loadBranchUsers(selectedBranch.code)}
-                                                    >
-                                                        <FaSearch className="me-1" />
-                                                        새로고침
-                                                    </Button>
-                                                </ButtonGroup>
+                                            <Card.Header>
+                                                <Row className="align-items-center">
+                                                    <Col>
+                                                        <h5 className="mb-0">
+                                                            <FaUsers className="me-2" />
+                                                            {selectedBranch.name} 사용자 목록
+                                                        </h5>
+                                                    </Col>
+                                                    <Col xs="auto">
+                                                        <ButtonGroup>
+                                                            <Button
+                                                                variant="primary"
+                                                                size="sm"
+                                                                onClick={() => setShowTransferModal(true)}
+                                                                disabled={selectedUsers.length === 0}
+                                                                className="me-2"
+                                                            >
+                                                                <FaExchangeAlt className="me-1" />
+                                                                지점 이동 ({selectedUsers.length})
+                                                            </Button>
+                                                            <Button
+                                                                variant="outline-secondary"
+                                                                size="sm"
+                                                                onClick={() => loadBranchUsers(selectedBranch.code)}
+                                                            >
+                                                                <FaSearch className="me-1" />
+                                                                새로고침
+                                                            </Button>
+                                                        </ButtonGroup>
+                                                    </Col>
+                                                </Row>
                                             </Card.Header>
                                             <Card.Body>
                                                 {/* 필터 및 검색 */}
@@ -372,31 +379,41 @@ const BranchManagement = () => {
                                                 </Row>
                                                 
                                                 {/* 사용자 테이블 */}
+                                                {/* 사용자 선택 안내 */}
+                                                {selectedUsers.length > 0 && (
+                                                    <Alert variant="info" className="mb-3">
+                                                        <strong>{selectedUsers.length}명</strong>의 사용자가 선택되었습니다. 
+                                                        "지점 이동" 버튼을 클릭하여 다른 지점으로 이동시킬 수 있습니다.
+                                                    </Alert>
+                                                )}
+                                                
                                                 {loading ? (
                                                     <LoadingSpinner text="사용자 목록을 불러오는 중..." size="medium" />
                                                 ) : filteredUsers.length === 0 ? (
                                                     <div className="text-center py-4 text-muted">
                                                         <FaUsers className="mb-3" style={{ fontSize: '2rem' }} />
-                                                        <p>사용자가 없습니다.</p>
+                                                        <p>이 지점에는 사용자가 없습니다.</p>
+                                                        <small>다른 지점을 선택하거나 필터를 조정해보세요.</small>
                                                     </div>
                                                 ) : (
-                                                    <Table responsive hover>
-                                                        <thead>
-                                                            <tr>
-                                                                <th>
-                                                                    <FormCheck
-                                                                        checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                                                                        onChange={(e) => handleSelectAll(e.target.checked)}
-                                                                    />
-                                                                </th>
-                                                                <th>사용자</th>
-                                                                <th>역할</th>
-                                                                <th>지점</th>
-                                                                <th>상태</th>
-                                                                <th>등록일</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
+                                                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                                        <Table responsive hover>
+                                                            <thead className="sticky-top bg-white">
+                                                                <tr>
+                                                                    <th>
+                                                                        <FormCheck
+                                                                            checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                                                                            onChange={(e) => handleSelectAll(e.target.checked)}
+                                                                        />
+                                                                    </th>
+                                                                    <th>사용자</th>
+                                                                    <th>역할</th>
+                                                                    <th>지점</th>
+                                                                    <th>상태</th>
+                                                                    <th>등록일</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
                                                             {filteredUsers.map((user) => (
                                                                 <tr key={user.id} className={!user.isActive ? 'table-secondary' : ''}>
                                                                     <td>
@@ -437,8 +454,9 @@ const BranchManagement = () => {
                                                                     </td>
                                                                 </tr>
                                                             ))}
-                                                        </tbody>
-                                                    </Table>
+                                                            </tbody>
+                                                        </Table>
+                                                    </div>
                                                 )}
                                             </Card.Body>
                                         </Card>

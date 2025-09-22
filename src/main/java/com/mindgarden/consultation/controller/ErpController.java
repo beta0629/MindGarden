@@ -23,6 +23,7 @@ import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.RecurringExpenseService;
+import com.mindgarden.consultation.util.SecurityUtils;
 import com.mindgarden.consultation.util.TaxCalculationUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.data.domain.Page;
@@ -1352,15 +1353,14 @@ public class ErpController {
             @RequestParam(required = false) String endDate,
             HttpSession session) {
         try {
-            // ERP 접근 권한 확인 (지점 수퍼 관리자만 허용)
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
-                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
-                log.warn("❌ ERP 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "ERP 시스템은 지점 수퍼 관리자만 접근할 수 있습니다."));
+            // ERP 접근 권한 확인 (공통 처리)
+            ResponseEntity<Map<String, Object>> permissionCheck = SecurityUtils.checkPermission(
+                session, UserRole.HQ_MASTER, UserRole.BRANCH_SUPER_ADMIN, UserRole.SUPER_HQ_ADMIN);
+            if (permissionCheck != null) {
+                return permissionCheck;
             }
+            
+            User currentUser = SessionUtils.getCurrentUser(session);
             
             log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 사용자지점={}, 요청지점={}", 
                     currentUser.getEmail(), currentUser.getBranchCode(), branchCode);

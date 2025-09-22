@@ -21,7 +21,6 @@ import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.PaymentRepository;
 import com.mindgarden.consultation.repository.PurchaseRequestRepository;
 import com.mindgarden.consultation.repository.SalaryCalculationRepository;
-import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import org.springframework.data.domain.Page;
@@ -48,7 +47,6 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     private final SalaryCalculationRepository salaryCalculationRepository;
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final PaymentRepository paymentRepository;
-    private final UserRepository userRepository;
     private final CommonCodeService commonCodeService;
     
     @Override
@@ -79,6 +77,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 .relatedEntityType(request.getRelatedEntityType())
                 .department(request.getDepartment())
                 .projectCode(request.getProjectCode())
+                .branchCode(request.getBranchCode())
                 .taxIncluded(request.getTaxIncluded() != null ? request.getTaxIncluded() : false)
                 .taxAmount(request.getTaxAmount() != null ? request.getTaxAmount() : BigDecimal.ZERO)
                 .amountBeforeTax(request.getAmountBeforeTax() != null ? request.getAmountBeforeTax() : request.getAmount())
@@ -122,6 +121,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         transaction.setRelatedEntityType(request.getRelatedEntityType());
         transaction.setDepartment(request.getDepartment());
         transaction.setProjectCode(request.getProjectCode());
+        transaction.setBranchCode(request.getBranchCode());
         transaction.setTaxIncluded(request.getTaxIncluded() != null ? request.getTaxIncluded() : false);
         transaction.setTaxAmount(request.getTaxAmount() != null ? request.getTaxAmount() : BigDecimal.ZERO);
         transaction.setAmountBeforeTax(request.getAmountBeforeTax() != null ? request.getAmountBeforeTax() : request.getAmount());
@@ -436,15 +436,21 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         SalaryCalculation salary = salaryCalculationRepository.findById(salaryCalculationId)
                 .orElseThrow(() -> new RuntimeException("급여 계산을 찾을 수 없습니다: " + salaryCalculationId));
         
+        // 공통 코드에서 카테고리 조회
+        String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
+        String salaryCategory = getSafeCodeName("FINANCIAL_CATEGORY", "SALARY", "급여");
+        String consultantSalarySubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CONSULTANT_SALARY", "상담사급여");
+        String salaryEntityType = getSafeCodeName("ENTITY_TYPE", "SALARY", "SALARY");
+        
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
-                .transactionType("EXPENSE")
-                .category("급여")
-                .subcategory("상담사급여")
+                .transactionType(expenseType)
+                .category(salaryCategory)
+                .subcategory(consultantSalarySubcategory)
                 .amount(salary.getTotalSalary())
                 .description(description != null ? description : "상담사 급여 지급")
                 .transactionDate(salary.getPayDate())
                 .relatedEntityId(salaryCalculationId)
-                .relatedEntityType("SALARY")
+                .relatedEntityType(salaryEntityType)
                 .taxIncluded(false)
                 .taxAmount(salary.getTaxAmount())
                 .amountBeforeTax(salary.getTotalSalary())
@@ -458,15 +464,21 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         PurchaseRequest purchase = purchaseRequestRepository.findById(purchaseRequestId)
                 .orElseThrow(() -> new RuntimeException("구매 요청을 찾을 수 없습니다: " + purchaseRequestId));
         
+        // 공통 코드에서 카테고리 조회
+        String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
+        String purchaseCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PURCHASE", "구매");
+        String equipmentPurchaseSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "EQUIPMENT_PURCHASE", "비품구매");
+        String purchaseEntityType = getSafeCodeName("ENTITY_TYPE", "PURCHASE", "PURCHASE");
+        
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
-                .transactionType("EXPENSE")
-                .category("구매")
-                .subcategory("비품구매")
+                .transactionType(expenseType)
+                .category(purchaseCategory)
+                .subcategory(equipmentPurchaseSubcategory)
                 .amount(purchase.getTotalAmount())
                 .description(description != null ? description : purchase.getReason())
                 .transactionDate(purchase.getCreatedAt().toLocalDate())
                 .relatedEntityId(purchaseRequestId)
-                .relatedEntityType("PURCHASE")
+                .relatedEntityType(purchaseEntityType)
                 .taxIncluded(true)
                 .build();
         
@@ -482,17 +494,23 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         com.mindgarden.consultation.util.TaxCalculationUtil.TaxCalculationResult taxResult = 
             com.mindgarden.consultation.util.TaxCalculationUtil.calculateTaxFromPayment(payment.getAmount());
         
+        // 공통 코드에서 카테고리 조회
+        String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
+        String paymentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "PAYMENT", "결제");
+        String consultationFeeSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CONSULTATION_FEE", "상담료");
+        String paymentEntityType = getSafeCodeName("ENTITY_TYPE", "PAYMENT", "PAYMENT");
+        
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
-                .transactionType("INCOME")
-                .category(category != null ? category : "결제")
-                .subcategory(subcategory != null ? subcategory : "상담료")
+                .transactionType(incomeType)
+                .category(category != null ? category : paymentCategory)
+                .subcategory(subcategory != null ? subcategory : consultationFeeSubcategory)
                 .amount(payment.getAmount()) // 부가세 포함 금액
                 .amountBeforeTax(taxResult.getAmountExcludingTax()) // 부가세 제외 금액
                 .taxAmount(taxResult.getVatAmount()) // 부가세 금액
                 .description(description != null ? description : payment.getDescription())
                 .transactionDate(payment.getCreatedAt().toLocalDate())
                 .relatedEntityId(paymentId)
-                .relatedEntityType("PAYMENT")
+                .relatedEntityType(paymentEntityType)
                 .taxIncluded(true)
                 .build();
         
@@ -501,10 +519,15 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     
     @Override
     public FinancialTransactionResponse createRentTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
+        // 공통 코드에서 카테고리 조회
+        String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
+        String rentCategory = getSafeCodeName("FINANCIAL_CATEGORY", "RENT", "임대료");
+        String officeRentSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "OFFICE_RENT", "사무실임대료");
+        
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
-                .transactionType("EXPENSE")
-                .category("임대료")
-                .subcategory("사무실임대료")
+                .transactionType(expenseType)
+                .category(rentCategory)
+                .subcategory(officeRentSubcategory)
                 .amount(amount)
                 .description(description != null ? description : "사무실 임대료")
                 .transactionDate(transactionDate)
@@ -516,10 +539,15 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     
     @Override
     public FinancialTransactionResponse createManagementFeeTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
+        // 공통 코드에서 카테고리 조회
+        String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
+        String managementFeeCategory = getSafeCodeName("FINANCIAL_CATEGORY", "MANAGEMENT_FEE", "관리비");
+        String officeManagementFeeSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "OFFICE_MANAGEMENT_FEE", "사무실관리비");
+        
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
-                .transactionType("EXPENSE")
-                .category("관리비")
-                .subcategory("사무실관리비")
+                .transactionType(expenseType)
+                .category(managementFeeCategory)
+                .subcategory(officeManagementFeeSubcategory)
                 .amount(amount)
                 .description(description != null ? description : "사무실 관리비")
                 .transactionDate(transactionDate)
@@ -531,10 +559,15 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     
     @Override
     public FinancialTransactionResponse createTaxTransaction(BigDecimal amount, LocalDate transactionDate, String description) {
+        // 공통 코드에서 카테고리 조회
+        String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
+        String taxCategory = getSafeCodeName("FINANCIAL_CATEGORY", "TAX", "세금");
+        String corporateTaxSubcategory = getSafeCodeName("FINANCIAL_SUBCATEGORY", "CORPORATE_TAX", "법인세");
+        
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
-                .transactionType("EXPENSE")
-                .category("세금")
-                .subcategory("법인세")
+                .transactionType(expenseType)
+                .category(taxCategory)
+                .subcategory(corporateTaxSubcategory)
                 .amount(amount)
                 .description(description != null ? description : "법인세")
                 .transactionDate(transactionDate)

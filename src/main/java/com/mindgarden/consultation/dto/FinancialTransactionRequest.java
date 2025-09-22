@@ -54,6 +54,9 @@ public class FinancialTransactionRequest {
     @Size(max = 50, message = "프로젝트 코드는 50자 이하여야 합니다.")
     private String projectCode;
     
+    @Size(max = 20, message = "지점 코드는 20자 이하여야 합니다.")
+    private String branchCode;
+    
     private Boolean taxIncluded;
     
     @DecimalMin(value = "0.0", message = "세금 금액은 0 이상이어야 합니다.")

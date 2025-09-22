@@ -188,6 +188,13 @@ public class FinancialTransaction {
     private BigDecimal amountBeforeTax;
     
     /**
+     * 지점 코드
+     */
+    @Size(max = 20, message = "지점 코드는 20자 이하여야 합니다.")
+    @Column(name = "branch_code", length = 20)
+    private String branchCode;
+    
+    /**
      * 비고
      */
     @Size(max = 1000, message = "비고는 1000자 이하여야 합니다.")

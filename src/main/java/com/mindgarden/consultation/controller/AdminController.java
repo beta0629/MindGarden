@@ -20,9 +20,12 @@ import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.MenuService;
 import com.mindgarden.consultation.service.ScheduleService;
+import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -1847,10 +1850,33 @@ public class AdminController {
      * 스케줄 상태별 통계 조회
      */
     @GetMapping("/schedules/statistics")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('HQ_MASTER') or hasRole('SUPER_HQ_ADMIN') or hasRole('HQ_ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<?> getScheduleStatistics(@RequestParam(required = false) String userRole) {
+    public ResponseEntity<?> getScheduleStatistics(@RequestParam(required = false) String userRole, HttpSession session) {
         try {
             log.info("📊 스케줄 상태별 통계 조회 요청 - 사용자 역할: {}", userRole);
+            
+            // 세션에서 사용자 정보 확인
+            User currentUser = (User) session.getAttribute("user");
+            if (currentUser == null) {
+                log.warn("❌ 인증되지 않은 사용자");
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "인증이 필요합니다."
+                ));
+            }
+            
+            // 권한 확인
+            UserRole role = currentUser.getRole();
+            if (role != UserRole.ADMIN && role != UserRole.HQ_MASTER && 
+                role != UserRole.SUPER_HQ_ADMIN && role != UserRole.HQ_ADMIN && 
+                role != UserRole.SUPER_ADMIN) {
+                log.warn("❌ 권한 없음: 현재 역할={}", role);
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "접근 권한이 없습니다."
+                ));
+            }
+            
+            log.info("✅ 권한 확인 완료: 현재 역할={}", role);
             
             Map<String, Object> statistics = adminService.getScheduleStatistics();
             

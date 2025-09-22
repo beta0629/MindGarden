@@ -1,20 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button, Modal, Form, Badge, Container, Row, Col, Card } from 'react-bootstrap';
-import { FaUsers, FaEdit } from 'react-icons/fa';
+import { Button, Modal, Form, Badge, Container, Row, Col, Card, InputGroup } from 'react-bootstrap';
+import { FaUsers, FaEdit, FaUser, FaUserTie, FaCrown, FaBuilding, FaSearch, FaFilter } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import LoadingSpinner from '../common/LoadingSpinner';
+import SimpleLayout from '../layout/SimpleLayout';
+import './UserManagement.css';
 
 const UserManagement = ({ onUpdate, showToast }) => {
     // showToast가 없으면 기본 notification 사용
     const toast = showToast || showNotification;
     const [users, setUsers] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState([]);
     const [roles, setRoles] = useState([]);
     const [roleOptions, setRoleOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     const [showRoleModal, setShowRoleModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedRole, setSelectedRole] = useState('');
     const [form, setForm] = useState({
         newRole: ''
     });
@@ -77,6 +82,27 @@ const UserManagement = ({ onUpdate, showToast }) => {
         loadRoleCodes();
     }, [loadData, loadRoleCodes]);
 
+    // 필터링 로직
+    useEffect(() => {
+        let filtered = users;
+
+        // 역할 필터
+        if (selectedRole) {
+            filtered = filtered.filter(user => user.role === selectedRole);
+        }
+
+        // 검색 필터 (이름, 이메일)
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(user => 
+                user.name?.toLowerCase().includes(term) ||
+                user.email?.toLowerCase().includes(term)
+            );
+        }
+
+        setFilteredUsers(filtered);
+    }, [users, selectedRole, searchTerm]);
+
     const handleRoleChange = async (e) => {
         e.preventDefault();
         
@@ -138,18 +164,74 @@ const UserManagement = ({ onUpdate, showToast }) => {
         }
     };
 
+    const getRoleIcon = (role) => {
+        switch (role) {
+            case 'CLIENT': return <FaUser />;
+            case 'CONSULTANT': return <FaUserTie />;
+            case 'ADMIN': return <FaBuilding />;
+            case 'BRANCH_SUPER_ADMIN': return <FaCrown />;
+            default: return <FaUsers />;
+        }
+    };
+
     return (
-        <Container fluid className="py-4">
-            <Row>
-                <Col>
-                    <Card>
-                        <Card.Header>
-                            <h5 className="mb-0">
-                                <i className="bi bi-people-fill me-2"></i>
-                                사용자 관리
-                            </h5>
-                        </Card.Header>
-                        <Card.Body>
+        <SimpleLayout title="사용자 관리">
+            <Container fluid className="py-4">
+                <Row>
+                    <Col>
+                        <Card>
+                            <Card.Header className="d-flex justify-content-between align-items-center">
+                                <h5 className="mb-0">
+                                    <i className="bi bi-people-fill me-2"></i>
+                                    사용자 목록 ({filteredUsers.length}명)
+                                </h5>
+                                <Button variant="outline-primary" size="sm" onClick={loadData}>
+                                    <i className="bi bi-arrow-clockwise me-1"></i>
+                                    새로고침
+                                </Button>
+                            </Card.Header>
+                            <Card.Body>
+                                {/* 필터 및 검색 */}
+                                <Row className="mb-4">
+                                    <Col md={6}>
+                                        <InputGroup>
+                                            <InputGroup.Text>
+                                                <FaSearch />
+                                            </InputGroup.Text>
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="이름 또는 이메일로 검색..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </InputGroup>
+                                    </Col>
+                                    <Col md={4}>
+                                        <Form.Select
+                                            value={selectedRole}
+                                            onChange={(e) => setSelectedRole(e.target.value)}
+                                        >
+                                            <option value="">모든 역할</option>
+                                            <option value="CLIENT">내담자</option>
+                                            <option value="CONSULTANT">상담사</option>
+                                            <option value="ADMIN">관리자</option>
+                                            <option value="BRANCH_SUPER_ADMIN">최고관리자</option>
+                                        </Form.Select>
+                                    </Col>
+                                    <Col md={2}>
+                                        <Button 
+                                            variant="outline-secondary" 
+                                            size="sm" 
+                                            onClick={() => {
+                                                setSearchTerm('');
+                                                setSelectedRole('');
+                                            }}
+                                        >
+                                            <FaFilter className="me-1" />
+                                            초기화
+                                        </Button>
+                                    </Col>
+                                </Row>
                 {loading ? (
                     <LoadingSpinner text="사용자 목록을 불러오는 중..." size="medium" />
                 ) : users.length === 0 ? (
@@ -157,63 +239,80 @@ const UserManagement = ({ onUpdate, showToast }) => {
                         <FaUsers className="mb-3" style={{ fontSize: '2rem' }} />
                         <p>등록된 사용자가 없습니다.</p>
                     </div>
-                ) : (
-                    <div className="user-list">
-                        {users.slice(0, 5).map((user) => (
-                            <div key={user.id} className="summary-item">
-                                <div className="summary-icon">
-                                    <FaUsers />
-                                </div>
-                                <div className="summary-info">
-                                    <div className="summary-label">{user.name}</div>
-                                    <div className="summary-value">
-                                        {user.email} | 
-                                        <Badge bg={getRoleBadgeVariant(user.role)} className="ms-2">
-                                            {getRoleDisplayName(user.role)}
-                                        </Badge>
-                                    </div>
-                                </div>
-                                <div className="d-flex gap-1">
-                                    {/* 내담자→상담사 빠른 변경 버튼 */}
-                                    {user.role === 'CLIENT' && (
-                                        <Button 
-                                            size="sm" 
-                                            variant="success"
-                                            onClick={() => {
-                                                setSelectedUser(user);
-                                                setForm({ newRole: 'CONSULTANT' });
-                                                setShowRoleModal(true);
-                                            }}
-                                            title="내담자를 상담사로 변경"
-                                        >
-                                            <i className="bi bi-person-plus"></i>
-                                        </Button>
-                                    )}
-                                    
-                                    {/* 일반 역할 변경 버튼 */}
-                                    <Button 
-                                        size="sm" 
-                                        variant="outline-primary"
-                                        onClick={() => {
-                                            setSelectedUser(user);
-                                            setForm({ newRole: user.role });
-                                            setShowRoleModal(true);
-                                        }}
-                                        title="역할 변경"
-                                    >
-                                        <FaEdit />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-                        {users.length > 5 && (
-                            <div className="text-center mt-2">
-                                <small className="text-muted">
-                                    외 {users.length - 5}명 더...
-                                </small>
-                            </div>
-                        )}
+                ) : filteredUsers.length === 0 ? (
+                    <div className="text-center py-4 text-muted">
+                        <FaSearch className="mb-3" style={{ fontSize: '2rem' }} />
+                        <p>검색 결과가 없습니다.</p>
+                        <small>다른 검색어나 필터를 시도해보세요.</small>
                     </div>
+                ) : (
+                    <Row>
+                        {filteredUsers.map((user) => (
+                            <Col key={user.id} md={6} lg={4} xl={3} className="mb-3">
+                                <Card className="h-100 user-card">
+                                    <Card.Body className="d-flex flex-column">
+                                        <div className="d-flex align-items-center mb-3">
+                                            <div className="user-avatar me-3">
+                                                {getRoleIcon(user.role)}
+                                            </div>
+                                            <div className="flex-grow-1">
+                                                <h6 className="mb-1 text-truncate" title={user.name}>
+                                                    {user.name}
+                                                </h6>
+                                                <small className="text-muted text-truncate d-block" title={user.email}>
+                                                    {user.email}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="mb-3">
+                                            <Badge bg={getRoleBadgeVariant(user.role)} className="w-100">
+                                                {getRoleDisplayName(user.role)}
+                                            </Badge>
+                                        </div>
+                                        
+                                        <div className="mt-auto">
+                                            <div className="d-flex gap-2">
+                                                {/* 내담자→상담사 빠른 변경 버튼 */}
+                                                {user.role === 'CLIENT' && (
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="success"
+                                                        className="flex-fill"
+                                                        onClick={() => {
+                                                            setSelectedUser(user);
+                                                            setForm({ newRole: 'CONSULTANT' });
+                                                            setShowRoleModal(true);
+                                                        }}
+                                                        title="내담자를 상담사로 변경"
+                                                    >
+                                                        <i className="bi bi-person-plus me-1"></i>
+                                                        상담사로
+                                                    </Button>
+                                                )}
+                                                
+                                                {/* 일반 역할 변경 버튼 */}
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline-primary"
+                                                    className="flex-fill"
+                                                    onClick={() => {
+                                                        setSelectedUser(user);
+                                                        setForm({ newRole: user.role });
+                                                        setShowRoleModal(true);
+                                                    }}
+                                                    title="역할 변경"
+                                                >
+                                                    <FaEdit className="me-1" />
+                                                    변경
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        ))}
+                    </Row>
                 )}
                         </Card.Body>
                     </Card>

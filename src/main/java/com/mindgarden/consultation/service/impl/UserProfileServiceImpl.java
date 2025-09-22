@@ -2,7 +2,10 @@ package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.HashMap;
+import java.util.Map;
 import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.dto.ConsultantApplicationRequest;
 import com.mindgarden.consultation.dto.UserProfileResponse;
 import com.mindgarden.consultation.dto.UserProfileUpdateRequest;
 import com.mindgarden.consultation.entity.User;
@@ -463,5 +466,97 @@ public class UserProfileServiceImpl implements UserProfileService {
         }
         
         return "프로필이 완성되었습니다.";
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> applyForConsultant(Long userId, ConsultantApplicationRequest request) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            
+            log.info("상담사 신청 처리 시작: userId={}, currentRole={}", userId, user.getRole());
+            
+            // 1. 현재 역할이 내담자인지 확인
+            if (!UserRole.CLIENT.equals(user.getRole())) {
+                result.put("success", false);
+                result.put("message", "내담자만 상담사로 신청할 수 있습니다.");
+                return result;
+            }
+            
+            // 2. 상담사 자격 요건 확인
+            if (!checkConsultantEligibility(userId)) {
+                result.put("success", false);
+                result.put("message", "상담사 자격 요건을 충족하지 못합니다. 이메일 인증 및 기본 프로필 정보를 완성해주세요.");
+                result.put("requirements", getConsultantRequirements(user));
+                return result;
+            }
+            
+            // 3. 상담사 신청 정보를 메모에 저장
+            StringBuilder applicationInfo = new StringBuilder();
+            applicationInfo.append("\n=== 상담사 신청 정보 ===\n");
+            applicationInfo.append("신청일: ").append(java.time.LocalDateTime.now()).append("\n");
+            applicationInfo.append("신청 사유: ").append(request.getApplicationReason() != null ? request.getApplicationReason() : "미입력").append("\n");
+            applicationInfo.append("관련 경험: ").append(request.getExperience() != null ? request.getExperience() : "미입력").append("\n");
+            applicationInfo.append("보유 자격증: ").append(request.getCertifications() != null ? request.getCertifications() : "미입력").append("\n");
+            applicationInfo.append("전문 분야: ").append(request.getSpecialty() != null ? request.getSpecialty() : "미입력").append("\n");
+            applicationInfo.append("자기소개: ").append(request.getIntroduction() != null ? request.getIntroduction() : "미입력").append("\n");
+            applicationInfo.append("연락처: ").append(request.getContactInfo() != null ? request.getContactInfo() : "미입력").append("\n");
+            applicationInfo.append("희망 상담 시간: ").append(request.getPreferredHours() != null ? request.getPreferredHours() : "미입력").append("\n");
+            applicationInfo.append("추가 메모: ").append(request.getAdditionalNotes() != null ? request.getAdditionalNotes() : "미입력").append("\n");
+            
+            // 기존 메모에 추가
+            String existingMemo = user.getMemo() != null ? user.getMemo() : "";
+            user.setMemo(existingMemo + applicationInfo.toString());
+            
+            // 4. 사용자 역할을 상담사로 변경
+            user.setRole(UserRole.CONSULTANT);
+            user.setUpdatedAt(java.time.LocalDateTime.now());
+            
+            user = userRepository.save(user);
+            
+            log.info("상담사 신청 완료: userId={}, newRole={}", userId, user.getRole());
+            
+            result.put("success", true);
+            result.put("message", "상담사 신청이 완료되었습니다. 관리자 승인 후 상담사로 활동하실 수 있습니다.");
+            result.put("userId", userId);
+            result.put("newRole", user.getRole().getDisplayName());
+            result.put("applicationDate", java.time.LocalDateTime.now());
+            
+            return result;
+            
+        } catch (Exception e) {
+            log.error("상담사 신청 중 오류 발생: userId={}, error={}", userId, e.getMessage(), e);
+            result.put("success", false);
+            result.put("message", "상담사 신청 중 오류가 발생했습니다: " + e.getMessage());
+            return result;
+        }
+    }
+    
+    /**
+     * 상담사 자격 요건 상세 정보 반환
+     */
+    private Map<String, Object> getConsultantRequirements(User user) {
+        Map<String, Object> requirements = new HashMap<>();
+        
+        boolean emailVerified = user.getIsEmailVerified();
+        boolean hasGender = user.getGender() != null;
+        boolean hasBirthDate = user.getBirthDate() != null;
+        
+        // 나이 확인
+        boolean isAdult = true;
+        if (user.getBirthDate() != null) {
+            int age = Period.between(user.getBirthDate(), LocalDate.now()).getYears();
+            isAdult = age >= 20;
+        }
+        
+        requirements.put("emailVerified", emailVerified);
+        requirements.put("hasGender", hasGender);
+        requirements.put("hasBirthDate", hasBirthDate);
+        requirements.put("isAdult", isAdult);
+        
+        return requirements;
     }
 }

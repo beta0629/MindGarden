@@ -1,5 +1,7 @@
 package com.mindgarden.consultation.service;
 
+import java.util.Map;
+import com.mindgarden.consultation.dto.ConsultantApplicationRequest;
 import com.mindgarden.consultation.dto.UserProfileResponse;
 import com.mindgarden.consultation.dto.UserProfileUpdateRequest;
 
@@ -53,4 +55,13 @@ public interface UserProfileService {
      * @return 상담사 자격 요건 충족 여부
      */
     boolean checkConsultantEligibility(Long userId);
+    
+    /**
+     * 상담사 신청
+     * 
+     * @param userId 사용자 ID
+     * @param request 상담사 신청 정보
+     * @return 신청 결과
+     */
+    Map<String, Object> applyForConsultant(Long userId, ConsultantApplicationRequest request);
 }

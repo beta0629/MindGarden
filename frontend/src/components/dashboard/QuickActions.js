@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { QUICK_ACTIONS_CSS } from '../../constants/css';
 import { DASHBOARD_ACTIONS } from '../../constants/dashboard';
+import ConsultantApplicationModal from '../common/ConsultantApplicationModal';
 import './QuickActions.css';
 
 const QuickActions = ({ user }) => {
   const navigate = useNavigate();
+  const [showConsultantApplicationModal, setShowConsultantApplicationModal] = useState(false);
 
   const goToProfile = () => {
     navigate(`/${user?.role?.toLowerCase()}/mypage`);
@@ -52,6 +54,12 @@ const QuickActions = ({ user }) => {
     }
   };
 
+  const handleConsultantApplicationSuccess = (result) => {
+    console.log('상담사 신청 성공:', result);
+    // 페이지 새로고침 또는 사용자 정보 업데이트
+    window.location.reload();
+  };
+
   return (
     <div className={QUICK_ACTIONS_CSS.CONTAINER}>
       <h3 className={QUICK_ACTIONS_CSS.SECTION_TITLE}>
@@ -75,6 +83,23 @@ const QuickActions = ({ user }) => {
             <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>
               {user?.role === 'CLIENT' ? '상담사 메시지' : '메시지 관리'}
             </span>
+          </button>
+        )}
+        
+        {/* 상담사 신청 버튼 (내담자 전용) */}
+        {user?.role === 'CLIENT' && (
+          <button 
+            className={`${QUICK_ACTIONS_CSS.ACTION_BUTTON} consultant-application-btn`}
+            onClick={() => setShowConsultantApplicationModal(true)}
+            style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+              color: 'white',
+              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
+            }}
+          >
+            <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} bi-person-plus`}></i>
+            <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>상담사 신청</span>
           </button>
         )}
         
@@ -117,6 +142,15 @@ const QuickActions = ({ user }) => {
           <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.SETTINGS.LABEL}</span>
         </button>
       </div>
+      
+      {/* 상담사 신청 모달 */}
+      <ConsultantApplicationModal
+        isOpen={showConsultantApplicationModal}
+        onClose={() => setShowConsultantApplicationModal(false)}
+        userId={user?.id}
+        userRole={user?.role}
+        onSuccess={handleConsultantApplicationSuccess}
+      />
     </div>
   );
 };

@@ -131,18 +131,19 @@ const UserManagement = ({ onUpdate, showToast }) => {
                 credentials: 'include'
             });
 
-            if (response.ok) {
+            const result = await response.json();
+
+            if (response.ok && result.success) {
                 const message = selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' 
                     ? `${selectedUser.name}님이 상담사로 성공적으로 변경되었습니다.`
-                    : '사용자 역할이 성공적으로 변경되었습니다.';
+                    : result.message || '사용자 역할이 성공적으로 변경되었습니다.';
                 toast(message, 'success');
                 setShowRoleModal(false);
                 setForm({ newRole: '' });
                 loadData();
-                onUpdate();
+                onUpdate && onUpdate();
             } else {
-                const error = await response.json();
-                toast(error.message || '역할 변경에 실패했습니다.', 'danger');
+                toast(result.message || '역할 변경에 실패했습니다.', 'danger');
             }
         } catch (error) {
             console.error('역할 변경 실패:', error);

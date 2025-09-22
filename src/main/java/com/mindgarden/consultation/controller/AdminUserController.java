@@ -235,9 +235,10 @@ public class AdminUserController {
     
     /**
      * 유저 역할 변경 (관리자 전용)
+     * 관리자 권한으로 자격 요건을 우회하여 역할 변경 가능
      */
     @PutMapping("/{userId}/role")
-    public ResponseEntity<Boolean> changeUserRole(
+    public ResponseEntity<Map<String, Object>> changeUserRole(
             @PathVariable Long userId,
             @RequestParam String newRole) {
         try {
@@ -246,20 +247,42 @@ public class AdminUserController {
             // 문자열을 UserRole enum으로 변환
             UserRole role = UserRole.fromString(newRole);
             if (role == null) {
-                return ResponseEntity.badRequest().body(false);
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "유효하지 않은 역할입니다.");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
             
-            boolean success = userProfileService.changeUserRole(userId, role);
-            if (success) {
-                log.info("유저 역할 변경 완료: userId={}, newRole={}", userId, role.getDisplayName());
-                return ResponseEntity.ok(true);
-            } else {
-                return ResponseEntity.badRequest().body(false);
-            }
+            // UserService를 통해 직접 역할 변경 (자격 요건 우회)
+            User user = userService.findActiveByIdOrThrow(userId);
+            UserRole oldRole = user.getRole();
+            
+            user.setRole(role);
+            user.setUpdatedAt(java.time.LocalDateTime.now());
+            user.setVersion(user.getVersion() + 1);
+            
+            userService.getRepository().save(user);
+            
+            log.info("관리자 권한으로 유저 역할 변경 완료: userId={}, oldRole={}, newRole={}", 
+                    userId, oldRole.getDisplayName(), role.getDisplayName());
+            
+            Map<String, Object> successResponse = new HashMap<>();
+            successResponse.put("success", true);
+            successResponse.put("message", "역할이 성공적으로 변경되었습니다.");
+            successResponse.put("oldRole", oldRole.name());
+            successResponse.put("newRole", role.name());
+            successResponse.put("newRoleDisplayName", role.getDisplayName());
+            
+            return ResponseEntity.ok(successResponse);
+            
         } catch (Exception e) {
             log.error("유저 역할 변경 중 오류 발생: userId={}, newRole={}, error={}", 
                     userId, newRole, e.getMessage(), e);
-            return ResponseEntity.badRequest().body(false);
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "역할 변경 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
     

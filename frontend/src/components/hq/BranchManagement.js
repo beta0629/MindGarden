@@ -57,7 +57,7 @@ const BranchManagement = () => {
             loadBranchStatistics(selectedBranch.code);
             loadBranchUsers(selectedBranch.code);
         }
-    }, [selectedBranch, selectedRole, includeInactive, loadBranchStatistics, loadBranchUsers]);
+    }, [selectedBranch, selectedRole, includeInactive]);
     
     // 지점 목록 로드
     const loadBranches = useCallback(async () => {

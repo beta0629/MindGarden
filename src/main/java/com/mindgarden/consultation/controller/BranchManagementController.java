@@ -85,16 +85,11 @@ public class BranchManagementController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
             
-            // 지점별 사용자 통계 계산
-            List<User> branchUsers = userService.findByBranchCode(branchCode);
+            // 지점별 사용자 통계 계산 (Repository에서 이미 활성 사용자만 조회)
+            List<User> activeUsers = userService.findByBranchCode(branchCode);
             
             // 관리자 역할 목록 (지점별로 다름)
             Set<String> adminRoles = Set.of("ADMIN", "HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER", "HQ_SUPER_ADMIN");
-            
-            // 활성 사용자만 필터링
-            List<User> activeUsers = branchUsers.stream()
-                    .filter(u -> !u.getIsDeleted())
-                    .collect(Collectors.toList());
             
             Map<String, Object> statistics = new HashMap<>();
             statistics.put("branchCode", branchCode);
@@ -103,9 +98,9 @@ public class BranchManagementController {
             statistics.put("consultants", activeUsers.stream().filter(u -> u.getRole().name().equals("CONSULTANT")).count());
             statistics.put("admins", activeUsers.stream().filter(u -> adminRoles.contains(u.getRole().name())).count());
             statistics.put("activeUsers", activeUsers.size());
-            statistics.put("inactiveUsers", branchUsers.stream().filter(u -> u.getIsDeleted()).count());
+            statistics.put("inactiveUsers", 0); // Repository에서 활성 사용자만 조회하므로 0
             
-            log.info("지점 통계 조회 완료: branchCode={}, activeUsers={}, totalUsers={}", branchCode, activeUsers.size(), branchUsers.size());
+            log.info("지점 통계 조회 완료: branchCode={}, activeUsers={}", branchCode, activeUsers.size());
             return ResponseEntity.ok(statistics);
             
         } catch (Exception e) {

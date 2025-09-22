@@ -174,7 +174,10 @@ public class BranchManagementController {
     public ResponseEntity<Map<String, Object>> bulkTransferUsers(@RequestBody Map<String, Object> request) {
         try {
             @SuppressWarnings("unchecked")
-            List<Long> userIds = (List<Long>) request.get("userIds");
+            List<Object> userIdsRaw = (List<Object>) request.get("userIds");
+            List<Long> userIds = userIdsRaw.stream()
+                .map(id -> Long.valueOf(id.toString()))
+                .collect(Collectors.toList());
             String targetBranchCode = (String) request.get("targetBranchCode");
             String reason = (String) request.get("reason");
             

@@ -411,4 +411,10 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u.branch.id, u.branch.branchName, u.role, COUNT(u) FROM User u WHERE u.isDeleted = false GROUP BY u.branch.id, u.branch.branchName, u.role ORDER BY u.branch.branchName, u.role")
     List<Object[]> countUsersByBranchAndRole();
+    
+    /**
+     * 지점 코드별 사용자 조회
+     */
+    @Query("SELECT u FROM User u WHERE u.branchCode = ?1 ORDER BY u.username")
+    List<User> findByBranchCode(String branchCode);
 }

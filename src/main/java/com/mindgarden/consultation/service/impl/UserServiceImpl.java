@@ -650,6 +650,11 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
+    public List<User> findByBranchCode(String branchCode) {
+        return userRepository.findByBranchCode(branchCode);
+    }
+    
+    @Override
     public void addExperiencePoints(Long id, Long points) {
         User user = findActiveByIdOrThrow(id);
         user.setExperiencePoints(user.getExperiencePoints() + points);

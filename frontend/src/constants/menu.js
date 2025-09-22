@@ -173,6 +173,11 @@ export const HQ_ADMIN_MENU_ITEMS = {
       label: '사용자 관리',
       icon: 'bi-people'
     },
+    BRANCHES: {
+      id: 'branches',
+      label: '지점 관리',
+      icon: 'bi-shop'
+    },
     SYSTEM: {
       id: 'system',
       label: '시스템 관리',
@@ -188,7 +193,14 @@ export const HQ_ADMIN_MENU_ITEMS = {
     users: [
       { id: 'hq-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
       { id: 'hq-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
+      { id: 'hq-user-management', label: '사용자 관리', path: '/admin/user-management', icon: 'bi-people' },
       { id: 'hq-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' }
+    ],
+    branches: [
+      { id: 'hq-branch-management', label: '지점 관리', path: '/hq/branch-management', icon: 'bi-shop' },
+      { id: 'hq-branch-list', label: '지점 목록', path: '/admin/branches', icon: 'bi-list' },
+      { id: 'hq-branch-create', label: '지점 등록', path: '/admin/branches/create', icon: 'bi-plus-circle' },
+      { id: 'hq-branch-managers', label: '지점장 관리', path: '/admin/branch-managers', icon: 'bi-person-badge' }
     ],
     system: [
       { id: 'hq-codes', label: '공통코드 관리', path: '/admin/common-codes', icon: 'bi-code' },
@@ -242,6 +254,7 @@ export const SUPER_HQ_ADMIN_MENU_ITEMS = {
     users: [
       { id: 'super-hq-consultants', label: '상담사 관리', path: '/admin/consultant-comprehensive', icon: 'bi-person-badge' },
       { id: 'super-hq-clients', label: '내담자 관리', path: '/admin/client-comprehensive', icon: 'bi-person-check' },
+      { id: 'super-hq-user-management', label: '사용자 관리', path: '/admin/user-management', icon: 'bi-people' },
       { id: 'super-hq-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' },
       { id: 'super-hq-admins', label: '관리자 관리', path: '/super_admin/admin-management', icon: 'bi-shield-check' }
     ],
@@ -252,6 +265,7 @@ export const SUPER_HQ_ADMIN_MENU_ITEMS = {
       { id: 'super-hq-integration-test', label: '통합 테스트', path: '/test/integration', icon: 'bi-check-circle' }
     ],
     branches: [
+      { id: 'super-hq-branch-management', label: '지점 관리', path: '/hq/branch-management', icon: 'bi-shop' },
       { id: 'super-hq-branch-list', label: '지점 목록', path: '/admin/branches', icon: 'bi-list' },
       { id: 'super-hq-branch-create', label: '지점 등록', path: '/admin/branches/create', icon: 'bi-plus-circle' },
       { id: 'super-hq-branch-managers', label: '지점장 관리', path: '/admin/branch-managers', icon: 'bi-person-badge' },

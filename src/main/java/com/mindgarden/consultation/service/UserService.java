@@ -245,6 +245,11 @@ public interface UserService extends BaseService<User, Long> {
     void changeUserGrade(Long id, String newGrade);
     
     /**
+     * 지점 코드별 사용자 조회
+     */
+    List<User> findByBranchCode(String branchCode);
+    
+    /**
      * 사용자 경험치 추가
      */
     void addExperiencePoints(Long id, Long points);

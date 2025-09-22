@@ -12,6 +12,7 @@ import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.UserAddressService;
 import com.mindgarden.consultation.service.UserProfileService;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,6 +42,7 @@ public class AdminUserController {
     private final EmailService emailService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserAddressService userAddressService;
+    private final CommonCodeService commonCodeService;
     
     /**
      * 전체 사용자 목록 조회 (관리자 전용)
@@ -297,6 +299,68 @@ public class AdminUserController {
         } catch (Exception e) {
             log.error("역할 목록 조회 중 오류 발생: error={}", e.getMessage(), e);
             return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    /**
+     * 사용자 지점 이동 (관리자 전용)
+     */
+    @PutMapping("/{userId}/branch")
+    public ResponseEntity<Map<String, Object>> changeUserBranch(
+            @PathVariable Long userId,
+            @RequestParam String newBranchCode) {
+        try {
+            log.info("관리자 권한으로 사용자 지점 이동: userId={}, newBranchCode={}", userId, newBranchCode);
+            
+            // 사용자 조회
+            User user = userService.findActiveByIdOrThrow(userId);
+            String oldBranchCode = user.getBranchCode();
+            
+            // 지점 코드 유효성 검사 (공통코드 기반)
+            var branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
+            var branchCodeExists = branchCodes.stream()
+                .anyMatch(code -> code.getCodeValue().equals(newBranchCode));
+            
+            if (!branchCodeExists) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "존재하지 않는 지점 코드입니다: " + newBranchCode);
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+            
+            // 지점 정보 가져오기
+            var branchInfo = branchCodes.stream()
+                .filter(code -> code.getCodeValue().equals(newBranchCode))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("지점 정보를 찾을 수 없습니다."));
+            
+            // 사용자 지점 변경
+            user.setBranchCode(newBranchCode);
+            user.setUpdatedAt(java.time.LocalDateTime.now());
+            user.setVersion(user.getVersion() + 1);
+            
+            userService.getRepository().save(user);
+            
+            log.info("관리자 권한으로 사용자 지점 이동 완료: userId={}, oldBranch={}, newBranch={}", 
+                    userId, oldBranchCode, newBranchCode);
+            
+            Map<String, Object> successResponse = new HashMap<>();
+            successResponse.put("success", true);
+            successResponse.put("message", "지점이 성공적으로 변경되었습니다.");
+            successResponse.put("oldBranchCode", oldBranchCode);
+            successResponse.put("newBranchCode", newBranchCode);
+            successResponse.put("newBranchName", branchInfo.getCodeLabel());
+            
+            return ResponseEntity.ok(successResponse);
+            
+        } catch (Exception e) {
+            log.error("사용자 지점 이동 중 오류 발생: userId={}, newBranchCode={}, error={}", 
+                    userId, newBranchCode, e.getMessage(), e);
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "지점 이동 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
     

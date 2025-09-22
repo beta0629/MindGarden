@@ -41,6 +41,7 @@ import PaymentTest from './components/test/PaymentTest';
 import IntegrationTest from './components/test/IntegrationTest';
 import AccountManagement from './components/admin/AccountManagement';
 import UserManagement from './components/admin/UserManagement';
+import BranchManagement from './components/hq/BranchManagement';
 import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
 import ConsultantClientList from './components/consultant/ConsultantClientList';
@@ -276,6 +277,7 @@ function AppContent() {
             <Route path="/admin/sessions" element={<SessionManagement />} />
             <Route path="/admin/accounts" element={<AccountManagement />} />
             <Route path="/admin/user-management" element={<UserManagement />} />
+            <Route path="/hq/branch-management" element={<BranchManagement />} />
             
             <Route path="/admin/schedules" element={
               <SimpleLayout>

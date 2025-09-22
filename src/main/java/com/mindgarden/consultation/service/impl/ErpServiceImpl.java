@@ -22,7 +22,6 @@ import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.ItemRepository;
 import com.mindgarden.consultation.repository.PurchaseOrderRepository;
 import com.mindgarden.consultation.repository.PurchaseRequestRepository;
-import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.UserService;
@@ -52,7 +51,6 @@ public class ErpServiceImpl implements ErpService {
     private final FinancialTransactionRepository financialTransactionRepository;
     private final UserService userService;
     private final FinancialTransactionService financialTransactionService;
-    private final CommonCodeService commonCodeService;
     
     // ==================== Item Management ====================
     
@@ -761,6 +759,7 @@ public class ErpServiceImpl implements ErpService {
         
         // 실제 재무 데이터 추가
         Map<String, Object> financialData = getRealTimeFinancialData();
+        log.info("📊 통합 대시보드 - financialData 구조: {}", financialData);
         dashboardData.put("financialData", financialData);
         
         // 최근 구매 요청
@@ -786,8 +785,167 @@ public class ErpServiceImpl implements ErpService {
         return dashboardData;
     }
     
+    @Override
+    public Map<String, Object> getBranchFinanceDashboard(String branchCode) {
+        Map<String, Object> dashboardData = new HashMap<>();
+        
+        try {
+            log.info("🏢 지점별 재무 대시보드 데이터 조회: 지점={}", branchCode);
+            
+            // 지점별 재무 거래 데이터 조회
+            List<com.mindgarden.consultation.dto.FinancialTransactionResponse> allTransactions = 
+                financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 10000))
+                    .getContent();
+            
+            // 지점코드로 필터링
+            List<com.mindgarden.consultation.dto.FinancialTransactionResponse> branchTransactions = 
+                allTransactions.stream()
+                    .filter(t -> branchCode.equals(t.getBranchCode()))
+                    .collect(java.util.stream.Collectors.toList());
+            
+            log.info("📊 지점 거래 데이터 필터링 완료: 전체={}, 지점={}건", allTransactions.size(), branchTransactions.size());
+            
+            // 지점별 수입/지출 계산 (손익계산서와 동일하게 모든 상태 포함)
+            BigDecimal totalIncome = branchTransactions.stream()
+                .filter(t -> "INCOME".equals(t.getTransactionType()))
+                .map(com.mindgarden.consultation.dto.FinancialTransactionResponse::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            BigDecimal totalExpense = branchTransactions.stream()
+                .filter(t -> "EXPENSE".equals(t.getTransactionType()))
+                .map(com.mindgarden.consultation.dto.FinancialTransactionResponse::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            BigDecimal netProfit = totalIncome.subtract(totalExpense);
+            
+            // 카테고리별 분석
+            Map<String, BigDecimal> incomeByCategory = new HashMap<>();
+            Map<String, BigDecimal> expenseByCategory = new HashMap<>();
+            
+            branchTransactions.forEach(t -> {
+                if ("INCOME".equals(t.getTransactionType())) {
+                    incomeByCategory.merge(t.getCategory() != null ? t.getCategory() : "기타", 
+                        t.getAmount(), BigDecimal::add);
+                } else if ("EXPENSE".equals(t.getTransactionType())) {
+                    expenseByCategory.merge(t.getCategory() != null ? t.getCategory() : "기타", 
+                        t.getAmount(), BigDecimal::add);
+                }
+            });
+            
+            // 최근 거래 내역 (최근 10건)
+            List<Map<String, Object>> recentTransactions = branchTransactions.stream()
+                .sorted((t1, t2) -> t2.getTransactionDate().compareTo(t1.getTransactionDate()))
+                .limit(10)
+                .map(t -> {
+                    Map<String, Object> transactionMap = new HashMap<>();
+                    transactionMap.put("id", t.getId());
+                    transactionMap.put("type", t.getTransactionType());
+                    transactionMap.put("amount", t.getAmount());
+                    transactionMap.put("category", t.getCategory() != null ? t.getCategory() : "기타");
+                    transactionMap.put("description", t.getDescription() != null ? t.getDescription() : "");
+                    transactionMap.put("date", t.getTransactionDate());
+                    transactionMap.put("status", t.getStatus());
+                    return transactionMap;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            // 대시보드 데이터 구성 (통합 대시보드와 동일한 구조)
+            Map<String, Object> financialData = new HashMap<>();
+            financialData.put("totalIncome", totalIncome);
+            financialData.put("totalExpense", totalExpense);
+            financialData.put("netProfit", netProfit);
+            financialData.put("incomeByCategory", incomeByCategory);
+            financialData.put("expenseByCategory", expenseByCategory);
+            financialData.put("transactionCount", branchTransactions.size());
+            
+            dashboardData.put("branchCode", branchCode);
+            dashboardData.put("financialData", financialData);
+            dashboardData.put("recentTransactions", recentTransactions);
+            
+            // ERP 통계 (지점별 동적 조회 - 세션 기반)
+            Map<String, Object> erpStats = getBranchErpStatisticsBySession(branchCode);
+            dashboardData.put("erpStats", erpStats);
+            
+            log.info("✅ 지점별 재무 대시보드 데이터 구성 완료: 지점={}, 수입={}, 지출={}", 
+                    branchCode, totalIncome, totalExpense);
+            
+        } catch (Exception e) {
+            log.error("❌ 지점별 재무 대시보드 데이터 조회 실패: 지점={}, 오류={}", branchCode, e.getMessage(), e);
+            throw new RuntimeException("지점별 재무 대시보드 데이터 조회에 실패했습니다: " + e.getMessage());
+        }
+        
+        return dashboardData;
+    }
+    
+    @Override
+    public Map<String, Object> getBranchFinanceDashboard(String branchCode, LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> dashboardData = new HashMap<>();
+        
+        try {
+            log.info("🏢 지점별 재무 대시보드 데이터 조회: 지점={}, 기간={}~{}", branchCode, startDate, endDate);
+            
+            // 지점별 재무 거래 데이터 조회 (날짜 범위 지정)
+            Map<String, Object> branchData = financialTransactionService.getBranchFinancialData(branchCode, startDate, endDate, null, null);
+            
+            log.info("🔍 지점별 재무 데이터 조회 결과: 지점={}, 데이터={}", branchCode, branchData);
+            
+            // 대시보드 데이터 구성
+            dashboardData.put("branchCode", branchCode);
+            dashboardData.put("financialData", branchData);
+            dashboardData.put("period", Map.of(
+                "startDate", startDate.toString(),
+                "endDate", endDate.toString()
+            ));
+            
+            // ERP 통계 (지점별 동적 조회 - 세션 기반)
+            Map<String, Object> erpStats = getBranchErpStatisticsBySession(branchCode);
+            dashboardData.put("erpStats", erpStats);
+            
+            log.info("✅ 지점별 재무 대시보드 데이터 구성 완료: 지점={}, 기간={}~{}", 
+                    branchCode, startDate, endDate);
+            
+        } catch (Exception e) {
+            log.error("❌ 지점별 재무 대시보드 데이터 조회 실패: 지점={}, 기간={}~{}, 오류={}", 
+                    branchCode, startDate, endDate, e.getMessage(), e);
+            throw new RuntimeException("지점별 재무 대시보드 데이터 조회에 실패했습니다: " + e.getMessage());
+        }
+        
+        return dashboardData;
+    }
+    
+    @Override
+    public Map<String, Object> getBranchFinanceStatistics(String branchCode, String startDate, String endDate) {
+        Map<String, Object> statistics = new HashMap<>();
+        
+        try {
+            log.info("📊 지점별 재무 통계 조회: 지점={}, 기간={} ~ {}", branchCode, startDate, endDate);
+            
+            // 날짜 범위 설정
+            LocalDate start = startDate != null ? LocalDate.parse(startDate) : LocalDate.now().withDayOfMonth(1);
+            LocalDate end = endDate != null ? LocalDate.parse(endDate) : LocalDate.now();
+            
+            // 지점별 재무 데이터 조회
+            Map<String, Object> branchData = financialTransactionService.getBranchFinancialData(branchCode, start, end, null, null);
+            
+            statistics.put("branchCode", branchCode);
+            statistics.put("period", Map.of(
+                "startDate", start.toString(),
+                "endDate", end.toString()
+            ));
+            statistics.putAll(branchData);
+            
+            log.info("✅ 지점별 재무 통계 조회 완료: 지점={}", branchCode);
+            
+        } catch (Exception e) {
+            log.error("❌ 지점별 재무 통계 조회 실패: 지점={}, 오류={}", branchCode, e.getMessage(), e);
+            throw new RuntimeException("지점별 재무 통계 조회에 실패했습니다: " + e.getMessage());
+        }
+        
+        return statistics;
+    }
+    
     /**
-     * 실시간 재무 데이터 조회
+     * 실시간 재무 데이터 조회 (HQ 전체)
      */
     private Map<String, Object> getRealTimeFinancialData() {
         Map<String, Object> financialData = new HashMap<>();
@@ -798,17 +956,17 @@ public class ErpServiceImpl implements ErpService {
                 financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 1000))
                     .getContent();
             
-            // 수입 총계 (INCOME 타입, PENDING과 COMPLETED 모두 포함)
+            log.info("📊 실시간 재무 데이터 - 전체 거래 건수: {}", transactions.size());
+            
+            // 수입 총계 (INCOME 타입, 손익계산서와 동일하게 모든 상태 포함)
             BigDecimal totalIncome = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
-                .filter(t -> !"REJECTED".equals(t.getStatus()) && !"CANCELLED".equals(t.getStatus())) // 거부/취소 제외
                 .map(com.mindgarden.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
-            // 지출 총계 (EXPENSE 타입, PENDING과 COMPLETED 모두 포함)
+            // 지출 총계 (EXPENSE 타입, 손익계산서와 동일하게 모든 상태 포함)
             BigDecimal totalExpense = transactions.stream()
                 .filter(t -> "EXPENSE".equals(t.getTransactionType()))
-                .filter(t -> !"REJECTED".equals(t.getStatus()) && !"CANCELLED".equals(t.getStatus())) // 거부/취소 제외
                 .map(com.mindgarden.consultation.dto.FinancialTransactionResponse::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             
@@ -820,11 +978,6 @@ public class ErpServiceImpl implements ErpService {
             Map<String, BigDecimal> expenseByCategory = new HashMap<>();
             
             transactions.forEach(t -> {
-                // 거부/취소된 거래는 제외
-                if ("REJECTED".equals(t.getStatus()) || "CANCELLED".equals(t.getStatus())) {
-                    return;
-                }
-                
                 String category = t.getCategory();
                 BigDecimal amount = t.getAmount();
                 
@@ -842,8 +995,8 @@ public class ErpServiceImpl implements ErpService {
             financialData.put("expenseByCategory", expenseByCategory);
             financialData.put("transactionCount", transactions.size());
             
-            log.info("실시간 재무 데이터 조회 완료 - 수입: {}, 지출: {}, 순이익: {}", 
-                totalIncome, totalExpense, netProfit);
+            log.info("실시간 재무 데이터 조회 완료 - 수입: {}, 지출: {}, 순이익: {}, 거래건수: {}", 
+                totalIncome, totalExpense, netProfit, transactions.size());
             
         } catch (Exception e) {
             log.error("실시간 재무 데이터 조회 실패: {}", e.getMessage(), e);
@@ -857,6 +1010,60 @@ public class ErpServiceImpl implements ErpService {
         }
         
         return financialData;
+    }
+    
+    /**
+     * 지점별 ERP 통계 조회 (세션 기반)
+     */
+    private Map<String, Object> getBranchErpStatisticsBySession(String branchCode) {
+        Map<String, Object> erpStats = new HashMap<>();
+        
+        try {
+            // 현재는 ERP 엔티티들이 지점코드를 가지지 않으므로 전체 통계 반환
+            // 향후 지점별 ERP 관리가 필요하면 엔티티에 branchCode 필드 추가 필요
+            
+            erpStats.put("totalItems", itemRepository.findAllActive().size());
+            erpStats.put("pendingRequests", purchaseRequestRepository.findPendingAdminApproval().size());
+            erpStats.put("totalOrders", purchaseOrderRepository.findAllActive().size());
+            
+            // 예산 사용률 계산
+            List<Budget> allBudgets = budgetRepository.findAllActive();
+            BigDecimal totalBudget = allBudgets.stream()
+                    .map(Budget::getTotalBudget)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalUsed = allBudgets.stream()
+                    .map(Budget::getUsedBudget)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            String budgetUsagePercentage = "0%";
+            if (totalBudget.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal usagePercentage = totalUsed.divide(totalBudget, 4, java.math.RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100));
+                budgetUsagePercentage = usagePercentage.setScale(1, java.math.RoundingMode.HALF_UP) + "%";
+            }
+            
+            erpStats.put("totalBudgets", allBudgets.size());
+            erpStats.put("budgetUsage", budgetUsagePercentage);
+            erpStats.put("budgetUsed", totalUsed);
+            erpStats.put("budgetTotal", totalBudget);
+            
+            log.info("📊 지점별 ERP 통계 조회 완료: 지점={}, 아이템={}, 요청={}, 주문={}, 예산={}", 
+                    branchCode, erpStats.get("totalItems"), erpStats.get("pendingRequests"), 
+                    erpStats.get("totalOrders"), erpStats.get("totalBudgets"));
+            
+        } catch (Exception e) {
+            log.error("❌ 지점별 ERP 통계 조회 실패: 지점={}, 오류={}", branchCode, e.getMessage(), e);
+            // 기본값 설정
+            erpStats.put("totalItems", 0);
+            erpStats.put("pendingRequests", 0);
+            erpStats.put("totalOrders", 0);
+            erpStats.put("totalBudgets", 0);
+            erpStats.put("budgetUsage", "0%");
+            erpStats.put("budgetUsed", BigDecimal.ZERO);
+            erpStats.put("budgetTotal", BigDecimal.ZERO);
+        }
+        
+        return erpStats;
     }
     
     @Override
@@ -1050,13 +1257,14 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     @Transactional(readOnly = true)
-    public Map<String, Object> getBalanceSheet(String reportDate) {
-        log.info("대차대조표 조회: {}", reportDate);
+    public Map<String, Object> getBalanceSheet(String reportDate, String branchCode) {
+        log.info("대차대조표 조회: {}, 브랜치: {}", reportDate, branchCode);
         
         Map<String, Object> balanceSheet = new HashMap<>();
         
         // 기본 정보
         balanceSheet.put("reportDate", reportDate);
+        balanceSheet.put("branchCode", branchCode);
         balanceSheet.put("reportPeriod", "대차대조표");
         
         // 자산 섹션
@@ -1067,9 +1275,19 @@ public class ErpServiceImpl implements ErpService {
         
         // 실제 재무 거래에서 자산 계산
         try {
-            List<com.mindgarden.consultation.dto.FinancialTransactionResponse> transactions = 
-                financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 1000))
-                    .getContent();
+            List<com.mindgarden.consultation.dto.FinancialTransactionResponse> transactions;
+            if (branchCode != null && !branchCode.isEmpty()) {
+                // 특정 브랜치 데이터만 조회
+                transactions = financialTransactionService.getTransactionsByBranch(
+                    branchCode, null, null, null, null, 
+                    org.springframework.data.domain.PageRequest.of(0, 1000)
+                ).getContent();
+            } else {
+                // 전체 데이터 조회
+                transactions = financialTransactionService.getTransactions(
+                    org.springframework.data.domain.PageRequest.of(0, 1000)
+                ).getContent();
+            }
             
             BigDecimal totalIncome = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
@@ -1258,12 +1476,13 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     @Transactional(readOnly = true)
-    public Map<String, Object> getIncomeStatement(String startDate, String endDate) {
-        log.info("손익계산서 조회: {} ~ {}", startDate, endDate);
+    public Map<String, Object> getIncomeStatement(String startDate, String endDate, String branchCode) {
+        log.info("손익계산서 조회: {} ~ {}, 브랜치: {}", startDate, endDate, branchCode);
         
         Map<String, Object> incomeStatement = new HashMap<>();
         incomeStatement.put("startDate", startDate);
         incomeStatement.put("endDate", endDate);
+        incomeStatement.put("branchCode", branchCode);
         incomeStatement.put("reportPeriod", "손익계산서");
         
         // 수익 섹션 - 실제 결제 데이터에서 조회
@@ -1271,9 +1490,19 @@ public class ErpServiceImpl implements ErpService {
         
         // 실제 재무 거래에서 수익 조회
         try {
-            List<com.mindgarden.consultation.dto.FinancialTransactionResponse> transactions = 
-                financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 1000))
-                    .getContent();
+            List<com.mindgarden.consultation.dto.FinancialTransactionResponse> transactions;
+            if (branchCode != null && !branchCode.isEmpty()) {
+                // 특정 브랜치 데이터만 조회
+                transactions = financialTransactionService.getTransactionsByBranch(
+                    branchCode, null, null, startDate, endDate, 
+                    org.springframework.data.domain.PageRequest.of(0, 1000)
+                ).getContent();
+            } else {
+                // 전체 데이터 조회
+                transactions = financialTransactionService.getTransactions(
+                    org.springframework.data.domain.PageRequest.of(0, 1000)
+                ).getContent();
+            }
             
             BigDecimal consultationRevenue = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
@@ -1303,9 +1532,19 @@ public class ErpServiceImpl implements ErpService {
         // 비용 섹션 - 실제 재무 거래에서 조회
         Map<String, Object> expenses = new HashMap<>();
         try {
-            List<com.mindgarden.consultation.dto.FinancialTransactionResponse> transactions = 
-                financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 1000))
-                    .getContent();
+            List<com.mindgarden.consultation.dto.FinancialTransactionResponse> transactions;
+            if (branchCode != null && !branchCode.isEmpty()) {
+                // 특정 브랜치 데이터만 조회
+                transactions = financialTransactionService.getTransactionsByBranch(
+                    branchCode, null, null, startDate, endDate, 
+                    org.springframework.data.domain.PageRequest.of(0, 1000)
+                ).getContent();
+            } else {
+                // 전체 데이터 조회
+                transactions = financialTransactionService.getTransactions(
+                    org.springframework.data.domain.PageRequest.of(0, 1000)
+                ).getContent();
+            }
             
             // 카테고리별 지출 계산
             Map<String, BigDecimal> expenseByCategory = new HashMap<>();

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useSession } from '../../contexts/SessionContext';
+import { getCodeLabel } from '../../utils/commonCodeUtils';
 import SimpleHeader from '../layout/SimpleHeader';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
@@ -22,6 +24,7 @@ const formatNumber = (num) => {
  * ERP와 회계 시스템을 통합한 수입/지출 관리 화면
  */
 const IntegratedFinanceDashboard = () => {
+  const { user } = useSession();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,25 +32,113 @@ const IntegratedFinanceDashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showQuickExpenseForm, setShowQuickExpenseForm] = useState(false);
+  
+  // 본사 사용자를 위한 지점 선택
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [branches, setBranches] = useState([]);
+  const [isHQUser, setIsHQUser] = useState(false);
 
   useEffect(() => {
-    fetchDashboardData();
+    initializeComponent();
   }, []);
+  
+  useEffect(() => {
+    if (selectedBranch) {
+      fetchDashboardData();
+    }
+  }, [selectedBranch]);
+  
+  const initializeComponent = async () => {
+    try {
+      // 사용자 권한 확인
+      const userRole = user?.role;
+      const isHQ = userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN' || user?.branchCode === 'HQ';
+      setIsHQUser(isHQ);
+      
+      if (isHQ) {
+        // 본사 사용자: 지점 목록 로드
+        await loadBranches();
+      } else {
+        // 지점 사용자: 자기 지점으로 설정
+        setSelectedBranch(user?.branchCode || '');
+      }
+    } catch (err) {
+      console.error('컴포넌트 초기화 실패:', err);
+      setError('초기화 중 오류가 발생했습니다.');
+    }
+  };
+  
+  const loadBranches = async () => {
+    try {
+      const response = await axios.get('/api/common/codes/BRANCH', {
+        withCredentials: true
+      });
+      
+      if (response.data.success) {
+        setBranches(response.data.data || []);
+        // 기본값으로 첫 번째 지점 선택
+        if (response.data.data && response.data.data.length > 0) {
+          setSelectedBranch(response.data.data[0].codeValue);
+        }
+      }
+    } catch (err) {
+      console.error('지점 목록 로드 실패:', err);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/erp/finance/dashboard', {
+      
+      // 지점 선택에 따른 API 호출
+      let url = '/api/erp/finance/dashboard';
+      let targetBranch = selectedBranch;
+      
+      if (isHQUser) {
+        // 본사 사용자: 선택된 지점의 데이터 조회
+        if (selectedBranch === 'HQ' || !selectedBranch) {
+          // HQ 선택 또는 미선택 시 통합 데이터 조회
+          console.log('📍 본사 - 통합 데이터 조회');
+          // 파라미터 없이 호출하면 통합 데이터
+        } else {
+          // 특정 지점 선택 시 해당 지점 데이터 조회
+          url += `?branchCode=${selectedBranch}`;
+          console.log('📍 본사 - 지점별 데이터 조회:', selectedBranch);
+        }
+      } else {
+        // 지점 사용자: 자기 지점 데이터만 조회 (파라미터 전달하지 않음)
+        targetBranch = user?.branchCode;
+        console.log('📍 지점 사용자 - 자기 지점 데이터 조회:', targetBranch);
+      }
+      
+      const response = await axios.get(url, {
         withCredentials: true
       });
+      
       if (response.data.success) {
         setDashboardData(response.data.data);
+        console.log('✅ ERP 대시보드 데이터 로드 완료:', response.data.data);
       } else {
         setError(response.data.message);
+        
+        // 재로그인 필요한 경우 로그인 화면으로 이동
+        if (response.data.redirectToLogin) {
+          console.error('🔒 세션 만료 - 로그인 화면으로 이동');
+          window.location.href = '/login';
+          return;
+        }
       }
     } catch (err) {
-      setError('데이터를 불러오는 중 오류가 발생했습니다.');
       console.error('Dashboard fetch error:', err);
+      
+      // 401 오류인 경우 로그인 화면으로 이동
+      if (err.response?.status === 401 || err.status === 401) {
+        console.error('🔒 인증 오류 - 로그인 화면으로 이동');
+        window.location.href = '/login';
+        return;
+      }
+      
+      setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -110,10 +201,37 @@ const IntegratedFinanceDashboard = () => {
             color: 'rgba(255,255,255,0.9)',
             fontWeight: '300'
           }}>
-            수입/지출 통합 관리 및 대차대조표
+            {isHQUser 
+              ? `${selectedBranch ? (selectedBranch === 'HQ' ? '전체 지점 통합' : `${selectedBranch} 지점`) : '지점을 선택하세요'} - 수입/지출 관리`
+              : `${user?.branchCode || ''} 지점 - 수입/지출 관리`
+            }
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
+          {isHQUser && (
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              style={{
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: 'none',
+                fontSize: '14px',
+                backgroundColor: 'rgba(255,255,255,0.3)',
+                color: 'white',
+                backdropFilter: 'blur(10px)',
+                cursor: 'pointer',
+                minWidth: '120px'
+              }}
+            >
+              <option value="">지점 선택</option>
+              {branches.map(branch => (
+                <option key={branch.codeValue} value={branch.codeValue} style={{color: '#333'}}>
+                  {branch.codeLabel}
+                </option>
+              ))}
+            </select>
+          )}
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
@@ -256,8 +374,8 @@ const IntegratedFinanceDashboard = () => {
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}>
         {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
-        {activeTab === 'balance-sheet' && <BalanceSheetTab />}
-        {activeTab === 'income-statement' && <IncomeStatementTab />}
+        {activeTab === 'balance-sheet' && <BalanceSheetTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}
+        {activeTab === 'income-statement' && <IncomeStatementTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}
         {activeTab === 'daily' && <DailyReportTab period={selectedPeriod} />}
         {activeTab === 'monthly' && <MonthlyReportTab period={selectedPeriod} />}
         {activeTab === 'yearly' && <YearlyReportTab period={selectedPeriod} />}
@@ -562,17 +680,22 @@ const OverviewTab = ({ data }) => {
 };
 
 // 대차대조표 탭 컴포넌트
-const BalanceSheetTab = () => {
+const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
   const [balanceSheetData, setBalanceSheetData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchBalanceSheet();
-  }, []);
+  }, [selectedBranch]);
 
   const fetchBalanceSheet = async () => {
     try {
-      const response = await axios.get('/api/erp/finance/balance-sheet', {
+      let url = '/api/erp/finance/balance-sheet';
+      if (isHQUser && selectedBranch && selectedBranch !== 'HQ') {
+        url += `?branchCode=${selectedBranch}`;
+      }
+      
+      const response = await axios.get(url, {
         withCredentials: true
       });
       if (response.data.success) {
@@ -722,17 +845,22 @@ const BalanceSheetTab = () => {
 };
 
 // 손익계산서 탭 컴포넌트
-const IncomeStatementTab = () => {
+const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
   const [incomeStatementData, setIncomeStatementData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchIncomeStatement();
-  }, []);
+  }, [selectedBranch]);
 
   const fetchIncomeStatement = async () => {
     try {
-      const response = await axios.get('/api/erp/finance/income-statement', {
+      let url = '/api/erp/finance/income-statement';
+      if (isHQUser && selectedBranch && selectedBranch !== 'HQ') {
+        url += `?branchCode=${selectedBranch}`;
+      }
+      
+      const response = await axios.get(url, {
         withCredentials: true
       });
       if (response.data.success) {

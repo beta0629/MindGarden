@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
+import { getCodeLabel } from '../../utils/commonCodeUtils';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
 import FinancialCalendarView from './FinancialCalendarView';
@@ -43,7 +44,9 @@ const FinancialManagement = () => {
     totalIncome: 0,
     totalExpense: 0,
     netProfit: 0,
-    transactionCount: 0
+    transactionCount: 0,
+    branchCode: '',
+    branchName: ''
   });
 
   // 데이터 로드
@@ -110,10 +113,24 @@ const FinancialManagement = () => {
         params.append('search', filters.searchText);
       }
       
+      // ERP 중앙화: 지점코드가 있으면 해당 지점만, 없으면 전체 데이터 조회
+      if (user?.branchCode) {
+        params.append('branchCode', user.branchCode);
+        console.log('📍 지점 관리자 - 자기 지점 데이터 조회:', user.branchCode);
+      } else {
+        console.log('📍 ERP 중앙화 - 전체 회사 데이터 조회');
+        console.log('📍 사용자 정보:', user);
+      }
+      
       const response = await apiGet(`/api/admin/financial-transactions?${params.toString()}`);
+      console.log('📡 API 응답:', response);
+      console.log('📡 API URL:', `/api/admin/financial-transactions?${params.toString()}`);
+      
       if (response.success) {
         // 클라이언트 사이드 필터링 (서버 사이드 필터링이 완전하지 않은 경우 백업)
         let filteredTransactions = response.data || [];
+        console.log('📊 조회된 거래 데이터:', filteredTransactions.length, '건');
+        console.log('📊 첫 번째 거래 샘플:', filteredTransactions[0]);
         
         // 검색 텍스트 필터링
         if (filters.searchText) {
@@ -133,18 +150,33 @@ const FinancialManagement = () => {
         }));
         
         // 대시보드 통계 계산 (이번 달 기준)
-        calculateDashboardStats(filteredTransactions);
+        await calculateDashboardStats(filteredTransactions);
       } else {
         setError(response.message || '재무 거래 목록을 불러올 수 없습니다.');
+        
+        // 재로그인 필요한 경우 로그인 화면으로 이동
+        if (response.redirectToLogin) {
+          console.error('🔒 세션 만료 - 로그인 화면으로 이동');
+          window.location.href = '/login';
+          return;
+        }
       }
     } catch (err) {
       console.error('재무 거래 로드 실패:', err);
+      
+      // 401 오류인 경우 로그인 화면으로 이동
+      if (err.response?.status === 401 || err.status === 401) {
+        console.error('🔒 인증 오류 - 로그인 화면으로 이동');
+        window.location.href = '/login';
+        return;
+      }
+      
       setError('재무 거래 목록을 불러오는 중 오류가 발생했습니다.');
     }
   };
 
   // 대시보드 통계 계산 함수
-  const calculateDashboardStats = (transactionData) => {
+  const calculateDashboardStats = async (transactionData) => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
@@ -166,11 +198,16 @@ const FinancialManagement = () => {
       .filter(t => t.transactionType === 'EXPENSE')
       .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
     
+    // 지점명을 비동기로 가져오기
+    const branchName = await getBranchName(user?.branchCode);
+    
     setDashboardStats({
       totalIncome,
       totalExpense,
       netProfit: totalIncome - totalExpense,
-      transactionCount: thisMonthTransactions.length
+      transactionCount: thisMonthTransactions.length,
+      branchCode: user?.branchCode || '',
+      branchName: branchName
     });
     
     console.log('📊 대시보드 통계 업데이트:', {
@@ -208,6 +245,18 @@ const FinancialManagement = () => {
     return new Date(dateString).toLocaleDateString('ko-KR');
   };
 
+  // 지점명 가져오기 (공통코드에서 동적으로)
+  const getBranchName = async (branchCode) => {
+    if (!branchCode) return '';
+    try {
+      const branchName = await getCodeLabel('BRANCH', branchCode);
+      return branchName || branchCode;
+    } catch (error) {
+      console.error('지점명 조회 실패:', error);
+      return branchCode;
+    }
+  };
+
   if (sessionLoading) {
     return (
       <SimpleLayout 
@@ -220,7 +269,7 @@ const FinancialManagement = () => {
 
   if (!isLoggedIn) {
     return (
-      <SimpleLayout title="재무 관리">
+      <SimpleLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
         <div className="erp-error">
           <h3>로그인이 필요합니다.</h3>
           <p>재무 관리 기능을 사용하려면 로그인해주세요.</p>
@@ -230,7 +279,7 @@ const FinancialManagement = () => {
   }
 
   return (
-    <SimpleLayout title="재무 관리">
+    <SimpleLayout title={`재무 관리${dashboardStats.branchName ? ' - ' + dashboardStats.branchName : ''}`}>
       <div className="erp-system">
         <div className="erp-container">
         {/* 헤더 */}

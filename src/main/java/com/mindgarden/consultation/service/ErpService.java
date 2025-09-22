@@ -267,14 +267,29 @@ public interface ErpService {
     // ==================== 회계 시스템 통합 ====================
     
     /**
-     * 통합 재무 대시보드 데이터 조회 (수입/지출 통합)
+     * 통합 재무 대시보드 데이터 조회 (HQ 전체)
      */
     Map<String, Object> getIntegratedFinanceDashboard();
     
     /**
-     * 수입/지출 통계 조회
+     * 지점별 재무 대시보드 데이터 조회
+     */
+    Map<String, Object> getBranchFinanceDashboard(String branchCode);
+    
+    /**
+     * 지점별 재무 대시보드 데이터 조회 (날짜 범위 지정)
+     */
+    Map<String, Object> getBranchFinanceDashboard(String branchCode, java.time.LocalDate startDate, java.time.LocalDate endDate);
+    
+    /**
+     * 수입/지출 통계 조회 (HQ 전체)
      */
     Map<String, Object> getFinanceStatistics(String startDate, String endDate);
+    
+    /**
+     * 지점별 수입/지출 통계 조회
+     */
+    Map<String, Object> getBranchFinanceStatistics(String branchCode, String startDate, String endDate);
     
     /**
      * 카테고리별 수입/지출 분석
@@ -284,12 +299,12 @@ public interface ErpService {
     /**
      * 대차대조표 조회
      */
-    Map<String, Object> getBalanceSheet(String reportDate);
+    Map<String, Object> getBalanceSheet(String reportDate, String branchCode);
     
     /**
      * 손익계산서 조회
      */
-    Map<String, Object> getIncomeStatement(String startDate, String endDate);
+    Map<String, Object> getIncomeStatement(String startDate, String endDate, String branchCode);
     
     /**
      * 일단위 재무 리포트

@@ -38,6 +38,7 @@ public class FinancialTransactionResponse {
     private String relatedEntityType;
     private String department;
     private String projectCode;
+    private String branchCode;
     private Boolean taxIncluded;
     private BigDecimal taxAmount;
     private BigDecimal amountBeforeTax;

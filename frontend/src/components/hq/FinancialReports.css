@@ -1,0 +1,177 @@
+.financial-reports {
+    padding: 1rem 0;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.financial-reports .card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #e3e6f0;
+}
+
+.financial-reports .card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.financial-reports .nav-tabs {
+    border-bottom: 2px solid #e3e6f0;
+}
+
+.financial-reports .nav-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+}
+
+.financial-reports .nav-tabs .nav-link.active {
+    background-color: #007bff;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.financial-reports .nav-tabs .nav-link:hover {
+    color: #007bff;
+    background-color: #f8f9fc;
+    border-radius: 8px 8px 0 0;
+}
+
+.financial-reports .category-item {
+    background-color: #f8f9fc;
+    transition: transform 0.2s ease;
+}
+
+.financial-reports .category-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.financial-reports .growth-item {
+    background-color: #f8f9fc;
+    transition: transform 0.2s ease;
+}
+
+.financial-reports .growth-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.financial-reports .progress {
+    background-color: #e9ecef;
+}
+
+.financial-reports .progress-bar {
+    background-color: #007bff;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .financial-reports {
+        padding: 0.5rem 0;
+    }
+    
+    .financial-reports .card {
+        margin-bottom: 1rem;
+    }
+    
+    .financial-reports .row {
+        margin: 0;
+    }
+    
+    .financial-reports .col-md-3,
+    .financial-reports .col-md-6 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .financial-reports h2 {
+        font-size: 1.5rem;
+    }
+    
+    .financial-reports h4 {
+        font-size: 1.25rem;
+    }
+    
+    .financial-reports .nav-tabs .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* 테이블 스타일 */
+.financial-reports .table {
+    font-size: 0.9rem;
+}
+
+.financial-reports .table th {
+    background-color: #f8f9fc;
+    border-color: #e3e6f0;
+    font-weight: 600;
+}
+
+.financial-reports .table td {
+    border-color: #e3e6f0;
+    vertical-align: middle;
+}
+
+/* 차트 컨테이너 */
+.financial-reports .chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+/* 알림 스타일 */
+.financial-reports .alert {
+    border: none;
+    border-radius: 8px;
+}
+
+/* 버튼 스타일 */
+.financial-reports .btn {
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.financial-reports .btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.financial-reports .btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.financial-reports .btn-outline-info {
+    border-color: #17a2b8;
+    color: #17a2b8;
+}
+
+.financial-reports .btn-outline-info:hover {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+/* 탭 컨텐츠 스타일 */
+.financial-reports .tab-content {
+    padding-top: 1rem;
+}
+
+/* 프린트 스타일 */
+@media print {
+    .financial-reports .btn,
+    .financial-reports .nav-tabs {
+        display: none !important;
+    }
+    
+    .financial-reports .card {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .financial-reports .card-header {
+        background-color: #f0f0f0;
+        -webkit-print-color-adjust: exact;
+    }
+}

@@ -22,6 +22,11 @@ import org.springframework.stereotype.Repository;
 public interface FinancialTransactionRepository extends JpaRepository<FinancialTransaction, Long> {
     
     /**
+     * 삭제되지 않은 모든 거래 조회
+     */
+    List<FinancialTransaction> findByIsDeletedFalse();
+    
+    /**
      * 거래 유형별 조회
      */
     List<FinancialTransaction> findByTransactionTypeAndIsDeletedFalse(

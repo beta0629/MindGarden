@@ -2,6 +2,70 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-01-17] - 재무 보고서 카테고리별 지출 분석 기능 완성
+
+### ✨ 새로운 기능
+- **월별 보고서 카테고리별 지출 분석**
+  - 월별 보고서에서 카테고리별 지출 분석 데이터 표시
+  - 각 지점의 카테고리별 지출 데이터를 통합하여 분석
+  - 상담비, 임대료, 공과금, 급여 등 카테고리별 금액과 비율 표시
+  - 진행률 바와 퍼센트 표시로 직관적인 분석 제공
+
+- **재무 보고서 차트 데이터 개선**
+  - 일별 수익/지출 트렌드 차트 정상 표시
+  - 월별 데이터를 일별로 분산하여 차트 생성
+  - 실제 거래 데이터 기반 차트 렌더링
+
+### 🔧 개선사항
+- **데이터 파싱 구조 개선**
+  - API 응답 데이터 구조 파싱 로직 통일
+  - `summary.totalRevenue`, `summary.totalExpenses` 경로로 데이터 접근
+  - `categoryBreakdown` 데이터 정확한 추출
+
+- **중복 API 호출 제거**
+  - 지점별 데이터 조회 시 `categoryBreakdown` 포함
+  - 불필요한 추가 API 호출 제거로 성능 향상
+
+- **권한 체크 개선**
+  - ERP 접근 권한을 명확히 정의
+  - `HQ_MASTER`, `BRANCH_SUPER_ADMIN`, `SUPER_HQ_ADMIN` 역할 허용
+
+### 🐛 버그 수정
+- **월별 보고서 데이터 표시 문제 해결**
+  - 카테고리별 지출 분석에서 "분석 데이터가 없습니다" 표시 문제 해결
+  - 실제 거래 데이터 기반 카테고리 분석 데이터 생성
+
+- **Repository 메서드 추가**
+  - `FinancialTransactionRepository`에 `findByIsDeletedFalse()` 메서드 추가
+  - 삭제되지 않은 거래만 조회하도록 개선
+
+### 📊 데이터 구조
+- **카테고리별 지출 분석 데이터**
+  ```javascript
+  {
+    category: "상담비",
+    amount: 2400000,
+    percentage: 100.0
+  }
+  ```
+
+- **API 응답 구조 개선**
+  ```json
+  {
+    "financialData": {
+      "summary": {
+        "totalRevenue": 1400000,
+        "totalExpenses": 1000000,
+        "netProfit": 400000,
+        "transactionCount": 5
+      },
+      "categoryBreakdown": {
+        "CONSULTATION": 2400000.00
+      }
+    }
+  }
+  ```
+
 ## [2025-01-17] - 매핑 관리 시스템 대폭 개선 및 부분 환불 기능 구현
 
 ### ✨ 새로운 기능

@@ -1878,7 +1878,15 @@ public class AdminController {
             Map<String, Object> statistics = adminService.getScheduleStatistics();
             log.info("🔍 AdminService.getScheduleStatistics() 호출 완료: {}", statistics != null ? statistics.size() : "null");
             
-            log.info("✅ 스케줄 통계 조회 완료 - 총 스케줄: {}", statistics.get("totalSchedules"));
+            if (statistics != null) {
+                log.info("✅ 스케줄 통계 조회 완료 - 총 스케줄: {}", statistics.get("totalSchedules"));
+            } else {
+                log.warn("⚠️ 스케줄 통계가 null입니다.");
+                return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "스케줄 통계를 조회할 수 없습니다."
+                ));
+            }
             
             Map<String, Object> response = Map.of(
                 "success", true,
@@ -2071,28 +2079,80 @@ public class AdminController {
     }
     
     /**
-     * 재무 거래 목록 조회
+     * 재무 거래 목록 조회 (지점별 필터링 적용)
      */
     @GetMapping("/financial-transactions")
     public ResponseEntity<Map<String, Object>> getFinancialTransactions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String branchCode,
+            @RequestParam(required = false) String transactionType,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
             HttpSession session) {
         try {
-            log.info("🔍 재무 거래 목록 조회");
+            log.info("🔍 재무 거래 목록 조회: 지점={}, 유형={}, 카테고리={}", branchCode, transactionType, category);
             
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
+                log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(401).body(response);
             }
             
+            log.info("👤 현재 사용자: 이메일={}, 역할={}, 지점코드={}", 
+                    currentUser.getEmail(), currentUser.getRole(), currentUser.getBranchCode());
+            
+            // 지점코드 결정: HQ_MASTER는 모든 지점, 나머지는 자신의 지점만
+            String targetBranchCode = branchCode;
+            UserRole role = currentUser.getRole();
+            
+            // 지점코드 결정 및 보안 검사
+            if (role != UserRole.HQ_MASTER && role != UserRole.SUPER_HQ_ADMIN) {
+                // 지점 관리자는 자신의 지점 데이터만 조회
+                targetBranchCode = currentUser.getBranchCode();
+                log.info("📍 지점 관리자 - 자기 지점만 조회: {}", targetBranchCode);
+                
+                // 지점코드가 null이면 세션 오류로 처리
+                if (targetBranchCode == null || targetBranchCode.isEmpty()) {
+                    log.error("❌ 지점 관리자의 지점코드가 없음 - 세션 오류, 재로그인 필요");
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", false);
+                    response.put("message", "세션이 만료되었습니다. 다시 로그인해주세요.");
+                    response.put("redirectToLogin", true);
+                    return ResponseEntity.status(401).body(response);
+                }
+            } else {
+                // 본사 관리자는 요청된 지점 또는 모든 지점 조회
+                log.info("📍 본사 관리자 - 요청 지점 조회: {}", targetBranchCode);
+            }
+            
             // 재무 거래 목록 조회
-            var transactions = financialTransactionService.getTransactions(
-                org.springframework.data.domain.PageRequest.of(page, size)
-            );
+            org.springframework.data.domain.Page<com.mindgarden.consultation.dto.FinancialTransactionResponse> transactions;
+            if (targetBranchCode != null && !targetBranchCode.isEmpty() && !"HQ".equals(targetBranchCode)) {
+                // 특정 지점 데이터만 조회
+                transactions = financialTransactionService.getTransactionsByBranch(
+                    targetBranchCode, transactionType, category, startDate, endDate,
+                    org.springframework.data.domain.PageRequest.of(page, size)
+                );
+            } else if ("HQ".equals(targetBranchCode) || (role == UserRole.HQ_MASTER || role == UserRole.SUPER_HQ_ADMIN)) {
+                // HQ 지점코드이거나 본사 관리자인 경우: 모든 지점 데이터 조회
+                transactions = financialTransactionService.getTransactions(
+                    org.springframework.data.domain.PageRequest.of(page, size)
+                );
+                log.info("📊 HQ 또는 본사 관리자 - 전체 데이터 조회");
+            } else {
+                // 그 외의 경우 세션 오류로 처리
+                log.error("❌ 유효하지 않은 지점코드 또는 권한: {} - 재로그인 필요", targetBranchCode);
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "세션이 만료되었습니다. 다시 로그인해주세요.");
+                response.put("redirectToLogin", true);
+                return ResponseEntity.status(401).body(response);
+            }
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -2101,6 +2161,9 @@ public class AdminController {
             response.put("totalPages", transactions.getTotalPages());
             response.put("currentPage", transactions.getNumber());
             response.put("size", transactions.getSize());
+            response.put("branchCode", targetBranchCode);
+            
+            log.info("✅ 재무 거래 목록 조회 완료: 지점={}, 총 {}건", targetBranchCode, transactions.getTotalElements());
             
             return ResponseEntity.ok(response);
             
@@ -2135,7 +2198,7 @@ public class AdminController {
             }
             
             // 예산 목록 조회
-            var budgets = erpService.getAllActiveBudgets();
+            java.util.List<com.mindgarden.consultation.entity.Budget> budgets = erpService.getAllActiveBudgets();
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -2275,7 +2338,8 @@ public class AdminController {
                 org.springframework.data.domain.PageRequest.of(page, size);
             
             // 상담일지 조회
-            var consultationRecords = consultationRecordService.getConsultationRecords(consultantId, clientId, pageable);
+            org.springframework.data.domain.Page<com.mindgarden.consultation.entity.ConsultationRecord> consultationRecords = 
+                consultationRecordService.getConsultationRecords(consultantId, clientId, pageable);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -2324,7 +2388,7 @@ public class AdminController {
             }
             
             // 상담일지 조회
-            var record = consultationRecordService.getConsultationRecordById(recordId);
+            com.mindgarden.consultation.entity.ConsultationRecord record = consultationRecordService.getConsultationRecordById(recordId);
             
             if (record == null) {
                 return ResponseEntity.notFound().build();
@@ -2374,7 +2438,7 @@ public class AdminController {
             }
             
             // 상담일지 수정
-            var updatedRecord = consultationRecordService.updateConsultationRecord(recordId, recordData);
+            com.mindgarden.consultation.entity.ConsultationRecord updatedRecord = consultationRecordService.updateConsultationRecord(recordId, recordData);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

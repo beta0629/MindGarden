@@ -10,6 +10,7 @@ import {
 } from 'react-icons/fa';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
+import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { showNotification } from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -282,22 +283,6 @@ const HQDashboard = ({ user: propUser }) => {
                                     <Col md={3}>
                                         <div className="d-grid">
                                             <Button 
-                                                variant="secondary" 
-                                                size="lg"
-                                                onClick={() => navigate('/erp/dashboard')}
-                                                className="mb-2"
-                                            >
-                                                <FaBox className="me-2" />
-                                                ERP 관리
-                                            </Button>
-                                            <small className="text-muted text-center">구매 및 예산 관리</small>
-                                        </div>
-                                    </Col>
-                                </Row>
-                                <Row className="mt-3">
-                                    <Col md={4}>
-                                        <div className="d-grid">
-                                            <Button 
                                                 variant="warning" 
                                                 size="lg"
                                                 onClick={() => navigate('/hq/erp/branch-financial')}
@@ -309,7 +294,9 @@ const HQDashboard = ({ user: propUser }) => {
                                             <small className="text-muted text-center">지점별 수익/지출 분석</small>
                                         </div>
                                     </Col>
-                                    <Col md={4}>
+                                </Row>
+                                <Row className="mt-3">
+                                    <Col md={6}>
                                         <div className="d-grid">
                                             <Button 
                                                 variant="danger" 
@@ -323,10 +310,10 @@ const HQDashboard = ({ user: propUser }) => {
                                             <small className="text-muted text-center">전사 재무 통합 분석</small>
                                         </div>
                                     </Col>
-                                    <Col md={4}>
+                                    <Col md={6}>
                                         <div className="d-grid">
                                             <Button 
-                                                variant="dark" 
+                                                variant="success" 
                                                 size="lg"
                                                 onClick={() => navigate('/hq/erp/reports')}
                                                 className="mb-2"

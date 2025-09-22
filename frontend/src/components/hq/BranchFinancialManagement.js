@@ -13,6 +13,215 @@ import LoadingSpinner from '../common/LoadingSpinner';
 import './BranchFinancialManagement.css';
 
 /**
+ * 지점별 재무관리 필터 카드 컴포넌트
+ */
+const BranchFilterCard = ({
+    branches,
+    selectedBranch,
+    onBranchChange,
+    filters,
+    onFilterChange,
+    onApplyFilters
+}) => {
+    return (
+        <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ 
+                backgroundColor: 'white', 
+                border: '1px solid #dee2e6', 
+                borderRadius: '0.375rem',
+                boxShadow: '0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'
+            }}>
+                <div style={{ 
+                    padding: '1rem 1.25rem', 
+                    borderBottom: '1px solid #dee2e6',
+                    backgroundColor: '#f8f9fa'
+                }}>
+                    <h5 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '500' }}>
+                        <FaFilter style={{ marginRight: '0.5rem' }} />
+                        지점 선택 및 필터
+                    </h5>
+                </div>
+                <div style={{ padding: '1.25rem' }}>
+                    <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                        gap: '1rem',
+                        alignItems: 'end'
+                    }}>
+                        <div>
+                            <label style={{ 
+                                display: 'block', 
+                                marginBottom: '0.5rem', 
+                                fontWeight: '500',
+                                color: '#495057'
+                            }}>
+                                지점 선택
+                            </label>
+                            <select 
+                                value={selectedBranch?.code || ''}
+                                onChange={(e) => {
+                                    const branch = branches.find(b => b.code === e.target.value);
+                                    onBranchChange(branch);
+                                }}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.375rem 0.75rem',
+                                    fontSize: '1rem',
+                                    border: '1px solid #ced4da',
+                                    borderRadius: '0.375rem',
+                                    backgroundColor: 'white'
+                                }}
+                            >
+                                <option value="">지점을 선택하세요</option>
+                                {branches.map(branch => (
+                                    <option key={branch.code} value={branch.code}>
+                                        {branch.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label style={{ 
+                                display: 'block', 
+                                marginBottom: '0.5rem', 
+                                fontWeight: '500',
+                                color: '#495057'
+                            }}>
+                                시작일
+                            </label>
+                            <input 
+                                type="date" 
+                                value={filters.startDate}
+                                onChange={(e) => onFilterChange('startDate', e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.375rem 0.75rem',
+                                    fontSize: '1rem',
+                                    border: '1px solid #ced4da',
+                                    borderRadius: '0.375rem',
+                                    backgroundColor: 'white'
+                                }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ 
+                                display: 'block', 
+                                marginBottom: '0.5rem', 
+                                fontWeight: '500',
+                                color: '#495057'
+                            }}>
+                                종료일
+                            </label>
+                            <input 
+                                type="date" 
+                                value={filters.endDate}
+                                onChange={(e) => onFilterChange('endDate', e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.375rem 0.75rem',
+                                    fontSize: '1rem',
+                                    border: '1px solid #ced4da',
+                                    borderRadius: '0.375rem',
+                                    backgroundColor: 'white'
+                                }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{ 
+                                display: 'block', 
+                                marginBottom: '0.5rem', 
+                                fontWeight: '500',
+                                color: '#495057'
+                            }}>
+                                거래 유형
+                            </label>
+                            <select 
+                                value={filters.transactionType}
+                                onChange={(e) => onFilterChange('transactionType', e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.375rem 0.75rem',
+                                    fontSize: '1rem',
+                                    border: '1px solid #ced4da',
+                                    borderRadius: '0.375rem',
+                                    backgroundColor: 'white'
+                                }}
+                            >
+                                <option value="">전체</option>
+                                <option value="INCOME">수입</option>
+                                <option value="EXPENSE">지출</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style={{ 
+                                display: 'block', 
+                                marginBottom: '0.5rem', 
+                                fontWeight: '500',
+                                color: '#495057'
+                            }}>
+                                카테고리
+                            </label>
+                            <select 
+                                value={filters.category}
+                                onChange={(e) => onFilterChange('category', e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.375rem 0.75rem',
+                                    fontSize: '1rem',
+                                    border: '1px solid #ced4da',
+                                    borderRadius: '0.375rem',
+                                    backgroundColor: 'white'
+                                }}
+                            >
+                                <option value="">전체</option>
+                                <option value="CONSULTATION">상담 수익</option>
+                                <option value="RENT">임대료</option>
+                                <option value="SALARY">급여</option>
+                                <option value="UTILITY">공과금</option>
+                                <option value="MARKETING">마케팅</option>
+                                <option value="OTHER">기타</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style={{ 
+                                display: 'block', 
+                                marginBottom: '0.5rem', 
+                                fontWeight: '500',
+                                color: '#495057'
+                            }}>
+                                &nbsp;
+                            </label>
+                            <button 
+                                onClick={onApplyFilters}
+                                disabled={!selectedBranch}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.375rem 0.75rem',
+                                    fontSize: '0.875rem',
+                                    fontWeight: '500',
+                                    color: 'white',
+                                    backgroundColor: selectedBranch ? '#0d6efd' : '#6c757d',
+                                    border: 'none',
+                                    borderRadius: '0.375rem',
+                                    cursor: selectedBranch ? 'pointer' : 'not-allowed',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.25rem'
+                                }}
+                            >
+                                <FaEye />
+                                조회
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+/**
  * HQ 마스터용 지점별 재무관리 컴포넌트
  * 각 지점의 수익, 지출, 순이익을 분석하고 관리
  * 
@@ -174,124 +383,55 @@ const BranchFinancialManagement = () => {
 
     return (
         <SimpleLayout>
-            <Container className="branch-financial-management" style={{ maxWidth: '100%', padding: '0 15px' }}>
-                <Row className="mb-4">
-                    <Col>
-                        <div className="d-flex justify-content-between align-items-center">
-                            <h2>
-                                <FaDollarSign className="me-2 text-warning" />
-                                지점별 재무관리
-                            </h2>
-                            <Badge bg="info" className="fs-6">
-                                {user?.role === 'HQ_MASTER' ? 'HQ 마스터' : '본사 관리자'}
-                            </Badge>
+            <Container className="branch-financial-management" style={{ maxWidth: '100%', padding: '0 2rem' }}>
+                <div style={{ marginBottom: '2rem' }}>
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginBottom: '1rem'
+                    }}>
+                        <h2 style={{ 
+                            margin: 0, 
+                            fontSize: '2rem', 
+                            fontWeight: '600',
+                            color: '#212529'
+                        }}>
+                            <FaDollarSign style={{ marginRight: '0.5rem', color: '#ffc107' }} />
+                            지점별 재무관리
+                        </h2>
+                        <div style={{
+                            backgroundColor: '#17a2b8',
+                            color: 'white',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '0.375rem',
+                            fontSize: '1rem',
+                            fontWeight: '500'
+                        }}>
+                            {user?.role === 'HQ_MASTER' ? 'HQ 마스터' : '본사 관리자'}
                         </div>
-                        <p className="text-muted">지점별 수익, 지출 현황을 분석하고 관리합니다.</p>
-                    </Col>
-                </Row>
+                    </div>
+                    <p style={{ 
+                        color: '#6c757d', 
+                        fontSize: '1.25rem', 
+                        marginTop: '1rem',
+                        marginBottom: '2rem',
+                        margin: '1rem 0 2rem 0',
+                        lineHeight: '1.5'
+                    }}>
+                        지점별 수익, 지출 현황을 분석하고 관리합니다.
+                    </p>
+                </div>
 
                 {/* 지점 선택 및 필터 */}
-                <Row className="mb-4">
-                    <Col>
-                        <Card>
-                            <Card.Header>
-                                <h5 className="mb-0">
-                                    <FaFilter className="me-2" />
-                                    지점 선택 및 필터
-                                </h5>
-                            </Card.Header>
-                            <Card.Body>
-                                <Row className="g-3">
-                                    <Col lg={3} md={6} sm={12}>
-                                        <Form.Group>
-                                            <Form.Label>지점 선택</Form.Label>
-                                            <Form.Select 
-                                                value={selectedBranch?.code || ''}
-                                                onChange={(e) => {
-                                                    const branch = branches.find(b => b.code === e.target.value);
-                                                    setSelectedBranch(branch);
-                                                }}
-                                            >
-                                                <option value="">지점을 선택하세요</option>
-                                                {branches.map(branch => (
-                                                    <option key={branch.code} value={branch.code}>
-                                                        {branch.name}
-                                                    </option>
-                                                ))}
-                                            </Form.Select>
-                                        </Form.Group>
-                                    </Col>
-                                    <Col lg={2} md={6} sm={6}>
-                                        <Form.Group>
-                                            <Form.Label>시작일</Form.Label>
-                                            <Form.Control 
-                                                type="date" 
-                                                value={filters.startDate}
-                                                onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                                            />
-                                        </Form.Group>
-                                    </Col>
-                                    <Col lg={2} md={6} sm={6}>
-                                        <Form.Group>
-                                            <Form.Label>종료일</Form.Label>
-                                            <Form.Control 
-                                                type="date" 
-                                                value={filters.endDate}
-                                                onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                                            />
-                                        </Form.Group>
-                                    </Col>
-                                    <Col lg={2} md={6} sm={6}>
-                                        <Form.Group>
-                                            <Form.Label>거래 유형</Form.Label>
-                                            <Form.Select 
-                                                value={filters.transactionType}
-                                                onChange={(e) => handleFilterChange('transactionType', e.target.value)}
-                                            >
-                                                <option value="">전체</option>
-                                                <option value="INCOME">수입</option>
-                                                <option value="EXPENSE">지출</option>
-                                            </Form.Select>
-                                        </Form.Group>
-                                    </Col>
-                                    <Col lg={2} md={6} sm={6}>
-                                        <Form.Group>
-                                            <Form.Label>카테고리</Form.Label>
-                                            <Form.Select 
-                                                value={filters.category}
-                                                onChange={(e) => handleFilterChange('category', e.target.value)}
-                                            >
-                                                <option value="">전체</option>
-                                                <option value="CONSULTATION">상담 수익</option>
-                                                <option value="RENT">임대료</option>
-                                                <option value="SALARY">급여</option>
-                                                <option value="UTILITY">공과금</option>
-                                                <option value="MARKETING">마케팅</option>
-                                                <option value="OTHER">기타</option>
-                                            </Form.Select>
-                                        </Form.Group>
-                                    </Col>
-                                    <Col lg={1} md={6} sm={6}>
-                                        <Form.Group>
-                                            <Form.Label>&nbsp;</Form.Label>
-                                            <div className="d-grid">
-                                                <Button 
-                                                    variant="primary"
-                                                    onClick={handleApplyFilters}
-                                                    disabled={!selectedBranch}
-                                                    size="sm"
-                                                >
-                                                    <FaEye className="me-1" />
-                                                    조회
-                                                </Button>
-                                            </div>
-                                        </Form.Group>
-                                    </Col>
-                                </Row>
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                </Row>
+                <BranchFilterCard
+                    branches={branches}
+                    selectedBranch={selectedBranch}
+                    onBranchChange={setSelectedBranch}
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    onApplyFilters={handleApplyFilters}
+                />
 
                 {selectedBranch && (
                     <>

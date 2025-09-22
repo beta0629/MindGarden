@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.controller;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -1290,34 +1291,144 @@ public class ErpController {
     // ==================== 회계 시스템 통합 API ====================
     
     /**
+     * 데이터 확인용 API (임시)
+     */
+    @GetMapping("/debug/transactions")
+    public ResponseEntity<Map<String, Object>> debugTransactions(
+            @RequestParam(required = false) String branchCode,
+            HttpServletRequest request) {
+        
+        try {
+            log.info("🔍 데이터 확인 API 호출: branchCode={}", branchCode);
+            
+            // 모든 거래 조회
+            List<com.mindgarden.consultation.dto.FinancialTransactionResponse> allTransactions = 
+                financialTransactionService.getTransactions(PageRequest.of(0, 100)).getContent();
+            
+            // 지점별 필터링
+            List<com.mindgarden.consultation.dto.FinancialTransactionResponse> filteredTransactions = allTransactions;
+            if (branchCode != null && !branchCode.isEmpty()) {
+                filteredTransactions = allTransactions.stream()
+                    .filter(t -> branchCode.equals(t.getBranchCode()))
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            // 카테고리별 집계
+            Map<String, BigDecimal> categoryBreakdown = filteredTransactions.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                    t -> t.getCategory() != null ? t.getCategory() : "기타",
+                    java.util.stream.Collectors.reducing(BigDecimal.ZERO, 
+                        com.mindgarden.consultation.dto.FinancialTransactionResponse::getAmount, 
+                        BigDecimal::add)
+                ));
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("totalTransactions", allTransactions.size());
+            result.put("filteredTransactions", filteredTransactions.size());
+            result.put("branchCode", branchCode);
+            result.put("categoryBreakdown", categoryBreakdown);
+            result.put("sampleTransactions", filteredTransactions.stream().limit(5).collect(java.util.stream.Collectors.toList()));
+            
+            log.info("🔍 데이터 확인 결과: 전체={}, 필터링={}, 카테고리={}", 
+                allTransactions.size(), filteredTransactions.size(), categoryBreakdown.size());
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("❌ 데이터 확인 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "데이터 확인 실패: " + e.getMessage()));
+        }
+    }
+    
+    /**
      * 통합 재무 대시보드 데이터 조회 (수입/지출 통합)
+     * 지점별 데이터 필터링 적용
      */
     @GetMapping("/finance/dashboard")
-    public ResponseEntity<Map<String, Object>> getFinanceDashboard(HttpSession session) {
+    public ResponseEntity<Map<String, Object>> getFinanceDashboard(
+            @RequestParam(required = false) String branchCode,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            HttpSession session) {
         try {
-            // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
+            // ERP 접근 권한 확인 (지점 수퍼 관리자만 허용)
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null || (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
                 !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
                 !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+                log.warn("❌ ERP 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "ERP 시스템은 지점 수퍼 관리자만 접근할 수 있습니다."));
             }
             
-            log.info("통합 재무 대시보드 데이터 조회 요청: {}", currentUser.getEmail());
+            log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 사용자지점={}, 요청지점={}", 
+                    currentUser.getEmail(), currentUser.getBranchCode(), branchCode);
             
-            // ERP 통합 대시보드 데이터 조회
-            Map<String, Object> financeData = erpService.getIntegratedFinanceDashboard();
+            // 지점 선택 로직
+            String targetBranchCode = branchCode;
+            UserRole role = currentUser.getRole();
+            
+            // 본사 사용자 권한 확인
+            boolean isHQUser = UserRole.HQ_MASTER.equals(role) || UserRole.SUPER_HQ_ADMIN.equals(role) || "HQ".equals(currentUser.getBranchCode());
+            
+            if (isHQUser) {
+                // 본사 사용자: 요청된 지점 또는 통합 데이터 조회
+                if (targetBranchCode == null || targetBranchCode.isEmpty()) {
+                    // 지점 선택 안함: 통합 데이터 조회
+                    log.info("📊 본사 사용자 - 통합 데이터 조회");
+                    Map<String, Object> financeData = erpService.getIntegratedFinanceDashboard();
+                    
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("success", true);
+                    response.put("message", "통합 재무 대시보드 데이터를 성공적으로 조회했습니다.");
+                    response.put("data", financeData);
+                    response.put("branchCode", "HQ");
+                    response.put("branchType", "integrated");
+                    
+                    return ResponseEntity.ok(response);
+                } else {
+                    // 특정 지점 선택: 해당 지점 데이터 조회
+                    log.info("📍 본사 사용자 - 지점별 데이터 조회: {}", targetBranchCode);
+                }
+            } else {
+                // 지점 사용자: 자기 지점 데이터만 조회 (요청 지점코드 무시)
+                targetBranchCode = currentUser.getBranchCode();
+                log.info("🏢 지점 사용자 - 자기 지점만 조회: {} (요청된 지점 {} 무시)", targetBranchCode, branchCode);
+                
+                if (targetBranchCode == null || targetBranchCode.isEmpty()) {
+                    log.error("❌ 지점 사용자의 지점코드가 없음 - 세션 오류");
+                    return ResponseEntity.status(401).body(Map.of(
+                        "success", false,
+                        "message", "세션이 만료되었습니다. 다시 로그인해주세요.",
+                        "redirectToLogin", true
+                    ));
+                }
+            }
+            
+            // 지점별 데이터 조회 (날짜 파라미터 전달)
+            Map<String, Object> financeData;
+            if (startDate != null && endDate != null) {
+                LocalDate start = LocalDate.parse(startDate);
+                LocalDate end = LocalDate.parse(endDate);
+                financeData = erpService.getBranchFinanceDashboard(targetBranchCode, start, end);
+                log.info("✅ 지점별 재무 대시보드 데이터 조회 완료: 지점={}, 기간={}~{}", targetBranchCode, startDate, endDate);
+            } else {
+                financeData = erpService.getBranchFinanceDashboard(targetBranchCode);
+                log.info("✅ 지점별 재무 대시보드 데이터 조회 완료: 지점={} (전체 기간)", targetBranchCode);
+            }
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "통합 재무 대시보드 데이터를 성공적으로 조회했습니다.");
+            response.put("message", "재무 대시보드 데이터를 성공적으로 조회했습니다.");
             response.put("data", financeData);
+            response.put("branchCode", targetBranchCode);
+            response.put("branchType", "branch");
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("통합 재무 대시보드 데이터 조회 실패", e);
+            log.error("재무 대시보드 데이터 조회 실패", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("success", false, "message", "재무 데이터 조회 중 오류가 발생했습니다."));
         }
@@ -1330,23 +1441,39 @@ public class ErpController {
     public ResponseEntity<Map<String, Object>> getFinanceStatistics(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String branchCode,
             HttpSession session) {
         try {
-            // 수퍼어드민 권한 확인
+            // 비용처리 권한 확인 (어드민, 지점 수퍼 관리자, HQ 마스터 허용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
+            if (currentUser == null || (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                !UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
             
-            log.info("수입/지출 통계 조회 요청: {} ~ {}", startDate, endDate);
+            // 지점코드 결정
+            String targetBranchCode = branchCode;
+            UserRole role = currentUser.getRole();
             
-            Map<String, Object> statistics = erpService.getFinanceStatistics(startDate, endDate);
+            if (role != UserRole.HQ_MASTER && role != UserRole.SUPER_HQ_ADMIN) {
+                // 일반 관리자는 자신의 지점 데이터만 조회 가능
+                targetBranchCode = currentUser.getBranchCode();
+                log.info("📍 지점 관리자 권한: 자동으로 지점코드 설정 = {}", targetBranchCode);
+            }
+            
+            log.info("수입/지출 통계 조회 요청: {} ~ {}, 지점={}", startDate, endDate, targetBranchCode);
+            
+            Map<String, Object> statistics = erpService.getBranchFinanceStatistics(targetBranchCode, startDate, endDate);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "수입/지출 통계를 성공적으로 조회했습니다.");
             response.put("data", statistics);
+            response.put("branchCode", targetBranchCode);
             
             return ResponseEntity.ok(response);
             
@@ -1523,6 +1650,7 @@ public class ErpController {
     @GetMapping("/finance/balance-sheet")
     public ResponseEntity<Map<String, Object>> getBalanceSheet(
             @RequestParam(required = false) String reportDate,
+            @RequestParam(required = false) String branchCode,
             HttpSession session) {
         try {
             // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
@@ -1534,9 +1662,23 @@ public class ErpController {
                     .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
             
-            log.info("대차대조표 조회 요청: {}", reportDate);
+            // 브랜치 코드 결정
+            String targetBranchCode = null;
+            if (UserRole.HQ_MASTER.equals(currentUser.getRole()) || UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole())) {
+                // HQ 사용자는 요청된 브랜치 코드 사용 (없으면 전체)
+                targetBranchCode = branchCode;
+            } else {
+                // 지점 관리자는 자신의 브랜치만 조회
+                targetBranchCode = currentUser.getBranchCode();
+                if (targetBranchCode == null || targetBranchCode.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "message", "지점 코드가 없습니다.", "redirectToLogin", true));
+                }
+            }
             
-            Map<String, Object> balanceSheet = erpService.getBalanceSheet(reportDate);
+            log.info("대차대조표 조회 요청: {}, 브랜치: {}", reportDate, targetBranchCode);
+            
+            Map<String, Object> balanceSheet = erpService.getBalanceSheet(reportDate, targetBranchCode);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1559,6 +1701,7 @@ public class ErpController {
     public ResponseEntity<Map<String, Object>> getIncomeStatement(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String branchCode,
             HttpSession session) {
         try {
             // 관리자 권한 확인 (HQ_MASTER, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN 허용)
@@ -1570,9 +1713,23 @@ public class ErpController {
                     .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
             }
             
-            log.info("손익계산서 조회 요청: {} ~ {}", startDate, endDate);
+            // 브랜치 코드 결정
+            String targetBranchCode = null;
+            if (UserRole.HQ_MASTER.equals(currentUser.getRole()) || UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole())) {
+                // HQ 사용자는 요청된 브랜치 코드 사용 (없으면 전체)
+                targetBranchCode = branchCode;
+            } else {
+                // 지점 관리자는 자신의 브랜치만 조회
+                targetBranchCode = currentUser.getBranchCode();
+                if (targetBranchCode == null || targetBranchCode.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "message", "지점 코드가 없습니다.", "redirectToLogin", true));
+                }
+            }
             
-            Map<String, Object> incomeStatement = erpService.getIncomeStatement(startDate, endDate);
+            log.info("손익계산서 조회 요청: {} ~ {}, 브랜치: {}", startDate, endDate, targetBranchCode);
+            
+            Map<String, Object> incomeStatement = erpService.getIncomeStatement(startDate, endDate, targetBranchCode);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1598,16 +1755,25 @@ public class ErpController {
             @Valid @RequestBody FinancialTransactionRequest request,
             HttpSession session) {
         try {
-            // 관리자 권한 확인 (HQ_MASTER 또는 BRANCH_SUPER_ADMIN)
+            // 비용처리 권한 확인 (어드민, 지점 수퍼 관리자, HQ 마스터 허용)
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null || 
-                (!UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
-                 !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()))) {
+                (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                 !UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                 !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) &&
+                 !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
             
-            log.info("수입/지출 거래 등록 요청: {}", request);
+            // 지점코드 자동 설정
+            if (request.getBranchCode() == null || request.getBranchCode().isEmpty()) {
+                request.setBranchCode(currentUser.getBranchCode());
+            }
+            
+            log.info("수입/지출 거래 등록 요청: 사용자={}, 지점={}, 거래={}", 
+                    currentUser.getEmail(), currentUser.getBranchCode(), request);
             
             FinancialTransactionResponse response = financialTransactionService.createTransaction(request, currentUser);
             
@@ -1626,24 +1792,44 @@ public class ErpController {
     }
     
     /**
-     * 모든 수입/지출 거래 조회
+     * 모든 수입/지출 거래 조회 (지점별 필터링 적용)
      */
     @GetMapping("/finance/transactions")
     public ResponseEntity<Map<String, Object>> getAllFinancialTransactions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String branchCode,
+            @RequestParam(required = false) String transactionType,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
             HttpSession session) {
         try {
-            // 수퍼어드민 권한 확인
+            // 비용처리 권한 확인 (어드민, 지점 수퍼 관리자, HQ 마스터 허용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
+            if (currentUser == null || (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                !UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
             
-            log.info("수입/지출 거래 목록 조회 요청");
+            // 지점코드 결정: HQ_MASTER는 모든 지점, 나머지는 자신의 지점만
+            String targetBranchCode = branchCode;
+            UserRole role = currentUser.getRole();
             
-            Page<FinancialTransactionResponse> transactionPage = financialTransactionService.getTransactions(
+            if (role != UserRole.HQ_MASTER && role != UserRole.SUPER_HQ_ADMIN) {
+                // 일반 관리자는 자신의 지점 데이터만 조회 가능
+                targetBranchCode = currentUser.getBranchCode();
+                log.info("📍 지점 관리자 권한: 자동으로 지점코드 설정 = {}", targetBranchCode);
+            }
+            
+            log.info("수입/지출 거래 목록 조회 요청: 지점={}", targetBranchCode);
+            
+            Page<FinancialTransactionResponse> transactionPage = financialTransactionService.getTransactionsByBranch(
+                targetBranchCode, transactionType, category, startDate, endDate,
                 PageRequest.of(page, size)
             );
             List<FinancialTransactionResponse> transactions = transactionPage.getContent();
@@ -1652,6 +1838,7 @@ public class ErpController {
             response.put("success", true);
             response.put("message", "거래 목록을 성공적으로 조회했습니다.");
             response.put("data", transactions);
+            response.put("branchCode", targetBranchCode);
             
             return ResponseEntity.ok(response);
             
@@ -1674,14 +1861,18 @@ public class ErpController {
             @RequestParam(required = false) String transactionDate,
             HttpSession session) {
         try {
-            // 수퍼어드민 권한 확인
+            // 비용처리 권한 확인 (어드민, 지점 수퍼 관리자, HQ 마스터 허용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
+            if (currentUser == null || (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                !UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
             
-            log.info("빠른 지출 등록 요청: category={}, amount={}", category, amount);
+            log.info("빠른 지출 등록 요청: category={}, amount={}, 지점={}", category, amount, currentUser.getBranchCode());
             
             // 부가세 적용 여부 확인 및 계산
             boolean isVatApplicable = TaxCalculationUtil.isVatApplicable(category);
@@ -1705,6 +1896,7 @@ public class ErpController {
                     .description(description != null ? description : category + " 지출")
                     .transactionDate(transactionDate != null ? java.time.LocalDate.parse(transactionDate) : java.time.LocalDate.now())
                     .taxIncluded(isVatApplicable)
+                    .branchCode(currentUser.getBranchCode()) // 지점코드 자동 설정
                     .build();
             
             FinancialTransactionResponse response = financialTransactionService.createTransaction(request, currentUser);
@@ -1735,14 +1927,18 @@ public class ErpController {
             @RequestParam(required = false) String transactionDate,
             HttpSession session) {
         try {
-            // 수퍼어드민 권한 확인
+            // 비용처리 권한 확인 (어드민, 지점 수퍼 관리자, HQ 마스터 허용)
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !UserRole.HQ_MASTER.equals(currentUser.getRole())) {
+            if (currentUser == null || (!UserRole.ADMIN.equals(currentUser.getRole()) &&
+                !UserRole.HQ_MASTER.equals(currentUser.getRole()) && 
+                !UserRole.BRANCH_SUPER_ADMIN.equals(currentUser.getRole()) && 
+                !UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole()))) {
+                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}", currentUser != null ? currentUser.getRole() : "null");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "message", "수퍼어드민 권한이 필요합니다."));
+                    .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
             }
             
-            log.info("빠른 수입 등록 요청: category={}, amount={}", category, amount);
+            log.info("빠른 수입 등록 요청: category={}, amount={}, 지점={}", category, amount, currentUser.getBranchCode());
             
             // 수입은 항상 부가세 포함 (내담자가 결제한 금액)
             TaxCalculationUtil.TaxCalculationResult taxResult = TaxCalculationUtil.calculateTaxFromPayment(amount);
@@ -1757,6 +1953,7 @@ public class ErpController {
                     .description(description != null ? description : category + " 수입")
                     .transactionDate(transactionDate != null ? java.time.LocalDate.parse(transactionDate) : java.time.LocalDate.now())
                     .taxIncluded(true) // 수입은 항상 부가세 포함
+                    .branchCode(currentUser.getBranchCode()) // 지점코드 자동 설정
                     .build();
             
             FinancialTransactionResponse response = financialTransactionService.createTransaction(request, currentUser);

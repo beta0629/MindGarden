@@ -133,5 +133,12 @@ public interface FinancialTransactionService {
      * 지점별 재무 데이터 조회
      */
     Map<String, Object> getBranchFinancialData(String branchCode, LocalDate startDate, LocalDate endDate, 
-                                             String category, String transactionType);
+                                              String category, String transactionType);
+    
+    /**
+     * 지점별 재무 거래 목록 조회 (페이징)
+     */
+    Page<FinancialTransactionResponse> getTransactionsByBranch(String branchCode, String transactionType, 
+                                                              String category, String startDate, String endDate, 
+                                                              Pageable pageable);
 }

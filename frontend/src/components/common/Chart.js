@@ -63,8 +63,21 @@ const Chart = ({
   onDataPointClick = null,
   onLegendClick = null
 }) => {
+  // 고유한 chartRef 생성 (타임스탬프 + 랜덤)
   const chartRef = useRef(null);
   const [chartInstance, setChartInstance] = useState(null);
+  const chartId = useRef(`chart-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+
+  // 컴포넌트 언마운트 시 차트 인스턴스 정리
+  useEffect(() => {
+    return () => {
+      if (chartInstance) {
+        console.log('🧹 Chart 인스턴스 정리:', chartId.current);
+        chartInstance.destroy();
+        setChartInstance(null);
+      }
+    };
+  }, [chartInstance]);
 
   // 차트 옵션 병합
   const getChartOptions = () => {
@@ -101,12 +114,16 @@ const Chart = ({
 
   // 차트 데이터 처리
   const processedData = React.useMemo(() => {
-    if (!data) return null;
+    console.log('🔍 Chart 컴포넌트 - 원본 데이터:', data);
+    if (!data) {
+      console.log('❌ Chart 컴포넌트 - 데이터가 없음');
+      return null;
+    }
 
     // 기본 색상 적용
     const colors = data.colors || CHART_DEFAULTS.COLORS;
     
-    return {
+    const processed = {
       ...data,
       datasets: data.datasets?.map((dataset, index) => ({
         ...dataset,
@@ -118,11 +135,19 @@ const Chart = ({
         pointHoverRadius: dataset.pointHoverRadius || CHART_DEFAULTS.POINT_HOVER_RADIUS
       }))
     };
+    
+    console.log('🔍 Chart 컴포넌트 - 처리된 데이터:', processed);
+    return processed;
   }, [data]);
 
   // 차트 컴포넌트 렌더링
   const renderChart = () => {
-    if (!processedData) return null;
+    console.log('🔍 Chart renderChart 호출됨:', { type, processedData, mergedOptions });
+    
+    if (!processedData) {
+      console.log('❌ Chart renderChart - processedData가 null');
+      return null;
+    }
 
     const commonProps = {
       ref: chartRef,
@@ -131,16 +156,23 @@ const Chart = ({
       className: `chart-component ${className}`
     };
 
+    console.log('🔍 Chart commonProps:', commonProps);
+
     switch (type) {
       case CHART_TYPES.BAR:
+        console.log('📊 Bar 차트 렌더링');
         return <Bar {...commonProps} />;
       case CHART_TYPES.LINE:
+        console.log('📊 Line 차트 렌더링');
         return <Line {...commonProps} />;
       case CHART_TYPES.PIE:
+        console.log('📊 Pie 차트 렌더링');
         return <Pie {...commonProps} />;
       case CHART_TYPES.DOUGHNUT:
+        console.log('📊 Doughnut 차트 렌더링');
         return <Doughnut {...commonProps} />;
       default:
+        console.log('📊 기본 Bar 차트 렌더링');
         return <Bar {...commonProps} />;
     }
   };
@@ -174,6 +206,11 @@ const Chart = ({
 
   // 데이터 없음
   if (!processedData || !processedData.datasets || processedData.datasets.length === 0) {
+    console.log('❌ Chart 컴포넌트 - 데이터 없음 상태:', {
+      processedData,
+      hasDatasets: !!processedData?.datasets,
+      datasetsLength: processedData?.datasets?.length
+    });
     return (
       <div className="chart-container chart-empty" style={{ height }}>
         <div className="chart-empty-content">
@@ -195,8 +232,18 @@ const Chart = ({
     return baseClass;
   };
 
+  console.log('🔍 Chart 최종 렌더링:', { 
+    containerClass: getChartContainerClass(), 
+    height, 
+    chartComponent: renderChart() 
+  });
+
   return (
-    <div className={getChartContainerClass()} style={{ height }}>
+    <div 
+      id={chartId.current}
+      className={getChartContainerClass()} 
+      style={{ height }}
+    >
       <div className="chart-wrapper">
         {renderChart()}
       </div>

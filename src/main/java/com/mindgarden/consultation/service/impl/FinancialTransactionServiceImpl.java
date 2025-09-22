@@ -598,6 +598,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 .relatedEntityType(transaction.getRelatedEntityType())
                 .department(transaction.getDepartment())
                 .projectCode(transaction.getProjectCode())
+                .branchCode(transaction.getBranchCode())
                 .taxIncluded(transaction.getTaxIncluded())
                 .taxAmount(transaction.getTaxAmount())
                 .amountBeforeTax(transaction.getAmountBeforeTax())
@@ -879,8 +880,11 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             log.info("🏢 지점별 재무 데이터 조회: 지점={}, 시작일={}, 종료일={}, 카테고리={}, 유형={}", 
                     branchCode, startDate, endDate, category, transactionType);
             
-            // 지점별 거래 내역 조회
-            List<FinancialTransaction> transactions = financialTransactionRepository.findAll()
+            // 지점별 거래 내역 조회 (삭제되지 않은 거래만)
+            List<FinancialTransaction> allTransactions = financialTransactionRepository.findByIsDeletedFalse();
+            log.info("🔍 전체 거래 내역 수: {}", allTransactions.size());
+            
+            List<FinancialTransaction> transactions = allTransactions
                     .stream()
                     .filter(t -> branchCode.equals(t.getBranchCode()))
                     .filter(t -> !startDate.isAfter(t.getTransactionDate()) && !endDate.isBefore(t.getTransactionDate()))
@@ -888,6 +892,9 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                     .filter(t -> transactionType == null || transactionType.isEmpty() || 
                             transactionType.equals(t.getTransactionType().name()))
                     .collect(Collectors.toList());
+            
+            log.info("🔍 필터링된 거래 내역 수: {}, 지점: {}, 기간: {}~{}", 
+                    transactions.size(), branchCode, startDate, endDate);
             
             // 수익/지출 계산
             BigDecimal totalRevenue = transactions.stream()
@@ -975,6 +982,103 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         map.put("amount", transaction.getAmount().longValue());
         map.put("status", transaction.getStatus() != null ? transaction.getStatus().name() : "UNKNOWN");
         return map;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FinancialTransactionResponse> getTransactionsByBranch(String branchCode, String transactionType, 
+                                                                     String category, String startDate, String endDate, 
+                                                                     Pageable pageable) {
+        try {
+            log.info("🏢 지점별 재무 거래 목록 조회: 지점={}, 유형={}, 카테고리={}, 시작일={}, 종료일={}", 
+                    branchCode, transactionType, category, startDate, endDate);
+            
+            // 모든 거래 조회 후 필터링
+            Page<FinancialTransaction> allTransactions = financialTransactionRepository
+                    .findByIsDeletedFalseOrderByTransactionDateDescCreatedAtDesc(
+                        org.springframework.data.domain.PageRequest.of(0, 10000)); // 더 많은 데이터 가져오기
+            
+            log.info("🔍 전체 재무 거래 조회 완료: {}건", allTransactions.getTotalElements());
+            
+            // 지점별 필터링 적용
+            List<FinancialTransaction> filteredTransactions = allTransactions.getContent().stream()
+                    .filter(t -> {
+                        // 지점코드 필터링 디버깅
+                        if (branchCode != null && !branchCode.isEmpty()) {
+                            boolean matches = branchCode.equals(t.getBranchCode());
+                            if (!matches) {
+                                log.info("🔍 지점코드 불일치: 요청={}, 거래={} (거래ID={})", branchCode, t.getBranchCode(), t.getId());
+                            } else {
+                                log.info("✅ 지점코드 일치: 요청={}, 거래={} (거래ID={})", branchCode, t.getBranchCode(), t.getId());
+                            }
+                            return matches;
+                        }
+                        log.info("🔍 지점코드 필터링 없음 - 모든 거래 포함");
+                        return true;
+                    })
+                    .filter(t -> {
+                        // 거래 유형 필터링
+                        if (transactionType != null && !transactionType.isEmpty() && !"ALL".equals(transactionType)) {
+                            return transactionType.equals(t.getTransactionType().name());
+                        }
+                        return true;
+                    })
+                    .filter(t -> {
+                        // 카테고리 필터링
+                        if (category != null && !category.isEmpty() && !"ALL".equals(category)) {
+                            return category.equals(t.getCategory());
+                        }
+                        return true;
+                    })
+                    .filter(t -> {
+                        // 날짜 범위 필터링
+                        if (startDate != null && !startDate.isEmpty()) {
+                            LocalDate start = LocalDate.parse(startDate);
+                            if (t.getTransactionDate().isBefore(start)) {
+                                return false;
+                            }
+                        }
+                        if (endDate != null && !endDate.isEmpty()) {
+                            LocalDate end = LocalDate.parse(endDate);
+                            if (t.getTransactionDate().isAfter(end)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    })
+                    .collect(Collectors.toList());
+            
+            log.info("🔍 필터링 결과: 전체={}건, 지점 필터링 후={}건", allTransactions.getTotalElements(), filteredTransactions.size());
+            
+            // 처음 몇 개 거래의 지점코드 출력 (디버깅)
+            filteredTransactions.stream().limit(5).forEach(t -> 
+                log.info("📊 거래 샘플: ID={}, 지점={}, 유형={}, 금액={}", 
+                    t.getId(), t.getBranchCode(), t.getTransactionType(), t.getAmount())
+            );
+            
+            // 페이징 처리
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), filteredTransactions.size());
+            List<FinancialTransaction> pageContent = filteredTransactions.subList(start, end);
+            
+            // FinancialTransactionResponse로 변환
+            List<FinancialTransactionResponse> responseContent = pageContent.stream()
+                    .map(this::convertToResponse)
+                    .collect(Collectors.toList());
+            
+            // Page 객체 생성
+            Page<FinancialTransactionResponse> result = new org.springframework.data.domain.PageImpl<>(
+                    responseContent, pageable, filteredTransactions.size());
+            
+            log.info("✅ 지점별 재무 거래 조회 완료: 지점={}, 전체={}, 필터링후={}건", 
+                    branchCode, allTransactions.getTotalElements(), filteredTransactions.size());
+            
+            return result;
+            
+        } catch (Exception e) {
+            log.error("❌ 지점별 재무 거래 조회 실패: 지점={}, 오류={}", branchCode, e.getMessage(), e);
+            throw new RuntimeException("지점별 재무 거래 조회에 실패했습니다: " + e.getMessage());
+        }
     }
     
     /**

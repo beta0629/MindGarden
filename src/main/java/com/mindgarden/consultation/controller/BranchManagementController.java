@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/hq/branch-management")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
+// @PreAuthorize("hasRole('HQ_MASTER') or hasRole('SUPER_HQ_ADMIN') or hasRole('HQ_ADMIN') or hasRole('ADMIN')")
 public class BranchManagementController {
     
     private final CommonCodeService commonCodeService;
@@ -42,7 +42,7 @@ public class BranchManagementController {
      * 지점 목록 조회 (공통코드 기반)
      */
     @GetMapping("/branches")
-    public ResponseEntity<List<Map<String, Object>>> getBranches() {
+    public ResponseEntity<Map<String, Object>> getBranches() {
         try {
             log.info("지점 목록 조회 요청");
             
@@ -51,12 +51,21 @@ public class BranchManagementController {
                 .map(this::convertBranchToMap)
                 .collect(Collectors.toList());
             
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", branches);
+            response.put("totalCount", branches.size());
+            
             log.info("지점 목록 조회 완료: {}개", branches.size());
-            return ResponseEntity.ok(branches);
+            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("지점 목록 조회 중 오류 발생: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "지점 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
     

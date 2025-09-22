@@ -93,6 +93,11 @@ public class BranchManagementController {
             
             log.info("지점 {} 사용자 조회: 전체={}, 활성={}", branchCode, allBranchUsers.size(), activeUsers.size());
             
+            // 역할별 상세 카운트 로그
+            Map<String, Long> roleCount = activeUsers.stream()
+                    .collect(Collectors.groupingBy(u -> u.getRole().name(), Collectors.counting()));
+            log.info("지점 {} 역할별 카운트: {}", branchCode, roleCount);
+            
             // 관리자 역할 목록 (지점별로 다름)
             Set<String> adminRoles = Set.of("ADMIN", "HQ_ADMIN", "SUPER_HQ_ADMIN", "HQ_MASTER", "HQ_SUPER_ADMIN");
             

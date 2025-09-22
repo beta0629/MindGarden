@@ -34,12 +34,19 @@ const ConsultantApplicationModal = ({
         additionalNotes: ''
     });
 
-    // 모달이 열릴 때마다 자격 요건 확인
-    useEffect(() => {
-        if (isOpen && userId && userRole === 'CLIENT') {
-            checkEligibility();
+    /**
+     * 자격 요건 상세 정보 조회 (미충족 시)
+     */
+    const getRequirementsDetails = useCallback(async () => {
+        try {
+            // 자격 요건 상세 정보를 별도 API로 조회하거나 
+            // 프로필 완성도 정보를 활용
+            const response = await apiGet(`/api/user/profile/${userId}/completion`);
+            setRequirements({ completionRate: response.data });
+        } catch (error) {
+            console.error('자격 요건 상세 정보 조회 오류:', error);
         }
-    }, [isOpen, userId, userRole, checkEligibility]);
+    }, [userId]);
 
     /**
      * 상담사 자격 요건 확인
@@ -62,21 +69,14 @@ const ConsultantApplicationModal = ({
         } finally {
             setLoading(false);
         }
-    }, [userId]);
+    }, [userId, getRequirementsDetails]);
 
-    /**
-     * 자격 요건 상세 정보 조회 (미충족 시)
-     */
-    const getRequirementsDetails = async () => {
-        try {
-            // 자격 요건 상세 정보를 별도 API로 조회하거나 
-            // 프로필 완성도 정보를 활용
-            const response = await apiGet(`/api/user/profile/${userId}/completion`);
-            setRequirements({ completionRate: response.data });
-        } catch (error) {
-            console.error('자격 요건 상세 정보 조회 오류:', error);
+    // 모달이 열릴 때마다 자격 요건 확인
+    useEffect(() => {
+        if (isOpen && userId && userRole === 'CLIENT') {
+            checkEligibility();
         }
-    };
+    }, [isOpen, userId, userRole, checkEligibility]);
 
     /**
      * 폼 데이터 변경 핸들러

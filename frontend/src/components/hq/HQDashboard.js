@@ -91,12 +91,16 @@ const HQDashboard = ({ user: propUser }) => {
                     console.log(`📊 지점 ${branch.code} (${branch.name}) 통계 로드 중...`);
                     
                     const statsResponse = await apiGet(`/api/hq/branch-management/branches/${branch.code}/statistics`);
+                    console.log(`📊 지점 ${branch.code} API 응답:`, statsResponse);
+                    
                     const userStats = {
                         total: statsResponse.totalUsers || 0,
                         consultants: statsResponse.consultants || 0,
                         clients: statsResponse.clients || 0,
                         admins: statsResponse.admins || 0
                     };
+                    
+                    console.log(`📊 지점 ${branch.code} 파싱된 통계:`, userStats);
                     
                     enrichedBranches.push({
                         ...branch,
@@ -132,6 +136,8 @@ const HQDashboard = ({ user: propUser }) => {
             });
 
             console.log('✅ 본사 대시보드 데이터 로드 완료');
+            console.log('📊 전사 통계:', branchStats);
+            console.log('📊 지점별 데이터:', enrichedBranches);
 
         } catch (error) {
             console.error('❌ 본사 대시보드 데이터 로드 실패:', error);

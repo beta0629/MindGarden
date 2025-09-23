@@ -1370,9 +1370,34 @@ public class AdminController {
      * 매핑 부분 환불 처리 (지정된 회기수만 환불)
      */
     @PostMapping("/mappings/{id}/partial-refund")
-    public ResponseEntity<?> partialRefundMapping(@PathVariable Long id, @RequestBody Map<String, Object> requestBody) {
+    public ResponseEntity<?> partialRefundMapping(@PathVariable Long id, @RequestBody Map<String, Object> requestBody, HttpSession session) {
         try {
             log.info("🔧 매핑 부분 환불: ID={}", id);
+            
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 관리자 권한 확인
+            UserRole userRole = currentUser.getRole();
+            boolean hasPermission = userRole.isAdmin() || userRole.isMaster() || 
+                                  userRole.equals(UserRole.BRANCH_SUPER_ADMIN) ||
+                                  userRole.equals(UserRole.HQ_ADMIN) ||
+                                  userRole.equals(UserRole.SUPER_HQ_ADMIN);
+            
+            if (!hasPermission) {
+                log.warn("❌ 부분 환불 권한 없음: role={}", userRole);
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "부분 환불 권한이 없습니다."
+                ));
+            }
+            
             String reason = (String) requestBody.get("reason");
             Object refundSessionsObj = requestBody.get("refundSessions");
             

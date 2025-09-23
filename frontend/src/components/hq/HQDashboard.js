@@ -12,7 +12,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { showNotification } from '../../utils/notification';
-import sessionManager from '../../utils/sessionManager';
+import { sessionManager } from '../../utils/sessionManager';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
 import MotivationCard from '../common/MotivationCard';

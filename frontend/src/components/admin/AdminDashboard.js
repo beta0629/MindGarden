@@ -14,7 +14,7 @@ import ConsultantRatingStatistics from './ConsultantRatingStatistics';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
-import sessionManager from '../../utils/sessionManager';
+import { sessionManager } from '../../utils/sessionManager';
 import './AdminDashboard.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';

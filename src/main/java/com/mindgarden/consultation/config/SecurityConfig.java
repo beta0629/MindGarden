@@ -60,10 +60,12 @@ public class SecurityConfig {
                     "/api/auth/login",  // 로그인만 CSRF 제외
                     "/api/auth/register",  // 회원가입만 CSRF 제외
                     "/api/auth/forgot-password",  // 비밀번호 찾기만 CSRF 제외
+                    "/api/auth/logout",  // 로그아웃만 CSRF 제외
                     "/oauth2/**",    // OAuth2 콜백
                     "/api/password-reset/**",  // 비밀번호 재설정
                     "/api/test-simple/**",  // 간단한 테스트 API
                     "/api/health/**",  // 헬스체크
+                    "/api/admin/mappings/*/partial-refund",  // 부분 환불 API CSRF 제외
                     "/error"
                 )
             )

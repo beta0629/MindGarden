@@ -5,7 +5,7 @@ import SimpleHeader from '../layout/SimpleHeader';
 import SocialSignupModal from './SocialSignupModal';
 import { authAPI } from '../../utils/ajax';
 import { testLogin } from '../../utils/ajax';
-import ENV from '../../constants/environment';
+import { API_BASE_URL } from '../../constants/api';
 import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallback } from '../../utils/socialLogin';
 // import { setLoginSession, redirectToDashboard, logSessionInfo } from '../../utils/session'; // 제거됨
 import { sessionManager } from '../../utils/sessionManager';
@@ -101,7 +101,7 @@ const TabletLogin = () => {
         console.log('🔍 로그인 페이지 - 기존 세션 확인 중...');
         
         // ajax.js의 checkSessionAndRedirect를 우회하여 직접 세션 체크
-        const response = await fetch(`${ENV.API_BASE_URL}/api/auth/current-user`, {
+        const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
           credentials: 'include',
           method: 'GET'
         });

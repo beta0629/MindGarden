@@ -214,14 +214,19 @@ export const SessionProvider = ({ children }) => {
         dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
         dispatch({ type: SessionActionTypes.SET_LOADING, payload: false }); // 로딩 즉시 해제
         
-        // 잠시 후 서버 세션 확인 (쿠키 설정 시간 확보)
+        // 잠시 후 서버 세션 확인 (쿠키 설정 시간 확보) - 실패해도 사용자 정보 유지
         setTimeout(async () => {
           try {
             console.log('🔄 로그인 후 세션 확인 시작...');
-            await checkSession(true);
-            console.log('✅ 로그인 후 세션 확인 완료');
+            const sessionCheckResult = await checkSession(true);
+            if (sessionCheckResult) {
+              console.log('✅ 로그인 후 세션 확인 완료');
+            } else {
+              console.log('⚠️ 로그인 후 세션 확인 실패했지만 사용자 정보 유지');
+            }
           } catch (error) {
             console.error('❌ 로그인 후 세션 확인 실패:', error);
+            console.log('⚠️ 세션 확인 실패했지만 사용자 정보 유지');
           }
         }, 500); // 1초 → 500ms로 단축
         

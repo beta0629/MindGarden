@@ -169,12 +169,13 @@ class SessionManager {
                 if (userResponse.status !== 401) {
                     console.log('❌ 사용자 정보 확인 실패:', userResponse.status);
                 }
-                // 기존 사용자 정보가 있으면 보존
-                if (!this.user || !this.user.role) {
+                // 기존 사용자 정보가 있으면 보존 (더 관대하게 처리)
+                if (this.user && this.user.role) {
+                    console.log('🔄 서버 오류지만 기존 사용자 정보 보존:', this.user.role);
+                    // 사용자 정보는 그대로 유지
+                } else {
                     this.user = null;
                     this.sessionInfo = null;
-                } else {
-                    console.log('🔄 서버 오류지만 기존 사용자 정보 보존:', this.user.role);
                 }
             }
             

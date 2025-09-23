@@ -513,17 +513,23 @@ const CommonDashboard = ({ user: propUser }) => {
           return;
         }
         
-        // 2. 로그인 상태 확인 (sessionManager 사용자 정보로만 판단)
-        const currentUser = sessionManager.getUser();
+        // 2. 로그인 상태 확인 (propUser 또는 sessionUser 우선, sessionManager는 백업)
+        let currentUser = propUser || sessionUser;
         if (!currentUser || !currentUser.role) {
-          console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
-          console.log('👤 sessionManager 사용자:', currentUser);
-          navigate('/login', { replace: true });
-          return;
+          // 백업으로 sessionManager 확인
+          currentUser = sessionManager.getUser();
+          if (!currentUser || !currentUser.role) {
+            console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
+            console.log('👤 propUser:', propUser);
+            console.log('👤 sessionUser:', sessionUser);
+            console.log('👤 sessionManager 사용자:', currentUser);
+            navigate('/login', { replace: true });
+            return;
+          }
         }
         
-        // 3. 사용자 정보 가져오기 (propUser 또는 sessionManager)
-        let dashboardUser = propUser || sessionUser;
+        // 3. 사용자 정보 가져오기 (위에서 확인한 currentUser 사용)
+        let dashboardUser = currentUser;
         
         console.log('👤 propUser:', propUser);
         console.log('👤 dashboardUser:', dashboardUser);

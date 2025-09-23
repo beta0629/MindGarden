@@ -26,8 +26,15 @@ public interface CommonCodeRepository extends JpaRepository<CommonCode, Long> {
     // 상위 코드 그룹별 조회
     List<CommonCode> findByParentCodeGroupOrderBySortOrderAsc(String parentCodeGroup);
     
-    // 모든 코드 그룹 목록 조회
-    @Query("SELECT DISTINCT c.codeGroup FROM CommonCode c WHERE c.isActive = true ORDER BY c.codeGroup")
+    // 모든 코드 그룹 목록 조회 (상담패키지 관련 항목을 먼저 표시)
+    @Query("SELECT DISTINCT c.codeGroup FROM CommonCode c WHERE c.isActive = true ORDER BY " +
+           "CASE " +
+           "WHEN c.codeGroup = 'CONSULTATION_PACKAGE' THEN 1 " +
+           "WHEN c.codeGroup = 'PACKAGE_TYPE' THEN 2 " +
+           "WHEN c.codeGroup LIKE '%PACKAGE%' THEN 3 " +
+           "WHEN c.codeGroup LIKE '%CONSULTATION%' THEN 4 " +
+           "ELSE 5 " +
+           "END, c.codeGroup")
     List<String> findAllActiveCodeGroups();
     
     // 코드 그룹별 개수 조회

@@ -2,6 +2,7 @@ package com.mindgarden.consultation.config;
 
 import java.util.Arrays;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -10,8 +11,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
@@ -50,7 +49,9 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
             // 세션 기반 인증 필터 추가
-            .addFilterBefore(sessionBasedAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(sessionBasedAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            
+            // Rate Limiting 필터 추가 (RateLimitingConfig에서 자동 등록됨)
             
             // CSRF 보호 설정
             .csrf(csrf -> csrf
@@ -67,12 +68,15 @@ public class SecurityConfig {
                 )
             )
             
-            // 세션 관리 활성화
+            // 세션 관리 활성화 (보안 강화)
             .sessionManagement(session -> session
                 .sessionAuthenticationStrategy(sessionAuthenticationStrategy())
                 .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
+                .sessionFixation().changeSessionId()  // 세션 고정 공격 방지
                 .maximumSessions(3)
                 .sessionRegistry(sessionRegistry())
+                .maxSessionsPreventsLogin(false)  // 동시 세션 초과 시 기존 세션 만료
+                .expiredUrl("/login?expired")      // 세션 만료 시 리다이렉트 URL
             )
             
             // 환경별 인증 설정 (기존 세션 기반 인증 시스템과 호환)
@@ -108,8 +112,7 @@ public class SecurityConfig {
                     "/actuator/info"
                 ).permitAll();
                 
-                // 임시: 모든 API 허용 (기존 세션 기반 인증 시스템 사용)
-                // TODO: 세션 기반 인증 필터 문제 해결 후 적절한 권한 설정 적용
+                // 모든 API 허용 (컨트롤러 레벨에서 권한 체크)
                 authz.anyRequest().permitAll();
             })
             
@@ -171,7 +174,7 @@ public class SecurityConfig {
             "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
         ));
         
-        // 허용할 헤더 설정
+        // 허용할 헤더 설정 (보안 강화)
         configuration.setAllowedHeaders(Arrays.asList(
             "Authorization",
             "Content-Type",
@@ -181,7 +184,9 @@ public class SecurityConfig {
             "Access-Control-Request-Method",
             "Access-Control-Request-Headers",
             "Cache-Control",
-            "Pragma"
+            "Pragma",
+            "X-XSRF-TOKEN",  // CSRF 토큰 헤더 추가
+            "_csrf"          // CSRF 파라미터 추가
         ));
         
         // 인증 정보 포함 허용
@@ -203,13 +208,7 @@ public class SecurityConfig {
         return source;
     }
     
-    /**
-     * 비밀번호 인코더
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
-    }
+    // 비밀번호 인코더는 PasswordPolicyConfig에서 관리
     
     /**
      * 인증 매니저 (기본 설정 사용)
@@ -222,12 +221,12 @@ public class SecurityConfig {
     
     
     /**
-     * 세션 기반 인증 필터
+     * 세션 기반 인증 필터 (자동 주입)
      */
-    @Bean
-    public SessionBasedAuthenticationFilter sessionBasedAuthenticationFilter() {
-        return new SessionBasedAuthenticationFilter();
-    }
+    @Autowired
+    private SessionBasedAuthenticationFilter sessionBasedAuthenticationFilter;
+    
+    // Rate Limiting 필터는 RateLimitingConfig에서 관리
     
     /**
      * 커스텀 인증 진입점

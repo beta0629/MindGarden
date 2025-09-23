@@ -1,24 +1,24 @@
 package com.mindgarden.consultation.config;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.utils.SessionUtils;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * 세션 기반 인증 필터
@@ -29,6 +29,7 @@ import java.util.List;
  * @since 2025-01-17
  */
 @Slf4j
+@Component
 public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
@@ -37,6 +38,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         
         String requestPath = request.getRequestURI();
         log.info("🔍 SessionBasedAuthenticationFilter 실행: {}", requestPath);
+        log.info("🔍 필터 체인 실행 시작");
         
         try {
             // 세션에서 사용자 정보 조회
@@ -57,6 +59,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     // SecurityContext 확인
                     Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
                     log.info("🔍 SecurityContext 인증 상태: {}", currentAuth != null && currentAuth.isAuthenticated() ? "인증됨" : "미인증");
+                    log.info("🔍 SecurityContext 권한: {}", currentAuth != null ? currentAuth.getAuthorities() : "null");
                 } else {
                     log.warn("⚠️ 세션에 사용자 정보 없음");
                 }
@@ -143,7 +146,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         
-        // 정적 리소스와 공개 API는 필터링하지 않음
+        // 정적 리소스와 공개 API만 필터링하지 않음
         return path.startsWith("/static/") ||
                path.startsWith("/css/") ||
                path.startsWith("/js/") ||
@@ -152,7 +155,9 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                path.equals("/favicon.ico") ||
                path.equals("/robots.txt") ||
                path.equals("/manifest.json") ||
-               path.startsWith("/api/auth/") ||
+               path.equals("/api/auth/login") ||  // 로그인만 제외
+               path.equals("/api/auth/register") ||  // 회원가입만 제외
+               path.equals("/api/auth/forgot-password") ||  // 비밀번호 찾기만 제외
                path.startsWith("/oauth2/") ||
                path.startsWith("/api/password-reset/") ||
                path.startsWith("/api/test-simple/") ||

@@ -224,6 +224,7 @@ function AppContent() {
             <Route path="/super_admin/dashboard" element={<AdminDashboard user={user} />} />
             <Route path="/hq_admin/dashboard" element={<AdminDashboard user={user} />} />
             <Route path="/super_hq_admin/dashboard" element={<AdminDashboard user={user} />} />
+            <Route path="/hq_master/dashboard" element={<AdminDashboard user={user} />} />
             <Route path="/branch_super_admin/dashboard" element={<Navigate to="/super_admin/dashboard" replace />} />
             <Route path="/branch_manager/dashboard" element={<AdminDashboard user={user} />} />
             <Route path="/client/mypage" element={<MyPage />} />
@@ -232,6 +233,7 @@ function AppContent() {
             <Route path="/super_admin/mypage" element={<MyPage />} />
             <Route path="/hq_admin/mypage" element={<MyPage />} />
             <Route path="/super_hq_admin/mypage" element={<MyPage />} />
+            <Route path="/hq_master/mypage" element={<MyPage />} />
             <Route path="/branch_super_admin/mypage" element={<Navigate to="/super_admin/mypage" replace />} />
             <Route path="/branch_manager/mypage" element={<MyPage />} />
             

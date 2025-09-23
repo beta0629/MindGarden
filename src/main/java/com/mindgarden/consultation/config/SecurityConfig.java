@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -49,7 +50,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf
                 .csrfTokenRepository(csrfTokenRepository())
                 .ignoringRequestMatchers(
-                    "/api/auth/**",  // 인증 관련 API는 CSRF 제외
+                    "/api/auth/login",  // 로그인만 CSRF 제외
+                    "/api/auth/register",  // 회원가입만 CSRF 제외
+                    "/api/auth/forgot-password",  // 비밀번호 찾기만 CSRF 제외
                     "/oauth2/**",    // OAuth2 콜백
                     "/api/password-reset/**",  // 비밀번호 재설정
                     "/api/test-simple/**",  // 간단한 테스트 API
@@ -262,6 +265,16 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
+    }
+    
+    /**
+     * 인증 매니저 빌더 설정
+     */
+    @Bean
+    public AuthenticationManagerBuilder authenticationManagerBuilder(
+            AuthenticationManagerBuilder auth, SessionAuthenticationProvider sessionAuthProvider) throws Exception {
+        auth.authenticationProvider(sessionAuthProvider);
+        return auth;
     }
     
     /**

@@ -513,59 +513,61 @@ const CommonDashboard = ({ user: propUser }) => {
           return;
         }
         
-        // 2. 로그인 상태 확인 (더 관대하게 처리)
-        if (!isLoggedIn && !sessionUser) {
-          console.log('❌ 로그인되지 않음, 로그인 페이지로 이동');
+        // 2. 로그인 상태 확인 (sessionManager 사용자 정보로만 판단)
+        const currentUser = sessionManager.getUser();
+        if (!currentUser || !currentUser.role) {
+          console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
+          console.log('👤 sessionManager 사용자:', currentUser);
           navigate('/login', { replace: true });
           return;
         }
         
         // 3. 사용자 정보 가져오기 (propUser 또는 sessionManager)
-        let currentUser = propUser || sessionUser;
+        let dashboardUser = propUser || sessionUser;
         
         console.log('👤 propUser:', propUser);
-        console.log('👤 currentUser:', currentUser);
+        console.log('👤 dashboardUser:', dashboardUser);
         console.log('👤 sessionUser:', sessionUser);
         console.log('🔐 로그인 상태:', isLoggedIn);
         console.log('⏳ 세션 로딩 상태:', sessionLoading);
         
         // 4. 사용자 정보가 없는 경우 처리
-        if (!currentUser) {
+        if (!dashboardUser) {
           console.log('⏳ 사용자 정보 없음, 잠시 대기...');
           return;
         }
         
         // 사용자 정보 변경 감지
-        if (currentUser && currentUser.role) {
-          console.log('👤 현재 사용자 role:', currentUser.role, '이름:', currentUser.name || currentUser.nickname || currentUser.username);
+        if (dashboardUser && dashboardUser.role) {
+          console.log('👤 현재 사용자 role:', dashboardUser.role, '이름:', dashboardUser.name || dashboardUser.nickname || dashboardUser.username);
         }
         
         // 컴포넌트가 마운트된 상태에서만 상태 업데이트
         if (isMounted) {
-          console.log('✅ 사용자 정보 설정:', currentUser);
-          setUser(currentUser);
+          console.log('✅ 사용자 정보 설정:', dashboardUser);
+          setUser(dashboardUser);
         }
         
         // 역할별 리다이렉션 체크 (CLIENT, CONSULTANT만 CommonDashboard 사용)
-        if (currentUser?.role && !['CLIENT', 'CONSULTANT'].includes(currentUser.role)) {
-          console.log('🎯 관리자 역할 감지, 적절한 대시보드로 리다이렉션:', currentUser.role);
-          const dashboardPath = getDashboardPath(currentUser.role);
+        if (dashboardUser?.role && !['CLIENT', 'CONSULTANT'].includes(dashboardUser.role)) {
+          console.log('🎯 관리자 역할 감지, 적절한 대시보드로 리다이렉션:', dashboardUser.role);
+          const dashboardPath = getDashboardPath(dashboardUser.role);
           console.log('🎯 리다이렉션 경로:', dashboardPath);
-          redirectToDashboardWithFallback(currentUser.role, navigate);
+          redirectToDashboardWithFallback(dashboardUser.role, navigate);
           return;
         }
         
         // 2. 상담 데이터 로드
-        if (currentUser?.role === 'CLIENT') {
+        if (dashboardUser?.role === 'CLIENT') {
           console.log('📊 내담자 상담 데이터 로드 시작');
-          await loadClientConsultationData(currentUser.id);
-          await loadClientStatus(currentUser.id);
-        } else if (currentUser?.role === 'CONSULTANT') {
+          await loadClientConsultationData(dashboardUser.id);
+          await loadClientStatus(dashboardUser.id);
+        } else if (dashboardUser?.role === 'CONSULTANT') {
           console.log('📊 상담사 상담 데이터 로드 시작');
-          await loadConsultantConsultationData(currentUser.id);
-        } else if (currentUser?.role === 'ADMIN' || currentUser?.role === 'BRANCH_SUPER_ADMIN' || 
-                   currentUser?.role === 'BRANCH_MANAGER' || currentUser?.role === 'HQ_ADMIN' || 
-                   currentUser?.role === 'SUPER_HQ_ADMIN' || currentUser?.role === 'HQ_MASTER') {
+          await loadConsultantConsultationData(dashboardUser.id);
+        } else if (dashboardUser?.role === 'ADMIN' || dashboardUser?.role === 'BRANCH_SUPER_ADMIN' || 
+                   dashboardUser?.role === 'BRANCH_MANAGER' || dashboardUser?.role === 'HQ_ADMIN' || 
+                   dashboardUser?.role === 'SUPER_HQ_ADMIN' || dashboardUser?.role === 'HQ_MASTER') {
           console.log('📊 관리자 시스템 데이터 로드 시작');
           await loadAdminSystemData();
         }
@@ -591,7 +593,7 @@ const CommonDashboard = ({ user: propUser }) => {
     return () => {
       isMounted = false;
     };
-  }, [isLoggedIn, sessionLoading, propUser?.id, sessionUser?.id, propUser?.role, sessionUser?.role, loadClientConsultationData, loadConsultantConsultationData, loadAdminSystemData]); // 함수 의존성 추가
+  }, [sessionLoading, propUser?.id, sessionUser?.id, propUser?.role, sessionUser?.role, loadClientConsultationData, loadConsultantConsultationData, loadAdminSystemData]); // isLoggedIn 제거, sessionManager 사용자 정보만 의존
 
   // 현재 시간 업데이트
   useEffect(() => {

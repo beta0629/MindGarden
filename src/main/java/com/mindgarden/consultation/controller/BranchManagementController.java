@@ -73,6 +73,7 @@ public class BranchManagementController {
      * 지점별 사용자 통계 조회
      */
     @GetMapping("/branches/{branchCode}/statistics")
+    // @PreAuthorize("hasAnyRole('HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')") // 임시로 주석 처리
     public ResponseEntity<Map<String, Object>> getBranchStatistics(@PathVariable String branchCode) {
         try {
             log.info("지점 통계 조회 요청: branchCode={}", branchCode);

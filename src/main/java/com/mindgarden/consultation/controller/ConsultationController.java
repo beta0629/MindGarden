@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,6 +51,7 @@ public class ConsultationController {
      * GET /api/v1/consultations?clientId=1&consultantId=2&status=REQUESTED&priority=HIGH
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getConsultations(
             @RequestParam(required = false) Long clientId,
             @RequestParam(required = false) Long consultantId,
@@ -94,6 +96,7 @@ public class ConsultationController {
      * GET /api/v1/consultations/{id}
      */
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getConsultationById(@PathVariable Long id) {
         log.info("상담 상세 정보 조회 - ID: {}", id);
         
@@ -132,6 +135,7 @@ public class ConsultationController {
      * POST /api/v1/consultations/search
      */
     @PostMapping("/search")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> searchConsultations(
             @RequestBody Map<String, Object> searchCriteria,
             Pageable pageable) {
@@ -161,6 +165,7 @@ public class ConsultationController {
      * POST /api/v1/consultations
      */
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> createConsultation(@RequestBody Consultation consultation) {
         log.info("상담 예약 생성 - clientId: {}, consultantId: {}", 
                 consultation.getClientId(), consultation.getConsultantId());

@@ -8,6 +8,7 @@ import com.mindgarden.consultation.dto.UserProfileResponse;
 import com.mindgarden.consultation.dto.UserProfileUpdateRequest;
 import com.mindgarden.consultation.service.UserProfileService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +39,7 @@ public class UserProfileController {
      * 유저 프로필 조회
      */
     @GetMapping("/{userId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable Long userId) {
         try {
             UserProfileResponse response = userProfileService.getUserProfile(userId);
@@ -52,6 +54,7 @@ public class UserProfileController {
      * 유저 프로필 추가 정보 등록/수정
      */
     @PutMapping("/{userId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserProfileResponse> updateUserProfile(
             @PathVariable Long userId,
             @RequestBody UserProfileUpdateRequest request) {

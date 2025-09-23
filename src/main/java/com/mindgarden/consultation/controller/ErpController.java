@@ -1348,7 +1348,6 @@ public class ErpController {
      * 통합 재무 대시보드 데이터 조회 (수입/지출 통합)
      * 지점별 데이터 필터링 적용
      */
-    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     @GetMapping("/finance/dashboard")
     public ResponseEntity<Map<String, Object>> getFinanceDashboard(
             @RequestParam(required = false) String branchCode,

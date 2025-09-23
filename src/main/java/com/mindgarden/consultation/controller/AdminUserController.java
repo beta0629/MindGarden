@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,6 +50,7 @@ public class AdminUserController {
      * @param includeInactive 비활성 사용자 포함 여부 (기본값: false)
      */
     @GetMapping("")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     public ResponseEntity<Map<String, Object>> getAllUsers(
             @RequestParam(value = "includeInactive", defaultValue = "false") boolean includeInactive) {
         try {

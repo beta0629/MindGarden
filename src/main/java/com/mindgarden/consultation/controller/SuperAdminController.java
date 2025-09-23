@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,7 @@ public class SuperAdminController {
      * @return 생성 결과
      */
     @PostMapping("/create")
+    @PreAuthorize("hasRole('HQ_MASTER')")
     public ResponseEntity<?> createSuperAdmin(
             @Valid @RequestBody SuperAdminCreateRequest request,
             HttpSession session) {

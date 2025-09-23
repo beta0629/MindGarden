@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,6 +51,7 @@ public class ConsultantController {
      * GET /api/v1/consultants?specialty=PSYCHOLOGY&experience=5&rating=4.0
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Object>> getConsultants(
             @RequestParam(required = false) String specialty,
             @RequestParam(required = false) Integer experience,

@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,6 +54,7 @@ public class UserController implements BaseController<User, Long> {
      * 이메일로 사용자 조회
      */
     @GetMapping("/email/{email}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<User> getByEmail(@PathVariable String email) {
         return userService.findByEmail(email)
                 .map(ResponseEntity::ok)
@@ -63,6 +65,7 @@ public class UserController implements BaseController<User, Long> {
      * 닉네임으로 사용자 조회
      */
     @GetMapping("/nickname/{nickname}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<User> getByNickname(@PathVariable String nickname) {
         return userService.findByNickname(nickname)
                 .map(ResponseEntity::ok)
@@ -73,6 +76,7 @@ public class UserController implements BaseController<User, Long> {
      * 전화번호로 사용자 조회
      */
     @GetMapping("/phone/{phone}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<User> getByPhone(@PathVariable String phone) {
         return userService.findByPhone(phone)
                 .map(ResponseEntity::ok)
@@ -83,6 +87,7 @@ public class UserController implements BaseController<User, Long> {
      * 역할별 사용자 조회
      */
     @GetMapping("/role/{role}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     public ResponseEntity<List<User>> getByRole(@PathVariable String role, HttpSession session) {
         // 현재 로그인한 사용자의 지점코드 확인
         User currentUser = (User) session.getAttribute("user");
@@ -424,6 +429,7 @@ public class UserController implements BaseController<User, Long> {
      * 사용자 등록
      */
     @PostMapping("/register")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     public ResponseEntity<User> registerUser(@RequestBody User user, HttpSession session) {
         // 세션에서 현재 사용자의 지점 정보 가져오기 (관리자가 등록하는 경우)
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -443,6 +449,7 @@ public class UserController implements BaseController<User, Long> {
      * 사용자 프로필 수정
      */
     @PutMapping("/{id}/profile")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<User> updateProfile(@PathVariable Long id, @RequestBody User updateData) {
         User updatedUser = userService.updateUserProfile(id, updateData);
         return ResponseEntity.ok(updatedUser);
@@ -452,6 +459,7 @@ public class UserController implements BaseController<User, Long> {
      * 사용자 비밀번호 변경
      */
     @PutMapping("/{id}/password")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> changePassword(
             @PathVariable Long id,
             @RequestParam String oldPassword,
@@ -473,6 +481,7 @@ public class UserController implements BaseController<User, Long> {
      * 사용자 계정 활성화/비활성화
      */
     @PutMapping("/{id}/active")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     public ResponseEntity<Void> setActive(@PathVariable Long id, @RequestParam boolean isActive) {
         userService.setUserActive(id, isActive);
         return ResponseEntity.ok().build();

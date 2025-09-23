@@ -18,8 +18,25 @@ class SessionManager {
         this.isFormSubmitting = false; // 폼 제출 중 플래그
         this.formSubmitCount = 0; // 폼 제출 카운터
         
+        // localStorage에서 사용자 정보 복원
+        this.restoreUserFromStorage();
+        
         // 전역 폼 제출 감지 이벤트 리스너 등록
         this.setupGlobalFormListeners();
+    }
+    
+    // localStorage에서 사용자 정보 복원
+    restoreUserFromStorage() {
+        try {
+            const storedUser = localStorage.getItem('userInfo');
+            if (storedUser) {
+                this.user = JSON.parse(storedUser);
+                console.log('✅ sessionManager 사용자 정보 복원:', this.user);
+            }
+        } catch (error) {
+            console.error('❌ 사용자 정보 복원 실패:', error);
+            this.user = null;
+        }
     }
     
     // 전역 폼 제출 감지 설정
@@ -303,8 +320,11 @@ class SessionManager {
             
             // 로컬 저장소 정리
             localStorage.removeItem('user');
+            localStorage.removeItem('userInfo');
             localStorage.removeItem('sessionId');
             localStorage.removeItem('sessionInfo');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
             sessionStorage.clear();
             
             // 쿠키 정리 (가능한 범위에서)
@@ -414,6 +434,11 @@ class SessionManager {
     setUser(user, tokens = null) {
         this.user = user;
         this.sessionInfo = null; // 서버에서 가져올 예정
+        
+        // 사용자 정보를 localStorage에 저장
+        if (user) {
+            localStorage.setItem('userInfo', JSON.stringify(user));
+        }
         
         // 토큰이 있으면 localStorage에 저장
         if (tokens) {

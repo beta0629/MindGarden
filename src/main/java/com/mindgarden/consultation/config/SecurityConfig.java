@@ -198,7 +198,8 @@ public class SecurityConfig {
         configuration.setExposedHeaders(Arrays.asList(
             "Authorization",
             "Access-Control-Allow-Origin",
-            "Access-Control-Allow-Credentials"
+            "Access-Control-Allow-Credentials",
+            "Set-Cookie"  // 세션 쿠키 노출 허용
         ));
         
         // Preflight 요청 캐시 시간 (초)

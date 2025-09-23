@@ -23,6 +23,8 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -306,6 +308,12 @@ public class OAuth2Controller {
                     log.info("네이버 OAuth2 로그인 성공: userId={}, role={}, profileImage={}", 
                             user.getId(), user.getRole(), user.getProfileImageUrl());
                     
+                    // 세션 정보 디버깅 로그 추가
+                    log.info("세션 정보 확인: sessionId={}, userInSession={}, sessionMaxInactiveInterval={}", 
+                            session.getId(), 
+                            SessionUtils.getCurrentUser(session) != null ? "설정됨" : "없음",
+                            session.getMaxInactiveInterval());
+                    
                     // 사용자 역할에 따른 리다이렉트 (공통 유틸리티 사용)
                     String frontendUrl = getFrontendBaseUrl(request);
                     String redirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
@@ -495,6 +503,12 @@ public class OAuth2Controller {
                     
                     log.info("카카오 OAuth2 로그인 성공: userId={}, role={}, profileImage={}", 
                             user.getId(), user.getRole(), user.getProfileImageUrl());
+                    
+                    // 세션 정보 디버깅 로그 추가
+                    log.info("세션 정보 확인: sessionId={}, userInSession={}, sessionMaxInactiveInterval={}", 
+                            session.getId(), 
+                            SessionUtils.getCurrentUser(session) != null ? "설정됨" : "없음",
+                            session.getMaxInactiveInterval());
                     
                     // 사용자 역할에 따른 리다이렉트 (공통 유틸리티 사용)
                     String frontendUrl = getFrontendBaseUrl(request);

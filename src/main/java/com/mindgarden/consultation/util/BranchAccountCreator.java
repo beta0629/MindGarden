@@ -61,12 +61,6 @@ public class BranchAccountCreator {
             
             // 1. 지점 관리자 계정 생성
             createBranchAdminAccount(branchCode, branchName);
-            
-            // 2. 테스트 상담사 계정 생성
-            createTestConsultantAccount(branchCode, branchName);
-            
-            // 3. 테스트 내담자 계정 생성
-            createTestClientAccount(branchCode, branchName);
         }
         
         System.out.println("지점별 계정 생성 완료!");
@@ -76,8 +70,9 @@ public class BranchAccountCreator {
      * 지점 관리자 계정 생성
      */
     private void createBranchAdminAccount(String branchCode, String branchName) {
-        String email = branchCode.toLowerCase() + "_admin@mindgarden.com";
-        String username = branchCode.toLowerCase() + "_admin";
+        String timestamp = String.valueOf(System.currentTimeMillis()).substring(8); // 마지막 5자리
+        String email = branchCode.toLowerCase() + "_admin_" + timestamp + "@mindgarden.co.kr";
+        String username = branchCode.toLowerCase() + "_admin_" + timestamp;
         String name = branchName + " 관리자";
         
         // 기존 계정 확인
@@ -109,8 +104,9 @@ public class BranchAccountCreator {
      * 테스트 상담사 계정 생성
      */
     private void createTestConsultantAccount(String branchCode, String branchName) {
-        String email = "consultant_" + branchCode.toLowerCase() + "@mindgarden.com";
-        String username = "consultant_" + branchCode.toLowerCase();
+        String timestamp = String.valueOf(System.currentTimeMillis()).substring(8); // 마지막 5자리
+        String email = "consultant_" + branchCode.toLowerCase() + "_" + timestamp + "@mindgarden.co.kr";
+        String username = "consultant_" + branchCode.toLowerCase() + "_" + timestamp;
         String name = branchName + " 테스트상담사";
         
         // 기존 계정 확인
@@ -137,9 +133,24 @@ public class BranchAccountCreator {
         
         User savedUser = userRepository.save(user);
         
-        // 상담사 상세 정보 생성
+        // 상담사 상세 정보 생성 (User 필드들도 설정)
         Consultant consultant = new Consultant();
         consultant.setId(savedUser.getId());
+        consultant.setEmail(email);
+        consultant.setUsername(username);
+        consultant.setPassword(passwordEncoder.encode("consultant123"));
+        consultant.setName(name);
+        consultant.setRole(UserRole.CONSULTANT);
+        consultant.setPhone("010-2345-6789");
+        consultant.setBranchCode(branchCode);
+        consultant.setActive(true);
+        consultant.setIsEmailVerified(true);
+        consultant.setCreatedAt(LocalDateTime.now());
+        consultant.setUpdatedAt(LocalDateTime.now());
+        consultant.setIsDeleted(false);
+        consultant.setVersion(0L);
+        
+        // 상담사 전용 필드 설정
         consultant.setGrade("SENIOR");
         consultant.setSpecialty("개인상담");
         consultant.setYearsOfExperience(5);
@@ -148,10 +159,6 @@ public class BranchAccountCreator {
         consultant.setSessionDuration(60);
         consultant.setBreakTime("15분");
         consultant.setConsultationHours("09:00-18:00");
-        consultant.setCreatedAt(LocalDateTime.now());
-        consultant.setUpdatedAt(LocalDateTime.now());
-        consultant.setIsDeleted(false);
-        consultant.setVersion(0L);
         
         consultantRepository.save(consultant);
         System.out.println("  ✓ 테스트 상담사 계정 생성: " + email);
@@ -161,8 +168,9 @@ public class BranchAccountCreator {
      * 테스트 내담자 계정 생성
      */
     private void createTestClientAccount(String branchCode, String branchName) {
-        String email = "client_" + branchCode.toLowerCase() + "@mindgarden.com";
-        String username = "client_" + branchCode.toLowerCase();
+        String timestamp = String.valueOf(System.currentTimeMillis()).substring(8); // 마지막 5자리
+        String email = "client_" + branchCode.toLowerCase() + "_" + timestamp + "@mindgarden.co.kr";
+        String username = "client_" + branchCode.toLowerCase() + "_" + timestamp;
         String name = branchName + " 테스트내담자";
         
         // 기존 계정 확인

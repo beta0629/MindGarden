@@ -2,8 +2,6 @@ package com.mindgarden.consultation.controller;
 
 import java.util.HashMap;
 import java.util.Map;
-import com.mindgarden.consultation.annotation.RequireRole;
-import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.util.BranchAccountCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +27,6 @@ public class TestController {
      * 모든 지점의 계정 생성
      */
     @PostMapping("/create-branch-accounts")
-    @RequireRole({UserRole.HQ_MASTER, UserRole.SUPER_HQ_ADMIN})
     public ResponseEntity<Map<String, Object>> createAllBranchAccounts() {
         try {
             branchAccountCreator.createAllBranchAccounts();

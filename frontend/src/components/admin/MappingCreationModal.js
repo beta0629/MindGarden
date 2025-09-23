@@ -4,6 +4,7 @@ import { notification } from '../../utils/scripts';
 import { useSession } from '../../hooks/useSession';
 import { getPackageOptions } from '../../utils/commonCodeUtils';
 import { API_BASE_URL } from '../../constants/api';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 import { 
     MAPPING_CREATION_STEPS, 
     MAPPING_CREATION_STEP_LABELS,
@@ -51,11 +52,42 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         notes: ''
     });
 
+    // 참조번호 생성 함수
+    const generateReferenceNumber = (method = 'BANK_TRANSFER') => {
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+        
+        if (method === 'CASH') {
+            return `CASH_${timestamp}`;
+        } else if (method === 'CARD') {
+            return `CARD_${timestamp}`;
+        } else if (method === 'BANK_TRANSFER') {
+            return `BANK_${timestamp}`;
+        } else {
+            return `${method}_${timestamp}`;
+        }
+    };
+
     // 코드 옵션 상태
     const [packageOptions, setPackageOptions] = useState(PACKAGE_OPTIONS);
     const [paymentMethodOptions, setPaymentMethodOptions] = useState(PAYMENT_METHOD_OPTIONS);
     const [responsibilityOptions, setResponsibilityOptions] = useState(RESPONSIBILITY_OPTIONS);
     const [loadingPackageCodes, setLoadingPackageCodes] = useState(false);
+
+    // 모달이 열릴 때 초기 참조번호 생성
+    useEffect(() => {
+        if (isOpen && !paymentInfo.paymentReference) {
+            const initialReference = generateReferenceNumber(paymentInfo.paymentMethod);
+            console.log('🔧 매핑 생성 모달 - 초기 참조번호 생성:', {
+                method: paymentInfo.paymentMethod,
+                generatedReference: initialReference
+            });
+            setPaymentInfo(prev => ({
+                ...prev,
+                paymentReference: initialReference
+            }));
+        }
+    }, [isOpen, paymentInfo.paymentMethod]);
 
     // 패키지 코드 로드
     const loadPackageCodes = useCallback(async () => {
@@ -250,14 +282,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
             // 실제 매핑 생성 API 사용
             try {
-                const response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify(mappingData)
-                });
+                const response = await csrfTokenManager.post(`${API_BASE_URL}/api/admin/mappings`, mappingData);
 
                 if (response.ok) {
                     const result = await response.json();
@@ -569,7 +594,19 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                     <label>결제 방법</label>
                                     <select
                                         value={paymentInfo.paymentMethod}
-                                        onChange={(e) => setPaymentInfo({...paymentInfo, paymentMethod: e.target.value})}
+                                        onChange={(e) => {
+                                            const selectedMethod = e.target.value;
+                                            const referenceNumber = generateReferenceNumber(selectedMethod);
+                                            console.log('🔧 매핑 생성 - 결제 방법 변경:', {
+                                                method: selectedMethod,
+                                                generatedReference: referenceNumber
+                                            });
+                                            setPaymentInfo({
+                                                ...paymentInfo, 
+                                                paymentMethod: selectedMethod,
+                                                paymentReference: referenceNumber
+                                            });
+                                        }}
                                     >
                                         {paymentMethodOptions.map(method => (
                                             <option key={method.value} value={method.label}>
@@ -583,10 +620,16 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                     <label>결제 참조번호</label>
                                     <input
                                         type="text"
-                                        value={paymentInfo.paymentReference}
-                                        onChange={(e) => setPaymentInfo({...paymentInfo, paymentReference: e.target.value})}
-                                        placeholder="예: PAY-123456"
+                                        value={paymentInfo.paymentReference || generateReferenceNumber(paymentInfo.paymentMethod)}
+                                        onChange={(e) => {
+                                            console.log('🔧 매핑 생성 - 참조번호 수동 변경:', e.target.value);
+                                            setPaymentInfo({...paymentInfo, paymentReference: e.target.value});
+                                        }}
+                                        placeholder="자동 생성됩니다 (수정 가능)"
                                     />
+                                    <small className="form-help-text">
+                                        💡 결제 방법을 선택하면 자동으로 참조번호가 생성됩니다
+                                    </small>
                                 </div>
 
                                 <div className="form-group">

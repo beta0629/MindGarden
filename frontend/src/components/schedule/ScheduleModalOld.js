@@ -6,6 +6,7 @@ import TimeSlotGrid from './TimeSlotGrid';
 import notificationManager from '../../utils/notification';
 import { CSS_VARIABLES } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 import './ScheduleModal.css';
 
 /**
@@ -188,14 +189,7 @@ const ScheduleModal = ({
 
             console.log('📝 스케줄 생성 데이터:', scheduleData);
 
-            const response = await fetch('/api/schedules/consultant', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify(scheduleData)
-            });
+            const response = await csrfTokenManager.post('/api/schedules/consultant', scheduleData);
 
             if (response.ok) {
                 const result = await response.json();

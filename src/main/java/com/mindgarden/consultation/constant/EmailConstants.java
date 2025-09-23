@@ -21,6 +21,7 @@ public final class EmailConstants {
     public static final String TEMPLATE_PAYMENT_CONFIRMATION = "PAYMENT_CONFIRMATION";
     public static final String TEMPLATE_PAYMENT_FAILED = "PAYMENT_FAILED";
     public static final String TEMPLATE_SYSTEM_NOTIFICATION = "SYSTEM_NOTIFICATION";
+    public static final String TEMPLATE_SESSION_EXTENSION_CONFIRMATION = "SESSION_EXTENSION_CONFIRMATION";
     
     // === 이메일 제목 ===
     public static final String SUBJECT_WELCOME = "[mindgarden] 회원가입을 환영합니다";
@@ -34,6 +35,7 @@ public final class EmailConstants {
     public static final String SUBJECT_PAYMENT_CONFIRMATION = "[mindgarden] 결제 완료 안내";
     public static final String SUBJECT_PAYMENT_FAILED = "[mindgarden] 결제 실패 안내";
     public static final String SUBJECT_SYSTEM_NOTIFICATION = "[mindgarden] 시스템 알림";
+    public static final String SUBJECT_SESSION_EXTENSION_CONFIRMATION = "[mindgarden] 회기 추가 완료 안내";
     
     // === 이메일 설정 ===
     public static final String FROM_EMAIL = "noreply@mindgarden.com";
@@ -53,6 +55,7 @@ public final class EmailConstants {
     public static final String TEMPLATE_PATH_PAYMENT_CONFIRMATION = "email/payment-confirmation.html";
     public static final String TEMPLATE_PATH_PAYMENT_FAILED = "email/payment-failed.html";
     public static final String TEMPLATE_PATH_SYSTEM_NOTIFICATION = "email/system-notification.html";
+    public static final String TEMPLATE_PATH_SESSION_EXTENSION_CONFIRMATION = "email/session-extension-confirmation.html";
     
     // === 이메일 발송 상태 ===
     public static final String STATUS_PENDING = "PENDING";

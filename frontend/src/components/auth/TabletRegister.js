@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import { apiGet } from '../../utils/ajax';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 
 const TabletRegister = () => {
   const navigate = useNavigate();
@@ -148,13 +149,7 @@ const TabletRegister = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await csrfTokenManager.post('/api/auth/register', formData);
 
       if (response.ok) {
         const result = await response.json();

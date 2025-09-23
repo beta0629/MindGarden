@@ -8,6 +8,7 @@ import { LoadingBar } from '../common/LoadingBar';
 import { showAlert } from '../../utils/alert';
 import { useSession } from '../../contexts/SessionContext';
 import { getDashboardPath } from '../../utils/session';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 import './BranchManagement.css';
 
 /**
@@ -140,14 +141,7 @@ const BranchManagement = () => {
         try {
             setLoading(true);
 
-            const response = await fetch(API_ENDPOINTS.BRANCHES, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(branchData)
-            });
+            const response = await csrfTokenManager.post(API_ENDPOINTS.BRANCHES, branchData);
 
             if (!response.ok) {
                 const errorData = await response.json();

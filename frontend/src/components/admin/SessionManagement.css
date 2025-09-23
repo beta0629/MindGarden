@@ -44,13 +44,18 @@
 }
 
 .session-mgmt-btn-primary {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
     color: white;
+    font-weight: 600;
+    border: 2px solid #e74c3c;
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
 }
 
 .session-mgmt-btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+    border-color: #c0392b;
 }
 
 .session-mgmt-btn-secondary {
@@ -817,14 +822,16 @@
 }
 
 .session-mgmt-tab:hover {
-    color: #3498db;
-    background: #f8f9fa;
+    color: #e74c3c;
+    background: #fdf2f2;
+    border-bottom-color: #e74c3c;
 }
 
 .session-mgmt-tab.active {
-    color: #3498db;
-    border-bottom-color: #3498db;
-    background: #f8f9fa;
+    color: #e74c3c;
+    border-bottom-color: #e74c3c;
+    background: #fdf2f2;
+    font-weight: 600;
 }
 
 /* 회기 추가 요청 섹션 */

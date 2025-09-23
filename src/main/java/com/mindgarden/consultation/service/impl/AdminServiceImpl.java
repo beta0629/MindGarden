@@ -10,7 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mindgarden.consultation.constant.AdminConstants;
+import com.mindgarden.consultation.constant.MappingStatusConstants;
 import com.mindgarden.consultation.constant.ScheduleStatus;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
@@ -208,13 +211,14 @@ public class AdminServiceImpl implements AdminService {
         
         if (!existingMappings.isEmpty()) {
             // 중복 매핑이 있는 경우 가장 최근의 활성 매핑을 선택
+            String activeStatus = getMappingStatusCode("ACTIVE");
             ConsultantClientMapping existing = existingMappings.stream()
-                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                .filter(m -> m.getStatus().name().equals(activeStatus))
                 .max(Comparator.comparing(ConsultantClientMapping::getCreatedAt))
                 .orElse(existingMappings.get(0));
             
             // 활성 상태인지 확인
-            if (existing.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
+            if (!existing.getStatus().name().equals(activeStatus)) {
                 log.warn("⚠️ 비활성 매핑 발견, 새 매핑 생성: 상태={}", existing.getStatus());
                 // 비활성 상태면 새 매핑 생성으로 진행
             } else if (!branchCode.equals(existing.getBranchCode())) {
@@ -270,7 +274,8 @@ public class AdminServiceImpl implements AdminService {
                 
                 if (needsPaymentConfirmation) {
                     // 추가 결제가 있는 경우 입금 확인 대기 상태로 설정
-                    existing.setPaymentStatus(ConsultantClientMapping.PaymentStatus.PENDING);
+                    String pendingStatus = getPaymentStatusCode("PENDING");
+                    existing.setPaymentStatus(ConsultantClientMapping.PaymentStatus.valueOf(pendingStatus));
                     log.info("💰 추가 매핑 시 입금 확인 필요: 추가금액={}원", 
                         dto.getPaymentAmount() != null ? dto.getPaymentAmount() : dto.getPackagePrice());
                 } else {
@@ -300,12 +305,15 @@ public class AdminServiceImpl implements AdminService {
             dto.getStartDate().atStartOfDay() : 
             LocalDateTime.now());
         // 새 매핑은 입금 확인 후 활성화되도록 설정
+        String defaultMappingStatus = getMappingStatusCode("PENDING_PAYMENT");
+        String defaultPaymentStatus = getPaymentStatusCode("PENDING");
+        
         mapping.setStatus(dto.getStatus() != null ? 
             ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus()) : 
-            ConsultantClientMapping.MappingStatus.PENDING_PAYMENT);
+            ConsultantClientMapping.MappingStatus.valueOf(defaultMappingStatus));
         mapping.setPaymentStatus(dto.getPaymentStatus() != null ? 
             ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus()) : 
-            ConsultantClientMapping.PaymentStatus.PENDING);
+            ConsultantClientMapping.PaymentStatus.valueOf(defaultPaymentStatus));
         mapping.setTotalSessions(dto.getTotalSessions() != null ? dto.getTotalSessions() : 10);
         mapping.setRemainingSessions(dto.getRemainingSessions() != null ? dto.getRemainingSessions() : (dto.getTotalSessions() != null ? dto.getTotalSessions() : 10));
         mapping.setUsedSessions(0);
@@ -605,6 +613,7 @@ public class AdminServiceImpl implements AdminService {
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND")
+                .branchCode(mapping.getBranchCode()) // 매핑의 지점코드 사용
                 .taxIncluded(false) // 환불은 부가세 면세
                 .build();
         
@@ -690,7 +699,8 @@ public class AdminServiceImpl implements AdminService {
         ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
         
-        mapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
+        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
         mapping.setNotes(reason);
         mapping.setTerminatedAt(LocalDateTime.now());
         
@@ -757,7 +767,10 @@ public class AdminServiceImpl implements AdminService {
      */
     @Override
     public List<ConsultantClientMapping> getPendingPaymentMappings() {
-        return mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.PENDING_PAYMENT);
+        String pendingPaymentStatus = getMappingStatusCode("PENDING_PAYMENT");
+        return mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getStatus().name().equals(pendingPaymentStatus))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -765,7 +778,10 @@ public class AdminServiceImpl implements AdminService {
      */
     @Override
     public List<ConsultantClientMapping> getPaymentConfirmedMappings() {
-        return mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED);
+        String paymentConfirmedStatus = getMappingStatusCode("PAYMENT_CONFIRMED");
+        return mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getStatus().name().equals(paymentConfirmedStatus))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -781,7 +797,10 @@ public class AdminServiceImpl implements AdminService {
      */
     @Override
     public List<ConsultantClientMapping> getSessionsExhaustedMappings() {
-        return mappingRepository.findByStatus(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED);
+        String sessionsExhaustedStatus = getMappingStatusCode("SESSIONS_EXHAUSTED");
+        return mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getStatus().name().equals(sessionsExhaustedStatus))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -1436,8 +1455,11 @@ public class AdminServiceImpl implements AdminService {
         }
         
         // 2. 활성 매핑들을 새로운 상담사로 이전
-        List<ConsultantClientMapping> activeMappings = mappingRepository
-                .findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
+        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getConsultant().getId().equals(consultantId))
+                .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
+                .collect(Collectors.toList());
         
         for (ConsultantClientMapping mapping : activeMappings) {
             String transferReason = String.format("상담사 삭제로 인한 이전: %s -> %s. 사유: %s", 
@@ -1448,8 +1470,9 @@ public class AdminServiceImpl implements AdminService {
                 mappingRepository.findByConsultantAndClient(transferToConsultant, mapping.getClient());
             
             // 활성 매핑이 있는지 확인
+            String activeStatus = getMappingStatusCode("ACTIVE");
             Optional<ConsultantClientMapping> existingActiveMapping = existingTransferMappings.stream()
-                .filter(m -> m.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                .filter(m -> m.getStatus().name().equals(activeStatus))
                 .findFirst();
             
             if (existingActiveMapping.isPresent()) {
@@ -1566,14 +1589,19 @@ public class AdminServiceImpl implements AdminService {
         }
         
         // 1. 활성 매핑 조회
-        List<ConsultantClientMapping> activeMappings = mappingRepository
-                .findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
+        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getConsultant().getId().equals(consultantId))
+                .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
+                .collect(Collectors.toList());
         
         // 2. 예정된 스케줄 조회 (오늘 포함, 활성 상태만)
+        String bookedStatus = getScheduleStatusCode("BOOKED");
+        String confirmedStatus = getScheduleStatusCode("CONFIRMED");
         List<Schedule> futureSchedules = scheduleRepository.findByConsultantIdAndDateGreaterThanEqual(consultantId, LocalDate.now())
                 .stream()
-                .filter(schedule -> schedule.getStatus() == ScheduleStatus.BOOKED || 
-                                  schedule.getStatus() == ScheduleStatus.CONFIRMED)
+                .filter(schedule -> schedule.getStatus().name().equals(bookedStatus) || 
+                                  schedule.getStatus().name().equals(confirmedStatus))
                 .collect(Collectors.toList());
         
         Map<String, Object> result = new HashMap<>();
@@ -1664,8 +1692,11 @@ public class AdminServiceImpl implements AdminService {
         }
         
         // 1. 해당 내담자의 활성 매핑 조회
-        List<ConsultantClientMapping> activeMappings = mappingRepository
-                .findByClientIdAndStatusNot(id, ConsultantClientMapping.MappingStatus.TERMINATED);
+        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getClient().getId().equals(id))
+                .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
+                .collect(Collectors.toList());
         
         // 2. 남은 회기가 있는 매핑 확인
         List<ConsultantClientMapping> mappingsWithRemainingSessions = activeMappings.stream()
@@ -1686,8 +1717,9 @@ public class AdminServiceImpl implements AdminService {
         }
         
         // 3. 결제 대기 중인 매핑 확인
+        String pendingPaymentStatus = getPaymentStatusCode("PENDING");
         List<ConsultantClientMapping> pendingPaymentMappings = activeMappings.stream()
-                .filter(mapping -> mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.PENDING)
+                .filter(mapping -> mapping.getPaymentStatus().name().equals(pendingPaymentStatus))
                 .collect(Collectors.toList());
         
         if (!pendingPaymentMappings.isEmpty()) {
@@ -1701,9 +1733,11 @@ public class AdminServiceImpl implements AdminService {
         List<Schedule> futureSchedules = scheduleRepository.findByClientIdAndDateGreaterThanEqual(id, LocalDate.now());
         
         // 활성 스케줄만 필터링 (BOOKED, CONFIRMED 상태)
+        String bookedStatus = getScheduleStatusCode("BOOKED");
+        String confirmedStatus = getScheduleStatusCode("CONFIRMED");
         List<Schedule> activeSchedules = futureSchedules.stream()
-                .filter(schedule -> schedule.getStatus() == ScheduleStatus.BOOKED || 
-                                  schedule.getStatus() == ScheduleStatus.CONFIRMED)
+                .filter(schedule -> schedule.getStatus().name().equals(bookedStatus) || 
+                                  schedule.getStatus().name().equals(confirmedStatus))
                 .collect(Collectors.toList());
         
         if (!activeSchedules.isEmpty()) {
@@ -1728,7 +1762,7 @@ public class AdminServiceImpl implements AdminService {
         int cancelledScheduleCount = 0;
         
         for (Schedule schedule : allFutureSchedules) {
-            if (schedule.getStatus() == ScheduleStatus.BOOKED || schedule.getStatus() == ScheduleStatus.CONFIRMED) {
+            if (schedule.getStatus().name().equals(bookedStatus) || schedule.getStatus().name().equals(confirmedStatus)) {
                 User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
                 
                 log.info("📅 내담자 삭제로 인한 스케줄 취소: ID={}, 날짜={}, 상담사={} (활성:{})", 
@@ -1767,8 +1801,11 @@ public class AdminServiceImpl implements AdminService {
         }
         
         // 1. 활성 매핑 조회
-        List<ConsultantClientMapping> activeMappings = mappingRepository
-                .findByClientIdAndStatusNot(clientId, ConsultantClientMapping.MappingStatus.TERMINATED);
+        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getClient().getId().equals(clientId))
+                .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
+                .collect(Collectors.toList());
         
         // 2. 남은 회기가 있는 매핑 확인
         List<ConsultantClientMapping> mappingsWithRemainingSessions = activeMappings.stream()
@@ -1776,15 +1813,18 @@ public class AdminServiceImpl implements AdminService {
                 .collect(Collectors.toList());
         
         // 3. 결제 대기 중인 매핑 확인
+        String pendingPaymentStatus = getPaymentStatusCode("PENDING");
         List<ConsultantClientMapping> pendingPaymentMappings = activeMappings.stream()
-                .filter(mapping -> mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.PENDING)
+                .filter(mapping -> mapping.getPaymentStatus().name().equals(pendingPaymentStatus))
                 .collect(Collectors.toList());
         
         // 4. 예정된 스케줄 조회 (오늘 포함, 활성 스케줄만)
+        String bookedStatus = getScheduleStatusCode("BOOKED");
+        String confirmedStatus = getScheduleStatusCode("CONFIRMED");
         List<Schedule> futureSchedules = scheduleRepository.findByClientIdAndDateGreaterThanEqual(clientId, LocalDate.now())
                 .stream()
-                .filter(schedule -> schedule.getStatus() == ScheduleStatus.BOOKED || 
-                                  schedule.getStatus() == ScheduleStatus.CONFIRMED)
+                .filter(schedule -> schedule.getStatus().name().equals(bookedStatus) || 
+                                  schedule.getStatus().name().equals(confirmedStatus))
                 .collect(Collectors.toList());
         
         Map<String, Object> result = new HashMap<>();
@@ -1865,7 +1905,8 @@ public class AdminServiceImpl implements AdminService {
     public void deleteMapping(Long id) {
         ConsultantClientMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Mapping not found"));
-        mapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
+        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
         mapping.setTerminatedAt(LocalDateTime.now());
         mappingRepository.save(mapping);
     }
@@ -1878,7 +1919,8 @@ public class AdminServiceImpl implements AdminService {
         ConsultantClientMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다."));
         
-        if (mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED) {
+        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        if (mapping.getStatus().name().equals(terminatedStatus)) {
             throw new RuntimeException("이미 종료된 매핑입니다.");
         }
         
@@ -1898,7 +1940,7 @@ public class AdminServiceImpl implements AdminService {
         }
         
         // 매핑 종료 처리
-        mapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
         mapping.setTerminatedAt(LocalDateTime.now());
         
         // 종료 사유 추가
@@ -1937,10 +1979,13 @@ public class AdminServiceImpl implements AdminService {
                         schedule.getId(), schedule.getDate(), schedule.getStartTime(), schedule.getEndTime(), 
                         schedule.getStatus(), schedule.getConsultantId(), schedule.getClientId());
                 
-                if (schedule.getStatus() == ScheduleStatus.BOOKED || schedule.getStatus() == ScheduleStatus.CONFIRMED) {
+                String bookedStatus = getScheduleStatusCode("BOOKED");
+                String confirmedStatus = getScheduleStatusCode("CONFIRMED");
+                if (schedule.getStatus().name().equals(bookedStatus) || schedule.getStatus().name().equals(confirmedStatus)) {
                     log.info("🚫 스케줄 취소 처리: ID={}, 기존상태={}", schedule.getId(), schedule.getStatus());
                     
-                    schedule.setStatus(ScheduleStatus.CANCELLED);
+                    String cancelledStatus = getScheduleStatusCode("CANCELLED");
+                    schedule.setStatus(ScheduleStatus.valueOf(cancelledStatus));
                     schedule.setNotes(schedule.getNotes() != null ? 
                         schedule.getNotes() + "\n[환불 처리로 인한 자동 취소] " + reason :
                         "[환불 처리로 인한 자동 취소] " + reason);
@@ -1992,7 +2037,8 @@ public class AdminServiceImpl implements AdminService {
         ConsultantClientMapping mapping = mappingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다."));
         
-        if (mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED) {
+        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        if (mapping.getStatus().name().equals(terminatedStatus)) {
             throw new RuntimeException("이미 종료된 매핑입니다.");
         }
         
@@ -2105,7 +2151,8 @@ public class AdminServiceImpl implements AdminService {
         // 매핑 상태는 유지 (전체 환불이 아니므로)
         // 단, 남은 회기가 0이 되면 자동으로 회기 소진 처리
         if (mapping.getRemainingSessions() <= 0) {
-            mapping.setStatus(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED);
+            String sessionsExhaustedStatus = getMappingStatusCode("SESSIONS_EXHAUSTED");
+            mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(sessionsExhaustedStatus));
             mapping.setEndDate(LocalDateTime.now());
             log.info("🎯 부분 환불 후 회기 소진: 남은 회기가 0이 되어 상태를 SESSIONS_EXHAUSTED로 변경");
         }
@@ -2150,26 +2197,28 @@ public class AdminServiceImpl implements AdminService {
         // 공통 코드에서 기간 설정 정보 조회
         startDate = getRefundPeriodStartDate(period);
         
-        // 환불된 매핑 조회 (강제 종료된 매핑)
-        List<ConsultantClientMapping> refundedMappings = mappingRepository.findAll().stream()
-                .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED)
+        // 1. 전체 환불된 매핑 조회 (강제 종료된 매핑)
+        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        List<ConsultantClientMapping> terminatedMappings = mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
                 .filter(mapping -> mapping.getTerminatedAt() != null)
                 .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
                 .collect(Collectors.toList());
         
-        // 기본 통계
-        int totalRefundCount = refundedMappings.size();
-        int totalRefundedSessions = refundedMappings.stream()
-                .mapToInt(mapping -> {
-                    // 노트에서 환불 회기 수 추출 (실제로는 총 회기수에서 사용된 회기수를 뺀 값)
-                    return mapping.getTotalSessions() - mapping.getUsedSessions();
-                })
+        // 2. 부분 환불 거래 조회 (FinancialTransaction에서)
+        List<com.mindgarden.consultation.entity.FinancialTransaction> partialRefundTransactions = 
+            financialTransactionRepository.findByTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
+                com.mindgarden.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
+        
+        // 3. 전체 환불 통계 계산
+        int totalTerminatedRefundCount = terminatedMappings.size();
+        int totalTerminatedRefundedSessions = terminatedMappings.stream()
+                .mapToInt(mapping -> mapping.getTotalSessions() - mapping.getUsedSessions())
                 .sum();
         
-        long totalRefundAmount = refundedMappings.stream()
+        long totalTerminatedRefundAmount = terminatedMappings.stream()
                 .mapToLong(mapping -> {
-                    // 환불 금액 계산 (패키지 가격 기준으로 비례 계산)
                     if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
                         int refundedSessions = mapping.getTotalSessions() - mapping.getUsedSessions();
                         return (mapping.getPackagePrice() * refundedSessions) / mapping.getTotalSessions();
@@ -2178,8 +2227,26 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .sum();
         
-        // 상담사별 환불 통계
-        Map<String, Map<String, Object>> consultantRefundStats = refundedMappings.stream()
+        // 4. 부분 환불 통계 계산
+        int totalPartialRefundCount = partialRefundTransactions.size();
+        int totalPartialRefundedSessions = partialRefundTransactions.stream()
+                .mapToInt(transaction -> extractRefundSessionsFromDescription(transaction.getDescription()))
+                .sum();
+        
+        long totalPartialRefundAmount = partialRefundTransactions.stream()
+                .mapToLong(transaction -> transaction.getAmount().longValue())
+                .sum();
+        
+        // 5. 전체 통계 합계
+        int totalRefundCount = totalTerminatedRefundCount + totalPartialRefundCount;
+        int totalRefundedSessions = totalTerminatedRefundedSessions + totalPartialRefundedSessions;
+        long totalRefundAmount = totalTerminatedRefundAmount + totalPartialRefundAmount;
+        
+        // 6. 상담사별 환불 통계 (전체 환불 + 부분 환불)
+        Map<String, Map<String, Object>> consultantRefundStats = new HashMap<>();
+        
+        // 전체 환불 통계 추가
+        Map<String, Map<String, Object>> terminatedStats = terminatedMappings.stream()
                 .collect(Collectors.groupingBy(
                     mapping -> mapping.getConsultant().getName(),
                     Collectors.collectingAndThen(
@@ -2202,38 +2269,86 @@ public class AdminServiceImpl implements AdminService {
                     )
                 ));
         
-        // 월별 환불 추이 (최근 6개월)
+        // 부분 환불 통계 추가
+        Map<String, Map<String, Object>> partialStats = partialRefundTransactions.stream()
+                .collect(Collectors.groupingBy(
+                    transaction -> {
+                        ConsultantClientMapping mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
+                        return mapping != null ? mapping.getConsultant().getName() : "알 수 없음";
+                    },
+                    Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        transactions -> {
+                            Map<String, Object> stats = new HashMap<>();
+                            stats.put("refundCount", transactions.size());
+                            stats.put("refundedSessions", transactions.stream()
+                                    .mapToInt(t -> extractRefundSessionsFromDescription(t.getDescription())).sum());
+                            stats.put("refundAmount", transactions.stream()
+                                    .mapToLong(t -> t.getAmount().longValue()).sum());
+                            return stats;
+                        }
+                    )
+                ));
+        
+        // 통계 합치기
+        consultantRefundStats.putAll(terminatedStats);
+        partialStats.forEach((consultant, stats) -> {
+            if (consultantRefundStats.containsKey(consultant)) {
+                Map<String, Object> existing = consultantRefundStats.get(consultant);
+                existing.put("refundCount", (Integer) existing.get("refundCount") + (Integer) stats.get("refundCount"));
+                existing.put("refundedSessions", (Integer) existing.get("refundedSessions") + (Integer) stats.get("refundedSessions"));
+                existing.put("refundAmount", (Long) existing.get("refundAmount") + (Long) stats.get("refundAmount"));
+            } else {
+                consultantRefundStats.put(consultant, stats);
+            }
+        });
+        
+        // 7. 월별 환불 추이 (최근 6개월) - 전체 환불 + 부분 환불
         List<Map<String, Object>> monthlyTrend = new ArrayList<>();
         for (int i = 5; i >= 0; i--) {
             LocalDate monthStart = LocalDate.now().minusMonths(i).withDayOfMonth(1);
             LocalDate monthEnd = monthStart.plusMonths(1).minusDays(1);
             
-            List<ConsultantClientMapping> monthlyRefunds = refundedMappings.stream()
+            // 해당 월의 전체 환불
+            List<ConsultantClientMapping> monthlyTerminatedRefunds = terminatedMappings.stream()
                     .filter(mapping -> {
                         LocalDate terminatedDate = mapping.getTerminatedAt().toLocalDate();
                         return !terminatedDate.isBefore(monthStart) && !terminatedDate.isAfter(monthEnd);
                     })
                     .collect(Collectors.toList());
             
+            // 해당 월의 부분 환불
+            List<com.mindgarden.consultation.entity.FinancialTransaction> monthlyPartialRefunds = partialRefundTransactions.stream()
+                    .filter(transaction -> {
+                        LocalDate transactionDate = transaction.getTransactionDate();
+                        return !transactionDate.isBefore(monthStart) && !transactionDate.isAfter(monthEnd);
+                    })
+                    .collect(Collectors.toList());
+            
             Map<String, Object> monthData = new HashMap<>();
             monthData.put("month", monthStart.format(DateTimeFormatter.ofPattern("yyyy-MM")));
-            monthData.put("refundCount", monthlyRefunds.size());
-            monthData.put("refundedSessions", monthlyRefunds.stream()
-                    .mapToInt(m -> m.getTotalSessions() - m.getUsedSessions()).sum());
-            monthData.put("refundAmount", monthlyRefunds.stream()
-                    .mapToLong(m -> {
-                        if (m.getPackagePrice() != null && m.getTotalSessions() > 0) {
-                            int refunded = m.getTotalSessions() - m.getUsedSessions();
-                            return (m.getPackagePrice() * refunded) / m.getTotalSessions();
-                        }
-                        return 0;
-                    }).sum());
+            monthData.put("refundCount", monthlyTerminatedRefunds.size() + monthlyPartialRefunds.size());
+            monthData.put("refundedSessions", 
+                monthlyTerminatedRefunds.stream().mapToInt(m -> m.getTotalSessions() - m.getUsedSessions()).sum() +
+                monthlyPartialRefunds.stream().mapToInt(t -> extractRefundSessionsFromDescription(t.getDescription())).sum());
+            monthData.put("refundAmount", 
+                monthlyTerminatedRefunds.stream().mapToLong(m -> {
+                    if (m.getPackagePrice() != null && m.getTotalSessions() > 0) {
+                        int refunded = m.getTotalSessions() - m.getUsedSessions();
+                        return (m.getPackagePrice() * refunded) / m.getTotalSessions();
+                    }
+                    return 0;
+                }).sum() +
+                monthlyPartialRefunds.stream().mapToLong(t -> t.getAmount().longValue()).sum());
             
             monthlyTrend.add(monthData);
         }
         
-        // 환불 사유별 통계 (공통 코드 기반 표준화)
-        Map<String, Integer> refundReasonStats = refundedMappings.stream()
+        // 8. 환불 사유별 통계 (전체 환불 + 부분 환불)
+        Map<String, Integer> refundReasonStats = new HashMap<>();
+        
+        // 전체 환불 사유 통계
+        Map<String, Integer> terminatedReasonStats = terminatedMappings.stream()
                 .collect(Collectors.groupingBy(
                     mapping -> {
                         // 노트에서 환불 사유 추출
@@ -2251,10 +2366,28 @@ public class AdminServiceImpl implements AdminService {
                     Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)
                 ));
         
-        // 최근 환불 목록 (최근 10건)
-        List<Map<String, Object>> recentRefunds = refundedMappings.stream()
+        // 부분 환불 사유 통계
+        Map<String, Integer> partialReasonStats = partialRefundTransactions.stream()
+                .collect(Collectors.groupingBy(
+                    transaction -> {
+                        String reason = extractRefundReasonFromDescription(transaction.getDescription());
+                        return standardizeRefundReason(reason);
+                    },
+                    Collectors.collectingAndThen(Collectors.counting(), Math::toIntExact)
+                ));
+        
+        // 사유 통계 합치기
+        refundReasonStats.putAll(terminatedReasonStats);
+        partialReasonStats.forEach((reason, count) -> {
+            refundReasonStats.merge(reason, count, Integer::sum);
+        });
+        
+        // 9. 최근 환불 목록 (전체 환불 + 부분 환불, 최근 10건)
+        List<Map<String, Object>> recentRefunds = new ArrayList<>();
+        
+        // 전체 환불 목록 추가
+        terminatedMappings.stream()
                 .sorted((a, b) -> b.getTerminatedAt().compareTo(a.getTerminatedAt()))
-                .limit(10)
                 .map(mapping -> {
                     Map<String, Object> refund = new HashMap<>();
                     refund.put("mappingId", mapping.getId());
@@ -2280,9 +2413,56 @@ public class AdminServiceImpl implements AdminService {
                     
                     return refund;
                 })
-                .collect(Collectors.toList());
+                .forEach(recentRefunds::add);
         
-        // 결과 구성
+        // 부분 환불 목록 추가
+        partialRefundTransactions.stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(transaction -> {
+                    Map<String, Object> refund = new HashMap<>();
+                    
+                    // 관련 매핑 정보 조회
+                    ConsultantClientMapping mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
+                    
+                    if (mapping != null) {
+                        refund.put("mappingId", mapping.getId());
+                        refund.put("clientName", mapping.getClient().getName());
+                        refund.put("consultantName", mapping.getConsultant().getName());
+                        refund.put("packageName", mapping.getPackageName());
+                        refund.put("refundedSessions", extractRefundSessionsFromDescription(transaction.getDescription()));
+                        refund.put("refundAmount", transaction.getAmount().longValue());
+                        refund.put("terminatedAt", transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                        
+                        // 환불 사유 추출
+                        String reason = extractRefundReasonFromDescription(transaction.getDescription());
+                        refund.put("reason", reason);
+                    } else {
+                        refund.put("mappingId", transaction.getRelatedEntityId());
+                        refund.put("clientName", "알 수 없음");
+                        refund.put("consultantName", "알 수 없음");
+                        refund.put("packageName", "알 수 없음");
+                        refund.put("refundedSessions", 0);
+                        refund.put("refundAmount", transaction.getAmount().longValue());
+                        refund.put("terminatedAt", transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                        refund.put("reason", "매핑 정보 없음");
+                    }
+                    
+                    return refund;
+                })
+                .forEach(recentRefunds::add);
+        
+        // 날짜순으로 정렬하고 최근 10건만 선택
+        recentRefunds.sort((a, b) -> {
+            String dateA = (String) a.get("terminatedAt");
+            String dateB = (String) b.get("terminatedAt");
+            return dateB.compareTo(dateA);
+        });
+        
+        if (recentRefunds.size() > 10) {
+            recentRefunds = recentRefunds.subList(0, 10);
+        }
+        
+        // 10. 결과 구성
         Map<String, Object> result = new HashMap<>();
         result.put("period", period);
         result.put("startDate", startDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
@@ -2296,13 +2476,14 @@ public class AdminServiceImpl implements AdminService {
         summary.put("averageRefundPerCase", totalRefundCount > 0 ? totalRefundAmount / totalRefundCount : 0);
         result.put("summary", summary);
         
+        // 상세 통계
         result.put("consultantStats", consultantRefundStats);
         result.put("monthlyTrend", monthlyTrend);
         result.put("refundReasonStats", refundReasonStats);
         result.put("recentRefunds", recentRefunds);
         
-        log.info("✅ 환불 통계 조회 완료: 총 {}건, 환불 회기 {}회, 환불 금액 {}원", 
-                totalRefundCount, totalRefundedSessions, totalRefundAmount);
+        log.info("📊 환불 통계 조회 완료: 전체={}, 부분환불={}, 전체환불={}, 총금액={}원", 
+                totalRefundCount, totalPartialRefundCount, totalTerminatedRefundCount, totalRefundAmount);
         
         return result;
     }
@@ -2314,24 +2495,77 @@ public class AdminServiceImpl implements AdminService {
         LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
         LocalDateTime endDate = LocalDateTime.now();
         
-        // 환불된 매핑 조회 (강제 종료된 매핑)
-        List<ConsultantClientMapping> allRefundedMappings = mappingRepository.findAll().stream()
-                .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED)
+        // 1. 전체 환불된 매핑 조회 (강제 종료된 매핑)
+        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        List<ConsultantClientMapping> terminatedMappings = mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
                 .filter(mapping -> mapping.getTerminatedAt() != null)
                 .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
-                .sorted((a, b) -> b.getTerminatedAt().compareTo(a.getTerminatedAt()))
                 .collect(Collectors.toList());
         
-        // 페이징 처리
-        int totalElements = allRefundedMappings.size();
-        int startIndex = page * size;
-        int endIndex = Math.min(startIndex + size, totalElements);
+        // 2. 부분 환불 거래 조회 (FinancialTransaction에서)
+        List<com.mindgarden.consultation.entity.FinancialTransaction> partialRefundTransactions = 
+            financialTransactionRepository.findByTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
+                com.mindgarden.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
         
-        List<ConsultantClientMapping> pagedMappings = allRefundedMappings.subList(startIndex, endIndex);
+        // 3. 부분 환불 데이터를 환불 이력 형식으로 변환
+        List<Map<String, Object>> partialRefundHistory = partialRefundTransactions.stream()
+                .map(transaction -> {
+                    Map<String, Object> refund = new HashMap<>();
+                    
+                    // 관련 매핑 정보 조회
+                    ConsultantClientMapping mapping = null;
+                    if (transaction.getRelatedEntityId() != null) {
+                        mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
+                    }
+                    
+                    if (mapping != null) {
+                        refund.put("mappingId", mapping.getId());
+                        refund.put("clientName", mapping.getClient().getName());
+                        refund.put("consultantName", mapping.getConsultant().getName());
+                        refund.put("packageName", mapping.getPackageName());
+                        refund.put("originalAmount", mapping.getPackagePrice());
+                        refund.put("totalSessions", mapping.getTotalSessions());
+                        refund.put("usedSessions", mapping.getUsedSessions());
+                        
+                        // 부분 환불 정보 (거래에서 추출)
+                        refund.put("refundedSessions", extractRefundSessionsFromDescription(transaction.getDescription()));
+                        refund.put("refundAmount", transaction.getAmount().longValue());
+                        refund.put("terminatedAt", transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                        refund.put("branchCode", transaction.getBranchCode());
+                        refund.put("erpStatus", "SENT");
+                        refund.put("erpReference", "ERP_" + mapping.getId() + "_" + transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+                        
+                        // 환불 사유 추출
+                        String reason = extractRefundReasonFromDescription(transaction.getDescription());
+                        refund.put("refundReason", reason);
+                        refund.put("standardizedReason", standardizeRefundReason(reason));
+                    } else {
+                        // 매핑 정보를 찾을 수 없는 경우
+                        refund.put("mappingId", transaction.getRelatedEntityId());
+                        refund.put("clientName", "알 수 없음");
+                        refund.put("consultantName", "알 수 없음");
+                        refund.put("packageName", "알 수 없음");
+                        refund.put("originalAmount", 0);
+                        refund.put("totalSessions", 0);
+                        refund.put("usedSessions", 0);
+                        refund.put("refundedSessions", 0);
+                        refund.put("refundAmount", transaction.getAmount().longValue());
+                        refund.put("terminatedAt", transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                        refund.put("branchCode", transaction.getBranchCode());
+                        refund.put("erpStatus", "SENT");
+                        refund.put("erpReference", "ERP_UNKNOWN_" + transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+                        refund.put("refundReason", "매핑 정보 없음");
+                        refund.put("standardizedReason", "기타");
+                    }
+                    
+                    return refund;
+                })
+                .collect(Collectors.toList());
         
-        // 환불 이력 데이터 구성
-        List<Map<String, Object>> refundHistory = pagedMappings.stream()
+        // 4. 전체 환불된 매핑 데이터 구성
+        List<Map<String, Object>> terminatedRefundHistory = terminatedMappings.stream()
                 .map(mapping -> {
                     Map<String, Object> refund = new HashMap<>();
                     refund.put("mappingId", mapping.getId());
@@ -2353,6 +2587,8 @@ public class AdminServiceImpl implements AdminService {
                     
                     refund.put("terminatedAt", mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
                     refund.put("branchCode", mapping.getBranchCode());
+                    refund.put("erpStatus", "SENT");
+                    refund.put("erpReference", "ERP_" + mapping.getId() + "_" + mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
                     
                     // 환불 사유 추출
                     String notes = mapping.getNotes();
@@ -2372,15 +2608,30 @@ public class AdminServiceImpl implements AdminService {
                     refund.put("refundReason", reason);
                     refund.put("standardizedReason", standardizeRefundReason(reason));
                     
-                    // ERP 전송 상태 (모의)
-                    refund.put("erpStatus", "SENT");
-                    refund.put("erpReference", "ERP_" + mapping.getId() + "_" + mapping.getTerminatedAt().toLocalDate().toString().replace("-", ""));
-                    
                     return refund;
                 })
                 .collect(Collectors.toList());
         
-        // 페이징 정보
+        // 5. 전체 환불 이력 합치기 (부분 환불 + 전체 환불)
+        List<Map<String, Object>> allRefundHistory = new ArrayList<>();
+        allRefundHistory.addAll(partialRefundHistory);
+        allRefundHistory.addAll(terminatedRefundHistory);
+        
+        // 6. 날짜순으로 정렬 (최신순)
+        allRefundHistory.sort((a, b) -> {
+            String dateA = (String) a.get("terminatedAt");
+            String dateB = (String) b.get("terminatedAt");
+            return dateB.compareTo(dateA);
+        });
+        
+        // 7. 페이징 처리
+        int totalElements = allRefundHistory.size();
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, totalElements);
+        
+        List<Map<String, Object>> pagedRefundHistory = allRefundHistory.subList(startIndex, endIndex);
+        
+        // 8. 페이지 정보 구성
         Map<String, Object> pageInfo = new HashMap<>();
         pageInfo.put("currentPage", page);
         pageInfo.put("pageSize", size);
@@ -2389,15 +2640,60 @@ public class AdminServiceImpl implements AdminService {
         pageInfo.put("hasNext", endIndex < totalElements);
         pageInfo.put("hasPrevious", page > 0);
         
+        // 9. 결과 반환
         Map<String, Object> result = new HashMap<>();
-        result.put("refundHistory", refundHistory);
+        result.put("refundHistory", pagedRefundHistory);
         result.put("pageInfo", pageInfo);
-        result.put("period", period);
-        result.put("status", status);
+        result.put("period", period != null ? period : "month");
+        result.put("status", status != null ? status : "all");
         
-        log.info("✅ 환불 이력 조회 완료: 총 {}건, 페이지 {}/{}", totalElements, page + 1, pageInfo.get("totalPages"));
+        log.info("📋 환불 이력 조회 완료: 전체={}, 부분환불={}, 전체환불={}, 페이지={}", 
+                totalElements, partialRefundHistory.size(), terminatedRefundHistory.size(), page);
+        
         return result;
     }
+    
+    /**
+     * 환불 설명에서 환불 회기수 추출
+     */
+    private int extractRefundSessionsFromDescription(String description) {
+        if (description == null) return 0;
+        
+        // "상담료 부분 환불 - 패키지명 (5회기 부분 환불, 사유: ...)" 형식에서 회기수 추출
+        try {
+            if (description.contains("회기 부분 환불")) {
+                String[] parts = description.split("회기 부분 환불");
+                if (parts.length > 0) {
+                    String numberPart = parts[0].substring(parts[0].lastIndexOf("(") + 1);
+                    return Integer.parseInt(numberPart.trim());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("환불 회기수 추출 실패: {}", description);
+        }
+        return 0;
+    }
+    
+    /**
+     * 환불 설명에서 환불 사유 추출
+     */
+    private String extractRefundReasonFromDescription(String description) {
+        if (description == null) return "기타";
+        
+        try {
+            if (description.contains("사유: ")) {
+                String[] parts = description.split("사유: ");
+                if (parts.length > 1) {
+                    String reason = parts[1].split(" \\[")[0]; // " [" 이전까지만 추출
+                    return reason.trim();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("환불 사유 추출 실패: {}", description);
+        }
+        return "기타";
+    }
+    
 
     @Override
     public Map<String, Object> getErpSyncStatus() {
@@ -2524,31 +2820,37 @@ public class AdminServiceImpl implements AdminService {
         
         try {
             // 공통 코드에서 REFUND_REASON 그룹 조회
-            List<CommonCode> reasonCodes = commonCodeRepository.findByCodeGroupOrderBySortOrderAsc("REFUND_REASON");
+            List<CommonCode> reasonCodes = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc("REFUND_REASON");
+            
+            String reason = rawReason.toLowerCase().trim();
             
             for (CommonCode code : reasonCodes) {
                 String codeLabel = code.getCodeLabel();
                 String codeValue = code.getCodeValue();
                 
-                // 키워드 매칭으로 표준화
-                if (rawReason.contains(codeLabel) || rawReason.contains(codeValue)) {
+                // 라벨과 코드값으로 직접 매칭
+                if (reason.contains(codeLabel.toLowerCase()) || reason.contains(codeValue.toLowerCase())) {
                     return codeLabel;
                 }
                 
-                // extra_data에 키워드가 있으면 매칭
+                // extra_data의 키워드로 매칭
                 String extraData = code.getExtraData();
                 if (extraData != null && extraData.contains("\"keywords\"")) {
                     try {
-                        // 간단한 키워드 추출 (정규식 사용)
-                        String keywords = extraData.replaceAll(".*\"keywords\":\\s*\"([^\"]+)\".*", "$1");
-                        String[] keywordArray = keywords.split(",");
-                        for (String keyword : keywordArray) {
-                            if (rawReason.contains(keyword.trim())) {
-                                return codeLabel;
+                        ObjectMapper mapper = new ObjectMapper();
+                        JsonNode extraDataNode = mapper.readTree(extraData);
+                        JsonNode keywords = extraDataNode.get("keywords");
+                        
+                        if (keywords != null) {
+                            String[] keywordArray = keywords.asText().split(",");
+                            for (String keyword : keywordArray) {
+                                if (reason.contains(keyword.trim().toLowerCase())) {
+                                    return codeLabel;
+                                }
                             }
                         }
                     } catch (Exception e) {
-                        log.debug("환불 사유 키워드 파싱 무시: {}", e.getMessage());
+                        log.debug("환불 사유 키워드 파싱 실패: codeValue={}, error={}", codeValue, e.getMessage());
                     }
                 }
             }
@@ -2556,8 +2858,13 @@ public class AdminServiceImpl implements AdminService {
             log.error("환불 사유 공통 코드 조회 실패: rawReason={}", rawReason, e);
         }
         
-        // 기본값: 원본 사유를 20자로 제한
-        return rawReason.length() > 20 ? rawReason.substring(0, 20) + "..." : rawReason;
+        // 특별한 경우 처리
+        if (rawReason.toLowerCase().contains("환불테스트")) {
+            return "환불테스트";
+        }
+        
+        // 기본값: 기타
+        return "기타";
     }
 
     /**
@@ -2673,6 +2980,57 @@ public class AdminServiceImpl implements AdminService {
     /**
      * 환불 관련 공통 코드 초기화 (없으면 자동 생성)
      */
+    /**
+     * 공통코드에서 매핑 상태 조회
+     */
+    private String getMappingStatusCode(String statusName) {
+        try {
+            List<CommonCode> statusCodes = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(MappingStatusConstants.MAPPING_STATUS_GROUP);
+            for (CommonCode code : statusCodes) {
+                if (code.getCodeLabel().equals(statusName) || code.getCodeValue().equals(statusName)) {
+                    return code.getCodeValue();
+                }
+            }
+        } catch (Exception e) {
+            log.error("매핑 상태 코드 조회 실패: {}", statusName, e);
+        }
+        return statusName; // 기본값으로 원본 반환
+    }
+
+    /**
+     * 공통코드에서 결제 상태 조회
+     */
+    private String getPaymentStatusCode(String statusName) {
+        try {
+            List<CommonCode> statusCodes = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(MappingStatusConstants.PAYMENT_STATUS_GROUP);
+            for (CommonCode code : statusCodes) {
+                if (code.getCodeLabel().equals(statusName) || code.getCodeValue().equals(statusName)) {
+                    return code.getCodeValue();
+                }
+            }
+        } catch (Exception e) {
+            log.error("결제 상태 코드 조회 실패: {}", statusName, e);
+        }
+        return statusName; // 기본값으로 원본 반환
+    }
+
+    /**
+     * 공통코드에서 스케줄 상태 조회
+     */
+    private String getScheduleStatusCode(String statusName) {
+        try {
+            List<CommonCode> statusCodes = commonCodeRepository.findByCodeGroupAndIsActiveTrueOrderBySortOrderAsc(MappingStatusConstants.SCHEDULE_STATUS_GROUP);
+            for (CommonCode code : statusCodes) {
+                if (code.getCodeLabel().equals(statusName) || code.getCodeValue().equals(statusName)) {
+                    return code.getCodeValue();
+                }
+            }
+        } catch (Exception e) {
+            log.error("스케줄 상태 코드 조회 실패: {}", statusName, e);
+        }
+        return statusName; // 기본값으로 원본 반환
+    }
+
     private void initializeRefundCommonCodes() {
         try {
             // REFUND_PERIOD 그룹 확인 및 생성

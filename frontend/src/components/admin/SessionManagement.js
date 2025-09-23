@@ -274,12 +274,20 @@ const SessionManagement = () => {
      */
     const loadExtensionRequests = async () => {
         try {
+            console.log('🔄 회기 추가 요청 목록 로드 시작');
             const response = await apiGet('/api/admin/session-extensions/requests');
+            console.log('📊 회기 추가 요청 API 응답:', response);
+            
             if (response.success) {
-                setExtensionRequests(response.data || []);
+                const requests = response.data || [];
+                console.log('📋 로드된 회기 추가 요청 수:', requests.length);
+                console.log('📋 회기 추가 요청 데이터:', requests);
+                setExtensionRequests(requests);
+            } else {
+                console.error('❌ 회기 추가 요청 목록 로드 실패:', response.message);
             }
         } catch (error) {
-            console.error('회기 추가 요청 목록 로드 실패:', error);
+            console.error('❌ 회기 추가 요청 목록 로드 실패:', error);
         }
     };
 
@@ -1336,15 +1344,32 @@ const SessionManagement = () => {
                     </div>
 
                     <div className="session-mgmt-extensions-grid">
-                        {extensionRequests.map(request => (
-                            <div key={request.id} className="session-mgmt-extension-card">
-                                <div className="session-mgmt-card-header">
-                                    <div className="session-mgmt-card-title">
-                                        <h4>요청 #{request.id}</h4>
-                                        <span className="session-mgmt-card-subtitle">
-                                            {request.consultantName} → {request.clientName}
-                                        </span>
-                                    </div>
+                        {extensionRequests.map(request => {
+                            // 데이터 구조 확인 및 안전한 접근
+                            const consultantName = request.mapping?.consultant?.name || 
+                                                 request.consultantName || 
+                                                 '알 수 없음';
+                            const clientName = request.mapping?.client?.name || 
+                                             request.clientName || 
+                                             '알 수 없음';
+                            
+                            console.log('🔍 요청 데이터 처리:', {
+                                id: request.id,
+                                consultantName,
+                                clientName,
+                                status: request.status,
+                                mapping: request.mapping
+                            });
+                            
+                            return (
+                                <div key={request.id} className="session-mgmt-extension-card">
+                                    <div className="session-mgmt-card-header">
+                                        <div className="session-mgmt-card-title">
+                                            <h4>요청 #{request.id}</h4>
+                                            <span className="session-mgmt-card-subtitle">
+                                                {consultantName} → {clientName}
+                                            </span>
+                                        </div>
                                     <span 
                                         className="session-mgmt-status-badge"
                                         style={{ backgroundColor: getExtensionStatusColor(request.status) }}
@@ -1429,12 +1454,16 @@ const SessionManagement = () => {
                                     )}
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {extensionRequests.length === 0 && (
                         <div className="session-mgmt-no-results">
                             <p>회기 추가 요청이 없습니다.</p>
+                            <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '10px' }}>
+                                회기 추가 요청을 생성하면 여기에 표시됩니다.
+                            </p>
                         </div>
                     )}
                 </div>

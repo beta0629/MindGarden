@@ -54,12 +54,10 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
     }
   }, [isOpen, user]);
 
-  console.log('🔍 isOpen 상태 체크:', { isOpen, user });
+  // 중복 로그 제거 - 렌더링마다 출력되는 로그 제거
   if (!isOpen) {
-    console.log('❌ 햄버거 메뉴 닫혀있음 - 렌더링 중단');
     return null;
   }
-  console.log('✅ 햄버거 메뉴 열려있음 - 렌더링 계속');
 
   const handleMenuClick = (path, menuGroup = null) => {
     if (path && path !== '준비중') {
@@ -85,10 +83,16 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
-    sessionManager.logout();
-    navigate('/login');
-    onClose();
+  const confirmLogout = async () => {
+    try {
+      await sessionManager.logout();
+      console.log('✅ 로그아웃 완료');
+    } catch (error) {
+      console.error('❌ 로그아웃 실패:', error);
+    } finally {
+      navigate('/login');
+      onClose();
+    }
   };
 
   const toggleExpanded = (itemId) => {
@@ -168,7 +172,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
     );
   }
 
-  console.log('🔍 SimpleHamburgerMenu 렌더링 시작:', { isOpen, user, menuStructure });
+  // 중복 로그 제거 - 렌더링 시작 로그 제거
   
   return (
     <div className="simple-hamburger-overlay" onClick={onClose}>
@@ -245,9 +249,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
 
         {/* 푸터 영역 */}
         <div className="simple-hamburger-footer">
-          {console.log('🔍 푸터 영역 렌더링됨 - simple-hamburger-footer')}
           <button className="simple-logout-btn" onClick={handleLogout}>
-            {console.log('🔍 로그아웃 버튼 렌더링됨 - simple-logout-btn')}
             <i className="bi bi-box-arrow-right"></i>
             <span>로그아웃</span>
           </button>

@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import { getDashboardPath } from '../../utils/session';
 import notificationManager from '../../utils/notification';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 import './BranchLogin.css';
 
 /**
@@ -89,13 +90,7 @@ const HeadquartersLogin = () => {
 
       console.log('🏢 본사 로그인 요청:', loginData);
 
-      const response = await fetch(`${API_ENDPOINTS.AUTH}/headquarters/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(loginData)
-      });
+      const response = await csrfTokenManager.post(`${API_ENDPOINTS.AUTH}/headquarters/login`, loginData);
 
       const result = await response.json();
 

@@ -5,6 +5,7 @@ import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import LoadingSpinner from '../common/LoadingSpinner';
 import SimpleLayout from '../layout/SimpleLayout';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 import './UserManagement.css';
 
 const UserManagement = ({ onUpdate, showToast }) => {
@@ -125,11 +126,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
         }
         
         try {
-            const response = await fetch(`/api/admin/users/${selectedUser.id}/role?newRole=${form.newRole}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include'
-            });
+            const response = await csrfTokenManager.put(`/api/admin/users/${selectedUser.id}/role?newRole=${form.newRole}`);
 
             const result = await response.json();
 
@@ -345,10 +342,23 @@ const UserManagement = ({ onUpdate, showToast }) => {
             </Container>
 
             {/* 역할 변경 모달 */}
-            <Modal show={showRoleModal} onHide={() => setShowRoleModal(false)} size="lg">
+            <Modal 
+                show={showRoleModal} 
+                onHide={() => setShowRoleModal(false)} 
+                size="lg"
+                style={{ zIndex: 9999 }}
+            >
                 <Modal.Header closeButton>
-                    <Modal.Title>
-                        <i className="bi bi-person-gear me-2"></i>
+                    <Modal.Title style={{ 
+                        fontSize: '18px', 
+                        fontWeight: '600', 
+                        color: '#333',
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                    }}>
+                        <i className="bi bi-person-gear"></i>
                         사용자 역할 변경
                     </Modal.Title>
                 </Modal.Header>
@@ -379,11 +389,48 @@ const UserManagement = ({ onUpdate, showToast }) => {
                             )}
                             
                             <Form.Group className="mb-3">
-                                <Form.Label>새로운 역할</Form.Label>
-                                <Form.Select
+                                <Form.Label style={{
+                                    display: 'block',
+                                    marginBottom: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    color: '#333'
+                                }}>
+                                    새로운 역할
+                                </Form.Label>
+                                <select
+                                    className="role-select-dropdown"
                                     value={form.newRole}
                                     onChange={(e) => setForm({...form, newRole: e.target.value})}
                                     required
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        fontSize: '14px',
+                                        border: '2px solid #007bff',
+                                        borderRadius: '6px',
+                                        backgroundColor: '#fff',
+                                        color: '#495057',
+                                        outline: 'none',
+                                        transition: 'border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
+                                        zIndex: 10000,
+                                        position: 'relative',
+                                        appearance: 'menulist',
+                                        WebkitAppearance: 'menulist',
+                                        MozAppearance: 'menulist',
+                                        cursor: 'pointer',
+                                        minHeight: '38px',
+                                        boxSizing: 'border-box',
+                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = '#80bdff';
+                                        e.target.style.boxShadow = '0 0 0 0.2rem rgba(0, 123, 255, 0.25)';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#ced4da';
+                                        e.target.style.boxShadow = 'none';
+                                    }}
                                 >
                                     <option value="">역할을 선택하세요</option>
                                     {roleOptions.map(role => (
@@ -391,23 +438,64 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                             {role.icon} {role.label} ({role.value})
                                         </option>
                                     ))}
-                                </Form.Select>
+                                </select>
                             </Form.Group>
                             
-                            <div className="d-flex justify-content-end gap-2">
-                                <Button variant="secondary" onClick={() => setShowRoleModal(false)}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowRoleModal(false)}
+                                    style={{
+                                        padding: '8px 16px',
+                                        fontSize: '14px',
+                                        border: '1px solid #6c757d',
+                                        borderRadius: '4px',
+                                        backgroundColor: '#6c757d',
+                                        color: '#fff',
+                                        cursor: 'pointer',
+                                        transition: 'background-color 0.15s ease-in-out'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        e.target.style.backgroundColor = '#5a6268';
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.target.style.backgroundColor = '#6c757d';
+                                    }}
+                                >
                                     취소
-                                </Button>
-                                <Button 
-                                    variant="primary" 
+                                </button>
+                                <button
                                     type="submit"
                                     disabled={form.newRole === selectedUser.role}
+                                    style={{
+                                        padding: '8px 16px',
+                                        fontSize: '14px',
+                                        border: '1px solid #007bff',
+                                        borderRadius: '4px',
+                                        backgroundColor: form.newRole === selectedUser.role ? '#6c757d' : '#007bff',
+                                        color: '#fff',
+                                        cursor: form.newRole === selectedUser.role ? 'not-allowed' : 'pointer',
+                                        transition: 'background-color 0.15s ease-in-out',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        if (form.newRole !== selectedUser.role) {
+                                            e.target.style.backgroundColor = '#0056b3';
+                                        }
+                                    }}
+                                    onMouseOut={(e) => {
+                                        if (form.newRole !== selectedUser.role) {
+                                            e.target.style.backgroundColor = '#007bff';
+                                        }
+                                    }}
                                 >
-                                    <i className="bi bi-check-lg me-2"></i>
+                                    <i className="bi bi-check-lg"></i>
                                     {selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' 
                                         ? '상담사로 변경' 
                                         : '역할 변경'}
-                                </Button>
+                                </button>
                             </div>
                         </Form>
                     )}

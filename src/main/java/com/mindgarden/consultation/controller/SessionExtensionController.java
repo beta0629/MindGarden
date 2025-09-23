@@ -91,7 +91,7 @@ public class SessionExtensionController {
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "입금이 확인되었습니다. 이제 관리자 승인을 기다려주세요.",
+                "message", "입금이 확인되었고 자동으로 승인되어 회기가 추가되었습니다.",
                 "data", requestData
             ));
         } catch (Exception e) {

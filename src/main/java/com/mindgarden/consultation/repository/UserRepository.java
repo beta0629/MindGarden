@@ -163,6 +163,24 @@ public interface UserRepository extends BaseRepository<User, Long> {
     @Query("SELECT COUNT(u) FROM User u WHERE u.isActive = ?1 AND u.isDeleted = false")
     long countByIsActive(Boolean isActive);
     
+    /**
+     * 역할별 사용자 조회 (활성 상태 옵션)
+     */
+    @Query("SELECT u FROM User u WHERE u.role = ?1 AND (?2 IS NULL OR u.isActive = ?2) AND u.isDeleted = false")
+    List<User> findByRoleAndIsActive(UserRole role, Boolean isActive);
+    
+    /**
+     * 지점별 사용자 조회 (활성 상태 옵션)
+     */
+    @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND (?2 IS NULL OR u.isActive = ?2) AND u.isDeleted = false")
+    List<User> findByBranchCodeAndIsActive(String branchCode, Boolean isActive);
+    
+    /**
+     * 역할 + 지점별 사용자 조회 (활성 상태 옵션)
+     */
+    @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.branchCode = ?2 AND (?3 IS NULL OR u.isActive = ?3) AND u.isDeleted = false")
+    List<User> findByRoleAndBranchCodeAndIsActive(UserRole role, String branchCode, Boolean isActive);
+    
 
     
     /**

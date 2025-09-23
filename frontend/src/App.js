@@ -112,17 +112,21 @@ function AppContent() {
   // 중복 로그인 알림 상태
   const [showDuplicateLoginAlert, setShowDuplicateLoginAlert] = React.useState(false);
 
-  // 콜백 함수로 메모이제이션
+  // 콜백 함수로 메모이제이션 (개발 환경에서만)
   const logMount = useCallback(() => {
-    console.log('🚀 App 컴포넌트 마운트됨');
-    console.log('🌐 현재 환경:', process.env.NODE_ENV);
-    console.log('📱 React 버전:', React.version);
-    console.log('🔗 라우터 초기화 완료');
-    console.log('✅ MindGarden 앱 시작됨');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🚀 App 컴포넌트 마운트됨');
+      console.log('🌐 현재 환경:', process.env.NODE_ENV);
+      console.log('📱 React 버전:', React.version);
+      console.log('🔗 라우터 초기화 완료');
+      console.log('✅ MindGarden 앱 시작됨');
+    }
   }, []);
 
   const logUnmount = useCallback(() => {
-    console.log('🚀 App 컴포넌트 언마운트됨');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🚀 App 컴포넌트 언마운트됨');
+    }
   }, []);
 
   useEffect(() => {

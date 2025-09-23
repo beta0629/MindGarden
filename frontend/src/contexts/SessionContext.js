@@ -159,6 +159,16 @@ export const SessionProvider = ({ children }) => {
         // 지점 매핑 필요 여부 확인 (branchCode가 없으면 매핑 필요)
         // 단, SUPER_HQ_ADMIN, HQ_MASTER만 지점 매핑 불필요 (본사 관리자)
         const hqAdminRoles = ['SUPER_HQ_ADMIN', 'HQ_MASTER'];
+        
+        // 사용자 정보가 완전한지 확인 (branchCode와 needsBranchMapping이 모두 있어야 함)
+        const hasCompleteUserInfo = user.branchCode && user.needsBranchMapping !== undefined;
+        
+        if (!hasCompleteUserInfo) {
+          console.log('⚠️ 불완전한 사용자 정보, 백엔드에서 최신 정보 가져오기:', user);
+          // 불완전한 정보면 백엔드에서 최신 정보를 가져오도록 함
+          return;
+        }
+        
         if ((user.needsBranchMapping || !user.branchCode) && !hqAdminRoles.includes(user.role)) {
           console.log('🏢 지점 매핑 필요:', user);
           dispatch({ 
@@ -167,6 +177,8 @@ export const SessionProvider = ({ children }) => {
           });
         } else if (hqAdminRoles.includes(user.role)) {
           console.log('✅ 본사 관리자 - 지점 매핑 불필요:', user.role);
+        } else {
+          console.log('✅ 지점 매핑 불필요:', user);
         }
         
         console.log('✅ 중앙 세션 확인 완료:', user);

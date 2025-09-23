@@ -20,7 +20,6 @@ import com.mindgarden.consultation.service.UserSessionService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,7 +52,6 @@ public class AuthController {
     private final Map<String, Long> verificationTimes = new ConcurrentHashMap<>();
     
     @PostMapping("/clear-session")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> clearSession(HttpSession session) {
         try {
             log.info("세션 강제 초기화 요청");
@@ -211,7 +209,6 @@ public class AuthController {
     }
     
     @PostMapping("/logout")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> logout(HttpSession session) {
         try {
             String sessionId = session.getId();
@@ -374,7 +371,6 @@ public class AuthController {
      * 강제 로그아웃 API (관리자용)
      */
     @PostMapping("/force-logout")
-    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     public ResponseEntity<?> forceLogout(@RequestBody Map<String, String> request) {
         try {
             String targetEmail = request.get("email");

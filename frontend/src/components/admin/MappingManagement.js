@@ -71,12 +71,14 @@ const MappingManagement = () => {
             if (response.success) {
                 console.log('🔍 매핑 데이터 로드 성공:', response.data);
                 console.log('🔍 첫 번째 매핑 데이터:', response.data?.[0]);
+                console.log('🔍 첫 번째 매핑의 packagePrice:', response.data?.[0]?.packagePrice);
                 setMappings(response.data || []);
             } else {
                 // API 실패 시 테스트 데이터 사용
                 console.log('API 실패, 테스트 데이터 사용');
                 const testData = getTestMappings();
                 console.log('🔍 테스트 데이터:', testData);
+                console.log('🔍 테스트 데이터 첫 번째 packagePrice:', testData[0]?.packagePrice);
                 setMappings(testData);
             }
         } catch (error) {
@@ -85,6 +87,7 @@ const MappingManagement = () => {
             console.log('오류 발생, 테스트 데이터 사용');
             const testData = getTestMappings();
             console.log('🔍 테스트 데이터 (오류 시):', testData);
+            console.log('🔍 테스트 데이터 첫 번째 packagePrice:', testData[0]?.packagePrice);
             setMappings(testData);
         } finally {
             setLoading(false);
@@ -269,41 +272,19 @@ const MappingManagement = () => {
         }
     };
 
-    // 입금 확인
+    // 입금 확인 (모달에서 처리됨)
     const handleConfirmPayment = async (mappingId) => {
-        try {
-            const response = await apiPost(`/api/admin/mappings/${mappingId}/confirm-payment`, {
-                paymentMethod: '신용카드',
-                paymentReference: `PAY-${Date.now()}`,
-                paymentAmount: 300000 // 기본 패키지 가격
-            });
-            
-            if (response.success) {
-                // Toast 컴포넌트가 마운트될 때까지 대기
-                setTimeout(() => {
-                    notificationManager.success('✅ 입금 확인 완료! ERP 시스템에 상담료 수입이 자동 등록되었습니다.');
-                }, 100);
-                loadMappings();
-                
-                // ERP 연동 성공 로그
-                console.log('💚 매핑-ERP 연동 성공:', {
-                    mappingId: mappingId,
-                    action: '입금확인',
-                    erpIntegration: '상담료 수입 자동 생성',
-                    category: 'CONSULTATION',
-                    subcategory: 'INDIVIDUAL_CONSULTATION'
-                });
-            } else {
-                setTimeout(() => {
-                    notificationManager.error('입금 확인에 실패했습니다.');
-                }, 100);
-            }
-        } catch (error) {
-            console.error('입금 확인 실패:', error);
-            setTimeout(() => {
-                notificationManager.error('입금 확인에 실패했습니다.');
-            }, 100);
-        }
+        // 모달에서 처리되므로 여기서는 목록만 새로고침
+        loadMappings();
+        
+        // ERP 연동 성공 로그
+        console.log('💚 매핑-ERP 연동 성공:', {
+            mappingId: mappingId,
+            action: '입금확인',
+            erpIntegration: '상담료 수입 자동 생성',
+            category: 'CONSULTATION',
+            subcategory: 'INDIVIDUAL_CONSULTATION'
+        });
     };
 
     // 매핑 거부

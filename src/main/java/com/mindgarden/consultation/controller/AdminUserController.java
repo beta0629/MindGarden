@@ -9,19 +9,19 @@ import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.UserAddressService;
 import com.mindgarden.consultation.service.UserProfileService;
-import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/users")
+@RequestMapping("/api/admin/user-management")
 @RequiredArgsConstructor
 public class AdminUserController {
     

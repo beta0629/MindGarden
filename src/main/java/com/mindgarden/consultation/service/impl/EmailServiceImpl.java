@@ -469,6 +469,7 @@ public class EmailServiceImpl implements EmailService {
         templates.put(EmailConstants.TEMPLATE_PAYMENT_CONFIRMATION, getPaymentConfirmationTemplate());
         templates.put(EmailConstants.TEMPLATE_PAYMENT_FAILED, getPaymentFailedTemplate());
         templates.put(EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION, getSystemNotificationTemplate());
+        templates.put(EmailConstants.TEMPLATE_SESSION_EXTENSION_CONFIRMATION, getSessionExtensionConfirmationTemplate());
         
         return templates.get(templateType);
     }
@@ -501,6 +502,7 @@ public class EmailServiceImpl implements EmailService {
         subjects.put(EmailConstants.TEMPLATE_PAYMENT_CONFIRMATION, EmailConstants.SUBJECT_PAYMENT_CONFIRMATION);
         subjects.put(EmailConstants.TEMPLATE_PAYMENT_FAILED, EmailConstants.SUBJECT_PAYMENT_FAILED);
         subjects.put(EmailConstants.TEMPLATE_SYSTEM_NOTIFICATION, EmailConstants.SUBJECT_SYSTEM_NOTIFICATION);
+        subjects.put(EmailConstants.TEMPLATE_SESSION_EXTENSION_CONFIRMATION, EmailConstants.SUBJECT_SESSION_EXTENSION_CONFIRMATION);
         
         return subjects.getOrDefault(templateType, "mindgarden 알림");
     }
@@ -685,6 +687,69 @@ public class EmailServiceImpl implements EmailService {
                 <p>{{message}}</p>
                 <p>문의사항이 있으시면 {{supportEmail}}로 연락해주세요.</p>
                 <p>감사합니다.<br>mindgarden 팀</p>
+            </body>
+            </html>
+            """;
+    }
+    
+    private String getSessionExtensionConfirmationTemplate() {
+        return """
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2c5aa0; border-bottom: 2px solid #2c5aa0; padding-bottom: 10px;">
+                        회기 추가 완료 안내
+                    </h2>
+                    
+                    <p>안녕하세요, <strong>{{userName}}</strong>님</p>
+                    
+                    <p>요청하신 회기 추가가 성공적으로 완료되었습니다.</p>
+                    
+                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #2c5aa0; margin-top: 0;">📋 결제 정보</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin: 8px 0;"><strong>결제 금액:</strong> {{paymentAmount}}원</li>
+                            <li style="margin: 8px 0;"><strong>결제 방법:</strong> {{paymentMethod}}</li>
+                            <li style="margin: 8px 0;"><strong>확인 일시:</strong> {{confirmationDate}}</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background-color: #e8f4fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #2c5aa0; margin-top: 0;">📈 회기 정보</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin: 8px 0;"><strong>패키지명:</strong> {{packageName}}</li>
+                            <li style="margin: 8px 0;"><strong>추가 회기:</strong> {{additionalSessions}}회</li>
+                            <li style="margin: 8px 0;"><strong>총 회기:</strong> {{totalSessions}}회</li>
+                            <li style="margin: 8px 0;"><strong>남은 회기:</strong> {{remainingSessions}}회</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background-color: #f0f8e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="color: #2c5aa0; margin-top: 0;">👥 상담 정보</h3>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin: 8px 0;"><strong>상담사:</strong> {{consultantName}}</li>
+                            <li style="margin: 8px 0;"><strong>내담자:</strong> {{clientName}}</li>
+                        </ul>
+                    </div>
+                    
+                    <p style="margin-top: 30px;">
+                        추가된 회기는 즉시 사용 가능하며, 상담 예약 시 자동으로 차감됩니다.
+                    </p>
+                    
+                    <p>
+                        문의사항이 있으시면 <a href="mailto:{{supportEmail}}" style="color: #2c5aa0;">{{supportEmail}}</a>로 연락해주세요.
+                    </p>
+                    
+                    <p style="margin-top: 30px;">
+                        감사합니다.<br>
+                        <strong>mindgarden 팀</strong>
+                    </p>
+                    
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                    <p style="font-size: 12px; color: #666; text-align: center;">
+                        © {{currentYear}} mindgarden. All rights reserved.
+                    </p>
+                </div>
             </body>
             </html>
             """;

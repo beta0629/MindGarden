@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { CLIENT_SELECTOR_CONSTANTS } from '../../constants/css-variables';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 import './ClientSelector.css';
 
 /**
@@ -214,14 +215,7 @@ const ClientSelector = ({
             
             console.log('📤 요청 데이터:', requestBody);
             
-            const response = await fetch(API_ENDPOINTS.CHECK_MAPPING, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify(requestBody)
-            });
+            const response = await csrfTokenManager.post(API_ENDPOINTS.CHECK_MAPPING, requestBody);
 
             console.log('📥 응답 상태:', response.status, response.statusText);
             

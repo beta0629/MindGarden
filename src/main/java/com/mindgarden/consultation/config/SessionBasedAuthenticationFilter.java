@@ -158,6 +158,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                path.equals("/api/auth/login") ||  // 로그인만 제외
                path.equals("/api/auth/register") ||  // 회원가입만 제외
                path.equals("/api/auth/forgot-password") ||  // 비밀번호 찾기만 제외
+               path.equals("/api/auth/logout") ||  // 로그아웃만 제외
                path.startsWith("/oauth2/") ||
                path.startsWith("/api/password-reset/") ||
                path.startsWith("/api/test-simple/") ||

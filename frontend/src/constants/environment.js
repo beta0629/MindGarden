@@ -19,8 +19,8 @@ const getBaseUrl = () => {
     return window.location.origin;
   }
   
-  // 개발 환경 기본값
-  return 'http://localhost:8080';
+  // 개발 환경에서는 프록시를 통해 상대 경로 사용
+  return '';
 };
 
 const getFrontendUrl = () => {

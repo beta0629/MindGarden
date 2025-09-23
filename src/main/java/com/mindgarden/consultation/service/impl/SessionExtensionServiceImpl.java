@@ -6,11 +6,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.SessionExtensionRequest;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.SessionExtensionRequestRepository;
+import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.SessionExtensionService;
 import com.mindgarden.consultation.service.SessionSyncService;
 import com.mindgarden.consultation.service.UserService;
@@ -36,6 +38,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     private final ConsultantClientMappingRepository mappingRepository;
     private final UserService userService;
     private final SessionSyncService sessionSyncService;
+    private final EmailService emailService;
     
     @Override
     public SessionExtensionRequest createRequest(Long mappingId, Long requesterId, 
@@ -71,7 +74,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     
     @Override
     public SessionExtensionRequest confirmPayment(Long requestId, String paymentMethod, String paymentReference) {
-        log.info("입금 확인 처리: requestId={}, paymentMethod={}, paymentReference={}", 
+        log.info("💰 입금 확인 및 자동 승인 처리: requestId={}, paymentMethod={}, paymentReference={}", 
                 requestId, paymentMethod, paymentReference);
         
         SessionExtensionRequest request = requestRepository.findById(requestId)
@@ -80,11 +83,63 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         // 현금 결제의 경우 참조번호를 null로 설정
         String finalPaymentReference = "CASH".equals(paymentMethod) ? null : paymentReference;
         
+        // 1. 입금 확인 처리
         request.confirmPayment(paymentMethod, finalPaymentReference);
+        
+        // 2. 자동 관리자 승인 처리 (시스템 관리자로 처리)
+        User systemAdmin = userService.findActiveById(1L) // 시스템 관리자 ID
+                .orElseThrow(() -> new RuntimeException("시스템 관리자를 찾을 수 없습니다"));
+        
+        request.approveByAdmin(systemAdmin);
+        request.setAdminComment("입금 확인 후 자동 승인 처리");
+        
+        // 3. 즉시 완료 처리 (실제 회기 추가)
+        request.complete();
         
         SessionExtensionRequest savedRequest = requestRepository.save(request);
         
-        log.info("✅ 입금 확인 완료: requestId={}", savedRequest.getId());
+        // 4. 매핑에 회기 추가 및 동기화
+        try {
+            sessionSyncService.syncAfterSessionExtension(savedRequest);
+            log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
+        } catch (Exception e) {
+            log.error("❌ 회기 추가 후 동기화 실패: requestId={}, error={}", 
+                     savedRequest.getId(), e.getMessage(), e);
+            // 동기화 실패해도 회기 추가는 완료된 상태로 유지
+        }
+        
+        // 5. 매핑 상태도 자동으로 ACTIVE로 변경 및 결제 정보 동기화
+        try {
+            ConsultantClientMapping mapping = request.getMapping();
+            mapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+            mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+            mapping.setAdminApprovalDate(LocalDateTime.now());
+            mapping.setApprovedBy("시스템 자동 승인");
+            
+            // 결제 정보를 매핑에도 동기화
+            mapping.setPaymentMethod(paymentMethod);
+            mapping.setPaymentReference(finalPaymentReference);
+            mapping.setPaymentDate(LocalDateTime.now());
+            
+            mappingRepository.save(mapping);
+            log.info("✅ 매핑 상태 자동 활성화 및 결제 정보 동기화: mappingId={}, paymentReference={}", 
+                    mapping.getId(), finalPaymentReference);
+        } catch (Exception e) {
+            log.error("❌ 매핑 상태 활성화 실패: {}", e.getMessage(), e);
+        }
+        
+        // 6. 이메일 알림 발송
+        try {
+            sendPaymentConfirmationEmail(savedRequest);
+            log.info("✅ 입금 확인 이메일 발송 완료: requestId={}", savedRequest.getId());
+        } catch (Exception e) {
+            log.error("❌ 입금 확인 이메일 발송 실패: requestId={}, error={}", 
+                     savedRequest.getId(), e.getMessage(), e);
+            // 이메일 발송 실패해도 회기 추가는 완료된 상태로 유지
+        }
+        
+        log.info("✅ 입금 확인 및 자동 승인 완료: requestId={}, status={}", 
+                savedRequest.getId(), savedRequest.getStatus());
         return savedRequest;
     }
     
@@ -113,9 +168,6 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         
         SessionExtensionRequest request = requestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("요청을 찾을 수 없습니다: " + requestId));
-        
-        User admin = userService.findActiveById(adminId)
-                .orElseThrow(() -> new RuntimeException("관리자를 찾을 수 없습니다: " + adminId));
         
         request.reject(reason);
         
@@ -262,5 +314,69 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         statistics.put("statusStats", stats);
         
         return statistics;
+    }
+    
+    /**
+     * 입금 확인 이메일 발송
+     */
+    private void sendPaymentConfirmationEmail(SessionExtensionRequest request) {
+        try {
+            log.info("📧 입금 확인 이메일 발송 시작: requestId={}", request.getId());
+            
+            // 요청자 정보 조회
+            User requester = request.getRequester();
+            if (requester == null || requester.getEmail() == null) {
+                log.warn("⚠️ 이메일 발송 실패: 요청자 정보 또는 이메일이 없습니다. requestId={}", request.getId());
+                return;
+            }
+            
+            // 매핑 정보 조회
+            ConsultantClientMapping mapping = request.getMapping();
+            if (mapping == null) {
+                log.warn("⚠️ 이메일 발송 실패: 매핑 정보가 없습니다. requestId={}", request.getId());
+                return;
+            }
+            
+            // 이메일 템플릿 변수 설정
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("userName", requester.getName() != null ? requester.getName() : "고객님");
+            variables.put("userEmail", requester.getEmail());
+            variables.put("companyName", "mindgarden");
+            variables.put("supportEmail", EmailConstants.SUPPORT_EMAIL);
+            variables.put("currentYear", String.valueOf(java.time.Year.now().getValue()));
+            variables.put("paymentAmount", String.format("%,d", request.getPackagePrice().longValue()));
+            variables.put("paymentMethod", request.getPaymentMethod() != null ? request.getPaymentMethod() : "미지정");
+            variables.put("additionalSessions", request.getAdditionalSessions().toString());
+            variables.put("packageName", request.getPackageName());
+            variables.put("totalSessions", mapping.getTotalSessions() != null ? mapping.getTotalSessions().toString() : "0");
+            variables.put("remainingSessions", mapping.getRemainingSessions() != null ? mapping.getRemainingSessions().toString() : "0");
+            variables.put("consultantName", mapping.getConsultant() != null && mapping.getConsultant().getName() != null ? 
+                         mapping.getConsultant().getName() : "상담사");
+            variables.put("clientName", mapping.getClient() != null && mapping.getClient().getName() != null ? 
+                         mapping.getClient().getName() : "내담자");
+            variables.put("confirmationDate", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH:mm")));
+            
+            // 이메일 발송
+            var response = emailService.sendTemplateEmail(
+                EmailConstants.TEMPLATE_SESSION_EXTENSION_CONFIRMATION,
+                requester.getEmail(),
+                requester.getName(),
+                variables
+            );
+            boolean success = response.isSuccess();
+            
+            if (success) {
+                log.info("✅ 입금 확인 이메일 발송 성공: requestId={}, email={}", 
+                        request.getId(), requester.getEmail());
+            } else {
+                log.warn("⚠️ 입금 확인 이메일 발송 실패: requestId={}, email={}", 
+                        request.getId(), requester.getEmail());
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 입금 확인 이메일 발송 중 오류 발생: requestId={}, error={}", 
+                     request.getId(), e.getMessage(), e);
+            throw e;
+        }
     }
 }

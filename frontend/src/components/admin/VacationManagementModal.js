@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 import './VacationManagementModal.css';
 
 /**
@@ -276,14 +277,7 @@ const VacationManagementModal = ({
         });
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/consultant/${selectedConsultantId}/vacation`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify(submitData)
-            });
+            const response = await csrfTokenManager.post(`${API_BASE_URL}/api/consultant/${selectedConsultantId}/vacation`, submitData);
 
             const result = await response.json();
             

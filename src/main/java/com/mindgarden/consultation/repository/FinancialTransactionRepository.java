@@ -185,4 +185,10 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
      */
     boolean existsByRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
         Long relatedEntityId, String relatedEntityType, FinancialTransaction.TransactionType transactionType);
+    
+    /**
+     * 거래 유형, 세부카테고리, 기간으로 조회 (부분 환불용)
+     */
+    List<FinancialTransaction> findByTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
+        FinancialTransaction.TransactionType transactionType, String subcategory, LocalDate startDate, LocalDate endDate);
 }

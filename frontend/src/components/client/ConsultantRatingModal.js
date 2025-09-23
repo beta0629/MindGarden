@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 
 /**
  * 상담사 하트 평가 모달 컴포넌트
@@ -55,20 +56,13 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
 
         setIsSubmitting(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/ratings/create`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    scheduleId: schedule.scheduleId,
-                    clientId: user.id,
-                    heartScore: heartScore,
-                    comment: comment.trim() || null,
-                    ratingTags: selectedTags,
-                    isAnonymous: isAnonymous
-                })
+            const response = await csrfTokenManager.post(`${API_BASE_URL}/api/ratings/create`, {
+                scheduleId: schedule.scheduleId,
+                clientId: user.id,
+                heartScore: heartScore,
+                comment: comment.trim() || null,
+                ratingTags: selectedTags,
+                isAnonymous: isAnonymous
             });
 
             const result = await response.json();

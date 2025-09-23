@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '../../constants/api';
 import notificationManager from '../../utils/notification';
+import { apiPost } from '../../utils/ajax';
 import './BranchMappingModal.css';
 
 /**
@@ -84,17 +85,9 @@ const BranchMappingModal = ({ isOpen, onClose, onSuccess }) => {
     setError(null);
 
     try {
-      const response = await fetch('/api/auth/map-branch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          branchCode: selectedBranchCode
-        })
+      const data = await apiPost('/api/auth/map-branch', {
+        branchCode: selectedBranchCode
       });
-
-      const data = await response.json();
 
       if (data.success) {
         notificationManager.show(data.message, 'success');

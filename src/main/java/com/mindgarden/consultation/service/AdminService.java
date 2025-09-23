@@ -254,9 +254,19 @@ public interface AdminService {
     Map<String, Object> autoCompleteSchedulesWithReminder();
     
     /**
+     * 사용자 목록 조회
+     */
+    List<User> getUsers(boolean includeInactive, String role, String branchCode);
+    
+    /**
      * 사용자 ID로 사용자 조회
      */
     User getUserById(Long id);
+    
+    /**
+     * 사용자 역할 변경
+     */
+    User changeUserRole(Long userId, String newRole);
     
     /**
      * 중복 매핑 통합

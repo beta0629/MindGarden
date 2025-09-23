@@ -19,15 +19,20 @@ import {
 } from '../constants/oauth2';
 import { setLoginSession, redirectToDashboard, logSessionInfo } from './session';
 import { notification } from './scripts';
+import { cachedApiCall, CACHE_CONFIG } from './apiCache';
 
 let oauth2Config = null;
 
 /**
- * OAuth2 초기화
+ * OAuth2 초기화 (캐시 적용)
  */
 export const initializeOAuth2 = async () => {
   try {
-    const config = await authAPI.getOAuth2Config();
+    const config = await cachedApiCall(
+      '/api/auth/config/oauth2',
+      {},
+      CACHE_CONFIG.OAUTH2_CONFIG.ttl
+    );
     oauth2Config = config;
     console.log('OAuth2 설정 로드 완료:', config);
   } catch (error) {

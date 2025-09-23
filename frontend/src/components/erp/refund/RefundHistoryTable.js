@@ -59,7 +59,7 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
                             </thead>
                             <tbody>
                                 {refundHistory.map((refund, index) => (
-                                    <tr key={refund.mappingId} style={{ 
+                                    <tr key={`${refund.mappingId}-${refund.terminatedAt}-${index}`} style={{ 
                                         backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa' 
                                     }}>
                                         <td style={{ padding: '12px', border: '1px solid #ddd' }}>

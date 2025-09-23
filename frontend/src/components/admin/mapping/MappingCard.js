@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import MappingPaymentModal from './MappingPaymentModal';
 
 /**
  * 매핑 카드 컴포넌트 (동적 처리 지원)
@@ -27,6 +28,7 @@ const MappingCard = ({
     onViewTransferHistory,
     onRefund
 }) => {
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     // 상태별 색상 (props에서 받은 데이터 사용)
     const getStatusColor = (status) => {
         return statusInfo.color;
@@ -356,7 +358,10 @@ const MappingCard = ({
                     status: mapping.status,
                     paymentStatus: mapping.paymentStatus,
                     consultantName: mapping.consultantName,
-                    clientName: mapping.clientName
+                    clientName: mapping.clientName,
+                    packagePrice: mapping.packagePrice,
+                    packageName: mapping.packageName,
+                    fullMapping: mapping
                 })}
                 
                 {/* 입금 확인 버튼 - PENDING 상태일 때만 표시 */}
@@ -376,7 +381,7 @@ const MappingCard = ({
                             backgroundColor: '#007bff',
                             color: 'white'
                         }}
-                        onClick={() => onConfirmPayment?.(mapping.id)}
+                        onClick={() => setShowPaymentModal(true)}
                         onMouseEnter={(e) => {
                             e.target.style.backgroundColor = '#0056b3';
                             e.target.style.transform = 'translateY(-1px)';
@@ -613,6 +618,17 @@ const MappingCard = ({
                     </button>
                 )}
             </div>
+
+            {/* 입금확인 모달 */}
+            <MappingPaymentModal
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                mapping={mapping}
+                onPaymentConfirmed={(mappingId) => {
+                    setShowPaymentModal(false);
+                    onConfirmPayment?.(mappingId);
+                }}
+            />
         </div>
     );
 };

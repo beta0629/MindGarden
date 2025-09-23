@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import { getDashboardPath } from '../../utils/session';
 import notificationManager from '../../utils/notification';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 import './BranchLogin.css';
 
 /**
@@ -95,13 +96,7 @@ const BranchSpecificLogin = () => {
 
       console.log('🏢 지점별 로그인 요청:', { branchCode, loginData });
 
-      const response = await fetch(`${API_ENDPOINTS.AUTH}/branch/${branchCode}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(loginData)
-      });
+      const response = await csrfTokenManager.post(`${API_ENDPOINTS.AUTH}/branch/${branchCode}/login`, loginData);
 
       const result = await response.json();
 

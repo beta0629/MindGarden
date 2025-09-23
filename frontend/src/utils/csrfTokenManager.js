@@ -1,165 +1,162 @@
 /**
  * CSRF 토큰 관리 유틸리티
- * Spring Security CSRF 보호와 연동하여 토큰 관리
+ * - CSRF 토큰 캐싱 및 자동 갱신
+ * - fetch 요청에 자동으로 CSRF 토큰 포함
  * 
  * @author MindGarden
  * @version 1.0.0
- * @since 2025-01-17
+ * @since 2025-01-23
  */
 
-/**
- * CSRF 토큰을 쿠키에서 가져오기
- * 
- * @returns {string|null} CSRF 토큰 또는 null
- */
-export const getCsrfToken = () => {
-    try {
-        const cookies = document.cookie.split(';');
-        for (const cookie of cookies) {
-            const [name, value] = cookie.trim().split('=');
-            if (name === 'XSRF-TOKEN') {
-                return decodeURIComponent(value);
-            }
+class CsrfTokenManager {
+    constructor() {
+        this.token = null;
+        this.tokenExpiry = null;
+        this.isRefreshing = false;
+        this.refreshPromise = null;
+    }
+
+    /**
+     * CSRF 토큰 가져오기 (캐시된 토큰이 있으면 사용, 없으면 새로 요청)
+     */
+    async getToken() {
+        // 캐시된 토큰이 있고 유효하면 반환
+        if (this.token && this.tokenExpiry && Date.now() < this.tokenExpiry) {
+            return this.token;
         }
-        return null;
-    } catch (error) {
-        console.error('❌ CSRF 토큰 조회 실패:', error);
-        return null;
-    }
-};
 
-/**
- * CSRF 토큰을 헤더에 설정
- * 
- * @param {object} headers - 요청 헤더 객체
- * @returns {object} CSRF 토큰이 추가된 헤더
- */
-export const addCsrfTokenToHeaders = (headers = {}) => {
-    const csrfToken = getCsrfToken();
-    if (csrfToken) {
-        headers['X-XSRF-TOKEN'] = csrfToken;
-        console.log('🔒 CSRF 토큰 헤더 추가됨');
-    } else {
-        console.warn('⚠️ CSRF 토큰을 찾을 수 없습니다.');
-    }
-    return headers;
-};
+        // 이미 토큰을 가져오는 중이면 기다림
+        if (this.isRefreshing && this.refreshPromise) {
+            return await this.refreshPromise;
+        }
 
-/**
- * POST/PUT/DELETE 요청에 CSRF 토큰 자동 추가
- * 
- * @param {string} url - 요청 URL
- * @param {object} options - fetch 옵션
- * @returns {Promise<Response>} fetch 응답
- */
-export const fetchWithCsrf = async (url, options = {}) => {
-    const method = options.method?.toUpperCase();
-    
-    // CSRF 보호가 필요한 메서드인지 확인
-    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-        options.headers = addCsrfTokenToHeaders(options.headers);
+        // 새로 토큰 요청
+        return await this.refreshToken();
     }
-    
-    try {
-        const response = await fetch(url, options);
-        
-        // CSRF 오류 처리
-        if (response.status === 403 && response.headers.get('content-type')?.includes('application/json')) {
-            const errorData = await response.json();
-            if (errorData.message?.includes('CSRF') || errorData.message?.includes('csrf')) {
-                console.error('❌ CSRF 토큰 오류:', errorData.message);
-                // 토큰 갱신 후 재시도
-                await refreshCsrfToken();
-                return fetchWithCsrf(url, options);
+
+    /**
+     * CSRF 토큰 새로고침
+     */
+    async refreshToken() {
+        if (this.isRefreshing) {
+            return await this.refreshPromise;
+        }
+
+        this.isRefreshing = true;
+        this.refreshPromise = this._fetchToken();
+
+        try {
+            const token = await this.refreshPromise;
+            return token;
+        } finally {
+            this.isRefreshing = false;
+            this.refreshPromise = null;
+        }
+    }
+
+    /**
+     * 실제 토큰 요청
+     */
+    async _fetchToken() {
+        try {
+            const response = await fetch('/api/auth/csrf-token', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.token = data.token;
+                // 토큰을 30분간 유효하다고 가정 (실제로는 서버에서 만료 시간을 알려줘야 함)
+                this.tokenExpiry = Date.now() + (30 * 60 * 1000);
+                console.log('✅ CSRF 토큰 갱신 완료');
+                return this.token;
+            } else {
+                console.warn('⚠️ CSRF 토큰 요청 실패:', response.status);
+                return null;
             }
+        } catch (error) {
+            console.warn('⚠️ CSRF 토큰 가져오기 실패:', error);
+            return null;
+        }
+    }
+
+    /**
+     * fetch 요청에 CSRF 토큰을 자동으로 포함하는 래퍼 함수
+     */
+    async fetchWithCsrf(url, options = {}) {
+        const token = await this.getToken();
+        
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            ...options.headers
+        };
+        
+        // CSRF 토큰이 있으면 헤더에 추가
+        if (token) {
+            headers['X-XSRF-TOKEN'] = token;
         }
         
-        return response;
-    } catch (error) {
-        console.error('❌ CSRF 포함 요청 실패:', error);
-        throw error;
-    }
-};
-
-/**
- * CSRF 토큰 갱신
- * 
- * @returns {Promise<boolean>} 갱신 성공 여부
- */
-export const refreshCsrfToken = async () => {
-    try {
-        console.log('🔄 CSRF 토큰 갱신 시도');
-        
-        // CSRF 토큰 요청 (GET 요청으로 토큰 갱신)
-        const response = await fetch('/api/auth/csrf-token', {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
+        return fetch(url, {
+            ...options,
+            headers,
+            credentials: 'include'
         });
-        
-        if (response.ok) {
-            console.log('✅ CSRF 토큰 갱신 성공');
-            return true;
-        } else {
-            console.warn('⚠️ CSRF 토큰 갱신 실패:', response.status);
-            return false;
-        }
-    } catch (error) {
-        console.error('❌ CSRF 토큰 갱신 오류:', error);
-        return false;
     }
-};
 
-/**
- * CSRF 토큰 상태 확인
- * 
- * @returns {boolean} 토큰 존재 여부
- */
-export const hasValidCsrfToken = () => {
-    const token = getCsrfToken();
-    return token !== null && token.length > 0;
-};
-
-/**
- * CSRF 토큰 초기화
- * 페이지 로드 시 자동으로 CSRF 토큰 확인 및 갱신
- */
-export const initializeCsrfToken = async () => {
-    try {
-        console.log('🔒 CSRF 토큰 초기화 시작');
-        
-        if (!hasValidCsrfToken()) {
-            console.log('🔄 CSRF 토큰이 없어 갱신 시도');
-            await refreshCsrfToken();
-        } else {
-            console.log('✅ CSRF 토큰이 이미 존재함');
-        }
-    } catch (error) {
-        console.error('❌ CSRF 토큰 초기화 실패:', error);
+    /**
+     * POST 요청 헬퍼
+     */
+    async post(url, data, options = {}) {
+        return this.fetchWithCsrf(url, {
+            method: 'POST',
+            body: JSON.stringify(data),
+            ...options
+        });
     }
-};
 
-/**
- * CSRF 토큰 디버깅 정보 출력
- */
-export const debugCsrfToken = () => {
-    const token = getCsrfToken();
-    console.group('🔒 CSRF 토큰 디버깅 정보');
-    console.log('토큰 존재 여부:', hasValidCsrfToken());
-    console.log('토큰 값:', token ? `${token.substring(0, 10)}...` : 'null');
-    console.log('쿠키 정보:', document.cookie);
-    console.groupEnd();
-};
+    /**
+     * PUT 요청 헬퍼
+     */
+    async put(url, data, options = {}) {
+        return this.fetchWithCsrf(url, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+            ...options
+        });
+    }
 
-export default {
-    getCsrfToken,
-    addCsrfTokenToHeaders,
-    fetchWithCsrf,
-    refreshCsrfToken,
-    hasValidCsrfToken,
-    initializeCsrfToken,
-    debugCsrfToken
-};
+    /**
+     * DELETE 요청 헬퍼
+     */
+    async delete(url, options = {}) {
+        return this.fetchWithCsrf(url, {
+            method: 'DELETE',
+            ...options
+        });
+    }
+
+    /**
+     * GET 요청 헬퍼 (CSRF 토큰 불필요하지만 일관성을 위해)
+     */
+    async get(url, options = {}) {
+        return this.fetchWithCsrf(url, {
+            method: 'GET',
+            ...options
+        });
+    }
+
+    /**
+     * 토큰 캐시 초기화
+     */
+    clearToken() {
+        this.token = null;
+        this.tokenExpiry = null;
+    }
+}
+
+// 싱글톤 인스턴스 생성
+const csrfTokenManager = new CsrfTokenManager();
+
+export default csrfTokenManager;

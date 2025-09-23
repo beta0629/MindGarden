@@ -26,18 +26,18 @@ class SessionManager {
     }
     
     // localStorage에서 사용자 정보 복원
-    restoreUserFromStorage() {
-        try {
-            const storedUser = localStorage.getItem('userInfo');
-            if (storedUser) {
-                this.user = JSON.parse(storedUser);
-                console.log('✅ sessionManager 사용자 정보 복원:', this.user);
-            }
-        } catch (error) {
-            console.error('❌ 사용자 정보 복원 실패:', error);
-            this.user = null;
-        }
+  restoreUserFromStorage() {
+    try {
+      const storedUser = localStorage.getItem('userInfo');
+      if (storedUser) {
+        this.user = JSON.parse(storedUser);
+        console.log('✅ sessionManager 사용자 정보 복원:', this.user);
+      }
+    } catch (error) {
+      console.error('❌ 사용자 정보 복원 실패:', error);
+      this.user = null;
     }
+  }
     
     // 전역 폼 제출 감지 설정
     setupGlobalFormListeners() {

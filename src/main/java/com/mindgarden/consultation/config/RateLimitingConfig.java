@@ -62,10 +62,10 @@ public class RateLimitingConfig {
             public long getLastRequestTime() { return lastRequestTime; }
         }
         
-        // Rate Limiting 설정
-        private static final int MAX_REQUESTS_PER_MINUTE = 60;  // 분당 최대 60회
-        private static final int MAX_LOGIN_ATTEMPTS = 5;        // 로그인 시도 최대 5회
-        private static final long LOGIN_COOLDOWN_MINUTES = 15;  // 로그인 실패 후 15분 대기
+        // Rate Limiting 설정 (테스트용 비활성화)
+        private static final int MAX_REQUESTS_PER_MINUTE = 999999; // 분당 최대 999999회 (테스트용)
+        private static final int MAX_LOGIN_ATTEMPTS = 999999;       // 로그인 시도 최대 999999회 (테스트용)
+        private static final long LOGIN_COOLDOWN_MINUTES = 0;   // 로그인 실패 후 0분 대기 (테스트용)
         
         @Override
         protected void doFilterInternal(@NonNull HttpServletRequest request, 

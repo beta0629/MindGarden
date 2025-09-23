@@ -8,6 +8,7 @@
  */
 
 import { apiGet } from './ajax';
+import { cachedApiCall, CACHE_CONFIG } from './apiCache';
 
 class NotificationManager {
     constructor() {
@@ -18,11 +19,15 @@ class NotificationManager {
     }
 
     /**
-     * 알림 유형 코드 로드
+     * 알림 유형 코드 로드 (캐시 적용)
      */
     async loadNotificationTypes() {
         try {
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=NOTIFICATION_TYPE');
+            const response = await cachedApiCall(
+                '/api/admin/common-codes/values?groupCode=NOTIFICATION_TYPE',
+                {},
+                CACHE_CONFIG.COMMON_CODES.ttl
+            );
             if (response && response.length > 0) {
                 this.notificationTypes = response.map(code => ({
                     code: code.codeValue,

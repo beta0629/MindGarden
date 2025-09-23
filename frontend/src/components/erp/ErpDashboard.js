@@ -5,6 +5,7 @@ import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErpHeader from './common/ErpHeader';
+import { apiGet } from '../../utils/ajax';
 
 /**
  * ERP 메인 대시보드 컴포넌트
@@ -29,19 +30,12 @@ const ErpDashboard = () => {
     try {
       setLoading(true);
       
-      // 병렬로 여러 API 호출
-      const [itemsRes, pendingRes, ordersRes, budgetsRes] = await Promise.all([
-        fetch('/api/erp/items'),
-        fetch('/api/erp/purchase-requests/pending-admin'),
-        fetch('/api/erp/purchase-orders'),
-        fetch('/api/erp/budgets')
-      ]);
-
+      // 병렬로 여러 API 호출 (apiGet 사용)
       const [itemsData, pendingData, ordersData, budgetsData] = await Promise.all([
-        itemsRes.json(),
-        pendingRes.json(),
-        ordersRes.json(),
-        budgetsRes.json()
+        apiGet('/api/erp/items'),
+        apiGet('/api/erp/purchase-requests/pending-admin'),
+        apiGet('/api/erp/purchase-orders'),
+        apiGet('/api/erp/budgets')
       ]);
 
       // 예산 통계 계산

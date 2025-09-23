@@ -318,8 +318,10 @@ public class OAuth2Controller {
                     String frontendUrl = getFrontendBaseUrl(request);
                     String redirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
                     
+                    // 세션 쿠키 설정을 명시적으로 추가
                     return ResponseEntity.status(302)
                         .header("Location", redirectUrl)
+                        .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; Domain=.m-garden.co.kr; SameSite=None; Max-Age=3600; HttpOnly=false", session.getId()))
                         .build();
                 }
             } else if (response.isRequiresSignup()) {
@@ -514,8 +516,10 @@ public class OAuth2Controller {
                     String frontendUrl = getFrontendBaseUrl(request);
                     String redirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
                     
+                    // 세션 쿠키 설정을 명시적으로 추가
                     return ResponseEntity.status(302)
                         .header("Location", redirectUrl)
+                        .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; Domain=.m-garden.co.kr; SameSite=None; Max-Age=3600; HttpOnly=false", session.getId()))
                         .build();
                 }
             } else if (response.isRequiresSignup()) {

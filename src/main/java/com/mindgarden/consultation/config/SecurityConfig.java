@@ -188,7 +188,9 @@ public class SecurityConfig {
             "Cache-Control",
             "Pragma",
             "X-XSRF-TOKEN",  // CSRF 토큰 헤더 추가
-            "_csrf"          // CSRF 파라미터 추가
+            "_csrf",         // CSRF 파라미터 추가
+            "Cookie",        // 쿠키 헤더 추가
+            "Set-Cookie"     // Set-Cookie 헤더 추가
         ));
         
         // 인증 정보 포함 허용

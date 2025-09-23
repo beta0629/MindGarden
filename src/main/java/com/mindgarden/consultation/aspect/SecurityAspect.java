@@ -66,20 +66,10 @@ public class SecurityAspect {
     }
     
     private ResponseEntity<Map<String, Object>> createUnauthorizedResponse() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-            .body(Map.of(
-                "success", false,
-                "message", "로그인이 필요합니다.",
-                "redirectToLogin", true
-            ));
+        return SecurityUtils.createUnauthorizedResponse();
     }
     
     private ResponseEntity<Map<String, Object>> createForbiddenResponse(String message) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-            .body(Map.of(
-                "success", false,
-                "message", message,
-                "redirectToLogin", true
-            ));
+        return SecurityUtils.createForbiddenResponse(message);
     }
 }

@@ -8,6 +8,7 @@ import {
   API_ERROR_MESSAGES
 } from '../constants/api';
 import csrfTokenManager from './csrfTokenManager';
+import { sessionManager } from './sessionManager';
 
 /**
  * 공통 AJAX 유틸리티
@@ -59,7 +60,7 @@ const checkSessionAndRedirect = async (response) => {
     
     try {
       // 세션 체크 API 호출
-      const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+      const sessionResponse = await sessionManager.fetch(`${API_BASE_URL}/api/auth/current-user`, {
         credentials: 'include',
         method: 'GET'
       });
@@ -101,7 +102,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     const queryString = new URLSearchParams(params).toString();
     const url = queryString ? `${API_BASE_URL}${endpoint}?${queryString}` : `${API_BASE_URL}${endpoint}`;
     
-    const response = await fetch(url, {
+    const response = await sessionManager.fetch(url, {
       method: 'GET',
       headers: { ...getDefaultHeaders(), ...options.headers },
       credentials: 'include', // 세션 쿠키 포함
@@ -146,7 +147,7 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
       }
       
       try {
-        const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+        const sessionResponse = await sessionManager.fetch(`${API_BASE_URL}/api/auth/current-user`, {
           credentials: 'include',
           method: 'GET'
         });
@@ -233,7 +234,7 @@ export const apiPostFormData = async (endpoint, formData, options = {}) => {
     // FormData를 사용할 때는 Content-Type을 자동으로 설정하도록 제거
     delete headers['Content-Type'];
     
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await sessionManager.fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: { ...getDefaultHeaders(), ...headers },
       body: formData,
@@ -289,7 +290,7 @@ export const apiUpload = async (endpoint, formData, options = {}) => {
     const headers = { ...getDefaultHeaders() };
     delete headers['Content-Type']; // multipart/form-data를 위해 제거
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await sessionManager.fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: { ...headers, ...options.headers },
       body: formData,
@@ -320,7 +321,7 @@ export const authAPI = {
     // curl과 동일한 방식으로 직접 요청
     try {
       console.log('🔐 직접 fetch 로그인 시도:', data);
-      const response = await fetch(`${API_BASE_URL}${AUTH_API.LOGIN}`, {
+      const response = await sessionManager.fetch(`${API_BASE_URL}${AUTH_API.LOGIN}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -387,7 +388,7 @@ export const consultationAPI = {
 // 테스트 로그인 함수 (개발 환경에서만 사용)
 export const testLogin = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/test-login`, {
+    const response = await sessionManager.fetch(`${API_BASE_URL}/api/auth/test-login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

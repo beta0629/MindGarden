@@ -39,8 +39,8 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     List<ConsultantClientMapping> findByDateRange(@Param("startDate") java.time.LocalDate startDate, 
                                                  @Param("endDate") java.time.LocalDate endDate);
     
-    // 모든 매핑을 관련 엔티티와 함께 조회 (최신순 정렬)
-    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client ORDER BY m.createdAt DESC")
+    // 모든 매핑을 관련 엔티티와 함께 조회 (최신 업데이트순 정렬)
+    @Query("SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client ORDER BY m.updatedAt DESC, m.createdAt DESC")
     List<ConsultantClientMapping> findAllWithDetails();
     
     // 활성 매핑을 관련 엔티티와 함께 조회

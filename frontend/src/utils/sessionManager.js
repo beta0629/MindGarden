@@ -245,6 +245,8 @@ class SessionManager {
                 this.sessionInfo = null;
             } else {
                 console.log('🔄 예외 발생했지만 기존 사용자 정보 보존:', this.user.role);
+                // 기존 사용자 정보가 있으면 로그인 상태 유지
+                return true;
             }
             
             this.notifyListeners();

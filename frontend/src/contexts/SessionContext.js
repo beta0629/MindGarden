@@ -33,7 +33,8 @@ const SessionActionTypes = {
   SET_LAST_CHECK_TIME: 'SET_LAST_CHECK_TIME',
   SET_MODAL_OPEN: 'SET_MODAL_OPEN', // 모달 상태 액션 추가
   SET_DUPLICATE_LOGIN_MODAL: 'SET_DUPLICATE_LOGIN_MODAL', // 중복 로그인 모달 액션 추가
-  SET_BRANCH_MAPPING_MODAL: 'SET_BRANCH_MAPPING_MODAL' // 지점 매핑 모달 액션 추가
+  SET_BRANCH_MAPPING_MODAL: 'SET_BRANCH_MAPPING_MODAL', // 지점 매핑 모달 액션 추가
+  SET_LOGGED_IN: 'SET_LOGGED_IN' // 로그인 상태 액션 추가
 };
 
 // 리듀서 함수
@@ -98,6 +99,12 @@ const sessionReducer = (state, action) => {
       return {
         ...state,
         branchMappingModal: action.payload
+      };
+    
+    case SessionActionTypes.SET_LOGGED_IN:
+      return {
+        ...state,
+        isLoggedIn: action.payload
       };
     
     default:

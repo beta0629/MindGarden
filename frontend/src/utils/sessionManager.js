@@ -107,13 +107,18 @@ class SessionManager {
                 return false;
             }
             
-            // 401 오류는 정상적인 상황이므로 조용히 처리
+            // 401 오류 시 로그인 페이지로 리다이렉트
             if (userResponse.status === 401) {
-                console.log('🔍 세션 확인 실패 (정상): 401 Unauthorized');
+                console.log('🔍 세션 확인 실패: 401 Unauthorized - 로그인 페이지로 리다이렉트');
                 this.user = null;
                 this.sessionInfo = null;
                 this.lastCheckTime = now;
                 this.notifyListeners();
+                
+                // 로그인 페이지로 리다이렉트
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                window.location.href = '/login';
                 return false;
             }
             
@@ -170,9 +175,35 @@ class SessionManager {
             return this.user !== null;
             
         } catch (error) {
-            // 네트워크 오류나 기타 예외는 로그에 남기되, 401은 정상으로 처리
+            // 네트워크 오류나 기타 예외 처리
             if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                 console.log('ℹ️ 네트워크 연결 실패 - 서버가 실행되지 않았을 수 있습니다');
+                
+                // 네트워크 오류 시에도 세션 체크를 한 번 더 시도
+                try {
+                    const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+                        credentials: 'include',
+                        method: 'GET'
+                    });
+                    
+                    if (!sessionResponse.ok) {
+                        console.log('🔐 네트워크 오류 시 세션 없음 - 로그인 페이지로 리다이렉트');
+                        this.user = null;
+                        this.sessionInfo = null;
+                        localStorage.removeItem('accessToken');
+                        localStorage.removeItem('refreshToken');
+                        window.location.href = '/login';
+                        return false;
+                    }
+                } catch (sessionError) {
+                    console.log('🔐 네트워크 오류 시 세션 체크 실패 - 로그인 페이지로 리다이렉트');
+                    this.user = null;
+                    this.sessionInfo = null;
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    window.location.href = '/login';
+                    return false;
+                }
             } else if (error.message && error.message.includes('401')) {
                 // 401 오류는 정상적인 상황이므로 콘솔에 오류로 표시하지 않음
                 // 조용히 처리
@@ -200,17 +231,83 @@ class SessionManager {
     // 로그아웃
     async logout() {
         try {
-            await fetch(`${API_BASE_URL}/api/auth/logout`, { 
+            console.log('🚪 로그아웃 시작...');
+            
+            // CSRF 토큰 가져오기
+            const csrfToken = this.getCsrfToken();
+            console.log('🔑 CSRF 토큰:', csrfToken ? '발견됨' : '없음');
+            
+            // 헤더 구성
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            
+            // CSRF 토큰이 있으면 추가
+            if (csrfToken) {
+                headers['X-CSRF-TOKEN'] = csrfToken;
+            }
+            
+            // 서버에 로그아웃 요청
+            const response = await fetch(`${API_BASE_URL}/api/auth/logout`, { 
                 method: 'POST',
-                credentials: 'include' 
+                credentials: 'include',
+                headers: headers
             });
+            
+            if (response.ok) {
+                console.log('✅ 서버 로그아웃 완료');
+            } else {
+                console.warn('⚠️ 서버 로그아웃 응답 오류:', response.status, response.statusText);
+            }
         } catch (error) {
-            console.error('로그아웃 실패:', error);
+            console.error('❌ 서버 로그아웃 실패:', error);
+            // 서버 로그아웃 실패해도 클라이언트 로그아웃은 진행
         } finally {
+            // 클라이언트 상태 강제 초기화
             this.user = null;
             this.sessionInfo = null;
+            this.lastCheckTime = 0;
+            this.checkInProgress = false;
+            
+            // 로컬 저장소 정리
+            localStorage.removeItem('user');
+            localStorage.removeItem('sessionId');
+            localStorage.removeItem('sessionInfo');
+            sessionStorage.clear();
+            
+            // 쿠키 정리 (가능한 범위에서)
+            document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'XSRF-TOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = '_csrf=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            
+            // 리스너들에게 알림
             this.notifyListeners();
+            
+            console.log('✅ 클라이언트 로그아웃 완료');
         }
+    }
+    
+    // CSRF 토큰 가져오기
+    getCsrfToken() {
+        // 쿠키에서 CSRF 토큰 찾기 (여러 가능한 이름 확인)
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'XSRF-TOKEN' || name === '_csrf' || name === 'csrfToken') {
+                return decodeURIComponent(value);
+            }
+        }
+        
+        // 쿠키에서 찾지 못한 경우 메타 태그에서 찾기
+        const csrfMeta = document.querySelector('meta[name="_csrf"]');
+        if (csrfMeta) {
+            return csrfMeta.getAttribute('content');
+        }
+        
+        // 모두 찾지 못한 경우 빈 문자열 반환
+        console.warn('⚠️ CSRF 토큰을 찾을 수 없습니다. 쿠키:', document.cookie);
+        return '';
     }
     
     // 세션 강제 초기화 (서버 + 클라이언트)

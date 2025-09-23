@@ -7,6 +7,7 @@ import {
   API_STATUS,
   API_ERROR_MESSAGES
 } from '../constants/api';
+import csrfTokenManager from './csrfTokenManager';
 
 /**
  * 공통 AJAX 유틸리티
@@ -42,6 +43,36 @@ const getErrorMessage = (status) => {
   }
 };
 
+// 세션 체크 및 리다이렉트 공통 함수
+const checkSessionAndRedirect = async (response) => {
+  // 401, 403, 500 오류 시 세션 체크
+  if (response.status === 401 || response.status === 403 || response.status >= 500) {
+    try {
+      // 세션 체크 API 호출
+      const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+        credentials: 'include',
+        method: 'GET'
+      });
+      
+      // 세션이 없으면 로그인 페이지로 리다이렉트
+      if (!sessionResponse.ok) {
+        console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+        return true; // 리다이렉트됨
+      }
+    } catch (sessionError) {
+      console.log('🔐 세션 체크 실패 - 로그인 페이지로 리다이렉트');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/login';
+      return true; // 리다이렉트됨
+    }
+  }
+  return false; // 리다이렉트되지 않음
+};
+
 // 에러 처리
 const handleError = (error, status) => {
   if (status === API_STATUS.UNAUTHORIZED) {
@@ -68,6 +99,12 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     });
 
     if (!response.ok) {
+      // 세션 체크 및 리다이렉트
+      const redirected = await checkSessionAndRedirect(response);
+      if (redirected) {
+        return null; // 리다이렉트됨
+      }
+      
       // 401 오류는 로그인되지 않은 상태로 정상적인 상황이므로 조용히 처리
       if (response.status === 401) {
         return null;
@@ -85,28 +122,55 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     return await response.json();
   } catch (error) {
     console.error('GET 요청 오류:', error);
+    
+    // 네트워크 오류 시에도 세션 체크
+    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      try {
+        const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+          credentials: 'include',
+          method: 'GET'
+        });
+        
+        if (!sessionResponse.ok) {
+          console.log('🔐 네트워크 오류 시 세션 없음 - 로그인 페이지로 리다이렉트');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/login';
+          return null;
+        }
+      } catch (sessionError) {
+        console.log('🔐 네트워크 오류 시 세션 체크 실패 - 로그인 페이지로 리다이렉트');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+        return null;
+      }
+    }
+    
     throw error;
   }
 };
 
-// POST 요청
+// POST 요청 (CSRF 토큰 자동 포함)
 export const apiPost = async (endpoint, data = {}, options = {}) => {
   try {
     console.log('📤 POST 요청:', {
       url: `${API_BASE_URL}${endpoint}`,
-      data: data,
-      headers: { ...getDefaultHeaders(), ...options.headers }
+      data: data
     });
     
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'POST',
-      headers: { ...getDefaultHeaders(), ...options.headers },
-      body: JSON.stringify(data),
-      credentials: 'include', // 세션 쿠키 포함
-      ...options
+    const response = await csrfTokenManager.post(`${API_BASE_URL}${endpoint}`, data, {
+      ...options,
+      headers: { ...getDefaultHeaders(), ...options.headers }
     });
 
     if (!response.ok) {
+      // 세션 체크 및 리다이렉트
+      const redirected = await checkSessionAndRedirect(response);
+      if (redirected) {
+        return null; // 리다이렉트됨
+      }
+      
       handleError(new Error('POST 요청 실패'), response.status);
     }
 
@@ -117,18 +181,21 @@ export const apiPost = async (endpoint, data = {}, options = {}) => {
   }
 };
 
-// PUT 요청
+// PUT 요청 (CSRF 토큰 자동 포함)
 export const apiPut = async (endpoint, data = {}, options = {}) => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'PUT',
-      headers: { ...getDefaultHeaders(), ...options.headers },
-      body: JSON.stringify(data),
-      credentials: 'include', // 세션 쿠키 포함
-      ...options
+    const response = await csrfTokenManager.put(`${API_BASE_URL}${endpoint}`, data, {
+      ...options,
+      headers: { ...getDefaultHeaders(), ...options.headers }
     });
 
     if (!response.ok) {
+      // 세션 체크 및 리다이렉트
+      const redirected = await checkSessionAndRedirect(response);
+      if (redirected) {
+        return null; // 리다이렉트됨
+      }
+      
       handleError(new Error('PUT 요청 실패'), response.status);
     }
 
@@ -155,6 +222,12 @@ export const apiPostFormData = async (endpoint, formData, options = {}) => {
     });
 
     if (!response.ok) {
+      // 세션 체크 및 리다이렉트
+      const redirected = await checkSessionAndRedirect(response);
+      if (redirected) {
+        return null; // 리다이렉트됨
+      }
+      
       handleError(new Error('POST FormData 요청 실패'), response.status);
     }
 
@@ -165,17 +238,21 @@ export const apiPostFormData = async (endpoint, formData, options = {}) => {
   }
 };
 
-// DELETE 요청
+// DELETE 요청 (CSRF 토큰 자동 포함)
 export const apiDelete = async (endpoint, options = {}) => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'DELETE',
-      headers: { ...getDefaultHeaders(), ...options.headers },
-      credentials: 'include', // 세션 쿠키 포함
-      ...options
+    const response = await csrfTokenManager.delete(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers: { ...getDefaultHeaders(), ...options.headers }
     });
 
     if (!response.ok) {
+      // 세션 체크 및 리다이렉트
+      const redirected = await checkSessionAndRedirect(response);
+      if (redirected) {
+        return null; // 리다이렉트됨
+      }
+      
       handleError(new Error('DELETE 요청 실패'), response.status);
     }
 
@@ -201,6 +278,12 @@ export const apiUpload = async (endpoint, formData, options = {}) => {
     });
 
     if (!response.ok) {
+      // 세션 체크 및 리다이렉트
+      const redirected = await checkSessionAndRedirect(response);
+      if (redirected) {
+        return null; // 리다이렉트됨
+      }
+      
       handleError(new Error('파일 업로드 실패'), response.status);
     }
 

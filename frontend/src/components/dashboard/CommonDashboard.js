@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI, apiGet } from '../../utils/ajax';
+import { sessionManager } from '../../utils/sessionManager';
 import { DASHBOARD_API } from '../../constants/api';
 import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 // import '../../styles/dashboard/dashboard.css'; // 인라인 스타일로 변경

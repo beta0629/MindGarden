@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
@@ -37,6 +37,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     
+    // 기존 세션 기반 인증 시스템 사용
+    // Spring Security는 보안 강화 목적으로만 사용
+    
     /**
      * SecurityFilterChain 설정 (환경별 보안 설정)
      */
@@ -45,6 +48,9 @@ public class SecurityConfig {
         http
             // CORS 설정
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            
+            // 세션 기반 인증 필터 추가
+            .addFilterBefore(new SessionBasedAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             
             // CSRF 보호 설정
             .csrf(csrf -> csrf
@@ -69,7 +75,7 @@ public class SecurityConfig {
                 .sessionRegistry(sessionRegistry())
             )
             
-            // 환경별 인증 설정
+            // 환경별 인증 설정 (기존 세션 기반 인증 시스템과 호환)
             .authorizeHttpRequests(authz -> {
                 // 정적 리소스 (CSS, JS, 이미지 등) - 항상 허용
                 authz.requestMatchers(
@@ -268,23 +274,14 @@ public class SecurityConfig {
     }
     
     /**
-     * 인증 매니저 빌더 설정
-     */
-    @Bean
-    public AuthenticationManagerBuilder authenticationManagerBuilder(
-            AuthenticationManagerBuilder auth, SessionAuthenticationProvider sessionAuthProvider) throws Exception {
-        auth.authenticationProvider(sessionAuthProvider);
-        return auth;
-    }
-    
-    /**
-     * 인증 매니저
+     * 인증 매니저 (기본 설정 사용)
      */
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+            AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
     }
+    
     
     /**
      * 커스텀 인증 진입점

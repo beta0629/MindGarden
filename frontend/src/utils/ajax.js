@@ -45,8 +45,18 @@ const getErrorMessage = (status) => {
 
 // 세션 체크 및 리다이렉트 공통 함수
 const checkSessionAndRedirect = async (response) => {
+  // 현재 페이지가 로그인 페이지인지 확인
+  const currentPath = window.location.pathname;
+  const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+  
   // 401, 403, 500 오류 시 세션 체크
   if (response.status === 401 || response.status === 403 || response.status >= 500) {
+    // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
+    if (isLoginPage) {
+      console.log('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+      return false;
+    }
+    
     try {
       // 세션 체크 API 호출
       const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
@@ -125,6 +135,16 @@ export const apiGet = async (endpoint, params = {}, options = {}) => {
     
     // 네트워크 오류 시에도 세션 체크
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      // 현재 페이지가 로그인 페이지인지 확인
+      const currentPath = window.location.pathname;
+      const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+      
+      // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
+      if (isLoginPage) {
+        console.log('🔐 네트워크 오류 - 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+        return null;
+      }
+      
       try {
         const sessionResponse = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
           credentials: 'include',

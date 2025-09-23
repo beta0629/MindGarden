@@ -951,9 +951,9 @@ public class ErpServiceImpl implements ErpService {
         Map<String, Object> financialData = new HashMap<>();
         
         try {
-            // 실제 재무 거래 데이터에서 수입/지출 조회
+            // 실제 재무 거래 데이터에서 수입/지출 조회 (모든 거래 조회)
             List<com.mindgarden.consultation.dto.FinancialTransactionResponse> transactions = 
-                financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 1000))
+                financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 10000))
                     .getContent();
             
             log.info("📊 실시간 재무 데이터 - 전체 거래 건수: {}", transactions.size());

@@ -401,7 +401,7 @@ public class AdminServiceImpl implements AdminService {
             log.warn("💡 권장사항: {}", consistency.getRecommendation());
         }
         
-        // 4. ERP 거래 생성
+        // 4. ERP 거래 생성 (현재 사용자의 지점코드 포함)
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("INCOME")
                 .category("CONSULTATION") // 공통코드 사용
@@ -414,6 +414,7 @@ public class AdminServiceImpl implements AdminService {
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
+                .branchCode(mapping.getBranchCode()) // 매핑의 지점코드 사용
                 .taxIncluded(false) // 상담료는 부가세 면세
                 .build();
         
@@ -3353,6 +3354,43 @@ public class AdminServiceImpl implements AdminService {
     
     @Override
     @Transactional(readOnly = true)
+    public List<User> getUsers(boolean includeInactive, String role, String branchCode) {
+        log.info("🔍 사용자 목록 조회: includeInactive={}, role={}, branchCode={}", includeInactive, role, branchCode);
+        try {
+            List<User> users;
+            
+            if (role != null && !role.isEmpty()) {
+                // 역할별 조회
+                UserRole userRole = UserRole.valueOf(role);
+                if (branchCode != null && !branchCode.isEmpty()) {
+                    // 역할 + 지점별 조회
+                    users = userRepository.findByRoleAndBranchCodeAndIsActive(userRole, branchCode, includeInactive ? null : true);
+                } else {
+                    // 역할별 조회
+                    users = userRepository.findByRoleAndIsActive(userRole, includeInactive ? null : true);
+                }
+            } else if (branchCode != null && !branchCode.isEmpty()) {
+                // 지점별 조회
+                users = userRepository.findByBranchCodeAndIsActive(branchCode, includeInactive ? null : true);
+            } else {
+                // 전체 조회
+                if (includeInactive) {
+                    users = userRepository.findAll();
+                } else {
+                    users = userRepository.findByIsActive(true);
+                }
+            }
+            
+            log.info("✅ 사용자 목록 조회 완료: {}명", users.size());
+            return users;
+        } catch (Exception e) {
+            log.error("❌ 사용자 목록 조회 중 오류 발생: {}", e.getMessage(), e);
+            return List.of();
+        }
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
     public User getUserById(Long id) {
         log.info("🔍 사용자 ID로 조회: {}", id);
         try {
@@ -3360,6 +3398,36 @@ public class AdminServiceImpl implements AdminService {
         } catch (Exception e) {
             log.error("❌ 사용자 조회 중 오류 발생: {}", e.getMessage(), e);
             return null;
+        }
+    }
+    
+    @Override
+    @Transactional
+    public User changeUserRole(Long userId, String newRole) {
+        log.info("🔧 사용자 역할 변경: userId={}, newRole={}", userId, newRole);
+        try {
+            // 사용자 조회
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                log.warn("❌ 사용자를 찾을 수 없습니다: userId={}", userId);
+                return null;
+            }
+            
+            // 새로운 역할로 변경
+            UserRole role = UserRole.valueOf(newRole);
+            user.setRole(role);
+            user.setUpdatedAt(LocalDateTime.now());
+            
+            // 저장
+            User savedUser = userRepository.save(user);
+            
+            log.info("✅ 사용자 역할 변경 완료: userId={}, oldRole={}, newRole={}", 
+                    userId, user.getRole(), newRole);
+            
+            return savedUser;
+        } catch (Exception e) {
+            log.error("❌ 사용자 역할 변경 중 오류 발생: {}", e.getMessage(), e);
+            throw new RuntimeException("사용자 역할 변경에 실패했습니다: " + e.getMessage());
         }
     }
     

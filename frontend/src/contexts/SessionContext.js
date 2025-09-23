@@ -157,12 +157,16 @@ export const SessionProvider = ({ children }) => {
         }
         
         // 지점 매핑 필요 여부 확인 (branchCode가 없으면 매핑 필요)
-        if (user.needsBranchMapping || !user.branchCode) {
+        // 단, BRANCH_SUPER_ADMIN, SUPER_HQ_ADMIN, HQ_MASTER는 지점 매핑 불필요
+        const superAdminRoles = ['BRANCH_SUPER_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'];
+        if ((user.needsBranchMapping || !user.branchCode) && !superAdminRoles.includes(user.role)) {
           console.log('🏢 지점 매핑 필요:', user);
           dispatch({ 
             type: SessionActionTypes.SET_BRANCH_MAPPING_MODAL, 
             payload: { isOpen: true, needsMapping: true }
           });
+        } else if (superAdminRoles.includes(user.role)) {
+          console.log('✅ 슈퍼 관리자 - 지점 매핑 불필요:', user.role);
         }
         
         console.log('✅ 중앙 세션 확인 완료:', user);

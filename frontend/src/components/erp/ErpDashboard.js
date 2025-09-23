@@ -5,7 +5,7 @@ import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErpHeader from './common/ErpHeader';
-import { apiGet } from '../../utils/ajax';
+import axios from 'axios';
 
 /**
  * ERP 메인 대시보드 컴포넌트
@@ -30,13 +30,20 @@ const ErpDashboard = () => {
     try {
       setLoading(true);
       
-      // 병렬로 여러 API 호출 (apiGet 사용)
-      const [itemsData, pendingData, ordersData, budgetsData] = await Promise.all([
-        apiGet('/api/erp/items'),
-        apiGet('/api/erp/purchase-requests/pending-admin'),
-        apiGet('/api/erp/purchase-orders'),
-        apiGet('/api/erp/budgets')
+      // 병렬로 여러 API 호출 (axios 사용)
+      const [itemsResponse, pendingResponse, ordersResponse, budgetsResponse] = await Promise.all([
+        axios.get('/api/erp/items', { withCredentials: true }),
+        axios.get('/api/erp/purchase-requests/pending-admin', { withCredentials: true }),
+        axios.get('/api/erp/purchase-orders', { withCredentials: true }),
+        axios.get('/api/erp/budgets', { withCredentials: true })
       ]);
+
+      const [itemsData, pendingData, ordersData, budgetsData] = [
+        itemsResponse.data,
+        pendingResponse.data,
+        ordersResponse.data,
+        budgetsResponse.data
+      ];
 
       // 예산 통계 계산
       const totalBudget = budgetsData.data?.reduce((sum, budget) => 

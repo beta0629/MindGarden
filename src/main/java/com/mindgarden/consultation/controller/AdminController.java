@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
@@ -32,6 +33,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.mindgarden.consultation.annotation.RequireRole;
+import com.mindgarden.consultation.entity.UserRole;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1367,6 +1370,7 @@ public class AdminController {
     /**
      * 매핑 부분 환불 처리 (지정된 회기수만 환불)
      */
+    @RequireRole({UserRole.ADMIN, UserRole.BRANCH_SUPER_ADMIN, UserRole.HQ_ADMIN, UserRole.SUPER_HQ_ADMIN, UserRole.HQ_MASTER})
     @PostMapping("/mappings/{id}/partial-refund")
     public ResponseEntity<?> partialRefundMapping(@PathVariable Long id, @RequestBody Map<String, Object> requestBody) {
         try {
@@ -1906,6 +1910,122 @@ public class AdminController {
     }
     
     /**
+     * 사용자 목록 조회
+     */
+    @GetMapping("/users")
+    public ResponseEntity<?> getUsers(
+            @RequestParam(value = "includeInactive", defaultValue = "false") boolean includeInactive,
+            @RequestParam(value = "role", required = false) String role,
+            @RequestParam(value = "branchCode", required = false) String branchCode,
+            HttpSession session) {
+        try {
+            log.info("🔍 사용자 목록 조회: includeInactive={}, role={}, branchCode={}", includeInactive, role, branchCode);
+            
+            // 권한 확인
+            User currentUser = (User) session.getAttribute("user");
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            }
+            
+            // 어드민 또는 지점어드민 권한 확인
+            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster() && 
+                !currentUser.getRole().equals(UserRole.BRANCH_SUPER_ADMIN)) {
+                return ResponseEntity.status(403).body(Map.of("success", false, "message", "권한이 없습니다."));
+            }
+            
+            // 지점어드민인 경우 자신의 지점 사용자만 조회 가능
+            String targetBranchCode = branchCode;
+            if (currentUser.getRole().equals(UserRole.BRANCH_SUPER_ADMIN)) {
+                targetBranchCode = currentUser.getBranchCode();
+            }
+            
+            List<User> users = adminService.getUsers(includeInactive, role, targetBranchCode);
+            
+            // 안전한 사용자 정보만 추출하여 반환
+            List<Map<String, Object>> userList = users.stream()
+                .map(user -> {
+                    Map<String, Object> userData = new HashMap<>();
+                    userData.put("id", user.getId());
+                    userData.put("name", user.getName() != null ? user.getName() : "");
+                    userData.put("email", user.getEmail() != null ? user.getEmail() : "");
+                    userData.put("phone", user.getPhone() != null ? user.getPhone() : "");
+                    userData.put("role", user.getRole() != null ? user.getRole().name() : "");
+                    userData.put("roleDisplayName", user.getRole() != null ? user.getRole().getDisplayName() : "");
+                    userData.put("branchCode", user.getBranchCode() != null ? user.getBranchCode() : "");
+                    userData.put("isActive", user.getIsActive() != null ? user.getIsActive() : false);
+                    userData.put("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : "");
+                    return userData;
+                })
+                .collect(Collectors.toList());
+            
+            log.info("✅ 사용자 목록 조회 완료: {}명", userList.size());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", userList,
+                "total", userList.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 사용자 목록 조회 중 오류 발생: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", "사용자 목록 조회 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 사용자 역할 변경
+     */
+    @PutMapping("/users/{userId}/role")
+    public ResponseEntity<?> changeUserRole(
+            @PathVariable Long userId,
+            @RequestParam String newRole,
+            HttpSession session) {
+        try {
+            log.info("🔧 사용자 역할 변경: userId={}, newRole={}", userId, newRole);
+            
+            // 권한 확인
+            User currentUser = (User) session.getAttribute("user");
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            }
+            
+            // 어드민 또는 지점어드민 권한 확인
+            UserRole userRole = currentUser.getRole();
+            boolean hasPermission = userRole.isAdmin() || userRole.isMaster() || 
+                                  userRole.equals(UserRole.BRANCH_SUPER_ADMIN) ||
+                                  userRole.equals(UserRole.HQ_ADMIN) ||
+                                  userRole.equals(UserRole.SUPER_HQ_ADMIN);
+            
+            if (!hasPermission) {
+                log.warn("❌ 사용자 역할 변경 권한 없음: role={}", userRole);
+                return ResponseEntity.status(403).body(Map.of("success", false, "message", "권한이 없습니다."));
+            }
+            
+            // 역할 변경 실행
+            User updatedUser = adminService.changeUserRole(userId, newRole);
+            
+            if (updatedUser == null) {
+                return ResponseEntity.status(404).body(Map.of("success", false, "message", "사용자를 찾을 수 없습니다."));
+            }
+            
+            log.info("✅ 사용자 역할 변경 완료: userId={}, newRole={}", userId, newRole);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "사용자 역할이 성공적으로 변경되었습니다.",
+                "data", Map.of(
+                    "id", updatedUser.getId(),
+                    "name", updatedUser.getName(),
+                    "role", updatedUser.getRole().name(),
+                    "roleDisplayName", updatedUser.getRole().getDisplayName()
+                )
+            ));
+        } catch (Exception e) {
+            log.error("❌ 사용자 역할 변경 중 오류 발생: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", "사용자 역할 변경 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
      * 사용자 상세 정보 조회
      */
     @GetMapping("/users/{id}")
@@ -1925,17 +2045,16 @@ public class AdminController {
             }
             
             // 안전한 사용자 정보만 추출하여 반환
-            Map<String, Object> userData = Map.of(
-                "id", user.getId(),
-                "name", user.getName() != null ? user.getName() : "",
-                "email", user.getEmail() != null ? user.getEmail() : "",
-                "phone", user.getPhone() != null ? user.getPhone() : "",
-                "role", user.getRole() != null ? user.getRole().name() : "",
-                "roleDisplayName", user.getRole() != null ? user.getRole().getDisplayName() : "",
-                "branchCode", user.getBranchCode() != null ? user.getBranchCode() : "",
-                "isActive", user.getIsActive() != null ? user.getIsActive() : false,
-                "createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : ""
-            );
+            Map<String, Object> userData = new HashMap<>();
+            userData.put("id", user.getId());
+            userData.put("name", user.getName() != null ? user.getName() : "");
+            userData.put("email", user.getEmail() != null ? user.getEmail() : "");
+            userData.put("phone", user.getPhone() != null ? user.getPhone() : "");
+            userData.put("role", user.getRole() != null ? user.getRole().name() : "");
+            userData.put("roleDisplayName", user.getRole() != null ? user.getRole().getDisplayName() : "");
+            userData.put("branchCode", user.getBranchCode() != null ? user.getBranchCode() : "");
+            userData.put("isActive", user.getIsActive() != null ? user.getIsActive() : false);
+            userData.put("createdAt", user.getCreatedAt() != null ? user.getCreatedAt().toString() : "");
             
             log.info("✅ 사용자 상세 정보 조회 완료: {}({})", user.getName(), user.getRole());
             
@@ -1964,11 +2083,10 @@ public class AdminController {
             }
             
             // 임시로 빈 데이터 반환 (실제 구현 필요)
-            Map<String, Object> socialAccounts = Map.of(
-                "kakao", Map.of("connected", false),
-                "naver", Map.of("connected", false),
-                "google", Map.of("connected", false)
-            );
+            Map<String, Object> socialAccounts = new HashMap<>();
+            socialAccounts.put("kakao", Map.of("connected", false));
+            socialAccounts.put("naver", Map.of("connected", false));
+            socialAccounts.put("google", Map.of("connected", false));
             
             log.info("✅ 사용자 소셜 계정 정보 조회 완료: ID={}", id);
             
@@ -1983,9 +2101,17 @@ public class AdminController {
     }
     
     /**
-     * 사용자 역할 정보 조회 (동적 표시명)
+     * 사용자 역할 정보 조회 (동적 표시명) - 기존 호환성
      */
     @GetMapping("/user-roles")
+    public ResponseEntity<?> getUserRolesLegacy() {
+        return getUserRoles();
+    }
+    
+    /**
+     * 사용자 역할 정보 조회 (동적 표시명)
+     */
+    @GetMapping("/users/roles")
     public ResponseEntity<?> getUserRoles() {
         try {
             log.info("🔍 사용자 역할 정보 조회");
@@ -1993,11 +2119,10 @@ public class AdminController {
             Map<String, Map<String, String>> roleInfo = new HashMap<>();
             
             for (UserRole role : UserRole.values()) {
-                Map<String, String> roleData = Map.of(
-                    "value", role.name(),
-                    "displayName", role.getDisplayName(),
-                    "displayNameEn", getEnglishDisplayName(role)
-                );
+                Map<String, String> roleData = new HashMap<>();
+                roleData.put("value", role.name());
+                roleData.put("displayName", role.getDisplayName());
+                roleData.put("displayNameEn", getEnglishDisplayName(role));
                 roleInfo.put(role.name(), roleData);
             }
             

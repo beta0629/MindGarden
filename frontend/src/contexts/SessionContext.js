@@ -308,12 +308,21 @@ export const SessionProvider = ({ children }) => {
 
   // 주기적 세션 체크
   useEffect(() => {
-    // 초기 세션 체크
-    checkSession();
+    // 현재 페이지가 로그인 페이지인지 확인
+    const currentPath = window.location.pathname;
+    const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+    
+    // 로그인 페이지가 아니면 초기 세션 체크
+    if (!isLoginPage) {
+      checkSession();
+    }
 
-    // 주기적 세션 체크 설정
+    // 주기적 세션 체크 설정 (로그인 페이지가 아닐 때만)
     const interval = setInterval(() => {
-      if (!state.isLoading) {
+      const currentPath = window.location.pathname;
+      const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+      
+      if (!state.isLoading && !isLoginPage) {
         checkSession();
       }
     }, SESSION_CHECK_INTERVAL);

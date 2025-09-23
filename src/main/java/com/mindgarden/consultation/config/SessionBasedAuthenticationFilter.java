@@ -35,24 +35,33 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
                                   FilterChain filterChain) throws ServletException, IOException {
         
+        String requestPath = request.getRequestURI();
+        log.info("🔍 SessionBasedAuthenticationFilter 실행: {}", requestPath);
+        
         try {
             // 세션에서 사용자 정보 조회
             HttpSession session = request.getSession(false);
+            log.info("🔍 세션 확인: {}", session != null ? session.getId() : "null");
             
             if (session != null) {
                 User user = SessionUtils.getCurrentUser(session);
+                log.info("🔍 세션에서 사용자 조회: {}", user != null ? user.getEmail() : "null");
                 
                 if (user != null) {
                     // Spring Security 컨텍스트에 인증 정보 설정
                     Authentication authentication = createAuthentication(user);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     
-                    log.debug("🔐 세션 기반 인증 성공: 사용자={}, 역할={}", user.getEmail(), user.getRole());
+                    log.info("✅ 세션 기반 인증 성공: 사용자={}, 역할={}", user.getEmail(), user.getRole());
+                    
+                    // SecurityContext 확인
+                    Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
+                    log.info("🔍 SecurityContext 인증 상태: {}", currentAuth != null && currentAuth.isAuthenticated() ? "인증됨" : "미인증");
                 } else {
-                    log.debug("🔐 세션에 사용자 정보 없음");
+                    log.warn("⚠️ 세션에 사용자 정보 없음");
                 }
             } else {
-                log.debug("🔐 세션이 없음");
+                log.warn("⚠️ 세션이 없음");
             }
             
         } catch (Exception e) {

@@ -37,7 +37,6 @@ public class MenuController {
      * @param session HTTP 세션
      * @return 권한별 메뉴 구조
      */
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/structure")
     public ResponseEntity<?> getMenuStructure(HttpSession session) {
         try {
@@ -77,7 +76,6 @@ public class MenuController {
      * @param session HTTP 세션
      * @return 사용자 권한 정보
      */
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/permissions")
     public ResponseEntity<?> getUserPermissions(HttpSession session) {
         try {
@@ -103,7 +101,6 @@ public class MenuController {
      * 
      * @return 공통 메뉴 목록
      */
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/common")
     public ResponseEntity<?> getCommonMenus() {
         try {

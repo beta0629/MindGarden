@@ -30,7 +30,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.mindgarden.consultation.annotation.RequireRole;
+import com.mindgarden.consultation.entity.UserRole;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -70,7 +71,7 @@ public class ErpController {
     /**
      * 모든 활성화된 아이템 조회
      */
-    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
+    @RequireRole({UserRole.ADMIN, UserRole.BRANCH_SUPER_ADMIN, UserRole.HQ_ADMIN, UserRole.SUPER_HQ_ADMIN, UserRole.HQ_MASTER})
     @GetMapping("/items")
     public ResponseEntity<Map<String, Object>> getAllItems(HttpSession session) {
         try {

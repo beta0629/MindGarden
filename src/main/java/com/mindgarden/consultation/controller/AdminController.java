@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.mindgarden.consultation.annotation.RequireRole;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
 import com.mindgarden.consultation.dto.ConsultantClientMappingDto;
@@ -33,8 +34,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.mindgarden.consultation.annotation.RequireRole;
-import com.mindgarden.consultation.entity.UserRole;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1370,7 +1369,6 @@ public class AdminController {
     /**
      * 매핑 부분 환불 처리 (지정된 회기수만 환불)
      */
-    @RequireRole({UserRole.ADMIN, UserRole.BRANCH_SUPER_ADMIN, UserRole.HQ_ADMIN, UserRole.SUPER_HQ_ADMIN, UserRole.HQ_MASTER})
     @PostMapping("/mappings/{id}/partial-refund")
     public ResponseEntity<?> partialRefundMapping(@PathVariable Long id, @RequestBody Map<String, Object> requestBody) {
         try {

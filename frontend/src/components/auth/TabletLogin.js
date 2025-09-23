@@ -5,6 +5,7 @@ import SimpleHeader from '../layout/SimpleHeader';
 import SocialSignupModal from './SocialSignupModal';
 import { authAPI } from '../../utils/ajax';
 import { testLogin } from '../../utils/ajax';
+import { API_BASE_URL } from '../../constants/environment';
 import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallback } from '../../utils/socialLogin';
 // import { setLoginSession, redirectToDashboard, logSessionInfo } from '../../utils/session'; // 제거됨
 import { sessionManager } from '../../utils/sessionManager';
@@ -13,6 +14,7 @@ import { LOGIN_SESSION_CHECK_DELAY, EXISTING_SESSION_CHECK_DELAY } from '../../c
 import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 import notificationManager from '../../utils/notification';
 import { TABLET_LOGIN_CSS } from '../../constants/css';
+import csrfTokenManager from '../../utils/csrfTokenManager';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
 import '../../styles/auth/TabletLogin.css';
 
@@ -97,19 +99,34 @@ const TabletLogin = () => {
     const checkExistingSession = async () => {
       try {
         console.log('🔍 로그인 페이지 - 기존 세션 확인 중...');
-        const isLoggedIn = await checkSession();
         
-        if (isLoggedIn) {
-          const user = sessionManager.getUser();
-          if (user && user.role) {
-            const dashboardPath = getDashboardPath(user.role);
-            console.log('✅ 기존 세션 발견, 대시보드로 리다이렉트:', dashboardPath);
-            console.log('👤 사용자 정보:', user);
+        // ajax.js의 checkSessionAndRedirect를 우회하여 직접 세션 체크
+        const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+          credentials: 'include',
+          method: 'GET'
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.user) {
+            console.log('✅ 기존 세션 발견, 대시보드로 리다이렉트:', result.user.role);
+            console.log('👤 사용자 정보:', result.user);
+            
+            // sessionManager에 사용자 정보 설정
+            sessionManager.setUser(result.user, {
+              accessToken: result.accessToken || 'existing_session_token',
+              refreshToken: result.refreshToken || 'existing_session_refresh_token'
+            });
+            
+            const dashboardPath = getDashboardPath(result.user.role);
             navigate(dashboardPath, { replace: true });
           }
+        } else {
+          console.log('🔍 기존 세션 없음 - 로그인 페이지 유지');
         }
       } catch (error) {
         console.error('❌ 세션 확인 실패:', error);
+        // 세션 확인 실패해도 로그인 페이지 유지
       }
     };
 
@@ -248,13 +265,7 @@ const TabletLogin = () => {
     }
 
     try {
-      const response = await fetch(TABLET_LOGIN_CONSTANTS.API_ENDPOINTS.SMS_SEND, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phoneNumber }),
-      });
+      const response = await csrfTokenManager.post(TABLET_LOGIN_CONSTANTS.API_ENDPOINTS.SMS_SEND, { phoneNumber });
 
       const data = await response.json();
 
@@ -287,15 +298,9 @@ const TabletLogin = () => {
     }
 
     try {
-      const response = await fetch(TABLET_LOGIN_CONSTANTS.API_ENDPOINTS.SMS_VERIFY, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          phoneNumber, 
-          verificationCode 
-        }),
+      const response = await csrfTokenManager.post(TABLET_LOGIN_CONSTANTS.API_ENDPOINTS.SMS_VERIFY, { 
+        phoneNumber, 
+        verificationCode 
       });
 
       const data = await response.json();
@@ -327,13 +332,7 @@ const TabletLogin = () => {
         loginType: 'SMS_AUTH'
       };
       
-      const response = await fetch('/api/auth/sms-login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginData)
-      });
+      const response = await csrfTokenManager.post('/api/auth/sms-login', loginData);
       
       const data = await response.json();
       

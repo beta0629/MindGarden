@@ -513,8 +513,8 @@ const CommonDashboard = ({ user: propUser }) => {
           return;
         }
         
-        // 2. 로그인되지 않은 경우 즉시 로그인 페이지로 이동
-        if (!isLoggedIn) {
+        // 2. 로그인 상태 확인 (더 관대하게 처리)
+        if (!isLoggedIn && !sessionUser) {
           console.log('❌ 로그인되지 않음, 로그인 페이지로 이동');
           navigate('/login', { replace: true });
           return;

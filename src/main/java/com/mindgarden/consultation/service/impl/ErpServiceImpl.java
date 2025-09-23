@@ -951,7 +951,7 @@ public class ErpServiceImpl implements ErpService {
         Map<String, Object> financialData = new HashMap<>();
         
         try {
-            // 실제 재무 거래 데이터에서 수입/지출 조회 (모든 거래 조회)
+            // 실제 재무 거래 데이터에서 수입/지출 조회 (모든 지점의 모든 거래 조회)
             List<com.mindgarden.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 10000))
                     .getContent();
@@ -1593,17 +1593,26 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     @Transactional(readOnly = true)
-    public Map<String, Object> getDailyFinanceReport(String reportDate) {
-        log.info("일단위 재무 리포트 조회: {}", reportDate);
+    public Map<String, Object> getDailyFinanceReport(String reportDate, String branchCode) {
+        log.info("일단위 재무 리포트 조회: {}, 지점: {}", reportDate, branchCode);
         
         LocalDate targetDate = LocalDate.parse(reportDate);
         Map<String, Object> dailyReport = new HashMap<>();
         dailyReport.put("reportDate", reportDate);
         dailyReport.put("reportType", "일간");
+        dailyReport.put("branchCode", branchCode);
         
-        // 해당 날짜의 실제 거래 데이터 조회
-        List<FinancialTransaction> dailyTransactions = financialTransactionRepository
+        // 해당 날짜의 실제 거래 데이터 조회 (지점코드 필터링 적용)
+        List<FinancialTransaction> allTransactions = financialTransactionRepository
             .findByTransactionDateAndIsDeletedFalse(targetDate);
+        
+        // 지점코드 필터링 적용
+        List<FinancialTransaction> dailyTransactions = allTransactions.stream()
+            .filter(t -> branchCode == null || branchCode.equals(t.getBranchCode()))
+            .collect(java.util.stream.Collectors.toList());
+        
+        log.info("📊 일간 리포트 - 전체 거래: {}건, 필터링 후: {}건 (지점: {})", 
+            allTransactions.size(), dailyTransactions.size(), branchCode);
         
         // 일일 수입 (실제 데이터 기반)
         Map<String, Object> dailyIncome = new HashMap<>();
@@ -1691,8 +1700,8 @@ public class ErpServiceImpl implements ErpService {
     
     @Override
     @Transactional(readOnly = true)
-    public Map<String, Object> getMonthlyFinanceReport(String year, String month) {
-        log.info("월단위 재무 리포트 조회: {}-{}", year, month);
+    public Map<String, Object> getMonthlyFinanceReport(String year, String month, String branchCode) {
+        log.info("월단위 재무 리포트 조회: {}-{}, 지점: {}", year, month, branchCode);
         
         // 해당 월의 시작일과 종료일 계산
         int yearInt = Integer.parseInt(year);
@@ -1704,10 +1713,19 @@ public class ErpServiceImpl implements ErpService {
         monthlyReport.put("year", year);
         monthlyReport.put("month", month);
         monthlyReport.put("reportType", "월간");
+        monthlyReport.put("branchCode", branchCode);
         
-        // 해당 월의 실제 거래 데이터 조회
-        List<FinancialTransaction> monthlyTransactions = financialTransactionRepository
+        // 해당 월의 실제 거래 데이터 조회 (지점코드 필터링 적용)
+        List<FinancialTransaction> allTransactions = financialTransactionRepository
             .findByTransactionDateBetweenAndIsDeletedFalse(startDate, endDate);
+        
+        // 지점코드 필터링 적용
+        List<FinancialTransaction> monthlyTransactions = allTransactions.stream()
+            .filter(t -> branchCode == null || branchCode.equals(t.getBranchCode()))
+            .collect(java.util.stream.Collectors.toList());
+        
+        log.info("📊 월간 리포트 - 전체 거래: {}건, 필터링 후: {}건 (지점: {})", 
+            allTransactions.size(), monthlyTransactions.size(), branchCode);
         
         // 월간 수입 (실제 데이터 기반)
         Map<String, Object> monthlyIncome = new HashMap<>();

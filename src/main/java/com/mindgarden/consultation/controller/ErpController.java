@@ -1546,7 +1546,13 @@ public class ErpController {
                 reportDate = java.time.LocalDate.now().toString();
             }
             
-            Map<String, Object> dailyReport = erpService.getDailyFinanceReport(reportDate);
+            // 현재 사용자의 지점코드 전달 (지점 사용자는 자신의 지점만, HQ는 전체)
+            String branchCode = currentUser.getBranchCode();
+            if (UserRole.HQ_MASTER.equals(currentUser.getRole()) || UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole())) {
+                branchCode = null; // HQ는 전체 데이터 조회
+            }
+            
+            Map<String, Object> dailyReport = erpService.getDailyFinanceReport(reportDate, branchCode);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1590,7 +1596,13 @@ public class ErpController {
                 month = String.valueOf(java.time.LocalDate.now().getMonthValue());
             }
             
-            Map<String, Object> monthlyReport = erpService.getMonthlyFinanceReport(year, month);
+            // 현재 사용자의 지점코드 전달 (지점 사용자는 자신의 지점만, HQ는 전체)
+            String branchCode = currentUser.getBranchCode();
+            if (UserRole.HQ_MASTER.equals(currentUser.getRole()) || UserRole.SUPER_HQ_ADMIN.equals(currentUser.getRole())) {
+                branchCode = null; // HQ는 전체 데이터 조회
+            }
+            
+            Map<String, Object> monthlyReport = erpService.getMonthlyFinanceReport(year, month, branchCode);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

@@ -309,12 +309,12 @@ public interface ErpService {
     /**
      * 일단위 재무 리포트
      */
-    Map<String, Object> getDailyFinanceReport(String reportDate);
+    Map<String, Object> getDailyFinanceReport(String reportDate, String branchCode);
     
     /**
      * 월단위 재무 리포트
      */
-    Map<String, Object> getMonthlyFinanceReport(String year, String month);
+    Map<String, Object> getMonthlyFinanceReport(String year, String month, String branchCode);
     
     /**
      * 년단위 재무 리포트

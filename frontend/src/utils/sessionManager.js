@@ -107,18 +107,26 @@ class SessionManager {
                 return false;
             }
             
-            // 401 오류 시 로그인 페이지로 리다이렉트
+            // 401 오류 시 로그인 페이지로 리다이렉트 (로그인 페이지가 아닐 때만)
             if (userResponse.status === 401) {
-                console.log('🔍 세션 확인 실패: 401 Unauthorized - 로그인 페이지로 리다이렉트');
+                console.log('🔍 세션 확인 실패: 401 Unauthorized');
                 this.user = null;
                 this.sessionInfo = null;
                 this.lastCheckTime = now;
                 this.notifyListeners();
                 
-                // 로그인 페이지로 리다이렉트
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                window.location.href = '/login';
+                // 현재 페이지가 로그인 페이지가 아닐 때만 리다이렉트
+                const currentPath = window.location.pathname;
+                const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+                
+                if (!isLoginPage) {
+                    console.log('🔍 로그인 페이지로 리다이렉트');
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    window.location.href = '/login';
+                } else {
+                    console.log('🔍 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+                }
                 return false;
             }
             
@@ -187,21 +195,41 @@ class SessionManager {
                     });
                     
                     if (!sessionResponse.ok) {
-                        console.log('🔐 네트워크 오류 시 세션 없음 - 로그인 페이지로 리다이렉트');
+                        console.log('🔐 네트워크 오류 시 세션 없음');
                         this.user = null;
                         this.sessionInfo = null;
-                        localStorage.removeItem('accessToken');
-                        localStorage.removeItem('refreshToken');
-                        window.location.href = '/login';
+                        
+                        // 현재 페이지가 로그인 페이지가 아닐 때만 리다이렉트
+                        const currentPath = window.location.pathname;
+                        const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+                        
+                        if (!isLoginPage) {
+                            console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트');
+                            localStorage.removeItem('accessToken');
+                            localStorage.removeItem('refreshToken');
+                            window.location.href = '/login';
+                        } else {
+                            console.log('🔐 네트워크 오류 - 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+                        }
                         return false;
                     }
                 } catch (sessionError) {
-                    console.log('🔐 네트워크 오류 시 세션 체크 실패 - 로그인 페이지로 리다이렉트');
+                    console.log('🔐 네트워크 오류 시 세션 체크 실패');
                     this.user = null;
                     this.sessionInfo = null;
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('refreshToken');
-                    window.location.href = '/login';
+                    
+                    // 현재 페이지가 로그인 페이지가 아닐 때만 리다이렉트
+                    const currentPath = window.location.pathname;
+                    const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+                    
+                    if (!isLoginPage) {
+                        console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트');
+                        localStorage.removeItem('accessToken');
+                        localStorage.removeItem('refreshToken');
+                        window.location.href = '/login';
+                    } else {
+                        console.log('🔐 네트워크 오류 - 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+                    }
                     return false;
                 }
             } else if (error.message && error.message.includes('401')) {

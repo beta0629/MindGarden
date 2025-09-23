@@ -12,6 +12,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { showNotification } from '../../utils/notification';
+import sessionManager from '../../utils/sessionManager';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
 import MotivationCard from '../common/MotivationCard';
@@ -54,14 +55,21 @@ const HQDashboard = ({ user: propUser }) => {
             return;
         }
 
-        if (!isLoggedIn) {
-            console.log('❌ 로그인되지 않음, 로그인 페이지로 이동');
-            navigate('/login', { replace: true });
-            return;
+        // 로그인 상태 확인 (propUser 또는 sessionUser 우선, sessionManager는 백업)
+        let currentUser = user;
+        if (!currentUser || !currentUser.role) {
+            // 백업으로 sessionManager 확인
+            currentUser = sessionManager.getUser();
+            if (!currentUser || !currentUser.role) {
+                console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
+                console.log('👤 user:', user);
+                console.log('👤 sessionManager 사용자:', currentUser);
+                navigate('/login', { replace: true });
+                return;
+            }
         }
 
-        const currentUser = user;
-        if (!currentUser || !['HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
+        if (!['HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
             console.log('❌ 본사 관리자 권한 없음, 일반 대시보드로 이동');
             navigate('/dashboard', { replace: true });
             return;
@@ -69,7 +77,7 @@ const HQDashboard = ({ user: propUser }) => {
 
         console.log('✅ HQ Dashboard 접근 허용:', currentUser?.role);
         loadDashboardData();
-    }, [isLoggedIn, sessionLoading, user, navigate]);
+    }, [sessionLoading, user, navigate]); // isLoggedIn 제거
 
     // 대시보드 데이터 로드
     const loadDashboardData = useCallback(async () => {

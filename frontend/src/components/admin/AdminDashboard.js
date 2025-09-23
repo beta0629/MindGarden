@@ -13,6 +13,8 @@ import VacationStatistics from './VacationStatistics';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
+import csrfTokenManager from '../../utils/csrfTokenManager';
+import sessionManager from '../../utils/sessionManager';
 import './AdminDashboard.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
@@ -52,15 +54,23 @@ const AdminDashboard = ({ user: propUser }) => {
             return;
         }
 
-        if (!isLoggedIn) {
-            console.log('❌ 로그인되지 않음, 로그인 페이지로 이동');
-            navigate('/login', { replace: true });
-            return;
+        // 로그인 상태 확인 (propUser 또는 sessionUser 우선, sessionManager는 백업)
+        let currentUser = propUser || sessionUser;
+        if (!currentUser || !currentUser.role) {
+            // 백업으로 sessionManager 확인
+            currentUser = sessionManager.getUser();
+            if (!currentUser || !currentUser.role) {
+                console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
+                console.log('👤 propUser:', propUser);
+                console.log('👤 sessionUser:', sessionUser);
+                console.log('👤 sessionManager 사용자:', currentUser);
+                navigate('/login', { replace: true });
+                return;
+            }
         }
 
-        const currentUser = propUser || sessionUser;
         console.log('✅ AdminDashboard 접근 허용:', currentUser?.role);
-    }, [isLoggedIn, sessionLoading, propUser, sessionUser, navigate]);
+    }, [sessionLoading, propUser, sessionUser, navigate]); // isLoggedIn 제거
 
     const showToast = useCallback((message, type = 'success') => {
         setToastMessage(message);
@@ -137,9 +147,7 @@ const AdminDashboard = ({ user: propUser }) => {
     // 스케줄 자동 완료 처리
     const handleAutoCompleteSchedules = async () => {
         try {
-            const response = await fetch('/api/admin/schedules/auto-complete', {
-                method: 'POST'
-            });
+            const response = await csrfTokenManager.post('/api/admin/schedules/auto-complete');
 
             if (response.ok) {
                 const result = await response.json();
@@ -158,9 +166,7 @@ const AdminDashboard = ({ user: propUser }) => {
     // 스케줄 자동 완료 처리 및 상담일지 미작성 알림
     const handleAutoCompleteWithReminder = async () => {
         try {
-            const response = await fetch('/api/admin/schedules/auto-complete-with-reminder', {
-                method: 'POST'
-            });
+            const response = await csrfTokenManager.post('/api/admin/schedules/auto-complete-with-reminder');
 
             if (response.ok) {
                 const result = await response.json();
@@ -199,9 +205,7 @@ const AdminDashboard = ({ user: propUser }) => {
             }
             
             // 중복 매핑 통합 실행
-            const response = await fetch('/api/admin/merge-duplicate-mappings', {
-                method: 'POST'
-            });
+            const response = await csrfTokenManager.post('/api/admin/merge-duplicate-mappings');
 
             if (response.ok) {
                 const result = await response.json();
@@ -225,9 +229,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const createTestData = async () => {
         try {
-            const response = await fetch('/api/test/create-test-data', {
-                method: 'POST'
-            });
+            const response = await csrfTokenManager.post('/api/test/create-test-data');
 
             if (response.ok) {
                 showToast('테스트 데이터가 성공적으로 생성되었습니다.');
@@ -308,9 +310,7 @@ const AdminDashboard = ({ user: propUser }) => {
     // 캐시 초기화
     const clearCache = async () => {
         try {
-            const response = await fetch('/api/admin/cache/clear', {
-                method: 'POST'
-            });
+            const response = await csrfTokenManager.post('/api/admin/cache/clear');
 
             if (response.ok) {
                 showToast('캐시가 성공적으로 초기화되었습니다.', 'success');
@@ -328,9 +328,7 @@ const AdminDashboard = ({ user: propUser }) => {
     // 백업 생성
     const createBackup = async () => {
         try {
-            const response = await fetch('/api/admin/backup/create', {
-                method: 'POST'
-            });
+            const response = await csrfTokenManager.post('/api/admin/backup/create');
 
             if (response.ok) {
                 const backupData = await response.json();

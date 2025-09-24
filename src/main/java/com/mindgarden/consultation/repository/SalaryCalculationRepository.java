@@ -1,15 +1,14 @@
 package com.mindgarden.consultation.repository;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 import com.mindgarden.consultation.entity.SalaryCalculation;
 import com.mindgarden.consultation.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface SalaryCalculationRepository extends JpaRepository<SalaryCalculation, Long> {
@@ -38,4 +37,12 @@ public interface SalaryCalculationRepository extends JpaRepository<SalaryCalcula
             @Param("branchCode") String branchCode,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
+    
+    // 프론트엔드 호환성을 위한 메서드
+    @Query("SELECT sc FROM SalaryCalculation sc WHERE sc.consultant.id = :consultantId " +
+           "AND sc.consultant.branchCode = :branchCode " +
+           "ORDER BY sc.calculatedAt DESC")
+    List<SalaryCalculation> findByConsultantIdAndConsultantBranchCode(
+            @Param("consultantId") Long consultantId,
+            @Param("branchCode") String branchCode);
 }

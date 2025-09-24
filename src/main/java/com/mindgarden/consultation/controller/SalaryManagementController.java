@@ -105,6 +105,110 @@ public class SalaryManagementController {
     }
     
     /**
+     * 상담사별 급여 계산 내역 조회
+     */
+    @GetMapping("/calculations/{consultantId}")
+    public ResponseEntity<Map<String, Object>> getSalaryCalculations(@PathVariable Long consultantId, HttpSession session) {
+        try {
+            User currentUser = (User) session.getAttribute("currentUser");
+            if (currentUser == null) {
+                log.warn("급여 계산 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다. 세션을 확인해주세요."
+                ));
+            }
+            
+            log.info("급여 계산 조회: 사용자 {}, 상담사 ID {}", currentUser.getName(), consultantId);
+            String branchCode = currentUser.getBranchCode();
+            List<SalaryCalculation> calculations = salaryManagementService.getSalaryCalculations(consultantId, branchCode);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", calculations,
+                "message", "급여 계산 내역을 조회했습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("급여 계산 조회 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "급여 계산 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 급여 계산별 세금 상세 조회
+     */
+    @GetMapping("/tax/{calculationId}")
+    public ResponseEntity<Map<String, Object>> getTaxDetails(@PathVariable Long calculationId, HttpSession session) {
+        try {
+            User currentUser = (User) session.getAttribute("currentUser");
+            if (currentUser == null) {
+                log.warn("세금 상세 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다. 세션을 확인해주세요."
+                ));
+            }
+            
+            log.info("세금 상세 조회: 사용자 {}, 계산 ID {}", currentUser.getName(), calculationId);
+            String branchCode = currentUser.getBranchCode();
+            Map<String, Object> taxDetails = salaryManagementService.getTaxDetails(calculationId, branchCode);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", taxDetails,
+                "message", "세금 상세 내역을 조회했습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("세금 상세 조회 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "세금 상세 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 세금 통계 조회
+     */
+    @GetMapping("/tax/statistics")
+    public ResponseEntity<Map<String, Object>> getTaxStatistics(
+            @RequestParam String period, 
+            HttpSession session) {
+        try {
+            User currentUser = (User) session.getAttribute("currentUser");
+            if (currentUser == null) {
+                log.warn("세금 통계 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다. 세션을 확인해주세요."
+                ));
+            }
+            
+            log.info("세금 통계 조회: 사용자 {}, 기간 {}", currentUser.getName(), period);
+            String branchCode = currentUser.getBranchCode();
+            Map<String, Object> statistics = salaryManagementService.getTaxStatistics(period, branchCode);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", statistics,
+                "message", "세금 통계를 조회했습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("세금 통계 조회 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "세금 통계 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
      * 급여 계산 (PL/SQL 통합)
      */
     @PostMapping("/calculate")

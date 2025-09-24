@@ -255,4 +255,94 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
                 .map(SalaryCalculation::getNetSalary)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+    
+    /**
+     * 상담사별 급여 계산 내역 조회 (프론트엔드 호환성)
+     */
+    @Override
+    public List<SalaryCalculation> getSalaryCalculations(Long consultantId, String branchCode) {
+        log.info("💰 상담사별 급여 계산 조회: ConsultantId={}, BranchCode={}", consultantId, branchCode);
+        
+        return salaryCalculationRepository.findByConsultantIdAndConsultantBranchCode(
+            consultantId, branchCode
+        );
+    }
+    
+    /**
+     * 세금 상세 내역 조회 (프론트엔드 호환성)
+     */
+    @Override
+    public Map<String, Object> getTaxDetails(Long calculationId, String branchCode) {
+        log.info("💰 세금 상세 조회: CalculationId={}, BranchCode={}", calculationId, branchCode);
+        
+        // 급여 계산 정보 조회
+        SalaryCalculation calculation = salaryCalculationRepository.findById(calculationId)
+            .orElseThrow(() -> new RuntimeException("급여 계산 정보를 찾을 수 없습니다: " + calculationId));
+        
+        // 지점 코드 확인
+        if (!branchCode.equals(calculation.getConsultant().getBranchCode())) {
+            throw new RuntimeException("접근 권한이 없습니다.");
+        }
+        
+        // 세금 계산 조회
+        List<Map<String, Object>> taxCalculations = salaryTaxCalculationRepository
+            .findByCalculationIdAndBranchCode(calculationId, branchCode);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("calculationId", calculationId);
+        result.put("consultantName", calculation.getConsultant().getName());
+        result.put("calculationPeriod", calculation.getCalculationPeriodStart() + " ~ " + calculation.getCalculationPeriodEnd());
+        result.put("grossSalary", calculation.getGrossSalary());
+        result.put("netSalary", calculation.getNetSalary());
+        result.put("taxDetails", taxCalculations);
+        
+        return result;
+    }
+    
+    /**
+     * 세금 통계 조회 (프론트엔드 호환성)
+     */
+    @Override
+    public Map<String, Object> getTaxStatistics(String period, String branchCode) {
+        log.info("💰 세금 통계 조회: Period={}, BranchCode={}", period, branchCode);
+        
+        // 기간 파싱 (예: "2025-01")
+        String[] periodParts = period.split("-");
+        if (periodParts.length != 2) {
+            throw new RuntimeException("잘못된 기간 형식입니다: " + period);
+        }
+        
+        int year = Integer.parseInt(periodParts[0]);
+        int month = Integer.parseInt(periodParts[1]);
+        
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        
+        // 해당 기간의 급여 계산 조회
+        List<SalaryCalculation> calculations = getSalaryCalculations(branchCode, startDate, endDate);
+        
+        // 통계 계산
+        BigDecimal totalGrossSalary = calculations.stream()
+            .map(SalaryCalculation::getGrossSalary)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal totalNetSalary = calculations.stream()
+            .map(SalaryCalculation::getNetSalary)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+        BigDecimal totalTaxAmount = totalGrossSalary.subtract(totalNetSalary);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("period", period);
+        result.put("totalCalculations", calculations.size());
+        result.put("totalGrossSalary", totalGrossSalary);
+        result.put("totalNetSalary", totalNetSalary);
+        result.put("totalTaxAmount", totalTaxAmount);
+        result.put("averageGrossSalary", calculations.isEmpty() ? BigDecimal.ZERO : 
+            totalGrossSalary.divide(BigDecimal.valueOf(calculations.size()), 2, java.math.RoundingMode.HALF_UP));
+        result.put("averageNetSalary", calculations.isEmpty() ? BigDecimal.ZERO : 
+            totalNetSalary.divide(BigDecimal.valueOf(calculations.size()), 2, java.math.RoundingMode.HALF_UP));
+        
+        return result;
+    }
 }

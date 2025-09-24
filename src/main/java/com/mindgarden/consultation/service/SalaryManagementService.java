@@ -27,6 +27,11 @@ public interface SalaryManagementService {
     SalaryCalculation approveSalaryCalculation(Long calculationId, String approvedBy);
     SalaryCalculation markAsPaid(Long calculationId, String paidBy);
     
+    // 프론트엔드 호환성을 위한 메서드들
+    List<SalaryCalculation> getSalaryCalculations(Long consultantId, String branchCode);
+    Map<String, Object> getTaxDetails(Long calculationId, String branchCode);
+    Map<String, Object> getTaxStatistics(String period, String branchCode);
+    
     // 통계 및 분석
     Map<String, Object> getSalaryStatistics(String branchCode, LocalDate startDate, LocalDate endDate);
     List<Map<String, Object>> getTopPerformers(String branchCode, LocalDate startDate, LocalDate endDate, int limit);

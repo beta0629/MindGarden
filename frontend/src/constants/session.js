@@ -17,7 +17,7 @@ export const SESSION_CHECK_TIMEOUT = 10 * 1000; // 10초
 export const LOGIN_SESSION_CHECK_DELAY = 100; // 100ms
 
 // 기존 세션 확인 지연 시간 (밀리초) - 로그인 페이지에서 세션 체크
-export const EXISTING_SESSION_CHECK_DELAY = 0; // 즉시 실행
+export const EXISTING_SESSION_CHECK_DELAY = 500; // OAuth2 콜백 후 세션 쿠키 설정 대기
 
 // 정기 세션 확인 간격 (밀리초)
 export const PERIODIC_SESSION_CHECK_INTERVAL = 10 * 60 * 1000; // 10분

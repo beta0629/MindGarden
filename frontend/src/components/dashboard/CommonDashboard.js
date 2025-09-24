@@ -520,11 +520,37 @@ const CommonDashboard = ({ user: propUser }) => {
           // 백업으로 sessionManager 확인
           currentUser = sessionManager.getUser();
           if (!currentUser || !currentUser.role) {
-            console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
+            // OAuth2 콜백 후 세션 쿠키 설정 대기 (1초)
+            console.log('⏳ 사용자 정보 없음, 1초 대기 후 재확인...');
             console.log('👤 propUser:', propUser);
             console.log('👤 sessionUser:', sessionUser);
             console.log('👤 sessionManager 사용자:', currentUser);
-            navigate('/login', { replace: true });
+            
+            setTimeout(async () => {
+              try {
+                // 1초 후 다시 세션 확인
+                const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+                  credentials: 'include',
+                  method: 'GET'
+                });
+                
+                if (response.ok) {
+                  const result = await response.json();
+                  if (result.success && result.user) {
+                    console.log('✅ 지연된 세션 확인 성공, 사용자 정보 로드:', result.user);
+                    // 사용자 정보 설정 후 데이터 로드
+                    setUser(result.user);
+                    return;
+                  }
+                }
+                
+                console.log('❌ 지연된 세션 확인 실패, 로그인 페이지로 이동');
+                navigate('/login', { replace: true });
+              } catch (error) {
+                console.log('❌ 지연된 세션 확인 오류, 로그인 페이지로 이동:', error);
+                navigate('/login', { replace: true });
+              }
+            }, 1000);
             return;
           }
         }

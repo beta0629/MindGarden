@@ -478,7 +478,6 @@ const BranchManagement = () => {
                                     </>
                                 )}
                             </Col>
-                            </Col>
                         </Row>
                     </Tab>
                     

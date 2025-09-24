@@ -527,31 +527,40 @@ const CommonDashboard = ({ user: propUser }) => {
             console.log('👤 sessionUser:', sessionUser);
             console.log('👤 sessionManager 사용자:', currentUser);
             
-            setTimeout(async () => {
-              try {
-                // 1초 후 다시 세션 확인
-                const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
-                  credentials: 'include',
-                  method: 'GET'
-                });
-                
-                if (response.ok) {
-                  const result = await response.json();
-                  if (result.success && result.user) {
-                    console.log('✅ 지연된 세션 확인 성공, 사용자 정보 로드:', result.user);
-                    // 사용자 정보 설정 후 데이터 로드
-                    setUser(result.user);
-                    return;
-                  }
-                }
-                
-                console.log('❌ 지연된 세션 확인 실패, 로그인 페이지로 이동');
-                navigate('/login', { replace: true });
-              } catch (error) {
-                console.log('❌ 지연된 세션 확인 오류, 로그인 페이지로 이동:', error);
-                navigate('/login', { replace: true });
-              }
-            }, 1000);
+           setTimeout(async () => {
+             try {
+               console.log('🔄 지연된 세션 확인 시작...');
+               
+               // 1초 후 다시 세션 확인
+               const response = await fetch(`${API_BASE_URL}/api/auth/current-user`, {
+                 credentials: 'include',
+                 method: 'GET',
+                 headers: {
+                   'Content-Type': 'application/json'
+                 }
+               });
+               
+               console.log('🔍 지연된 세션 확인 응답:', response.status, response.statusText);
+               
+               if (response.ok) {
+                 const result = await response.json();
+                 console.log('📋 지연된 세션 확인 응답 데이터:', result);
+                 
+                 if (result.success && result.user) {
+                   console.log('✅ 지연된 세션 확인 성공, 사용자 정보 로드:', result.user);
+                   // 사용자 정보 설정 후 데이터 로드
+                   setUser(result.user);
+                   return;
+                 }
+               }
+               
+               console.log('❌ 지연된 세션 확인 실패, 로그인 페이지로 이동');
+               navigate('/login', { replace: true });
+             } catch (error) {
+               console.log('❌ 지연된 세션 확인 오류, 로그인 페이지로 이동:', error);
+               navigate('/login', { replace: true });
+             }
+           }, 1000);
             return;
           }
         }

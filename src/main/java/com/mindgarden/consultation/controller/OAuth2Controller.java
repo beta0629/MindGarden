@@ -319,10 +319,10 @@ public class OAuth2Controller {
                     String redirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
                     
                     // 세션 쿠키 설정을 명시적으로 추가
-                    return ResponseEntity.status(302)
-                        .header("Location", redirectUrl)
-                        .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; SameSite=Lax; Max-Age=3600; HttpOnly=false", session.getId()))
-                        .build();
+        return ResponseEntity.status(302)
+            .header("Location", redirectUrl)
+            .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; SameSite=None; Max-Age=3600; HttpOnly=false", session.getId()))
+            .build();
                 }
             } else if (response.isRequiresSignup()) {
                 // 간편 회원가입이 필요한 경우
@@ -517,10 +517,10 @@ public class OAuth2Controller {
                     String redirectUrl = DashboardRedirectUtil.getDashboardUrl(user.getRole(), frontendUrl);
                     
                     // 세션 쿠키 설정을 명시적으로 추가
-                    return ResponseEntity.status(302)
-                        .header("Location", redirectUrl)
-                        .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; SameSite=Lax; Max-Age=3600; HttpOnly=false", session.getId()))
-                        .build();
+        return ResponseEntity.status(302)
+            .header("Location", redirectUrl)
+            .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; SameSite=None; Max-Age=3600; HttpOnly=false", session.getId()))
+            .build();
                 }
             } else if (response.isRequiresSignup()) {
                 // 간편 회원가입이 필요한 경우

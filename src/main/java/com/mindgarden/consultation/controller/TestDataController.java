@@ -68,11 +68,11 @@ public class TestDataController {
      */
     @PostMapping("/create-test-data")
     public ResponseEntity<?> createTestData() {
-        // 개발 모드가 아니면 접근 거부
-        if (!isDev) {
-            log.warn("🚫 운영 환경에서 테스트 데이터 생성 시도 차단");
+        // 운영 환경에서 실행 방지 (더 강화된 체크)
+        if (!isDev && !"local".equals(activeProfile)) {
+            log.warn("🚫 운영 환경에서 테스트 데이터 생성 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
-                .body(Map.of("error", "테스트 데이터 생성은 개발 모드에서만 가능합니다."));
+                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
         }
         
         log.info("🧪 테스트용 데이터 생성 시작 (개발 모드: {})", activeProfile);
@@ -171,14 +171,15 @@ public class TestDataController {
 
     /**
      * 추가 상담사 등록 (개발 모드에서만 동작)
+     * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-consultant")
     public ResponseEntity<?> createConsultant(@RequestBody ConsultantRegistrationDto request) {
-        // 개발 모드가 아니면 접근 거부
-        if (!isDev) {
-            log.warn("🚫 운영 환경에서 테스트 상담사 등록 시도 차단");
+        // 운영 환경에서 실행 방지 (더 강화된 체크)
+        if (!isDev && !"local".equals(activeProfile)) {
+            log.warn("🚫 운영 환경에서 테스트 상담사 등록 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
-                .body(Map.of("error", "테스트 상담사 등록은 개발 모드에서만 가능합니다."));
+                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
         }
         
         log.info("🧪 추가 상담사 등록: {}", request.getUsername());
@@ -196,14 +197,15 @@ public class TestDataController {
 
     /**
      * 추가 내담자 등록 (개발 모드에서만 동작)
+     * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-client")
     public ResponseEntity<?> createClient(@RequestBody ClientRegistrationDto request) {
-        // 개발 모드가 아니면 접근 거부
-        if (!isDev) {
-            log.warn("🚫 운영 환경에서 테스트 내담자 등록 시도 차단");
+        // 운영 환경에서 실행 방지 (더 강화된 체크)
+        if (!isDev && !"local".equals(activeProfile)) {
+            log.warn("🚫 운영 환경에서 테스트 내담자 등록 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
-                .body(Map.of("error", "테스트 내담자 등록은 개발 모드에서만 가능합니다."));
+                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
         }
         
         log.info("🧪 추가 내담자 등록: {}", request.getName());
@@ -221,14 +223,15 @@ public class TestDataController {
 
     /**
      * 추가 매핑 생성 (개발 모드에서만 동작)
+     * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-mapping")
     public ResponseEntity<?> createMapping(@RequestBody ConsultantClientMappingDto request) {
-        // 개발 모드가 아니면 접근 거부
-        if (!isDev) {
-            log.warn("🚫 운영 환경에서 테스트 매핑 생성 시도 차단");
+        // 운영 환경에서 실행 방지 (더 강화된 체크)
+        if (!isDev && !"local".equals(activeProfile)) {
+            log.warn("🚫 운영 환경에서 테스트 매핑 생성 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
-                .body(Map.of("error", "테스트 매핑 생성은 개발 모드에서만 가능합니다."));
+                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
         }
         
         log.info("🧪 추가 매핑 생성: 상담사={}, 내담자={}", 
@@ -247,14 +250,15 @@ public class TestDataController {
 
     /**
      * 생성된 데이터 조회 (개발 모드에서만 동작)
+     * ⚠️ 로컬 개발 환경에서만 동작
      */
     @GetMapping("/data")
     public ResponseEntity<?> getTestData() {
-        // 개발 모드가 아니면 접근 거부
-        if (!isDev) {
-            log.warn("🚫 운영 환경에서 테스트 데이터 조회 시도 차단");
+        // 운영 환경에서 실행 방지 (더 강화된 체크)
+        if (!isDev && !"local".equals(activeProfile)) {
+            log.warn("🚫 운영 환경에서 테스트 데이터 조회 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
-                .body(Map.of("error", "테스트 데이터 조회는 개발 모드에서만 가능합니다."));
+                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
         }
         
         log.info("🧪 테스트 데이터 조회 (개발 모드: {})", activeProfile);
@@ -278,15 +282,15 @@ public class TestDataController {
     
     /**
      * 사용자 역할 데이터 마이그레이션 (ROLE_ 접두사 제거)
-     * 개발 모드에서만 동작
+     * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/migrate-user-roles")
     public ResponseEntity<?> migrateUserRoles() {
-        // 개발 모드가 아니면 접근 거부
-        if (!isDev) {
-            log.warn("🚫 운영 환경에서 데이터 마이그레이션 시도 차단");
+        // 운영 환경에서 실행 방지 (더 강화된 체크)
+        if (!isDev && !"local".equals(activeProfile)) {
+            log.warn("🚫 운영 환경에서 데이터 마이그레이션 시도 차단 - profile: {}, isDev: {}", activeProfile, isDev);
             return ResponseEntity.status(403)
-                .body(Map.of("error", "데이터 마이그레이션은 개발 모드에서만 가능합니다."));
+                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
         }
         
         log.info("🔄 사용자 역할 데이터 마이그레이션 시작...");
@@ -432,10 +436,19 @@ public class TestDataController {
                 ));
             }
 
+            // Client를 User로 변환
+            User clientUser = userRepository.findById(clientEntity.getId()).orElse(null);
+            if (clientUser == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "내담자에 해당하는 User를 찾을 수 없습니다."
+                ));
+            }
+            
             // 새 매핑 생성
             ConsultantClientMapping mapping = new ConsultantClientMapping();
             mapping.setConsultant(consultant);  // User 타입
-            // mapping.setClientId(clientEntity.getId());  // setClientId 메서드가 없으므로 주석 처리
+            mapping.setClient(clientUser);  // User 타입으로 설정
             mapping.setStartDate(LocalDateTime.now());  // 필수 필드 추가
             mapping.setStatus(MappingStatus.ACTIVE);
             mapping.setPaymentStatus(PaymentStatus.APPROVED);
@@ -560,6 +573,7 @@ public class TestDataController {
             Consultation consultation1 = new Consultation();
             consultation1.setClientId(client.getId());
             consultation1.setConsultantId(consultant.getId());
+            consultation1.setTitle("첫 번째 상담 - 스트레스 관리");
             consultation1.setConsultationDate(LocalDate.now().minusDays(7));
             consultation1.setStartTime(LocalTime.of(14, 0));
             consultation1.setEndTime(LocalTime.of(15, 0));
@@ -573,6 +587,7 @@ public class TestDataController {
             Consultation consultation2 = new Consultation();
             consultation2.setClientId(client.getId());
             consultation2.setConsultantId(consultant.getId());
+            consultation2.setTitle("두 번째 상담 - 불안 증상");
             consultation2.setConsultationDate(LocalDate.now().minusDays(14));
             consultation2.setStartTime(LocalTime.of(10, 0));
             consultation2.setEndTime(LocalTime.of(11, 0));
@@ -586,6 +601,7 @@ public class TestDataController {
             Consultation consultation3 = new Consultation();
             consultation3.setClientId(client.getId());
             consultation3.setConsultantId(consultant.getId());
+            consultation3.setTitle("세 번째 상담 - 초기 상담");
             consultation3.setConsultationDate(LocalDate.now().minusDays(21));
             consultation3.setStartTime(LocalTime.of(16, 0));
             consultation3.setEndTime(LocalTime.of(17, 0));

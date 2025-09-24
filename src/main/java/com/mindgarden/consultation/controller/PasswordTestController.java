@@ -1,14 +1,17 @@
 package com.mindgarden.consultation.controller;
 
+import java.util.HashMap;
+import java.util.Map;
 import com.mindgarden.consultation.config.PasswordPolicyConfig;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 비밀번호 정책 테스트 컨트롤러

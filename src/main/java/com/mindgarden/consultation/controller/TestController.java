@@ -10,6 +10,7 @@ import com.mindgarden.consultation.repository.UserActivityRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.util.BranchAccountCreator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,12 +35,25 @@ public class TestController {
     
     @Autowired
     private UserRepository userRepository;
+    
+    @Value("${spring.profiles.active:prod}")
+    private String activeProfile;
+    
+    @Value("${isDev:false}")
+    private boolean isDev;
 
     /**
      * 모든 지점의 계정 생성
+     * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-branch-accounts")
     public ResponseEntity<Map<String, Object>> createAllBranchAccounts() {
+        // 운영 환경에서 실행 방지
+        if (!isDev && !"local".equals(activeProfile)) {
+            return ResponseEntity.status(403)
+                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
+        }
+        
         try {
             branchAccountCreator.createAllBranchAccounts();
             
@@ -59,9 +73,16 @@ public class TestController {
 
     /**
      * 특정 지점의 계정 생성
+     * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-branch-account/{branchCode}")
     public ResponseEntity<Map<String, Object>> createBranchAccount(@PathVariable String branchCode) {
+        // 운영 환경에서 실행 방지
+        if (!isDev && !"local".equals(activeProfile)) {
+            return ResponseEntity.status(403)
+                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
+        }
+        
         try {
             branchAccountCreator.createBranchAccount(branchCode);
             
@@ -94,9 +115,16 @@ public class TestController {
     
     /**
      * 활동 내역 샘플 데이터 삽입 (로컬 테스트용)
+     * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/insert-activity-samples")
     public ResponseEntity<Map<String, Object>> insertActivitySamples() {
+        // 운영 환경에서 실행 방지
+        if (!isDev && !"local".equals(activeProfile)) {
+            return ResponseEntity.status(403)
+                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
+        }
+        
         try {
             // 기존 샘플 데이터 삭제
             userActivityRepository.deleteAll();
@@ -199,9 +227,16 @@ public class TestController {
     
     /**
      * 각 지점별 지점수퍼관리자 생성 (로컬 테스트용)
+     * ⚠️ 로컬 개발 환경에서만 동작
      */
     @PostMapping("/create-branch-super-admins")
     public ResponseEntity<Map<String, Object>> createBranchSuperAdmins() {
+        // 운영 환경에서 실행 방지
+        if (!isDev && !"local".equals(activeProfile)) {
+            return ResponseEntity.status(403)
+                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
+        }
+        
         try {
             Map<String, Object> response = new HashMap<>();
             
@@ -225,6 +260,7 @@ public class TestController {
                 // 이미 존재하는지 확인
                 if (userRepository.findByEmail(email).isEmpty()) {
                     User branchAdmin = User.builder()
+                        .username(email) // username은 email과 동일하게 설정
                         .email(email)
                         .password("$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iKyVhQrF0yP/8KzqKzqKzqKzqKzq") // password: branch123
                         .name(name)
@@ -260,9 +296,16 @@ public class TestController {
     
     /**
      * 지점수퍼관리자 목록 조회
+     * ⚠️ 로컬 개발 환경에서만 동작
      */
     @GetMapping("/branch-super-admins")
     public ResponseEntity<Map<String, Object>> getBranchSuperAdmins() {
+        // 운영 환경에서 실행 방지
+        if (!isDev && !"local".equals(activeProfile)) {
+            return ResponseEntity.status(403)
+                .body(Map.of("error", "이 API는 로컬 개발 환경에서만 사용할 수 있습니다."));
+        }
+        
         try {
             Map<String, Object> response = new HashMap<>();
             

@@ -52,6 +52,10 @@ public class Consultation extends BaseEntity {
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
     
+    @Size(max = 200, message = "상담 제목은 200자 이하여야 합니다.")
+    @Column(name = "title", nullable = false, length = 200)
+    private String title; // 상담 제목
+    
     @Column(name = "duration_minutes")
     private Integer durationMinutes; // 상담 시간 (분)
     
@@ -257,6 +261,14 @@ public class Consultation extends BaseEntity {
     
     public void setEndTime(LocalTime endTime) {
         this.endTime = endTime;
+    }
+    
+    public String getTitle() {
+        return title;
+    }
+    
+    public void setTitle(String title) {
+        this.title = title;
     }
     
     public Integer getDurationMinutes() {

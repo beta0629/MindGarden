@@ -14,7 +14,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import LoadingSpinner from '../common/LoadingSpinner';
 import SimpleLayout from '../layout/SimpleLayout';
-import './BranchManagement.css';
+// CSS 파일 제거 - 인라인 스타일 사용
 
 /**
  * 본사 지점 관리 컴포넌트
@@ -207,33 +207,114 @@ const BranchManagement = () => {
                         }>
                             <Row>
                                 <Col md={3}>
-                                    <Card className="branch-list-card h-100">
-                                        <Card.Header>
-                                            <h5 className="mb-0">
-                                                <FaBuilding className="me-2" />
+                                    <Card style={{
+                                        height: '100%',
+                                        border: '1px solid #e9ecef',
+                                        borderRadius: '12px',
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <Card.Header style={{
+                                            background: '#f8f9fa',
+                                            borderBottom: '1px solid #e9ecef',
+                                            padding: '16px 20px',
+                                            borderRadius: '12px 12px 0 0'
+                                        }}>
+                                            <h5 style={{
+                                                margin: 0,
+                                                color: '#495057',
+                                                fontSize: '16px',
+                                                fontWeight: '600',
+                                                display: 'flex',
+                                                alignItems: 'center'
+                                            }}>
+                                                <FaBuilding style={{ marginRight: '8px', color: '#007bff' }} />
                                                 지점 목록 ({branches.length}개)
                                             </h5>
                                         </Card.Header>
-                                        <Card.Body>
+                                        <Card.Body style={{
+                                            padding: '0',
+                                            height: 'calc(100% - 60px)',
+                                            overflow: 'hidden'
+                                        }}>
                                             {loading ? (
-                                                <div className="loading-container">
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    height: '200px',
+                                                    flexDirection: 'column'
+                                                }}>
                                                     <LoadingSpinner text="지점 목록을 불러오는 중..." size="small" />
                                                 </div>
                                             ) : (
-                                                <div>
+                                                <div style={{
+                                                    height: '100%',
+                                                    overflowY: 'auto',
+                                                    padding: '8px'
+                                                }}>
                                                     {branches.map((branch) => (
                                                         <button
                                                             key={branch.id}
-                                                            className={`branch-list-item ${
-                                                                selectedBranch?.id === branch.id ? 'active' : ''
-                                                            }`}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '12px 16px',
+                                                                marginBottom: '4px',
+                                                                border: 'none',
+                                                                borderRadius: '8px',
+                                                                background: selectedBranch?.id === branch.id ? '#e3f2fd' : '#ffffff',
+                                                                borderLeft: selectedBranch?.id === branch.id ? '4px solid #007bff' : '4px solid #e9ecef',
+                                                                cursor: 'pointer',
+                                                                transition: 'all 0.2s ease',
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center',
+                                                                textAlign: 'left',
+                                                                boxShadow: selectedBranch?.id === branch.id ? '0 2px 8px rgba(0,123,255,0.15)' : '0 1px 3px rgba(0,0,0,0.1)'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                if (selectedBranch?.id !== branch.id) {
+                                                                    e.target.style.background = '#f8f9fa';
+                                                                    e.target.style.borderLeftColor = '#007bff';
+                                                                }
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                if (selectedBranch?.id !== branch.id) {
+                                                                    e.target.style.background = '#ffffff';
+                                                                    e.target.style.borderLeftColor = '#e9ecef';
+                                                                }
+                                                            }}
                                                             onClick={() => setSelectedBranch(branch)}
                                                         >
-                                                            <div className="branch-info">
-                                                                <strong>{branch.name}</strong>
-                                                                <small>{branch.code}</small>
+                                                            <div style={{
+                                                                display: 'flex',
+                                                                flexDirection: 'column',
+                                                                alignItems: 'flex-start'
+                                                            }}>
+                                                                <strong style={{
+                                                                    fontSize: '14px',
+                                                                    color: selectedBranch?.id === branch.id ? '#007bff' : '#495057',
+                                                                    fontWeight: '600',
+                                                                    marginBottom: '2px'
+                                                                }}>
+                                                                    {branch.name}
+                                                                </strong>
+                                                                <small style={{
+                                                                    fontSize: '12px',
+                                                                    color: '#6c757d',
+                                                                    fontFamily: 'monospace'
+                                                                }}>
+                                                                    {branch.code}
+                                                                </small>
                                                             </div>
-                                                            <Badge bg={branch.isActive ? 'success' : 'secondary'}>
+                                                            <Badge 
+                                                                bg={branch.isActive ? 'success' : 'secondary'}
+                                                                style={{
+                                                                    fontSize: '11px',
+                                                                    padding: '4px 8px',
+                                                                    borderRadius: '12px'
+                                                                }}
+                                                            >
                                                                 {branch.isActive ? '활성' : '비활성'}
                                                             </Badge>
                                                         </button>
@@ -248,51 +329,181 @@ const BranchManagement = () => {
                                 {selectedBranch && (
                                     <>
                                         {/* 지점 통계 */}
-                                        <Row className="mb-4">
+                                        <Row style={{ marginBottom: '24px' }}>
                                             <Col>
-                                                <Card className="branch-stats-card">
-                                                    <Card.Header>
-                                                        <h5 className="mb-0">
-                                                            <FaChartBar className="me-2" />
+                                                <Card style={{
+                                                    border: '1px solid #e9ecef',
+                                                    borderRadius: '12px',
+                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                    overflow: 'hidden'
+                                                }}>
+                                                    <Card.Header style={{
+                                                        background: '#f8f9fa',
+                                                        borderBottom: '1px solid #e9ecef',
+                                                        padding: '16px 20px'
+                                                    }}>
+                                                        <h5 style={{
+                                                            margin: 0,
+                                                            color: '#495057',
+                                                            fontSize: '16px',
+                                                            fontWeight: '600',
+                                                            display: 'flex',
+                                                            alignItems: 'center'
+                                                        }}>
+                                                            <FaChartBar style={{ marginRight: '8px', color: '#28a745' }} />
                                                             {selectedBranch.name} 통계
                                                         </h5>
                                                     </Card.Header>
-                                                    <Card.Body>
+                                                    <Card.Body style={{ padding: '20px' }}>
                                                         <Row>
                                                             <Col md={2}>
-                                                                <div className="stat-item">
-                                                                    <span className="stat-number text-primary">{branchStatistics.totalUsers || 0}</span>
-                                                                    <span className="stat-label">전체 사용자</span>
+                                                                <div style={{
+                                                                    textAlign: 'center',
+                                                                    padding: '16px 8px',
+                                                                    background: '#f8f9fa',
+                                                                    borderRadius: '8px',
+                                                                    border: '1px solid #e9ecef'
+                                                                }}>
+                                                                    <div style={{
+                                                                        fontSize: '24px',
+                                                                        fontWeight: '700',
+                                                                        color: '#007bff',
+                                                                        marginBottom: '4px'
+                                                                    }}>
+                                                                        {branchStatistics.totalUsers || 0}
+                                                                    </div>
+                                                                    <div style={{
+                                                                        fontSize: '12px',
+                                                                        color: '#6c757d',
+                                                                        fontWeight: '500'
+                                                                    }}>
+                                                                        전체 사용자
+                                                                    </div>
                                                                 </div>
                                                             </Col>
                                                             <Col md={2}>
-                                                                <div className="stat-item">
-                                                                    <span className="stat-number text-success">{branchStatistics.consultants || 0}</span>
-                                                                    <span className="stat-label">상담사</span>
+                                                                <div style={{
+                                                                    textAlign: 'center',
+                                                                    padding: '16px 8px',
+                                                                    background: '#f8f9fa',
+                                                                    borderRadius: '8px',
+                                                                    border: '1px solid #e9ecef'
+                                                                }}>
+                                                                    <div style={{
+                                                                        fontSize: '24px',
+                                                                        fontWeight: '700',
+                                                                        color: '#28a745',
+                                                                        marginBottom: '4px'
+                                                                    }}>
+                                                                        {branchStatistics.consultants || 0}
+                                                                    </div>
+                                                                    <div style={{
+                                                                        fontSize: '12px',
+                                                                        color: '#6c757d',
+                                                                        fontWeight: '500'
+                                                                    }}>
+                                                                        상담사
+                                                                    </div>
                                                                 </div>
                                                             </Col>
                                                             <Col md={2}>
-                                                                <div className="stat-item">
-                                                                    <span className="stat-number text-primary">{branchStatistics.clients || 0}</span>
-                                                                    <span className="stat-label">내담자</span>
+                                                                <div style={{
+                                                                    textAlign: 'center',
+                                                                    padding: '16px 8px',
+                                                                    background: '#f8f9fa',
+                                                                    borderRadius: '8px',
+                                                                    border: '1px solid #e9ecef'
+                                                                }}>
+                                                                    <div style={{
+                                                                        fontSize: '24px',
+                                                                        fontWeight: '700',
+                                                                        color: '#007bff',
+                                                                        marginBottom: '4px'
+                                                                    }}>
+                                                                        {branchStatistics.clients || 0}
+                                                                    </div>
+                                                                    <div style={{
+                                                                        fontSize: '12px',
+                                                                        color: '#6c757d',
+                                                                        fontWeight: '500'
+                                                                    }}>
+                                                                        내담자
+                                                                    </div>
                                                                 </div>
                                                             </Col>
                                                             <Col md={2}>
-                                                                <div className="stat-item">
-                                                                    <span className="stat-number text-warning">{branchStatistics.admins || 0}</span>
-                                                                    <span className="stat-label">관리자</span>
+                                                                <div style={{
+                                                                    textAlign: 'center',
+                                                                    padding: '16px 8px',
+                                                                    background: '#f8f9fa',
+                                                                    borderRadius: '8px',
+                                                                    border: '1px solid #e9ecef'
+                                                                }}>
+                                                                    <div style={{
+                                                                        fontSize: '24px',
+                                                                        fontWeight: '700',
+                                                                        color: '#ffc107',
+                                                                        marginBottom: '4px'
+                                                                    }}>
+                                                                        {branchStatistics.admins || 0}
+                                                                    </div>
+                                                                    <div style={{
+                                                                        fontSize: '12px',
+                                                                        color: '#6c757d',
+                                                                        fontWeight: '500'
+                                                                    }}>
+                                                                        관리자
+                                                                    </div>
                                                                 </div>
                                                             </Col>
                                                             <Col md={2}>
-                                                                <div className="stat-item">
-                                                                    <span className="stat-number text-info">{branchStatistics.activeUsers || 0}</span>
-                                                                    <span className="stat-label">활성</span>
+                                                                <div style={{
+                                                                    textAlign: 'center',
+                                                                    padding: '16px 8px',
+                                                                    background: '#f8f9fa',
+                                                                    borderRadius: '8px',
+                                                                    border: '1px solid #e9ecef'
+                                                                }}>
+                                                                    <div style={{
+                                                                        fontSize: '24px',
+                                                                        fontWeight: '700',
+                                                                        color: '#17a2b8',
+                                                                        marginBottom: '4px'
+                                                                    }}>
+                                                                        {branchStatistics.activeUsers || 0}
+                                                                    </div>
+                                                                    <div style={{
+                                                                        fontSize: '12px',
+                                                                        color: '#6c757d',
+                                                                        fontWeight: '500'
+                                                                    }}>
+                                                                        활성
+                                                                    </div>
                                                                 </div>
                                                             </Col>
                                                             <Col md={2}>
-                                                                <div className="stat-item">
-                                                                    <span className="stat-number text-secondary">{branchStatistics.inactiveUsers || 0}</span>
-                                                                    <span className="stat-label">비활성</span>
+                                                                <div style={{
+                                                                    textAlign: 'center',
+                                                                    padding: '16px 8px',
+                                                                    background: '#f8f9fa',
+                                                                    borderRadius: '8px',
+                                                                    border: '1px solid #e9ecef'
+                                                                }}>
+                                                                    <div style={{
+                                                                        fontSize: '24px',
+                                                                        fontWeight: '700',
+                                                                        color: '#6c757d',
+                                                                        marginBottom: '4px'
+                                                                    }}>
+                                                                        {branchStatistics.inactiveUsers || 0}
+                                                                    </div>
+                                                                    <div style={{
+                                                                        fontSize: '12px',
+                                                                        color: '#6c757d',
+                                                                        fontWeight: '500'
+                                                                    }}>
+                                                                        비활성
+                                                                    </div>
                                                                 </div>
                                                             </Col>
                                                         </Row>
@@ -302,12 +513,28 @@ const BranchManagement = () => {
                                         </Row>
                                         
                                         {/* 사용자 목록 */}
-                                        <Card className="user-list-card">
-                                            <Card.Header>
-                                                <Row className="align-items-center">
+                                        <Card style={{
+                                            border: '1px solid #e9ecef',
+                                            borderRadius: '12px',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                            overflow: 'hidden'
+                                        }}>
+                                            <Card.Header style={{
+                                                background: '#f8f9fa',
+                                                borderBottom: '1px solid #e9ecef',
+                                                padding: '16px 20px'
+                                            }}>
+                                                <Row style={{ alignItems: 'center' }}>
                                                     <Col>
-                                                        <h5 className="mb-0">
-                                                            <FaUsers className="me-2" />
+                                                        <h5 style={{
+                                                            margin: 0,
+                                                            color: '#495057',
+                                                            fontSize: '16px',
+                                                            fontWeight: '600',
+                                                            display: 'flex',
+                                                            alignItems: 'center'
+                                                        }}>
+                                                            <FaUsers style={{ marginRight: '8px', color: '#6f42c1' }} />
                                                             {selectedBranch.name} 사용자 목록
                                                         </h5>
                                                     </Col>
@@ -318,36 +545,62 @@ const BranchManagement = () => {
                                                                 size="sm"
                                                                 onClick={() => setShowTransferModal(true)}
                                                                 disabled={selectedUsers.length === 0}
-                                                                className="me-2"
+                                                                style={{
+                                                                    marginRight: '8px',
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '12px',
+                                                                    padding: '6px 12px'
+                                                                }}
                                                             >
-                                                                <FaExchangeAlt className="me-1" />
+                                                                <FaExchangeAlt style={{ marginRight: '4px' }} />
                                                                 지점 이동 ({selectedUsers.length})
                                                             </Button>
                                                             <Button
                                                                 variant="outline-secondary"
                                                                 size="sm"
                                                                 onClick={() => loadBranchUsers(selectedBranch.code)}
+                                                                style={{
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '12px',
+                                                                    padding: '6px 12px'
+                                                                }}
                                                             >
-                                                                <FaSearch className="me-1" />
+                                                                <FaSearch style={{ marginRight: '4px' }} />
                                                                 새로고침
                                                             </Button>
                                                         </ButtonGroup>
                                                     </Col>
                                                 </Row>
                                             </Card.Header>
-                                            <Card.Body>
+                                            <Card.Body style={{ padding: '20px' }}>
                                                 {/* 필터 및 검색 */}
-                                                <div className="filter-section">
+                                                <div style={{
+                                                    marginBottom: '20px',
+                                                    padding: '16px',
+                                                    background: '#f8f9fa',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #e9ecef'
+                                                }}>
                                                     <Row>
                                                         <Col md={4}>
                                                             <InputGroup size="sm">
-                                                                <InputGroup.Text>
-                                                                    <FaSearch />
+                                                                <InputGroup.Text style={{
+                                                                    background: '#ffffff',
+                                                                    border: '1px solid #ced4da',
+                                                                    borderRight: 'none',
+                                                                    borderRadius: '6px 0 0 6px'
+                                                                }}>
+                                                                    <FaSearch style={{ color: '#6c757d' }} />
                                                                 </InputGroup.Text>
                                                                 <FormControl
                                                                     placeholder="이름 또는 이메일로 검색..."
                                                                     value={searchTerm}
                                                                     onChange={(e) => setSearchTerm(e.target.value)}
+                                                                    style={{
+                                                                        border: '1px solid #ced4da',
+                                                                        borderRadius: '0 6px 6px 0',
+                                                                        fontSize: '14px'
+                                                                    }}
                                                                 />
                                                             </InputGroup>
                                                         </Col>
@@ -356,6 +609,11 @@ const BranchManagement = () => {
                                                                 size="sm"
                                                                 value={selectedRole}
                                                                 onChange={(e) => setSelectedRole(e.target.value)}
+                                                                style={{
+                                                                    border: '1px solid #ced4da',
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '14px'
+                                                                }}
                                                             >
                                                                 <option value="">모든 역할</option>
                                                                 <option value="CLIENT">내담자</option>
@@ -370,6 +628,10 @@ const BranchManagement = () => {
                                                                 label="비활성 사용자 포함"
                                                                 checked={includeInactive}
                                                                 onChange={(e) => setIncludeInactive(e.target.checked)}
+                                                                style={{
+                                                                    fontSize: '14px',
+                                                                    color: '#495057'
+                                                                }}
                                                             />
                                                         </Col>
                                                         <Col md={2}>
@@ -381,8 +643,13 @@ const BranchManagement = () => {
                                                                     setSelectedRole('');
                                                                     setIncludeInactive(false);
                                                                 }}
+                                                                style={{
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '12px',
+                                                                    padding: '6px 12px'
+                                                                }}
                                                             >
-                                                                <FaFilter className="me-1" />
+                                                                <FaFilter style={{ marginRight: '4px' }} />
                                                                 초기화
                                                             </Button>
                                                         </Col>
@@ -392,79 +659,190 @@ const BranchManagement = () => {
                                                 {/* 사용자 테이블 */}
                                                 {/* 사용자 선택 안내 */}
                                                 {selectedUsers.length > 0 && (
-                                                    <Alert variant="info" className="selected-users-alert mb-3">
+                                                    <Alert variant="info" style={{
+                                                        marginBottom: '16px',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #b8daff',
+                                                        background: '#d1ecf1',
+                                                        color: '#0c5460'
+                                                    }}>
                                                         <strong>{selectedUsers.length}명</strong>의 사용자가 선택되었습니다. 
                                                         "지점 이동" 버튼을 클릭하여 다른 지점으로 이동시킬 수 있습니다.
                                                     </Alert>
                                                 )}
                                                 
-                                                <div className="user-table">
+                                                <div style={{
+                                                    border: '1px solid #e9ecef',
+                                                    borderRadius: '8px',
+                                                    overflow: 'hidden'
+                                                }}>
                                                     {loading ? (
-                                                        <div className="loading-container">
+                                                        <div style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'center',
+                                                            alignItems: 'center',
+                                                            height: '200px',
+                                                            flexDirection: 'column'
+                                                        }}>
                                                             <LoadingSpinner text="사용자 목록을 불러오는 중..." size="medium" />
                                                         </div>
                                                     ) : filteredUsers.length === 0 ? (
-                                                        <div className="empty-state">
-                                                            <FaUsers className="mb-3" style={{ fontSize: '2rem' }} />
-                                                            <p>이 지점에는 사용자가 없습니다.</p>
+                                                        <div style={{
+                                                            textAlign: 'center',
+                                                            padding: '40px 20px',
+                                                            color: '#6c757d'
+                                                        }}>
+                                                            <FaUsers style={{ fontSize: '2rem', marginBottom: '12px', color: '#dee2e6' }} />
+                                                            <p style={{ margin: '0 0 8px 0', fontSize: '16px' }}>이 지점에는 사용자가 없습니다.</p>
                                                             <small>다른 지점을 선택하거나 필터를 조정해보세요.</small>
                                                         </div>
                                                     ) : (
                                                         <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                                                            <Table responsive hover>
-                                                                <thead className="sticky-top bg-white">
+                                                            <Table responsive hover style={{ margin: 0 }}>
+                                                                <thead style={{
+                                                                    position: 'sticky',
+                                                                    top: 0,
+                                                                    background: '#ffffff',
+                                                                    zIndex: 10,
+                                                                    borderBottom: '2px solid #e9ecef'
+                                                                }}>
                                                                     <tr>
-                                                                        <th>
+                                                                        <th style={{
+                                                                            padding: '12px 16px',
+                                                                            fontSize: '14px',
+                                                                            fontWeight: '600',
+                                                                            color: '#495057',
+                                                                            background: '#f8f9fa',
+                                                                            borderBottom: '1px solid #e9ecef'
+                                                                        }}>
                                                                             <FormCheck
                                                                                 checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
                                                                                 onChange={(e) => handleSelectAll(e.target.checked)}
+                                                                                style={{ margin: 0 }}
                                                                             />
                                                                         </th>
-                                                                        <th>사용자</th>
-                                                                        <th>역할</th>
-                                                                        <th>지점</th>
-                                                                        <th>상태</th>
-                                                                        <th>등록일</th>
+                                                                        <th style={{
+                                                                            padding: '12px 16px',
+                                                                            fontSize: '14px',
+                                                                            fontWeight: '600',
+                                                                            color: '#495057',
+                                                                            background: '#f8f9fa',
+                                                                            borderBottom: '1px solid #e9ecef'
+                                                                        }}>사용자</th>
+                                                                        <th style={{
+                                                                            padding: '12px 16px',
+                                                                            fontSize: '14px',
+                                                                            fontWeight: '600',
+                                                                            color: '#495057',
+                                                                            background: '#f8f9fa',
+                                                                            borderBottom: '1px solid #e9ecef'
+                                                                        }}>역할</th>
+                                                                        <th style={{
+                                                                            padding: '12px 16px',
+                                                                            fontSize: '14px',
+                                                                            fontWeight: '600',
+                                                                            color: '#495057',
+                                                                            background: '#f8f9fa',
+                                                                            borderBottom: '1px solid #e9ecef'
+                                                                        }}>지점</th>
+                                                                        <th style={{
+                                                                            padding: '12px 16px',
+                                                                            fontSize: '14px',
+                                                                            fontWeight: '600',
+                                                                            color: '#495057',
+                                                                            background: '#f8f9fa',
+                                                                            borderBottom: '1px solid #e9ecef'
+                                                                        }}>상태</th>
+                                                                        <th style={{
+                                                                            padding: '12px 16px',
+                                                                            fontSize: '14px',
+                                                                            fontWeight: '600',
+                                                                            color: '#495057',
+                                                                            background: '#f8f9fa',
+                                                                            borderBottom: '1px solid #e9ecef'
+                                                                        }}>등록일</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
                                                                 {filteredUsers.map((user) => (
-                                                                    <tr key={user.id} className={!user.isActive ? 'table-secondary' : ''}>
-                                                                        <td>
+                                                                    <tr 
+                                                                        key={user.id} 
+                                                                        style={{
+                                                                            background: !user.isActive ? '#f8f9fa' : '#ffffff',
+                                                                            borderBottom: '1px solid #e9ecef'
+                                                                        }}
+                                                                    >
+                                                                        <td style={{ padding: '12px 16px' }}>
                                                                             <FormCheck
                                                                                 checked={selectedUsers.includes(user.id)}
                                                                                 onChange={(e) => handleUserSelection(user.id, e.target.checked)}
+                                                                                style={{ margin: 0 }}
                                                                             />
                                                                         </td>
-                                                                        <td>
-                                                                            <div className="d-flex align-items-center">
-                                                                                <div className="me-2">
+                                                                        <td style={{ padding: '12px 16px' }}>
+                                                                            <div style={{
+                                                                                display: 'flex',
+                                                                                alignItems: 'center'
+                                                                            }}>
+                                                                                <div style={{ marginRight: '8px' }}>
                                                                                     {getRoleIcon(user.role)}
                                                                                 </div>
                                                                                 <div>
-                                                                                    <div className="fw-bold">{user.name}</div>
-                                                                                    <small className="text-muted">{user.email}</small>
+                                                                                    <div style={{
+                                                                                        fontWeight: '600',
+                                                                                        fontSize: '14px',
+                                                                                        color: '#495057',
+                                                                                        marginBottom: '2px'
+                                                                                    }}>
+                                                                                        {user.name}
+                                                                                    </div>
+                                                                                    <small style={{ color: '#6c757d', fontSize: '12px' }}>
+                                                                                        {user.email}
+                                                                                    </small>
                                                                                 </div>
                                                                             </div>
                                                                         </td>
-                                                                        <td>
-                                                                            <Badge bg={getRoleBadgeVariant(user.role)}>
+                                                                        <td style={{ padding: '12px 16px' }}>
+                                                                            <Badge 
+                                                                                bg={getRoleBadgeVariant(user.role)}
+                                                                                style={{
+                                                                                    fontSize: '11px',
+                                                                                    padding: '4px 8px',
+                                                                                    borderRadius: '12px'
+                                                                                }}
+                                                                            >
                                                                                 {user.roleDisplayName}
                                                                             </Badge>
                                                                         </td>
-                                                                        <td>
-                                                                            <Badge bg="info">
-                                                                                <FaMapMarkerAlt className="me-1" />
+                                                                        <td style={{ padding: '12px 16px' }}>
+                                                                            <Badge 
+                                                                                bg="info"
+                                                                                style={{
+                                                                                    fontSize: '11px',
+                                                                                    padding: '4px 8px',
+                                                                                    borderRadius: '12px'
+                                                                                }}
+                                                                            >
+                                                                                <FaMapMarkerAlt style={{ marginRight: '4px' }} />
                                                                                 {user.branchCode}
                                                                             </Badge>
                                                                         </td>
-                                                                        <td>
-                                                                            <Badge bg={user.isActive ? 'success' : 'secondary'}>
+                                                                        <td style={{ padding: '12px 16px' }}>
+                                                                            <Badge 
+                                                                                bg={user.isActive ? 'success' : 'secondary'}
+                                                                                style={{
+                                                                                    fontSize: '11px',
+                                                                                    padding: '4px 8px',
+                                                                                    borderRadius: '12px'
+                                                                                }}
+                                                                            >
                                                                                 {user.isActive ? '활성' : '비활성'}
                                                                             </Badge>
                                                                         </td>
-                                                                        <td>
-                                                                            <small>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</small>
+                                                                        <td style={{ padding: '12px 16px' }}>
+                                                                            <small style={{ color: '#6c757d', fontSize: '12px' }}>
+                                                                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
+                                                                            </small>
                                                                         </td>
                                                                     </tr>
                                                                 ))}
@@ -484,15 +862,37 @@ const BranchManagement = () => {
                     <Tab eventKey="transfer" title={
                         <span><FaExchangeAlt className="me-2" />지점 이동</span>
                     }>
-                        <Card>
-                            <Card.Header>
-                                <h5 className="mb-0">
-                                    <FaExchangeAlt className="me-2" />
+                        <Card style={{
+                            border: '1px solid #e9ecef',
+                            borderRadius: '12px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                            overflow: 'hidden'
+                        }}>
+                            <Card.Header style={{
+                                background: '#f8f9fa',
+                                borderBottom: '1px solid #e9ecef',
+                                padding: '16px 20px'
+                            }}>
+                                <h5 style={{
+                                    margin: 0,
+                                    color: '#495057',
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                }}>
+                                    <FaExchangeAlt style={{ marginRight: '8px', color: '#6f42c1' }} />
                                     사용자 지점 이동 관리
                                 </h5>
                             </Card.Header>
-                            <Card.Body>
-                                <Alert variant="info" className="mb-4">
+                            <Card.Body style={{ padding: '20px' }}>
+                                <Alert variant="info" style={{
+                                    marginBottom: '24px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #b8daff',
+                                    background: '#d1ecf1',
+                                    color: '#0c5460'
+                                }}>
                                     <strong>지점 이동 기능 사용법</strong><br />
                                     1. "지점 목록" 탭에서 원하는 지점을 선택하세요<br />
                                     2. 이동할 사용자들을 체크박스로 선택하세요<br />
@@ -502,37 +902,79 @@ const BranchManagement = () => {
                                 {selectedUsers.length > 0 ? (
                                     <Row>
                                         <Col md={6}>
-                                            <Alert variant="success">
-                                                <h6><FaUsers className="me-2" />선택된 사용자</h6>
+                                            <Alert variant="success" style={{
+                                                borderRadius: '8px',
+                                                border: '1px solid #c3e6cb',
+                                                background: '#d4edda',
+                                                color: '#155724'
+                                            }}>
+                                                <h6 style={{
+                                                    margin: '0 0 8px 0',
+                                                    fontSize: '14px',
+                                                    fontWeight: '600',
+                                                    display: 'flex',
+                                                    alignItems: 'center'
+                                                }}>
+                                                    <FaUsers style={{ marginRight: '8px' }} />
+                                                    선택된 사용자
+                                                </h6>
                                                 <strong>{selectedUsers.length}명</strong>의 사용자가 선택되었습니다.
                                             </Alert>
                                         </Col>
                                         <Col md={6}>
-                                            <div className="d-grid">
+                                            <div style={{ display: 'grid' }}>
                                                 <Button 
                                                     variant="primary" 
                                                     size="lg"
                                                     onClick={() => setShowTransferModal(true)}
+                                                    style={{
+                                                        borderRadius: '8px',
+                                                        fontSize: '16px',
+                                                        padding: '12px 24px',
+                                                        fontWeight: '600'
+                                                    }}
                                                 >
-                                                    <FaExchangeAlt className="me-2" />
+                                                    <FaExchangeAlt style={{ marginRight: '8px' }} />
                                                     {selectedUsers.length}명 지점 이동
                                                 </Button>
                                             </div>
                                         </Col>
                                     </Row>
                                 ) : (
-                                    <div className="text-center py-5">
-                                        <FaUsers className="mb-3 text-muted" style={{ fontSize: '3rem' }} />
-                                        <h5 className="text-muted">이동할 사용자를 선택해주세요</h5>
-                                        <p className="text-muted">
+                                    <div style={{
+                                        textAlign: 'center',
+                                        padding: '40px 20px'
+                                    }}>
+                                        <FaUsers style={{
+                                            marginBottom: '16px',
+                                            color: '#6c757d',
+                                            fontSize: '3rem'
+                                        }} />
+                                        <h5 style={{
+                                            color: '#6c757d',
+                                            marginBottom: '12px',
+                                            fontSize: '18px'
+                                        }}>
+                                            이동할 사용자를 선택해주세요
+                                        </h5>
+                                        <p style={{
+                                            color: '#6c757d',
+                                            marginBottom: '20px',
+                                            fontSize: '14px'
+                                        }}>
                                             "지점 목록" 탭에서 지점을 선택하고 사용자를 체크한 후<br />
                                             다시 이 탭으로 돌아오시면 이동 기능을 사용할 수 있습니다.
                                         </p>
                                         <Button 
                                             variant="outline-primary" 
                                             onClick={() => setActiveTab('branches')}
+                                            style={{
+                                                borderRadius: '8px',
+                                                fontSize: '14px',
+                                                padding: '8px 16px'
+                                            }}
                                         >
-                                            <FaBuilding className="me-2" />
+                                            <FaBuilding style={{ marginRight: '8px' }} />
                                             지점 목록으로 이동
                                         </Button>
                                     </div>

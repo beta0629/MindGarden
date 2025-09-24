@@ -348,7 +348,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               {todayConsultations.length > 0 ? (
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: '20px',
                   width: '100%',
                   boxSizing: 'border-box'

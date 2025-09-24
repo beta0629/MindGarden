@@ -36,14 +36,27 @@ const SalaryManagement = () => {
             setLoading(true);
             const response = await apiGet('/api/admin/salary/consultants');
             console.log('📊 상담사 목록 응답:', response);
+            
+            // response가 null인 경우 (401 인증 오류 등) 처리
+            if (!response) {
+                console.warn('⚠️ 상담사 목록 응답이 null입니다 (인증 문제 가능성)');
+                setConsultants([]);
+                return;
+            }
+            
             if (response && response.success) {
                 console.log('✅ 상담사 목록 로드 성공:', response.data.length, '명');
-                setConsultants(response.data);
+                setConsultants(response.data || []);
             } else {
                 console.error('❌ 상담사 목록 응답 실패:', response);
+                setConsultants([]);
+                if (response && response.message) {
+                    showNotification(response.message, 'error');
+                }
             }
         } catch (error) {
             console.error('❌ 상담사 목록 로드 실패:', error);
+            setConsultants([]);
             showNotification('상담사 목록을 불러오는데 실패했습니다.', 'error');
         } finally {
             setLoading(false);
@@ -55,11 +68,25 @@ const SalaryManagement = () => {
         try {
             setLoading(true);
             const response = await apiGet('/api/admin/salary/profiles');
+            
+            // response가 null인 경우 (401 인증 오류 등) 처리
+            if (!response) {
+                console.warn('⚠️ 급여 프로필 응답이 null입니다 (인증 문제 가능성)');
+                setSalaryProfiles([]);
+                return;
+            }
+            
             if (response && response.success) {
-                setSalaryProfiles(response.data);
+                setSalaryProfiles(response.data || []);
+            } else {
+                setSalaryProfiles([]);
+                if (response && response.message) {
+                    showNotification(response.message, 'error');
+                }
             }
         } catch (error) {
             console.error('급여 프로필 로드 실패:', error);
+            setSalaryProfiles([]);
             showNotification('급여 프로필을 불러오는데 실패했습니다.', 'error');
         } finally {
             setLoading(false);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { API_BASE_URL } from '../../constants/api';
+import SimpleLayout from '../../components/layout/SimpleLayout';
 
 const ActivityHistory = () => {
   const navigate = useNavigate();
@@ -135,34 +136,35 @@ const ActivityHistory = () => {
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* 헤더 */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '30px',
-        paddingBottom: '20px',
-        borderBottom: '2px solid #e9ecef'
-      }}>
-        <div>
-          <h2 style={{ margin: 0, color: '#2c3e50' }}>
-            <i className="bi bi-clock-history" style={{ marginRight: '10px', color: '#007bff' }}></i>
-            활동 내역
-          </h2>
-          <p style={{ margin: '5px 0 0 0', color: '#6c757d' }}>
-            최근 활동과 시스템 알림을 확인하세요
-          </p>
+    <SimpleLayout>
+      <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+        {/* 헤더 */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '30px',
+          paddingBottom: '20px',
+          borderBottom: '2px solid #e9ecef'
+        }}>
+          <div>
+            <h2 style={{ margin: 0, color: '#2c3e50' }}>
+              <i className="bi bi-clock-history" style={{ marginRight: '10px', color: '#007bff' }}></i>
+              활동 내역
+            </h2>
+            <p style={{ margin: '5px 0 0 0', color: '#6c757d' }}>
+              최근 활동과 시스템 알림을 확인하세요
+            </p>
+          </div>
+          <button 
+            className="btn btn-outline-secondary"
+            onClick={() => navigate('/client/dashboard')}
+            style={{ padding: '8px 16px' }}
+          >
+            <i className="bi bi-arrow-left" style={{ marginRight: '5px' }}></i>
+            대시보드로
+          </button>
         </div>
-        <button 
-          className="btn btn-outline-secondary"
-          onClick={() => navigate('/client/dashboard')}
-          style={{ padding: '8px 16px' }}
-        >
-          <i className="bi bi-arrow-left" style={{ marginRight: '5px' }}></i>
-          대시보드로
-        </button>
-      </div>
 
       {/* 필터 */}
       <div style={{ 
@@ -326,7 +328,8 @@ const ActivityHistory = () => {
           <p style={{ margin: 0, color: '#666' }}>완료된 활동</p>
         </div>
       </div>
-    </div>
+      </div>
+    </SimpleLayout>
   );
 };
 

@@ -107,28 +107,4 @@ public interface StatisticsConfigService {
      * 특정 설정 그룹 캐시 초기화
      */
     void clearConfigCache(String codeGroup);
-    
-    /**
-     * 성과 가중치 조회
-     * 
-     * @param weightType 가중치 유형 (COMPLETION_RATE, AVERAGE_RATING, CLIENT_RETENTION 등)
-     * @return 가중치 값
-     */
-    BigDecimal getPerformanceWeight(String weightType);
-    
-    /**
-     * 보너스 점수 조회
-     * 
-     * @param bonusType 보너스 유형 (CANCELLATION_BONUS, NOSHOW_BONUS 등)
-     * @return 보너스 점수
-     */
-    BigDecimal getBonusScore(String bonusType);
-    
-    /**
-     * 등급명 조회 (성과 점수 기반)
-     * 
-     * @param performanceScore 성과 점수
-     * @return 등급명
-     */
-    String getGradeName(BigDecimal performanceScore);
 }

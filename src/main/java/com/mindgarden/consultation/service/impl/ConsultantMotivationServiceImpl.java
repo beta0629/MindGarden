@@ -38,10 +38,21 @@ public class ConsultantMotivationServiceImpl implements ConsultantMotivationServ
             humor = Optional.ofNullable(dailyHumorRepository.findRandom());
         }
         
-        // 데이터가 없으면 기본 메시지 반환
+        // 데이터가 없으면 기본 메시지 반환 (랜덤하게 선택)
         if (humor.isEmpty()) {
+            String[] defaultHumorMessages = {
+                "오늘도 힘내세요! 😊",
+                "웃음은 최고의 약이에요! 😄",
+                "작은 기쁨도 소중한 하루가 될 거예요! 🌟",
+                "긍정적인 마음으로 하루를 시작해보세요! ☀️",
+                "당신의 미소가 세상을 밝게 만들어요! 😊",
+                "오늘 하루도 화이팅! 💪",
+                "작은 행복도 큰 기쁨이 될 수 있어요! 🎉",
+                "매일이 새로운 시작이에요! 🌱"
+            };
+            
             DailyHumor defaultHumor = new DailyHumor();
-            defaultHumor.setContent("오늘도 힘내세요! 😊");
+            defaultHumor.setContent(defaultHumorMessages[(int) (Math.random() * defaultHumorMessages.length)]);
             defaultHumor.setCategory(DEFAULT_HUMOR_CATEGORY);
             return defaultHumor;
         }
@@ -63,10 +74,21 @@ public class ConsultantMotivationServiceImpl implements ConsultantMotivationServ
             warmWords = Optional.ofNullable(warmWordsRepository.findRandom());
         }
         
-        // 데이터가 없으면 기본 메시지 반환
+        // 데이터가 없으면 기본 메시지 반환 (랜덤하게 선택)
         if (warmWords.isEmpty()) {
+            String[] defaultWarmWords = {
+                "당신의 마음이 소중합니다 💙",
+                "오늘도 수고하셨어요! 🌸",
+                "당신은 충분히 잘하고 있어요! ✨",
+                "작은 걸음도 큰 진전이에요! 🚀",
+                "당신의 노력이 빛을 발할 거예요! ⭐",
+                "힘든 시간도 지나갈 거예요! 🌈",
+                "당신은 소중한 사람이에요! 💕",
+                "오늘 하루도 의미 있는 하루였어요! 🌺"
+            };
+            
             WarmWords defaultWords = WarmWords.builder()
-                .content("당신의 마음이 소중합니다 💙")
+                .content(defaultWarmWords[(int) (Math.random() * defaultWarmWords.length)])
                 .consultantRole(DEFAULT_CONSULTANT_ROLE)
                 .build();
             return defaultWords;

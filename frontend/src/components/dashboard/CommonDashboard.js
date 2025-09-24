@@ -527,6 +527,14 @@ const CommonDashboard = ({ user: propUser }) => {
             console.log('👤 sessionUser:', sessionUser);
             console.log('👤 sessionManager 사용자:', currentUser);
             
+            // 이미 지연된 세션 확인이 실행 중인지 확인
+            if (window.delayedSessionCheckExecuted) {
+              console.log('🔄 지연된 세션 확인 이미 실행됨, 스킵');
+              return;
+            }
+            
+            window.delayedSessionCheckExecuted = true;
+            
            setTimeout(async () => {
              try {
                console.log('🔄 지연된 세션 확인 시작...');
@@ -551,9 +559,9 @@ const CommonDashboard = ({ user: propUser }) => {
                    const userData = result.success ? result.user : result;
                    console.log('✅ 지연된 세션 확인 성공, 사용자 정보 로드:', userData);
                    
-                   // 세션 쿠키 강제 새로고침을 위해 페이지 리로드
-                   console.log('🔄 세션 쿠키 새로고침을 위해 페이지 리로드...');
-                   window.location.reload();
+                   // 사용자 정보 설정 (페이지 리로드 대신)
+                   setUser(userData);
+                   console.log('✅ 사용자 정보 설정 완료, 페이지 리로드 없이 계속 진행');
                    return;
                  }
                }

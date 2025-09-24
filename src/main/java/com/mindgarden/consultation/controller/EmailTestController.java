@@ -7,6 +7,7 @@ import com.mindgarden.consultation.dto.EmailRequest;
 import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.service.EmailService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * 이메일 테스트 컨트롤러
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequestMapping("/api/test/email")
+@ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class EmailTestController {
     
     @Autowired

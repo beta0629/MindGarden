@@ -17,14 +17,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * 테스트용 컨트롤러
  * 작성일: 2025-09-23
  * 설명: 지점별 계정 생성 및 테스트 기능
+ * 개발 환경에서만 동작
  */
 @RestController
 @RequestMapping("/api/test")
+@ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class TestController {
 
     @Autowired

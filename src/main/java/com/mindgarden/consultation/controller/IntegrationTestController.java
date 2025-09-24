@@ -27,10 +27,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * 통합 테스트 컨트롤러
  * 전체 시스템의 통합 동작을 검증하는 API 제공
+ * 개발 환경에서만 동작
  * 
  * @author MindGarden
  * @version 1.0.0
@@ -39,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/integration-test")
 @CrossOrigin(origins = "*")
+@ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class IntegrationTestController {
 
     @Autowired

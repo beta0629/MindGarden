@@ -6,9 +6,11 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * 간단한 테스트용 컨트롤러
+ * 개발 환경에서만 동작
  * 
  * @author MindGarden
  * @version 1.0.0
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/test")
+@ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class SimpleTestController {
     
     /**

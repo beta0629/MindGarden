@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * 알림 테스트 컨트롤러
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/test/notification")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class NotificationTestController {
     
     @Value("${kakao.alimtalk.simulation-mode:true}")

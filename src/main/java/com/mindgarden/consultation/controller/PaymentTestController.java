@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * 결제 테스트 컨트롤러
@@ -33,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequestMapping("/api/test/payment")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class PaymentTestController {
     
     private final PaymentService paymentService;

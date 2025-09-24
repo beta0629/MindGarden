@@ -10,10 +10,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * PL/SQL 실제 동작 테스트 컨트롤러
+ * 개발 환경에서만 동작
  * 
  * @author MindGarden
  * @version 1.0.0
@@ -22,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequestMapping("/api/test/plsql")
+@ConditionalOnProperty(name = "isDev", havingValue = "true")
 public class PlSqlTestController {
     
     @Autowired

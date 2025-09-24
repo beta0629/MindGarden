@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatPhoneNumber, isValidEmail, isValidPassword } from '../../utils/common';
 import { userAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import PrivacyConsentModal from '../common/PrivacyConsentModal';
 import '../../styles/auth/social-signup-modal.css';
 
 const SocialSignupModal = ({ 
@@ -27,6 +28,14 @@ const SocialSignupModal = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [branches, setBranches] = useState([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  
+  // 개인정보 동의 관련 상태
+  const [showPrivacyConsent, setShowPrivacyConsent] = useState(false);
+  const [privacyConsents, setPrivacyConsents] = useState({
+    privacy: false,
+    terms: false,
+    marketing: false
+  });
 
   // 지점 목록 로드
   const loadBranches = async () => {
@@ -189,9 +198,29 @@ const SocialSignupModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  // 개인정보 동의 처리
+  const handlePrivacyConsent = (consents) => {
+    setPrivacyConsents(consents);
+    setShowPrivacyConsent(false);
+    console.log('개인정보 동의 완료:', consents);
+  };
+
+  // 개인정보 동의 모달 열기
+  const openPrivacyConsent = () => {
+    setShowPrivacyConsent(true);
+  };
+
   // 회원가입 제출
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // 개인정보 동의 검증
+    if (!privacyConsents.privacy || !privacyConsents.terms) {
+      setErrors({ 
+        privacy: '개인정보 수집 및 이용 동의와 이용약관에 동의해주세요.' 
+      });
+      return;
+    }
     
     if (!validateForm()) {
       return;
@@ -212,7 +241,11 @@ const SocialSignupModal = ({
         password: formData.password,
         phone: formData.phone,
         providerProfileImage: socialUser.profileImageUrl,
-        branchCode: formData.branchCode
+        branchCode: formData.branchCode,
+        // 개인정보 동의 정보 추가
+        privacyConsent: privacyConsents.privacy,
+        termsConsent: privacyConsents.terms,
+        marketingConsent: privacyConsents.marketing
       };
       
       const response = await userAPI.socialSignup(signupData);
@@ -453,6 +486,64 @@ const SocialSignupModal = ({
               <small className="form-help">회원가입 후 해당 지점의 서비스를 이용할 수 있습니다</small>
             </div>
             
+            {/* 개인정보 수집 및 이용 동의 섹션 */}
+            <div className="form-group">
+              <div className="privacy-consent-section">
+                <h4 className="privacy-consent-title">
+                  <i className="bi bi-shield-check"></i>
+                  개인정보 수집 및 이용 동의
+                </h4>
+                
+                <div className="privacy-consent-summary">
+                  <div className="consent-item">
+                    <div className="consent-status">
+                      <i className={`bi bi-${privacyConsents.privacy ? 'check-circle-fill' : 'circle'}`} 
+                         style={{ color: privacyConsents.privacy ? '#28a745' : '#6c757d' }}></i>
+                      <span className={privacyConsents.privacy ? 'consent-agreed' : 'consent-pending'}>
+                        개인정보 처리방침 동의
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="consent-item">
+                    <div className="consent-status">
+                      <i className={`bi bi-${privacyConsents.terms ? 'check-circle-fill' : 'circle'}`} 
+                         style={{ color: privacyConsents.terms ? '#28a745' : '#6c757d' }}></i>
+                      <span className={privacyConsents.terms ? 'consent-agreed' : 'consent-pending'}>
+                        이용약관 동의
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="consent-item">
+                    <div className="consent-status">
+                      <i className={`bi bi-${privacyConsents.marketing ? 'check-circle-fill' : 'circle'}`} 
+                         style={{ color: privacyConsents.marketing ? '#28a745' : '#6c757d' }}></i>
+                      <span className={privacyConsents.marketing ? 'consent-agreed' : 'consent-pending'}>
+                        마케팅 정보 수신 동의 (선택)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <button
+                  type="button"
+                  className="btn btn-outline-primary privacy-consent-button"
+                  onClick={openPrivacyConsent}
+                >
+                  <i className="bi bi-file-text"></i>
+                  개인정보 수집 및 이용 동의하기
+                </button>
+                
+                {errors.privacy && (
+                  <div className="error-message privacy-error">
+                    <i className="bi bi-exclamation-triangle"></i>
+                    {errors.privacy}
+                  </div>
+                )}
+              </div>
+            </div>
+            
             {/* 전체 에러 메시지 */}
             {errors.submit && (
               <div className="error-summary">
@@ -478,6 +569,15 @@ const SocialSignupModal = ({
           </form>
         </div>
       </div>
+      
+      {/* 개인정보 수집 및 이용 동의 모달 */}
+      <PrivacyConsentModal
+        isOpen={showPrivacyConsent}
+        onClose={() => setShowPrivacyConsent(false)}
+        onConsent={handlePrivacyConsent}
+        title="개인정보 수집 및 이용 동의"
+        showMarketingConsent={true}
+      />
     </>
   );
 };

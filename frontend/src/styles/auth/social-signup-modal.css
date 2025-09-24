@@ -300,3 +300,96 @@
     width: 100%;
   }
 }
+
+/* 개인정보 동의 섹션 스타일 */
+.privacy-consent-section {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.privacy-consent-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #495057;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.privacy-consent-title i {
+  color: #007bff;
+  font-size: 18px;
+}
+
+.privacy-consent-summary {
+  margin-bottom: 16px;
+}
+
+.consent-item {
+  margin-bottom: 8px;
+}
+
+.consent-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.consent-status i {
+  font-size: 16px;
+}
+
+.consent-agreed {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.consent-pending {
+  color: #6c757d;
+}
+
+.privacy-consent-button {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #007bff;
+  background-color: #ffffff;
+  color: #007bff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.privacy-consent-button:hover {
+  background-color: #007bff;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.privacy-consent-button i {
+  font-size: 16px;
+}
+
+.privacy-error {
+  margin-top: 8px;
+  color: #dc3545;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.privacy-error i {
+  font-size: 14px;
+}

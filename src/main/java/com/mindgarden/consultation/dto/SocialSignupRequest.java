@@ -59,6 +59,21 @@ public class SocialSignupRequest {
     private boolean agreeMarketing;
     
     /**
+     * 개인정보 처리방침 동의 여부
+     */
+    private boolean privacyConsent;
+    
+    /**
+     * 이용약관 동의 여부 (새로운 필드명)
+     */
+    private boolean termsConsent;
+    
+    /**
+     * 마케팅 정보 수신 동의 여부 (새로운 필드명)
+     */
+    private boolean marketingConsent;
+    
+    /**
      * 소셜 계정 제공자 (KAKAO, NAVER 등)
      */
     private String provider;

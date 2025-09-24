@@ -93,6 +93,26 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             
             // 비밀번호 확인 검증은 프론트엔드에서 처리
             
+            // 개인정보 동의 검증
+            if (!request.isPrivacyConsent()) {
+                log.warn("개인정보 처리방침 동의 필요: email={}", request.getEmail());
+                return SocialSignupResponse.builder()
+                    .success(false)
+                    .message("개인정보 처리방침에 동의해주세요.")
+                    .build();
+            }
+            
+            if (!request.isTermsConsent()) {
+                log.warn("이용약관 동의 필요: email={}", request.getEmail());
+                return SocialSignupResponse.builder()
+                    .success(false)
+                    .message("이용약관에 동의해주세요.")
+                    .build();
+            }
+            
+            log.info("개인정보 동의 확인: privacy={}, terms={}, marketing={}", 
+                request.isPrivacyConsent(), request.isTermsConsent(), request.isMarketingConsent());
+            
             // 휴대폰번호 형식 검증
             String phone = request.getPhone();
             if (phone != null) {

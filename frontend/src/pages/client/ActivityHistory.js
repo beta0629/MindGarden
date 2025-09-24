@@ -9,117 +9,69 @@ const ActivityHistory = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, consultation, payment, system
   const [dateRange, setDateRange] = useState('all'); // all, week, month, year
+  const [statistics, setStatistics] = useState({});
 
   useEffect(() => {
     loadActivities();
+    loadStatistics();
   }, [filter, dateRange]);
 
   const loadActivities = async () => {
     try {
       setLoading(true);
-      // 실제 API 호출 (현재는 목업 데이터)
-      const mockActivities = generateMockActivities();
-      setActivities(mockActivities);
+      
+      // API 호출
+      const params = new URLSearchParams();
+      if (filter !== 'all') params.append('type', filter);
+      if (dateRange !== 'all') params.append('dateRange', dateRange);
+      
+      const response = await fetch(`${API_BASE_URL}/api/activities/history?${params}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setActivities(result.data || []);
+        } else {
+          console.error('활동 내역 로드 실패:', result.message);
+          setActivities([]);
+        }
+      } else {
+        console.error('활동 내역 API 호출 실패:', response.status);
+        setActivities([]);
+      }
     } catch (error) {
       console.error('활동 내역 로드 실패:', error);
+      setActivities([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const generateMockActivities = () => {
-    const baseActivities = [
-      {
-        id: 1,
-        type: 'consultation',
-        title: '김선희 상담사와의 상담 일정 등록',
-        description: '2025년 1월 15일 오후 2시 상담 예약이 완료되었습니다.',
-        date: '2025-01-10',
-        time: '14:30',
-        status: 'completed',
-        icon: 'bi-calendar-check',
-        color: '#28a745'
-      },
-      {
-        id: 2,
-        type: 'consultation',
-        title: '상담 일정 확정',
-        description: '김선희 상담사와의 상담이 확정되었습니다.',
-        date: '2025-01-10',
-        time: '09:15',
-        status: 'completed',
-        icon: 'bi-check-circle',
-        color: '#007bff'
-      },
-      {
-        id: 3,
-        type: 'payment',
-        title: '상담 패키지 결제 완료',
-        description: '5회 상담 패키지 (150,000원) 결제가 완료되었습니다.',
-        date: '2025-01-09',
-        time: '16:45',
-        status: 'completed',
-        icon: 'bi-credit-card',
-        color: '#6f42c1'
-      },
-      {
-        id: 4,
-        type: 'system',
-        title: '상담 리마인더 알림',
-        description: '내일 오후 2시 상담 일정이 있습니다.',
-        date: '2025-01-09',
-        time: '18:00',
-        status: 'info',
-        icon: 'bi-bell',
-        color: '#ffc107'
-      },
-      {
-        id: 5,
-        type: 'consultation',
-        title: '상담사 피드백 수신',
-        description: '김선희 상담사님으로부터 상담 후 피드백을 받았습니다.',
-        date: '2025-01-08',
-        time: '20:30',
-        status: 'completed',
-        icon: 'bi-chat-dots',
-        color: '#17a2b8'
-      },
-      {
-        id: 6,
-        type: 'system',
-        title: '프로필 정보 업데이트',
-        description: '연락처 정보가 성공적으로 변경되었습니다.',
-        date: '2025-01-07',
-        time: '11:20',
-        status: 'completed',
-        icon: 'bi-person-gear',
-        color: '#6c757d'
-      },
-      {
-        id: 7,
-        type: 'payment',
-        title: '환불 요청 접수',
-        description: '미사용 상담 회기에 대한 환불 요청이 접수되었습니다.',
-        date: '2025-01-06',
-        time: '14:15',
-        status: 'pending',
-        icon: 'bi-arrow-clockwise',
-        color: '#fd7e14'
-      },
-      {
-        id: 8,
-        type: 'consultation',
-        title: '상담 일정 변경',
-        description: '기존 상담 일정이 1월 20일 오후 3시로 변경되었습니다.',
-        date: '2025-01-05',
-        time: '10:30',
-        status: 'completed',
-        icon: 'bi-calendar-event',
-        color: '#20c997'
+  const loadStatistics = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/activities/statistics`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setStatistics(result.data || {});
+        }
       }
-    ];
-
-    return baseActivities;
+    } catch (error) {
+      console.error('통계 로드 실패:', error);
+    }
   };
 
   const getActivityTypeLabel = (type) => {

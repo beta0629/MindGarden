@@ -64,6 +64,7 @@ public class SecurityConfig {
                     "/oauth2/**",    // OAuth2 콜백
                     "/api/password-reset/**",  // 비밀번호 재설정
                     "/api/test-simple/**",  // 간단한 테스트 API
+                    "/api/test/**",  // 테스트 API
                     "/api/health/**",  // 헬스체크
                     "/api/admin/mappings/*/partial-refund",  // 부분 환불 API CSRF 제외
                     "/error"
@@ -108,6 +109,7 @@ public class SecurityConfig {
                     "/oauth2/**",
                     "/api/password-reset/**",  // 비밀번호 재설정 API
                     "/api/test-simple/**",  // 간단한 테스트 API
+                    "/api/test/**",  // 테스트 API
                     "/api/health/**",  // 시스템 헬스체크
                     "/error",
                     "/actuator/health",

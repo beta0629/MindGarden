@@ -174,6 +174,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                path.startsWith("/oauth2/") ||
                path.startsWith("/api/password-reset/") ||
                path.startsWith("/api/test-simple/") ||
+               path.startsWith("/api/test/") ||
                path.startsWith("/api/health/") ||
                path.equals("/error") ||
                path.startsWith("/actuator/");

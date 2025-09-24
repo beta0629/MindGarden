@@ -18,6 +18,7 @@ import com.mindgarden.consultation.repository.ConsultantRatingRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.ConsultantRatingService;
+import com.mindgarden.consultation.service.RealTimeStatisticsService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +44,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
     private final ScheduleRepository scheduleRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final RealTimeStatisticsService realTimeStatisticsService;
 
     @Override
     public ConsultantRating createRating(Long scheduleId, Long clientId, Integer heartScore, 
@@ -97,6 +99,19 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 .build();
 
             ConsultantRating savedRating = ratingRepository.save(rating);
+
+            // 🚀 실시간 통계 업데이트 추가
+            try {
+                realTimeStatisticsService.updateConsultantPerformance(
+                    consultant.getId(), 
+                    schedule.getDate()
+                );
+                
+                log.info("✅ 평점 등록시 실시간 통계 업데이트 완료: consultantId={}, scheduleDate={}", 
+                         consultant.getId(), schedule.getDate());
+            } catch (Exception e) {
+                log.error("❌ 평점 등록시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
+            }
 
             log.info("✅ 상담사 평가 등록 완료: ID={}, 상담사={}, 하트점수={}", 
                 savedRating.getId(), consultant.getName(), heartScore);

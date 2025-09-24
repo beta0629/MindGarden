@@ -14,6 +14,7 @@ import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.SessionExtensionRequestRepository;
 import com.mindgarden.consultation.service.EmailService;
+import com.mindgarden.consultation.service.RealTimeStatisticsService;
 import com.mindgarden.consultation.service.SessionExtensionService;
 import com.mindgarden.consultation.service.SessionSyncService;
 import com.mindgarden.consultation.service.UserService;
@@ -40,6 +41,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     private final UserService userService;
     private final SessionSyncService sessionSyncService;
     private final EmailService emailService;
+    private final RealTimeStatisticsService realTimeStatisticsService;
     
     @Override
     public SessionExtensionRequest createRequest(Long mappingId, Long requesterId, 
@@ -123,6 +125,29 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
             mapping.setPaymentDate(LocalDateTime.now());
             
             mappingRepository.save(mapping);
+            
+            // 🚀 실시간 통계 업데이트 추가
+            try {
+                realTimeStatisticsService.updateStatisticsOnMappingChange(
+                    mapping.getConsultant().getId(), 
+                    mapping.getClient().getId(), 
+                    mapping.getBranchCode()
+                );
+                
+                // 결제 완료시 재무 통계 업데이트
+                if (mapping.getPaymentAmount() != null) {
+                    realTimeStatisticsService.updateFinancialStatisticsOnPayment(
+                        mapping.getBranchCode(), 
+                        mapping.getPaymentAmount(), 
+                        LocalDateTime.now().toLocalDate()
+                    );
+                }
+                
+                log.info("✅ 세션 연장 승인시 실시간 통계 업데이트 완료: mappingId={}", mapping.getId());
+            } catch (Exception e) {
+                log.error("❌ 세션 연장 승인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
+            }
+            
             log.info("✅ 매핑 상태 자동 활성화 및 결제 정보 동기화: mappingId={}, paymentReference={}", 
                     mapping.getId(), finalPaymentReference);
         } catch (Exception e) {

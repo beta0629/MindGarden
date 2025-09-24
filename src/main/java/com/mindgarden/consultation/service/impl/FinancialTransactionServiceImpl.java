@@ -23,6 +23,7 @@ import com.mindgarden.consultation.repository.PurchaseRequestRepository;
 import com.mindgarden.consultation.repository.SalaryCalculationRepository;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
+import com.mindgarden.consultation.service.RealTimeStatisticsService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final PaymentRepository paymentRepository;
     private final CommonCodeService commonCodeService;
+    private final RealTimeStatisticsService realTimeStatisticsService;
     
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
@@ -86,6 +88,36 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 .build();
         
         FinancialTransaction savedTransaction = financialTransactionRepository.save(transaction);
+        
+        // 🚀 실시간 통계 업데이트 추가
+        try {
+            // 거래 유형에 따른 통계 업데이트
+            if ("INCOME".equals(request.getTransactionType()) && savedTransaction.getBranchCode() != null) {
+                // 수입 거래시 재무 통계 업데이트 (상담료 수입 등)
+                realTimeStatisticsService.updateFinancialStatisticsOnPayment(
+                    savedTransaction.getBranchCode(),
+                    savedTransaction.getAmount().longValue(),
+                    savedTransaction.getTransactionDate()
+                );
+            } else if ("EXPENSE".equals(request.getTransactionType()) && 
+                      ("CONSULTATION_REFUND".equals(savedTransaction.getSubcategory()) ||
+                       "CONSULTATION_PARTIAL_REFUND".equals(savedTransaction.getSubcategory()))) {
+                // 환불 거래시 환불 통계 업데이트
+                if (savedTransaction.getRelatedEntityId() != null && savedTransaction.getBranchCode() != null) {
+                    // 관련 상담사 ID를 추출하여 환불 통계 업데이트 (추후 매핑 테이블 조회 로직 추가 가능)
+                    realTimeStatisticsService.updateStatisticsOnRefund(
+                        null, // 상담사 ID (추후 매핑에서 조회)
+                        savedTransaction.getBranchCode(),
+                        savedTransaction.getAmount().longValue(),
+                        savedTransaction.getTransactionDate()
+                    );
+                }
+            }
+            
+            log.info("✅ 회계 거래 생성시 실시간 통계 업데이트 완료: transactionId={}", savedTransaction.getId());
+        } catch (Exception e) {
+            log.error("❌ 회계 거래 생성시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
+        }
         
         log.info("✅ 회계 거래 생성 완료: ID={}", savedTransaction.getId());
         return convertToResponse(savedTransaction);

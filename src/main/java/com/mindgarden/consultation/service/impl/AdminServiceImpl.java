@@ -40,6 +40,7 @@ import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.service.ConsultationMessageService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.NotificationService;
+import com.mindgarden.consultation.service.RealTimeStatisticsService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -67,6 +68,7 @@ public class AdminServiceImpl implements AdminService {
     private final BranchService branchService;
     private final NotificationService notificationService;
     private final FinancialTransactionService financialTransactionService;
+    private final RealTimeStatisticsService realTimeStatisticsService;
     private final FinancialTransactionRepository financialTransactionRepository;
     private final AmountManagementService amountManagementService;
 
@@ -666,6 +668,28 @@ public class AdminServiceImpl implements AdminService {
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         
+        // 🚀 실시간 통계 업데이트 추가
+        try {
+            realTimeStatisticsService.updateStatisticsOnMappingChange(
+                savedMapping.getConsultant().getId(), 
+                savedMapping.getClient().getId(), 
+                savedMapping.getBranchCode()
+            );
+            
+            // 결제 완료시 재무 통계 업데이트
+            if (savedMapping.getPaymentAmount() != null) {
+                realTimeStatisticsService.updateFinancialStatisticsOnPayment(
+                    savedMapping.getBranchCode(), 
+                    savedMapping.getPaymentAmount(), 
+                    LocalDate.now()
+                );
+            }
+            
+            log.info("✅ 입금 확인시 실시간 통계 업데이트 완료: mappingId={}", mappingId);
+        } catch (Exception e) {
+            log.error("❌ 입금 확인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
+        }
+        
         // 입금 확인 시 자동으로 ERP 수입 거래 생성
         try {
             createConsultationIncomeTransaction(savedMapping);
@@ -688,7 +712,22 @@ public class AdminServiceImpl implements AdminService {
         
         mapping.approveByAdmin(adminName);
         
-        return mappingRepository.save(mapping);
+        ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
+        
+        // 🚀 실시간 통계 업데이트 추가
+        try {
+            realTimeStatisticsService.updateStatisticsOnMappingChange(
+                savedMapping.getConsultant().getId(), 
+                savedMapping.getClient().getId(), 
+                savedMapping.getBranchCode()
+            );
+            
+            log.info("✅ 관리자 승인시 실시간 통계 업데이트 완료: mappingId={}", mappingId);
+        } catch (Exception e) {
+            log.error("❌ 관리자 승인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
+        }
+        
+        return savedMapping;
     }
 
     /**

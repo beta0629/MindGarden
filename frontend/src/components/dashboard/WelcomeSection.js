@@ -202,37 +202,47 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                 }
               </p>
               {todayConsultations.length > 0 && (
-                <div className="consultation-details">
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                  gap: '16px',
+                  marginTop: '16px'
+                }}>
                   {todayConsultations.slice(0, 3).map((consultation, index) => (
-                    <div key={index} className="consultation-item" style={{
+                    <div key={index} style={{
                       background: '#f8f9fa',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      marginBottom: '8px',
-                      border: '1px solid #e9ecef'
+                      borderRadius: '12px',
+                      padding: '16px',
+                      border: '1px solid #e9ecef',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                     }}>
-                      <div className="consultation-time" style={{
+                      <div style={{
                         fontSize: '14px',
                         fontWeight: '600',
                         color: '#495057',
-                        marginBottom: '4px'
+                        marginBottom: '8px',
+                        lineHeight: '1.4'
                       }}>
                         {new Date(consultation.date).toLocaleDateString('ko-KR')} {consultation.startTime} - {consultation.endTime}
                       </div>
-                      <div className="consultation-consultant" style={{
+                      <div style={{
                         fontSize: '13px',
                         color: '#6c757d',
-                        marginBottom: '4px'
+                        marginBottom: '8px',
+                        fontWeight: '500'
                       }}>
                         {consultation.consultantName} 상담사
                       </div>
-                      <div className="consultation-status" style={{
+                      <div style={{
                         fontSize: '12px',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
+                        padding: '4px 12px',
+                        borderRadius: '16px',
                         display: 'inline-block',
                         background: consultation.status === 'CONFIRMED' ? '#d4edda' : '#fff3cd',
-                        color: consultation.status === 'CONFIRMED' ? '#155724' : '#856404'
+                        color: consultation.status === 'CONFIRMED' ? '#155724' : '#856404',
+                        fontWeight: '600',
+                        border: consultation.status === 'CONFIRMED' ? '1px solid #c3e6cb' : '1px solid #ffeaa7'
                       }}>
                         {consultation.status === 'CONFIRMED' ? '확정' : consultation.status === 'BOOKED' ? '예약' : consultation.status}
                       </div>

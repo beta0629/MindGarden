@@ -304,6 +304,9 @@ public class OAuth2Controller {
                     // SpringSecurity 인증 컨텍스트에도 사용자 정보 설정
                     setSpringSecurityAuthentication(user);
                     
+                    // 세션에 SecurityContext 저장 (명시적으로)
+                    session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+                    
                     // 세션 무효화 시간 설정 (1시간)
                     session.setMaxInactiveInterval(3600);
                     
@@ -508,6 +511,9 @@ public class OAuth2Controller {
                     
                     // SpringSecurity 인증 컨텍스트에도 사용자 정보 설정
                     setSpringSecurityAuthentication(user);
+                    
+                    // 세션에 SecurityContext 저장 (명시적으로)
+                    session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
                     
                     // 세션 무효화 시간 설정 (1시간)
                     session.setMaxInactiveInterval(3600);

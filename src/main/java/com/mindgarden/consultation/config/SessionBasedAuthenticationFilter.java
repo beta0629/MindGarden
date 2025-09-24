@@ -57,6 +57,9 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     Authentication authentication = createAuthentication(user);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     
+                    // 세션에 SecurityContext 저장 (명시적으로)
+                    session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+                    
                     log.info("✅ 세션 기반 인증 성공: 사용자={}, 역할={}", user.getEmail(), user.getRole());
                     
                     // SecurityContext 확인
@@ -67,6 +70,9 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     log.warn("⚠️ 세션에 사용자 정보 없음 - SecurityContext 초기화");
                     // 세션에 사용자 정보가 없으면 SecurityContext 초기화
                     SecurityContextHolder.clearContext();
+                    if (session != null) {
+                        session.removeAttribute("SPRING_SECURITY_CONTEXT");
+                    }
                 }
             } else {
                 log.warn("⚠️ 세션이 없음 - SecurityContext 초기화");

@@ -231,7 +231,6 @@ public class TestController {
                         .role(UserRole.BRANCH_SUPER_ADMIN)
                         .grade("SUPER_ADMIN")
                         .branchCode(branchCode)
-                        .branchId(null)
                         .phone(phone)
                         .address(address)
                         .isActive(true)

@@ -38,7 +38,6 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         
         String requestPath = request.getRequestURI();
         log.info("🔍 SessionBasedAuthenticationFilter 실행: {}", requestPath);
-        log.info("🔍 필터 체인 실행 시작");
         
         try {
             // 세션에서 사용자 정보 조회
@@ -50,6 +49,10 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 log.info("🔍 세션에서 사용자 조회: {}", user != null ? user.getEmail() : "null");
                 
                 if (user != null) {
+                    // 기존 인증 정보 확인
+                    Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
+                    log.info("🔍 기존 인증 정보: {}", existingAuth != null ? existingAuth.getName() : "null");
+                    
                     // Spring Security 컨텍스트에 인증 정보 설정
                     Authentication authentication = createAuthentication(user);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -61,14 +64,20 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     log.info("🔍 SecurityContext 인증 상태: {}", currentAuth != null && currentAuth.isAuthenticated() ? "인증됨" : "미인증");
                     log.info("🔍 SecurityContext 권한: {}", currentAuth != null ? currentAuth.getAuthorities() : "null");
                 } else {
-                    log.warn("⚠️ 세션에 사용자 정보 없음");
+                    log.warn("⚠️ 세션에 사용자 정보 없음 - SecurityContext 초기화");
+                    // 세션에 사용자 정보가 없으면 SecurityContext 초기화
+                    SecurityContextHolder.clearContext();
                 }
             } else {
-                log.warn("⚠️ 세션이 없음");
+                log.warn("⚠️ 세션이 없음 - SecurityContext 초기화");
+                // 세션이 없으면 SecurityContext 초기화
+                SecurityContextHolder.clearContext();
             }
             
         } catch (Exception e) {
             log.error("❌ 세션 기반 인증 필터 오류: {}", e.getMessage(), e);
+            // 오류 발생 시 SecurityContext 초기화
+            SecurityContextHolder.clearContext();
         }
         
         // 다음 필터로 진행

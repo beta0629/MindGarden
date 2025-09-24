@@ -305,6 +305,9 @@ public class OAuth2Controller {
                     // SpringSecurity 인증 컨텍스트에도 사용자 정보 설정
                     setSpringSecurityAuthentication(user);
                     
+                    // 세션 무효화 시간 설정 (1시간)
+                    session.setMaxInactiveInterval(3600);
+                    
                     log.info("네이버 OAuth2 로그인 성공: userId={}, role={}, profileImage={}", 
                             user.getId(), user.getRole(), user.getProfileImageUrl());
                     
@@ -313,6 +316,10 @@ public class OAuth2Controller {
                             session.getId(), 
                             SessionUtils.getCurrentUser(session) != null ? "설정됨" : "없음",
                             session.getMaxInactiveInterval());
+                    
+                    // SecurityContext 확인
+                    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                    log.info("SecurityContext 설정 확인: {}", auth != null && auth.isAuthenticated() ? "성공" : "실패");
                     
                     // 사용자 역할에 따른 리다이렉트 (공통 유틸리티 사용)
                     String frontendUrl = getFrontendBaseUrl(request);
@@ -503,6 +510,9 @@ public class OAuth2Controller {
                     // SpringSecurity 인증 컨텍스트에도 사용자 정보 설정
                     setSpringSecurityAuthentication(user);
                     
+                    // 세션 무효화 시간 설정 (1시간)
+                    session.setMaxInactiveInterval(3600);
+                    
                     log.info("카카오 OAuth2 로그인 성공: userId={}, role={}, profileImage={}", 
                             user.getId(), user.getRole(), user.getProfileImageUrl());
                     
@@ -511,6 +521,10 @@ public class OAuth2Controller {
                             session.getId(), 
                             SessionUtils.getCurrentUser(session) != null ? "설정됨" : "없음",
                             session.getMaxInactiveInterval());
+                    
+                    // SecurityContext 확인
+                    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                    log.info("SecurityContext 설정 확인: {}", auth != null && auth.isAuthenticated() ? "성공" : "실패");
                     
                     // 사용자 역할에 따른 리다이렉트 (공통 유틸리티 사용)
                     String frontendUrl = getFrontendBaseUrl(request);

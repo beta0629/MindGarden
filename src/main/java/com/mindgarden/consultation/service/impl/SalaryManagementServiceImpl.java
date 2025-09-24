@@ -12,6 +12,7 @@ import com.mindgarden.consultation.entity.SalaryCalculation;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.ConsultantSalaryProfileRepository;
 import com.mindgarden.consultation.repository.SalaryCalculationRepository;
+import com.mindgarden.consultation.repository.SalaryTaxCalculationRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.SalaryManagementService;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     
     private final ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
     private final SalaryCalculationRepository salaryCalculationRepository;
+    private final SalaryTaxCalculationRepository salaryTaxCalculationRepository;
     private final UserRepository userRepository;
     
     @Override

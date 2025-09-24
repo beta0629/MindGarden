@@ -50,6 +50,11 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByConsultantIdAndDateAfter(Long consultantId, LocalDate date);
     
     /**
+     * 날짜별 지점 스케줄 조회
+     */
+    List<Schedule> findByDateAndBranchCode(LocalDate date, String branchCode);
+    
+    /**
      * 상담사별 특정 날짜 이후 스케줄 조회 (해당 날짜 포함)
      */
     List<Schedule> findByConsultantIdAndDateGreaterThanEqual(Long consultantId, LocalDate date);

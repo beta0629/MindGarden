@@ -215,4 +215,36 @@ public class CommonCodeServiceImpl implements CommonCodeService {
             return codeValue; // 오류 시 원본 값 반환
         }
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public String getCodeValue(String codeGroup, String codeValue) {
+        log.debug("코드값 조회: 그룹={}, 값={}", codeGroup, codeValue);
+        
+        try {
+            return commonCodeRepository.findByCodeGroupAndCodeValueAndIsActiveTrue(codeGroup, codeValue)
+                    .map(CommonCode::getCodeDescription) // description에 실제 설정값 저장
+                    .orElse(null);
+            
+        } catch (Exception e) {
+            log.error("코드값 조회 실패: 그룹={}, 값={}, 오류={}", codeGroup, codeValue, e.getMessage());
+            return null;
+        }
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public String getCodeKoreanName(String codeGroup, String codeValue) {
+        log.debug("한글명 조회: 그룹={}, 값={}", codeGroup, codeValue);
+        
+        try {
+            return commonCodeRepository.findByCodeGroupAndCodeValueAndIsActiveTrue(codeGroup, codeValue)
+                    .map(CommonCode::getKoreanName)
+                    .orElse(codeValue);
+            
+        } catch (Exception e) {
+            log.error("한글명 조회 실패: 그룹={}, 값={}, 오류={}", codeGroup, codeValue, e.getMessage());
+            return codeValue;
+        }
+    }
 }

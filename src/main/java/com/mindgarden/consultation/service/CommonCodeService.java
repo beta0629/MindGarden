@@ -55,4 +55,10 @@ public interface CommonCodeService {
     
     // 코드 그룹과 값으로 코드명 조회
     String getCodeName(String codeGroup, String codeValue);
+    
+    // 코드 그룹과 값으로 코드 값 조회 (통계 설정용)
+    String getCodeValue(String codeGroup, String codeValue);
+    
+    // 코드 그룹과 값으로 한글명 조회
+    String getCodeKoreanName(String codeGroup, String codeValue);
 }

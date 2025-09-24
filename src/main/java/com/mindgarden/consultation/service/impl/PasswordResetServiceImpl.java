@@ -73,7 +73,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             PasswordResetToken resetToken = PasswordResetToken.builder()
                 .token(token)
                 .email(email)
-                .user(user)
+                .userId(user.getId())
                 .expiresAt(expiresAt)
                 .used(false)
                 .build();

@@ -389,7 +389,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
                             <h3>상담사</h3>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{stats.totalConsultants}명</div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>등록된 상담사</div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>현재 활성화된 상담사</div>
                         </div>
                     </div>
                     
@@ -400,7 +400,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
                             <h3>내담자</h3>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{stats.totalClients}명</div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>등록된 내담자</div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>현재 활성화된 내담자</div>
                         </div>
                     </div>
                     

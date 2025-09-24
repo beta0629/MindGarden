@@ -1,13 +1,12 @@
 package com.mindgarden.consultation.repository;
 
+import java.util.List;
+import java.util.Optional;
 import com.mindgarden.consultation.entity.UserPrivacyConsent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * 사용자 개인정보 동의 Repository
@@ -28,7 +27,7 @@ public interface UserPrivacyConsentRepository extends JpaRepository<UserPrivacyC
     /**
      * 사용자 ID로 최신 동의 정보 조회 (단일)
      */
-    @Query("SELECT upc FROM UserPrivacyConsent upc WHERE upc.userId = :userId ORDER BY upc.consentDate DESC")
+    @Query("SELECT upc FROM UserPrivacyConsent upc WHERE upc.userId = :userId ORDER BY upc.consentDate DESC LIMIT 1")
     Optional<UserPrivacyConsent> findLatestByUserId(@Param("userId") Long userId);
     
     /**

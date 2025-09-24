@@ -13,6 +13,7 @@ import com.mindgarden.consultation.dto.ConsultantTransferRequest;
 import com.mindgarden.consultation.entity.Client;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.ConsultantRatingService;
 import com.mindgarden.consultation.service.ConsultationRecordService;
@@ -52,6 +53,7 @@ public class AdminController {
     private final FinancialTransactionService financialTransactionService;
     private final ErpService erpService;
     private final ConsultantRatingService consultantRatingService;
+    private final UserSocialAccountRepository userSocialAccountRepository;
 
     /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
@@ -139,10 +141,29 @@ public class AdminController {
      * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
      */
     @GetMapping("/consultants/with-vacation")
-    public ResponseEntity<?> getAllConsultantsWithVacationInfo(@RequestParam String date) {
+    public ResponseEntity<?> getAllConsultantsWithVacationInfo(@RequestParam String date, HttpSession session) {
         try {
             log.info("🔍 휴무 정보를 포함한 상담사 목록 조회: date={}", date);
-            List<Map<String, Object>> consultantsWithVacation = adminService.getAllConsultantsWithVacationInfo(date);
+            
+            // 현재 로그인한 사용자의 지점코드 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+            log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+            
+            List<Map<String, Object>> allConsultantsWithVacation = adminService.getAllConsultantsWithVacationInfo(date);
+            
+            // 지점코드로 필터링
+            List<Map<String, Object>> consultantsWithVacation = allConsultantsWithVacation.stream()
+                .filter(consultant -> {
+                    if (currentBranchCode == null || currentBranchCode.trim().isEmpty()) {
+                        return true; // 지점코드가 없으면 모든 상담사 조회
+                    }
+                    String consultantBranchCode = (String) consultant.get("branchCode");
+                    return currentBranchCode.equals(consultantBranchCode);
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            log.info("🔍 휴무 정보를 포함한 상담사 목록 조회 완료 - 전체: {}, 필터링 후: {}", allConsultantsWithVacation.size(), consultantsWithVacation.size());
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -162,10 +183,29 @@ public class AdminController {
      * 상담사별 휴가 통계 조회
      */
     @GetMapping("/vacation-statistics")
-    public ResponseEntity<?> getConsultantVacationStats(@RequestParam(defaultValue = "month") String period) {
+    public ResponseEntity<?> getConsultantVacationStats(@RequestParam(defaultValue = "month") String period, HttpSession session) {
         try {
             log.info("📊 상담사별 휴가 통계 조회: period={}", period);
-            Map<String, Object> vacationStats = adminService.getConsultantVacationStats(period);
+            
+            // 현재 사용자 정보 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                log.error("❌ 로그인된 사용자 정보가 없습니다");
+                return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            }
+            
+            log.info("👤 현재 사용자: {} (역할: {}, 지점코드: {})", 
+                    currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
+            
+            // 지점 관리자인 경우 자신의 지점 상담사만 조회
+            Map<String, Object> vacationStats;
+            if (currentUser.getRole().isBranchAdmin()) {
+                log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회");
+                vacationStats = adminService.getConsultantVacationStatsByBranch(period, currentUser.getBranchCode());
+            } else {
+                log.info("🏢 본사 관리자 - 모든 상담사 조회");
+                vacationStats = adminService.getConsultantVacationStats(period);
+            }
             
             return ResponseEntity.ok(vacationStats);
         } catch (Exception e) {
@@ -1411,10 +1451,16 @@ public class AdminController {
      * 환불 통계 조회
      */
     @GetMapping("/refund-statistics")
-    public ResponseEntity<?> getRefundStatistics(@RequestParam(defaultValue = "month") String period) {
+    public ResponseEntity<?> getRefundStatistics(@RequestParam(defaultValue = "month") String period, HttpSession session) {
         try {
             log.info("📊 환불 통계 조회: period={}", period);
-            Map<String, Object> statistics = adminService.getRefundStatistics(period);
+            
+            // 현재 로그인한 사용자의 지점코드 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+            log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+            
+            Map<String, Object> statistics = adminService.getRefundStatistics(period, currentBranchCode);
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -1437,10 +1483,17 @@ public class AdminController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String period,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            HttpSession session) {
         try {
             log.info("📋 환불 이력 조회: page={}, size={}, period={}, status={}", page, size, period, status);
-            Map<String, Object> result = adminService.getRefundHistory(page, size, period, status);
+            
+            // 현재 사용자 정보 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+            log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
+            
+            Map<String, Object> result = adminService.getRefundHistory(page, size, period, status, currentBranchCode);
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -1705,11 +1758,29 @@ public class AdminController {
      */
     @GetMapping("/statistics/consultation-completion")
     public ResponseEntity<?> getConsultationCompletionStatistics(
-            @RequestParam(required = false) String period) {
+            @RequestParam(required = false) String period, HttpSession session) {
         try {
             log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
             
-            List<Map<String, Object>> statistics = adminService.getConsultationCompletionStatistics(period);
+            // 현재 사용자 정보 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                log.error("❌ 로그인된 사용자 정보가 없습니다");
+                return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+            }
+            
+            log.info("👤 현재 사용자: {} (역할: {}, 지점코드: {})", 
+                    currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
+            
+            // 지점 관리자인 경우 자신의 지점 상담사만 조회
+            List<Map<String, Object>> statistics;
+            if (currentUser.getRole().isBranchAdmin()) {
+                log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회");
+                statistics = adminService.getConsultationCompletionStatisticsByBranch(period, currentUser.getBranchCode());
+            } else {
+                log.info("🏢 본사 관리자 - 모든 상담사 조회");
+                statistics = adminService.getConsultationCompletionStatistics(period);
+            }
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -1852,8 +1923,8 @@ public class AdminController {
         try {
             log.info("📊 스케줄 상태별 통계 조회 요청 - 사용자 역할: {}", userRole);
             
-            // 세션에서 사용자 정보 확인
-            User currentUser = (User) session.getAttribute("user");
+            // 현재 사용자 정보 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 log.warn("❌ 인증되지 않은 사용자");
                 return ResponseEntity.status(401).body(Map.of(
@@ -1862,23 +1933,18 @@ public class AdminController {
                 ));
             }
             
-            // 권한 확인
-            UserRole role = currentUser.getRole();
-            if (role != UserRole.ADMIN && role != UserRole.HQ_MASTER && 
-                role != UserRole.SUPER_HQ_ADMIN && role != UserRole.HQ_ADMIN && 
-                role != UserRole.HQ_SUPER_ADMIN) {
-                log.warn("❌ 권한 없음: 현재 역할={}", role);
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "접근 권한이 없습니다."
-                ));
+            log.info("👤 현재 사용자: {} (역할: {}, 지점코드: {})", 
+                    currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
+            
+            // 지점 관리자인 경우 자신의 지점 스케줄만 조회
+            Map<String, Object> statistics;
+            if (currentUser.getRole().isBranchAdmin()) {
+                log.info("🏢 지점 관리자 - 자신의 지점 스케줄만 조회");
+                statistics = adminService.getScheduleStatisticsByBranch(currentUser.getBranchCode());
+            } else {
+                log.info("🏢 본사 관리자 - 모든 스케줄 조회");
+                statistics = adminService.getScheduleStatistics();
             }
-            
-            log.info("✅ 권한 확인 완료: 현재 역할={}", role);
-            
-            log.info("🔍 AdminService.getScheduleStatistics() 호출 시작");
-            Map<String, Object> statistics = adminService.getScheduleStatistics();
-            log.info("🔍 AdminService.getScheduleStatistics() 호출 완료: {}", statistics != null ? statistics.size() : "null");
             
             if (statistics != null) {
                 log.info("✅ 스케줄 통계 조회 완료 - 총 스케줄: {}", statistics.get("totalSchedules"));
@@ -1890,13 +1956,10 @@ public class AdminController {
                 ));
             }
             
-            Map<String, Object> response = Map.of(
+            return ResponseEntity.ok(Map.of(
                 "success", true,
                 "data", statistics
-            );
-            log.info("📤 최종 응답 데이터: {}", response);
-            
-            return ResponseEntity.ok(response);
+            ));
             
         } catch (Exception e) {
             log.error("❌ 스케줄 통계 조회 실패", e);
@@ -2080,18 +2143,13 @@ public class AdminController {
                 return ResponseEntity.status(403).body(Map.of("success", false, "message", "권한이 없습니다."));
             }
             
-            // 임시로 빈 데이터 반환 (실제 구현 필요)
-            Map<String, Object> socialAccounts = new HashMap<>();
-            socialAccounts.put("kakao", Map.of("connected", false));
-            socialAccounts.put("naver", Map.of("connected", false));
-            socialAccounts.put("google", Map.of("connected", false));
+            // 사용자의 소셜 계정 목록 조회
+            var socialAccounts = userSocialAccountRepository.findByUserIdAndIsDeletedFalse(id);
             
-            log.info("✅ 사용자 소셜 계정 정보 조회 완료: ID={}", id);
+            log.info("✅ 사용자 소셜 계정 정보 조회 완료: ID={}, count={}", id, socialAccounts.size());
             
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", socialAccounts
-            ));
+            return ResponseEntity.ok(socialAccounts);
+            
         } catch (Exception e) {
             log.error("❌ 사용자 소셜 계정 정보 조회 중 오류 발생: {}", e.getMessage(), e);
             return ResponseEntity.status(500).body(Map.of("success", false, "message", "소셜 계정 정보 조회 중 오류가 발생했습니다."));
@@ -2712,7 +2770,7 @@ public class AdminController {
         try {
             log.info("💖 관리자 평가 통계 조회 요청");
             
-            // 권한 확인
+            // 현재 사용자 정보 확인
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 return ResponseEntity.status(401).body(Map.of(
@@ -2721,16 +2779,18 @@ public class AdminController {
                 ));
             }
             
-            // 관리자 권한 확인
-            if (!currentUser.getRole().isAdmin() && !currentUser.getRole().isMaster()) {
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "관리자 권한이 필요합니다."
-                ));
-            }
+            log.info("👤 현재 사용자: {} (역할: {}, 지점코드: {})", 
+                    currentUser.getUsername(), currentUser.getRole(), currentUser.getBranchCode());
             
-            // 평가 통계 조회
-            Map<String, Object> statistics = consultantRatingService.getAdminRatingStatistics();
+            // 지점 관리자인 경우 자신의 지점 상담사만 조회
+            Map<String, Object> statistics;
+            if (currentUser.getRole().isBranchAdmin()) {
+                log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회");
+                statistics = consultantRatingService.getAdminRatingStatisticsByBranch(currentUser.getBranchCode());
+            } else {
+                log.info("🏢 본사 관리자 - 모든 상담사 조회");
+                statistics = consultantRatingService.getAdminRatingStatistics();
+            }
             
             return ResponseEntity.ok(Map.of(
                 "success", true,

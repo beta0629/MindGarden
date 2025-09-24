@@ -60,53 +60,7 @@
   /* 파스텔 톤 단색 */
   --gradient-primary: var(--color-primary);
   
-  /* Toast 알림 시스템 */
-  --toast-container-top: 20px;
-  --toast-container-right: 20px;
-  --toast-z-index: 9999;
-  --toast-gap: 10px;
-  --toast-container-max-width: 400px;
-  --toast-bg: #fff;
-  --toast-border-radius: 8px;
-  --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --toast-animation-duration: 0.3s;
-  --toast-border-left-width: 4px;
-  --toast-min-width: 300px;
-  --toast-max-width: 400px;
-  --toast-hover-scale: 1.02;
-  --toast-hover-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-  --toast-success-color: #28a745;
-  --toast-error-color: #dc3545;
-  --toast-warning-color: #ffc107;
-  --toast-info-color: #17a2b8;
-  --toast-content-padding: 16px;
-  --toast-content-gap: 12px;
-  --toast-icon-size: 20px;
-  --toast-message-font-size: 14px;
-  --toast-message-line-height: 1.4;
-  --toast-message-color: #333;
-  --toast-message-font-weight: 500;
-  --toast-close-bg: none;
-  --toast-close-border: none;
-  --toast-close-font-size: 18px;
-  --toast-close-color: #999;
-  --toast-close-padding: 0;
-  --toast-close-size: 20px;
-  --toast-close-border-radius: 50%;
-  --toast-close-transition: all 0.2s ease;
-  --toast-close-hover-bg: #f5f5f5;
-  --toast-close-hover-color: #666;
-  --toast-progress-height: 3px;
-  --toast-progress-bg: rgba(0, 0, 0, 0.1);
-  --toast-progress-bar-bg: linear-gradient(90deg, #007bff, #0056b3);
-  --toast-success-progress-bg: linear-gradient(90deg, #28a745, #1e7e34);
-  --toast-error-progress-bg: linear-gradient(90deg, #dc3545, #c82333);
-  --toast-warning-progress-bg: linear-gradient(90deg, #ffc107, #e0a800);
-  --toast-info-progress-bg: linear-gradient(90deg, #17a2b8, #138496);
-  --toast-mobile-top: 10px;
-  --toast-mobile-right: 10px;
-  --toast-mobile-left: 10px;
-  --toast-mobile-max-width: none;
+  /* Toast 알림 시스템 - 중복 제거됨, 아래 통일된 변수 사용 */
   --toast-mobile-min-width: auto;
   --toast-mobile-content-padding: 12px;
   --toast-mobile-content-gap: 8px;
@@ -184,11 +138,11 @@
   --toast-hover-scale: 1.02;
   --toast-hover-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   
-  /* Toast 타입별 색상 */
-  --toast-success-color: #28a745;
-  --toast-error-color: #dc3545;
-  --toast-warning-color: #ffc107;
-  --toast-info-color: #17a2b8;
+  /* Toast 타입별 색상 (통일된 색상 체계) */
+  --toast-success-color: #10B981;  /* 녹색 - 성공/시스템 */
+  --toast-error-color: #EF4444;    /* 빨강 - 오류 */
+  --toast-warning-color: #F59E0B;  /* 주황 - 경고 */
+  --toast-info-color: #3B82F6;     /* 파랑 - 안내 */
   
   /* Toast 콘텐츠 */
   --toast-content-padding: 16px;
@@ -196,7 +150,7 @@
   --toast-icon-size: 20px;
   --toast-message-font-size: 14px;
   --toast-message-line-height: 1.4;
-  --toast-message-color: #333333;
+  --toast-message-color: #6B7280;  /* 회색 글자색상으로 통일 */
   --toast-message-font-weight: 500;
   
   /* Toast 닫기 버튼 */
@@ -219,6 +173,7 @@
   --toast-error-progress-bg: linear-gradient(90deg, #dc3545, #c82333);
   --toast-warning-progress-bg: linear-gradient(90deg, #ffc107, #e0a800);
   --toast-info-progress-bg: linear-gradient(90deg, #17a2b8, #138496);
+  --toast-system-progress-bg: linear-gradient(90deg, #10B981, #059669);  /* 시스템은 녹색 사용 */
   
   /* Toast 모바일 반응형 */
   --toast-mobile-top: 10px;

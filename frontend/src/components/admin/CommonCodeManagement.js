@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
-import { notification } from '../../utils/scripts';
+import notificationManager from '../../utils/notification';
 import { 
     loadCodeGroupMetadata, 
     getCodeGroupKoreanName, 
@@ -90,11 +90,11 @@ const CommonCodeManagement = () => {
             if (response.success && response.data) {
                 setCodeGroups(response.data);
             } else {
-                notification.error('코드그룹 목록을 불러오는데 실패했습니다.');
+                notificationManager.error('코드그룹 목록을 불러오는데 실패했습니다.');
             }
         } catch (error) {
             console.error('코드그룹 로드 오류:', error);
-            notification.error('코드그룹 목록을 불러오는데 실패했습니다.');
+            notificationManager.error('코드그룹 목록을 불러오는데 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -108,11 +108,11 @@ const CommonCodeManagement = () => {
             if (response.success && response.data) {
                 setGroupCodes(response.data);
             } else {
-                notification.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
+                notificationManager.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
             }
         } catch (error) {
             console.error('그룹 코드 로드 오류:', error);
-            notification.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
+            notificationManager.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
         } finally {
             setLoading(false);
         }
@@ -308,7 +308,7 @@ const CommonCodeManagement = () => {
         e.preventDefault();
         
         if (!newCodeData.codeValue.trim() || !newCodeData.codeLabel.trim()) {
-            notification.error('코드 값과 라벨은 필수입니다.');
+            notificationManager.error('코드 값과 라벨은 필수입니다.');
             return;
         }
 
@@ -320,7 +320,7 @@ const CommonCodeManagement = () => {
             });
 
             if (response.success) {
-                notification.success('새 코드가 추가되었습니다!');
+                notificationManager.success('새 코드가 추가되었습니다!');
                 setShowAddForm(false);
                 setNewCodeData({
                     codeGroup: '',
@@ -338,11 +338,11 @@ const CommonCodeManagement = () => {
                 });
                 loadGroupCodes(selectedGroup);
             } else {
-                notification.error(response.message || '코드 추가에 실패했습니다.');
+                notificationManager.error(response.message || '코드 추가에 실패했습니다.');
             }
         } catch (error) {
             console.error('코드 추가 오류:', error);
-            notification.error('코드 추가에 실패했습니다.');
+            notificationManager.error('코드 추가에 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -359,14 +359,14 @@ const CommonCodeManagement = () => {
             const response = await apiDelete(`/api/admin/common-codes/${codeId}`);
             
             if (response.success) {
-                notification.success('코드가 삭제되었습니다!');
+                notificationManager.success('코드가 삭제되었습니다!');
                 loadGroupCodes(selectedGroup);
             } else {
-                notification.error(response.message || '코드 삭제에 실패했습니다.');
+                notificationManager.error(response.message || '코드 삭제에 실패했습니다.');
             }
         } catch (error) {
             console.error('코드 삭제 오류:', error);
-            notification.error('코드 삭제에 실패했습니다.');
+            notificationManager.error('코드 삭제에 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -379,14 +379,14 @@ const CommonCodeManagement = () => {
             const response = await apiPost(`/api/admin/common-codes/${codeId}/toggle-status`);
             
             if (response.success) {
-                notification.success('코드 상태가 변경되었습니다!');
+                notificationManager.success('코드 상태가 변경되었습니다!');
                 loadGroupCodes(selectedGroup);
             } else {
-                notification.error(response.message || '코드 상태 변경에 실패했습니다.');
+                notificationManager.error(response.message || '코드 상태 변경에 실패했습니다.');
             }
         } catch (error) {
             console.error('코드 상태 토글 오류:', error);
-            notification.error('코드 상태 변경에 실패했습니다.');
+            notificationManager.error('코드 상태 변경에 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -417,7 +417,7 @@ const CommonCodeManagement = () => {
         e.preventDefault();
         
         if (!newCodeData.codeValue.trim() || !newCodeData.codeLabel.trim()) {
-            notification.error('코드 값과 라벨은 필수입니다.');
+            notificationManager.error('코드 값과 라벨은 필수입니다.');
             return;
         }
 
@@ -426,7 +426,7 @@ const CommonCodeManagement = () => {
             const response = await apiPut(`/api/admin/common-codes/${editingCode.id}`, newCodeData);
 
             if (response.success) {
-                notification.success('코드가 수정되었습니다!');
+                notificationManager.success('코드가 수정되었습니다!');
                 setShowAddForm(false);
                 setEditingCode(null);
                 setNewCodeData({
@@ -445,11 +445,11 @@ const CommonCodeManagement = () => {
                 });
                 loadGroupCodes(selectedGroup);
             } else {
-                notification.error(response.message || '코드 수정에 실패했습니다.');
+                notificationManager.error(response.message || '코드 수정에 실패했습니다.');
             }
         } catch (error) {
             console.error('코드 수정 오류:', error);
-            notification.error('코드 수정에 실패했습니다.');
+            notificationManager.error('코드 수정에 실패했습니다.');
         } finally {
             setLoading(false);
         }

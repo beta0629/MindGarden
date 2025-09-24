@@ -60,14 +60,19 @@ public class SecurityConfig {
                     "/api/auth/login",  // 로그인만 CSRF 제외
                     "/api/auth/register",  // 회원가입만 CSRF 제외
                     "/api/auth/forgot-password",  // 비밀번호 찾기만 CSRF 제외
+                    "/api/auth/reset-password",  // 비밀번호 재설정 API CSRF 제외
+                    "/api/auth/change-password",  // 비밀번호 변경 API CSRF 제외
                     "/api/auth/logout",  // 로그아웃만 CSRF 제외
                     "/oauth2/**",    // OAuth2 콜백
                     "/api/password-reset/**",  // 비밀번호 재설정
+                    "/api/password/**",  // 비밀번호 관리 API CSRF 제외
+                    "/api/password-management/**",  // 비밀번호 관리 API CSRF 제외
                     "/api/test-simple/**",  // 간단한 테스트 API
                     "/api/test/**",  // 테스트 API
                     "/api/health/**",  // 헬스체크
                     "/api/admin/mappings/*/partial-refund",  // 부분 환불 API CSRF 제외
                     "/api/client/social-account",  // 소셜 계정 관리 API CSRF 제외
+                    "/api/privacy-consent/**",  // 개인정보 동의 API CSRF 제외
                     "/error"
                 )
             )
@@ -108,6 +113,7 @@ public class SecurityConfig {
                 authz.requestMatchers(
                     "/api/auth/**", 
                     "/oauth2/**",
+                    "/api/password/**",  // 비밀번호 관리 API
                     "/api/password-reset/**",  // 비밀번호 재설정 API
                     "/api/test-simple/**",  // 간단한 테스트 API
                     "/api/test/**",  // 테스트 API

@@ -60,7 +60,7 @@ const PasswordResetModal = ({ isOpen, onClose, onSuccess }) => {
     setError('');
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+      const response = await fetch(`${API_BASE_URL}/api/password/reset/request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

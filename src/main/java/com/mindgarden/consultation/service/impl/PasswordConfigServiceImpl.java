@@ -1,15 +1,13 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.util.HashMap;
+import java.util.Map;
 import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.repository.CommonCodeRepository;
 import com.mindgarden.consultation.service.PasswordConfigService;
+import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 비밀번호 설정 서비스 구현체

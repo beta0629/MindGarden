@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost } from '../../utils/ajax';
-import { notification } from '../../utils/scripts';
+import notificationManager from '../../utils/notification';
 import { useSession } from '../../hooks/useSession';
 import { getPackageOptions } from '../../utils/commonCodeUtils';
 import { API_BASE_URL } from '../../constants/api';
@@ -253,7 +253,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
     const handleCreateMapping = async () => {
         if (!selectedConsultant || !selectedClient) {
-            notification.warning('상담사와 내담자를 모두 선택해주세요.');
+            notificationManager.warning('상담사와 내담자를 모두 선택해주세요.');
             return;
         }
 
@@ -293,7 +293,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     const clientName = selectedClient?.name || '내담자';
                     const packageName = paymentInfo.packageName || '패키지';
                     
-                    notification.success(
+                    notificationManager.success(
                         `🎉 매핑이 완료되었습니다!\n` +
                         `📋 상담사: ${consultantName}\n` +
                         `👤 내담자: ${clientName}\n` +
@@ -313,19 +313,19 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                         console.error('❌ 에러 응답 파싱 실패:', parseError);
                         errorMessage = `서버 오류 (${response.status}): ${response.statusText}`;
                     }
-                    notification.error(errorMessage);
+                    notificationManager.error(errorMessage);
                 }
             } catch (apiError) {
                 console.error('API 호출 실패:', apiError);
                 // API 실패 시 시뮬레이션으로 성공 처리
                 console.log('API 실패, 시뮬레이션으로 성공 처리');
-                notification.success('매핑이 성공적으로 생성되었습니다! (시뮬레이션)');
+                notificationManager.success('매핑이 성공적으로 생성되었습니다! (시뮬레이션)');
                 setStep(4);
                 if (onMappingCreated) onMappingCreated();
             }
         } catch (error) {
             console.error('매핑 생성 오류:', error);
-            notification.error('매핑 생성 중 오류가 발생했습니다.');
+            notificationManager.error('매핑 생성 중 오류가 발생했습니다.');
         } finally {
             setLoading(false);
         }
@@ -566,7 +566,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                                 });
                                                 
                                                 // 자동 매핑 성공 알림
-                                                notification.success(
+                                                notificationManager.success(
                                                     `패키지가 선택되었습니다! 세션 수: ${selectedPackage.sessions}회기, 가격: ${selectedPackage.price.toLocaleString()}원`
                                                 );
                                             } else {

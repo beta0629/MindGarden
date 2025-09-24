@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.EmailConstants;
+import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.SessionExtensionRequest;
 import com.mindgarden.consultation.entity.User;
@@ -357,7 +358,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
             variables.put("confirmationDate", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH:mm")));
             
             // 이메일 발송
-            var response = emailService.sendTemplateEmail(
+            EmailResponse response = emailService.sendTemplateEmail(
                 EmailConstants.TEMPLATE_SESSION_EXTENSION_CONFIRMATION,
                 requester.getEmail(),
                 requester.getName(),

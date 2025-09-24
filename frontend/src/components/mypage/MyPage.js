@@ -2,13 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
-import { notification } from '../../utils/scripts';
+import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import ProfileSection from './components/ProfileSection';
 import SettingsSection from './components/SettingsSection';
 import SecuritySection from './components/SecuritySection';
 import SocialAccountsSection from './components/SocialAccountsSection';
 import PrivacyConsentSection from './components/PrivacyConsentSection';
+import PasswordResetModal from './components/PasswordResetModal';
+import PasswordChangeModal from './components/PasswordChangeModal';
 import './MyPage.css';
 
 const MyPage = () => {
@@ -18,6 +20,8 @@ const MyPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isProfileEditing, setIsProfileEditing] = useState(false);
   const [socialAccounts, setSocialAccounts] = useState([]);
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     nickname: '',
@@ -166,30 +170,30 @@ const MyPage = () => {
     if (linkStatus && provider && message) {
       // 연동 결과에 따른 알림 표시
       if (linkStatus === 'success') {
-        notification.showToast(`✅ ${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동 완료!`, 'success');
+        notificationManager.show(`✅ ${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동 완료!`, 'success');
         // 소셜 계정 목록 새로고침
         loadSocialAccounts();
         // URL 파라미터 정리
         window.history.replaceState({}, document.title, window.location.pathname);
       } else if (linkStatus === 'error') {
-        notification.showToast(`❌ ${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동 실패: ${message}`, 'error');
+        notificationManager.show(`❌ ${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동 실패: ${message}`, 'error');
         // URL 파라미터 정리
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
-  }, [loadUserInfo, loadSocialAccounts]);
+  }, []); // 컴포넌트 마운트 시 한 번만 실행
 
   // 소셜 계정 탭이 활성화될 때 데이터 로드
   useEffect(() => {
     if (activeTab === 'social') {
       loadSocialAccounts();
     }
-  }, [activeTab, loadSocialAccounts]);
+  }, [activeTab]); // activeTab이 변경될 때만 실행
 
-  // formData 상태 변화 추적
-  useEffect(() => {
-    console.log('🔄 formData 상태 변경:', formData);
-  }, [formData]);
+  // formData 상태 변화 추적 (개발용 - 필요시 주석 해제)
+  // useEffect(() => {
+  //   console.log('🔄 formData 상태 변경:', formData);
+  // }, [formData]);
 
 
 
@@ -227,9 +231,9 @@ const MyPage = () => {
     if (files.length > 0) {
       const file = files[0];
       if (file.type.startsWith('image/')) {
-        notification.showToast('이미지 업로드는 프로필 정보 탭에서 가능합니다.', 'info');
+        notificationManager.show('이미지 업로드는 프로필 정보 탭에서 가능합니다.', 'info');
       } else {
-        notification.showToast('이미지 파일만 업로드 가능합니다.', 'warning');
+        notificationManager.show('이미지 파일만 업로드 가능합니다.', 'warning');
       }
     }
   };
@@ -344,28 +348,28 @@ const MyPage = () => {
     
     console.log('상태 업데이트 완료 - 원본 데이터 사용');
     
-    notification.showToast('프로필이 성공적으로 업데이트되었습니다.', 'success');
+    notificationManager.show('프로필이 성공적으로 업데이트되었습니다.', 'success');
     
     // 사용자에게 페이지 새로고침 안내
     setTimeout(() => {
-      notification.showToast('페이지를 새로고침하여 저장된 데이터를 확인해보세요.', 'info');
+      notificationManager.show('페이지를 새로고침하여 저장된 데이터를 확인해보세요.', 'info');
     }, 2000);
   });
 
-  const handlePasswordReset = async () => {
-    try {
-      const email = displayUser?.email;
-      if (!email) {
-        notification.showToast('이메일 정보가 없습니다.', 'warning');
-        return;
-      }
-      
-      await mypageApi.requestPasswordReset(email);
-              notification.showToast('비밀번호 재설정 이메일이 발송되었습니다. 이메일을 확인해주세요.', 'success');
-    } catch (error) {
-      console.error('비밀번호 재설정 실패:', error);
-              notification.showToast('비밀번호 재설정 요청에 실패했습니다: ' + error.message, 'error');
-    }
+  const handlePasswordReset = () => {
+    setShowPasswordResetModal(true);
+  };
+
+  const handlePasswordResetSuccess = () => {
+    notificationManager.show('비밀번호 재설정 이메일이 발송되었습니다. 이메일을 확인해주세요.', 'success');
+  };
+
+  const handlePasswordChange = () => {
+    setShowPasswordChangeModal(true);
+  };
+
+  const handlePasswordChangeSuccess = () => {
+    notificationManager.show('비밀번호가 성공적으로 변경되었습니다.', 'success');
   };
 
   const handleLinkSocialAccount = async (provider) => {
@@ -373,14 +377,14 @@ const MyPage = () => {
       console.log('🚀 소셜 계정 연동 시작:', provider);
       
       // 연동 시작 알림
-      notification.showToast(`${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동을 시작합니다...`, 'info');
+      notificationManager.show(`${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동을 시작합니다...`, 'info');
       
       console.log('📡 mypageApi.getOAuth2Url 호출 중...');
       const oauthUrl = await mypageApi.getOAuth2Url(provider);
       console.log('🔗 받은 OAuth2 URL:', oauthUrl);
       
       // 연동 진행 중 알림
-      notification.showToast(`${provider === 'KAKAO' ? '카카오' : '네이버'}에서 권한을 승인해주세요.`, 'system');
+      notificationManager.show(`${provider === 'KAKAO' ? '카카오' : '네이버'}에서 권한을 승인해주세요.`, 'system');
       
       console.log('🔄 페이지 리다이렉트 중...');
       console.log('📍 리다이렉트 URL:', oauthUrl);
@@ -395,7 +399,7 @@ const MyPage = () => {
       
     } catch (error) {
       console.error('❌ 소셜 계정 연동 URL 생성 실패:', error);
-      notification.showToast('소셜 계정 연동을 시작할 수 없습니다: ' + error.message, 'error');
+      notificationManager.show('소셜 계정 연동을 시작할 수 없습니다: ' + error.message, 'error');
     }
   };
 
@@ -406,12 +410,12 @@ const MyPage = () => {
 
     try {
       await mypageApi.unlinkSocialAccount(provider, accountId);
-      notification.showToast('소셜 계정 연동이 해제되었습니다.', 'success');
+      notificationManager.show('소셜 계정 연동이 해제되었습니다.', 'success');
       // 소셜 계정 목록 새로고침
       loadSocialAccounts();
     } catch (error) {
       console.error('소셜 계정 연동 해제 실패:', error);
-      notification.showToast('소셜 계정 연동 해제에 실패했습니다: ' + error.message, 'error');
+      notificationManager.show('소셜 계정 연동 해제에 실패했습니다: ' + error.message, 'error');
     }
   };
 
@@ -495,21 +499,36 @@ const MyPage = () => {
                     <h3>알림 설정</h3>
                     <p>이메일 및 푸시 알림을 관리합니다</p>
                   </div>
-                  <button className="setting-btn">설정</button>
+                  <button 
+                    className="setting-btn" 
+                    onClick={() => notificationManager.show('알림 설정 기능은 개발 예정입니다. 곧 출시될 예정이니 조금만 기다려주세요!', 'info')}
+                  >
+                    설정
+                  </button>
                 </div>
                 <div className="setting-item">
                   <div className="setting-info">
                     <h3>언어 설정</h3>
                     <p>사용 언어를 변경합니다</p>
                   </div>
-                  <button className="setting-btn">설정</button>
+                  <button 
+                    className="setting-btn" 
+                    onClick={() => notificationManager.show('언어 설정 기능은 개발 예정입니다. 곧 출시될 예정이니 조금만 기다려주세요!', 'info')}
+                  >
+                    설정
+                  </button>
                 </div>
                 <div className="setting-item">
                   <div className="setting-info">
                     <h3>테마 설정</h3>
                     <p>화면 테마를 변경합니다</p>
                   </div>
-                  <button className="setting-btn">설정</button>
+                  <button 
+                    className="setting-btn" 
+                    onClick={() => notificationManager.show('테마 설정 기능은 개발 예정입니다. 곧 출시될 예정이니 조금만 기다려주세요!', 'info')}
+                  >
+                    설정
+                  </button>
                 </div>
               </div>
             </div>
@@ -524,7 +543,7 @@ const MyPage = () => {
                     <h3>비밀번호 변경</h3>
                     <p>현재 비밀번호를 변경합니다</p>
                   </div>
-                  <button className="security-btn">변경</button>
+                  <button className="security-btn" onClick={handlePasswordChange}>변경</button>
                 </div>
                 <div className="security-item">
                   <div className="security-info">
@@ -540,7 +559,12 @@ const MyPage = () => {
                     <h3>2단계 인증</h3>
                     <p>추가 보안을 위해 2단계 인증을 설정합니다</p>
                   </div>
-                  <button className="security-btn">설정</button>
+                  <button 
+                    className="security-btn" 
+                    onClick={() => notificationManager.show('2단계 인증 기능은 개발 예정입니다. 곧 출시될 예정이니 조금만 기다려주세요!', 'info')}
+                  >
+                    설정
+                  </button>
                 </div>
               </div>
             </div>
@@ -624,6 +648,20 @@ const MyPage = () => {
         </div>
       </div>
       </div>
+
+      {/* 비밀번호 재설정 모달 */}
+      <PasswordResetModal
+        isOpen={showPasswordResetModal}
+        onClose={() => setShowPasswordResetModal(false)}
+        onSuccess={handlePasswordResetSuccess}
+      />
+
+      {/* 비밀번호 변경 모달 */}
+      <PasswordChangeModal
+        isOpen={showPasswordChangeModal}
+        onClose={() => setShowPasswordChangeModal(false)}
+        onSuccess={handlePasswordChangeSuccess}
+      />
     </SimpleLayout>
   );
 };

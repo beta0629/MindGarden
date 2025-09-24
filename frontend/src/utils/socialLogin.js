@@ -18,7 +18,7 @@ import {
   getOAuth2Config as getOAuth2ConfigFromConstants
 } from '../constants/oauth2';
 import { setLoginSession, redirectToDashboard, logSessionInfo } from './session';
-import { notification } from './scripts';
+import notificationManager from './notification';
 import { cachedApiCall, CACHE_CONFIG } from './apiCache';
 
 let oauth2Config = null;
@@ -138,7 +138,7 @@ export const kakaoLogin = async () => {
     }
   } catch (error) {
     console.error('카카오 로그인 상세 오류:', error);
-    notification.showToast(`카카오 로그인 오류: ${error.message}`, 'error');
+    notificationManager.show(`카카오 로그인 오류: ${error.message}`, 'error');
   }
 };
 
@@ -173,7 +173,7 @@ export const naverLogin = async () => {
     }
   } catch (error) {
     console.error('네이버 로그인 오류:', error);
-    notification.showToast('네이버 로그인을 시작할 수 없습니다.', 'error');
+    notificationManager.show('네이버 로그인을 시작할 수 없습니다.', 'error');
   }
 };
 

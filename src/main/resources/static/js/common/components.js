@@ -258,62 +258,7 @@
         },
 
         // ===== Loading 컴포넌트 =====
-        Loading: {
-            show: function(message = '로딩 중...', options = {}) {
-                const defaultOptions = {
-                    overlay: true,
-                    spinner: true,
-                    closable: false
-                };
-                
-                const config = { ...defaultOptions, ...options };
-                
-                // 기존 로딩 제거
-                this.hide();
-                
-                // 로딩 요소 생성
-                const loadingElement = document.createElement('div');
-                loadingElement.className = 'loading-overlay';
-                loadingElement.innerHTML = `
-                    <div class="loading-content">
-                        ${config.spinner ? '<div class="loading-spinner"></div>' : ''}
-                        <div class="loading-message">${message}</div>
-                    </div>
-                `;
-                
-                // 스타일 적용
-                Object.assign(loadingElement.style, {
-                    position: 'fixed',
-                    top: '0',
-                    left: '0',
-                    width: '100%',
-                    height: '100%',
-                    zIndex: '10001',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: config.overlay ? 'rgba(0, 0, 0, 0.5)' : 'transparent'
-                });
-                
-                // 문서에 추가
-                document.body.appendChild(loadingElement);
-                
-                // 전역 로딩 상태 설정
-                document.body.classList.add('loading');
-                
-                return loadingElement;
-            },
-            
-            hide: function() {
-                const loadingElement = document.querySelector('.loading-overlay');
-                if (loadingElement && loadingElement.parentNode) {
-                    loadingElement.parentNode.removeChild(loadingElement);
-                }
-                
-                // 전역 로딩 상태 해제
-                document.body.classList.remove('loading');
-            }
-        },
+        // 중복된 로딩 시스템 제거됨 - React LoadingSpinner 컴포넌트 사용
 
         // ===== Form 컴포넌트 =====
         Form: {

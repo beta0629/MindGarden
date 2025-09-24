@@ -4,6 +4,44 @@ import LoadingSpinner from '../common/LoadingSpinner';
 import './VacationStatistics.css';
 
 /**
+ * 상담사별 색상 반환 함수
+ */
+const getConsultantColor = (consultantId) => {
+    const colors = [
+        '#3b82f6', // 파란색
+        '#10b981', // 녹색
+        '#f59e0b', // 주황색
+        '#ef4444', // 빨간색
+        '#8b5cf6', // 보라색
+        '#06b6d4', // 청록색
+        '#84cc16', // 라임색
+        '#f97316', // 오렌지색
+        '#ec4899', // 핑크색
+        '#6366f1'  // 인디고색
+    ];
+    
+    // 상담사 ID를 기반으로 일관된 색상 할당
+    const colorIndex = consultantId % colors.length;
+    return colors[colorIndex];
+};
+
+/**
+ * 휴가 유형을 한글로 변환
+ */
+const getVacationTypeKorean = (type) => {
+    const typeMap = {
+        'annual': '연차',
+        'personal': '개인',
+        'sick': '병가',
+        'maternity': '출산',
+        'paternity': '육아',
+        'bereavement': '경조',
+        'other': '기타'
+    };
+    return typeMap[type] || type;
+};
+
+/**
  * 휴가 통계 컴포넌트
  * - 상담사별 휴가 사용 현황
  * - 휴가 유형별 통계
@@ -239,72 +277,82 @@ const VacationStatistics = ({ className = "" }) => {
                         상담사별 휴가 현황
                     </h4>
                     <div className="consultant-list">
-                        {vacationStats.consultantStats.map(consultant => (
-                            <div key={consultant.consultantId} className="consultant-item">
-                                <div className="consultant-info">
-                                    <div className="consultant-name">{consultant.consultantName}</div>
-                                    <div className="consultant-email">{consultant.email}</div>
-                                </div>
-                                <div className="vacation-info">
-                                <div className="vacation-days">
-                                    <span className="days-count">
-                                        {typeof consultant.vacationDays === 'number' 
-                                            ? consultant.vacationDays.toFixed(1)
-                                            : consultant.vacationDays}
-                                    </span>
-                                    <span className="days-label">일</span>
-                                </div>
-                                    <div className="vacation-types">
-                                        {consultant.vacationDaysByType && Object.entries(consultant.vacationDaysByType).map(([type, days]) => (
-                                            days > 0 && (
-                                                <span 
-                                                    key={type}
-                                                    className="type-badge"
-                                                    style={{ 
-                                                        backgroundColor: getVacationTypeColor(type),
-                                                        color: '#374151',
-                                                        fontWeight: '500',
-                                                        borderRadius: '12px',
-                                                        padding: '4px 8px',
-                                                        fontSize: '12px',
-                                                        margin: '2px',
-                                                        display: 'inline-block'
-                                                    }}
-                                                    title={`${type}: ${days.toFixed(1)}일`}
-                                                >
-                                                    {type} {days.toFixed(1)}일
-                                                </span>
-                                            )
-                                        ))}
-                                        {/* 백업: 가중치 데이터가 없으면 개수로 표시 */}
-                                        {!consultant.vacationDaysByType && consultant.vacationByType && Object.entries(consultant.vacationByType).map(([type, count]) => (
-                                            count > 0 && (
-                                                <span 
-                                                    key={type}
-                                                    className="type-badge"
-                                                    style={{ 
-                                                        backgroundColor: getVacationTypeColor(type),
-                                                        color: '#374151',
-                                                        fontWeight: '500',
-                                                        borderRadius: '12px',
-                                                        padding: '4px 8px',
-                                                        fontSize: '12px',
-                                                        margin: '2px',
-                                                        display: 'inline-block'
-                                                    }}
-                                                >
-                                                    {type} {count}회
-                                                </span>
-                                            )
-                                        ))}
+                        {vacationStats.consultantStats.map(consultant => {
+                            const consultantColor = getConsultantColor(consultant.consultantId);
+                            return (
+                                <div key={consultant.consultantId} className="consultant-item" style={{ borderLeft: `4px solid ${consultantColor}` }}>
+                                    <div className="consultant-info">
+                                        <div className="consultant-avatar" style={{ backgroundColor: consultantColor }}>
+                                            {consultant.consultantName.charAt(0)}
+                                        </div>
+                                        <div className="consultant-details">
+                                            <div className="consultant-name">{consultant.consultantName}</div>
+                                            <div className="consultant-email">{consultant.consultantEmail}</div>
+                                        </div>
                                     </div>
-                                    <div className="last-vacation">
-                                        <FaClock className="clock-icon" />
-                                        <span>최근: {formatDate(consultant.lastVacationDate)}</span>
+                                    <div className="vacation-info">
+                                        <div className="vacation-days" style={{ color: consultantColor }}>
+                                            <span className="days-count">
+                                                {typeof consultant.vacationDays === 'number' 
+                                                    ? consultant.vacationDays.toFixed(1)
+                                                    : consultant.vacationDays}
+                                            </span>
+                                            <span className="days-label">일</span>
+                                        </div>
+                                        <div className="vacation-types">
+                                            {consultant.vacationDaysByType && Object.entries(consultant.vacationDaysByType).map(([type, days]) => (
+                                                days > 0 && (
+                                                    <span 
+                                                        key={type}
+                                                        className="type-badge"
+                                                        style={{ 
+                                                            backgroundColor: `${consultantColor}20`,
+                                                            color: consultantColor,
+                                                            border: `1px solid ${consultantColor}`,
+                                                            fontWeight: '500',
+                                                            borderRadius: '12px',
+                                                            padding: '4px 8px',
+                                                            fontSize: '12px',
+                                                            margin: '2px',
+                                                            display: 'inline-block'
+                                                        }}
+                                                        title={`${getVacationTypeKorean(type)}: ${days.toFixed(1)}일`}
+                                                    >
+                                                        {getVacationTypeKorean(type)} {days.toFixed(1)}일
+                                                    </span>
+                                                )
+                                            ))}
+                                            {/* 백업: 가중치 데이터가 없으면 개수로 표시 */}
+                                            {!consultant.vacationDaysByType && consultant.vacationByType && Object.entries(consultant.vacationByType).map(([type, count]) => (
+                                                count > 0 && (
+                                                    <span 
+                                                        key={type}
+                                                        className="type-badge"
+                                                        style={{ 
+                                                            backgroundColor: `${consultantColor}20`,
+                                                            color: consultantColor,
+                                                            border: `1px solid ${consultantColor}`,
+                                                            fontWeight: '500',
+                                                            borderRadius: '12px',
+                                                            padding: '4px 8px',
+                                                            fontSize: '12px',
+                                                            margin: '2px',
+                                                            display: 'inline-block'
+                                                        }}
+                                                    >
+                                                        {getVacationTypeKorean(type)} {count}회
+                                                    </span>
+                                                )
+                                            ))}
+                                        </div>
+                                        <div className="last-vacation">
+                                            <FaClock className="clock-icon" />
+                                            <span>최근: {formatDate(consultant.lastVacationDate)}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -315,19 +363,22 @@ const VacationStatistics = ({ className = "" }) => {
                         휴가 사용 TOP 3
                     </h4>
                     <div className="top-list">
-                        {vacationStats.topVacationConsultants.map((consultant, index) => (
-                            <div key={index} className="top-item">
-                                <div className="rank-badge">
-                                    {index + 1}
+                        {vacationStats.topVacationConsultants.map((consultant, index) => {
+                            const consultantColor = getConsultantColor(consultant.consultantId);
+                            return (
+                                <div key={index} className="top-item" style={{ borderLeft: `4px solid ${consultantColor}` }}>
+                                    <div className="rank-badge" style={{ backgroundColor: consultantColor }}>
+                                        {index + 1}
+                                    </div>
+                                    <div className="consultant-name">{consultant.consultantName}</div>
+                                    <div className="vacation-count" style={{ color: consultantColor }}>
+                                        {typeof consultant.vacationDays === 'number' 
+                                            ? consultant.vacationDays.toFixed(1)
+                                            : consultant.vacationDays}일
+                                    </div>
                                 </div>
-                                <div className="consultant-name">{consultant.consultantName}</div>
-                                <div className="vacation-count">
-                                    {typeof consultant.vacationDays === 'number' 
-                                        ? consultant.vacationDays.toFixed(1)
-                                        : consultant.vacationDays}일
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </div>

@@ -902,6 +902,7 @@ public class AdminServiceImpl implements AdminService {
                 
                 consultantData.put("role", consultant.getRole());
                 consultantData.put("isActive", consultant.getIsActive());
+                consultantData.put("branchCode", consultant.getBranchCode());
                 consultantData.put("createdAt", consultant.getCreatedAt());
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
                 
@@ -2186,7 +2187,12 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public Map<String, Object> getRefundStatistics(String period) {
-        log.info("📊 환불 통계 조회 시작: period={}", period);
+        return getRefundStatistics(period, null);
+    }
+    
+    @Override
+    public Map<String, Object> getRefundStatistics(String period, String branchCode) {
+        log.info("📊 환불 통계 조회 시작: period={}, branchCode={}", period, branchCode);
         
         // 환불 관련 공통 코드 초기화 (없으면 생성)
         initializeRefundCommonCodes();
@@ -2199,17 +2205,37 @@ public class AdminServiceImpl implements AdminService {
         
         // 1. 전체 환불된 매핑 조회 (강제 종료된 매핑)
         String terminatedStatus = getMappingStatusCode("TERMINATED");
-        List<ConsultantClientMapping> terminatedMappings = mappingRepository.findAll().stream()
+        List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findAll().stream()
                 .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
                 .filter(mapping -> mapping.getTerminatedAt() != null)
                 .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
                 .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
                 .collect(Collectors.toList());
         
+        // 지점별 필터링 적용
+        List<ConsultantClientMapping> terminatedMappings = allTerminatedMappings.stream()
+                .filter(mapping -> {
+                    if (branchCode == null || branchCode.trim().isEmpty()) {
+                        return true; // 지점코드가 없으면 모든 매핑 조회
+                    }
+                    return branchCode.equals(mapping.getBranchCode());
+                })
+                .collect(Collectors.toList());
+        
         // 2. 부분 환불 거래 조회 (FinancialTransaction에서)
-        List<com.mindgarden.consultation.entity.FinancialTransaction> partialRefundTransactions = 
+        List<com.mindgarden.consultation.entity.FinancialTransaction> allPartialRefundTransactions = 
             financialTransactionRepository.findByTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
                 com.mindgarden.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
+        
+        // 지점별 필터링 적용
+        List<com.mindgarden.consultation.entity.FinancialTransaction> partialRefundTransactions = allPartialRefundTransactions.stream()
+                .filter(transaction -> {
+                    if (branchCode == null || branchCode.trim().isEmpty()) {
+                        return true; // 지점코드가 없으면 모든 거래 조회
+                    }
+                    return branchCode.equals(transaction.getBranchCode());
+                })
+                .collect(Collectors.toList());
         
         // 3. 전체 환불 통계 계산
         int totalTerminatedRefundCount = terminatedMappings.size();
@@ -2649,6 +2675,160 @@ public class AdminServiceImpl implements AdminService {
         
         log.info("📋 환불 이력 조회 완료: 전체={}, 부분환불={}, 전체환불={}, 페이지={}", 
                 totalElements, partialRefundHistory.size(), terminatedRefundHistory.size(), page);
+        
+        return result;
+    }
+    
+    @Override
+    public Map<String, Object> getRefundHistory(int page, int size, String period, String status, String branchCode) {
+        log.info("📋 환불 이력 조회 (지점별): page={}, size={}, period={}, status={}, branchCode={}", page, size, period, status, branchCode);
+        
+        LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
+        LocalDateTime endDate = LocalDateTime.now();
+        
+        // 1. 전체 환불된 매핑 조회 (강제 종료된 매핑)
+        String terminatedStatus = getMappingStatusCode("TERMINATED");
+        List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
+                .filter(mapping -> mapping.getTerminatedAt() != null)
+                .filter(mapping -> mapping.getTerminatedAt().isAfter(startDate) && mapping.getTerminatedAt().isBefore(endDate))
+                .filter(mapping -> mapping.getNotes() != null && mapping.getNotes().contains("강제 종료"))
+                .collect(Collectors.toList());
+        
+        // 지점별 필터링 적용
+        List<ConsultantClientMapping> terminatedMappings = allTerminatedMappings.stream()
+                .filter(mapping -> {
+                    if (branchCode == null || branchCode.trim().isEmpty()) {
+                        return true; // 지점코드가 없으면 모든 매핑 조회
+                    }
+                    return branchCode.equals(mapping.getBranchCode());
+                })
+                .collect(Collectors.toList());
+        
+        // 2. 부분 환불 거래 조회 (FinancialTransaction에서)
+        List<com.mindgarden.consultation.entity.FinancialTransaction> allPartialRefundTransactions = 
+            financialTransactionRepository.findByTransactionTypeAndSubcategoryAndTransactionDateBetweenAndIsDeletedFalse(
+                com.mindgarden.consultation.entity.FinancialTransaction.TransactionType.EXPENSE, "CONSULTATION_PARTIAL_REFUND", startDate.toLocalDate(), endDate.toLocalDate());
+        
+        // 지점별 필터링 적용
+        List<com.mindgarden.consultation.entity.FinancialTransaction> partialRefundTransactions = allPartialRefundTransactions.stream()
+                .filter(transaction -> {
+                    if (branchCode == null || branchCode.trim().isEmpty()) {
+                        return true; // 지점코드가 없으면 모든 거래 조회
+                    }
+                    return branchCode.equals(transaction.getBranchCode());
+                })
+                .collect(Collectors.toList());
+        
+        // 3. 부분 환불 데이터를 환불 이력 형식으로 변환
+        List<Map<String, Object>> partialRefundHistory = partialRefundTransactions.stream()
+                .map(transaction -> {
+                    Map<String, Object> refund = new HashMap<>();
+                    
+                    // 관련 매핑 정보 조회
+                    ConsultantClientMapping mapping = null;
+                    if (transaction.getRelatedEntityId() != null) {
+                        mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
+                    }
+                    
+                    if (mapping != null) {
+                        refund.put("mappingId", mapping.getId());
+                        refund.put("consultantName", mapping.getConsultant() != null ? mapping.getConsultant().getName() : "알 수 없음");
+                        refund.put("clientName", mapping.getClient() != null ? mapping.getClient().getName() : "알 수 없음");
+                        refund.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName() : "알 수 없음");
+                        refund.put("refundedSessions", extractRefundSessionsFromDescription(transaction.getDescription()));
+                        refund.put("refundAmount", transaction.getAmount().longValue());
+                        refund.put("terminatedAt", transaction.getTransactionDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                    } else {
+                        refund.put("mappingId", transaction.getRelatedEntityId());
+                        refund.put("consultantName", "알 수 없음");
+                        refund.put("clientName", "알 수 없음");
+                        refund.put("packageName", "알 수 없음");
+                        refund.put("refundedSessions", extractRefundSessionsFromDescription(transaction.getDescription()));
+                        refund.put("refundAmount", transaction.getAmount().longValue());
+                        refund.put("terminatedAt", transaction.getTransactionDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                    }
+                    
+                    refund.put("refundReason", extractRefundReasonFromDescription(transaction.getDescription()));
+                    refund.put("standardizedReason", standardizeRefundReason(extractRefundReasonFromDescription(transaction.getDescription())));
+                    
+                    return refund;
+                })
+                .collect(Collectors.toList());
+        
+        // 4. 전체 환불 데이터를 환불 이력 형식으로 변환
+        List<Map<String, Object>> terminatedRefundHistory = terminatedMappings.stream()
+                .map(mapping -> {
+                    Map<String, Object> refund = new HashMap<>();
+                    refund.put("mappingId", mapping.getId());
+                    refund.put("consultantName", mapping.getConsultant() != null ? mapping.getConsultant().getName() : "알 수 없음");
+                    refund.put("clientName", mapping.getClient() != null ? mapping.getClient().getName() : "알 수 없음");
+                    refund.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName() : "알 수 없음");
+                    refund.put("refundedSessions", mapping.getTotalSessions() - mapping.getUsedSessions());
+                    refund.put("refundAmount", mapping.getPackagePrice() != null ? 
+                        ((mapping.getPackagePrice() * (mapping.getTotalSessions() - mapping.getUsedSessions())) / mapping.getTotalSessions()) : 0L);
+                    refund.put("terminatedAt", mapping.getTerminatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                    
+                    // 환불 사유 추출
+                    String notes = mapping.getNotes();
+                    String reason = "기타";
+                    if (notes != null && notes.contains("강제 종료]")) {
+                        String[] parts = notes.split("강제 종료] ");
+                        if (parts.length > 1) {
+                            String fullReason = parts[1].split("\n")[0];
+                            // 환불 정보 부분 제거하고 사유만 추출
+                            if (fullReason.contains(" (환불:")) {
+                                reason = fullReason.split(" \\(환불:")[0];
+                            } else {
+                                reason = fullReason;
+                            }
+                        }
+                    }
+                    refund.put("refundReason", reason);
+                    refund.put("standardizedReason", standardizeRefundReason(reason));
+                    
+                    return refund;
+                })
+                .collect(Collectors.toList());
+        
+        // 5. 전체 환불 이력 합치기 (부분 환불 + 전체 환불)
+        List<Map<String, Object>> allRefundHistory = new ArrayList<>();
+        allRefundHistory.addAll(partialRefundHistory);
+        allRefundHistory.addAll(terminatedRefundHistory);
+        
+        // 6. 날짜순으로 정렬 (최신순)
+        allRefundHistory.sort((a, b) -> {
+            String dateA = (String) a.get("terminatedAt");
+            String dateB = (String) b.get("terminatedAt");
+            return dateB.compareTo(dateA);
+        });
+        
+        // 7. 페이징 처리
+        int totalElements = allRefundHistory.size();
+        int startIndex = page * size;
+        int endIndex = Math.min(startIndex + size, totalElements);
+        
+        List<Map<String, Object>> pagedRefundHistory = allRefundHistory.subList(startIndex, endIndex);
+        
+        // 8. 페이지 정보 구성
+        Map<String, Object> pageInfo = new HashMap<>();
+        pageInfo.put("currentPage", page);
+        pageInfo.put("pageSize", size);
+        pageInfo.put("totalElements", totalElements);
+        pageInfo.put("totalPages", (int) Math.ceil((double) totalElements / size));
+        pageInfo.put("hasNext", endIndex < totalElements);
+        pageInfo.put("hasPrevious", page > 0);
+        
+        // 9. 결과 반환
+        Map<String, Object> result = new HashMap<>();
+        result.put("refundHistory", pagedRefundHistory);
+        result.put("pageInfo", pageInfo);
+        result.put("period", period != null ? period : "month");
+        result.put("status", status != null ? status : "all");
+        result.put("branchCode", branchCode);
+        
+        log.info("📋 환불 이력 조회 완료 (지점별): 전체={}, 부분환불={}, 전체환불={}, 페이지={}, 지점={}", 
+                totalElements, partialRefundHistory.size(), terminatedRefundHistory.size(), page, branchCode);
         
         return result;
     }
@@ -3403,6 +3583,80 @@ public class AdminServiceImpl implements AdminService {
     }
     
     @Override
+    public List<Map<String, Object>> getConsultationCompletionStatisticsByBranch(String period, String branchCode) {
+        try {
+            log.info("📊 지점별 상담 완료 건수 통계 조회: period={}, branchCode={}", period, branchCode);
+            
+            // 특정 지점의 활성 상담사만 조회
+            List<User> consultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(UserRole.CONSULTANT, branchCode);
+            log.info("👥 지점 {} 활성 상담사 수: {}명", branchCode, consultants.size());
+            
+            List<Map<String, Object>> statistics = new ArrayList<>();
+            
+            for (User consultant : consultants) {
+                try {
+                    // 기간 설정
+                    LocalDate startDate, endDate;
+                    if (period != null && !period.isEmpty()) {
+                        // 기간 파싱 (예: "2025-09")
+                        String[] parts = period.split("-");
+                        int year = Integer.parseInt(parts[0]);
+                        int month = Integer.parseInt(parts[1]);
+                        startDate = LocalDate.of(year, month, 1);
+                        endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+                    } else {
+                        // 전체 기간 (올해)
+                        startDate = LocalDate.of(LocalDate.now().getYear(), 1, 1);
+                        endDate = LocalDate.of(LocalDate.now().getYear(), 12, 31);
+                    }
+                    
+                    // 상담 완료 건수 조회 (스케줄 기준)
+                    int completedCount = getCompletedScheduleCount(consultant.getId(), startDate, endDate);
+                    
+                    // 총 상담 건수 조회 (스케줄 기준)
+                    long totalCount = getTotalScheduleCount(consultant.getId());
+                    
+                    // 상담사 정보와 통계 데이터 매핑
+                    Map<String, Object> consultantStats = new HashMap<>();
+                    consultantStats.put("consultantId", consultant.getId());
+                    consultantStats.put("consultantName", consultant.getName());
+                    consultantStats.put("consultantEmail", consultant.getEmail());
+                    consultantStats.put("consultantPhone", maskPhone(consultant.getPhone()));
+                    consultantStats.put("specialization", consultant.getSpecialization());
+                    consultantStats.put("grade", consultant.getGrade());
+                    consultantStats.put("branchCode", consultant.getBranchCode());
+                    consultantStats.put("completedCount", completedCount);
+                    consultantStats.put("totalCount", totalCount);
+                    consultantStats.put("completionRate", totalCount > 0 ? 
+                        Math.round((double) completedCount / totalCount * 100) : 0);
+                    consultantStats.put("period", period != null ? period : "전체");
+                    consultantStats.put("startDate", startDate.toString());
+                    consultantStats.put("endDate", endDate.toString());
+                    
+                    statistics.add(consultantStats);
+                    
+                } catch (Exception e) {
+                    log.warn("상담사 ID {} 통계 조회 실패: {}", consultant.getId(), e.getMessage());
+                }
+            }
+            
+            // 완료 건수 기준으로 내림차순 정렬
+            statistics.sort((a, b) -> {
+                Integer countA = (Integer) a.get("completedCount");
+                Integer countB = (Integer) b.get("completedCount");
+                return countB.compareTo(countA);
+            });
+            
+            log.info("✅ 지점별 상담 완료 건수 통계 조회 완료: 지점={}, {}명", branchCode, statistics.size());
+            return statistics;
+            
+        } catch (Exception e) {
+            log.error("❌ 지점별 상담 완료 건수 통계 조회 실패: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+    
+    @Override
     public List<Map<String, Object>> getAllSchedules() {
         try {
             log.info("🔍 모든 스케줄 조회");
@@ -3541,6 +3795,71 @@ public class AdminServiceImpl implements AdminService {
             
         } catch (Exception e) {
             log.error("❌ 스케줄 통계 조회 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("스케줄 통계 조회 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public Map<String, Object> getScheduleStatisticsByBranch(String branchCode) {
+        try {
+            log.info("📊 스케줄 상태별 통계 조회 시작 (지점별): branchCode={}", branchCode);
+            
+            // 해당 지점의 스케줄만 조회
+            log.debug("🔍 지점별 스케줄 조회 중...");
+            List<Schedule> allSchedules = scheduleRepository.findAll();
+            List<Schedule> branchSchedules = allSchedules.stream()
+                    .filter(schedule -> branchCode.equals(schedule.getBranchCode()))
+                    .collect(Collectors.toList());
+            log.info("📋 조회된 스케줄 수: {} (전체: {}, 지점: {})", branchSchedules.size(), allSchedules.size(), branchCode);
+            
+            // 상태별 카운트
+            log.debug("📊 상태별 카운트 계산 중...");
+            Map<String, Long> statusCount = branchSchedules.stream()
+                .collect(Collectors.groupingBy(
+                    schedule -> {
+                        String status = schedule.getStatus() != null ? schedule.getStatus().name() : "UNKNOWN";
+                        log.trace("스케줄 ID {}: 상태 = {}", schedule.getId(), status);
+                        return status;
+                    },
+                    Collectors.counting()
+                ));
+            log.info("📊 상태별 카운트: {}", statusCount);
+            
+            // 상담사별 완료 건수 (스케줄 기준)
+            log.debug("👥 상담사별 완료 건수 계산 중...");
+            Map<Long, Long> consultantCompletedCount = branchSchedules.stream()
+                .filter(schedule -> {
+                    boolean isCompleted = ScheduleStatus.COMPLETED.equals(schedule.getStatus());
+                    if (isCompleted) {
+                        log.trace("완료된 스케줄 ID {}: 상담사 ID = {}", schedule.getId(), schedule.getConsultantId());
+                    }
+                    return isCompleted;
+                })
+                .filter(schedule -> schedule.getConsultantId() != null)
+                .collect(Collectors.groupingBy(
+                    Schedule::getConsultantId,
+                    Collectors.counting()
+                ));
+            log.info("👥 상담사별 완료 건수: {}", consultantCompletedCount);
+            
+            Map<String, Object> statistics = new HashMap<>();
+            statistics.put("totalSchedules", branchSchedules.size());
+            statistics.put("statusCount", statusCount);
+            statistics.put("consultantCompletedCount", consultantCompletedCount);
+            statistics.put("completedSchedules", statusCount.getOrDefault(ScheduleStatus.COMPLETED.name(), 0L));
+            statistics.put("bookedSchedules", statusCount.getOrDefault(ScheduleStatus.BOOKED.name(), 0L));
+            statistics.put("cancelledSchedules", statusCount.getOrDefault(ScheduleStatus.CANCELLED.name(), 0L));
+            statistics.put("branchCode", branchCode);
+            
+            log.info("✅ 스케줄 통계 조회 완료 (지점별): 총 {}개, 완료 {}개, 예약 {}개, 취소 {}개", 
+                    branchSchedules.size(), 
+                    statusCount.getOrDefault(ScheduleStatus.COMPLETED.name(), 0L),
+                    statusCount.getOrDefault(ScheduleStatus.BOOKED.name(), 0L),
+                    statusCount.getOrDefault(ScheduleStatus.CANCELLED.name(), 0L));
+            return statistics;
+            
+        } catch (Exception e) {
+            log.error("❌ 스케줄 통계 조회 실패 (지점별): {}", e.getMessage(), e);
             throw new RuntimeException("스케줄 통계 조회 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
     }
@@ -4007,6 +4326,85 @@ public class AdminServiceImpl implements AdminService {
             log.error("❌ 상담사별 휴가 통계 조회 실패: {}", e.getMessage(), e);
             result.put("success", false);
             result.put("message", "휴가 통계 조회에 실패했습니다: " + e.getMessage());
+        }
+        
+        return result;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getConsultantVacationStatsByBranch(String period, String branchCode) {
+        log.info("📊 지점별 상담사 휴가 통계 조회: period={}, branchCode={}", period, branchCode);
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 기간 설정 (미래 휴가도 포함)
+            LocalDate startDate = getVacationPeriodStartDate(period);
+            LocalDate endDate = LocalDate.now().plusMonths(1); // 미래 1개월까지 포함
+            
+            log.info("📅 휴가 통계 조회 기간: {} ~ {} (period={})", startDate, endDate, period);
+            
+            // 특정 지점의 활성 상담사 목록 조회
+            List<User> activeConsultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(UserRole.CONSULTANT, branchCode);
+            log.info("👥 지점 {} 활성 상담사 수: {}명", branchCode, activeConsultants.size());
+            
+            // 상담사별 휴가 통계
+            List<Map<String, Object>> consultantStats = new ArrayList<>();
+            double totalVacationDays = 0.0;
+            
+            for (User consultant : activeConsultants) {
+                Map<String, Object> consultantData = new HashMap<>();
+                consultantData.put("consultantId", consultant.getId());
+                consultantData.put("consultantName", consultant.getUsername());
+                consultantData.put("consultantEmail", consultant.getEmail());
+                consultantData.put("branchCode", consultant.getBranchCode());
+                
+                // 상담사의 휴가 일수 조회
+                double vacationDays = getConsultantVacationCount(consultant.getId(), startDate, endDate);
+                consultantData.put("vacationDays", vacationDays);
+                totalVacationDays += vacationDays;
+                
+                // 휴가 유형별 통계 (기본값)
+                Map<String, Double> vacationByType = new HashMap<>();
+                vacationByType.put("annual", vacationDays);
+                vacationByType.put("sick", 0.0);
+                vacationByType.put("personal", 0.0);
+                consultantData.put("vacationByType", vacationByType);
+                
+                consultantStats.add(consultantData);
+            }
+            
+            // 휴가 일수 기준으로 정렬 (내림차순)
+            consultantStats.sort((a, b) -> Double.compare(
+                (Double) b.get("vacationDays"), 
+                (Double) a.get("vacationDays")
+            ));
+            
+            // 상위 휴가 상담사 (상위 5명)
+            List<Map<String, Object>> topVacationConsultants = consultantStats.stream()
+                .limit(5)
+                .collect(Collectors.toList());
+            
+            // 요약 정보
+            Map<String, Object> summary = new HashMap<>();
+            summary.put("totalConsultants", activeConsultants.size());
+            summary.put("totalVacationDays", totalVacationDays);
+            summary.put("averageVacationDays", activeConsultants.isEmpty() ? 0.0 : totalVacationDays / activeConsultants.size());
+            summary.put("branchCode", branchCode);
+            
+            result.put("success", true);
+            result.put("summary", summary);
+            result.put("consultantStats", consultantStats);
+            result.put("topVacationConsultants", topVacationConsultants);
+            
+            log.info("✅ 지점별 상담사 휴가 통계 조회 완료: 지점={}, 총 {}명, 총 휴가 {}일", 
+                branchCode, activeConsultants.size(), totalVacationDays);
+            
+        } catch (Exception e) {
+            log.error("❌ 지점별 상담사 휴가 통계 조회 실패: {}", e.getMessage(), e);
+            result.put("success", false);
+            result.put("message", "지점별 휴가 통계 조회에 실패했습니다: " + e.getMessage());
         }
         
         return result;

@@ -123,4 +123,12 @@ public interface ConsultantRatingService {
      * @return 전체 평가 통계 정보
      */
     Map<String, Object> getAdminRatingStatistics();
+    
+    /**
+     * 관리자용 전체 평가 통계 (지점별 필터링)
+     * 
+     * @param branchCode 지점코드
+     * @return 지점별 평가 통계 정보
+     */
+    Map<String, Object> getAdminRatingStatisticsByBranch(String branchCode);
 }

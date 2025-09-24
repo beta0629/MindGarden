@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '../../../constants/api';
 import './PasswordChangeModal.css';
 
@@ -46,27 +46,8 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
     });
   };
 
-  // 모달이 열릴 때 폼 초기화
-  useEffect(() => {
-    if (isOpen) {
-      resetForm();
-    }
-  }, [isOpen]);
-
-  // 입력값 변경 처리
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // 실시간 유효성 검사
-    validateField(name, value);
-  };
-
-  // 필드별 유효성 검사
-  const validateField = (fieldName, value) => {
+  // 필드별 유효성 검사 (상태 변경 없이 결과만 반환)
+  const validateField = useCallback((fieldName, value, currentPassword = '', newPassword = '') => {
     let isValid = true;
     let message = '';
 
@@ -100,7 +81,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
         } else if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value)) {
           isValid = false;
           message = '비밀번호는 최소 1개의 특수문자를 포함해야 합니다.';
-        } else if (value === formData.currentPassword) {
+        } else if (value === currentPassword) {
           isValid = false;
           message = '새 비밀번호는 현재 비밀번호와 달라야 합니다.';
         }
@@ -110,7 +91,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
         if (!value.trim()) {
           isValid = false;
           message = '비밀번호 확인을 입력해주세요.';
-        } else if (value !== formData.newPassword) {
+        } else if (value !== newPassword) {
           isValid = false;
           message = '비밀번호 확인이 일치하지 않습니다.';
         }
@@ -120,22 +101,46 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
         break;
     }
 
-    setValidation(prev => ({
-      ...prev,
-      [fieldName]: { isValid, message }
-    }));
+    return { isValid, message };
+  }, []);
 
-    return isValid;
-  };
+  // 모달이 열릴 때 폼 초기화
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
+
+  // formData 변경 시 실시간 유효성 검사
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const currentResult = validateField('currentPassword', formData.currentPassword, formData.currentPassword, formData.newPassword);
+    const newResult = validateField('newPassword', formData.newPassword, formData.currentPassword, formData.newPassword);
+    const confirmResult = validateField('confirmPassword', formData.confirmPassword, formData.currentPassword, formData.newPassword);
+    
+    setValidation({
+      currentPassword: currentResult,
+      newPassword: newResult,
+      confirmPassword: confirmResult
+    });
+  }, [formData.currentPassword, formData.newPassword, formData.confirmPassword, isOpen, validateField]);
+
+  // 입력값 변경 처리 (유효성 검사 제거)
+  const handleInputChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  }, []);
 
   // 전체 폼 유효성 검사
-  const validateForm = () => {
-    const isCurrentValid = validateField('currentPassword', formData.currentPassword);
-    const isNewValid = validateField('newPassword', formData.newPassword);
-    const isConfirmValid = validateField('confirmPassword', formData.confirmPassword);
-    
-    return isCurrentValid && isNewValid && isConfirmValid;
-  };
+  const validateForm = useCallback(() => {
+    return validation.currentPassword.isValid && 
+           validation.newPassword.isValid && 
+           validation.confirmPassword.isValid;
+  }, [validation.currentPassword.isValid, validation.newPassword.isValid, validation.confirmPassword.isValid]);
 
   // 비밀번호 변경 요청
   const handleSubmit = async (e) => {
@@ -148,7 +153,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess }) => {
     setIsLoading(true);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/user/change-password`, {
+      const response = await fetch(`${API_BASE_URL}/api/password/change`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

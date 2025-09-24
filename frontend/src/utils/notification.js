@@ -39,12 +39,12 @@ class NotificationManager {
             }
         } catch (error) {
             console.error('알림 유형 코드 로드 실패:', error);
-            // 실패 시 기본값 설정
+            // 실패 시 기본값 설정 (통일된 색상 체계)
             this.notificationTypes = [
-                { code: 'SUCCESS', name: '성공', icon: '✅', color: '#10b981', description: '성공 알림' },
-                { code: 'ERROR', name: '오류', icon: '❌', color: '#ef4444', description: '오류 알림' },
-                { code: 'WARNING', name: '경고', icon: '⚠️', color: '#f59e0b', description: '경고 알림' },
-                { code: 'INFO', name: '정보', icon: 'ℹ️', color: '#3b82f6', description: '정보 알림' }
+                { code: 'SUCCESS', name: '성공', icon: '✅', color: '#10B981', description: '성공 알림' },     // 녹색
+                { code: 'ERROR', name: '오류', icon: '❌', color: '#EF4444', description: '오류 알림' },       // 빨강
+                { code: 'WARNING', name: '경고', icon: '⚠️', color: '#F59E0B', description: '경고 알림' },     // 주황
+                { code: 'INFO', name: '정보', icon: 'ℹ️', color: '#3B82F6', description: '정보 알림' }        // 파랑
             ];
         }
     }

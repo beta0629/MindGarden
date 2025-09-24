@@ -99,6 +99,8 @@ const getIcon = (type) => {
             return '⚠️';
         case 'info':
             return 'ℹ️';
+        case 'system':
+            return '🔧';
         default:
             return '📢';
     }

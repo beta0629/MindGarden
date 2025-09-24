@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mindgarden.consultation.constant.ScheduleStatus;
+import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.ConsultantRating;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
@@ -506,6 +507,144 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         } catch (Exception e) {
             log.error("❌ 관리자 평가 통계 조회 실패", e);
             throw new RuntimeException("평가 통계를 불러오는데 실패했습니다.");
+        }
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getAdminRatingStatisticsByBranch(String branchCode) {
+        try {
+            log.info("💖 관리자 평가 통계 조회 시작 (지점별): branchCode={}", branchCode);
+
+            Map<String, Object> stats = new HashMap<>();
+
+            // 해당 지점의 상담사들 조회
+            List<User> branchConsultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(
+                UserRole.CONSULTANT, branchCode);
+            List<Long> consultantIds = branchConsultants.stream()
+                .map(User::getId)
+                .collect(Collectors.toList());
+            
+            log.info("🏢 지점 상담사 수: {} (지점코드: {})", consultantIds.size(), branchCode);
+
+            // 해당 지점 상담사들의 평가만 조회
+            List<ConsultantRating> branchRatings = ratingRepository.findAll().stream()
+                .filter(rating -> consultantIds.contains(rating.getConsultant().getId()))
+                .collect(Collectors.toList());
+            
+            Long totalRatings = (long) branchRatings.size();
+            stats.put("totalRatings", totalRatings);
+
+            // 지점별 평균 점수
+            double averageScore = branchRatings.stream()
+                .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)
+                .mapToInt(ConsultantRating::getHeartScore)
+                .average()
+                .orElse(0.0);
+            stats.put("averageScore", Math.round(averageScore * 10.0) / 10.0);
+
+            // 지점 상담사 랭킹 (TOP 10)
+            List<Map<String, Object>> topConsultants = getConsultantRankingByBranch(branchCode, PageRequest.of(0, 10));
+            stats.put("topConsultants", topConsultants);
+
+            // 최근 7일 평가 동향
+            List<Map<String, Object>> recentTrends = new ArrayList<>();
+            for (int i = 6; i >= 0; i--) {
+                LocalDateTime dayStart = LocalDateTime.now().minusDays(i).withHour(0).withMinute(0).withSecond(0);
+                LocalDateTime dayEnd = dayStart.withHour(23).withMinute(59).withSecond(59);
+                
+                // 해당 날짜의 지점 평가 개수 조회
+                long dayCount = branchRatings.stream()
+                    .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)
+                    .filter(rating -> rating.getRatedAt().isAfter(dayStart) && rating.getRatedAt().isBefore(dayEnd))
+                    .count();
+                
+                Map<String, Object> dayTrend = new HashMap<>();
+                dayTrend.put("date", dayStart.toLocalDate().toString().substring(5)); // MM-dd 형식
+                dayTrend.put("count", dayCount);
+                recentTrends.add(dayTrend);
+            }
+            stats.put("recentTrends", recentTrends);
+            stats.put("branchCode", branchCode);
+
+            log.info("✅ 관리자 평가 통계 조회 완료 (지점별): 총평가={}, 평균점수={}, 상담사수={}", 
+                totalRatings, averageScore, topConsultants.size());
+
+            return stats;
+
+        } catch (Exception e) {
+            log.error("❌ 관리자 평가 통계 조회 실패 (지점별): branchCode={}", branchCode, e);
+            throw new RuntimeException("평가 통계를 불러오는데 실패했습니다.");
+        }
+    }
+    
+    /**
+     * 지점별 상담사 랭킹 조회
+     */
+    private List<Map<String, Object>> getConsultantRankingByBranch(String branchCode, Pageable pageable) {
+        try {
+            // 해당 지점의 상담사들 조회
+            List<User> branchConsultants = userRepository.findByRoleAndIsActiveTrueAndBranchCode(
+                UserRole.CONSULTANT, branchCode);
+            List<Long> consultantIds = branchConsultants.stream()
+                .map(User::getId)
+                .collect(Collectors.toList());
+            
+            if (consultantIds.isEmpty()) {
+                return new ArrayList<>();
+            }
+            
+            // 해당 지점 상담사들의 평가만 조회하여 랭킹 계산
+            List<ConsultantRating> branchRatings = ratingRepository.findAll().stream()
+                .filter(rating -> consultantIds.contains(rating.getConsultant().getId()))
+                .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)
+                .collect(Collectors.toList());
+            
+            // 상담사별 평균 점수 계산
+            Map<Long, Double> consultantAverages = branchRatings.stream()
+                .collect(Collectors.groupingBy(
+                    rating -> rating.getConsultant().getId(),
+                    Collectors.averagingInt(ConsultantRating::getHeartScore)
+                ));
+            
+            // 상담사별 평가 개수 계산
+            Map<Long, Long> consultantCounts = branchRatings.stream()
+                .collect(Collectors.groupingBy(
+                    rating -> rating.getConsultant().getId(),
+                    Collectors.counting()
+                ));
+            
+            // 랭킹 생성
+            List<Map<String, Object>> ranking = consultantAverages.entrySet().stream()
+                .filter(entry -> entry.getValue() > 0) // 평균 점수가 0보다 큰 경우만
+                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
+                .limit(pageable.getPageSize())
+                .map(entry -> {
+                    Long consultantId = entry.getKey();
+                    Double averageScore = entry.getValue();
+                    Long ratingCount = consultantCounts.getOrDefault(consultantId, 0L);
+                    
+                    // 상담사 정보 조회
+                    User consultant = branchConsultants.stream()
+                        .filter(c -> c.getId().equals(consultantId))
+                        .findFirst()
+                        .orElse(null);
+                    
+                    Map<String, Object> consultantData = new HashMap<>();
+                    consultantData.put("consultantId", consultantId);
+                    consultantData.put("consultantName", consultant != null ? consultant.getName() : "알 수 없음");
+                    consultantData.put("averageScore", Math.round(averageScore * 10.0) / 10.0);
+                    consultantData.put("ratingCount", ratingCount);
+                    
+                    return consultantData;
+                })
+                .collect(Collectors.toList());
+            
+            return ranking;
+            
+        } catch (Exception e) {
+            log.error("❌ 지점별 상담사 랭킹 조회 실패: branchCode={}", branchCode, e);
+            return new ArrayList<>();
         }
     }
 

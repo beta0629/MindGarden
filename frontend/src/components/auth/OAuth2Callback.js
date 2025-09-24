@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { notification } from '../../utils/scripts';
+import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import { LOGIN_SESSION_CHECK_DELAY } from '../../constants/session';
@@ -50,7 +50,7 @@ const OAuth2Callback = () => {
         if (error) {
           console.error('❌ OAuth2 오류:', error);
           setError(`OAuth2 인증 오류: ${error}`);
-          notification.showToast('OAuth2 인증에 실패했습니다.', 'error');
+          notificationManager.show('OAuth2 인증에 실패했습니다.', 'error');
           setTimeout(() => navigate('/login'), 3000);
           return;
         }
@@ -58,7 +58,7 @@ const OAuth2Callback = () => {
         if (!success || success !== 'true') {
           console.error('❌ OAuth2 성공 플래그가 없습니다');
           setError('OAuth2 인증이 완료되지 않았습니다.');
-          notification.showToast('OAuth2 인증이 완료되지 않았습니다.', 'error');
+          notificationManager.show('OAuth2 인증이 완료되지 않았습니다.', 'error');
           setTimeout(() => navigate('/login'), 3000);
           return;
         }
@@ -66,7 +66,7 @@ const OAuth2Callback = () => {
         if (!provider) {
           console.error('❌ Provider 정보가 없습니다');
           setError('OAuth2 제공자 정보를 찾을 수 없습니다.');
-          notification.showToast('OAuth2 제공자 정보를 찾을 수 없습니다.', 'error');
+          notificationManager.show('OAuth2 제공자 정보를 찾을 수 없습니다.', 'error');
           setTimeout(() => navigate('/login'), 3000);
           return;
         }
@@ -76,7 +76,7 @@ const OAuth2Callback = () => {
           console.log('🔗 OAuth2 계정 통합 필요:', { provider, email, name, nickname });
           
           // 성공 메시지 표시
-          notification.showToast(`${provider} 소셜 로그인 성공! 기존 계정과 연결해주세요.`, 'success');
+          notificationManager.show(`${provider} 소셜 로그인 성공! 기존 계정과 연결해주세요.`, 'success');
           
           // SNS 사용자 정보 설정
           const userData = {
@@ -100,7 +100,7 @@ const OAuth2Callback = () => {
           console.log('📝 OAuth2 회원가입 필요:', { provider, email, name, nickname });
           
           // 성공 메시지 표시
-          notification.showToast(`${provider} 소셜 로그인 성공! 회원가입을 완료해주세요.`, 'success');
+          notificationManager.show(`${provider} 소셜 로그인 성공! 회원가입을 완료해주세요.`, 'success');
           
           // SNS 사용자 정보 설정
           const userData = {
@@ -124,7 +124,7 @@ const OAuth2Callback = () => {
         console.log('🔍 OAuth2 콜백 URL 파라미터:', { userId, email, name, nickname, role, provider });
         
         // 성공 메시지 표시
-        notification.showToast(`${provider} 소셜 로그인에 성공했습니다!`, 'success');
+        notificationManager.show(`${provider} 소셜 로그인에 성공했습니다!`, 'success');
         
         // 사용자 정보를 중앙 세션에 설정
         if (userId && email) {
@@ -211,7 +211,7 @@ const OAuth2Callback = () => {
       } catch (error) {
         console.error('❌ OAuth2 콜백 처리 오류:', error);
         setError(error.message);
-        notification.showToast('로그인 처리 중 오류가 발생했습니다.', 'error');
+        notificationManager.show('로그인 처리 중 오류가 발생했습니다.', 'error');
         
         // 오류 발생 시 로그인 페이지로 이동
         setTimeout(() => navigate('/login'), 3000);
@@ -278,7 +278,7 @@ const OAuth2Callback = () => {
           socialUser={socialUserData}
           onSignupSuccess={(response) => {
             console.log('✅ 소셜 회원가입 성공:', response);
-            notification.showToast('회원가입이 완료되었습니다. 로그인해주세요.', 'success');
+            notificationManager.show('회원가입이 완료되었습니다. 로그인해주세요.', 'success');
             // 로그인 페이지로 이동
             navigate('/login');
           }}

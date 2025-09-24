@@ -85,7 +85,7 @@ export const MYPAGE_API = {
   
   // 비밀번호 관리
   CHANGE_PASSWORD: '/api/client/profile/change-password',
-  RESET_PASSWORD: '/api/auth/reset-password',
+  RESET_PASSWORD: '/api/password/reset/request',
   
   // 프로필 이미지
   UPLOAD_IMAGE: '/api/client/profile/image',
@@ -123,7 +123,7 @@ export const PROFILE_API = {
     UPDATE_INFO: (userId) => `/api/client/profile`,
     CHANGE_PASSWORD: (userId) => `/api/client/profile/password`,
     UPLOAD_IMAGE: (userId) => `/api/client/profile/image`,
-    GET_SOCIAL_ACCOUNTS: (userId) => `/api/client/social-accounts`,
+    GET_SOCIAL_ACCOUNTS: (userId) => `/api/admin/users/${userId}/social-accounts`,
     MANAGE_SOCIAL_ACCOUNT: (userId) => `/api/client/social-account`
   }
 };

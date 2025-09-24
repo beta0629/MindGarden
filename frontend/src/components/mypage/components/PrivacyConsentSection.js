@@ -92,7 +92,13 @@ const PrivacyConsentSection = () => {
 
   // 개인정보 동의 처리
   const handleConsent = (consents) => {
-    updateConsentStatus(consents);
+    // 프론트엔드 키를 백엔드 키로 변환
+    const consentData = {
+      privacyConsent: consents.privacy,
+      termsConsent: consents.terms,
+      marketingConsent: consents.marketing
+    };
+    updateConsentStatus(consentData);
     setShowConsentModal(false);
   };
 

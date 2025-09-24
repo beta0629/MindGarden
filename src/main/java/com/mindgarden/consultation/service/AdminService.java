@@ -130,9 +130,19 @@ public interface AdminService {
     Map<String, Object> getRefundStatistics(String period);
     
     /**
+     * 환불 통계 조회 (지점별 필터링)
+     */
+    Map<String, Object> getRefundStatistics(String period, String branchCode);
+    
+    /**
      * 환불 이력 조회
      */
     Map<String, Object> getRefundHistory(int page, int size, String period, String status);
+    
+    /**
+     * 환불 이력 조회 (지점별 필터링)
+     */
+    Map<String, Object> getRefundHistory(int page, int size, String period, String status, String branchCode);
     
     /**
      * ERP 동기화 상태 확인
@@ -145,6 +155,16 @@ public interface AdminService {
      * 상담사별 휴가 통계 조회
      */
     Map<String, Object> getConsultantVacationStats(String period);
+    
+    /**
+     * 지점별 상담사 휴가 통계 조회
+     */
+    Map<String, Object> getConsultantVacationStatsByBranch(String period, String branchCode);
+    
+    /**
+     * 지점별 상담 완료 건수 통계 조회
+     */
+    List<Map<String, Object>> getConsultationCompletionStatisticsByBranch(String period, String branchCode);
 
     // ==================== 입금 승인 시스템 ====================
 
@@ -247,6 +267,11 @@ public interface AdminService {
      * 스케줄 상태별 통계 조회
      */
     Map<String, Object> getScheduleStatistics();
+    
+    /**
+     * 스케줄 상태별 통계 조회 (지점별 필터링)
+     */
+    Map<String, Object> getScheduleStatisticsByBranch(String branchCode);
     
     /**
      * 스케줄 자동 완료 처리 (상담일지 미작성 시 메시지 발송 포함)

@@ -48,6 +48,10 @@
     border-left-color: var(--toast-info-color, #17a2b8);
 }
 
+.toast-system {
+    border-left-color: var(--toast-success-color, #10B981);  /* 시스템은 녹색 사용 */
+}
+
 .toast-content {
     display: flex;
     align-items: center;
@@ -64,7 +68,7 @@
     flex: 1;
     font-size: 16px !important;
     line-height: 1.4 !important;
-    color: #333 !important;
+    color: #6B7280 !important;  /* 회색 글자색상으로 통일 */
     font-weight: 600 !important;
 }
 
@@ -117,6 +121,10 @@
 
 .toast-info .toast-progress-bar {
     background: var(--toast-info-progress-bg, linear-gradient(90deg, #17a2b8, #138496));
+}
+
+.toast-system .toast-progress-bar {
+    background: var(--toast-system-progress-bg, linear-gradient(90deg, #10B981, #059669));
 }
 
 /* 애니메이션 */

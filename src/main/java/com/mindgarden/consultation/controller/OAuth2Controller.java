@@ -321,7 +321,7 @@ public class OAuth2Controller {
                     // 세션 쿠키 설정을 명시적으로 추가
                     return ResponseEntity.status(302)
                         .header("Location", redirectUrl)
-                        .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; Domain=m-garden.co.kr; SameSite=Lax; Max-Age=3600; HttpOnly=false", session.getId()))
+                        .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; SameSite=Lax; Max-Age=3600; HttpOnly=false", session.getId()))
                         .build();
                 }
             } else if (response.isRequiresSignup()) {
@@ -519,7 +519,7 @@ public class OAuth2Controller {
                     // 세션 쿠키 설정을 명시적으로 추가
                     return ResponseEntity.status(302)
                         .header("Location", redirectUrl)
-                        .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; Domain=m-garden.co.kr; SameSite=Lax; Max-Age=3600; HttpOnly=false", session.getId()))
+                        .header("Set-Cookie", String.format("JSESSIONID=%s; Path=/; SameSite=Lax; Max-Age=3600; HttpOnly=false", session.getId()))
                         .build();
                 }
             } else if (response.isRequiresSignup()) {

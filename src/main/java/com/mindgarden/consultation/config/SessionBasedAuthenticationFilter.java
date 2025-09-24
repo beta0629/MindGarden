@@ -82,14 +82,14 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         // 사용자 권한 설정
         Collection<GrantedAuthority> authorities = getAuthorities(user);
         
-        // 인증된 토큰 생성
+        // 인증된 토큰 생성 (authorities를 생성자에 전달하면 자동으로 인증됨)
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
             user.getEmail(), 
             null, // 비밀번호는 null로 설정 (이미 인증됨)
             authorities
         );
         
-        authToken.setAuthenticated(true);
+        // setAuthenticated(true) 호출 제거 - 이미 authorities로 자동 인증됨
         
         // Principal에 사용자 정보 설정
         authToken.setDetails(user);

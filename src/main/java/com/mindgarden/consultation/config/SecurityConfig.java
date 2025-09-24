@@ -67,6 +67,7 @@ public class SecurityConfig {
                     "/api/test/**",  // 테스트 API
                     "/api/health/**",  // 헬스체크
                     "/api/admin/mappings/*/partial-refund",  // 부분 환불 API CSRF 제외
+                    "/api/client/social-account",  // 소셜 계정 관리 API CSRF 제외
                     "/error"
                 )
             )

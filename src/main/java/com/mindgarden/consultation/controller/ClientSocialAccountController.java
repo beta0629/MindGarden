@@ -66,11 +66,21 @@ public class ClientSocialAccountController {
     @PostMapping("/social-account")
     public ResponseEntity<?> manageSocialAccount(@RequestBody Map<String, Object> request, HttpSession session) {
         try {
+            log.info("🔍 소셜 계정 관리 요청 시작: sessionId={}", session != null ? session.getId() : "null");
+            
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
-                log.error("❌ 로그인된 사용자 정보가 없습니다");
-                return ResponseEntity.status(401).build();
+                log.error("❌ 로그인된 사용자 정보가 없습니다 - 세션: {}", session != null ? session.getId() : "null");
+                return ResponseEntity.status(401)
+                    .body(Map.of(
+                        "success", false,
+                        "message", "접근 권한이 없습니다.",
+                        "redirectToLogin", true,
+                        "timestamp", System.currentTimeMillis()
+                    ));
             }
+            
+            log.info("✅ 사용자 인증 확인: userId={}, email={}", currentUser.getId(), currentUser.getEmail());
 
             String action = (String) request.get("action");
             String provider = (String) request.get("provider");

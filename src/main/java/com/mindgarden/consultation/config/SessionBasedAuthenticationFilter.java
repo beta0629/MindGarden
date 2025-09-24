@@ -39,6 +39,11 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         String requestPath = request.getRequestURI();
         log.info("🔍 SessionBasedAuthenticationFilter 실행: {}", requestPath);
         
+        // 소셜 계정 관련 요청에 대한 특별 로깅
+        if (requestPath.contains("/social-account")) {
+            log.info("🔍 소셜 계정 요청 감지: {}", requestPath);
+        }
+        
         try {
             // 세션에서 사용자 정보 조회
             HttpSession session = request.getSession(false);
@@ -59,6 +64,18 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     
                     // 세션에 SecurityContext 저장 (명시적으로)
                     session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+                    
+                    // 세션 쿠키 설정 (운영 환경 호환성)
+                    if (requestPath.contains("/social-account")) {
+                        log.info("🔍 소셜 계정 요청 - 세션 쿠키 설정 확인");
+                        // 세션 쿠키가 제대로 설정되었는지 확인
+                        String sessionId = session.getId();
+                        log.info("🔍 현재 세션 ID: {}", sessionId);
+                        
+                        // 세션 만료 시간 설정 (1시간)
+                        session.setMaxInactiveInterval(3600);
+                        log.info("🔍 세션 만료 시간 설정: 3600초");
+                    }
                     
                     log.info("✅ 세션 기반 인증 성공: 사용자={}, 역할={}", user.getEmail(), user.getRole());
                     

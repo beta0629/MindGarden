@@ -24,12 +24,29 @@ public class PlSqlMappingSyncServiceImpl implements PlSqlMappingSyncService {
     
     private final JdbcTemplate jdbcTemplate;
     
+    /**
+     * UTF-8 인코딩 설정
+     */
+    private void setUtf8Encoding() {
+        try {
+            jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+            jdbcTemplate.execute("SET character_set_client = utf8mb4");
+            jdbcTemplate.execute("SET character_set_connection = utf8mb4");
+            jdbcTemplate.execute("SET character_set_results = utf8mb4");
+        } catch (Exception e) {
+            log.warn("UTF-8 인코딩 설정 중 오류 (무시됨): {}", e.getMessage());
+        }
+    }
+    
     @Override
     public Map<String, Object> useSessionForMapping(Long consultantId, Long clientId, Long scheduleId, String sessionType) {
         log.info("🔄 PL/SQL 회기 사용 처리: ConsultantID={}, ClientID={}, ScheduleID={}, Type={}", 
                  consultantId, clientId, scheduleId, sessionType);
         
         try {
+            // UTF-8 인코딩 설정
+            setUtf8Encoding();
+            
             Map<String, Object> result = new HashMap<>();
             
             // PL/SQL 프로시저 호출

@@ -36,6 +36,12 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
         log.info("📊 일별 통계 PL/SQL 프로시저 호출: branchCode={}, statDate={}", branchCode, statDate);
         
         try {
+            // UTF-8 인코딩 설정
+            jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+            jdbcTemplate.execute("SET character_set_client = utf8mb4");
+            jdbcTemplate.execute("SET character_set_connection = utf8mb4");
+            jdbcTemplate.execute("SET character_set_results = utf8mb4");
+            
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
                 .withProcedureName("UpdateDailyStatistics")
                 .declareParameters(

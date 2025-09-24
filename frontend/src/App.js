@@ -74,6 +74,8 @@ import duplicateLoginManager from './utils/duplicateLoginManager';
 import DuplicateLoginAlert from './components/common/DuplicateLoginAlert';
 import BranchMappingModal from './components/common/BranchMappingModal';
 import DuplicateLoginModal from './components/common/DuplicateLoginModal';
+import PrivacyPolicy from './components/common/PrivacyPolicy';
+import TermsOfService from './components/common/TermsOfService';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -267,6 +269,10 @@ function AppContent() {
             <Route path="/client/payment-history" element={<ClientPaymentHistory />} />
             <Route path="/client/settings" element={<ClientSettings />} />
             <Route path="/client/activity-history" element={<ActivityHistory />} />
+            
+            {/* 개인정보 및 약관 관련 라우트 */}
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             
             {/* 상담 내역 및 리포트 라우트 (모든 사용자) */}
             <Route path="/consultation-history" element={<ConsultationHistory />} />

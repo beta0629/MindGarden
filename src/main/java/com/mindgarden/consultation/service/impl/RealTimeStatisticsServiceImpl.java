@@ -12,6 +12,7 @@ import com.mindgarden.consultation.repository.DailyStatisticsRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.RealTimeStatisticsService;
 import com.mindgarden.consultation.service.StatisticsConfigService;
+import com.mindgarden.consultation.service.PlSqlStatisticsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
     private final ConsultantPerformanceRepository consultantPerformanceRepository;
     private final UserRepository userRepository;
     private final StatisticsConfigService statisticsConfigService;
+    private final PlSqlStatisticsService plSqlStatisticsService;
     
     @Override
     public void updateStatisticsOnScheduleCompletion(Schedule schedule) {
@@ -52,11 +54,25 @@ public class RealTimeStatisticsServiceImpl implements RealTimeStatisticsService 
             String branchCode = consultant.getBranchCode();
             LocalDate scheduleDate = schedule.getDate();
             
-            // 2. 일별 통계 업데이트
-            updateDailyStatistics(branchCode, scheduleDate);
+            // 2. 일별 통계 업데이트 (PL/SQL 우선 사용)
+            if (plSqlStatisticsService.isProcedureAvailable()) {
+                log.info("🚀 PL/SQL 프로시저를 사용한 일별 통계 업데이트: branchCode={}, date={}", branchCode, scheduleDate);
+                String result = plSqlStatisticsService.updateDailyStatistics(branchCode, scheduleDate);
+                log.debug("PL/SQL 일별 통계 결과: {}", result);
+            } else {
+                log.info("📊 Java 방식 일별 통계 업데이트 (PL/SQL 비활성): branchCode={}, date={}", branchCode, scheduleDate);
+                updateDailyStatistics(branchCode, scheduleDate);
+            }
             
-            // 3. 상담사별 성과 업데이트
-            updateConsultantPerformance(schedule.getConsultantId(), scheduleDate);
+            // 3. 상담사별 성과 업데이트 (PL/SQL 우선 사용)
+            if (plSqlStatisticsService.isProcedureAvailable()) {
+                log.info("🚀 PL/SQL 프로시저를 사용한 상담사 성과 업데이트: consultantId={}, date={}", schedule.getConsultantId(), scheduleDate);
+                String result = plSqlStatisticsService.updateConsultantPerformance(schedule.getConsultantId(), scheduleDate);
+                log.debug("PL/SQL 상담사 성과 결과: {}", result);
+            } else {
+                log.info("📈 Java 방식 상담사 성과 업데이트 (PL/SQL 비활성): consultantId={}, date={}", schedule.getConsultantId(), scheduleDate);
+                updateConsultantPerformance(schedule.getConsultantId(), scheduleDate);
+            }
             
             log.info("✅ 스케줄 완료시 실시간 통계 업데이트 완료: scheduleId={}", schedule.getId());
             

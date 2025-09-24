@@ -22,8 +22,11 @@ const RecentActivities = ({ consultationData }) => {
   };
 
   const handleViewAll = () => {
-    // 상세 페이지로 이동 (예: 활동 내역 페이지)
-    navigate('/activities');
+    // 활동 내역 페이지로 이동 (임시로 대시보드로 리다이렉트)
+    console.log('최근 활동 상세 페이지로 이동 (임시 구현)');
+    // TODO: 실제 활동 내역 페이지 구현 필요
+    alert('최근 활동 상세 페이지는 준비 중입니다. 곧 제공될 예정입니다.');
+    // navigate('/client/activity-history'); // 추후 구현
   };
 
   const activities = consultationData?.recentActivities || [];

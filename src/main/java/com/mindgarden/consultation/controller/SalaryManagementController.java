@@ -1,21 +1,24 @@
 package com.mindgarden.consultation.controller;
 
-import com.mindgarden.consultation.entity.ConsultantSalaryProfile;
-import com.mindgarden.consultation.entity.SalaryCalculation;
-import com.mindgarden.consultation.entity.User;
-import com.mindgarden.consultation.service.SalaryManagementService;
-import com.mindgarden.consultation.service.PlSqlSalaryManagementService;
-import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import com.mindgarden.consultation.entity.ConsultantSalaryProfile;
+import com.mindgarden.consultation.entity.SalaryCalculation;
+import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.service.PlSqlSalaryManagementService;
+import com.mindgarden.consultation.service.SalaryManagementService;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 급여관리 컨트롤러
@@ -41,12 +44,14 @@ public class SalaryManagementController {
         try {
             User currentUser = (User) session.getAttribute("currentUser");
             if (currentUser == null) {
+                log.warn("급여 프로필 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", "로그인이 필요합니다."
+                    "message", "로그인이 필요합니다. 세션을 확인해주세요."
                 ));
             }
             
+            log.info("급여 프로필 조회: 사용자 {}, 지점 {}", currentUser.getName(), currentUser.getBranchCode());
             String branchCode = currentUser.getBranchCode();
             List<ConsultantSalaryProfile> profiles = salaryManagementService.getAllSalaryProfiles(branchCode);
             
@@ -73,12 +78,14 @@ public class SalaryManagementController {
         try {
             User currentUser = (User) session.getAttribute("currentUser");
             if (currentUser == null) {
+                log.warn("상담사 목록 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", "로그인이 필요합니다."
+                    "message", "로그인이 필요합니다. 세션을 확인해주세요."
                 ));
             }
             
+            log.info("상담사 목록 조회: 사용자 {}, 지점 {}", currentUser.getName(), currentUser.getBranchCode());
             String branchCode = currentUser.getBranchCode();
             List<User> consultants = salaryManagementService.getConsultantsForSalary(branchCode);
             

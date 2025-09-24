@@ -21,13 +21,13 @@ import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.service.UserService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * 통합 테스트 컨트롤러

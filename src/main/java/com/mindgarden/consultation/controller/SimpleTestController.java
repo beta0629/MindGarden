@@ -3,10 +3,10 @@ package com.mindgarden.consultation.controller;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 /**
  * 간단한 테스트용 컨트롤러

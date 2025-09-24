@@ -68,11 +68,18 @@ const CommonCodeManagement = () => {
 
     // 새 코드 폼 데이터
     const [newCodeData, setNewCodeData] = useState({
+        codeGroup: '',
         codeValue: '',
         codeLabel: '',
         codeDescription: '',
         sortOrder: 0,
-        isActive: true
+        isActive: true,
+        parentCodeGroup: '',
+        parentCodeValue: '',
+        extraData: '',
+        icon: '',
+        colorCode: '',
+        koreanName: ''
     });
 
     // 코드그룹 목록 로드
@@ -316,11 +323,18 @@ const CommonCodeManagement = () => {
                 notification.success('새 코드가 추가되었습니다!');
                 setShowAddForm(false);
                 setNewCodeData({
+                    codeGroup: '',
                     codeValue: '',
                     codeLabel: '',
                     codeDescription: '',
                     sortOrder: 0,
-                    isActive: true
+                    isActive: true,
+                    parentCodeGroup: '',
+                    parentCodeValue: '',
+                    extraData: '',
+                    icon: '',
+                    colorCode: '',
+                    koreanName: ''
                 });
                 loadGroupCodes(selectedGroup);
             } else {
@@ -382,11 +396,18 @@ const CommonCodeManagement = () => {
     const handleEditCode = (code) => {
         setEditingCode(code);
         setNewCodeData({
+            codeGroup: code.codeGroup,
             codeValue: code.codeValue,
             codeLabel: code.codeLabel,
             codeDescription: code.codeDescription || '',
             sortOrder: code.sortOrder || 0,
-            isActive: code.isActive
+            isActive: code.isActive,
+            parentCodeGroup: code.parentCodeGroup,
+            parentCodeValue: code.parentCodeValue,
+            extraData: code.extraData,
+            icon: code.icon,
+            colorCode: code.colorCode,
+            koreanName: code.koreanName
         });
         setShowAddForm(true);
     };
@@ -409,11 +430,18 @@ const CommonCodeManagement = () => {
                 setShowAddForm(false);
                 setEditingCode(null);
                 setNewCodeData({
+                    codeGroup: '',
                     codeValue: '',
                     codeLabel: '',
                     codeDescription: '',
                     sortOrder: 0,
-                    isActive: true
+                    isActive: true,
+                    parentCodeGroup: '',
+                    parentCodeValue: '',
+                    extraData: '',
+                    icon: '',
+                    colorCode: '',
+                    koreanName: ''
                 });
                 loadGroupCodes(selectedGroup);
             } else {

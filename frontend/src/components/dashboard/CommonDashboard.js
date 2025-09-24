@@ -546,10 +546,12 @@ const CommonDashboard = ({ user: propUser }) => {
                  const result = await response.json();
                  console.log('📋 지연된 세션 확인 응답 데이터:', result);
                  
-                 if (result.success && result.user) {
-                   console.log('✅ 지연된 세션 확인 성공, 사용자 정보 로드:', result.user);
+                 // 응답 데이터 구조 확인: result.success && result.user 또는 직접 사용자 객체
+                 if ((result.success && result.user) || (result.role && result.name)) {
+                   const userData = result.success ? result.user : result;
+                   console.log('✅ 지연된 세션 확인 성공, 사용자 정보 로드:', userData);
                    // 사용자 정보 설정 후 데이터 로드
-                   setUser(result.user);
+                   setUser(userData);
                    return;
                  }
                }

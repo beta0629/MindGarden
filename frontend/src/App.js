@@ -48,6 +48,7 @@ import ConsolidatedFinancial from './components/hq/ConsolidatedFinancial';
 import FinancialReports from './components/hq/FinancialReports';
 import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
+import ActivityHistory from './pages/client/ActivityHistory';
 import ConsultantClientList from './components/consultant/ConsultantClientList';
 import ConsultantAvailability from './components/consultant/ConsultantAvailability';
 import ConsultantRecords from './components/consultant/ConsultantRecords';
@@ -265,6 +266,7 @@ function AppContent() {
             <Route path="/client/session-management" element={<ClientSessionManagement />} />
             <Route path="/client/payment-history" element={<ClientPaymentHistory />} />
             <Route path="/client/settings" element={<ClientSettings />} />
+            <Route path="/client/activity-history" element={<ActivityHistory />} />
             
             {/* 상담 내역 및 리포트 라우트 (모든 사용자) */}
             <Route path="/consultation-history" element={<ConsultationHistory />} />

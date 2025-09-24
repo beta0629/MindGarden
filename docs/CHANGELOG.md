@@ -2,6 +2,62 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2025-01-25] - PL/SQL 통합 시스템 및 급여 관리 시스템 완전 구현
+
+### ✨ 새로운 기능
+- **PL/SQL 통합 시스템 구현**
+  - 통계 관리 PL/SQL 프로시저: `UpdateDailyStatistics()`, `UpdateConsultantPerformance()` 등
+  - 급여 관리 PL/SQL 프로시저: `ProcessIntegratedSalaryCalculation()`, `ProcessSalaryPaymentWithErpSync()` 등
+  - 할인 회계 PL/SQL 프로시저: `ApplyDiscountAccounting()`, `ProcessDiscountRefund()` 등
+  - 매핑-세션 통합 PL/SQL 프로시저: `UseSessionForMapping()`, `SyncAllMappings()` 등
+
+- **급여 관리 시스템 완성**
+  - 프리랜서/정규직 통합 급여 계산 시스템
+  - 세금 자동 계산 (소득세, 지방소득세, 부가가치세, 4대보험)
+  - ERP 실시간 동기화 및 회계 거래 자동 생성
+  - 지점별 급여 관리 및 통계 분석
+
+- **Java-PL/SQL 연동 아키텍처**
+  - JdbcTemplate 기반 PL/SQL 프로시저 직접 호출
+  - MySQL 오류 메시지 한글 지원 및 상세 로깅
+  - PL/SQL 실패 시 Java 로직 Fallback 메커니즘
+
+### 🗄️ 데이터베이스 변경사항
+- **신규 엔티티 추가**
+  - `DailyStatistics`, `ConsultantPerformance`, `PerformanceAlert`, `ErpSyncLog`
+  - `SalaryCalculation`, `SalaryTaxCalculation`, `ConsultantSalaryProfile`
+  - `PackageDiscount`, `DiscountAccountingTransaction`
+
+- **PL/SQL 프로시저 생성**
+  - 통계 관리: 4개 프로시저
+  - 급여 관리: 4개 프로시저
+  - 할인 회계: 4개 프로시저
+  - 매핑-세션 통합: 8개 프로시저
+
+### 🔧 개선사항
+- **실시간 자동화 시스템**
+  - 이벤트 기반 통계 업데이트 (스케줄 완료, 결제 확인 시)
+  - `StatisticsSchedulerService`를 통한 배치 처리
+  - 성능 모니터링 및 오류 추적
+
+- **서비스 계층 구조화**
+  - `PlSqlStatisticsService`, `PlSqlSalaryManagementService` 등 PL/SQL 전용 서비스
+  - `RealTimeStatisticsService`로 실시간 업데이트 관리
+  - 기존 Java 서비스와 PL/SQL 서비스 통합
+
+### 🚀 성능 최적화
+- **대용량 데이터 처리**
+  - 복잡한 집계 쿼리를 PL/SQL로 이전하여 성능 향상
+  - 메모리 캐싱 및 인덱스 최적화
+  - 배치 처리를 통한 시스템 부하 분산
+
+### 📊 API 엔드포인트 추가
+- **PL/SQL 통합 시스템 API**
+  - `/api/admin/statistics-management/plsql/*` - 통계 관리
+  - `/api/admin/salary/*` - 급여 관리
+  - `/api/admin/plsql-discount/*` - 할인 회계
+  - `/api/admin/plsql-mapping-sync/*` - 매핑 동기화
+
 ## [2025-01-17] - 재무 보고서 카테고리별 지출 분석 기능 완성
 
 ### ✨ 새로운 기능

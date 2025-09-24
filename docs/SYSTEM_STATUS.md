@@ -1,8 +1,8 @@
 # 🚀 MindGarden 상담 시스템 - 현재 상태 보고서
 
-**최종 업데이트**: 2025년 1월 17일 09:00  
-**문서 버전**: v8.0.0  
-**상태**: ✅ **매핑 관리 시스템 대폭 개선 및 부분 환불 기능 완료**
+**최종 업데이트**: 2025년 1월 25일 12:00  
+**문서 버전**: v9.0.0  
+**상태**: ✅ **PL/SQL 통합 시스템 및 급여 관리 시스템 완전 구현 완료**
 
 ## ⚠️ **필수 개발 원칙**
 
@@ -25,6 +25,46 @@ MindGarden 상담 시스템은 상담사와 내담자를 연결하는 전문적�
 Spring Boot 백엔드와 React 프론트엔드로 구성되어 있으며, OAuth2 기반 SNS 로그인과 프로필 이미지 우선순위 시스템을 제공합니다.
 
 ---
+
+## 🆕 **v9.0.0 신규 기능**
+
+### **PL/SQL 통합 시스템 완전 구현** 🎯
+- **통계 관리 PL/SQL 시스템**
+  - `UpdateDailyStatistics()`, `UpdateConsultantPerformance()` 등 핵심 프로시저 구현
+  - 실시간 통계 업데이트 및 성과 모니터링 자동화
+  - 지점별 필터링 및 권한 기반 데이터 분리
+  - `DailyStatistics`, `ConsultantPerformance`, `PerformanceAlert` 엔티티 완성
+
+- **급여 관리 PL/SQL 시스템**
+  - `ProcessIntegratedSalaryCalculation()`, `ProcessSalaryPaymentWithErpSync()` 프로시저
+  - 프리랜서/정규직 구분 자동 계산 및 세금 처리
+  - ERP 실시간 동기화 및 회계 거래 자동 생성
+  - `SalaryCalculation`, `SalaryTaxCalculation`, `ConsultantSalaryProfile` 엔티티 통합
+
+- **할인 회계 PL/SQL 시스템**
+  - `ApplyDiscountAccounting()`, `ProcessDiscountRefund()` 프로시저
+  - 패키지 할인 처리 및 환불 시 할인 비례 적용
+  - 수익/할인 분리 회계 처리 및 무결성 검증
+  - `PackageDiscount`, `DiscountAccountingTransaction` 엔티티
+
+- **매핑-세션 통합 PL/SQL 시스템**
+  - `UseSessionForMapping()`, `SyncAllMappings()` 프로시저
+  - 세션과 매핑 데이터 실시간 동기화
+  - 환불 시 세션 조정 및 부분 환불 처리
+  - 데이터 일관성 보장 및 무결성 검증
+
+### **Java-PL/SQL 연동 아키텍처 완성** 🔧
+- **서비스 계층 구조**: `PlSqlStatisticsService`, `PlSqlSalaryManagementService` 등
+- **JdbcTemplate 기반**: PL/SQL 프로시저 직접 호출
+- **예외 처리**: MySQL 오류 메시지 한글 지원 및 상세 로깅
+- **Fallback 메커니즘**: PL/SQL 실패 시 Java 로직 대체
+- **트랜잭션 관리**: `@Transactional` 어노테이션 활용
+
+### **실시간 자동화 시스템** ⚡
+- **이벤트 기반 업데이트**: 스케줄 완료, 결제 확인 시 즉시 통계 업데이트
+- **스케줄러 서비스**: `StatisticsSchedulerService`로 배치 처리
+- **성능 모니터링**: 실행 시간, 처리 건수, 오류 추적
+- **캐싱 최적화**: 자주 조회되는 데이터 메모리 캐싱
 
 ## 🆕 **v8.0.0 신규 기능**
 
@@ -218,7 +258,24 @@ Spring Boot 백엔드와 React 프론트엔드로 구성되어 있으며, OAuth2
 
 ## ✅ **완성된 핵심 기능들**
 
-### **1. 전체 통계 대시보드 시스템** 📊
+### **1. PL/SQL 통합 시스템** 🗄️
+- **통계 관리 PL/SQL**: 일별/월별 통계 자동 업데이트, 상담사 성과 분석, 실시간 모니터링
+- **급여 관리 PL/SQL**: 통합 급여 계산, 세금 처리, ERP 동기화, 재무 거래 자동 생성
+- **할인 회계 PL/SQL**: 패키지 할인 처리, 환불 관리, 수익/할인 분리 회계
+- **매핑-세션 통합 PL/SQL**: 세션 동기화, 매핑 무결성 검증, 환불 시 세션 조정
+- **Java-PL/SQL 연동**: JdbcTemplate 기반 프로시저 호출, 예외 처리, Fallback 메커니즘
+
+**주요 엔티티**:
+- `DailyStatistics`, `ConsultantPerformance`, `PerformanceAlert`, `ErpSyncLog`
+- `SalaryCalculation`, `SalaryTaxCalculation`, `ConsultantSalaryProfile`
+- `PackageDiscount`, `DiscountAccountingTransaction`
+
+**주요 서비스**:
+- `PlSqlStatisticsService`, `PlSqlSalaryManagementService`
+- `PlSqlDiscountAccountingService`, `PlSqlMappingSyncService`
+- `RealTimeStatisticsService`, `StatisticsSchedulerService`
+
+### **2. 전체 통계 대시보드 시스템** 📊
 - **통계 대시보드**: 그래프와 상세 통계를 포함한 종합 대시보드
 - **차트 시각화**: Bar, Line, Pie, Doughnut 차트로 데이터 표현
 - **필터링 기능**: 날짜 범위별 통계 조회 (오늘, 이번 주, 이번 달, 올해)
@@ -654,6 +711,34 @@ frontend/src/components/
 
 ## 🔧 **API 엔드포인트**
 
+### **PL/SQL 통합 시스템 API**
+- `GET /api/admin/statistics-management/plsql/status` - PL/SQL 상태 확인
+- `POST /api/admin/statistics-management/update-yesterday` - 어제 통계 업데이트
+- `POST /api/admin/statistics-management/update-date` - 특정일 통계 업데이트
+- `POST /api/admin/salary/calculate-plsql` - PL/SQL 급여 계산
+- `POST /api/admin/salary/approve-plsql` - PL/SQL 급여 승인
+- `GET /api/admin/salary/statistics-plsql` - PL/SQL 급여 통계
+- `POST /api/admin/plsql-discount/apply` - 할인 적용
+- `POST /api/admin/plsql-discount/refund` - 할인 환불
+- `GET /api/admin/plsql-discount/statistics` - 할인 통계
+- `POST /api/admin/plsql-mapping-sync/use-session` - 세션 사용
+- `POST /api/admin/plsql-mapping-sync/validate` - 무결성 검증
+- `POST /api/admin/plsql-mapping-sync/sync-all` - 전체 동기화
+
+### **급여 관리 API**
+- `GET /api/admin/salary/profiles` - 급여 프로필 목록 조회
+- `GET /api/admin/salary/profiles/{id}` - 급여 프로필 조회
+- `POST /api/admin/salary/profiles` - 급여 프로필 생성
+- `PUT /api/admin/salary/profiles/{id}` - 급여 프로필 수정
+- `DELETE /api/admin/salary/profiles/{id}` - 급여 프로필 삭제
+- `GET /api/admin/salary/consultants` - 급여용 상담사 목록
+- `GET /api/admin/salary/calculations` - 급여 계산 목록
+- `POST /api/admin/salary/calculate` - 급여 계산
+- `POST /api/admin/salary/approve/{id}` - 급여 승인
+- `POST /api/admin/salary/mark-paid/{id}` - 급여 지급 완료
+- `GET /api/admin/salary/statistics` - 급여 통계
+- `GET /api/admin/salary/top-performers` - 상위 성과자
+
 ### **통계 및 스케줄 API**
 - `GET /api/schedules/admin/statistics` - 관리자용 전체 스케줄 통계 조회
 - `GET /api/schedules/today/statistics` - 오늘의 스케줄 통계 조회
@@ -844,8 +929,14 @@ frontend/src/components/
 
 ## 🎉 **결론**
 
-**MindGarden 상담 시스템의 프랜차이즈 지점 관리, 결제 시스템, ERP 시스템, 캐시 시스템, 중복 로그인 방지 시스템이 완성되었습니다!**
+**MindGarden 상담 시스템의 PL/SQL 통합 시스템 및 급여 관리 시스템이 완전 구현되어 프로덕션 배포 준비가 완료되었습니다!**
 
+- ✅ **PL/SQL 통합 시스템**: 통계, 급여, 할인, 매핑-세션 통합 처리 시스템 완성
+- ✅ **급여 관리 시스템**: 프리랜서/정규직 급여 계산, 세금 처리, ERP 연동 완성
+- ✅ **할인 회계 시스템**: 패키지 할인, 환불 처리, 수익/할인 분리 회계 완성
+- ✅ **매핑-세션 통합**: 세션 동기화, 무결성 검증, 환불 시 세션 조정 완성
+- ✅ **Java-PL/SQL 연동**: JdbcTemplate 기반 프로시저 호출, 예외 처리, Fallback 메커니즘 완성
+- ✅ **실시간 자동화**: 이벤트 기반 업데이트, 스케줄러 서비스, 성능 모니터링 완성
 - ✅ **프랜차이즈 지점 관리**: 지점 엔티티, 계층 구조, 권한 관리, 지점장 시스템 완성
 - ✅ **사용자 역할 확장**: 다중 역할, 지점별 권한, 데이터 격리, 동적 권한 할당 완성
 - ✅ **결제 시스템**: 토스페이먼츠/아임포트 연동, Webhook 처리, 실시간 결제 상태 관리 완성
@@ -866,7 +957,7 @@ frontend/src/components/
 - ✅ **내담자 관리**: 카드 형태 UI, 검색/필터링, SNS 사용자 지원 완성
 - ✅ **상담사 변경 시스템**: 활성 매핑 상담사 변경, 이력 추적, 회기수 이전 완성
 
-**프랜차이즈 지점 관리, 결제 시스템, ERP 시스템, 캐시 시스템, 중복 로그인 방지 시스템이 프로덕션 환경 배포 준비가 완료되었습니다!** 🚀
+**PL/SQL 통합 시스템을 포함한 모든 핵심 시스템이 프로덕션 환경 배포 준비가 완료되었습니다!** 🚀
 
 ---
 

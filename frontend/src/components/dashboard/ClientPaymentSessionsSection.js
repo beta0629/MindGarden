@@ -185,23 +185,100 @@ const ClientPaymentSessionsSection = ({ userId }) => {
 
       <div className="payment-sessions-content">
         {/* 회기 현황 요약 */}
-        <div className="sessions-summary">
-          <div className="summary-card">
-            <div className="summary-item">
-              <div className="summary-label">총 회기수</div>
-              <div className="summary-value total">{paymentData.totalSessions}회</div>
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '30px',
+            background: '#f8f9fa',
+            padding: '32px',
+            borderRadius: '16px',
+            width: '100%',
+            minHeight: '200px'
+          }}>
+            <div style={{
+              textAlign: 'center',
+              padding: '20px',
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              transition: 'transform 0.2s ease'
+            }}>
+              <div style={{
+                fontSize: '1rem',
+                color: '#6c757d',
+                marginBottom: '12px',
+                fontWeight: '600'
+              }}>총 회기수</div>
+              <div style={{
+                fontSize: '2rem',
+                fontWeight: '700',
+                margin: '0',
+                color: '#007bff'
+              }}>{paymentData.totalSessions}회</div>
             </div>
-            <div className="summary-item">
-              <div className="summary-label">사용한 회기</div>
-              <div className="summary-value used">{paymentData.usedSessions}회</div>
+            <div style={{
+              textAlign: 'center',
+              padding: '20px',
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              transition: 'transform 0.2s ease'
+            }}>
+              <div style={{
+                fontSize: '1rem',
+                color: '#6c757d',
+                marginBottom: '12px',
+                fontWeight: '600'
+              }}>사용한 회기</div>
+              <div style={{
+                fontSize: '2rem',
+                fontWeight: '700',
+                margin: '0',
+                color: '#28a745'
+              }}>{paymentData.usedSessions}회</div>
             </div>
-            <div className="summary-item">
-              <div className="summary-label">남은 회기</div>
-              <div className="summary-value remaining">{paymentData.remainingSessions}회</div>
+            <div style={{
+              textAlign: 'center',
+              padding: '20px',
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              transition: 'transform 0.2s ease'
+            }}>
+              <div style={{
+                fontSize: '1rem',
+                color: '#6c757d',
+                marginBottom: '12px',
+                fontWeight: '600'
+              }}>남은 회기</div>
+              <div style={{
+                fontSize: '2rem',
+                fontWeight: '700',
+                margin: '0',
+                color: '#ffc107'
+              }}>{paymentData.remainingSessions}회</div>
             </div>
-            <div className="summary-item">
-              <div className="summary-label">총 결제금액</div>
-              <div className="summary-value amount">{formatCurrency(paymentData.totalAmount)}</div>
+            <div style={{
+              textAlign: 'center',
+              padding: '20px',
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              transition: 'transform 0.2s ease'
+            }}>
+              <div style={{
+                fontSize: '1rem',
+                color: '#6c757d',
+                marginBottom: '12px',
+                fontWeight: '600'
+              }}>총 결제금액</div>
+              <div style={{
+                fontSize: '2rem',
+                fontWeight: '700',
+                margin: '0',
+                color: '#6f42c1'
+              }}>{formatCurrency(paymentData.totalAmount)}</div>
             </div>
           </div>
         </div>
@@ -290,26 +367,37 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         .summary-card {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 20px;
+          gap: 30px;
           background: #f8f9fa;
-          padding: 24px;
-          border-radius: 12px;
+          padding: 32px;
+          border-radius: 16px;
           width: 100%;
+          min-height: 200px;
         }
 
         .summary-item {
           text-align: center;
+          padding: 20px;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          transition: transform 0.2s ease;
+        }
+
+        .summary-item:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         }
 
         .summary-label {
-          font-size: 0.875rem;
+          font-size: 1rem;
           color: #6c757d;
-          margin-bottom: 8px;
-          font-weight: 500;
+          margin-bottom: 12px;
+          font-weight: 600;
         }
 
         .summary-value {
-          font-size: 1.5rem;
+          font-size: 2rem;
           font-weight: 700;
           margin: 0;
         }

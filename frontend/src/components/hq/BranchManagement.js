@@ -14,6 +14,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import LoadingSpinner from '../common/LoadingSpinner';
 import SimpleLayout from '../layout/SimpleLayout';
+import './BranchManagement.css';
 
 /**
  * 본사 지점 관리 컴포넌트
@@ -194,52 +195,54 @@ const BranchManagement = () => {
     
     return (
         <SimpleLayout title="지점 관리">
-            <Container fluid className="py-4">
-                <Tabs
-                    activeKey={activeTab}
-                    onSelect={setActiveTab}
-                    className="mb-4"
-                >
-                    <Tab eventKey="branches" title={
-                        <span><FaBuilding className="me-2" />지점 목록</span>
-                    }>
-                        <Row>
-                            <Col md={3}>
-                                <Card className="h-100">
-                                    <Card.Header>
-                                        <h5 className="mb-0">
-                                            <FaBuilding className="me-2" />
-                                            지점 목록 ({branches.length}개)
-                                        </h5>
-                                    </Card.Header>
-                                    <Card.Body style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                                        {loading ? (
-                                            <LoadingSpinner text="지점 목록을 불러오는 중..." size="small" />
-                                        ) : (
-                                            <div className="list-group">
-                                                {branches.map((branch) => (
-                                                    <button
-                                                        key={branch.id}
-                                                        className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${
-                                                            selectedBranch?.id === branch.id ? 'active' : ''
-                                                        }`}
-                                                        onClick={() => setSelectedBranch(branch)}
-                                                    >
-                                                        <div>
-                                                            <strong>{branch.name}</strong>
-                                                            <br />
-                                                            <small className="text-muted">{branch.code}</small>
-                                                        </div>
-                                                        <Badge bg={branch.isActive ? 'success' : 'secondary'}>
-                                                            {branch.isActive ? '활성' : '비활성'}
-                                                        </Badge>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </Card.Body>
-                                </Card>
-                            </Col>
+            <div className="hq-branch-management">
+                <Container fluid className="py-4">
+                    <Tabs
+                        activeKey={activeTab}
+                        onSelect={setActiveTab}
+                        className="mb-4"
+                    >
+                        <Tab eventKey="branches" title={
+                            <span><FaBuilding className="me-2" />지점 목록</span>
+                        }>
+                            <Row>
+                                <Col md={3}>
+                                    <Card className="branch-list-card h-100">
+                                        <Card.Header>
+                                            <h5 className="mb-0">
+                                                <FaBuilding className="me-2" />
+                                                지점 목록 ({branches.length}개)
+                                            </h5>
+                                        </Card.Header>
+                                        <Card.Body>
+                                            {loading ? (
+                                                <div className="loading-container">
+                                                    <LoadingSpinner text="지점 목록을 불러오는 중..." size="small" />
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    {branches.map((branch) => (
+                                                        <button
+                                                            key={branch.id}
+                                                            className={`branch-list-item ${
+                                                                selectedBranch?.id === branch.id ? 'active' : ''
+                                                            }`}
+                                                            onClick={() => setSelectedBranch(branch)}
+                                                        >
+                                                            <div className="branch-info">
+                                                                <strong>{branch.name}</strong>
+                                                                <small>{branch.code}</small>
+                                                            </div>
+                                                            <Badge bg={branch.isActive ? 'success' : 'secondary'}>
+                                                                {branch.isActive ? '활성' : '비활성'}
+                                                            </Badge>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
                             
                             <Col md={9}>
                                 {selectedBranch && (
@@ -247,7 +250,7 @@ const BranchManagement = () => {
                                         {/* 지점 통계 */}
                                         <Row className="mb-4">
                                             <Col>
-                                                <Card>
+                                                <Card className="branch-stats-card">
                                                     <Card.Header>
                                                         <h5 className="mb-0">
                                                             <FaChartBar className="me-2" />
@@ -257,39 +260,39 @@ const BranchManagement = () => {
                                                     <Card.Body>
                                                         <Row>
                                                             <Col md={2}>
-                                                                <div className="text-center">
-                                                                    <div className="h4 text-primary">{branchStatistics.totalUsers || 0}</div>
-                                                                    <small>전체 사용자</small>
+                                                                <div className="stat-item">
+                                                                    <span className="stat-number text-primary">{branchStatistics.totalUsers || 0}</span>
+                                                                    <span className="stat-label">전체 사용자</span>
                                                                 </div>
                                                             </Col>
                                                             <Col md={2}>
-                                                                <div className="text-center">
-                                                                    <div className="h4 text-success">{branchStatistics.consultants || 0}</div>
-                                                                    <small>상담사</small>
+                                                                <div className="stat-item">
+                                                                    <span className="stat-number text-success">{branchStatistics.consultants || 0}</span>
+                                                                    <span className="stat-label">상담사</span>
                                                                 </div>
                                                             </Col>
                                                             <Col md={2}>
-                                                                <div className="text-center">
-                                                                    <div className="h4 text-primary">{branchStatistics.clients || 0}</div>
-                                                                    <small>내담자</small>
+                                                                <div className="stat-item">
+                                                                    <span className="stat-number text-primary">{branchStatistics.clients || 0}</span>
+                                                                    <span className="stat-label">내담자</span>
                                                                 </div>
                                                             </Col>
                                                             <Col md={2}>
-                                                                <div className="text-center">
-                                                                    <div className="h4 text-warning">{branchStatistics.admins || 0}</div>
-                                                                    <small>관리자</small>
+                                                                <div className="stat-item">
+                                                                    <span className="stat-number text-warning">{branchStatistics.admins || 0}</span>
+                                                                    <span className="stat-label">관리자</span>
                                                                 </div>
                                                             </Col>
                                                             <Col md={2}>
-                                                                <div className="text-center">
-                                                                    <div className="h4 text-info">{branchStatistics.activeUsers || 0}</div>
-                                                                    <small>활성</small>
+                                                                <div className="stat-item">
+                                                                    <span className="stat-number text-info">{branchStatistics.activeUsers || 0}</span>
+                                                                    <span className="stat-label">활성</span>
                                                                 </div>
                                                             </Col>
                                                             <Col md={2}>
-                                                                <div className="text-center">
-                                                                    <div className="h4 text-secondary">{branchStatistics.inactiveUsers || 0}</div>
-                                                                    <small>비활성</small>
+                                                                <div className="stat-item">
+                                                                    <span className="stat-number text-secondary">{branchStatistics.inactiveUsers || 0}</span>
+                                                                    <span className="stat-label">비활성</span>
                                                                 </div>
                                                             </Col>
                                                         </Row>
@@ -299,7 +302,7 @@ const BranchManagement = () => {
                                         </Row>
                                         
                                         {/* 사용자 목록 */}
-                                        <Card>
+                                        <Card className="user-list-card">
                                             <Card.Header>
                                                 <Row className="align-items-center">
                                                     <Col>
@@ -334,140 +337,147 @@ const BranchManagement = () => {
                                             </Card.Header>
                                             <Card.Body>
                                                 {/* 필터 및 검색 */}
-                                                <Row className="mb-3">
-                                                    <Col md={4}>
-                                                        <InputGroup size="sm">
-                                                            <InputGroup.Text>
-                                                                <FaSearch />
-                                                            </InputGroup.Text>
-                                                            <FormControl
-                                                                placeholder="이름 또는 이메일로 검색..."
-                                                                value={searchTerm}
-                                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                <div className="filter-section">
+                                                    <Row>
+                                                        <Col md={4}>
+                                                            <InputGroup size="sm">
+                                                                <InputGroup.Text>
+                                                                    <FaSearch />
+                                                                </InputGroup.Text>
+                                                                <FormControl
+                                                                    placeholder="이름 또는 이메일로 검색..."
+                                                                    value={searchTerm}
+                                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                                />
+                                                            </InputGroup>
+                                                        </Col>
+                                                        <Col md={3}>
+                                                            <FormSelect
+                                                                size="sm"
+                                                                value={selectedRole}
+                                                                onChange={(e) => setSelectedRole(e.target.value)}
+                                                            >
+                                                                <option value="">모든 역할</option>
+                                                                <option value="CLIENT">내담자</option>
+                                                                <option value="CONSULTANT">상담사</option>
+                                                                <option value="ADMIN">관리자</option>
+                                                            </FormSelect>
+                                                        </Col>
+                                                        <Col md={3}>
+                                                            <FormCheck
+                                                                type="checkbox"
+                                                                id="includeInactive"
+                                                                label="비활성 사용자 포함"
+                                                                checked={includeInactive}
+                                                                onChange={(e) => setIncludeInactive(e.target.checked)}
                                                             />
-                                                        </InputGroup>
-                                                    </Col>
-                                                    <Col md={3}>
-                                                        <FormSelect
-                                                            size="sm"
-                                                            value={selectedRole}
-                                                            onChange={(e) => setSelectedRole(e.target.value)}
-                                                        >
-                                                            <option value="">모든 역할</option>
-                                                            <option value="CLIENT">내담자</option>
-                                                            <option value="CONSULTANT">상담사</option>
-                                                            <option value="ADMIN">관리자</option>
-                                                        </FormSelect>
-                                                    </Col>
-                                                    <Col md={3}>
-                                                        <FormCheck
-                                                            type="checkbox"
-                                                            id="includeInactive"
-                                                            label="비활성 사용자 포함"
-                                                            checked={includeInactive}
-                                                            onChange={(e) => setIncludeInactive(e.target.checked)}
-                                                        />
-                                                    </Col>
-                                                    <Col md={2}>
-                                                        <Button
-                                                            variant="outline-secondary"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                setSearchTerm('');
-                                                                setSelectedRole('');
-                                                                setIncludeInactive(false);
-                                                            }}
-                                                        >
-                                                            <FaFilter className="me-1" />
-                                                            초기화
-                                                        </Button>
-                                                    </Col>
-                                                </Row>
+                                                        </Col>
+                                                        <Col md={2}>
+                                                            <Button
+                                                                variant="outline-secondary"
+                                                                size="sm"
+                                                                onClick={() => {
+                                                                    setSearchTerm('');
+                                                                    setSelectedRole('');
+                                                                    setIncludeInactive(false);
+                                                                }}
+                                                            >
+                                                                <FaFilter className="me-1" />
+                                                                초기화
+                                                            </Button>
+                                                        </Col>
+                                                    </Row>
+                                                </div>
                                                 
                                                 {/* 사용자 테이블 */}
                                                 {/* 사용자 선택 안내 */}
                                                 {selectedUsers.length > 0 && (
-                                                    <Alert variant="info" className="mb-3">
+                                                    <Alert variant="info" className="selected-users-alert mb-3">
                                                         <strong>{selectedUsers.length}명</strong>의 사용자가 선택되었습니다. 
                                                         "지점 이동" 버튼을 클릭하여 다른 지점으로 이동시킬 수 있습니다.
                                                     </Alert>
                                                 )}
                                                 
-                                                {loading ? (
-                                                    <LoadingSpinner text="사용자 목록을 불러오는 중..." size="medium" />
-                                                ) : filteredUsers.length === 0 ? (
-                                                    <div className="text-center py-4 text-muted">
-                                                        <FaUsers className="mb-3" style={{ fontSize: '2rem' }} />
-                                                        <p>이 지점에는 사용자가 없습니다.</p>
-                                                        <small>다른 지점을 선택하거나 필터를 조정해보세요.</small>
-                                                    </div>
-                                                ) : (
-                                                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                                                        <Table responsive hover>
-                                                            <thead className="sticky-top bg-white">
-                                                                <tr>
-                                                                    <th>
-                                                                        <FormCheck
-                                                                            checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                                                                            onChange={(e) => handleSelectAll(e.target.checked)}
-                                                                        />
-                                                                    </th>
-                                                                    <th>사용자</th>
-                                                                    <th>역할</th>
-                                                                    <th>지점</th>
-                                                                    <th>상태</th>
-                                                                    <th>등록일</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                            {filteredUsers.map((user) => (
-                                                                <tr key={user.id} className={!user.isActive ? 'table-secondary' : ''}>
-                                                                    <td>
-                                                                        <FormCheck
-                                                                            checked={selectedUsers.includes(user.id)}
-                                                                            onChange={(e) => handleUserSelection(user.id, e.target.checked)}
-                                                                        />
-                                                                    </td>
-                                                                    <td>
-                                                                        <div className="d-flex align-items-center">
-                                                                            <div className="me-2">
-                                                                                {getRoleIcon(user.role)}
+                                                <div className="user-table">
+                                                    {loading ? (
+                                                        <div className="loading-container">
+                                                            <LoadingSpinner text="사용자 목록을 불러오는 중..." size="medium" />
+                                                        </div>
+                                                    ) : filteredUsers.length === 0 ? (
+                                                        <div className="empty-state">
+                                                            <FaUsers className="mb-3" style={{ fontSize: '2rem' }} />
+                                                            <p>이 지점에는 사용자가 없습니다.</p>
+                                                            <small>다른 지점을 선택하거나 필터를 조정해보세요.</small>
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                                            <Table responsive hover>
+                                                                <thead className="sticky-top bg-white">
+                                                                    <tr>
+                                                                        <th>
+                                                                            <FormCheck
+                                                                                checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                                                                                onChange={(e) => handleSelectAll(e.target.checked)}
+                                                                            />
+                                                                        </th>
+                                                                        <th>사용자</th>
+                                                                        <th>역할</th>
+                                                                        <th>지점</th>
+                                                                        <th>상태</th>
+                                                                        <th>등록일</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                {filteredUsers.map((user) => (
+                                                                    <tr key={user.id} className={!user.isActive ? 'table-secondary' : ''}>
+                                                                        <td>
+                                                                            <FormCheck
+                                                                                checked={selectedUsers.includes(user.id)}
+                                                                                onChange={(e) => handleUserSelection(user.id, e.target.checked)}
+                                                                            />
+                                                                        </td>
+                                                                        <td>
+                                                                            <div className="d-flex align-items-center">
+                                                                                <div className="me-2">
+                                                                                    {getRoleIcon(user.role)}
+                                                                                </div>
+                                                                                <div>
+                                                                                    <div className="fw-bold">{user.name}</div>
+                                                                                    <small className="text-muted">{user.email}</small>
+                                                                                </div>
                                                                             </div>
-                                                                            <div>
-                                                                                <div className="fw-bold">{user.name}</div>
-                                                                                <small className="text-muted">{user.email}</small>
-                                                                            </div>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td>
-                                                                        <Badge bg={getRoleBadgeVariant(user.role)}>
-                                                                            {user.roleDisplayName}
-                                                                        </Badge>
-                                                                    </td>
-                                                                    <td>
-                                                                        <Badge bg="info">
-                                                                            <FaMapMarkerAlt className="me-1" />
-                                                                            {user.branchCode}
-                                                                        </Badge>
-                                                                    </td>
-                                                                    <td>
-                                                                        <Badge bg={user.isActive ? 'success' : 'secondary'}>
-                                                                            {user.isActive ? '활성' : '비활성'}
-                                                                        </Badge>
-                                                                    </td>
-                                                                    <td>
-                                                                        <small>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</small>
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                            </tbody>
-                                                        </Table>
-                                                    </div>
-                                                )}
+                                                                        </td>
+                                                                        <td>
+                                                                            <Badge bg={getRoleBadgeVariant(user.role)}>
+                                                                                {user.roleDisplayName}
+                                                                            </Badge>
+                                                                        </td>
+                                                                        <td>
+                                                                            <Badge bg="info">
+                                                                                <FaMapMarkerAlt className="me-1" />
+                                                                                {user.branchCode}
+                                                                            </Badge>
+                                                                        </td>
+                                                                        <td>
+                                                                            <Badge bg={user.isActive ? 'success' : 'secondary'}>
+                                                                                {user.isActive ? '활성' : '비활성'}
+                                                                            </Badge>
+                                                                        </td>
+                                                                        <td>
+                                                                            <small>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</small>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                                </tbody>
+                                                            </Table>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </Card.Body>
                                         </Card>
                                     </>
                                 )}
+                            </Col>
                             </Col>
                         </Row>
                     </Tab>
@@ -598,7 +608,8 @@ const BranchManagement = () => {
                         </Button>
                     </Modal.Footer>
                 </Modal>
-            </Container>
+                </Container>
+            </div>
         </SimpleLayout>
     );
 };

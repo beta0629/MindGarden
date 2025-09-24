@@ -351,7 +351,10 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                   gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: '20px',
                   width: '100%',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  maxHeight: '400px',
+                  overflowY: 'auto',
+                  paddingRight: '8px'
                 }}>
                   {todayConsultations.map((consultation, index) => (
                     <div key={index} style={{

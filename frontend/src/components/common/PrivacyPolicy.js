@@ -1,5 +1,5 @@
 import React from 'react';
-import SimpleLayout from './SimpleLayout';
+import SimpleLayout from '../layout/SimpleLayout';
 
 /**
  * 개인정보 처리방침 컴포넌트

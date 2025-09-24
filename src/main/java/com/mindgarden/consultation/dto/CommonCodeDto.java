@@ -27,4 +27,7 @@ public class CommonCodeDto {
     private String parentCodeGroup;
     private String parentCodeValue;
     private String extraData;
+    private String icon;
+    private String colorCode;
+    private String koreanName;
 }

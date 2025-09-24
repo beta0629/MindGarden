@@ -131,6 +131,9 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         existingCode.setParentCodeGroup(dto.getParentCodeGroup());
         existingCode.setParentCodeValue(dto.getParentCodeValue());
         existingCode.setExtraData(dto.getExtraData());
+        existingCode.setIcon(dto.getIcon());
+        existingCode.setColorCode(dto.getColorCode());
+        existingCode.setKoreanName(dto.getKoreanName());
 
         return commonCodeRepository.save(existingCode);
     }

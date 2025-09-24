@@ -62,6 +62,7 @@ public class SecurityConfig {
                     "/api/auth/forgot-password",  // 비밀번호 찾기만 CSRF 제외
                     "/api/auth/reset-password",  // 비밀번호 재설정 API CSRF 제외
                     "/api/auth/change-password",  // 비밀번호 변경 API CSRF 제외
+                    "/api/admin/plsql-mapping-sync/**",  // PL/SQL 매핑 동기화 API CSRF 제외
                     "/api/auth/logout",  // 로그아웃만 CSRF 제외
                     "/oauth2/**",    // OAuth2 콜백
                     "/api/password-reset/**",  // 비밀번호 재설정

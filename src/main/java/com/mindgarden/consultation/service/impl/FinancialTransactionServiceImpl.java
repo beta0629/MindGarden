@@ -478,14 +478,14 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                 .transactionType(expenseType)
                 .category(salaryCategory)
                 .subcategory(consultantSalarySubcategory)
-                .amount(salary.getTotalSalary())
+                .amount(salary.getNetSalary())
                 .description(description != null ? description : "상담사 급여 지급")
-                .transactionDate(salary.getPayDate())
+                .transactionDate(salary.getCalculationPeriodEnd())
                 .relatedEntityId(salaryCalculationId)
                 .relatedEntityType(salaryEntityType)
                 .taxIncluded(false)
-                .taxAmount(salary.getTaxAmount())
-                .amountBeforeTax(salary.getTotalSalary())
+                .taxAmount(salary.getDeductions())
+                .amountBeforeTax(salary.getGrossSalary())
                 .build();
         
         return createTransaction(request, null); // 시스템 자동 생성

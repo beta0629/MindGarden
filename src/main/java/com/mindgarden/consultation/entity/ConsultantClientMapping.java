@@ -122,6 +122,22 @@ public class ConsultantClientMapping extends BaseEntity {
 
     @Column(name = "branch_code", length = 20)
     private String branchCode; // 지점코드
+    
+    // 할인 관련 필드
+    @Column(name = "discount_code", length = 50)
+    private String discountCode; // 할인 코드
+    
+    @Column(name = "discount_amount")
+    private Long discountAmount; // 할인 금액
+    
+    @Column(name = "original_amount")
+    private Long originalAmount; // 원래 금액
+    
+    @Column(name = "final_amount")
+    private Long finalAmount; // 최종 금액
+    
+    @Column(name = "discount_applied_at")
+    private LocalDateTime discountAppliedAt; // 할인 적용일
 
     /**
      * 매핑 상태 enum

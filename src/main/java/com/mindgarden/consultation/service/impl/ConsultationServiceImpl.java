@@ -20,7 +20,6 @@ import com.mindgarden.consultation.repository.BaseRepository;
 import com.mindgarden.consultation.repository.ClientRepository;
 import com.mindgarden.consultation.repository.ConsultantRepository;
 import com.mindgarden.consultation.repository.ConsultationRepository;
-import com.mindgarden.consultation.repository.DiscountRepository;
 import com.mindgarden.consultation.repository.NoteRepository;
 import com.mindgarden.consultation.repository.QualityEvaluationRepository;
 import com.mindgarden.consultation.repository.ReviewRepository;
@@ -63,10 +62,6 @@ public class ConsultationServiceImpl implements ConsultationService {
     @Autowired
     @SuppressWarnings("unused")
     private QualityEvaluationRepository qualityEvaluationRepository;
-    
-    @Autowired
-    @SuppressWarnings("unused")
-    private DiscountRepository discountRepository;
     
     @Autowired
     private ClientRepository clientRepository;

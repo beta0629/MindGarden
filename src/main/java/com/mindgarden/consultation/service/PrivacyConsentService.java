@@ -1,9 +1,8 @@
 package com.mindgarden.consultation.service;
 
+import java.util.Map;
 import com.mindgarden.consultation.dto.PrivacyConsentDto;
 import com.mindgarden.consultation.entity.UserPrivacyConsent;
-
-import java.util.Map;
 
 /**
  * 개인정보 동의 서비스 인터페이스

@@ -224,7 +224,7 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
             
             // 최근 동기화 로그 확인
             LocalDate today = LocalDate.now();
-            long todayLogs = erpSyncLogRepository.countByCreatedAtAfter(today.atStartOfDay());
+            long todayLogs = erpSyncLogRepository.countBySyncDateAfter(today.atStartOfDay());
             
             return String.format(
                 "스케줄러 상태 - PL/SQL사용가능: %s, 오늘실행로그: %d개, 마지막확인: %s",

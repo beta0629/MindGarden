@@ -1,19 +1,18 @@
 package com.mindgarden.consultation.service.impl;
 
-import com.mindgarden.consultation.dto.PrivacyConsentDto;
-import com.mindgarden.consultation.entity.UserPrivacyConsent;
-import com.mindgarden.consultation.repository.UserPrivacyConsentRepository;
-import com.mindgarden.consultation.service.PrivacyConsentService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.mindgarden.consultation.dto.PrivacyConsentDto;
+import com.mindgarden.consultation.entity.UserPrivacyConsent;
+import com.mindgarden.consultation.repository.UserPrivacyConsentRepository;
+import com.mindgarden.consultation.service.PrivacyConsentService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 개인정보 동의 서비스 구현체

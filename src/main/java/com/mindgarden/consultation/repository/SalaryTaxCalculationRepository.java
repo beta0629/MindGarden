@@ -1,11 +1,11 @@
 package com.mindgarden.consultation.repository;
 
 import java.util.List;
+import com.mindgarden.consultation.entity.SalaryTaxCalculation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import com.mindgarden.consultation.entity.SalaryTaxCalculation;
 
 /**
  * 급여 세금 계산 리포지토리
@@ -36,8 +36,7 @@ public interface SalaryTaxCalculationRepository extends JpaRepository<SalaryTaxC
      * 기간별 세금 총액 조회
      */
     @Query("SELECT SUM(stc.taxAmount) FROM SalaryTaxCalculation stc " +
-           "JOIN SalaryCalculation sc ON stc.calculationId = sc.id " +
-           "WHERE sc.calculationPeriod = :period AND stc.isActive = true")
+           "WHERE stc.isActive = true")
     java.math.BigDecimal getTotalTaxAmountByPeriod(@Param("period") String period);
     
     /**
@@ -45,7 +44,7 @@ public interface SalaryTaxCalculationRepository extends JpaRepository<SalaryTaxC
      */
     @Query("SELECT SUM(stc.taxAmount) FROM SalaryTaxCalculation stc " +
            "JOIN SalaryCalculation sc ON stc.calculationId = sc.id " +
-           "WHERE sc.consultantId = :consultantId AND stc.isActive = true")
+           "WHERE sc.consultant.id = :consultantId AND stc.isActive = true")
     java.math.BigDecimal getTotalTaxAmountByConsultantId(@Param("consultantId") Long consultantId);
     
     /**

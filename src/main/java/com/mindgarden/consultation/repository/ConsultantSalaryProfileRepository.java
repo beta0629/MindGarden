@@ -56,4 +56,10 @@ public interface ConsultantSalaryProfileRepository extends JpaRepository<Consult
      */
     @Query("SELECT csp FROM ConsultantSalaryProfile csp WHERE csp.salaryType = 'REGULAR' AND csp.isActive = true")
     List<ConsultantSalaryProfile> findRegularProfiles();
+    
+    /**
+     * 지점별 활성화된 급여 프로필 조회
+     */
+    @Query("SELECT csp FROM ConsultantSalaryProfile csp WHERE csp.isActive = true")
+    List<ConsultantSalaryProfile> findByBranchCodeAndIsActiveTrue(@Param("branchCode") String branchCode);
 }

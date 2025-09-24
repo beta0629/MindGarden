@@ -9,8 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.stereotype.Service;
 import com.mindgarden.consultation.constant.ScheduleStatus;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.ConsultantRating;
@@ -22,6 +20,8 @@ import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.StatisticsTestDataService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

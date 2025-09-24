@@ -1,0 +1,233 @@
+/* 개인정보 동의 관리 섹션 스타일 */
+.privacy-consent-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.privacy-consent-loading {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.privacy-consent-loading .spinner-border {
+  margin-bottom: 15px;
+}
+
+.consent-summary {
+  margin-bottom: 30px;
+}
+
+.consent-status-card {
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.consent-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.consent-status-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.consent-status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.consent-status-badge.complete {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.consent-status-badge.incomplete {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.consent-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.consent-status-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.consent-status-icon {
+  font-size: 20px;
+  min-width: 24px;
+}
+
+.consent-status-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.consent-status-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 2px;
+}
+
+.consent-status-value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.consent-status-value.agreed {
+  color: #28a745;
+}
+
+.consent-status-value.not-agreed {
+  color: #dc3545;
+}
+
+.consent-date {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+  text-align: center;
+}
+
+.consent-date small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #6c757d;
+}
+
+.consent-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.consent-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  min-width: 160px;
+  justify-content: center;
+}
+
+.consent-action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.consent-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.consent-notice {
+  margin-top: 20px;
+}
+
+.consent-notice .alert {
+  border-radius: 8px;
+  border: none;
+  padding: 16px 20px;
+}
+
+.consent-notice .alert i {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.consent-notice .alert p {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .consent-status-card {
+    padding: 20px;
+  }
+  
+  .consent-status-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  
+  .consent-status-header h3 {
+    font-size: 16px;
+  }
+  
+  .consent-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .consent-action-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .consent-status-item {
+    padding: 10px;
+  }
+  
+  .consent-status-icon {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .privacy-consent-container {
+    padding: 0 10px;
+  }
+  
+  .consent-status-card {
+    padding: 16px;
+  }
+  
+  .consent-status-item {
+    padding: 8px;
+  }
+  
+  .consent-status-label {
+    font-size: 13px;
+  }
+  
+  .consent-status-value {
+    font-size: 12px;
+  }
+}

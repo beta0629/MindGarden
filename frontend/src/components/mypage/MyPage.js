@@ -8,6 +8,7 @@ import ProfileSection from './components/ProfileSection';
 import SettingsSection from './components/SettingsSection';
 import SecuritySection from './components/SecuritySection';
 import SocialAccountsSection from './components/SocialAccountsSection';
+import PrivacyConsentSection from './components/PrivacyConsentSection';
 import './MyPage.css';
 
 const MyPage = () => {
@@ -463,6 +464,12 @@ const MyPage = () => {
             >
               소셜 계정
             </button>
+            <button
+              className={`nav-item ${activeTab === 'privacy' ? 'active' : ''}`}
+              onClick={() => setActiveTab('privacy')}
+            >
+              개인정보 동의
+            </button>
           </div>
         </div>
 
@@ -609,6 +616,10 @@ const MyPage = () => {
                 </div>
               </div>
             </div>
+          )}
+
+          {activeTab === 'privacy' && (
+            <PrivacyConsentSection />
           )}
         </div>
       </div>

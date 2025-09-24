@@ -215,33 +215,69 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
     }
 
     // 3. 상담사 목록 또는 활동 메시지
-    if (consultationData?.consultantList?.length > 0) {
-      messages.push({
-        id: 'consultant-list',
-        icon: 'bi-people',
-        title: '상담사 목록',
-        subtitle: `${consultationData.consultantList.length}명의 상담사가 있습니다`,
-        color: '#3f51b5',
-        action: 'consultants'
-      });
-    } else if (status.hasRecentActivity) {
-      messages.push({
-        id: 'recent-activity',
-        icon: 'bi-activity',
-        title: '최근 활동',
-        subtitle: '새로운 활동이 있습니다',
-        color: '#00bcd4',
-        action: 'activity'
-      });
+    // 환경별 우선순위 조정 (운영 환경과 동일하게 맞추기)
+    const isProduction = process.env.NODE_ENV === 'production' || window.location.hostname === 'm-garden.co.kr';
+    
+    if (isProduction) {
+      // 운영 환경: 최근 활동 우선 표시
+      if (status.hasRecentActivity) {
+        messages.push({
+          id: 'recent-activity',
+          icon: 'bi-activity',
+          title: '최근 활동',
+          subtitle: '새로운 활동이 있습니다',
+          color: '#00bcd4',
+          action: 'activity'
+        });
+      } else if (consultationData?.consultantList?.length > 0) {
+        messages.push({
+          id: 'consultant-list',
+          icon: 'bi-people',
+          title: '상담사 목록',
+          subtitle: `${consultationData.consultantList.length}명의 상담사가 있습니다`,
+          color: '#3f51b5',
+          action: 'consultants'
+        });
+      } else {
+        messages.push({
+          id: 'wellness-reminder',
+          icon: 'bi-heart-pulse',
+          title: '웰니스 알림',
+          subtitle: '마음의 건강도 챙겨주세요',
+          color: '#ff9800',
+          action: 'wellness'
+        });
+      }
     } else {
-      messages.push({
-        id: 'wellness-reminder',
-        icon: 'bi-heart-pulse',
-        title: '웰니스 알림',
-        subtitle: '마음의 건강도 챙겨주세요',
-        color: '#ff9800',
-        action: 'wellness'
-      });
+      // 로컬 환경: 기존 로직 유지
+      if (consultationData?.consultantList?.length > 0) {
+        messages.push({
+          id: 'consultant-list',
+          icon: 'bi-people',
+          title: '상담사 목록',
+          subtitle: `${consultationData.consultantList.length}명의 상담사가 있습니다`,
+          color: '#3f51b5',
+          action: 'consultants'
+        });
+      } else if (status.hasRecentActivity) {
+        messages.push({
+          id: 'recent-activity',
+          icon: 'bi-activity',
+          title: '최근 활동',
+          subtitle: '새로운 활동이 있습니다',
+          color: '#00bcd4',
+          action: 'activity'
+        });
+      } else {
+        messages.push({
+          id: 'wellness-reminder',
+          icon: 'bi-heart-pulse',
+          title: '웰니스 알림',
+          subtitle: '마음의 건강도 챙겨주세요',
+          color: '#ff9800',
+          action: 'wellness'
+        });
+      }
     }
 
     // 4. 내담자 전용 유용한 카드들 추가

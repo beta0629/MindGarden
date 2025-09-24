@@ -28,6 +28,7 @@ public class ScheduleAutoCompleteService {
     private final ScheduleService scheduleService;
     private final ScheduleRepository scheduleRepository;
     private final ConsultationMessageService consultationMessageService;
+    private final RealTimeStatisticsService realTimeStatisticsService;
     
     /**
      * 매 10분마다 시간이 지난 스케줄을 자동 완료 처리 및 상담일지 미작성 알림
@@ -55,7 +56,10 @@ public class ScheduleAutoCompleteService {
                         scheduleRepository.save(schedule);
                         completedCount++;
                         
-                        log.info("✅ 오늘 스케줄 자동 완료: ID={}, 제목={}, 시간={}", 
+                        // 🚀 실시간 통계 업데이트 추가
+                        realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
+                        
+                        log.info("✅ 오늘 스케줄 자동 완료 및 통계 업데이트: ID={}, 제목={}, 시간={}", 
                             schedule.getId(), schedule.getTitle(), schedule.getStartTime());
                     }
                 } catch (Exception e) {
@@ -77,7 +81,10 @@ public class ScheduleAutoCompleteService {
                         scheduleRepository.save(schedule);
                         completedCount++;
                         
-                        log.info("✅ 지난 예약 스케줄 자동 완료: ID={}, 제목={}, 날짜={}", 
+                        // 🚀 실시간 통계 업데이트 추가
+                        realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
+                        
+                        log.info("✅ 지난 예약 스케줄 자동 완료 및 통계 업데이트: ID={}, 제목={}, 날짜={}", 
                             schedule.getId(), schedule.getTitle(), schedule.getDate());
                     }
                 } catch (Exception e) {
@@ -93,7 +100,10 @@ public class ScheduleAutoCompleteService {
                         scheduleRepository.save(schedule);
                         completedCount++;
                         
-                        log.info("✅ 지난 확정 스케줄 자동 완료: ID={}, 제목={}, 날짜={}", 
+                        // 🚀 실시간 통계 업데이트 추가
+                        realTimeStatisticsService.updateStatisticsOnScheduleCompletion(schedule);
+                        
+                        log.info("✅ 지난 확정 스케줄 자동 완료 및 통계 업데이트: ID={}, 제목={}, 날짜={}", 
                             schedule.getId(), schedule.getTitle(), schedule.getDate());
                     }
                 } catch (Exception e) {

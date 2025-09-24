@@ -1,10 +1,14 @@
 package com.mindgarden.consultation.controller;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import com.mindgarden.consultation.util.BranchAccountCreator;
+import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.entity.UserActivity;
 import com.mindgarden.consultation.repository.UserActivityRepository;
+import com.mindgarden.consultation.repository.UserRepository;
+import com.mindgarden.consultation.util.BranchAccountCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.time.LocalDateTime;
 
 /**
  * 테스트용 컨트롤러
@@ -28,6 +31,9 @@ public class TestController {
     
     @Autowired
     private UserActivityRepository userActivityRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * 모든 지점의 계정 생성
@@ -186,6 +192,93 @@ public class TestController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "샘플 데이터 삽입 중 오류가 발생했습니다: " + e.getMessage());
+            
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
+     * 각 지점별 지점수퍼관리자 생성 (로컬 테스트용)
+     */
+    @PostMapping("/create-branch-super-admins")
+    public ResponseEntity<Map<String, Object>> createBranchSuperAdmins() {
+        try {
+            Map<String, Object> response = new HashMap<>();
+            
+            // 각 지점별 지점수퍼관리자 생성
+            String[][] branchAdmins = {
+                {"GANGNAM", "gangnam_admin@mindgarden.com", "강남점 관리자", "010-1111-2222", "서울특별시 강남구 테헤란로 123"},
+                {"HONGDAE", "hongdae_admin@mindgarden.com", "홍대점 관리자", "010-2222-3333", "서울특별시 마포구 홍익로 456"},
+                {"JAMSIL", "jamsil_admin@mindgarden.com", "잠실점 관리자", "010-3333-4444", "서울특별시 송파구 올림픽로 789"},
+                {"SINCHON", "sinchon_admin@mindgarden.com", "신촌점 관리자", "010-4444-5555", "서울특별시 서대문구 신촌로 101"},
+                {"inchen_songdo", "songdo_admin@mindgarden.com", "인천송도점 관리자", "010-5555-6666", "인천광역시 연수구 송도과학로 202"}
+            };
+            
+            int createdCount = 0;
+            for (String[] admin : branchAdmins) {
+                String branchCode = admin[0];
+                String email = admin[1];
+                String name = admin[2];
+                String phone = admin[3];
+                String address = admin[4];
+                
+                // 이미 존재하는지 확인
+                if (userRepository.findByEmail(email).isEmpty()) {
+                    User branchAdmin = User.builder()
+                        .email(email)
+                        .password("$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iKyVhQrF0yP/8KzqKzqKzqKzqKzq") // password: branch123
+                        .name(name)
+                        .role(UserRole.BRANCH_SUPER_ADMIN)
+                        .grade("SUPER_ADMIN")
+                        .branchCode(branchCode)
+                        .branchId(null)
+                        .phone(phone)
+                        .address(address)
+                        .isActive(true)
+                        .build();
+                    
+                    userRepository.save(branchAdmin);
+                    createdCount++;
+                }
+            }
+            
+            response.put("success", true);
+            response.put("message", "지점수퍼관리자 " + createdCount + "명이 생성되었습니다.");
+            response.put("count", createdCount);
+            response.put("passwords", "모든 계정의 비밀번호는 'branch123'입니다.");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "지점수퍼관리자 생성 중 오류가 발생했습니다: " + e.getMessage());
+            response.put("error", e.getClass().getSimpleName());
+            
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
+     * 지점수퍼관리자 목록 조회
+     */
+    @GetMapping("/branch-super-admins")
+    public ResponseEntity<Map<String, Object>> getBranchSuperAdmins() {
+        try {
+            Map<String, Object> response = new HashMap<>();
+            
+            var branchAdmins = userRepository.findByRole(UserRole.BRANCH_SUPER_ADMIN);
+            
+            response.put("success", true);
+            response.put("data", branchAdmins);
+            response.put("count", branchAdmins.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "지점수퍼관리자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
             
             return ResponseEntity.internalServerError().body(response);
         }

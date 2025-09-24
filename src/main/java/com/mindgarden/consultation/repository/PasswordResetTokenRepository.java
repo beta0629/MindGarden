@@ -16,52 +16,46 @@ import java.util.Optional;
  * 
  * @author MindGarden
  * @version 1.0.0
- * @since 2025-09-17
+ * @since 2025-01-17
  */
 @Repository
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
     
     /**
-     * 토큰으로 비밀번호 재설정 토큰 조회
+     * 토큰으로 조회
      */
     Optional<PasswordResetToken> findByToken(String token);
     
     /**
-     * 이메일로 사용되지 않은 토큰들 조회 (최신순)
+     * 사용자 ID로 유효한 토큰 조회
      */
-    @Query("SELECT prt FROM PasswordResetToken prt WHERE prt.email = :email AND prt.used = false ORDER BY prt.createdAt DESC")
-    List<PasswordResetToken> findUnusedTokensByEmail(@Param("email") String email);
+    @Query("SELECT prt FROM PasswordResetToken prt WHERE prt.userId = :userId AND prt.used = false AND prt.expiresAt > :now ORDER BY prt.createdAt DESC")
+    List<PasswordResetToken> findValidTokensByUserId(@Param("userId") Long userId, @Param("now") LocalDateTime now);
     
     /**
-     * 사용자 ID로 사용되지 않은 토큰들 조회 (최신순)
+     * 이메일로 유효한 토큰 조회
      */
-    @Query("SELECT prt FROM PasswordResetToken prt WHERE prt.user.id = :userId AND prt.used = false ORDER BY prt.createdAt DESC")
-    List<PasswordResetToken> findUnusedTokensByUserId(@Param("userId") Long userId);
+    @Query("SELECT prt FROM PasswordResetToken prt WHERE prt.email = :email AND prt.used = false AND prt.expiresAt > :now ORDER BY prt.createdAt DESC")
+    List<PasswordResetToken> findValidTokensByEmail(@Param("email") String email, @Param("now") LocalDateTime now);
     
     /**
-     * 만료된 토큰들 조회
-     */
-    @Query("SELECT prt FROM PasswordResetToken prt WHERE prt.expiresAt < :now")
-    List<PasswordResetToken> findExpiredTokens(@Param("now") LocalDateTime now);
-    
-    /**
-     * 특정 사용자의 모든 토큰을 사용됨으로 표시
+     * 만료된 토큰 삭제
      */
     @Modifying
-    @Query("UPDATE PasswordResetToken prt SET prt.used = true, prt.usedAt = :usedAt WHERE prt.user.id = :userId AND prt.used = false")
-    int markAllTokensAsUsedByUserId(@Param("userId") Long userId, @Param("usedAt") LocalDateTime usedAt);
+    @Query("DELETE FROM PasswordResetToken prt WHERE prt.expiresAt < :now")
+    int deleteExpiredTokens(@Param("now") LocalDateTime now);
     
     /**
-     * 특정 이메일의 모든 토큰을 사용됨으로 표시
+     * 사용자 ID로 모든 토큰 삭제
      */
     @Modifying
-    @Query("UPDATE PasswordResetToken prt SET prt.used = true, prt.usedAt = :usedAt WHERE prt.email = :email AND prt.used = false")
-    int markAllTokensAsUsedByEmail(@Param("email") String email, @Param("usedAt") LocalDateTime usedAt);
+    @Query("DELETE FROM PasswordResetToken prt WHERE prt.userId = :userId")
+    int deleteByUserId(@Param("userId") Long userId);
     
     /**
-     * 만료된 토큰들 삭제
+     * 토큰 사용 처리
      */
     @Modifying
-    @Query("DELETE FROM PasswordResetToken prt WHERE prt.expiresAt < :expiredBefore")
-    int deleteExpiredTokens(@Param("expiredBefore") LocalDateTime expiredBefore);
+    @Query("UPDATE PasswordResetToken prt SET prt.used = true, prt.usedAt = :usedAt WHERE prt.token = :token")
+    int markTokenAsUsed(@Param("token") String token, @Param("usedAt") LocalDateTime usedAt);
 }

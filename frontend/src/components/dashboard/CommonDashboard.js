@@ -550,8 +550,10 @@ const CommonDashboard = ({ user: propUser }) => {
                  if ((result.success && result.user) || (result.role && result.name)) {
                    const userData = result.success ? result.user : result;
                    console.log('✅ 지연된 세션 확인 성공, 사용자 정보 로드:', userData);
-                   // 사용자 정보 설정 후 데이터 로드
-                   setUser(userData);
+                   
+                   // 세션 쿠키 강제 새로고침을 위해 페이지 리로드
+                   console.log('🔄 세션 쿠키 새로고침을 위해 페이지 리로드...');
+                   window.location.reload();
                    return;
                  }
                }

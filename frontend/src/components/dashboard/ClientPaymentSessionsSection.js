@@ -289,7 +289,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
 
         .summary-card {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(2, 1fr);
           gap: 20px;
           background: #f8f9fa;
           padding: 24px;
@@ -425,8 +425,6 @@ const ClientPaymentSessionsSection = ({ userId }) => {
         @media (max-width: 768px) {
           .summary-card {
             grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            padding: 20px;
           }
 
           .payment-item {
@@ -443,14 +441,6 @@ const ClientPaymentSessionsSection = ({ userId }) => {
           .payment-status {
             margin-left: 0;
             align-self: flex-end;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .summary-card {
-            grid-template-columns: 1fr;
-            gap: 12px;
-            padding: 16px;
           }
         }
       `}</style>

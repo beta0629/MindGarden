@@ -5,6 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { authAPI, apiGet } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { DASHBOARD_API } from '../../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
 // import '../../styles/dashboard/dashboard.css'; // 인라인 스타일로 변경
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';

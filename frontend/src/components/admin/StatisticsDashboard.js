@@ -59,7 +59,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
   const [sortOptions, setSortOptions] = useState([]);
   const [loadingFilterCodes, setLoadingFilterCodes] = useState(false);
 
-  // 일정 상태 코드 로드
+  // 일정 상태 코드 로드 (주요 상태값만 필터링)
   const loadScheduleStatusCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
@@ -67,24 +67,45 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
       if (response.ok) {
         const data = await response.json();
         if (data && data.length > 0) {
-          setScheduleStatusOptions(data.map(code => ({
-            value: code.codeValue,
-            label: code.codeLabel,
-            icon: code.icon,
-            color: code.colorCode,
-            description: code.codeDescription
-          })));
+          // 주요 상태값만 필터링 (통계에서 자주 사용되는 상태들)
+          const mainStatuses = [
+            'AVAILABLE', 'BOOKED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'VACATION',
+            'PENDING', 'ACTIVE', 'INACTIVE', 'APPROVED', 'REJECTED'
+          ];
+          
+          const filteredData = data.filter(code => mainStatuses.includes(code.codeValue));
+          
+          // 기본 "전체" 옵션 추가
+          const statusOptions = [
+            { value: 'all', label: '전체', icon: '📋', color: '#6b7280', description: '모든 상태' },
+            ...filteredData.map(code => ({
+              value: code.codeValue,
+              label: code.codeLabel,
+              icon: code.icon || '📋',
+              color: code.colorCode || '#6b7280',
+              description: code.codeDescription
+            }))
+          ];
+          
+          setScheduleStatusOptions(statusOptions);
         }
       }
     } catch (error) {
       console.error('일정 상태 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
+      // 실패 시 기본값 설정 (주요 상태만)
       setScheduleStatusOptions([
         { value: 'all', label: '전체', icon: '📋', color: '#6b7280', description: '모든 상태' },
-        { value: 'AVAILABLE', label: '사용가능', icon: '✅', color: '#10b981', description: '사용 가능한 일정' },
-        { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#3b82f6', description: '예약된 일정' },
-        { value: 'BLOCKED', label: '차단됨', icon: '🚫', color: '#ef4444', description: '차단된 일정' },
-        { value: 'MAINTENANCE', label: '점검중', icon: '🔧', color: '#f59e0b', description: '점검 중인 일정' }
+        { value: 'AVAILABLE', label: '가능', icon: '✅', color: '#28a745', description: '사용 가능한 상태' },
+        { value: 'BOOKED', label: '예약됨', icon: '📅', color: '#007bff', description: '예약된 상태' },
+        { value: 'CONFIRMED', label: '확인됨', icon: '✅', color: '#17a2b8', description: '확인된 상태' },
+        { value: 'COMPLETED', label: '완료', icon: '✅', color: '#6c757d', description: '완료된 상태' },
+        { value: 'CANCELLED', label: '취소됨', icon: '❌', color: '#dc3545', description: '취소된 상태' },
+        { value: 'VACATION', label: '휴가', icon: '🏖️', color: '#ffc107', description: '휴가 상태' },
+        { value: 'PENDING', label: '대기중', icon: '⏳', color: '#ffc107', description: '대기 중인 상태' },
+        { value: 'ACTIVE', label: '활성', icon: '🟢', color: '#28a745', description: '활성 상태' },
+        { value: 'INACTIVE', label: '비활성', icon: '🔴', color: '#dc3545', description: '비활성 상태' },
+        { value: 'APPROVED', label: '승인됨', icon: '✅', color: '#28a745', description: '승인된 상태' },
+        { value: 'REJECTED', label: '거부됨', icon: '❌', color: '#dc3545', description: '거부된 상태' }
       ]);
     } finally {
       setLoadingCodes(false);
@@ -657,7 +678,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
           display: 'flex',
           flexDirection: 'column',
           gap: '8px',
-          minWidth: '150px'
+          minWidth: '200px'
         }}>
           <label style={{
             fontSize: '14px',
@@ -665,35 +686,79 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
             color: '#495057',
             margin: '0'
           }}>상태</label>
-          <select 
-            style={{
-              padding: '12px 16px',
-              border: '1px solid #e9ecef',
-              borderRadius: '8px',
-              fontSize: '14px',
-              backgroundColor: '#ffffff',
-              color: '#495057',
-              cursor: 'pointer',
-              outline: 'none',
-              transition: 'all 0.2s ease'
-            }}
-            value={filters.status}
-            onChange={(e) => handleFilterChange('status', e.target.value)}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#667eea';
-              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e9ecef';
-              e.target.style.boxShadow = 'none';
-            }}
-          >
-            {scheduleStatusOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.icon} {option.label}
-              </option>
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '6px',
+            padding: '8px',
+            border: '1px solid #e9ecef',
+            borderRadius: '8px',
+            backgroundColor: '#f8f9fa',
+            minHeight: '44px',
+            alignItems: 'center'
+          }}>
+            {scheduleStatusOptions.slice(0, 8).map(option => (
+              <button
+                key={option.value}
+                onClick={() => handleFilterChange('status', option.value)}
+                style={{
+                  padding: '6px 12px',
+                  border: 'none',
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  backgroundColor: filters.status === option.value ? option.color || '#667eea' : '#ffffff',
+                  color: filters.status === option.value ? '#ffffff' : '#495057',
+                  border: `1px solid ${filters.status === option.value ? option.color || '#667eea' : '#e9ecef'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  whiteSpace: 'nowrap'
+                }}
+                onMouseEnter={(e) => {
+                  if (filters.status !== option.value) {
+                    e.target.style.backgroundColor = '#f8f9fa';
+                    e.target.style.borderColor = option.color || '#667eea';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (filters.status !== option.value) {
+                    e.target.style.backgroundColor = '#ffffff';
+                    e.target.style.borderColor = '#e9ecef';
+                  }
+                }}
+              >
+                <span>{option.icon}</span>
+                <span>{option.label}</span>
+              </button>
             ))}
-          </select>
+            {scheduleStatusOptions.length > 8 && (
+              <select 
+                style={{
+                  padding: '6px 8px',
+                  border: '1px solid #e9ecef',
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  backgroundColor: '#ffffff',
+                  color: '#495057',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  minWidth: '80px'
+                }}
+                value={filters.status}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+              >
+                <option value="all">전체</option>
+                {scheduleStatusOptions.slice(8).map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.icon} {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
         
         <button 

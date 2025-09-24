@@ -197,7 +197,17 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               }}>오늘의 상담</h3>
               <p className="info-value">
                 {todayConsultations.length > 0 
-                  ? `${todayConsultations.length}건의 상담이 오늘 예정되어 있습니다`
+                  ? (
+                    <span>
+                      <span style={{
+                        fontSize: '1.2em',
+                        fontWeight: '700',
+                        color: '#007bff',
+                        textShadow: '0 1px 2px rgba(0, 123, 255, 0.3)'
+                      }}>{todayConsultations.length}</span>
+                      건의 상담이 오늘 예정되어 있습니다
+                    </span>
+                  )
                   : '오늘 예정된 상담이 없습니다'
                 }
               </p>

@@ -140,6 +140,8 @@ public class SalaryManagementController {
                     dto.put("hourlyEarnings", calc.getHourlyEarnings() != null ? calc.getHourlyEarnings() : BigDecimal.ZERO);
                     dto.put("totalConsultations", calc.getTotalConsultations());
                     dto.put("completedConsultations", calc.getCompletedConsultations());
+                    // 프론트엔드 호환성을 위한 consultationCount 필드 추가
+                    dto.put("consultationCount", calc.getCompletedConsultations());
                     dto.put("commissionEarnings", calc.getCommissionEarnings() != null ? calc.getCommissionEarnings() : BigDecimal.ZERO);
                     dto.put("bonusEarnings", calc.getBonusEarnings() != null ? calc.getBonusEarnings() : BigDecimal.ZERO);
                     dto.put("deductions", calc.getDeductions() != null ? calc.getDeductions() : BigDecimal.ZERO);

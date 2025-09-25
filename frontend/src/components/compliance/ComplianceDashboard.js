@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SimpleHeader from '../common/SimpleHeader';
 import './ComplianceDashboard.css';
 
 /**
@@ -88,6 +89,7 @@ const ComplianceDashboard = () => {
     if (loading) {
         return (
             <div className="compliance-dashboard">
+                <SimpleHeader title="컴플라이언스 관리" />
                 <div className="loading-container">
                     <div className="loading-spinner"></div>
                     <p>컴플라이언스 데이터를 불러오는 중...</p>
@@ -99,6 +101,7 @@ const ComplianceDashboard = () => {
     if (error) {
         return (
             <div className="compliance-dashboard">
+                <SimpleHeader title="컴플라이언스 관리" />
                 <div className="error-container">
                     <h2>❌ 오류 발생</h2>
                     <p>{error}</p>
@@ -112,6 +115,7 @@ const ComplianceDashboard = () => {
 
     return (
         <div className="compliance-dashboard">
+            <SimpleHeader title="컴플라이언스 관리" />
             <div className="dashboard-header">
                 <h1>⚖️ 컴플라이언스 모니터링 대시보드</h1>
                 <p>개인정보보호법 및 관련 법령 준수 현황을 실시간으로 모니터링합니다.</p>

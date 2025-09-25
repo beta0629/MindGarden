@@ -4,13 +4,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import com.mindgarden.consultation.dto.CommonCodeDto;
-import com.mindgarden.consultation.entity.CommonCode;
-import com.mindgarden.consultation.entity.CodeGroupMetadata;
-import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.constant.UserRole;
-import com.mindgarden.consultation.service.CommonCodeService;
+import com.mindgarden.consultation.dto.CommonCodeDto;
+import com.mindgarden.consultation.entity.CodeGroupMetadata;
+import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.repository.CodeGroupMetadataRepository;
+import com.mindgarden.consultation.service.CommonCodeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -79,6 +78,11 @@ public class CommonCodeController {
      * 코드 그룹별 권한 체크
      */
     private boolean hasCodeGroupPermission(UserRole userRole, String codeGroup) {
+        // 브랜치 관련 코드 그룹 (HQ만 접근 가능)
+        if (isBranchCodeGroup(codeGroup)) {
+            return hasBranchCodePermission(userRole);
+        }
+        
         // ERP 관련 코드 그룹
         if (isErpCodeGroup(codeGroup)) {
             return hasErpCodePermission(userRole);
@@ -118,6 +122,29 @@ public class CommonCodeController {
                "SALARY_TYPE".equals(codeGroup) ||
                "SALARY_GRADE".equals(codeGroup) ||
                "TAX_TYPE".equals(codeGroup);
+    }
+    
+    /**
+     * 브랜치 관련 코드 그룹 판별
+     */
+    private boolean isBranchCodeGroup(String codeGroup) {
+        return "BRANCH_STATUS".equals(codeGroup) ||
+               "BRANCH_TYPE".equals(codeGroup) ||
+               "BRANCH_PERMISSION".equals(codeGroup) ||
+               "BRANCH_STATISTICS".equals(codeGroup) ||
+               "BRANCH_SETTING".equals(codeGroup) ||
+               "BRANCH_CODE".equals(codeGroup) ||
+               "BRANCH_MANAGEMENT".equals(codeGroup);
+    }
+    
+    /**
+     * 브랜치 관련 공통 코드 권한 체크
+     * HQ만 접근 가능
+     */
+    private boolean hasBranchCodePermission(UserRole userRole) {
+        return userRole == UserRole.HQ_MASTER || 
+               userRole == UserRole.SUPER_HQ_ADMIN ||
+               userRole == UserRole.HQ_ADMIN;
     }
 
     /**

@@ -49,6 +49,12 @@ const CommonCodeManagement = () => {
                user?.role === 'HQ_ADMIN';
     };
     
+    const hasBranchCodePermission = () => {
+        return user?.role === 'HQ_MASTER' || 
+               user?.role === 'SUPER_HQ_ADMIN' ||
+               user?.role === 'HQ_ADMIN';
+    };
+    
     const isErpCodeGroup = (codeGroup) => {
         return ['ITEM_CATEGORY', 'ITEM_STATUS', 'PURCHASE_STATUS', 'BUDGET_CATEGORY', 
                 'APPROVAL_TYPE', 'APPROVAL_STATUS', 'APPROVAL_PRIORITY'].includes(codeGroup);
@@ -59,7 +65,15 @@ const CommonCodeManagement = () => {
                 'PAYMENT_METHOD', 'PAYMENT_STATUS', 'SALARY_TYPE', 'SALARY_GRADE', 'TAX_TYPE'].includes(codeGroup);
     };
     
+    const isBranchCodeGroup = (codeGroup) => {
+        return ['BRANCH_STATUS', 'BRANCH_TYPE', 'BRANCH_PERMISSION', 'BRANCH_STATISTICS', 
+                'BRANCH_SETTING', 'BRANCH_CODE', 'BRANCH_MANAGEMENT'].includes(codeGroup);
+    };
+    
     const hasCodeGroupPermission = (codeGroup) => {
+        if (isBranchCodeGroup(codeGroup)) {
+            return hasBranchCodePermission();
+        }
         if (isErpCodeGroup(codeGroup)) {
             return hasErpCodePermission();
         }
@@ -171,7 +185,9 @@ const CommonCodeManagement = () => {
     const handleGroupSelect = (group) => {
         // 권한 체크
         if (!hasCodeGroupPermission(group)) {
-            if (isErpCodeGroup(group)) {
+            if (isBranchCodeGroup(group)) {
+                notificationManager.error('브랜치 관련 코드 그룹은 HQ만 접근할 수 있습니다.');
+            } else if (isErpCodeGroup(group)) {
                 notificationManager.error('ERP 관련 코드 그룹은 지점수퍼어드민만 접근할 수 있습니다.');
             } else if (isFinancialCodeGroup(group)) {
                 notificationManager.error('수입지출 관련 코드 그룹은 지점수퍼어드민만 접근할 수 있습니다.');

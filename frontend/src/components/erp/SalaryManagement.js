@@ -114,9 +114,10 @@ const SalaryManagement = () => {
         console.log('🚀 급여 계산 실행 시작');
         console.log('📊 현재 상태:', {
             selectedConsultant: selectedConsultant?.name,
+            selectedConsultantId: selectedConsultant?.id,
             selectedPeriod,
             salaryProfilesCount: salaryProfiles.length,
-            salaryProfiles: salaryProfiles
+            salaryProfiles: salaryProfiles.map(p => ({ id: p.id, consultantId: p.consultantId, consultantName: p.consultantName || 'N/A' }))
         });
 
         if (!selectedConsultant || !selectedPeriod) {
@@ -128,6 +129,15 @@ const SalaryManagement = () => {
         if (salaryProfiles.length === 0) {
             console.log('⚠️ 급여 프로필 없음 - 유효성 검사 실행');
             showNotification('급여 계산을 위해서는 먼저 급여 프로필을 작성해주세요.\n급여 프로필 탭에서 "새 프로필 생성" 버튼을 클릭하세요.', 'warning');
+            setActiveTab('profiles'); // 급여 프로필 탭으로 이동
+            return;
+        }
+
+        // 선택된 상담사에 해당하는 급여 프로필이 있는지 확인
+        const consultantProfile = salaryProfiles.find(profile => profile.consultantId === selectedConsultant.id);
+        if (!consultantProfile) {
+            console.log('⚠️ 선택된 상담사의 급여 프로필 없음:', { consultantId: selectedConsultant.id, consultantName: selectedConsultant.name });
+            showNotification(`${selectedConsultant.name} 상담사의 급여 프로필이 없습니다.\n급여 프로필 탭에서 해당 상담사의 프로필을 먼저 작성해주세요.`, 'warning');
             setActiveTab('profiles'); // 급여 프로필 탭으로 이동
             return;
         }

@@ -82,6 +82,9 @@ MindGarden 프로젝트의 개발 효율성을 극대화하기 위한 완전 자
 ```bash
 # 로컬 개발 환경으로 전체 시스템 시작
 ./scripts/start-all.sh local dev
+
+# 또는 기존 개발 스크립트 사용
+./config/shell-scripts/start-dev.sh
 ```
 
 ### 2️⃣ 개발 중 문제 발생 시

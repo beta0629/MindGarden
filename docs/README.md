@@ -290,6 +290,27 @@ mindGarden/
 - **프론트엔드**: http://localhost:3000
 - **API 문서**: http://localhost:8080/api/auth/oauth2/config
 
+## 🚀 개발 서버 시작
+
+### 방법 1: 통합 스크립트 사용
+```bash
+./scripts/start-all.sh local dev
+```
+
+### 방법 2: 기존 개발 스크립트 사용
+```bash
+./config/shell-scripts/start-dev.sh
+```
+
+### 방법 3: 개별 실행
+```bash
+# 백엔드만 시작
+./scripts/start-backend.sh local
+
+# 프론트엔드만 시작
+./scripts/start-frontend.sh dev
+```
+
 ## 📚 문서
 
 프로젝트의 상세한 문서는 다음을 참조하세요:

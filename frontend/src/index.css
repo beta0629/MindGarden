@@ -12,33 +12,59 @@ body {
 
 /* 전역 select 드롭다운 z-index 수정 */
 select {
-  position: relative;
-  z-index: 1;
+  position: relative !important;
+  z-index: 1 !important;
   /* 드롭다운이 부모 컨테이너를 벗어나지 않도록 */
-  overflow: visible;
+  overflow: visible !important;
+  transform: translateZ(0) !important;
+  will-change: transform !important;
+  contain: layout style paint !important;
 }
 
 /* select 드롭다운 옵션들이 다른 요소 위에 표시되도록 */
 select option {
-  position: relative;
-  z-index: 9999;
-  /* 옵션들이 고정된 위치에 표시되도록 */
-  position: fixed;
+  position: relative !important;
+  z-index: 9999 !important;
+  background: white !important;
+  color: #333 !important;
 }
 
 /* select 드롭다운이 스크롤에 영향을 받지 않도록 */
 select:focus {
-  position: relative;
-  z-index: 9999;
+  position: relative !important;
+  z-index: 9999 !important;
+  transform: translateZ(0) !important;
+  will-change: transform !important;
+  contain: layout style paint !important;
 }
 
 /* 드롭다운 컨테이너 고정 */
 select:focus option {
-  position: fixed;
-  z-index: 9999;
-  background: white;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  position: relative !important;
+  z-index: 9999 !important;
+  background: white !important;
+  border: 1px solid #ccc !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* 스케줄 관련 select 요소 특별 처리 */
+.consultant-filter-select,
+.schedule-consultant-select {
+  position: relative !important;
+  z-index: 1 !important;
+  transform: translateZ(0) !important;
+  will-change: transform !important;
+  overflow: visible !important;
+  contain: layout style paint !important;
+}
+
+.consultant-filter-select:focus,
+.schedule-consultant-select:focus {
+  position: relative !important;
+  z-index: 9999 !important;
+  transform: translateZ(0) !important;
+  will-change: transform !important;
+  contain: layout style paint !important;
 }
 
 /* 모달과 오버레이의 z-index 설정 */

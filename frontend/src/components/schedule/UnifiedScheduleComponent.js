@@ -7,6 +7,7 @@ import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import LoadingSpinner from '../common/LoadingSpinner';
+import CustomSelect from '../common/CustomSelect';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
@@ -767,29 +768,27 @@ const UnifiedScheduleComponent = ({
                     
                     {/* 상담사 선택 (어드민/수퍼어드민만) */}
                     {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
-                        <select
+                        <CustomSelect
                             value={selectedConsultantId}
-                            onChange={(e) => {
+                            onChange={(value) => {
                                 try {
-                                    console.log('👤 상담사 선택 변경:', e.target.value);
-                                    setSelectedConsultantId(e.target.value);
+                                    console.log('👤 상담사 선택 변경:', value);
+                                    setSelectedConsultantId(value);
                                 } catch (error) {
                                     console.error('❌ 상담사 선택 오류:', error);
                                 }
                             }}
+                            placeholder="👥 전체 상담사"
                             className="consultant-filter-select"
-                        >
-                            <option value="">👥 전체 상담사</option>
-                            {loadingConsultants ? (
-                                <option disabled>상담사 목록을 불러오는 중...</option>
-                            ) : (
-                                consultants.map(consultant => (
-                                    <option key={consultant.id} value={consultant.id}>
-                                        👤 {consultant.name}
-                                    </option>
-                                ))
-                            )}
-                        </select>
+                            loading={loadingConsultants}
+                            options={[
+                                { value: '', label: '👥 전체 상담사' },
+                                ...consultants.map(consultant => ({
+                                    value: consultant.id,
+                                    label: `👤 ${consultant.name}`
+                                }))
+                            ]}
+                        />
                     )}
                     
                     <button 

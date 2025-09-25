@@ -11,6 +11,7 @@ import PropTypes from 'prop-types';
 import { apiGet } from '../../utils/ajax';
 import { SCHEDULE_API } from '../../constants/api';
 import LoadingSpinner from './LoadingSpinner';
+import CustomSelect from './CustomSelect';
 import { 
   SORT_OPTIONS, 
   SORT_OPTION_LABELS, 
@@ -366,22 +367,20 @@ const ScheduleList = ({
         <div className="schedule-controls">
           {/* 상담사 선택 (어드민/수퍼어드민만) */}
           {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
-            <select
+            <CustomSelect
               value={selectedConsultantId}
-              onChange={(e) => setSelectedConsultantId(e.target.value)}
+              onChange={(value) => setSelectedConsultantId(value)}
+              placeholder="👥 전체 상담사"
               className="schedule-consultant-select"
-            >
-              <option value="">👥 전체 상담사</option>
-              {loadingConsultants ? (
-                <option disabled>상담사 목록을 불러오는 중...</option>
-              ) : (
-                consultants.map(consultant => (
-                  <option key={consultant.id} value={consultant.id}>
-                    👤 {consultant.name}
-                  </option>
-                ))
-              )}
-            </select>
+              loading={loadingConsultants}
+              options={[
+                { value: '', label: '👥 전체 상담사' },
+                ...consultants.map(consultant => ({
+                  value: consultant.id,
+                  label: `👤 ${consultant.name}`
+                }))
+              ]}
+            />
           )}
           
           <select

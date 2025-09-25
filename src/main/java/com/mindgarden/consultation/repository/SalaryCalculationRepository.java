@@ -45,4 +45,10 @@ public interface SalaryCalculationRepository extends JpaRepository<SalaryCalcula
     List<SalaryCalculation> findByConsultantIdAndConsultantBranchCode(
             @Param("consultantId") Long consultantId,
             @Param("branchCode") String branchCode);
+    
+    /**
+     * 만료된 급여 데이터 조회 (파기용)
+     */
+    @Query("SELECT sc.id, u.name FROM SalaryCalculation sc JOIN sc.consultant u WHERE sc.isDeleted = true AND sc.updatedAt < ?1")
+    List<Object[]> findExpiredSalariesForDestruction(java.time.LocalDateTime cutoffDate);
 }

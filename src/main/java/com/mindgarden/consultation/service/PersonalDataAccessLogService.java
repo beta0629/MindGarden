@@ -47,7 +47,7 @@ public class PersonalDataAccessLogService {
                                     String dataDetails, HttpServletRequest request) {
         
         try {
-            PersonalDataAccessLog log = PersonalDataAccessLog.builder()
+            PersonalDataAccessLog accessLog = PersonalDataAccessLog.builder()
                 .accessorId(accessorId)
                 .accessorName(accessorName)
                 .dataType(dataType)
@@ -64,7 +64,7 @@ public class PersonalDataAccessLogService {
                 .userAgent(request.getHeader("User-Agent"))
                 .build();
             
-            personalDataAccessLogRepository.save(log);
+            personalDataAccessLogRepository.save(accessLog);
             
             log.info("개인정보 접근 로그 기록 완료: 접근자={}, 유형={}, 대상={}", 
                     accessorId, dataType, targetUserId);

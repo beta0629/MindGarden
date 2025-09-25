@@ -1,20 +1,19 @@
 package com.mindgarden.consultation.service;
 
-import com.mindgarden.consultation.entity.PersonalDataAccessLog;
-import com.mindgarden.consultation.repository.PersonalDataAccessLogRepository;
-import com.mindgarden.consultation.repository.UserRepository;
-import com.mindgarden.consultation.repository.ConsultationRecordRepository;
-import com.mindgarden.consultation.repository.PaymentRepository;
-import com.mindgarden.consultation.repository.SalaryCalculationRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import com.mindgarden.consultation.entity.PersonalDataAccessLog;
+import com.mindgarden.consultation.repository.ConsultationRecordRepository;
+import com.mindgarden.consultation.repository.PaymentRepository;
+import com.mindgarden.consultation.repository.PersonalDataAccessLogRepository;
+import com.mindgarden.consultation.repository.SalaryCalculationRepository;
+import com.mindgarden.consultation.repository.UserRepository;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 개인정보 파기 서비스
@@ -261,7 +260,7 @@ public class PersonalDataDestructionService {
      */
     private void logPersonalDataDestruction(String accessorId, String dataType, String dataId, String reason) {
         try {
-            PersonalDataAccessLog log = PersonalDataAccessLog.builder()
+            PersonalDataAccessLog accessLog = PersonalDataAccessLog.builder()
                 .accessorId(accessorId)
                 .accessorName("SYSTEM")
                 .dataType(dataType)
@@ -278,7 +277,7 @@ public class PersonalDataDestructionService {
                 .userAgent("PersonalDataDestructionService")
                 .build();
             
-            personalDataAccessLogRepository.save(log);
+            personalDataAccessLogRepository.save(accessLog);
             
         } catch (Exception e) {
             log.error("개인정보 파기 로그 기록 실패: {}", e.getMessage(), e);

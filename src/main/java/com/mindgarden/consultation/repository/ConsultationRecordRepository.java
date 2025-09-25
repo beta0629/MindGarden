@@ -48,6 +48,12 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
         Long consultantId, LocalDate startDate, LocalDate endDate);
     
     /**
+     * 만료된 상담 기록 조회 (파기용)
+     */
+    @Query("SELECT cr.id, c.name FROM ConsultationRecord cr JOIN cr.consultant c WHERE cr.isDeleted = true AND cr.updatedAt < ?1")
+    List<Object[]> findExpiredRecordsForDestruction(java.time.LocalDateTime cutoffDate);
+    
+    /**
      * 완료된 세션만 조회
      */
     List<ConsultationRecord> findByConsultantIdAndIsSessionCompletedTrueAndIsDeletedFalseOrderBySessionDateDesc(Long consultantId);

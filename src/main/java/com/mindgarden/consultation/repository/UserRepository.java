@@ -40,6 +40,12 @@ public interface UserRepository extends BaseRepository<User, Long> {
     boolean existsByUsername(String username);
     
     /**
+     * 만료된 사용자 데이터 조회 (파기용)
+     */
+    @Query("SELECT u.id, u.name FROM User u WHERE u.isDeleted = true AND u.updatedAt < ?1")
+    List<Object[]> findExpiredUsersForDestruction(LocalDateTime cutoffDate);
+    
+    /**
      * 이메일로 사용자 조회 (활성 상태만)
      */
     @Query("SELECT u FROM User u WHERE u.email = ?1 AND u.isDeleted = false")

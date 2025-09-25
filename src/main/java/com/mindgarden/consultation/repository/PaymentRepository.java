@@ -48,6 +48,12 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Page<Payment> findByBranchIdAndIsDeletedFalse(Long branchId, Pageable pageable);
     
     /**
+     * 만료된 결제 데이터 조회 (파기용)
+     */
+    @Query("SELECT p.id, p.paymentMethod FROM Payment p WHERE p.isDeleted = true AND p.updatedAt < ?1")
+    List<Object[]> findExpiredPaymentsForDestruction(LocalDateTime cutoffDate);
+    
+    /**
      * 결제 상태로 결제 목록 조회
      */
     Page<Payment> findByStatusAndIsDeletedFalse(Payment.PaymentStatus status, Pageable pageable);

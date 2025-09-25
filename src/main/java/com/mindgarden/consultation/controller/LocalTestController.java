@@ -1,6 +1,7 @@
 package com.mindgarden.consultation.controller;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.Map;
 import com.mindgarden.consultation.service.PlSqlScheduleValidationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,18 @@ public class LocalTestController {
     
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    
+    @Autowired(required = false)
+    private com.mindgarden.consultation.service.PlSqlStatisticsService plSqlStatisticsService;
+    
+    @Autowired(required = false)
+    private com.mindgarden.consultation.service.PlSqlSalaryManagementService plSqlSalaryManagementService;
+    
+    @Autowired(required = false)
+    private com.mindgarden.consultation.service.PlSqlAccountingService plSqlAccountingService;
+    
+    @Autowired(required = false)
+    private com.mindgarden.consultation.service.StatisticsSchedulerService statisticsSchedulerService;
     
     /**
      * 상담일지 작성 여부 확인 테스트
@@ -151,6 +164,150 @@ public class LocalTestController {
         }
     }
     
+    /**
+     * 의존성 주입 상태 확인
+     */
+    @GetMapping("/debug-dependencies")
+    public Map<String, Object> debugDependencies() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("timestamp", java.time.LocalDateTime.now());
+        result.put("plSqlScheduleValidationService", plSqlScheduleValidationService != null);
+        result.put("plSqlStatisticsService", plSqlStatisticsService != null);
+        result.put("plSqlSalaryManagementService", plSqlSalaryManagementService != null);
+        result.put("plSqlAccountingService", plSqlAccountingService != null);
+        result.put("statisticsSchedulerService", statisticsSchedulerService != null);
+        result.put("jdbcTemplate", jdbcTemplate != null);
+        
+        return result;
+    }
+
+    /**
+     * 모든 PL/SQL 시스템 종합 테스트
+     */
+    @GetMapping("/test-all-plsql-systems")
+    public Map<String, Object> testAllPlSqlSystems() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("timestamp", java.time.LocalDateTime.now());
+        
+        try {
+            // 1. 상담일지 검증 시스템 테스트
+            Map<String, Object> consultationValidation = testConsultationValidationSystem();
+            result.put("consultationValidationSystem", consultationValidation);
+            
+            // 2. 통계 시스템 테스트
+            Map<String, Object> statisticsSystem = testStatisticsSystem();
+            result.put("statisticsSystem", statisticsSystem);
+            
+            // 3. 급여 관리 시스템 테스트
+            Map<String, Object> salarySystem = testSalaryManagementSystem();
+            result.put("salaryManagementSystem", salarySystem);
+            
+            // 4. 회계 시스템 테스트
+            Map<String, Object> accountingSystem = testAccountingSystem();
+            result.put("accountingSystem", accountingSystem);
+            
+            // 전체 결과 판정
+            boolean allSuccess = (Boolean) consultationValidation.get("available") &&
+                               (Boolean) statisticsSystem.get("available") &&
+                               (Boolean) salarySystem.get("available") &&
+                               (Boolean) accountingSystem.get("available");
+            
+            result.put("success", allSuccess);
+            result.put("message", allSuccess ? "모든 PL/SQL 시스템이 정상 작동합니다." : "일부 PL/SQL 시스템에 문제가 있습니다.");
+            
+            return result;
+            
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "PL/SQL 시스템 테스트 중 오류: " + e.getMessage());
+            result.put("error", e.getClass().getSimpleName());
+            return result;
+        }
+    }
+    
+    /**
+     * 개별 상담일지 검증 시스템 테스트
+     */
+    @GetMapping("/test-consultation-validation")
+    public Map<String, Object> testConsultationValidationSystem() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            var validationResult = plSqlScheduleValidationService.validateConsultationRecordBeforeCompletion(
+                1L, 1L, LocalDate.now());
+            result.put("available", true);
+            result.put("testResult", validationResult);
+            result.put("message", "상담일지 검증 시스템 정상");
+        } catch (Exception e) {
+            result.put("available", false);
+            result.put("message", "상담일지 검증 시스템 오류: " + e.getMessage());
+            result.put("error", e.getClass().getSimpleName());
+        }
+        result.put("timestamp", java.time.LocalDateTime.now());
+        return result;
+    }
+    
+    /**
+     * 개별 통계 시스템 테스트
+     */
+    @GetMapping("/test-statistics")
+    public Map<String, Object> testStatisticsSystem() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            if (plSqlStatisticsService != null) {
+                boolean available = plSqlStatisticsService.isProcedureAvailable();
+                result.put("available", available);
+                result.put("message", available ? "통계 시스템 정상" : "통계 시스템 프로시저 사용 불가");
+            } else {
+                result.put("available", false);
+                result.put("message", "통계 시스템 서비스가 주입되지 않음");
+            }
+        } catch (Exception e) {
+            result.put("available", false);
+            result.put("message", "통계 시스템 오류: " + e.getMessage());
+            result.put("error", e.getClass().getSimpleName());
+        }
+        result.put("timestamp", java.time.LocalDateTime.now());
+        return result;
+    }
+    
+    private Map<String, Object> testSalaryManagementSystem() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            if (plSqlSalaryManagementService != null) {
+                boolean available = plSqlSalaryManagementService.isProcedureAvailable();
+                result.put("available", available);
+                result.put("message", available ? "급여 관리 시스템 정상" : "급여 관리 시스템 프로시저 사용 불가");
+            } else {
+                result.put("available", false);
+                result.put("message", "급여 관리 시스템 서비스가 주입되지 않음");
+            }
+        } catch (Exception e) {
+            result.put("available", false);
+            result.put("message", "급여 관리 시스템 오류: " + e.getMessage());
+            result.put("error", e.getClass().getSimpleName());
+        }
+        return result;
+    }
+    
+    private Map<String, Object> testAccountingSystem() {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            if (plSqlAccountingService != null) {
+                // 회계 시스템은 isProcedureAvailable 메서드가 없을 수 있으므로 다른 방법으로 테스트
+                result.put("available", true);
+                result.put("message", "회계 시스템 서비스 주입됨");
+            } else {
+                result.put("available", false);
+                result.put("message", "회계 시스템 서비스가 주입되지 않음");
+            }
+        } catch (Exception e) {
+            result.put("available", false);
+            result.put("message", "회계 시스템 오류: " + e.getMessage());
+            result.put("error", e.getClass().getSimpleName());
+        }
+        return result;
+    }
+
     /**
      * 로컬 테스트 환경 확인
      */

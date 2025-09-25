@@ -36,14 +36,35 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   };
 
   // 빠른 지출 항목 생성 (공통 코드 기반)
-  const quickExpenses = [
-    { categoryCode: 'SALARY', subcategoryCode: 'CONSULTANT_SALARY', icon: '💰', color: '#e74c3c' },
-    { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT', icon: '🏢', color: '#e67e22' },
-    { categoryCode: 'UTILITY', subcategoryCode: 'ELECTRICITY', icon: '⚡', color: '#f39c12' },
-    { categoryCode: 'TAX', subcategoryCode: 'INCOME_TAX', icon: '📋', color: '#9b59b6' },
-    { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'STATIONERY', icon: '📝', color: '#3498db' },
-    { categoryCode: 'MARKETING', subcategoryCode: 'ONLINE_ADS', icon: '📢', color: '#1abc9c' }
-  ];
+  const getQuickExpenses = () => {
+    const quickExpenseConfigs = [
+      { categoryCode: 'SALARY', subcategoryCode: 'CONSULTANT_SALARY', icon: '💰', color: '#e74c3c' },
+      { categoryCode: 'RENT', subcategoryCode: 'OFFICE_RENT', icon: '🏢', color: '#e67e22' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'ELECTRICITY', icon: '⚡', color: '#f39c12' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'WATER', icon: '💧', color: '#3498db' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'GAS', icon: '🔥', color: '#e74c3c' },
+      { categoryCode: 'MANAGEMENT_FEE', subcategoryCode: 'INTERNET', icon: '🌐', color: '#9b59b6' },
+      { categoryCode: 'TAX', subcategoryCode: 'INCOME_TAX', icon: '📋', color: '#9b59b6' },
+      { categoryCode: 'TAX', subcategoryCode: 'CORPORATE_TAX', icon: '📊', color: '#8e44ad' },
+      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'STATIONERY', icon: '📝', color: '#3498db' },
+      { categoryCode: 'OFFICE_SUPPLIES', subcategoryCode: 'EQUIPMENT', icon: '🖥️', color: '#2c3e50' },
+      { categoryCode: 'MARKETING', subcategoryCode: 'ONLINE_ADS', icon: '📢', color: '#1abc9c' },
+      { categoryCode: 'MARKETING', subcategoryCode: 'PROMOTION', icon: '📈', color: '#27ae60' }
+    ];
+
+    return quickExpenseConfigs.map(config => {
+      const category = expenseCategories.find(cat => cat.codeValue === config.categoryCode);
+      const subcategory = expenseSubcategories.find(sub => sub.codeValue === config.subcategoryCode);
+      
+      return {
+        ...config,
+        category,
+        subcategory,
+        displayName: category ? category.codeLabel : config.categoryCode,
+        subDisplayName: subcategory ? subcategory.codeLabel : config.subcategoryCode
+      };
+    }).filter(item => item.category && item.subcategory);
+  };
 
   const handleQuickExpense = async (categoryCode, subcategoryCode) => {
     // 공통 코드에서 카테고리 정보 찾기
@@ -59,7 +80,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
     
     let message = `${category.codeLabel} > ${subcategory.codeLabel} 금액을 입력하세요 (원):`;
     if (isVatApplicable) {
-      message += '\n※ 부가세 제외 금액을 입력하세요 (부가세 10%가 자동 추가됩니다)';
+      message += '\n※ 부가세 포함 금액을 입력하세요 (실제 지불한 금액)';
     } else {
       message += '\n※ 급여는 부가세가 없습니다';
     }
@@ -176,11 +197,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
             gap: '15px',
             marginBottom: '20px'
           }}>
-            {quickExpenses.map((expense, index) => {
-              const category = expenseCategories.find(c => c.codeValue === expense.categoryCode);
-              const subcategory = expenseSubcategories.find(s => s.codeValue === expense.subcategoryCode);
-              
-              if (!category || !subcategory) return null;
+            {getQuickExpenses().map((expense, index) => {
               
               return (
                 <button
@@ -218,10 +235,10 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                     {expense.icon}
                   </div>
                   <div style={{ fontSize: '12px', marginBottom: '4px' }}>
-                    {category.codeLabel}
+                    {expense.displayName}
                   </div>
                   <div style={{ fontSize: '10px', opacity: 0.7 }}>
-                    {subcategory.codeLabel}
+                    {expense.subDisplayName}
                   </div>
                 </button>
               );
@@ -237,7 +254,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
           marginBottom: '20px'
         }}>
           <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
-            💡 버튼을 클릭하면 금액 입력창이 나타납니다
+            💡 버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
           </p>
         </div>
 

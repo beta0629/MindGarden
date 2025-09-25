@@ -28,6 +28,7 @@ const SalaryManagement = () => {
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('calculations');
     const [selectedCalculation, setSelectedCalculation] = useState(null);
+    const [previewResult, setPreviewResult] = useState(null);
 
     // 상담사 목록 로드
     const loadConsultants = async () => {
@@ -165,8 +166,23 @@ const SalaryManagement = () => {
             console.log('📤 전송할 URL 파라미터:', queryParams.toString());
             const response = await apiPost(`/api/admin/salary/calculate?${queryParams}`);
             if (response && response.success) {
-                showNotification('급여 계산이 완료되었습니다.', 'success');
-                // 계산 완료 후 내역 다시 로드
+                showNotification('급여 계산 미리보기가 완료되었습니다.', 'success');
+                
+                // 미리보기 결과를 상태에 저장하여 화면에 표시
+                if (response.data) {
+                    setPreviewResult({
+                        consultantId: selectedConsultant.id,
+                        consultantName: selectedConsultant.name,
+                        period: selectedPeriod,
+                        grossSalary: response.data.grossSalary || 0,
+                        netSalary: response.data.netSalary || 0,
+                        taxAmount: response.data.taxAmount || 0,
+                        consultationCount: response.data.consultationCount || 0,
+                        calculatedAt: new Date().toISOString()
+                    });
+                }
+                
+                // 기존 저장된 내역도 다시 로드
                 loadSalaryCalculations(selectedConsultant.id);
             } else {
                 showNotification(response?.message || '급여 계산에 실패했습니다.', 'error');
@@ -535,6 +551,63 @@ const SalaryManagement = () => {
                     
                     <div className="calculations-history">
                         <h4>급여 계산 내역</h4>
+                        
+                        {/* 미리보기 결과 표시 */}
+                        {previewResult && (
+                            <div className="preview-result" style={{
+                                backgroundColor: '#e8f5e8',
+                                border: '2px solid #4caf50',
+                                borderRadius: '8px',
+                                padding: '16px',
+                                marginBottom: '16px'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                    <h5 style={{ margin: 0, color: '#2e7d32' }}>💰 급여 계산 미리보기</h5>
+                                    <span style={{ 
+                                        fontSize: '12px', 
+                                        color: '#666',
+                                        backgroundColor: '#4caf50',
+                                        color: 'white',
+                                        padding: '4px 8px',
+                                        borderRadius: '4px'
+                                    }}>
+                                        미리보기
+                                    </span>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                                    <div>
+                                        <strong>상담사:</strong> {previewResult.consultantName}
+                                    </div>
+                                    <div>
+                                        <strong>기간:</strong> {previewResult.period}
+                                    </div>
+                                    <div>
+                                        <strong>상담 건수:</strong> {previewResult.consultationCount}건
+                                    </div>
+                                    <div>
+                                        <strong>총 급여:</strong> ₩{previewResult.grossSalary?.toLocaleString() || 0}
+                                    </div>
+                                    <div>
+                                        <strong>세금:</strong> ₩{previewResult.taxAmount?.toLocaleString() || 0}
+                                    </div>
+                                    <div>
+                                        <strong>실지급액:</strong> ₩{previewResult.netSalary?.toLocaleString() || 0}
+                                    </div>
+                                </div>
+                                <div style={{ 
+                                    marginTop: '12px', 
+                                    padding: '8px', 
+                                    backgroundColor: '#fff3cd', 
+                                    border: '1px solid #ffeaa7',
+                                    borderRadius: '4px',
+                                    fontSize: '12px',
+                                    color: '#856404'
+                                }}>
+                                    ⚠️ 실제 급여는 매월 기산일에 배치로 처리됩니다.
+                                </div>
+                            </div>
+                        )}
+                        
                         <div className="calculations-list">
                         {salaryCalculations.map(calculation => (
                             <div key={calculation.id} className="calculation-card">

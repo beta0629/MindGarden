@@ -24,6 +24,7 @@ import MotivationCard from '../common/MotivationCard';
 import ScheduleQuickAccess from './ScheduleQuickAccess';
 import RatableConsultationsSection from '../client/RatableConsultationsSection';
 import ConsultantRatingDisplay from '../consultant/ConsultantRatingDisplay';
+import ConsultationRecordSection from '../consultant/ConsultationRecordSection';
 
 const CommonDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
@@ -812,6 +813,11 @@ const CommonDashboard = ({ user: propUser }) => {
         {/* 상담사 평가 표시 섹션 (상담사 전용) */}
         {user?.role === 'CONSULTANT' && (
           <ConsultantRatingDisplay consultantId={user.id} />
+        )}
+
+        {/* 상담일지 섹션 (상담사 전용) */}
+        {user?.role === 'CONSULTANT' && (
+          <ConsultationRecordSection consultantId={user.id} />
         )}
         
         {/* 동기부여 카드 (모든 사용자) */}

@@ -1,0 +1,41 @@
+/* 통합 회계 관리 드롭다운 스타일 */
+
+.integrated-finance-select {
+  position: relative !important;
+  z-index: 9999 !important;
+  transform: translateZ(0) !important;
+  will-change: transform !important;
+  overflow: visible !important;
+  contain: layout style paint !important;
+}
+
+.integrated-finance-select:focus {
+  position: relative !important;
+  z-index: 9999 !important;
+  transform: none !important;
+  contain: layout style paint !important;
+}
+
+.integrated-finance-select option {
+  position: fixed !important;
+  z-index: 9999 !important;
+  background: white !important;
+  color: #333 !important;
+  border: 1px solid #ccc !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+  padding: 8px 12px !important;
+}
+
+/* 헤더 컨테이너에 isolation 추가 */
+.integrated-finance-header {
+  position: relative;
+  z-index: 10;
+  isolation: isolate;
+}
+
+/* 드롭다운 컨테이너 */
+.integrated-finance-dropdown-container {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}

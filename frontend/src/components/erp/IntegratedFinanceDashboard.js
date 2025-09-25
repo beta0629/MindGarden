@@ -6,6 +6,7 @@ import SimpleHeader from '../layout/SimpleHeader';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
 import LoadingSpinner from '../common/LoadingSpinner';
+import './IntegratedFinanceDashboard.css';
 
 // 공통 유틸리티 함수들
 const formatCurrency = (amount) => {
@@ -174,7 +175,7 @@ const IntegratedFinanceDashboard = () => {
         fontFamily: 'Arial, sans-serif'
       }}>
         {/* 헤더 */}
-      <div style={{
+      <div className="integrated-finance-header" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -207,11 +208,12 @@ const IntegratedFinanceDashboard = () => {
             }
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="integrated-finance-dropdown-container" style={{ display: 'flex', gap: '10px' }}>
           {isHQUser && (
             <select
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
+              className="integrated-finance-select"
               style={{
                 padding: '12px 16px',
                 borderRadius: '12px',
@@ -221,7 +223,13 @@ const IntegratedFinanceDashboard = () => {
                 color: 'white',
                 backdropFilter: 'blur(10px)',
                 cursor: 'pointer',
-                minWidth: '120px'
+                minWidth: '120px',
+                position: 'relative',
+                zIndex: 1,
+                transform: 'translateZ(0)',
+                willChange: 'transform',
+                overflow: 'visible',
+                contain: 'layout style paint'
               }}
             >
               <option value="">지점 선택</option>
@@ -235,6 +243,7 @@ const IntegratedFinanceDashboard = () => {
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="integrated-finance-select"
             style={{
               padding: '12px 16px',
               borderRadius: '12px',
@@ -243,7 +252,13 @@ const IntegratedFinanceDashboard = () => {
               backgroundColor: 'rgba(255,255,255,0.2)',
               color: 'white',
               backdropFilter: 'blur(10px)',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              position: 'relative',
+              zIndex: 1,
+              transform: 'translateZ(0)',
+              willChange: 'transform',
+              overflow: 'visible',
+              contain: 'layout style paint'
             }}
           >
             <option value="daily">일간</option>

@@ -50,7 +50,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     /**
      * 만료된 결제 데이터 조회 (파기용)
      */
-    @Query("SELECT p.id, p.paymentMethod FROM Payment p WHERE p.updatedAt < ?1")
+    @Query("SELECT p.id, p.method FROM Payment p WHERE p.updatedAt < ?1")
     List<Object[]> findExpiredPaymentsForDestruction(LocalDateTime cutoffDate);
     
     /**

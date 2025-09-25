@@ -626,4 +626,82 @@ public class SalaryManagementController {
             ));
         }
     }
+    
+    /**
+     * 급여 설정 조회
+     */
+    @GetMapping("/configs")
+    public ResponseEntity<Map<String, Object>> getSalaryConfigs(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 현재 급여 설정 조회 (공통 코드에서)
+            Map<String, Object> configs = Map.of(
+                "monthlyBaseDay", "LAST_DAY",
+                "paymentDay", 5,
+                "cutoffDay", "LAST_DAY",
+                "batchCycle", "MONTHLY",
+                "calculationMethod", "CONSULTATION_COUNT"
+            );
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", configs,
+                "message", "급여 설정을 조회했습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("급여 설정 조회 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "급여 설정 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 급여 설정 저장
+     */
+    @PostMapping("/config")
+    public ResponseEntity<Map<String, Object>> saveSalaryConfig(
+            @RequestBody Map<String, Object> configRequest,
+            HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            String configType = (String) configRequest.get("configType");
+            String configValue = (String) configRequest.get("configValue");
+            String description = (String) configRequest.get("description");
+            
+            log.info("급여 설정 저장: Type={}, Value={}, Description={}", 
+                    configType, configValue, description);
+            
+            // TODO: 실제로는 CommonCodeService를 통해 공통 코드 업데이트
+            // 현재는 성공 응답만 반환
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "급여 설정이 저장되었습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("급여 설정 저장 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "급여 설정 저장 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
 }

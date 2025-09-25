@@ -8,6 +8,7 @@ import SalaryProfileFormModal from './SalaryProfileFormModal';
 import TaxDetailsModal from '../common/TaxDetailsModal';
 import SalaryExportModal from '../common/SalaryExportModal';
 import SalaryPrintComponent from '../common/SalaryPrintComponent';
+import SalaryConfigModal from './SalaryConfigModal';
 import { SALARY_CSS_CLASSES, SALARY_MESSAGES } from '../../constants/salaryConstants';
 import './SalaryManagement.css';
 
@@ -29,6 +30,7 @@ const SalaryManagement = () => {
     const [activeTab, setActiveTab] = useState('calculations');
     const [selectedCalculation, setSelectedCalculation] = useState(null);
     const [previewResult, setPreviewResult] = useState(null);
+    const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
 
     // 상담사 목록 로드
     const loadConsultants = async () => {
@@ -338,6 +340,13 @@ const SalaryManagement = () => {
             <div className="salary-header">
                 <h2>급여 관리</h2>
                 <div className="header-actions">
+                    <button 
+                        className="config-button"
+                        onClick={() => setIsConfigModalOpen(true)}
+                        title="급여 기산일 설정"
+                    >
+                        ⚙️ 기산일 설정
+                    </button>
                     <select 
                         value={selectedPeriod} 
                         onChange={(e) => {
@@ -856,6 +865,16 @@ const SalaryManagement = () => {
                 salaryData={selectedCalculation}
                 consultantName={selectedConsultant?.name}
                 period={selectedCalculation?.calculationPeriod}
+            />
+
+            {/* 급여 기산일 설정 모달 */}
+            <SalaryConfigModal
+                isOpen={isConfigModalOpen}
+                onClose={() => setIsConfigModalOpen(false)}
+                onSave={() => {
+                    showNotification('급여 기산일 설정이 저장되었습니다.', 'success');
+                    // 설정 저장 후 필요한 경우 데이터 새로고침
+                }}
             />
             </div>
         </SimpleLayout>

@@ -8,6 +8,7 @@ import com.mindgarden.consultation.entity.SalaryCalculation;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.PlSqlSalaryManagementService;
 import com.mindgarden.consultation.service.SalaryManagementService;
+import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,7 +43,7 @@ public class SalaryManagementController {
     @GetMapping("/profiles")
     public ResponseEntity<Map<String, Object>> getSalaryProfiles(HttpSession session) {
         try {
-            User currentUser = (User) session.getAttribute("currentUser");
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 log.warn("급여 프로필 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
                 return ResponseEntity.badRequest().body(Map.of(
@@ -76,7 +77,7 @@ public class SalaryManagementController {
     @GetMapping("/consultants")
     public ResponseEntity<Map<String, Object>> getConsultants(HttpSession session) {
         try {
-            User currentUser = (User) session.getAttribute("currentUser");
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 log.warn("상담사 목록 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
                 return ResponseEntity.badRequest().body(Map.of(
@@ -110,7 +111,7 @@ public class SalaryManagementController {
     @GetMapping("/calculations/{consultantId}")
     public ResponseEntity<Map<String, Object>> getSalaryCalculations(@PathVariable Long consultantId, HttpSession session) {
         try {
-            User currentUser = (User) session.getAttribute("currentUser");
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 log.warn("급여 계산 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
                 return ResponseEntity.badRequest().body(Map.of(
@@ -144,7 +145,7 @@ public class SalaryManagementController {
     @GetMapping("/tax/{calculationId}")
     public ResponseEntity<Map<String, Object>> getTaxDetails(@PathVariable Long calculationId, HttpSession session) {
         try {
-            User currentUser = (User) session.getAttribute("currentUser");
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 log.warn("세금 상세 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
                 return ResponseEntity.badRequest().body(Map.of(
@@ -180,7 +181,7 @@ public class SalaryManagementController {
             @RequestParam String period, 
             HttpSession session) {
         try {
-            User currentUser = (User) session.getAttribute("currentUser");
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 log.warn("세금 통계 조회: 세션에 currentUser가 없음, 세션 ID: {}", session.getId());
                 return ResponseEntity.badRequest().body(Map.of(
@@ -218,7 +219,7 @@ public class SalaryManagementController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodEnd,
             HttpSession session) {
         try {
-            User currentUser = (User) session.getAttribute("currentUser");
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
@@ -261,7 +262,7 @@ public class SalaryManagementController {
             @PathVariable Long calculationId,
             HttpSession session) {
         try {
-            User currentUser = (User) session.getAttribute("currentUser");
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
@@ -304,7 +305,7 @@ public class SalaryManagementController {
             @PathVariable Long calculationId,
             HttpSession session) {
         try {
-            User currentUser = (User) session.getAttribute("currentUser");
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
@@ -348,7 +349,7 @@ public class SalaryManagementController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             HttpSession session) {
         try {
-            User currentUser = (User) session.getAttribute("currentUser");
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
@@ -387,7 +388,7 @@ public class SalaryManagementController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             HttpSession session) {
         try {
-            User currentUser = (User) session.getAttribute("currentUser");
+            User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,

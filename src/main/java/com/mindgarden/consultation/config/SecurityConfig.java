@@ -118,6 +118,7 @@ public class SecurityConfig {
                     "/api/password-reset/**",  // 비밀번호 재설정 API
                     "/api/test-simple/**",  // 간단한 테스트 API
                     "/api/test/**",  // 테스트 API
+                    "/api/local-test/**",  // 로컬 테스트 API (로컬 환경에서만 활성화)
                     "/api/health/**",  // 시스템 헬스체크
                     "/error",
                     "/actuator/health",

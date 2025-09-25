@@ -32,6 +32,9 @@ public class PlSqlInitializer {
             // 상담일지 알림 프로시저 초기화
             initializeConsultationRecordAlertProcedures();
             
+            // 상담일지 검증 프로시저 초기화
+            initializeConsultationRecordValidationProcedures();
+            
             log.info("✅ PL/SQL 프로시저 자동 초기화 완료");
             
         } catch (Exception e) {
@@ -98,6 +101,57 @@ public class PlSqlInitializer {
             log.error("❌ SQL 파일 읽기 실패: {}", e.getMessage(), e);
         } catch (Exception e) {
             log.error("❌ 상담일지 알림 프로시저 초기화 실패: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 상담일지 검증 프로시저 초기화
+     */
+    private void initializeConsultationRecordValidationProcedures() {
+        try {
+            log.info("🔍 상담일지 검증 프로시저 초기화 시작");
+            
+            // UTF-8 인코딩 설정
+            jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+            
+            // SQL 파일 읽기
+            ClassPathResource resource = new ClassPathResource("sql/consultation_record_validation_procedures.sql");
+            String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            
+            // DELIMITER 구분자로 프로시저 분리
+            String[] procedures = sqlContent.split("DELIMITER \\$\\$");
+            
+            for (int i = 0; i < procedures.length; i++) {
+                String procedure = procedures[i].trim();
+                if (procedure.isEmpty() || procedure.startsWith("--") || procedure.startsWith("/*")) {
+                    continue;
+                }
+                
+                // DELIMITER $$ 제거
+                procedure = procedure.replaceAll("DELIMITER \\$\\$", "").trim();
+                if (procedure.isEmpty()) {
+                    continue;
+                }
+                
+                try {
+                    jdbcTemplate.execute(procedure);
+                    log.info("✅ 상담일지 검증 프로시저 {} 생성 완료", i + 1);
+                } catch (Exception e) {
+                    if (e.getMessage().contains("already exists") || 
+                        e.getMessage().contains("Duplicate procedure")) {
+                        log.info("ℹ️ 상담일지 검증 프로시저 {}가 이미 존재합니다: {}", i + 1, e.getMessage());
+                    } else {
+                        log.warn("⚠️ 상담일지 검증 프로시저 {} 생성 중 오류: {}", i + 1, e.getMessage());
+                    }
+                }
+            }
+            
+            log.info("✅ 상담일지 검증 프로시저 초기화 완료");
+            
+        } catch (IOException e) {
+            log.error("❌ SQL 파일 읽기 실패: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("❌ 상담일지 검증 프로시저 초기화 실패: {}", e.getMessage(), e);
         }
     }
 }

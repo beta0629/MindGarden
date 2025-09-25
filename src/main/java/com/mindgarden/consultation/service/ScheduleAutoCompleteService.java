@@ -35,7 +35,7 @@ public class ScheduleAutoCompleteService {
      * 매 10분마다 시간이 지난 스케줄을 자동 완료 처리 및 상담일지 미작성 알림
      * cron: 초 분 시 일 월 요일
      */
-    @Scheduled(cron = "0 */1 * * * *") // 1분마다 실행 (테스트용)
+    @Scheduled(cron = "0 */10 * * * *") // 10분마다 실행 (운영용)
     public void autoCompleteExpiredSchedules() {
         try {
             log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 시작 (스케줄러)");

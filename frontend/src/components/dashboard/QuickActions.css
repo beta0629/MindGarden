@@ -30,12 +30,21 @@
 
 .quick-actions-action-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+  max-width: 500px;
 }
 
+/* 상담사 대시보드 - 2열로 표시 */
+.dashboard-container.consultant .quick-actions-action-grid {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 500px;
+}
+
+/* 관리자 대시보드 - 3열로 표시 */
 .quick-actions-action-grid.admin-layout {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 600px;
 }
 
 .quick-actions-action-button {

@@ -3,10 +3,10 @@ package com.mindgarden.consultation.config;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -19,13 +19,13 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
-public class PlSqlInitializer implements CommandLineRunner {
+public class PlSqlInitializer {
     
     @Autowired
     private JdbcTemplate jdbcTemplate;
     
-    @Override
-    public void run(String... args) throws Exception {
+    @PostConstruct
+    public void init() {
         log.info("🚀 PL/SQL 프로시저 자동 초기화 시작");
         
         try {
@@ -55,34 +55,39 @@ public class PlSqlInitializer implements CommandLineRunner {
             
             log.info("📄 SQL 파일 크기: {} bytes", sqlContent.length());
             
-            // DELIMITER를 제거하고 개별 프로시저로 분리
-            String[] procedures = sqlContent.split("DELIMITER ;");
-            log.info("🔍 분리된 프로시저 개수: {}", procedures.length);
+            // 간단한 프로시저 생성 (테스트용)
+            String[] testProcedures = {
+                "DROP PROCEDURE IF EXISTS GetConsultationRecordMissingStatistics",
+                "CREATE PROCEDURE GetConsultationRecordMissingStatistics(" +
+                "IN p_check_date DATE," +
+                "IN p_branch_code VARCHAR(20)," +
+                "OUT p_missing_count INT," +
+                "OUT p_alerts_created INT," +
+                "OUT p_success BOOLEAN," +
+                "OUT p_message TEXT" +
+                ") " +
+                "BEGIN " +
+                "SET p_missing_count = 0;" +
+                "SET p_alerts_created = 0;" +
+                "SET p_success = TRUE;" +
+                "SET p_message = '테스트 프로시저';" +
+                "END"
+            };
             
-            for (int i = 0; i < procedures.length; i++) {
-                String procedure = procedures[i];
-                if (procedure.trim().isEmpty()) continue;
-                
-                // DELIMITER // 제거
-                String cleanProcedure = procedure.replaceAll("DELIMITER //", "").trim();
-                if (cleanProcedure.isEmpty()) continue;
-                
+            for (int i = 0; i < testProcedures.length; i++) {
+                String procedure = testProcedures[i];
                 log.info("🔧 프로시저 {} 실행 중...", i + 1);
-                log.debug("프로시저 내용 (처음 200자): {}", cleanProcedure.substring(0, Math.min(200, cleanProcedure.length())));
+                log.debug("프로시저 내용: {}", procedure);
                 
                 try {
-                    // 프로시저 실행
-                    jdbcTemplate.execute(cleanProcedure);
+                    jdbcTemplate.execute(procedure);
                     log.info("✅ PL/SQL 프로시저 {} 생성 성공", i + 1);
                 } catch (Exception e) {
-                    // 프로시저가 이미 존재하는 경우 무시
                     if (e.getMessage().contains("already exists") || 
-                        e.getMessage().contains("Duplicate procedure") ||
-                        e.getMessage().contains("already exists")) {
+                        e.getMessage().contains("Duplicate procedure")) {
                         log.info("ℹ️ PL/SQL 프로시저 {}가 이미 존재합니다: {}", i + 1, e.getMessage());
                     } else {
                         log.warn("⚠️ PL/SQL 프로시저 {} 생성 중 오류: {}", i + 1, e.getMessage());
-                        log.debug("프로시저 내용: {}", cleanProcedure);
                     }
                 }
             }

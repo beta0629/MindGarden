@@ -42,6 +42,11 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
              CallableStatement stmt = connection.prepareCall(
                  "{CALL ProcessIntegratedSalaryCalculation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
+            // UTF-8 인코딩 설정
+            connection.createStatement().execute("SET character_set_client = utf8mb4");
+            connection.createStatement().execute("SET character_set_connection = utf8mb4");
+            connection.createStatement().execute("SET character_set_results = utf8mb4");
+            
             // IN 파라미터 설정
             stmt.setLong(1, consultantId);
             stmt.setDate(2, java.sql.Date.valueOf(periodStart));

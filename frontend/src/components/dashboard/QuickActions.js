@@ -62,10 +62,6 @@ const QuickActions = ({ user }) => {
 
   return (
     <div className={QUICK_ACTIONS_CSS.CONTAINER}>
-      <h3 className={QUICK_ACTIONS_CSS.SECTION_TITLE}>
-        <i className="bi bi-lightning"></i>
-        빠른 액션
-      </h3>
       <div className={`${QUICK_ACTIONS_CSS.ACTION_GRID} ${(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') ? 'admin-layout' : ''}`}>
         <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToProfile}>
           <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.PROFILE.ICON}`}></i>

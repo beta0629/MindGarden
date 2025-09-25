@@ -8,25 +8,7 @@
   margin-bottom: 1.5rem;
 }
 
-.quick-actions .section-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #495057;
-  margin: 0 0 1.5rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.quick-actions .section-title i {
-  color: var(--dashboard-consultant-primary);
-  font-size: 1.3rem;
-}
-
-/* 내담자 대시보드 섹션 타이틀 아이콘 색상 */
-.dashboard-container.client .quick-actions .section-title i {
-  color: var(--dashboard-client-primary);
-}
+/* 제목 스타일 제거 - 모든 버튼이 동일한 크기 */
 
 .quick-actions-action-grid {
   display: grid;

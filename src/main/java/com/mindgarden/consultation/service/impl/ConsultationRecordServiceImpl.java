@@ -10,6 +10,7 @@ import com.mindgarden.consultation.entity.ConsultationRecord;
 import com.mindgarden.consultation.repository.ConsultationRecordRepository;
 import com.mindgarden.consultation.repository.ConsultationRepository;
 import com.mindgarden.consultation.service.ConsultationRecordService;
+import com.mindgarden.consultation.service.PlSqlConsultationRecordAlertService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +35,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     
     @Autowired
     private ConsultationRepository consultationRepository;
+    
+    @Autowired
+    private PlSqlConsultationRecordAlertService consultationRecordAlertService;
 
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
@@ -170,7 +174,30 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
                 }
             }
             
-            return consultationRecordRepository.save(record);
+            ConsultationRecord savedRecord = consultationRecordRepository.save(record);
+            
+            // 상담일지 작성 완료시 미작성 알림 자동 해제
+            try {
+                String resolvedBy = recordData.get("resolvedBy") != null ? 
+                    recordData.get("resolvedBy").toString() : "SYSTEM";
+                
+                Map<String, Object> alertResult = consultationRecordAlertService.resolveConsultationRecordAlert(
+                    consultationId, resolvedBy);
+                
+                Boolean alertSuccess = (Boolean) alertResult.get("success");
+                if (alertSuccess) {
+                    log.info("✅ 상담일지 작성 완료로 인한 알림 해제 성공: 상담ID={}", consultationId);
+                } else {
+                    log.warn("⚠️ 상담일지 작성 완료로 인한 알림 해제 실패: 상담ID={}, 메시지={}", 
+                            consultationId, alertResult.get("message"));
+                }
+                
+            } catch (Exception alertException) {
+                log.error("❌ 상담일지 작성 완료로 인한 알림 해제 중 오류: {}", alertException.getMessage(), alertException);
+                // 알림 해제 실패해도 상담일지 작성은 성공으로 처리
+            }
+            
+            return savedRecord;
             
         } catch (Exception e) {
             log.error("상담일지 작성 오류:", e);

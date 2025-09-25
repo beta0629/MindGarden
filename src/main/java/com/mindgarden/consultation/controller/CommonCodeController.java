@@ -7,6 +7,8 @@ import java.util.Optional;
 import com.mindgarden.consultation.dto.CommonCodeDto;
 import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.entity.CodeGroupMetadata;
+import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.repository.CodeGroupMetadataRepository;
 import org.springframework.http.HttpStatus;
@@ -40,6 +42,83 @@ public class CommonCodeController {
 
     private final CommonCodeService commonCodeService;
     private final CodeGroupMetadataRepository codeGroupMetadataRepository;
+    
+    /**
+     * ERP 관련 공통 코드 권한 체크
+     * 지점수퍼어드민만 접근 가능
+     */
+    private boolean hasErpCodePermission(UserRole userRole) {
+        return userRole == UserRole.BRANCH_SUPER_ADMIN || 
+               userRole == UserRole.HQ_MASTER || 
+               userRole == UserRole.SUPER_HQ_ADMIN;
+    }
+    
+    /**
+     * 수입지출 관련 공통 코드 권한 체크
+     * 지점수퍼어드민만 접근 가능
+     */
+    private boolean hasFinancialCodePermission(UserRole userRole) {
+        return userRole == UserRole.BRANCH_SUPER_ADMIN || 
+               userRole == UserRole.HQ_MASTER || 
+               userRole == UserRole.SUPER_HQ_ADMIN;
+    }
+    
+    /**
+     * 일반 공통 코드 권한 체크
+     * 어드민 이상 접근 가능
+     */
+    private boolean hasGeneralCodePermission(UserRole userRole) {
+        return userRole == UserRole.ADMIN || 
+               userRole == UserRole.BRANCH_SUPER_ADMIN || 
+               userRole == UserRole.HQ_MASTER || 
+               userRole == UserRole.SUPER_HQ_ADMIN ||
+               userRole == UserRole.HQ_ADMIN;
+    }
+    
+    /**
+     * 코드 그룹별 권한 체크
+     */
+    private boolean hasCodeGroupPermission(UserRole userRole, String codeGroup) {
+        // ERP 관련 코드 그룹
+        if (isErpCodeGroup(codeGroup)) {
+            return hasErpCodePermission(userRole);
+        }
+        
+        // 수입지출 관련 코드 그룹
+        if (isFinancialCodeGroup(codeGroup)) {
+            return hasFinancialCodePermission(userRole);
+        }
+        
+        // 기타 코드 그룹
+        return hasGeneralCodePermission(userRole);
+    }
+    
+    /**
+     * ERP 관련 코드 그룹 판별
+     */
+    private boolean isErpCodeGroup(String codeGroup) {
+        return "ITEM_CATEGORY".equals(codeGroup) ||
+               "ITEM_STATUS".equals(codeGroup) ||
+               "PURCHASE_STATUS".equals(codeGroup) ||
+               "BUDGET_CATEGORY".equals(codeGroup) ||
+               "APPROVAL_TYPE".equals(codeGroup) ||
+               "APPROVAL_STATUS".equals(codeGroup) ||
+               "APPROVAL_PRIORITY".equals(codeGroup);
+    }
+    
+    /**
+     * 수입지출 관련 코드 그룹 판별
+     */
+    private boolean isFinancialCodeGroup(String codeGroup) {
+        return "FINANCIAL_CATEGORY".equals(codeGroup) ||
+               "FINANCIAL_SUBCATEGORY".equals(codeGroup) ||
+               "TRANSACTION_TYPE".equals(codeGroup) ||
+               "PAYMENT_METHOD".equals(codeGroup) ||
+               "PAYMENT_STATUS".equals(codeGroup) ||
+               "SALARY_TYPE".equals(codeGroup) ||
+               "SALARY_GRADE".equals(codeGroup) ||
+               "TAX_TYPE".equals(codeGroup);
+    }
 
     /**
      * 코드 그룹별 코드 값 조회 (기존 API 호환성)
@@ -49,10 +128,16 @@ public class CommonCodeController {
         try {
             log.info("📋 코드 값 목록 조회: 그룹={}, 요청자 역할={}", groupCode, userRole);
             
-            // 관리자 권한 확인 (userRole이 제공된 경우에만)
-            if (userRole != null && !"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && !"BRANCH_HQ_MASTER".equals(userRole) && !"BRANCH_SUPER_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole) && !"HQ_ADMIN".equals(userRole)) {
-                log.warn("❌ 관리자 권한 없음: {}", userRole);
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            // 권한 체크 (userRole이 제공된 경우에만)
+            if (userRole != null) {
+                UserRole role = UserRole.valueOf(userRole);
+                if (!hasCodeGroupPermission(role, groupCode)) {
+                    log.warn("❌ 코드 그룹 접근 권한 없음: 역할={}, 코드그룹={}", userRole, groupCode);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "success", false,
+                        "message", "해당 코드 그룹에 대한 접근 권한이 없습니다."
+                    ));
+                }
             }
             
             List<CommonCode> commonCodes = commonCodeService.getCommonCodesByGroup(groupCode);
@@ -89,9 +174,22 @@ public class CommonCodeController {
      * 코드 그룹별 조회
      */
     @GetMapping("/group/{codeGroup}")
-    public ResponseEntity<?> getCommonCodesByGroup(@PathVariable String codeGroup) {
+    public ResponseEntity<?> getCommonCodesByGroup(@PathVariable String codeGroup, @RequestParam(required = false) String userRole) {
         try {
-            log.info("🔍 코드 그룹별 공통코드 조회: {}", codeGroup);
+            log.info("🔍 코드 그룹별 공통코드 조회: {}, 요청자 역할: {}", codeGroup, userRole);
+            
+            // 권한 체크 (userRole이 제공된 경우에만)
+            if (userRole != null) {
+                UserRole role = UserRole.valueOf(userRole);
+                if (!hasCodeGroupPermission(role, codeGroup)) {
+                    log.warn("❌ 코드 그룹 접근 권한 없음: 역할={}, 코드그룹={}", userRole, codeGroup);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "success", false,
+                        "message", "해당 코드 그룹에 대한 접근 권한이 없습니다."
+                    ));
+                }
+            }
+            
             List<CommonCode> commonCodes = commonCodeService.getCommonCodesByGroup(codeGroup);
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -111,9 +209,22 @@ public class CommonCodeController {
      * 활성 코드만 조회
      */
     @GetMapping("/group/{codeGroup}/active")
-    public ResponseEntity<?> getActiveCommonCodesByGroup(@PathVariable String codeGroup) {
+    public ResponseEntity<?> getActiveCommonCodesByGroup(@PathVariable String codeGroup, @RequestParam(required = false) String userRole) {
         try {
-            log.info("🔍 활성 코드 그룹별 공통코드 조회: {}", codeGroup);
+            log.info("🔍 활성 코드 그룹별 공통코드 조회: {}, 요청자 역할: {}", codeGroup, userRole);
+            
+            // 권한 체크 (userRole이 제공된 경우에만)
+            if (userRole != null) {
+                UserRole role = UserRole.valueOf(userRole);
+                if (!hasCodeGroupPermission(role, codeGroup)) {
+                    log.warn("❌ 활성 코드 그룹 접근 권한 없음: 역할={}, 코드그룹={}", userRole, codeGroup);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "success", false,
+                        "message", "해당 코드 그룹에 대한 접근 권한이 없습니다."
+                    ));
+                }
+            }
+            
             List<CommonCode> commonCodes = commonCodeService.getActiveCommonCodesByGroup(codeGroup);
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -154,9 +265,22 @@ public class CommonCodeController {
      * 공통코드 생성
      */
     @PostMapping
-    public ResponseEntity<?> createCommonCode(@RequestBody CommonCodeDto dto) {
+    public ResponseEntity<?> createCommonCode(@RequestBody CommonCodeDto dto, @RequestParam(required = false) String userRole) {
         try {
-            log.info("🔧 공통코드 생성: {} - {}", dto.getCodeGroup(), dto.getCodeValue());
+            log.info("🔧 공통코드 생성: {} - {}, 요청자 역할: {}", dto.getCodeGroup(), dto.getCodeValue(), userRole);
+            
+            // 권한 체크 (userRole이 제공된 경우에만)
+            if (userRole != null) {
+                UserRole role = UserRole.valueOf(userRole);
+                if (!hasCodeGroupPermission(role, dto.getCodeGroup())) {
+                    log.warn("❌ 공통코드 생성 권한 없음: 역할={}, 코드그룹={}", userRole, dto.getCodeGroup());
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "success", false,
+                        "message", "해당 코드 그룹에 대한 생성 권한이 없습니다."
+                    ));
+                }
+            }
+            
             CommonCode commonCode = commonCodeService.createCommonCode(dto);
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -176,9 +300,22 @@ public class CommonCodeController {
      * 공통코드 수정
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateCommonCode(@PathVariable Long id, @RequestBody CommonCodeDto dto) {
+    public ResponseEntity<?> updateCommonCode(@PathVariable Long id, @RequestBody CommonCodeDto dto, @RequestParam(required = false) String userRole) {
         try {
-            log.info("🔧 공통코드 수정: {}", id);
+            log.info("🔧 공통코드 수정: {}, 요청자 역할: {}", id, userRole);
+            
+            // 권한 체크 (userRole이 제공된 경우에만)
+            if (userRole != null) {
+                UserRole role = UserRole.valueOf(userRole);
+                if (!hasCodeGroupPermission(role, dto.getCodeGroup())) {
+                    log.warn("❌ 공통코드 수정 권한 없음: 역할={}, 코드그룹={}", userRole, dto.getCodeGroup());
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "success", false,
+                        "message", "해당 코드 그룹에 대한 수정 권한이 없습니다."
+                    ));
+                }
+            }
+            
             CommonCode commonCode = commonCodeService.updateCommonCode(id, dto);
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -198,9 +335,31 @@ public class CommonCodeController {
      * 공통코드 삭제
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteCommonCode(@PathVariable Long id) {
+    public ResponseEntity<?> deleteCommonCode(@PathVariable Long id, @RequestParam(required = false) String userRole) {
         try {
-            log.info("🗑️ 공통코드 삭제: {}", id);
+            log.info("🗑️ 공통코드 삭제: {}, 요청자 역할: {}", id, userRole);
+            
+            // 기존 코드 조회하여 권한 체크
+            if (userRole != null) {
+                try {
+                    CommonCode existingCode = commonCodeService.getCommonCodeById(id);
+                    UserRole role = UserRole.valueOf(userRole);
+                    if (!hasCodeGroupPermission(role, existingCode.getCodeGroup())) {
+                        log.warn("❌ 공통코드 삭제 권한 없음: 역할={}, 코드그룹={}", userRole, existingCode.getCodeGroup());
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                            "success", false,
+                            "message", "해당 코드 그룹에 대한 삭제 권한이 없습니다."
+                        ));
+                    }
+                } catch (Exception e) {
+                    log.warn("❌ 공통코드 조회 실패: {}", e.getMessage());
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                        "success", false,
+                        "message", "공통코드를 찾을 수 없습니다."
+                    ));
+                }
+            }
+            
             commonCodeService.deleteCommonCode(id);
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -219,9 +378,31 @@ public class CommonCodeController {
      * 공통코드 상태 토글
      */
     @PostMapping("/{id}/toggle-status")
-    public ResponseEntity<?> toggleCommonCodeStatus(@PathVariable Long id) {
+    public ResponseEntity<?> toggleCommonCodeStatus(@PathVariable Long id, @RequestParam(required = false) String userRole) {
         try {
-            log.info("🔄 공통코드 상태 토글: {}", id);
+            log.info("🔄 공통코드 상태 토글: {}, 요청자 역할: {}", id, userRole);
+            
+            // 기존 코드 조회하여 권한 체크
+            if (userRole != null) {
+                try {
+                    CommonCode existingCode = commonCodeService.getCommonCodeById(id);
+                    UserRole role = UserRole.valueOf(userRole);
+                    if (!hasCodeGroupPermission(role, existingCode.getCodeGroup())) {
+                        log.warn("❌ 공통코드 상태 토글 권한 없음: 역할={}, 코드그룹={}", userRole, existingCode.getCodeGroup());
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                            "success", false,
+                            "message", "해당 코드 그룹에 대한 상태 변경 권한이 없습니다."
+                        ));
+                    }
+                } catch (Exception e) {
+                    log.warn("❌ 공통코드 조회 실패: {}", e.getMessage());
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                        "success", false,
+                        "message", "공통코드를 찾을 수 없습니다."
+                    ));
+                }
+            }
+            
             CommonCode commonCode = commonCodeService.toggleCommonCodeStatus(id);
             return ResponseEntity.ok(Map.of(
                 "success", true,

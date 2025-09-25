@@ -667,6 +667,70 @@ public class SalaryManagementController {
     }
     
     /**
+     * 급여 기산일 옵션 조회 (공통 코드)
+     */
+    @GetMapping("/config-options")
+    public ResponseEntity<Map<String, Object>> getSalaryConfigOptions(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 공통 코드에서 급여 관련 옵션들 조회
+            Map<String, Object> options = Map.of(
+                "monthlyBaseDays", List.of(
+                    Map.of("value", "LAST_DAY", "label", "매월 말일"),
+                    Map.of("value", "25", "label", "25일"),
+                    Map.of("value", "30", "label", "30일"),
+                    Map.of("value", "31", "label", "31일")
+                ),
+                "paymentDays", List.of(
+                    Map.of("value", "1", "label", "익월 1일"),
+                    Map.of("value", "5", "label", "익월 5일"),
+                    Map.of("value", "10", "label", "익월 10일"),
+                    Map.of("value", "15", "label", "익월 15일"),
+                    Map.of("value", "20", "label", "익월 20일"),
+                    Map.of("value", "25", "label", "익월 25일"),
+                    Map.of("value", "30", "label", "익월 30일")
+                ),
+                "cutoffDays", List.of(
+                    Map.of("value", "LAST_DAY", "label", "매월 말일"),
+                    Map.of("value", "25", "label", "25일"),
+                    Map.of("value", "30", "label", "30일"),
+                    Map.of("value", "31", "label", "31일")
+                ),
+                "batchCycles", List.of(
+                    Map.of("value", "MONTHLY", "label", "월별 배치"),
+                    Map.of("value", "SEMI_MONTHLY", "label", "반월별 배치"),
+                    Map.of("value", "WEEKLY", "label", "주별 배치")
+                ),
+                "calculationMethods", List.of(
+                    Map.of("value", "CONSULTATION_COUNT", "label", "상담건수 기준"),
+                    Map.of("value", "HOURLY_RATE", "label", "시간당 기준"),
+                    Map.of("value", "FIXED_SALARY", "label", "고정급여")
+                )
+            );
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", options,
+                "message", "급여 설정 옵션을 조회했습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("급여 설정 옵션 조회 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "급여 설정 옵션 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
      * 급여 설정 저장
      */
     @PostMapping("/config")

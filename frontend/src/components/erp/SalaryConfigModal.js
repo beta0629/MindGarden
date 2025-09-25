@@ -9,12 +9,20 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
     batchCycle: 'MONTHLY',
     calculationMethod: 'CONSULTATION_COUNT'
   });
+  const [options, setOptions] = useState({
+    monthlyBaseDays: [],
+    paymentDays: [],
+    cutoffDays: [],
+    batchCycles: [],
+    calculationMethods: []
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       loadCurrentConfigs();
+      loadConfigOptions();
     }
   }, [isOpen]);
 
@@ -32,6 +40,20 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
       console.error('설정 로드 오류:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadConfigOptions = async () => {
+    try {
+      const response = await fetch('/api/admin/salary/config-options');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setOptions(data.data);
+        }
+      }
+    } catch (error) {
+      console.error('설정 옵션 로드 오류:', error);
     }
   };
 
@@ -121,10 +143,11 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.monthlyBaseDay} 
                 onChange={(e) => handleInputChange('monthlyBaseDay', e.target.value)}
               >
-                <option value="LAST_DAY">매월 말일</option>
-                <option value="25">25일</option>
-                <option value="30">30일</option>
-                <option value="31">31일</option>
+                {options.monthlyBaseDays.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -134,13 +157,11 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.paymentDay} 
                 onChange={(e) => handleInputChange('paymentDay', parseInt(e.target.value))}
               >
-                <option value="1">익월 1일</option>
-                <option value="5">익월 5일</option>
-                <option value="10">익월 10일</option>
-                <option value="15">익월 15일</option>
-                <option value="20">익월 20일</option>
-                <option value="25">익월 25일</option>
-                <option value="30">익월 30일</option>
+                {options.paymentDays.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -150,10 +171,11 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.cutoffDay} 
                 onChange={(e) => handleInputChange('cutoffDay', e.target.value)}
               >
-                <option value="LAST_DAY">매월 말일</option>
-                <option value="25">25일</option>
-                <option value="30">30일</option>
-                <option value="31">31일</option>
+                {options.cutoffDays.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -167,9 +189,11 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.batchCycle} 
                 onChange={(e) => handleInputChange('batchCycle', e.target.value)}
               >
-                <option value="MONTHLY">월별 배치</option>
-                <option value="SEMI_MONTHLY">반월별 배치</option>
-                <option value="WEEKLY">주별 배치</option>
+                {options.batchCycles.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -183,9 +207,11 @@ const SalaryConfigModal = ({ isOpen, onClose, onSave }) => {
                 value={configs.calculationMethod} 
                 onChange={(e) => handleInputChange('calculationMethod', e.target.value)}
               >
-                <option value="CONSULTATION_COUNT">상담건수 기준</option>
-                <option value="HOURLY_RATE">시간당 기준</option>
-                <option value="FIXED_SALARY">고정급여</option>
+                {options.calculationMethods.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

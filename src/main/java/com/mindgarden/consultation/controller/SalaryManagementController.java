@@ -232,6 +232,8 @@ public class SalaryManagementController {
                 consultantId, periodStart, periodEnd, currentUser.getName()
             );
             
+            log.info("💰 PL/SQL 결과: {}", result);
+            
             if ((Boolean) result.get("success")) {
                 return ResponseEntity.ok(Map.of(
                     "success", true,
@@ -239,6 +241,7 @@ public class SalaryManagementController {
                     "message", "급여 계산이 완료되었습니다."
                 ));
             } else {
+                log.error("💰 PL/SQL 급여 계산 실패: {}", result.get("message"));
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", result.get("message")

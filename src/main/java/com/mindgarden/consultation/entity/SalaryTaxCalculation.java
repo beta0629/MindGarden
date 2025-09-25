@@ -55,6 +55,10 @@ public class SalaryTaxCalculation {
     @Column(name = "tax_rate", precision = 5, scale = 4, nullable = false)
     private BigDecimal taxRate; // 0.033, 0.10, 0.15 등
     
+    @DecimalMin(value = "0.0", message = "기준금액은 0 이상이어야 합니다.")
+    @Column(name = "base_amount", precision = 10, scale = 2, nullable = false)
+    private BigDecimal baseAmount; // 세금 계산 기준 금액
+    
     @DecimalMin(value = "0.0", message = "과세표준은 0 이상이어야 합니다.")
     @Column(name = "taxable_amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal taxableAmount; // 과세표준 금액
@@ -64,8 +68,8 @@ public class SalaryTaxCalculation {
     private BigDecimal taxAmount; // 계산된 세금액
     
     @Size(max = 500, message = "세금 설명은 500자 이하여야 합니다.")
-    @Column(name = "tax_description", length = 500)
-    private String taxDescription;
+    @Column(name = "description", length = 500)
+    private String description;
     
     @Size(max = 1000, message = "계산 상세는 1000자 이하여야 합니다.")
     @Column(name = "calculation_details", columnDefinition = "TEXT")
@@ -99,8 +103,9 @@ public class SalaryTaxCalculation {
      * 세금 계산
      */
     public void calculateTax() {
-        if (taxableAmount != null && taxRate != null) {
-            this.taxAmount = taxableAmount.multiply(taxRate).setScale(0, java.math.RoundingMode.HALF_UP);
+        if (baseAmount != null && taxRate != null) {
+            this.taxAmount = baseAmount.multiply(taxRate).setScale(0, java.math.RoundingMode.HALF_UP);
+            this.taxableAmount = baseAmount; // 기준금액을 과세표준으로 설정
         }
     }
     
@@ -108,8 +113,9 @@ public class SalaryTaxCalculation {
      * 세금 계산 (사용자 정의 세율)
      */
     public void calculateTax(BigDecimal customRate) {
-        if (taxableAmount != null && customRate != null) {
-            this.taxAmount = taxableAmount.multiply(customRate).setScale(0, java.math.RoundingMode.HALF_UP);
+        if (baseAmount != null && customRate != null) {
+            this.taxAmount = baseAmount.multiply(customRate).setScale(0, java.math.RoundingMode.HALF_UP);
+            this.taxableAmount = baseAmount; // 기준금액을 과세표준으로 설정
         }
     }
 }

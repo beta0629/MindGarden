@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import SimpleHeader from '../../common/SimpleHeader';
+import SimpleHeader from '../layout/SimpleHeader';
 import './ComplianceMenu.css';
 
 /**

@@ -9,6 +9,7 @@ import {
     getCodeGroupIconSync,
     clearCodeGroupCache
 } from '../../utils/codeHelper';
+import { useSession } from '../../contexts/SessionContext';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
 import './ImprovedCommonCodeManagement.css';
@@ -24,6 +25,50 @@ import './ImprovedCommonCodeManagement.css';
  * @since 2025-09-13
  */
 const CommonCodeManagement = () => {
+    // 세션 정보
+    const { user } = useSession();
+    
+    // 권한 체크 함수들
+    const hasErpCodePermission = () => {
+        return user?.role === 'BRANCH_SUPER_ADMIN' || 
+               user?.role === 'HQ_MASTER' || 
+               user?.role === 'SUPER_HQ_ADMIN';
+    };
+    
+    const hasFinancialCodePermission = () => {
+        return user?.role === 'BRANCH_SUPER_ADMIN' || 
+               user?.role === 'HQ_MASTER' || 
+               user?.role === 'SUPER_HQ_ADMIN';
+    };
+    
+    const hasGeneralCodePermission = () => {
+        return user?.role === 'ADMIN' || 
+               user?.role === 'BRANCH_SUPER_ADMIN' || 
+               user?.role === 'HQ_MASTER' || 
+               user?.role === 'SUPER_HQ_ADMIN' ||
+               user?.role === 'HQ_ADMIN';
+    };
+    
+    const isErpCodeGroup = (codeGroup) => {
+        return ['ITEM_CATEGORY', 'ITEM_STATUS', 'PURCHASE_STATUS', 'BUDGET_CATEGORY', 
+                'APPROVAL_TYPE', 'APPROVAL_STATUS', 'APPROVAL_PRIORITY'].includes(codeGroup);
+    };
+    
+    const isFinancialCodeGroup = (codeGroup) => {
+        return ['FINANCIAL_CATEGORY', 'FINANCIAL_SUBCATEGORY', 'TRANSACTION_TYPE', 
+                'PAYMENT_METHOD', 'PAYMENT_STATUS', 'SALARY_TYPE', 'SALARY_GRADE', 'TAX_TYPE'].includes(codeGroup);
+    };
+    
+    const hasCodeGroupPermission = (codeGroup) => {
+        if (isErpCodeGroup(codeGroup)) {
+            return hasErpCodePermission();
+        }
+        if (isFinancialCodeGroup(codeGroup)) {
+            return hasFinancialCodePermission();
+        }
+        return hasGeneralCodePermission();
+    };
+    
     // 상태 관리
     const [currentStep, setCurrentStep] = useState(1); // 1: 그룹 선택, 2: 코드 관리
     const [selectedGroup, setSelectedGroup] = useState(null);
@@ -104,7 +149,7 @@ const CommonCodeManagement = () => {
     const loadGroupCodes = useCallback(async (groupName) => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/admin/common-codes/group/${groupName}`);
+            const response = await apiGet(`/api/admin/common-codes/group/${groupName}?userRole=${user?.role || ''}`);
             if (response.success && response.data) {
                 setGroupCodes(response.data);
             } else {
@@ -112,14 +157,30 @@ const CommonCodeManagement = () => {
             }
         } catch (error) {
             console.error('그룹 코드 로드 오류:', error);
-            notificationManager.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
+            if (error.response?.status === 403) {
+                notificationManager.error('해당 코드 그룹에 대한 접근 권한이 없습니다.');
+            } else {
+                notificationManager.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
+            }
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user?.role]);
 
     // 코드그룹 선택
     const handleGroupSelect = (group) => {
+        // 권한 체크
+        if (!hasCodeGroupPermission(group)) {
+            if (isErpCodeGroup(group)) {
+                notificationManager.error('ERP 관련 코드 그룹은 지점수퍼어드민만 접근할 수 있습니다.');
+            } else if (isFinancialCodeGroup(group)) {
+                notificationManager.error('수입지출 관련 코드 그룹은 지점수퍼어드민만 접근할 수 있습니다.');
+            } else {
+                notificationManager.error('해당 코드 그룹에 대한 접근 권한이 없습니다.');
+            }
+            return;
+        }
+        
         setSelectedGroup(group);
         setCurrentStep(2);
         loadGroupCodes(group);
@@ -314,7 +375,7 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            const response = await apiPost('/api/admin/common-codes', {
+            const response = await apiPost(`/api/admin/common-codes?userRole=${user?.role || ''}`, {
                 ...newCodeData,
                 codeGroup: selectedGroup
             });
@@ -342,7 +403,11 @@ const CommonCodeManagement = () => {
             }
         } catch (error) {
             console.error('코드 추가 오류:', error);
-            notificationManager.error('코드 추가에 실패했습니다.');
+            if (error.response?.status === 403) {
+                notificationManager.error('해당 코드 그룹에 대한 생성 권한이 없습니다.');
+            } else {
+                notificationManager.error('코드 추가에 실패했습니다.');
+            }
         } finally {
             setLoading(false);
         }
@@ -356,7 +421,7 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            const response = await apiDelete(`/api/admin/common-codes/${codeId}`);
+            const response = await apiDelete(`/api/admin/common-codes/${codeId}?userRole=${user?.role || ''}`);
             
             if (response.success) {
                 notificationManager.success('코드가 삭제되었습니다!');
@@ -366,7 +431,11 @@ const CommonCodeManagement = () => {
             }
         } catch (error) {
             console.error('코드 삭제 오류:', error);
-            notificationManager.error('코드 삭제에 실패했습니다.');
+            if (error.response?.status === 403) {
+                notificationManager.error('해당 코드 그룹에 대한 삭제 권한이 없습니다.');
+            } else {
+                notificationManager.error('코드 삭제에 실패했습니다.');
+            }
         } finally {
             setLoading(false);
         }
@@ -376,7 +445,7 @@ const CommonCodeManagement = () => {
     const handleToggleStatus = async (codeId, currentStatus) => {
         try {
             setLoading(true);
-            const response = await apiPost(`/api/admin/common-codes/${codeId}/toggle-status`);
+            const response = await apiPost(`/api/admin/common-codes/${codeId}/toggle-status?userRole=${user?.role || ''}`);
             
             if (response.success) {
                 notificationManager.success('코드 상태가 변경되었습니다!');
@@ -386,7 +455,11 @@ const CommonCodeManagement = () => {
             }
         } catch (error) {
             console.error('코드 상태 토글 오류:', error);
-            notificationManager.error('코드 상태 변경에 실패했습니다.');
+            if (error.response?.status === 403) {
+                notificationManager.error('해당 코드 그룹에 대한 상태 변경 권한이 없습니다.');
+            } else {
+                notificationManager.error('코드 상태 변경에 실패했습니다.');
+            }
         } finally {
             setLoading(false);
         }
@@ -423,7 +496,7 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            const response = await apiPut(`/api/admin/common-codes/${editingCode.id}`, newCodeData);
+            const response = await apiPut(`/api/admin/common-codes/${editingCode.id}?userRole=${user?.role || ''}`, newCodeData);
 
             if (response.success) {
                 notificationManager.success('코드가 수정되었습니다!');
@@ -449,7 +522,11 @@ const CommonCodeManagement = () => {
             }
         } catch (error) {
             console.error('코드 수정 오류:', error);
-            notificationManager.error('코드 수정에 실패했습니다.');
+            if (error.response?.status === 403) {
+                notificationManager.error('해당 코드 그룹에 대한 수정 권한이 없습니다.');
+            } else {
+                notificationManager.error('코드 수정에 실패했습니다.');
+            }
         } finally {
             setLoading(false);
         }

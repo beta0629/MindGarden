@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import SimpleHeader from '../common/SimpleHeader';
+import SimpleHeader from '../../common/SimpleHeader';
 import './ComplianceDashboard.css';
 
 /**

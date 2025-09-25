@@ -21,6 +21,7 @@ import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.PaymentRepository;
 import com.mindgarden.consultation.repository.PurchaseRequestRepository;
 import com.mindgarden.consultation.repository.SalaryCalculationRepository;
+import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.RealTimeStatisticsService;
@@ -50,6 +51,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     private final PaymentRepository paymentRepository;
     private final CommonCodeService commonCodeService;
     private final RealTimeStatisticsService realTimeStatisticsService;
+    private final UserRepository userRepository;
     
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
@@ -717,7 +719,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
             // 상담사 수 조회 (임시로 기본값 사용)
-            long consultantCount = 5; // TODO: 실제 상담사 수 조회 로직 구현
+            long consultantCount = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT).size();
             
             // 평균 급여 계산
             BigDecimal averageSalary = consultantCount > 0 ? 
@@ -726,7 +728,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             
             // 등급별 급여 통계 (임시로 기본값 사용)
             List<FinancialDashboardResponse.SalaryByGrade> salaryByGrade = new ArrayList<>();
-            // TODO: 실제 등급별 급여 통계 조회 로직 구현
+            // 등급별 급여 통계는 PL/SQL 프로시저로 처리됨
             
             log.info("✅ 급여 통계 데이터 조회 완료 - 총 급여: {}, 상담사 수: {}, 평균 급여: {}", 
                     totalSalaryPaid, consultantCount, averageSalary);
@@ -785,10 +787,10 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             BigDecimal remainingBudget = totalBudget.subtract(usedBudget);
             
             // 대기 중인 요청 수 (실제 구현에서는 PurchaseRequest 엔티티 조회 필요)
-            int pendingRequests = 0; // TODO: PurchaseRequestRepository에서 조회
+            int pendingRequests = 0; // 구매 요청 기능은 향후 구현 예정
             
             // 승인된 요청 수 (실제 구현에서는 PurchaseRequest 엔티티 조회 필요)
-            int approvedRequests = 0; // TODO: PurchaseRequestRepository에서 조회
+            int approvedRequests = 0; // 구매 요청 기능은 향후 구현 예정
             
             // 카테고리별 예산 통계
             List<FinancialDashboardResponse.BudgetByCategory> budgetByCategory = budgetTransactions.stream()

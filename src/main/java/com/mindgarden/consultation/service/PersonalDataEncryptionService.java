@@ -1,13 +1,11 @@
 package com.mindgarden.consultation.service;
 
-import org.springframework.stereotype.Service;
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.security.SecureRandom;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import org.springframework.stereotype.Service;
 
 /**
  * 개인정보 암호화 서비스

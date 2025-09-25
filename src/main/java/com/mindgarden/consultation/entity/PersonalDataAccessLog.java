@@ -1,13 +1,15 @@
 package com.mindgarden.consultation.entity;
 
+import java.time.LocalDateTime;
+import org.hibernate.annotations.CreationTimestamp;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-
-import javax.persistence.*;
-import java.time.LocalDateTime;
 
 /**
  * 개인정보 접근 로그 엔티티

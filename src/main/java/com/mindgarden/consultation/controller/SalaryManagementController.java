@@ -41,6 +41,53 @@ public class SalaryManagementController {
     private final PlSqlSalaryManagementService plSqlSalaryManagementService;
     
     /**
+     * 개별 급여 프로필 조회
+     */
+    @GetMapping("/profiles/{consultantId}")
+    public ResponseEntity<Map<String, Object>> getSalaryProfile(@PathVariable Long consultantId, HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            log.info("개별 급여 프로필 조회: 상담사 ID {}", consultantId);
+            String branchCode = currentUser.getBranchCode();
+            List<ConsultantSalaryProfile> profiles = salaryManagementService.getAllSalaryProfiles(branchCode);
+            
+            // 해당 상담사의 프로필 찾기
+            ConsultantSalaryProfile consultantProfile = profiles.stream()
+                .filter(profile -> profile.getConsultantId().equals(consultantId))
+                .findFirst()
+                .orElse(null);
+            
+            if (consultantProfile != null) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "data", consultantProfile,
+                    "message", "급여 프로필을 조회했습니다."
+                ));
+            } else {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "data", null,
+                    "message", "해당 상담사의 급여 프로필이 없습니다."
+                ));
+            }
+            
+        } catch (Exception e) {
+            log.error("개별 급여 프로필 조회 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "급여 프로필 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
      * 급여 프로필 목록 조회
      */
     @GetMapping("/profiles")
@@ -465,6 +512,117 @@ public class SalaryManagementController {
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "급여 계산 목록 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 급여 옵션 유형 조회
+     */
+    @GetMapping("/option-types")
+    public ResponseEntity<Map<String, Object>> getOptionTypes(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 기본 옵션 유형 반환
+            List<Map<String, Object>> optionTypes = List.of(
+                Map.of("value", "CONSULTATION", "label", "상담 수당"),
+                Map.of("value", "BONUS", "label", "보너스"),
+                Map.of("value", "OVERTIME", "label", "초과 근무"),
+                Map.of("value", "HOLIDAY", "label", "휴일 근무")
+            );
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", optionTypes,
+                "message", "급여 옵션 유형을 조회했습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("급여 옵션 유형 조회 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "급여 옵션 유형 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 상담사 등급 조회
+     */
+    @GetMapping("/grades")
+    public ResponseEntity<Map<String, Object>> getGrades(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 기본 등급 반환
+            List<Map<String, Object>> grades = List.of(
+                Map.of("value", "S", "label", "S급"),
+                Map.of("value", "A", "label", "A급"),
+                Map.of("value", "B", "label", "B급"),
+                Map.of("value", "C", "label", "C급"),
+                Map.of("value", "D", "label", "D급")
+            );
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", grades,
+                "message", "상담사 등급을 조회했습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("상담사 등급 조회 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "상담사 등급 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 급여 유형 코드 조회
+     */
+    @GetMapping("/codes")
+    public ResponseEntity<Map<String, Object>> getSalaryCodes(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 기본 급여 유형 반환
+            List<Map<String, Object>> salaryTypes = List.of(
+                Map.of("value", "FREELANCE", "label", "프리랜서"),
+                Map.of("value", "REGULAR", "label", "정규직"),
+                Map.of("value", "PART_TIME", "label", "파트타임")
+            );
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", salaryTypes,
+                "message", "급여 유형 코드를 조회했습니다."
+            ));
+            
+        } catch (Exception e) {
+            log.error("급여 유형 코드 조회 오류", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "급여 유형 코드 조회 중 오류가 발생했습니다: " + e.getMessage()
             ));
         }
     }

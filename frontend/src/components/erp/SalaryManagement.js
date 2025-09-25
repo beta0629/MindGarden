@@ -145,14 +145,15 @@ const SalaryManagement = () => {
             
             console.log('📅 계산된 기간:', { periodStart, periodEnd });
 
-            const requestData = {
+            // @RequestParam을 위해 URL 파라미터로 전송
+            const queryParams = new URLSearchParams({
                 consultantId: selectedConsultant.id,
                 periodStart: periodStart,
                 periodEnd: periodEnd
-            };
+            });
 
-            console.log('📤 전송할 데이터:', requestData);
-            const response = await apiPost('/api/admin/salary/calculate', requestData);
+            console.log('📤 전송할 URL 파라미터:', queryParams.toString());
+            const response = await apiPost(`/api/admin/salary/calculate?${queryParams}`);
             if (response && response.success) {
                 showNotification('급여 계산이 완료되었습니다.', 'success');
                 // 계산 완료 후 내역 다시 로드

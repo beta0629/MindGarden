@@ -34,6 +34,11 @@ logs/
 *.log
 *.log.*
 
+# Test data (organized)
+test-data/
+config/examples/
+config/shell-scripts/
+
 # Application
 application-local.yml
 application-prod.yml

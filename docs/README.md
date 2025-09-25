@@ -209,8 +209,15 @@ mindGarden/
 │   ├── hooks/          # 커스텀 React 훅
 │   ├── utils/          # 유틸리티 함수
 │   └── styles/         # CSS 스타일
-└── docs/               # 프로젝트 문서
+├── test-data/           # 테스트 관련 파일 (쿠키, 세션, 로그 등)
+├── sql-scripts/         # SQL 스크립트 (DDL, DML, 마이그레이션)
+├── config/              # 설정 파일 (예시, GitHub, 쉘 스크립트)
+└── docs/                # 프로젝트 문서
 ```
+
+### 📋 파일 정리 가이드
+- **자동 정리**: `./scripts/cleanup-project.sh` 실행
+- **상세 가이드**: [PROJECT_FILE_ORGANIZATION.md](PROJECT_FILE_ORGANIZATION.md) 참조
 
 ## 🔧 구현된 기능
 

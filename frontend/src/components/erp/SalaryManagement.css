@@ -178,6 +178,17 @@
     font-size: 14px;
     background: white;
     min-width: 150px;
+    /* 드롭다운 고정을 위한 추가 속성 */
+    transform: translateZ(0);
+    will-change: transform;
+    overflow: visible;
+}
+
+/* select 드롭다운이 스크롤에 영향을 받지 않도록 */
+.period-select:focus, .consultant-select:focus, .payday-select:focus {
+    position: relative;
+    z-index: 9999;
+    transform: none;
 }
 
 .control-group {

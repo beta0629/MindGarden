@@ -117,12 +117,19 @@
   transition: border-color 0.2s, box-shadow 0.2s;
   position: relative;
   z-index: 1;
+  /* 드롭다운 고정을 위한 추가 속성 */
+  transform: translateZ(0);
+  will-change: transform;
+  overflow: visible;
 }
 
 .config-item select:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  position: relative;
+  z-index: 9999;
+  transform: none;
 }
 
 .config-preview {

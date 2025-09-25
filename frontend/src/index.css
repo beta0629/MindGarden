@@ -14,12 +14,31 @@ body {
 select {
   position: relative;
   z-index: 1;
+  /* 드롭다운이 부모 컨테이너를 벗어나지 않도록 */
+  overflow: visible;
 }
 
 /* select 드롭다운 옵션들이 다른 요소 위에 표시되도록 */
 select option {
   position: relative;
   z-index: 9999;
+  /* 옵션들이 고정된 위치에 표시되도록 */
+  position: fixed;
+}
+
+/* select 드롭다운이 스크롤에 영향을 받지 않도록 */
+select:focus {
+  position: relative;
+  z-index: 9999;
+}
+
+/* 드롭다운 컨테이너 고정 */
+select:focus option {
+  position: fixed;
+  z-index: 9999;
+  background: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 /* 모달과 오버레이의 z-index 설정 */
@@ -46,6 +65,39 @@ select option {
 table select {
   position: relative;
   z-index: 1;
+}
+
+/* 드롭다운 고정을 위한 추가 스타일 */
+select {
+  /* 드롭다운이 스크롤에 영향을 받지 않도록 */
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* 스크롤 컨테이너 내 select 고정 */
+.scroll-container, .scrollable, [style*="overflow"] {
+  position: relative;
+  z-index: 1;
+}
+
+.scroll-container select, .scrollable select, [style*="overflow"] select {
+  position: sticky;
+  z-index: 9999;
+  top: 0;
+}
+
+/* 모달 내 select 완전 고정 */
+.modal select, .modal-content select {
+  position: relative;
+  z-index: 1;
+  transform: none;
+}
+
+/* 급여 관리 페이지 select 고정 */
+.salary-management select {
+  position: relative;
+  z-index: 1;
+  transform: none;
 }
 
 code {

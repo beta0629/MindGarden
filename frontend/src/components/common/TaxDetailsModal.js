@@ -37,7 +37,8 @@ const TaxDetailsModal = ({
       const response = await apiGet(`/api/admin/salary/tax/${calculationId}`);
       
       if (response.success) {
-        setTaxDetails(response.data || []);
+        // response.data는 객체이고, 실제 세금 배열은 taxDetails 필드에 있음
+        setTaxDetails(response.data?.taxDetails || []);
       } else {
         setError(response.message || SALARY_MESSAGES.CALCULATION_ERROR);
       }
@@ -71,8 +72,10 @@ const TaxDetailsModal = ({
     return `${(rate * 100).toFixed(1)}%`;
   };
 
-  // 총 세금 계산
-  const totalTaxAmount = taxDetails.reduce((sum, tax) => sum + (tax.taxAmount || 0), 0);
+  // 총 세금 계산 (안전한 배열 처리)
+  const totalTaxAmount = Array.isArray(taxDetails) 
+    ? taxDetails.reduce((sum, tax) => sum + (tax.taxAmount || 0), 0)
+    : 0;
 
   if (!isOpen) return null;
 

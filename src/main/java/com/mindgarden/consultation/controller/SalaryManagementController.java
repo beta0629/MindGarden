@@ -1,8 +1,10 @@
 package com.mindgarden.consultation.controller;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import com.mindgarden.consultation.entity.ConsultantSalaryProfile;
 import com.mindgarden.consultation.entity.SalaryCalculation;
 import com.mindgarden.consultation.entity.User;
@@ -124,9 +126,42 @@ public class SalaryManagementController {
             String branchCode = currentUser.getBranchCode();
             List<SalaryCalculation> calculations = salaryManagementService.getSalaryCalculations(consultantId, branchCode);
             
+            // 엔티티를 DTO로 변환하여 JSON 직렬화 문제 해결
+            List<Map<String, Object>> calculationDtos = calculations.stream()
+                .map(calc -> {
+                    Map<String, Object> dto = new HashMap<>();
+                    dto.put("id", calc.getId());
+                    dto.put("calculationPeriod", calc.getCalculationPeriod());
+                    dto.put("calculationPeriodStart", calc.getCalculationPeriodStart());
+                    dto.put("calculationPeriodEnd", calc.getCalculationPeriodEnd());
+                    dto.put("baseSalary", calc.getBaseSalary());
+                    dto.put("totalHoursWorked", calc.getTotalHoursWorked());
+                    dto.put("hourlyEarnings", calc.getHourlyEarnings());
+                    dto.put("totalConsultations", calc.getTotalConsultations());
+                    dto.put("completedConsultations", calc.getCompletedConsultations());
+                    dto.put("commissionEarnings", calc.getCommissionEarnings());
+                    dto.put("bonusEarnings", calc.getBonusEarnings());
+                    dto.put("deductions", calc.getDeductions());
+                    dto.put("grossSalary", calc.getGrossSalary());
+                    dto.put("netSalary", calc.getNetSalary());
+                    dto.put("totalSalary", calc.getTotalSalary());
+                    dto.put("status", calc.getStatus());
+                    dto.put("calculatedAt", calc.getCalculatedAt());
+                    dto.put("approvedAt", calc.getApprovedAt());
+                    dto.put("paidAt", calc.getPaidAt());
+                    dto.put("branchCode", calc.getBranchCode());
+                    // 연관 엔티티는 ID만 포함
+                    if (calc.getConsultant() != null) {
+                        dto.put("consultantId", calc.getConsultant().getId());
+                        dto.put("consultantName", calc.getConsultant().getName());
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
+            
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "data", calculations,
+                "data", calculationDtos,
                 "message", "급여 계산 내역을 조회했습니다."
             ));
             

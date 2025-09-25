@@ -49,6 +49,6 @@ public interface SalaryCalculationRepository extends JpaRepository<SalaryCalcula
     /**
      * 만료된 급여 데이터 조회 (파기용)
      */
-    @Query("SELECT sc.id, u.name FROM SalaryCalculation sc JOIN User u ON sc.consultant.id = u.id WHERE sc.isDeleted = true AND sc.updatedAt < ?1")
+    @Query("SELECT sc.id, u.name FROM SalaryCalculation sc JOIN User u ON sc.consultant.id = u.id WHERE sc.updatedAt < ?1")
     List<Object[]> findExpiredSalariesForDestruction(java.time.LocalDateTime cutoffDate);
 }

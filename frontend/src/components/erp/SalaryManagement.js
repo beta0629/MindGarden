@@ -112,6 +112,12 @@ const SalaryManagement = () => {
             return;
         }
 
+        if (salaryProfiles.length === 0) {
+            showNotification('급여 계산을 위해서는 먼저 급여 프로필을 작성해주세요.\n급여 프로필 탭에서 "새 프로필 생성" 버튼을 클릭하세요.', 'warning');
+            setActiveTab('profiles'); // 급여 프로필 탭으로 이동
+            return;
+        }
+
         try {
             setLoading(true);
             const requestData = {
@@ -330,16 +336,51 @@ const SalaryManagement = () => {
                 <div className="profiles-section">
                     <div className="section-header">
                         <h3>상담사 급여 프로필</h3>
-                        <button className="btn-primary">새 프로필 생성</button>
+                        <button 
+                            className="btn-primary"
+                            onClick={() => setIsProfileFormOpen(true)}
+                        >
+                            새 프로필 생성
+                        </button>
                     </div>
+                    
+                    {salaryProfiles.length === 0 && !loading && (
+                        <div className="no-profiles-message" style={{
+                            textAlign: 'center',
+                            padding: '40px 20px',
+                            backgroundColor: '#f8f9fa',
+                            border: '2px dashed #dee2e6',
+                            borderRadius: '8px',
+                            margin: '20px 0'
+                        }}>
+                            <h4 style={{ color: '#6c757d', marginBottom: '16px' }}>
+                                📋 급여 프로필이 없습니다
+                            </h4>
+                            <p style={{ color: '#6c757d', marginBottom: '20px' }}>
+                                급여 계산을 하기 위해서는 먼저 상담사별 급여 프로필을 작성해야 합니다.<br/>
+                                위의 "새 프로필 생성" 버튼을 클릭하여 급여 프로필을 작성해주세요.
+                            </p>
+                            <button 
+                                className="btn-primary"
+                                onClick={() => setIsProfileFormOpen(true)}
+                                style={{ padding: '12px 24px', fontSize: '16px' }}
+                            >
+                                지금 프로필 작성하기
+                            </button>
+                        </div>
+                    )}
                     
                     <div className="profiles-grid">
                         {console.log('🔍 렌더링 - 상담사 수:', consultants.length)}
-                        {consultants.length === 0 ? (
+                        {loading ? (
                             <div className="no-data">
-                                <p>상담사 데이터를 불러오는 중...</p>
+                                <p>데이터를 불러오는 중...</p>
                             </div>
-                        ) : (
+                        ) : consultants.length === 0 ? (
+                            <div className="no-data">
+                                <p>상담사 데이터가 없습니다.</p>
+                            </div>
+                        ) : salaryProfiles.length > 0 ? (
                             consultants.map(consultant => {
                                 console.log('🔍 상담사 카드 렌더링:', consultant.name);
                                 return (
@@ -363,7 +404,7 @@ const SalaryManagement = () => {
                                     </div>
                                 );
                             })
-                        )}
+                        ) : null}
                     </div>
                 </div>
             )}
@@ -372,6 +413,31 @@ const SalaryManagement = () => {
                 <div className="calculations-section">
                     <div className="section-header">
                         <h3>급여 계산</h3>
+                        {salaryProfiles.length === 0 && (
+                            <div className="profile-warning" style={{
+                                backgroundColor: '#fff3cd',
+                                border: '1px solid #ffeaa7',
+                                borderRadius: '4px',
+                                padding: '12px 16px',
+                                marginLeft: '20px',
+                                color: '#856404'
+                            }}>
+                                ⚠️ 급여 프로필이 작성되지 않았습니다. 
+                                <button 
+                                    onClick={() => setActiveTab('profiles')}
+                                    style={{
+                                        marginLeft: '8px',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#856404',
+                                        textDecoration: 'underline',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    지금 작성하기
+                                </button>
+                            </div>
+                        )}
                         <div className="calculation-controls">
                             <div className="control-group">
                                 <label>상담사 선택:</label>
@@ -423,7 +489,7 @@ const SalaryManagement = () => {
                             <button 
                                 className="btn-primary"
                                 onClick={executeSalaryCalculation}
-                                disabled={loading || !selectedConsultant || !selectedPeriod}
+                                disabled={loading || !selectedConsultant || !selectedPeriod || salaryProfiles.length === 0}
                             >
                                 {loading ? '계산 중...' : '급여 계산 실행'}
                             </button>

@@ -199,11 +199,12 @@ public class AdminController {
             
             // 지점 관리자인 경우 자신의 지점 상담사만 조회
             Map<String, Object> vacationStats;
-            if (currentUser.getRole().isBranchAdmin()) {
-                log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회");
+            if (currentUser.getRole().isBranchAdmin() && currentUser.getBranchCode() != null) {
+                log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회 (역할: {}, 지점: {})", 
+                        currentUser.getRole(), currentUser.getBranchCode());
                 vacationStats = adminService.getConsultantVacationStatsByBranch(period, currentUser.getBranchCode());
             } else {
-                log.info("🏢 본사 관리자 - 모든 상담사 조회");
+                log.info("🏢 본사 관리자 - 모든 상담사 조회 (역할: {})", currentUser.getRole());
                 vacationStats = adminService.getConsultantVacationStats(period);
             }
             
@@ -1774,11 +1775,12 @@ public class AdminController {
             
             // 지점 관리자인 경우 자신의 지점 상담사만 조회
             List<Map<String, Object>> statistics;
-            if (currentUser.getRole().isBranchAdmin()) {
-                log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회");
+            if (currentUser.getRole().isBranchAdmin() && currentUser.getBranchCode() != null) {
+                log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회 (역할: {}, 지점: {})", 
+                        currentUser.getRole(), currentUser.getBranchCode());
                 statistics = adminService.getConsultationCompletionStatisticsByBranch(period, currentUser.getBranchCode());
             } else {
-                log.info("🏢 본사 관리자 - 모든 상담사 조회");
+                log.info("🏢 본사 관리자 - 모든 상담사 조회 (역할: {})", currentUser.getRole());
                 statistics = adminService.getConsultationCompletionStatistics(period);
             }
             
@@ -1938,11 +1940,12 @@ public class AdminController {
             
             // 지점 관리자인 경우 자신의 지점 스케줄만 조회
             Map<String, Object> statistics;
-            if (currentUser.getRole().isBranchAdmin()) {
-                log.info("🏢 지점 관리자 - 자신의 지점 스케줄만 조회");
+            if (currentUser.getRole().isBranchAdmin() && currentUser.getBranchCode() != null) {
+                log.info("🏢 지점 관리자 - 자신의 지점 스케줄만 조회 (역할: {}, 지점: {})", 
+                        currentUser.getRole(), currentUser.getBranchCode());
                 statistics = adminService.getScheduleStatisticsByBranch(currentUser.getBranchCode());
             } else {
-                log.info("🏢 본사 관리자 - 모든 스케줄 조회");
+                log.info("🏢 본사 관리자 - 모든 스케줄 조회 (역할: {})", currentUser.getRole());
                 statistics = adminService.getScheduleStatistics();
             }
             
@@ -2784,11 +2787,12 @@ public class AdminController {
             
             // 지점 관리자인 경우 자신의 지점 상담사만 조회
             Map<String, Object> statistics;
-            if (currentUser.getRole().isBranchAdmin()) {
-                log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회");
+            if (currentUser.getRole().isBranchAdmin() && currentUser.getBranchCode() != null) {
+                log.info("🏢 지점 관리자 - 자신의 지점 상담사만 조회 (역할: {}, 지점: {})", 
+                        currentUser.getRole(), currentUser.getBranchCode());
                 statistics = consultantRatingService.getAdminRatingStatisticsByBranch(currentUser.getBranchCode());
             } else {
-                log.info("🏢 본사 관리자 - 모든 상담사 조회");
+                log.info("🏢 본사 관리자 - 모든 상담사 조회 (역할: {})", currentUser.getRole());
                 statistics = consultantRatingService.getAdminRatingStatistics();
             }
             

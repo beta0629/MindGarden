@@ -100,7 +100,7 @@ public enum UserRole {
     
     // 지점 관리자 역할인지 확인
     public boolean isBranchAdmin() {
-        return this == BRANCH_MANAGER || this == BRANCH_SUPER_ADMIN;
+        return this == BRANCH_MANAGER || this == BRANCH_SUPER_ADMIN || this == ADMIN;
     }
     
     // 지점장 역할인지 확인

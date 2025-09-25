@@ -61,4 +61,13 @@ public interface CommonCodeService {
     
     // 코드 그룹과 값으로 한글명 조회
     String getCodeKoreanName(String codeGroup, String codeValue);
+    
+    // 공통 코드의 추가 데이터 업데이트
+    void updateCodeExtraData(String codeGroup, String codeValue, String extraData);
+    
+    // 단일 공통 코드 조회
+    CommonCode getCode(String groupCode, String codeValue);
+    
+    // 코드 그룹별 조회 (별칭 메서드)
+    List<CommonCode> getCodesByGroup(String codeGroup);
 }

@@ -247,4 +247,36 @@ public class CommonCodeServiceImpl implements CommonCodeService {
             return codeValue;
         }
     }
+    
+    @Override
+    @Transactional
+    public void updateCodeExtraData(String codeGroup, String codeValue, String extraData) {
+        log.debug("추가 데이터 업데이트: 그룹={}, 값={}, 데이터={}", codeGroup, codeValue, extraData);
+        
+        try {
+            CommonCode code = getCommonCodeByGroupAndValue(codeGroup, codeValue);
+            if (code != null) {
+                code.setExtraData(extraData);
+                commonCodeRepository.save(code);
+                log.info("추가 데이터 업데이트 완료: 그룹={}, 값={}", codeGroup, codeValue);
+            } else {
+                log.warn("공통코드를 찾을 수 없음: 그룹={}, 값={}", codeGroup, codeValue);
+            }
+        } catch (Exception e) {
+            log.error("추가 데이터 업데이트 실패: 그룹={}, 값={}, 오류={}", codeGroup, codeValue, e.getMessage());
+            throw new RuntimeException("추가 데이터 업데이트 실패", e);
+        }
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public CommonCode getCode(String groupCode, String codeValue) {
+        return getCommonCodeByGroupAndValue(groupCode, codeValue);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<CommonCode> getCodesByGroup(String codeGroup) {
+        return getCommonCodesByGroup(codeGroup);
+    }
 }

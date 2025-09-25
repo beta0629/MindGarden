@@ -31,26 +31,29 @@ const CommonCodeManagement = () => {
     // 권한 체크 함수들
     const hasErpCodePermission = () => {
         return user?.role === 'BRANCH_SUPER_ADMIN' || 
-               user?.role === 'HQ_MASTER' || 
-               user?.role === 'SUPER_HQ_ADMIN';
+               user?.role === 'HQ_MASTER';
     };
     
     const hasFinancialCodePermission = () => {
         return user?.role === 'BRANCH_SUPER_ADMIN' || 
-               user?.role === 'HQ_MASTER' || 
-               user?.role === 'SUPER_HQ_ADMIN';
+               user?.role === 'HQ_MASTER';
+    };
+    
+    const hasHqCodePermission = () => {
+        return user?.role === 'HQ_MASTER' || 
+               user?.role === 'SUPER_HQ_ADMIN' ||
+               user?.role === 'HQ_ADMIN';
+    };
+    
+    const hasBranchCodePermission = () => {
+        return user?.role === 'BRANCH_SUPER_ADMIN' || 
+               user?.role === 'HQ_MASTER';
     };
     
     const hasGeneralCodePermission = () => {
         return user?.role === 'ADMIN' || 
                user?.role === 'BRANCH_SUPER_ADMIN' || 
                user?.role === 'HQ_MASTER' || 
-               user?.role === 'SUPER_HQ_ADMIN' ||
-               user?.role === 'HQ_ADMIN';
-    };
-    
-    const hasBranchCodePermission = () => {
-        return user?.role === 'HQ_MASTER' || 
                user?.role === 'SUPER_HQ_ADMIN' ||
                user?.role === 'HQ_ADMIN';
     };
@@ -65,12 +68,20 @@ const CommonCodeManagement = () => {
                 'PAYMENT_METHOD', 'PAYMENT_STATUS', 'SALARY_TYPE', 'SALARY_GRADE', 'TAX_TYPE'].includes(codeGroup);
     };
     
+    const isHqCodeGroup = (codeGroup) => {
+        return ['HQ_SETTING', 'HQ_MANAGEMENT', 'HQ_PERMISSION', 'HQ_STATISTICS', 
+                'HQ_CONFIG'].includes(codeGroup);
+    };
+    
     const isBranchCodeGroup = (codeGroup) => {
         return ['BRANCH_STATUS', 'BRANCH_TYPE', 'BRANCH_PERMISSION', 'BRANCH_STATISTICS', 
                 'BRANCH_SETTING', 'BRANCH_CODE', 'BRANCH_MANAGEMENT'].includes(codeGroup);
     };
     
     const hasCodeGroupPermission = (codeGroup) => {
+        if (isHqCodeGroup(codeGroup)) {
+            return hasHqCodePermission();
+        }
         if (isBranchCodeGroup(codeGroup)) {
             return hasBranchCodePermission();
         }
@@ -147,7 +158,11 @@ const CommonCodeManagement = () => {
             setLoading(true);
             const response = await apiGet('/api/admin/common-codes/groups');
             if (response.success && response.data) {
-                setCodeGroups(response.data);
+                // 권한에 따라 코드 그룹 필터링
+                const filteredGroups = response.data.filter(group => {
+                    return hasCodeGroupPermission(group.codeGroup);
+                });
+                setCodeGroups(filteredGroups);
             } else {
                 notificationManager.error('코드그룹 목록을 불러오는데 실패했습니다.');
             }
@@ -157,7 +172,7 @@ const CommonCodeManagement = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user?.role]);
 
     // 특정 그룹의 코드 목록 로드
     const loadGroupCodes = useCallback(async (groupName) => {
@@ -185,12 +200,14 @@ const CommonCodeManagement = () => {
     const handleGroupSelect = (group) => {
         // 권한 체크
         if (!hasCodeGroupPermission(group)) {
-            if (isBranchCodeGroup(group)) {
-                notificationManager.error('브랜치 관련 코드 그룹은 HQ만 접근할 수 있습니다.');
+            if (isHqCodeGroup(group)) {
+                notificationManager.error('HQ 관련 코드 그룹은 HQ 역할만 접근할 수 있습니다.');
+            } else if (isBranchCodeGroup(group)) {
+                notificationManager.error('지점 관련 코드 그룹은 지점수퍼어드민 또는 HQ_MASTER만 접근할 수 있습니다.');
             } else if (isErpCodeGroup(group)) {
-                notificationManager.error('ERP 관련 코드 그룹은 지점수퍼어드민만 접근할 수 있습니다.');
+                notificationManager.error('ERP 관련 코드 그룹은 지점수퍼어드민 또는 HQ_MASTER만 접근할 수 있습니다.');
             } else if (isFinancialCodeGroup(group)) {
-                notificationManager.error('수입지출 관련 코드 그룹은 지점수퍼어드민만 접근할 수 있습니다.');
+                notificationManager.error('수입지출 관련 코드 그룹은 지점수퍼어드민 또는 HQ_MASTER만 접근할 수 있습니다.');
             } else {
                 notificationManager.error('해당 코드 그룹에 대한 접근 권한이 없습니다.');
             }

@@ -158,7 +158,7 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         log.info("🧮 급여 계산: ConsultantID={}, ProfileID={}, Period={} ~ {}", 
                 consultantId, profileId, periodStart, periodEnd);
         
-        // TODO: 실제 급여 계산 로직 구현
+        // 급여 계산 로직은 PL/SQL 프로시저로 처리됨
         // 현재는 PL/SQL 서비스를 통해 처리됨
         
         throw new UnsupportedOperationException("급여 계산은 PL/SQL 서비스를 통해 처리됩니다.");

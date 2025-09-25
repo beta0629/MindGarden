@@ -44,27 +44,44 @@ public class CommonCodeController {
     
     /**
      * ERP 관련 공통 코드 권한 체크
-     * 지점수퍼어드민만 접근 가능
+     * 지점수퍼어드민과 HQ_MASTER만 접근 가능
      */
     private boolean hasErpCodePermission(UserRole userRole) {
         return userRole == UserRole.BRANCH_SUPER_ADMIN || 
-               userRole == UserRole.HQ_MASTER || 
-               userRole == UserRole.SUPER_HQ_ADMIN;
+               userRole == UserRole.HQ_MASTER;
     }
     
     /**
      * 수입지출 관련 공통 코드 권한 체크
-     * 지점수퍼어드민만 접근 가능
+     * 지점수퍼어드민과 HQ_MASTER만 접근 가능
      */
     private boolean hasFinancialCodePermission(UserRole userRole) {
         return userRole == UserRole.BRANCH_SUPER_ADMIN || 
-               userRole == UserRole.HQ_MASTER || 
-               userRole == UserRole.SUPER_HQ_ADMIN;
+               userRole == UserRole.HQ_MASTER;
+    }
+    
+    /**
+     * HQ 관련 공통 코드 권한 체크
+     * HQ 역할만 접근 가능
+     */
+    private boolean hasHqCodePermission(UserRole userRole) {
+        return userRole == UserRole.HQ_MASTER || 
+               userRole == UserRole.SUPER_HQ_ADMIN ||
+               userRole == UserRole.HQ_ADMIN;
+    }
+    
+    /**
+     * 지점 관련 공통 코드 권한 체크
+     * 지점수퍼어드민과 HQ_MASTER만 접근 가능
+     */
+    private boolean hasBranchCodePermission(UserRole userRole) {
+        return userRole == UserRole.BRANCH_SUPER_ADMIN || 
+               userRole == UserRole.HQ_MASTER;
     }
     
     /**
      * 일반 공통 코드 권한 체크
-     * 어드민 이상 접근 가능
+     * 모든 관리자 접근 가능
      */
     private boolean hasGeneralCodePermission(UserRole userRole) {
         return userRole == UserRole.ADMIN || 
@@ -78,22 +95,27 @@ public class CommonCodeController {
      * 코드 그룹별 권한 체크
      */
     private boolean hasCodeGroupPermission(UserRole userRole, String codeGroup) {
-        // 브랜치 관련 코드 그룹 (HQ만 접근 가능)
+        // HQ 관련 코드 그룹 (HQ 역할만 접근 가능)
+        if (isHqCodeGroup(codeGroup)) {
+            return hasHqCodePermission(userRole);
+        }
+        
+        // 지점 관련 코드 그룹 (지점수퍼어드민과 HQ_MASTER만 접근 가능)
         if (isBranchCodeGroup(codeGroup)) {
             return hasBranchCodePermission(userRole);
         }
         
-        // ERP 관련 코드 그룹
+        // ERP 관련 코드 그룹 (지점수퍼어드민과 HQ_MASTER만 접근 가능)
         if (isErpCodeGroup(codeGroup)) {
             return hasErpCodePermission(userRole);
         }
         
-        // 수입지출 관련 코드 그룹
+        // 수입지출 관련 코드 그룹 (지점수퍼어드민과 HQ_MASTER만 접근 가능)
         if (isFinancialCodeGroup(codeGroup)) {
             return hasFinancialCodePermission(userRole);
         }
         
-        // 기타 코드 그룹
+        // 기타 코드 그룹 (모든 관리자 접근 가능)
         return hasGeneralCodePermission(userRole);
     }
     
@@ -125,7 +147,18 @@ public class CommonCodeController {
     }
     
     /**
-     * 브랜치 관련 코드 그룹 판별
+     * HQ 관련 코드 그룹 판별
+     */
+    private boolean isHqCodeGroup(String codeGroup) {
+        return "HQ_SETTING".equals(codeGroup) ||
+               "HQ_MANAGEMENT".equals(codeGroup) ||
+               "HQ_PERMISSION".equals(codeGroup) ||
+               "HQ_STATISTICS".equals(codeGroup) ||
+               "HQ_CONFIG".equals(codeGroup);
+    }
+    
+    /**
+     * 지점 관련 코드 그룹 판별
      */
     private boolean isBranchCodeGroup(String codeGroup) {
         return "BRANCH_STATUS".equals(codeGroup) ||
@@ -135,16 +168,6 @@ public class CommonCodeController {
                "BRANCH_SETTING".equals(codeGroup) ||
                "BRANCH_CODE".equals(codeGroup) ||
                "BRANCH_MANAGEMENT".equals(codeGroup);
-    }
-    
-    /**
-     * 브랜치 관련 공통 코드 권한 체크
-     * HQ만 접근 가능
-     */
-    private boolean hasBranchCodePermission(UserRole userRole) {
-        return userRole == UserRole.HQ_MASTER || 
-               userRole == UserRole.SUPER_HQ_ADMIN ||
-               userRole == UserRole.HQ_ADMIN;
     }
 
     /**

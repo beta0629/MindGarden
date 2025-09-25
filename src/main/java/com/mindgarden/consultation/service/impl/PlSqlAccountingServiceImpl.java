@@ -112,7 +112,7 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
             // 프로시저 실행
             stmt.execute();
             
-            // 결과 추출
+            // 결과 추출 (인덱스 4-11)
             result.put("totalRevenue", stmt.getBigDecimal(4));
             result.put("totalExpenses", stmt.getBigDecimal(5));
             result.put("netProfit", stmt.getBigDecimal(6));

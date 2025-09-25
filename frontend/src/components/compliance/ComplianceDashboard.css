@@ -108,9 +108,10 @@
 .metric-item {
     text-align: center;
     padding: 15px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 8px;
     backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .metric-label {
@@ -124,6 +125,8 @@
     font-size: 1.5rem;
     font-weight: 700;
     margin: 0;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* 상태 카드들 */

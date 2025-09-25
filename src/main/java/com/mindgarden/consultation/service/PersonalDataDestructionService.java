@@ -289,7 +289,7 @@ public class PersonalDataDestructionService {
      */
     @Transactional
     public Map<String, Object> executeManualPersonalDataDestruction(String dataType, String dataId, String reason) {
-        Map<String, Object> result = Map.of();
+        Map<String, Object> result = new java.util.HashMap<>();
         
         try {
             log.info("수동 개인정보 파기 실행: 유형={}, ID={}, 사유={}", dataType, dataId, reason);
@@ -348,16 +348,17 @@ public class PersonalDataDestructionService {
                     java.util.stream.Collectors.counting()
                 ));
             
-            return Map.of(
-                "totalDestroyed", destructionLogs.size(),
-                "destructionStats", destructionStats,
-                "period", Map.of(
-                    "startDate", oneMonthAgo,
-                    "endDate", LocalDateTime.now()
-                ),
-                "lastDestruction", destructionLogs.isEmpty() ? null : 
-                    destructionLogs.get(destructionLogs.size() - 1).getAccessTime()
-            );
+            Map<String, Object> result = new java.util.HashMap<>();
+            result.put("totalDestroyed", destructionLogs.size());
+            result.put("destructionStats", destructionStats);
+            result.put("period", Map.of(
+                "startDate", oneMonthAgo,
+                "endDate", LocalDateTime.now()
+            ));
+            result.put("lastDestruction", destructionLogs.isEmpty() ? 
+                "N/A" : destructionLogs.get(destructionLogs.size() - 1).getAccessTime());
+            
+            return result;
             
         } catch (Exception e) {
             log.error("개인정보 파기 현황 조회 실패: {}", e.getMessage(), e);

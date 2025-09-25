@@ -17,6 +17,7 @@ import com.mindgarden.consultation.entity.PerformanceAlert;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.ConsultantPerformanceRepository;
+import com.mindgarden.consultation.repository.ConsultantRatingRepository;
 import com.mindgarden.consultation.repository.DailyStatisticsRepository;
 import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.PerformanceAlertRepository;
@@ -48,6 +49,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final ScheduleRepository scheduleRepository;
     private final UserRepository userRepository;
     private final FinancialTransactionRepository financialTransactionRepository;
+    private final ConsultantRatingRepository consultantRatingRepository;
 
     // ==================== 일별 통계 관리 ====================
 
@@ -89,8 +91,31 @@ public class StatisticsServiceImpl implements StatisticsService {
             statistics.setTotalRevenue(totalRevenue);
 
             // 평균 평점 계산 (해당 날짜에 평가받은 상담사들의 평균)
-            // TODO: 실제 평점 계산 로직 구현 필요
-            statistics.setAvgRating(BigDecimal.valueOf(4.5)); // 임시값
+            BigDecimal avgRating = BigDecimal.ZERO;
+            if (!daySchedules.isEmpty()) {
+                // 해당 날짜의 상담사들의 평점 계산
+                List<Long> consultantIds = daySchedules.stream()
+                    .map(Schedule::getConsultantId)
+                    .distinct()
+                    .collect(Collectors.toList());
+                
+                if (!consultantIds.isEmpty()) {
+                    // 해당 날짜의 상담사들의 평균 평점 계산
+                    Double totalAvgRating = consultantIds.stream()
+                        .mapToDouble(consultantId -> {
+                            Double rating = consultantRatingRepository.getAverageHeartScoreByConsultant(
+                                consultantId, 
+                                com.mindgarden.consultation.entity.ConsultantRating.RatingStatus.ACTIVE
+                            );
+                            return rating != null ? rating : 0.0;
+                        })
+                        .average()
+                        .orElse(0.0);
+                    
+                    avgRating = BigDecimal.valueOf(totalAvgRating);
+                }
+            }
+            statistics.setAvgRating(avgRating);
 
             // 상담사 수 계산
             long consultantCount = daySchedules.stream()
@@ -212,8 +237,11 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .count();
             performance.setCancelledSchedules((int) cancelledCount);
 
-            // TODO: NO_SHOW 상태 추가 시 구현
-            performance.setNoShowSchedules(0);
+            // NO_SHOW 상태 처리 (현재는 기본값, 향후 ScheduleStatus.NO_SHOW 추가 시 자동 적용)
+            long noShowCount = consultantSchedules.stream()
+                .filter(s -> s.getStatus() != null && s.getStatus().toString().equals("NO_SHOW"))
+                .count();
+            performance.setNoShowSchedules((int) noShowCount);
 
             // 수익 계산 (기본 세션비 기준)
             BigDecimal totalRevenue = consultantSchedules.stream()
@@ -222,16 +250,34 @@ public class StatisticsServiceImpl implements StatisticsService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
             performance.setTotalRevenue(totalRevenue);
 
-            // 고객 관련 통계 (임시로 기본값 설정)
-            // TODO: 실제 고객 데이터 기반으로 계산 구현
-            performance.setUniqueClients(consultantSchedules.size() > 0 ? 
-                (int) consultantSchedules.stream().map(Schedule::getClientId).distinct().count() : 0);
-            performance.setRepeatClients(0); // TODO: 실제 재방문 고객 계산
+            // 고객 관련 통계 (실제 데이터 기반 자동 계산)
+            long uniqueClientCount = consultantSchedules.stream()
+                .map(Schedule::getClientId)
+                .distinct()
+                .count();
+            performance.setUniqueClients((int) uniqueClientCount);
+            
+            // 재방문 고객 계산 (해당 상담사를 2회 이상 이용한 고객)
+            long repeatClientCount = consultantSchedules.stream()
+                .collect(Collectors.groupingBy(Schedule::getClientId, Collectors.counting()))
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() > 1)
+                .count();
+            performance.setRepeatClients((int) repeatClientCount);
 
-            // 평점 관련 통계 (임시로 기본값 설정)
-            // TODO: ConsultantRating 기반으로 실제 평점 계산
-            performance.setAvgRating(BigDecimal.valueOf(4.5));
-            performance.setTotalRatings(0);
+            // 평점 관련 통계 (ConsultantRating 기반 실제 평점 계산)
+            Double avgRating = consultantRatingRepository.getAverageHeartScoreByConsultant(
+                consultantId, 
+                com.mindgarden.consultation.entity.ConsultantRating.RatingStatus.ACTIVE
+            );
+            Long totalRatings = consultantRatingRepository.getTotalRatingCountByConsultant(
+                consultantId, 
+                com.mindgarden.consultation.entity.ConsultantRating.RatingStatus.ACTIVE
+            );
+            
+            performance.setAvgRating(avgRating != null ? BigDecimal.valueOf(avgRating) : BigDecimal.ZERO);
+            performance.setTotalRatings(totalRatings != null ? totalRatings.intValue() : 0);
 
             // 성과 점수 자동 계산
             performance.calculatePerformanceScore();
@@ -489,18 +535,144 @@ public class StatisticsServiceImpl implements StatisticsService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getRealTimePerformanceIndicators(String branchCode) {
-        // TODO: 실시간 성과 지표 구현
-        Map<String, Object> indicators = new HashMap<>();
-        indicators.put("status", "개발 예정");
-        return indicators;
+        log.info("📊 실시간 성과 지표 조회: branchCode={}", branchCode);
+        
+        try {
+            Map<String, Object> indicators = new HashMap<>();
+            LocalDateTime now = LocalDateTime.now();
+            LocalDate today = now.toLocalDate();
+            
+            // 오늘의 실시간 지표
+            DailyStatistics todayStats = getDailyStatistics(today, branchCode);
+            
+            // 실시간 상담 진행 상황
+            List<Schedule> todaySchedules = scheduleRepository.findByDateAndBranchCode(today, branchCode);
+            long inProgressCount = todaySchedules.stream()
+                .filter(s -> ScheduleStatus.BOOKED.equals(s.getStatus()) || ScheduleStatus.CONFIRMED.equals(s.getStatus()))
+                .count();
+            
+            // 실시간 완료율
+            long completedCount = todaySchedules.stream()
+                .filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus()))
+                .count();
+            double completionRate = todaySchedules.isEmpty() ? 0.0 : 
+                (double) completedCount / todaySchedules.size() * 100;
+            
+            // 실시간 수익 (오늘 완료된 상담 기준)
+            BigDecimal realTimeRevenue = todaySchedules.stream()
+                .filter(s -> ScheduleStatus.COMPLETED.equals(s.getStatus()))
+                .map(s -> BigDecimal.valueOf(50000)) // 기본 세션비
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // 활성 상담사 수
+            long activeConsultants = todaySchedules.stream()
+                .map(Schedule::getConsultantId)
+                .distinct()
+                .count();
+            
+            indicators.put("timestamp", now);
+            indicators.put("todayStats", todayStats);
+            indicators.put("inProgressConsultations", inProgressCount);
+            indicators.put("completionRate", Math.round(completionRate * 100.0) / 100.0);
+            indicators.put("realTimeRevenue", realTimeRevenue);
+            indicators.put("activeConsultants", activeConsultants);
+            indicators.put("totalTodayConsultations", todaySchedules.size());
+            
+            return indicators;
+            
+        } catch (Exception e) {
+            log.error("❌ 실시간 성과 지표 조회 실패: branchCode={}", branchCode, e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", "error");
+            errorResponse.put("message", "실시간 성과 지표 조회 중 오류가 발생했습니다.");
+            return errorResponse;
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getTrendAnalysisData(LocalDate startDate, LocalDate endDate, String branchCode) {
-        // TODO: 트렌드 분석 데이터 구현
-        Map<String, Object> trends = new HashMap<>();
-        trends.put("status", "개발 예정");
-        return trends;
+        log.info("📊 트렌드 분석 데이터 조회: startDate={}, endDate={}, branchCode={}", startDate, endDate, branchCode);
+        
+        try {
+            Map<String, Object> trends = new HashMap<>();
+            
+            // 기간별 일별 통계 조회
+            List<DailyStatistics> dailyStats = getDailyStatistics(startDate, endDate, branchCode);
+            
+            // 트렌드 데이터 생성
+            List<Map<String, Object>> consultationTrend = dailyStats.stream()
+                .map(stat -> {
+                    Map<String, Object> dayData = new HashMap<>();
+                    dayData.put("date", stat.getStatDate());
+                    dayData.put("totalConsultations", stat.getTotalConsultations());
+                    dayData.put("completedConsultations", stat.getCompletedConsultations());
+                    dayData.put("totalRevenue", stat.getTotalRevenue());
+                    dayData.put("avgRating", stat.getAvgRating());
+                    return dayData;
+                })
+                .collect(Collectors.toList());
+            
+            // 평균값 계산
+            double avgConsultationsPerDay = dailyStats.stream()
+                .mapToInt(DailyStatistics::getTotalConsultations)
+                .average()
+                .orElse(0.0);
+            
+            double avgCompletionRate = dailyStats.stream()
+                .filter(stat -> stat.getTotalConsultations() > 0)
+                .mapToDouble(stat -> (double) stat.getCompletedConsultations() / stat.getTotalConsultations() * 100)
+                .average()
+                .orElse(0.0);
+            
+            BigDecimal totalRevenue = dailyStats.stream()
+                .map(DailyStatistics::getTotalRevenue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            double avgRating = dailyStats.stream()
+                .filter(stat -> stat.getAvgRating() != null && stat.getAvgRating().compareTo(BigDecimal.ZERO) > 0)
+                .mapToDouble(stat -> stat.getAvgRating().doubleValue())
+                .average()
+                .orElse(0.0);
+            
+            // 트렌드 방향 분석 (최근 7일 vs 이전 7일)
+            List<DailyStatistics> recentWeek = dailyStats.stream()
+                .filter(stat -> stat.getStatDate().isAfter(endDate.minusDays(7)))
+                .collect(Collectors.toList());
+            
+            List<DailyStatistics> previousWeek = dailyStats.stream()
+                .filter(stat -> stat.getStatDate().isAfter(endDate.minusDays(14)) && 
+                               stat.getStatDate().isBefore(endDate.minusDays(7)))
+                .collect(Collectors.toList());
+            
+            Map<String, Object> trendAnalysis = new HashMap<>();
+            if (!recentWeek.isEmpty() && !previousWeek.isEmpty()) {
+                double recentAvg = recentWeek.stream().mapToInt(DailyStatistics::getTotalConsultations).average().orElse(0.0);
+                double previousAvg = previousWeek.stream().mapToInt(DailyStatistics::getTotalConsultations).average().orElse(0.0);
+                
+                double consultationTrendPercent = previousAvg > 0 ? ((recentAvg - previousAvg) / previousAvg) * 100 : 0.0;
+                trendAnalysis.put("consultationTrend", Math.round(consultationTrendPercent * 100.0) / 100.0);
+                trendAnalysis.put("consultationDirection", consultationTrendPercent > 0 ? "증가" : "감소");
+            }
+            
+            trends.put("period", Map.of("start", startDate, "end", endDate));
+            trends.put("dailyTrends", consultationTrend);
+            trends.put("summary", Map.of(
+                "avgConsultationsPerDay", Math.round(avgConsultationsPerDay * 100.0) / 100.0,
+                "avgCompletionRate", Math.round(avgCompletionRate * 100.0) / 100.0,
+                "totalRevenue", totalRevenue,
+                "avgRating", Math.round(avgRating * 100.0) / 100.0
+            ));
+            trends.put("trendAnalysis", trendAnalysis);
+            
+            return trends;
+            
+        } catch (Exception e) {
+            log.error("❌ 트렌드 분석 데이터 조회 실패: startDate={}, endDate={}, branchCode={}", startDate, endDate, branchCode, e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", "error");
+            errorResponse.put("message", "트렌드 분석 데이터 조회 중 오류가 발생했습니다.");
+            return errorResponse;
+        }
     }
 }

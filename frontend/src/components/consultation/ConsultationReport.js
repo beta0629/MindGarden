@@ -18,10 +18,32 @@ const ConsultationReport = () => {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [periodOptions, setPeriodOptions] = useState([]);
+  const [periodOptions, setPeriodOptions] = useState([
+    { value: 'MONTH', label: '월별', icon: '📅', color: '#3b82f6', description: '월별 보고서' },
+    { value: 'YEAR', label: '년별', icon: '📊', color: '#10b981', description: '년별 보고서' },
+    { value: 'QUARTER', label: '분기별', icon: '📈', color: '#f59e0b', description: '분기별 보고서' },
+    { value: 'WEEK', label: '주별', icon: '📋', color: '#8b5cf6', description: '주별 보고서' }
+  ]);
   const [loadingCodes, setLoadingCodes] = useState(false);
-  const [yearOptions, setYearOptions] = useState([]);
-  const [monthOptions, setMonthOptions] = useState([]);
+  const [yearOptions, setYearOptions] = useState(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 5 }, (_, i) => ({
+      value: currentYear - i,
+      label: `${currentYear - i}년`,
+      icon: '📅',
+      color: '#3b82f6',
+      description: `${currentYear - i}년`
+    }));
+  });
+  const [monthOptions, setMonthOptions] = useState(() => {
+    return Array.from({ length: 12 }, (_, i) => ({
+      value: i + 1,
+      label: `${i + 1}월`,
+      icon: '📅',
+      color: '#3b82f6',
+      description: `${i + 1}월`
+    }));
+  });
   const [loadingYearCodes, setLoadingYearCodes] = useState(false);
   const [loadingMonthCodes, setLoadingMonthCodes] = useState(false);
 
@@ -42,13 +64,7 @@ const ConsultationReport = () => {
       }
     } catch (error) {
       console.error('보고서 기간 코드 로드 실패:', error);
-      // 실패 시 기본값 설정
-      setPeriodOptions([
-        { value: 'MONTH', label: '월별', icon: '📅', color: '#3b82f6', description: '월별 보고서' },
-        { value: 'YEAR', label: '년별', icon: '📊', color: '#10b981', description: '년별 보고서' },
-        { value: 'QUARTER', label: '분기별', icon: '📈', color: '#f59e0b', description: '분기별 보고서' },
-        { value: 'WEEK', label: '주별', icon: '📋', color: '#8b5cf6', description: '주별 보고서' }
-      ]);
+      // 실패 시 기본값은 이미 초기값으로 설정되어 있으므로 변경하지 않음
     } finally {
       setLoadingCodes(false);
     }
@@ -70,15 +86,7 @@ const ConsultationReport = () => {
       }
     } catch (error) {
       console.error('년도 코드 로드 실패:', error);
-      // 실패 시 기본값 설정 (최근 5년)
-      const currentYear = new Date().getFullYear();
-      setYearOptions(Array.from({ length: 5 }, (_, i) => ({
-        value: currentYear - i,
-        label: `${currentYear - i}년`,
-        icon: '📅',
-        color: '#3b82f6',
-        description: `${currentYear - i}년`
-      })));
+      // 실패 시 기본값은 이미 초기값으로 설정되어 있으므로 변경하지 않음
     } finally {
       setLoadingYearCodes(false);
     }
@@ -100,14 +108,7 @@ const ConsultationReport = () => {
       }
     } catch (error) {
       console.error('월 코드 로드 실패:', error);
-      // 실패 시 기본값 설정 (1-12월)
-      setMonthOptions(Array.from({ length: 12 }, (_, i) => ({
-        value: i + 1,
-        label: `${i + 1}월`,
-        icon: '📅',
-        color: '#10b981',
-        description: `${i + 1}월`
-      })));
+      // 실패 시 기본값은 이미 초기값으로 설정되어 있으므로 변경하지 않음
     } finally {
       setLoadingMonthCodes(false);
     }

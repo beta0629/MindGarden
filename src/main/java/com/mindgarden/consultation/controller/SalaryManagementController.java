@@ -1,5 +1,6 @@
 package com.mindgarden.consultation.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -134,22 +135,36 @@ public class SalaryManagementController {
                     dto.put("calculationPeriod", calc.getCalculationPeriod());
                     dto.put("calculationPeriodStart", calc.getCalculationPeriodStart());
                     dto.put("calculationPeriodEnd", calc.getCalculationPeriodEnd());
-                    dto.put("baseSalary", calc.getBaseSalary());
+                    dto.put("baseSalary", calc.getBaseSalary() != null ? calc.getBaseSalary() : BigDecimal.ZERO);
                     dto.put("totalHoursWorked", calc.getTotalHoursWorked());
-                    dto.put("hourlyEarnings", calc.getHourlyEarnings());
+                    dto.put("hourlyEarnings", calc.getHourlyEarnings() != null ? calc.getHourlyEarnings() : BigDecimal.ZERO);
                     dto.put("totalConsultations", calc.getTotalConsultations());
                     dto.put("completedConsultations", calc.getCompletedConsultations());
-                    dto.put("commissionEarnings", calc.getCommissionEarnings());
-                    dto.put("bonusEarnings", calc.getBonusEarnings());
-                    dto.put("deductions", calc.getDeductions());
-                    dto.put("grossSalary", calc.getGrossSalary());
-                    dto.put("netSalary", calc.getNetSalary());
-                    dto.put("totalSalary", calc.getTotalSalary());
+                    dto.put("commissionEarnings", calc.getCommissionEarnings() != null ? calc.getCommissionEarnings() : BigDecimal.ZERO);
+                    dto.put("bonusEarnings", calc.getBonusEarnings() != null ? calc.getBonusEarnings() : BigDecimal.ZERO);
+                    dto.put("deductions", calc.getDeductions() != null ? calc.getDeductions() : BigDecimal.ZERO);
+                    dto.put("grossSalary", calc.getGrossSalary() != null ? calc.getGrossSalary() : BigDecimal.ZERO);
+                    dto.put("netSalary", calc.getNetSalary() != null ? calc.getNetSalary() : BigDecimal.ZERO);
+                    dto.put("totalSalary", calc.getTotalSalary() != null ? calc.getTotalSalary() : BigDecimal.ZERO);
                     dto.put("status", calc.getStatus());
                     dto.put("calculatedAt", calc.getCalculatedAt());
                     dto.put("approvedAt", calc.getApprovedAt());
                     dto.put("paidAt", calc.getPaidAt());
                     dto.put("branchCode", calc.getBranchCode());
+                    
+                    // 프론트엔드 호환성을 위한 추가 필드
+                    BigDecimal optionSalary = BigDecimal.ZERO;
+                    if (calc.getCommissionEarnings() != null && calc.getCommissionEarnings().compareTo(BigDecimal.ZERO) > 0) {
+                        optionSalary = calc.getCommissionEarnings(); // FREELANCE: 상담 수당
+                    } else if (calc.getHourlyEarnings() != null && calc.getHourlyEarnings().compareTo(BigDecimal.ZERO) > 0) {
+                        optionSalary = calc.getHourlyEarnings(); // REGULAR: 시간당 급여
+                    }
+                    dto.put("optionSalary", optionSalary);
+                    
+                    // 세금 계산
+                    BigDecimal taxAmount = calc.getDeductions() != null ? calc.getDeductions() : BigDecimal.ZERO;
+                    dto.put("taxAmount", taxAmount);
+                    
                     // 연관 엔티티는 ID만 포함
                     if (calc.getConsultant() != null) {
                         dto.put("consultantId", calc.getConsultant().getId());

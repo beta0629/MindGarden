@@ -43,4 +43,9 @@ public interface PlSqlSalaryManagementService {
      * PL/SQL 프로시저 사용 가능 여부 확인
      */
     boolean isProcedureAvailable();
+    
+    /**
+     * 급여 계산 미리보기 (저장하지 않음)
+     */
+    Map<String, Object> calculateSalaryPreview(Long consultantId, LocalDate periodStart, LocalDate periodEnd);
 }

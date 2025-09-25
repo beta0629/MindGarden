@@ -221,7 +221,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             // 프로시저 존재 여부 확인
             String sql = "SELECT COUNT(*) FROM information_schema.routines " +
                         "WHERE routine_schema = DATABASE() " +
-                        "AND routine_name = 'ProcessIntegratedSalaryCalculation' " +
+                        "AND routine_name = 'CalculateSalaryPreview' " +
                         "AND routine_type = 'PROCEDURE'";
             
             Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
@@ -231,5 +231,56 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             log.error("PL/SQL 프로시저 사용 가능 여부 확인 오류", e);
             return false;
         }
+    }
+    
+    @Override
+    public Map<String, Object> calculateSalaryPreview(Long consultantId, LocalDate periodStart, LocalDate periodEnd) {
+        log.info("💰 PL/SQL 급여 미리보기 계산: ConsultantID={}, Period={} ~ {}", 
+                consultantId, periodStart, periodEnd);
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+             CallableStatement stmt = connection.prepareCall(
+                 "{CALL CalculateSalaryPreview(?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            
+            // UTF-8 인코딩 설정
+            connection.createStatement().execute("SET character_set_client = utf8mb4");
+            connection.createStatement().execute("SET character_set_connection = utf8mb4");
+            connection.createStatement().execute("SET character_set_results = utf8mb4");
+            
+            // IN 파라미터 설정
+            stmt.setLong(1, consultantId);
+            stmt.setDate(2, java.sql.Date.valueOf(periodStart));
+            stmt.setDate(3, java.sql.Date.valueOf(periodEnd));
+            
+            // OUT 파라미터 등록
+            stmt.registerOutParameter(4, java.sql.Types.DECIMAL);   // p_gross_salary
+            stmt.registerOutParameter(5, java.sql.Types.DECIMAL);   // p_net_salary
+            stmt.registerOutParameter(6, java.sql.Types.DECIMAL);   // p_tax_amount
+            stmt.registerOutParameter(7, java.sql.Types.INTEGER);   // p_consultation_count
+            stmt.registerOutParameter(8, java.sql.Types.BOOLEAN);   // p_success
+            stmt.registerOutParameter(9, java.sql.Types.VARCHAR);   // p_message
+            
+            // 프로시저 실행
+            stmt.execute();
+            
+            // 결과 추출
+            result.put("grossSalary", stmt.getBigDecimal(4));
+            result.put("netSalary", stmt.getBigDecimal(5));
+            result.put("taxAmount", stmt.getBigDecimal(6));
+            result.put("consultationCount", stmt.getInt(7));
+            result.put("success", stmt.getBoolean(8));
+            result.put("message", stmt.getString(9));
+            
+            log.info("✅ PL/SQL 급여 미리보기 완료: ConsultantID={}, GrossSalary={}, NetSalary={}, ConsultationCount={}", 
+                    consultantId, result.get("grossSalary"), result.get("netSalary"), result.get("consultationCount"));
+
+        } catch (Exception e) {
+            log.error("❌ PL/SQL 급여 미리보기 중 오류 발생: {}", e.getMessage(), e);
+            result.put("success", false);
+            result.put("message", "급여 미리보기 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        return result;
     }
 }

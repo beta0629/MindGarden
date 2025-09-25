@@ -262,10 +262,10 @@ public class SalaryManagementController {
     }
     
     /**
-     * 급여 계산 (PL/SQL 통합)
+     * 급여 계산 미리보기 (저장하지 않음)
      */
     @PostMapping("/calculate")
-    public ResponseEntity<Map<String, Object>> calculateSalary(
+    public ResponseEntity<Map<String, Object>> calculateSalaryPreview(
             @RequestParam Long consultantId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodStart,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodEnd,
@@ -279,34 +279,27 @@ public class SalaryManagementController {
                 ));
             }
             
-            // PL/SQL 통합 급여 계산 호출
-            Map<String, Object> result = plSqlSalaryManagementService.processIntegratedSalaryCalculation(
-                consultantId, periodStart, periodEnd, currentUser.getName()
+            // PL/SQL 급여 미리보기 계산 호출 (저장 안 함)
+            Map<String, Object> result = plSqlSalaryManagementService.calculateSalaryPreview(
+                consultantId, periodStart, periodEnd
             );
             
             if ((Boolean) result.get("success")) {
                 return ResponseEntity.ok(Map.of(
                     "success", true,
                     "data", result,
-                    "message", "급여 계산이 완료되었습니다."
+                    "message", "급여 계산 미리보기가 완료되었습니다.",
+                    "note", "실제 급여는 매월 기산일에 배치로 처리됩니다."
                 ));
             } else {
-                String errorMessage = (String) result.get("message");
-                if (errorMessage != null && errorMessage.contains("이미 존재")) {
-                    return ResponseEntity.badRequest().body(Map.of(
-                        "success", false,
-                        "message", "해당 기간의 급여 계산이 이미 완료되었습니다. 기존 계산 내역을 확인해주세요."
-                    ));
-                } else {
-                    return ResponseEntity.badRequest().body(Map.of(
-                        "success", false,
-                        "message", errorMessage != null ? errorMessage : "급여 계산 중 오류가 발생했습니다."
-                    ));
-                }
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", (String) result.get("message")
+                ));
             }
             
         } catch (Exception e) {
-            log.error("급여 계산 오류", e);
+            log.error("급여 계산 미리보기 오류", e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "급여 계산 중 오류가 발생했습니다: " + e.getMessage()

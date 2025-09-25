@@ -1,17 +1,16 @@
 package com.mindgarden.consultation.service.impl;
 
-import com.mindgarden.consultation.service.PlSqlSalaryManagementService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import com.mindgarden.consultation.service.PlSqlSalaryManagementService;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * PL/SQL 급여관리 서비스 구현체
@@ -41,7 +40,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement stmt = connection.prepareCall(
-                 "{CALL ProcessIntegratedSalaryCalculation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 "{CALL ProcessIntegratedSalaryCalculation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // IN 파라미터 설정
             stmt.setLong(1, consultantId);

@@ -66,8 +66,10 @@ const SalaryManagement = () => {
     // 급여 프로필 로드
     const loadSalaryProfiles = async () => {
         try {
+            console.log('🔍 급여 프로필 로드 시작');
             setLoading(true);
             const response = await apiGet('/api/admin/salary/profiles');
+            console.log('📊 급여 프로필 응답:', response);
             
             // response가 null인 경우 (401 인증 오류 등) 처리
             if (!response) {
@@ -77,8 +79,10 @@ const SalaryManagement = () => {
             }
             
             if (response && response.success) {
+                console.log('✅ 급여 프로필 로드 성공:', response.data?.length || 0, '개');
                 setSalaryProfiles(response.data || []);
             } else {
+                console.error('❌ 급여 프로필 응답 실패:', response);
                 setSalaryProfiles([]);
                 if (response && response.message) {
                     showNotification(response.message, 'error');
@@ -107,16 +111,28 @@ const SalaryManagement = () => {
 
     // 급여 계산 실행
     const executeSalaryCalculation = async () => {
+        console.log('🚀 급여 계산 실행 시작');
+        console.log('📊 현재 상태:', {
+            selectedConsultant: selectedConsultant?.name,
+            selectedPeriod,
+            salaryProfilesCount: salaryProfiles.length,
+            salaryProfiles: salaryProfiles
+        });
+
         if (!selectedConsultant || !selectedPeriod) {
+            console.log('⚠️ 상담사 또는 기간 미선택');
             showNotification('상담사와 기간을 선택해주세요.', 'warning');
             return;
         }
 
         if (salaryProfiles.length === 0) {
+            console.log('⚠️ 급여 프로필 없음 - 유효성 검사 실행');
             showNotification('급여 계산을 위해서는 먼저 급여 프로필을 작성해주세요.\n급여 프로필 탭에서 "새 프로필 생성" 버튼을 클릭하세요.', 'warning');
             setActiveTab('profiles'); // 급여 프로필 탭으로 이동
             return;
         }
+
+        console.log('✅ 모든 유효성 검사 통과 - API 호출 시작');
 
         try {
             setLoading(true);

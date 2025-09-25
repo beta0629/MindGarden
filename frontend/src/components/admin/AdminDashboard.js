@@ -638,6 +638,57 @@ const AdminDashboard = ({ user: propUser }) => {
 
 
 
+            {/* 컴플라이언스 관리 (관리자 전용) */}
+            {((propUser || sessionUser)?.role === 'ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_BRANCH_SUPER_ADMIN') && (
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                        <i className="bi bi-shield-check"></i>
+                        컴플라이언스 관리
+                    </h2>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/compliance')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} compliance`}>
+                                <i className="bi bi-shield-check"></i>
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>컴플라이언스 대시보드</h3>
+                                <p>개인정보보호법 준수 현황을 모니터링합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/compliance/dashboard')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} compliance-dashboard`}>
+                                <i className="bi bi-graph-up"></i>
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>종합 모니터링</h3>
+                                <p>실시간 컴플라이언스 현황을 확인합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/compliance/personal-data-processing')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} personal-data`}>
+                                <i className="bi bi-person-lines-fill"></i>
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>개인정보 처리 현황</h3>
+                                <p>개인정보 처리 현황 및 통계를 관리합니다</p>
+                            </div>
+                        </div>
+                        
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/compliance/destruction')}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} data-destruction`}>
+                                <i className="bi bi-trash"></i>
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>개인정보 파기 관리</h3>
+                                <p>자동화된 개인정보 파기 시스템을 관리합니다</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* ERP 관리 (수퍼어드민/지점수퍼어드민 전용) */}
             {((propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_BRANCH_SUPER_ADMIN') && (
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>

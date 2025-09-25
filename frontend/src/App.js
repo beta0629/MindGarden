@@ -48,6 +48,8 @@ import ConsolidatedFinancial from './components/hq/ConsolidatedFinancial';
 import FinancialReports from './components/hq/FinancialReports';
 import ConsultationHistory from './components/consultation/ConsultationHistory';
 import ConsultationReport from './components/consultation/ConsultationReport';
+import ComplianceMenu from './components/compliance/ComplianceMenu';
+import ComplianceDashboard from './components/compliance/ComplianceDashboard';
 import ActivityHistory from './pages/client/ActivityHistory';
 import ConsultantClientList from './components/consultant/ConsultantClientList';
 import ConsultantAvailability from './components/consultant/ConsultantAvailability';
@@ -277,6 +279,17 @@ function AppContent() {
             {/* 상담 내역 및 리포트 라우트 (모든 사용자) */}
             <Route path="/consultation-history" element={<ConsultationHistory />} />
             <Route path="/consultation-report" element={<ConsultationReport />} />
+            
+            {/* 컴플라이언스 관리 라우트 */}
+            <Route path="/admin/compliance" element={<ComplianceMenu />} />
+            <Route path="/admin/compliance/dashboard" element={<ComplianceDashboard />} />
+            <Route path="/admin/compliance/personal-data-processing" element={<ComplianceDashboard />} />
+            <Route path="/admin/compliance/impact-assessment" element={<ComplianceDashboard />} />
+            <Route path="/admin/compliance/breach-response" element={<ComplianceDashboard />} />
+            <Route path="/admin/compliance/education" element={<ComplianceDashboard />} />
+            <Route path="/admin/compliance/policy" element={<ComplianceDashboard />} />
+            <Route path="/admin/compliance/destruction" element={<ComplianceDashboard />} />
+            <Route path="/admin/compliance/audit" element={<ComplianceDashboard />} />
             
             {/* 공통 라우트 (모든 사용자) */}
             <Route path="/help" element={<HelpPage />} />

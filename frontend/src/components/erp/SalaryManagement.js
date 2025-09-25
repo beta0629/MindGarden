@@ -136,12 +136,22 @@ const SalaryManagement = () => {
 
         try {
             setLoading(true);
+            
+            // period를 LocalDate 형식으로 변환 (예: "2025-09" -> "2025-09-01", "2025-09-30")
+            const [year, month] = selectedPeriod.split('-');
+            const periodStart = `${year}-${month.padStart(2, '0')}-01`;
+            const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+            const periodEnd = `${year}-${month.padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
+            
+            console.log('📅 계산된 기간:', { periodStart, periodEnd });
+
             const requestData = {
                 consultantId: selectedConsultant.id,
-                period: selectedPeriod,
-                payDayCode: selectedPayDay
+                periodStart: periodStart,
+                periodEnd: periodEnd
             };
 
+            console.log('📤 전송할 데이터:', requestData);
             const response = await apiPost('/api/admin/salary/calculate', requestData);
             if (response && response.success) {
                 showNotification('급여 계산이 완료되었습니다.', 'success');

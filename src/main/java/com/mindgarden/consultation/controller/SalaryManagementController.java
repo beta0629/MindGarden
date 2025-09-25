@@ -232,8 +232,6 @@ public class SalaryManagementController {
                 consultantId, periodStart, periodEnd, currentUser.getName()
             );
             
-            log.info("💰 PL/SQL 결과: {}", result);
-            
             if ((Boolean) result.get("success")) {
                 return ResponseEntity.ok(Map.of(
                     "success", true,
@@ -241,11 +239,18 @@ public class SalaryManagementController {
                     "message", "급여 계산이 완료되었습니다."
                 ));
             } else {
-                log.error("💰 PL/SQL 급여 계산 실패: {}", result.get("message"));
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", result.get("message")
-                ));
+                String errorMessage = (String) result.get("message");
+                if (errorMessage != null && errorMessage.contains("이미 존재")) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "해당 기간의 급여 계산이 이미 완료되었습니다. 기존 계산 내역을 확인해주세요."
+                    ));
+                } else {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", errorMessage != null ? errorMessage : "급여 계산 중 오류가 발생했습니다."
+                    ));
+                }
             }
             
         } catch (Exception e) {

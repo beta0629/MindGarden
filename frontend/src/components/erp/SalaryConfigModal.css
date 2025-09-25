@@ -21,6 +21,9 @@
   max-height: 90vh;
   overflow-y: auto;
   animation: modalSlideIn 0.3s ease-out;
+  position: relative;
+  z-index: 1001;
+  isolation: isolate;
 }
 
 @keyframes modalSlideIn {
@@ -112,6 +115,8 @@
   font-size: 0.9rem;
   background-color: white;
   transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  z-index: 1;
 }
 
 .config-item select:focus {

@@ -10,6 +10,44 @@ body {
   color: #333;
 }
 
+/* 전역 select 드롭다운 z-index 수정 */
+select {
+  position: relative;
+  z-index: 1;
+}
+
+/* select 드롭다운 옵션들이 다른 요소 위에 표시되도록 */
+select option {
+  position: relative;
+  z-index: 9999;
+}
+
+/* 모달과 오버레이의 z-index 설정 */
+.modal-overlay, .overlay {
+  z-index: 1000;
+}
+
+.modal, .modal-content {
+  z-index: 1001;
+}
+
+/* 드롭다운이 모달보다 위에 표시되지 않도록 */
+.modal select {
+  z-index: 1;
+}
+
+/* 스크롤 컨테이너 내 select 드롭다운 문제 해결 */
+.scroll-container select {
+  position: relative;
+  z-index: 1;
+}
+
+/* 테이블 내 select 드롭다운 문제 해결 */
+table select {
+  position: relative;
+  z-index: 1;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

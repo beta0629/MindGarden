@@ -53,7 +53,15 @@ const ConsultationReport = () => {
       setLoadingCodes(true);
       const response = await apiGet('/api/admin/common-codes/values?groupCode=REPORT_PERIOD');
       if (response && response.length > 0) {
-        const options = response.map(code => ({
+        // 중복 제거: codeValue 기준으로 유니크하게 필터링
+        const uniqueCodes = response.reduce((acc, code) => {
+          if (!acc.find(item => item.codeValue === code.codeValue)) {
+            acc.push(code);
+          }
+          return acc;
+        }, []);
+        
+        const options = uniqueCodes.map(code => ({
           value: code.codeValue,
           label: code.codeLabel,
           icon: code.icon,
@@ -76,7 +84,15 @@ const ConsultationReport = () => {
       setLoadingYearCodes(true);
       const response = await apiGet('/api/admin/common-codes/values?groupCode=YEAR_RANGE');
       if (response && response.length > 0) {
-        setYearOptions(response.map(code => ({
+        // 중복 제거: codeValue 기준으로 유니크하게 필터링
+        const uniqueCodes = response.reduce((acc, code) => {
+          if (!acc.find(item => item.codeValue === code.codeValue)) {
+            acc.push(code);
+          }
+          return acc;
+        }, []);
+        
+        setYearOptions(uniqueCodes.map(code => ({
           value: parseInt(code.codeValue),
           label: code.codeLabel,
           icon: code.icon,
@@ -98,7 +114,15 @@ const ConsultationReport = () => {
       setLoadingMonthCodes(true);
       const response = await apiGet('/api/admin/common-codes/values?groupCode=MONTH_RANGE');
       if (response && response.length > 0) {
-        setMonthOptions(response.map(code => ({
+        // 중복 제거: codeValue 기준으로 유니크하게 필터링
+        const uniqueCodes = response.reduce((acc, code) => {
+          if (!acc.find(item => item.codeValue === code.codeValue)) {
+            acc.push(code);
+          }
+          return acc;
+        }, []);
+        
+        setMonthOptions(uniqueCodes.map(code => ({
           value: parseInt(code.codeValue),
           label: code.codeLabel,
           icon: code.icon,

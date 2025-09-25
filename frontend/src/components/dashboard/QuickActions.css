@@ -9,33 +9,32 @@
 }
 
 .quick-actions .section-title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #1976d2;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #5a6c7d;
   margin: 0 0 1.5rem 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #e3f2fd;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 2px solid #bbdefb;
+  background: #f8f9ff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: none;
 }
 
 .quick-actions .section-title i {
-  color: #1976d2;
-  font-size: 1.3rem;
+  color: #8b9dc3;
+  font-size: 1.1rem;
 }
 
 /* 내담자 대시보드 섹션 타이틀 색상 */
 .dashboard-container.client .quick-actions .section-title {
-  color: #1976d2;
-  background: #e3f2fd;
-  border-color: #bbdefb;
+  color: #5a6c7d;
+  background: #f8f9ff;
 }
 
 .dashboard-container.client .quick-actions .section-title i {
-  color: #1976d2;
+  color: #8b9dc3;
 }
 
 .quick-actions-action-grid {

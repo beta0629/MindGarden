@@ -316,23 +316,6 @@ const IntegratedFinanceDashboard = () => {
           >
             📋 상세 내역 보기
           </button>
-          <button
-            onClick={fetchDashboardData}
-            style={{
-              padding: '12px 20px',
-              background: 'linear-gradient(135deg, #a8d8ea, #c7ceea)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '600',
-              boxShadow: '0 4px 15px rgba(116,185,255,0.3)',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            🔄 새로고침
-          </button>
         </div>
       </div>
 

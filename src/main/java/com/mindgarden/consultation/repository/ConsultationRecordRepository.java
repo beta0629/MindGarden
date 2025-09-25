@@ -153,4 +153,9 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
      * 내담자별 특정 날짜의 상담일지 조회
      */
     List<ConsultationRecord> findByClientIdAndSessionDateAndIsDeletedFalse(Long clientId, LocalDate sessionDate);
+    
+    /**
+     * 상담사 ID와 세션 날짜로 상담일지 작성 여부 확인
+     */
+    long countByConsultantIdAndSessionDateAndIsDeletedFalse(Long consultantId, LocalDate sessionDate);
 }

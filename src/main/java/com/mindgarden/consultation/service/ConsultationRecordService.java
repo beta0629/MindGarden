@@ -32,6 +32,11 @@ public interface ConsultationRecordService {
     ConsultationRecord createConsultationRecord(Map<String, Object> recordData);
     
     /**
+     * 특정 스케줄에 대한 상담일지 작성 여부 확인
+     */
+    boolean hasConsultationRecordForSchedule(Long scheduleId, Long consultantId, LocalDate sessionDate);
+    
+    /**
      * 상담일지 수정
      */
     ConsultationRecord updateConsultationRecord(Long recordId, Map<String, Object> recordData);

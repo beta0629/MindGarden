@@ -491,4 +491,25 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         
         log.info("✅ 상담 예약 검증 완료: {}", consultationId);
     }
+    
+    @Override
+    public boolean hasConsultationRecordForSchedule(Long scheduleId, Long consultantId, LocalDate sessionDate) {
+        try {
+            log.info("🔍 상담일지 작성 여부 확인: 스케줄 ID={}, 상담사 ID={}, 날짜={}", 
+                    scheduleId, consultantId, sessionDate);
+            
+            // 해당 스케줄에 대한 상담일지가 작성되었는지 확인
+            long count = consultationRecordRepository.countByConsultantIdAndSessionDateAndIsDeletedFalse(
+                consultantId, sessionDate);
+            
+            boolean hasRecord = count > 0;
+            log.info("📝 상담일지 작성 여부: {}", hasRecord ? "작성됨" : "미작성");
+            
+            return hasRecord;
+            
+        } catch (Exception e) {
+            log.error("❌ 상담일지 작성 여부 확인 실패: {}", e.getMessage(), e);
+            return false; // 오류 시 안전하게 미작성으로 간주
+        }
+    }
 }

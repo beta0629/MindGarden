@@ -43,16 +43,32 @@ select:focus option {
 
 /* 모달과 오버레이의 z-index 설정 */
 .modal-overlay, .overlay {
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .modal, .modal-content {
-  z-index: 1001;
+  z-index: 10000;
 }
 
 /* 드롭다운이 모달보다 위에 표시되지 않도록 */
 .modal select {
   z-index: 1;
+  /* 드롭다운을 모달 내부로 격리 */
+  contain: layout style paint;
+}
+
+/* 급여 기산일 설정 모달 특별 처리 */
+.salary-config-modal-overlay {
+  z-index: 9999 !important;
+}
+
+.salary-config-modal {
+  z-index: 10000 !important;
+}
+
+.salary-config-modal select {
+  z-index: 1 !important;
+  contain: layout style paint;
 }
 
 /* 스크롤 컨테이너 내 select 드롭다운 문제 해결 */

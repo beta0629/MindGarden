@@ -9,7 +9,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 9999;
+  /* 드롭다운이 백그라운드에 포함되지 않도록 */
+  isolation: isolate;
 }
 
 .salary-config-modal {
@@ -22,8 +24,11 @@
   overflow-y: auto;
   animation: modalSlideIn 0.3s ease-out;
   position: relative;
-  z-index: 1001;
+  z-index: 10000;
+  /* 드롭다운을 모달 내부로 완전히 격리 */
   isolation: isolate;
+  /* 드롭다운이 모달 밖으로 나가지 않도록 */
+  contain: layout style paint;
 }
 
 @keyframes modalSlideIn {
@@ -117,9 +122,12 @@
   transition: border-color 0.2s, box-shadow 0.2s;
   position: relative;
   z-index: 1;
-  /* 드롭다운 고정을 위한 추가 속성 */
+  /* 드롭다운을 모달 내부로 완전히 격리 */
   transform: translateZ(0);
   will-change: transform;
+  /* 드롭다운이 모달 밖으로 나가지 않도록 */
+  contain: layout style paint;
+  /* 드롭다운 옵션들이 모달 내부에만 표시되도록 */
   overflow: visible;
 }
 

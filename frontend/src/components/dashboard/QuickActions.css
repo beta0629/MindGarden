@@ -8,29 +8,50 @@
   margin-bottom: 1.5rem;
 }
 
-/* 제목 스타일 제거 - 모든 버튼이 동일한 크기 */
+.quick-actions .section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #495057;
+  margin: 0 0 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quick-actions .section-title i {
+  color: var(--dashboard-consultant-primary);
+  font-size: 1.3rem;
+}
+
+/* 내담자 대시보드 섹션 타이틀 아이콘 색상 */
+.dashboard-container.client .quick-actions .section-title i {
+  color: var(--dashboard-client-primary);
+}
 
 .quick-actions-action-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 1rem;
-  max-width: 500px;
+  justify-content: flex-start;
 }
 
-/* 상담사 대시보드 - 2열 그리드 */
+/* 상담사 대시보드 - 가로 배치 */
 .dashboard-container.consultant .quick-actions-action-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 1rem;
-  max-width: 500px;
+  justify-content: flex-start;
 }
 
-/* 관리자 대시보드 - 3열 그리드 */
+/* 관리자 대시보드 - 가로 배치 */
 .quick-actions-action-grid.admin-layout {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 1rem;
-  max-width: 600px;
+  justify-content: flex-start;
 }
 
 .quick-actions-action-button {
@@ -38,16 +59,20 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 1rem 0.75rem;
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  padding: 0.75rem 0.5rem;
+  background: #ffffff;
+  border: 2px solid #e3f2fd;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
-  color: #495057;
-  font-size: 0.9rem;
-  font-weight: 500;
+  color: #1976d2;
+  font-size: 0.85rem;
+  font-weight: 600;
+  width: 120px;
+  height: 80px;
+  flex: 0 0 120px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .quick-actions-action-button:hover {

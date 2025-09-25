@@ -11,6 +11,7 @@ import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import './ScheduleCalendar.css';
+import '../common/ScheduleList.css';
 
 /**
  * 통합된 스케줄 관리 컴포넌트

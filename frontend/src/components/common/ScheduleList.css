@@ -89,6 +89,12 @@
   min-width: 180px;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+  transform: translateZ(0);
+  will-change: transform;
+  overflow: visible;
+  contain: layout style paint;
 }
 
 .schedule-consultant-select:hover {
@@ -100,6 +106,40 @@
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px var(--color-primary-light);
+  z-index: 9999;
+  position: relative;
+}
+
+/* consultant-filter-select 클래스 추가 (UnifiedScheduleComponent용) */
+.consultant-filter-select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-neutral-light);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-white);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  min-width: 180px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+  transform: translateZ(0);
+  will-change: transform;
+  overflow: visible;
+  contain: layout style paint;
+}
+
+.consultant-filter-select:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary-light);
+}
+
+.consultant-filter-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+  z-index: 9999;
+  position: relative;
 }
 
 .schedule-filter-select,

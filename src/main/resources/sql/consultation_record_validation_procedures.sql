@@ -7,6 +7,12 @@ DELIMITER $$
 
 DROP PROCEDURE IF EXISTS ValidateConsultationRecordBeforeCompletion$$
 
+DROP PROCEDURE IF EXISTS CreateConsultationRecordReminder$$
+
+DROP PROCEDURE IF EXISTS ProcessScheduleAutoCompletion$$
+
+DROP PROCEDURE IF EXISTS ProcessBatchScheduleCompletion$$
+
 CREATE PROCEDURE ValidateConsultationRecordBeforeCompletion(
     IN p_schedule_id BIGINT,
     IN p_consultant_id BIGINT,
@@ -35,8 +41,7 @@ BEGIN
     FROM consultation_records cr
     WHERE cr.consultant_id = p_consultant_id
       AND cr.session_date = p_session_date
-      AND cr.is_deleted = 0
-      AND (cr.schedule_id = p_schedule_id OR cr.schedule_id IS NULL);
+      AND cr.is_deleted = 0;
     
     IF v_record_count > 0 THEN
         SET p_has_record = 1;

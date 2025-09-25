@@ -44,7 +44,26 @@ MindGarden 상담 관리 시스템은 복잡한 비즈니스 로직과 대용량
 - **ERP 실시간 동기화**: 급여 지급 시 회계 시스템 자동 업데이트
 - **통계 연동**: 급여 지급 시 재무 통계 자동 업데이트
 
-### 3. 할인 회계 시스템 (Discount Accounting)
+### 3. 상담일지 검증 시스템 (Consultation Record Validation)
+
+#### 핵심 프로시저
+- `ValidateConsultationRecordBeforeCompletion()` - 스케줄 완료 전 상담일지 검증
+- `CreateConsultationRecordReminder()` - 상담일지 미작성 알림 생성
+- `ProcessScheduleAutoCompletion()` - 상담일지 검증 포함 스케줄 자동 완료
+- `ProcessBatchScheduleCompletion()` - 지점별 일괄 스케줄 완료 처리
+
+#### 관리 엔티티
+- `Schedule` - 스케줄 정보
+- `ConsultationRecord` - 상담일지
+- `ConsultationRecordAlert` - 상담일지 알림
+
+#### 자동화 기능
+- **스케줄 완료 검증**: 상담일지 미작성 시 스케줄 완료 차단
+- **자동 알림 생성**: 미작성 상담일지에 대한 실시간 알림
+- **일괄 처리**: 지점별 스케줄 완료 상태 일괄 업데이트
+- **실시간 모니터링**: 상담일지 작성 현황 실시간 추적
+
+### 4. 할인 회계 시스템 (Discount Accounting)
 
 #### 핵심 프로시저
 - `ApplyDiscountAccounting()` - 할인 회계 처리

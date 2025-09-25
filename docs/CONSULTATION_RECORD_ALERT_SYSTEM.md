@@ -27,7 +27,51 @@
 
 ## 📊 PL/SQL 프로시저
 
-### 1. CheckMissingConsultationRecords
+### 1. ValidateConsultationRecordBeforeCompletion
+- **목적**: 스케줄 완료 전 상담일지 작성 여부 검증
+- **파라미터**: 
+  - `p_consultant_id` (BIGINT): 상담사 ID
+  - `p_session_date` (DATE): 상담 날짜
+  - `p_has_record` (TINYINT): 작성 여부 (OUT)
+  - `p_message` (VARCHAR): 결과 메시지 (OUT)
+- **기능**: 
+  - 해당 상담사의 특정 날짜 상담일지 작성 여부 확인
+  - 미작성 시 스케줄 완료 차단
+  - 작성 완료 시 스케줄 완료 허용
+
+### 2. CreateConsultationRecordReminder
+- **목적**: 상담일지 미작성 알림 생성
+- **파라미터**: 
+  - `p_schedule_id` (BIGINT): 스케줄 ID
+  - `p_consultant_id` (BIGINT): 상담사 ID
+  - `p_client_id` (BIGINT): 고객 ID
+  - `p_session_date` (DATE): 상담 날짜
+  - `p_title` (VARCHAR): 알림 제목
+- **기능**: 
+  - HIGH 우선순위 알림 생성
+  - 상담사별 개별 알림 관리
+
+### 3. ProcessScheduleAutoCompletion
+- **목적**: 스케줄 자동 완료 처리 (상담일지 검증 포함)
+- **파라미터**: 
+  - `p_schedule_id` (BIGINT): 스케줄 ID
+  - `p_consultant_id` (BIGINT): 상담사 ID
+  - `p_session_date` (DATE): 상담 날짜
+  - `p_force_complete` (BOOLEAN): 강제 완료 여부
+- **기능**: 
+  - 상담일지 작성 여부 자동 확인
+  - 미작성 시 알림 생성 후 완료 차단
+  - 작성 완료 시 스케줄 상태 완료로 변경
+
+### 4. ProcessBatchScheduleCompletion
+- **목적**: 지점별 일괄 스케줄 완료 처리
+- **파라미터**: 
+  - `p_branch_code` (VARCHAR): 지점 코드
+- **기능**: 
+  - 해당 지점의 모든 완료 대상 스케줄 일괄 처리
+  - 상담일지 검증 후 완료 처리
+
+### 5. CheckMissingConsultationRecords
 ```sql
 -- 상담일지 미작성 확인 및 알림 생성
 CALL CheckMissingConsultationRecords(

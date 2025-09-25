@@ -114,36 +114,54 @@ public class PlSqlInitializer {
             // UTF-8 인코딩 설정
             jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
             
-            // SQL 파일 읽기
-            ClassPathResource resource = new ClassPathResource("sql/consultation_record_validation_procedures.sql");
+            // SQL 파일 읽기 (간단한 버전 사용)
+            ClassPathResource resource = new ClassPathResource("sql/simple_consultation_validation.sql");
             String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             
-            // DELIMITER 구분자로 프로시저 분리
-            String[] procedures = sqlContent.split("DELIMITER \\$\\$");
+            // 프로시저별로 분리 (CREATE PROCEDURE 기준)
+            String[] lines = sqlContent.split("\n");
+            StringBuilder currentProcedure = new StringBuilder();
+            boolean inProcedure = false;
+            int procedureCount = 0;
             
-            for (int i = 0; i < procedures.length; i++) {
-                String procedure = procedures[i].trim();
-                if (procedure.isEmpty() || procedure.startsWith("--") || procedure.startsWith("/*")) {
+            for (String line : lines) {
+                line = line.trim();
+                
+                // 주석이나 빈 줄은 건너뛰기
+                if (line.isEmpty() || line.startsWith("--") || line.startsWith("/*")) {
                     continue;
                 }
                 
                 // DELIMITER $$ 제거
-                procedure = procedure.replaceAll("DELIMITER \\$\\$", "").trim();
-                if (procedure.isEmpty()) {
+                if (line.equals("DELIMITER $$")) {
                     continue;
                 }
                 
-                try {
-                    jdbcTemplate.execute(procedure);
-                    log.info("✅ 상담일지 검증 프로시저 {} 생성 완료", i + 1);
-                } catch (Exception e) {
-                    if (e.getMessage().contains("already exists") || 
-                        e.getMessage().contains("Duplicate procedure")) {
-                        log.info("ℹ️ 상담일지 검증 프로시저 {}가 이미 존재합니다: {}", i + 1, e.getMessage());
-                    } else {
-                        log.warn("⚠️ 상담일지 검증 프로시저 {} 생성 중 오류: {}", i + 1, e.getMessage());
+                // 프로시저 시작
+                if (line.startsWith("CREATE PROCEDURE") || line.startsWith("DROP PROCEDURE")) {
+                    if (inProcedure && currentProcedure.length() > 0) {
+                        // 이전 프로시저 실행
+                        executeProcedure(currentProcedure.toString(), procedureCount++);
+                        currentProcedure.setLength(0);
+                    }
+                    inProcedure = true;
+                }
+                
+                if (inProcedure) {
+                    currentProcedure.append(line).append("\n");
+                    
+                    // 프로시저 끝 (END$$)
+                    if (line.equals("END$$")) {
+                        executeProcedure(currentProcedure.toString(), procedureCount++);
+                        currentProcedure.setLength(0);
+                        inProcedure = false;
                     }
                 }
+            }
+            
+            // 마지막 프로시저 실행
+            if (inProcedure && currentProcedure.length() > 0) {
+                executeProcedure(currentProcedure.toString(), procedureCount++);
             }
             
             log.info("✅ 상담일지 검증 프로시저 초기화 완료");
@@ -153,5 +171,56 @@ public class PlSqlInitializer {
         } catch (Exception e) {
             log.error("❌ 상담일지 검증 프로시저 초기화 실패: {}", e.getMessage(), e);
         }
+    }
+    
+    /**
+     * 개별 프로시저 실행
+     */
+    private void executeProcedure(String procedure, int procedureNumber) {
+        try {
+            // END$$ 제거하고 ; 추가
+            String cleanProcedure = procedure.replaceAll("END\\$\\$", "END;").trim();
+            
+            // 프로시저명 추출하여 DROP 먼저 실행
+            if (cleanProcedure.contains("CREATE PROCEDURE")) {
+                String procedureName = extractProcedureName(cleanProcedure);
+                if (procedureName != null) {
+                    jdbcTemplate.execute("DROP PROCEDURE IF EXISTS " + procedureName);
+                    log.info("🗑️ 기존 프로시저 삭제: {}", procedureName);
+                }
+            }
+            
+            jdbcTemplate.execute(cleanProcedure);
+            log.info("✅ 상담일지 검증 프로시저 {} 생성 완료", procedureNumber + 1);
+        } catch (Exception e) {
+            if (e.getMessage().contains("already exists") || 
+                e.getMessage().contains("Duplicate procedure")) {
+                log.info("ℹ️ 상담일지 검증 프로시저 {}가 이미 존재합니다: {}", procedureNumber + 1, e.getMessage());
+            } else {
+                log.warn("⚠️ 상담일지 검증 프로시저 {} 생성 중 오류: {}", procedureNumber + 1, e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * 프로시저명 추출
+     */
+    private String extractProcedureName(String procedure) {
+        try {
+            String[] lines = procedure.split("\n");
+            for (String line : lines) {
+                if (line.contains("CREATE PROCEDURE")) {
+                    String[] parts = line.split("\\s+");
+                    for (int i = 0; i < parts.length; i++) {
+                        if ("PROCEDURE".equals(parts[i]) && i + 1 < parts.length) {
+                            return parts[i + 1].trim();
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("프로시저명 추출 실패: {}", e.getMessage());
+        }
+        return null;
     }
 }

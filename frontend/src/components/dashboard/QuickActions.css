@@ -10,22 +10,32 @@
 
 .quick-actions .section-title {
   font-size: 1.2rem;
-  font-weight: 600;
-  color: #495057;
+  font-weight: 700;
+  color: #1976d2;
   margin: 0 0 1.5rem 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  background: #e3f2fd;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 2px solid #bbdefb;
 }
 
 .quick-actions .section-title i {
-  color: var(--dashboard-consultant-primary);
+  color: #1976d2;
   font-size: 1.3rem;
 }
 
-/* 내담자 대시보드 섹션 타이틀 아이콘 색상 */
+/* 내담자 대시보드 섹션 타이틀 색상 */
+.dashboard-container.client .quick-actions .section-title {
+  color: #1976d2;
+  background: #e3f2fd;
+  border-color: #bbdefb;
+}
+
 .dashboard-container.client .quick-actions .section-title i {
-  color: var(--dashboard-client-primary);
+  color: #1976d2;
 }
 
 .quick-actions-action-grid {

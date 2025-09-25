@@ -114,6 +114,22 @@ select {
   position: relative;
   z-index: 1;
   transform: none;
+  contain: layout style paint;
+}
+
+/* 급여 관리 헤더 드롭다운 특별 처리 */
+.salary-header select {
+  position: relative;
+  z-index: 1;
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+
+.salary-header select:focus {
+  position: relative;
+  z-index: 9999;
+  contain: layout style paint;
+  transform: none;
 }
 
 code {

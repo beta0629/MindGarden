@@ -182,6 +182,8 @@
     transform: translateZ(0);
     will-change: transform;
     overflow: visible;
+    /* 드롭다운이 스크롤에 영향을 받지 않도록 */
+    contain: layout style paint;
 }
 
 /* select 드롭다운이 스크롤에 영향을 받지 않도록 */
@@ -189,6 +191,27 @@
     position: relative;
     z-index: 9999;
     transform: none;
+    /* 드롭다운을 완전히 고정 */
+    contain: layout style paint;
+}
+
+/* 급여 관리 헤더 영역 고정 */
+.salary-header {
+    position: relative;
+    z-index: 10;
+    /* 헤더 내 드롭다운이 스크롤에 영향을 받지 않도록 */
+    isolation: isolate;
+}
+
+.salary-header .header-actions {
+    position: relative;
+    z-index: 1;
+}
+
+/* 급여 관리 페이지 전체 컨테이너 */
+.salary-management {
+    position: relative;
+    z-index: 1;
 }
 
 .control-group {

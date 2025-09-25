@@ -35,15 +35,19 @@
   max-width: 500px;
 }
 
-/* 상담사 대시보드 - 2열로 표시 */
+/* 상담사 대시보드 - 2열 그리드 */
 .dashboard-container.consultant .quick-actions-action-grid {
+  display: grid;
   grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
   max-width: 500px;
 }
 
-/* 관리자 대시보드 - 3열로 표시 */
+/* 관리자 대시보드 - 3열 그리드 */
 .quick-actions-action-grid.admin-layout {
+  display: grid;
   grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
   max-width: 600px;
 }
 

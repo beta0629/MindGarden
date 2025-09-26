@@ -120,6 +120,7 @@ public class SecurityConfig {
                     "/api/test/**",  // 테스트 API
                     "/api/local-test/**",  // 로컬 테스트 API (로컬 환경에서만 활성화)
                     "/api/health/**",  // 시스템 헬스체크
+                    "/api/common-codes/**",  // 공통코드 API 허용
                     "/error",
                     "/actuator/health",
                     "/actuator/info"

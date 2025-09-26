@@ -467,29 +467,6 @@ public class BranchServiceImpl extends BaseServiceImpl<Branch, Long> implements 
         return statistics;
     }
     
-    @Override
-    @Transactional(readOnly = true)
-    public Map<String, Object> getAllBranchesStatistics() {
-        Map<String, Object> statistics = new HashMap<>();
-        
-        // 전체 지점 수
-        long totalBranches = branchRepository.countByIsDeletedFalse();
-        statistics.put("totalBranches", totalBranches);
-        
-        // 상태별 지점 수
-        Map<Branch.BranchStatus, Long> statusCounts = getCountByStatus();
-        statistics.put("branchStatusCounts", statusCounts);
-        
-        // 유형별 지점 수
-        Map<Branch.BranchType, Long> typeCounts = getCountByType();
-        statistics.put("branchTypeCounts", typeCounts);
-        
-        // 활성 지점 수
-        long activeBranches = branchRepository.countByBranchStatusAndIsDeletedFalse(Branch.BranchStatus.ACTIVE);
-        statistics.put("activeBranches", activeBranches);
-        
-        return statistics;
-    }
     
     @Override
     @Transactional(readOnly = true)
@@ -814,5 +791,145 @@ public class BranchServiceImpl extends BaseServiceImpl<Branch, Long> implements 
         }
         
         return response;
+    }
+    
+    // === 통계 메서드 구현 ===
+    
+    @Override
+    public Map<String, Object> getAllBranchesStatistics() {
+        log.info("전체 지점 통계 조회");
+        
+        try {
+            // PL/SQL 프로시저 호출을 위한 임시 구현
+            // 실제로는 @Query 또는 @Procedure를 사용하여 PL/SQL 호출
+            Map<String, Object> stats = new HashMap<>();
+            
+            // 기본 통계 데이터
+            long totalBranches = branchRepository.count();
+            long activeBranches = branchRepository.countByBranchStatusAndIsDeletedFalse(Branch.BranchStatus.ACTIVE);
+            long totalUsers = userRepository.count();
+            long activeUsers = userRepository.countByIsActiveTrueAndIsDeletedFalse();
+            
+            // 역할별 사용자 수
+            long totalConsultants = userRepository.countByRoleAndIsDeletedFalse(UserRole.CONSULTANT);
+            long activeConsultants = userRepository.countByRoleAndIsActiveTrueAndIsDeletedFalse(UserRole.CONSULTANT);
+            long totalClients = userRepository.countByRoleAndIsDeletedFalse(UserRole.CLIENT);
+            long activeClients = userRepository.countByRoleAndIsActiveTrueAndIsDeletedFalse(UserRole.CLIENT);
+            
+            stats.put("totalBranches", totalBranches);
+            stats.put("activeBranches", activeBranches);
+            stats.put("totalUsers", totalUsers);
+            stats.put("activeUsers", activeUsers);
+            stats.put("totalConsultants", totalConsultants);
+            stats.put("activeConsultants", activeConsultants);
+            stats.put("totalClients", totalClients);
+            stats.put("activeClients", activeClients);
+            stats.put("period", "month");
+            stats.put("lastUpdated", java.time.LocalDateTime.now());
+            
+            log.info("전체 지점 통계 조회 완료: {} 지점, {} 사용자", totalBranches, totalUsers);
+            return stats;
+            
+        } catch (Exception e) {
+            log.error("전체 지점 통계 조회 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("통계 조회에 실패했습니다.", e);
+        }
+    }
+    
+    @Override
+    public List<Map<String, Object>> getBranchComparisonStatistics(String period, String metric) {
+        log.info("지점 비교 통계 조회 - 기간: {}, 지표: {}", period, metric);
+        
+        try {
+            // 지점별 기본 통계 조회
+            List<Branch> branches = branchRepository.findByIsDeletedFalseOrderByBranchName();
+            List<Map<String, Object>> comparison = branches.stream()
+                .map(branch -> {
+                    Map<String, Object> branchStats = new HashMap<>();
+                    branchStats.put("branchId", branch.getId());
+                    branchStats.put("branchName", branch.getBranchName());
+                    branchStats.put("branchCode", branch.getBranchCode());
+                    branchStats.put("branchStatus", branch.getBranchStatus());
+                    
+                    // 지점별 사용자 수
+                    long userCount = userRepository.countByBranchIdAndIsDeletedFalse(branch.getId());
+                    long activeUserCount = userRepository.countByBranchIdAndIsActiveTrueAndIsDeletedFalse(branch.getId());
+                    long consultantCount = userRepository.countByBranchIdAndRoleAndIsDeletedFalse(branch.getId(), UserRole.CONSULTANT);
+                    long clientCount = userRepository.countByBranchIdAndRoleAndIsDeletedFalse(branch.getId(), UserRole.CLIENT);
+                    
+                    branchStats.put("totalUsers", userCount);
+                    branchStats.put("activeUsers", activeUserCount);
+                    branchStats.put("consultants", consultantCount);
+                    branchStats.put("clients", clientCount);
+                    
+                    return branchStats;
+                })
+                .collect(Collectors.toList());
+            
+            log.info("지점 비교 통계 조회 완료: {} 지점", comparison.size());
+            return comparison;
+            
+        } catch (Exception e) {
+            log.error("지점 비교 통계 조회 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("비교 통계 조회에 실패했습니다.", e);
+        }
+    }
+    
+    @Override
+    public List<Map<String, Object>> getBranchTrendStatistics(String period, String metric, Long branchId) {
+        log.info("지점 추이 분석 통계 조회 - 기간: {}, 지표: {}, 지점ID: {}", period, metric, branchId);
+        
+        try {
+            // 기간 계산
+            LocalDate endDate = LocalDate.now();
+            LocalDate startDate;
+            
+            switch (period.toLowerCase()) {
+                case "week":
+                    startDate = endDate.minusWeeks(1);
+                    break;
+                case "month":
+                    startDate = endDate.minusMonths(1);
+                    break;
+                case "quarter":
+                    startDate = endDate.minusMonths(3);
+                    break;
+                case "year":
+                    startDate = endDate.minusYears(1);
+                    break;
+                default:
+                    startDate = endDate.minusMonths(1);
+            }
+            
+            List<Map<String, Object>> trendData = new java.util.ArrayList<>();
+            
+            // 일별 사용자 생성 추이
+            if ("DAILY_USERS".equals(metric)) {
+                // 실제로는 복잡한 쿼리로 일별 데이터를 조회
+                for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                    Map<String, Object> dailyData = new HashMap<>();
+                    dailyData.put("date", date);
+                    dailyData.put("newUsers", 0); // 임시 데이터
+                    dailyData.put("newConsultants", 0);
+                    dailyData.put("newClients", 0);
+                    trendData.add(dailyData);
+                }
+            } else {
+                // 기본 추이 데이터
+                Map<String, Object> defaultData = new HashMap<>();
+                defaultData.put("period", period);
+                defaultData.put("metric", metric);
+                defaultData.put("branchId", branchId);
+                defaultData.put("data", new java.util.ArrayList<>());
+                trendData.add(defaultData);
+            }
+            
+            log.info("지점 추이 분석 통계 조회 완료: {} 데이터 포인트", trendData.size());
+            return trendData;
+            
+        } catch (Exception e) {
+            log.error("지점 추이 분석 통계 조회 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("추이 분석 조회에 실패했습니다.", e);
+        }
     }
 }

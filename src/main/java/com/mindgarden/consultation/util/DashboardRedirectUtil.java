@@ -56,7 +56,7 @@ public class DashboardRedirectUtil {
             case SUPER_HQ_ADMIN:
                 return "/super_admin/dashboard";  // 본사 고급 관리자는 수퍼 어드민 대시보드로
             case HQ_MASTER:
-                return "/super_admin/dashboard";  // 본사 총관리자는 수퍼 어드민 대시보드로
+                return "/hq_master/dashboard";  // 본사 총관리자는 HQ 마스터 대시보드로
             default:
                 return "/client/dashboard";
         }

@@ -320,10 +320,26 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     private String getMessageTypeFromCommonCode(String messageTypeName) {
         try {
             String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.MESSAGE_TYPE_GROUP, messageTypeName);
-            return codeValue != null ? codeValue : messageTypeName; // 공통코드에 없으면 원본 반환
+            if (codeValue != null) {
+                return codeValue;
+            }
+            
+            // 공통코드에 없으면 기본값 매핑
+            switch (messageTypeName) {
+                case "INCOMPLETE_CONSULTATION":
+                    return "GENERAL"; // 20자 제한에 맞춰 기본값 사용
+                case "DAILY_SUMMARY":
+                    return "GENERAL";
+                case "MONTHLY_REPORT":
+                    return "GENERAL";
+                case "REMINDER":
+                    return "APPOINTMENT"; // 약속 안내로 매핑
+                default:
+                    return "GENERAL"; // 기본값
+            }
         } catch (Exception e) {
             log.warn("공통코드에서 메시지 타입 코드 조회 실패: {}, 기본값 사용", messageTypeName, e);
-            return messageTypeName;
+            return "GENERAL"; // 기본값
         }
     }
     

@@ -279,4 +279,87 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     public List<CommonCode> getCodesByGroup(String codeGroup) {
         return getCommonCodesByGroup(codeGroup);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, List<CommonCode>> getCommonCodesByGroups(String[] groups) {
+        log.info("🔍 여러 그룹의 공통코드 조회: {}", String.join(", ", groups));
+        
+        Map<String, List<CommonCode>> result = new HashMap<>();
+        for (String group : groups) {
+            List<CommonCode> codes = getCommonCodesByGroup(group);
+            result.put(group, codes);
+        }
+        
+        log.info("✅ 여러 그룹 공통코드 조회 완료: {} 그룹", result.size());
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, List<CommonCode>> getActiveCommonCodesByGroups(String[] groups) {
+        log.info("🔍 여러 그룹의 활성 공통코드 조회: {}", String.join(", ", groups));
+        
+        Map<String, List<CommonCode>> result = new HashMap<>();
+        for (String group : groups) {
+            List<CommonCode> codes = getActiveCommonCodesByGroup(group);
+            result.put(group, codes);
+        }
+        
+        log.info("✅ 여러 그룹 활성 공통코드 조회 완료: {} 그룹", result.size());
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getCommonCodeGroups() {
+        log.info("🔍 공통코드 그룹 목록 조회");
+        
+        List<String> groups = commonCodeRepository.findDistinctCodeGroups();
+        log.info("✅ 공통코드 그룹 목록 조회 완료: {} 개", groups.size());
+        return groups;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CommonCode getCommonCode(String groupCode, String codeValue) {
+        log.info("🔍 공통코드 상세 조회: {}/{}", groupCode, codeValue);
+        
+        CommonCode code = getCommonCodeByGroupAndValue(groupCode, codeValue);
+        if (code != null) {
+            log.info("✅ 공통코드 조회 완료: {}", code.getCodeLabel());
+        } else {
+            log.warn("⚠️ 공통코드를 찾을 수 없음: {}/{}", groupCode, codeValue);
+        }
+        
+        return code;
+    }
+
+    @Override
+    public int deactivateCommonCodes(List<String> codeValues) {
+        log.info("🔧 공통코드 비활성화 시작: {} 개", codeValues.size());
+        
+        int deactivatedCount = 0;
+        
+        for (String codeValue : codeValues) {
+            try {
+                // 해당 코드값을 가진 모든 공통코드 조회
+                List<CommonCode> codes = commonCodeRepository.findByCodeValue(codeValue);
+                
+                for (CommonCode code : codes) {
+                    if (code.getIsActive()) {
+                        code.setIsActive(false);
+                        commonCodeRepository.save(code);
+                        deactivatedCount++;
+                        log.info("✅ 공통코드 비활성화 완료: {} ({})", code.getCodeLabel(), code.getCodeValue());
+                    }
+                }
+            } catch (Exception e) {
+                log.error("❌ 공통코드 비활성화 실패: {} - {}", codeValue, e.getMessage());
+            }
+        }
+        
+        log.info("🔧 공통코드 비활성화 완료: {} 개 처리", deactivatedCount);
+        return deactivatedCount;
+    }
 }

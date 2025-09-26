@@ -58,9 +58,9 @@ const BranchFilterCard = ({
                                 지점 선택
                             </label>
                             <select 
-                                value={selectedBranch?.code || ''}
+                                value={selectedBranch?.branchCode || ''}
                                 onChange={(e) => {
-                                    const branch = branches.find(b => b.code === e.target.value);
+                                    const branch = branches.find(b => b.branchCode === e.target.value);
                                     onBranchChange(branch);
                                 }}
                                 style={{
@@ -74,8 +74,8 @@ const BranchFilterCard = ({
                             >
                                 <option value="">지점을 선택하세요</option>
                                 {branches.map(branch => (
-                                    <option key={branch.code} value={branch.code}>
-                                        {branch.name}
+                                    <option key={branch.branchCode} value={branch.branchCode}>
+                                        {branch.branchName}
                                     </option>
                                 ))}
                             </select>
@@ -276,10 +276,16 @@ const BranchFinancialManagement = () => {
     const loadBranches = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await apiGet('/api/hq/branch-management/branches');
+            const response = await apiGet('/api/hq/branches');
             console.log('🏢 지점 목록 API 응답:', response);
             
-            if (response.success && response.data) {
+            // API 응답이 배열인 경우 직접 사용
+            if (Array.isArray(response)) {
+                setBranches(response);
+                if (response.length > 0 && !selectedBranch) {
+                    setSelectedBranch(response[0]);
+                }
+            } else if (response.success && response.data) {
                 setBranches(response.data);
                 if (response.data.length > 0 && !selectedBranch) {
                     setSelectedBranch(response.data[0]);
@@ -336,7 +342,7 @@ const BranchFinancialManagement = () => {
     // 선택된 지점 변경 시 재무 데이터 로드
     useEffect(() => {
         if (selectedBranch) {
-            loadBranchFinancialData(selectedBranch.code);
+            loadBranchFinancialData(selectedBranch.branchCode);
         }
     }, [selectedBranch, loadBranchFinancialData]);
 
@@ -351,7 +357,7 @@ const BranchFinancialManagement = () => {
     // 필터 적용
     const handleApplyFilters = () => {
         if (selectedBranch) {
-            loadBranchFinancialData(selectedBranch.code);
+            loadBranchFinancialData(selectedBranch.branchCode);
         }
     };
 

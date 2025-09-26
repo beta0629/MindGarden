@@ -117,6 +117,8 @@ public class ScheduleController {
     public ResponseEntity<Page<ScheduleDto>> getSchedulesByUserRolePaged(
             @RequestParam Long userId,
             @RequestParam String userRole,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String dateRange,
             @PageableDefault(size = 10, sort = "date") Pageable pageable) {
         
         log.info("🔐 권한 기반 페이지네이션 스케줄 조회 요청: 사용자 {}, 역할 {}, 페이지 {}", userId, userRole, pageable.getPageNumber());
@@ -534,9 +536,13 @@ public class ScheduleController {
     public ResponseEntity<Map<String, Object>> getScheduleStatisticsForAdmin(
             @RequestParam String userRole,
             @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String dateRange,
+            @RequestParam(required = false) String chartType) {
         
-        log.info("📊 관리자용 스케줄 통계 조회 요청: 역할 {}, 시작일: {}, 종료일: {}", userRole, startDate, endDate);
+        log.info("📊 관리자용 스케줄 통계 조회 요청: 역할 {}, 시작일: {}, 종료일: {}, 상태: {}, 날짜범위: {}, 차트타입: {}", 
+                userRole, startDate, endDate, status, dateRange, chartType);
         
         // 관리자 권한 확인
         if (!"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 

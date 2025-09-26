@@ -45,6 +45,11 @@ public interface UserService extends BaseService<User, Long> {
     List<User> findByRole(String role);
     
     /**
+     * 여러 역할의 활성 사용자 조회
+     */
+    List<User> findByRoleInAndIsDeletedFalse(List<String> roles);
+    
+    /**
      * 역할별 사용자 페이징 조회
      */
     Page<User> findByRole(String role, Pageable pageable);

@@ -68,7 +68,7 @@ redirectToDashboard(userInfo);
 | `BRANCH_SUPER_ADMIN` | `/super_admin/dashboard` | 지점 수퍼 관리자 대시보드 |
 | `HQ_ADMIN` | `/erp/dashboard` | 본사 관리자 대시보드 (ERP) |
 | `SUPER_HQ_ADMIN` | `/super_admin/dashboard` | 본사 고급 관리자 대시보드 |
-| `HQ_MASTER` | `/super_admin/dashboard` | 본사 총관리자 대시보드 |
+| `HQ_MASTER` | `/hq_master/dashboard` | 본사 총관리자 대시보드 |
 
 ## 적용된 컴포넌트
 

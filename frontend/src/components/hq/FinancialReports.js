@@ -164,7 +164,7 @@ const FinancialReports = () => {
                 console.log(`📊 ${year}년 ${month}월 데이터 확인 중...`);
                 
                 // 간단한 API 호출로 데이터 존재 여부 확인
-                const testResponse = await apiGet(`/api/erp/finance/dashboard?year=${year}&month=${month}`);
+                const testResponse = await apiGet(`/api/hq/erp/reports?year=${year}&month=${month}`);
                 if (testResponse.data && testResponse.data.totalIncome > 0) {
                     console.log(`✅ ${year}년 ${month}월에 데이터 발견!`);
                     setReportPeriod({ year, month });
@@ -227,7 +227,7 @@ const FinancialReports = () => {
             console.log('📊 재무 보고서 데이터 로드 시작');
 
             // 지점 목록 로드
-            const branchesResponse = await apiGet('/api/hq/branch-management/branches');
+            const branchesResponse = await apiGet('/api/hq/branches');
             const branches = branchesResponse.data || [];
 
             if (activeTab === 'monthly') {
@@ -248,352 +248,263 @@ const FinancialReports = () => {
 
     // 월별 보고서 데이터 로드
     const loadMonthlyReport = async (branches) => {
-        const startDate = new Date(reportPeriod.year, reportPeriod.month - 1, 1);
-        const endDate = new Date(reportPeriod.year, reportPeriod.month, 0);
+        console.log('📊 월별 보고서 데이터 로드 시작');
         
-        const branchPerformance = [];
-        let totalRevenue = 0;
-        let totalExpense = 0;
-        let totalTransactions = 0;
-
-        // 각 지점별 월별 데이터 수집
-        for (const branch of branches) {
-            try {
-                console.log(`📊 지점 ${branch.code} 월별 데이터 로드 중...`);
-                console.log(`📊 날짜 범위: ${startDate.toISOString().split('T')[0]} ~ ${endDate.toISOString().split('T')[0]}`);
-                
-                const financialResponse = await apiGet(
-                    `/api/erp/finance/dashboard?branchCode=${branch.code}&startDate=${startDate.toISOString().split('T')[0]}&endDate=${endDate.toISOString().split('T')[0]}`
-                );
-                
-                const financialData = financialResponse.data?.data?.financialData || financialResponse.data?.financialData || financialResponse.data;
-                
-                console.log(`📊 지점 ${branch.code} 데이터:`, {
-                    revenue: financialData?.summary?.totalRevenue || 0,
-                    expense: financialData?.summary?.totalExpenses || 0,
-                    transactionCount: financialData?.summary?.transactionCount || 0
-                });
-                
-                const branchData = {
-                    branchCode: branch.code,
-                    branchName: branch.name,
-                    revenue: financialData?.summary?.totalRevenue || 0,
-                    expense: financialData?.summary?.totalExpenses || 0,
-                    profit: (financialData?.summary?.totalRevenue || 0) - (financialData?.summary?.totalExpenses || 0),
-                    transactionCount: financialData?.summary?.transactionCount || 0,
-                    profitMargin: (financialData?.summary?.totalRevenue || 0) > 0 ? 
-                        (((financialData?.summary?.totalRevenue || 0) - (financialData?.summary?.totalExpenses || 0)) / (financialData?.summary?.totalRevenue || 0)) * 100 : 0,
-                    categoryBreakdown: financialData?.categoryBreakdown || {}
-                };
-
-                branchPerformance.push(branchData);
-                totalRevenue += branchData.revenue;
-                totalExpense += branchData.expense;
-                totalTransactions += branchData.transactionCount;
-            } catch (error) {
-                console.error(`❌ 지점 ${branch.code} 월별 데이터 로드 실패:`, error);
-            }
-        }
-
-        const netProfit = totalRevenue - totalExpense;
-        const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
-
-        // 카테고리별 지출 분석 데이터 생성
-        const categoryAnalysis = [];
-        console.log('📊 월별 카테고리 분석 시작 - branchPerformance:', branchPerformance);
-        
-        if (branchPerformance.length > 0) {
-            // 각 지점의 카테고리별 지출 데이터 수집
-            const categoryMap = new Map();
+        try {
+            // 월별 보고서 API 호출
+            const reportResponse = await apiGet(
+                `/api/hq/erp/reports?reportType=monthly&period=${reportPeriod.year}-${String(reportPeriod.month).padStart(2, '0')}`
+            );
             
-            for (const branch of branchPerformance) {
-                try {
-                    // 지점별 데이터에서 카테고리 정보 추출
-                    const categoryBreakdown = branch.categoryBreakdown || {};
-                    
-                    console.log(`📊 지점 ${branch.branchCode} 전체 데이터:`, branch);
-                    console.log(`📊 지점 ${branch.branchCode} 카테고리 데이터:`, categoryBreakdown);
-                    console.log(`📊 지점 ${branch.branchCode} 카테고리 키:`, Object.keys(categoryBreakdown));
-                    console.log(`📊 지점 ${branch.branchCode} 카테고리 값:`, Object.values(categoryBreakdown));
-                    
-                    // 카테고리별 지출 합산
-                    Object.entries(categoryBreakdown).forEach(([category, amount]) => {
-                        console.log(`📊 카테고리 ${category}: ${amount}`);
-                        const koreanCategory = getCategoryKoreanName(category);
-                        if (amount > 0) { // 양수인 경우만 추가
-                            if (categoryMap.has(koreanCategory)) {
-                                categoryMap.set(koreanCategory, categoryMap.get(koreanCategory) + amount);
-                            } else {
-                                categoryMap.set(koreanCategory, amount);
-                            }
-                        }
-                    });
-                } catch (error) {
-                    console.error(`❌ 지점 ${branch.branchCode} 카테고리 데이터 처리 실패:`, error);
-                }
-            }
+            console.log('📊 월별 보고서 API 응답:', reportResponse);
             
-            // 카테고리별 지출 분석 데이터 생성
-            const totalCategoryExpense = Array.from(categoryMap.values()).reduce((sum, amount) => sum + amount, 0);
+            // API 응답에서 데이터 추출
+            const responseData = reportResponse.data?.data || reportResponse.data;
+            console.log('📊 추출된 월별 데이터:', responseData);
             
-            console.log('📊 categoryMap:', categoryMap);
-            console.log('📊 totalCategoryExpense:', totalCategoryExpense);
+            // API 응답 구조에 맞게 데이터 추출
+            const reportData = responseData?.reportData || [];
+            console.log('📊 reportData:', reportData);
             
-            categoryMap.forEach((amount, category) => {
-                const percentage = totalCategoryExpense > 0 ? (amount / totalCategoryExpense) * 100 : 0;
-                console.log(`📊 카테고리 ${category}: ${amount} (${percentage.toFixed(1)}%)`);
-                categoryAnalysis.push({
-                    category,
-                    amount,
-                    percentage
-                });
+            // 전체 요약 데이터 (첫 번째 리포트 데이터 사용)
+            const firstReport = reportData[0] || {};
+            const totalRevenue = firstReport?.totalRevenue || 0;
+            const totalExpense = firstReport?.totalExpenses || 0;
+            const totalTransactions = firstReport?.totalTransactions || 0;
+            const netProfit = firstReport?.netProfit || 0;
+            const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+            
+            console.log('📊 월별 전체 요약:', {
+                totalRevenue,
+                totalExpense,
+                netProfit,
+                profitMargin,
+                totalTransactions
             });
             
-            // 금액 순으로 정렬
-            categoryAnalysis.sort((a, b) => b.amount - a.amount);
+            // 지점별 데이터 처리 (현재는 전체 데이터를 하나의 지점으로 처리)
+            const branchPerformance = [];
             
-            console.log('📊 최종 월별 categoryAnalysis:', categoryAnalysis);
-        }
-        
-        // 월별 일별 트렌드 데이터 생성 (실제 일별 데이터)
-        const trends = [];
-        if (branchPerformance.length > 0) {
-            // 해당 월의 일수 계산
-            const daysInMonth = new Date(reportPeriod.year, reportPeriod.month, 0).getDate();
+            if (reportData.length > 0) {
+                const report = reportData[0];
+                branchPerformance.push({
+                    branchCode: 'ALL',
+                    branchName: '전체',
+                    revenue: report.totalRevenue || 0,
+                    expense: report.totalExpenses || 0,
+                    profit: report.netProfit || 0,
+                    transactionCount: report.totalTransactions || 0,
+                    profitMargin: profitMargin,
+                    categoryBreakdown: {} // 카테고리별 데이터는 별도 처리 필요
+                });
+            }
             
-            // 각 일별로 데이터 생성 (실제 데이터 기반)
-            for (let day = 1; day <= daysInMonth; day++) {
-                // 해당 일의 데이터가 있는지 확인하고, 없으면 평균 분산
-                const dayRevenue = totalRevenue > 0 ? Math.floor(totalRevenue / daysInMonth) : 0;
-                const dayExpense = totalExpense > 0 ? Math.floor(totalExpense / daysInMonth) : 0;
+            console.log('📊 변환된 지점별 데이터:', branchPerformance);
+
+            // 카테고리별 지출 분석 데이터 처리 및 변환
+            const rawCategoryAnalysis = responseData?.categoryAnalysis || [];
+            const categoryAnalysis = rawCategoryAnalysis.map(item => {
+                const totalExpense = firstReport?.totalExpenses || 0;
+                const percentage = totalExpense > 0 ? (item.totalAmount / totalExpense) * 100 : 0;
+                return {
+                    category: getCategoryKoreanName(item.category),
+                    originalCategory: item.category,
+                    amount: item.totalAmount,
+                    percentage: Math.round(percentage * 100) / 100,
+                    transactionCount: item.transactionCount,
+                    avgAmount: item.avgAmount,
+                    trend: 'stable' // 기본값
+                };
+            });
+            
+            // 월별 일별 트렌드 데이터 생성 (간단한 예시)
+            const trends = [];
+            if (branchPerformance.length > 0) {
+                // 해당 월의 일수 계산
+                const daysInMonth = new Date(reportPeriod.year, reportPeriod.month, 0).getDate();
                 
-                // 실제 데이터가 있는 경우에만 추가 (0이 아닌 경우)
-                if (dayRevenue > 0 || dayExpense > 0) {
+                // 각 일별로 데이터 생성 (평균 분산)
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayRevenue = totalRevenue > 0 ? Math.floor(totalRevenue / daysInMonth) : 0;
+                    const dayExpense = totalExpense > 0 ? Math.floor(totalExpense / daysInMonth) : 0;
+                    
+                    if (dayRevenue > 0 || dayExpense > 0) {
+                        trends.push({
+                            day: `${day}일`,
+                            revenue: dayRevenue,
+                            expense: dayExpense
+                        });
+                    }
+                }
+                
+                // 데이터가 없는 경우 기본 데이터 생성
+                if (trends.length === 0) {
                     trends.push({
-                        day: `${day}일`,
-                        revenue: dayRevenue,
-                        expense: dayExpense
+                        day: '1일',
+                        revenue: totalRevenue,
+                        expense: totalExpense
                     });
                 }
             }
             
-            // 데이터가 없는 경우 기본 데이터 생성
-            if (trends.length === 0) {
-                trends.push({
-                    day: '1일',
-                    revenue: totalRevenue,
-                    expense: totalExpense
-                });
-            }
-        }
-        
-        console.log('📊 월별 trends 데이터 생성:', trends);
+            console.log('📊 월별 trends 데이터 생성:', trends);
 
-        setReportData(prev => ({
-            ...prev,
-            monthly: {
-                summary: {
-                    totalRevenue,
-                    totalExpense,
-                    netProfit,
-                    profitMargin,
-                    transactionCount: totalTransactions
-                },
-                branchPerformance,
-                categoryAnalysis,
-                trends
-            }
-        }));
+            setReportData(prev => ({
+                ...prev,
+                monthly: {
+                    summary: {
+                        totalRevenue,
+                        totalExpense,
+                        netProfit,
+                        profitMargin,
+                        transactionCount: totalTransactions
+                    },
+                    branchPerformance,
+                    categoryAnalysis,
+                    trends
+                }
+            }));
+            
+        } catch (error) {
+            console.error('❌ 월별 보고서 데이터 로드 실패:', error);
+            showNotification('월별 보고서 데이터를 불러오는데 실패했습니다.', 'error');
+        }
     };
 
     // 연별 보고서 데이터 로드
     const loadYearlyReport = async (branches) => {
-        console.log('🚀 loadYearlyReport 함수 호출됨');
-        console.log('📊 branches:', branches);
+        console.log('📊 연별 보고서 데이터 로드 시작');
         
-        // 연별 보고서는 현재 월의 지점별 데이터를 사용
-        const startDate = new Date(reportPeriod.year, reportPeriod.month - 1, 1);
-        const endDate = new Date(reportPeriod.year, reportPeriod.month, 0);
-        
-        console.log('📊 연별 보고서 날짜 범위:', startDate.toISOString().split('T')[0], '~', endDate.toISOString().split('T')[0]);
-        
-        const branchPerformance = [];
-        let totalRevenue = 0;
-        let totalExpense = 0;
-        let totalTransactions = 0;
-
-        // 각 지점별 데이터 수집
-        for (const branch of branches) {
-            try {
-                console.log(`📊 지점 ${branch.code} 연별 데이터 로드 중...`);
-                console.log(`📊 날짜 범위: ${startDate.toISOString().split('T')[0]} ~ ${endDate.toISOString().split('T')[0]}`);
-                
-                const financialResponse = await apiGet(
-                    `/api/erp/finance/dashboard?branchCode=${branch.code}&startDate=${startDate.toISOString().split('T')[0]}&endDate=${endDate.toISOString().split('T')[0]}`
-                );
-                
-                const financialData = financialResponse.data?.data?.financialData || financialResponse.data?.financialData || financialResponse.data;
-                
-                console.log(`📊 지점 ${branch.code} 연별 데이터:`, {
-                    revenue: financialData?.summary?.totalRevenue || 0,
-                    expense: financialData?.summary?.totalExpenses || 0,
-                    transactionCount: financialData?.summary?.transactionCount || 0
-                });
-                
-                const branchData = {
-                    branchCode: branch.code,
-                    branchName: branch.name,
-                    revenue: financialData?.summary?.totalRevenue || 0,
-                    expense: financialData?.summary?.totalExpenses || 0,
-                    profit: (financialData?.summary?.totalRevenue || 0) - (financialData?.summary?.totalExpenses || 0),
-                    transactionCount: financialData?.summary?.transactionCount || 0,
-                    profitMargin: (financialData?.summary?.totalRevenue || 0) > 0 ? 
-                        (((financialData?.summary?.totalRevenue || 0) - (financialData?.summary?.totalExpenses || 0)) / (financialData?.summary?.totalRevenue || 0)) * 100 : 0,
-                    categoryBreakdown: financialData?.categoryBreakdown || {}
-                };
-
-                branchPerformance.push(branchData);
-                totalRevenue += branchData.revenue;
-                totalExpense += branchData.expense;
-                totalTransactions += branchData.transactionCount;
-            } catch (error) {
-                console.error(`❌ 지점 ${branch.code} 연별 데이터 로드 실패:`, error);
-            }
-        }
-
-        // 월별 데이터 생성 (연별 보고서용)
-        const monthlyBreakdown = [];
-        if (branchPerformance.length > 0) {
-            // 현재 월의 데이터를 월별 형태로 변환
-            monthlyBreakdown.push({
-                month: `${reportPeriod.month}월`,
-                revenue: totalRevenue,
-                expense: totalExpense,
-                profit: totalRevenue - totalExpense,
-                transactionCount: totalTransactions
-            });
-        }
-
-        const netProfit = totalRevenue - totalExpense;
-        const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
-
-        // 실제 데이터가 있을 때만 분석 데이터 생성
-        const branchComparison = [];
-        const growthAnalysis = [];
-        
-        // 성장률 분석 데이터 생성 (간단한 예시)
-        if (branchPerformance.length > 0) {
-            branchPerformance.forEach((branch, index) => {
-                growthAnalysis.push({
-                    branch: branch.branchName,
-                    revenue: branch.revenue,
-                    expense: branch.expense,
-                    profit: branch.profit,
-                    growthRate: 0, // 실제로는 전년 대비 계산 필요
-                    trend: branch.profit > 0 ? 'up' : 'down', // 수익이 있으면 상승, 없으면 하락
-                    percentage: branch.profit > 0 ? Math.abs(branch.profit / (branch.revenue || 1) * 100) : 0
-                });
-            });
-        }
-        
-        console.log('📊 성장률 분석 데이터 생성:', growthAnalysis);
-        
-        // 카테고리별 지출 분석 데이터 생성
-        const categoryAnalysis = [];
-        console.log('📊 카테고리 분석 시작 - branchPerformance:', branchPerformance);
-        
-        if (branchPerformance.length > 0) {
-            // 각 지점의 카테고리별 지출 데이터 수집 (이미 로드된 데이터 사용)
-            const categoryMap = new Map();
+        try {
+            // 연별 보고서 API 호출
+            const reportResponse = await apiGet(
+                `/api/hq/erp/reports?reportType=yearly&period=${reportPeriod.year}`
+            );
             
-            for (const branch of branchPerformance) {
-                try {
-                    // 이미 로드된 지점별 데이터에서 카테고리 정보 추출
-                    const categoryBreakdown = branch.categoryBreakdown || {};
-                    
-                    console.log(`📊 지점 ${branch.branchCode} 전체 데이터:`, branch);
-                    console.log(`📊 지점 ${branch.branchCode} 카테고리 데이터:`, categoryBreakdown);
-                    console.log(`📊 지점 ${branch.branchCode} 카테고리 키:`, Object.keys(categoryBreakdown));
-                    console.log(`📊 지점 ${branch.branchCode} 카테고리 값:`, Object.values(categoryBreakdown));
-                    
-                    // 카테고리별 지출 합산
-                    Object.entries(categoryBreakdown).forEach(([category, amount]) => {
-                        console.log(`📊 카테고리 ${category}: ${amount}`);
-                        const koreanCategory = getCategoryKoreanName(category);
-                        if (categoryMap.has(koreanCategory)) {
-                            categoryMap.set(koreanCategory, categoryMap.get(koreanCategory) + amount);
-                        } else {
-                            categoryMap.set(koreanCategory, amount);
-                        }
-                    });
-                } catch (error) {
-                    console.error(`❌ 지점 ${branch.branchCode} 카테고리 데이터 처리 실패:`, error);
-                }
+            console.log('📊 연별 보고서 API 응답:', reportResponse);
+            
+            // API 응답에서 데이터 추출
+            const responseData = reportResponse.data?.data || reportResponse.data;
+            console.log('📊 추출된 연별 데이터:', responseData);
+            
+            // API 응답 구조에 맞게 데이터 추출
+            const reportData = responseData?.reportData || [];
+            console.log('📊 reportData:', reportData);
+            
+            // 전체 요약 데이터 (첫 번째 리포트 데이터 사용)
+            const firstReport = reportData[0] || {};
+            const totalRevenue = firstReport?.totalRevenue || 0;
+            const totalExpense = firstReport?.totalExpenses || 0;
+            const totalTransactions = firstReport?.totalTransactions || 0;
+            const netProfit = firstReport?.netProfit || 0;
+            const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+            
+            console.log('📊 연별 전체 요약:', {
+                totalRevenue,
+                totalExpense,
+                netProfit,
+                profitMargin,
+                totalTransactions
+            });
+            
+            // 지점별 데이터 처리 (현재는 전체 데이터를 하나의 지점으로 처리)
+            const branchPerformance = [];
+            
+            if (reportData.length > 0) {
+                const report = reportData[0];
+                branchPerformance.push({
+                    branchCode: 'ALL',
+                    branchName: '전체',
+                    revenue: report.totalRevenue || 0,
+                    expense: report.totalExpenses || 0,
+                    profit: report.netProfit || 0,
+                    transactionCount: report.totalTransactions || 0,
+                    profitMargin: profitMargin,
+                    categoryBreakdown: {} // 카테고리별 데이터는 별도 처리 필요
+                });
             }
             
-            // 카테고리별 지출 분석 데이터 생성
-            const totalCategoryExpense = Array.from(categoryMap.values()).reduce((sum, amount) => sum + amount, 0);
-            
-            console.log('📊 categoryMap:', categoryMap);
-            console.log('📊 totalCategoryExpense:', totalCategoryExpense);
-            
-            categoryMap.forEach((amount, category) => {
-                const percentage = totalCategoryExpense > 0 ? (amount / totalCategoryExpense) * 100 : 0;
-                console.log(`📊 카테고리 ${category}: ${amount} (${percentage.toFixed(1)}%)`);
-                categoryAnalysis.push({
-                    category,
-                    amount,
-                    percentage
-                });
-            });
-            
-            // 금액 순으로 정렬
-            categoryAnalysis.sort((a, b) => b.amount - a.amount);
-            
-            console.log('📊 최종 categoryAnalysis:', categoryAnalysis);
-        }
-        
-        // 월별 데이터를 트렌드로 사용
-        const trends = monthlyBreakdown.map(month => ({
-            day: month.month,
-            revenue: month.revenue,
-            expense: month.expense
-        }));
-        
-        console.log('📊 연별 trends 데이터 생성:', trends);
-        console.log('📊 연별 categoryAnalysis 데이터 생성:', categoryAnalysis);
+            console.log('📊 변환된 지점별 데이터:', branchPerformance);
 
-        setReportData(prev => ({
-            ...prev,
-            yearly: {
-                summary: {
-                    totalRevenue,
-                    totalExpense,
-                    netProfit,
-                    profitMargin,
+            // 월별 데이터 생성 (연별 보고서용)
+            const monthlyBreakdown = [];
+            if (branchPerformance.length > 0) {
+                // 현재 월의 데이터를 월별 형태로 변환
+                monthlyBreakdown.push({
+                    month: `${reportPeriod.month}월`,
+                    revenue: totalRevenue,
+                    expense: totalExpense,
+                    profit: totalRevenue - totalExpense,
                     transactionCount: totalTransactions
-                },
-                monthlyBreakdown,
-                branchComparison: branchPerformance,
-                growthAnalysis,
-                categoryAnalysis,
-                trends
+                });
             }
-        }));
+
+            // 성장률 분석 데이터 생성 (간단한 예시)
+            const growthAnalysis = [];
+            if (branchPerformance.length > 0) {
+                branchPerformance.forEach((branch, index) => {
+                    growthAnalysis.push({
+                        branch: branch.branchName,
+                        revenue: branch.revenue,
+                        expense: branch.expense,
+                        profit: branch.profit,
+                        growthRate: 0, // 실제로는 전년 대비 계산 필요
+                        trend: branch.profit > 0 ? 'up' : 'down', // 수익이 있으면 상승, 없으면 하락
+                        percentage: branch.profit > 0 ? Math.abs(branch.profit / (branch.revenue || 1) * 100) : 0
+                    });
+                });
+            }
+            
+            console.log('📊 성장률 분석 데이터 생성:', growthAnalysis);
+            
+            // 카테고리별 지출 분석 데이터 생성 (현재는 빈 배열로 설정)
+            const categoryAnalysis = [];
+            
+            // 월별 데이터를 트렌드로 사용
+            const trends = monthlyBreakdown.map(month => ({
+                day: month.month,
+                revenue: month.revenue,
+                expense: month.expense
+            }));
+            
+            console.log('📊 연별 trends 데이터 생성:', trends);
+
+            setReportData(prev => ({
+                ...prev,
+                yearly: {
+                    summary: {
+                        totalRevenue,
+                        totalExpense,
+                        netProfit,
+                        profitMargin,
+                        transactionCount: totalTransactions
+                    },
+                    monthlyBreakdown,
+                    branchComparison: branchPerformance,
+                    growthAnalysis,
+                    categoryAnalysis,
+                    trends
+                }
+            }));
+            
+        } catch (error) {
+            console.error('❌ 연별 보고서 데이터 로드 실패:', error);
+            showNotification('연별 보고서 데이터를 불러오는데 실패했습니다.', 'error');
+        }
     };
 
 
-    // 카테고리 한국어 이름 변환
+    // 카테고리 한글 매핑
     const getCategoryKoreanName = (category) => {
         const categoryMap = {
-            'CONSULTATION': '상담비',
+            'CONSULTATION': '상담',
             'RENT': '임대료',
-            'UTILITY': '공과금',
             'SALARY': '급여',
+            'UTILITY': '공과금',
             'MARKETING': '마케팅',
             'EQUIPMENT': '장비',
-            'TRAINING': '교육비',
-            'INSURANCE': '보험료',
+            'TRAINING': '교육',
+            'INSURANCE': '보험',
             'MAINTENANCE': '유지보수',
             'OTHER': '기타'
         };
@@ -607,6 +518,7 @@ const FinancialReports = () => {
             currency: 'KRW'
         }).format(amount);
     };
+
 
     // 보고서 다운로드
     const handleDownloadReport = () => {

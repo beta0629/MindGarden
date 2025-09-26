@@ -15,7 +15,6 @@ import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AuthService;
 import com.mindgarden.consultation.service.BranchService;
-import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.UserSessionService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
@@ -44,7 +43,6 @@ public class AuthController {
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final AuthService authService;
     private final BranchService branchService;
-    private final CommonCodeService commonCodeService;
     private final UserSessionService userSessionService;
     
     // 메모리 저장을 위한 ConcurrentHashMap (Redis 없을 때 사용)
@@ -112,17 +110,17 @@ public class AuthController {
             userInfo.put("branchCode", user.getBranchCode());
             userInfo.put("needsBranchMapping", user.getBranchCode() == null);
             
-            // 지점명 한글 표시 (공통코드에서 조회)
+            // 지점명 한글 표시 (branches 테이블에서 조회)
             String branchName = user.getBranchCode();
             if (user.getBranchCode() != null) {
                 try {
-                    var branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
-                    var branchInfo = branchCodes.stream()
-                        .filter(code -> code.getCodeValue().equals(user.getBranchCode()))
+                    var branches = branchService.getAllActiveBranches();
+                    var branchInfo = branches.stream()
+                        .filter(branch -> branch.getBranchCode().equals(user.getBranchCode()))
                         .findFirst();
                     
                     if (branchInfo.isPresent()) {
-                        branchName = branchInfo.get().getCodeLabel(); // 한글명 사용
+                        branchName = branchInfo.get().getBranchName(); // 한글명 사용
                         log.info("✅ 지점명 한글 변환: {} -> {}", user.getBranchCode(), branchName);
                     }
                 } catch (Exception e) {
@@ -1110,16 +1108,16 @@ public class AuthController {
         try {
             log.info("🏢 로그인용 지점 목록 조회 요청");
             
-            // 공통코드에서 지점 정보 조회
-            var branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
+            // branches 테이블에서 지점 정보 조회
+            var branchResponses = branchService.getAllActiveBranches();
             
             // 지점 정보를 API 응답 형태로 변환
-            var branches = branchCodes.stream()
-                .map(code -> Map.of(
-                    "id", code.getId(),
-                    "branchCode", code.getCodeValue(),
-                    "branchName", code.getCodeLabel(),
-                    "description", code.getCodeDescription() != null ? code.getCodeDescription() : code.getCodeLabel()
+            var branches = branchResponses.stream()
+                .map(branch -> Map.of(
+                    "id", branch.getId(),
+                    "branchCode", branch.getBranchCode(),
+                    "branchName", branch.getBranchName(),
+                    "description", branch.getAddress() != null ? branch.getAddress() : branch.getBranchName()
                 ))
                 .collect(java.util.stream.Collectors.toList());
             
@@ -1449,13 +1447,13 @@ public class AuthController {
                 ));
             }
             
-            // 지점 존재 여부 확인 (공통코드 기반)
+            // 지점 존재 여부 확인 (branches 테이블 기반)
             log.info("🔍 지점 코드 유효성 검사: branchCode={}", branchCode);
             
-            // 공통코드에서 지점 정보 조회
-            var branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
-            var branchCodeExists = branchCodes.stream()
-                .anyMatch(code -> code.getCodeValue().equals(branchCode));
+            // branches 테이블에서 지점 정보 조회
+            var branches = branchService.getAllActiveBranches();
+            var branchCodeExists = branches.stream()
+                .anyMatch(branch -> branch.getBranchCode().equals(branchCode));
             
             if (!branchCodeExists) {
                 log.warn("❌ 존재하지 않는 지점 코드: branchCode={}", branchCode);
@@ -1466,8 +1464,8 @@ public class AuthController {
             }
             
             // 지점 정보 가져오기
-            var branchInfo = branchCodes.stream()
-                .filter(code -> code.getCodeValue().equals(branchCode))
+            var branchInfo = branches.stream()
+                .filter(branch -> branch.getBranchCode().equals(branchCode))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("지점 정보를 찾을 수 없습니다."));
             
@@ -1483,13 +1481,13 @@ public class AuthController {
             SessionUtils.setCurrentUser(session, userToUpdate);
             
             log.info("✅ 사용자 지점 매핑 완료: userId={}, branchCode={}, branchName={}", 
-                userToUpdate.getId(), branchCode, branchInfo.getCodeLabel());
+                userToUpdate.getId(), branchCode, branchInfo.getBranchName());
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "지점이 성공적으로 매핑되었습니다.",
                 "branchId", branchInfo.getId(),
-                "branchName", branchInfo.getCodeLabel(),
+                "branchName", branchInfo.getBranchName(),
                 "branchCode", branchCode
             ));
             

@@ -24,7 +24,7 @@ class NotificationManager {
     async loadNotificationTypes() {
         try {
             const response = await cachedApiCall(
-                '/api/admin/common-codes/values?groupCode=NOTIFICATION_TYPE',
+                '/api/common-codes/group/NOTIFICATION_TYPE',
                 {},
                 CACHE_CONFIG.COMMON_CODES.ttl
             );

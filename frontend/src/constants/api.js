@@ -266,6 +266,17 @@ export const SEARCH_API = {
   SEARCH_USERS: '/api/search/users'
 };
 
+// 지점 관리 관련 API
+export const BRANCH_API = {
+  BRANCHES: '/api/branches',
+  BRANCH_DETAIL: '/api/branches',
+  BRANCH_CREATE: '/api/branches',
+  BRANCH_UPDATE: '/api/branches',
+  BRANCH_DELETE: '/api/branches',
+  BRANCH_USERS: '/api/branches',
+  BRANCH_STATISTICS: '/api/branches'
+};
+
 // 전체 API 엔드포인트 객체
 export const API_ENDPOINTS = {
   AUTH: AUTH_API,
@@ -277,7 +288,9 @@ export const API_ENDPOINTS = {
   DASHBOARD: DASHBOARD_API,
   FILE: FILE_API,
   NOTIFICATION: NOTIFICATION_API,
-  SEARCH: SEARCH_API
+  SEARCH: SEARCH_API,
+  BRANCH: BRANCH_API,
+  BRANCHES: '/api/branches' // 기존 컴포넌트 호환성을 위해 추가
 };
 
 // API 응답 상태 코드

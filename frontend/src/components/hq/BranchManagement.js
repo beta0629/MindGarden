@@ -12,8 +12,10 @@ import {
 } from 'react-icons/fa';
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
+import { normalizeBranchList, getBranchNameByCode } from '../../utils/branchUtils';
 import LoadingSpinner from '../common/LoadingSpinner';
 import SimpleLayout from '../layout/SimpleLayout';
+import BranchRegistrationModal from './BranchRegistrationModal';
 // CSS 파일 제거 - 인라인 스타일 사용
 
 /**
@@ -40,6 +42,7 @@ const BranchManagement = () => {
     
     // 모달 상태
     const [showTransferModal, setShowTransferModal] = useState(false);
+    const [showBranchRegistrationModal, setShowBranchRegistrationModal] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [transferForm, setTransferForm] = useState({
         targetBranchCode: '',
@@ -54,9 +57,9 @@ const BranchManagement = () => {
     useEffect(() => {
         console.log('🔍 useEffect 트리거 - selectedBranch:', selectedBranch);
         if (selectedBranch) {
-            console.log(`📊 지점 ${selectedBranch.code} 선택됨, 데이터 로드 시작`);
-            loadBranchStatistics(selectedBranch.code);
-            loadBranchUsers(selectedBranch.code);
+            console.log(`📊 지점 ${selectedBranch.branchCode} 선택됨, 데이터 로드 시작`);
+            loadBranchStatistics(selectedBranch.branchCode);
+            loadBranchUsers(selectedBranch.branchCode);
         }
     }, [selectedBranch, selectedRole, includeInactive]);
     
@@ -165,6 +168,12 @@ const BranchManagement = () => {
         }
     };
     
+    // 지점 등록 완료 핸들러
+    const handleBranchAdded = (newBranch) => {
+        setBranches(prev => [...prev, newBranch]);
+        showNotification('새 지점이 등록되었습니다.', 'success');
+    };
+    
     // 필터된 사용자 목록
     const filteredUsers = branchUsers.filter(user => {
         const matchesSearch = !searchTerm || 
@@ -220,17 +229,36 @@ const BranchManagement = () => {
                                             padding: '16px 20px',
                                             borderRadius: '12px 12px 0 0'
                                         }}>
-                                            <h5 style={{
-                                                margin: 0,
-                                                color: '#495057',
-                                                fontSize: '16px',
-                                                fontWeight: '600',
+                                            <div style={{
                                                 display: 'flex',
+                                                justifyContent: 'space-between',
                                                 alignItems: 'center'
                                             }}>
-                                                <FaBuilding style={{ marginRight: '8px', color: '#007bff' }} />
-                                                지점 목록 ({branches.length}개)
-                                            </h5>
+                                                <h5 style={{
+                                                    margin: 0,
+                                                    color: '#495057',
+                                                    fontSize: '16px',
+                                                    fontWeight: '600',
+                                                    display: 'flex',
+                                                    alignItems: 'center'
+                                                }}>
+                                                    <FaBuilding style={{ marginRight: '8px', color: '#007bff' }} />
+                                                    지점 목록 ({branches.length}개)
+                                                </h5>
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    onClick={() => setShowBranchRegistrationModal(true)}
+                                                    style={{
+                                                        padding: '4px 12px',
+                                                        fontSize: '12px',
+                                                        borderRadius: '6px'
+                                                    }}
+                                                >
+                                                    <FaPlus className="me-1" />
+                                                    지점 등록
+                                                </Button>
+                                            </div>
                                         </Card.Header>
                                         <Card.Body style={{
                                             padding: '0',
@@ -251,7 +279,9 @@ const BranchManagement = () => {
                                                 <div style={{
                                                     height: '100%',
                                                     overflowY: 'auto',
-                                                    padding: '8px'
+                                                    padding: '8px',
+                                                    minWidth: '200px',
+                                                    maxWidth: '250px'
                                                 }}>
                                                     {branches.map((branch) => (
                                                         <button
@@ -270,7 +300,9 @@ const BranchManagement = () => {
                                                                 justifyContent: 'space-between',
                                                                 alignItems: 'center',
                                                                 textAlign: 'left',
-                                                                boxShadow: selectedBranch?.id === branch.id ? '0 2px 8px rgba(0,123,255,0.15)' : '0 1px 3px rgba(0,0,0,0.1)'
+                                                                boxShadow: selectedBranch?.id === branch.id ? '0 2px 8px rgba(0,123,255,0.15)' : '0 1px 3px rgba(0,0,0,0.1)',
+                                                                minHeight: '60px',
+                                                                maxHeight: '80px'
                                                             }}
                                                             onMouseEnter={(e) => {
                                                                 if (selectedBranch?.id !== branch.id) {
@@ -295,16 +327,26 @@ const BranchManagement = () => {
                                                                     fontSize: '14px',
                                                                     color: selectedBranch?.id === branch.id ? '#007bff' : '#495057',
                                                                     fontWeight: '600',
-                                                                    marginBottom: '2px'
+                                                                    marginBottom: '2px',
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    display: 'block',
+                                                                    lineHeight: '1.2',
+                                                                    maxWidth: '150px'
                                                                 }}>
-                                                                    {branch.name}
+                                                                    {branch.branchName}
                                                                 </strong>
                                                                 <small style={{
                                                                     fontSize: '12px',
                                                                     color: '#6c757d',
-                                                                    fontFamily: 'monospace'
+                                                                    fontFamily: 'monospace',
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    maxWidth: '150px'
                                                                 }}>
-                                                                    {branch.code}
+                                                                    {branch.branchCode}
                                                                 </small>
                                                             </div>
                                                             <Badge 
@@ -1011,10 +1053,10 @@ const BranchManagement = () => {
                                     >
                                         <option value="">지점을 선택하세요</option>
                                         {branches
-                                            .filter(branch => branch.code !== selectedBranch?.code)
+                                            .filter(branch => branch.branchCode !== selectedBranch?.branchCode)
                                             .map(branch => (
-                                                <option key={branch.id} value={branch.code}>
-                                                    {branch.name} ({branch.code})
+                                                <option key={branch.id} value={branch.branchCode}>
+                                                    {branch.branchName} ({branch.branchCode})
                                                 </option>
                                             ))
                                         }
@@ -1049,6 +1091,13 @@ const BranchManagement = () => {
                         </Button>
                     </Modal.Footer>
                 </Modal>
+
+                {/* 지점 등록 모달 */}
+                <BranchRegistrationModal
+                    show={showBranchRegistrationModal}
+                    onHide={() => setShowBranchRegistrationModal(false)}
+                    onBranchAdded={handleBranchAdded}
+                />
                 </Container>
             </div>
         </SimpleLayout>

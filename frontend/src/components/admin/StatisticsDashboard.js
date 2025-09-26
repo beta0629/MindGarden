@@ -36,9 +36,9 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
   
   // 필터 상태
   const [filters, setFilters] = useState({
-    dateRange: FILTER_OPTIONS.DATE_RANGE.THIS_MONTH,
-    chartType: FILTER_OPTIONS.CHART_TYPE.BAR,
-    timePeriod: FILTER_OPTIONS.TIME_PERIOD.MONTHLY,
+    dateRange: 'THIS_MONTH',
+    chartType: 'BAR',
+    timePeriod: 'MONTHLY',
     status: 'all',
     consultant: 'all'
   });
@@ -63,7 +63,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
   const loadScheduleStatusCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await fetch('/api/admin/common-codes/values?groupCode=STATUS');
+      const response = await fetch('/api/common-codes/group/STATUS');
       if (response.ok) {
         const data = await response.json();
         if (data && data.length > 0) {
@@ -116,7 +116,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
   const loadDateRangeFilterCodes = useCallback(async () => {
     try {
       setLoadingFilterCodes(true);
-      const response = await fetch('/api/admin/common-codes/values?groupCode=DATE_RANGE_FILTER');
+      const response = await fetch('/api/common-codes/group/DATE_RANGE_FILTER');
       if (response.ok) {
         const data = await response.json();
         if (data && data.length > 0) {
@@ -151,7 +151,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
   const loadChartTypeFilterCodes = useCallback(async () => {
     try {
       setLoadingFilterCodes(true);
-      const response = await fetch('/api/admin/common-codes/values?groupCode=CHART_TYPE_FILTER');
+      const response = await fetch('/api/common-codes/group/CHART_TYPE_FILTER');
       if (response.ok) {
         const data = await response.json();
         if (data && data.length > 0) {
@@ -186,7 +186,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
   const loadSortOptionCodes = useCallback(async () => {
     try {
       setLoadingFilterCodes(true);
-      const response = await fetch('/api/admin/common-codes/values?groupCode=SORT_OPTION');
+      const response = await fetch('/api/common-codes/group/SORT_OPTION');
       if (response.ok) {
         const data = await response.json();
         if (data && data.length > 0) {
@@ -223,7 +223,15 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
     setError(null);
     
     try {
-      const response = await apiGet(`${SCHEDULE_API.STATISTICS}?userRole=${userRole}`);
+      const params = new URLSearchParams({
+        userRole,
+        status: filters.status !== 'all' ? filters.status : '',
+        dateRange: filters.dateRange,
+        chartType: filters.chartType
+      });
+      
+      console.log('📊 통계 API 호출 파라미터:', params.toString());
+      const response = await apiGet(`${SCHEDULE_API.STATISTICS}?${params}`);
       console.log('📊 통계 API 응답:', response);
       setStatistics(response.data || response);
     } catch (err) {
@@ -232,7 +240,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
     } finally {
       setLoading(false);
     }
-  }, [userRole]);
+  }, [userRole, filters]);
 
   // 스케줄 데이터 로드
   const loadSchedules = useCallback(async () => {
@@ -241,13 +249,16 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
     
     try {
       const params = new URLSearchParams({
-        userId,
+        userId: userId || 0, // null인 경우 0으로 설정
         userRole,
         page: currentPage - 1,
         size: pageSize,
-        sort: getSortParam(sortBy)
+        sort: getSortParam(sortBy),
+        status: filters.status !== 'all' ? filters.status : '',
+        dateRange: filters.dateRange
       });
       
+      console.log('📋 스케줄 API 호출 파라미터:', params.toString());
       const data = await apiGet(`${SCHEDULE_API.PAGED_SCHEDULES}?${params}`);
       setSchedules(data.content || []);
       setTableData(data.content || []);
@@ -257,7 +268,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
     } finally {
       setLoading(false);
     }
-  }, [userRole, currentPage, pageSize, sortBy]);
+  }, [userRole, currentPage, pageSize, sortBy, filters]);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
@@ -268,6 +279,14 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
     loadChartTypeFilterCodes();
     loadSortOptionCodes();
   }, [loadStatistics, loadSchedules, loadScheduleStatusCodes, loadDateRangeFilterCodes, loadChartTypeFilterCodes, loadSortOptionCodes]);
+
+  // 필터 변경 시 데이터 재로드
+  useEffect(() => {
+    console.log('🔄 필터 변경 감지:', filters);
+    // 필터가 변경될 때마다 데이터 재로드
+    loadStatistics();
+    loadSchedules();
+  }, [filters, loadStatistics, loadSchedules]);
 
 
   // 정렬 변경 핸들러
@@ -408,10 +427,26 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
 
   // 필터 변경 핸들러
   const handleFilterChange = (filterType, value) => {
+    console.log(`🔍 필터 변경: ${filterType} = ${value}`);
     setFilters(prev => ({
       ...prev,
       [filterType]: value
     }));
+  };
+
+  // 차트 타입 매핑 함수
+  const getChartType = (type) => {
+    const typeMap = {
+      'BAR': 'bar',
+      'LINE': 'line',
+      'PIE': 'pie',
+      'DOUGHNUT': 'doughnut',
+      'AREA': 'area',
+      'SCATTER': 'scatter',
+      'RADAR': 'radar',
+      'TABLE': 'bar' // 테이블은 막대 차트로 대체
+    };
+    return typeMap[type] || 'bar';
   };
 
   // 차트 데이터 생성
@@ -827,7 +862,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
           flexDirection: 'column'
         }}>
           <Chart
-            type={filters.chartType}
+            type={getChartType(filters.chartType)}
             data={getChartData()}
             title="스케줄 상태별 통계"
             height="500px"

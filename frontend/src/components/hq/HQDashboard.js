@@ -97,9 +97,9 @@ const HQDashboard = ({ user: propUser }) => {
             
             for (const branch of branches) {
                 try {
-                    console.log(`📊 지점 ${branch.code} (${branch.name}) 통계 로드 중...`);
+                    console.log(`📊 지점 ${branch.branchCode} (${branch.branchName}) 통계 로드 중...`);
                     
-                    const statsResponse = await apiGet(`/api/hq/branch-management/branches/${branch.code}/statistics`);
+                    const statsResponse = await apiGet(`/api/hq/branch-management/branches/${branch.branchCode}/statistics`);
                     const userStats = {
                         total: statsResponse.totalUsers || 0,
                         consultants: statsResponse.consultants || 0,
@@ -112,7 +112,7 @@ const HQDashboard = ({ user: propUser }) => {
                         userStats
                     });
                 } catch (error) {
-                    console.error(`❌ 지점 ${branch.code} 통계 로드 실패:`, error);
+                    console.error(`❌ 지점 ${branch.branchCode} 통계 로드 실패:`, error);
                     enrichedBranches.push({
                         ...branch,
                         userStats: { total: 0, consultants: 0, clients: 0, admins: 0 }
@@ -369,16 +369,16 @@ const HQDashboard = ({ user: propUser }) => {
                                                 <Card 
                                                     className={`h-100 branch-card ${!branch.isActive ? 'inactive' : ''}`}
                                                     style={{ cursor: 'pointer' }}
-                                                    onClick={() => handleBranchDetail(branch.code)}
+                                                    onClick={() => handleBranchDetail(branch.branchCode)}
                                                 >
                                                     <Card.Body>
                                                         <div className="d-flex justify-content-between align-items-start mb-2">
-                                                            <h6 className="mb-0">{branch.name}</h6>
+                                                            <h6 className="mb-0">{branch.branchName}</h6>
                                                             <Badge bg={branch.isActive ? 'success' : 'secondary'}>
                                                                 {branch.isActive ? '활성' : '비활성'}
                                                             </Badge>
                                                         </div>
-                                                        <p className="text-muted small mb-2">{branch.code}</p>
+                                                        <p className="text-muted small mb-2">{branch.branchCode}</p>
                                                         
                                                         <Row className="text-center">
                                                             <Col xs={3}>

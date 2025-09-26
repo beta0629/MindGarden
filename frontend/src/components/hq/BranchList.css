@@ -1,0 +1,325 @@
+/* 지점 목록 컴포넌트 스타일 */
+
+.branch-list {
+    margin-bottom: 1.5rem;
+}
+
+/* 헤더 카드 */
+.branch-list-header {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+}
+
+.branch-list-header .card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 16px 20px;
+}
+
+.branch-list-header h5 {
+    margin: 0;
+    color: #495057;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.branch-add-button {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+/* 지점 목록 콘텐츠 */
+.branch-list-content {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    min-height: 400px;
+}
+
+/* 지점 그리드 */
+.branch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+}
+
+/* 지점 카드 */
+.branch-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.branch-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 16px rgba(0,123,255,0.15);
+    transform: translateY(-2px);
+}
+
+.branch-card.selected {
+    border-color: #007bff;
+    background: #f8f9ff;
+    box-shadow: 0 4px 16px rgba(0,123,255,0.2);
+}
+
+.branch-card.selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #007bff;
+}
+
+/* 지점 카드 헤더 */
+.branch-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.branch-status-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.branch-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.branch-action-btn {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.branch-action-btn:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.branch-action-btn:focus {
+    box-shadow: none;
+}
+
+/* 지점 카드 본문 */
+.branch-card-body {
+    padding: 16px;
+}
+
+.branch-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.branch-code {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.branch-code code {
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #e83e8c;
+    margin-left: 4px;
+}
+
+.branch-address {
+    font-size: 13px;
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+/* 지점 통계 */
+.branch-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #495057;
+    background: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.stat-item .stat-label {
+    margin-right: 4px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* 지점 카드 푸터 */
+.branch-card-footer {
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.branch-card-footer small {
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .branch-grid {
+        grid-template-columns: 1fr;
+        padding: 0.5rem;
+    }
+    
+    .branch-list-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+    
+    .branch-add-button {
+        width: 100%;
+    }
+    
+    .branch-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .branch-actions {
+        align-self: flex-end;
+    }
+    
+    .branch-name {
+        font-size: 14px;
+        max-width: 200px;
+    }
+    
+    .branch-code {
+        font-size: 12px;
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 576px) {
+    .branch-list-header .card-body .row .col-md-4,
+    .branch-list-header .card-body .row .col-md-2 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .branch-stats {
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .stat-item {
+        justify-content: space-between;
+    }
+    
+    .branch-name {
+        font-size: 13px;
+        max-width: 150px;
+    }
+    
+    .branch-code {
+        font-size: 11px;
+        max-width: 150px;
+    }
+    
+    .branch-card-body {
+        padding: 12px;
+    }
+}
+
+/* 로딩 및 빈 상태 */
+.branch-list .text-center {
+    padding: 3rem 1rem;
+}
+
+.branch-list .text-muted {
+    color: #6c757d !important;
+}
+
+/* 검색 결과 안내 */
+.branch-list .alert {
+    border-radius: 8px;
+    margin-bottom: 0;
+}
+
+/* 필터 컨트롤 */
+.branch-list .form-control,
+.branch-list .form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    font-size: 14px;
+}
+
+.branch-list .form-control:focus,
+.branch-list .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+/* 버튼 스타일 */
+.branch-list .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.branch-list .btn:hover {
+    transform: translateY(-1px);
+}
+
+.branch-list .btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.branch-list .btn-outline-primary:hover {
+    background-color: #007bff;
+    border-color: #007bff;
+}

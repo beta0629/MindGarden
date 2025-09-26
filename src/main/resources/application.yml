@@ -10,10 +10,12 @@ spring:
   
   # 데이터베이스 설정
   datasource:
-    url: jdbc:mysql://localhost:3306/mindgarden_consultation?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/mind_garden?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    # 문자셋 설정 추가
+    connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
   
   # JPA 설정
   jpa:

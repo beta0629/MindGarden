@@ -233,7 +233,7 @@ function AppContent() {
             <Route path="/super_admin/dashboard" element={<AdminDashboard user={user} />} />
             <Route path="/hq_admin/dashboard" element={<AdminDashboard user={user} />} />
             <Route path="/super_hq_admin/dashboard" element={<AdminDashboard user={user} />} />
-            <Route path="/hq_master/dashboard" element={<AdminDashboard user={user} />} />
+            <Route path="/hq_master/dashboard" element={<HQDashboard user={user} />} />
             <Route path="/branch_super_admin/dashboard" element={<Navigate to="/super_admin/dashboard" replace />} />
             <Route path="/branch_manager/dashboard" element={<AdminDashboard user={user} />} />
             <Route path="/client/mypage" element={<MyPage />} />
@@ -309,6 +309,7 @@ function AppContent() {
             <Route path="/admin/accounts" element={<AccountManagement />} />
             <Route path="/admin/user-management" element={<UserManagement />} />
             <Route path="/hq/branch-management" element={<BranchManagement />} />
+            <Route path="/hq/branches" element={<BranchManagement />} />
             <Route path="/hq/dashboard" element={<HQDashboard />} />
             <Route path="/hq/erp/branch-financial" element={<BranchFinancialManagement />} />
             <Route path="/hq/erp/consolidated" element={<ConsolidatedFinancial />} />

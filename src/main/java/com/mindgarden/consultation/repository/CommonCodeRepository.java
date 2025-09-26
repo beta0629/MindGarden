@@ -50,4 +50,11 @@ public interface CommonCodeRepository extends JpaRepository<CommonCode, Long> {
     
     // 코드 값이 특정 문자열로 끝나는 활성 코드 조회
     List<CommonCode> findByCodeGroupAndCodeValueEndingWithAndIsActiveTrue(String codeGroup, String codeValueSuffix);
+    
+    // 모든 코드 그룹 목록 조회 (간단한 버전)
+    @Query("SELECT DISTINCT c.codeGroup FROM CommonCode c ORDER BY c.codeGroup")
+    List<String> findDistinctCodeGroups();
+    
+    // 코드값으로 조회
+    List<CommonCode> findByCodeValue(String codeValue);
 }

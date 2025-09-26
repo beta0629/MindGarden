@@ -70,4 +70,19 @@ public interface CommonCodeService {
     
     // 코드 그룹별 조회 (별칭 메서드)
     List<CommonCode> getCodesByGroup(String codeGroup);
+    
+    // 여러 그룹의 공통코드 조회
+    Map<String, List<CommonCode>> getCommonCodesByGroups(String[] groups);
+    
+    // 여러 그룹의 활성 공통코드 조회
+    Map<String, List<CommonCode>> getActiveCommonCodesByGroups(String[] groups);
+    
+    // 공통코드 그룹 목록 조회
+    List<String> getCommonCodeGroups();
+    
+    // 특정 그룹과 값으로 공통코드 조회
+    CommonCode getCommonCode(String groupCode, String codeValue);
+    
+    // 공통코드 비활성화
+    int deactivateCommonCodes(List<String> codeValues);
 }

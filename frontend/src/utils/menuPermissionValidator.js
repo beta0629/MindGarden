@@ -291,6 +291,8 @@ export const validateMenuPath = (path) => {
         /^\/super_admin\/.*$/,
         /^\/hq_admin\/.*$/,
         /^\/super_hq_admin\/.*$/,
+        /^\/hq_master\/.*$/,  // 본사 총관리자 경로 추가
+        /^\/hq\/.*$/,         // 본사 관리자 경로 추가
         /^\/branch_super_admin\/.*$/,
         /^\/branch_manager\/.*$/,
         /^\/consultant\/.*$/,

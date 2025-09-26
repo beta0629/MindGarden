@@ -186,6 +186,18 @@ public interface BranchService extends BaseService<Branch, Long> {
      */
     boolean isBranchCodeDuplicate(String branchCode);
     
+    // === 통계 메서드 ===
+    
+    /**
+     * 지점별 비교 통계 조회
+     */
+    List<Map<String, Object>> getBranchComparisonStatistics(String period, String metric);
+    
+    /**
+     * 지점 추이 분석 통계 조회
+     */
+    List<Map<String, Object>> getBranchTrendStatistics(String period, String metric, Long branchId);
+    
     /**
      * 지점 코드 중복 확인 (수정 시)
      */

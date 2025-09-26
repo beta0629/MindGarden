@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import com.mindgarden.consultation.entity.CommonCode;
+import com.mindgarden.consultation.dto.BranchResponse;
 import com.mindgarden.consultation.entity.User;
-import com.mindgarden.consultation.service.CommonCodeService;
+import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,20 +35,21 @@ import lombok.extern.slf4j.Slf4j;
 // @PreAuthorize("hasRole('HQ_MASTER') or hasRole('SUPER_HQ_ADMIN') or hasRole('HQ_ADMIN') or hasRole('ADMIN')")
 public class BranchManagementController {
     
-    private final CommonCodeService commonCodeService;
     private final UserService userService;
+    private final BranchService branchService;
     
     /**
-     * 지점 목록 조회 (공통코드 기반)
+     * 지점 목록 조회 (branches 테이블 기반)
      */
     @GetMapping("/branches")
     public ResponseEntity<Map<String, Object>> getBranches() {
         try {
-            log.info("지점 목록 조회 요청");
+            log.info("지점 목록 조회 요청 (branches 테이블 기반)");
             
-            List<CommonCode> branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
-            List<Map<String, Object>> branches = branchCodes.stream()
-                .map(this::convertBranchToMap)
+            // branches 테이블에서 지점 목록 조회
+            List<BranchResponse> branchResponses = branchService.getAllActiveBranches();
+            List<Map<String, Object>> branches = branchResponses.stream()
+                .map(this::convertBranchResponseToMap)
                 .collect(Collectors.toList());
             
             Map<String, Object> response = new HashMap<>();
@@ -270,18 +271,6 @@ public class BranchManagementController {
     
     // ==================== Private Helper Methods ====================
     
-    /**
-     * 지점 코드를 Map으로 변환
-     */
-    private Map<String, Object> convertBranchToMap(CommonCode branchCode) {
-        Map<String, Object> branchMap = new HashMap<>();
-        branchMap.put("id", branchCode.getId());
-        branchMap.put("code", branchCode.getCodeValue());
-        branchMap.put("name", branchCode.getCodeLabel());
-        branchMap.put("description", branchCode.getCodeDescription());
-        branchMap.put("isActive", !branchCode.getIsDeleted());
-        return branchMap;
-    }
     
     /**
      * 사용자를 안전한 Map으로 변환
@@ -301,7 +290,24 @@ public class BranchManagementController {
     }
     
     /**
-     * 지점 코드 유효성 검사
+     * BranchResponse를 Map으로 변환
+     */
+    private Map<String, Object> convertBranchResponseToMap(BranchResponse branch) {
+        Map<String, Object> branchMap = new HashMap<>();
+        branchMap.put("id", branch.getId());
+        branchMap.put("branchName", branch.getBranchName());
+        branchMap.put("branchCode", branch.getBranchCode());
+        branchMap.put("branchType", branch.getBranchType());
+        branchMap.put("branchStatus", branch.getBranchStatus());
+        branchMap.put("address", branch.getAddress());
+        branchMap.put("phoneNumber", branch.getPhoneNumber());
+        branchMap.put("email", branch.getEmail());
+        branchMap.put("isActive", branch.getIsActive());
+        return branchMap;
+    }
+    
+    /**
+     * 지점 코드 유효성 검사 (branches 테이블 기반)
      */
     private boolean isValidBranchCode(String branchCode) {
         if (branchCode == null || branchCode.trim().isEmpty()) {
@@ -309,9 +315,9 @@ public class BranchManagementController {
         }
         
         try {
-            List<CommonCode> branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
-            return branchCodes.stream()
-                .anyMatch(code -> code.getCodeValue().equals(branchCode));
+            List<BranchResponse> branches = branchService.getAllActiveBranches();
+            return branches.stream()
+                .anyMatch(branch -> branch.getBranchCode().equals(branchCode));
         } catch (Exception e) {
             log.error("지점 코드 유효성 검사 중 오류: {}", e.getMessage());
             return false;

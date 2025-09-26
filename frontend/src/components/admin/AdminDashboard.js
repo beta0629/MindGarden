@@ -788,13 +788,13 @@ const AdminDashboard = ({ user: propUser }) => {
                         지점 관리
                     </h2>
                     <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branches')}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/hq/dashboard')}>
                             <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-list`}>
                                 <FaBuilding />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>지점 목록</h3>
-                                <p>모든 지점을 조회하고 관리합니다</p>
+                                <h3>지점 관리</h3>
+                                <p>지점 등록, 수정, 통계를 통합 관리합니다</p>
                             </div>
                         </div>
                         

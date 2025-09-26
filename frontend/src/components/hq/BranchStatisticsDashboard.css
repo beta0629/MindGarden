@@ -1,0 +1,576 @@
+/* 지점별 통계 대시보드 컴포넌트 스타일 */
+
+.branch-statistics-dashboard {
+    padding: 0;
+}
+
+/* 대시보드 헤더 */
+.dashboard-header {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.dashboard-header .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1.5rem;
+}
+
+.dashboard-header h4 {
+    margin: 0;
+    font-weight: 600;
+    color: white;
+}
+
+.dashboard-header p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.filter-select {
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 0.9rem;
+}
+
+.filter-select:focus {
+    border-color: rgba(255,255,255,0.5);
+    box-shadow: 0 0 0 0.2rem rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.15);
+    color: white;
+}
+
+.filter-select option {
+    background: #495057;
+    color: white;
+}
+
+.refresh-btn {
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    background: rgba(255,255,255,0.1);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.5);
+    color: white;
+}
+
+/* 통계 요약 카드 */
+.stat-summary-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.stat-summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.stat-summary-card .card-body {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.stat-icon.total-users {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.stat-icon.total-branches {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.stat-icon.total-consultations {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+}
+
+.stat-icon.total-revenue {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.stat-content h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.stat-content p {
+    color: #6c757d;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+.stat-change {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* 비교 카드 */
+.comparison-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.comparison-card .card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+.comparison-card .card-header h5 {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.comparison-card .card-body {
+    padding: 1.5rem;
+}
+
+/* 지점 비교 리스트 */
+.branch-comparison-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.branch-comparison-item {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.branch-comparison-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 16px rgba(0,123,255,0.15);
+    transform: translateY(-1px);
+}
+
+.branch-comparison-item.selected {
+    border-color: #007bff;
+    background: #f8f9ff;
+    box-shadow: 0 4px 16px rgba(0,123,255,0.2);
+}
+
+/* 순위 및 등급 */
+.branch-rank {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 80px;
+}
+
+.rank-badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.performance-grade {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.grade {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.grade-success { color: #28a745; }
+.grade-primary { color: #007bff; }
+.grade-warning { color: #ffc107; }
+.grade-info { color: #17a2b8; }
+.grade-danger { color: #dc3545; }
+
+.grade-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* 지점 정보 */
+.branch-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.branch-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.branch-code {
+    margin-bottom: 0.5rem;
+}
+
+.branch-code code {
+    background: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #e83e8c;
+    font-weight: 500;
+}
+
+.branch-manager {
+    font-size: 0.85rem;
+}
+
+/* 지점 지표 */
+.branch-metrics {
+    flex: 2;
+    min-width: 400px;
+}
+
+.metric-row {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.metric-item {
+    flex: 1;
+    text-align: center;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+}
+
+.metric-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.metric-rank {
+    font-size: 0.75rem;
+    color: #6c757d;
+    background: #e9ecef;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.metric-trend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* 성과 지표 */
+.performance-indicators {
+    display: flex;
+    gap: 1rem;
+}
+
+.indicator {
+    flex: 1;
+    background: #ffffff;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.indicator-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+}
+
+.indicator-bar {
+    height: 6px;
+    margin-bottom: 0.25rem;
+    border-radius: 3px;
+}
+
+.indicator-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    text-align: center;
+}
+
+/* 트렌드 카드 */
+.trend-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.trend-card .card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+.trend-card .card-header h5 {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.trend-card .card-body {
+    padding: 1.5rem;
+}
+
+.trend-chart-placeholder {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    min-height: 300px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+    .metric-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .performance-indicators {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 1rem;
+    }
+    
+    .dashboard-header .card-header {
+        padding: 1rem;
+    }
+    
+    .branch-comparison-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .branch-rank {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .branch-metrics {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .metric-row {
+        flex-direction: row;
+        gap: 0.75rem;
+    }
+    
+    .metric-item {
+        padding: 0.5rem;
+    }
+    
+    .performance-indicators {
+        flex-direction: row;
+        gap: 0.5rem;
+    }
+    
+    .indicator {
+        padding: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-header .card-header {
+        padding: 0.75rem;
+    }
+    
+    .comparison-card .card-body,
+    .trend-card .card-body {
+        padding: 1rem;
+    }
+    
+    .branch-comparison-item {
+        padding: 1rem;
+    }
+    
+    .metric-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .performance-indicators {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .stat-summary-card .card-body {
+        padding: 1rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .stat-content h3 {
+        font-size: 1.5rem;
+    }
+}
+
+/* 애니메이션 */
+.stat-summary-card,
+.comparison-card,
+.trend-card,
+.branch-comparison-item {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 호버 효과 */
+.stat-icon {
+    transition: transform 0.2s ease;
+}
+
+.stat-summary-card:hover .stat-icon {
+    transform: scale(1.1);
+}
+
+/* 스크롤바 스타일 */
+.comparison-card .card-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.comparison-card .card-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.comparison-card .card-body::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.comparison-card .card-body::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 포커스 상태 */
+.branch-comparison-item:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+/* 로딩 상태 */
+.text-center {
+    padding: 2rem 1rem;
+}
+
+/* 텍스트 색상 */
+.text-muted {
+    color: #6c757d !important;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-primary {
+    color: #007bff !important;
+}
+
+.text-warning {
+    color: #ffc107 !important;
+}
+
+.text-info {
+    color: #17a2b8 !important;
+}

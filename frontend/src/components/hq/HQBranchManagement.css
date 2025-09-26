@@ -1,0 +1,309 @@
+/* HQ 지점관리 통합 화면 스타일 */
+
+.hq-branch-management {
+    min-height: 100vh;
+    background: #f8f9fa;
+}
+
+.hq-branch-management-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50vh;
+}
+
+/* 관리 헤더 */
+.management-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.management-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.management-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+    color: white;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-role {
+    background: rgba(255,255,255,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* 관리 탭 */
+.management-tabs .nav-tabs {
+    border-bottom: 2px solid #e9ecef;
+    background: white;
+    border-radius: 12px 12px 0 0;
+    margin: 0;
+    padding: 0.5rem 1rem 0;
+}
+
+.management-tabs .nav-tabs .nav-link {
+    border: none;
+    border-radius: 8px 8px 0 0;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 1rem 1.5rem;
+    margin-right: 0.5rem;
+    transition: all 0.2s ease;
+    background: transparent;
+}
+
+.management-tabs .nav-tabs .nav-link:hover {
+    background: #f8f9fa;
+    color: #495057;
+    border-color: transparent;
+}
+
+.management-tabs .nav-tabs .nav-link.active {
+    background: white;
+    color: #007bff;
+    border-bottom: 2px solid #007bff;
+    font-weight: 600;
+}
+
+.management-tabs .nav-tabs .nav-link:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.management-tabs .tab-content {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    padding: 1.5rem;
+    min-height: 600px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* 지점 선택 안내 */
+.no-branch-selected {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.no-branch-selected .text-center {
+    padding: 2rem;
+}
+
+.no-branch-selected .text-muted {
+    color: #6c757d !important;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .management-header {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .management-title {
+        font-size: 1.5rem;
+    }
+    
+    .management-subtitle {
+        font-size: 1rem;
+    }
+    
+    .user-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .management-tabs .nav-tabs {
+        padding: 0.25rem 0.5rem 0;
+    }
+    
+    .management-tabs .nav-tabs .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        margin-right: 0.25rem;
+    }
+    
+    .management-tabs .tab-content {
+        padding: 1rem;
+        min-height: 500px;
+    }
+    
+    .no-branch-selected {
+        min-height: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    .management-header {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .management-title {
+        font-size: 1.25rem;
+    }
+    
+    .management-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .management-tabs .nav-tabs .nav-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .management-tabs .tab-content {
+        padding: 0.75rem;
+    }
+    
+    .no-branch-selected {
+        min-height: 250px;
+    }
+    
+    .no-branch-selected .text-center {
+        padding: 1rem;
+    }
+}
+
+/* 애니메이션 */
+.management-header,
+.management-tabs,
+.no-branch-selected {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 호버 효과 */
+.management-tabs .nav-tabs .nav-link:hover {
+    transform: translateY(-1px);
+}
+
+/* 포커스 상태 */
+.management-tabs .nav-tabs .nav-link:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    outline: none;
+}
+
+/* 로딩 상태 */
+.hq-branch-management-loading {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* 스크롤바 스타일 */
+.management-tabs .tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.management-tabs .tab-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.management-tabs .tab-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.management-tabs .tab-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 텍스트 색상 */
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* 아이콘 스타일 */
+.management-title .fa-building,
+.management-tabs .nav-link i {
+    margin-right: 0.5rem;
+}
+
+/* 그라데이션 배경 */
+.management-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.management-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    pointer-events: none;
+}
+
+.management-header > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* 카드 스타일 개선 */
+.management-tabs .tab-content {
+    border: 1px solid #e9ecef;
+    border-top: none;
+}
+
+/* 탭 활성화 상태 개선 */
+.management-tabs .nav-tabs .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #007bff;
+    border-radius: 1px;
+}
+
+.management-tabs .nav-tabs .nav-link {
+    position: relative;
+}

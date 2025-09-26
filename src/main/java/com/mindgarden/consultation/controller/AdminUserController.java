@@ -9,7 +9,7 @@ import com.mindgarden.consultation.constant.EmailConstants;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.entity.User;
-import com.mindgarden.consultation.service.CommonCodeService;
+import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.UserAddressService;
 import com.mindgarden.consultation.service.UserProfileService;
@@ -43,7 +43,7 @@ public class AdminUserController {
     private final EmailService emailService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserAddressService userAddressService;
-    private final CommonCodeService commonCodeService;
+    private final BranchService branchService;
     
     /**
      * 전체 사용자 목록 조회 (관리자 전용)
@@ -318,10 +318,10 @@ public class AdminUserController {
             User user = userService.findActiveByIdOrThrow(userId);
             String oldBranchCode = user.getBranchCode();
             
-            // 지점 코드 유효성 검사 (공통코드 기반)
-            var branchCodes = commonCodeService.getActiveCommonCodesByGroup("BRANCH");
-            var branchCodeExists = branchCodes.stream()
-                .anyMatch(code -> code.getCodeValue().equals(newBranchCode));
+            // 지점 코드 유효성 검사 (branches 테이블 기반)
+            var branches = branchService.getAllActiveBranches();
+            var branchCodeExists = branches.stream()
+                .anyMatch(branch -> branch.getBranchCode().equals(newBranchCode));
             
             if (!branchCodeExists) {
                 Map<String, Object> errorResponse = new HashMap<>();
@@ -331,8 +331,8 @@ public class AdminUserController {
             }
             
             // 지점 정보 가져오기
-            var branchInfo = branchCodes.stream()
-                .filter(code -> code.getCodeValue().equals(newBranchCode))
+            var branchInfo = branches.stream()
+                .filter(branch -> branch.getBranchCode().equals(newBranchCode))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("지점 정보를 찾을 수 없습니다."));
             
@@ -351,7 +351,7 @@ public class AdminUserController {
             successResponse.put("message", "지점이 성공적으로 변경되었습니다.");
             successResponse.put("oldBranchCode", oldBranchCode);
             successResponse.put("newBranchCode", newBranchCode);
-            successResponse.put("newBranchName", branchInfo.getCodeLabel());
+            successResponse.put("newBranchName", branchInfo.getBranchName());
             
             return ResponseEntity.ok(successResponse);
             

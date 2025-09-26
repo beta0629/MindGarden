@@ -246,7 +246,7 @@ const ROLE_DASHBOARD_MAP = {
   'BRANCH_MANAGER': '/admin/dashboard',  // 지점장은 관리자 대시보드로
   'HQ_ADMIN': '/hq/dashboard',  // 본사 관리자는 HQ 대시보드로
   'SUPER_HQ_ADMIN': '/hq/dashboard',  // 본사 고급 관리자는 HQ 대시보드로
-  'HQ_MASTER': '/hq/dashboard',  // 본사 총관리자는 HQ 대시보드로
+  'HQ_MASTER': '/hq_master/dashboard',  // 본사 총관리자는 HQ 마스터 대시보드로
   'HQ_SUPER_ADMIN': '/hq/dashboard'  // 본사 최고관리자는 HQ 대시보드로
 };
 

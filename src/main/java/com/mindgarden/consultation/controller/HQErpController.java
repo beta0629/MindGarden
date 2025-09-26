@@ -6,10 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.constant.UserRole;
-import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
+import com.mindgarden.consultation.service.PlSqlFinancialService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,6 +36,7 @@ public class HQErpController {
     
     private final FinancialTransactionService financialTransactionService;
     private final CommonCodeService commonCodeService;
+    private final PlSqlFinancialService plSqlFinancialService;
     
     /**
      * 지점별 재무 현황 조회
@@ -118,7 +119,7 @@ public class HQErpController {
             @RequestParam(required = false) String endDate) {
         
         try {
-            log.info("🏭 전사 통합 재무 현황 조회: 시작일={}, 종료일={}", startDate, endDate);
+            log.info("🏭 PL/SQL 전사 통합 재무 현황 조회: 시작일={}, 종료일={}", startDate, endDate);
             
             // 날짜 범위 설정 (기본: 현재 월)
             LocalDate start = startDate != null ? LocalDate.parse(startDate) : 
@@ -126,59 +127,8 @@ public class HQErpController {
             LocalDate end = endDate != null ? LocalDate.parse(endDate) : 
                 LocalDate.now();
             
-            // 모든 지점 목록 조회
-            List<CommonCode> branches = commonCodeService.getCommonCodesByGroup("BRANCH");
-            
-            // 각 지점별 재무 데이터 조회 및 통합
-            Map<String, Object> consolidatedData = new HashMap<>();
-            long totalRevenue = 0;
-            long totalExpenses = 0;
-            int totalTransactions = 0;
-            
-            Map<String, Map<String, Object>> branchBreakdown = new HashMap<>();
-            
-            for (CommonCode branch : branches) {
-                try {
-                    Map<String, Object> branchData = financialTransactionService
-                        .getBranchFinancialData(branch.getCodeValue(), start, end, null, null);
-                    
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> summary = (Map<String, Object>) branchData.get("summary");
-                    
-                    if (summary != null) {
-                        long branchRevenue = ((Number) summary.getOrDefault("totalRevenue", 0)).longValue();
-                        long branchExpenses = ((Number) summary.getOrDefault("totalExpenses", 0)).longValue();
-                        int branchTransactions = ((Number) summary.getOrDefault("transactionCount", 0)).intValue();
-                        
-                        totalRevenue += branchRevenue;
-                        totalExpenses += branchExpenses;
-                        totalTransactions += branchTransactions;
-                        
-                        branchBreakdown.put(branch.getCodeValue(), Map.of(
-                            "branchName", branch.getCodeLabel(),
-                            "revenue", branchRevenue,
-                            "expenses", branchExpenses,
-                            "netProfit", branchRevenue - branchExpenses,
-                            "transactionCount", branchTransactions
-                        ));
-                    }
-                } catch (Exception e) {
-                    log.warn("⚠️ 지점 {} 재무 데이터 조회 실패: {}", branch.getCodeValue(), e.getMessage());
-                    // 개별 지점 오류는 무시하고 계속 진행
-                }
-            }
-            
-            consolidatedData.put("totalSummary", Map.of(
-                "totalRevenue", totalRevenue,
-                "totalExpenses", totalExpenses,
-                "netProfit", totalRevenue - totalExpenses,
-                "totalTransactions", totalTransactions,
-                "branchCount", branches.size()
-            ));
-            consolidatedData.put("branchBreakdown", branchBreakdown);
-            
-            log.info("✅ 전사 통합 재무 현황 조회 완료: 총수익={}, 총지출={}, 순이익={}", 
-                    totalRevenue, totalExpenses, (totalRevenue - totalExpenses));
+            // PL/SQL 프로시저를 통한 통합 재무 데이터 조회
+            Map<String, Object> consolidatedData = plSqlFinancialService.getConsolidatedFinancialData(start, end);
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -208,7 +158,7 @@ public class HQErpController {
             @RequestParam(required = false) String branchCode) {
         
         try {
-            log.info("📊 재무 보고서 조회: 유형={}, 기간={}, 지점={}", reportType, period, branchCode);
+            log.info("📊 PL/SQL 재무 보고서 조회: 유형={}, 기간={}, 지점={}", reportType, period, branchCode);
             
             // 기본값 설정
             String type = reportType != null ? reportType : "monthly";
@@ -216,21 +166,32 @@ public class HQErpController {
             
             Map<String, Object> reportData = new HashMap<>();
             
+            // PL/SQL 프로시저를 통한 보고서 생성
             switch (type) {
                 case "monthly":
-                    reportData = generateMonthlyReport(targetPeriod, branchCode);
+                    String[] monthParts = targetPeriod.split("-");
+                    int year = Integer.parseInt(monthParts[0]);
+                    int month = Integer.parseInt(monthParts[1]);
+                    reportData = plSqlFinancialService.generateMonthlyFinancialReport(year, month, branchCode);
                     break;
                 case "quarterly":
-                    reportData = generateQuarterlyReport(targetPeriod, branchCode);
+                    String[] quarterParts = targetPeriod.split("-Q");
+                    int quarterYear = Integer.parseInt(quarterParts[0]);
+                    int quarter = Integer.parseInt(quarterParts[1]);
+                    reportData = plSqlFinancialService.generateQuarterlyFinancialReport(quarterYear, quarter, branchCode);
                     break;
                 case "yearly":
-                    reportData = generateYearlyReport(targetPeriod, branchCode);
+                    int reportYear = Integer.parseInt(targetPeriod);
+                    reportData = plSqlFinancialService.generateYearlyFinancialReport(reportYear, branchCode);
                     break;
                 default:
-                    reportData = generateMonthlyReport(targetPeriod, branchCode);
+                    String[] defaultParts = targetPeriod.split("-");
+                    int defaultYear = Integer.parseInt(defaultParts[0]);
+                    int defaultMonth = Integer.parseInt(defaultParts[1]);
+                    reportData = plSqlFinancialService.generateMonthlyFinancialReport(defaultYear, defaultMonth, branchCode);
             }
             
-            log.info("✅ 재무 보고서 조회 완료: 유형={}, 기간={}", type, targetPeriod);
+            log.info("✅ PL/SQL 재무 보고서 조회 완료: 유형={}, 기간={}", type, targetPeriod);
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "data", reportData,

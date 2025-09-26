@@ -135,15 +135,23 @@ public class BranchController {
     }
     
     /**
-     * 지점 페이징 조회
+     * 지점 페이징 조회 (branches 테이블 기반)
      */
     @GetMapping
     @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN') or hasRole('BRANCH_MANAGER') or hasRole('BRANCH_HQ_MASTER')")
-    public ResponseEntity<Page<BranchResponse>> getBranches(Pageable pageable) {
-        log.info("지점 페이징 조회 요청: {}", pageable);
+    public ResponseEntity<List<BranchResponse>> getBranches() {
+        log.info("지점 목록 조회 요청 (branches 테이블 기반)");
         
-        Page<BranchResponse> branches = branchService.getBranchesWithPaging(pageable);
-        return ResponseEntity.ok(branches);
+        try {
+            // branches 테이블에서 지점 목록 조회
+            List<BranchResponse> branches = branchService.getAllActiveBranches();
+            
+            log.info("지점 목록 조회 완료: {}개", branches.size());
+            return ResponseEntity.ok(branches);
+        } catch (Exception e) {
+            log.error("지점 목록 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
     
     /**

@@ -465,4 +465,42 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
     List<User> findByRoleInAndIsDeletedFalse(@Param("roles") List<String> roles);
+    
+    // === 통계용 메서드 ===
+    
+    /**
+     * 활성 사용자 수 조회
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.isActive = true AND u.isDeleted = false")
+    long countByIsActiveTrueAndIsDeletedFalse();
+    
+    /**
+     * 역할별 사용자 수 조회
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.isDeleted = false")
+    long countByRoleAndIsDeletedFalse(UserRole role);
+    
+    /**
+     * 역할별 활성 사용자 수 조회
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = ?1 AND u.isActive = true AND u.isDeleted = false")
+    long countByRoleAndIsActiveTrueAndIsDeletedFalse(UserRole role);
+    
+    /**
+     * 지점별 사용자 수 조회
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.branch.id = ?1 AND u.isDeleted = false")
+    long countByBranchIdAndIsDeletedFalse(Long branchId);
+    
+    /**
+     * 지점별 활성 사용자 수 조회
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.branch.id = ?1 AND u.isActive = true AND u.isDeleted = false")
+    long countByBranchIdAndIsActiveTrueAndIsDeletedFalse(Long branchId);
+    
+    /**
+     * 지점별 역할별 사용자 수 조회
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.branch.id = ?1 AND u.role = ?2 AND u.isDeleted = false")
+    long countByBranchIdAndRoleAndIsDeletedFalse(Long branchId, UserRole role);
 }

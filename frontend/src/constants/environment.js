@@ -11,6 +11,7 @@
 const getBaseUrl = () => {
   // 환경변수가 있으면 사용
   if (process.env.REACT_APP_API_BASE_URL) {
+    console.log('🔧 API_BASE_URL from env:', process.env.REACT_APP_API_BASE_URL);
     return process.env.REACT_APP_API_BASE_URL;
   }
   
@@ -19,8 +20,9 @@ const getBaseUrl = () => {
     return window.location.origin;
   }
   
-  // 개발 환경에서는 프록시를 통해 상대 경로 사용
-  return '';
+  // 개발 환경에서는 강제로 백엔드 서버 사용
+  console.log('🔧 API_BASE_URL fallback to localhost:8080');
+  return 'http://localhost:8080';
 };
 
 const getFrontendUrl = () => {

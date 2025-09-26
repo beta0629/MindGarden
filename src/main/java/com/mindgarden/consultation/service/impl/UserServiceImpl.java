@@ -319,6 +319,12 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
+    public List<User> findByRoleInAndIsDeletedFalse(List<String> roles) {
+        List<User> users = userRepository.findByRoleInAndIsDeletedFalse(roles);
+        return decryptUserListPersonalData(users);
+    }
+    
+    @Override
     public Page<User> findByRole(String role, Pageable pageable) {
         Page<User> userPage = userRepository.findByRole(UserRole.fromString(role), pageable);
         return decryptUserPagePersonalData(userPage);

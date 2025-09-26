@@ -27,6 +27,8 @@ import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.service.SessionSyncService;
+import com.mindgarden.consultation.service.StatisticsService;
+import com.mindgarden.consultation.service.ConsultationMessageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -55,6 +57,8 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final CommonCodeService commonCodeService;
     private final ConsultantAvailabilityService consultantAvailabilityService;
     private final SessionSyncService sessionSyncService;
+    private final StatisticsService statisticsService;
+    private final ConsultationMessageService consultationMessageService;
     
     // 상수는 ScheduleConstants 클래스에서 관리
 
@@ -62,9 +66,64 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public Schedule createSchedule(Schedule schedule) {
-        
         log.info("📅 스케줄 생성: {}", schedule.getTitle());
-        return scheduleRepository.save(schedule);
+        Schedule createdSchedule = scheduleRepository.save(schedule);
+        
+        // 🔄 워크플로우 자동화: 예약 생성 → 자동 알림 → 리마인더
+        try {
+            // 1. 예약 확인 알림 자동 발송
+            log.info("🔔 예약 생성 후 자동 알림 발송: scheduleId={}", createdSchedule.getId());
+            
+            // 내담자에게 예약 확인 알림
+            String clientMessage = String.format("상담 예약이 완료되었습니다.\n" +
+                "📅 날짜: %s\n" +
+                "⏰ 시간: %s - %s", 
+                schedule.getDate(), 
+                schedule.getStartTime(), 
+                schedule.getEndTime()
+            );
+            
+            consultationMessageService.sendMessage(
+                schedule.getClientId(), 
+                schedule.getConsultantId(), 
+                null, // consultationId
+                "CLIENT", 
+                "예약 확인", 
+                clientMessage,
+                "APPOINTMENT_CONFIRMATION",
+                false, // isImportant
+                false  // isUrgent
+            );
+            
+            // 상담사에게 새로운 예약 알림
+            String consultantMessage = String.format("새로운 상담 예약이 있습니다.\n" +
+                "📅 날짜: %s\n" +
+                "⏰ 시간: %s - %s", 
+                schedule.getDate(), 
+                schedule.getStartTime(), 
+                schedule.getEndTime()
+            );
+            
+            consultationMessageService.sendMessage(
+                schedule.getConsultantId(), 
+                schedule.getClientId(), 
+                null, // consultationId
+                "CONSULTANT", 
+                "새 예약", 
+                consultantMessage,
+                "NEW_APPOINTMENT",
+                false, // isImportant
+                false  // isUrgent
+            );
+            
+            log.info("✅ 예약 생성 워크플로우 자동화 완료: scheduleId={}", createdSchedule.getId());
+            
+        } catch (Exception e) {
+            log.error("❌ 예약 생성 워크플로우 자동화 실패: scheduleId={}", createdSchedule.getId(), e);
+            // 알림 발송 실패해도 예약 생성은 유지
+        }
+        
+        return createdSchedule;
     }
 
     @Override
@@ -324,7 +383,59 @@ public class ScheduleServiceImpl implements ScheduleService {
         log.info("✅ 스케줄 완료: ID {}", scheduleId);
         Schedule schedule = findById(scheduleId);
         schedule.setStatus(ScheduleStatus.COMPLETED);
-        return scheduleRepository.save(schedule);
+        
+        Schedule completedSchedule = scheduleRepository.save(schedule);
+        
+        // 🔄 워크플로우 자동화: 상담 완료 → 통계 업데이트 → 성과 알림
+        try {
+            // 1. 통계 자동 업데이트
+            log.info("📊 상담 완료 후 통계 자동 업데이트 시작: scheduleId={}", scheduleId);
+            // 지점 코드는 사용자에서 조회
+            User consultant = userRepository.findById(schedule.getConsultantId()).orElse(null);
+            String branchCode = consultant != null ? consultant.getBranchCode() : "DEFAULT";
+            statisticsService.updateDailyStatistics(schedule.getDate(), branchCode);
+            statisticsService.updateConsultantPerformance(schedule.getConsultantId(), schedule.getDate());
+            
+            // 2. 성과 알림 자동 발송
+            log.info("🔔 상담 완료 후 성과 알림 자동 발송: consultantId={}", schedule.getConsultantId());
+            String message = String.format("상담이 완료되었습니다. (일시: %s %s-%s)", 
+                schedule.getDate(), schedule.getStartTime(), schedule.getEndTime());
+            
+            // 상담사에게 완료 알림
+            consultationMessageService.sendMessage(
+                schedule.getConsultantId(), 
+                schedule.getClientId(), 
+                null, // consultationId
+                "CONSULTANT", 
+                "상담 완료", 
+                message,
+                "COMPLETION",
+                false, // isImportant
+                false  // isUrgent
+            );
+            
+            // 3. 내담자에게 평가 요청 알림
+            String ratingMessage = "상담이 완료되었습니다. 상담사에 대한 평가를 남겨주세요.";
+            consultationMessageService.sendMessage(
+                schedule.getClientId(), 
+                schedule.getConsultantId(), 
+                null, // consultationId
+                "CLIENT", 
+                "평가 요청", 
+                ratingMessage,
+                "RATING_REQUEST",
+                false, // isImportant
+                false  // isUrgent
+            );
+            
+            log.info("✅ 워크플로우 자동화 완료: scheduleId={}", scheduleId);
+            
+        } catch (Exception e) {
+            log.error("❌ 워크플로우 자동화 실패: scheduleId={}", scheduleId, e);
+            // 통계 업데이트 실패해도 스케줄 완료는 유지
+        }
+        
+        return completedSchedule;
     }
 
     @Override

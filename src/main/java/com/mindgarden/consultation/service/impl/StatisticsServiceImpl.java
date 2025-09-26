@@ -675,4 +675,50 @@ public class StatisticsServiceImpl implements StatisticsService {
             return errorResponse;
         }
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> getMonthlyStatistics(LocalDate startDate, LocalDate endDate, String branchCode) {
+        log.info("📊 월간 통계 조회: startDate={}, endDate={}, branchCode={}", startDate, endDate, branchCode);
+        try {
+            Map<String, Object> monthlyStats = new HashMap<>();
+            
+            // 기간별 일별 통계 조회
+            List<DailyStatistics> dailyStats = getDailyStatistics(startDate, endDate, branchCode);
+            
+            // 월간 집계 계산
+            int totalConsultations = dailyStats.stream()
+                .mapToInt(DailyStatistics::getTotalConsultations)
+                .sum();
+            
+            int completedConsultations = dailyStats.stream()
+                .mapToInt(DailyStatistics::getCompletedConsultations)
+                .sum();
+            
+            BigDecimal totalRevenue = dailyStats.stream()
+                .map(DailyStatistics::getTotalRevenue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            double avgRating = dailyStats.stream()
+                .filter(stat -> stat.getAvgRating() != null && stat.getAvgRating().compareTo(BigDecimal.ZERO) > 0)
+                .mapToDouble(stat -> stat.getAvgRating().doubleValue())
+                .average()
+                .orElse(0.0);
+            
+            monthlyStats.put("totalConsultations", totalConsultations);
+            monthlyStats.put("completedConsultations", completedConsultations);
+            monthlyStats.put("totalRevenue", totalRevenue);
+            monthlyStats.put("avgRating", avgRating);
+            monthlyStats.put("period", Map.of("start", startDate, "end", endDate));
+            monthlyStats.put("branchCode", branchCode);
+            
+            return monthlyStats;
+        } catch (Exception e) {
+            log.error("❌ 월간 통계 조회 실패: startDate={}, endDate={}, branchCode={}", startDate, endDate, branchCode, e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", "error");
+            errorResponse.put("message", "월간 통계 조회 중 오류가 발생했습니다.");
+            return errorResponse;
+        }
+    }
 }

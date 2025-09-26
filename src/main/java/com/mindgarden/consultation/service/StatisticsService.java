@@ -121,4 +121,9 @@ public interface StatisticsService {
      * 트렌드 분석 데이터
      */
     Map<String, Object> getTrendAnalysisData(LocalDate startDate, LocalDate endDate, String branchCode);
+    
+    /**
+     * 월간 통계 조회
+     */
+    Map<String, Object> getMonthlyStatistics(LocalDate startDate, LocalDate endDate, String branchCode);
 }

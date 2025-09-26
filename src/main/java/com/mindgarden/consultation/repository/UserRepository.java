@@ -453,4 +453,16 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
     List<User> findByRoleIn(@Param("roles") List<String> roles);
+    
+    /**
+     * 역할별 사용자 조회 (삭제되지 않은 사용자만)
+     */
+    @Query("SELECT u FROM User u WHERE u.role = ?1 AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByRoleAndIsDeletedFalse(String role);
+    
+    /**
+     * 여러 역할로 사용자 조회 (삭제되지 않은 사용자만)
+     */
+    @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByRoleInAndIsDeletedFalse(@Param("roles") List<String> roles);
 }

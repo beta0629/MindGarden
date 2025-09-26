@@ -16,6 +16,9 @@ import com.mindgarden.consultation.repository.PaymentRepository;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.PaymentService;
 import com.mindgarden.consultation.service.ReserveFundService;
+// import com.mindgarden.consultation.service.ConsultantClientMappingService;
+import com.mindgarden.consultation.service.StatisticsService;
+import com.mindgarden.consultation.service.ConsultationMessageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,6 +42,9 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final FinancialTransactionService financialTransactionService;
     private final ReserveFundService reserveFundService;
+    // private final ConsultantClientMappingService consultantClientMappingService;
+    private final StatisticsService statisticsService;
+    private final ConsultationMessageService consultationMessageService;
     
     @Override
     public PaymentResponse createPayment(PaymentRequest request) {
@@ -142,9 +148,10 @@ public class PaymentServiceImpl implements PaymentService {
         switch (status) {
             case APPROVED:
                 payment.setApprovedAt(LocalDateTime.now());
-                // 결제 승인 시 자동으로 수입 거래 생성 (부가세 포함)
+                
+                // 🔄 워크플로우 자동화: 결제 완료 → 자동 매핑 → 통계 반영
                 try {
-                    // 결제 방법에 따른 카테고리 분류
+                    // 1. 결제 승인 시 자동으로 수입 거래 생성 (부가세 포함)
                     String category = getPaymentCategory(payment);
                     String subcategory = getPaymentSubcategory(payment);
                     
@@ -153,7 +160,62 @@ public class PaymentServiceImpl implements PaymentService {
                     log.info("💚 결제 승인으로 인한 수입 거래 자동 생성: PaymentID={}, 카테고리={}, 금액={}", 
                         paymentId, category, payment.getAmount());
                     
-                    // 수입에서 자동 적립금 생성
+                    // 2. 자동 매핑 생성 (상담사-내담자 관계) - TODO: ConsultantClientMappingService 구현 후 활성화
+                    /*
+                    if (payment.getPayerId() != null && payment.getRecipientId() != null) {
+                        try {
+                            consultantClientMappingService.createOrUpdateMapping(
+                                payment.getRecipientId(), 
+                                payment.getPayerId(), 
+                                payment.getBranchId(),
+                                "결제 완료로 인한 자동 매핑"
+                            );
+                            log.info("🔗 결제 완료 후 자동 매핑 생성: 상담사={}, 내담자={}", 
+                                payment.getRecipientId(), payment.getPayerId());
+                        } catch (Exception e) {
+                            log.error("자동 매핑 생성 실패: {}", e.getMessage(), e);
+                        }
+                    }
+                    */
+                    
+                    // 3. 통계 자동 업데이트
+                    try {
+                        statisticsService.updateDailyStatistics(LocalDateTime.now().toLocalDate(), 
+                            payment.getBranchId().toString());
+                        log.info("📊 결제 완료 후 통계 자동 업데이트: PaymentID={}", paymentId);
+                    } catch (Exception e) {
+                        log.error("통계 업데이트 실패: {}", e.getMessage(), e);
+                    }
+                    
+                    // 4. 결제 완료 알림 자동 발송
+                    try {
+                        String paymentMessage = String.format("결제가 완료되었습니다.\n" +
+                            "💰 금액: %s원\n" +
+                            "📅 결제일시: %s\n" +
+                            "📝 내용: %s", 
+                            payment.getAmount(), 
+                            LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                            payment.getDescription()
+                        );
+                        
+                        consultationMessageService.sendMessage(
+                            payment.getPayerId(), 
+                            payment.getRecipientId(), 
+                            null, // consultationId
+                            "CLIENT", 
+                            "결제 완료", 
+                            paymentMessage,
+                            "PAYMENT_COMPLETION",
+                            false, // isImportant
+                            false  // isUrgent
+                        );
+                        
+                        log.info("🔔 결제 완료 알림 자동 발송: PaymentID={}", paymentId);
+                    } catch (Exception e) {
+                        log.error("결제 완료 알림 발송 실패: {}", e.getMessage(), e);
+                    }
+                    
+                    // 5. 수입에서 자동 적립금 생성
                     try {
                         reserveFundService.autoReserveFromIncome(payment.getAmount(), 
                             "결제 수입 - " + payment.getDescription());
@@ -162,9 +224,12 @@ public class PaymentServiceImpl implements PaymentService {
                     } catch (Exception e) {
                         log.error("자동 적립금 생성 실패: {}", e.getMessage(), e);
                     }
+                    
+                    log.info("✅ 결제 완료 워크플로우 자동화 완료: PaymentID={}", paymentId);
+                    
                 } catch (Exception e) {
-                    log.error("수입 거래 자동 생성 실패: {}", e.getMessage(), e);
-                    // 거래 생성 실패해도 결제 상태는 업데이트
+                    log.error("❌ 결제 완료 워크플로우 자동화 실패: PaymentID={}", paymentId, e);
+                    // 워크플로우 실패해도 결제 상태는 업데이트
                 }
                 break;
             case CANCELLED:

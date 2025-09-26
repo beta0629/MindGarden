@@ -64,6 +64,13 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
      */
     List<Schedule> findByConsultantIdAndIsDeletedFalse(Long consultantId);
 
+    // ==================== 상태별 스케줄 조회 ====================
+    
+    /**
+     * 특정 날짜와 상태 목록으로 스케줄 조회
+     */
+    List<Schedule> findByDateAndStatusIn(LocalDate date, List<ScheduleStatus> statuses);
+    
     // ==================== 내담자별 스케줄 조회 ====================
     
     /**

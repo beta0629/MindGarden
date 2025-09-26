@@ -125,8 +125,8 @@ public class SecurityConfig {
                     "/actuator/info"
                 ).permitAll();
                 
-                // 모든 API 허용 (컨트롤러 레벨에서 권한 체크)
-                authz.anyRequest().permitAll();
+                // 인증된 사용자만 접근 허용
+                authz.anyRequest().authenticated();
             })
             
             // 인증 실패 시 로그인 페이지로 리다이렉트

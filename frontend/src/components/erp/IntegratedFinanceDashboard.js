@@ -71,7 +71,7 @@ const IntegratedFinanceDashboard = () => {
   
   const loadBranches = async () => {
     try {
-      const response = await axios.get('/api/common/codes/BRANCH', {
+      const response = await axios.get('/api/hq/branches', {
         withCredentials: true
       });
       
@@ -79,7 +79,7 @@ const IntegratedFinanceDashboard = () => {
         setBranches(response.data.data || []);
         // 기본값으로 첫 번째 지점 선택
         if (response.data.data && response.data.data.length > 0) {
-          setSelectedBranch(response.data.data[0].codeValue);
+          setSelectedBranch(response.data.data[0].branchCode);
         }
       }
     } catch (err) {

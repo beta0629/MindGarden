@@ -269,10 +269,31 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
         log.info("📊 연도별 재무 보고서 생성: {}, 지점={}", year, branchCode);
         
         try {
-            String sql = "CALL GenerateYearlyFinancialReport(?, ?)";
+            // 직접 SQL 쿼리로 연간 보고서 생성
+            String sql = """
+                SELECT 
+                    ? AS report_year,
+                    COALESCE(b.branch_code, 'ALL') AS branch_code,
+                    COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END), 0) AS total_revenue,
+                    COALESCE(SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS total_expenses,
+                    COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) - 
+                             SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS net_profit,
+                    COUNT(ft.id) AS total_transactions,
+                    COUNT(DISTINCT MONTH(ft.transaction_date)) AS active_months,
+                    COUNT(DISTINCT ft.branch_code) AS active_branches
+                FROM branches b
+                LEFT JOIN financial_transactions ft ON b.branch_code = ft.branch_code
+                    AND YEAR(ft.transaction_date) = ?
+                    AND ft.is_deleted = FALSE
+                WHERE b.is_deleted = FALSE 
+                AND b.branch_status = 'ACTIVE'
+                AND (? IS NULL OR b.branch_code = ?)
+                GROUP BY b.branch_code
+                ORDER BY total_revenue DESC
+                """;
             
             List<Map<String, Object>> reportData = jdbcTemplate.query(sql,
-                new Object[]{year, branchCode},
+                new Object[]{year, year, branchCode, branchCode},
                 (rs, rowNum) -> {
                     Map<String, Object> report = new HashMap<>();
                     report.put("reportYear", rs.getInt("report_year"));

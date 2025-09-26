@@ -13,12 +13,14 @@ import com.mindgarden.consultation.dto.PaymentResponse;
 import com.mindgarden.consultation.dto.PaymentWebhookRequest;
 import com.mindgarden.consultation.entity.Payment;
 import com.mindgarden.consultation.repository.PaymentRepository;
+import com.mindgarden.consultation.service.CommonCodeService;
+import com.mindgarden.consultation.service.ConsultationMessageService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.PaymentService;
 import com.mindgarden.consultation.service.ReserveFundService;
 // import com.mindgarden.consultation.service.ConsultantClientMappingService;
 import com.mindgarden.consultation.service.StatisticsService;
-import com.mindgarden.consultation.service.ConsultationMessageService;
+import com.mindgarden.consultation.util.CommonCodeConstants;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -45,6 +47,7 @@ public class PaymentServiceImpl implements PaymentService {
     // private final ConsultantClientMappingService consultantClientMappingService;
     private final StatisticsService statisticsService;
     private final ConsultationMessageService consultationMessageService;
+    private final CommonCodeService commonCodeService;
     
     @Override
     public PaymentResponse createPayment(PaymentRequest request) {
@@ -202,10 +205,10 @@ public class PaymentServiceImpl implements PaymentService {
                             payment.getPayerId(), 
                             payment.getRecipientId(), 
                             null, // consultationId
-                            "CLIENT", 
+                            getRoleCodeFromCommonCode("CLIENT"), 
                             "결제 완료", 
                             paymentMessage,
-                            "PAYMENT_COMPLETION",
+                            getMessageTypeFromCommonCode("PAYMENT_COMPLETION"),
                             false, // isImportant
                             false  // isUrgent
                         );
@@ -683,5 +686,31 @@ public class PaymentServiceImpl implements PaymentService {
                 .updatedAt(payment.getUpdatedAt())
                 .paymentUrl(paymentUrl)
                 .build();
+    }
+    
+    /**
+     * 공통코드에서 역할 코드 조회
+     */
+    private String getRoleCodeFromCommonCode(String roleName) {
+        try {
+            String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.USER_ROLE_GROUP, roleName);
+            return codeValue != null ? codeValue : roleName; // 공통코드에 없으면 원본 반환
+        } catch (Exception e) {
+            log.warn("공통코드에서 역할 코드 조회 실패: {}, 기본값 사용", roleName, e);
+            return roleName;
+        }
+    }
+    
+    /**
+     * 공통코드에서 메시지 타입 코드 조회
+     */
+    private String getMessageTypeFromCommonCode(String messageTypeName) {
+        try {
+            String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.MESSAGE_TYPE_GROUP, messageTypeName);
+            return codeValue != null ? codeValue : messageTypeName; // 공통코드에 없으면 원본 반환
+        } catch (Exception e) {
+            log.warn("공통코드에서 메시지 타입 코드 조회 실패: {}, 기본값 사용", messageTypeName, e);
+            return messageTypeName;
+        }
     }
 }

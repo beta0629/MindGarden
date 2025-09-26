@@ -25,10 +25,11 @@ import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.repository.VacationRepository;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
+import com.mindgarden.consultation.service.ConsultationMessageService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.service.SessionSyncService;
 import com.mindgarden.consultation.service.StatisticsService;
-import com.mindgarden.consultation.service.ConsultationMessageService;
+import com.mindgarden.consultation.util.CommonCodeConstants;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -87,10 +88,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 schedule.getClientId(), 
                 schedule.getConsultantId(), 
                 null, // consultationId
-                "CLIENT", 
+                getRoleCodeFromCommonCode("CLIENT"), 
                 "예약 확인", 
                 clientMessage,
-                "APPOINTMENT_CONFIRMATION",
+                getMessageTypeFromCommonCode("APPOINTMENT_CONFIRMATION"),
                 false, // isImportant
                 false  // isUrgent
             );
@@ -108,10 +109,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 schedule.getConsultantId(), 
                 schedule.getClientId(), 
                 null, // consultationId
-                "CONSULTANT", 
+                getRoleCodeFromCommonCode("CONSULTANT"), 
                 "새 예약", 
                 consultantMessage,
-                "NEW_APPOINTMENT",
+                getMessageTypeFromCommonCode("NEW_APPOINTMENT"),
                 false, // isImportant
                 false  // isUrgent
             );
@@ -406,10 +407,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 schedule.getConsultantId(), 
                 schedule.getClientId(), 
                 null, // consultationId
-                "CONSULTANT", 
+                getRoleCodeFromCommonCode("CONSULTANT"), 
                 "상담 완료", 
                 message,
-                "COMPLETION",
+                getMessageTypeFromCommonCode("COMPLETION"),
                 false, // isImportant
                 false  // isUrgent
             );
@@ -420,10 +421,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                 schedule.getClientId(), 
                 schedule.getConsultantId(), 
                 null, // consultationId
-                "CLIENT", 
+                getRoleCodeFromCommonCode("CLIENT"), 
                 "평가 요청", 
                 ratingMessage,
-                "RATING_REQUEST",
+                getMessageTypeFromCommonCode("RATING_REQUEST"),
                 false, // isImportant
                 false  // isUrgent
             );
@@ -996,7 +997,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 조회: {}", userId);
             schedules = scheduleRepository.findByConsultantId(userId);
-        } else if ("CLIENT".equals(userRole)) {
+        } else if (getRoleCodeFromCommonCode("CLIENT").equals(userRole)) {
             // 내담자: 자신의 스케줄만 조회
             log.info("👤 내담자 권한으로 자신의 스케줄만 조회: {}", userId);
             schedules = scheduleRepository.findByClientId(userId);
@@ -1038,7 +1039,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 상담사: 자신의 스케줄만 조회
             log.info("👨‍⚕️ 상담사 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
             schedulePage = scheduleRepository.findByConsultantId(userId, pageable);
-        } else if ("CLIENT".equals(userRole)) {
+        } else if (getRoleCodeFromCommonCode("CLIENT").equals(userRole)) {
             // 내담자: 자신의 스케줄만 조회
             log.info("👤 내담자 권한으로 자신의 스케줄만 페이지네이션 조회: {}", userId);
             schedulePage = scheduleRepository.findByClientId(userId, pageable);
@@ -1403,7 +1404,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             
             // 지점의 상담사들 조회
             List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, "CONSULTANT");
+                branch, getRoleCodeFromCommonCode("CONSULTANT"));
             if (consultants.isEmpty()) {
                 log.warn("지점에 상담사가 없습니다: branchId={}", branchId);
                 return new ArrayList<>();
@@ -1515,7 +1516,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             
             // 지점의 상담사들 조회
             List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, "CONSULTANT");
+                branch, getRoleCodeFromCommonCode("CONSULTANT"));
             
             Map<String, Object> status = new HashMap<>();
             status.put("branchId", branchId);
@@ -1735,5 +1736,31 @@ public class ScheduleServiceImpl implements ScheduleService {
      */
     private boolean isTimeOverlap(LocalDateTime start1, LocalDateTime end1, LocalDateTime start2, LocalDateTime end2) {
         return start1.isBefore(end2) && start2.isBefore(end1);
+    }
+    
+    /**
+     * 공통코드에서 역할 코드 조회
+     */
+    private String getRoleCodeFromCommonCode(String roleName) {
+        try {
+            String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.USER_ROLE_GROUP, roleName);
+            return codeValue != null ? codeValue : roleName; // 공통코드에 없으면 원본 반환
+        } catch (Exception e) {
+            log.warn("공통코드에서 역할 코드 조회 실패: {}, 기본값 사용", roleName, e);
+            return roleName;
+        }
+    }
+    
+    /**
+     * 공통코드에서 메시지 타입 코드 조회
+     */
+    private String getMessageTypeFromCommonCode(String messageTypeName) {
+        try {
+            String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.MESSAGE_TYPE_GROUP, messageTypeName);
+            return codeValue != null ? codeValue : messageTypeName; // 공통코드에 없으면 원본 반환
+        } catch (Exception e) {
+            log.warn("공통코드에서 메시지 타입 코드 조회 실패: {}, 기본값 사용", messageTypeName, e);
+            return messageTypeName;
+        }
     }
 }

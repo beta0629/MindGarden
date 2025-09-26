@@ -14,9 +14,11 @@ import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.ConsultationMessageService;
 import com.mindgarden.consultation.service.StatisticsService;
 import com.mindgarden.consultation.service.WorkflowAutomationService;
+import com.mindgarden.consultation.util.CommonCodeConstants;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +42,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     private final UserRepository userRepository;
     private final ConsultationMessageService consultationMessageService;
     private final StatisticsService statisticsService;
+    private final CommonCodeService commonCodeService;
     
     // 워크플로우 실행 로그 저장용 (실제 환경에서는 별도 테이블 사용 권장)
     private final List<Map<String, Object>> workflowLogs = new ArrayList<>();
@@ -57,10 +60,14 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             LocalDate today = now.toLocalDate();
             LocalTime currentTime = now.toLocalTime();
             
-            // 오늘 예정된 상담 조회
+            // 오늘 예정된 상담 조회 - 공통코드에서 상태 코드 조회
+            List<String> activeStatusNames = List.of("BOOKED", "CONFIRMED");
+            List<String> activeStatusCodes = getScheduleStatusCodesFromCommonCode(activeStatusNames);
             List<Schedule> todaySchedules = scheduleRepository.findByDateAndStatusIn(
                 today, 
-                List.of(ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED)
+                activeStatusCodes.stream()
+                    .map(code -> ScheduleStatus.valueOf(code))
+                    .collect(Collectors.toList())
             );
             
             for (Schedule schedule : todaySchedules) {
@@ -103,10 +110,14 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             LocalDate today = now.toLocalDate();
             LocalTime currentTime = now.toLocalTime();
             
-            // 시간이 지났지만 완료되지 않은 상담 조회
+            // 시간이 지났지만 완료되지 않은 상담 조회 - 공통코드에서 상태 코드 조회
+            List<String> incompleteStatusNames = List.of("BOOKED", "CONFIRMED");
+            List<String> incompleteStatusCodes = getScheduleStatusCodesFromCommonCode(incompleteStatusNames);
             List<Schedule> incompleteSchedules = scheduleRepository.findByDateAndStatusIn(
                 today, 
-                List.of(ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED)
+                incompleteStatusCodes.stream()
+                    .map(code -> ScheduleStatus.valueOf(code))
+                    .collect(Collectors.toList())
             ).stream()
             .filter(schedule -> schedule.getEndTime().isBefore(currentTime))
             .collect(Collectors.toList());
@@ -126,10 +137,10 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                     schedule.getConsultantId(), 
                     schedule.getClientId(), 
                     null, // consultationId
-                    "CONSULTANT", 
+                    getRoleCodeFromCommonCode("CONSULTANT"), 
                     "미완료 상담 알림", 
                     alertMessage,
-                    "INCOMPLETE_CONSULTATION",
+                    getMessageTypeFromCommonCode("INCOMPLETE_CONSULTATION"),
                     true, // isImportant
                     false  // isUrgent
                 );
@@ -159,7 +170,9 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             LocalDate today = LocalDate.now();
             
             // 상담사 조회
-            List<User> consultants = userRepository.findByRoleAndIsDeletedFalse("CONSULTANT");
+            // 공통코드에서 상담사 역할 코드 조회
+            String consultantRoleCode = getRoleCodeFromCommonCode("CONSULTANT");
+            List<User> consultants = userRepository.findByRoleAndIsDeletedFalse(consultantRoleCode);
             
             for (User consultant : consultants) {
                 try {
@@ -182,10 +195,10 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                         consultant.getId(), 
                         null, 
                         null, // consultationId
-                        "CONSULTANT", 
+                        getRoleCodeFromCommonCode("CONSULTANT"), 
                         "일일 성과 요약", 
                         summaryMessage,
-                        "DAILY_SUMMARY",
+                        getMessageTypeFromCommonCode("DAILY_SUMMARY"),
                         false, // isImportant
                         false  // isUrgent
                     );
@@ -235,18 +248,22 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             );
             
             // 관리자들에게 월간 리포트 발송
+            // 공통코드에서 관리자 역할 코드들 조회
+            String adminRoleCode = getRoleCodeFromCommonCode("ADMIN");
+            String branchSuperAdminRoleCode = getRoleCodeFromCommonCode("BRANCH_SUPER_ADMIN");
+            String hqMasterRoleCode = getRoleCodeFromCommonCode("HQ_MASTER");
             List<User> admins = userRepository.findByRoleInAndIsDeletedFalse(
-                List.of("ADMIN", "BRANCH_SUPER_ADMIN", "HQ_MASTER"));
+                List.of(adminRoleCode, branchSuperAdminRoleCode, hqMasterRoleCode));
             
             for (User admin : admins) {
                 consultationMessageService.sendMessage(
                     admin.getId(), 
                     null, 
                     null, // consultationId
-                    "ADMIN", 
+                    getRoleCodeFromCommonCode("ADMIN"), 
                     "월간 성과 리포트", 
                     reportMessage,
-                    "MONTHLY_REPORT",
+                    getMessageTypeFromCommonCode("MONTHLY_REPORT"),
                     true, // isImportant
                     false  // isUrgent
                 );
@@ -284,6 +301,50 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     
     // ==================== Private Helper Methods ====================
     
+    /**
+     * 공통코드에서 역할 코드 조회
+     */
+    private String getRoleCodeFromCommonCode(String roleName) {
+        try {
+            String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.USER_ROLE_GROUP, roleName);
+            return codeValue != null ? codeValue : roleName; // 공통코드에 없으면 원본 반환
+        } catch (Exception e) {
+            log.warn("공통코드에서 역할 코드 조회 실패: {}, 기본값 사용", roleName, e);
+            return roleName;
+        }
+    }
+    
+    /**
+     * 공통코드에서 메시지 타입 코드 조회
+     */
+    private String getMessageTypeFromCommonCode(String messageTypeName) {
+        try {
+            String codeValue = commonCodeService.getCodeValue(CommonCodeConstants.MESSAGE_TYPE_GROUP, messageTypeName);
+            return codeValue != null ? codeValue : messageTypeName; // 공통코드에 없으면 원본 반환
+        } catch (Exception e) {
+            log.warn("공통코드에서 메시지 타입 코드 조회 실패: {}, 기본값 사용", messageTypeName, e);
+            return messageTypeName;
+        }
+    }
+    
+    /**
+     * 공통코드에서 스케줄 상태 코드 조회
+     */
+    private List<String> getScheduleStatusCodesFromCommonCode(List<String> statusNames) {
+        List<String> statusCodes = new ArrayList<>();
+        for (String statusName : statusNames) {
+            try {
+                String statusCode = commonCodeService.getCodeValue(CommonCodeConstants.CONSULTATION_STATUS_GROUP, statusName);
+                if (statusCode == null) statusCode = statusName;
+                statusCodes.add(statusCode);
+            } catch (Exception e) {
+                log.warn("공통코드에서 스케줄 상태 코드 조회 실패: {}, 기본값 사용", statusName, e);
+                statusCodes.add(statusName);
+            }
+        }
+        return statusCodes;
+    }
+    
     private boolean isTimeInRange(LocalTime currentTime, LocalTime targetTime, int toleranceMinutes) {
         LocalTime lowerBound = targetTime.minusMinutes(toleranceMinutes);
         LocalTime upperBound = targetTime.plusMinutes(toleranceMinutes);
@@ -297,11 +358,11 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                 schedule.getClientId(), 
                 schedule.getConsultantId(), 
                 null, // consultationId
-                "CLIENT", 
+                getRoleCodeFromCommonCode("CLIENT"), 
                 title, 
                 message + String.format("\n📅 일시: %s %s-%s", 
                     schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()),
-                "REMINDER",
+                getMessageTypeFromCommonCode("REMINDER"),
                 false, // isImportant
                 false  // isUrgent
             );
@@ -311,11 +372,11 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                 schedule.getConsultantId(), 
                 schedule.getClientId(), 
                 null, // consultationId
-                "CONSULTANT", 
+                getRoleCodeFromCommonCode("CONSULTANT"), 
                 title, 
                 message + String.format("\n📅 일시: %s %s-%s", 
                     schedule.getDate(), schedule.getStartTime(), schedule.getEndTime()),
-                "REMINDER",
+                getMessageTypeFromCommonCode("REMINDER"),
                 false, // isImportant
                 false  // isUrgent
             );

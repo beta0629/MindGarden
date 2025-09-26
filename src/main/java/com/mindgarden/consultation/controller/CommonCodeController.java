@@ -78,6 +78,28 @@ public class CommonCodeController {
     }
 
     /**
+     * 특정 그룹의 활성 공통코드만 조회 (메뉴용)
+     * 
+     * @param groupCode 그룹 코드
+     * @return 활성 공통코드 목록
+     */
+    @GetMapping("/group/{groupCode}/active")
+    public ResponseEntity<List<CommonCode>> getActiveCommonCodesByGroup(
+            @PathVariable String groupCode) {
+        try {
+            log.info("활성 공통코드 그룹 조회 요청: {}", groupCode);
+            
+            List<CommonCode> codes = commonCodeService.getActiveCommonCodesByGroup(groupCode);
+            
+            log.info("활성 공통코드 그룹 조회 완료: {} 개", codes.size());
+            return ResponseEntity.ok(codes);
+        } catch (Exception e) {
+            log.error("활성 공통코드 그룹 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
      * 공통코드 상세 조회
      * 
      * @param groupCode 그룹 코드

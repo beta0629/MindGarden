@@ -28,7 +28,7 @@ BEGIN
         p_branch_code AS branch_code,
         COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END), 0) AS total_revenue,
         COALESCE(SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS total_expenses,
-        COALESCE(SUM(CASE WHEN ft.transaction_type = 'REVENUE' THEN ft.amount ELSE 0 END) - 
+        COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) - 
                  SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS net_profit,
         COUNT(*) AS total_transactions,
         COUNT(DISTINCT DATE(ft.transaction_date)) AS active_days
@@ -102,7 +102,7 @@ BEGIN
         p_branch_code AS branch_code,
         COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END), 0) AS total_revenue,
         COALESCE(SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS total_expenses,
-        COALESCE(SUM(CASE WHEN ft.transaction_type = 'REVENUE' THEN ft.amount ELSE 0 END) - 
+        COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) - 
                  SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS net_profit,
         COUNT(*) AS total_transactions,
         COUNT(DISTINCT MONTH(ft.transaction_date)) AS active_months
@@ -146,7 +146,7 @@ BEGIN
         p_branch_code AS branch_code,
         COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END), 0) AS total_revenue,
         COALESCE(SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS total_expenses,
-        COALESCE(SUM(CASE WHEN ft.transaction_type = 'REVENUE' THEN ft.amount ELSE 0 END) - 
+        COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) - 
                  SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS net_profit,
         COUNT(*) AS total_transactions,
         COUNT(DISTINCT MONTH(ft.transaction_date)) AS active_months,
@@ -159,7 +159,7 @@ BEGIN
     -- 분기별 연도 내 상세
     SELECT 
         QUARTER(ft.transaction_date) AS quarter,
-        SUM(CASE WHEN ft.transaction_type = 'REVENUE' THEN ft.amount ELSE 0 END) AS quarterly_revenue,
+        SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) AS quarterly_revenue,
         SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END) AS quarterly_expenses,
         COUNT(*) AS quarterly_transactions
     FROM financial_transactions ft
@@ -172,16 +172,18 @@ BEGIN
     -- 지점별 연도 내 상세
     SELECT 
         ft.branch_code,
-        cc.code_label AS branch_name,
-        SUM(CASE WHEN ft.transaction_type = 'REVENUE' THEN ft.amount ELSE 0 END) AS branch_revenue,
+        b.branch_name,
+        SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) AS branch_revenue,
         SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END) AS branch_expenses,
         COUNT(*) AS branch_transactions
     FROM financial_transactions ft
-    LEFT JOIN common_codes cc ON ft.branch_code = cc.code_value AND cc.code_group = 'BRANCH'
+    LEFT JOIN branches b ON ft.branch_code = b.branch_code
     WHERE ft.transaction_date BETWEEN start_date AND end_date
     AND (p_branch_code IS NULL OR ft.branch_code = p_branch_code)
     AND ft.is_deleted = FALSE
-    GROUP BY ft.branch_code, cc.code_label
+    AND b.is_deleted = FALSE
+    AND b.branch_status = 'ACTIVE'
+    GROUP BY ft.branch_code, b.branch_name
     ORDER BY branch_revenue DESC;
     
 END //

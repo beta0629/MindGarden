@@ -27,9 +27,9 @@ BEGIN
     
     -- 커서 선언: 활성 지점 목록
     DECLARE branch_cursor CURSOR FOR 
-        SELECT code_value, code_label 
-        FROM common_codes 
-        WHERE code_group = 'BRANCH' AND is_active = TRUE;
+        SELECT branch_code, branch_name 
+        FROM branches 
+        WHERE is_deleted = FALSE AND branch_status = 'ACTIVE';
     
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
     
@@ -95,20 +95,20 @@ CREATE PROCEDURE GetBranchFinancialBreakdown(
 )
 BEGIN
     SELECT 
-        cc.code_value AS branch_code,
-        cc.code_label AS branch_name,
+        b.branch_code,
+        b.branch_name,
         COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END), 0) AS revenue,
         COALESCE(SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS expenses,
         COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) - 
                  SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS net_profit,
         COUNT(ft.id) AS transaction_count
-    FROM common_codes cc
-    LEFT JOIN financial_transactions ft ON cc.code_value = ft.branch_code
+    FROM branches b
+    LEFT JOIN financial_transactions ft ON b.branch_code = ft.branch_code
         AND ft.transaction_date BETWEEN p_start_date AND p_end_date
         AND ft.is_deleted = FALSE
-    WHERE cc.code_group = 'BRANCH' 
-    AND cc.is_active = TRUE
-    GROUP BY cc.code_value, cc.code_label
+    WHERE b.is_deleted = FALSE 
+    AND b.branch_status = 'ACTIVE'
+    GROUP BY b.branch_code, b.branch_name
     ORDER BY revenue DESC;
     
 END //

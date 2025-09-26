@@ -340,23 +340,23 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
      * 지점별 재무 상세 데이터 조회 (내부 메서드)
      */
     private List<Map<String, Object>> getBranchFinancialBreakdownData(LocalDate startDate, LocalDate endDate) {
-        // 직접 SQL 쿼리로 수정 (INCOME 타입 사용)
+        // branches 테이블에서 지점 데이터 조회하도록 수정
         String sql = """
             SELECT 
-                cc.code_value AS branch_code,
-                cc.code_label AS branch_name,
+                b.branch_code,
+                b.branch_name,
                 COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END), 0) AS revenue,
                 COALESCE(SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS expenses,
                 COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) - 
                          SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS net_profit,
                 COUNT(ft.id) AS transaction_count
-            FROM common_codes cc
-            LEFT JOIN financial_transactions ft ON cc.code_value = ft.branch_code
+            FROM branches b
+            LEFT JOIN financial_transactions ft ON b.branch_code = ft.branch_code
                 AND ft.transaction_date BETWEEN ? AND ?
                 AND ft.is_deleted = FALSE
-            WHERE cc.code_group = 'BRANCH' 
-            AND cc.is_active = TRUE
-            GROUP BY cc.code_value, cc.code_label
+            WHERE b.is_deleted = FALSE 
+            AND b.branch_status = 'ACTIVE'
+            GROUP BY b.branch_code, b.branch_name
             ORDER BY revenue DESC
             """;
         

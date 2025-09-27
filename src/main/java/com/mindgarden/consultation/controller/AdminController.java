@@ -22,6 +22,7 @@ import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.MenuService;
 import com.mindgarden.consultation.service.ScheduleService;
+import com.mindgarden.consultation.service.StoredProcedureService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -54,6 +55,7 @@ public class AdminController {
     private final ErpService erpService;
     private final ConsultantRatingService consultantRatingService;
     private final UserSocialAccountRepository userSocialAccountRepository;
+    private final StoredProcedureService storedProcedureService;
 
     /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)

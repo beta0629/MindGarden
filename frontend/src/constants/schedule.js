@@ -259,15 +259,15 @@ export const BREAK_TIME_MINUTES = 10;
 
 // ==================== 영업 시간 ====================
 export const BUSINESS_HOURS = {
-  START: '09:00',
-  END: '18:00',
+  START: '10:00',
+  END: '20:00',
   LUNCH_START: '12:00',
   LUNCH_END: '13:00'
 };
 
 export const BUSINESS_HOURS_DISPLAY = {
-  START: '09:00',
-  END: '18:00',
+  START: '10:00',
+  END: '20:00',
   LUNCH: '12:00 - 13:00'
 };
 

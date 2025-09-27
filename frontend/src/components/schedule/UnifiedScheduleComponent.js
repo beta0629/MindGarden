@@ -876,16 +876,16 @@ const UnifiedScheduleComponent = ({
                 editable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
                 droppable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
                 height="auto"
-                slotMinTime="08:00:00"
+                slotMinTime="10:00:00"
                 slotMaxTime="20:00:00"
                 slotDuration="00:30:00"
-                scrollTime="09:00:00"
+                scrollTime="10:00:00"
                 scrollTimeReset={false}
                 allDaySlot={false}
                 businessHours={{
                     daysOfWeek: [1, 2, 3, 4, 5], // 월-금
-                    startTime: '09:00',
-                    endTime: '18:00'
+                    startTime: '10:00',
+                    endTime: '20:00'
                 }}
                 expandRows={true}
                 stickyHeaderDates={true}

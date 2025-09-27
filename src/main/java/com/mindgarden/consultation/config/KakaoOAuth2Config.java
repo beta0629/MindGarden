@@ -17,7 +17,7 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
  * @since 2024-12-19
  */
 @Configuration
-@ConditionalOnProperty(name = "development.security.oauth2.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "development.security.oauth2.enabled", havingValue = "false")
 public class KakaoOAuth2Config {
 
     @Bean

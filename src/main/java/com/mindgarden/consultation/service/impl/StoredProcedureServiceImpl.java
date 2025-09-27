@@ -247,7 +247,7 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
     }
     
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = false)
     public Map<String, Object> checkMappingUpdatePermission(Long mappingId, Long userId, String userRole) {
         log.info("🔍 매핑 수정 권한 확인: mappingId={}, userId={}, userRole={}", 
                 mappingId, userId, userRole);

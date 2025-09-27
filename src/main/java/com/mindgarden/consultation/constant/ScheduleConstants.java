@@ -11,8 +11,8 @@ public final class ScheduleConstants {
     
     // 기본 상담 시간 관련 상수
     public static final int BREAK_TIME_MINUTES = 10;
-    public static final int WORKDAY_START_HOUR = 9;
-    public static final int WORKDAY_END_HOUR = 18;
+    public static final int WORKDAY_START_HOUR = 10;
+    public static final int WORKDAY_END_HOUR = 20;
     public static final int WORKDAY_TOTAL_HOURS = WORKDAY_END_HOUR - WORKDAY_START_HOUR;
     
     // 스케줄 상태 관련 상수

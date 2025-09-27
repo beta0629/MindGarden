@@ -1689,10 +1689,10 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 기존 스케줄 조회
             List<Schedule> existingSchedules = scheduleRepository.findByConsultantIdAndDate(consultantId, date);
             
-            // 가능한 시간대 계산 (9시-18시, 1시간 단위)
+            // 가능한 시간대 계산 (10시-20시, 1시간 단위)
             List<Map<String, Object>> availableSlots = new ArrayList<>();
-            LocalTime startHour = LocalTime.of(9, 0);
-            LocalTime endHour = LocalTime.of(18, 0);
+            LocalTime startHour = LocalTime.of(10, 0);
+            LocalTime endHour = LocalTime.of(20, 0);
             
             for (LocalTime time = startHour; time.isBefore(endHour); time = time.plusHours(1)) {
                 LocalTime slotEnd = time.plusHours(1);

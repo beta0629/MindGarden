@@ -38,19 +38,19 @@ export const VACATION_TYPE_COLORS = {
 // 시간대별 기본 설정
 export const TIME_SLOTS = {
   MORNING: {
-    start: '09:00',
+    start: '10:00',
     end: '12:00',
-    label: '오전 (09:00-12:00)'
+    label: '오전 (10:00-12:00)'
   },
   AFTERNOON: {
     start: '13:00',
-    end: '18:00',
-    label: '오후 (13:00-18:00)'
+    end: '20:00',
+    label: '오후 (13:00-20:00)'
   },
   MORNING_HALF: {
-    start: '09:00',
+    start: '10:00',
     end: '11:00',
-    label: '오전 반반차 (09:00-11:00)'
+    label: '오전 반반차 (10:00-11:00)'
   },
   AFTERNOON_HALF: {
     start: '14:00',

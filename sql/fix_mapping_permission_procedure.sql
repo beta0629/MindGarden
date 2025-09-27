@@ -34,7 +34,7 @@ BEGIN
         SET p_reason = '종료된 매핑은 수정할 수 없습니다.';
     ELSEIF v_used_sessions > 0 THEN
         SET p_reason = '이미 사용된 세션이 있는 매핑은 수정할 수 없습니다.';
-    ELSEIF p_user_role NOT IN ('ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER', 'BRANCH_SUPER_ADMIN') THEN
+    ELSEIF p_user_role NOT IN ('ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER', 'BRANCH_SUPER_ADMIN') THEN
         SET p_reason = '매핑 수정 권한이 없습니다.';
     ELSE
         SET p_can_update = TRUE;

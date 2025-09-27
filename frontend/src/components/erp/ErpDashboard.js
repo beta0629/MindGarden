@@ -71,8 +71,8 @@ const ErpDashboard = ({ user: propUser }) => {
         }
       }
 
-      // ERP 접근 권한 확인 (상담사, 관리자, 본사 관리자)
-      if (!['CONSULTANT', 'ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
+      // ERP 접근 권한 확인 (상담사, 관리자, 지점 수퍼 관리자, 본사 관리자)
+      if (!['CONSULTANT', 'ADMIN', 'BRANCH_SUPER_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
         console.log('❌ ERP 접근 권한 없음, 일반 대시보드로 이동');
         navigate('/dashboard', { replace: true });
         return;

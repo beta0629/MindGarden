@@ -178,9 +178,9 @@ const CommonCodeManagement = () => {
     const loadGroupCodes = useCallback(async (groupName) => {
         try {
             setLoading(true);
-            const response = await apiGet(`/api/admin/common-codes/group/${groupName}?userRole=${user?.role || ''}`);
-            if (response.success && response.data) {
-                setGroupCodes(response.data);
+            const response = await apiGet(`/api/common-codes/group/${groupName}`);
+            if (response && response.length > 0) {
+                setGroupCodes(response);
             } else {
                 notificationManager.error(`${groupName} 그룹의 코드 목록을 불러오는데 실패했습니다.`);
             }
@@ -454,7 +454,7 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            const response = await apiDelete(`/api/admin/common-codes/${codeId}?userRole=${user?.role || ''}`);
+            const response = await apiDelete(`/api/common-codes/${codeId}`);
             
             if (response.success) {
                 notificationManager.success('코드가 삭제되었습니다!');
@@ -478,7 +478,7 @@ const CommonCodeManagement = () => {
     const handleToggleStatus = async (codeId, currentStatus) => {
         try {
             setLoading(true);
-            const response = await apiPost(`/api/admin/common-codes/${codeId}/toggle-status?userRole=${user?.role || ''}`);
+            const response = await apiPost(`/api/common-codes/${codeId}/toggle-status`);
             
             if (response.success) {
                 notificationManager.success('코드 상태가 변경되었습니다!');
@@ -529,7 +529,7 @@ const CommonCodeManagement = () => {
 
         try {
             setLoading(true);
-            const response = await apiPut(`/api/admin/common-codes/${editingCode.id}?userRole=${user?.role || ''}`, newCodeData);
+            const response = await apiPut(`/api/common-codes/${editingCode.id}`, newCodeData);
 
             if (response.success) {
                 notificationManager.success('코드가 수정되었습니다!');

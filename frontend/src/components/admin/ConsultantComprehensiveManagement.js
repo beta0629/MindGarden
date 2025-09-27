@@ -221,7 +221,7 @@ const ConsultantComprehensiveManagement = () => {
             } else {
                 console.log('⚠️ 새로운 API 응답이 비어있음, 기존 API 시도...');
                 // 기존 CommonCode API도 시도
-                const fallbackResponse = await apiGet('/api/admin/common-codes/SPECIALTY');
+                const fallbackResponse = await apiGet('/api/common-codes/group/SPECIALTY');
                 console.log('📋 기존 API 응답:', fallbackResponse);
                 if (fallbackResponse.success) {
                     console.log('✅ 기존 API로 전문분야 코드 로드 성공:', fallbackResponse.data?.length || 0, '개');
@@ -236,7 +236,7 @@ const ConsultantComprehensiveManagement = () => {
             // 기존 CommonCode API로 폴백
             try {
                 console.log('🔄 기존 API로 폴백 시도...');
-                const fallbackResponse = await apiGet('/api/admin/common-codes/SPECIALTY');
+                const fallbackResponse = await apiGet('/api/common-codes/group/SPECIALTY');
                 console.log('📋 폴백 API 응답:', fallbackResponse);
                 if (fallbackResponse.success) {
                     console.log('✅ 폴백 API로 전문분야 코드 로드 성공:', fallbackResponse.data?.length || 0, '개');

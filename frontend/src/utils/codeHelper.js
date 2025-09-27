@@ -59,9 +59,10 @@ export const getCodeGroupKoreanName = async (groupName) => {
         }
         
         // 캐시에 없으면 API 호출
-        const response = await apiGet(`/api/admin/common-codes/group/${groupName}/korean-name`);
-        if (response.success && response.data) {
-            return response.data.koreanName;
+        const response = await apiGet(`/api/common-codes/group/${groupName}`);
+        if (response && response.length > 0) {
+            // 첫 번째 코드의 koreanName 반환 (그룹명으로 사용)
+            return response[0].koreanName || groupName;
         }
     } catch (error) {
         console.error('코드그룹 한글명 조회 실패:', error);
@@ -83,9 +84,10 @@ export const getCodeGroupIcon = async (groupName) => {
             }
         }
         
-        const response = await apiGet(`/api/admin/common-codes/group/${groupName}/korean-name`);
-        if (response.success && response.data && response.data.icon) {
-            return response.data.icon;
+        const response = await apiGet(`/api/common-codes/group/${groupName}`);
+        if (response && response.length > 0) {
+            // 첫 번째 코드의 icon 반환
+            return response[0].icon || '📋';
         }
     } catch (error) {
         console.error('코드그룹 아이콘 조회 실패:', error);
@@ -107,9 +109,10 @@ export const getCodeGroupColor = async (groupName) => {
             }
         }
         
-        const response = await apiGet(`/api/admin/common-codes/group/${groupName}/korean-name`);
-        if (response.success && response.data && response.data.colorCode) {
-            return response.data.colorCode;
+        const response = await apiGet(`/api/common-codes/group/${groupName}`);
+        if (response && response.length > 0) {
+            // 첫 번째 코드의 colorCode 반환
+            return response[0].colorCode || '#6c757d';
         }
     } catch (error) {
         console.error('코드그룹 색상 조회 실패:', error);
@@ -124,7 +127,7 @@ export const getCodeGroupColor = async (groupName) => {
  */
 export const getStatusColor = async (codeValue, groupName) => {
     try {
-        const response = await apiGet(`/api/admin/common-codes/group/${groupName}/display-options`);
+        const response = await apiGet(`/api/common-codes/group/${groupName}`);
         if (response.success && response.data && response.data.codes) {
             const code = response.data.codes.find(c => c.codeValue === codeValue);
             if (code && code.colorCode) {
@@ -179,7 +182,7 @@ export const getStatusColor = async (codeValue, groupName) => {
  */
 export const getStatusIcon = async (codeValue, groupName) => {
     try {
-        const response = await apiGet(`/api/admin/common-codes/group/${groupName}/display-options`);
+        const response = await apiGet(`/api/common-codes/group/${groupName}`);
         if (response.success && response.data && response.data.codes) {
             const code = response.data.codes.find(c => c.codeValue === codeValue);
             if (code && code.icon) {
@@ -234,7 +237,7 @@ export const getStatusIcon = async (codeValue, groupName) => {
  */
 export const getCodeGroupDisplayOptions = async (groupName) => {
     try {
-        const response = await apiGet(`/api/admin/common-codes/group/${groupName}/display-options`);
+        const response = await apiGet(`/api/common-codes/group/${groupName}`);
         if (response.success && response.data) {
             return response.data;
         }
@@ -284,7 +287,7 @@ export const getCodeGroupIconSync = (groupName) => {
  */
 export const getUserStatusKoreanName = async (status) => {
     try {
-        const response = await apiGet(`/api/admin/common-codes/group/STATUS/display-options`);
+        const response = await apiGet(`/api/common-codes/group/STATUS`);
         if (response.success && response.data && response.data.codes) {
             const code = response.data.codes.find(c => c.codeValue === status);
             if (code && code.codeLabel) {

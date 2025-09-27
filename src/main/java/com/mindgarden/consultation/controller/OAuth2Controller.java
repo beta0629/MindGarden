@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import com.mindgarden.consultation.constant.OAuth2Constants;
-import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SocialLoginResponse;
 import com.mindgarden.consultation.dto.SocialUserInfo;
 import com.mindgarden.consultation.entity.User;

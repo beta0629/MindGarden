@@ -385,9 +385,9 @@ export const getUserGradeIcon = async (grade) => {
  */
 export const getMappingStatusKoreanName = async (status) => {
     try {
-        const response = await apiGet(`/api/admin/common-codes/group/MAPPING_STATUS/display-options`);
-        if (response.success && response.data && response.data.codes) {
-            const code = response.data.codes.find(c => c.codeValue === status);
+        const response = await apiGet(`/api/common-codes/group/MAPPING_STATUS`);
+        if (response && response.length > 0) {
+            const code = response.find(c => c.codeValue === status);
             if (code && code.codeLabel) {
                 return code.codeLabel;
             }

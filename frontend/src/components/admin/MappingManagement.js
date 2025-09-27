@@ -99,12 +99,12 @@ const MappingManagement = () => {
         try {
             console.log('📊 매핑 상태 정보 일괄 로드 시작');
             
-            const response = await apiGet('/api/admin/common-codes/group/MAPPING_STATUS/display-options');
-            if (response.success && response.data) {
+            const response = await apiGet('/api/common-codes/group/MAPPING_STATUS');
+            if (response && response.length > 0) {
                 const statusInfoMap = {};
                 
                 // 각 상태별 정보를 맵으로 정리
-                response.data.codes.forEach(code => {
+                response.forEach(code => {
                     statusInfoMap[code.codeValue] = {
                         label: code.koreanName || code.codeLabel,
                         color: code.colorCode || '#6c757d',

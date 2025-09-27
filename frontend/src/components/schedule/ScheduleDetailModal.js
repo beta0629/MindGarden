@@ -31,7 +31,7 @@ const ScheduleDetailModal = ({
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
+            const response = await apiGet('/api/common-codes/group/STATUS');
             if (response && response.length > 0) {
                 // 우리가 원하는 6개 상태만 필터링
                 const allowedStatuses = ['AVAILABLE', 'BOOKED', 'CONFIRMED', 'VACATION', 'COMPLETED', 'CANCELLED'];

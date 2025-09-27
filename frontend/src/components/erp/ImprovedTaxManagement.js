@@ -102,7 +102,7 @@ const ImprovedTaxManagement = () => {
 
   const loadTaxSettings = async () => {
     try {
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=TAX_CATEGORY');
+      const response = await apiGet('/api/common-codes/group/TAX_CATEGORY');
       if (response.success) {
         setTaxCategories(response.data || []);
       } else {

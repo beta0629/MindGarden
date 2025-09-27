@@ -31,7 +31,7 @@ const ConsultationRecordScreen = () => {
   const loadPriorityCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=PRIORITY');
+      const response = await apiGet('/api/common-codes/group/PRIORITY');
       if (response && response.length > 0) {
         const options = response.map(code => ({
           value: code.codeValue,
@@ -305,7 +305,7 @@ const ConsultationRecordScreen = () => {
   const loadCompletionStatusCodes = useCallback(async () => {
     try {
       setLoadingCompletionCodes(true);
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=COMPLETION_STATUS');
+      const response = await apiGet('/api/common-codes/group/COMPLETION_STATUS');
       if (response && response.length > 0) {
         setCompletionStatusOptions(response.map(code => ({
           value: code.codeValue === 'COMPLETED' ? true : false,

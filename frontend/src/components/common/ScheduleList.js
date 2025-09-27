@@ -59,7 +59,7 @@ const ScheduleList = ({
   const loadFilterOptions = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=SCHEDULE_FILTER');
+      const response = await apiGet('/api/common-codes/group/SCHEDULE_FILTER');
       if (response && response.length > 0) {
         setFilterOptions(response.map(code => ({
           value: code.codeValue,
@@ -89,7 +89,7 @@ const ScheduleList = ({
   const loadSortOptions = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=SCHEDULE_SORT');
+      const response = await apiGet('/api/common-codes/group/SCHEDULE_SORT');
       if (response && response.length > 0) {
         setSortOptions(response.map(code => ({
           value: code.codeValue,

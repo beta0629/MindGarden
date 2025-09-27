@@ -53,7 +53,7 @@ const SessionManagement = () => {
     const loadMappingStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=MAPPING_STATUS');
+            const response = await apiGet('/api/common-codes/group/MAPPING_STATUS');
             if (response && response.length > 0) {
                 const options = response.map(code => ({
                     value: code.codeValue,
@@ -93,7 +93,7 @@ const SessionManagement = () => {
     const loadStatusCodes = useCallback(async () => {
         try {
             setLoadingStatusCodes(true);
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
+            const response = await apiGet('/api/common-codes/group/STATUS');
             if (response && response.length > 0) {
                 const options = response.map(code => ({
                     value: code.codeValue,
@@ -124,7 +124,7 @@ const SessionManagement = () => {
     const loadPackageCodes = useCallback(async () => {
         try {
             setLoadingPackageCodes(true);
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=CONSULTATION_PACKAGE');
+            const response = await apiGet('/api/common-codes/group/CONSULTATION_PACKAGE');
             if (response && response.length > 0) {
                 const options = response.map(code => {
                     let sessions = 20; // 기본값

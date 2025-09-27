@@ -114,7 +114,7 @@ const BudgetManagement = () => {
 
       console.log('로그인 상태에서 API 호출 시도');
       try {
-        const response = await apiGet('/api/admin/common-codes/values?groupCode=BUDGET_CATEGORY');
+        const response = await apiGet('/api/common-codes/group/BUDGET_CATEGORY');
         console.log('API 응답:', response);
         
         if (response && response.success && response.data && response.data.length > 0) {

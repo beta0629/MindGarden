@@ -70,7 +70,7 @@ const ScheduleModalNew = ({
         const loadConsultationTypeCodes = async () => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/admin/common-codes/values?groupCode=CONSULTATION_TYPE');
+                const response = await apiGet('/api/common-codes/group/CONSULTATION_TYPE');
                 if (response && response.length > 0) {
                     const options = response.map(code => {
                         let durationMinutes = 50; // 기본값
@@ -115,7 +115,7 @@ const ScheduleModalNew = ({
         const loadDurationCodes = async () => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/admin/common-codes/values?groupCode=DURATION');
+                const response = await apiGet('/api/common-codes/group/DURATION');
                 if (response && response.length > 0) {
                     const options = response.map(code => {
                         let durationMinutes = 60; // 기본값

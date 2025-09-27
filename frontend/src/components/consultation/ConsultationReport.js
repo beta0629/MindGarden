@@ -51,7 +51,7 @@ const ConsultationReport = () => {
   const loadPeriodCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=REPORT_PERIOD');
+      const response = await apiGet('/api/common-codes/group/REPORT_PERIOD');
       if (response && response.length > 0) {
         // 중복 제거: codeValue 기준으로 유니크하게 필터링
         const uniqueCodes = response.reduce((acc, code) => {
@@ -82,7 +82,7 @@ const ConsultationReport = () => {
   const loadYearCodes = useCallback(async () => {
     try {
       setLoadingYearCodes(true);
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=YEAR_RANGE');
+      const response = await apiGet('/api/common-codes/group/YEAR_RANGE');
       if (response && response.length > 0) {
         // 중복 제거: codeValue 기준으로 유니크하게 필터링
         const uniqueCodes = response.reduce((acc, code) => {
@@ -112,7 +112,7 @@ const ConsultationReport = () => {
   const loadMonthCodes = useCallback(async () => {
     try {
       setLoadingMonthCodes(true);
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=MONTH_RANGE');
+      const response = await apiGet('/api/common-codes/group/MONTH_RANGE');
       if (response && response.length > 0) {
         // 중복 제거: codeValue 기준으로 유니크하게 필터링
         const uniqueCodes = response.reduce((acc, code) => {

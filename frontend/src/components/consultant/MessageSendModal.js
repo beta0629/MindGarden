@@ -33,7 +33,7 @@ const MessageSendModal = ({
     const loadMessageTypeCodes = async () => {
       try {
         setLoadingCodes(true);
-        const response = await apiGet('/api/admin/common-codes/values?groupCode=MESSAGE_TYPE');
+        const response = await apiGet('/api/common-codes/group/MESSAGE_TYPE');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,

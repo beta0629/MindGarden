@@ -68,7 +68,7 @@ const UnifiedScheduleComponent = ({
     const loadScheduleStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
+            const response = await apiGet('/api/common-codes/group/STATUS');
             console.log('📋 스케줄 상태 코드 응답:', response);
             
             if (response && Array.isArray(response) && response.length > 0) {

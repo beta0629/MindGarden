@@ -36,7 +36,7 @@ const TabletRegister = () => {
     const loadGenderCodes = async () => {
       try {
         setLoading(true);
-        const response = await apiGet('/api/admin/common-codes/values?groupCode=GENDER');
+        const response = await apiGet('/api/common-codes/group/GENDER');
         if (response && response.length > 0) {
           const options = response.map(code => ({
             value: code.codeValue,

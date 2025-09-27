@@ -43,7 +43,7 @@ const ScheduleModal = ({
     const loadConsultationTypeCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await fetch('/api/admin/common-codes/values?groupCode=CONSULTATION_TYPE');
+            const response = await fetch('/api/common-codes/group/CONSULTATION_TYPE');
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.length > 0) {

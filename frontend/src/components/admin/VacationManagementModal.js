@@ -54,7 +54,7 @@ const VacationManagementModal = ({
         const loadVacationTypeCodes = async () => {
             try {
                 setLoadingCodes(true);
-                const response = await apiGet('/api/admin/common-codes/values?groupCode=VACATION_TYPE');
+                const response = await apiGet('/api/common-codes/group/VACATION_TYPE');
                 if (response && response.length > 0) {
                     // 원하는 휴가 유형만 필터링 (시간이 표시된 구체적인 옵션만)
                     const allowedTypes = [

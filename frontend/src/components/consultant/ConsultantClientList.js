@@ -89,7 +89,7 @@ const ConsultantClientList = () => {
     try {
       setLoadingCodes(true);
       console.log('🔄 사용자 상태 코드 로드 시작...');
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
+      const response = await apiGet('/api/common-codes/group/STATUS');
       console.log('📡 API 응답:', response);
       
       if (response && response.length > 0) {

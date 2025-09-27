@@ -30,7 +30,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
     const loadRoleCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=ROLE');
+            const response = await apiGet('/api/common-codes/group/ROLE');
             if (response && response.length > 0) {
                 const options = response.map(code => ({
                     value: code.codeValue,

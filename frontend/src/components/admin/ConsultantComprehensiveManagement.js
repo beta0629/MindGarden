@@ -207,9 +207,9 @@ const ConsultantComprehensiveManagement = () => {
     const loadSpecialtyCodes = async () => {
         try {
             console.log('🔍 전문분야 코드 로드 시작...');
-            console.log('🌐 API URL:', '/api/admin/common-codes/values?groupCode=SPECIALTY');
+            console.log('🌐 API URL:', '/api/common-codes/group/SPECIALTY');
             
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=SPECIALTY');
+            const response = await apiGet('/api/common-codes/group/SPECIALTY');
             console.log('📋 새로운 API 응답:', response);
             console.log('📋 응답 타입:', typeof response);
             console.log('📋 응답 길이:', response?.length);

@@ -93,7 +93,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     const loadPackageCodes = useCallback(async () => {
         try {
             setLoadingPackageCodes(true);
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=CONSULTATION_PACKAGE');
+            const response = await apiGet('/api/common-codes/group/CONSULTATION_PACKAGE');
             if (response && response.length > 0) {
                 const options = response.map(code => {
                     let sessions = 20; // 기본값
@@ -207,7 +207,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             setPackageOptions(packageOpts);
 
             // 결제 방법 코드 로드
-            const paymentResponse = await apiGet(`/api/admin/common-codes/values?groupCode=PAYMENT_METHOD&userRole=${user?.role || 'BRANCH_SUPER_ADMIN'}`);
+            const paymentResponse = await apiGet(`/api/common-codes/group/PAYMENT_METHOD&userRole=${user?.role || 'BRANCH_SUPER_ADMIN'}`);
             if (paymentResponse && paymentResponse.length > 0) {
                 const paymentOpts = paymentResponse.map(code => ({
                     value: code.codeValue,
@@ -217,7 +217,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             }
 
             // 담당 업무 코드 로드
-            const responsibilityResponse = await apiGet(`/api/admin/common-codes/values?groupCode=RESPONSIBILITY&userRole=${user?.role || 'BRANCH_SUPER_ADMIN'}`);
+            const responsibilityResponse = await apiGet(`/api/common-codes/group/RESPONSIBILITY&userRole=${user?.role || 'BRANCH_SUPER_ADMIN'}`);
             if (responsibilityResponse && responsibilityResponse.length > 0) {
                 const responsibilityOpts = responsibilityResponse.map(code => ({
                     value: code.codeValue,

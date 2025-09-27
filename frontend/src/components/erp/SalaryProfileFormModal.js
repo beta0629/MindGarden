@@ -98,7 +98,7 @@ const SalaryProfileFormModal = ({
     // 공통 코드에서 등급 정보 로드
     const loadGradeTableData = async () => {
         try {
-            const response = await apiGet('/api/admin/common-codes/values?groupCode=CONSULTANT_GRADE');
+            const response = await apiGet('/api/common-codes/group/CONSULTANT_GRADE');
             if (Array.isArray(response)) {
                 const baseOptions = [
                     { type: 'FAMILY_CONSULTATION', name: '가족상담', baseAmount: 3000 },
@@ -155,14 +155,14 @@ const SalaryProfileFormModal = ({
             console.log('🔍 급여 프로필 폼 초기 데이터 로드 시작');
             
             // 급여 유형 로드
-            const salaryTypeResponse = await apiGet('/api/admin/common-codes/values?groupCode=SALARY_TYPE');
+            const salaryTypeResponse = await apiGet('/api/common-codes/group/SALARY_TYPE');
             console.log('📊 급여 유형 응답:', salaryTypeResponse);
             if (Array.isArray(salaryTypeResponse)) {
                 setSalaryTypes(salaryTypeResponse);
             }
 
             // 옵션 유형 로드
-            const optionTypeResponse = await apiGet('/api/admin/common-codes/values?groupCode=SALARY_OPTION_TYPE');
+            const optionTypeResponse = await apiGet('/api/common-codes/group/SALARY_OPTION_TYPE');
             console.log('📊 옵션 유형 응답:', optionTypeResponse);
             if (Array.isArray(optionTypeResponse)) {
                 setOptionTypes(optionTypeResponse);

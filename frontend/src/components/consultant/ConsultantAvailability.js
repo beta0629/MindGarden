@@ -21,7 +21,7 @@ const ConsultantAvailability = () => {
   const loadDurationCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=DURATION');
+      const response = await apiGet('/api/common-codes/group/DURATION');
       if (response && response.length > 0) {
         setDurationOptions(response.map(code => ({
           value: code.codeValue,

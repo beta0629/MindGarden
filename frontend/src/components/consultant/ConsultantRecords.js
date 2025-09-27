@@ -20,7 +20,7 @@ const ConsultantRecords = () => {
   const loadStatusCodes = useCallback(async () => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet('/api/admin/common-codes/values?groupCode=STATUS');
+      const response = await apiGet('/api/common-codes/group/STATUS');
       if (response && response.length > 0) {
         // 상담기록에 적합한 상태만 필터링
         const consultationStatuses = response.filter(code => 

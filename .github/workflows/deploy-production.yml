@@ -59,6 +59,20 @@ jobs:
           echo "SSH 연결 테스트 성공: $(date)"
           echo "서버 정보: $(uname -a)"
           
+          # SSH 포트 차단 문제 해결
+          echo "🔧 방화벽 상태 확인..."
+          sudo ufw status
+          
+          # ufw가 SSH를 차단하고 있다면 비활성화
+          if sudo ufw status | grep -q "Status: active"; then
+            echo "⚠️ ufw가 활성화되어 있음 - SSH 포트 차단 문제 해결"
+            sudo ufw disable
+            sudo systemctl disable ufw
+            echo "✅ ufw 비활성화 완료"
+          else
+            echo "✅ ufw가 이미 비활성화되어 있음"
+          fi
+          
     - name: 🚀 서버 배포
       uses: appleboy/ssh-action@v1.1.0
       with:
@@ -109,6 +123,18 @@ jobs:
         source: "frontend/build/*"
         target: "/var/www/html/"
         strip_components: 2
+        overwrite: true
+        
+    - name: 📤 설정 파일 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        source: "deployment/application-production.yml"
+        target: "/var/www/mindgarden/application-prod.yml"
         overwrite: true
         
     - name: 🔧 프론트엔드 파일 권한 설정

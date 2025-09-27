@@ -158,7 +158,7 @@ jobs:
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
         port: 22
         timeout: 120s
-        source: "sql/production_mapping_procedures.sql"
+        source: "sql/production_all_missing_procedures.sql"
         target: "/tmp/"
         strip_components: 1
         overwrite: true
@@ -225,10 +225,10 @@ jobs:
           
           # PL/SQL 프로시저 등록
           echo "🔧 PL/SQL 프로시저 등록 시작..."
-          if [ -f /tmp/production_mapping_procedures.sql ]; then
-            mysql -u root -p${MYSQL_ROOT_PASSWORD} ${MYSQL_DATABASE} < /tmp/production_mapping_procedures.sql
-            echo "✅ 매핑 관련 PL/SQL 프로시저 등록 완료"
-            rm -f /tmp/production_mapping_procedures.sql
+          if [ -f /tmp/production_all_missing_procedures.sql ]; then
+            mysql -u root -p${MYSQL_ROOT_PASSWORD} ${MYSQL_DATABASE} < /tmp/production_all_missing_procedures.sql
+            echo "✅ 모든 누락된 PL/SQL 프로시저 등록 완료"
+            rm -f /tmp/production_all_missing_procedures.sql
           else
             echo "⚠️ PL/SQL 프로시저 파일을 찾을 수 없습니다"
           fi

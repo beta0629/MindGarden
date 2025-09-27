@@ -935,10 +935,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                     mapping.useSession();
                     mappingRepository.save(mapping);
                     
-                    // 🔄 회기 사용 후 전체 시스템 동기화 (운영 서버 프로시저 미등록으로 임시 비활성화)
+                    // 🔄 회기 사용 후 전체 시스템 동기화
                     try {
-                        // sessionSyncService.syncAfterSessionUsage(mapping.getId(), consultantId, clientId);
-                        log.info("⚠️ 회기 사용 후 동기화 임시 비활성화: mappingId={} (운영 서버 프로시저 미등록)", mapping.getId());
+                        sessionSyncService.syncAfterSessionUsage(mapping.getId(), consultantId, clientId);
+                        log.info("✅ 회기 사용 후 동기화 완료: mappingId={}", mapping.getId());
                     } catch (Exception syncError) {
                         log.error("❌ 회기 사용 후 동기화 실패: mappingId={}, error={}", 
                                  mapping.getId(), syncError.getMessage(), syncError);

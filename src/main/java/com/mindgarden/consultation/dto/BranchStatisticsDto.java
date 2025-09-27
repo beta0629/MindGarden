@@ -1,12 +1,11 @@
 package com.mindgarden.consultation.dto;
 
+import java.time.LocalDate;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-import java.util.Map;
 
 /**
  * 지점 통계 DTO

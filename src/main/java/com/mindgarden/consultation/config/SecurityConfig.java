@@ -53,7 +53,7 @@ public class SecurityConfig {
             
             // Rate Limiting 필터 추가 (RateLimitingConfig에서 자동 등록됨)
             
-            // CSRF 보호 설정
+            // CSRF 보호 설정 (보안 강화)
             .csrf(csrf -> csrf
                 .csrfTokenRepository(csrfTokenRepository())
                 .ignoringRequestMatchers(
@@ -71,6 +71,8 @@ public class SecurityConfig {
                     "/api/test-simple/**",  // 간단한 테스트 API
                     "/api/test/**",  // 테스트 API
                     "/api/health/**",  // 헬스체크
+                    "/api/common-codes/group/MENU/active",  // 메뉴 구조만 CSRF 제외
+                    "/api/common-codes/group/NOTIFICATION_TYPE",  // 알림 타입만 CSRF 제외
                     "/api/admin/mappings/*/partial-refund",  // 부분 환불 API CSRF 제외
                     "/api/client/social-account",  // 소셜 계정 관리 API CSRF 제외
                     "/api/privacy-consent/**",  // 개인정보 동의 API CSRF 제외
@@ -120,7 +122,8 @@ public class SecurityConfig {
                     "/api/test/**",  // 테스트 API
                     "/api/local-test/**",  // 로컬 테스트 API (로컬 환경에서만 활성화)
                     "/api/health/**",  // 시스템 헬스체크
-                    "/api/common-codes/**",  // 공통코드 API 허용
+                    "/api/common-codes/group/MENU/active",  // 메뉴 구조만 허용
+                    "/api/common-codes/group/NOTIFICATION_TYPE",  // 알림 타입만 허용
                     "/error",
                     "/actuator/health",
                     "/actuator/info"

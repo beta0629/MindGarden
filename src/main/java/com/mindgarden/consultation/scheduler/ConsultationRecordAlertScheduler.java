@@ -2,13 +2,10 @@ package com.mindgarden.consultation.scheduler;
 
 import java.time.LocalDate;
 import java.util.Map;
-
+import com.mindgarden.consultation.service.PlSqlConsultationRecordAlertService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import com.mindgarden.consultation.service.PlSqlConsultationRecordAlertService;
-
 import lombok.extern.slf4j.Slf4j;
 
 /**

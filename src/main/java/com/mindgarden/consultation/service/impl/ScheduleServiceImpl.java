@@ -932,8 +932,16 @@ public class ScheduleServiceImpl implements ScheduleService {
                 mapping.getClient().getId().equals(clientId)) {
                 
                 try {
-                    mapping.useSession();
-                    mappingRepository.save(mapping);
+                    // 매핑을 다시 조회하여 최신 상태 확인
+                    ConsultantClientMapping freshMapping = mappingRepository.findById(mapping.getId())
+                            .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mapping.getId()));
+                    
+                    log.info("🔍 매핑 상태 확인: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}", 
+                            freshMapping.getId(), freshMapping.getTotalSessions(), 
+                            freshMapping.getUsedSessions(), freshMapping.getRemainingSessions());
+                    
+                    freshMapping.useSession();
+                    mappingRepository.save(freshMapping);
                     
                     // 🔄 회기 사용 후 전체 시스템 동기화
                     try {

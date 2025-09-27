@@ -257,18 +257,19 @@ export const DEFAULT_CONSULTATION_DURATION = CONSULTATION_DURATIONS.SIXTY_MINUTE
 
 export const BREAK_TIME_MINUTES = 10;
 
-// ==================== 영업 시간 ====================
+// ==================== 영업 시간 (동적 로딩) ====================
+// 실제 값은 businessTimeUtils.js에서 동적으로 로딩됩니다
 export const BUSINESS_HOURS = {
-  START: '10:00',
-  END: '20:00',
-  LUNCH_START: '12:00',
-  LUNCH_END: '13:00'
+  START: '10:00',  // 기본값, 실제로는 서버에서 로딩
+  END: '20:00',    // 기본값, 실제로는 서버에서 로딩
+  LUNCH_START: '12:00',  // 기본값, 실제로는 서버에서 로딩
+  LUNCH_END: '13:00'     // 기본값, 실제로는 서버에서 로딩
 };
 
 export const BUSINESS_HOURS_DISPLAY = {
-  START: '10:00',
-  END: '20:00',
-  LUNCH: '12:00 - 13:00'
+  START: '10:00',  // 기본값, 실제로는 서버에서 로딩
+  END: '20:00',    // 기본값, 실제로는 서버에서 로딩
+  LUNCH: '12:00 - 13:00'  // 기본값, 실제로는 서버에서 로딩
 };
 
 // ==================== 시간 슬롯 관련 ====================

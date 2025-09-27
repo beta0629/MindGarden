@@ -39,9 +39,34 @@ test-data/
 config/examples/
 config/shell-scripts/
 
-# Application
+# Application - 민감한 설정 파일들
 application-local.yml
 application-prod.yml
+application-production.yml
+application-*.yml
+*.properties
+
+# Environment variables - 보안상 중요
+.env
+.env.*
+.env.local
+.env.production
+.env.staging
+deployment/production-env-template.sh
+deployment/*.env*
+
+# Configuration templates with sensitive data
+*-template.*
+*template*
+config/examples/
+config/shell-scripts/
+deployment/*template*
+
+# API Keys and Secrets
+**/api-keys/
+**/secrets/
+**/credentials/
+**/auth-keys/
 
 # Database
 *.db

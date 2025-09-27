@@ -226,8 +226,38 @@ jobs:
           # PL/SQL 프로시저 등록
           echo "🔧 PL/SQL 프로시저 등록 시작..."
           if [ -f /tmp/production_all_missing_procedures.sql ]; then
-            mysql -u root -p${MYSQL_ROOT_PASSWORD} ${MYSQL_DATABASE} < /tmp/production_all_missing_procedures.sql
-            echo "✅ 모든 누락된 PL/SQL 프로시저 등록 완료"
+            echo "📋 MySQL 연결 정보 확인..."
+            echo "DB_HOST: ${DB_HOST:-localhost}"
+            echo "DB_USER: ${DB_USER:-root}"
+            echo "DB_NAME: ${DB_NAME:-mindgarden}"
+            
+            # MySQL 연결 테스트
+            mysql -h ${DB_HOST:-localhost} -u ${DB_USER:-root} -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1;" ${DB_NAME:-mindgarden}
+            
+            if [ $? -eq 0 ]; then
+              echo "✅ MySQL 연결 성공 - 프로시저 등록 시작"
+              mysql -h ${DB_HOST:-localhost} -u ${DB_USER:-root} -p${MYSQL_ROOT_PASSWORD} ${DB_NAME:-mindgarden} < /tmp/production_all_missing_procedures.sql
+              
+              if [ $? -eq 0 ]; then
+                echo "✅ 모든 누락된 PL/SQL 프로시저 등록 완료"
+                
+                # 등록된 프로시저 확인
+                echo "📋 등록된 프로시저 목록:"
+                mysql -h ${DB_HOST:-localhost} -u ${DB_USER:-root} -p${MYSQL_ROOT_PASSWORD} ${DB_NAME:-mindgarden} -e "
+                SELECT ROUTINE_NAME, CREATED 
+                FROM information_schema.ROUTINES 
+                WHERE ROUTINE_SCHEMA = DATABASE() 
+                AND ROUTINE_TYPE = 'PROCEDURE' 
+                ORDER BY CREATED DESC;
+                "
+              else
+                echo "❌ PL/SQL 프로시저 등록 실패"
+                exit 1
+              fi
+            else
+              echo "❌ MySQL 연결 실패 - 프로시저 등록 건너뜀"
+            fi
+            
             rm -f /tmp/production_all_missing_procedures.sql
           else
             echo "⚠️ PL/SQL 프로시저 파일을 찾을 수 없습니다"

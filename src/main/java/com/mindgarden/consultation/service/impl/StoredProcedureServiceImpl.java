@@ -203,4 +203,83 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
             throw new RuntimeException("프로시저 실행에 실패했습니다: " + e.getMessage(), e);
         }
     }
+    
+    @Override
+    @Transactional
+    public Map<String, Object> updateMappingInfo(Long mappingId, String newPackageName, 
+                                                Double newPackagePrice, Integer newTotalSessions, String updatedBy) {
+        log.info("🔄 매핑 정보 수정 프로시저 호출: mappingId={}, packageName={}, price={}, sessions={}, updatedBy={}", 
+                mappingId, newPackageName, newPackagePrice, newTotalSessions, updatedBy);
+        
+        try {
+            return jdbcTemplate.execute(
+                connection -> connection.prepareCall("{CALL UpdateMappingInfo(?, ?, ?, ?, ?, ?, ?)}"),
+                (CallableStatementCallback<Map<String, Object>>) cs -> {
+                    cs.setLong(1, mappingId);
+                    cs.setString(2, newPackageName);
+                    cs.setDouble(3, newPackagePrice);
+                    cs.setInt(4, newTotalSessions);
+                    cs.setString(5, updatedBy);
+                    cs.registerOutParameter(6, Types.BOOLEAN); // p_success
+                    cs.registerOutParameter(7, Types.VARCHAR); // p_message
+                    
+                    cs.execute();
+                    
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("success", cs.getBoolean(6));
+                    result.put("message", cs.getString(7));
+                    result.put("mappingId", mappingId);
+                    result.put("newPackageName", newPackageName);
+                    result.put("newPackagePrice", newPackagePrice);
+                    result.put("newTotalSessions", newTotalSessions);
+                    result.put("updatedBy", updatedBy);
+                    
+                    log.info("✅ 매핑 정보 수정 완료: success={}, message={}", 
+                            result.get("success"), result.get("message"));
+                    
+                    return result;
+                }
+            );
+        } catch (Exception e) {
+            log.error("❌ 매핑 정보 수정 실패: mappingId={}", mappingId, e);
+            throw new RuntimeException("매핑 정보 수정에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> checkMappingUpdatePermission(Long mappingId, Long userId, String userRole) {
+        log.info("🔍 매핑 수정 권한 확인: mappingId={}, userId={}, userRole={}", 
+                mappingId, userId, userRole);
+        
+        try {
+            return jdbcTemplate.execute(
+                connection -> connection.prepareCall("{CALL CheckMappingUpdatePermission(?, ?, ?, ?, ?)}"),
+                (CallableStatementCallback<Map<String, Object>>) cs -> {
+                    cs.setLong(1, mappingId);
+                    cs.setLong(2, userId);
+                    cs.setString(3, userRole);
+                    cs.registerOutParameter(4, Types.BOOLEAN); // p_can_update
+                    cs.registerOutParameter(5, Types.VARCHAR); // p_reason
+                    
+                    cs.execute();
+                    
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("canUpdate", cs.getBoolean(4));
+                    result.put("reason", cs.getString(5));
+                    result.put("mappingId", mappingId);
+                    result.put("userId", userId);
+                    result.put("userRole", userRole);
+                    
+                    log.info("✅ 매핑 수정 권한 확인 완료: canUpdate={}, reason={}", 
+                            result.get("canUpdate"), result.get("reason"));
+                    
+                    return result;
+                }
+            );
+        } catch (Exception e) {
+            log.error("❌ 매핑 수정 권한 확인 실패: mappingId={}, userId={}", mappingId, userId, e);
+            throw new RuntimeException("매핑 수정 권한 확인에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
 }

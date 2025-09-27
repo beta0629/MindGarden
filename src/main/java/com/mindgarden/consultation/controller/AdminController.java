@@ -562,6 +562,73 @@ public class AdminController {
         }
     }
 
+    // ==================== 매핑 수정 시스템 ====================
+    
+    /**
+     * 매핑 정보 수정 (ERP 연동)
+     */
+    @PostMapping("/mappings/{mappingId}/update")
+    public ResponseEntity<?> updateMappingInfo(
+            @PathVariable Long mappingId,
+            @RequestBody Map<String, Object> updateRequest,
+            HttpSession session) {
+        try {
+            log.info("🔄 매핑 정보 수정 요청: mappingId={}, request={}", mappingId, updateRequest);
+            
+            // 세션에서 현재 사용자 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 권한 확인
+            Map<String, Object> permissionResult = storedProcedureService.checkMappingUpdatePermission(
+                mappingId, currentUser.getId(), currentUser.getRole().toString());
+            
+            if (!(Boolean) permissionResult.get("canUpdate")) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", permissionResult.get("reason")
+                ));
+            }
+            
+            // 요청 데이터 추출
+            String newPackageName = (String) updateRequest.get("packageName");
+            Double newPackagePrice = ((Number) updateRequest.get("packagePrice")).doubleValue();
+            Integer newTotalSessions = ((Number) updateRequest.get("totalSessions")).intValue();
+            
+            // 매핑 정보 수정 (PL/SQL 프로시저 호출)
+            Map<String, Object> updateResult = storedProcedureService.updateMappingInfo(
+                mappingId, newPackageName, newPackagePrice, newTotalSessions, currentUser.getName());
+            
+            if ((Boolean) updateResult.get("success")) {
+                log.info("✅ 매핑 정보 수정 완료: mappingId={}", mappingId);
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", updateResult.get("message"),
+                    "data", updateResult
+                ));
+            } else {
+                log.error("❌ 매핑 정보 수정 실패: mappingId={}, message={}", 
+                         mappingId, updateResult.get("message"));
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", updateResult.get("message")
+                ));
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ 매핑 정보 수정 실패: mappingId={}", mappingId, e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "매핑 정보 수정에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
     // ==================== 입금 승인 시스템 ====================
 
     /**

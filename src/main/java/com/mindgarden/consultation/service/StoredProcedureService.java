@@ -45,4 +45,25 @@ public interface StoredProcedureService {
      * @return 실행 결과
      */
     List<Map<String, Object>> executeProcedure(String procedureName, Map<String, Object> parameters);
+    
+    /**
+     * 매핑 정보 수정 (ERP 연동)
+     * @param mappingId 매핑 ID
+     * @param newPackageName 새로운 패키지명
+     * @param newPackagePrice 새로운 패키지 가격
+     * @param newTotalSessions 새로운 총 세션 수
+     * @param updatedBy 수정자
+     * @return 수정 결과
+     */
+    Map<String, Object> updateMappingInfo(Long mappingId, String newPackageName, 
+                                         Double newPackagePrice, Integer newTotalSessions, String updatedBy);
+    
+    /**
+     * 매핑 수정 권한 확인
+     * @param mappingId 매핑 ID
+     * @param userId 사용자 ID
+     * @param userRole 사용자 역할
+     * @return 권한 확인 결과
+     */
+    Map<String, Object> checkMappingUpdatePermission(Long mappingId, Long userId, String userRole);
 }

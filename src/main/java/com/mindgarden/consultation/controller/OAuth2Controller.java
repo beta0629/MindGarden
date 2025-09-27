@@ -10,6 +10,7 @@ import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SocialLoginResponse;
 import com.mindgarden.consultation.dto.SocialUserInfo;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.OAuth2FactoryService;
 import com.mindgarden.consultation.service.OAuth2Service;
 import com.mindgarden.consultation.util.DashboardRedirectUtil;
@@ -42,6 +43,7 @@ public class OAuth2Controller {
 
     private final OAuth2FactoryService oauth2FactoryService;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final UserRepository userRepository;
     
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
     private String kakaoClientId;
@@ -272,33 +274,11 @@ public class OAuth2Controller {
                     // 새로운 세션 생성
                     session = request.getSession(true);
                     
-                    // 세션에 사용자 정보 저장 (UserInfo를 User 엔티티로 변환, 복호화된 데이터 사용)
-                    User user = new User();
-                    user.setId(userInfo.getId());
-                    user.setEmail(userInfo.getEmail());
+                    // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장 (이메일 로그인과 동일)
+                    User user = userRepository.findById(userInfo.getId())
+                        .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
                     
-                    // 이름과 닉네임 복호화해서 세션에 저장
-                    String decryptedName = null;
-                    String decryptedNickname = null;
-                    
-                    try {
-                        if (userInfo.getName() != null && !userInfo.getName().trim().isEmpty()) {
-                            decryptedName = encryptionUtil.safeDecrypt(userInfo.getName());
-                        }
-                        if (userInfo.getNickname() != null && !userInfo.getNickname().trim().isEmpty()) {
-                            decryptedNickname = encryptionUtil.safeDecrypt(userInfo.getNickname());
-                        }
-                    } catch (Exception e) {
-                        log.warn("사용자 정보 복호화 실패, 원본 데이터 사용: {}", e.getMessage());
-                        decryptedName = userInfo.getName();
-                        decryptedNickname = userInfo.getNickname();
-                    }
-                    
-                    user.setName(decryptedName);
-                    user.setNickname(decryptedNickname);
-                    user.setRole(UserRole.fromString(userInfo.getRole()));
-                    user.setProfileImageUrl(userInfo.getProfileImageUrl());
-                    
+                    // 세션에 완전한 User 객체 저장
                     SessionUtils.setCurrentUser(session, user);
                     
                     // SpringSecurity 인증 컨텍스트에도 사용자 정보 설정
@@ -486,33 +466,11 @@ public class OAuth2Controller {
                     // 새로운 세션 생성
                     session = request.getSession(true);
                     
-                    // 세션에 사용자 정보 저장 (UserInfo를 User 엔티티로 변환, 복호화된 데이터 사용)
-                    User user = new User();
-                    user.setId(userInfo.getId());
-                    user.setEmail(userInfo.getEmail());
+                    // 데이터베이스에서 완전한 User 객체를 가져와서 세션에 저장 (이메일 로그인과 동일)
+                    User user = userRepository.findById(userInfo.getId())
+                        .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
                     
-                    // 이름과 닉네임 복호화해서 세션에 저장
-                    String decryptedName = null;
-                    String decryptedNickname = null;
-                    
-                    try {
-                        if (userInfo.getName() != null && !userInfo.getName().trim().isEmpty()) {
-                            decryptedName = encryptionUtil.safeDecrypt(userInfo.getName());
-                        }
-                        if (userInfo.getNickname() != null && !userInfo.getNickname().trim().isEmpty()) {
-                            decryptedNickname = encryptionUtil.safeDecrypt(userInfo.getNickname());
-                        }
-                    } catch (Exception e) {
-                        log.warn("사용자 정보 복호화 실패, 원본 데이터 사용: {}", e.getMessage());
-                        decryptedName = userInfo.getName();
-                        decryptedNickname = userInfo.getNickname();
-                    }
-                    
-                    user.setName(decryptedName);
-                    user.setNickname(decryptedNickname);
-                    user.setRole(UserRole.fromString(userInfo.getRole()));
-                    user.setProfileImageUrl(userInfo.getProfileImageUrl());
-                    
+                    // 세션에 완전한 User 객체 저장
                     SessionUtils.setCurrentUser(session, user);
                     
                     // SpringSecurity 인증 컨텍스트에도 사용자 정보 설정

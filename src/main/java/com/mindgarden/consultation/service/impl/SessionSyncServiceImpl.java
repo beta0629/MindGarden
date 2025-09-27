@@ -80,17 +80,20 @@ public class SessionSyncServiceImpl implements SessionSyncService {
             ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
                     .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
             
-            // 1. 회기 사용 처리
-            mapping.useSession();
-            mappingRepository.save(mapping);
+            // 회기 사용은 이미 ScheduleServiceImpl에서 처리되었으므로 중복 처리하지 않음
+            log.info("📋 매핑 상태 확인: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}", 
+                    mappingId, mapping.getTotalSessions(), mapping.getUsedSessions(), mapping.getRemainingSessions());
             
-            // 2. 매핑 상태 검증
+            // 2. 회기 수 검증 (단회기 패키지 고려)
+            validateSessionCountsForUsage(mapping);
+            
+            // 3. 매핑 상태 검증
             validateMappingStatus(mapping);
             
-            // 3. 관련된 모든 매핑 동기화
+            // 4. 관련된 모든 매핑 동기화
             syncRelatedMappings(mapping);
             
-            // 4. 사용 로그 기록
+            // 5. 사용 로그 기록
             logSessionUsage(mappingId, "USAGE", 1, 
                           "상담 완료: consultantId=" + consultantId + ", clientId=" + clientId);
             
@@ -301,6 +304,40 @@ public class SessionSyncServiceImpl implements SessionSyncService {
                 "잔여 회기 수 음수: mappingId=%d, remaining=%d", 
                 mapping.getId(), remaining));
         }
+    }
+    
+    /**
+     * 회기 사용 후 검증 (단회기 패키지 고려)
+     */
+    private void validateSessionCountsForUsage(ConsultantClientMapping mapping) {
+        int total = mapping.getTotalSessions();
+        int used = mapping.getUsedSessions();
+        int remaining = mapping.getRemainingSessions();
+        
+        log.info("🔍 회기 사용 후 검증: mappingId={}, total={}, used={}, remaining={}", 
+                mapping.getId(), total, used, remaining);
+        
+        // 기본 회기 수 검증
+        if (total != (used + remaining)) {
+            throw new RuntimeException(String.format(
+                "회기 수 불일치: mappingId=%d, total=%d, used=%d, remaining=%d", 
+                mapping.getId(), total, used, remaining));
+        }
+        
+        // 단회기 패키지의 경우 remaining이 0이어도 정상
+        if (remaining < 0) {
+            throw new RuntimeException(String.format(
+                "잔여 회기 수 음수: mappingId=%d, remaining=%d", 
+                mapping.getId(), remaining));
+        }
+        
+        // 단회기 패키지인 경우 remaining이 0이면 정상적으로 완료된 상태
+        if (total == 1 && used == 1 && remaining == 0) {
+            log.info("✅ 단회기 패키지 정상 완료: mappingId={}", mapping.getId());
+            return;
+        }
+        
+        log.info("✅ 회기 사용 후 검증 완료: mappingId={}", mapping.getId());
     }
     
     /**

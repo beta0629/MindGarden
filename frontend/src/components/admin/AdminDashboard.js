@@ -793,7 +793,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/finance-dashboard')}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/erp/financial')}>
                             <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} finance-integrated`}>
                                 <FaDollarSign />
                             </div>

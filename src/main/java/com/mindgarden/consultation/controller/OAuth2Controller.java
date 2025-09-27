@@ -404,23 +404,26 @@ public class OAuth2Controller {
             HttpSession session) {
         
         if (error != null) {
+            String frontendUrl = getFrontendBaseUrl(request);
             return ResponseEntity.status(302)
-                .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode(error, StandardCharsets.UTF_8) + "&provider=KAKAO")
+                .header("Location", frontendUrl + "/login?error=" + URLEncoder.encode(error, StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
         
         if (code == null) {
             log.warn("카카오 OAuth2 콜백에서 인증 코드가 없습니다. error={}, state={}", error, state);
+            String frontendUrl = getFrontendBaseUrl(request);
             return ResponseEntity.status(302)
-                .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode("인증코드없음", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                .header("Location", frontendUrl + "/login?error=" + URLEncoder.encode("인증코드없음", StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
         
         String savedState = (String) session.getAttribute("oauth2_kakao_state");
         if (savedState != null && !savedState.equals(state)) {
             session.removeAttribute("oauth2_kakao_state");
+            String frontendUrl = getFrontendBaseUrl(request);
             return ResponseEntity.status(302)
-                .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode("보안검증실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                .header("Location", frontendUrl + "/login?error=" + URLEncoder.encode("보안검증실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
         
@@ -441,8 +444,9 @@ public class OAuth2Controller {
                     User currentUser = SessionUtils.getCurrentUser(session);
                     if (currentUser == null) {
                         log.error("계정 연동 모드에서 세션 사용자를 찾을 수 없음");
+                        String frontendUrl = getFrontendBaseUrl(request);
                         return ResponseEntity.status(302)
-                            .header("Location", frontendBaseUrl + "/mypage?error=" + URLEncoder.encode("세션만료", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                            .header("Location", frontendUrl + "/mypage?error=" + URLEncoder.encode("세션만료", StandardCharsets.UTF_8) + "&provider=KAKAO")
                             .build();
                     }
                     
@@ -463,13 +467,15 @@ public class OAuth2Controller {
                         log.info("카카오 계정 연동 성공: 기존 사용자 userId={}, 소셜 사용자 providerUserId={}", 
                                 currentUser.getId(), userInfo.getId());
                         
+                        String frontendUrl = getFrontendBaseUrl(request);
                         return ResponseEntity.status(302)
-                            .header("Location", frontendBaseUrl + "/mypage?success=" + URLEncoder.encode("연동완료", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                            .header("Location", frontendUrl + "/mypage?success=" + URLEncoder.encode("연동완료", StandardCharsets.UTF_8) + "&provider=KAKAO")
                             .build();
                     } catch (Exception e) {
                         log.error("카카오 계정 연동 실패", e);
+                        String frontendUrl = getFrontendBaseUrl(request);
                         return ResponseEntity.status(302)
-                            .header("Location", frontendBaseUrl + "/mypage?error=" + URLEncoder.encode("연동실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                            .header("Location", frontendUrl + "/mypage?error=" + URLEncoder.encode("연동실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
                             .build();
                     }
                 } else {
@@ -550,7 +556,8 @@ public class OAuth2Controller {
                 String name = response.getSocialUserInfo() != null ? response.getSocialUserInfo().getName() : "";
                 String nickname = response.getSocialUserInfo() != null ? response.getSocialUserInfo().getNickname() : "";
                 
-                String signupUrl = frontendBaseUrl + "/login?" +
+                String frontendUrl = getFrontendBaseUrl(request);
+                String signupUrl = frontendUrl + "/login?" +
                     "signup=required" +
                     "&provider=kakao" +
                     "&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8) +
@@ -561,14 +568,16 @@ public class OAuth2Controller {
                     .header("Location", signupUrl)
                     .build();
             } else {
+                String frontendUrl = getFrontendBaseUrl(request);
                 return ResponseEntity.status(302)
-                    .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode(response.getMessage(), StandardCharsets.UTF_8) + "&provider=KAKAO")
+                    .header("Location", frontendUrl + "/login?error=" + URLEncoder.encode(response.getMessage(), StandardCharsets.UTF_8) + "&provider=KAKAO")
                     .build();
             }
         } catch (Exception e) {
             log.error("카카오 OAuth2 콜백 처리 실패", e);
+            String frontendUrl = getFrontendBaseUrl(request);
             return ResponseEntity.status(302)
-                .header("Location", frontendBaseUrl + "/login?error=" + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
+                .header("Location", frontendUrl + "/login?error=" + URLEncoder.encode("처리실패", StandardCharsets.UTF_8) + "&provider=KAKAO")
                 .build();
         }
     }

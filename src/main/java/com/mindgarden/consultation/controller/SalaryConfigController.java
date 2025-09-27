@@ -49,6 +49,16 @@ public class SalaryConfigController {
                 ));
             }
             
+            // 급여 관리 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
+            if (!currentUser.getRole().isAdmin() && 
+                !currentUser.getRole().isBranchSuperAdmin() && 
+                !currentUser.getRole().isHeadquartersAdmin()) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "급여 관리 권한이 없습니다."
+                ));
+            }
+            
             // 급여 기산일 설정
             List<CommonCode> baseDateSettings = commonCodeService.getCodesByGroup("SALARY_BASE_DATE");
             
@@ -108,14 +118,16 @@ public class SalaryConfigController {
                 ));
             }
             
-            // 관리자 권한 확인
-            if (!"MASTER_ADMIN".equals(currentUser.getRole().name()) && 
-                !"BRANCH_SUPER_ADMIN".equals(currentUser.getRole().name())) {
-                return ResponseEntity.badRequest().body(Map.of(
+            // 급여 관리 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
+            if (!currentUser.getRole().isAdmin() && 
+                !currentUser.getRole().isBranchSuperAdmin() && 
+                !currentUser.getRole().isHeadquartersAdmin()) {
+                return ResponseEntity.status(403).body(Map.of(
                     "success", false,
-                    "message", "급여 설정 변경 권한이 없습니다."
+                    "message", "급여 관리 권한이 없습니다."
                 ));
             }
+            
             
             String baseDayType = (String) request.get("baseDayType"); // "LAST_DAY" 또는 숫자
             String paymentDay = String.valueOf(request.get("paymentDay"));

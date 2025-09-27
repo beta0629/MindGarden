@@ -254,6 +254,16 @@ public class SalaryManagementController {
                 ));
             }
             
+            // 급여/세금 관리 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
+            if (!currentUser.getRole().isAdmin() && 
+                !currentUser.getRole().isBranchSuperAdmin() && 
+                !currentUser.getRole().isHeadquartersAdmin()) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "급여/세금 관리 권한이 없습니다."
+                ));
+            }
+            
             log.info("세금 상세 조회: 사용자 {}, 계산 ID {}", currentUser.getName(), calculationId);
             String branchCode = currentUser.getBranchCode();
             Map<String, Object> taxDetails = salaryManagementService.getTaxDetails(calculationId, branchCode);
@@ -287,6 +297,16 @@ public class SalaryManagementController {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "로그인이 필요합니다. 세션을 확인해주세요."
+                ));
+            }
+            
+            // 급여/세금 관리 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
+            if (!currentUser.getRole().isAdmin() && 
+                !currentUser.getRole().isBranchSuperAdmin() && 
+                !currentUser.getRole().isHeadquartersAdmin()) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "급여/세금 관리 권한이 없습니다."
                 ));
             }
             

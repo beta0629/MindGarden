@@ -2493,6 +2493,16 @@ public class AdminController {
                 return ResponseEntity.status(401).body(response);
             }
             
+            // 세금 관리 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
+            if (!currentUser.getRole().isAdmin() && 
+                !currentUser.getRole().isBranchSuperAdmin() && 
+                !currentUser.getRole().isHeadquartersAdmin()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "세금 관리 권한이 없습니다.");
+                return ResponseEntity.status(403).body(response);
+            }
+            
             // 세금 계산 목록 조회 (임시 데이터)
             List<Map<String, Object>> taxCalculations = new ArrayList<>();
             
@@ -2533,6 +2543,16 @@ public class AdminController {
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(401).body(response);
+            }
+            
+            // 세금 관리 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
+            if (!currentUser.getRole().isAdmin() && 
+                !currentUser.getRole().isBranchSuperAdmin() && 
+                !currentUser.getRole().isHeadquartersAdmin()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "세금 관리 권한이 없습니다.");
+                return ResponseEntity.status(403).body(response);
             }
             
             // 세금 계산 항목 생성 로직 (향후 구현)

@@ -156,11 +156,11 @@ const CommonCodeManagement = () => {
     const loadCodeGroups = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await apiGet('/api/admin/common-codes/groups');
-            if (response.success && response.data) {
+            const response = await apiGet('/api/common-codes/groups/list');
+            if (response && response.length > 0) {
                 // 권한에 따라 코드 그룹 필터링
-                const filteredGroups = response.data.filter(group => {
-                    return hasCodeGroupPermission(group.codeGroup);
+                const filteredGroups = response.filter(groupCode => {
+                    return hasCodeGroupPermission(groupCode);
                 });
                 setCodeGroups(filteredGroups);
             } else {

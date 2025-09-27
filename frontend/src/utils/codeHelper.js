@@ -26,9 +26,14 @@ export const loadCodeGroupMetadata = async () => {
     }
     
     try {
-        const response = await apiGet('/api/admin/common-codes/group-metadata');
-        if (response.success && response.data) {
-            groupMetadataCache = response.data;
+        const response = await apiGet('/api/common-codes/groups/list');
+        if (response && response.length > 0) {
+            // 문자열 배열을 메타데이터 형태로 변환
+            groupMetadataCache = response.map(groupCode => ({
+                codeGroup: groupCode,
+                koreanName: getCodeGroupKoreanNameSync(groupCode),
+                icon: getCodeGroupIconSync(groupCode)
+            }));
             lastCacheTime = now;
             return groupMetadataCache;
         }

@@ -1,5 +1,6 @@
 package com.mindgarden.consultation.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,18 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 @ConditionalOnProperty(name = "development.security.oauth2.enabled", havingValue = "false")
 public class KakaoOAuth2Config {
 
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
+    private String clientId;
+
+    @Value("${spring.security.oauth2.client.registration.kakao.client-secret:dummy}")
+    private String clientSecret;
+
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${OAUTH2_BASE_URL:https://m-garden.co.kr}/login/oauth2/code/kakao}")
+    private String redirectUri;
+
+    @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,profile_image,account_email}")
+    private String scope;
+
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
         return new InMemoryClientRegistrationRepository(kakaoClientRegistration());
@@ -27,12 +40,12 @@ public class KakaoOAuth2Config {
 
     private ClientRegistration kakaoClientRegistration() {
         return ClientRegistration.withRegistrationId("kakao")
-                .clientId("cbb457cfb5f9351fd495be4af2b11a34") // 환경변수로 설정
-                .clientSecret("LH53SXuqZk7iEVeDkKfQuKxW0sdxYmEG") // 환경변수로 설정
+                .clientId(clientId)
+                .clientSecret(clientSecret)
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_POST)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
-                .scope("profile_nickname", "profile_image", "account_email")
+                .redirectUri(redirectUri)
+                .scope(scope.split(","))
                 .authorizationUri("https://kauth.kakao.com/oauth/authorize")
                 .tokenUri("https://kauth.kakao.com/oauth/token")
                 .userInfoUri("https://kapi.kakao.com/v2/user/me")

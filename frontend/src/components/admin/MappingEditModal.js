@@ -137,16 +137,14 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     const validateForm = () => {
         const newErrors = {};
 
+        // 패키지 선택 검사만 수행 (가격과 회기 수는 자동 설정되므로)
         if (!formData.packageName.trim()) {
             newErrors.packageName = '패키지를 선택해주세요.';
         }
 
-        if (!formData.packagePrice || formData.packagePrice <= 0) {
-            newErrors.packagePrice = '유효한 가격을 입력해주세요.';
-        }
-
-        if (!formData.totalSessions || formData.totalSessions <= 0) {
-            newErrors.totalSessions = '유효한 회기 수를 입력해주세요.';
+        // 패키지가 선택되었는지 확인
+        if (formData.packageName && (!formData.packagePrice || !formData.totalSessions)) {
+            newErrors.packageName = '패키지 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.';
         }
 
         setErrors(newErrors);
@@ -267,48 +265,44 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                             )}
                         </div>
 
-                        {/* 패키지 가격 */}
+                        {/* 패키지 가격 (읽기 전용) */}
                         <div className="form-group">
                             <label htmlFor="packagePrice">패키지 가격 *</label>
-                            <div className="price-input-wrapper">
+                            <div className="price-display-wrapper">
                                 <input
-                                    type="number"
+                                    type="text"
                                     id="packagePrice"
                                     name="packagePrice"
-                                    value={formData.packagePrice}
-                                    onChange={handleInputChange}
-                                    className={errors.packagePrice ? 'error' : ''}
-                                    disabled={loading}
-                                    min="0"
-                                    step="1000"
+                                    value={formData.packagePrice ? formData.packagePrice.toLocaleString() : ''}
+                                    className="readonly-input"
+                                    disabled={true}
+                                    readOnly
                                 />
                                 <span className="currency">원</span>
                             </div>
-                            {errors.packagePrice && (
-                                <span className="error-message">{errors.packagePrice}</span>
-                            )}
+                            <div className="field-description">
+                                패키지 선택 시 자동으로 설정됩니다
+                            </div>
                         </div>
 
-                        {/* 총 회기 수 */}
+                        {/* 총 회기 수 (읽기 전용) */}
                         <div className="form-group">
                             <label htmlFor="totalSessions">총 회기 수 *</label>
-                            <div className="sessions-input-wrapper">
+                            <div className="sessions-display-wrapper">
                                 <input
-                                    type="number"
+                                    type="text"
                                     id="totalSessions"
                                     name="totalSessions"
-                                    value={formData.totalSessions}
-                                    onChange={handleInputChange}
-                                    className={errors.totalSessions ? 'error' : ''}
-                                    disabled={loading}
-                                    min="1"
-                                    max="100"
+                                    value={formData.totalSessions || ''}
+                                    className="readonly-input"
+                                    disabled={true}
+                                    readOnly
                                 />
                                 <span className="unit">회기</span>
                             </div>
-                            {errors.totalSessions && (
-                                <span className="error-message">{errors.totalSessions}</span>
-                            )}
+                            <div className="field-description">
+                                패키지 선택 시 자동으로 설정됩니다
+                            </div>
                         </div>
 
                         {/* 주의사항 */}

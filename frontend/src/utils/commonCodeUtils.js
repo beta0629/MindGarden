@@ -137,18 +137,27 @@ export const getPackageOptions = async () => {
                 sessions = 1;
                 // SINGLE_30000 -> 30000
                 const priceStr = code.codeValue.replace('SINGLE_', '');
-                price = parseInt(priceStr);
+                price = parseInt(priceStr, 10);
+                // NaN 체크
+                if (isNaN(price)) {
+                    console.warn(`단회기 가격 파싱 실패: ${code.codeValue} -> ${priceStr}`);
+                    price = 30000; // 기본값
+                }
+                console.log(`단회기 옵션 처리: ${code.codeValue} -> ${sessions}회기, ${price}원`);
             }
             
             // korean_name이 있으면 그것을 사용, 없으면 code_label 사용
             const label = code.koreanName || code.codeLabel;
             
-            return {
+            const result = {
                 value: code.codeValue,
                 label: label,
                 sessions: sessions,
                 price: price
             };
+            
+            console.log(`패키지 옵션 생성:`, result);
+            return result;
         });
     } catch (error) {
         console.error('패키지 옵션 조회 실패:', error);

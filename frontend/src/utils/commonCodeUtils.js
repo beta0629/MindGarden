@@ -114,9 +114,12 @@ export const getGradeKoreanName = async (grade) => {
  */
 export const getPackageOptions = async () => {
     try {
+        console.log('🔍 getPackageOptions 시작');
         const codes = await getCommonCodes('CONSULTATION_PACKAGE');
+        console.log('📋 CONSULTATION_PACKAGE 코드들:', codes);
         
         return codes.map(code => {
+            console.log(`🔧 처리 중인 코드: ${code.codeValue}`);
             let sessions = 1; // 기본값
             let price = 50000; // 기본값
             

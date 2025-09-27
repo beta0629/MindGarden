@@ -576,11 +576,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                         className={paymentInfo.packageName ? 'package-selected' : ''}
                                     >
                                         <option value="">패키지를 선택하세요</option>
-                                        {packageOptions.map(pkg => (
-                                            <option key={pkg.value} value={pkg.label}>
-                                                {pkg.label} ({pkg.sessions}회기, {pkg.price.toLocaleString()}원)
-                                            </option>
-                                        ))}
+                                        {packageOptions.map(pkg => {
+                                            const displayPrice = isNaN(pkg.price) ? '가격 오류' : pkg.price.toLocaleString();
+                                            return (
+                                                <option key={pkg.value} value={pkg.label}>
+                                                    {pkg.label} ({pkg.sessions}회기, {displayPrice}원)
+                                                </option>
+                                            );
+                                        })}
                                     </select>
                                     {paymentInfo.packageName && (
                                         <div className="package-info">

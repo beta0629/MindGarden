@@ -46,7 +46,7 @@ public class OAuth2Controller {
     @Value("${spring.security.oauth2.client.registration.kakao.client-id:dummy}")
     private String kakaoClientId;
     
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${OAUTH2_BASE_URL:http://m-garden.co.kr}/api/auth/kakao/callback}")
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri}")
     private String kakaoRedirectUri;
     
     @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,account_email}")
@@ -55,7 +55,7 @@ public class OAuth2Controller {
     @Value("${spring.security.oauth2.client.registration.naver.client-id:dummy}")
     private String naverClientId;
     
-    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:${OAUTH2_BASE_URL:http://m-garden.co.kr}/api/auth/naver/callback}")
+    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri}")
     private String naverRedirectUri;
     
     @Value("${spring.security.oauth2.client.registration.naver.scope:name,email}")

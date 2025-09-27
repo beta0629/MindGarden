@@ -55,29 +55,57 @@ const HQDashboard = ({ user: propUser }) => {
             return;
         }
 
-        // 로그인 상태 확인 (propUser 또는 sessionUser 우선, sessionManager는 백업)
-        let currentUser = user;
-        if (!currentUser || !currentUser.role) {
-            // 백업으로 sessionManager 확인
-            currentUser = sessionManager.getUser();
+        // OAuth2 콜백 후 세션 확인을 위한 지연 처리
+        const checkSessionWithDelay = async () => {
+            // 로그인 상태 확인 (propUser 또는 sessionUser 우선, sessionManager는 백업)
+            let currentUser = user;
+            
+            // OAuth2 콜백 후 세션이 아직 설정되지 않았을 수 있으므로 API 직접 호출
             if (!currentUser || !currentUser.role) {
-                console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
-                console.log('👤 user:', user);
-                console.log('👤 sessionManager 사용자:', currentUser);
-                navigate('/login', { replace: true });
+                try {
+                    console.log('🔄 세션 API 직접 호출 시도...');
+                    const response = await fetch('/api/auth/current-user', {
+                        credentials: 'include',
+                        method: 'GET'
+                    });
+                    
+                    if (response.ok) {
+                        const userData = await response.json();
+                        if (userData && userData.role) {
+                            console.log('✅ API에서 사용자 정보 확인됨:', userData.role);
+                            currentUser = userData; // currentUser 업데이트
+                        }
+                    }
+                } catch (error) {
+                    console.log('❌ 세션 API 호출 실패:', error);
+                }
+                
+                // 백업으로 sessionManager 확인
+                if (!currentUser || !currentUser.role) {
+                    currentUser = sessionManager.getUser();
+                    if (!currentUser || !currentUser.role) {
+                        console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
+                        console.log('👤 user:', user);
+                        console.log('👤 sessionManager 사용자:', currentUser);
+                        navigate('/login', { replace: true });
+                        return;
+                    }
+                }
+            }
+
+            if (!['HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
+                console.log('❌ 본사 관리자 권한 없음, 일반 대시보드로 이동');
+                navigate('/dashboard', { replace: true });
                 return;
             }
-        }
 
-        if (!['HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
-            console.log('❌ 본사 관리자 권한 없음, 일반 대시보드로 이동');
-            navigate('/dashboard', { replace: true });
-            return;
-        }
+            console.log('✅ HQ Dashboard 접근 허용:', currentUser?.role);
+            loadDashboardData();
+        };
 
-        console.log('✅ HQ Dashboard 접근 허용:', currentUser?.role);
-        loadDashboardData();
-    }, [sessionLoading, user, navigate]); // isLoggedIn 제거
+        // OAuth2 콜백 후 세션 설정을 위한 지연
+        setTimeout(checkSessionWithDelay, 100);
+    }, [sessionLoading, user, isLoggedIn, navigate]);
 
     // 대시보드 데이터 로드
     const loadDashboardData = useCallback(async () => {

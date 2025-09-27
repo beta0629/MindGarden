@@ -37,7 +37,7 @@ public class KakaoOAuth2ServiceImpl extends AbstractOAuth2Service {
     @Value("${spring.security.oauth2.client.registration.kakao.client-secret:dummy}")
     private String clientSecret;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:http://m-garden.co.kr/api/auth/kakao/callback}")
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri}")
     private String redirectUri;
     
     public KakaoOAuth2ServiceImpl(

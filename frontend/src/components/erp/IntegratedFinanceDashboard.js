@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSession } from '../../contexts/SessionContext';
+import { sessionManager } from '../../utils/sessionManager';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import SimpleHeader from '../layout/SimpleHeader';
 import FinancialTransactionForm from './FinancialTransactionForm';
@@ -24,8 +26,9 @@ const formatNumber = (num) => {
  * 통합 재무 대시보드 컴포넌트
  * ERP와 회계 시스템을 통합한 수입/지출 관리 화면
  */
-const IntegratedFinanceDashboard = () => {
-  const { user } = useSession();
+const IntegratedFinanceDashboard = ({ user: propUser }) => {
+  const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,9 +42,75 @@ const IntegratedFinanceDashboard = () => {
   const [branches, setBranches] = useState([]);
   const [isHQUser, setIsHQUser] = useState(false);
 
+  // 현재 사용자 결정
+  const user = propUser || sessionUser;
+
+  // 세션 체크 및 권한 확인
   useEffect(() => {
-    initializeComponent();
-  }, []);
+    if (sessionLoading) {
+      console.log('⏳ 세션 로딩 중...');
+      return;
+    }
+
+    // OAuth2 콜백 후 세션 확인을 위한 지연 처리
+    const checkSessionWithDelay = async () => {
+      // 로그인 상태 확인 (propUser 또는 sessionUser 우선, sessionManager는 백업)
+      let currentUser = user;
+      
+      // OAuth2 콜백 후 세션이 아직 설정되지 않았을 수 있으므로 API 직접 호출
+      if (!currentUser || !currentUser.role) {
+        try {
+          console.log('🔄 세션 API 직접 호출 시도...');
+          const response = await fetch('/api/auth/current-user', {
+            credentials: 'include',
+            method: 'GET'
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            if (userData && userData.role) {
+              console.log('✅ API에서 사용자 정보 확인됨:', userData.role);
+              currentUser = userData; // currentUser 업데이트
+            }
+          }
+        } catch (error) {
+          console.log('❌ 세션 API 호출 실패:', error);
+        }
+        
+        // 백업으로 sessionManager 확인
+        if (!currentUser || !currentUser.role) {
+          currentUser = sessionManager.getUser();
+          if (!currentUser || !currentUser.role) {
+            console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
+            console.log('👤 propUser:', propUser);
+            console.log('👤 sessionUser:', sessionUser);
+            console.log('👤 sessionManager 사용자:', currentUser);
+            navigate('/login', { replace: true });
+            return;
+          }
+        }
+      }
+
+      // 재무 대시보드 접근 권한 확인 (관리자, 본사 관리자)
+      if (!['ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
+        console.log('❌ 재무 대시보드 접근 권한 없음, 일반 대시보드로 이동');
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+
+      console.log('✅ IntegratedFinanceDashboard 접근 허용:', currentUser?.role);
+      initializeComponent();
+    };
+
+    // OAuth2 콜백 후 세션 설정을 위한 지연
+    setTimeout(checkSessionWithDelay, 100);
+  }, [sessionLoading, user, isLoggedIn, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      initializeComponent();
+    }
+  }, [user]);
   
   useEffect(() => {
     if (selectedBranch) {

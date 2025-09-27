@@ -54,23 +54,49 @@ const AdminDashboard = ({ user: propUser }) => {
             return;
         }
 
-        // 로그인 상태 확인 (propUser 또는 sessionUser 우선, sessionManager는 백업)
-        let currentUser = propUser || sessionUser;
-        if (!currentUser || !currentUser.role) {
-            // 백업으로 sessionManager 확인
-            currentUser = sessionManager.getUser();
+        // OAuth2 콜백 후 세션 확인을 위한 지연 처리
+        const checkSessionWithDelay = async () => {
+            // 로그인 상태 확인 (propUser 또는 sessionUser 우선, sessionManager는 백업)
+            let currentUser = propUser || sessionUser;
+            
+            // OAuth2 콜백 후 세션이 아직 설정되지 않았을 수 있으므로 API 직접 호출
             if (!currentUser || !currentUser.role) {
-                console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
-                console.log('👤 propUser:', propUser);
-                console.log('👤 sessionUser:', sessionUser);
-                console.log('👤 sessionManager 사용자:', currentUser);
-                navigate('/login', { replace: true });
-                return;
+                try {
+                    console.log('🔄 세션 API 직접 호출 시도...');
+                    const response = await fetch('/api/auth/current-user', {
+                        credentials: 'include',
+                        method: 'GET'
+                    });
+                    
+                    if (response.ok) {
+                        const userData = await response.json();
+                        if (userData && userData.role) {
+                            console.log('✅ API에서 사용자 정보 확인됨:', userData.role);
+                            return; // 성공적으로 사용자 정보 확인됨
+                        }
+                    }
+                } catch (error) {
+                    console.log('❌ 세션 API 호출 실패:', error);
+                }
+                
+                // 백업으로 sessionManager 확인
+                currentUser = sessionManager.getUser();
+                if (!currentUser || !currentUser.role) {
+                    console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
+                    console.log('👤 propUser:', propUser);
+                    console.log('👤 sessionUser:', sessionUser);
+                    console.log('👤 sessionManager 사용자:', currentUser);
+                    navigate('/login', { replace: true });
+                    return;
+                }
             }
-        }
 
-        console.log('✅ AdminDashboard 접근 허용:', currentUser?.role);
-    }, [sessionLoading, propUser, sessionUser, navigate]); // isLoggedIn 제거
+            console.log('✅ AdminDashboard 접근 허용:', currentUser?.role);
+        };
+
+        // OAuth2 콜백 후 세션 설정을 위한 지연
+        setTimeout(checkSessionWithDelay, 100);
+    }, [sessionLoading, propUser, sessionUser, isLoggedIn, navigate]);
 
     const showToast = useCallback((message, type = 'success') => {
         setToastMessage(message);

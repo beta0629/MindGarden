@@ -37,7 +37,7 @@ public class NaverOAuth2ServiceImpl extends AbstractOAuth2Service {
     @Value("${spring.security.oauth2.client.registration.naver.client-secret:dummy}")
     private String clientSecret;
 
-    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:http://m-garden.co.kr/api/auth/naver/callback}")
+    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri}")
     private String redirectUri;
     
     public NaverOAuth2ServiceImpl(

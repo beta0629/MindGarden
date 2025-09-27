@@ -17,6 +17,7 @@ import ConsultantTransferHistory from './mapping/ConsultantTransferHistory';
 import PartialRefundModal from './mapping/PartialRefundModal';
 import PaymentConfirmationModal from './PaymentConfirmationModal';
 import MappingDetailModal from './mapping/MappingDetailModal';
+import MappingEditModal from './MappingEditModal';
 import './MappingManagement.css';
 
 /**
@@ -56,6 +57,10 @@ const MappingManagement = () => {
     // 상세보기 관련 상태
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [detailMapping, setDetailMapping] = useState(null);
+    
+    // 매핑 수정 관련 상태
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editMapping, setEditMapping] = useState(null);
 
     // 데이터 로드
     useEffect(() => {
@@ -437,6 +442,22 @@ const MappingManagement = () => {
         }
     };
 
+    // 매핑 수정 핸들러들
+    const handleEditMapping = (mapping) => {
+        console.log('🔄 매핑 수정 요청:', mapping);
+        setEditMapping(mapping);
+        setShowEditModal(true);
+    };
+
+    const handleEditSuccess = (updatedData) => {
+        console.log('✅ 매핑 수정 성공:', updatedData);
+        // 매핑 목록 새로고침
+        loadMappings();
+        // 수정 모달 닫기
+        setShowEditModal(false);
+        setEditMapping(null);
+    };
+
     // 필터 핸들러들
     const handleStatusChange = (status) => {
         setFilterStatus(status);
@@ -591,9 +612,7 @@ const MappingManagement = () => {
                                 onApprove={handleApproveMapping}
                                 onReject={handleRejectMapping}
                                 onConfirmPayment={handleConfirmPayment}
-                                onEdit={(mapping) => {
-                                    notificationManager.info('매핑 수정 기능은 준비 중입니다.');
-                                }}
+                                onEdit={handleEditMapping}
                                 onView={handleViewMapping}
                                 onTransfer={handleTransferConsultant}
                                 onViewTransferHistory={handleViewTransferHistory}
@@ -839,6 +858,17 @@ const MappingManagement = () => {
                     </div>
                 </div>
             )}
+
+            {/* 매핑 수정 모달 */}
+            <MappingEditModal
+                isOpen={showEditModal}
+                onClose={() => {
+                    setShowEditModal(false);
+                    setEditMapping(null);
+                }}
+                mapping={editMapping}
+                onSuccess={handleEditSuccess}
+            />
             </div>
         </SimpleLayout>
     );

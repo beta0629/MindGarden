@@ -114,24 +114,38 @@ export const getGradeKoreanName = async (grade) => {
  */
 export const getPackageOptions = async () => {
     try {
-        const codes = await getCommonCodes('PACKAGE_TYPE');
+        const codes = await getCommonCodes('CONSULTATION_PACKAGE');
         
         return codes.map(code => {
-            let sessions = 10;
-            let price = 500000;
+            let sessions = 1; // 기본값
+            let price = 50000; // 기본값
             
-            try {
-                const extraData = JSON.parse(code.extraData || '{}');
-                sessions = extraData.sessions || 10;
-                price = extraData.price || 500000;
-            } catch (e) {
-                // extraData가 없거나 파싱 실패 시 기본값 사용
-                console.warn(`패키지 데이터 파싱 실패 (${code.codeValue}):`, e);
+            // 코드 값에 따라 세션 수와 가격 설정
+            if (code.codeValue === 'BASIC') {
+                sessions = 20;
+                price = 200000;
+            } else if (code.codeValue === 'STANDARD') {
+                sessions = 20;
+                price = 400000;
+            } else if (code.codeValue === 'PREMIUM') {
+                sessions = 20;
+                price = 600000;
+            } else if (code.codeValue === 'VIP') {
+                sessions = 20;
+                price = 1000000;
+            } else if (code.codeValue.startsWith('SINGLE_')) {
+                sessions = 1;
+                // SINGLE_30000 -> 30000
+                const priceStr = code.codeValue.replace('SINGLE_', '');
+                price = parseInt(priceStr);
             }
+            
+            // korean_name이 있으면 그것을 사용, 없으면 code_label 사용
+            const label = code.koreanName || code.codeLabel;
             
             return {
                 value: code.codeValue,
-                label: code.codeLabel,
+                label: label,
                 sessions: sessions,
                 price: price
             };
@@ -140,9 +154,11 @@ export const getPackageOptions = async () => {
         console.error('패키지 옵션 조회 실패:', error);
         // 기본값 반환
         return [
-            { value: 'basic_10', label: '기본 10회기', sessions: 10, price: 500000 },
-            { value: 'basic_20', label: '기본 20회기', sessions: 20, price: 900000 },
-            { value: 'premium_10', label: '프리미엄 10회기', sessions: 10, price: 700000 }
+            { value: 'BASIC', label: '기본 패키지 (20회기, 200,000원)', sessions: 20, price: 200000 },
+            { value: 'STANDARD', label: '표준 패키지 (20회기, 400,000원)', sessions: 20, price: 400000 },
+            { value: 'PREMIUM', label: '프리미엄 패키지 (20회기, 600,000원)', sessions: 20, price: 600000 },
+            { value: 'VIP', label: 'VIP 패키지 (20회기, 1,000,000원)', sessions: 20, price: 1000000 },
+            { value: 'SINGLE_30000', label: '단회기 (30,000원)', sessions: 1, price: 30000 }
         ];
     }
 };

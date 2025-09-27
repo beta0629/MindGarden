@@ -1,19 +1,16 @@
 package com.mindgarden.consultation.service.impl;
 
-import com.mindgarden.consultation.entity.CommonCode;
-import com.mindgarden.consultation.repository.CommonCodeRepository;
-import com.mindgarden.consultation.service.BusinessTimeService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import com.mindgarden.consultation.repository.CommonCodeRepository;
+import com.mindgarden.consultation.service.BusinessTimeService;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 업무 시간 및 정책 관리 서비스 구현
@@ -139,19 +136,20 @@ public class BusinessTimeServiceImpl implements BusinessTimeService {
      */
     private LocalTime getTimeFromCode(String groupCode, String codeValue, LocalTime defaultValue) {
         try {
-            List<CommonCode> codes = commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue);
-            if (!codes.isEmpty()) {
-                String timeStr = codes.get(0).getCodeLabel();
-                // "업무 시작시간 (10:00)" -> "10:00" 추출
-                if (timeStr.contains("(") && timeStr.contains(")")) {
-                    timeStr = timeStr.substring(timeStr.indexOf("(") + 1, timeStr.indexOf(")"));
-                }
-                return LocalTime.parse(timeStr, timeFormatter);
-            }
+            return commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue)
+                .map(code -> {
+                    String timeStr = code.getCodeLabel();
+                    // "업무 시작시간 (10:00)" -> "10:00" 추출
+                    if (timeStr.contains("(") && timeStr.contains(")")) {
+                        timeStr = timeStr.substring(timeStr.indexOf("(") + 1, timeStr.indexOf(")"));
+                    }
+                    return LocalTime.parse(timeStr, timeFormatter);
+                })
+                .orElse(defaultValue);
         } catch (Exception e) {
             log.warn("시간 코드 조회 실패: {}.{}, 기본값 사용: {}", groupCode, codeValue, defaultValue, e);
+            return defaultValue;
         }
-        return defaultValue;
     }
     
     /**
@@ -159,21 +157,22 @@ public class BusinessTimeServiceImpl implements BusinessTimeService {
      */
     private int getIntFromCode(String groupCode, String codeValue, int defaultValue) {
         try {
-            List<CommonCode> codes = commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue);
-            if (!codes.isEmpty()) {
-                String intStr = codes.get(0).getCodeLabel();
-                // "시간 슬롯 간격 (30분)" -> "30" 추출
-                if (intStr.contains("(") && intStr.contains(")")) {
-                    intStr = intStr.substring(intStr.indexOf("(") + 1, intStr.indexOf(")"));
-                    // "30분" -> "30" 추출
-                    intStr = intStr.replaceAll("[^0-9]", "");
-                }
-                return Integer.parseInt(intStr);
-            }
+            return commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue)
+                .map(code -> {
+                    String intStr = code.getCodeLabel();
+                    // "시간 슬롯 간격 (30분)" -> "30" 추출
+                    if (intStr.contains("(") && intStr.contains(")")) {
+                        intStr = intStr.substring(intStr.indexOf("(") + 1, intStr.indexOf(")"));
+                        // "30분" -> "30" 추출
+                        intStr = intStr.replaceAll("[^0-9]", "");
+                    }
+                    return Integer.parseInt(intStr);
+                })
+                .orElse(defaultValue);
         } catch (Exception e) {
             log.warn("정수 코드 조회 실패: {}.{}, 기본값 사용: {}", groupCode, codeValue, defaultValue, e);
+            return defaultValue;
         }
-        return defaultValue;
     }
     
     /**
@@ -181,26 +180,25 @@ public class BusinessTimeServiceImpl implements BusinessTimeService {
      */
     private void updateCommonCode(String groupCode, String codeValue, Object newValue) {
         try {
-            List<CommonCode> codes = commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue);
-            if (!codes.isEmpty()) {
-                CommonCode code = codes.get(0);
-                String newLabel = code.getCodeLabel();
-                
-                // 시간 형식인 경우
-                if (newValue instanceof String && ((String) newValue).matches("\\d{2}:\\d{2}")) {
-                    newLabel = newLabel.replaceAll("\\(.*\\)", "(" + newValue + ")");
-                } else {
-                    // 숫자인 경우
-                    newLabel = newLabel.replaceAll("\\(.*\\)", "(" + newValue + (codeValue.contains("HOURS") ? "시간" : 
-                                                                             codeValue.contains("DAYS") ? "일" : "분") + ")");
-                }
-                
-                code.setCodeLabel(newLabel);
-                code.setKoreanName(newLabel);
-                commonCodeRepository.save(code);
-                
-                log.info("✅ 공통 코드 업데이트: {}.{} = {}", groupCode, codeValue, newLabel);
-            }
+            commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue)
+                .ifPresent(code -> {
+                    String newLabel = code.getCodeLabel();
+                    
+                    // 시간 형식인 경우
+                    if (newValue instanceof String && ((String) newValue).matches("\\d{2}:\\d{2}")) {
+                        newLabel = newLabel.replaceAll("\\(.*\\)", "(" + newValue + ")");
+                    } else {
+                        // 숫자인 경우
+                        newLabel = newLabel.replaceAll("\\(.*\\)", "(" + newValue + (codeValue.contains("HOURS") ? "시간" : 
+                                                                                 codeValue.contains("DAYS") ? "일" : "분") + ")");
+                    }
+                    
+                    code.setCodeLabel(newLabel);
+                    code.setKoreanName(newLabel);
+                    commonCodeRepository.save(code);
+                    
+                    log.info("✅ 공통 코드 업데이트: {}.{} = {}", groupCode, codeValue, newLabel);
+                });
         } catch (Exception e) {
             log.error("공통 코드 업데이트 실패: {}.{}", groupCode, codeValue, e);
         }

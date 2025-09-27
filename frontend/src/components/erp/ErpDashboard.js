@@ -266,7 +266,7 @@ const ErpDashboard = ({ user: propUser }) => {
           <ErpButton
             variant="primary"
             size="large"
-            onClick={() => navigate('/erp/finance-dashboard')}
+            onClick={() => navigate('/admin/erp/financial')}
             style={{ 
               width: '100%', 
               backgroundColor: '#8e44ad', 

@@ -59,16 +59,28 @@ jobs:
           echo "SSH 연결 테스트 성공: $(date)"
           echo "서버 정보: $(uname -a)"
           
-          # SSH 포트 차단 문제 해결
+          # SSH 포트 차단 문제 일시 해결 (한 번만)
           echo "🔧 방화벽 상태 확인..."
           sudo ufw status
           
-          # ufw가 SSH를 차단하고 있다면 비활성화
+          # ufw가 SSH를 차단하고 있다면 일시 비활성화
           if sudo ufw status | grep -q "Status: active"; then
-            echo "⚠️ ufw가 활성화되어 있음 - SSH 포트 차단 문제 해결"
+            echo "⚠️ ufw가 활성화되어 있음 - SSH 포트 차단 문제 일시 해결"
             sudo ufw disable
-            sudo systemctl disable ufw
-            echo "✅ ufw 비활성화 완료"
+            echo "✅ ufw 일시 비활성화 완료"
+            
+            # 배포 완료 후 다시 ufw 활성화 (SSH 포트 허용)
+            echo "🔧 배포 완료 후 방화벽 재설정 준비..."
+            sudo ufw --force reset
+            sudo ufw default deny incoming
+            sudo ufw default allow outgoing
+            sudo ufw allow 22/tcp    # SSH
+            sudo ufw allow 80/tcp    # HTTP
+            sudo ufw allow 443/tcp   # HTTPS
+            sudo ufw allow 3306/tcp  # MySQL
+            sudo ufw --force enable
+            sudo systemctl enable ufw
+            echo "✅ ufw 재활성화 완료 (SSH 포트 허용)"
           else
             echo "✅ ufw가 이미 비활성화되어 있음"
           fi

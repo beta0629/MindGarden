@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../styles/glassmorphism.css';
+import '../../../styles/glassmorphism.css';
 
 /**
  * ERP 공통 버튼 컴포넌트 (리퀴드 글래스 효과 적용)

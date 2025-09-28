@@ -91,8 +91,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         }
       }
 
-      // 재무 대시보드 접근 권한 확인 (관리자, 본사 관리자)
-      if (!['ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
+      // 재무 대시보드 접근 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
+      if (!['ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
         console.log('❌ 재무 대시보드 접근 권한 없음, 일반 대시보드로 이동');
         navigate('/dashboard', { replace: true });
         return;

@@ -8,6 +8,7 @@ import ErpButton from './common/ErpButton';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErpHeader from './common/ErpHeader';
 import axios from 'axios';
+import '../../styles/glassmorphism.css';
 
 /**
  * ERP 메인 대시보드 컴포넌트
@@ -143,8 +144,9 @@ const ErpDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <SimpleLayout>
-      <div style={{ padding: '24px', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+    <div className="glass-background">
+      <SimpleLayout>
+        <div style={{ padding: '24px', minHeight: '100vh' }}>
         <ErpHeader
           title="ERP 관리 시스템"
           subtitle="상담사 비품 구매 및 예산 관리"
@@ -299,8 +301,9 @@ const ErpDashboard = ({ user: propUser }) => {
           최근 활동 내역이 없습니다.
         </div>
       </ErpCard>
-      </div>
-    </SimpleLayout>
+        </div>
+      </SimpleLayout>
+    </div>
   );
 };
 

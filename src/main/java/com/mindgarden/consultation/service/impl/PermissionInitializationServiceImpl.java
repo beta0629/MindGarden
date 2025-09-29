@@ -69,6 +69,11 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             Permission.of("MAPPING_VIEW", "매핑 조회", "MAPPING"),
             Permission.of("MAPPING_MANAGE", "매핑 관리", "MAPPING"),
             
+            // 급여 관리 권한
+            Permission.of("SALARY_MANAGE", "급여 관리", "SALARY"),
+            Permission.of("SALARY_VIEW", "급여 조회", "SALARY"),
+            Permission.of("SALARY_CALCULATE", "급여 계산", "SALARY"),
+            
             // 시스템 관리 권한
             Permission.of("SYSTEM_CONFIGURATION", "시스템 설정", "SYSTEM"),
             Permission.of("USER_ROLE_MANAGEMENT", "사용자 역할 관리", "SYSTEM"),
@@ -94,7 +99,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         
         // BRANCH_SUPER_ADMIN 권한
         List<String> branchSuperAdminPermissions = List.of(
-            "ERP_ACCESS", "INTEGRATED_FINANCE_VIEW", "SALARY_MANAGE",
+            "ERP_ACCESS", "INTEGRATED_FINANCE_VIEW", "SALARY_MANAGE", "SALARY_VIEW", "SALARY_CALCULATE",
             "TAX_MANAGE", "REFUND_MANAGE", "PURCHASE_REQUEST_VIEW",
             "APPROVAL_MANAGE", "ITEM_MANAGE", "BUDGET_MANAGE",
             "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
@@ -106,7 +111,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         
         // ADMIN 권한
         List<String> adminPermissions = List.of(
-            "ERP_ACCESS", "INTEGRATED_FINANCE_VIEW", "SALARY_MANAGE",
+            "ERP_ACCESS", "INTEGRATED_FINANCE_VIEW", "SALARY_MANAGE", "SALARY_VIEW", "SALARY_CALCULATE",
             "TAX_MANAGE", "REFUND_MANAGE", "PURCHASE_REQUEST_VIEW",
             "APPROVAL_MANAGE", "ITEM_MANAGE", "BUDGET_MANAGE",
             "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",

@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.mindgarden.consultation.entity.ConsultantSalaryProfile;
 import com.mindgarden.consultation.entity.SalaryCalculation;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.PlSqlSalaryManagementService;
 import com.mindgarden.consultation.service.SalaryManagementService;
 import com.mindgarden.consultation.utils.SessionUtils;
@@ -40,6 +41,7 @@ public class SalaryManagementController {
     
     private final SalaryManagementService salaryManagementService;
     private final PlSqlSalaryManagementService plSqlSalaryManagementService;
+    private final DynamicPermissionService dynamicPermissionService;
     
     /**
      * 개별 급여 프로필 조회
@@ -49,9 +51,17 @@ public class SalaryManagementController {
         try {
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
-                return ResponseEntity.badRequest().body(Map.of(
+                return ResponseEntity.status(401).body(Map.of(
                     "success", false,
                     "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            if (!dynamicPermissionService.hasPermission(currentUser, "SALARY_MANAGE")) {
+                log.warn("❌ 급여 관리 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "급여 관리 권한이 없습니다."
                 ));
             }
             

@@ -43,7 +43,6 @@ public class PermissionManagementController {
         try {
             log.info("🔍 권한 조회 API 호출 시작");
             log.info("🔍 세션 ID: {}", session.getId());
-            log.info("🔍 세션 속성들: {}", session.getAttributeNames());
             
             User currentUser = SessionUtils.getCurrentUser(session);
             log.info("🔍 세션에서 가져온 사용자: {}", currentUser != null ? currentUser.getEmail() : "null");

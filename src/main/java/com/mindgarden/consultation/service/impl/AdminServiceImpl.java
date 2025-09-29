@@ -4812,4 +4812,34 @@ public class AdminServiceImpl implements AdminService {
         
         return result;
     }
+
+    @Override
+    public List<ConsultantClientMapping> getMappingsByConsultantEmail(String consultantEmail) {
+        log.info("🔍 상담사 이메일로 매핑 조회 - 이메일: {}", consultantEmail);
+        
+        // 이메일로 상담사 찾기
+        Optional<User> consultantOpt = userRepository.findByEmail(consultantEmail);
+        if (consultantOpt.isEmpty()) {
+            log.warn("❌ 상담사를 찾을 수 없습니다 - 이메일: {}", consultantEmail);
+            return new ArrayList<>();
+        }
+        
+        User consultant = consultantOpt.get();
+        List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(
+            consultant.getId(), ConsultantClientMapping.MappingStatus.TERMINATED);
+        
+        log.info("🔍 상담사별 매핑 수: {}", mappings.size());
+        
+        // 매핑된 사용자 정보 복호화
+        for (ConsultantClientMapping mapping : mappings) {
+            if (mapping.getConsultant() != null) {
+                decryptUserPersonalData(mapping.getConsultant());
+            }
+            if (mapping.getClient() != null) {
+                decryptUserPersonalData(mapping.getClient());
+            }
+        }
+        
+        return mappings;
+    }
 }

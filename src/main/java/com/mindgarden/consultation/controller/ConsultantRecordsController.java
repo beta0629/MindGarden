@@ -8,8 +8,11 @@ import java.util.Optional;
 import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.ConsultationRecordService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.service.UserService;
+import com.mindgarden.consultation.util.PermissionCheckUtils;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ConsultantRecordsController {
     
     private final ConsultationRecordService consultationRecordService;
+    private final DynamicPermissionService dynamicPermissionService;
     private final UserService userService;
     private final ScheduleService scheduleService;
     
@@ -139,11 +143,17 @@ public class ConsultantRecordsController {
     @GetMapping("/{consultantId}/consultation-records/{recordId}")
     public ResponseEntity<Map<String, Object>> getConsultationRecord(
             @PathVariable Long consultantId,
-            @PathVariable Long recordId) {
+            @PathVariable Long recordId,
+            HttpSession session) {
         
         log.info("상담기록 상세 조회: consultantId={}, recordId={}", consultantId, recordId);
         
         try {
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "ACCESS_CONSULTATION_RECORDS", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return (ResponseEntity<Map<String, Object>>) permissionResponse;
+            }
             // 상담기록 조회
             var record = consultationRecordService.getConsultationRecordById(recordId);
             

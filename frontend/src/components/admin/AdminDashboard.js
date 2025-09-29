@@ -61,10 +61,11 @@ const AdminDashboard = ({ user: propUser }) => {
             isInitialized: isInitialized.current
         });
         
-        if (sessionLoading) {
-            console.log('⏳ 세션 로딩 중...');
-            return;
-        }
+        // 세션 로딩 체크 제거 (무한 로딩 방지)
+        // if (sessionLoading) {
+        //     console.log('⏳ 세션 로딩 중...');
+        //     return;
+        // }
 
         // 이미 초기화되었으면 중복 실행 방지
         if (isInitialized.current) {

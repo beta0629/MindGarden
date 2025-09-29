@@ -67,6 +67,7 @@ export const useSession = () => {
     
     return {
         ...sessionState,
+        isLoading: sessionState.isLoading,
         isLoggedIn: sessionState.user !== null && sessionManager.isLoggedIn(),
         checkSession: () => sessionManager.checkSession(),
         logout: () => sessionManager.logout()

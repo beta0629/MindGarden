@@ -33,6 +33,10 @@ const PERMISSION_CATEGORIES = {
         { code: 'ITEM_MANAGE', name: '아이템 관리', description: '아이템 관리 시스템' },
         { code: 'BUDGET_MANAGE', name: '예산 관리', description: '예산 관리 시스템' }
     ],
+    '매핑 관리': [
+        { code: 'MAPPING_VIEW', name: '매핑 조회', description: '상담사-내담자 매핑 조회' },
+        { code: 'MAPPING_MANAGE', name: '매핑 관리', description: '상담사-내담자 매핑 관리' }
+    ],
     '통계 및 조회': [
         { code: 'STATISTICS_VIEW', name: '통계 조회', description: '전체 통계 조회' },
         { code: 'FINANCIAL_VIEW', name: '재무 조회', description: '재무 정보 조회' },
@@ -46,8 +50,8 @@ const ROLE_PERMISSIONS = {
         'ADMIN_DASHBOARD_VIEW', 'ERP_ACCESS', 'INTEGRATED_FINANCE_VIEW',
         'SALARY_MANAGE', 'TAX_MANAGE', 'REFUND_MANAGE', 'PURCHASE_REQUEST_VIEW',
         'APPROVAL_MANAGE', 'ITEM_MANAGE', 'BUDGET_MANAGE', 'USER_MANAGE',
-        'CONSULTANT_MANAGE', 'CLIENT_MANAGE', 'BRANCH_DETAILS_VIEW',
-        'SCHEDULE_MANAGE', 'SCHEDULE_CREATE', 'SCHEDULE_MODIFY', 'SCHEDULE_DELETE',
+        'CONSULTANT_MANAGE', 'CLIENT_MANAGE', 'MAPPING_VIEW', 'MAPPING_MANAGE',
+        'BRANCH_DETAILS_VIEW', 'SCHEDULE_MANAGE', 'SCHEDULE_CREATE', 'SCHEDULE_MODIFY', 'SCHEDULE_DELETE',
         'CONSULTATION_RECORD_VIEW', 'STATISTICS_VIEW', 'FINANCIAL_VIEW',
         'CONSULTATION_STATISTICS_VIEW'
     ],

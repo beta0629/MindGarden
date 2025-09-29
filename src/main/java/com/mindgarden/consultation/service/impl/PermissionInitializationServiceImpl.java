@@ -65,6 +65,10 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             Permission.of("FINANCIAL_VIEW", "재무 통계 조회", "STATISTICS"),
             Permission.of("CONSULTATION_STATISTICS_VIEW", "상담 통계 조회", "STATISTICS"),
             
+            // 매핑 관련 권한
+            Permission.of("MAPPING_VIEW", "매핑 조회", "MAPPING"),
+            Permission.of("MAPPING_MANAGE", "매핑 관리", "MAPPING"),
+            
             // 시스템 관리 권한
             Permission.of("SYSTEM_CONFIGURATION", "시스템 설정", "SYSTEM"),
             Permission.of("USER_ROLE_MANAGEMENT", "사용자 역할 관리", "SYSTEM"),
@@ -94,7 +98,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             "TAX_MANAGE", "REFUND_MANAGE", "PURCHASE_REQUEST_VIEW",
             "APPROVAL_MANAGE", "ITEM_MANAGE", "BUDGET_MANAGE",
             "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
-            "MAPPING_MANAGE", "BRANCH_DETAILS_VIEW", "SCHEDULE_MANAGE",
+            "MAPPING_VIEW", "MAPPING_MANAGE", "BRANCH_DETAILS_VIEW", "SCHEDULE_MANAGE",
             "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
             "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "FINANCIAL_VIEW",
             "CONSULTATION_STATISTICS_VIEW"
@@ -106,7 +110,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             "TAX_MANAGE", "REFUND_MANAGE", "PURCHASE_REQUEST_VIEW",
             "APPROVAL_MANAGE", "ITEM_MANAGE", "BUDGET_MANAGE",
             "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
-            "MAPPING_MANAGE", "ALL_BRANCHES_VIEW", "BRANCH_DETAILS_VIEW",
+            "MAPPING_VIEW", "MAPPING_MANAGE", "ALL_BRANCHES_VIEW", "BRANCH_DETAILS_VIEW",
             "SCHEDULE_MANAGE", "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
             "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "FINANCIAL_VIEW",
             "CONSULTATION_STATISTICS_VIEW"

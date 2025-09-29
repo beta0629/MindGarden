@@ -115,9 +115,22 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   useEffect(() => {
     if (user) {
-      initializeComponent();
+      // 사용자 권한 조회
+      fetchUserPermissions(setUserPermissions);
     }
   }, [user]);
+
+  // 권한이 로드된 후 통합재무관리 접근 권한 확인
+  useEffect(() => {
+    if (userPermissions.length > 0) {
+      if (!PermissionChecks.canViewIntegratedFinance(userPermissions)) {
+        console.log('❌ 통합재무관리 접근 권한 없음, ERP 대시보드로 이동');
+        navigate('/erp/dashboard', { replace: true });
+        return;
+      }
+      initializeComponent();
+    }
+  }, [userPermissions, navigate]);
   
   useEffect(() => {
     if (selectedBranch) {

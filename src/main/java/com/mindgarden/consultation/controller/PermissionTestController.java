@@ -95,4 +95,40 @@ public class PermissionTestController {
             ));
         }
     }
+
+    /**
+     * 지점수퍼어드민 권한 테스트 (인증 없이)
+     */
+    @GetMapping("/test-branch-super-admin")
+    public ResponseEntity<Map<String, Object>> testBranchSuperAdminPermissions() {
+        try {
+            log.info("🔍 지점수퍼어드민 권한 테스트...");
+            
+            // 지점수퍼어드민 권한 목록
+            List<String> branchSuperAdminPermissions = List.of(
+                "ERP_ACCESS", "INTEGRATED_FINANCE_VIEW", "SALARY_MANAGE",
+                "TAX_MANAGE", "REFUND_MANAGE", "PURCHASE_REQUEST_VIEW",
+                "APPROVAL_MANAGE", "ITEM_MANAGE", "BUDGET_MANAGE",
+                "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
+                "MAPPING_MANAGE", "BRANCH_DETAILS_VIEW", "SCHEDULE_MANAGE",
+                "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
+                "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "FINANCIAL_VIEW",
+                "CONSULTATION_STATISTICS_VIEW"
+            );
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "지점수퍼어드민 권한 테스트 성공",
+                "role", "BRANCH_SUPER_ADMIN",
+                "permissions", branchSuperAdminPermissions,
+                "permissionCount", branchSuperAdminPermissions.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 지점수퍼어드민 권한 테스트 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "지점수퍼어드민 권한 테스트에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
 }

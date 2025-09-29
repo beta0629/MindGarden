@@ -30,40 +30,40 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         // 기본 권한 정의
         List<Permission> defaultPermissions = List.of(
             // ERP 관련 권한
-            Permission.of("ACCESS_ERP_DASHBOARD", "ERP 대시보드 접근", "ERP"),
-            Permission.of("ACCESS_INTEGRATED_FINANCE", "통합 회계 시스템 접근", "ERP"),
-            Permission.of("ACCESS_SALARY_MANAGEMENT", "급여 관리 접근", "ERP"),
-            Permission.of("ACCESS_TAX_MANAGEMENT", "세금 관리 접근", "ERP"),
-            Permission.of("ACCESS_REFUND_MANAGEMENT", "환불 관리 접근", "ERP"),
-            Permission.of("ACCESS_PURCHASE_REQUESTS", "구매 요청 접근", "ERP"),
-            Permission.of("ACCESS_APPROVAL_MANAGEMENT", "승인 관리 접근", "ERP"),
-            Permission.of("ACCESS_ITEM_MANAGEMENT", "아이템 관리 접근", "ERP"),
-            Permission.of("ACCESS_BUDGET_MANAGEMENT", "예산 관리 접근", "ERP"),
+            Permission.of("ERP_ACCESS", "ERP 접근", "ERP"),
+            Permission.of("INTEGRATED_FINANCE_VIEW", "통합 재무 조회", "ERP"),
+            Permission.of("SALARY_MANAGE", "급여 관리", "ERP"),
+            Permission.of("TAX_MANAGE", "세금 관리", "ERP"),
+            Permission.of("REFUND_MANAGE", "환불 관리", "ERP"),
+            Permission.of("PURCHASE_REQUEST_VIEW", "구매 요청 조회", "ERP"),
+            Permission.of("APPROVAL_MANAGE", "승인 관리", "ERP"),
+            Permission.of("ITEM_MANAGE", "아이템 관리", "ERP"),
+            Permission.of("BUDGET_MANAGE", "예산 관리", "ERP"),
             
             // 관리자 권한
-            Permission.of("ACCESS_ADMIN_DASHBOARD", "관리자 대시보드 접근", "ADMIN"),
-            Permission.of("MANAGE_USERS", "사용자 관리", "ADMIN"),
-            Permission.of("MANAGE_CONSULTANTS", "상담사 관리", "ADMIN"),
-            Permission.of("MANAGE_CLIENTS", "내담자 관리", "ADMIN"),
-            Permission.of("MANAGE_MAPPINGS", "매핑 관리", "ADMIN"),
-            Permission.of("VIEW_ALL_BRANCHES", "모든 지점 조회", "ADMIN"),
-            Permission.of("VIEW_BRANCH_DETAILS", "지점 상세 조회", "ADMIN"),
+            Permission.of("ADMIN_DASHBOARD_VIEW", "관리자 대시보드 조회", "ADMIN"),
+            Permission.of("USER_MANAGE", "사용자 관리", "ADMIN"),
+            Permission.of("CONSULTANT_MANAGE", "상담사 관리", "ADMIN"),
+            Permission.of("CLIENT_MANAGE", "내담자 관리", "ADMIN"),
+            Permission.of("MAPPING_MANAGE", "매핑 관리", "ADMIN"),
+            Permission.of("ALL_BRANCHES_VIEW", "모든 지점 조회", "ADMIN"),
+            Permission.of("BRANCH_DETAILS_VIEW", "지점 상세 조회", "ADMIN"),
             
             // 스케줄 관련 권한
-            Permission.of("ACCESS_SCHEDULE_MANAGEMENT", "스케줄 관리 접근", "SCHEDULE"),
-            Permission.of("CREATE_SCHEDULES", "스케줄 생성", "SCHEDULE"),
-            Permission.of("MODIFY_SCHEDULES", "스케줄 수정", "SCHEDULE"),
-            Permission.of("DELETE_SCHEDULES", "스케줄 삭제", "SCHEDULE"),
+            Permission.of("SCHEDULE_MANAGE", "스케줄 관리", "SCHEDULE"),
+            Permission.of("SCHEDULE_CREATE", "스케줄 생성", "SCHEDULE"),
+            Permission.of("SCHEDULE_MODIFY", "스케줄 수정", "SCHEDULE"),
+            Permission.of("SCHEDULE_DELETE", "스케줄 삭제", "SCHEDULE"),
             
             // 상담일지 관련 권한
-            Permission.of("ACCESS_CONSULTATION_RECORDS", "상담일지 접근", "CONSULTATION"),
-            Permission.of("CREATE_CONSULTATION_RECORDS", "상담일지 작성", "CONSULTATION"),
-            Permission.of("MODIFY_CONSULTATION_RECORDS", "상담일지 수정", "CONSULTATION"),
+            Permission.of("CONSULTATION_RECORD_VIEW", "상담일지 조회", "CONSULTATION"),
+            Permission.of("CONSULTATION_RECORD_CREATE", "상담일지 작성", "CONSULTATION"),
+            Permission.of("CONSULTATION_RECORD_MODIFY", "상담일지 수정", "CONSULTATION"),
             
             // 통계 관련 권한
-            Permission.of("ACCESS_STATISTICS", "통계 접근", "STATISTICS"),
-            Permission.of("VIEW_FINANCIAL_STATISTICS", "재무 통계 조회", "STATISTICS"),
-            Permission.of("VIEW_CONSULTATION_STATISTICS", "상담 통계 조회", "STATISTICS"),
+            Permission.of("STATISTICS_VIEW", "통계 조회", "STATISTICS"),
+            Permission.of("FINANCIAL_VIEW", "재무 통계 조회", "STATISTICS"),
+            Permission.of("CONSULTATION_STATISTICS_VIEW", "상담 통계 조회", "STATISTICS"),
             
             // 시스템 관리 권한
             Permission.of("SYSTEM_CONFIGURATION", "시스템 설정", "SYSTEM"),
@@ -90,26 +90,26 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         
         // BRANCH_SUPER_ADMIN 권한
         List<String> branchSuperAdminPermissions = List.of(
-            "ACCESS_ERP_DASHBOARD", "ACCESS_INTEGRATED_FINANCE", "ACCESS_SALARY_MANAGEMENT",
-            "ACCESS_TAX_MANAGEMENT", "ACCESS_REFUND_MANAGEMENT", "ACCESS_PURCHASE_REQUESTS",
-            "ACCESS_APPROVAL_MANAGEMENT", "ACCESS_ITEM_MANAGEMENT", "ACCESS_BUDGET_MANAGEMENT",
-            "ACCESS_ADMIN_DASHBOARD", "MANAGE_USERS", "MANAGE_CONSULTANTS", "MANAGE_CLIENTS",
-            "MANAGE_MAPPINGS", "VIEW_BRANCH_DETAILS", "ACCESS_SCHEDULE_MANAGEMENT",
-            "CREATE_SCHEDULES", "MODIFY_SCHEDULES", "DELETE_SCHEDULES",
-            "ACCESS_CONSULTATION_RECORDS", "ACCESS_STATISTICS", "VIEW_FINANCIAL_STATISTICS",
-            "VIEW_CONSULTATION_STATISTICS"
+            "ERP_ACCESS", "INTEGRATED_FINANCE_VIEW", "SALARY_MANAGE",
+            "TAX_MANAGE", "REFUND_MANAGE", "PURCHASE_REQUEST_VIEW",
+            "APPROVAL_MANAGE", "ITEM_MANAGE", "BUDGET_MANAGE",
+            "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
+            "MAPPING_MANAGE", "BRANCH_DETAILS_VIEW", "SCHEDULE_MANAGE",
+            "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
+            "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "FINANCIAL_VIEW",
+            "CONSULTATION_STATISTICS_VIEW"
         );
         
         // ADMIN 권한
         List<String> adminPermissions = List.of(
-            "ACCESS_ERP_DASHBOARD", "ACCESS_INTEGRATED_FINANCE", "ACCESS_SALARY_MANAGEMENT",
-            "ACCESS_TAX_MANAGEMENT", "ACCESS_REFUND_MANAGEMENT", "ACCESS_PURCHASE_REQUESTS",
-            "ACCESS_APPROVAL_MANAGEMENT", "ACCESS_ITEM_MANAGEMENT", "ACCESS_BUDGET_MANAGEMENT",
-            "ACCESS_ADMIN_DASHBOARD", "MANAGE_USERS", "MANAGE_CONSULTANTS", "MANAGE_CLIENTS",
-            "MANAGE_MAPPINGS", "VIEW_ALL_BRANCHES", "VIEW_BRANCH_DETAILS",
-            "ACCESS_SCHEDULE_MANAGEMENT", "CREATE_SCHEDULES", "MODIFY_SCHEDULES", "DELETE_SCHEDULES",
-            "ACCESS_CONSULTATION_RECORDS", "ACCESS_STATISTICS", "VIEW_FINANCIAL_STATISTICS",
-            "VIEW_CONSULTATION_STATISTICS"
+            "ERP_ACCESS", "INTEGRATED_FINANCE_VIEW", "SALARY_MANAGE",
+            "TAX_MANAGE", "REFUND_MANAGE", "PURCHASE_REQUEST_VIEW",
+            "APPROVAL_MANAGE", "ITEM_MANAGE", "BUDGET_MANAGE",
+            "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
+            "MAPPING_MANAGE", "ALL_BRANCHES_VIEW", "BRANCH_DETAILS_VIEW",
+            "SCHEDULE_MANAGE", "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
+            "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "FINANCIAL_VIEW",
+            "CONSULTATION_STATISTICS_VIEW"
         );
         
         // HQ_ADMIN 권한

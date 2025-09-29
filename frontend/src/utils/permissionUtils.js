@@ -160,6 +160,16 @@ export const PERMISSIONS = {
     ERP_SYNC_STATUS_VIEW: 'ERP_SYNC_STATUS_VIEW',
     ERP_SYNC_MANAGE: 'ERP_SYNC_MANAGE',
     
+    // ERP 하위 메뉴 권한
+    SALARY_MANAGE: 'SALARY_MANAGE',
+    TAX_MANAGE: 'TAX_MANAGE',
+    REFUND_MANAGE: 'REFUND_MANAGE',
+    PURCHASE_REQUEST_VIEW: 'PURCHASE_REQUEST_VIEW',
+    PURCHASE_REQUEST_MANAGE: 'PURCHASE_REQUEST_MANAGE',
+    APPROVAL_MANAGE: 'APPROVAL_MANAGE',
+    ITEM_MANAGE: 'ITEM_MANAGE',
+    BUDGET_MANAGE: 'BUDGET_MANAGE',
+    
     // 지점 관리
     BRANCH_VIEW: 'BRANCH_VIEW',
     BRANCH_MANAGE: 'BRANCH_MANAGE',
@@ -275,12 +285,20 @@ export const PermissionChecks = {
     // 재무 관리 권한
     canManageFinancial: (permissions) => hasPermission(permissions, PERMISSIONS.FINANCIAL_MANAGE),
     canViewFinancial: (permissions) => hasPermission(permissions, PERMISSIONS.FINANCIAL_VIEW),
-    canManageTax: (permissions) => hasPermission(permissions, PERMISSIONS.TAX_MANAGE),
-    canManageSalary: (permissions) => hasPermission(permissions, PERMISSIONS.SALARY_MANAGE),
     
     // ERP 접근 권한
     canAccessERP: (permissions) => hasPermission(permissions, PERMISSIONS.ERP_ACCESS),
     canViewERPDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.ERP_DASHBOARD_VIEW),
+    
+    // ERP 하위 메뉴 권한
+    canManageSalary: (permissions) => hasPermission(permissions, PERMISSIONS.SALARY_MANAGE),
+    canManageTax: (permissions) => hasPermission(permissions, PERMISSIONS.TAX_MANAGE),
+    canManageRefund: (permissions) => hasPermission(permissions, PERMISSIONS.REFUND_MANAGE),
+    canViewPurchaseRequests: (permissions) => hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_VIEW),
+    canManagePurchaseRequests: (permissions) => hasPermission(permissions, PERMISSIONS.PURCHASE_REQUEST_MANAGE),
+    canManageApprovals: (permissions) => hasPermission(permissions, PERMISSIONS.APPROVAL_MANAGE),
+    canManageItems: (permissions) => hasPermission(permissions, PERMISSIONS.ITEM_MANAGE),
+    canManageBudget: (permissions) => hasPermission(permissions, PERMISSIONS.BUDGET_MANAGE),
     
     // 결제 관리 권한
     canAccessPayment: (permissions) => hasPermission(permissions, PERMISSIONS.PAYMENT_ACCESS),

@@ -219,59 +219,71 @@ const ErpDashboard = ({ user: propUser }) => {
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
           gap: '16px'
         }}>
-          <ErpButton
-            variant="primary"
-            size="large"
-            onClick={() => window.location.href = '/erp/purchase-requests'}
-            style={{ width: '100%' }}
-          >
-            구매 요청하기
-          </ErpButton>
+          {PermissionChecks.canViewPurchaseRequests(userPermissions) && (
+            <ErpButton
+              variant="primary"
+              size="large"
+              onClick={() => window.location.href = '/erp/purchase-requests'}
+              style={{ width: '100%' }}
+            >
+              구매 요청하기
+            </ErpButton>
+          )}
           
-          <ErpButton
-            variant="info"
-            size="large"
-            onClick={() => window.location.href = '/erp/approvals'}
-            style={{ width: '100%' }}
-          >
-            승인 관리
-          </ErpButton>
+          {PermissionChecks.canManageApprovals(userPermissions) && (
+            <ErpButton
+              variant="info"
+              size="large"
+              onClick={() => window.location.href = '/erp/approvals'}
+              style={{ width: '100%' }}
+            >
+              승인 관리
+            </ErpButton>
+          )}
           
-          <ErpButton
-            variant="success"
-            size="large"
-            onClick={() => window.location.href = '/erp/items'}
-            style={{ width: '100%' }}
-          >
-            아이템 관리
-          </ErpButton>
+          {PermissionChecks.canManageItems(userPermissions) && (
+            <ErpButton
+              variant="success"
+              size="large"
+              onClick={() => window.location.href = '/erp/items'}
+              style={{ width: '100%' }}
+            >
+              아이템 관리
+            </ErpButton>
+          )}
           
-          <ErpButton
-            variant="warning"
-            size="large"
-            onClick={() => window.location.href = '/erp/budget'}
-            style={{ width: '100%' }}
-          >
-            예산 관리
-          </ErpButton>
+          {PermissionChecks.canManageBudget(userPermissions) && (
+            <ErpButton
+              variant="warning"
+              size="large"
+              onClick={() => window.location.href = '/erp/budget'}
+              style={{ width: '100%' }}
+            >
+              예산 관리
+            </ErpButton>
+          )}
           
-          <ErpButton
-            variant="danger"
-            size="large"
-            onClick={() => window.location.href = '/erp/salary'}
-            style={{ width: '100%' }}
-          >
-            급여 관리
-          </ErpButton>
+          {PermissionChecks.canManageSalary(userPermissions) && (
+            <ErpButton
+              variant="danger"
+              size="large"
+              onClick={() => window.location.href = '/erp/salary'}
+              style={{ width: '100%' }}
+            >
+              급여 관리
+            </ErpButton>
+          )}
           
-          <ErpButton
-            variant="secondary"
-            size="large"
-            onClick={() => window.location.href = '/erp/tax'}
-            style={{ width: '100%' }}
-          >
-            세금 관리
-          </ErpButton>
+          {PermissionChecks.canManageTax(userPermissions) && (
+            <ErpButton
+              variant="secondary"
+              size="large"
+              onClick={() => window.location.href = '/erp/tax'}
+              style={{ width: '100%' }}
+            >
+              세금 관리
+            </ErpButton>
+          )}
           
           {PermissionChecks.canViewIntegratedFinance(userPermissions) && (
             <ErpButton
@@ -289,19 +301,21 @@ const ErpDashboard = ({ user: propUser }) => {
             </ErpButton>
           )}
           
-          <ErpButton
-            variant="danger"
-            size="large"
-            onClick={() => navigate('/erp/refund-management')}
-            style={{ 
-              width: '100%', 
-              backgroundColor: '#dc3545', 
-              borderColor: '#dc3545',
-              color: 'white'
-            }}
-          >
-            💸 환불 관리 시스템
-          </ErpButton>
+          {PermissionChecks.canManageRefund(userPermissions) && (
+            <ErpButton
+              variant="danger"
+              size="large"
+              onClick={() => navigate('/erp/refund-management')}
+              style={{ 
+                width: '100%', 
+                backgroundColor: '#dc3545', 
+                borderColor: '#dc3545',
+                color: 'white'
+              }}
+            >
+              💸 환불 관리 시스템
+            </ErpButton>
+          )}
         </div>
       </ErpCard>
 

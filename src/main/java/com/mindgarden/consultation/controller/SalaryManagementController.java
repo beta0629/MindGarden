@@ -13,6 +13,7 @@ import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.PlSqlSalaryManagementService;
 import com.mindgarden.consultation.service.SalaryManagementService;
 import com.mindgarden.consultation.utils.SessionUtils;
+import com.mindgarden.consultation.util.PermissionCheckUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,21 +50,13 @@ public class SalaryManagementController {
     @GetMapping("/profiles/{consultantId}")
     public ResponseEntity<Map<String, Object>> getSalaryProfile(@PathVariable Long consultantId, HttpSession session) {
         try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
             }
             
-            if (!dynamicPermissionService.hasPermission(currentUser, "SALARY_MANAGE")) {
-                log.warn("❌ 급여 관리 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "급여 관리 권한이 없습니다."
-                ));
-            }
+            User currentUser = SessionUtils.getCurrentUser(session);
             
             log.info("개별 급여 프로필 조회: 상담사 ID {}", consultantId);
             String branchCode = currentUser.getBranchCode();

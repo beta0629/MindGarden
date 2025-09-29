@@ -25,6 +25,7 @@ import com.mindgarden.consultation.service.ConsultationRecordService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.utils.SessionUtils;
+import com.mindgarden.consultation.util.PermissionCheckUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -545,17 +546,10 @@ public class ScheduleController {
         log.info("📊 관리자용 스케줄 통계 조회 요청: 역할 {}, 시작일: {}, 종료일: {}, 상태: {}, 날짜범위: {}, 차트타입: {}", 
                 userRole, startDate, endDate, status, dateRange, chartType);
         
-        // 세션에서 현재 사용자 확인
-        User currentUser = (User) session.getAttribute("user");
-        if (currentUser == null) {
-            log.warn("❌ 인증되지 않은 사용자");
-            return ResponseEntity.status(401).build();
-        }
-        
-        // 동적 권한 체크 - 통계 조회 권한 확인
-        if (!dynamicPermissionService.hasPermission(currentUser, "STATISTICS_VIEW")) {
-            log.warn("❌ 통계 조회 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
-            return ResponseEntity.status(403).build();
+        // 동적 권한 체크
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkStatisticsPermission(session, dynamicPermissionService);
+        if (permissionResponse != null) {
+            return (ResponseEntity<Map<String, Object>>) permissionResponse;
         }
         
         try {
@@ -577,17 +571,10 @@ public class ScheduleController {
         
         log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}", userRole);
         
-        // 세션에서 현재 사용자 확인
-        User currentUser = (User) session.getAttribute("user");
-        if (currentUser == null) {
-            log.warn("❌ 인증되지 않은 사용자");
-            return ResponseEntity.status(401).build();
-        }
-        
-        // 동적 권한 체크 - 통계 조회 권한 확인
-        if (!dynamicPermissionService.hasPermission(currentUser, "STATISTICS_VIEW")) {
-            log.warn("❌ 통계 조회 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
-            return ResponseEntity.status(403).build();
+        // 동적 권한 체크
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkStatisticsPermission(session, dynamicPermissionService);
+        if (permissionResponse != null) {
+            return (ResponseEntity<Map<String, Object>>) permissionResponse;
         }
         
         try {

@@ -7,8 +7,10 @@ import java.util.Map;
 import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.CommonCodeService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.SalaryScheduleService;
 import com.mindgarden.consultation.utils.SessionUtils;
+import com.mindgarden.consultation.util.PermissionCheckUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -34,6 +36,7 @@ public class SalaryConfigController {
     
     private final CommonCodeService commonCodeService;
     private final SalaryScheduleService salaryScheduleService;
+    private final DynamicPermissionService dynamicPermissionService;
     
     /**
      * 급여 설정 조회
@@ -41,23 +44,13 @@ public class SalaryConfigController {
     @GetMapping("/settings")
     public ResponseEntity<Map<String, Object>> getSalarySettings(HttpSession session) {
         try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
             }
             
-            // 급여 관리 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
-            if (!currentUser.getRole().isAdmin() && 
-                !currentUser.getRole().isBranchSuperAdmin() && 
-                !currentUser.getRole().isHeadquartersAdmin()) {
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "급여 관리 권한이 없습니다."
-                ));
-            }
+            User currentUser = SessionUtils.getCurrentUser(session);
             
             // 급여 기산일 설정
             List<CommonCode> baseDateSettings = commonCodeService.getCodesByGroup("SALARY_BASE_DATE");

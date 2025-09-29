@@ -4,8 +4,10 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.SalaryBatchService;
 import com.mindgarden.consultation.utils.SessionUtils;
+import com.mindgarden.consultation.util.PermissionCheckUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SalaryBatchController {
     
     private final SalaryBatchService salaryBatchService;
+    private final DynamicPermissionService dynamicPermissionService;
     
     /**
      * 급여 배치 실행
@@ -41,22 +44,13 @@ public class SalaryBatchController {
             @RequestBody Map<String, Object> request,
             HttpSession session) {
         try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
             }
             
-            // 관리자 권한 확인
-            if (!"MASTER_ADMIN".equals(currentUser.getRole().name()) && 
-                !"BRANCH_SUPER_ADMIN".equals(currentUser.getRole().name())) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "급여 배치 실행 권한이 없습니다."
-                ));
-            }
+            User currentUser = SessionUtils.getCurrentUser(session);
             
             String targetMonth = (String) request.get("targetMonth"); // "YYYY-MM"
             String branchCode = currentUser.getBranchCode();

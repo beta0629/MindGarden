@@ -24,6 +24,7 @@ import com.mindgarden.consultation.service.MenuService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.service.StoredProcedureService;
 import com.mindgarden.consultation.utils.SessionUtils;
+import com.mindgarden.consultation.util.PermissionCheckUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -66,22 +67,12 @@ public class AdminController {
             log.info("🔍 상담사 목록 조회");
             
             // 동적 권한 체크
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CONSULTANT_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
             }
             
-            if (!dynamicPermissionService.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
-                log.warn("❌ 상담사 관리 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "상담사 관리 권한이 없습니다."
-                ));
-            }
+            User currentUser = SessionUtils.getCurrentUser(session);
             
             log.info("🔍 상담사 조회 권한 확인 완료: role={}", currentUser.getRole());
             
@@ -212,22 +203,12 @@ public class AdminController {
             log.info("🔍 내담자 목록 조회");
             
             // 동적 권한 체크
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CLIENT_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
             }
             
-            if (!dynamicPermissionService.hasPermission(currentUser, "CLIENT_MANAGE")) {
-                log.warn("❌ 내담자 관리 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "내담자 관리 권한이 없습니다."
-                ));
-            }
+            User currentUser = SessionUtils.getCurrentUser(session);
             
             String currentBranchCode = currentUser.getBranchCode();
             log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
@@ -470,20 +451,9 @@ public class AdminController {
             log.info("🔍 매핑 목록 조회 (중앙화)");
             
             // 동적 권한 체크
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
-            }
-            
-            if (!dynamicPermissionService.hasPermission(currentUser, "MAPPING_VIEW")) {
-                log.warn("❌ 매핑 조회 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "매핑 조회 권한이 없습니다."
-                ));
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_VIEW", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
             }
             
             // 모든 매핑 조회 (지점 필터링 제거)
@@ -1078,22 +1048,12 @@ public class AdminController {
             log.info("🔧 상담사 등록: {}", dto.getUsername());
             
             // 동적 권한 체크
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CONSULTANT_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
             }
             
-            if (!dynamicPermissionService.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
-                log.warn("❌ 상담사 관리 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "상담사 관리 권한이 없습니다."
-                ));
-            }
+            User currentUser = SessionUtils.getCurrentUser(session);
             
             if (currentUser != null) {
                 log.info("🔧 현재 사용자 지점 정보: branchCode={}", currentUser.getBranchCode());
@@ -1140,22 +1100,12 @@ public class AdminController {
             log.info("🔧 요청 데이터: branchCode={}", dto.getBranchCode());
             
             // 동적 권한 체크
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CLIENT_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
             }
             
-            if (!dynamicPermissionService.hasPermission(currentUser, "CLIENT_MANAGE")) {
-                log.warn("❌ 내담자 관리 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "내담자 관리 권한이 없습니다."
-                ));
-            }
+            User currentUser = SessionUtils.getCurrentUser(session);
             
             log.info("🔧 세션 사용자: {}", currentUser.getName());
             
@@ -1206,22 +1156,12 @@ public class AdminController {
             log.info("🔧 매핑 생성: 상담사={}, 내담자={}", dto.getConsultantId(), dto.getClientId());
             
             // 동적 권한 체크
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
             }
             
-            if (!dynamicPermissionService.hasPermission(currentUser, "MAPPING_MANAGE")) {
-                log.warn("❌ 매핑 관리 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "매핑 관리 권한이 없습니다."
-                ));
-            }
+            User currentUser = SessionUtils.getCurrentUser(session);
             
             String currentBranchCode = currentUser.getBranchCode();
             log.info("🔧 현재 사용자 지점코드: {}", currentBranchCode);

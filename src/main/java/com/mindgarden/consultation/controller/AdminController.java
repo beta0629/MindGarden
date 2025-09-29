@@ -321,6 +321,18 @@ public class AdminController {
             }
             
             log.info("🔍 상담사별 매핑된 내담자 목록 조회 - 상담사 ID: {}", consultantId);
+            
+            // 상담사 존재 여부 확인
+            Optional<User> consultant = userService.findById(consultantId);
+            if (consultant.isEmpty()) {
+                log.warn("❌ 상담사를 찾을 수 없습니다 - ID: {}", consultantId);
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "상담사를 찾을 수 없습니다"
+                ));
+            }
+            
+            log.info("✅ 상담사 확인 완료: {} (ID: {})", consultant.get().getName(), consultantId);
             List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantId(consultantId);
             
             // 결제 승인된 매핑만 필터링 (세션 소진 여부와 관계없이 모든 매핑 표시)

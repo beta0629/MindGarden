@@ -4833,6 +4833,13 @@ public class AdminServiceImpl implements AdminService {
         
         log.info("🔍 상담사별 매핑 수: {}", mappings.size());
         
+        // 각 매핑의 상세 정보 로깅
+        for (ConsultantClientMapping mapping : mappings) {
+            log.info("🔍 매핑 정보 - ID: {}, 상담사ID: {}, 내담자ID: {}, 결제상태: {}, 상태: {}", 
+                    mapping.getId(), mapping.getConsultantId(), mapping.getClientId(), 
+                    mapping.getPaymentStatus(), mapping.getStatus());
+        }
+        
         // 매핑된 사용자 정보 복호화
         for (ConsultantClientMapping mapping : mappings) {
             if (mapping.getConsultant() != null) {

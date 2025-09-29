@@ -233,13 +233,16 @@ const PermissionManagement = () => {
         return userPermissions.includes(permissionCode);
     };
 
-    const canManagePermissions = hasPermission('USER_MANAGE');
+    // 권한 관리는 지점 수퍼 어드민 이상만 가능
+    const canManagePermissions = currentUserRole === 'BRANCH_SUPER_ADMIN' || 
+                                currentUserRole === 'HQ_ADMIN' || 
+                                currentUserRole === 'SUPER_HQ_ADMIN' || 
+                                currentUserRole === 'HQ_MASTER';
     const isHQMaster = currentUserRole === 'HQ_MASTER';
 
     console.log('🔍 PermissionManagement 권한 체크:', {
         userPermissions,
         canManagePermissions,
-        hasUserManage: userPermissions.includes('USER_MANAGE'),
         currentUserRole
     });
 
@@ -259,8 +262,8 @@ const PermissionManagement = () => {
             <div className="permission-management">
                 <div className="permission-error">
                     <h3>🚫 접근 권한 없음</h3>
-                    <p>권한 관리를 위해서는 사용자 관리 권한이 필요합니다.</p>
-                    <p>현재 권한: {userPermissions.join(', ')}</p>
+                    <p>권한 관리를 위해서는 지점 수퍼 어드민 이상의 권한이 필요합니다.</p>
+                    <p>현재 역할: {currentUserRole || '알 수 없음'}</p>
                 </div>
             </div>
         );

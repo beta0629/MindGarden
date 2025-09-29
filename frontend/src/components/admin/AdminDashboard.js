@@ -904,15 +904,19 @@ const AdminDashboard = ({ user: propUser }) => {
                 </div>
             )}
 
-            {/* 권한 관리 */}
+            {/* 권한 관리 - 지점 수퍼 어드민 이상만 접근 가능 */}
             {(() => {
-                const canManage = PermissionChecks.canManageUsers(userPermissions);
+                const currentRole = (propUser || sessionUser)?.role;
+                const canManagePermissions = currentRole === 'BRANCH_SUPER_ADMIN' || 
+                                           currentRole === 'HQ_ADMIN' || 
+                                           currentRole === 'SUPER_HQ_ADMIN' || 
+                                           currentRole === 'HQ_MASTER';
                 console.log('🔍 권한 관리 섹션 렌더링 체크:', {
-                    userPermissions,
-                    canManage,
-                    hasUserManage: userPermissions.includes('USER_MANAGE')
+                    currentRole,
+                    canManagePermissions,
+                    userPermissions
                 });
-                return canManage;
+                return canManagePermissions;
             })() && (
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
                     <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>

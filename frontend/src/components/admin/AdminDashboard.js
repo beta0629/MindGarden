@@ -97,9 +97,15 @@ const AdminDashboard = ({ user: propUser }) => {
             console.log('✅ AdminDashboard 접근 허용:', currentUser?.role);
             
             // 동적 권한 목록 가져오기
-            const permissions = await fetchUserPermissions(setUserPermissions);
-            console.log('🔍 AdminDashboard 권한 로드 완료:', permissions);
-            console.log('🔍 USER_MANAGE 권한 확인:', permissions.includes('USER_MANAGE'));
+            try {
+                console.log('🔄 권한 로드 시작...');
+                const permissions = await fetchUserPermissions(setUserPermissions);
+                console.log('🔍 AdminDashboard 권한 로드 완료:', permissions);
+                console.log('🔍 USER_MANAGE 권한 확인:', permissions.includes('USER_MANAGE'));
+            } catch (error) {
+                console.error('❌ 권한 로드 실패:', error);
+                setUserPermissions([]);
+            }
         };
 
         // OAuth2 콜백 후 세션 설정을 위한 지연

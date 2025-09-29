@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Alert } from 'react-bootstrap';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaToggleOff, FaCompressAlt } from 'react-icons/fa';
@@ -49,11 +49,26 @@ const AdminDashboard = ({ user: propUser }) => {
         lastChecked: null
     });
     const [showStatisticsModal, setShowStatisticsModal] = useState(false);
+    const isInitialized = useRef(false);
 
     // 세션 체크 및 권한 확인
     useEffect(() => {
+        console.log('🔄 AdminDashboard useEffect 실행:', {
+            sessionLoading,
+            propUser: !!propUser,
+            sessionUser: !!sessionUser,
+            isLoggedIn,
+            isInitialized: isInitialized.current
+        });
+        
         if (sessionLoading) {
             console.log('⏳ 세션 로딩 중...');
+            return;
+        }
+
+        // 이미 초기화되었으면 중복 실행 방지
+        if (isInitialized.current) {
+            console.log('⚠️ 이미 초기화됨, 중복 실행 방지');
             return;
         }
 
@@ -102,9 +117,14 @@ const AdminDashboard = ({ user: propUser }) => {
                 const permissions = await fetchUserPermissions(setUserPermissions);
                 console.log('🔍 AdminDashboard 권한 로드 완료:', permissions);
                 console.log('🔍 USER_MANAGE 권한 확인:', permissions.includes('USER_MANAGE'));
+                
+                // 초기화 완료 플래그 설정
+                isInitialized.current = true;
+                console.log('✅ AdminDashboard 초기화 완료');
             } catch (error) {
                 console.error('❌ 권한 로드 실패:', error);
                 setUserPermissions([]);
+                isInitialized.current = true; // 실패해도 초기화 완료로 처리
             }
         };
 

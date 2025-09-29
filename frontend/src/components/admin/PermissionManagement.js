@@ -236,12 +236,31 @@ const PermissionManagement = () => {
     const canManagePermissions = hasPermission('USER_MANAGE');
     const isHQMaster = currentUserRole === 'HQ_MASTER';
 
+    console.log('🔍 PermissionManagement 권한 체크:', {
+        userPermissions,
+        canManagePermissions,
+        hasUserManage: userPermissions.includes('USER_MANAGE'),
+        currentUserRole
+    });
+
+    if (loading) {
+        return (
+            <div className="permission-management">
+                <div className="permission-loading">
+                    <h3>⏳ 권한 정보 로딩 중...</h3>
+                    <p>잠시만 기다려주세요.</p>
+                </div>
+            </div>
+        );
+    }
+
     if (!canManagePermissions) {
         return (
             <div className="permission-management">
                 <div className="permission-error">
                     <h3>🚫 접근 권한 없음</h3>
                     <p>권한 관리를 위해서는 사용자 관리 권한이 필요합니다.</p>
+                    <p>현재 권한: {userPermissions.join(', ')}</p>
                 </div>
             </div>
         );

@@ -560,7 +560,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                     
-                    {PermissionChecks.canViewClients(userPermissions) && (
+                    {PermissionChecks.canManageClients(userPermissions) && (
                         <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/client-comprehensive')}>
                             <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} clients`}>
                                 <FaUsers />

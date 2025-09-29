@@ -97,7 +97,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
     public void initializeDefaultRolePermissions() {
         log.info("기본 역할별 권한 매핑 초기화 시작");
         
-        // BRANCH_SUPER_ADMIN 권한
+        // BRANCH_SUPER_ADMIN 권한 (지점 관련 모든 권한)
         List<String> branchSuperAdminPermissions = List.of(
             "ERP_ACCESS", "INTEGRATED_FINANCE_VIEW", "SALARY_MANAGE", "SALARY_VIEW", "SALARY_CALCULATE",
             "TAX_MANAGE", "REFUND_MANAGE", "PURCHASE_REQUEST_VIEW",
@@ -106,7 +106,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             "MAPPING_VIEW", "MAPPING_MANAGE", "BRANCH_DETAILS_VIEW", "SCHEDULE_MANAGE",
             "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
             "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "FINANCIAL_VIEW",
-            "CONSULTATION_STATISTICS_VIEW"
+            "CONSULTATION_STATISTICS_VIEW", "ALL_BRANCHES_VIEW", "BRANCH_MANAGE"
         );
         
         // ADMIN 권한
@@ -162,6 +162,14 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             "ACCESS_STATISTICS", "VIEW_CONSULTATION_STATISTICS"
         );
         
+        // BRANCH_ADMIN 권한
+        List<String> branchAdminPermissions = List.of(
+            "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
+            "BRANCH_DETAILS_VIEW", "SCHEDULE_MANAGE", "SCHEDULE_CREATE", "SCHEDULE_MODIFY",
+            "SCHEDULE_DELETE", "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW",
+            "CONSULTATION_STATISTICS_VIEW", "MAPPING_VIEW"
+        );
+        
         // CLIENT 권한 (최소한)
         List<String> clientPermissions = List.of(
             "ACCESS_CONSULTATION_RECORDS"
@@ -170,6 +178,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         // 권한 매핑 생성
         createRolePermissions("BRANCH_SUPER_ADMIN", branchSuperAdminPermissions);
         createRolePermissions("ADMIN", adminPermissions);
+        createRolePermissions("BRANCH_ADMIN", branchAdminPermissions);
         createRolePermissions("HQ_ADMIN", hqAdminPermissions);
         createRolePermissions("SUPER_HQ_ADMIN", superHqAdminPermissions);
         createRolePermissions("HQ_MASTER", hqMasterPermissions);

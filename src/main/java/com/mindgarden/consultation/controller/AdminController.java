@@ -23,8 +23,8 @@ import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.MenuService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.service.StoredProcedureService;
-import com.mindgarden.consultation.utils.SessionUtils;
 import com.mindgarden.consultation.util.PermissionCheckUtils;
+import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -545,6 +545,12 @@ public class AdminController {
             HttpSession session) {
         try {
             log.info("🔄 매핑 정보 수정 요청: mappingId={}, request={}", mappingId, updateRequest);
+            
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
+            }
             
             // 세션에서 현재 사용자 정보 가져오기
             User currentUser = SessionUtils.getCurrentUser(session);

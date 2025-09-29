@@ -20,6 +20,7 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
   const [expandedItems, setExpandedItems] = useState({});
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [menuStructure, setMenuStructure] = useState(null);
+  const [filteredMenus, setFilteredMenus] = useState({ mainMenus: [], subMenus: {} });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -35,6 +36,26 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
         
         setMenuStructure(structure);
         console.log('✅ 동적 햄버거 메뉴 로딩 완료');
+        
+        // 권한에 따라 메뉴 필터링
+        const transformedStructure = transformMenuStructure(structure);
+        const filteredMainMenus = [];
+        for (const menu of transformedStructure.mainMenus) {
+          if (menu.menuGroup) {
+            const hasAccess = await hasMenuAccess(menu.menuGroup);
+            if (hasAccess) {
+              filteredMainMenus.push(menu);
+            }
+          } else {
+            // 메뉴 그룹이 없는 경우 기본적으로 표시
+            filteredMainMenus.push(menu);
+          }
+        }
+        
+        setFilteredMenus({ 
+          mainMenus: filteredMainMenus, 
+          subMenus: transformedStructure.subMenus 
+        });
         
         // 디버깅 정보 출력 (개발 환경에서만)
         if (process.env.NODE_ENV === 'development') {
@@ -59,12 +80,15 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
     return null;
   }
 
-  const handleMenuClick = (path, menuGroup = null) => {
+  const handleMenuClick = async (path, menuGroup = null) => {
     if (path && path !== '준비중') {
-      // 메뉴 그룹 권한 검증
-      if (menuGroup && !hasMenuAccess(menuGroup)) {
-        logPermissionCheck('메뉴 접근', menuGroup, false);
-        return;
+      // 메뉴 그룹 권한 검증 (비동기)
+      if (menuGroup) {
+        const hasAccess = await hasMenuAccess(menuGroup);
+        if (!hasAccess) {
+          logPermissionCheck('메뉴 접근', menuGroup, false);
+          return;
+        }
       }
       
       // 메뉴 경로 유효성 검증
@@ -102,16 +126,8 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
     }));
   };
 
-  // 동적 메뉴 구조 생성
-  const getMenuStructure = () => {
-    if (!menuStructure || isLoading || error) {
-      return { mainMenus: [], subMenus: {} };
-    }
-
-    return transformMenuStructure(menuStructure);
-  };
-
-  const { mainMenus, subMenus } = getMenuStructure();
+  // 필터링된 메뉴 구조 사용
+  const { mainMenus, subMenus } = filteredMenus;
 
   // 로딩 상태 렌더링
   if (isLoading) {

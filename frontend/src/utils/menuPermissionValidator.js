@@ -1,13 +1,14 @@
 /**
  * 메뉴 권한 검증 유틸리티
- * 사용자 역할에 따른 메뉴 접근 권한을 검증
+ * 동적 권한 시스템 기반 메뉴 접근 권한을 검증
  * 
  * @author MindGarden
- * @version 1.0.0
- * @since 2025-01-17
+ * @version 2.0.0
+ * @since 2025-09-29
  */
 
 import { sessionManager } from './sessionManager';
+import { fetchUserPermissions } from './permissionUtils';
 
 /**
  * 사용자 역할별 메뉴 접근 권한 매트릭스
@@ -160,30 +161,59 @@ const MENU_PERMISSIONS = {
 };
 
 /**
- * 현재 사용자가 메뉴 그룹에 접근할 수 있는지 확인
+ * 현재 사용자가 메뉴 그룹에 접근할 수 있는지 확인 (동적 권한 시스템)
  * 
  * @param {string} menuGroup - 메뉴 그룹명
  * @returns {boolean} 접근 권한 여부
  */
-export const hasMenuAccess = (menuGroup) => {
-    const user = sessionManager.getUser();
-    if (!user || !user.role) {
-        console.warn('⚠️ 사용자 정보 또는 역할이 없습니다.');
+export const hasMenuAccess = async (menuGroup) => {
+    try {
+        const user = sessionManager.getUser();
+        if (!user || !user.role) {
+            console.warn('⚠️ 사용자 정보 또는 역할이 없습니다.');
+            return false;
+        }
+        
+        // 동적 권한 조회
+        const userPermissions = await fetchUserPermissions();
+        if (!userPermissions || userPermissions.length === 0) {
+            console.warn('⚠️ 사용자 권한 정보를 가져올 수 없습니다.');
+            return false;
+        }
+        
+        // 메뉴 그룹별 권한 매핑
+        const menuGroupPermissionMap = {
+            'COMMON_MENU': ['ADMIN_DASHBOARD_VIEW'],
+            'ADMIN_MENU': ['ADMIN_DASHBOARD_VIEW', 'USER_MANAGE', 'CONSULTANT_MANAGE', 'CLIENT_MANAGE'],
+            'HQ_ADMIN_MENU': ['ADMIN_DASHBOARD_VIEW', 'ALL_BRANCHES_VIEW', 'USER_MANAGE', 'BRANCH_DETAILS_VIEW'],
+            'ERP_MENU': ['ERP_ACCESS', 'FINANCIAL_VIEW', 'INTEGRATED_FINANCE_VIEW'],
+            'CLIENT_MENU': ['CONSULTATION_RECORD_VIEW'],
+            'CONSULTANT_MENU': ['CONSULTATION_RECORD_VIEW', 'SCHEDULE_MANAGE']
+        };
+        
+        const requiredPermissions = menuGroupPermissionMap[menuGroup];
+        if (!requiredPermissions) {
+            console.warn(`⚠️ 알 수 없는 메뉴 그룹: ${menuGroup}`);
+            return false;
+        }
+        
+        // HQ_MASTER는 모든 메뉴 접근 가능
+        if (user.role === 'HQ_MASTER') {
+            return true;
+        }
+        
+        // 필요한 권한 중 하나라도 있으면 접근 가능
+        const hasRequiredPermission = requiredPermissions.some(permission => 
+            userPermissions.includes(permission)
+        );
+        
+        console.log(`🔍 메뉴 접근 권한 확인: 그룹=${menuGroup}, 권한=${requiredPermissions}, 결과=${hasRequiredPermission}`);
+        return hasRequiredPermission;
+        
+    } catch (error) {
+        console.error('❌ 메뉴 접근 권한 확인 실패:', error);
         return false;
     }
-    
-    const permissions = MENU_PERMISSIONS[user.role];
-    if (!permissions) {
-        console.warn(`⚠️ 지원되지 않는 역할: ${user.role}`);
-        return false;
-    }
-    
-    // HQ_MASTER는 모든 메뉴 접근 가능
-    if (user.role === 'HQ_MASTER') {
-        return true;
-    }
-    
-    return permissions.menuGroups.includes(menuGroup);
 };
 
 /**
@@ -326,7 +356,7 @@ export const logPermissionCheck = (action, resource, allowed) => {
     }
 };
 
-export default {
+const menuPermissionValidator = {
     hasMenuAccess,
     hasFeature,
     getUserPermissions,
@@ -334,3 +364,5 @@ export default {
     validateMenuPath,
     logPermissionCheck
 };
+
+export default menuPermissionValidator;

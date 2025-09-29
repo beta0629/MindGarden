@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { fetchUserPermissions } from '../../utils/permissionUtils';
+import React, { useState, useEffect, useCallback } from 'react';
 import './PermissionManagement.css';
 
 const PERMISSION_CATEGORIES = {
@@ -59,7 +58,7 @@ const ROLE_PERMISSIONS = {
         'ADMIN_DASHBOARD_VIEW', 'USER_MANAGE', 'CONSULTANT_MANAGE', 'CLIENT_MANAGE',
         'BRANCH_DETAILS_VIEW', 'SCHEDULE_MANAGE', 'SCHEDULE_CREATE', 'SCHEDULE_MODIFY',
         'SCHEDULE_DELETE', 'CONSULTATION_RECORD_VIEW', 'STATISTICS_VIEW',
-        'CONSULTATION_STATISTICS_VIEW'
+        'CONSULTATION_STATISTICS_VIEW', 'MAPPING_VIEW'
     ],
     'CONSULTANT': [
         'SCHEDULE_MANAGE', 'SCHEDULE_CREATE', 'SCHEDULE_MODIFY', 'SCHEDULE_DELETE',
@@ -119,55 +118,74 @@ const PermissionManagement = () => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
-    useEffect(() => {
-        loadUserPermissions();
-    }, []);
-
-    useEffect(() => {
-        loadRolePermissions();
-    }, [selectedRole]);
-
-    const loadUserPermissions = async () => {
-        try {
-            const permissions = await fetchUserPermissions(setUserPermissions);
-            setUserPermissions(permissions);
-            
-            // 현재 사용자의 역할 가져오기
-            const userInfo = await fetchUserInfo();
-            if (userInfo && userInfo.role) {
-                setCurrentUserRole(userInfo.role);
-                // 사용자 역할에 따라 기본 선택 역할 설정
-                if (userInfo.role === 'HQ_MASTER') {
-                    setSelectedRole('BRANCH_SUPER_ADMIN'); // HQ 마스터는 모든 역할 관리 가능
-                } else {
-                    setSelectedRole(userInfo.role); // 다른 역할은 자신의 역할만 관리 가능
-                }
-            }
-        } catch (error) {
-            console.error('권한 로드 실패:', error);
-            setMessage('권한을 불러오는데 실패했습니다.');
-        }
-    };
-
     const fetchUserInfo = async () => {
         try {
             const response = await fetch('/api/auth/current-user', {
                 credentials: 'include'
             });
+            
             if (response.ok) {
-                return await response.json();
+                const data = await response.json();
+                return data;
+            } else {
+                console.error('사용자 정보 조회 실패:', response.status);
+                return null;
             }
-            return null;
         } catch (error) {
             console.error('사용자 정보 조회 실패:', error);
             return null;
         }
     };
 
-    const loadRolePermissions = () => {
+    const loadUserPermissions = useCallback(async () => {
+        try {
+            // 관리 가능한 권한만 로드
+            const response = await fetch('/api/permissions/manageable', {
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            if (data.success) {
+                setUserPermissions(data.data);
+                console.log('✅ 관리 가능한 권한 로드 완료:', data.data.length, '개');
+                
+                // 현재 사용자의 역할 가져오기
+                const userInfo = await fetchUserInfo();
+                if (userInfo && userInfo.role) {
+                    setCurrentUserRole(userInfo.role);
+                    // 사용자 역할에 따라 기본 선택 역할 설정
+                    if (userInfo.role === 'HQ_MASTER') {
+                        setSelectedRole('BRANCH_SUPER_ADMIN'); // HQ 마스터는 모든 역할 관리 가능
+                    } else {
+                        setSelectedRole(userInfo.role); // 다른 역할은 자신의 역할만 관리 가능
+                    }
+                }
+            } else {
+                console.error('❌ 권한 로드 실패:', data.message);
+                setMessage('권한을 불러오는데 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('❌ 권한 로드 실패:', error);
+            setMessage('권한을 불러오는데 실패했습니다.');
+        }
+    }, []);
+
+    const loadRolePermissions = useCallback(() => {
         const permissions = ROLE_PERMISSIONS[selectedRole] || [];
         setRolePermissions(permissions);
-    };
+    }, [selectedRole]);
+
+    useEffect(() => {
+        loadUserPermissions();
+    }, [loadUserPermissions]);
+
+    useEffect(() => {
+        loadRolePermissions();
+    }, [loadRolePermissions]);
 
     const handlePermissionToggle = (permissionCode) => {
         setRolePermissions(prev => {

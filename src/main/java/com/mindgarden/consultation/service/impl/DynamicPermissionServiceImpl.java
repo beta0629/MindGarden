@@ -176,19 +176,30 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     @Cacheable(value = "allPermissions")
     public List<Map<String, Object>> getAllPermissions() {
         try {
-            log.debug("모든 권한 조회");
+            log.info("🔍 모든 권한 조회 시작");
             
             List<Permission> permissions = permissionRepository.findByIsActiveTrue();
+            log.info("🔍 데이터베이스에서 조회된 권한 수: {}", permissions != null ? permissions.size() : "null");
+            
+            if (permissions == null) {
+                log.error("❌ permissionRepository.findByIsActiveTrue()가 null을 반환했습니다");
+                return new ArrayList<>();
+            }
+            
+            if (permissions.isEmpty()) {
+                log.warn("⚠️ 데이터베이스에 활성화된 권한이 없습니다");
+                return new ArrayList<>();
+            }
             
             List<Map<String, Object>> permissionMaps = permissions.stream()
                 .map(this::convertPermissionToMap)
                 .collect(Collectors.toList());
             
-            log.debug("모든 권한 조회 완료: 권한 수={}", permissionMaps.size());
+            log.info("✅ 모든 권한 조회 완료: 권한 수={}", permissionMaps.size());
             return permissionMaps;
             
         } catch (Exception e) {
-            log.error("모든 권한 조회 중 오류 발생", e);
+            log.error("❌ 모든 권한 조회 중 오류 발생", e);
             return new ArrayList<>();
         }
     }
@@ -300,8 +311,12 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
         map.put("permission_code", rolePermission.getPermissionCode());
         map.put("role_name", rolePermission.getRoleName());
         map.put("granted_by", rolePermission.getGrantedBy());
-        map.put("granted_at", rolePermission.getGrantedAt());
         map.put("is_active", rolePermission.getIsActive());
+        
+        // LocalDateTime을 String으로 변환하여 직렬화 문제 해결
+        if (rolePermission.getGrantedAt() != null) {
+            map.put("granted_at", rolePermission.getGrantedAt().toString());
+        }
         
         // 권한 상세 정보 조회
         Permission permission = permissionRepository.findByPermissionCode(rolePermission.getPermissionCode()).orElse(null);
@@ -325,8 +340,15 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
         map.put("permission_description", permission.getPermissionDescription());
         map.put("category", permission.getCategory());
         map.put("is_active", permission.getIsActive());
-        map.put("created_at", permission.getCreatedAt());
-        map.put("updated_at", permission.getUpdatedAt());
+        
+        // LocalDateTime을 String으로 변환하여 직렬화 문제 해결
+        if (permission.getCreatedAt() != null) {
+            map.put("created_at", permission.getCreatedAt().toString());
+        }
+        if (permission.getUpdatedAt() != null) {
+            map.put("updated_at", permission.getUpdatedAt().toString());
+        }
+        
         return map;
     }
     

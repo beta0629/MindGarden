@@ -92,8 +92,8 @@ server:
     session:
       cookie:
         http-only: true
-        secure: false  # OAuth2 콜백이 HTTP이므로 false로 설정
-        same-site: lax  # OAuth2 콜백을 위해 lax로 변경
+        secure: true  # HTTPS 환경에서는 true로 설정
+        same-site: none  # 크로스 사이트 요청을 위해 none으로 설정
         max-age: 3600  # 1시간
         domain: m-garden.co.kr
   compression:

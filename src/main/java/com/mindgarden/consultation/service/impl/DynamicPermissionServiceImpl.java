@@ -47,16 +47,26 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
     @Cacheable(value = "userPermissions", key = "#roleName + '_' + #permissionCode")
     public boolean hasPermission(String roleName, String permissionCode) {
         try {
-            log.debug("권한 체크: 역할={}, 권한={}", roleName, permissionCode);
+            log.info("🔍 권한 체크 시작: 역할={}, 권한={}", roleName, permissionCode);
             
             boolean hasPermission = rolePermissionRepository
                 .existsByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode);
             
-            log.debug("권한 체크 결과: 역할={}, 권한={}, 결과={}", roleName, permissionCode, hasPermission);
+            log.info("✅ 권한 체크 결과: 역할={}, 권한={}, 결과={}", roleName, permissionCode, hasPermission);
+            
+            // 디버깅을 위해 실제 데이터 확인
+            if (!hasPermission) {
+                log.warn("❌ 권한 없음 - 데이터베이스 확인: 역할={}, 권한={}", roleName, permissionCode);
+                // 실제 데이터 확인
+                var allRolePermissions = rolePermissionRepository.findByRoleNameAndIsActiveTrue(roleName);
+                log.warn("📋 해당 역할의 모든 권한: {}", 
+                    allRolePermissions.stream().map(rp -> rp.getPermissionCode()).collect(java.util.stream.Collectors.toList()));
+            }
+            
             return hasPermission;
             
         } catch (Exception e) {
-            log.error("권한 체크 중 오류 발생: 역할={}, 권한={}", roleName, permissionCode, e);
+            log.error("❌ 권한 체크 중 오류 발생: 역할={}, 권한={}", roleName, permissionCode, e);
             return false;
         }
     }

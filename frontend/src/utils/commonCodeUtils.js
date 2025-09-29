@@ -160,7 +160,8 @@ export const getPackageOptions = async () => {
             } else if (code.codeValue === 'VIP') {
                 label = 'VIP 패키지';
             } else if (code.codeValue.startsWith('SINGLE_')) {
-                label = '단회기 상담';
+                // SINGLE_ 패키지는 코드값 그대로 사용 (SINGLE_30000, SINGLE_35000 등)
+                label = code.codeValue;
             } else {
                 label = code.koreanName || code.codeLabel;
             }

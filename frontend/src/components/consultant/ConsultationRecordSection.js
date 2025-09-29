@@ -52,11 +52,11 @@ const ConsultationRecordSection = ({ consultantId }) => {
   }, [consultantId]);
 
   const handleViewAllRecords = () => {
-    navigate('/consultation-records');
+    navigate('/consultant/consultation-records');
   };
 
   const handleCreateRecord = () => {
-    navigate('/consultation-records/create');
+    navigate('/consultant/consultation-records/create');
   };
 
   if (loading) {
@@ -191,7 +191,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
             </button>
             <button 
               className="quick-action-btn"
-              onClick={() => navigate('/consultation-records/statistics')}
+              onClick={() => navigate('/consultant/consultation-records/statistics')}
             >
               <i className="bi bi-graph-up"></i>
               통계 보기

@@ -308,8 +308,8 @@ public class AdminController {
                 ));
             }
             
-            // 세션의 사용자 정보가 불완전할 수 있으므로 데이터베이스에서 다시 조회
-            User fullUser = userService.findById(currentUser.getId())
+            // 세션의 사용자 정보가 불완전할 수 있으므로 이메일로 데이터베이스에서 다시 조회
+            User fullUser = userService.findByEmail(currentUser.getEmail())
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             currentUser = fullUser; // Update currentUser with the fully loaded object
             

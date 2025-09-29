@@ -78,22 +78,23 @@ const ErpDashboard = ({ user: propUser }) => {
       
       // 동적 권한 목록 가져오기
       await fetchUserPermissions(setUserPermissions);
-      
-      // ERP 접근 권한 확인 (동적 권한 시스템 사용)
-      // 권한이 로드될 때까지 잠시 대기
-      setTimeout(() => {
-        if (!PermissionChecks.canAccessERP(userPermissions)) {
-          console.log('❌ ERP 접근 권한 없음, 일반 대시보드로 이동');
-          navigate('/dashboard', { replace: true });
-          return;
-        }
-        loadDashboardData();
-      }, 100);
     };
 
     // OAuth2 콜백 후 세션 설정을 위한 지연
     setTimeout(checkSessionWithDelay, 100);
   }, [sessionLoading, propUser, sessionUser, isLoggedIn, navigate]);
+
+  // 권한이 로드된 후 ERP 접근 권한 확인
+  useEffect(() => {
+    if (userPermissions.length > 0) {
+      if (!PermissionChecks.canAccessERP(userPermissions)) {
+        console.log('❌ ERP 접근 권한 없음, 일반 대시보드로 이동');
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+      loadDashboardData();
+    }
+  }, [userPermissions, navigate]);
 
   const loadDashboardData = async () => {
     try {

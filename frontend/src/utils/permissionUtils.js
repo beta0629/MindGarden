@@ -3,7 +3,7 @@
  * 백엔드의 DynamicPermissionService와 연동하여 권한을 체크합니다.
  */
 
-import { apiGet, apiPost } from './ajax';
+import { apiGet } from './ajax';
 
 /**
  * 사용자의 권한 목록을 가져옵니다.
@@ -163,9 +163,6 @@ export const PERMISSIONS = {
     ERP_SYNC_MANAGE: 'ERP_SYNC_MANAGE',
     
     // ERP 하위 메뉴 권한
-    SALARY_MANAGE: 'SALARY_MANAGE',
-    TAX_MANAGE: 'TAX_MANAGE',
-    REFUND_MANAGE: 'REFUND_MANAGE',
     PURCHASE_REQUEST_VIEW: 'PURCHASE_REQUEST_VIEW',
     PURCHASE_REQUEST_MANAGE: 'PURCHASE_REQUEST_MANAGE',
     APPROVAL_MANAGE: 'APPROVAL_MANAGE',
@@ -317,7 +314,7 @@ export const PermissionChecks = {
     canViewIntegratedFinance: (permissions) => hasPermission(permissions, PERMISSIONS.INTEGRATED_FINANCE_VIEW)
 };
 
-export default {
+const permissionUtils = {
     fetchUserPermissions,
     hasPermission,
     hasAnyPermission,
@@ -327,3 +324,5 @@ export default {
     PERMISSION_ROLES,
     PermissionChecks
 };
+
+export default permissionUtils;

@@ -148,7 +148,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
                     <div className="record-actions">
                       <button 
                         className="btn btn-sm btn-outline-secondary"
-                        onClick={() => navigate(`/consultation-records/${record.id}`)}
+                        onClick={() => navigate(`/consultant/consultation-record-view/${record.id}`)}
                       >
                         보기
                       </button>

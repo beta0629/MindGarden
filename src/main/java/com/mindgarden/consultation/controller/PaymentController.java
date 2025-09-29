@@ -17,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -53,7 +52,6 @@ public class PaymentController {
      * 결제 생성 (수퍼 어드민 전용)
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     public ResponseEntity<?> createPayment(@Valid @RequestBody PaymentRequest request, HttpServletRequest httpRequest) {
         // 동적 권한 체크 - 결제 기능 접근 권한
         String userRole = (String) httpRequest.getAttribute("userRole");
@@ -92,7 +90,6 @@ public class PaymentController {
      * 결제 조회
      */
     @GetMapping("/{paymentId}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getPayment(@PathVariable String paymentId) {
         try {
             log.info("결제 조회: {}", paymentId);

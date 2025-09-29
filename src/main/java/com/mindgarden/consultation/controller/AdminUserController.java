@@ -11,11 +11,11 @@ import com.mindgarden.consultation.dto.EmailResponse;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.EmailService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.UserAddressService;
 import com.mindgarden.consultation.service.UserProfileService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -44,13 +44,13 @@ public class AdminUserController {
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserAddressService userAddressService;
     private final BranchService branchService;
+    private final DynamicPermissionService dynamicPermissionService;
     
     /**
      * 전체 사용자 목록 조회 (관리자 전용)
      * @param includeInactive 비활성 사용자 포함 여부 (기본값: false)
      */
     @GetMapping("")
-    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     public ResponseEntity<Map<String, Object>> getAllUsers(
             @RequestParam(value = "includeInactive", defaultValue = "false") boolean includeInactive) {
         try {

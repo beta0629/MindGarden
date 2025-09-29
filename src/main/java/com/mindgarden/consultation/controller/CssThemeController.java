@@ -3,13 +3,12 @@ package com.mindgarden.consultation.controller;
 import com.mindgarden.consultation.entity.CssColorSettings;
 import com.mindgarden.consultation.entity.CssThemeMetadata;
 import com.mindgarden.consultation.service.CssThemeService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,10 +25,10 @@ import java.util.Optional;
 @RequestMapping("/api/admin/css-themes")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasRole('ADMIN') or hasRole('BRANCH_SUPER_ADMIN') or hasRole('HQ_ADMIN') or hasRole('SUPER_HQ_ADMIN') or hasRole('HQ_MASTER')")
 public class CssThemeController {
 
     private final CssThemeService cssThemeService;
+    private final DynamicPermissionService dynamicPermissionService;
 
     /**
      * 모든 활성화된 테마 목록 조회

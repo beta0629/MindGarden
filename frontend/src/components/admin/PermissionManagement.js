@@ -139,8 +139,8 @@ const PermissionManagement = () => {
 
     const loadUserPermissions = useCallback(async () => {
         try {
-            // 관리 가능한 권한만 로드
-            const response = await fetch('/api/permissions/manageable', {
+            // 실제 사용자 권한 로드
+            const response = await fetch('/api/permissions/my-permissions', {
                 credentials: 'include'
             });
             
@@ -149,9 +149,9 @@ const PermissionManagement = () => {
             }
             
             const data = await response.json();
-            if (data.success) {
-                setUserPermissions(data.data);
-                console.log('✅ 관리 가능한 권한 로드 완료:', data.data.length, '개');
+            if (data.success && data.data && data.data.permissions) {
+                setUserPermissions(data.data.permissions);
+                console.log('✅ 사용자 권한 로드 완료:', data.data.permissions.length, '개');
                 
                 // 현재 사용자의 역할 가져오기
                 const userInfo = await fetchUserInfo();

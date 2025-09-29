@@ -1,14 +1,14 @@
 package com.mindgarden.consultation.controller;
 
+import java.util.Map;
 import com.mindgarden.consultation.service.PermissionInitializationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Map;
 
 /**
  * 권한 초기화 컨트롤러 (운영 환경 디버깅용)
@@ -17,6 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/debug")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class PermissionInitController {
 
     private final PermissionInitializationService permissionInitializationService;

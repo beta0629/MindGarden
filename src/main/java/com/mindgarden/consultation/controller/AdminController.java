@@ -315,7 +315,8 @@ public class AdminController {
                 log.info("🔧 세션에 브랜치 코드가 없어 사용자 정보에서 가져옴: {}", currentBranchCode);
             }
             
-            if (currentBranchCode == null) {
+            // 상담사는 브랜치 코드가 없어도 자신의 매핑을 조회할 수 있음
+            if (currentBranchCode == null && !currentUser.getRole().equals(UserRole.CONSULTANT)) {
                 log.warn("❌ 브랜치 코드를 찾을 수 없습니다");
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,

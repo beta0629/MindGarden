@@ -105,9 +105,8 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
           navigate('/dashboard', { replace: true });
           return;
         }
-        loadDashboardData();
+        initializeComponent();
       }, 100);
-      initializeComponent();
     };
 
     // OAuth2 콜백 후 세션 설정을 위한 지연

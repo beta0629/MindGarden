@@ -97,7 +97,9 @@ const AdminDashboard = ({ user: propUser }) => {
             console.log('✅ AdminDashboard 접근 허용:', currentUser?.role);
             
             // 동적 권한 목록 가져오기
-            await fetchUserPermissions(setUserPermissions);
+            const permissions = await fetchUserPermissions(setUserPermissions);
+            console.log('🔍 AdminDashboard 권한 로드 완료:', permissions);
+            console.log('🔍 USER_MANAGE 권한 확인:', permissions.includes('USER_MANAGE'));
         };
 
         // OAuth2 콜백 후 세션 설정을 위한 지연
@@ -903,7 +905,15 @@ const AdminDashboard = ({ user: propUser }) => {
             )}
 
             {/* 권한 관리 */}
-            {PermissionChecks.canManageUsers(userPermissions) && (
+            {(() => {
+                const canManage = PermissionChecks.canManageUsers(userPermissions);
+                console.log('🔍 권한 관리 섹션 렌더링 체크:', {
+                    userPermissions,
+                    canManage,
+                    hasUserManage: userPermissions.includes('USER_MANAGE')
+                });
+                return canManage;
+            })() && (
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
                     <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
                         <i className="bi bi-shield-check"></i>

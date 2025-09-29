@@ -2,7 +2,6 @@ package com.mindgarden.consultation.config;
 
 import java.util.Arrays;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -12,7 +11,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
@@ -36,6 +34,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     
+    private final SessionBasedAuthenticationFilter sessionBasedAuthenticationFilter;
+    
+    public SecurityConfig(SessionBasedAuthenticationFilter sessionBasedAuthenticationFilter) {
+        this.sessionBasedAuthenticationFilter = sessionBasedAuthenticationFilter;
+    }
+    
     // 기존 세션 기반 인증 시스템 사용
     // Spring Security는 보안 강화 목적으로만 사용
     
@@ -48,102 +52,16 @@ public class SecurityConfig {
             // CORS 설정
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
-            // 세션 기반 인증 필터 추가
-            .addFilterBefore(sessionBasedAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            // CSRF 비활성화 (권한 체크는 컨트롤러에서 처리)
+            .csrf(csrf -> csrf.disable())
             
-            // Rate Limiting 필터 추가 (RateLimitingConfig에서 자동 등록됨)
-            
-            // CSRF 보호 설정 (보안 강화)
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(csrfTokenRepository())
-                .ignoringRequestMatchers(
-                    "/api/auth/login",  // 로그인만 CSRF 제외
-                    "/api/auth/register",  // 회원가입만 CSRF 제외
-                    "/api/auth/forgot-password",  // 비밀번호 찾기만 CSRF 제외
-                    "/api/auth/reset-password",  // 비밀번호 재설정 API CSRF 제외
-                    "/api/auth/change-password",  // 비밀번호 변경 API CSRF 제외
-                    "/api/admin/plsql-mapping-sync/**",  // PL/SQL 매핑 동기화 API CSRF 제외
-                    "/api/auth/logout",  // 로그아웃만 CSRF 제외
-                    "/oauth2/**",    // OAuth2 콜백
-                    "/api/password-reset/**",  // 비밀번호 재설정
-                    "/api/password/**",  // 비밀번호 관리 API CSRF 제외
-                    "/api/password-management/**",  // 비밀번호 관리 API CSRF 제외
-                    "/api/test-simple/**",  // 간단한 테스트 API
-                    "/api/test/**",  // 테스트 API
-                    "/api/health/**",  // 헬스체크
-                    "/api/common-codes/group/MENU/active",  // 메뉴 구조만 CSRF 제외
-                    "/api/common-codes/group/NOTIFICATION_TYPE",  // 알림 타입만 CSRF 제외
-                    "/api/admin/mappings/*/partial-refund",  // 부분 환불 API CSRF 제외
-                    "/api/client/social-account",  // 소셜 계정 관리 API CSRF 제외
-                    "/api/privacy-consent/**",  // 개인정보 동의 API CSRF 제외
-                    "/error"
-                )
-            )
-            
-            // 세션 관리 활성화 (보안 강화)
+            // 세션 관리 비활성화 (권한 체크는 컨트롤러에서 처리)
             .sessionManagement(session -> session
-                .sessionAuthenticationStrategy(sessionAuthenticationStrategy())
-                .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
-                .sessionFixation().changeSessionId()  // 세션 고정 공격 방지
-                .maximumSessions(3)
-                .sessionRegistry(sessionRegistry())
-                .maxSessionsPreventsLogin(false)  // 동시 세션 초과 시 기존 세션 만료
-                .expiredUrl("/login?expired")      // 세션 만료 시 리다이렉트 URL
+                .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS)
             )
             
-            // 환경별 인증 설정 (기존 세션 기반 인증 시스템과 호환)
-            .authorizeHttpRequests(authz -> {
-                // 정적 리소스 (CSS, JS, 이미지 등) - 항상 허용
-                authz.requestMatchers(
-                    "/static/**",
-                    "/css/**", 
-                    "/js/**",
-                    "/images/**",
-                    "/fonts/**",
-                    "/favicon.ico",
-                    "/robots.txt",
-                    "/manifest.json",
-                    "/*.png",
-                    "/*.jpg",
-                    "/*.jpeg",
-                    "/*.gif",
-                    "/*.svg",
-                    "/*.css",
-                    "/*.js"
-                ).permitAll();
-                
-                // 공개 API (모든 환경에서 허용)
-                authz.requestMatchers(
-                    "/api/auth/**", 
-                    "/oauth2/**",
-                    "/api/password/**",  // 비밀번호 관리 API
-                    "/api/password-reset/**",  // 비밀번호 재설정 API
-                    "/api/health/**",  // 시스템 헬스체크
-                    "/api/common-codes/group/MENU/active",  // 메뉴 구조만 허용
-                    "/api/common-codes/group/NOTIFICATION_TYPE",  // 알림 타입만 허용
-                    "/error",
-                    "/actuator/health",
-                    "/actuator/info"
-                ).permitAll();
-                
-                // 로컬 환경에서만 테스트 API 허용
-                if (!isProductionEnvironment()) {
-                    authz.requestMatchers(
-                        "/api/test-simple/**",  // 간단한 테스트 API
-                        "/api/test/**",  // 테스트 API
-                        "/api/local-test/**"  // 로컬 테스트 API
-                    ).permitAll();
-                }
-                
-                // 인증된 사용자만 접근 허용
-                authz.anyRequest().authenticated();
-            })
-            
-            // 인증 실패 시 로그인 페이지로 리다이렉트
-            .exceptionHandling(exception -> exception
-                .authenticationEntryPoint(customAuthenticationEntryPoint())
-                .accessDeniedHandler(customAccessDeniedHandler())
-            );
+            // 모든 요청 허용 (권한 체크는 컨트롤러에서 처리)
+            .authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
         
         return http.build();
     }
@@ -246,11 +164,6 @@ public class SecurityConfig {
     }
     
     
-    /**
-     * 세션 기반 인증 필터 (자동 주입)
-     */
-    @Autowired
-    private SessionBasedAuthenticationFilter sessionBasedAuthenticationFilter;
     
     // Rate Limiting 필터는 RateLimitingConfig에서 관리
     

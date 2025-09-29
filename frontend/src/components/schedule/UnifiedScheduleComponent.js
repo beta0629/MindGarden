@@ -11,6 +11,7 @@ import CustomSelect from '../common/CustomSelect';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
+import notificationManager from '../../utils/notification';
 import './ScheduleCalendar.css';
 import '../common/ScheduleList.css';
 
@@ -517,7 +518,7 @@ const UnifiedScheduleComponent = ({
         // 상담사는 휴가 등록만 가능
         if (userRole === 'CONSULTANT') {
             if (isPastDate) {
-                alert('과거 날짜에는 휴가를 등록할 수 없습니다.');
+                notificationManager.show('warning', '과거 날짜에는 휴가를 등록할 수 없습니다.');
                 return;
             }
             
@@ -529,7 +530,7 @@ const UnifiedScheduleComponent = ({
         // 관리자는 스케줄과 휴가 모두 등록 가능
         else if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
             if (isPastDate) {
-                alert('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다.\n기존 스케줄을 클릭하여 조회하실 수 있습니다.');
+                notificationManager.show('warning', '과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.');
                 return;
             }
             
@@ -538,7 +539,7 @@ const UnifiedScheduleComponent = ({
             console.log('📅 DateActionModal 열기 시도 - isDateActionModalOpen을 true로 설정');
             setIsDateActionModalOpen(true);
         } else {
-            alert('스케줄 생성 권한이 없습니다.');
+            notificationManager.show('error', '스케줄 생성 권한이 없습니다.');
         }
     };
 
@@ -809,6 +810,7 @@ const UnifiedScheduleComponent = ({
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     date: selectedSchedule.date,
                     startTime: selectedSchedule.startTime,

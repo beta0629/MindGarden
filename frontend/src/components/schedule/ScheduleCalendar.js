@@ -9,6 +9,7 @@ import VacationManagementModal from '../admin/VacationManagementModal';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
+import notificationManager from '../../utils/notification';
 import './ScheduleCalendar.css';
 
 /**
@@ -504,7 +505,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'CONSULTANT') {
             // 과거 날짜인 경우 새로운 스케줄 등록 불가 알림
             if (isPastDate) {
-                alert('과거 날짜에는 새로운 스케줄을 등록할 수 없습니다.\n기존 스케줄을 클릭하여 조회하실 수 있습니다.');
+                notificationManager.show('warning', '과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.');
                 return;
             }
             
@@ -513,7 +514,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             console.log('📅 DateActionModal 열기 시도 - isDateActionModalOpen을 true로 설정');
             setIsDateActionModalOpen(true);
         } else {
-            alert('스케줄 생성 권한이 없습니다.');
+            notificationManager.show('error', '스케줄 생성 권한이 없습니다.');
         }
     };
 
@@ -765,6 +766,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     date: selectedSchedule.date,
                     startTime: selectedSchedule.startTime,
@@ -788,7 +790,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             
         } catch (error) {
             console.error('❌ 스케줄 시간 변경 실패:', error);
-            alert(`스케줄 시간 변경에 실패했습니다: ${error.message}`);
+            notificationManager.show('error', `스케줄 시간 변경에 실패했습니다: ${error.message}`);
         }
     };
 

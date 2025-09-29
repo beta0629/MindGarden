@@ -49,8 +49,9 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
         try {
             log.info("🔍 권한 체크 시작: 역할={}, 권한={}", roleName, permissionCode);
             
-            boolean hasPermission = rolePermissionRepository
-                .existsByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode);
+            // 직접 쿼리로 확인
+            var directCheck = rolePermissionRepository.findByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode);
+            boolean hasPermission = directCheck.isPresent();
             
             log.info("✅ 권한 체크 결과: 역할={}, 권한={}, 결과={}", roleName, permissionCode, hasPermission);
             
@@ -61,6 +62,10 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
                 var allRolePermissions = rolePermissionRepository.findByRoleNameAndIsActiveTrue(roleName);
                 log.warn("📋 해당 역할의 모든 권한: {}", 
                     allRolePermissions.stream().map(rp -> rp.getPermissionCode()).collect(java.util.stream.Collectors.toList()));
+                
+                // existsByRoleNameAndPermissionCodeAndIsActiveTrue 메서드도 테스트
+                boolean existsResult = rolePermissionRepository.existsByRoleNameAndPermissionCodeAndIsActiveTrue(roleName, permissionCode);
+                log.warn("🔍 existsByRoleNameAndPermissionCodeAndIsActiveTrue 결과: {}", existsResult);
             }
             
             return hasPermission;

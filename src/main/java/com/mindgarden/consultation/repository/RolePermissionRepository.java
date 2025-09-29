@@ -37,7 +37,8 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
     /**
      * 역할명과 권한 코드로 매핑 조회
      */
-    Optional<RolePermission> findByRoleNameAndPermissionCodeAndIsActiveTrue(String roleName, String permissionCode);
+    @Query("SELECT rp FROM RolePermission rp WHERE rp.roleName = :roleName AND rp.permissionCode = :permissionCode AND rp.isActive = true")
+    Optional<RolePermission> findByRoleNameAndPermissionCodeAndIsActiveTrue(@Param("roleName") String roleName, @Param("permissionCode") String permissionCode);
     
     /**
      * 특정 권한을 가진 모든 역할 조회

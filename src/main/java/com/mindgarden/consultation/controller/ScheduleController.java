@@ -472,15 +472,16 @@ public class ScheduleController {
             HttpSession session) {
         
         log.info("📝 스케줄 수정 요청: ID {}, 데이터 {}", id, updateData);
+        log.info("📝 세션 정보: {}", session != null ? session.getId() : "null");
         
         // 권한 체크
-        if (!PermissionCheckUtils.checkPermission(session, "SCHEDULE_MODIFY", dynamicPermissionService)) {
-            log.warn("⚠️ 스케줄 수정 권한 없음: 사용자 ID {}", session.getAttribute("userId"));
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                "success", false,
-                "message", "접근 권한이 없습니다."
-            ));
+        log.info("🔍 권한 체크 시작: SCHEDULE_MODIFY");
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SCHEDULE_MODIFY", dynamicPermissionService);
+        if (permissionResponse != null) {
+            log.warn("❌ 권한 체크 실패: {}", permissionResponse.getBody());
+            return (ResponseEntity<Map<String, Object>>) permissionResponse;
         }
+        log.info("✅ 권한 체크 통과");
         
         try {
             Schedule existingSchedule = scheduleService.findById(id);

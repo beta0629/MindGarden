@@ -53,6 +53,12 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 User user = SessionUtils.getCurrentUser(session);
                 log.info("🔍 세션에서 사용자 조회: {}", user != null ? user.getEmail() : "null");
                 
+                // 스케줄 관련 요청에 대한 특별 로깅
+                if (requestPath.contains("/schedules")) {
+                    log.info("🔍 스케줄 요청 감지: path={}, method={}, user={}", 
+                        requestPath, request.getMethod(), user != null ? user.getEmail() : "null");
+                }
+                
                 if (user != null) {
                     // 기존 인증 정보 확인
                     Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();

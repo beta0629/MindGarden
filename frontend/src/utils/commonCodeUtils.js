@@ -149,8 +149,21 @@ export const getPackageOptions = async () => {
                 console.log(`단회기 옵션 처리: ${code.codeValue} -> ${sessions}회기, ${price}원`);
             }
             
-            // korean_name이 있으면 그것을 사용, 없으면 code_label 사용
-            const label = code.koreanName || code.codeLabel;
+            // 패키지별 라벨 생성
+            let label;
+            if (code.codeValue === 'BASIC') {
+                label = '기본 패키지';
+            } else if (code.codeValue === 'STANDARD') {
+                label = '표준 패키지';
+            } else if (code.codeValue === 'PREMIUM') {
+                label = '프리미엄 패키지';
+            } else if (code.codeValue === 'VIP') {
+                label = 'VIP 패키지';
+            } else if (code.codeValue.startsWith('SINGLE_')) {
+                label = '단회기 상담';
+            } else {
+                label = code.koreanName || code.codeLabel;
+            }
             
             const result = {
                 value: code.codeValue,

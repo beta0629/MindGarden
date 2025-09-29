@@ -56,7 +56,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
   };
 
   const handleCreateRecord = () => {
-    navigate('/consultant/consultation-records/create');
+    navigate('/consultant/schedule');
   };
 
   if (loading) {

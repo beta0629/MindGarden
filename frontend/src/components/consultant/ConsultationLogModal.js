@@ -25,6 +25,7 @@ const ConsultationLogModal = ({
   const [loadingCodes, setLoadingCodes] = useState(false);
   const [completionStatusOptions, setCompletionStatusOptions] = useState([]);
   const [loadingCompletionCodes, setLoadingCompletionCodes] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
   // 우선순위 코드 로드
   const loadPriorityCodes = useCallback(async () => {
@@ -106,20 +107,30 @@ const ConsultationLogModal = ({
       setLoadingCompletionCodes(true);
       const response = await apiGet('/api/common-codes/group/COMPLETION_STATUS');
       if (response && response.length > 0) {
-        setCompletionStatusOptions(response.map(code => ({
-          value: code.codeValue === 'COMPLETED' ? true : false,
+        setCompletionStatusOptions(response.map((code, index) => ({
+          value: code.codeValue,
           label: code.codeLabel,
-          icon: code.icon,
+          icon: code.icon || '📋',
           color: code.colorCode,
           description: code.codeDescription
         })));
+      } else {
+        // 응답이 비어있을 때 기본값 설정
+        setCompletionStatusOptions([
+          { value: 'COMPLETED', label: '완료', icon: '✅', color: '#10b981', description: '작업 완료' },
+          { value: 'PENDING', label: '대기', icon: '⏳', color: '#ffc107', description: '작업 대기' },
+          { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#17a2b8', description: '작업 진행중' },
+          { value: 'CANCELLED', label: '취소', icon: '❌', color: '#ef4444', description: '작업 취소' }
+        ]);
       }
     } catch (error) {
       console.error('완료 상태 코드 로드 실패:', error);
       // 실패 시 기본값 설정
       setCompletionStatusOptions([
-        { value: true, label: '완료', icon: '✅', color: '#10b981', description: '작업 완료' },
-        { value: false, label: '미완료', icon: '❌', color: '#ef4444', description: '작업 미완료' }
+        { value: 'COMPLETED', label: '완료', icon: '✅', color: '#10b981', description: '작업 완료' },
+        { value: 'PENDING', label: '대기', icon: '⏳', color: '#ffc107', description: '작업 대기' },
+        { value: 'IN_PROGRESS', label: '진행중', icon: '🔄', color: '#17a2b8', description: '작업 진행중' },
+        { value: 'CANCELLED', label: '취소', icon: '❌', color: '#ef4444', description: '작업 취소' }
       ]);
     } finally {
       setLoadingCompletionCodes(false);
@@ -237,14 +248,72 @@ const ConsultationLogModal = ({
   };
 
   const handleInputChange = (e) => {
+    e.stopPropagation(); // 이벤트 버블링 방지
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+    
+    // 입력 시 해당 필드의 검증 오류 제거
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  // 필수값 검증 함수
+  const validateForm = () => {
+    const errors = {};
+    
+    // 세션 시간 (분) - 필수
+    if (!formData.sessionDurationMinutes || formData.sessionDurationMinutes < 1) {
+      errors.sessionDurationMinutes = '세션 시간을 입력해주세요 (최소 1분)';
+    }
+    
+    // 내담자 상태 - 필수
+    if (!formData.clientCondition || formData.clientCondition.trim() === '') {
+      errors.clientCondition = '내담자 상태를 입력해주세요';
+    }
+    
+    // 주요 이슈 - 필수
+    if (!formData.mainIssues || formData.mainIssues.trim() === '') {
+      errors.mainIssues = '주요 이슈를 입력해주세요';
+    }
+    
+    // 개입 방법 - 필수
+    if (!formData.interventionMethods || formData.interventionMethods.trim() === '') {
+      errors.interventionMethods = '개입 방법을 입력해주세요';
+    }
+    
+    // 내담자 반응 - 필수
+    if (!formData.clientResponse || formData.clientResponse.trim() === '') {
+      errors.clientResponse = '내담자 반응을 입력해주세요';
+    }
+    
+    // 위험도 평가 - 필수
+    if (!formData.riskAssessment || formData.riskAssessment === '') {
+      errors.riskAssessment = '위험도 평가를 선택해주세요';
+    }
+    
+    // 진행 평가 - 필수
+    if (!formData.progressEvaluation || formData.progressEvaluation.trim() === '') {
+      errors.progressEvaluation = '진행 평가를 입력해주세요';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSave = async () => {
+    // 필수값 검증
+    if (!validateForm()) {
+      notificationManager.error('필수 항목을 모두 입력해주세요.');
+      return;
+    }
+    
     try {
       setSaving(true);
       
@@ -291,6 +360,12 @@ const ConsultationLogModal = ({
   };
 
   const handleComplete = async () => {
+    // 필수값 검증
+    if (!validateForm()) {
+      notificationManager.error('필수 항목을 모두 입력해주세요.');
+      return;
+    }
+    
     try {
       setSaving(true);
       
@@ -564,6 +639,27 @@ const ConsultationLogModal = ({
         </div>
 
         <div style={styles.content}>
+          {/* 필수값 안내 */}
+          <div style={{
+            backgroundColor: '#fff3cd',
+            border: '1px solid #ffeaa7',
+            borderRadius: '8px',
+            padding: '12px',
+            marginBottom: '20px',
+            fontSize: '14px',
+            color: '#856404'
+          }}>
+            <div style={{display: 'flex', alignItems: 'center', marginBottom: '8px'}}>
+              <span style={{fontSize: '16px', marginRight: '8px'}}>⚠️</span>
+              <strong>필수 입력 항목 안내</strong>
+            </div>
+            <div style={{marginLeft: '24px', lineHeight: '1.5'}}>
+              <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span> 표시된 항목은 반드시 입력해야 합니다.
+              <br />
+              필수 항목: 세션 시간, 내담자 상태, 주요 이슈, 개입 방법, 내담자 반응, 위험도 평가, 진행 평가
+            </div>
+          </div>
+
           {/* 내담자 정보 */}
           {client && (
             <div style={styles.clientInfo}>
@@ -666,7 +762,9 @@ const ConsultationLogModal = ({
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.formLabel}>세션 시간 (분)</label>
+                <label style={styles.formLabel}>
+                  세션 시간 (분) <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                </label>
                 <input
                   type="number"
                   name="sessionDurationMinutes"
@@ -674,8 +772,17 @@ const ConsultationLogModal = ({
                   onChange={handleInputChange}
                   min="1"
                   max="180"
-                  style={styles.formInput}
+                  style={{
+                    ...styles.formInput,
+                    borderColor: validationErrors.sessionDurationMinutes ? '#dc3545' : '#ced4da'
+                  }}
+                  required
                 />
+                {validationErrors.sessionDurationMinutes && (
+                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                    {validationErrors.sessionDurationMinutes}
+                  </small>
+                )}
               </div>
 
               <div style={styles.formGroup}>
@@ -705,50 +812,94 @@ const ConsultationLogModal = ({
 
               {/* 내담자 상태 */}
               <div style={styles.formGroup}>
-                <label style={styles.formLabel}>내담자 상태</label>
+                <label style={styles.formLabel}>
+                  내담자 상태 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                </label>
                 <textarea
                   name="clientCondition"
                   value={formData.clientCondition}
                   onChange={handleInputChange}
                   placeholder="내담자의 현재 상태를 기록해주세요."
-                  style={styles.formTextarea}
+                  style={{
+                    ...styles.formTextarea,
+                    borderColor: validationErrors.clientCondition ? '#dc3545' : '#ced4da'
+                  }}
+                  required
                 />
+                {validationErrors.clientCondition && (
+                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                    {validationErrors.clientCondition}
+                  </small>
+                )}
               </div>
 
               {/* 주요 이슈 */}
               <div style={styles.formGroup}>
-                <label style={styles.formLabel}>주요 이슈</label>
+                <label style={styles.formLabel}>
+                  주요 이슈 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                </label>
                 <textarea
                   name="mainIssues"
                   value={formData.mainIssues}
                   onChange={handleInputChange}
                   placeholder="이번 세션에서 다룬 주요 이슈를 기록해주세요."
-                  style={styles.formTextarea}
+                  style={{
+                    ...styles.formTextarea,
+                    borderColor: validationErrors.mainIssues ? '#dc3545' : '#ced4da'
+                  }}
+                  required
                 />
+                {validationErrors.mainIssues && (
+                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                    {validationErrors.mainIssues}
+                  </small>
+                )}
               </div>
 
               {/* 개입 방법 */}
               <div style={styles.formGroup}>
-                <label style={styles.formLabel}>개입 방법</label>
+                <label style={styles.formLabel}>
+                  개입 방법 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                </label>
                 <textarea
                   name="interventionMethods"
                   value={formData.interventionMethods}
                   onChange={handleInputChange}
                   placeholder="사용한 상담 기법이나 개입 방법을 기록해주세요."
-                  style={styles.formTextarea}
+                  style={{
+                    ...styles.formTextarea,
+                    borderColor: validationErrors.interventionMethods ? '#dc3545' : '#ced4da'
+                  }}
+                  required
                 />
+                {validationErrors.interventionMethods && (
+                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                    {validationErrors.interventionMethods}
+                  </small>
+                )}
               </div>
 
               {/* 내담자 반응 */}
               <div style={styles.formGroup}>
-                <label style={styles.formLabel}>내담자 반응</label>
+                <label style={styles.formLabel}>
+                  내담자 반응 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                </label>
                 <textarea
                   name="clientResponse"
                   value={formData.clientResponse}
                   onChange={handleInputChange}
                   placeholder="내담자의 반응이나 변화를 기록해주세요."
-                  style={styles.formTextarea}
+                  style={{
+                    ...styles.formTextarea,
+                    borderColor: validationErrors.clientResponse ? '#dc3545' : '#ced4da'
+                  }}
+                  required
                 />
+                {validationErrors.clientResponse && (
+                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                    {validationErrors.clientResponse}
+                  </small>
+                )}
               </div>
 
               {/* 다음 세션 계획 */}
@@ -788,13 +939,20 @@ const ConsultationLogModal = ({
 
               {/* 위험도 평가 */}
               <div style={styles.formGroup}>
-                <label style={styles.formLabel}>위험도 평가</label>
+                <label style={styles.formLabel}>
+                  위험도 평가 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                </label>
                 <select
                   name="riskAssessment"
                   value={formData.riskAssessment}
                   onChange={handleInputChange}
-                  style={styles.formSelect}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    ...styles.formSelect,
+                    borderColor: validationErrors.riskAssessment ? '#dc3545' : '#ced4da'
+                  }}
                   disabled={loadingCodes}
+                  required
                 >
                   <option value="">위험도를 선택하세요</option>
                   {riskLevels.map(level => (
@@ -803,6 +961,11 @@ const ConsultationLogModal = ({
                     </option>
                   ))}
                 </select>
+                {validationErrors.riskAssessment && (
+                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                    {validationErrors.riskAssessment}
+                  </small>
+                )}
               </div>
 
               <div style={styles.formGroup}>
@@ -829,14 +992,25 @@ const ConsultationLogModal = ({
 
               {/* 진행 평가 */}
               <div style={styles.formGroup}>
-                <label style={styles.formLabel}>진행 평가</label>
+                <label style={styles.formLabel}>
+                  진행 평가 <span style={{color: '#dc3545', fontWeight: 'bold'}}>*</span>
+                </label>
                 <textarea
                   name="progressEvaluation"
                   value={formData.progressEvaluation}
                   onChange={handleInputChange}
                   placeholder="전반적인 진행 상황을 평가해주세요."
-                  style={styles.formTextarea}
+                  style={{
+                    ...styles.formTextarea,
+                    borderColor: validationErrors.progressEvaluation ? '#dc3545' : '#ced4da'
+                  }}
+                  required
                 />
+                {validationErrors.progressEvaluation && (
+                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                    {validationErrors.progressEvaluation}
+                  </small>
+                )}
               </div>
 
               <div style={styles.formGroup}>

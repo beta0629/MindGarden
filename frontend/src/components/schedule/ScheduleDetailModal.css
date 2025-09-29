@@ -299,6 +299,11 @@
     color: white;
 }
 
+.btn-log {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+}
+
 /* 취소 확인 모달 */
 .schedule-detail-confirm-overlay {
     position: fixed;

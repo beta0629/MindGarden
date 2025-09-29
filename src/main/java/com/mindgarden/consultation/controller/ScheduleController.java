@@ -930,9 +930,11 @@ public class ScheduleController {
      */
     @PostMapping("/consultation-records")
     public ResponseEntity<Map<String, Object>> createConsultationRecord(
-            @RequestBody Map<String, Object> recordData) {
+            @RequestBody Map<String, Object> recordData,
+            HttpSession session) {
         
         log.info("📝 상담일지 작성 - 데이터: {}", recordData);
+        log.info("📝 세션 정보: {}", session != null ? session.getId() : "null");
         
         try {
             com.mindgarden.consultation.entity.ConsultationRecord savedRecord = 

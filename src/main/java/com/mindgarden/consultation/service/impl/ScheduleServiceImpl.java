@@ -1337,13 +1337,13 @@ public class ScheduleServiceImpl implements ScheduleService {
                 try {
                     // 최신 버전으로 다시 조회하여 버전 충돌 방지
                     Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
+                    if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
                         latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                         latestSchedule.setUpdatedAt(LocalDateTime.now());
                         scheduleRepository.save(latestSchedule);
                         completedCount++;
                         
-                        log.info("✅ 오늘 스케줄 자동 완료: ID={}, 제목={}, 시간={}", 
+                        log.info("✅ 오늘 확정 스케줄 자동 완료: ID={}, 제목={}, 시간={}", 
                             latestSchedule.getId(), latestSchedule.getTitle(), latestSchedule.getStartTime());
                     }
                 } catch (Exception e) {
@@ -1377,7 +1377,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             for (Schedule schedule : pastConfirmedSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findById(schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
+                    if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
                         latestSchedule.setStatus(ScheduleStatus.COMPLETED);
                         latestSchedule.setUpdatedAt(LocalDateTime.now());
                         scheduleRepository.save(latestSchedule);

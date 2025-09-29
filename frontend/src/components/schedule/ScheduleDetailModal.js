@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiPut, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import ConsultationLogModal from '../consultant/ConsultationLogModal';
 import './ScheduleDetailModal.css';
 
 /**
@@ -22,6 +23,7 @@ const ScheduleDetailModal = ({
     const [loading, setLoading] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showConsultationLogModal, setShowConsultationLogModal] = useState(false);
     const [adminNote, setAdminNote] = useState('');
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
@@ -204,6 +206,28 @@ const ScheduleDetailModal = ({
         } finally {
             setLoading(false);
         }
+    };
+
+    /**
+     * 상담일지 작성 처리
+     */
+    const handleWriteConsultationLog = () => {
+        if (!scheduleData?.id) {
+            notificationManager.error('스케줄 정보가 올바르지 않습니다.');
+            return;
+        }
+        
+        console.log('📝 상담일지 작성 요청:', scheduleData.id);
+        setShowConsultationLogModal(true);
+    };
+
+    /**
+     * 상담일지 저장 완료 처리
+     */
+    const handleConsultationLogSaved = () => {
+        setShowConsultationLogModal(false);
+        onScheduleUpdated?.(); // 스케줄 목록 새로고침
+        notificationManager.success('상담일지가 저장되었습니다.');
     };
 
     /**
@@ -445,13 +469,6 @@ const ScheduleDetailModal = ({
                                             ✅ 예약 확정
                                         </button>
                                         <button 
-                                            className="btn-status btn-complete"
-                                            onClick={() => handleStatusChange('COMPLETED')}
-                                            disabled={loading}
-                                        >
-                                            ✅ 완료 처리
-                                        </button>
-                                        <button 
                                             className="btn-status btn-cancel"
                                             onClick={() => setShowCancelConfirm(true)}
                                             disabled={loading}
@@ -462,13 +479,29 @@ const ScheduleDetailModal = ({
                                 )}
                                 
                                 {(scheduleData.status === 'CONFIRMED' || scheduleData.status === '확정됨') && (
-                                    <button 
-                                        className="btn-status btn-cancel"
-                                        onClick={() => setShowCancelConfirm(true)}
-                                        disabled={loading}
-                                    >
-                                        ❌ 예약 취소
-                                    </button>
+                                    <>
+                                        <button 
+                                            className="btn-status btn-complete"
+                                            onClick={() => handleStatusChange('COMPLETED')}
+                                            disabled={loading}
+                                        >
+                                            ✅ 완료 처리
+                                        </button>
+                                        <button 
+                                            className="btn-status btn-log"
+                                            onClick={handleWriteConsultationLog}
+                                            disabled={loading}
+                                        >
+                                            📝 상담일지 작성
+                                        </button>
+                                        <button 
+                                            className="btn-status btn-cancel"
+                                            onClick={() => setShowCancelConfirm(true)}
+                                            disabled={loading}
+                                        >
+                                            ❌ 예약 취소
+                                        </button>
+                                    </>
                                 )}
                                 
                                 {(scheduleData.status === 'COMPLETED' || scheduleData.status === '완료됨') && (
@@ -498,6 +531,16 @@ const ScheduleDetailModal = ({
 
             {showCancelConfirm && renderCancelConfirm()}
             {showConfirmModal && renderConfirmModal()}
+            
+            {/* 상담일지 작성 모달 */}
+            {showConsultationLogModal && (
+                <ConsultationLogModal
+                    isOpen={showConsultationLogModal}
+                    onClose={() => setShowConsultationLogModal(false)}
+                    scheduleData={scheduleData}
+                    onSave={handleConsultationLogSaved}
+                />
+            )}
         </div>
     );
 };

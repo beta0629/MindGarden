@@ -321,28 +321,15 @@ public class AdminController {
             }
             
             // 상담사는 브랜치 코드가 없어도 자신의 매핑을 조회할 수 있음
-            if (currentBranchCode == null && !currentUser.getRole().equals(UserRole.CONSULTANT)) {
-                log.warn("❌ 브랜치 코드를 찾을 수 없습니다");
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "브랜치 코드가 설정되지 않았습니다"
-                ));
+            // 상담사 대시보드에서 호출되는 API이므로 브랜치 코드 체크 제거
+            if (currentBranchCode == null) {
+                log.info("🔧 브랜치 코드가 없지만 상담사 매핑 조회는 계속 진행");
             }
             
             log.info("🔍 상담사별 매핑된 내담자 목록 조회 - 상담사 ID: {}", consultantId);
             
-            // 상담사 존재 여부 확인
-            Optional<User> consultant = userService.findById(consultantId);
-            if (consultant.isEmpty()) {
-                log.warn("❌ 상담사를 찾을 수 없습니다 - ID: {}", consultantId);
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "상담사를 찾을 수 없습니다"
-                ));
-            }
-            
-            log.info("✅ 상담사 확인 완료: {} (ID: {})", consultant.get().getName(), consultantId);
-            List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantId(consultantId);
+            // 현재 로그인한 사용자의 이메일로 매핑 조회 (ID 차이 문제 해결)
+            List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantEmail(currentUser.getEmail());
             
             // 결제 승인된 매핑만 필터링 (세션 소진 여부와 관계없이 모든 매핑 표시)
             List<Map<String, Object>> activeMappings = mappings.stream()

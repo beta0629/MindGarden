@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
@@ -312,6 +311,9 @@ public class AdminController {
             User fullUser = userService.findByEmail(currentUser.getEmail())
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
             currentUser = fullUser; // Update currentUser with the fully loaded object
+            
+            log.info("🔍 현재 사용자 정보 - ID: {}, 이메일: {}, 역할: {}, 브랜치코드: {}", 
+                    currentUser.getId(), currentUser.getEmail(), currentUser.getRole(), currentUser.getBranchCode());
             
             // 사용자의 브랜치 코드 가져오기 (세션에서 또는 사용자 정보에서)
             String currentBranchCode = (String) session.getAttribute("branchCode");

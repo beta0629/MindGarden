@@ -225,6 +225,11 @@ public interface AdminService {
      */
     List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId);
     List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId, String branchCode);
+    
+    /**
+     * 상담사 이메일로 매핑 목록 조회
+     */
+    List<ConsultantClientMapping> getMappingsByConsultantEmail(String consultantEmail);
 
     /**
      * 내담자별 매핑 목록 조회

@@ -4825,6 +4825,9 @@ public class AdminServiceImpl implements AdminService {
         }
         
         User consultant = consultantOpt.get();
+        log.info("🔍 찾은 상담사 정보 - ID: {}, 이름: {}, 역할: {}, 브랜치코드: {}", 
+                consultant.getId(), consultant.getName(), consultant.getRole(), consultant.getBranchCode());
+        
         List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(
             consultant.getId(), ConsultantClientMapping.MappingStatus.TERMINATED);
         

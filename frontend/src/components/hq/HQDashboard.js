@@ -98,17 +98,15 @@ const HQDashboard = ({ user: propUser }) => {
             console.log('✅ HQ Dashboard 접근 허용:', currentUser?.role);
             
             // 동적 권한 목록 가져오기
-            await fetchUserPermissions(setUserPermissions);
+            const permissions = await fetchUserPermissions(setUserPermissions);
             
             // HQ 대시보드 접근 권한 확인 (동적 권한 시스템 사용)
-            setTimeout(() => {
-                if (!PermissionChecks.canViewHQDashboard(userPermissions)) {
-                    console.log('❌ HQ 대시보드 접근 권한 없음, 일반 대시보드로 이동');
-                    navigate('/dashboard', { replace: true });
-                    return;
-                }
-                loadDashboardData();
-            }, 100);
+            if (!PermissionChecks.canViewHQDashboard(permissions)) {
+                console.log('❌ HQ 대시보드 접근 권한 없음, 일반 대시보드로 이동');
+                navigate('/dashboard', { replace: true });
+                return;
+            }
+            loadDashboardData();
         };
 
         // OAuth2 콜백 후 세션 설정을 위한 지연

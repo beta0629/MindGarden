@@ -108,9 +108,9 @@ const AdminDashboard = ({ user: propUser }) => {
             }
         };
 
-        // OAuth2 콜백 후 세션 설정을 위한 지연
-        setTimeout(checkSessionWithDelay, 100);
-    }, [sessionLoading, propUser, sessionUser, isLoggedIn, navigate]);
+        // 세션 확인 실행
+        checkSessionWithDelay();
+    }, [sessionLoading, propUser, sessionUser, isLoggedIn]);
 
     const showToast = useCallback((message, type = 'success') => {
         setToastMessage(message);

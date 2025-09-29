@@ -65,16 +65,16 @@ export const useSession = () => {
         // 초기 세션 확인
         initializeSession();
         
-        // 정기적인 세션 확인
-        const interval = setInterval(() => {
-            console.log('⏰ 정기 세션 체크...');
-            sessionManager.checkSession();
-        }, PERIODIC_SESSION_CHECK_INTERVAL);
+        // 정기적인 세션 확인 (무한 로딩 문제로 임시 비활성화)
+        // const interval = setInterval(() => {
+        //     console.log('⏰ 정기 세션 체크...');
+        //     sessionManager.checkSession();
+        // }, PERIODIC_SESSION_CHECK_INTERVAL);
         
         return () => {
             console.log('🧹 useSession 정리...');
             sessionManager.removeListener(handleSessionChange);
-            clearInterval(interval);
+            // clearInterval(interval);
             initializedRef.current = false;
         };
     }, []); // 빈 의존성 배열로 한 번만 실행

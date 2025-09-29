@@ -255,9 +255,6 @@ public class MenuServiceImpl implements MenuService {
         List<String> menuGroups = new ArrayList<>();
         
         switch (userRole) {
-            case ADMIN:
-                menuGroups.add("ADMIN_MENU");
-                break;
             case HQ_ADMIN:
             case SUPER_HQ_ADMIN:
                 menuGroups.add("HQ_ADMIN_MENU");

@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import com.mindgarden.consultation.annotation.RequireRole;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.FinancialTransactionRequest;
 import com.mindgarden.consultation.dto.FinancialTransactionResponse;
@@ -24,7 +23,6 @@ import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ErpService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.RecurringExpenseService;
-import com.mindgarden.consultation.util.SecurityUtils;
 import com.mindgarden.consultation.util.TaxCalculationUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.data.domain.Page;
@@ -70,15 +68,30 @@ public class ErpController {
     /**
      * 모든 활성화된 아이템 조회
      */
-    @RequireRole({UserRole.ADMIN, UserRole.BRANCH_SUPER_ADMIN, UserRole.HQ_ADMIN, UserRole.SUPER_HQ_ADMIN, UserRole.HQ_MASTER})
     @GetMapping("/items")
     public ResponseEntity<Map<String, Object>> getAllItems(HttpSession session) {
         try {
             log.info("모든 아이템 조회 요청");
             
-            // 현재 로그인한 사용자의 지점코드 확인
+            // 동적 권한 체크
             User currentUser = (User) session.getAttribute("user");
-            String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다.",
+                    "redirectToLogin", true
+                ));
+            }
+            
+            // ERP 접근 권한 확인
+            if (!dynamicPermissionService.hasPermission(currentUser, "ERP_ACCESS")) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "ERP 접근 권한이 없습니다."
+                ));
+            }
+            
+            String currentBranchCode = currentUser.getBranchCode();
             log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
             
             List<Item> allItems = erpService.getAllActiveItems();
@@ -1355,14 +1368,23 @@ public class ErpController {
             @RequestParam(required = false) String endDate,
             HttpSession session) {
         try {
-            // ERP 접근 권한 확인 (공통 처리)
-            ResponseEntity<Map<String, Object>> permissionCheck = SecurityUtils.checkPermission(
-                session, UserRole.HQ_MASTER, UserRole.BRANCH_SUPER_ADMIN, UserRole.SUPER_HQ_ADMIN);
-            if (permissionCheck != null) {
-                return permissionCheck;
+            // 동적 권한 체크
+            User currentUser = (User) session.getAttribute("user");
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다.",
+                    "redirectToLogin", true
+                ));
             }
             
-            User currentUser = SessionUtils.getCurrentUser(session);
+            // 통합재무관리 접근 권한 확인
+            if (!dynamicPermissionService.hasPermission(currentUser, "INTEGRATED_FINANCE_VIEW")) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "통합재무관리 접근 권한이 없습니다."
+                ));
+            }
             
             log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 사용자지점={}, 요청지점={}", 
                     currentUser.getEmail(), currentUser.getBranchCode(), branchCode);

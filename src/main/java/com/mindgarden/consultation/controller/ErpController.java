@@ -18,6 +18,7 @@ import com.mindgarden.consultation.entity.PurchaseOrder;
 import com.mindgarden.consultation.entity.PurchaseRequest;
 import com.mindgarden.consultation.entity.RecurringExpense;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.repository.UserRepository;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ErpService;
@@ -62,6 +63,7 @@ public class ErpController {
     private final RecurringExpenseService recurringExpenseService;
     private final CommonCodeService commonCodeService;
     private final DynamicPermissionService dynamicPermissionService;
+    private final UserRepository userRepository;
     
     // ==================== Item Management ====================
     
@@ -1377,6 +1379,11 @@ public class ErpController {
                     "redirectToLogin", true
                 ));
             }
+            
+            // 세션의 사용자 정보가 불완전할 수 있으므로 데이터베이스에서 다시 조회
+            User fullUser = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+            currentUser = fullUser;
             
             // 통합재무관리 접근 권한 확인
             if (!dynamicPermissionService.hasPermission(currentUser, "INTEGRATED_FINANCE_VIEW")) {

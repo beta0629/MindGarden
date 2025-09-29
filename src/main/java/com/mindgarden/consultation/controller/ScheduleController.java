@@ -539,16 +539,23 @@ public class ScheduleController {
             @RequestParam(required = false) String endDate,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String dateRange,
-            @RequestParam(required = false) String chartType) {
+            @RequestParam(required = false) String chartType,
+            HttpSession session) {
         
         log.info("📊 관리자용 스케줄 통계 조회 요청: 역할 {}, 시작일: {}, 종료일: {}, 상태: {}, 날짜범위: {}, 차트타입: {}", 
                 userRole, startDate, endDate, status, dateRange, chartType);
         
-        // 관리자 권한 확인
-        if (!"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && 
-            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole)) {
-            log.warn("❌ 관리자 권한 없음: {}", userRole);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        // 세션에서 현재 사용자 확인
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            log.warn("❌ 인증되지 않은 사용자");
+            return ResponseEntity.status(401).build();
+        }
+        
+        // 동적 권한 체크 - 통계 조회 권한 확인
+        if (!dynamicPermissionService.hasPermission(currentUser, "STATISTICS_VIEW")) {
+            log.warn("❌ 통계 조회 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
+            return ResponseEntity.status(403).build();
         }
         
         try {
@@ -566,16 +573,21 @@ public class ScheduleController {
      */
     @GetMapping("/today/statistics")
     public ResponseEntity<Map<String, Object>> getTodayScheduleStatistics(
-            @RequestParam String userRole) {
+            @RequestParam String userRole, HttpSession session) {
         
         log.info("📊 오늘의 스케줄 통계 조회 요청: 역할 {}", userRole);
         
-        // 관리자 또는 상담사 권한 확인
-        if (!"ADMIN".equals(userRole) && !"HQ_MASTER".equals(userRole) && !"CONSULTANT".equals(userRole) && 
-            !"BRANCH_HQ_MASTER".equals(userRole) && !"HQ_ADMIN".equals(userRole) && !"SUPER_HQ_ADMIN".equals(userRole) && 
-            !"BRANCH_SUPER_ADMIN".equals(userRole)) {
-            log.warn("❌ 접근 권한 없음: {}", userRole);
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        // 세션에서 현재 사용자 확인
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            log.warn("❌ 인증되지 않은 사용자");
+            return ResponseEntity.status(401).build();
+        }
+        
+        // 동적 권한 체크 - 통계 조회 권한 확인
+        if (!dynamicPermissionService.hasPermission(currentUser, "STATISTICS_VIEW")) {
+            log.warn("❌ 통계 조회 권한 없음: 사용자={}, 역할={}", currentUser.getEmail(), currentUser.getRole());
+            return ResponseEntity.status(403).build();
         }
         
         try {

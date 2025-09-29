@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/permissions")
+@RequestMapping("/api/permissions")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class PermissionManagementController {

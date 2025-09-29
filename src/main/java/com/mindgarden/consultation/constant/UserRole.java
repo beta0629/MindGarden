@@ -25,7 +25,10 @@ public enum UserRole {
     BRANCH_SUPER_ADMIN("본점수퍼어드민"),
     
     // 지점 관리자 역할
-    ADMIN("지점관리자"),
+    BRANCH_ADMIN("지점관리자"),
+    
+    // 일반 관리자 역할
+    ADMIN("관리자"),
     
     // 본사 총관리자 역할 (최고 권한)
     HQ_MASTER("본사총관리자"),

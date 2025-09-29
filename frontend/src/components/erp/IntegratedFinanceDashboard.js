@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSession } from '../../contexts/SessionContext';
@@ -43,6 +43,9 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   const [selectedBranch, setSelectedBranch] = useState('');
   const [branches, setBranches] = useState([]);
   const [isHQUser, setIsHQUser] = useState(false);
+  
+  // 권한 체크 중복 실행 방지
+  const permissionCheckedRef = useRef(false);
 
   // 현재 사용자 결정
   const user = propUser || sessionUser;
@@ -122,12 +125,21 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   // 권한이 로드된 후 통합재무관리 접근 권한 확인
   useEffect(() => {
-    if (userPermissions.length > 0) {
+    if (userPermissions.length > 0 && !permissionCheckedRef.current) {
+      permissionCheckedRef.current = true;
+      
+      console.log('🔍 통합재무관리 권한 체크:', {
+        userPermissions,
+        hasPermission: PermissionChecks.canViewIntegratedFinance(userPermissions)
+      });
+      
       if (!PermissionChecks.canViewIntegratedFinance(userPermissions)) {
         console.log('❌ 통합재무관리 접근 권한 없음, ERP 대시보드로 이동');
         navigate('/erp/dashboard', { replace: true });
         return;
       }
+      
+      console.log('✅ 통합재무관리 접근 권한 확인됨');
       initializeComponent();
     }
   }, [userPermissions, navigate]);

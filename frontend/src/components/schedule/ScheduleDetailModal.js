@@ -231,6 +231,20 @@ const ScheduleDetailModal = ({
     };
 
     /**
+     * 예약 변경 처리
+     */
+    const handleEditSchedule = () => {
+        if (!scheduleData?.id) {
+            notificationManager.error('스케줄 정보가 올바르지 않습니다.');
+            return;
+        }
+        
+        console.log('✏️ 예약 변경 요청:', scheduleData.id);
+        // TODO: 예약 변경 모달 또는 페이지로 이동
+        notificationManager.info('예약 변경 기능은 준비 중입니다.');
+    };
+
+    /**
      * 예약 확정 처리
      */
     const handleConfirmSchedule = async () => {
@@ -461,6 +475,13 @@ const ScheduleDetailModal = ({
                             <>
                                 {(scheduleData.status === 'BOOKED' || scheduleData.status === '예약됨') && (
                                     <>
+                                        <button 
+                                            className="btn-status btn-edit"
+                                            onClick={handleEditSchedule}
+                                            disabled={loading}
+                                        >
+                                            ✏️ 예약 변경
+                                        </button>
                                         <button 
                                             className="btn-status btn-confirm"
                                             onClick={() => setShowConfirmModal(true)}

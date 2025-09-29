@@ -40,7 +40,10 @@ const UnifiedScheduleComponent = ({
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
     const [isDateActionModalOpen, setIsDateActionModalOpen] = useState(false);
+    const [showTimeSelectionModal, setShowTimeSelectionModal] = useState(false);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
+    const [bookedTimes, setBookedTimes] = useState([]);
+    const [loadingAvailableTimes, setLoadingAvailableTimes] = useState(false);
     const [loading, setLoading] = useState(false);
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
@@ -669,6 +672,87 @@ const UnifiedScheduleComponent = ({
     };
 
     /**
+     * 기존 예약 정보 조회
+     */
+    const loadBookedTimes = async (date, consultantId) => {
+        try {
+            setLoadingAvailableTimes(true);
+            console.log('📅 예약 정보 조회 시작:', { date, consultantId });
+            
+            const response = await fetch(`/api/schedules/available-times/${date}?consultantId=${consultantId || ''}`);
+            const data = await response.json();
+            
+            console.log('📅 API 응답:', { response: response.status, data });
+            
+            if (data.success) {
+                const bookedTimes = data.bookedTimes || [];
+                setBookedTimes(bookedTimes);
+                console.log('📅 예약된 시간대 설정 완료:', bookedTimes);
+                console.log('📅 예약된 시간대 개수:', bookedTimes.length);
+            } else {
+                console.error('❌ 예약 정보 조회 실패:', data.message);
+                setBookedTimes([]);
+            }
+        } catch (error) {
+            console.error('❌ 예약 정보 조회 오류:', error);
+            setBookedTimes([]);
+        } finally {
+            setLoadingAvailableTimes(false);
+        }
+    };
+
+    /**
+     * 시간대 슬롯 생성 (30분 단위)
+     */
+    const generateTimeSlots = () => {
+        const slots = [];
+        const startHour = 9;  // 09:00부터
+        const endHour = 20;   // 20:00까지
+        
+        for (let hour = startHour; hour < endHour; hour++) {
+            // 30분 단위로 슬롯 생성
+            slots.push({
+                startTime: `${hour.toString().padStart(2, '0')}:00`,
+                endTime: `${hour.toString().padStart(2, '0')}:30`,
+                duration: '50분'
+            });
+            slots.push({
+                startTime: `${hour.toString().padStart(2, '0')}:30`,
+                endTime: `${(hour + 1).toString().padStart(2, '0')}:00`,
+                duration: '50분'
+            });
+        }
+        
+        return slots;
+    };
+
+    /**
+     * 시간대가 예약되어 있는지 확인
+     */
+    const isTimeSlotBooked = (startTime, endTime) => {
+        console.log('🔍 시간 충돌 검사:', { startTime, endTime, bookedTimes });
+        
+        const isBooked = bookedTimes.some(booked => {
+            const bookedStart = booked.startTime;
+            const bookedEnd = booked.endTime;
+            
+            console.log('🔍 예약된 시간대와 비교:', { 
+                bookedStart, 
+                bookedEnd, 
+                startTime, 
+                endTime,
+                overlap: (startTime < bookedEnd && endTime > bookedStart)
+            });
+            
+            // 시간 겹침 확인
+            return (startTime < bookedEnd && endTime > bookedStart);
+        });
+        
+        console.log('🔍 최종 결과:', { startTime, endTime, isBooked });
+        return isBooked;
+    };
+
+    /**
      * 이벤트 드래그 앤 드롭 핸들러
      */
     const handleEventDrop = async (info) => {
@@ -678,31 +762,30 @@ const UnifiedScheduleComponent = ({
         const newStart = event.start;
         const newEnd = event.end;
 
-        try {
-            const response = await fetch(`/api/schedules/${event.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    date: newStart.toISOString().split('T')[0],
-                    startTime: newStart.toTimeString().split(' ')[0].slice(0, 5),
-                    endTime: newEnd.toTimeString().split(' ')[0].slice(0, 5)
-                })
-            });
+        // 이벤트를 원래 위치로 되돌리기
+        info.revert();
 
-            if (!response.ok) {
-                // 실패 시 원래 위치로 되돌리기
-                info.revert();
-                alert('스케줄 이동에 실패했습니다.');
-            } else {
-                console.log('✅ 스케줄 이동 완료');
-            }
-        } catch (error) {
-            console.error('스케줄 이동 오류:', error);
-            info.revert();
-            alert('스케줄 이동 중 오류가 발생했습니다.');
-        }
+        // 드래그된 스케줄 데이터 준비
+        const scheduleData = {
+            id: event.id,
+            title: event.title,
+            date: newStart.toISOString().split('T')[0],
+            startTime: newStart.toTimeString().split(' ')[0].slice(0, 5),
+            endTime: newEnd.toTimeString().split(' ')[0].slice(0, 5),
+            clientName: event.extendedProps?.clientName || '',
+            consultantName: event.extendedProps?.consultantName || '',
+            status: event.extendedProps?.status || 'BOOKED',
+            description: event.extendedProps?.description || '',
+            clientId: event.extendedProps?.clientId,
+            consultantId: event.extendedProps?.consultantId
+        };
+
+        // 기존 예약 정보 조회
+        await loadBookedTimes(scheduleData.date, scheduleData.consultantId);
+
+        // 시간 선택 모달 열기
+        setSelectedSchedule(scheduleData);
+        setShowTimeSelectionModal(true);
     };
 
     /**
@@ -712,6 +795,49 @@ const UnifiedScheduleComponent = ({
         setIsModalOpen(false);
         setSelectedDate(null);
         setSelectedInfo(null);
+    };
+
+    /**
+     * 시간 선택 확인 핸들러
+     */
+    const handleTimeSelectionConfirm = async () => {
+        if (!selectedSchedule) return;
+
+        try {
+            const response = await fetch(`/api/schedules/${selectedSchedule.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    date: selectedSchedule.date,
+                    startTime: selectedSchedule.startTime,
+                    endTime: selectedSchedule.endTime
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`스케줄 업데이트 실패: ${response.status} - ${errorData.message || response.statusText}`);
+            }
+
+            console.log('✅ 스케줄 시간 변경 완료');
+            
+            // 모달 닫기
+            setShowTimeSelectionModal(false);
+            setSelectedSchedule(null);
+            
+            // 스케줄 목록 새로고침
+            loadSchedules();
+            
+        } catch (error) {
+            console.error('❌ 스케줄 시간 변경 실패:', error);
+            notificationManager.show({
+                message: '스케줄 시간 변경에 실패했습니다.',
+                type: 'error',
+                duration: 5000
+            });
+        }
     };
 
     /**
@@ -873,8 +999,8 @@ const UnifiedScheduleComponent = ({
                 dateClick={handleDateClick}
                 eventClick={handleEventClick}
                 eventDrop={handleEventDrop}
-                editable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
-                droppable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN'}
+                editable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_ADMIN'}
+                droppable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_ADMIN'}
                 height="auto"
                 slotMinTime="10:00:00"
                 slotMaxTime="20:00:00"
@@ -1063,6 +1189,174 @@ const UnifiedScheduleComponent = ({
                         loadSchedules(); // 스케줄 다시 로드
                     }}
                 />
+            )}
+
+            {/* 시간 선택 모달 */}
+            {showTimeSelectionModal && selectedSchedule && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        width: '600px',
+                        maxWidth: '90vw',
+                        maxHeight: '80vh',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+                        overflow: 'auto'
+                    }}>
+                        <h3 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '18px', fontWeight: '600' }}>
+                            🕐 시간을 선택하세요
+                        </h3>
+                        
+                        {/* 상담 유형 선택 */}
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#4a5568' }}>
+                                상담 유형:
+                            </label>
+                            <select
+                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px' }}
+                                defaultValue="INDIVIDUAL"
+                            >
+                                <option value="INDIVIDUAL">개인상담 (INDIVIDUAL)</option>
+                                <option value="GROUP">그룹상담 (GROUP)</option>
+                                <option value="COUPLE">부부상담 (COUPLE)</option>
+                            </select>
+                        </div>
+
+                        {/* 상담 시간 선택 */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#4a5568' }}>
+                                상담 시간:
+                            </label>
+                            <select
+                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px' }}
+                                defaultValue="50_MIN"
+                            >
+                                <option value="30_MIN">30분 (30분)</option>
+                                <option value="50_MIN">50분 (50분)</option>
+                                <option value="60_MIN">60분 (60분)</option>
+                                <option value="90_MIN">90분 (90분)</option>
+                            </select>
+                        </div>
+
+                        {/* 시간대 선택 그리드 */}
+                        <div style={{ marginBottom: '24px' }}>
+                            <div style={{ marginBottom: '12px', fontWeight: '500', color: '#4a5568' }}>
+                                사용 가능한 시간대:
+                            </div>
+                            {loadingAvailableTimes ? (
+                                <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
+                                    예약 정보를 불러오는 중...
+                                </div>
+                            ) : (
+                                <div style={{ 
+                                    display: 'grid', 
+                                    gridTemplateColumns: 'repeat(2, 1fr)', 
+                                    gap: '8px',
+                                    maxHeight: '400px',
+                                    overflowY: 'auto',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    padding: '12px'
+                                }}>
+                                    {generateTimeSlots().map((timeSlot, index) => {
+                                        const isBooked = isTimeSlotBooked(timeSlot.startTime, timeSlot.endTime);
+                                        const isSelected = selectedSchedule.startTime === timeSlot.startTime && 
+                                                          selectedSchedule.endTime === timeSlot.endTime;
+                                        
+                                        return (
+                                            <button
+                                                key={index}
+                                                onClick={() => !isBooked && setSelectedSchedule(prev => ({
+                                                    ...prev,
+                                                    startTime: timeSlot.startTime,
+                                                    endTime: timeSlot.endTime
+                                                }))}
+                                                disabled={isBooked}
+                                                style={{
+                                                    padding: '12px 8px',
+                                                    border: '1px solid #e2e8f0',
+                                                    borderRadius: '6px',
+                                                    background: isBooked ? '#f3f4f6' : (isSelected ? '#3b82f6' : 'white'),
+                                                    color: isBooked ? '#9ca3af' : (isSelected ? 'white' : '#374151'),
+                                                    cursor: isBooked ? 'not-allowed' : 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                    fontSize: '12px'
+                                                }}
+                                            >
+                                                <div style={{ 
+                                                    width: '20px', 
+                                                    height: '20px', 
+                                                    borderRadius: '50%', 
+                                                    backgroundColor: isBooked ? '#d1d5db' : (isSelected ? 'white' : '#10b981'),
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '10px',
+                                                    color: isBooked ? '#9ca3af' : (isSelected ? '#3b82f6' : 'white')
+                                                }}>
+                                                    {isBooked ? '✗' : '가'}
+                                                </div>
+                                                <div style={{ fontWeight: '500' }}>
+                                                    {timeSlot.startTime}
+                                                </div>
+                                                <div style={{ fontSize: '10px', color: isBooked ? '#9ca3af' : '#6b7280' }}>
+                                                    {timeSlot.duration}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setShowTimeSelectionModal(false)}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '6px',
+                                    background: 'white',
+                                    color: '#4a5568',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleTimeSelectionConfirm}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    background: '#3b82f6',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                확인
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
             </div>
         </SimpleLayout>

@@ -113,7 +113,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         List<String> adminPermissions = List.of(
             "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
             "MAPPING_VIEW", "MAPPING_MANAGE", "BRANCH_DETAILS_VIEW",
-            "SCHEDULE_MANAGE", "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
+            "ACCESS_SCHEDULE_MANAGEMENT", "SCHEDULE_MANAGE", "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
             "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "CONSULTATION_STATISTICS_VIEW"
         );
         
@@ -151,19 +151,19 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             "SYSTEM_CONFIGURATION", "USER_ROLE_MANAGEMENT", "PERMISSION_MANAGEMENT"
         );
         
+        // BRANCH_ADMIN 권한 (지점 관리자)
+        List<String> branchAdminPermissions = List.of(
+            "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
+            "MAPPING_VIEW", "MAPPING_MANAGE", "BRANCH_DETAILS_VIEW",
+            "ACCESS_SCHEDULE_MANAGEMENT", "SCHEDULE_MANAGE", "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
+            "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "CONSULTATION_STATISTICS_VIEW"
+        );
+        
         // CONSULTANT 권한 (제한적)
         List<String> consultantPermissions = List.of(
             "ACCESS_SCHEDULE_MANAGEMENT", "CREATE_SCHEDULES", "MODIFY_SCHEDULES",
             "ACCESS_CONSULTATION_RECORDS", "CREATE_CONSULTATION_RECORDS",
             "ACCESS_STATISTICS", "VIEW_CONSULTATION_STATISTICS", "STATISTICS_VIEW", "MAPPING_VIEW"
-        );
-        
-        // BRANCH_ADMIN 권한
-        List<String> branchAdminPermissions = List.of(
-            "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
-            "BRANCH_DETAILS_VIEW", "SCHEDULE_MANAGE", "SCHEDULE_CREATE", "SCHEDULE_MODIFY",
-            "SCHEDULE_DELETE", "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW",
-            "CONSULTATION_STATISTICS_VIEW", "MAPPING_VIEW"
         );
         
         // CLIENT 권한 (최소한)

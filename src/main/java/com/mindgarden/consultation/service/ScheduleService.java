@@ -311,6 +311,11 @@ public interface ScheduleService {
      * 특정 상담사의 오늘의 스케줄 통계 조회
      */
     Map<String, Object> getTodayScheduleStatisticsByConsultant(Long consultantId);
+    
+    /**
+     * 특정 날짜의 스케줄 조회 (드래그 앤 드롭용)
+     */
+    List<Schedule> getSchedulesByDate(LocalDate date, Long consultantId);
 
     // ==================== 자동 완료 처리 ====================
     

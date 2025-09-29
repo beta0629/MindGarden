@@ -50,6 +50,16 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByConsultantIdAndDateAfter(Long consultantId, LocalDate date);
     
     /**
+     * 특정 날짜의 스케줄 조회 (삭제되지 않은 것만)
+     */
+    List<Schedule> findByDateAndIsDeletedFalse(LocalDate date);
+    
+    /**
+     * 특정 상담사의 특정 날짜 스케줄 조회 (삭제되지 않은 것만)
+     */
+    List<Schedule> findByDateAndConsultantIdAndIsDeletedFalse(LocalDate date, Long consultantId);
+    
+    /**
      * 날짜별 지점 스케줄 조회
      */
     List<Schedule> findByDateAndBranchCode(LocalDate date, String branchCode);
@@ -180,11 +190,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
      */
     List<Schedule> findByDateBetween(LocalDate startDate, LocalDate endDate);
     
-    /**
-     * 특정 날짜의 활성 스케줄 조회
-     */
-    List<Schedule> findByDateAndIsDeletedFalse(LocalDate date);
-
     // ==================== 스케줄 타입별 조회 ====================
     
     /**

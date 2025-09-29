@@ -330,8 +330,11 @@ public class AdminController {
             
             log.info("🔍 상담사별 매핑된 내담자 목록 조회 - 상담사 ID: {}", consultantId);
             
-            // 현재 로그인한 사용자의 이메일로 매핑 조회 (ID 차이 문제 해결)
-            List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantEmail(currentUser.getEmail());
+            // URL의 consultantId로 상담사 정보를 찾아서 매핑 조회
+            User targetConsultant = userService.findById(consultantId)
+                .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
+            
+            List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantEmail(targetConsultant.getEmail());
             
             // 결제 승인된 매핑만 필터링 (세션 소진 여부와 관계없이 모든 매핑 표시)
             List<Map<String, Object>> activeMappings = mappings.stream()

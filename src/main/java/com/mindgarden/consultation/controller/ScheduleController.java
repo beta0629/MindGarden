@@ -468,9 +468,19 @@ public class ScheduleController {
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> updateSchedule(
             @PathVariable Long id,
-            @RequestBody Map<String, Object> updateData) {
+            @RequestBody Map<String, Object> updateData,
+            HttpSession session) {
         
         log.info("📝 스케줄 수정 요청: ID {}, 데이터 {}", id, updateData);
+        
+        // 권한 체크
+        if (!PermissionCheckUtils.checkPermission(session, "SCHEDULE_MODIFY", dynamicPermissionService)) {
+            log.warn("⚠️ 스케줄 수정 권한 없음: 사용자 ID {}", session.getAttribute("userId"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "success", false,
+                "message", "접근 권한이 없습니다."
+            ));
+        }
         
         try {
             Schedule existingSchedule = scheduleService.findById(id);
@@ -497,6 +507,49 @@ public class ScheduleController {
                 existingSchedule.setConsultationType((String) updateData.get("consultationType"));
             }
             
+            // 날짜 및 시간 업데이트
+            if (updateData.containsKey("date")) {
+                String dateStr = (String) updateData.get("date");
+                try {
+                    existingSchedule.setDate(java.time.LocalDate.parse(dateStr));
+                    log.info("📝 스케줄 날짜 변경: {}", dateStr);
+                } catch (Exception e) {
+                    log.warn("⚠️ 유효하지 않은 날짜 형식: {}", dateStr);
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "유효하지 않은 날짜 형식입니다: " + dateStr
+                    ));
+                }
+            }
+            
+            if (updateData.containsKey("startTime")) {
+                String startTimeStr = (String) updateData.get("startTime");
+                try {
+                    existingSchedule.setStartTime(java.time.LocalTime.parse(startTimeStr));
+                    log.info("📝 스케줄 시작 시간 변경: {}", startTimeStr);
+                } catch (Exception e) {
+                    log.warn("⚠️ 유효하지 않은 시작 시간 형식: {}", startTimeStr);
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "유효하지 않은 시작 시간 형식입니다: " + startTimeStr
+                    ));
+                }
+            }
+            
+            if (updateData.containsKey("endTime")) {
+                String endTimeStr = (String) updateData.get("endTime");
+                try {
+                    existingSchedule.setEndTime(java.time.LocalTime.parse(endTimeStr));
+                    log.info("📝 스케줄 종료 시간 변경: {}", endTimeStr);
+                } catch (Exception e) {
+                    log.warn("⚠️ 유효하지 않은 종료 시간 형식: {}", endTimeStr);
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "유효하지 않은 종료 시간 형식입니다: " + endTimeStr
+                    ));
+                }
+            }
+            
             // 기타 필드 업데이트
             if (updateData.containsKey("title")) {
                 existingSchedule.setTitle((String) updateData.get("title"));
@@ -504,6 +557,9 @@ public class ScheduleController {
             if (updateData.containsKey("description")) {
                 existingSchedule.setDescription((String) updateData.get("description"));
             }
+            
+            // 업데이트 시간 설정
+            existingSchedule.setUpdatedAt(java.time.LocalDateTime.now());
             
             Schedule updatedSchedule = scheduleService.updateSchedule(id, existingSchedule);
             
@@ -1238,6 +1294,51 @@ public class ScheduleController {
         }
     }
 
+
+    /**
+     * 특정 날짜의 예약된 시간대 조회 (드래그 앤 드롭용)
+     */
+    @GetMapping("/available-times/{date}")
+    public ResponseEntity<Map<String, Object>> getAvailableTimes(
+            @PathVariable String date,
+            @RequestParam(required = false) Long consultantId,
+            HttpSession session) {
+        
+        try {
+            log.info("📅 사용 가능한 시간 조회 - 날짜: {}, 상담사ID: {}", date, consultantId);
+            
+            LocalDate targetDate = LocalDate.parse(date);
+            
+            // 해당 날짜의 모든 스케줄 조회
+            List<Schedule> existingSchedules = scheduleService.getSchedulesByDate(targetDate, consultantId);
+            
+            // 예약된 시간대 추출
+            List<Map<String, String>> bookedTimes = existingSchedules.stream()
+                .filter(schedule -> !schedule.getStatus().equals(ScheduleStatus.CANCELLED))
+                .map(schedule -> Map.of(
+                    "startTime", schedule.getStartTime().toString(),
+                    "endTime", schedule.getEndTime().toString(),
+                    "title", schedule.getTitle(),
+                    "status", schedule.getStatus().toString()
+                ))
+                .collect(Collectors.toList());
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "date", date,
+                "bookedTimes", bookedTimes,
+                "message", "사용 가능한 시간 조회 성공"
+            );
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 사용 가능한 시간 조회 실패: error={}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                Map.of("success", false, "message", "사용 가능한 시간 조회 실패: " + e.getMessage())
+            );
+        }
+    }
 
     /**
      * 공통코드를 사용한 관리자 권한 확인

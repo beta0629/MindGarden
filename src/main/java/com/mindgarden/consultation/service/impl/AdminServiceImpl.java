@@ -4828,8 +4828,11 @@ public class AdminServiceImpl implements AdminService {
         log.info("🔍 찾은 상담사 정보 - ID: {}, 이름: {}, 역할: {}, 브랜치코드: {}", 
                 consultant.getId(), consultant.getName(), consultant.getRole(), consultant.getBranchCode());
         
-        List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(
-            consultant.getId(), ConsultantClientMapping.MappingStatus.TERMINATED);
+        // TERMINATED가 아닌 모든 매핑 조회 (ACTIVE, PAYMENT_CONFIRMED 등)
+        List<ConsultantClientMapping> allMappings = mappingRepository.findByConsultantId(consultant.getId());
+        List<ConsultantClientMapping> mappings = allMappings.stream()
+            .filter(mapping -> mapping.getStatus() != ConsultantClientMapping.MappingStatus.TERMINATED)
+            .collect(java.util.stream.Collectors.toList());
         
         log.info("🔍 상담사별 매핑 수: {}", mappings.size());
         

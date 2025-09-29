@@ -1439,6 +1439,28 @@ public class ScheduleServiceImpl implements ScheduleService {
         return convertConsultationTypeToKorean(consultationType);
     }
     
+    /**
+     * 특정 날짜의 스케줄 조회 (드래그 앤 드롭용)
+     */
+    @Override
+    public List<Schedule> getSchedulesByDate(LocalDate date, Long consultantId) {
+        log.info("📅 특정 날짜 스케줄 조회: date={}, consultantId={}", date, consultantId);
+        
+        try {
+            if (consultantId != null) {
+                // 특정 상담사의 해당 날짜 스케줄 조회
+                return scheduleRepository.findByDateAndConsultantIdAndIsDeletedFalse(date, consultantId);
+            } else {
+                // 모든 상담사의 해당 날짜 스케줄 조회
+                return scheduleRepository.findByDateAndIsDeletedFalse(date);
+            }
+        } catch (Exception e) {
+            log.error("❌ 특정 날짜 스케줄 조회 실패: date={}, consultantId={}, error={}", 
+                date, consultantId, e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+    
     // ==================== 지점별 스케줄 관리 ====================
     
     @Override

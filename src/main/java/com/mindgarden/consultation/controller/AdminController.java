@@ -289,6 +289,12 @@ public class AdminController {
     @GetMapping("/mappings/consultant/{consultantId}/clients")
     public ResponseEntity<?> getClientsByConsultantMapping(@PathVariable Long consultantId, HttpSession session) {
         try {
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_VIEW", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
+            }
+            
             // 세션에서 현재 사용자 정보 가져오기
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {

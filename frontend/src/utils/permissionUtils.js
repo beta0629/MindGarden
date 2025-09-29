@@ -14,44 +14,20 @@ export const fetchUserPermissions = async (setUserPermissions) => {
         console.log('🔍 사용자 권한 목록 조회 중...');
         const response = await apiGet('/api/permissions/my-permissions');
         
-        if (response.success && response.data) {
+        if (response && response.success && response.data) {
             const permissions = response.data.permissions || [];
             console.log('✅ 사용자 권한 조회 완료:', permissions);
             setUserPermissions(permissions);
             return permissions;
         } else {
-            console.warn('⚠️ 권한 조회 실패, 기본 권한 사용:', response.message);
-            // 임시로 기본 권한 사용 (지점수퍼어드민)
-            const defaultPermissions = [
-                "ERP_ACCESS", "INTEGRATED_FINANCE_VIEW", "SALARY_MANAGE",
-                "TAX_MANAGE", "REFUND_MANAGE", "PURCHASE_REQUEST_VIEW",
-                "APPROVAL_MANAGE", "ITEM_MANAGE", "BUDGET_MANAGE",
-                "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
-                "MAPPING_MANAGE", "BRANCH_DETAILS_VIEW", "SCHEDULE_MANAGE",
-                "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
-                "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "FINANCIAL_VIEW",
-                "CONSULTATION_STATISTICS_VIEW"
-            ];
-            console.log('🔧 기본 권한 사용:', defaultPermissions);
-            setUserPermissions(defaultPermissions);
-            return defaultPermissions;
+            console.warn('⚠️ 권한 조회 실패:', response?.message || 'Unknown error');
+            setUserPermissions([]);
+            return [];
         }
     } catch (error) {
-        console.error('❌ 권한 조회 중 오류, 기본 권한 사용:', error);
-        // 임시로 기본 권한 사용 (지점수퍼어드민)
-        const defaultPermissions = [
-            "ERP_ACCESS", "INTEGRATED_FINANCE_VIEW", "SALARY_MANAGE",
-            "TAX_MANAGE", "REFUND_MANAGE", "PURCHASE_REQUEST_VIEW",
-            "APPROVAL_MANAGE", "ITEM_MANAGE", "BUDGET_MANAGE",
-            "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
-            "MAPPING_MANAGE", "BRANCH_DETAILS_VIEW", "SCHEDULE_MANAGE",
-            "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
-            "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "FINANCIAL_VIEW",
-            "CONSULTATION_STATISTICS_VIEW"
-        ];
-        console.log('🔧 기본 권한 사용:', defaultPermissions);
-        setUserPermissions(defaultPermissions);
-        return defaultPermissions;
+        console.error('❌ 권한 조회 중 오류:', error);
+        setUserPermissions([]);
+        return [];
     }
 };
 

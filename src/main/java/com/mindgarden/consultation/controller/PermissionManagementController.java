@@ -41,15 +41,24 @@ public class PermissionManagementController {
     @GetMapping("/my-permissions")
     public ResponseEntity<?> getMyPermissions(HttpSession session) {
         try {
+            log.info("🔍 권한 조회 API 호출 시작");
+            log.info("🔍 세션 ID: {}", session.getId());
+            log.info("🔍 세션 속성들: {}", session.getAttributeNames());
+            
             User currentUser = SessionUtils.getCurrentUser(session);
+            log.info("🔍 세션에서 가져온 사용자: {}", currentUser != null ? currentUser.getEmail() : "null");
+            
             if (currentUser == null) {
+                log.warn("⚠️ 세션에 사용자 정보가 없습니다");
                 return ResponseEntity.status(401).body(Map.of(
                     "success", false,
                     "message", "로그인이 필요합니다."
                 ));
             }
             
+            log.info("🔍 사용자 역할: {}", currentUser.getRole());
             List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(currentUser);
+            log.info("🔍 사용자 권한 목록: {}", permissions);
             
             return ResponseEntity.ok(Map.of(
                 "success", true,

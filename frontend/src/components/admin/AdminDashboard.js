@@ -540,17 +540,15 @@ const AdminDashboard = ({ user: propUser }) => {
                     관리 기능
                 </h2>
                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                    {PermissionChecks.canViewSchedules(userPermissions) && (
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/schedules')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} schedule`}>
-                                <FaCalendarAlt />
-                            </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>스케줄 관리</h3>
-                                <p>상담 일정을 관리하고 조정합니다</p>
-                            </div>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/schedules')}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} schedule`}>
+                            <FaCalendarAlt />
                         </div>
-                    )}
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>스케줄 관리</h3>
+                            <p>상담 일정을 관리하고 조정합니다</p>
+                        </div>
+                    </div>
                     
                     <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/sessions')}>
                         <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} sessions`}>
@@ -583,17 +581,15 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                     
                     
-                    {PermissionChecks.canViewConsultants(userPermissions) && (
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/consultant-comprehensive')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} consultants`}>
-                                <FaUserTie />
-                            </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>상담사 관리</h3>
-                                <p>상담사 정보를 관리합니다</p>
-                            </div>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/consultant-comprehensive')}>
+                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} consultants`}>
+                            <FaUserTie />
                         </div>
-                    )}
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <h3>상담사 관리</h3>
+                            <p>상담사 정보를 관리합니다</p>
+                        </div>
+                    </div>
                     
                     {PermissionChecks.canViewClients(userPermissions) && (
                         <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/client-comprehensive')}>

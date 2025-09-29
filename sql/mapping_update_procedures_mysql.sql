@@ -95,7 +95,19 @@ BEGIN
             p_updated_by
         );
 
-        -- 6. 통계 데이터 갱신
+        -- 6. ERP 재무 거래 데이터 동기화 (매핑과 연관된 거래 업데이트)
+        UPDATE financial_transactions 
+        SET 
+            amount = p_new_package_price,
+            description = CONCAT('상담료 입금 확인 - ', p_new_package_name, ' (', p_new_package_price, '원) (BANK_TRANSFER) [정확한금액: ', p_new_package_price, '원]'),
+            updated_at = NOW()
+        WHERE 
+            related_entity_type = 'CONSULTANT_CLIENT_MAPPING' 
+            AND related_entity_id = p_mapping_id
+            AND transaction_type = 'INCOME'
+            AND category = 'CONSULTATION';
+
+        -- 7. 통계 데이터 갱신
         CALL UpdateMappingStatistics(p_mapping_id, v_consultant_id, v_client_id, v_branch_code);
 
         COMMIT;

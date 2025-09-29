@@ -1,0 +1,232 @@
+/* 권한 관리 컴포넌트 스타일 */
+.permission-management {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.permission-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.permission-header h2 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 28px;
+}
+
+.permission-header p {
+    color: #6c757d;
+    font-size: 16px;
+}
+
+.permission-error {
+    text-align: center;
+    padding: 40px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    color: #721c24;
+}
+
+.permission-error h3 {
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
+.permission-message {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.permission-message.success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.permission-message.error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.permission-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.role-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.role-selector label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.role-selector select {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    min-width: 200px;
+}
+
+.save-button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.save-button:hover:not(:disabled) {
+    background: #0056b3;
+}
+
+.save-button:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.permission-categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.permission-category {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.permission-category h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.permission-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.permission-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    transition: all 0.2s;
+}
+
+.permission-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+}
+
+.permission-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    margin-bottom: 5px;
+}
+
+.permission-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #007bff;
+    cursor: pointer;
+}
+
+.permission-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.permission-description {
+    color: #6c757d;
+    font-size: 12px;
+    margin: 0;
+    margin-left: 28px;
+}
+
+.permission-summary {
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.permission-summary h3 {
+    color: #1976d2;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.selected-permissions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.permission-tag {
+    background: #007bff;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .permission-management {
+        padding: 15px;
+    }
+    
+    .permission-categories {
+        grid-template-columns: 1fr;
+    }
+    
+    .permission-controls {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .role-selector {
+        justify-content: center;
+    }
+    
+    .role-selector select {
+        min-width: 100%;
+    }
+}

@@ -11,6 +11,7 @@ import StatisticsModal from '../common/StatisticsModal';
 import ConsultationCompletionStats from './ConsultationCompletionStats';
 import VacationStatistics from './VacationStatistics';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
+import PermissionManagement from './PermissionManagement';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -898,6 +899,19 @@ const AdminDashboard = ({ user: propUser }) => {
                         <button type="button" className="btn-close" onClick={() => setShowToastState(false)}></button>
                     </div>
                     <div className={COMPONENT_CSS.ADMIN_DASHBOARD.TOAST_BODY}>{toastMessage}</div>
+                </div>
+            )}
+
+            {/* 권한 관리 */}
+            {PermissionChecks.canManageUsers(userPermissions) && (
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                        <i className="bi bi-shield-check"></i>
+                        권한 관리
+                    </h2>
+                    <div className="permission-management-section">
+                        <PermissionManagement />
+                    </div>
                 </div>
             )}
             

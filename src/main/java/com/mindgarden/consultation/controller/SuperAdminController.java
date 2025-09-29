@@ -6,13 +6,13 @@ import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.SuperAdminCreateRequest;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.UserRepository;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.SuperAdminService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,6 +44,7 @@ public class SuperAdminController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final FinancialTransactionService financialTransactionService;
+    private final DynamicPermissionService dynamicPermissionService;
     private final PersonalDataEncryptionUtil encryptionUtil;
     
     /**
@@ -54,7 +55,6 @@ public class SuperAdminController {
      * @return 생성 결과
      */
     @PostMapping("/create")
-    @PreAuthorize("hasRole('HQ_MASTER')")
     public ResponseEntity<?> createSuperAdmin(
             @Valid @RequestBody SuperAdminCreateRequest request,
             HttpSession session) {

@@ -243,4 +243,58 @@ public class PermissionManagementController {
             ));
         }
     }
+    
+    /**
+     * 역할별 권한 설정
+     */
+    @PostMapping("/role-permissions")
+    public ResponseEntity<?> setRolePermissions(@RequestBody Map<String, Object> request, HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "인증이 필요합니다."
+                ));
+            }
+            
+            // 권한 확인 (관리자만 가능)
+            if (!dynamicPermissionService.hasPermission(currentUser, "USER_MANAGE")) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "권한이 없습니다."
+                ));
+            }
+            
+            String roleName = (String) request.get("roleName");
+            @SuppressWarnings("unchecked")
+            List<String> permissionCodes = (List<String>) request.get("permissionCodes");
+            
+            if (roleName == null || permissionCodes == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "roleName과 permissionCodes가 필요합니다."
+                ));
+            }
+            
+            // 역할별 권한 설정
+            dynamicPermissionService.setRolePermissions(roleName, permissionCodes);
+            
+            log.info("✅ 역할별 권한 설정 완료: role={}, permissions={}", roleName, permissionCodes.size());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "역할별 권한이 성공적으로 설정되었습니다.",
+                "roleName", roleName,
+                "permissionCount", permissionCodes.size()
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 역할별 권한 설정 실패: error={}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "역할별 권한 설정에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
 }

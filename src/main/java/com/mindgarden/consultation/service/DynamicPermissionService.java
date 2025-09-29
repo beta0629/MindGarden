@@ -124,4 +124,12 @@ public interface DynamicPermissionService {
      * 역할별 권한 체크 (UserRole enum 사용)
      */
     boolean hasPermission(UserRole userRole, String permissionCode);
+    
+    /**
+     * 역할별 권한 설정 (기존 권한을 모두 제거하고 새로 설정)
+     * @param roleName 역할명
+     * @param permissionCodes 권한 코드 목록
+     * @return 성공 여부
+     */
+    boolean setRolePermissions(String roleName, List<String> permissionCodes);
 }

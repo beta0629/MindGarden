@@ -62,4 +62,9 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
      */
     @Query("SELECT rp FROM RolePermission rp WHERE rp.isActive = false")
     List<RolePermission> findByIsActiveFalse();
+    
+    /**
+     * 특정 역할의 모든 권한 매핑 삭제
+     */
+    void deleteByRoleName(String roleName);
 }

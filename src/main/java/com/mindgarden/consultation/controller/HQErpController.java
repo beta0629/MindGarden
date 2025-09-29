@@ -5,13 +5,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.CommonCodeService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.PlSqlFinancialService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -37,12 +36,12 @@ public class HQErpController {
     private final FinancialTransactionService financialTransactionService;
     private final CommonCodeService commonCodeService;
     private final PlSqlFinancialService plSqlFinancialService;
+    private final DynamicPermissionService dynamicPermissionService;
     
     /**
      * 지점별 재무 현황 조회
      */
     @GetMapping("/branch-financial")
-    @PreAuthorize("hasAnyRole('HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER')")
     public ResponseEntity<Map<String, Object>> getBranchFinancialData(
             @RequestParam String branchCode,
             @RequestParam(required = false) String startDate,
@@ -51,32 +50,18 @@ public class HQErpController {
             @RequestParam(required = false) String transactionType,
             HttpSession session) {
         
+        // 동적 권한 체크
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(null);
+        }
+        
+        if (!dynamicPermissionService.hasPermission(currentUser, "HQ_DASHBOARD_VIEW")) {
+            return ResponseEntity.status(403).body(null);
+        }
+        
         try {
             log.info("🏦 지점별 재무 현황 조회 요청: branchCode={}", branchCode);
-            
-            // 세션에서 사용자 정보 확인
-            User currentUser = (User) session.getAttribute("user");
-            if (currentUser == null) {
-                log.warn("❌ 인증되지 않은 사용자");
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "인증이 필요합니다."
-                ));
-            }
-            
-            // 권한 확인
-            UserRole role = currentUser.getRole();
-            if (role != UserRole.ADMIN && role != UserRole.HQ_MASTER && 
-                role != UserRole.SUPER_HQ_ADMIN && role != UserRole.HQ_ADMIN && 
-                role != UserRole.HQ_SUPER_ADMIN) {
-                log.warn("❌ 권한 없음: 현재 역할={}", role);
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "접근 권한이 없습니다."
-                ));
-            }
-            
-            log.info("✅ 권한 확인 완료: 현재 역할={}", role);
             log.info("🏢 지점별 재무 현황 조회: 지점={}, 시작일={}, 종료일={}, 카테고리={}, 유형={}", 
                     branchCode, startDate, endDate, category, transactionType);
             
@@ -116,7 +101,18 @@ public class HQErpController {
     @GetMapping("/consolidated")
     public ResponseEntity<Map<String, Object>> getConsolidatedFinancialData(
             @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
+            @RequestParam(required = false) String endDate,
+            HttpSession session) {
+        
+        // 동적 권한 체크
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(null);
+        }
+        
+        if (!dynamicPermissionService.hasPermission(currentUser, "HQ_DASHBOARD_VIEW")) {
+            return ResponseEntity.status(403).body(null);
+        }
         
         try {
             log.info("🏭 PL/SQL 전사 통합 재무 현황 조회: 시작일={}, 종료일={}", startDate, endDate);
@@ -155,7 +151,18 @@ public class HQErpController {
     public ResponseEntity<Map<String, Object>> getFinancialReports(
             @RequestParam(required = false) String reportType,
             @RequestParam(required = false) String period,
-            @RequestParam(required = false) String branchCode) {
+            @RequestParam(required = false) String branchCode,
+            HttpSession session) {
+        
+        // 동적 권한 체크
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(null);
+        }
+        
+        if (!dynamicPermissionService.hasPermission(currentUser, "HQ_DASHBOARD_VIEW")) {
+            return ResponseEntity.status(403).body(null);
+        }
         
         try {
             log.info("📊 PL/SQL 재무 보고서 조회: 유형={}, 기간={}, 지점={}", reportType, period, branchCode);

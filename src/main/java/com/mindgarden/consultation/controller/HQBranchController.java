@@ -7,10 +7,10 @@ import com.mindgarden.consultation.dto.BranchResponse;
 import com.mindgarden.consultation.entity.Branch;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.BranchService;
+import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,6 +38,7 @@ public class HQBranchController {
 
     private final BranchService branchService;
     private final UserService userService;
+    private final DynamicPermissionService dynamicPermissionService;
 
     /**
      * 모든 지점 목록 조회 (branches 테이블 기반)
@@ -158,7 +159,6 @@ public class HQBranchController {
      * 지점 등록
      */
     @PostMapping("/branches")
-    @PreAuthorize("hasRole('HQ_MASTER') or hasRole('ADMIN')")
     public ResponseEntity<?> createBranch(@RequestBody BranchCreateRequest request) {
         try {
             log.info("🏢 지점 등록 요청: {}", request.getBranchName());

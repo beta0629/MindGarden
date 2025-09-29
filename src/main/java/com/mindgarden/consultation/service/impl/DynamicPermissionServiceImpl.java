@@ -1,5 +1,6 @@
 package com.mindgarden.consultation.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -442,6 +443,52 @@ public class DynamicPermissionServiceImpl implements DynamicPermissionService {
             return hasPermission(userRole.name(), permissionCode);
         } catch (Exception e) {
             log.error("역할별 권한 체크 실패: 역할={}, 권한={}", userRole, permissionCode, e);
+            return false;
+        }
+    }
+    
+    @Override
+    @Transactional
+    public boolean setRolePermissions(String roleName, List<String> permissionCodes) {
+        try {
+            log.info("역할별 권한 설정 시작: 역할={}, 권한수={}", roleName, permissionCodes.size());
+            
+            // 1. 기존 권한 모두 삭제
+            rolePermissionRepository.deleteByRoleName(roleName);
+            log.debug("기존 권한 삭제 완료: 역할={}", roleName);
+            
+            // 2. 새 권한들 추가
+            int successCount = 0;
+            for (String permissionCode : permissionCodes) {
+                try {
+                    // 권한이 존재하는지 확인
+                    if (!permissionExists(permissionCode)) {
+                        log.warn("권한이 존재하지 않음: {}", permissionCode);
+                        continue;
+                    }
+                    
+                    // 역할별 권한 추가
+                    RolePermission rolePermission = new RolePermission();
+                    rolePermission.setRoleName(roleName);
+                    rolePermission.setPermissionCode(permissionCode);
+                    rolePermission.setIsActive(true);
+                    rolePermission.setCreatedAt(LocalDateTime.now());
+                    rolePermission.setUpdatedAt(LocalDateTime.now());
+                    
+                    rolePermissionRepository.save(rolePermission);
+                    successCount++;
+                    log.debug("권한 추가 완료: 역할={}, 권한={}", roleName, permissionCode);
+                    
+                } catch (Exception e) {
+                    log.error("권한 추가 실패: 역할={}, 권한={}", roleName, permissionCode, e);
+                }
+            }
+            
+            log.info("역할별 권한 설정 완료: 역할={}, 성공={}/{}", roleName, successCount, permissionCodes.size());
+            return successCount > 0;
+            
+        } catch (Exception e) {
+            log.error("역할별 권한 설정 실패: 역할={}", roleName, e);
             return false;
         }
     }

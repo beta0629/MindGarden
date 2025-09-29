@@ -207,24 +207,30 @@ jobs:
           # PL/SQL 프로시저 등록
           echo "🔧 PL/SQL 프로시저 등록 시작..."
           if [ -f /tmp/production_all_missing_procedures.sql ]; then
+            # 환경변수 명시적 설정
+            export DB_HOST="localhost"
+            export DB_USERNAME="mindgarden"
+            export DB_PASSWORD="mindgarden2025"
+            export DB_NAME="mind_garden"
+            
             echo "📋 MySQL 연결 정보 확인..."
-            echo "DB_HOST: ${DB_HOST:-localhost}"
-            echo "DB_USERNAME: ${DB_USERNAME:-mindgarden}"
-            echo "DB_NAME: ${DB_NAME:-mind_garden}"
+            echo "DB_HOST: $DB_HOST"
+            echo "DB_USERNAME: $DB_USERNAME"
+            echo "DB_NAME: $DB_NAME"
             
             # MySQL 연결 테스트
-            mysql -h ${DB_HOST:-localhost} -u ${DB_USERNAME:-mindgarden} -p${DB_PASSWORD:-mindgarden2025} -e "SELECT 1;" ${DB_NAME:-mind_garden}
+            mysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD -e "SELECT 1;" $DB_NAME
             
             if [ $? -eq 0 ]; then
               echo "✅ MySQL 연결 성공 - 프로시저 등록 시작"
-              mysql -h ${DB_HOST:-localhost} -u ${DB_USERNAME:-mindgarden} -p${DB_PASSWORD:-mindgarden2025} ${DB_NAME:-mind_garden} < /tmp/production_all_missing_procedures.sql
+              mysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME < /tmp/production_all_missing_procedures.sql
               
               if [ $? -eq 0 ]; then
                 echo "✅ 모든 누락된 PL/SQL 프로시저 등록 완료"
                 
                 # 등록된 프로시저 확인
                 echo "📋 등록된 프로시저 목록:"
-                mysql -h ${DB_HOST:-localhost} -u ${DB_USERNAME:-mindgarden} -p${DB_PASSWORD:-mindgarden2025} ${DB_NAME:-mind_garden} -e "
+                mysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME -e "
                 SELECT ROUTINE_NAME, CREATED 
                 FROM information_schema.ROUTINES 
                 WHERE ROUTINE_SCHEMA = DATABASE() 

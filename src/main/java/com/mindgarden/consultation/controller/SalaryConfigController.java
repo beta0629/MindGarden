@@ -9,8 +9,8 @@ import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.SalaryScheduleService;
-import com.mindgarden.consultation.utils.SessionUtils;
 import com.mindgarden.consultation.util.PermissionCheckUtils;
+import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -47,7 +47,7 @@ public class SalaryConfigController {
             // 동적 권한 체크
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "SALARY_MANAGE", dynamicPermissionService);
             if (permissionResponse != null) {
-                return permissionResponse;
+                return (ResponseEntity<Map<String, Object>>) permissionResponse;
             }
             
             User currentUser = SessionUtils.getCurrentUser(session);

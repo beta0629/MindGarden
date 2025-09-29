@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.ClientRegistrationDto;
@@ -23,6 +24,7 @@ import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.MenuService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.service.StoredProcedureService;
+import com.mindgarden.consultation.service.UserService;
 import com.mindgarden.consultation.util.PermissionCheckUtils;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +58,7 @@ public class AdminController {
     private final ErpService erpService;
     private final ConsultantRatingService consultantRatingService;
     private final UserSocialAccountRepository userSocialAccountRepository;
+    private final UserService userService;
     private final StoredProcedureService storedProcedureService;
 
     /**

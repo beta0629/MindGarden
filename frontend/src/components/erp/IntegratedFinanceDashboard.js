@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
+import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import SimpleHeader from '../layout/SimpleHeader';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
@@ -28,6 +29,7 @@ const formatNumber = (num) => {
  */
 const IntegratedFinanceDashboard = ({ user: propUser }) => {
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const [userPermissions, setUserPermissions] = useState([]);
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -91,14 +93,20 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         }
       }
 
-      // 재무 대시보드 접근 권한 확인 (관리자, 지점 수퍼 관리자, 본사 관리자)
-      if (!['ADMIN', 'BRANCH_SUPER_ADMIN', 'HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
-        console.log('❌ 재무 대시보드 접근 권한 없음, 일반 대시보드로 이동');
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-
       console.log('✅ IntegratedFinanceDashboard 접근 허용:', currentUser?.role);
+      
+      // 동적 권한 목록 가져오기
+      await fetchUserPermissions(setUserPermissions);
+      
+      // 통합 재무 대시보드 접근 권한 확인 (동적 권한 시스템 사용)
+      setTimeout(() => {
+        if (!PermissionChecks.canViewIntegratedFinance(userPermissions)) {
+          console.log('❌ 통합 재무 대시보드 접근 권한 없음, 일반 대시보드로 이동');
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+        loadDashboardData();
+      }, 100);
       initializeComponent();
     };
 

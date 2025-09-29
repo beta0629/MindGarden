@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
+import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
@@ -16,6 +17,7 @@ import '../../styles/glassmorphism.css';
 const ErpDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
   const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const [userPermissions, setUserPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalItems: 0,
@@ -72,15 +74,21 @@ const ErpDashboard = ({ user: propUser }) => {
         }
       }
 
-      // ERP 접근 권한 확인 (상담사, 관리자, 지점 수퍼 관리자, 본사 관리자)
-      if (!['CONSULTANT', 'ADMIN', 'BRANCH_SUPER_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
-        console.log('❌ ERP 접근 권한 없음, 일반 대시보드로 이동');
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-
       console.log('✅ ERP Dashboard 접근 허용:', currentUser?.role);
-      loadDashboardData();
+      
+      // 동적 권한 목록 가져오기
+      await fetchUserPermissions(setUserPermissions);
+      
+      // ERP 접근 권한 확인 (동적 권한 시스템 사용)
+      // 권한이 로드될 때까지 잠시 대기
+      setTimeout(() => {
+        if (!PermissionChecks.canAccessERP(userPermissions)) {
+          console.log('❌ ERP 접근 권한 없음, 일반 대시보드로 이동');
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+        loadDashboardData();
+      }, 100);
     };
 
     // OAuth2 콜백 후 세션 설정을 위한 지연
@@ -265,19 +273,21 @@ const ErpDashboard = ({ user: propUser }) => {
             세금 관리
           </ErpButton>
           
-          <ErpButton
-            variant="primary"
-            size="large"
-            onClick={() => navigate('/admin/erp/financial')}
-            style={{ 
-              width: '100%', 
-              backgroundColor: '#8e44ad', 
-              borderColor: '#8e44ad',
-              color: 'white'
-            }}
-          >
-            📊 통합 회계 시스템
-          </ErpButton>
+          {PermissionChecks.canViewIntegratedFinance(userPermissions) && (
+            <ErpButton
+              variant="primary"
+              size="large"
+              onClick={() => navigate('/admin/erp/financial')}
+              style={{ 
+                width: '100%', 
+                backgroundColor: '#8e44ad', 
+                borderColor: '#8e44ad',
+                color: 'white'
+              }}
+            >
+              📊 통합 회계 시스템
+            </ErpButton>
+          )}
           
           <ErpButton
             variant="danger"

@@ -13,6 +13,7 @@ import { apiGet } from '../../utils/ajax';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { showNotification } from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
+import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
 import MotivationCard from '../common/MotivationCard';
@@ -29,6 +30,7 @@ import './HQDashboard.css';
 const HQDashboard = ({ user: propUser }) => {
     const navigate = useNavigate();
     const { user: sessionUser, isLoggedIn, isLoading: sessionLoading } = useSession();
+    const [userPermissions, setUserPermissions] = useState([]);
     
     // 상태 관리
     const [loading, setLoading] = useState(false);
@@ -93,14 +95,20 @@ const HQDashboard = ({ user: propUser }) => {
                 }
             }
 
-            if (!['HQ_ADMIN', 'SUPER_HQ_ADMIN', 'HQ_MASTER'].includes(currentUser.role)) {
-                console.log('❌ 본사 관리자 권한 없음, 일반 대시보드로 이동');
-                navigate('/dashboard', { replace: true });
-                return;
-            }
-
             console.log('✅ HQ Dashboard 접근 허용:', currentUser?.role);
-            loadDashboardData();
+            
+            // 동적 권한 목록 가져오기
+            await fetchUserPermissions(setUserPermissions);
+            
+            // HQ 대시보드 접근 권한 확인 (동적 권한 시스템 사용)
+            setTimeout(() => {
+                if (!PermissionChecks.canViewHQDashboard(userPermissions)) {
+                    console.log('❌ HQ 대시보드 접근 권한 없음, 일반 대시보드로 이동');
+                    navigate('/dashboard', { replace: true });
+                    return;
+                }
+                loadDashboardData();
+            }, 100);
         };
 
         // OAuth2 콜백 후 세션 설정을 위한 지연

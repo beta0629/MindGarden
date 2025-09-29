@@ -1,18 +1,22 @@
 package com.mindgarden.consultation.controller;
 
+import java.util.List;
+import java.util.Map;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.utils.SessionUtils;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 권한 관리 컨트롤러
@@ -45,7 +49,7 @@ public class PermissionManagementController {
                 ));
             }
             
-            List<String> permissions = dynamicPermissionService.getUserPermissions(currentUser);
+            List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(currentUser);
             
             return ResponseEntity.ok(Map.of(
                 "success", true,

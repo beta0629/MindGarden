@@ -1,106 +1,127 @@
 package com.mindgarden.consultation.service;
 
+import java.util.List;
+import java.util.Map;
 import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.entity.User;
 
-import java.util.List;
-
 /**
- * 동적 권한 체크 서비스
- * 데이터베이스의 공통코드를 기반으로 권한을 동적으로 체크합니다.
- * 
- * @author MindGarden
- * @version 1.0.0
- * @since 2025-09-12
+ * 동적 권한 관리 서비스
+ * 데이터베이스 기반으로 권한을 동적으로 관리
  */
 public interface DynamicPermissionService {
     
     /**
      * 사용자가 특정 권한을 가지고 있는지 확인
-     * @param user 사용자 정보
-     * @param permissionCode 권한 코드 (예: ERD_ACCESS, PAYMENT_ACCESS)
+     * @param user 사용자 객체
+     * @param permissionCode 권한 코드
      * @return 권한 보유 여부
      */
     boolean hasPermission(User user, String permissionCode);
     
     /**
-     * 사용자 역할이 특정 권한을 가지고 있는지 확인
-     * @param userRole 사용자 역할
+     * 사용자가 특정 권한을 가지고 있는지 확인 (역할명으로)
+     * @param roleName 역할명
      * @param permissionCode 권한 코드
      * @return 권한 보유 여부
      */
-    boolean hasPermission(UserRole userRole, String permissionCode);
+    boolean hasPermission(String roleName, String permissionCode);
     
     /**
-     * 사용자가 가진 모든 권한 목록 조회
-     * @param user 사용자 정보
-     * @return 권한 코드 목록
+     * 사용자의 모든 권한 목록 조회
+     * @param user 사용자 객체
+     * @return 권한 목록
      */
-    List<String> getUserPermissions(User user);
+    List<Map<String, Object>> getUserPermissions(User user);
     
     /**
-     * 역할별 권한 목록 조회
-     * @param userRole 사용자 역할
-     * @return 권한 코드 목록
+     * 역할의 모든 권한 목록 조회
+     * @param roleName 역할명
+     * @return 권한 목록
      */
-    List<String> getRolePermissions(UserRole userRole);
+    List<Map<String, Object>> getRolePermissions(String roleName);
     
     /**
-     * 특정 권한을 가진 역할 목록 조회
+     * 사용자에게 권한 부여
+     * @param roleName 역할명
      * @param permissionCode 권한 코드
-     * @return 역할 목록
+     * @param grantedBy 부여자
+     * @return 성공 여부
      */
-    List<UserRole> getRolesWithPermission(String permissionCode);
-    
-    // 권한 체크 헬퍼 메서드들
+    boolean grantPermission(String roleName, String permissionCode, String grantedBy);
     
     /**
-     * ERD 메뉴 접근 권한 체크
+     * 사용자 권한 회수
+     * @param roleName 역할명
+     * @param permissionCode 권한 코드
+     * @return 성공 여부
      */
-    boolean canAccessERD(UserRole userRole);
+    boolean revokePermission(String roleName, String permissionCode);
     
     /**
-     * 결제 기능 접근 권한 체크
+     * 권한 존재 여부 확인
+     * @param permissionCode 권한 코드
+     * @return 권한 존재 여부
      */
-    boolean canAccessPayment(UserRole userRole);
+    boolean permissionExists(String permissionCode);
     
     /**
-     * 비품구매 요청 권한 체크
+     * 모든 권한 목록 조회
+     * @return 권한 목록
      */
-    boolean canRequestSupplyPurchase(UserRole userRole);
+    List<Map<String, Object>> getAllPermissions();
     
     /**
-     * 비품구매 결제 요청 권한 체크
+     * 카테고리별 권한 목록 조회
+     * @param category 카테고리
+     * @return 권한 목록
      */
-    boolean canRequestPaymentApproval(UserRole userRole);
+    List<Map<String, Object>> getPermissionsByCategory(String category);
     
     /**
-     * 비품구매 결제 승인 권한 체크
+     * 권한 캐시 초기화
      */
-    boolean canApprovePayment(UserRole userRole);
+    void clearPermissionCache();
     
     /**
-     * 스케줄러 등록 권한 체크
+     * 권한 캐시 새로고침
+     */
+    void refreshPermissionCache();
+    
+    // ==================== 추가 권한 체크 메서드들 ====================
+    
+    /**
+     * 스케줄러 등록 권한 확인
      */
     boolean canRegisterScheduler(UserRole userRole);
     
     /**
-     * 스케줄러 상담사 조회 권한 체크
-     */
-    boolean canViewSchedulerConsultants(UserRole userRole);
-    
-    /**
-     * 지점 내역 조회 권한 체크
+     * 지점 상세 조회 권한 확인
      */
     boolean canViewBranchDetails(UserRole userRole);
     
     /**
-     * 지점 관리 권한 체크
+     * 결제 기능 접근 권한 확인
      */
-    boolean canManageBranch(UserRole userRole);
+    boolean canAccessPayment(UserRole userRole);
     
     /**
-     * 시스템 관리 권한 체크
+     * 특정 권한을 가진 역할 목록 조회
      */
-    boolean canManageSystem(UserRole userRole);
+    List<UserRole> getRolesWithPermission(String permissionCode);
+    
+    /**
+     * 역할별 권한 목록 조회 (UserRole enum 사용)
+     */
+    List<String> getRolePermissions(UserRole userRole);
+    
+    /**
+     * 사용자 권한 목록 조회 (String 리스트 반환)
+     */
+    List<String> getUserPermissionsAsStringList(User user);
+    
+    /**
+     * 역할별 권한 체크 (UserRole enum 사용)
+     */
+    boolean hasPermission(UserRole userRole, String permissionCode);
 }

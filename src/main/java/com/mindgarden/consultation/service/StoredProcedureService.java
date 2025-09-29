@@ -66,4 +66,51 @@ public interface StoredProcedureService {
      * @return 권한 확인 결과
      */
     Map<String, Object> checkMappingUpdatePermission(Long mappingId, Long userId, String userRole);
+    
+    // ==================== 동적 권한 관리 ====================
+    
+    /**
+     * 사용자 권한 확인
+     * @param roleName 역할명
+     * @param permissionCode 권한 코드
+     * @return 권한 확인 결과
+     */
+    Map<String, Object> checkUserPermission(String roleName, String permissionCode);
+    
+    /**
+     * 사용자 권한 목록 조회
+     * @param roleName 역할명
+     * @return 권한 목록
+     */
+    List<Map<String, Object>> getUserPermissions(String roleName);
+    
+    /**
+     * 권한 부여
+     * @param roleName 역할명
+     * @param permissionCode 권한 코드
+     * @param grantedBy 부여자
+     * @return 성공 여부
+     */
+    boolean grantPermission(String roleName, String permissionCode, String grantedBy);
+    
+    /**
+     * 권한 회수
+     * @param roleName 역할명
+     * @param permissionCode 권한 코드
+     * @return 성공 여부
+     */
+    boolean revokePermission(String roleName, String permissionCode);
+    
+    /**
+     * 모든 권한 목록 조회
+     * @return 권한 목록
+     */
+    List<Map<String, Object>> getAllPermissions();
+    
+    /**
+     * 카테고리별 권한 목록 조회
+     * @param category 카테고리
+     * @return 권한 목록
+     */
+    List<Map<String, Object>> getPermissionsByCategory(String category);
 }

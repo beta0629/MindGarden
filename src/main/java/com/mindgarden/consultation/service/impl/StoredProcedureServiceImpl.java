@@ -93,7 +93,7 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
                     cs.setString(2, codeValue);
                     cs.setString(3, newValue);
                     
-                    boolean result = cs.execute();
+                    cs.execute();
                     
                     log.info("✅ 업무 시간 설정 업데이트 성공: {}.{} = {}", codeGroup, codeValue, newValue);
                     return true;
@@ -280,6 +280,109 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
         } catch (Exception e) {
             log.error("❌ 매핑 수정 권한 확인 실패: mappingId={}, userId={}", mappingId, userId, e);
             throw new RuntimeException("매핑 수정 권한 확인에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+    
+    // ==================== 동적 권한 관리 메서드들 ====================
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> checkUserPermission(String roleName, String permissionCode) {
+        log.info("🔍 사용자 권한 확인: 역할={}, 권한={}", roleName, permissionCode);
+        
+        try {
+            // 기본적으로 false 반환 (실제 구현은 DynamicPermissionService에서)
+            Map<String, Object> result = new HashMap<>();
+            result.put("hasPermission", false);
+            result.put("roleName", roleName);
+            result.put("permissionCode", permissionCode);
+            result.put("message", "권한 확인은 DynamicPermissionService를 사용하세요");
+            
+            return result;
+        } catch (Exception e) {
+            log.error("❌ 사용자 권한 확인 실패: 역할={}, 권한={}", roleName, permissionCode, e);
+            throw new RuntimeException("사용자 권한 확인에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getUserPermissions(String roleName) {
+        log.info("🔍 사용자 권한 목록 조회: 역할={}", roleName);
+        
+        try {
+            // 빈 목록 반환 (실제 구현은 DynamicPermissionService에서)
+            List<Map<String, Object>> permissions = new ArrayList<>();
+            
+            log.info("✅ 사용자 권한 목록 조회 완료: 역할={}, 권한 수=0", roleName);
+            return permissions;
+        } catch (Exception e) {
+            log.error("❌ 사용자 권한 목록 조회 실패: 역할={}", roleName, e);
+            throw new RuntimeException("사용자 권한 목록 조회에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    @Transactional
+    public boolean grantPermission(String roleName, String permissionCode, String grantedBy) {
+        log.info("🔑 권한 부여: 역할={}, 권한={}, 부여자={}", roleName, permissionCode, grantedBy);
+        
+        try {
+            // 권한 부여는 DynamicPermissionService에서 처리
+            log.warn("⚠️ 권한 부여는 DynamicPermissionService를 사용하세요: 역할={}, 권한={}", roleName, permissionCode);
+            return false;
+        } catch (Exception e) {
+            log.error("❌ 권한 부여 실패: 역할={}, 권한={}", roleName, permissionCode, e);
+            throw new RuntimeException("권한 부여에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    @Transactional
+    public boolean revokePermission(String roleName, String permissionCode) {
+        log.info("🔑 권한 회수: 역할={}, 권한={}", roleName, permissionCode);
+        
+        try {
+            // 권한 회수는 DynamicPermissionService에서 처리
+            log.warn("⚠️ 권한 회수는 DynamicPermissionService를 사용하세요: 역할={}, 권한={}", roleName, permissionCode);
+            return false;
+        } catch (Exception e) {
+            log.error("❌ 권한 회수 실패: 역할={}, 권한={}", roleName, permissionCode, e);
+            throw new RuntimeException("권한 회수에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getAllPermissions() {
+        log.info("🔍 모든 권한 조회");
+        
+        try {
+            // 빈 목록 반환 (실제 구현은 DynamicPermissionService에서)
+            List<Map<String, Object>> permissions = new ArrayList<>();
+            
+            log.info("✅ 모든 권한 조회 완료: 권한 수=0");
+            return permissions;
+        } catch (Exception e) {
+            log.error("❌ 모든 권한 조회 실패", e);
+            throw new RuntimeException("모든 권한 조회에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getPermissionsByCategory(String category) {
+        log.info("🔍 카테고리별 권한 조회: 카테고리={}", category);
+        
+        try {
+            // 빈 목록 반환 (실제 구현은 DynamicPermissionService에서)
+            List<Map<String, Object>> permissions = new ArrayList<>();
+            
+            log.info("✅ 카테고리별 권한 조회 완료: 카테고리={}, 권한 수=0", category);
+            return permissions;
+        } catch (Exception e) {
+            log.error("❌ 카테고리별 권한 조회 실패: 카테고리={}", category, e);
+            throw new RuntimeException("카테고리별 권한 조회에 실패했습니다: " + e.getMessage(), e);
         }
     }
 }

@@ -100,16 +100,6 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       
       // 동적 권한 목록 가져오기
       await fetchUserPermissions(setUserPermissions);
-      
-      // 통합 재무 대시보드 접근 권한 확인 (동적 권한 시스템 사용)
-      setTimeout(() => {
-        if (!PermissionChecks.canViewIntegratedFinance(userPermissions)) {
-          console.log('❌ 통합 재무 대시보드 접근 권한 없음, 일반 대시보드로 이동');
-          navigate('/dashboard', { replace: true });
-          return;
-        }
-        initializeComponent();
-      }, 100);
     };
 
     // OAuth2 콜백 후 세션 설정을 위한 지연
@@ -125,21 +115,24 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   // 권한이 로드된 후 통합재무관리 접근 권한 확인
   useEffect(() => {
-    if (userPermissions.length > 0 && !permissionCheckedRef.current) {
-      permissionCheckedRef.current = true;
+    if (userPermissions && userPermissions.length > 0 && !permissionCheckedRef.current) {
+      // 권한이 안정적으로 로드되었는지 확인
+      const hasIntegratedFinancePermission = userPermissions.includes('INTEGRATED_FINANCE_VIEW');
       
       console.log('🔍 통합재무관리 권한 체크:', {
         userPermissions,
-        hasPermission: PermissionChecks.canViewIntegratedFinance(userPermissions)
+        hasPermission: hasIntegratedFinancePermission,
+        permissionCount: userPermissions.length
       });
       
-      if (!PermissionChecks.canViewIntegratedFinance(userPermissions)) {
+      if (!hasIntegratedFinancePermission) {
         console.log('❌ 통합재무관리 접근 권한 없음, ERP 대시보드로 이동');
         navigate('/erp/dashboard', { replace: true });
         return;
       }
       
       console.log('✅ 통합재무관리 접근 권한 확인됨');
+      permissionCheckedRef.current = true;
       initializeComponent();
     }
   }, [userPermissions, navigate]);

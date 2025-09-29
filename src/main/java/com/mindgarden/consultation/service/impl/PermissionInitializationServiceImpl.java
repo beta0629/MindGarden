@@ -155,7 +155,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
         List<String> consultantPermissions = List.of(
             "ACCESS_SCHEDULE_MANAGEMENT", "CREATE_SCHEDULES", "MODIFY_SCHEDULES",
             "ACCESS_CONSULTATION_RECORDS", "CREATE_CONSULTATION_RECORDS",
-            "ACCESS_STATISTICS", "VIEW_CONSULTATION_STATISTICS"
+            "ACCESS_STATISTICS", "VIEW_CONSULTATION_STATISTICS", "STATISTICS_VIEW", "MAPPING_VIEW"
         );
         
         // BRANCH_ADMIN 권한

@@ -1,5 +1,6 @@
 package com.mindgarden.consultation.controller;
 
+import java.util.List;
 import java.util.Map;
 import com.mindgarden.consultation.service.PermissionInitializationService;
 import org.springframework.http.ResponseEntity;

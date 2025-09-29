@@ -277,15 +277,42 @@ public class PermissionManagementController {
                 ));
             }
             
-            // HQ 마스터만 전체 권한 변경 가능
-            if (!currentUser.getRole().name().equals("HQ_MASTER")) {
-                // HQ 마스터가 아닌 경우, 자신의 역할만 관리 가능
-                if (!roleName.equals(currentUser.getRole().name())) {
-                    return ResponseEntity.status(403).body(Map.of(
-                        "success", false,
-                        "message", "HQ 마스터만 다른 역할의 권한을 변경할 수 있습니다."
-                    ));
-                }
+            // 역할 계층 구조에 따른 권한 변경 제한
+            String currentUserRole = currentUser.getRole().name();
+            boolean canManageRole = false;
+            
+            // HQ 마스터는 모든 역할 관리 가능
+            if ("HQ_MASTER".equals(currentUserRole)) {
+                canManageRole = true;
+            }
+            // SUPER_HQ_ADMIN은 HQ_MASTER를 제외한 모든 역할 관리 가능
+            else if ("SUPER_HQ_ADMIN".equals(currentUserRole)) {
+                canManageRole = !"HQ_MASTER".equals(roleName);
+            }
+            // HQ_ADMIN은 본사 관리자 이하 역할 관리 가능
+            else if ("HQ_ADMIN".equals(currentUserRole)) {
+                canManageRole = !"HQ_MASTER".equals(roleName) && !"SUPER_HQ_ADMIN".equals(roleName);
+            }
+            // ADMIN은 지점 관련 역할만 관리 가능
+            else if ("ADMIN".equals(currentUserRole)) {
+                canManageRole = "BRANCH_SUPER_ADMIN".equals(roleName) || "BRANCH_ADMIN".equals(roleName) || 
+                               "CONSULTANT".equals(roleName) || "CLIENT".equals(roleName);
+            }
+            // BRANCH_SUPER_ADMIN은 지점 내 하위 역할만 관리 가능
+            else if ("BRANCH_SUPER_ADMIN".equals(currentUserRole)) {
+                canManageRole = "BRANCH_ADMIN".equals(roleName) || "CONSULTANT".equals(roleName) || 
+                               "CLIENT".equals(roleName);
+            }
+            // BRANCH_ADMIN은 상담사, 내담자만 관리 가능
+            else if ("BRANCH_ADMIN".equals(currentUserRole)) {
+                canManageRole = "CONSULTANT".equals(roleName) || "CLIENT".equals(roleName);
+            }
+            
+            if (!canManageRole) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "해당 역할의 권한을 변경할 권한이 없습니다."
+                ));
             }
             
             // 역할별 권한 설정

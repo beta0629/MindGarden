@@ -89,6 +89,20 @@
     min-width: 200px;
 }
 
+.role-selector select:disabled {
+    background: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+.role-restriction {
+    display: block;
+    color: #6c757d;
+    font-size: 12px;
+    margin-top: 5px;
+    font-style: italic;
+}
+
 .save-button {
     background: #007bff;
     color: white;

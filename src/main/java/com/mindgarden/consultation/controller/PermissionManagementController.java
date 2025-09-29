@@ -277,10 +277,22 @@ public class PermissionManagementController {
                 ));
             }
             
+            // HQ 마스터만 전체 권한 변경 가능
+            if (!currentUser.getRole().name().equals("HQ_MASTER")) {
+                // HQ 마스터가 아닌 경우, 자신의 역할만 관리 가능
+                if (!roleName.equals(currentUser.getRole().name())) {
+                    return ResponseEntity.status(403).body(Map.of(
+                        "success", false,
+                        "message", "HQ 마스터만 다른 역할의 권한을 변경할 수 있습니다."
+                    ));
+                }
+            }
+            
             // 역할별 권한 설정
             dynamicPermissionService.setRolePermissions(roleName, permissionCodes);
             
-            log.info("✅ 역할별 권한 설정 완료: role={}, permissions={}", roleName, permissionCodes.size());
+            log.info("✅ 역할별 권한 설정 완료: role={}, permissions={}, 설정자={}", 
+                    roleName, permissionCodes.size(), currentUser.getRole());
             
             return ResponseEntity.ok(Map.of(
                 "success", true,

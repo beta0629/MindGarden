@@ -72,8 +72,27 @@ const ROLE_PERMISSIONS = {
     ]
 };
 
+// 역할 계층 구조 (높은 등급이 낮은 등급을 관리할 수 있음)
+const ROLE_HIERARCHY = {
+    'HQ_MASTER': ['HQ_MASTER', 'SUPER_HQ_ADMIN', 'HQ_ADMIN', 'ADMIN', 'BRANCH_SUPER_ADMIN'],
+    'SUPER_HQ_ADMIN': ['SUPER_HQ_ADMIN', 'HQ_ADMIN', 'ADMIN', 'BRANCH_SUPER_ADMIN'],
+    'HQ_ADMIN': ['HQ_ADMIN', 'ADMIN', 'BRANCH_SUPER_ADMIN'],
+    'ADMIN': ['ADMIN', 'BRANCH_SUPER_ADMIN'],
+    'BRANCH_SUPER_ADMIN': ['BRANCH_SUPER_ADMIN'] // 지점수퍼관리자는 자신의 역할만 관리 가능
+};
+
+// 역할별 표시명
+const ROLE_DISPLAY_NAMES = {
+    'BRANCH_SUPER_ADMIN': '지점 수퍼관리자',
+    'ADMIN': '관리자',
+    'HQ_ADMIN': '본사 관리자',
+    'SUPER_HQ_ADMIN': '수퍼 본사 관리자',
+    'HQ_MASTER': '본사 마스터'
+};
+
 const PermissionManagement = () => {
     const [userPermissions, setUserPermissions] = useState([]);
+    const [currentUserRole, setCurrentUserRole] = useState(null);
     const [selectedRole, setSelectedRole] = useState('BRANCH_SUPER_ADMIN');
     const [rolePermissions, setRolePermissions] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -91,9 +110,36 @@ const PermissionManagement = () => {
         try {
             const permissions = await fetchUserPermissions(setUserPermissions);
             setUserPermissions(permissions);
+            
+            // 현재 사용자의 역할 가져오기
+            const userInfo = await fetchUserInfo();
+            if (userInfo && userInfo.role) {
+                setCurrentUserRole(userInfo.role);
+                // 사용자 역할에 따라 기본 선택 역할 설정
+                if (userInfo.role === 'HQ_MASTER') {
+                    setSelectedRole('BRANCH_SUPER_ADMIN'); // HQ 마스터는 모든 역할 관리 가능
+                } else {
+                    setSelectedRole(userInfo.role); // 다른 역할은 자신의 역할만 관리 가능
+                }
+            }
         } catch (error) {
             console.error('권한 로드 실패:', error);
             setMessage('권한을 불러오는데 실패했습니다.');
+        }
+    };
+
+    const fetchUserInfo = async () => {
+        try {
+            const response = await fetch('/api/auth/current-user', {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                return await response.json();
+            }
+            return null;
+        } catch (error) {
+            console.error('사용자 정보 조회 실패:', error);
+            return null;
         }
     };
 
@@ -149,6 +195,7 @@ const PermissionManagement = () => {
     };
 
     const canManagePermissions = hasPermission('USER_MANAGE');
+    const isHQMaster = currentUserRole === 'HQ_MASTER';
 
     if (!canManagePermissions) {
         return (
@@ -160,6 +207,18 @@ const PermissionManagement = () => {
             </div>
         );
     }
+
+    // 현재 사용자가 관리할 수 있는 역할 목록
+    const getManageableRoles = () => {
+        if (isHQMaster) {
+            return Object.keys(ROLE_PERMISSIONS);
+        } else if (currentUserRole) {
+            return ROLE_HIERARCHY[currentUserRole] || [currentUserRole];
+        }
+        return [currentUserRole];
+    };
+
+    const manageableRoles = getManageableRoles();
 
     return (
         <div className="permission-management">
@@ -181,11 +240,19 @@ const PermissionManagement = () => {
                         id="role-select"
                         value={selectedRole} 
                         onChange={(e) => setSelectedRole(e.target.value)}
+                        disabled={!isHQMaster && manageableRoles.length === 1}
                     >
-                        {Object.keys(ROLE_PERMISSIONS).map(role => (
-                            <option key={role} value={role}>{role}</option>
+                        {manageableRoles.map(role => (
+                            <option key={role} value={role}>
+                                {ROLE_DISPLAY_NAMES[role] || role}
+                            </option>
                         ))}
                     </select>
+                    {!isHQMaster && (
+                        <small className="role-restriction">
+                            {ROLE_DISPLAY_NAMES[currentUserRole] || currentUserRole}는 자신의 역할만 관리할 수 있습니다.
+                        </small>
+                    )}
                 </div>
                 
                 <button 

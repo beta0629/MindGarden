@@ -317,13 +317,12 @@ public class AdminController {
             log.info("🔍 상담사별 매핑된 내담자 목록 조회 - 상담사 ID: {}", consultantId);
             List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantId(consultantId);
             
-            // 결제 승인되고 세션이 남은 매핑만 필터링 (PENDING도 포함)
+            // 결제 승인된 매핑만 필터링 (세션 소진 여부와 관계없이 모든 매핑 표시)
             List<Map<String, Object>> activeMappings = mappings.stream()
                 .filter(mapping -> 
                     mapping.getPaymentStatus() != null && 
                     (mapping.getPaymentStatus().toString().equals("APPROVED") || 
-                     mapping.getPaymentStatus().toString().equals("PENDING")) &&
-                    mapping.getRemainingSessions() > 0
+                     mapping.getPaymentStatus().toString().equals("PENDING"))
                 )
                 .map(mapping -> {
                     Map<String, Object> data = new java.util.HashMap<>();

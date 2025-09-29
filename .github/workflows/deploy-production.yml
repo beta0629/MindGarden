@@ -209,22 +209,22 @@ jobs:
           if [ -f /tmp/production_all_missing_procedures.sql ]; then
             echo "📋 MySQL 연결 정보 확인..."
             echo "DB_HOST: ${DB_HOST:-localhost}"
-            echo "DB_USER: ${DB_USER:-root}"
-            echo "DB_NAME: ${DB_NAME:-mindgarden}"
+            echo "DB_USERNAME: ${DB_USERNAME:-mindgarden}"
+            echo "DB_NAME: ${DB_NAME:-mind_garden}"
             
             # MySQL 연결 테스트
-            mysql -h ${DB_HOST:-localhost} -u ${DB_USER:-root} -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1;" ${DB_NAME:-mindgarden}
+            mysql -h ${DB_HOST:-localhost} -u ${DB_USERNAME:-mindgarden} -p${DB_PASSWORD:-mindgarden2025} -e "SELECT 1;" ${DB_NAME:-mind_garden}
             
             if [ $? -eq 0 ]; then
               echo "✅ MySQL 연결 성공 - 프로시저 등록 시작"
-              mysql -h ${DB_HOST:-localhost} -u ${DB_USER:-root} -p${MYSQL_ROOT_PASSWORD} ${DB_NAME:-mindgarden} < /tmp/production_all_missing_procedures.sql
+              mysql -h ${DB_HOST:-localhost} -u ${DB_USERNAME:-mindgarden} -p${DB_PASSWORD:-mindgarden2025} ${DB_NAME:-mind_garden} < /tmp/production_all_missing_procedures.sql
               
               if [ $? -eq 0 ]; then
                 echo "✅ 모든 누락된 PL/SQL 프로시저 등록 완료"
                 
                 # 등록된 프로시저 확인
                 echo "📋 등록된 프로시저 목록:"
-                mysql -h ${DB_HOST:-localhost} -u ${DB_USER:-root} -p${MYSQL_ROOT_PASSWORD} ${DB_NAME:-mindgarden} -e "
+                mysql -h ${DB_HOST:-localhost} -u ${DB_USERNAME:-mindgarden} -p${DB_PASSWORD:-mindgarden2025} ${DB_NAME:-mind_garden} -e "
                 SELECT ROUTINE_NAME, CREATED 
                 FROM information_schema.ROUTINES 
                 WHERE ROUTINE_SCHEMA = DATABASE() 

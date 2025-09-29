@@ -283,7 +283,7 @@ public class MenuServiceImpl implements MenuService {
                 break;
             case ADMIN:
                 menuGroups.add("ADMIN_MENU");
-                menuGroups.add("BRANCH_SUPER_ADMIN_MENU"); // ERP 메뉴 접근 가능
+                // ERP 메뉴 접근 불가 (BRANCH_SUPER_ADMIN_MENU 제외)
                 break;
             case BRANCH_MANAGER:
                 menuGroups.add("ADMIN_MENU");

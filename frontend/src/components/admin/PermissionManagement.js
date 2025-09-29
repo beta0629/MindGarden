@@ -89,7 +89,7 @@ const PermissionManagement = () => {
 
     const loadUserPermissions = async () => {
         try {
-            const permissions = await fetchUserPermissions();
+            const permissions = await fetchUserPermissions(setUserPermissions);
             setUserPermissions(permissions);
         } catch (error) {
             console.error('권한 로드 실패:', error);

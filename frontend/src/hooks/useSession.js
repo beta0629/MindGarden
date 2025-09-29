@@ -6,7 +6,7 @@ export const useSession = () => {
     const [sessionState, setSessionState] = useState({
         user: null,
         sessionInfo: null,
-        isLoading: false  // 초기값을 false로 변경
+        isLoading: false  // 로딩 상태 없이 시작
     });
     
     const initializedRef = useRef(false);
@@ -31,31 +31,17 @@ export const useSession = () => {
             });
         };
         
-        // 초기 세션 확인 (한 번만)
+        // 초기 세션 확인 (로딩 없이 즉시 확인)
         const initializeSession = async () => {
             try {
-                console.log('🔍 초기 세션 체크...');
+                console.log('🔍 초기 세션 체크 (로딩 없음)...');
                 
-                // 로딩 상태 설정
-                setSessionState(prev => ({ ...prev, isLoading: true }));
-                
-                // 타임아웃 설정 (5초)
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('세션 체크 타임아웃')), 5000)
-                );
-                
-                // 서버에서만 세션 확인 (localStorage 백업 제거)
-                await Promise.race([
-                    sessionManager.checkSession(),
-                    timeoutPromise
-                ]);
+                // 로딩 상태 설정하지 않고 즉시 확인
+                await sessionManager.checkSession();
                 console.log('✅ 초기 세션 체크 완료');
             } catch (error) {
                 console.error('❌ 초기 세션 체크 실패:', error);
-                // 타임아웃이거나 오류가 발생해도 로딩 상태는 해제
-            } finally {
-                // 로딩 상태 해제
-                setSessionState(prev => ({ ...prev, isLoading: false }));
+                // 오류가 발생해도 로딩 상태는 설정하지 않음
             }
         };
         

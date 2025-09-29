@@ -306,6 +306,11 @@ public interface ScheduleService {
      * 오늘의 스케줄 통계 조회
      */
     Map<String, Object> getTodayScheduleStatistics();
+    
+    /**
+     * 특정 상담사의 오늘의 스케줄 통계 조회
+     */
+    Map<String, Object> getTodayScheduleStatisticsByConsultant(Long consultantId);
 
     // ==================== 자동 완료 처리 ====================
     

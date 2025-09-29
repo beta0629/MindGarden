@@ -578,8 +578,27 @@ public class ScheduleController {
         }
         
         try {
-            Map<String, Object> statistics = scheduleService.getTodayScheduleStatistics();
-            log.info("✅ 오늘의 스케줄 통계 조회 완료");
+            Map<String, Object> statistics;
+            
+            // 사용자 역할에 따라 다른 통계 반환
+            if ("CONSULTANT".equals(userRole)) {
+                // 상담사는 자신의 오늘 통계만 조회
+                User currentUser = SessionUtils.getCurrentUser(session);
+                if (currentUser == null) {
+                    return ResponseEntity.status(401).body(Map.of(
+                        "success", false,
+                        "message", "로그인이 필요합니다."
+                    ));
+                }
+                
+                statistics = scheduleService.getTodayScheduleStatisticsByConsultant(currentUser.getId());
+                log.info("✅ 상담사 오늘의 스케줄 통계 조회 완료 - 상담사 ID: {}", currentUser.getId());
+            } else {
+                // 관리자는 전체 통계 조회
+                statistics = scheduleService.getTodayScheduleStatistics();
+                log.info("✅ 관리자 오늘의 스케줄 통계 조회 완료");
+            }
+            
             return ResponseEntity.ok(statistics);
         } catch (Exception e) {
             log.error("❌ 오늘의 스케줄 통계 조회 실패: {}", e.getMessage());

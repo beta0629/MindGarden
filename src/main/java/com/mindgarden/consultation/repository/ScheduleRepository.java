@@ -340,4 +340,18 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
      */
     @Query("SELECT COUNT(DISTINCT s.consultantId) FROM Schedule s WHERE s.date BETWEEN :startDate AND :endDate AND s.isDeleted = false")
     long countDistinctConsultantsByDateBetween(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    
+    // ==================== 상담사별 오늘 통계 ====================
+    
+    /**
+     * 특정 상담사의 특정 날짜 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.consultantId = :consultantId AND s.date = :date AND s.isDeleted = false")
+    long countByDateAndConsultantId(@Param("date") LocalDate date, @Param("consultantId") Long consultantId);
+    
+    /**
+     * 특정 상담사의 특정 날짜 특정 상태 스케줄 개수 조회
+     */
+    @Query("SELECT COUNT(s) FROM Schedule s WHERE s.consultantId = :consultantId AND s.date = :date AND s.status = :status AND s.isDeleted = false")
+    long countByDateAndStatusAndConsultantId(@Param("date") LocalDate date, @Param("status") ScheduleStatus status, @Param("consultantId") Long consultantId);
 }

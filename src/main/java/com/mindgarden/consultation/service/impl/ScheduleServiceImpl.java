@@ -888,6 +888,46 @@ public class ScheduleServiceImpl implements ScheduleService {
         
         return statistics;
     }
+    
+    /**
+     * 특정 상담사의 오늘의 스케줄 통계 조회
+     */
+    @Override
+    public Map<String, Object> getTodayScheduleStatisticsByConsultant(Long consultantId) {
+        log.info("📊 상담사 오늘의 스케줄 통계 조회 - 상담사 ID: {}", consultantId);
+        
+        LocalDate today = LocalDate.now();
+        Map<String, Object> statistics = new HashMap<>();
+        
+        // 해당 상담사의 오늘 총 상담 수
+        long totalToday = scheduleRepository.countByDateAndConsultantId(today, consultantId);
+        statistics.put("totalToday", totalToday);
+        
+        // 해당 상담사의 오늘 완료된 상담 수
+        long completedToday = scheduleRepository.countByDateAndStatusAndConsultantId(today, ScheduleStatus.COMPLETED, consultantId);
+        statistics.put("completedToday", completedToday);
+        
+        // 해당 상담사의 오늘 진행중인 상담 수
+        long inProgressToday = 0; // IN_PROGRESS 상태가 없으므로 0으로 설정
+        statistics.put("inProgressToday", inProgressToday);
+        
+        // 해당 상담사의 오늘 취소된 상담 수
+        long cancelledToday = scheduleRepository.countByDateAndStatusAndConsultantId(today, ScheduleStatus.CANCELLED, consultantId);
+        statistics.put("cancelledToday", cancelledToday);
+        
+        // 해당 상담사의 오늘 예약된 상담 수
+        long bookedToday = scheduleRepository.countByDateAndStatusAndConsultantId(today, ScheduleStatus.BOOKED, consultantId);
+        statistics.put("bookedToday", bookedToday);
+        
+        // 해당 상담사의 오늘 확인된 상담 수
+        long confirmedToday = scheduleRepository.countByDateAndStatusAndConsultantId(today, ScheduleStatus.CONFIRMED, consultantId);
+        statistics.put("confirmedToday", confirmedToday);
+        
+        log.info("✅ 상담사 오늘의 스케줄 통계 조회 완료 - 상담사 ID: {}, 총 {}개, 완료 {}개, 진행중 {}개, 취소 {}개, 예약 {}개, 확인 {}개", 
+                consultantId, totalToday, completedToday, inProgressToday, cancelledToday, bookedToday, confirmedToday);
+        
+        return statistics;
+    }
 
     // ==================== 유틸리티 메서드 ====================
 

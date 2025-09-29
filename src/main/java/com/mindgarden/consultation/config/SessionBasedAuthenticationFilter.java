@@ -190,10 +190,6 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                path.startsWith("/api/auth/") ||  // 모든 인증 관련 API 제외
                path.startsWith("/oauth2/") ||
                path.startsWith("/api/password-reset/") ||
-               path.startsWith("/api/test-simple/") ||
-               path.startsWith("/api/test/") ||
-               path.startsWith("/api/local-test/") ||  // 로컬 테스트 API 제외
-               path.startsWith("/api/debug/") ||  // 디버그 API 제외
                path.startsWith("/api/health/") ||
                path.equals("/error") ||
                path.startsWith("/actuator/");

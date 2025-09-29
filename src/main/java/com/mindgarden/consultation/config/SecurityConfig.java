@@ -118,10 +118,6 @@ public class SecurityConfig {
                     "/oauth2/**",
                     "/api/password/**",  // 비밀번호 관리 API
                     "/api/password-reset/**",  // 비밀번호 재설정 API
-                    "/api/test-simple/**",  // 간단한 테스트 API
-                    "/api/test/**",  // 테스트 API
-                    "/api/local-test/**",  // 로컬 테스트 API (로컬 환경에서만 활성화)
-                    "/api/debug/**",  // 디버그 API (운영 환경 디버깅용)
                     "/api/health/**",  // 시스템 헬스체크
                     "/api/common-codes/group/MENU/active",  // 메뉴 구조만 허용
                     "/api/common-codes/group/NOTIFICATION_TYPE",  // 알림 타입만 허용
@@ -129,6 +125,15 @@ public class SecurityConfig {
                     "/actuator/health",
                     "/actuator/info"
                 ).permitAll();
+                
+                // 로컬 환경에서만 테스트 API 허용
+                if (!isProductionEnvironment()) {
+                    authz.requestMatchers(
+                        "/api/test-simple/**",  // 간단한 테스트 API
+                        "/api/test/**",  // 테스트 API
+                        "/api/local-test/**"  // 로컬 테스트 API
+                    ).permitAll();
+                }
                 
                 // 인증된 사용자만 접근 허용
                 authz.anyRequest().authenticated();

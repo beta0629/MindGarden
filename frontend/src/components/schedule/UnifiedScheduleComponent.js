@@ -569,11 +569,20 @@ const UnifiedScheduleComponent = ({
      * 이벤트 클릭 이벤트 핸들러 - 바로 상세 모달 표시
      */
     const handleEventClick = (info) => {
-        console.log('📋 이벤트 클릭:', info.event.title);
-        console.log('📋 이벤트 extendedProps:', info.event.extendedProps);
-        
-        const event = info.event;
-        showDetailModal(event);
+        try {
+            console.log('📋 이벤트 클릭 시작:', info);
+            console.log('📋 이벤트 제목:', info.event.title);
+            console.log('📋 이벤트 extendedProps:', info.event.extendedProps);
+            console.log('📋 현재 모달 상태 - isDetailModalOpen:', isDetailModalOpen);
+            
+            const event = info.event;
+            console.log('📋 showDetailModal 호출 전');
+            showDetailModal(event);
+            console.log('📋 showDetailModal 호출 후');
+        } catch (error) {
+            console.error('❌ 이벤트 클릭 처리 중 오류:', error);
+            notificationManager.show('error', '이벤트를 불러오는 중 오류가 발생했습니다.');
+        }
     };
     
     
@@ -581,9 +590,12 @@ const UnifiedScheduleComponent = ({
      * 상세 모달 표시 함수
      */
     const showDetailModal = (event) => {
-        
-        // 휴가 이벤트인지 확인
-        if (event.extendedProps.type === 'vacation') {
+        try {
+            console.log('📋 showDetailModal 시작:', event);
+            console.log('📋 event.extendedProps:', event.extendedProps);
+            
+            // 휴가 이벤트인지 확인
+            if (event.extendedProps.type === 'vacation') {
             console.log('🏖️ 휴가 이벤트 클릭');
             
             // 휴가 이벤트용 데이터 설정
@@ -668,8 +680,17 @@ const UnifiedScheduleComponent = ({
             status: koreanStatus
         };
 
+        console.log('📋 최종 스케줄 데이터:', scheduleData);
+        console.log('📋 모달 열기 전 상태 - isDetailModalOpen:', isDetailModalOpen);
+        
         setSelectedSchedule(scheduleData);
         setIsDetailModalOpen(true);
+        
+        console.log('📋 모달 열기 완료 - isDetailModalOpen:', true);
+        } catch (error) {
+            console.error('❌ showDetailModal 처리 중 오류:', error);
+            notificationManager.show('error', '상세 정보를 불러오는 중 오류가 발생했습니다.');
+        }
     };
 
     /**

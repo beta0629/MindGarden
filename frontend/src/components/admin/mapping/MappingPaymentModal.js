@@ -43,36 +43,13 @@ const MappingPaymentModal = ({
 
     // 모달이 열릴 때 초기화
     useEffect(() => {
-        console.log('🔧 매핑 입금확인 모달 useEffect 실행:', {
-            isOpen: isOpen,
-            mapping: mapping,
-            mappingId: mapping?.id,
-            packagePrice: mapping?.packagePrice
-        });
-        
         if (isOpen && mapping) {
             const referenceNumber = generateReferenceNumber('BANK_TRANSFER');
-            console.log('🔧 매핑 입금확인 모달 초기화:', {
-                mappingId: mapping.id,
-                packagePrice: mapping.packagePrice,
-                generatedReference: referenceNumber,
-                fullMapping: mapping
-            });
             
-            // 강제로 참조번호 설정
             setPaymentData({
                 paymentMethod: 'BANK_TRANSFER',
                 paymentReference: referenceNumber,
                 paymentAmount: mapping.packagePrice || 0
-            });
-            
-            // 추가 확인을 위한 로그
-            console.log('🔧 참조번호 설정 완료:', referenceNumber);
-        } else {
-            console.log('⚠️ 매핑 입금확인 모달 초기화 실패:', {
-                isOpen: isOpen,
-                mapping: mapping,
-                reason: !isOpen ? '모달이 열리지 않음' : '매핑 데이터 없음'
             });
         }
     }, [isOpen, mapping]);
@@ -80,10 +57,6 @@ const MappingPaymentModal = ({
     // 결제 방법 변경 시 참조번호 자동 생성
     const handlePaymentMethodChange = (method) => {
         const reference = generateReferenceNumber(method);
-        console.log('🔄 결제 방법 변경:', {
-            method: method,
-            generatedReference: reference
-        });
 
         setPaymentData(prev => ({
             ...prev,
@@ -123,18 +96,16 @@ const MappingPaymentModal = ({
         console.log('❌ MappingPaymentModal 렌더링 안됨:', { isOpen, mapping: !!mapping });
         return null;
     }
-    
+
     console.log('✅ MappingPaymentModal 렌더링됨:', { 
         mappingId: mapping.id, 
         consultantName: mapping.consultantName,
-        clientName: mapping.clientName 
+        clientName: mapping.clientName,
+        isOpen: isOpen
     });
 
     // 모달이 열릴 때마다 참조번호 강제 생성
     const currentReference = paymentData.paymentReference || generateReferenceNumber(paymentData.paymentMethod);
-    if (!paymentData.paymentReference) {
-        console.log('🔧 모달 렌더링 시 참조번호 강제 생성:', currentReference);
-    }
 
     return (
         <div style={{
@@ -238,7 +209,6 @@ const MappingPaymentModal = ({
                             type="text"
                             value={currentReference}
                             onChange={(e) => {
-                                console.log('🔧 참조번호 수동 변경:', e.target.value);
                                 setPaymentData(prev => ({
                                     ...prev,
                                     paymentReference: e.target.value

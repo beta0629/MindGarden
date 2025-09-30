@@ -33,11 +33,11 @@ const MappingCard = ({
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showDepositModal, setShowDepositModal] = useState(false);
     
-    // 모달 상태 초기화 (매핑이 변경될 때)
-    React.useEffect(() => {
-        setShowPaymentModal(false);
-        setShowDepositModal(false);
-    }, [mapping.id]);
+    // 모달 상태 초기화 (매핑이 변경될 때) - 제거
+    // React.useEffect(() => {
+    //     setShowPaymentModal(false);
+    //     setShowDepositModal(false);
+    // }, [mapping.id]);
     // 상태별 색상 (props에서 받은 데이터 사용)
     const getStatusColor = (status) => {
         return statusInfo.color;
@@ -361,26 +361,7 @@ const MappingCard = ({
                 borderTop: '1px solid #e1e8ed',
                 justifyContent: 'flex-end'
             }}>
-                {/* 디버깅용 로그 */}
-                {console.log('MappingCard Debug:', {
-                    id: mapping.id,
-                    status: mapping.status,
-                    paymentStatus: mapping.paymentStatus,
-                    consultantName: mapping.consultantName,
-                    clientName: mapping.clientName,
-                    packagePrice: mapping.packagePrice,
-                    packageName: mapping.packageName,
-                    fullMapping: mapping
-                })}
-                
                 {/* 결제 확인 버튼 - PENDING 상태일 때만 표시 */}
-                {console.log('🔍 매핑 상태 확인:', { 
-                    id: mapping.id, 
-                    paymentStatus: mapping.paymentStatus, 
-                    status: mapping.status,
-                    consultantName: mapping.consultantName,
-                    clientName: mapping.clientName
-                })}
                 {mapping.paymentStatus === 'PENDING' && (
                     <button 
                         style={{
@@ -402,9 +383,14 @@ const MappingCard = ({
                                 mappingId: mapping.id, 
                                 consultantName: mapping.consultantName,
                                 clientName: mapping.clientName,
-                                paymentStatus: mapping.paymentStatus
+                                paymentStatus: mapping.paymentStatus,
+                                showPaymentModal: showPaymentModal
                             });
                             setShowPaymentModal(true);
+                            console.log('🟢 setShowPaymentModal(true) 호출 후:', { 
+                                mappingId: mapping.id,
+                                showPaymentModal: true
+                            });
                         }}
                         onMouseEnter={(e) => {
                             e.target.style.backgroundColor = '#1e7e34';

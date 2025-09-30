@@ -3065,14 +3065,14 @@ public class AdminController {
             }
 
             // 권한 체크
-            if (!PermissionCheckUtils.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
+            if (!dynamicPermissionService.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
                     "message", "상담사 관리 권한이 없습니다."
                 ));
             }
 
-            List<User> consultants = userService.getConsultants();
+            List<User> consultants = userService.findByRole(UserRole.CONSULTANT.name());
             
             List<Map<String, Object>> consultantData = consultants.stream()
                 .map(consultant -> {
@@ -3121,7 +3121,7 @@ public class AdminController {
             }
 
             // 권한 체크
-            if (!PermissionCheckUtils.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
+            if (!dynamicPermissionService.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
                     "message", "상담사 관리 권한이 없습니다."
@@ -3136,13 +3136,13 @@ public class AdminController {
                 ));
             }
 
-            User consultant = userService.getUserById(consultantId);
+            User consultant = userService.findById(consultantId).orElse(null);
             if (consultant == null) {
                 return ResponseEntity.notFound().build();
             }
 
             consultant.setSpecialty(specialty.trim());
-            userService.updateUser(consultant);
+            userService.save(consultant);
 
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -3173,14 +3173,14 @@ public class AdminController {
             }
 
             // 권한 체크
-            if (!PermissionCheckUtils.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
+            if (!dynamicPermissionService.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
                     "message", "상담사 관리 권한이 없습니다."
                 ));
             }
 
-            List<User> consultants = userService.getConsultants();
+            List<User> consultants = userService.findByRole(UserRole.CONSULTANT.name());
             long totalConsultants = consultants.size();
             long specialtySet = consultants.stream().filter(c -> c.getSpecialty() != null && !c.getSpecialty().trim().isEmpty()).count();
             
@@ -3208,6 +3208,133 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "success", false,
                 "message", "전문분야 통계 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 반복 지출 목록 조회
+     */
+    @GetMapping("/recurring-expenses")
+    public ResponseEntity<Map<String, Object>> getRecurringExpenses(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "인증이 필요합니다."
+                ));
+            }
+
+            // 동적 권한 체크
+            if (!dynamicPermissionService.hasPermission(currentUser, "FINANCIAL_VIEW")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "재무 조회 권한이 없습니다."
+                ));
+            }
+
+            // 실제 데이터 조회 (현재는 빈 배열, 향후 FinancialTransactionService 연동)
+            List<Map<String, Object>> expenses = new ArrayList<>();
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", expenses,
+                "count", expenses.size(),
+                "message", "반복 지출 목록 조회 완료"
+            ));
+
+        } catch (Exception e) {
+            log.error("반복 지출 목록 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "반복 지출 목록 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 반복 지출 통계 조회
+     */
+    @GetMapping("/statistics/recurring-expenses")
+    public ResponseEntity<Map<String, Object>> getRecurringExpenseStatistics(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "인증이 필요합니다."
+                ));
+            }
+
+            // 동적 권한 체크
+            if (!dynamicPermissionService.hasPermission(currentUser, "FINANCIAL_VIEW")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "재무 조회 권한이 없습니다."
+                ));
+            }
+
+            // 실제 통계 데이터 조회 (현재는 빈 통계, 향후 FinancialTransactionService 연동)
+            Map<String, Object> statistics = Map.of(
+                "totalExpenses", 0,
+                "totalAmount", 0,
+                "monthlyAmount", 0,
+                "activeExpenses", 0
+            );
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", statistics,
+                "message", "반복 지출 통계 조회 완료"
+            ));
+
+        } catch (Exception e) {
+            log.error("반복 지출 통계 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "반복 지출 통계 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 지출 카테고리 목록 조회
+     */
+    @GetMapping("/expense-categories")
+    public ResponseEntity<Map<String, Object>> getExpenseCategories(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "인증이 필요합니다."
+                ));
+            }
+
+            // 동적 권한 체크
+            if (!dynamicPermissionService.hasPermission(currentUser, "FINANCIAL_VIEW")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "재무 조회 권한이 없습니다."
+                ));
+            }
+
+            // 실제 카테고리 데이터 조회 (현재는 빈 배열, 향후 CommonCodeService 연동)
+            List<Map<String, Object>> categories = new ArrayList<>();
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", categories,
+                "count", categories.size(),
+                "message", "지출 카테고리 목록 조회 완료"
+            ));
+
+        } catch (Exception e) {
+            log.error("지출 카테고리 목록 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "지출 카테고리 목록 조회 중 오류가 발생했습니다: " + e.getMessage()
             ));
         }
     }

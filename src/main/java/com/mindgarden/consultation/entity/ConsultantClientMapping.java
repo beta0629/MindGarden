@@ -160,8 +160,8 @@ public class ConsultantClientMapping extends BaseEntity {
     public enum PaymentStatus {
         PENDING,                    // 대기
         CONFIRMED,                  // 확인됨 (기존 호환성)
-        PAYMENT_CONFIRMED,          // 결제 확인됨 (미수금 상태)
-        DEPOSIT_CONFIRMED,          // 입금 확인됨 (현금 수입)
+        PAY,                        // 결제 확인됨 (미수금 상태) - 최단
+        DEP,                        // 입금 확인됨 (현금 수입) - 최단
         APPROVED,                   // 승인됨 (기존 호환성)
         REJECTED,                   // 거부됨
         REFUNDED                    // 환불됨
@@ -171,7 +171,7 @@ public class ConsultantClientMapping extends BaseEntity {
      * 결제 확인 처리 (미수금 상태)
      */
     public void confirmPayment(String paymentMethod, String paymentReference) {
-        this.paymentStatus = PaymentStatus.PAYMENT_CONFIRMED;
+        this.paymentStatus = PaymentStatus.CONFIRMED;
         this.paymentMethod = paymentMethod;
         this.paymentReference = paymentReference;
         this.paymentDate = LocalDateTime.now();
@@ -182,10 +182,10 @@ public class ConsultantClientMapping extends BaseEntity {
      * 입금 확인 처리 (현금 수입)
      */
     public void confirmDeposit(String depositReference) {
-        if (this.paymentStatus != PaymentStatus.PAYMENT_CONFIRMED) {
+        if (this.paymentStatus != PaymentStatus.CONFIRMED) {
             throw new IllegalStateException("결제 확인이 완료되지 않았습니다.");
         }
-        this.paymentStatus = PaymentStatus.DEPOSIT_CONFIRMED;
+        this.paymentStatus = PaymentStatus.APPROVED;
         this.paymentReference = this.paymentReference + " (입금: " + depositReference + ")";
         this.status = MappingStatus.DEPOSIT_CONFIRMED;
     }
@@ -194,7 +194,7 @@ public class ConsultantClientMapping extends BaseEntity {
      * 관리자 승인 (입금 확인 후 활성화)
      */
     public void approveByAdmin(String adminName) {
-        if (this.paymentStatus != PaymentStatus.DEPOSIT_CONFIRMED && this.paymentStatus != PaymentStatus.APPROVED) {
+        if (this.paymentStatus != PaymentStatus.DEP && this.paymentStatus != PaymentStatus.APPROVED) {
             throw new IllegalStateException("입금 확인이 완료되지 않았습니다.");
         }
         this.paymentStatus = PaymentStatus.APPROVED;

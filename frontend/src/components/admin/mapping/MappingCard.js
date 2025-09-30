@@ -405,8 +405,8 @@ const MappingCard = ({
                     </button>
                 )}
                 
-                {/* 입금 확인 버튼 - PAYMENT_CONFIRMED 상태일 때만 표시 */}
-                {mapping.paymentStatus === 'PAYMENT_CONFIRMED' && (
+                {/* 입금 확인 버튼 - CONFIRMED 상태일 때만 표시 */}
+                {mapping.paymentStatus === 'CONFIRMED' && (
                     <button 
                         style={{
                             padding: '4px 8px',

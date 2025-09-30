@@ -140,7 +140,7 @@ const TabletHomepage = () => {
 
   return (
     <CommonPageTemplate 
-      title="MindGarden - 마음의 정원을 가꾸는 상담 서비스"
+      title="마인드가든 - 마음의 정원을 가꾸는 상담 서비스"
       description="전문 상담사와 함께 마음의 평화를 찾아보세요. 언제 어디서나 편리하게 상담을 받을 수 있습니다."
       bodyClass="tablet-page"
     >

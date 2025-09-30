@@ -26,6 +26,7 @@ import com.mindgarden.consultation.service.StoredProcedureService;
 import com.mindgarden.consultation.service.UserService;
 import com.mindgarden.consultation.util.PermissionCheckUtils;
 import com.mindgarden.consultation.utils.SessionUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -704,8 +705,8 @@ public class AdminController {
                 .map(mapping -> {
                     Map<String, Object> mappingData = new HashMap<>();
                     mappingData.put("id", mapping.getId());
-                    mappingData.put("clientName", mapping.getClientName());
-                    mappingData.put("consultantName", mapping.getConsultantName());
+                    mappingData.put("clientName", mapping.getClient() != null ? mapping.getClient().getName() : "알 수 없음");
+                    mappingData.put("consultantName", mapping.getConsultant() != null ? mapping.getConsultant().getName() : "알 수 없음");
                     mappingData.put("packageName", mapping.getPackageName());
                     mappingData.put("packagePrice", mapping.getPackagePrice());
                     mappingData.put("paymentDate", mapping.getPaymentDate());

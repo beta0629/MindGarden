@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaToggleOff, FaCompressAlt } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaToggleOff, FaCompressAlt, FaClock } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
 import TodayStatistics from './TodayStatistics';
@@ -37,6 +37,12 @@ const AdminDashboard = ({ user: propUser }) => {
         totalRefundedSessions: 0,
         totalRefundAmount: 0,
         averageRefundPerCase: 0
+    });
+    
+    const [pendingDepositStats, setPendingDepositStats] = useState({
+        count: 0,
+        totalAmount: 0,
+        oldestHours: 0
     });
     
     const [loading, setLoading] = useState(false);
@@ -144,6 +150,28 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     }, []);
 
+    const loadPendingDepositStats = useCallback(async () => {
+        try {
+            const response = await fetch('/api/admin/mappings/pending-deposit');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    const count = data.data.length;
+                    const totalAmount = data.data.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
+                    const oldestHours = Math.max(...data.data.map(mapping => mapping.hoursElapsed || 0), 0);
+                    
+                    setPendingDepositStats({
+                        count,
+                        totalAmount,
+                        oldestHours
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('입금 확인 대기 통계 로드 실패:', error);
+        }
+    }, []);
+
     // 스케줄 자동 완료 처리
     const handleAutoCompleteSchedules = async () => {
         try {
@@ -225,7 +253,8 @@ const AdminDashboard = ({ user: propUser }) => {
     useEffect(() => {
         loadStats();
         loadRefundStats();
-    }, [loadStats, loadRefundStats]);
+        loadPendingDepositStats();
+    }, [loadStats, loadRefundStats, loadPendingDepositStats]);
 
     const createTestData = async () => {
         try {
@@ -426,6 +455,83 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                     </div>
                 </div>
+
+                {/* 입금 확인 대기 알림 - 지점어드민, 지점 수퍼어드민만 표시 */}
+                {(() => {
+                    const currentRole = (propUser || sessionUser)?.role;
+                    const canViewPendingDeposits = currentRole === 'ADMIN' || 
+                                                  currentRole === 'BRANCH_SUPER_ADMIN' || 
+                                                  currentRole === 'BRANCH_ADMIN';
+                    return canViewPendingDeposits;
+                })() && pendingDepositStats.count > 0 && (
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                        <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE} style={{ color: 'white' }}>
+                            <i className="bi bi-exclamation-triangle-fill"></i>
+                            ⚠️ 입금 확인 대기 알림
+                        </h2>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARDS}>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD} style={{ backgroundColor: '#fff5f5' }}>
+                                <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} pending-deposit`} style={{ backgroundColor: '#dc3545' }}>
+                                    <FaExclamationTriangle />
+                                </div>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                                    <h3>입금 확인 대기</h3>
+                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE} style={{ color: '#dc3545' }}>
+                                        {pendingDepositStats.count}건
+                                    </div>
+                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>
+                                        결제 확인 완료, 입금 대기 중
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD} style={{ backgroundColor: '#fff8f0' }}>
+                                <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} pending-amount`} style={{ backgroundColor: '#fd7e14' }}>
+                                    <FaDollarSign />
+                                </div>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                                    <h3>대기 중인 금액</h3>
+                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE} style={{ color: '#fd7e14' }}>
+                                        {pendingDepositStats.totalAmount.toLocaleString()}원
+                                    </div>
+                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>
+                                        입금 확인 대기 중인 총 금액
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD} style={{ backgroundColor: '#f8f5ff' }}>
+                                <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} oldest-waiting`} style={{ backgroundColor: '#6f42c1' }}>
+                                    <FaClock />
+                                </div>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                                    <h3>최장 대기 시간</h3>
+                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE} style={{ color: '#6f42c1' }}>
+                                        {pendingDepositStats.oldestHours}시간
+                                    </div>
+                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>
+                                        가장 오래 대기 중인 건
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD} onClick={() => navigate('/admin/mapping-management')} style={{ cursor: 'pointer', backgroundColor: '#f0fdfa' }}>
+                                <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} manage-deposits`} style={{ backgroundColor: '#20c997' }}>
+                                    <FaCog />
+                                </div>
+                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
+                                    <h3>입금 확인 처리</h3>
+                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE} style={{ color: '#20c997' }}>
+                                        처리하기
+                                    </div>
+                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>
+                                        매핑 관리에서 입금 확인
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* 휴가 통계 섹션 */}
                 <VacationStatistics />

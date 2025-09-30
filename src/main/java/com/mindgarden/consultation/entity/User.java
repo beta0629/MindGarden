@@ -187,6 +187,12 @@ public class User extends BaseEntity {
     @Column(name = "branch_code", length = 20)
     private String branchCode;
     
+    /**
+     * 상담사 전문분야 (상담사만 사용)
+     */
+    @Column(name = "specialty", length = 100)
+    private String specialty;
+    
     // === 사용자 설정 관련 필드들 ===
     
     /**

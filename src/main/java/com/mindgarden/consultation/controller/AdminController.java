@@ -3049,4 +3049,166 @@ public class AdminController {
             ));
         }
     }
+
+    /**
+     * 상담사 목록 조회 (전문분야 관리용)
+     */
+    @GetMapping("/consultants")
+    public ResponseEntity<Map<String, Object>> getConsultants(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "인증이 필요합니다."
+                ));
+            }
+
+            // 권한 체크
+            if (!PermissionCheckUtils.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "상담사 관리 권한이 없습니다."
+                ));
+            }
+
+            List<User> consultants = userService.getConsultants();
+            
+            List<Map<String, Object>> consultantData = consultants.stream()
+                .map(consultant -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("id", consultant.getId());
+                    data.put("name", consultant.getName());
+                    data.put("username", consultant.getUsername());
+                    data.put("email", consultant.getEmail());
+                    data.put("specialty", consultant.getSpecialty());
+                    data.put("isActive", consultant.getIsActive());
+                    return data;
+                })
+                .collect(Collectors.toList());
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", consultantData,
+                "count", consultantData.size(),
+                "message", "상담사 목록 조회 완료"
+            ));
+
+        } catch (Exception e) {
+            log.error("상담사 목록 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "상담사 목록 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 상담사 전문분야 업데이트
+     */
+    @PutMapping("/consultants/{consultantId}/specialty")
+    public ResponseEntity<Map<String, Object>> updateConsultantSpecialty(
+            @PathVariable Long consultantId,
+            @RequestBody Map<String, String> request,
+            HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "인증이 필요합니다."
+                ));
+            }
+
+            // 권한 체크
+            if (!PermissionCheckUtils.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "상담사 관리 권한이 없습니다."
+                ));
+            }
+
+            String specialty = request.get("specialty");
+            if (specialty == null || specialty.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "전문분야를 입력해주세요."
+                ));
+            }
+
+            User consultant = userService.getUserById(consultantId);
+            if (consultant == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            consultant.setSpecialty(specialty.trim());
+            userService.updateUser(consultant);
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "상담사 전문분야가 업데이트되었습니다."
+            ));
+
+        } catch (Exception e) {
+            log.error("상담사 전문분야 업데이트 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "상담사 전문분야 업데이트 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 전문분야 통계 조회
+     */
+    @GetMapping("/statistics/specialty")
+    public ResponseEntity<Map<String, Object>> getSpecialtyStatistics(HttpSession session) {
+        try {
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "인증이 필요합니다."
+                ));
+            }
+
+            // 권한 체크
+            if (!PermissionCheckUtils.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "상담사 관리 권한이 없습니다."
+                ));
+            }
+
+            List<User> consultants = userService.getConsultants();
+            long totalConsultants = consultants.size();
+            long specialtySet = consultants.stream().filter(c -> c.getSpecialty() != null && !c.getSpecialty().trim().isEmpty()).count();
+            
+            // 전문분야 종류 계산
+            long specialtyTypes = consultants.stream()
+                .filter(c -> c.getSpecialty() != null && !c.getSpecialty().trim().isEmpty())
+                .map(c -> c.getSpecialty().trim())
+                .distinct()
+                .count();
+
+            Map<String, Object> statistics = Map.of(
+                "totalConsultants", totalConsultants,
+                "specialtySet", specialtySet,
+                "specialtyTypes", specialtyTypes
+            );
+
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", statistics,
+                "message", "전문분야 통계 조회 완료"
+            ));
+
+        } catch (Exception e) {
+            log.error("전문분야 통계 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "전문분야 통계 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
 }

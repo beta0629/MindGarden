@@ -7,6 +7,7 @@ import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.PasswordConfigService;
 import com.mindgarden.consultation.service.PasswordResetService;
 import com.mindgarden.consultation.service.PasswordValidationService;
+import com.mindgarden.consultation.service.UserService;
 import com.mindgarden.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,6 +37,7 @@ public class PasswordManagementController {
     private final PasswordValidationService passwordValidationService;
     private final PasswordConfigService passwordConfigService;
     private final PasswordResetService passwordResetService;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     
     /**
@@ -162,8 +164,12 @@ public class PasswordManagementController {
                 ));
             }
             
-            // 비밀번호 변경 (실제 구현은 UserService에서)
-            // TODO: UserService의 changePassword 메서드 호출
+            // 비밀번호 변경 (UserService 호출)
+            userService.changePassword(
+                currentUser.getId(), 
+                request.getCurrentPassword(), 
+                request.getNewPassword()
+            );
             
             log.info("✅ 비밀번호 변경 성공: userId={}", currentUser.getId());
             

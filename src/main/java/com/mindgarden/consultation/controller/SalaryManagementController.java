@@ -6,9 +6,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import com.mindgarden.consultation.dto.CommonCodeDto;
+import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.entity.ConsultantSalaryProfile;
 import com.mindgarden.consultation.entity.SalaryCalculation;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.PlSqlSalaryManagementService;
 import com.mindgarden.consultation.service.SalaryManagementService;
@@ -42,6 +45,7 @@ public class SalaryManagementController {
     
     private final SalaryManagementService salaryManagementService;
     private final PlSqlSalaryManagementService plSqlSalaryManagementService;
+    private final CommonCodeService commonCodeService;
     private final DynamicPermissionService dynamicPermissionService;
     
     /**
@@ -776,12 +780,45 @@ public class SalaryManagementController {
             log.info("급여 설정 저장: Type={}, Value={}, Description={}", 
                     configType, configValue, description);
             
-            // TODO: 실제로는 CommonCodeService를 통해 공통 코드 업데이트
-            // 현재는 성공 응답만 반환
+            // CommonCodeService를 통해 공통 코드 업데이트
+            try {
+                CommonCode existingCode = commonCodeService.getCommonCodeByGroupAndValue("SALARY_CONFIG", configType);
+                
+                // 기존 설정 업데이트
+                existingCode.setCodeLabel(description);
+                existingCode.setCodeDescription(configValue);
+                existingCode.setIsActive(true);
+                commonCodeService.updateCommonCode(existingCode.getId(), 
+                    CommonCodeDto.builder()
+                        .codeGroup("SALARY_CONFIG")
+                        .codeValue(configType)
+                        .codeLabel(description)
+                        .codeDescription(configValue)
+                        .isActive(true)
+                        .sortOrder(existingCode.getSortOrder())
+                        .build());
+                log.info("✅ 급여 설정 업데이트 완료: {}", configType);
+                
+            } catch (Exception e) {
+                // 새 설정 생성
+                CommonCodeDto newCodeDto = CommonCodeDto.builder()
+                    .codeGroup("SALARY_CONFIG")
+                    .codeValue(configType)
+                    .codeLabel(description)
+                    .codeDescription(configValue)
+                    .isActive(true)
+                    .sortOrder(0)
+                    .build();
+                
+                commonCodeService.createCommonCode(newCodeDto);
+                log.info("✅ 급여 설정 생성 완료: {}", configType);
+            }
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "급여 설정이 저장되었습니다."
+                "message", "급여 설정이 저장되었습니다.",
+                "configType", configType,
+                "configValue", configValue
             ));
             
         } catch (Exception e) {

@@ -1,0 +1,353 @@
+/* ERP 보고서 모달 스타일 */
+.erp-report-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2500;
+    backdrop-filter: blur(2px);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.erp-report-modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.erp-report-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px 16px 0 0;
+    flex-shrink: 0;
+}
+
+.erp-report-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+}
+
+.erp-report-close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: white;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.erp-report-close-btn:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #f3f4f6;
+}
+
+.erp-report-close-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.erp-report-modal-content {
+    padding: 24px;
+    background: #fafafa;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* 보고서 설정 */
+.report-settings {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #374151;
+    font-size: 14px;
+}
+
+.radio-group {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.radio-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.radio-item:hover {
+    background-color: #f3f4f6;
+}
+
+.radio-item input[type="radio"] {
+    margin: 0;
+}
+
+.radio-item span {
+    font-size: 14px;
+    color: #374151;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    background: white;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input:disabled,
+.form-group select:disabled {
+    background-color: #f9fafb;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+.btn-generate {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.btn-generate:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-generate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 보고서 결과 */
+.report-results {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.report-header h4 {
+    margin: 0;
+    color: #374151;
+    font-size: 16px;
+}
+
+.btn-download {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-download:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+/* 요약 정보 */
+.report-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.summary-item .label {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.summary-item .value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.summary-item .value.revenue {
+    color: #059669;
+}
+
+.summary-item .value.expense {
+    color: #dc2626;
+}
+
+.summary-item .value.profit {
+    color: #2563eb;
+}
+
+/* 카테고리 분석 */
+.category-breakdown {
+    margin-top: 20px;
+}
+
+.category-breakdown h5 {
+    margin: 0 0 16px 0;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.category-name {
+    font-size: 14px;
+    color: #374151;
+    font-weight: 500;
+}
+
+.category-amount {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .erp-report-modal {
+        width: 95%;
+        max-height: 95vh;
+        margin: 10px;
+    }
+    
+    .erp-report-modal-content {
+        padding: 16px;
+    }
+    
+    .radio-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .report-summary {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .report-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .btn-download {
+        width: 100%;
+    }
+}
+
+/* 스크롤바 스타일 */
+.erp-report-modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.erp-report-modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.erp-report-modal-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.erp-report-modal-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

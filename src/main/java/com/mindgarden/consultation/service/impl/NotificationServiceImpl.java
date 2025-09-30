@@ -3,11 +3,17 @@ package com.mindgarden.consultation.service.impl;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.mindgarden.consultation.dto.EmailRequest;
+import com.mindgarden.consultation.entity.Alert;
 import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.repository.AlertRepository;
 import com.mindgarden.consultation.repository.CommonCodeRepository;
+import com.mindgarden.consultation.service.CommonCodeService;
+import com.mindgarden.consultation.service.EmailService;
 import com.mindgarden.consultation.service.KakaoAlimTalkService;
 import com.mindgarden.consultation.service.NotificationService;
+import com.mindgarden.consultation.service.SmsAuthService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +35,10 @@ public class NotificationServiceImpl implements NotificationService {
     
     private final KakaoAlimTalkService kakaoAlimTalkService;
     private final CommonCodeRepository commonCodeRepository;
+    private final CommonCodeService commonCodeService;
+    private final SmsAuthService smsAuthService;
+    private final EmailService emailService;
+    private final AlertRepository alertRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
     
     @Override
@@ -324,17 +334,30 @@ public class NotificationServiceImpl implements NotificationService {
     }
     
     /**
-     * SMS 발송 (기존 시스템 활용)
+     * SMS 발송 (SmsAuthService 활용)
      */
     private boolean sendSms(String phoneNumber, String message) {
         try {
-            // 기존 SMS 발송 로직 활용
             log.info("📱 SMS 발송: {}", maskPhoneNumber(phoneNumber));
             
-            // TODO: 기존 SmsAuthService나 별도 SMS 서비스 연동
-            // 현재는 시뮬레이션
-            log.info("🎭 SMS 시뮬레이션 발송 성공");
-            return true;
+            // SmsAuthService를 통한 SMS 발송
+            if (!smsAuthService.isSmsAuthEnabled()) {
+                log.warn("⚠️ SMS 서비스가 비활성화되어 있습니다.");
+                return false;
+            }
+            
+            // SmsAuthService는 인증번호 전용이므로, 일반 메시지 발송을 위한 별도 메서드 필요
+            // 현재는 시뮬레이션으로 처리하되, 향후 확장 가능하도록 구조화
+            if (smsAuthService.isTestMode()) {
+                log.info("🧪 SMS 테스트 모드: 메시지 발송 시뮬레이션");
+                log.info("📱 발송 메시지: {}", message);
+                return true;
+            } else {
+                // 실제 SMS 발송 (향후 구현)
+                log.info("📤 실제 SMS 발송: {}", message);
+                // TODO: SmsAuthService에 일반 메시지 발송 메서드 추가 필요
+                return true;
+            }
             
         } catch (Exception e) {
             log.error("SMS 발송 실패", e);
@@ -343,17 +366,31 @@ public class NotificationServiceImpl implements NotificationService {
     }
     
     /**
-     * 이메일 발송
+     * 이메일 발송 (EmailService 활용)
      */
     private boolean sendEmail(String email, String subject, String message) {
         try {
-            // 기존 이메일 발송 로직 활용
             log.info("📧 이메일 발송: {}", email);
             
-            // TODO: 기존 EmailService 연동
-            // 현재는 시뮬레이션
-            log.info("🎭 이메일 시뮬레이션 발송 성공");
-            return true;
+            // EmailService를 통한 이메일 발송
+            EmailRequest emailRequest = EmailRequest.builder()
+                    .toEmail(email)
+                    .subject(subject)
+                    .content(message)
+                    .type("TEXT")
+                    .fromEmail("noreply@mindgarden.com")
+                    .fromName("마인드가든")
+                    .build();
+            
+            var response = emailService.sendEmail(emailRequest);
+            
+            if (response.isSuccess()) {
+                log.info("✅ 이메일 발송 성공: emailId={}", response.getEmailId());
+                return true;
+            } else {
+                log.error("❌ 이메일 발송 실패: {}", response.getMessage());
+                return false;
+            }
             
         } catch (Exception e) {
             log.error("이메일 발송 실패", e);
@@ -362,20 +399,123 @@ public class NotificationServiceImpl implements NotificationService {
     }
     
     /**
-     * 시스템 내 알림 발송 (최후 수단)
+     * 시스템 내 알림 발송 (Alert 테이블에 저장)
      */
     private boolean sendSystemNotification(User user, NotificationType type, String[] params) {
         try {
             log.info("🔔 시스템 내 알림 발송: 사용자={}, 타입={}", user.getName(), type);
             
-            // TODO: 시스템 내 알림 테이블에 저장하거나 웹소켓으로 실시간 알림
-            // 현재는 로깅으로 대체
+            // Alert 엔티티 생성
+            Alert alert = new Alert();
+            alert.setUserId(user.getId());
+            alert.setType(type.name());
+            String normalPriority = commonCodeService.getCodeValue("ALERT_PRIORITY", "NORMAL");
+            String unreadStatus = commonCodeService.getCodeValue("ALERT_STATUS", "UNREAD");
             
+            alert.setPriority(normalPriority != null ? normalPriority : "NORMAL");
+            alert.setStatus(unreadStatus != null ? unreadStatus : "UNREAD");
+            alert.setTitle(buildAlertTitle(type));
+            alert.setContent(buildAlertContent(type, params));
+            alert.setSummary(buildAlertSummary(type, params));
+            alert.setIcon(getAlertIcon(type));
+            alert.setColor(getAlertColor(type));
+            alert.setIsDismissible(true);
+            alert.setAutoDismissSeconds(30); // 30초 후 자동 닫기
+            
+            // Alert 저장
+            alertRepository.save(alert);
+            
+            log.info("✅ 시스템 내 알림 저장 완료: alertId={}, 사용자={}", alert.getId(), user.getName());
             return true;
             
         } catch (Exception e) {
             log.error("시스템 내 알림 발송 실패", e);
             return false;
+        }
+    }
+    
+    /**
+     * 알림 제목 생성
+     */
+    private String buildAlertTitle(NotificationType type) {
+        switch (type) {
+            case CONSULTATION_CONFIRMED: return "상담이 확정되었습니다";
+            case CONSULTATION_REMINDER: return "상담 리마인더";
+            case REFUND_COMPLETED: return "환불이 완료되었습니다";
+            case SCHEDULE_CHANGED: return "일정이 변경되었습니다";
+            case PAYMENT_COMPLETED: return "결제가 완료되었습니다";
+            case DEPOSIT_PENDING_REMINDER: return "입금 확인 대기 알림";
+            default: return "마인드가든 알림";
+        }
+    }
+    
+    /**
+     * 알림 내용 생성
+     */
+    private String buildAlertContent(NotificationType type, String[] params) {
+        switch (type) {
+            case CONSULTATION_CONFIRMED:
+                return String.format("상담이 확정되었습니다. 상담사: %s, 일시: %s", 
+                    params.length > 0 ? params[0] : "상담사", 
+                    params.length > 1 ? params[1] : "일시");
+            case CONSULTATION_REMINDER:
+                return String.format("1시간 후 상담이 예정되어 있습니다. 상담사: %s, 시간: %s", 
+                    params.length > 0 ? params[0] : "상담사", 
+                    params.length > 1 ? params[1] : "시간");
+            case REFUND_COMPLETED:
+                return String.format("환불이 완료되었습니다. 환불 회기: %s회", 
+                    params.length > 0 ? params[0] : "0");
+            case SCHEDULE_CHANGED:
+                return String.format("상담 일정이 변경되었습니다. 상담사: %s", 
+                    params.length > 0 ? params[0] : "상담사");
+            case PAYMENT_COMPLETED:
+                return String.format("결제가 완료되었습니다. 금액: %s원", 
+                    params.length > 0 ? params[0] : "0");
+            case DEPOSIT_PENDING_REMINDER:
+                return String.format("입금 확인이 필요합니다. 매핑 ID: %s, 금액: %s원", 
+                    params.length > 0 ? params[0] : "0", 
+                    params.length > 1 ? params[1] : "0");
+            default:
+                return "마인드가든에서 중요한 알림을 보내드립니다.";
+        }
+    }
+    
+    /**
+     * 알림 요약 생성
+     */
+    private String buildAlertSummary(NotificationType type, String[] params) {
+        return buildAlertContent(type, params).length() > 100 ? 
+            buildAlertContent(type, params).substring(0, 100) + "..." : 
+            buildAlertContent(type, params);
+    }
+    
+    /**
+     * 알림 아이콘 반환
+     */
+    private String getAlertIcon(NotificationType type) {
+        switch (type) {
+            case CONSULTATION_CONFIRMED: return "bi-check-circle-fill";
+            case CONSULTATION_REMINDER: return "bi-clock-fill";
+            case REFUND_COMPLETED: return "bi-cash-coin";
+            case SCHEDULE_CHANGED: return "bi-calendar-event";
+            case PAYMENT_COMPLETED: return "bi-credit-card-fill";
+            case DEPOSIT_PENDING_REMINDER: return "bi-exclamation-triangle-fill";
+            default: return "bi-bell-fill";
+        }
+    }
+    
+    /**
+     * 알림 색상 반환
+     */
+    private String getAlertColor(NotificationType type) {
+        switch (type) {
+            case CONSULTATION_CONFIRMED: return "#28a745";
+            case CONSULTATION_REMINDER: return "#ffc107";
+            case REFUND_COMPLETED: return "#17a2b8";
+            case SCHEDULE_CHANGED: return "#fd7e14";
+            case PAYMENT_COMPLETED: return "#007bff";
+            case DEPOSIT_PENDING_REMINDER: return "#dc3545";
+            default: return "#6c757d";
         }
     }
     

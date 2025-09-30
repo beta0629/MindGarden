@@ -12,11 +12,13 @@ import com.mindgarden.consultation.constant.UserRole;
 import com.mindgarden.consultation.dto.FinancialDashboardResponse;
 import com.mindgarden.consultation.dto.FinancialTransactionRequest;
 import com.mindgarden.consultation.dto.FinancialTransactionResponse;
+import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.FinancialTransaction;
 import com.mindgarden.consultation.entity.Payment;
 import com.mindgarden.consultation.entity.PurchaseRequest;
 import com.mindgarden.consultation.entity.SalaryCalculation;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.PaymentRepository;
 import com.mindgarden.consultation.repository.PurchaseRequestRepository;
@@ -49,6 +51,7 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
     private final SalaryCalculationRepository salaryCalculationRepository;
     private final PurchaseRequestRepository purchaseRequestRepository;
     private final PaymentRepository paymentRepository;
+    private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final CommonCodeService commonCodeService;
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final UserRepository userRepository;
@@ -94,25 +97,32 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
         // 🚀 실시간 통계 업데이트 추가
         try {
             // 거래 유형에 따른 통계 업데이트
-            if ("INCOME".equals(request.getTransactionType()) && savedTransaction.getBranchCode() != null) {
+            String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
+            if (incomeType.equals(request.getTransactionType()) && savedTransaction.getBranchCode() != null) {
                 // 수입 거래시 재무 통계 업데이트 (상담료 수입 등)
                 realTimeStatisticsService.updateFinancialStatisticsOnPayment(
                     savedTransaction.getBranchCode(),
                     savedTransaction.getAmount().longValue(),
                     savedTransaction.getTransactionDate()
                 );
-            } else if ("EXPENSE".equals(request.getTransactionType()) && 
-                      ("CONSULTATION_REFUND".equals(savedTransaction.getSubcategory()) ||
-                       "CONSULTATION_PARTIAL_REFUND".equals(savedTransaction.getSubcategory()))) {
-                // 환불 거래시 환불 통계 업데이트
-                if (savedTransaction.getRelatedEntityId() != null && savedTransaction.getBranchCode() != null) {
-                    // 관련 상담사 ID를 추출하여 환불 통계 업데이트 (추후 매핑 테이블 조회 로직 추가 가능)
-                    realTimeStatisticsService.updateStatisticsOnRefund(
-                        null, // 상담사 ID (추후 매핑에서 조회)
-                        savedTransaction.getBranchCode(),
-                        savedTransaction.getAmount().longValue(),
-                        savedTransaction.getTransactionDate()
-                    );
+            } else {
+                String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
+                String refundType = getSafeCodeName("SUBCATEGORY", "CONSULTATION_REFUND", "CONSULTATION_REFUND");
+                String partialRefundType = getSafeCodeName("SUBCATEGORY", "CONSULTATION_PARTIAL_REFUND", "CONSULTATION_PARTIAL_REFUND");
+                
+                if (expenseType.equals(request.getTransactionType()) && 
+                    (refundType.equals(savedTransaction.getSubcategory()) ||
+                     partialRefundType.equals(savedTransaction.getSubcategory()))) {
+                    // 환불 거래시 환불 통계 업데이트
+                    if (savedTransaction.getRelatedEntityId() != null && savedTransaction.getBranchCode() != null) {
+                        // 관련 상담사 ID를 추출하여 환불 통계 업데이트 (추후 매핑 테이블 조회 로직 추가 가능)
+                        realTimeStatisticsService.updateStatisticsOnRefund(
+                            null, // 상담사 ID (추후 매핑에서 조회)
+                            savedTransaction.getBranchCode(),
+                            savedTransaction.getAmount().longValue(),
+                            savedTransaction.getTransactionDate()
+                        );
+                    }
                 }
             }
             
@@ -451,9 +461,12 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                     .build()
             );
             
-            if ("INCOME".equals(type)) {
+            String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
+            String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
+            
+            if (incomeType.equals(type)) {
                 data.setIncome(data.getIncome().add(amount));
-            } else if ("EXPENSE".equals(type)) {
+            } else if (expenseType.equals(type)) {
                 data.setExpense(data.getExpense().add(amount));
             }
             
@@ -772,14 +785,16 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
             // 총 예산 계산
+            String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
             BigDecimal totalBudget = budgetTransactions.stream()
-                    .filter(t -> "INCOME".equals(t.getTransactionType().name()))
+                    .filter(t -> incomeType.equals(t.getTransactionType().name()))
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
             // 사용된 예산 계산
+            String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
             BigDecimal usedBudget = budgetTransactions.stream()
-                    .filter(t -> "EXPENSE".equals(t.getTransactionType().name()))
+                    .filter(t -> expenseType.equals(t.getTransactionType().name()))
                     .map(FinancialTransaction::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             
@@ -801,12 +816,28 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
                                     BigDecimal::add)
                     ))
                     .entrySet().stream()
-                    .map(entry -> FinancialDashboardResponse.BudgetByCategory.builder()
-                            .category(entry.getKey())
-                            .totalBudget(entry.getValue())
-                            .usedBudget(BigDecimal.ZERO) // TODO: 실제 사용량 계산
-                            .remainingBudget(entry.getValue())
-                            .build())
+                    .map(entry -> {
+                        String category = entry.getKey();
+                        BigDecimal categoryTotalBudget = entry.getValue();
+                        
+                        // 실제 사용량 계산 - 해당 카테고리의 지출 거래 조회
+                        String categoryExpenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
+                        BigDecimal categoryUsedBudget = financialTransactionRepository
+                                .findByCategoryAndIsDeletedFalse(category)
+                                .stream()
+                                .filter(t -> categoryExpenseType.equals(t.getTransactionType().name()))
+                                .map(FinancialTransaction::getAmount)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                        
+                        BigDecimal categoryRemainingBudget = categoryTotalBudget.subtract(categoryUsedBudget);
+                        
+                        return FinancialDashboardResponse.BudgetByCategory.builder()
+                                .category(category)
+                                .totalBudget(categoryTotalBudget)
+                                .usedBudget(categoryUsedBudget)
+                                .remainingBudget(categoryRemainingBudget)
+                                .build();
+                    })
                     .collect(Collectors.toList());
             
             log.info("✅ ERP 통계 데이터 조회 완료 - 총 구매: {}, 총 예산: {}, 사용 예산: {}, 잔여 예산: {}", 
@@ -855,10 +886,10 @@ public class FinancialTransactionServiceImpl implements FinancialTransactionServ
             // 총 결제 건수
             int totalPaymentCount = paymentTransactions.size();
             
-            // 결제 상태별 통계 (실제 구현에서는 PaymentStatus 엔티티 조회 필요)
-            int pendingPayments = 0;   // TODO: PaymentStatus.PENDING 조회
-            int completedPayments = 0; // TODO: PaymentStatus.COMPLETED 조회
-            int failedPayments = 0;    // TODO: PaymentStatus.FAILED 조회
+            // 결제 상태별 통계 (ConsultantClientMapping의 PaymentStatus 조회)
+            int pendingPayments = (int) consultantClientMappingRepository.countByPaymentStatus(ConsultantClientMapping.PaymentStatus.PENDING);
+            int completedPayments = (int) consultantClientMappingRepository.countByPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+            int failedPayments = (int) consultantClientMappingRepository.countByPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
             
             // 결제 수단별 통계
             Map<String, BigDecimal> paymentByMethod = paymentTransactions.stream()

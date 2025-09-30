@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaToggleOff, FaCompressAlt, FaClock } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaToggleOff, FaCompressAlt, FaClock, FaChartBar, FaUserGraduate, FaRedo, FaFileExport } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
 import TodayStatistics from './TodayStatistics';
@@ -12,6 +12,11 @@ import ConsultationCompletionStats from './ConsultationCompletionStats';
 import VacationStatistics from './VacationStatistics';
 import ConsultantRatingStatistics from './ConsultantRatingStatistics';
 import PermissionManagement from './PermissionManagement';
+// 새로 추가된 모달 컴포넌트들
+import ErpReportModal from '../erp/ErpReportModal';
+import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
+import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
+import RecurringExpenseModal from '../finance/RecurringExpenseModal';
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
@@ -44,6 +49,12 @@ const AdminDashboard = ({ user: propUser }) => {
         totalAmount: 0,
         oldestHours: 0
     });
+    
+    // 새로 추가된 모달 상태들
+    const [showErpReport, setShowErpReport] = useState(false);
+    const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
+    const [showSpecialtyManagement, setShowSpecialtyManagement] = useState(false);
+    const [showRecurringExpense, setShowRecurringExpense] = useState(false);
     
     const [loading, setLoading] = useState(false);
     const [showToastState, setShowToastState] = useState(false);
@@ -887,6 +898,17 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
+                        {/* 새로 추가된 ERP 보고서 카드 */}
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => setShowErpReport(true)}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} erp-reports`}>
+                                <FaFileExport />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>ERP 보고서</h3>
+                                <p>월별/분기별/연별 재무 보고서를 생성합니다</p>
+                            </div>
+                        </div>
+                        
                         <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/budgets')}>
                             <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} budgets`}>
                                 <FaWallet />
@@ -993,6 +1015,69 @@ const AdminDashboard = ({ user: propUser }) => {
                 </div>
             )}
 
+            {/* 통계 및 분석 */}
+            {PermissionChecks.canViewStatistics(userPermissions) && (
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                        <i className="bi bi-graph-up"></i>
+                        통계 및 분석
+                    </h2>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => setShowPerformanceMetrics(true)}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} performance-metrics`}>
+                                <FaChartBar />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>성과 지표 대시보드</h3>
+                                <p>실시간 성과 지표를 확인하고 재계산합니다</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 상담사 관리 */}
+            {PermissionChecks.canManageConsultants(userPermissions) && (
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                        <i className="bi bi-people"></i>
+                        상담사 관리
+                    </h2>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => setShowSpecialtyManagement(true)}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} specialty-management`}>
+                                <FaUserGraduate />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>전문분야 관리</h3>
+                                <p>상담사별 전문분야를 설정하고 관리합니다</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 재무 관리 */}
+            {PermissionChecks.canAccessFinance(userPermissions) && (
+                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
+                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
+                        <i className="bi bi-cash-stack"></i>
+                        재무 관리
+                    </h2>
+                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => setShowRecurringExpense(true)}>
+                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} recurring-expense`}>
+                                <FaRedo />
+                            </div>
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                                <h3>반복 지출 관리</h3>
+                                <p>정기적인 지출을 설정하고 관리합니다</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* 토스트 알림 */}
             {showToastState && (
                 <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.TOAST} toast-${toastType}`} style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999 }}>
@@ -1034,6 +1119,27 @@ const AdminDashboard = ({ user: propUser }) => {
                 isOpen={showStatisticsModal}
                 onClose={() => setShowStatisticsModal(false)}
                 userRole={(propUser || sessionUser)?.role || 'ADMIN'}
+            />
+            
+            {/* 새로 추가된 모달들 */}
+            <ErpReportModal
+                isOpen={showErpReport}
+                onClose={() => setShowErpReport(false)}
+            />
+            
+            <PerformanceMetricsModal
+                isOpen={showPerformanceMetrics}
+                onClose={() => setShowPerformanceMetrics(false)}
+            />
+            
+            <SpecialtyManagementModal
+                isOpen={showSpecialtyManagement}
+                onClose={() => setShowSpecialtyManagement(false)}
+            />
+            
+            <RecurringExpenseModal
+                isOpen={showRecurringExpense}
+                onClose={() => setShowRecurringExpense(false)}
             />
             
             </div>

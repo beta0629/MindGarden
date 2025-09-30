@@ -231,7 +231,7 @@ const ScheduleDetailModal = ({
     };
 
     /**
-     * 예약 변경 처리
+     * 예약 변경 처리 - 드래그 앤 드롭 모드로 전환
      */
     const handleEditSchedule = () => {
         if (!scheduleData?.id) {
@@ -239,9 +239,18 @@ const ScheduleDetailModal = ({
             return;
         }
         
-        console.log('✏️ 예약 변경 요청:', scheduleData.id);
-        // TODO: 예약 변경 모달 또는 페이지로 이동
-        notificationManager.info('예약 변경 기능은 준비 중입니다.');
+        console.log('✏️ 예약 변경 요청 - 드래그 앤 드롭 모드:', scheduleData.id);
+        
+        // 부모 컴포넌트에 드래그 앤 드롭 모드 활성화 요청
+        if (onScheduleUpdated) {
+            // 드래그 앤 드롭 모드로 전환하는 콜백 호출
+            onScheduleUpdated('edit', scheduleData);
+        }
+        
+        // 모달 닫기
+        onClose();
+        
+        notificationManager.info('드래그 앤 드롭으로 예약을 변경할 수 있습니다.');
     };
 
     /**

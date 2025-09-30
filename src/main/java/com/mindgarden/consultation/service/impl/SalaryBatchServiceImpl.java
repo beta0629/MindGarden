@@ -1,11 +1,15 @@
 package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import com.mindgarden.consultation.constant.UserRole;
+import com.mindgarden.consultation.entity.SalaryCalculation;
 import com.mindgarden.consultation.entity.User;
+import com.mindgarden.consultation.repository.SalaryCalculationRepository;
 import com.mindgarden.consultation.repository.UserRepository;
+import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.PlSqlSalaryManagementService;
 import com.mindgarden.consultation.service.SalaryBatchService;
 import com.mindgarden.consultation.service.SalaryScheduleService;
@@ -27,8 +31,10 @@ import lombok.extern.slf4j.Slf4j;
 public class SalaryBatchServiceImpl implements SalaryBatchService {
     
     private final UserRepository userRepository;
+    private final SalaryCalculationRepository salaryCalculationRepository;
     private final PlSqlSalaryManagementService plSqlSalaryManagementService;
     private final SalaryScheduleService salaryScheduleService;
+    private final CommonCodeService commonCodeService;
     
     @Override
     @Transactional
@@ -134,19 +140,57 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
     
     @Override
     public BatchStatus getBatchStatus(int targetYear, int targetMonth) {
-        // TODO: 실제 배치 상태 테이블에서 조회
-        // 현재는 간단한 구현
+        log.info("🔍 급여 배치 상태 조회: {}-{}", targetYear, targetMonth);
         
         LocalDate targetDate = LocalDate.of(targetYear, targetMonth, 1);
         List<User> consultants = getTargetConsultants(null);
         
-        BatchStatus status = new BatchStatus("PENDING");
-        status.setTotalConsultants(consultants.size());
+        // 해당 월의 급여 계산 기록 조회 (기간으로 조회)
+        LocalDate periodStart = LocalDate.of(targetYear, targetMonth, 1);
+        LocalDate periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth());
         
-        // 이미 처리된 상담사 수 확인 (salary_calculations 테이블에서)
-        // TODO: 실제 DB 조회 구현
+        List<SalaryCalculation> existingCalculations = salaryCalculationRepository
+                .findByBranchCodeAndCalculationPeriodStartBetween(null, periodStart, periodEnd);
         
-        return status;
+        int processedConsultants = existingCalculations.size();
+        int totalConsultants = consultants.size();
+        
+        // 공통 코드에서 배치 상태 조회
+        String status;
+        if (processedConsultants == 0) {
+            status = commonCodeService.getCodeValue("BATCH_STATUS", "PENDING");
+        } else if (processedConsultants == totalConsultants) {
+            status = commonCodeService.getCodeValue("BATCH_STATUS", "COMPLETED");
+        } else {
+            status = commonCodeService.getCodeValue("BATCH_STATUS", "IN_PROGRESS");
+        }
+        
+        // 공통 코드에 값이 없으면 기본값 사용
+        if (status == null) {
+            if (processedConsultants == 0) {
+                status = "PENDING";
+            } else if (processedConsultants == totalConsultants) {
+                status = "COMPLETED";
+            } else {
+                status = "IN_PROGRESS";
+            }
+        }
+        
+        BatchStatus batchStatus = new BatchStatus(status);
+        batchStatus.setTotalConsultants(totalConsultants);
+        batchStatus.setProcessedConsultants(processedConsultants);
+        batchStatus.setLastExecuted(
+            existingCalculations.stream()
+                .map(SalaryCalculation::getCreatedAt)
+                .max(LocalDateTime::compareTo)
+                .map(LocalDateTime::toLocalDate)
+                .orElse(null)
+        );
+        
+        log.info("✅ 배치 상태 조회 완료: 상태={}, 전체={}, 처리됨={}", 
+                status, totalConsultants, processedConsultants);
+        
+        return batchStatus;
     }
     
     /**

@@ -8,6 +8,7 @@ import com.mindgarden.consultation.entity.CommonCode;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.service.CommonCodeService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
+import com.mindgarden.consultation.service.SalaryBatchService;
 import com.mindgarden.consultation.service.SalaryScheduleService;
 import com.mindgarden.consultation.util.PermissionCheckUtils;
 import com.mindgarden.consultation.utils.SessionUtils;
@@ -36,6 +37,7 @@ public class SalaryConfigController {
     
     private final CommonCodeService commonCodeService;
     private final SalaryScheduleService salaryScheduleService;
+    private final SalaryBatchService salaryBatchService;
     private final DynamicPermissionService dynamicPermissionService;
     
     /**
@@ -250,16 +252,29 @@ public class SalaryConfigController {
                 ));
             }
             
-            // TODO: 실제 배치 실행 로직 구현
-            // salaryBatchService.executeBatch(targetMonth, branchCode);
+            // 실제 배치 실행 로직 구현
+            String[] monthParts = targetMonth.split("-");
+            int targetYear = Integer.parseInt(monthParts[0]);
+            int targetMonthInt = Integer.parseInt(monthParts[1]);
             
-            log.info("급여 배치 실행: 사용자={}, 대상월={}, 지점={}", 
-                    currentUser.getName(), targetMonth, branchCode);
+            SalaryBatchService.BatchResult result = salaryBatchService.executeMonthlySalaryBatch(
+                targetYear, targetMonthInt, branchCode);
             
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", String.format("%s 급여 배치가 실행되었습니다.", targetMonth)
-            ));
+            log.info("급여 배치 실행: 사용자={}, 대상월={}, 지점={}, 결과={}", 
+                    currentUser.getName(), targetMonth, branchCode, result.isSuccess());
+            
+            if (result.isSuccess()) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", String.format("%s 급여 배치가 성공적으로 실행되었습니다.", targetMonth),
+                    "details", result.getMessage()
+                ));
+            } else {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", String.format("%s 급여 배치 실행 실패: %s", targetMonth, result.getMessage())
+                ));
+            }
             
         } catch (Exception e) {
             log.error("급여 배치 실행 오류", e);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { useParams, useNavigate } from 'react-router-dom';
-import { apiGet } from '../../utils/ajax';
+import { apiGet, apiPost } from '../../utils/ajax';
 import './ConsultantClientList.css';
 import SimpleLayout from '../layout/SimpleLayout';
 import ClientDetailModal from './ClientDetailModal';
@@ -262,19 +262,27 @@ const ConsultantClientList = () => {
   const handleSaveClient = async (updatedData) => {
     try {
       console.log('💾 내담자 정보 저장:', updatedData);
-      // TODO: 내담자 정보 업데이트 API 호출
-      // const response = await apiPost(`/api/admin/users/${selectedClient.id}`, updatedData);
       
-      // 임시로 로컬 상태 업데이트
-      setClients(prevClients => 
-        prevClients.map(client => 
-          client.id === selectedClient.id ? { ...client, ...updatedData } : client
-        )
-      );
+      // 내담자 정보 업데이트 API 호출
+      const response = await apiPost(`/api/users/${selectedClient.id}/profile`, updatedData);
       
-      handleCloseModal();
+      if (response && response.success !== false) {
+        // 성공 시 로컬 상태 업데이트
+        setClients(prevClients => 
+          prevClients.map(client => 
+            client.id === selectedClient.id ? { ...client, ...updatedData } : client
+          )
+        );
+        
+        console.log('✅ 내담자 정보 저장 성공');
+        handleCloseModal();
+      } else {
+        console.error('❌ 내담자 정보 저장 실패:', response?.message || '알 수 없는 오류');
+        alert('내담자 정보 저장에 실패했습니다: ' + (response?.message || '알 수 없는 오류'));
+      }
     } catch (err) {
       console.error('❌ 내담자 정보 저장 실패:', err);
+      alert('내담자 정보 저장 중 오류가 발생했습니다: ' + err.message);
     }
   };
 

@@ -884,8 +884,17 @@ const UnifiedScheduleComponent = ({
     /**
      * 스케줄 업데이트 후 처리
      */
-    const handleScheduleUpdated = () => {
-        loadSchedules(); // 스케줄 목록 새로고침
+    const handleScheduleUpdated = (mode, scheduleData) => {
+        if (mode === 'edit') {
+            // 드래그 앤 드롭 모드 활성화
+            console.log('🔄 드래그 앤 드롭 모드 활성화:', scheduleData);
+            // 캘린더에서 해당 이벤트를 드래그 가능한 상태로 변경
+            // 또는 드래그 모드 안내 메시지 표시
+            notificationManager.info('이제 캘린더에서 이벤트를 드래그하여 시간을 변경할 수 있습니다.');
+        } else {
+            // 일반적인 새로고침
+            loadSchedules();
+        }
     };
 
     /**

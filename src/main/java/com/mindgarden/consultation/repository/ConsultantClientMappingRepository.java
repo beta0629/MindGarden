@@ -70,4 +70,12 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     // 상담사 ID로 모든 매핑 조회
     @Query("SELECT m FROM ConsultantClientMapping m WHERE m.consultant.id = :consultantId")
     List<ConsultantClientMapping> findByConsultantId(@Param("consultantId") Long consultantId);
+    
+    // 결제 상태별 매핑 수 조회
+    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.paymentStatus = :paymentStatus")
+    long countByPaymentStatus(@Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
+    
+    // 결제 상태별 매핑 조회
+    @Query("SELECT m FROM ConsultantClientMapping m WHERE m.paymentStatus = :paymentStatus")
+    List<ConsultantClientMapping> findByPaymentStatus(@Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
 }

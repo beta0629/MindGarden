@@ -317,7 +317,11 @@ export const PermissionChecks = {
     canViewReports: (permissions) => hasPermission(permissions, PERMISSIONS.REPORT_VIEW),
     canViewDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.DASHBOARD_VIEW),
     canViewHQDashboard: (permissions) => hasPermission(permissions, PERMISSIONS.HQ_DASHBOARD_VIEW),
-    canViewIntegratedFinance: (permissions) => hasPermission(permissions, PERMISSIONS.INTEGRATED_FINANCE_VIEW)
+    canViewIntegratedFinance: (permissions) => hasPermission(permissions, PERMISSIONS.INTEGRATED_FINANCE_VIEW),
+    canViewStatistics: (permissions) => hasPermission(permissions, PERMISSIONS.REPORT_VIEW) || hasPermission(permissions, PERMISSIONS.DASHBOARD_VIEW),
+    
+    // 재무 접근 권한 (반복 지출 관리용)
+    canAccessFinance: (permissions) => hasPermission(permissions, PERMISSIONS.FINANCIAL_VIEW) || hasPermission(permissions, PERMISSIONS.FINANCIAL_MANAGE)
 };
 
 const permissionUtils = {

@@ -673,6 +673,80 @@ public class AdminController {
     }
 
     /**
+     * 입금 확인 대기 중인 매핑 목록 조회
+     */
+    @GetMapping("/mappings/pending-deposit")
+    public ResponseEntity<?> getPendingDepositMappings(HttpSession session) {
+        log.info("🔔 입금 확인 대기 매핑 조회 요청");
+        
+        try {
+            // 권한 확인
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 관리자 권한 확인
+            if (!currentUser.getRole().isAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "message", "관리자 권한이 필요합니다."
+                ));
+            }
+            
+            List<ConsultantClientMapping> pendingMappings = adminService.getPendingDepositMappings();
+            
+            // 대기 시간 계산하여 응답 구성
+            List<Map<String, Object>> responseData = pendingMappings.stream()
+                .map(mapping -> {
+                    Map<String, Object> mappingData = new HashMap<>();
+                    mappingData.put("id", mapping.getId());
+                    mappingData.put("clientName", mapping.getClientName());
+                    mappingData.put("consultantName", mapping.getConsultantName());
+                    mappingData.put("packageName", mapping.getPackageName());
+                    mappingData.put("packagePrice", mapping.getPackagePrice());
+                    mappingData.put("paymentDate", mapping.getPaymentDate());
+                    mappingData.put("paymentMethod", mapping.getPaymentMethod());
+                    mappingData.put("paymentReference", mapping.getPaymentReference());
+                    
+                    // 대기 시간 계산 (결제일 기준)
+                    if (mapping.getPaymentDate() != null) {
+                        long hoursElapsed = java.time.Duration.between(
+                            mapping.getPaymentDate(), 
+                            java.time.LocalDateTime.now()
+                        ).toHours();
+                        mappingData.put("hoursElapsed", hoursElapsed);
+                    } else {
+                        mappingData.put("hoursElapsed", 0L);
+                    }
+                    
+                    return mappingData;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            Map<String, Object> response = Map.of(
+                "success", true,
+                "data", responseData,
+                "count", responseData.size(),
+                "message", "입금 확인 대기 매핑 조회 완료"
+            );
+            
+            log.info("✅ 입금 확인 대기 매핑 조회 완료: {}개", responseData.size());
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ 입금 확인 대기 매핑 조회 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "입금 확인 대기 매핑 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 활성 매핑 목록 조회 (승인 완료)
      */
     @GetMapping("/mappings/active")

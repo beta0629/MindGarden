@@ -30,7 +30,8 @@ public interface NotificationService {
         CONSULTATION_REMINDER,   // 상담 리마인더
         REFUND_COMPLETED,       // 환불 완료
         SCHEDULE_CHANGED,       // 일정 변경
-        PAYMENT_COMPLETED       // 결제 완료
+        PAYMENT_COMPLETED,      // 결제 완료
+        DEPOSIT_PENDING_REMINDER // 입금 확인 대기 리마인더
     }
     
     /**
@@ -97,6 +98,20 @@ public interface NotificationService {
      * @return 발송 성공 여부
      */
     boolean sendPaymentCompleted(User user, long paymentAmount, String packageName, String consultantName);
+    
+    /**
+     * 입금 확인 대기 리마인더 알림
+     * 
+     * @param user 관리자
+     * @param mappingId 매핑 ID
+     * @param clientName 내담자명
+     * @param consultantName 상담사명
+     * @param packagePrice 패키지 가격
+     * @param hoursElapsed 대기 시간 (시간)
+     * @return 발송 성공 여부
+     */
+    boolean sendDepositPendingReminder(User user, Long mappingId, String clientName, String consultantName, 
+                                     Long packagePrice, long hoursElapsed);
     
     /**
      * 이메일 알림 발송 (일반 목적)

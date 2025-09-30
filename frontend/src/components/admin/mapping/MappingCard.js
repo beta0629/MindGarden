@@ -445,8 +445,8 @@ const MappingCard = ({
                     </div>
                 )}
                 
-                {/* 승인/거부 버튼 - CONFIRMED 상태일 때만 표시 */}
-                {mapping.paymentStatus === 'CONFIRMED' && (
+                {/* 승인/거부 버튼 - APPROVED 상태일 때만 표시 (입금 확인 완료 후) */}
+                {mapping.paymentStatus === 'APPROVED' && mapping.status !== 'ACTIVE' && (
                     <>
                         <button 
                             style={{

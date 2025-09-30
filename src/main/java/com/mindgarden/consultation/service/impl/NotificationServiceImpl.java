@@ -150,6 +150,14 @@ public class NotificationServiceImpl implements NotificationService {
                               String.format("%,d", paymentAmount), packageName, consultantName);
     }
     
+    @Override
+    public boolean sendDepositPendingReminder(User user, Long mappingId, String clientName, String consultantName, 
+                                            Long packagePrice, long hoursElapsed) {
+        return sendNotification(user, NotificationType.DEPOSIT_PENDING_REMINDER, NotificationPriority.HIGH, 
+                              String.valueOf(mappingId), clientName, consultantName, 
+                              String.format("%,d", packagePrice), String.valueOf(hoursElapsed));
+    }
+    
     /**
      * 사용자의 카카오 알림톡 사용 설정 확인
      */
@@ -235,6 +243,16 @@ public class NotificationServiceImpl implements NotificationService {
                     alimTalkParams.put("consultantName", params[2]);
                 }
                 break;
+                
+            case DEPOSIT_PENDING_REMINDER:
+                if (params.length >= 5) {
+                    alimTalkParams.put("mappingId", params[0]);
+                    alimTalkParams.put("clientName", params[1]);
+                    alimTalkParams.put("consultantName", params[2]);
+                    alimTalkParams.put("packagePrice", params[3]);
+                    alimTalkParams.put("hoursElapsed", params[4]);
+                }
+                break;
         }
         
         return alimTalkParams;
@@ -291,6 +309,7 @@ public class NotificationServiceImpl implements NotificationService {
             case REFUND_COMPLETED: return "[마인드가든] 환불 완료 안내";
             case SCHEDULE_CHANGED: return "[마인드가든] 상담 일정 변경 안내";
             case PAYMENT_COMPLETED: return "[마인드가든] 결제 완료 안내";
+            case DEPOSIT_PENDING_REMINDER: return "[마인드가든] 입금 확인 대기 알림";
             default: return "[마인드가든] 알림";
         }
     }

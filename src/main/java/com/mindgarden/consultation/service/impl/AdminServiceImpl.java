@@ -911,6 +911,19 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
+     * 입금 확인 대기 중인 매핑 목록 조회 (결제 확인 완료, 입금 확인 대기)
+     */
+    @Override
+    public List<ConsultantClientMapping> getPendingDepositMappings() {
+        return mappingRepository.findAll().stream()
+                .filter(mapping -> mapping.getPaymentStatus() != null && 
+                                 mapping.getPaymentStatus().name().equals("CONFIRMED") &&
+                                 mapping.getStatus() != null &&
+                                 mapping.getStatus().name().equals("PAYMENT_CONFIRMED"))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 활성 매핑 목록 조회 (승인 완료)
      */
     @Override

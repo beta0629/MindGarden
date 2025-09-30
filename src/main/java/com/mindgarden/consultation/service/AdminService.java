@@ -216,6 +216,11 @@ public interface AdminService {
     List<ConsultantClientMapping> getPaymentConfirmedMappings();
 
     /**
+     * 입금 확인 대기 중인 매핑 목록 조회 (결제 확인 완료, 입금 확인 대기)
+     */
+    List<ConsultantClientMapping> getPendingDepositMappings();
+
+    /**
      * 활성 매핑 목록 조회 (승인 완료)
      */
     List<ConsultantClientMapping> getActiveMappings();

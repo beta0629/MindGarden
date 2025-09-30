@@ -379,18 +379,7 @@ const MappingCard = ({
                             color: 'white'
                         }}
                         onClick={() => {
-                            console.log('🟢 결제 확인 버튼 클릭:', { 
-                                mappingId: mapping.id, 
-                                consultantName: mapping.consultantName,
-                                clientName: mapping.clientName,
-                                paymentStatus: mapping.paymentStatus,
-                                showPaymentModal: showPaymentModal
-                            });
                             setShowPaymentModal(true);
-                            console.log('🟢 setShowPaymentModal(true) 호출 후:', { 
-                                mappingId: mapping.id,
-                                showPaymentModal: true
-                            });
                         }}
                         onMouseEnter={(e) => {
                             e.target.style.backgroundColor = '#1e7e34';
@@ -423,12 +412,6 @@ const MappingCard = ({
                             color: 'white'
                         }}
                         onClick={() => {
-                            console.log('🔵 입금 확인 버튼 클릭:', { 
-                                mappingId: mapping.id, 
-                                consultantName: mapping.consultantName,
-                                clientName: mapping.clientName,
-                                paymentStatus: mapping.paymentStatus
-                            });
                             setShowDepositModal(true);
                         }}
                         onMouseEnter={(e) => {

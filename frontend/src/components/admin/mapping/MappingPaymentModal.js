@@ -93,16 +93,8 @@ const MappingPaymentModal = ({
     };
 
     if (!isOpen || !mapping) {
-        console.log('❌ MappingPaymentModal 렌더링 안됨:', { isOpen, mapping: !!mapping });
         return null;
     }
-
-    console.log('✅ MappingPaymentModal 렌더링됨:', { 
-        mappingId: mapping.id, 
-        consultantName: mapping.consultantName,
-        clientName: mapping.clientName,
-        isOpen: isOpen
-    });
 
     // 모달이 열릴 때마다 참조번호 강제 생성
     const currentReference = paymentData.paymentReference || generateReferenceNumber(paymentData.paymentMethod);

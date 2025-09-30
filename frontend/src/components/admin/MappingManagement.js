@@ -68,31 +68,27 @@ const MappingManagement = () => {
         loadMappingStatusInfo();
     }, []);
 
+    // 페이지 로드 시 스크롤을 맨 위로 이동
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
+
     const loadMappings = async () => {
         setLoading(true);
         try {
             // 실제 API 호출 시도
             const response = await apiGet(MAPPING_API_ENDPOINTS.LIST);
             if (response.success) {
-                console.log('🔍 매핑 데이터 로드 성공:', response.data);
-                console.log('🔍 첫 번째 매핑 데이터:', response.data?.[0]);
-                console.log('🔍 첫 번째 매핑의 packagePrice:', response.data?.[0]?.packagePrice);
                 setMappings(response.data || []);
             } else {
                 // API 실패 시 테스트 데이터 사용
-                console.log('API 실패, 테스트 데이터 사용');
                 const testData = getTestMappings();
-                console.log('🔍 테스트 데이터:', testData);
-                console.log('🔍 테스트 데이터 첫 번째 packagePrice:', testData[0]?.packagePrice);
                 setMappings(testData);
             }
         } catch (error) {
             console.error('매핑 목록 로드 실패:', error);
             // 오류 시 테스트 데이터 사용
-            console.log('오류 발생, 테스트 데이터 사용');
             const testData = getTestMappings();
-            console.log('🔍 테스트 데이터 (오류 시):', testData);
-            console.log('🔍 테스트 데이터 첫 번째 packagePrice:', testData[0]?.packagePrice);
             setMappings(testData);
         } finally {
             setLoading(false);
@@ -102,8 +98,6 @@ const MappingManagement = () => {
     // 매핑 상태 정보 일괄 로드
     const loadMappingStatusInfo = async () => {
         try {
-            console.log('📊 매핑 상태 정보 일괄 로드 시작');
-            
             const response = await apiGet('/api/common-codes/group/MAPPING_STATUS');
             if (response && response.length > 0) {
                 const statusInfoMap = {};
@@ -118,9 +112,7 @@ const MappingManagement = () => {
                 });
                 
                 setMappingStatusInfo(statusInfoMap);
-                console.log('📊 매핑 상태 정보 일괄 로드 완료:', statusInfoMap);
             } else {
-                console.log('매핑 상태 정보 로드 실패, 기본값 사용');
                 // 기본값 설정
                 setMappingStatusInfo({
                     'PENDING_PAYMENT': { label: '입금대기', color: '#ffc107', icon: '⏳' },
@@ -247,33 +239,20 @@ const MappingManagement = () => {
 
     // 매핑 승인
     const handleApproveMapping = async (mappingId) => {
-        // 테스트용 알림
-        console.log('승인 버튼 클릭됨 - 알림 시도');
-        setTimeout(() => {
-            notificationManager.success('테스트 알림: 매핑 승인 버튼 클릭됨');
-        }, 100);
-        console.log('알림 호출 완료');
-        
         try {
             const response = await apiPost(`/api/admin/mappings/${mappingId}/approve`, {
                 adminName: '관리자'
             });
             
             if (response.success) {
-                setTimeout(() => {
-                    notificationManager.success('매핑이 승인되었습니다.');
-                }, 100);
+                notificationManager.success('매핑이 승인되었습니다.');
                 loadMappings();
             } else {
-                setTimeout(() => {
-                    notificationManager.error('매핑 승인에 실패했습니다.');
-                }, 100);
+                notificationManager.error('매핑 승인에 실패했습니다.');
             }
         } catch (error) {
             console.error('매핑 승인 실패:', error);
-            setTimeout(() => {
-                notificationManager.error('매핑 승인에 실패했습니다.');
-            }, 100);
+            notificationManager.error('매핑 승인에 실패했습니다.');
         }
     };
 
@@ -281,59 +260,30 @@ const MappingManagement = () => {
     const handleConfirmPayment = async (mappingId) => {
         // 모달에서 처리되므로 여기서는 목록만 새로고침
         loadMappings();
-        
-        // ERP 연동 성공 로그
-        console.log('💚 매핑-ERP 연동 성공:', {
-            mappingId: mappingId,
-            action: '결제확인',
-            erpIntegration: '미수금 거래 자동 생성',
-            category: 'CONSULTATION',
-            subcategory: 'INDIVIDUAL_CONSULTATION'
-        });
     };
 
     // 입금 확인 (모달에서 처리됨)
     const handleConfirmDeposit = async (mappingId) => {
         // 모달에서 처리되므로 여기서는 목록만 새로고침
         loadMappings();
-        
-        // ERP 연동 성공 로그
-        console.log('💚 매핑-ERP 연동 성공:', {
-            mappingId: mappingId,
-            action: '입금확인',
-            erpIntegration: '현금 수입 거래 자동 생성',
-            category: 'CONSULTATION',
-            subcategory: 'INDIVIDUAL_CONSULTATION'
-        });
     };
 
     // 매핑 거부
     const handleRejectMapping = async (mappingId) => {
-        // 테스트용 알림
-        setTimeout(() => {
-            notificationManager.success('테스트 알림: 매핑 거부 버튼 클릭됨');
-        }, 100);
-        
         try {
             const response = await apiPost(`/api/admin/mappings/${mappingId}/reject`, {
                 reason: '관리자 거부'
             });
             
             if (response.success) {
-                setTimeout(() => {
-                    notificationManager.success('매핑이 거부되었습니다.');
-                }, 100);
+                notificationManager.success('매핑이 거부되었습니다.');
                 loadMappings();
             } else {
-                setTimeout(() => {
-                    notificationManager.error('매핑 거부에 실패했습니다.');
-                }, 100);
+                notificationManager.error('매핑 거부에 실패했습니다.');
             }
         } catch (error) {
             console.error('매핑 거부 실패:', error);
-            setTimeout(() => {
-                notificationManager.error('매핑 거부에 실패했습니다.');
-            }, 100);
+            notificationManager.error('매핑 거부에 실패했습니다.');
         }
     };
 
@@ -459,13 +409,11 @@ const MappingManagement = () => {
 
     // 매핑 수정 핸들러들
     const handleEditMapping = (mapping) => {
-        console.log('🔄 매핑 수정 요청:', mapping);
         setEditMapping(mapping);
         setShowEditModal(true);
     };
 
     const handleEditSuccess = (updatedData) => {
-        console.log('✅ 매핑 수정 성공:', updatedData);
         // 매핑 목록 새로고침
         loadMappings();
         // 수정 모달 닫기
@@ -489,8 +437,6 @@ const MappingManagement = () => {
 
     // 통계 카드 클릭 핸들러
     const handleStatCardClick = (stat) => {
-        console.log('통계 카드 클릭:', stat);
-        
         switch (stat.action) {
             case 'payment':
                 // 결제 확인 모달 열기
@@ -515,14 +461,11 @@ const MappingManagement = () => {
                 setFilterStatus('ALL');
                 notificationManager.info('전체 매핑을 표시합니다.');
                 break;
-            default:
-                console.log('알 수 없는 액션:', stat.action);
         }
     };
 
     // 결제 확인 모달 핸들러
     const handlePaymentConfirmed = (updatedMappings) => {
-        console.log('결제 확인 완료:', updatedMappings);
         // 매핑 목록 새로고침
         loadMappings();
         setShowPaymentModal(false);
@@ -534,30 +477,21 @@ const MappingManagement = () => {
         setPendingMappings([]);
     };
 
-    // 필터링된 매핑 목록
-    const filteredMappings = mappings.filter(mapping => {
-        const matchesStatus = filterStatus === 'ALL' || mapping.status === filterStatus;
-        const matchesSearch = searchTerm === '' || 
-            (mapping.consultantName && mapping.consultantName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (mapping.clientName && mapping.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (mapping.packageName && mapping.packageName.toLowerCase().includes(searchTerm.toLowerCase()));
-        
-        // 디버깅 로그 (검색어가 있을 때만)
-        if (searchTerm) {
-            console.log('🔍 필터링 디버깅:', {
-                searchTerm,
-                mappingId: mapping.id,
-                consultantName: mapping.consultantName,
-                clientName: mapping.clientName,
-                packageName: mapping.packageName,
-                matchesStatus,
-                matchesSearch,
-                finalResult: matchesStatus && matchesSearch
-            });
-        }
-        
-        return matchesStatus && matchesSearch;
-    });
+    // 필터링된 매핑 목록 (최신 순으로 정렬)
+    const filteredMappings = mappings
+        .filter(mapping => {
+            const matchesStatus = filterStatus === 'ALL' || mapping.status === filterStatus;
+            const matchesSearch = searchTerm === '' || 
+                (mapping.consultantName && mapping.consultantName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (mapping.clientName && mapping.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (mapping.packageName && mapping.packageName.toLowerCase().includes(searchTerm.toLowerCase()));
+            
+            return matchesStatus && matchesSearch;
+        })
+        .sort((a, b) => {
+            // 최신 순으로 정렬 (ID가 큰 것이 최신)
+            return b.id - a.id;
+        });
 
             if (loading) {
         return (

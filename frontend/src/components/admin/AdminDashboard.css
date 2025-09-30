@@ -262,6 +262,10 @@
     background: var(--admin-color-settings);
 }
 
+.management-icon.recurring-expense {
+    background: #28a745;
+}
+
 
 .management-content h3 {
     font-size: var(--admin-font-xl);

@@ -1065,7 +1065,10 @@ const AdminDashboard = ({ user: propUser }) => {
                         재무 관리
                     </h2>
                     <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => setShowRecurringExpense(true)}>
+                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => {
+                            console.log('🔄 반복 지출 모달 열기 버튼 클릭');
+                            setShowRecurringExpense(true);
+                        }}>
                             <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} recurring-expense`}>
                                 <FaRedo />
                             </div>

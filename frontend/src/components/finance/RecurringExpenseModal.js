@@ -32,6 +32,9 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 
     useEffect(() => {
         if (isOpen) {
+            // 모달이 열릴 때 body에 클래스 추가
+            document.body.classList.add('modal-open');
+            
             loadExpenses();
             loadStatistics();
             loadCategories();
@@ -41,7 +44,15 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                 ...prev,
                 startDate: today
             }));
+        } else {
+            // 모달이 닫힐 때 body에서 클래스 제거
+            document.body.classList.remove('modal-open');
         }
+        
+        // 컴포넌트 언마운트 시 클래스 제거
+        return () => {
+            document.body.classList.remove('modal-open');
+        };
     }, [isOpen]);
 
     /**
@@ -50,7 +61,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
     const loadExpenses = async () => {
         try {
             setLoading(true);
-            const response = await apiGet('/api/finance/recurring-expenses');
+            const response = await apiGet('/api/admin/recurring-expenses');
             if (response && response.success !== false) {
                 setExpenses(response.data || []);
             }
@@ -67,7 +78,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const loadStatistics = async () => {
         try {
-            const response = await apiGet('/api/finance/recurring-expenses/statistics');
+            const response = await apiGet('/api/admin/statistics/recurring-expenses');
             if (response && response.success !== false) {
                 setStatistics(response.data);
             }
@@ -81,8 +92,10 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const loadCategories = async () => {
         try {
-            const response = await apiGet('/api/common-codes/FINANCIAL_CATEGORY');
-            if (response && response.success !== false) {
+            const response = await apiGet('/api/common-codes/group/FINANCIAL_CATEGORY');
+            if (response && Array.isArray(response)) {
+                setCategories(response);
+            } else if (response && response.success !== false) {
                 setCategories(response.data || []);
             }
         } catch (error) {
@@ -160,9 +173,9 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
 
             let response;
             if (editingExpense) {
-                response = await apiPut(`/api/finance/recurring-expenses/${editingExpense.id}`, expenseData);
+                response = await apiPut(`/api/admin/recurring-expenses/${editingExpense.id}`, expenseData);
             } else {
-                response = await apiPost('/api/finance/recurring-expenses', expenseData);
+                response = await apiPost('/api/admin/recurring-expenses', expenseData);
             }
             
             if (response && response.success !== false) {
@@ -196,7 +209,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         try {
             setLoading(true);
             
-            const response = await apiDelete(`/api/finance/recurring-expenses/${expenseId}`);
+            const response = await apiDelete(`/api/admin/recurring-expenses/${expenseId}`);
             
             if (response && response.success !== false) {
                 notificationManager.success('반복 지출이 삭제되었습니다.');
@@ -224,15 +237,19 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
         onClose();
     };
 
-    if (!isOpen) return null;
+    if (!isOpen) {
+        console.log('🚫 RecurringExpenseModal: isOpen이 false입니다');
+        return null;
+    }
 
+    console.log('✅ RecurringExpenseModal: 모달 렌더링 시작');
     return (
         <div className="recurring-expense-modal-overlay">
             <div className="recurring-expense-modal">
                 <div className="recurring-expense-modal-header">
                     <h3>🔄 반복 지출 관리</h3>
                     <button 
-                        className="recurring-expense-close-btn"
+                        className="recurring-expense-modal-close"
                         onClick={handleClose}
                         disabled={loading}
                     >
@@ -240,7 +257,7 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
                     </button>
                 </div>
 
-                <div className="recurring-expense-modal-content">
+                <div className="recurring-expense-modal-body">
                     {/* 통계 정보 */}
                     {statistics && (
                         <div className="expense-statistics">

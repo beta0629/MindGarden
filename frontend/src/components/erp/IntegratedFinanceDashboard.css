@@ -2,18 +2,18 @@
 
 .integrated-finance-select {
   position: relative !important;
-  z-index: 9999 !important;
-  transform: translateZ(0) !important;
-  will-change: transform !important;
+  z-index: 1 !important;
+  transform: none !important;
+  will-change: auto !important;
   overflow: visible !important;
-  contain: layout style paint !important;
+  contain: none !important;
 }
 
 .integrated-finance-select:focus {
   position: relative !important;
   z-index: 9999 !important;
   transform: none !important;
-  contain: layout style paint !important;
+  contain: none !important;
 }
 
 .integrated-finance-select option {

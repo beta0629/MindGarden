@@ -36,7 +36,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
     const loadConsultants = async () => {
         try {
             setLoading(true);
-            const response = await apiGet('/api/consultants');
+            const response = await apiGet('/api/admin/consultants');
             if (response && response.success !== false) {
                 setConsultants(response.data || []);
             }
@@ -53,8 +53,10 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
      */
     const loadSpecialties = async () => {
         try {
-            const response = await apiGet('/api/common-codes/CONSULTANT_SPECIALTY');
-            if (response && response.success !== false) {
+            const response = await apiGet('/api/common-codes/group/SPECIALTY');
+            if (response && Array.isArray(response)) {
+                setSpecialties(response);
+            } else if (response && response.success !== false) {
                 setSpecialties(response.data || []);
             }
         } catch (error) {
@@ -67,7 +69,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
      */
     const loadStatistics = async () => {
         try {
-            const response = await apiGet('/api/statistics/specialty');
+            const response = await apiGet('/api/admin/statistics/specialty');
             if (response && response.success !== false) {
                 setStatistics(response.data);
             }
@@ -96,7 +98,7 @@ const SpecialtyManagementModal = ({ isOpen, onClose }) => {
         try {
             setLoading(true);
             
-            const response = await apiPut(`/api/consultants/${selectedConsultant.id}/specialty`, {
+            const response = await apiPut(`/api/admin/consultants/${selectedConsultant.id}/specialty`, {
                 specialty: newSpecialty.trim()
             });
             

@@ -78,6 +78,8 @@ import BranchMappingModal from './components/common/BranchMappingModal';
 import DuplicateLoginModal from './components/common/DuplicateLoginModal';
 import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
+import IOSCardSample from './pages/IOSCardSample';
+import ChatAppSample from './pages/ChatAppSample';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -430,6 +432,8 @@ function AppContent() {
             <Route path="/test/notifications" element={<NotificationTest />} />
             <Route path="/test/payment" element={<PaymentTest />} />
             <Route path="/test/integration" element={<IntegrationTest />} />
+            <Route path="/test/ios-cards" element={<IOSCardSample />} />
+            <Route path="/test/chat-app" element={<ChatAppSample />} />
             
             {/* 추후 홈페이지 추가 시 사용할 경로들 */}
             {/* <Route path="/homepage" element={<Homepage />} /> */}

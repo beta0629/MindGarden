@@ -16,7 +16,7 @@ const HelpPage = () => {
       icon: 'bi-info-circle',
       content: (
         <div>
-          <h4 style={{ color: '#2c3e50', marginBottom: '20px', fontSize: '20px' }}>MindGarden 사용 방법</h4>
+          <h4 style={{ color: '#2c3e50', marginBottom: '20px', fontSize: '20px' }}>마인드가든 사용 방법</h4>
           <div style={{ marginBottom: '20px', padding: '16px', background: '#f8f9fa', borderRadius: '12px' }}>
             <h5 style={{ color: '#495057', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <i className="bi bi-calendar-check" style={{ color: '#3498db' }}></i> 일정 관리
@@ -186,7 +186,7 @@ const HelpPage = () => {
             margin: '0',
             lineHeight: '1.6'
           }}>
-            MindGarden 사용에 필요한 모든 정보를 확인하세요
+            마인드가든 사용에 필요한 모든 정보를 확인하세요
           </p>
         </div>
 

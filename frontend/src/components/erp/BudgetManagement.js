@@ -263,7 +263,7 @@ const BudgetManagement = () => {
                 <div className="erp-login-header">
                   <div className="erp-logo">
                     <i className="bi bi-flower1"></i>
-                    <span>MindGarden</span>
+                    <span>마인드가든</span>
                   </div>
                   <div className="erp-login-actions">
                     <button className="btn btn-outline-primary">

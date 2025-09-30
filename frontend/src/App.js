@@ -124,7 +124,7 @@ function AppContent() {
       console.log('🌐 현재 환경:', process.env.NODE_ENV);
       console.log('📱 React 버전:', React.version);
       console.log('🔗 라우터 초기화 완료');
-      console.log('✅ MindGarden 앱 시작됨');
+      console.log('✅ 마인드가든 앱 시작됨');
     }
   }, []);
 

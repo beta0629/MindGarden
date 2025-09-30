@@ -374,7 +374,13 @@ const MappingCard = ({
                 })}
                 
                 {/* 결제 확인 버튼 - PENDING 상태일 때만 표시 */}
-                {console.log('🔍 매핑 상태 확인:', { id: mapping.id, paymentStatus: mapping.paymentStatus, status: mapping.status })}
+                {console.log('🔍 매핑 상태 확인:', { 
+                    id: mapping.id, 
+                    paymentStatus: mapping.paymentStatus, 
+                    status: mapping.status,
+                    consultantName: mapping.consultantName,
+                    clientName: mapping.clientName
+                })}
                 {mapping.paymentStatus === 'PENDING' && (
                     <button 
                         style={{
@@ -391,7 +397,15 @@ const MappingCard = ({
                             backgroundColor: '#28a745',
                             color: 'white'
                         }}
-                        onClick={() => setShowPaymentModal(true)}
+                        onClick={() => {
+                            console.log('🟢 결제 확인 버튼 클릭:', { 
+                                mappingId: mapping.id, 
+                                consultantName: mapping.consultantName,
+                                clientName: mapping.clientName,
+                                paymentStatus: mapping.paymentStatus
+                            });
+                            setShowPaymentModal(true);
+                        }}
                         onMouseEnter={(e) => {
                             e.target.style.backgroundColor = '#1e7e34';
                             e.target.style.transform = 'translateY(-1px)';
@@ -422,7 +436,15 @@ const MappingCard = ({
                             backgroundColor: '#007bff',
                             color: 'white'
                         }}
-                        onClick={() => setShowDepositModal(true)}
+                        onClick={() => {
+                            console.log('🔵 입금 확인 버튼 클릭:', { 
+                                mappingId: mapping.id, 
+                                consultantName: mapping.consultantName,
+                                clientName: mapping.clientName,
+                                paymentStatus: mapping.paymentStatus
+                            });
+                            setShowDepositModal(true);
+                        }}
                         onMouseEnter={(e) => {
                             e.target.style.backgroundColor = '#0056b3';
                             e.target.style.transform = 'translateY(-1px)';

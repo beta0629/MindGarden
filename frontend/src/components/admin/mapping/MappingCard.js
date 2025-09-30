@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import MappingPaymentModal from './MappingPaymentModal';
+import MappingDepositModal from './MappingDepositModal';
 
 /**
  * 매핑 카드 컴포넌트 (동적 처리 지원)
@@ -22,6 +23,7 @@ const MappingCard = ({
     onApprove, 
     onReject, 
     onConfirmPayment,
+    onConfirmDeposit,
     onEdit, 
     onView,
     onTransfer,
@@ -29,6 +31,7 @@ const MappingCard = ({
     onRefund
 }) => {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showDepositModal, setShowDepositModal] = useState(false);
     // 상태별 색상 (props에서 받은 데이터 사용)
     const getStatusColor = (status) => {
         return statusInfo.color;
@@ -364,8 +367,39 @@ const MappingCard = ({
                     fullMapping: mapping
                 })}
                 
-                {/* 입금 확인 버튼 - PENDING 상태일 때만 표시 */}
+                {/* 결제 확인 버튼 - PENDING 상태일 때만 표시 */}
                 {mapping.paymentStatus === 'PENDING' && (
+                    <button 
+                        style={{
+                            padding: '4px 8px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            backgroundColor: '#28a745',
+                            color: 'white'
+                        }}
+                        onClick={() => setShowPaymentModal(true)}
+                        onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#1e7e34';
+                            e.target.style.transform = 'translateY(-1px)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = '#28a745';
+                            e.target.style.transform = 'translateY(0)';
+                        }}
+                    >
+                        <i className="bi bi-check-circle"></i> 결제 확인
+                    </button>
+                )}
+                
+                {/* 입금 확인 버튼 - PAYMENT_CONFIRMED 상태일 때만 표시 */}
+                {mapping.paymentStatus === 'PAYMENT_CONFIRMED' && (
                     <button 
                         style={{
                             padding: '4px 8px',
@@ -381,7 +415,7 @@ const MappingCard = ({
                             backgroundColor: '#007bff',
                             color: 'white'
                         }}
-                        onClick={() => setShowPaymentModal(true)}
+                        onClick={() => setShowDepositModal(true)}
                         onMouseEnter={(e) => {
                             e.target.style.backgroundColor = '#0056b3';
                             e.target.style.transform = 'translateY(-1px)';
@@ -619,7 +653,7 @@ const MappingCard = ({
                 )}
             </div>
 
-            {/* 입금확인 모달 */}
+            {/* 결제 확인 모달 */}
             <MappingPaymentModal
                 isOpen={showPaymentModal}
                 onClose={() => setShowPaymentModal(false)}
@@ -627,6 +661,17 @@ const MappingCard = ({
                 onPaymentConfirmed={(mappingId) => {
                     setShowPaymentModal(false);
                     onConfirmPayment?.(mappingId);
+                }}
+            />
+            
+            {/* 입금 확인 모달 */}
+            <MappingDepositModal
+                isOpen={showDepositModal}
+                onClose={() => setShowDepositModal(false)}
+                mapping={mapping}
+                onDepositConfirmed={(mappingId) => {
+                    setShowDepositModal(false);
+                    onConfirmDeposit?.(mappingId);
                 }}
             />
         </div>

@@ -159,6 +159,7 @@ public class ConsultantClientMapping extends BaseEntity {
      */
     public enum PaymentStatus {
         PENDING,                    // 대기
+        CONFIRMED,                  // 확인됨 (기존 호환성)
         PAYMENT_CONFIRMED,          // 결제 확인됨 (미수금 상태)
         DEPOSIT_CONFIRMED,          // 입금 확인됨 (현금 수입)
         APPROVED,                   // 승인됨 (기존 호환성)

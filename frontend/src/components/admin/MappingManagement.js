@@ -277,7 +277,7 @@ const MappingManagement = () => {
         }
     };
 
-    // 입금 확인 (모달에서 처리됨)
+    // 결제 확인 (모달에서 처리됨)
     const handleConfirmPayment = async (mappingId) => {
         // 모달에서 처리되므로 여기서는 목록만 새로고침
         loadMappings();
@@ -285,8 +285,23 @@ const MappingManagement = () => {
         // ERP 연동 성공 로그
         console.log('💚 매핑-ERP 연동 성공:', {
             mappingId: mappingId,
+            action: '결제확인',
+            erpIntegration: '미수금 거래 자동 생성',
+            category: 'CONSULTATION',
+            subcategory: 'INDIVIDUAL_CONSULTATION'
+        });
+    };
+
+    // 입금 확인 (모달에서 처리됨)
+    const handleConfirmDeposit = async (mappingId) => {
+        // 모달에서 처리되므로 여기서는 목록만 새로고침
+        loadMappings();
+        
+        // ERP 연동 성공 로그
+        console.log('💚 매핑-ERP 연동 성공:', {
+            mappingId: mappingId,
             action: '입금확인',
-            erpIntegration: '상담료 수입 자동 생성',
+            erpIntegration: '현금 수입 거래 자동 생성',
             category: 'CONSULTATION',
             subcategory: 'INDIVIDUAL_CONSULTATION'
         });
@@ -612,6 +627,7 @@ const MappingManagement = () => {
                                 onApprove={handleApproveMapping}
                                 onReject={handleRejectMapping}
                                 onConfirmPayment={handleConfirmPayment}
+                                onConfirmDeposit={handleConfirmDeposit}
                                 onEdit={handleEditMapping}
                                 onView={handleViewMapping}
                                 onTransfer={handleTransferConsultant}

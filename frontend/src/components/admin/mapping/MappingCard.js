@@ -54,7 +54,7 @@ const MappingCard = ({
     };
 
     return (
-        <div style={{
+        <div className="mapping-card-mobile" style={{
             background: 'white',
             borderRadius: '12px',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
@@ -174,7 +174,7 @@ const MappingCard = ({
             </div>
 
             <div style={{ padding: '20px' }}>
-                <div style={{
+                <div className="participant-info" style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '16px',
@@ -239,7 +239,7 @@ const MappingCard = ({
                     </div>
                 </div>
 
-                <div style={{
+                <div className="session-info" style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     gap: '12px',
@@ -353,7 +353,7 @@ const MappingCard = ({
                 )}
             </div>
 
-            <div style={{
+            <div className="action-buttons" style={{
                 display: 'flex',
                 gap: '8px',
                 padding: '16px 20px',

@@ -152,23 +152,49 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const loadPendingDepositStats = useCallback(async () => {
         try {
+            console.log('🔍 입금 확인 대기 통계 로드 시작...');
             const response = await fetch('/api/admin/mappings/pending-deposit');
+            console.log('🔍 API 응답 상태:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
+                console.log('🔍 API 응답 데이터:', data);
+                
                 if (data.success && data.data) {
                     const count = data.data.length;
                     const totalAmount = data.data.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
                     const oldestHours = Math.max(...data.data.map(mapping => mapping.hoursElapsed || 0), 0);
+                    
+                    console.log('🔍 계산된 통계:', { count, totalAmount, oldestHours });
                     
                     setPendingDepositStats({
                         count,
                         totalAmount,
                         oldestHours
                     });
+                } else {
+                    console.log('🔍 데이터가 없거나 실패:', data);
+                    setPendingDepositStats({
+                        count: 0,
+                        totalAmount: 0,
+                        oldestHours: 0
+                    });
                 }
+            } else {
+                console.error('🔍 API 호출 실패:', response.status, response.statusText);
+                setPendingDepositStats({
+                    count: 0,
+                    totalAmount: 0,
+                    oldestHours: 0
+                });
             }
         } catch (error) {
             console.error('입금 확인 대기 통계 로드 실패:', error);
+            setPendingDepositStats({
+                count: 0,
+                totalAmount: 0,
+                oldestHours: 0
+            });
         }
     }, []);
 
@@ -460,8 +486,12 @@ const AdminDashboard = ({ user: propUser }) => {
                 {(() => {
                     const currentRole = (propUser || sessionUser)?.role;
                     const canViewPendingDeposits = currentRole === 'ADMIN' || 
-                                                  currentRole === 'BRANCH_SUPER_ADMIN' || 
-                                                  currentRole === 'BRANCH_ADMIN';
+                                                  currentRole === 'BRANCH_SUPER_ADMIN';
+                    console.log('🔍 입금 확인 대기 알림 권한 체크:', {
+                        currentRole,
+                        canViewPendingDeposits,
+                        pendingDepositStats
+                    });
                     return canViewPendingDeposits;
                 })() && pendingDepositStats.count > 0 && (
                     <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>

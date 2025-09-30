@@ -165,7 +165,7 @@ export const HEADER_TEXTS = {
   MENU_TITLE: '메뉴',
   DEFAULT_USER: '사용자',
   TEST_BUTTON: '테스트',
-  BRAND_NAME: 'MindGarden',
+  BRAND_NAME: '마인드가든',
 };
 
 // 기본 설정

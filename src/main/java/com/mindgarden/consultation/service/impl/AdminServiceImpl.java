@@ -657,7 +657,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
-     * 입금 확인 처리 (간단 버전)
+     * 결제 확인 처리 (미수금 상태)
      */
     @Override
     public ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference) {
@@ -676,7 +676,94 @@ public class AdminServiceImpl implements AdminService {
                 savedMapping.getBranchCode()
             );
             
-            // 결제 완료시 재무 통계 업데이트
+            log.info("✅ 결제 확인시 실시간 통계 업데이트 완료: mappingId={}", mappingId);
+        } catch (Exception e) {
+            log.error("❌ 결제 확인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
+        }
+        
+        // 결제 확인 시 자동으로 ERP 미수금(매출채권) 거래 생성
+        try {
+            createReceivablesTransaction(savedMapping);
+            log.info("💚 매핑 결제 확인으로 인한 미수금 거래 자동 생성: MappingID={}", mappingId);
+        } catch (Exception e) {
+            log.error("미수금 거래 자동 생성 실패: {}", e.getMessage(), e);
+            // 거래 생성 실패해도 결제 확인은 완료
+        }
+        
+        return savedMapping;
+    }
+    
+    /**
+     * 미수금(매출채권) 거래 생성
+     */
+    private void createReceivablesTransaction(ConsultantClientMapping mapping) {
+        log.info("💰 [미수금] 매출채권 거래 생성 시작: MappingID={}", mapping.getId());
+        
+        // 1. 중복 거래 방지
+        if (amountManagementService.isDuplicateTransaction(mapping.getId(), 
+                com.mindgarden.consultation.entity.FinancialTransaction.TransactionType.RECEIVABLES)) {
+            log.warn("🚫 중복 거래 방지: MappingID={}에 대한 미수금 거래가 이미 존재합니다.", mapping.getId());
+            return;
+        }
+        
+        // 2. 정확한 거래 금액 결정
+        Long accurateAmount = amountManagementService.getAccurateTransactionAmount(mapping);
+        
+        if (accurateAmount == null || accurateAmount <= 0) {
+            log.error("❌ 유효한 거래 금액을 결정할 수 없습니다: MappingID={}", mapping.getId());
+            return;
+        }
+        
+        // 3. ERP 미수금 거래 생성
+        FinancialTransactionRequest request = FinancialTransactionRequest.builder()
+                .transactionType("RECEIVABLES") // 미수금 거래 타입
+                .category("CONSULTATION") // 공통코드 사용
+                .subcategory("INDIVIDUAL_CONSULTATION") // 공통코드 사용
+                .amount(java.math.BigDecimal.valueOf(accurateAmount))
+                .description(String.format("상담료 결제 확인 (미수금) - %s (%s) [금액: %,d원]", 
+                    mapping.getPackageName() != null ? mapping.getPackageName() : "상담 패키지",
+                    mapping.getPaymentMethod() != null ? mapping.getPaymentMethod() : "미지정",
+                    accurateAmount))
+                .transactionDate(java.time.LocalDate.now())
+                .relatedEntityId(mapping.getId())
+                .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
+                .branchCode(mapping.getBranchCode()) // 매핑의 지점코드 사용
+                .taxIncluded(false) // 상담료는 부가세 면세
+                .build();
+        
+        // 4. 시스템 자동 거래 생성 (권한 검사 우회)
+        com.mindgarden.consultation.dto.FinancialTransactionResponse response = 
+            financialTransactionService.createTransaction(request, null);
+        
+        if (response != null && response.getId() != null) {
+            log.info("✅ [미수금] 매출채권 거래 생성 완료: TransactionID={}, MappingID={}, Amount={}원", 
+                response.getId(), mapping.getId(), accurateAmount);
+        } else {
+            log.error("❌ [미수금] 매출채권 거래 생성 실패: MappingID={}", mapping.getId());
+        }
+    }
+    
+    /**
+     * 입금 확인 처리 (현금 수입)
+     */
+    @Override
+    public ConsultantClientMapping confirmDeposit(Long mappingId, String depositReference) {
+        ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
+                .orElseThrow(() -> new RuntimeException("Mapping not found"));
+        
+        mapping.confirmDeposit(depositReference);
+        
+        ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
+        
+        // 🚀 실시간 통계 업데이트 추가
+        try {
+            realTimeStatisticsService.updateStatisticsOnMappingChange(
+                savedMapping.getConsultant().getId(), 
+                savedMapping.getClient().getId(), 
+                savedMapping.getBranchCode()
+            );
+            
+            // 입금 완료시 재무 통계 업데이트
             if (savedMapping.getPaymentAmount() != null) {
                 realTimeStatisticsService.updateFinancialStatisticsOnPayment(
                     savedMapping.getBranchCode(), 
@@ -690,7 +777,7 @@ public class AdminServiceImpl implements AdminService {
             log.error("❌ 입금 확인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
         }
         
-        // 입금 확인 시 자동으로 ERP 수입 거래 생성
+        // 입금 확인 시 자동으로 ERP 현금 수입 거래 생성
         try {
             createConsultationIncomeTransaction(savedMapping);
             log.info("💚 매핑 입금 확인으로 인한 상담료 수입 거래 자동 생성: MappingID={}", mappingId);

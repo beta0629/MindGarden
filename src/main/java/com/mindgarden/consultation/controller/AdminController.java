@@ -850,14 +850,14 @@ public class AdminController {
     }
 
     /**
-     * 입금 확인
+     * 결제 확인 (미수금 상태)
      */
     @PostMapping("/mappings/{mappingId}/confirm-payment")
     public ResponseEntity<?> confirmPayment(
             @PathVariable Long mappingId,
             @RequestBody Map<String, Object> request) {
         try {
-            log.info("💰 매핑 ID {} 입금 확인 시작", mappingId);
+            log.info("💰 매핑 ID {} 결제 확인 시작", mappingId);
             
             String paymentMethod = (String) request.get("paymentMethod");
             String paymentReference = (String) request.get("paymentReference");
@@ -869,7 +869,7 @@ public class AdminController {
             
             ConsultantClientMapping mapping = adminService.confirmPayment(mappingId, paymentMethod, paymentReference, paymentAmount);
             
-            log.info("💰 매핑 ID {} 입금 확인 완료", mappingId);
+            log.info("💰 매핑 ID {} 결제 확인 완료 (미수금 상태)", mappingId);
             
             // 안전한 데이터 추출 (프록시 객체 직렬화 문제 방지)
             Map<String, Object> mappingData = new HashMap<>();
@@ -1715,7 +1715,72 @@ public class AdminController {
             ));
         }
     }
-    
+
+    /**
+     * 입금 확인 (현금 수입)
+     */
+    @PostMapping("/mappings/{mappingId}/confirm-deposit")
+    public ResponseEntity<?> confirmDeposit(
+            @PathVariable Long mappingId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            log.info("💰 매핑 ID {} 입금 확인 시작", mappingId);
+            
+            String depositReference = (String) request.get("depositReference");
+            
+            log.info("💰 요청 데이터 - depositReference: {}", depositReference);
+            
+            ConsultantClientMapping mapping = adminService.confirmDeposit(mappingId, depositReference);
+            
+            log.info("💰 매핑 ID {} 입금 확인 완료 (현금 수입)", mappingId);
+            
+            // 안전한 데이터 추출 (프록시 객체 직렬화 문제 방지)
+            Map<String, Object> mappingData = new HashMap<>();
+            mappingData.put("id", mapping.getId());
+            mappingData.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "UNKNOWN");
+            mappingData.put("paymentStatus", mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().toString() : "UNKNOWN");
+            mappingData.put("paymentMethod", mapping.getPaymentMethod());
+            mappingData.put("paymentReference", mapping.getPaymentReference());
+            mappingData.put("paymentAmount", mapping.getPaymentAmount());
+            mappingData.put("paymentDate", mapping.getPaymentDate());
+            mappingData.put("totalSessions", mapping.getTotalSessions());
+            mappingData.put("remainingSessions", mapping.getRemainingSessions());
+            mappingData.put("packageName", mapping.getPackageName());
+            mappingData.put("packagePrice", mapping.getPackagePrice());
+            
+            // Consultant 정보 안전하게 추출
+            if (mapping.getConsultant() != null) {
+                Map<String, Object> consultantData = new HashMap<>();
+                consultantData.put("id", mapping.getConsultant().getId());
+                consultantData.put("username", mapping.getConsultant().getUsername());
+                consultantData.put("email", mapping.getConsultant().getEmail());
+                mappingData.put("consultant", consultantData);
+            }
+            
+            // Client 정보 안전하게 추출
+            if (mapping.getClient() != null) {
+                Map<String, Object> clientData = new HashMap<>();
+                clientData.put("id", mapping.getClient().getId());
+                clientData.put("username", mapping.getClient().getUsername());
+                clientData.put("email", mapping.getClient().getEmail());
+                mappingData.put("client", clientData);
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "입금이 성공적으로 확인되었습니다.",
+                "data", mappingData
+            ));
+            
+        } catch (Exception e) {
+            log.error("❌ 매핑 ID {} 입금 확인 실패: {}", mappingId, e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "입금 확인에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
     /**
      * 매핑 결제 확인
      */

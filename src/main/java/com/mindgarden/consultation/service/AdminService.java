@@ -174,9 +174,14 @@ public interface AdminService {
     ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference, Long paymentAmount);
 
     /**
-     * 입금 확인 처리 (간단 버전)
+     * 결제 확인 처리 (미수금 상태)
      */
     ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference);
+
+    /**
+     * 입금 확인 처리 (현금 수입)
+     */
+    ConsultantClientMapping confirmDeposit(Long mappingId, String depositReference);
 
     /**
      * 관리자 승인

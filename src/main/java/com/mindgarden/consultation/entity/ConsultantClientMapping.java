@@ -143,42 +143,57 @@ public class ConsultantClientMapping extends BaseEntity {
      * 매핑 상태 enum
      */
     public enum MappingStatus {
-        PENDING_PAYMENT,    // 입금 대기
-        PAYMENT_CONFIRMED,  // 입금 확인됨
-        ACTIVE,            // 활성 (승인 후)
-        INACTIVE,          // 비활성
-        SUSPENDED,         // 중단
-        TERMINATED,        // 종료
-        SESSIONS_EXHAUSTED // 회기 소진
+        PENDING_PAYMENT,        // 결제 대기
+        PAYMENT_CONFIRMED,      // 결제 확인됨 (미수금 상태)
+        DEPOSIT_PENDING,        // 입금 대기
+        DEPOSIT_CONFIRMED,      // 입금 확인됨
+        ACTIVE,                 // 활성 (승인 후)
+        INACTIVE,               // 비활성
+        SUSPENDED,              // 중단
+        TERMINATED,             // 종료
+        SESSIONS_EXHAUSTED      // 회기 소진
     }
 
     /**
      * 결제 상태 enum
      */
     public enum PaymentStatus {
-        PENDING,        // 대기
-        CONFIRMED,      // 확인됨
-        APPROVED,       // 승인됨
-        REJECTED,       // 거부됨
-        REFUNDED        // 환불됨
+        PENDING,                    // 대기
+        PAYMENT_CONFIRMED,          // 결제 확인됨 (미수금 상태)
+        DEPOSIT_CONFIRMED,          // 입금 확인됨 (현금 수입)
+        APPROVED,                   // 승인됨 (기존 호환성)
+        REJECTED,                   // 거부됨
+        REFUNDED                    // 환불됨
     }
 
     /**
-     * 입금 확인 처리
+     * 결제 확인 처리 (미수금 상태)
      */
     public void confirmPayment(String paymentMethod, String paymentReference) {
-        this.paymentStatus = PaymentStatus.CONFIRMED;
+        this.paymentStatus = PaymentStatus.PAYMENT_CONFIRMED;
         this.paymentMethod = paymentMethod;
         this.paymentReference = paymentReference;
         this.paymentDate = LocalDateTime.now();
         this.status = MappingStatus.PAYMENT_CONFIRMED;
     }
+    
+    /**
+     * 입금 확인 처리 (현금 수입)
+     */
+    public void confirmDeposit(String depositReference) {
+        if (this.paymentStatus != PaymentStatus.PAYMENT_CONFIRMED) {
+            throw new IllegalStateException("결제 확인이 완료되지 않았습니다.");
+        }
+        this.paymentStatus = PaymentStatus.DEPOSIT_CONFIRMED;
+        this.paymentReference = this.paymentReference + " (입금: " + depositReference + ")";
+        this.status = MappingStatus.DEPOSIT_CONFIRMED;
+    }
 
     /**
-     * 관리자 승인
+     * 관리자 승인 (입금 확인 후 활성화)
      */
     public void approveByAdmin(String adminName) {
-        if (this.paymentStatus != PaymentStatus.CONFIRMED && this.paymentStatus != PaymentStatus.APPROVED) {
+        if (this.paymentStatus != PaymentStatus.DEPOSIT_CONFIRMED && this.paymentStatus != PaymentStatus.APPROVED) {
             throw new IllegalStateException("입금 확인이 완료되지 않았습니다.");
         }
         this.paymentStatus = PaymentStatus.APPROVED;

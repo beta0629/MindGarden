@@ -178,7 +178,7 @@ const SalaryPrintComponent = ({
 
       <div style={{ marginTop: '40px', textAlign: 'center' }}>
         <div style={{ fontSize: '12px', color: '#666' }}>
-          본 급여 계산서는 mindgarden 통합 상담관리 시스템에서 자동 생성되었습니다.
+          본 급여 계산서는 마인드가든 통합 상담관리 시스템에서 자동 생성되었습니다.
         </div>
         <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
           문의사항이 있으시면 관리자에게 연락해주세요.

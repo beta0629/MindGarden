@@ -162,7 +162,7 @@ const PrintComponent = forwardRef(({
         </div>
         
         <div className="print-footer">
-          <div>mindgarden 통합 상담관리 시스템</div>
+          <div>마인드가든 통합 상담관리 시스템</div>
           <div>출력일: {new Date().toLocaleString('ko-KR')}</div>
         </div>
       </div>

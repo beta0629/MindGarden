@@ -482,13 +482,11 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                 </div>
 
-                {/* 입금 확인 대기 알림 - 지점어드민, 지점 수퍼어드민만 표시 */}
+                {/* 입금 확인 대기 알림 - 매핑 관리 권한이 있는 사용자만 표시 */}
                 {(() => {
-                    const currentRole = (propUser || sessionUser)?.role;
-                    const canViewPendingDeposits = currentRole === 'ADMIN' || 
-                                                  currentRole === 'BRANCH_SUPER_ADMIN';
+                    const canViewPendingDeposits = PermissionChecks.canViewMappings(userPermissions);
                     console.log('🔍 입금 확인 대기 알림 권한 체크:', {
-                        currentRole,
+                        userPermissions,
                         canViewPendingDeposits,
                         pendingDepositStats
                     });

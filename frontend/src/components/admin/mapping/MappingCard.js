@@ -32,6 +32,12 @@ const MappingCard = ({
 }) => {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showDepositModal, setShowDepositModal] = useState(false);
+    
+    // 모달 상태 초기화 (매핑이 변경될 때)
+    React.useEffect(() => {
+        setShowPaymentModal(false);
+        setShowDepositModal(false);
+    }, [mapping.id]);
     // 상태별 색상 (props에서 받은 데이터 사용)
     const getStatusColor = (status) => {
         return statusInfo.color;
@@ -368,6 +374,7 @@ const MappingCard = ({
                 })}
                 
                 {/* 결제 확인 버튼 - PENDING 상태일 때만 표시 */}
+                {console.log('🔍 매핑 상태 확인:', { id: mapping.id, paymentStatus: mapping.paymentStatus, status: mapping.status })}
                 {mapping.paymentStatus === 'PENDING' && (
                     <button 
                         style={{

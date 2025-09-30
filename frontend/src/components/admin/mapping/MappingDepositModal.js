@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import notificationManager from '../../../utils/notificationManager';
+import notificationManager from '../../../utils/notification';
 
 /**
  * 매핑 입금 확인 모달 컴포넌트
@@ -77,7 +77,7 @@ const MappingDepositModal = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1500
         }}>
             <div style={{
                 backgroundColor: 'white',

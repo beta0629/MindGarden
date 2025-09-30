@@ -138,7 +138,7 @@ const MappingPaymentModal = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
+            zIndex: 2000,
             '--input-bg': '#ffffff',
             '--input-color': '#333333',
             '--input-border': '#e1e8ed'

@@ -105,15 +105,15 @@ const MappingPaymentModal = ({
             });
 
             if (response.success) {
-                notificationManager.success('✅ 입금 확인 완료! ERP 시스템에 상담료 수입이 자동 등록되었습니다.');
+                notificationManager.success('✅ 결제 확인 완료! ERP 시스템에 미수금 거래가 자동 등록되었습니다.');
                 onPaymentConfirmed?.(mapping.id);
                 onClose();
             } else {
-                notificationManager.error('입금 확인에 실패했습니다.');
+                notificationManager.error('결제 확인에 실패했습니다.');
             }
         } catch (error) {
-            console.error('입금 확인 실패:', error);
-            notificationManager.error('입금 확인에 실패했습니다.');
+            console.error('결제 확인 실패:', error);
+            notificationManager.error('결제 확인에 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -157,7 +157,7 @@ const MappingPaymentModal = ({
                     fontSize: '18px',
                     fontWeight: '600'
                 }}>
-                    💰 입금 확인
+                    💰 결제 확인
                 </h3>
 
                 <div style={{ marginBottom: '16px' }}>

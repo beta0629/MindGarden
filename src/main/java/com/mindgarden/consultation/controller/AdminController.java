@@ -3050,58 +3050,6 @@ public class AdminController {
         }
     }
 
-    /**
-     * 상담사 목록 조회 (전문분야 관리용)
-     */
-    @GetMapping("/consultants")
-    public ResponseEntity<Map<String, Object>> getConsultants(HttpSession session) {
-        try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                    "success", false,
-                    "message", "인증이 필요합니다."
-                ));
-            }
-
-            // 권한 체크
-            if (!dynamicPermissionService.hasPermission(currentUser, "CONSULTANT_MANAGE")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                    "success", false,
-                    "message", "상담사 관리 권한이 없습니다."
-                ));
-            }
-
-            List<User> consultants = userService.findByRole(UserRole.CONSULTANT.name());
-            
-            List<Map<String, Object>> consultantData = consultants.stream()
-                .map(consultant -> {
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("id", consultant.getId());
-                    data.put("name", consultant.getName());
-                    data.put("username", consultant.getUsername());
-                    data.put("email", consultant.getEmail());
-                    data.put("specialty", consultant.getSpecialty());
-                    data.put("isActive", consultant.getIsActive());
-                    return data;
-                })
-                .collect(Collectors.toList());
-
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", consultantData,
-                "count", consultantData.size(),
-                "message", "상담사 목록 조회 완료"
-            ));
-
-        } catch (Exception e) {
-            log.error("상담사 목록 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "success", false,
-                "message", "상담사 목록 조회 중 오류가 발생했습니다: " + e.getMessage()
-            ));
-        }
-    }
 
     /**
      * 상담사 전문분야 업데이트

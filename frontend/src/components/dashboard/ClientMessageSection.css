@@ -300,7 +300,7 @@
   }
   
   .message-detail-modal {
-    margin: 10px;
+    margin: var(--spacing-sm);
     max-height: 90vh;
   }
   

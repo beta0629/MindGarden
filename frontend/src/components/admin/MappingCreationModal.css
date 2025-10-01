@@ -323,7 +323,7 @@
     background-color: #f9fafb;
     border-radius: 12px;
     padding: var(--spacing-lg);
-    margin: 24px 0;
+    margin: var(--spacing-xl) 0;
     text-align: left;
 }
 
@@ -430,7 +430,7 @@
 @media (max-width: 768px) {
     .mapping-modal {
         width: 95%;
-        margin: 20px;
+        margin: var(--spacing-base);
         max-height: 98vh;
         min-height: 600px;
     }

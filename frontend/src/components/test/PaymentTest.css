@@ -172,7 +172,7 @@
   padding: 20px;
   background: #f8f9fa;
   border-radius: 8px;
-  margin: 20px 0;
+  margin: var(--spacing-base) 0;
 }
 
 .spinner {
@@ -265,7 +265,7 @@
   background: #f8f9fa;
   padding: 15px;
   border-radius: 4px;
-  margin: 10px 0;
+  margin: var(--spacing-sm) 0;
   overflow-x: auto;
 }
 
@@ -282,7 +282,7 @@
   color: #721c24;
   padding: 10px;
   border-radius: 4px;
-  margin: 10px 0;
+  margin: var(--spacing-sm) 0;
   border: 1px solid #f5c6cb;
 }
 

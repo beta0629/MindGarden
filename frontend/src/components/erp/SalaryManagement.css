@@ -332,7 +332,7 @@
 }
 
 .profile-info p {
-    margin: 4px 0;
+    margin: var(--spacing-xs) 0;
     color: #6c757d;
     font-size: var(--font-size-sm);
 }

@@ -315,7 +315,7 @@
 @media (max-width: 768px) {
     .vacation-management-modal {
         width: 95%;
-        margin: 20px;
+        margin: var(--spacing-base);
     }
     
     .modal-content {

@@ -62,7 +62,7 @@
 .card-subtitle {
   font-size: var(--font-size-sm);
   color: var(--ios-text-secondary);
-  margin: 6px 0 0 0;
+  margin: var(--spacing-xs) 0 0 0;
   font-weight: var(--font-weight-medium);
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
   font-family: var(--font-family-ios);

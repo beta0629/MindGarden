@@ -603,7 +603,7 @@
 }
 
 .form-agreement {
-    margin: 24px 0;
+    margin: var(--spacing-xl) 0;
 }
 
 .checkbox-wrapper {

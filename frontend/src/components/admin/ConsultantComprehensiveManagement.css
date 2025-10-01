@@ -195,7 +195,7 @@
     background: var(--color-background-primary);
     color: var(--color-text-primary);
     padding: var(--spacing-xs) var(--spacing-sm);
-    margin: 2px 0;
+    margin: var(--spacing-xs) 0;
     border-radius: var(--border-radius-sm);
     font-size: var(--font-size-sm);
     line-height: 1.5;

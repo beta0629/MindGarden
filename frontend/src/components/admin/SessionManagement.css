@@ -1,17 +1,17 @@
 /* 내담자 회기 관리 스타일 */
 .session-mgmt-container {
-    padding: 20px;
+    padding: var(--spacing-base);
     max-width: 1200px;
     margin: 0 auto;
 }
 
 .session-mgmt-header {
-    margin-bottom: 30px;
+    margin-bottom: var(--spacing-xl);
 }
 
 .session-mgmt-header h2 {
     color: #2c3e50;
-    margin-bottom: 10px;
+    margin-bottom: var(--spacing-sm);
     font-size: var(--font-size-xxl);
     font-weight: 600;
 }
@@ -26,7 +26,7 @@
 .session-mgmt-action-buttons {
     display: flex;
     gap: 15px;
-    margin-bottom: 25px;
+    margin-bottom: var(--spacing-xl);
 }
 
 .session-mgmt-btn {
@@ -72,7 +72,7 @@
 .session-mgmt-search-filters {
     display: flex;
     gap: 15px;
-    margin-bottom: 25px;
+    margin-bottom: var(--spacing-xl);
     align-items: center;
 }
 
@@ -217,7 +217,7 @@
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    padding: 20px;
+    padding: var(--spacing-base);
 }
 
 .session-mgmt-modal-content {
@@ -234,7 +234,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: var(--spacing-base);
     border-bottom: 1px solid #e1e8ed;
 }
 
@@ -263,7 +263,7 @@
 }
 
 .session-mgmt-modal-body {
-    padding: 20px;
+    padding: var(--spacing-base);
 }
 
 .session-mgmt-form-group {
@@ -306,7 +306,7 @@
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    padding: 20px;
+    padding: var(--spacing-base);
     border-top: 1px solid #e1e8ed;
 }
 
@@ -344,7 +344,7 @@
 .session-mgmt-client-selection-section {
     background: white;
     border-radius: 12px;
-    padding: 20px;
+    padding: var(--spacing-base);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
 }
@@ -399,7 +399,7 @@
 .session-mgmt-selected-client-info {
     background: white;
     border-radius: 12px;
-    padding: 20px;
+    padding: var(--spacing-base);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
 }
@@ -407,7 +407,7 @@
 .session-mgmt-mapping-info {
     background: #f8f9fa;
     border-radius: 8px;
-    padding: 20px;
+    padding: var(--spacing-base);
 }
 
 .session-mgmt-mapping-details {
@@ -418,7 +418,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: var(--spacing-sm);
 }
 
 .session-mgmt-label {
@@ -453,7 +453,7 @@
 .session-mgmt-all-mappings-section {
     background: white;
     border-radius: 12px;
-    padding: 20px;
+    padding: var(--spacing-base);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -507,7 +507,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: var(--spacing-base);
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border-bottom: 1px solid #dee2e6;
 }
@@ -531,7 +531,7 @@
 
 /* 카드 내용 */
 .session-mgmt-card-content {
-    padding: 20px;
+    padding: var(--spacing-base);
 }
 
 .session-mgmt-info-row {
@@ -568,7 +568,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 15px;
-    margin: 20px 0;
+    margin: var(--spacing-base) 0;
     padding: 15px;
     background: #f8f9fa;
     border-radius: 8px;
@@ -642,7 +642,7 @@
 
 /* 내담자 선택 섹션 */
 .session-mgmt-client-selection-section {
-    margin-bottom: 30px;
+    margin-bottom: var(--spacing-xl);
 }
 
 .session-mgmt-client-selection-header {
@@ -727,7 +727,7 @@
     background: white;
     border: 2px solid #e9ecef;
     border-radius: 12px;
-    padding: 20px;
+    padding: var(--spacing-base);
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
@@ -838,12 +838,12 @@
 .session-mgmt-extensions-section {
     background: white;
     border-radius: 12px;
-    padding: 20px;
+    padding: var(--spacing-base);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .session-mgmt-extensions-header {
-    margin-bottom: 25px;
+    margin-bottom: var(--spacing-xl);
 }
 
 .session-mgmt-extensions-header h3 {
@@ -902,7 +902,7 @@
 }
 
 .session-mgmt-extension-card .session-mgmt-card-content {
-    padding: 20px;
+    padding: var(--spacing-base);
 }
 
 .session-mgmt-extension-card .session-mgmt-card-actions {

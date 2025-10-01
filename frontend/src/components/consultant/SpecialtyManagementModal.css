@@ -391,7 +391,7 @@
     .specialty-management-modal {
         width: 95%;
         max-height: 95vh;
-        margin: 10px;
+        margin: var(--spacing-sm);
     }
     
     .specialty-management-modal-content {

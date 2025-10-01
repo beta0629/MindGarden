@@ -288,7 +288,7 @@
 /* 알림 */
 .alert {
   padding: 15px;
-  margin: 20px 0;
+  margin: var(--spacing-base) 0;
   border: 1px solid transparent;
   border-radius: 4px;
 }

@@ -166,7 +166,7 @@
 .simple-hamburger-divider {
   height: 2px;
   background: linear-gradient(90deg, transparent, #e9ecef, transparent);
-  margin: 24px 16px;
+  margin: var(--spacing-xl) var(--spacing-md);
   border-radius: 1px;
 }
 

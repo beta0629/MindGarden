@@ -305,7 +305,7 @@
     .erp-report-modal {
         width: 95%;
         max-height: 95vh;
-        margin: 10px;
+        margin: var(--spacing-sm);
     }
     
     .erp-report-modal-content {

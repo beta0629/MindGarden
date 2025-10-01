@@ -116,7 +116,7 @@
 @media (max-width: 768px) {
   .modal-container {
     width: 95%;
-    margin: 20px;
+    margin: var(--spacing-base);
     max-height: 98vh;
     min-height: 300px;
   }

@@ -144,7 +144,7 @@
     background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
     border-radius: 12px;
     border: 2px solid #ffc107;
-    margin: 20px 0;
+    margin: var(--spacing-base) 0;
 }
 
 .no-clients-icon {

@@ -17,7 +17,7 @@
   color: #374151;
   font-size: var(--font-size-xl);
   font-weight: 600;
-  margin: 32px 0 16px 0;
+  margin: var(--spacing-xxl) 0 var(--spacing-md) 0;
   border-bottom: 2px solid #e5e7eb;
   padding-bottom: 8px;
 }

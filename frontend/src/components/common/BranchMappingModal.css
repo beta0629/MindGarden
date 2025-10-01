@@ -200,7 +200,7 @@
 /* 반응형 디자인 */
 @media (max-width: 640px) {
   .branch-mapping-modal {
-    margin: 10px;
+    margin: var(--spacing-sm);
     max-width: none;
   }
   

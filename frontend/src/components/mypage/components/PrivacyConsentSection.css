@@ -171,7 +171,7 @@
 }
 
 .consent-notice .alert p {
-  margin: 8px 0 0 0;
+  margin: var(--spacing-sm) 0 0 0;
   font-size: var(--font-size-sm);
 }
 

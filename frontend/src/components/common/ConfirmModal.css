@@ -177,7 +177,7 @@
 @media (max-width: 480px) {
   .confirm-modal-container {
     width: 95%;
-    margin: 20px;
+    margin: var(--spacing-base);
   }
   
   .confirm-modal-footer {

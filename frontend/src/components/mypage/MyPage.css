@@ -50,7 +50,7 @@
   --mypage-main-radius: 12px;
   --mypage-main-padding: var(--spacing-xxl);
   --mypage-main-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --mypage-section-margin: 30px;
+  --mypage-section-margin: var(--spacing-xl);
   --mypage-section-header-border: 2px solid #f0f2f5;
   --mypage-section-title-color: #333;
   --mypage-section-title-size: 1.8rem;
@@ -107,10 +107,10 @@
   --mypage-login-message-max-width: 500px;
   --mypage-login-title-color: #333;
   --mypage-login-title-size: 24px;
-  --mypage-login-title-margin: 16px;
+  --mypage-login-title-margin: var(--spacing-md);
   --mypage-login-text-color: #666;
   --mypage-login-text-size: 16px;
-  --mypage-login-text-margin: 24px;
+  --mypage-login-text-margin: var(--spacing-xl);
   --mypage-login-actions-gap: 16px;
   --mypage-login-btn-padding: var(--spacing-sm) var(--spacing-xl);
   --mypage-login-btn-radius: 6px;
@@ -140,7 +140,7 @@
   --mypage-link-border: 1px solid #e9ecef;
   --mypage-link-title-color: #333;
   --mypage-link-title-size: 1.2rem;
-  --mypage-link-title-margin: 20px;
+  --mypage-link-title-margin: var(--spacing-base);
   --mypage-link-options-gap: 15px;
   --mypage-link-btn-padding: var(--spacing-sm) var(--spacing-lg);
   --mypage-link-btn-radius: 8px;

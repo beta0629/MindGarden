@@ -175,7 +175,7 @@
 @media (max-width: 768px) {
   .consultation-log-modal {
     width: 98%;
-    margin: 10px;
+    margin: var(--spacing-sm);
   }
   
   .form-sections {

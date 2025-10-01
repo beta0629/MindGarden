@@ -246,7 +246,7 @@
 @media (max-width: 768px) {
   .salary-config-modal {
     width: 95%;
-    margin: 20px;
+    margin: var(--spacing-base);
   }
   
   .salary-config-modal-header {

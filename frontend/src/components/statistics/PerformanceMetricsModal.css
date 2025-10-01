@@ -386,7 +386,7 @@
     .performance-metrics-modal {
         width: 95%;
         max-height: 95vh;
-        margin: 10px;
+        margin: var(--spacing-sm);
     }
     
     .performance-metrics-modal-content {

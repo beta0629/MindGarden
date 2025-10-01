@@ -1661,7 +1661,7 @@ const styles = `
 }
 
 .tooltip-content p {
-    margin: 8px 0;
+    margin: 'var(--spacing-sm) 0',
     font-size: 14px;
     color: #374151;
 }

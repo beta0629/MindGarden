@@ -374,7 +374,7 @@
 @media (max-width: 768px) {
     .mapping-edit-modal {
         width: 95%;
-        margin: 20px;
+        margin: var(--spacing-base);
         max-height: 95vh;
     }
     

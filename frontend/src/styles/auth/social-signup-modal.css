@@ -285,7 +285,7 @@
   .social-signup-modal {
     width: 95%;
     max-width: none;
-    margin: 20px;
+    margin: var(--spacing-base);
   }
   
   .modal-body {

@@ -124,7 +124,7 @@
 .card__subtitle {
   font-size: var(--font-size-sm);
   color: var(--ios-text-secondary);
-  margin: 6px 0 0 0;
+  margin: var(--spacing-xs) 0 0 0;
   font-weight: var(--font-weight-medium);
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
   font-family: var(--font-family-ios);
@@ -294,7 +294,7 @@
   margin-top: var(--spacing-sm);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-xs);
   padding: 8px var(--spacing-md);
   border-radius: var(--border-radius-xl);
   backdrop-filter: blur(10px);

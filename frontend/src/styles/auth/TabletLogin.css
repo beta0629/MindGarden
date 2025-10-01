@@ -288,7 +288,7 @@
 .login-divider {
   position: relative;
   text-align: center;
-  margin: 24px 0;
+  margin: var(--spacing-xl) 0;
 }
 
 .login-divider::before {

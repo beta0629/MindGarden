@@ -2,7 +2,7 @@
 
 /* ProfileImageUpload 상수 변수 */
 :root {
-  --profile-image-section-margin: 20px;
+  --profile-image-section-margin: var(--spacing-base);
   --profile-image-size: 150px;
   --profile-image-border: 3px solid #e9ecef;
   --profile-image-hover-border: #007bff;
@@ -17,7 +17,7 @@
   --drag-overlay-color: white;
   --drag-overlay-transition: opacity 0.3s;
   --drag-icon-size: 24px;
-  --drag-icon-margin: 8px;
+  --drag-icon-margin: var(--spacing-sm);
   --drag-text-size: 12px;
   --upload-btn-bottom: 20px;
   --upload-btn-right: 50%;
@@ -34,11 +34,11 @@
   --crop-modal-max-width: 600px;
   --crop-modal-width: 90%;
   --crop-modal-max-height: 80vh;
-  --crop-header-margin: 20px;
+  --crop-header-margin: var(--spacing-base);
   --close-btn-font-size: var(--font-size-xxl);
   --close-btn-color: #6c757d;
   --close-btn-hover-color: #343a40;
-  --crop-container-margin: 20px;
+  --crop-container-margin: var(--spacing-base);
   --crop-frame-border: 2px solid #007bff;
   --crop-handle-size: 10px;
   --crop-handle-bg: #007bff;

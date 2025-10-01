@@ -101,7 +101,7 @@
 
 /* 일정 표시 최적화 */
 .fc-daygrid-event {
-  margin: 1px 0;
+  margin: var(--spacing-xs) 0;
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.8rem;
   line-height: 1.2;
@@ -140,7 +140,7 @@
 
 /* 시간별 뷰 최적화 */
 .fc-timegrid-event {
-  margin: 1px 2px;
+  margin: var(--spacing-xs) var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-md);
   font-size: 0.85rem;
   border-radius: 4px;
@@ -445,7 +445,7 @@ textarea {
   
   .modal-content {
     width: 95%;
-    margin: 20px;
+    margin: var(--spacing-base);
   }
   
   form {

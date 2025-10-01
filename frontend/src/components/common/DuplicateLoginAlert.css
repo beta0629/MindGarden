@@ -208,7 +208,7 @@
 /* 반응형 디자인 */
 @media (max-width: 480px) {
     .duplicate-login-alert {
-        margin: 20px;
+        margin: var(--spacing-base);
         width: calc(100% - 40px);
     }
     

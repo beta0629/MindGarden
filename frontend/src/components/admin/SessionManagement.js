@@ -1005,11 +1005,6 @@ const SessionManagement = () => {
                                     value={mappingSearchTerm}
                                     onChange={(e) => setMappingSearchTerm(e.target.value)}
                                     className="session-mgmt-search-input"
-                                        padding: '8px 12px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '6px',
-                                        fontSize: 'var(--font-size-sm)',
-                                        outline: 'none',
                                         transition: 'border-color 0.2s ease'
                                     }}
                                     onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
@@ -1020,11 +1015,6 @@ const SessionManagement = () => {
                                 value={mappingFilterStatus}
                                 onChange={(e) => setMappingFilterStatus(e.target.value)}
                                 className="session-mgmt-status-select"
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '6px',
-                                    fontSize: 'var(--font-size-sm)',
-                                    backgroundColor: 'white',
-                                    minWidth: '120px',
                                     outline: 'none',
                                     cursor: 'pointer',
                                     transition: 'border-color 0.2s ease'

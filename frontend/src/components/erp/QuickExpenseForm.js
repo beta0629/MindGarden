@@ -202,11 +202,6 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
           <button
             onClick={onClose}
             className="quick-expense-close-btn"
-              border: '1px solid #ddd',
-              borderRadius: '5px',
-              backgroundColor: 'white',
-              color: '#666',
-              cursor: 'pointer',
               fontSize: 'var(--font-size-sm)'
             }}
           >

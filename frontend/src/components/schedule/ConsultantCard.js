@@ -223,114 +223,35 @@ const ConsultantCardNew = ({
             <div className="consultant-card-info">
                 <h5 className="consultant-card-name">{consultant.name}</h5>
                 <p className="consultant-card-email">{consultant.email || '이메일 없음'}</p>
-                <p style={{
-                    fontSize: 'var(--font-size-sm)',
-                    color: '#6c757d',
-                    margin: '0',
-                    fontWeight: '400',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
-                    textAlign: 'left'
-                }}>{consultant.phone || '전화번호 없음'}</p>
-                <p style={{
-                    fontSize: 'var(--font-size-xs)',
-                    color: '#6c757d',
-                    fontWeight: '400',
-                    margin: '0',
-                    fontStyle: 'italic',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
-                    textAlign: 'left'
-                }}>{getSpecialtyText()}</p>
+                <p className="consultant-card-phone">{consultant.phone || '전화번호 없음'}</p>
+                <p className="consultant-card-specialty">{getSpecialtyText()}</p>
                 
                 {/* 상태 및 등록일 */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    gap: '12px',
-                    marginTop: '8px',
-                    marginLeft: '16px',
-                    alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    textAlign: 'left'
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontSize: 'var(--font-size-xs)',
-                        fontWeight: '600',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        background: getAvailabilityClass() === 'available' ? '#d4edda' : 
-                                   getAvailabilityClass() === 'busy' ? '#fff3cd' : '#f8d7da',
-                        color: getAvailabilityClass() === 'available' ? '#28a745' : 
-                               getAvailabilityClass() === 'busy' ? '#856404' : '#dc3545',
-                        minWidth: '60px',
-                        justifyContent: 'center',
-                        border: getAvailabilityClass() === 'available' ? '1px solid #c3e6cb' : 
-                                getAvailabilityClass() === 'busy' ? '1px solid #ffeaa7' : '1px solid #f5c6cb'
-                    }}>
-                        <div style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            background: 'currentColor',
-                            boxShadow: '0 0 4px rgba(0, 0, 0, 0.2)'
-                        }}></div>
+                <div className="consultant-card-status-row">
+                    <div className={`consultant-card-status consultant-card-status--${getAvailabilityClass()}`}>
+                        <div className="consultant-card-status-dot"></div>
                         {getAvailabilityText()}
                     </div>
-                    <p style={{
-                        fontSize: 'var(--font-size-xs)',
-                        color: '#6c757d',
-                        fontWeight: '400',
-                        margin: '0',
-                        textAlign: 'left'
-                    }}>
+                    <p className="consultant-card-created-date">
                         등록일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '2025. 1. 5.'}
                     </p>
                 </div>
                 
                 {/* 상담 가능 시간 정보 */}
                 {getAvailabilityInfo() && getAvailabilityInfo().length > 0 && (
-                    <div style={{
-                        marginTop: '12px',
-                        padding: '8px 12px',
-                        background: '#f8f9fa',
-                        borderRadius: '8px',
-                        border: '1px solid #e9ecef'
-                    }}>
-                        <div style={{
-                            fontSize: 'var(--font-size-xs)',
-                            fontWeight: '600',
-                            color: '#495057',
-                            marginBottom: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                        }}>
+                    <div className="consultant-card-availability">
+                        <div className="consultant-card-availability-title">
                             <span>🕐</span>
                             상담 가능 시간
                         </div>
-                        <div style={{
-                            fontSize: 'var(--font-size-xs)',
-                            color: '#6c757d',
-                            lineHeight: '1.4'
-                        }}>
+                        <div className="consultant-card-availability-times">
                             {getAvailabilityInfo().slice(0, 3).map((info, index) => (
-                                <div key={index} style={{ marginBottom: '2px' }}>
+                                <div key={index} className="consultant-card-availability-time">
                                     {info}
                                 </div>
                             ))}
                             {getAvailabilityInfo().length > 3 && (
-                                <div style={{ 
-                                    color: '#999',
-                                    fontStyle: 'italic'
-                                }}>
+                                <div className="consultant-card-availability-more">
                                     +{getAvailabilityInfo().length - 3}개 더
                                 </div>
                             )}
@@ -342,19 +263,6 @@ const ConsultantCardNew = ({
             {/* 선택 표시 */}
             {selected && (
                 <div className="consultant-card-selected-badge">
-                    right: '8px',
-                    width: '24px',
-                    height: '24px',
-                    background: '#28a745',
-                    color: '#ffffff',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 'var(--font-size-sm)',
-                    fontWeight: '700',
-                    animation: 'selectionPulse 0.3s ease'
-                }}>
                     ✓
                 </div>
             )}

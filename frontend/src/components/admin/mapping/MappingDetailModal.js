@@ -60,14 +60,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
         
         const config = statusConfig[status] || { label: status || '알 수 없음', color: '#6c757d' };
         return (
-            <span style={{
-                padding: '4px 8px',
-                borderRadius: '4px',
-                fontSize: 'var(--font-size-xs)',
-                fontWeight: 'bold',
-                color: 'white',
-                backgroundColor: config.color
-            }}>
+            <span className="mapping-detail-status-badge" data-badge-bg={config.color}>
                 {config.label}
             </span>
         );
@@ -82,14 +75,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
         
         const config = statusConfig[paymentStatus] || { label: paymentStatus || '알 수 없음', color: '#6c757d' };
         return (
-            <span style={{
-                padding: '4px 8px',
-                borderRadius: '4px',
-                fontSize: 'var(--font-size-xs)',
-                fontWeight: 'bold',
-                color: 'white',
-                backgroundColor: config.color
-            }}>
+            <span className="mapping-detail-payment-badge" data-badge-bg={config.color}>
                 {config.label}
             </span>
         );

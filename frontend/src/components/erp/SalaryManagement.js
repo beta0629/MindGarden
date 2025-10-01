@@ -568,8 +568,7 @@ const SalaryManagement = () => {
                                         <strong>실지급액:</strong> ₩{previewResult.netSalary?.toLocaleString() || 0}
                                     </div>
                                 </div>
-                                <div style={{ 
-                                    marginTop: '12px', 
+                                <div className="salary-management-preview-section" 
                                     padding: '8px', 
                                     backgroundColor: '#fff3cd', 
                                     border: '1px solid #ffeaa7',

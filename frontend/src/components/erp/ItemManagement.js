@@ -301,7 +301,7 @@ const ItemManagement = () => {
                     재고: {item.stockQuantity}개
                   </div>
                   {item.supplier && (
-                    <div style={{ fontSize: 'var(--font-size-xs)', color: '#999' }}>
+                    <div className="item-management-card-supplier">
                       공급업체: {item.supplier}
                     </div>
                   )}

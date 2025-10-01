@@ -148,8 +148,8 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           gap: '8px',
           marginBottom: '8px'
         }}>
-          <span style={{ fontSize: 'var(--font-size-base)', color: '#7B68EE' }}>↗</span>
-          <span style={{ fontSize: 'var(--font-size-sm)', color: '#495057' }}>{statistics.consultantGrowth || 0}명</span>
+          <span className="detailed-stats-card-growth-icon">↗</span>
+          <span className="detailed-stats-card-growth-value">{statistics.consultantGrowth || 0}명</span>
         </div>
         <div className="detailed-stats-card-growth-label">
           color: '#6c757d',

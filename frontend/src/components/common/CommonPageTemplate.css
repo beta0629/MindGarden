@@ -1,0 +1,41 @@
+/* CommonPageTemplate 스타일 - 새로운 디자인 시스템 적용 */
+
+.common-page-template {
+  min-height: 100vh;
+  font-family: var(--font-family-base);
+  background-color: var(--ios-bg-primary);
+}
+
+.common-page-template.tablet-page {
+  /* 태블릿 페이지 전용 스타일 */
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .common-page-template {
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .common-page-template.tablet-page {
+    max-width: 100%;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .common-page-template {
+    background-color: var(--ios-bg-primary-dark);
+  }
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+  .common-page-template {
+    transition: none;
+  }
+}

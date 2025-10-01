@@ -75,9 +75,7 @@ const Toast = () => {
                     <div className="toast-progress">
                         <div 
                             className="toast-progress-bar"
-                            style={{
-                                animationDuration: `${notification.duration}ms`
-                            }}
+                            data-duration={notification.duration}
                         />
                     </div>
                 </div>

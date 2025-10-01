@@ -568,9 +568,7 @@ const SalaryManagement = () => {
                                         <strong>실지급액:</strong> ₩{previewResult.netSalary?.toLocaleString() || 0}
                                     </div>
                                 </div>
-                                <div className="salary-management-preview-section"
-                                    color: '#856404'
-                                }}>
+                                <div className="salary-management-preview-section">
                                     ⚠️ 실제 급여는 매월 기산일에 배치로 처리됩니다.
                                 </div>
                             </div>

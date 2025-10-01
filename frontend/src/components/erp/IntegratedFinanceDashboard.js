@@ -329,11 +329,6 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className="integrated-finance-tab-btn"
-              padding: '14px 18px',
-              border: 'none',
-              background: activeTab === tab.key 
-                ? 'linear-gradient(135deg, #a8d8ea, #c7ceea)' 
-                : 'transparent',
               color: activeTab === tab.key ? 'white' : '#2c3e50',
               borderRadius: '12px',
               cursor: 'pointer',
@@ -352,11 +347,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       </div>
 
       {/* 콘텐츠 영역 */}
-      <div className="integrated-finance-content"
-        borderRadius: '10px',
-        padding: '20px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-      }}>
+      <div className="integrated-finance-content">
         {activeTab === 'overview' && <OverviewTab data={dashboardData} />}
         {activeTab === 'balance-sheet' && <BalanceSheetTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}
         {activeTab === 'income-statement' && <IncomeStatementTab selectedBranch={selectedBranch} isHQUser={isHQUser} />}

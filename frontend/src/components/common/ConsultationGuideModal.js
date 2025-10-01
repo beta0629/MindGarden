@@ -10,20 +10,9 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
       <div className="consultation-guide-modal" onClick={(e) => e.stopPropagation()}>
         <div 
           className="consultation-guide-header"
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '24px 32px',
-            borderBottom: '1px solid #e9ecef',
-            background: 'linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%)'
-          }}
         >
           <h2 
             className="consultation-guide-title"
-              fontSize: 'var(--font-size-xxl)',
-              fontWeight: '700',
-              color: '#2c3e50',
-              display: 'flex',
-              alignItems: 'center',
               gap: '12px'
             }}
           >

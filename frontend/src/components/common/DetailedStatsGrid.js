@@ -43,19 +43,9 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
   };
 
   return (
-    <div className="detailed-stats-grid"
-      gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-      gap: '28px',
-      margin: '40px 0',
-      padding: '0 8px'
-    }}>
+    <div className="detailed-stats-grid">
       {/* 내담자 현황 */}
       <div className="detailed-stats-card detailed-stats-card--clients"
-        borderRadius: '12px',
-        padding: '24px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        border: '1px solid #D1C4E9',
-        transition: 'all 0.3s ease'
       }}>
         <div style={{
           display: 'flex',

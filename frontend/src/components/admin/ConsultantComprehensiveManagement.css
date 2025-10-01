@@ -68,7 +68,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
     flex-shrink: 0;
 }
@@ -79,7 +79,7 @@
 }
 
 .consultant-comp-consultant-name {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
     color: #1f2937;
     margin: 0 0 4px 0;
@@ -89,7 +89,7 @@
 }
 
 .consultant-comp-consultant-email {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     color: #6b7280;
     margin: 0 0 2px 0;
     white-space: nowrap;
@@ -98,7 +98,7 @@
 }
 
 .consultant-comp-consultant-phone {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6b7280;
     margin: 0 0 4px 0;
     white-space: nowrap;
@@ -107,7 +107,7 @@
 }
 
 .consultant-comp-consultant-specialty {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #374151;
     margin: 0 0 4px 0;
     white-space: normal;
@@ -122,7 +122,7 @@
 }
 
 .consultant-comp-consultant-date {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     color: #6b7280;
     margin: 0;
 }
@@ -138,7 +138,7 @@
 
 .consultant-comp-consultant-actions .btn {
     padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     border-radius: 6px;
     border: none;
@@ -197,7 +197,7 @@
     padding: var(--spacing-xs) var(--spacing-sm);
     margin: 2px 0;
     border-radius: var(--border-radius-sm);
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     line-height: 1.5;
 }
 
@@ -218,7 +218,7 @@
     border-radius: 8px;
     background: #ffffff;
     color: #374151;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-family: inherit;
     box-sizing: border-box;
     transition: all 0.2s ease;
@@ -267,7 +267,7 @@
 }
 
 .consultant-detail-section h4 {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
     color: #1f2937;
     margin: 0 0 16px 0;
@@ -290,7 +290,7 @@
 }
 
 .consultant-detail-label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     color: #6b7280;
     text-transform: uppercase;
@@ -298,7 +298,7 @@
 }
 
 .consultant-detail-value {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #1f2937;
     font-weight: 500;
 }
@@ -313,7 +313,7 @@
 
 .consultant-detail-actions .btn {
     padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     border-radius: 6px;
     border: none;
@@ -377,7 +377,7 @@
 }
 
 .consultant-comp-stat-icon {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     width: 48px;
     height: 48px;
     display: flex;
@@ -394,7 +394,7 @@
 }
 
 .consultant-comp-stat-number {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     font-weight: 700;
     color: #1f2937;
     margin: 0 0 4px 0;
@@ -402,7 +402,7 @@
 }
 
 .consultant-comp-stat-label {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #6b7280;
     margin: 0;
     font-weight: 500;
@@ -414,7 +414,7 @@
 }
 
 .consultant-comp-section-header h3 {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
     color: #1f2937;
     margin: 0 0 8px 0;
@@ -430,7 +430,7 @@
     padding: var(--spacing-sm) var(--spacing-md);
     border: 1px solid #d1d5db;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: all 0.2s;
     background: white;
 }
@@ -455,7 +455,7 @@
 }
 
 .consultant-comp-title {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     font-weight: 700;
     color: #1f2937;
     margin: 0 0 8px 0;
@@ -467,7 +467,7 @@
 .consultant-comp-description {
     color: #6b7280;
     margin: 0 0 20px 0;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 /* 메인 탭 버튼 */
@@ -481,7 +481,7 @@
     padding: var(--spacing-sm) var(--spacing-lg);
     border: none;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
@@ -513,14 +513,14 @@
 .basic-management-content h3 {
     color: #1f2937;
     margin: 0 0 8px 0;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     font-weight: 600;
 }
 
 .basic-management-content p {
     color: #6b7280;
     margin: 0 0 20px 0;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .basic-actions {
@@ -533,7 +533,7 @@
     padding: var(--spacing-sm) var(--spacing-md);
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
@@ -617,7 +617,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     font-weight: 600;
     flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
@@ -629,7 +629,7 @@
 }
 
 .basic-management-tab .consultant-basic-info .consultant-name {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 700;
     color: #1f2937;
     margin: 0 0 6px 0;
@@ -640,7 +640,7 @@
 }
 
 .basic-management-tab .consultant-basic-info .consultant-email {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #6b7280;
     margin: 0;
     white-space: nowrap;
@@ -671,7 +671,7 @@
 .basic-management-tab .consultant-specialty-display div,
 .basic-management-tab .consultants-cards-grid .consultant-card .consultant-specialty-display,
 .basic-management-tab .consultants-cards-container .consultant-specialty-display {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #374151;
     line-height: 1.6;
     background: #f0f9ff;
@@ -716,7 +716,7 @@
 div[class*="consultant-specialty-display"] div,
 .basic-management-tab .consultants-cards-grid .consultant-card .consultant-specialty-display div,
 .basic-management-tab .consultants-cards-container .consultant-specialty-display div {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #374151;
     line-height: 1.6;
     background: #f0f9ff;
@@ -772,13 +772,13 @@ div[class*="consultant-specialty-display"] div,
 }
 
 .basic-management-tab .join-label {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     color: #6b7280;
     font-weight: 500;
 }
 
 .basic-management-tab .join-value {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     color: #374151;
     font-weight: 600;
 }
@@ -793,7 +793,7 @@ div[class*="consultant-specialty-display"] div,
 
 .basic-management-tab .btn-sm {
     padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     border-radius: 8px;
     border: none;
@@ -857,19 +857,19 @@ div[class*="consultant-specialty-display"] div,
     .basic-management-tab .consultant-avatar-small {
         width: 40px;
         height: 40px;
-        font-size: 16px;
+        font-size: var(--font-size-base);
     }
     
     .basic-management-tab .consultant-basic-info .consultant-name {
-        font-size: 15px;
+        font-size: var(--font-size-md);
     }
     
     .basic-management-tab .consultant-basic-info .consultant-email {
-        font-size: 12px;
+        font-size: var(--font-size-xs);
     }
     
     .basic-management-tab .consultant-specialty-display {
-        font-size: 12px;
+        font-size: var(--font-size-xs);
         padding: var(--spacing-xs) var(--spacing-sm);
     }
 }
@@ -901,26 +901,26 @@ div[class*="consultant-specialty-display"] div,
     .basic-management-tab .consultant-avatar-small {
         width: 36px;
         height: 36px;
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
     
     .basic-management-tab .consultant-basic-info .consultant-name {
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
     
     .basic-management-tab .consultant-basic-info .consultant-email {
-        font-size: 11px;
+        font-size: var(--font-size-xs);
     }
     
     .basic-management-tab .consultant-specialty-display {
-        font-size: 11px;
+        font-size: var(--font-size-xs);
         padding: var(--spacing-xs) var(--spacing-sm);
         min-height: 36px;
     }
     
     .basic-management-tab .join-label,
     .basic-management-tab .join-value {
-        font-size: 11px;
+        font-size: var(--font-size-xs);
     }
 }
 
@@ -944,19 +944,19 @@ div[class*="consultant-specialty-display"] div,
     .basic-management-tab .consultant-avatar-small {
         width: 48px;
         height: 48px;
-        font-size: 18px;
+        font-size: var(--font-size-lg);
     }
     
     .basic-management-tab .consultant-basic-info .consultant-name {
-        font-size: 16px;
+        font-size: var(--font-size-base);
     }
     
     .basic-management-tab .consultant-basic-info .consultant-email {
-        font-size: 13px;
+        font-size: var(--font-size-sm);
     }
     
     .basic-management-tab .consultant-specialty-display {
-        font-size: 13px;
+        font-size: var(--font-size-sm);
         padding: var(--spacing-sm) var(--spacing-md);
         min-height: 80px;
         max-height: 100px;
@@ -964,7 +964,7 @@ div[class*="consultant-specialty-display"] div,
     
     .basic-management-tab .btn-sm {
         padding: var(--spacing-sm) var(--spacing-sm);
-        font-size: 12px;
+        font-size: var(--font-size-xs);
     }
 }
 
@@ -987,19 +987,19 @@ div[class*="consultant-specialty-display"] div,
     .basic-management-tab .consultant-avatar-small {
         width: 40px;
         height: 40px;
-        font-size: 16px;
+        font-size: var(--font-size-base);
     }
     
     .basic-management-tab .consultant-basic-info .consultant-name {
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
     
     .basic-management-tab .consultant-basic-info .consultant-email {
-        font-size: 12px;
+        font-size: var(--font-size-xs);
     }
     
     .basic-management-tab .consultant-specialty-display {
-        font-size: 12px;
+        font-size: var(--font-size-xs);
         padding: var(--spacing-sm) var(--spacing-sm);
         min-height: 70px;
         max-height: 90px;
@@ -1011,12 +1011,12 @@ div[class*="consultant-specialty-display"] div,
     
     .basic-management-tab .join-label,
     .basic-management-tab .join-value {
-        font-size: 11px;
+        font-size: var(--font-size-xs);
     }
     
     .basic-management-tab .btn-sm {
         padding: var(--spacing-xs) var(--spacing-sm);
-        font-size: 11px;
+        font-size: var(--font-size-xs);
     }
 }
 
@@ -1037,15 +1037,15 @@ div[class*="consultant-specialty-display"] div,
     .consultant-comp-stat-icon {
         width: 40px;
         height: 40px;
-        font-size: 20px;
+        font-size: var(--font-size-xl);
     }
     
     .consultant-comp-stat-number {
-        font-size: 20px;
+        font-size: var(--font-size-xl);
     }
     
     .consultant-comp-stat-label {
-        font-size: 12px;
+        font-size: var(--font-size-xs);
     }
     
     .consultant-comp-consultant-list-section,
@@ -1085,15 +1085,15 @@ div[class*="consultant-specialty-display"] div,
     .consultant-comp-stat-icon {
         width: 36px;
         height: 36px;
-        font-size: 18px;
+        font-size: var(--font-size-lg);
     }
     
     .consultant-comp-stat-number {
-        font-size: 18px;
+        font-size: var(--font-size-lg);
     }
     
     .consultant-comp-stat-label {
-        font-size: 11px;
+        font-size: var(--font-size-xs);
     }
     
     .consultant-comp-consultant-list-section,
@@ -1109,23 +1109,23 @@ div[class*="consultant-specialty-display"] div,
     .consultant-comp-consultant-avatar {
         width: 40px;
         height: 40px;
-        font-size: 16px;
+        font-size: var(--font-size-base);
     }
     
     .consultant-comp-consultant-name {
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
     
     .consultant-comp-consultant-email,
     .consultant-comp-consultant-phone {
-        font-size: 11px;
+        font-size: var(--font-size-xs);
     }
     
     .consultant-comp-consultant-specialty {
-        font-size: 11px;
+        font-size: var(--font-size-xs);
     }
     
     .consultant-comp-consultant-date {
-        font-size: 10px;
+        font-size: var(--font-size-xs);
     }
 }

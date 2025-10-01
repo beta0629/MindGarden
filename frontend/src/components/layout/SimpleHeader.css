@@ -48,7 +48,7 @@
   --header-branch-size: 11px;
   --header-branch-size-mobile: 10px;
   --header-loading-size: 14px;
-  --header-button-font-size: 14px;
+  --header-button-font-size: var(--font-size-sm);
   --header-button-font-size-mobile: 13px;
   --header-icon-size: 16px;
   --header-icon-size-large: 18px;
@@ -254,7 +254,7 @@
   color: white;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 700;
   margin-right: 10px;
   position: fixed; /* fixed로 강제 */
@@ -288,7 +288,7 @@
 }
 
 .simple-logout-button i {
-  font-size: 16px;
+  font-size: var(--font-size-base);
 }
 
 /* 햄버거 메뉴 버튼 */

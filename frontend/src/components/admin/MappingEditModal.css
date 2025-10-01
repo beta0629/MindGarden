@@ -55,7 +55,7 @@
 .close-btn {
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     color: #6c757d;
     cursor: pointer;
     padding: 0;
@@ -135,7 +135,7 @@
     padding: var(--spacing-sm) var(--spacing-md);
     border: 2px solid #e9ecef;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: all 0.2s ease;
     background-color: white;
 }
@@ -260,7 +260,7 @@
 
 /* 필드 설명 */
 .field-description {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
     margin-top: 4px;
     font-style: italic;
@@ -270,7 +270,7 @@
 .error-message {
     display: block;
     color: #dc3545;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     margin-top: 4px;
     font-weight: 500;
 }
@@ -288,7 +288,7 @@
 }
 
 .warning-icon {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     flex-shrink: 0;
     margin-top: 2px;
 }
@@ -311,7 +311,7 @@
 
 .warning-content li {
     margin-bottom: 4px;
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     line-height: 1.4;
 }
 
@@ -334,7 +334,7 @@
     padding: var(--spacing-sm) var(--spacing-xl);
     border: none;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;

@@ -41,7 +41,7 @@
 
 .modal-header h3 {
     margin: 0;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     font-weight: 600;
 }
 
@@ -49,7 +49,7 @@
     background: none;
     border: none;
     color: white;
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     cursor: pointer;
     padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: 4px;
@@ -78,7 +78,7 @@
     margin-bottom: 6px;
     font-weight: 600;
     color: #495057;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .form-group input,
@@ -88,7 +88,7 @@
     padding: var(--spacing-sm) var(--spacing-sm);
     border: 2px solid #e9ecef;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background-color: white;
     color: #333;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -157,7 +157,7 @@
 .vacation-form h4 {
     margin: 0 0 20px 0;
     color: #495057;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
 }
 
@@ -173,7 +173,7 @@
     border: none;
     padding: var(--spacing-sm) var(--spacing-xl);
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
@@ -198,7 +198,7 @@
 .existing-vacations h4 {
     margin: 0 0 16px 0;
     color: #495057;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
 }
 
@@ -237,26 +237,26 @@
 .vacation-date {
     font-weight: 600;
     color: #007bff;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     margin-bottom: 4px;
 }
 
 .vacation-type {
     font-weight: 600;
     color: #495057;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     margin-bottom: 4px;
 }
 
 .vacation-time {
     color: #6c757d;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     margin-bottom: 4px;
 }
 
 .vacation-reason {
     color: #495057;
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     line-height: 1.4;
 }
 
@@ -266,7 +266,7 @@
     border: none;
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: 4px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s;
@@ -295,7 +295,7 @@
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: 6px;
     margin-top: 16px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
 }
 
@@ -363,7 +363,7 @@
     background: linear-gradient(135deg, #e3f2fd 0%, #f8f9ff 100%);
     border: none;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
     color: #1976d2;
     text-align: center;
@@ -380,11 +380,11 @@
     border: 1px solid #0ea5e9;
     border-radius: 8px;
     color: #0369a1;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
 }
 
 .consultant-info i {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     color: #0ea5e9;
 }

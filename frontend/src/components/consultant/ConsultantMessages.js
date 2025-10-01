@@ -303,11 +303,7 @@ const ConsultantMessages = () => {
                         </span>
                       </div>
                       
-                      <h4 className="consultant-messages-title" 
-                        color: '#2c3e50', 
-                        marginBottom: '8px',
-                        marginTop: '0'
-                      }}>
+                      <h4 className="consultant-messages-title">
                         {message.title}
                       </h4>
                       

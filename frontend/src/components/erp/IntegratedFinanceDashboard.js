@@ -270,29 +270,12 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             }
           </p>
         </div>
-        <div className="integrated-finance-dropdown-container" style={{ display: 'flex', gap: '10px' }}>
+        <div className="integrated-finance-dropdown-container">
           {isHQUser && (
             <select
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
-              className="integrated-finance-select"
-              style={{
-                padding: '12px 16px',
-                borderRadius: '12px',
-                border: 'none',
-                fontSize: 'var(--font-size-sm)',
-                backgroundColor: 'rgba(255,255,255,0.3)',
-                color: 'white',
-                backdropFilter: 'blur(10px)',
-                cursor: 'pointer',
-                minWidth: '120px',
-                position: 'relative',
-                zIndex: 1,
-                transform: 'translateZ(0)',
-                willChange: 'transform',
-                overflow: 'visible',
-                contain: 'layout style paint'
-              }}
+              className="integrated-finance-select integrated-finance-select--branch"
             >
               <option value="">지점 선택</option>
               {branches.map(branch => (
@@ -305,23 +288,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="integrated-finance-select"
-            style={{
-              padding: '12px 16px',
-              borderRadius: '12px',
-              border: 'none',
-              fontSize: 'var(--font-size-sm)',
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              color: 'white',
-              backdropFilter: 'blur(10px)',
-              cursor: 'pointer',
-              position: 'relative',
-              zIndex: 1,
-              transform: 'translateZ(0)',
-              willChange: 'transform',
-              overflow: 'visible',
-              contain: 'layout style paint'
-            }}
+            className="integrated-finance-select integrated-finance-select--period"
           >
             <option value="daily">일간</option>
             <option value="monthly">월간</option>
@@ -329,52 +296,19 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
           </select>
           <button
             onClick={() => setShowQuickExpenseForm(true)}
-            style={{
-              padding: '12px 20px',
-              background: 'linear-gradient(135deg, #ffb3ba, #ffc1cc)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: '600',
-              boxShadow: '0 4px 15px rgba(255,179,186,0.3)',
-              transition: 'all 0.3s ease'
-            }}
+            className="mg-btn mg-btn--danger mg-btn--sm"
           >
             ⚡ 빠른 지출
           </button>
           <button
             onClick={() => setShowTransactionForm(true)}
-            style={{
-              padding: '12px 20px',
-              background: 'linear-gradient(135deg, #bae7d9, #c7f0db)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: '600',
-              boxShadow: '0 4px 15px rgba(0,184,148,0.3)',
-              transition: 'all 0.3s ease'
-            }}
+            className="mg-btn mg-btn--success mg-btn--sm"
           >
             💰 거래 등록
           </button>
           <button
             onClick={() => window.location.href = '/erp/financial'}
-            style={{
-              padding: '12px 20px',
-              background: 'linear-gradient(135deg, #74b9ff, #0984e3)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: '600',
-              boxShadow: '0 4px 15px rgba(116,185,255,0.3)',
-              transition: 'all 0.3s ease'
-            }}
+            className="mg-btn mg-btn--primary mg-btn--sm"
           >
             📋 상세 내역 보기
           </button>
@@ -383,12 +317,6 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
       {/* 탭 메뉴 */}
       <div className="integrated-finance-tabs">
-        backgroundColor: 'rgba(255,255,255,0.95)',
-        borderRadius: '16px',
-        padding: '8px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-        backdropFilter: 'blur(10px)'
-      }}>
         {[
           { key: 'overview', label: '📈 개요', icon: '📈' },
           { key: 'balance-sheet', label: '⚖️ 대차대조표', icon: '⚖️' },

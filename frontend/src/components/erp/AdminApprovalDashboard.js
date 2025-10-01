@@ -265,13 +265,8 @@ const AdminApprovalDashboard = () => {
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="승인 사유나 추가 코멘트를 입력하세요..."
                 rows="3"
-                className="approval-request-comment-textarea">
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: 'var(--font-size-sm)'
-                }}
-              />
+                  className="approval-request-comment-textarea"
+                />
             </div>
 
             <div style={{ textAlign: 'right' }}>
@@ -330,13 +325,8 @@ const AdminApprovalDashboard = () => {
                 placeholder="거부 사유를 입력하세요..."
                 rows="3"
                 required
-                className="approval-request-comment-textarea">
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: 'var(--font-size-sm)'
-                }}
-              />
+                  className="approval-request-comment-textarea"
+                />
             </div>
 
             <div style={{ textAlign: 'right' }}>

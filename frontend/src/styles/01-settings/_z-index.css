@@ -3,11 +3,16 @@
 :root {
   /* Z-Index 레이어 시스템 */
   --z-base: 0;
+  --z-index-hidden: 0;
+  --z-index-select: 1;
   --z-dropdown: 1000;
+  --z-index-dropdown: 9999;
   --z-sticky: 1020;
   --z-fixed: 1030;
   --z-modal-backdrop: 1040;
+  --z-index-modal-overlay: 10000;
   --z-modal: 1050;
+  --z-index-modal: 10001;
   --z-popover: 1060;
   --z-tooltip: 1070;
   --z-toast: 1080;

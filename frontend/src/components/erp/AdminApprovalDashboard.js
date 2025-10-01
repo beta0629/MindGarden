@@ -213,11 +213,7 @@ const AdminApprovalDashboard = () => {
                   </div>
                 )}
 
-                <div className="approval-request-actions"
-                  gap: '8px', 
-                  justifyContent: 'flex-end',
-                  marginTop: '16px'
-                }}>
+                <div className="approval-request-actions">
                   <ErpButton
                     variant="success"
                     size="small"
@@ -250,11 +246,7 @@ const AdminApprovalDashboard = () => {
           <div>
             <div className="approval-request-details">
               <h4>승인할 구매 요청</h4>
-              <div className="approval-request-info-box" 
-                backgroundColor: '#f8f9fa', 
-                borderRadius: '4px',
-                marginBottom: '16px'
-              }}>
+              <div className="approval-request-info-box">
                 <div><strong>아이템:</strong> {selectedRequest.item?.name}</div>
                 <div><strong>수량:</strong> {selectedRequest.quantity}개</div>
                 <div><strong>총액:</strong> {formatCurrency(selectedRequest.totalAmount)}</div>

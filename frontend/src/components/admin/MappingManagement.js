@@ -628,62 +628,17 @@ const MappingManagement = () => {
 
             {/* 환불 처리 모달 */}
             {showRefundModal && refundMapping && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        backgroundColor: 'white',
-                        borderRadius: '16px',
-                        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
-                        maxWidth: '500px',
-                        width: '90%',
-                        maxHeight: '80vh',
-                        overflow: 'auto'
-                    }}>
+                <div className="mapping-refund-modal-overlay">
+                    <div className="mapping-refund-modal">
                         {/* 모달 헤더 */}
-                        <div style={{
-                            padding: '20px 24px',
-                            borderBottom: '1px solid #e9ecef',
-                            backgroundColor: '#f8f9fa',
-                            borderRadius: '16px 16px 0 0'
-                        }}>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between'
-                            }}>
-                                <h3 style={{
-                                    margin: 0,
-                                    fontSize: 'var(--font-size-lg)',
-                                    fontWeight: '600',
-                                    color: '#343a40'
-                                }}>
+                        <div className="mapping-refund-modal-header">
+                            <div className="mapping-refund-modal-header-content">
+                                <h3 className="mapping-refund-modal-title">
                                     🔄 매핑 환불 처리
                                 </h3>
                                 <button
                                     onClick={handleCloseRefundModal}
-                                    style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        fontSize: 'var(--font-size-xxl)',
-                                        cursor: 'pointer',
-                                        color: '#6c757d',
-                                        padding: '0',
-                                        width: '30px',
-                                        height: '30px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
+                                    className="mapping-refund-modal-close"
                                 >
                                     ×
                                 </button>

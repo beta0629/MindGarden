@@ -39,95 +39,28 @@ const ConsultantFilterNew = ({
     };
 
     return (
-        <div style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px'
-        }}>
+        <div className="consultant-filter">
             {/* 필터 행 */}
-            <div style={{
-                display: 'flex',
-                gap: '16px',
-                alignItems: 'center',
-                flexWrap: 'wrap'
-            }}>
+            <div className="consultant-filter-row">
                 {/* 검색 입력 */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    minWidth: '200px',
-                    flex: '1'
-                }}>
-                    <label style={{
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '600',
-                        color: '#495057',
-                        margin: '0'
-                    }}>검색</label>
+                <div className="consultant-filter-field consultant-filter-field--search">
+                    <label className="consultant-filter-label">검색</label>
                     <input
                         type="text"
-                        style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: 'var(--font-size-sm)',
-                            transition: 'all 0.2s ease',
-                            background: '#ffffff'
-                        }}
+                        className="consultant-filter-input"
                         placeholder={SCHEDULE_MODAL_CONSTANTS.FILTER.SEARCH_PLACEHOLDER}
                         value={filters.search}
                         onChange={handleSearchChange}
-                        onFocus={(e) => {
-                            e.target.style.outline = 'none';
-                            e.target.style.borderColor = '#667eea';
-                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                        }}
-                        onBlur={(e) => {
-                            e.target.style.borderColor = 'transparent';
-                            e.target.style.boxShadow = 'none';
-                        }}
                     />
                 </div>
 
                 {/* 전문분야 선택 */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    minWidth: '150px'
-                }}>
-                    <label style={{
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '600',
-                        color: '#495057',
-                        margin: '0'
-                    }}>전문분야</label>
+                <div className="consultant-filter-field consultant-filter-field--specialty">
+                    <label className="consultant-filter-label">전문분야</label>
                     <select
-                        style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: 'var(--font-size-sm)',
-                            background: '#ffffff',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                        }}
+                        className="consultant-filter-select"
                         value={filters.specialty}
                         onChange={handleSpecialtyChange}
-                        onFocus={(e) => {
-                            e.target.style.outline = 'none';
-                            e.target.style.borderColor = '#667eea';
-                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                        }}
-                        onBlur={(e) => {
-                            e.target.style.borderColor = 'transparent';
-                            e.target.style.boxShadow = 'none';
-                        }}
                     >
                         {SCHEDULE_MODAL_CONSTANTS.SPECIALTIES.map(specialty => (
                             <option key={specialty.value} value={specialty.value}>

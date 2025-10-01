@@ -691,23 +691,23 @@
     max-width: 100%;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
-    transform: none !important;
-    position: relative !important;
-    z-index: 999 !important;
-    font-weight: 500 !important;
-    box-sizing: border-box !important;
-    margin: 0 !important;
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-    vertical-align: baseline !important;
-    text-decoration: none !important;
-    text-shadow: none !important;
-    box-shadow: none !important;
-    outline: none !important;
-    resize: none !important;
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
+    transform: none;
+    position: relative;
+    z-index: 999;
+    font-weight: 500;
+    box-sizing: border-box;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    vertical-align: baseline;
+    text-decoration: none;
+    text-shadow: none;
+    box-shadow: none;
+    outline: none;
+    resize: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 /* 추가 강력한 선택자로 완전 강제 적용 - 텍스트 가로 표시 */
@@ -736,23 +736,23 @@ div[class*="consultant-specialty-display"] div,
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-    transform: none !important;
-    position: relative !important;
-    z-index: 999 !important;
-    font-weight: 500 !important;
-    box-sizing: border-box !important;
-    margin: 0 !important;
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-    vertical-align: baseline !important;
-    text-decoration: none !important;
-    text-shadow: none !important;
-    box-shadow: none !important;
-    outline: none !important;
-    resize: none !important;
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
+    transform: none;
+    position: relative;
+    z-index: 999;
+    font-weight: 500;
+    box-sizing: border-box;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    vertical-align: baseline;
+    text-decoration: none;
+    text-shadow: none;
+    box-shadow: none;
+    outline: none;
+    resize: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 .basic-management-tab .consultant-specialty-display:empty::before {

@@ -1,11 +1,12 @@
 /* ConsultantCard 스타일 - 새로운 디자인 시스템 적용 */
 
-.consultant-card {
+.consultant-card,
+.consultant-card-new {
   min-height: 220px;
   background: var(--ios-bg-primary);
   border-radius: var(--border-radius-lg);
-  padding: var(--spacing-md);
-  border: 2px solid var(--ios-separator);
+  padding: var(--spacing-lg);
+  border: 2px solid var(--ios-border-light);
   cursor: pointer;
   transition: all var(--transition-normal);
   display: flex;
@@ -18,24 +19,82 @@
   box-shadow: var(--shadow-sm);
   margin: 0;
   gap: var(--spacing-md);
-  font-family: var(--font-family-ios);
+  font-family: var(--font-family-base);
 }
 
-.consultant-card--selected {
+.consultant-card--selected,
+.consultant-card-new--selected {
   background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
   border-color: var(--ios-blue);
-  box-shadow: 0 8px 25px rgba(0, 122, 255, 0.2);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
 }
 
-.consultant-card--unavailable {
+.consultant-card--unavailable,
+.consultant-card--disabled,
+.consultant-card-new--disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.consultant-card:hover:not(.consultant-card--selected):not(.consultant-card--unavailable) {
+.consultant-card:hover:not(.consultant-card--selected):not(.consultant-card--unavailable),
+.consultant-card-new:hover:not(.consultant-card-new--selected):not(.consultant-card-new--disabled) {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
   border-color: var(--ios-blue);
+}
+
+.consultant-card-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--border-radius-full);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--ios-text-primary-light);
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  border: 2px solid var(--ios-border-light);
+}
+
+.consultant-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  overflow: visible;
+  justify-content: flex-start;
+  align-items: flex-start;
+  height: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.consultant-card-name {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--ios-text-primary);
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: left;
+}
+
+.consultant-card-email {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin: 0;
+  font-weight: var(--font-weight-regular);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: left;
 }
 
 .consultant-card__profile {

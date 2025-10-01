@@ -212,99 +212,17 @@ const ConsultantCardNew = ({
                 }
             }}
             aria-label={`${consultant.name} 상담사 선택`}
-            style={{
-                minHeight: '220px',
-                background: selected ? 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)' : '#ffffff',
-                borderRadius: '16px',
-                padding: '20px',
-                border: selected ? '2px solid #667eea' : '2px solid #e9ecef',
-                cursor: (() => {
-                    const isFullDayVacation = consultant.isOnVacation && 
-                        (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY');
-                    return (isFullDayVacation || !consultant.available) ? 'not-allowed' : 'pointer';
-                })(),
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'flex-start',
-                alignItems: 'flex-start',
-                textAlign: 'left',
-                position: 'relative',
-                overflow: 'visible',
-                boxShadow: selected ? '0 8px 25px rgba(102, 126, 234, 0.2)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                margin: '0',
-                gap: '16px'
-            }}
-            onMouseEnter={(e) => {
-                if (!selected) {
-                    e.target.style.transform = 'translateY(-4px)';
-                    e.target.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.2)';
-                    e.target.style.borderColor = '#667eea';
-                }
-            }}
-            onMouseLeave={(e) => {
-                if (!selected) {
-                    e.target.style.transform = 'translateY(0)';
-                    e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-                    e.target.style.borderColor = '#e9ecef';
-                }
-            }}
+            className={`consultant-card-new ${selected ? 'consultant-card-new--selected' : ''} ${!consultant.available || (consultant.isOnVacation && (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY')) ? 'consultant-card-new--disabled' : ''}`}
         >
             {/* 상담사 아바타 */}
-            <div style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 'var(--font-size-xl)',
-                fontWeight: '700',
-                color: '#ffffff',
-                flexShrink: '0',
-                boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-                border: '2px solid #e9ecef'
-            }}>
+            <div className="consultant-card-avatar">
                 {getInitial()}
             </div>
 
             {/* 상담사 정보 */}
-            <div style={{
-                flex: '1',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px',
-                overflow: 'visible',
-                justifyContent: 'flex-start',
-                alignItems: 'flex-start',
-                height: '100%',
-                minWidth: '0',
-                textAlign: 'left'
-            }}>
-                <h5 style={{
-                    fontSize: 'var(--font-size-lg)',
-                    fontWeight: '700',
-                    color: '#495057',
-                    margin: '0',
-                    lineHeight: '1.2',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
-                    textAlign: 'left'
-                }}>{consultant.name}</h5>
-                <p style={{
-                    fontSize: 'var(--font-size-sm)',
-                    color: '#6c757d',
-                    margin: '0',
-                    fontWeight: '400',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
-                    textAlign: 'left'
-                }}>{consultant.email || '이메일 없음'}</p>
+            <div className="consultant-card-info">
+                <h5 className="consultant-card-name">{consultant.name}</h5>
+                <p className="consultant-card-email">{consultant.email || '이메일 없음'}</p>
                 <p style={{
                     fontSize: 'var(--font-size-sm)',
                     color: '#6c757d',

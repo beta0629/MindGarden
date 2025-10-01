@@ -225,19 +225,11 @@ const OAuth2Callback = () => {
   
   if (isProcessing) {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        padding: '20px',
-        textAlign: 'center'
-      }}>
-        <div style={{ fontSize: 'var(--font-size-xxl)', marginBottom: '20px' }}>
+      <div className="oauth2-callback-processing">
+        <div className="oauth2-callback-title">
           🔄 로그인 처리 중...
         </div>
-        <div style={{ fontSize: 'var(--font-size-base)', color: '#666' }}>
+        <div className="oauth2-callback-message">
           잠시만 기다려주세요.
         </div>
       </div>
@@ -246,22 +238,14 @@ const OAuth2Callback = () => {
   
   if (error) {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        padding: '20px',
-        textAlign: 'center'
-      }}>
-        <div style={{ fontSize: 'var(--font-size-xxl)', marginBottom: '20px', color: '#e74c3c' }}>
+      <div className="oauth2-callback-error">
+        <div className="oauth2-callback-error-title">
           ❌ 로그인 실패
         </div>
-        <div style={{ fontSize: 'var(--font-size-base)', color: '#666', marginBottom: '20px' }}>
+        <div className="oauth2-callback-error-message">
           {error}
         </div>
-        <div style={{ fontSize: 'var(--font-size-sm)', color: '#999' }}>
+        <div className="oauth2-callback-error-redirect">
           잠시 후 로그인 페이지로 이동합니다...
         </div>
       </div>

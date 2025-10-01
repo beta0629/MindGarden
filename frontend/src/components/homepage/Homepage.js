@@ -387,7 +387,7 @@ const TabletHomepage = () => {
               </div>
             </div>
 
-            <div className={`info-section ${isLoaded ? 'fade-in-up' : ''}`} style={{ animationDelay: '0.6s' }}>
+            <div className={`info-section ${isLoaded ? 'fade-in-up' : ''}`} data-animation-delay="0.6s">
               <div className="info-content">
                 <h3 className="info-title">상담 서비스 이용 안내</h3>
                 <ul className="info-list">

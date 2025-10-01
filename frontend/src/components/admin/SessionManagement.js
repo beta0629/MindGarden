@@ -983,13 +983,7 @@ const SessionManagement = () => {
                     
                     {/* 전체 회기 관리 현황 필터 (특정 내담자 선택 시에는 숨김) */}
                     {!selectedClient && (
-                        <div style={{
-                            display: 'flex',
-                            gap: '15px',
-                            alignItems: 'center',
-                            flexWrap: 'nowrap',
-                            marginTop: '15px'
-                        }}>
+                        <div className="session-management-empty-state">
                             <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
                                 <input
                                     type="text"

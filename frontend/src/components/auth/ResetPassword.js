@@ -132,10 +132,7 @@ const ResetPassword = () => {
             <div className="tablet-container">
               <div className="reset-password-form-container">
                 <div className="reset-password-icon" />
-                <p style={{
-                  fontSize: 'var(--font-size-base)',
-                  color: '#718096'
-                }}>
+                <p className="reset-password-description">
                   토큰을 검증하고 있습니다...
                 </p>
               </div>

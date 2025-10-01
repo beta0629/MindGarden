@@ -1,0 +1,204 @@
+/* HelpPage 스타일 - 새로운 디자인 시스템 적용 */
+
+.help-page {
+    padding: var(--spacing-lg);
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+    min-height: 100vh;
+    font-family: var(--font-family-ios);
+}
+
+.help-page__header {
+    text-align: center;
+    margin-bottom: var(--spacing-xxl);
+    padding: var(--spacing-lg);
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(var(--blur-md));
+}
+
+.help-page__title {
+    font-size: var(--font-size-xxxl);
+    font-weight: var(--font-weight-bold);
+    color: var(--ios-text-primary);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.help-page__title-icon {
+    color: var(--ios-blue);
+    font-size: 36px;
+}
+
+.help-page__subtitle {
+    font-size: var(--font-size-md);
+    color: var(--ios-text-secondary);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.help-page__content {
+    display: flex;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xxl);
+}
+
+.help-page__sidebar {
+    width: 250px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-md);
+    height: fit-content;
+}
+
+.help-page__nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.help-page__nav-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: var(--border-radius-md);
+    background: transparent;
+    color: var(--ios-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    text-align: left;
+}
+
+.help-page__nav-item:hover {
+    background: var(--ios-bg-secondary);
+}
+
+.help-page__nav-item--active {
+    background: var(--ios-blue);
+    color: var(--ios-text-inverted);
+}
+
+.help-page__main {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    min-height: 500px;
+}
+
+.help-section {
+    margin-bottom: var(--spacing-md);
+}
+
+.help-section__title {
+    color: var(--ios-text-primary);
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+}
+
+.help-section__card {
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--ios-bg-tertiary);
+    border-radius: var(--border-radius-md);
+}
+
+.help-section__card-title {
+    color: var(--ios-text-primary);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+}
+
+.help-section__card-icon {
+    color: var(--ios-blue);
+}
+
+.help-section__card-text {
+    margin: var(--spacing-xs) 0;
+    color: var(--ios-text-secondary);
+    line-height: 1.6;
+}
+
+.help-page__footer {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+    text-align: center;
+}
+
+.help-page__footer-title {
+    color: var(--ios-text-primary);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+}
+
+.help-page__footer-icon {
+    color: var(--ios-blue);
+}
+
+.help-page__footer-text {
+    color: var(--ios-text-secondary);
+    margin-bottom: var(--spacing-md);
+}
+
+.help-page__footer-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+    .help-page {
+        padding: var(--spacing-md);
+    }
+
+    .help-page__content {
+        flex-direction: column;
+    }
+
+    .help-page__sidebar {
+        width: 100%;
+    }
+
+    .help-page__nav {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .help-page__nav-item {
+        white-space: nowrap;
+    }
+
+    .help-page__title {
+        font-size: var(--font-size-xxl);
+    }
+}
+
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .help-page {
+        padding: var(--spacing-lg) var(--spacing-xl);
+    }
+}

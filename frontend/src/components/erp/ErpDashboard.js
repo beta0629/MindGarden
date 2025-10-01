@@ -9,7 +9,8 @@ import ErpButton from './common/ErpButton';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErpHeader from './common/ErpHeader';
 import axios from 'axios';
-import '../../styles/glassmorphism.css';
+import '../../styles/main.css';
+import './ErpDashboard.css';
 
 /**
  * ERP 메인 대시보드 컴포넌트

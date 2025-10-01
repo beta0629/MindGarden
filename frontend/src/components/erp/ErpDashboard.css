@@ -1,0 +1,81 @@
+/* ErpDashboard 스타일 - 새로운 디자인 시스템 적용 */
+
+.erp-dashboard {
+    padding: var(--spacing-lg);
+    max-width: 1400px;
+    margin: 0 auto;
+    background: var(--ios-bg-primary);
+    min-height: 100vh;
+    font-family: var(--font-family-ios);
+}
+
+.erp-dashboard__header {
+    margin-bottom: var(--spacing-xxl);
+    text-align: center;
+}
+
+.erp-dashboard__title {
+    font-size: var(--font-size-xxxl);
+    font-weight: var(--font-weight-bold);
+    color: var(--ios-text-primary);
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.erp-dashboard__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xxl);
+}
+
+.erp-dashboard__management {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xxl);
+}
+
+.erp-dashboard__section {
+    margin-bottom: var(--spacing-xxl);
+}
+
+.erp-dashboard__section-title {
+    font-size: var(--font-size-xxl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--ios-text-primary);
+    margin: 0 0 var(--spacing-lg) 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+    .erp-dashboard {
+        padding: var(--spacing-md);
+    }
+
+    .erp-dashboard__title {
+        font-size: var(--font-size-xxl);
+    }
+
+    .erp-dashboard__stats {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .erp-dashboard__management {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+}
+
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .erp-dashboard {
+        padding: var(--spacing-lg) var(--spacing-xl);
+    }
+
+    .erp-dashboard__stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

@@ -22,7 +22,8 @@ import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
-import './AdminDashboard.css';
+import '../../styles/main.css';
+import './AdminDashboard.new.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
 
@@ -706,8 +707,8 @@ const AdminDashboard = ({ user: propUser }) => {
                     </div>
                     
                     {PermissionChecks.canManageClients(userPermissions) && (
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/client-comprehensive')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} clients`}>
+                        <div className="management-card" onClick={() => navigate('/admin/client-comprehensive')}>
+                            <div className={`card__icon card__icon--large card__icon-- clients`}>
                                 <FaUsers />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -718,8 +719,8 @@ const AdminDashboard = ({ user: propUser }) => {
                     )}
                     
                     {PermissionChecks.canManageUsers(userPermissions) && (
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/user-management')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} user-management`}>
+                        <div className="management-card" onClick={() => navigate('/admin/user-management')}>
+                            <div className={`card__icon card__icon--large card__icon-- user-management`}>
                                 <FaUserCog />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -730,8 +731,8 @@ const AdminDashboard = ({ user: propUser }) => {
                     )}
                     
                     {PermissionChecks.canViewMappings(userPermissions) && (
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/mapping-management')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} mappings`}>
+                        <div className="management-card" onClick={() => navigate('/admin/mapping-management')}>
+                            <div className={`card__icon card__icon--large card__icon-- mappings`}>
                                 <FaLink />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -796,9 +797,9 @@ const AdminDashboard = ({ user: propUser }) => {
                         <i className="bi bi-shield-check"></i>
                         컴플라이언스 관리
                     </h2>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/compliance')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} compliance`}>
+                    <div className="management-grid">
+                        <div className="management-card" onClick={() => navigate('/admin/compliance')}>
+                            <div className={`card__icon card__icon--large card__icon-- compliance`}>
                                 <i className="bi bi-shield-check"></i>
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -807,8 +808,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/compliance/dashboard')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} compliance-dashboard`}>
+                        <div className="management-card" onClick={() => navigate('/admin/compliance/dashboard')}>
+                            <div className={`card__icon card__icon--large card__icon-- compliance-dashboard`}>
                                 <i className="bi bi-graph-up"></i>
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -817,8 +818,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/compliance/personal-data-processing')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} personal-data`}>
+                        <div className="management-card" onClick={() => navigate('/admin/compliance/personal-data-processing')}>
+                            <div className={`card__icon card__icon--large card__icon-- personal-data`}>
                                 <i className="bi bi-person-lines-fill"></i>
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -827,8 +828,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/compliance/destruction')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} data-destruction`}>
+                        <div className="management-card" onClick={() => navigate('/admin/compliance/destruction')}>
+                            <div className={`card__icon card__icon--large card__icon-- data-destruction`}>
                                 <i className="bi bi-trash"></i>
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -847,9 +848,9 @@ const AdminDashboard = ({ user: propUser }) => {
                         <i className="bi bi-box-seam"></i>
                         ERP 관리
                     </h2>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/dashboard')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} erp-dashboard`}>
+                    <div className="management-grid">
+                        <div className="management-card" onClick={() => navigate('/erp/dashboard')}>
+                            <div className={`card__icon card__icon--large card__icon-- erp-dashboard`}>
                                 <FaChartLine />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -858,8 +859,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/purchase-requests')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} purchase-requests`}>
+                        <div className="management-card" onClick={() => navigate('/erp/purchase-requests')}>
+                            <div className={`card__icon card__icon--large card__icon-- purchase-requests`}>
                                 <FaShoppingCart />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -868,8 +869,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/approvals')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} approvals`}>
+                        <div className="management-card" onClick={() => navigate('/erp/approvals')}>
+                            <div className={`card__icon card__icon--large card__icon-- approvals`}>
                                 <FaCheckCircle />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -878,8 +879,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/super-approvals')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} super-approvals`}>
+                        <div className="management-card" onClick={() => navigate('/erp/super-approvals')}>
+                            <div className={`card__icon card__icon--large card__icon-- super-approvals`}>
                                 <FaCheckCircle />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -888,8 +889,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/items')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} items`}>
+                        <div className="management-card" onClick={() => navigate('/erp/items')}>
+                            <div className={`card__icon card__icon--large card__icon-- items`}>
                                 <FaBox />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -899,8 +900,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         
                         {/* 새로 추가된 ERP 보고서 카드 */}
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => setShowErpReport(true)}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} erp-reports`}>
+                        <div className="management-card" onClick={() => setShowErpReport(true)}>
+                            <div className={`card__icon card__icon--large card__icon-- erp-reports`}>
                                 <FaFileExport />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -909,8 +910,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/budgets')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} budgets`}>
+                        <div className="management-card" onClick={() => navigate('/erp/budgets')}>
+                            <div className={`card__icon card__icon--large card__icon-- budgets`}>
                                 <FaWallet />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -919,8 +920,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/erp/orders')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} orders`}>
+                        <div className="management-card" onClick={() => navigate('/erp/orders')}>
+                            <div className={`card__icon card__icon--large card__icon-- orders`}>
                                 <FaTruck />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -930,8 +931,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         
                         {PermissionChecks.canViewIntegratedFinance(userPermissions) && (
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/erp/financial')}>
-                                <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} finance-integrated`}>
+                            <div className="management-card" onClick={() => navigate('/admin/erp/financial')}>
+                                <div className={`card__icon card__icon--large card__icon-- finance-integrated`}>
                                     <FaDollarSign />
                                 </div>
                                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -951,9 +952,9 @@ const AdminDashboard = ({ user: propUser }) => {
                         <i className="bi bi-building"></i>
                         지점 관리
                     </h2>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/hq/dashboard')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-list`}>
+                    <div className="management-grid">
+                        <div className="management-card" onClick={() => navigate('/hq/dashboard')}>
+                            <div className={`card__icon card__icon--large card__icon-- branch-list`}>
                                 <FaBuilding />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -962,8 +963,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branch-create')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-create`}>
+                        <div className="management-card" onClick={() => navigate('/admin/branch-create')}>
+                            <div className={`card__icon card__icon--large card__icon-- branch-create`}>
                                 <FaMapMarkerAlt />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -972,8 +973,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branch-hierarchy')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-hierarchy`}>
+                        <div className="management-card" onClick={() => navigate('/admin/branch-hierarchy')}>
+                            <div className={`card__icon card__icon--large card__icon-- branch-hierarchy`}>
                                 <FaCogs />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -982,8 +983,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branch-managers')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-managers`}>
+                        <div className="management-card" onClick={() => navigate('/admin/branch-managers')}>
+                            <div className={`card__icon card__icon--large card__icon-- branch-managers`}>
                                 <FaUserCog />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -992,8 +993,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branch-status')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-status`}>
+                        <div className="management-card" onClick={() => navigate('/admin/branch-status')}>
+                            <div className={`card__icon card__icon--large card__icon-- branch-status`}>
                                 <FaToggleOn />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -1002,8 +1003,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             </div>
                         </div>
                         
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/branch-consultants')}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} branch-consultants`}>
+                        <div className="management-card" onClick={() => navigate('/admin/branch-consultants')}>
+                            <div className={`card__icon card__icon--large card__icon-- branch-consultants`}>
                                 <FaUserTie />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -1022,9 +1023,9 @@ const AdminDashboard = ({ user: propUser }) => {
                         <i className="bi bi-graph-up"></i>
                         통계 및 분석
                     </h2>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => setShowPerformanceMetrics(true)}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} performance-metrics`}>
+                    <div className="management-grid">
+                        <div className="management-card" onClick={() => setShowPerformanceMetrics(true)}>
+                            <div className={`card__icon card__icon--large card__icon-- performance-metrics`}>
                                 <FaChartBar />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -1043,9 +1044,9 @@ const AdminDashboard = ({ user: propUser }) => {
                         <i className="bi bi-people"></i>
                         상담사 관리
                     </h2>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => setShowSpecialtyManagement(true)}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} specialty-management`}>
+                    <div className="management-grid">
+                        <div className="management-card" onClick={() => setShowSpecialtyManagement(true)}>
+                            <div className={`card__icon card__icon--large card__icon-- specialty-management`}>
                                 <FaUserGraduate />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -1064,12 +1065,12 @@ const AdminDashboard = ({ user: propUser }) => {
                         <i className="bi bi-cash-stack"></i>
                         재무 관리
                     </h2>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => {
+                    <div className="management-grid">
+                        <div className="management-card" onClick={() => {
                             console.log('🔄 반복 지출 모달 열기 버튼 클릭');
                             setShowRecurringExpense(true);
                         }}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} recurring-expense`}>
+                            <div className={`card__icon card__icon--large card__icon-- recurring-expense`}>
                                 <FaRedo />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>

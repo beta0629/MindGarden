@@ -1,41 +1,89 @@
-/* 통합 회계 관리 드롭다운 스타일 */
+/* IntegratedFinanceDashboard 스타일 - 새로운 디자인 시스템 적용 */
 
-.integrated-finance-select {
-  position: relative !important;
-  z-index: 1 !important;
-  transform: none !important;
-  will-change: auto !important;
-  overflow: visible !important;
-  contain: none !important;
+.integrated-finance-dashboard {
+    padding: var(--spacing-lg);
+    max-width: 1400px;
+    margin: 0 auto;
+    background: var(--ios-bg-primary);
+    min-height: 100vh;
+    font-family: var(--font-family-ios);
 }
 
-.integrated-finance-select:focus {
-  position: relative !important;
-  z-index: 9999 !important;
-  transform: none !important;
-  contain: none !important;
+.integrated-finance-dashboard__header {
+    margin-bottom: var(--spacing-xxl);
+    text-align: center;
 }
 
-.integrated-finance-select option {
-  position: fixed !important;
-  z-index: 9999 !important;
-  background: white !important;
-  color: #333 !important;
-  border: 1px solid #ccc !important;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-  padding: 8px 12px !important;
+.integrated-finance-dashboard__title {
+    font-size: var(--font-size-xxxl);
+    font-weight: var(--font-weight-bold);
+    color: var(--ios-text-primary);
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* 헤더 컨테이너에 isolation 추가 */
-.integrated-finance-header {
-  position: relative;
-  z-index: 10;
-  isolation: isolate;
+.integrated-finance-dashboard__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xxl);
 }
 
-/* 드롭다운 컨테이너 */
-.integrated-finance-dropdown-container {
-  position: relative;
-  z-index: 1;
-  isolation: isolate;
+.integrated-finance-dashboard__charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xxl);
+}
+
+.integrated-finance-dashboard__tables {
+    margin-bottom: var(--spacing-xxl);
+}
+
+.integrated-finance-dashboard__section {
+    margin-bottom: var(--spacing-xxl);
+}
+
+.integrated-finance-dashboard__section-title {
+    font-size: var(--font-size-xxl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--ios-text-primary);
+    margin: 0 0 var(--spacing-lg) 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+    .integrated-finance-dashboard {
+        padding: var(--spacing-md);
+    }
+
+    .integrated-finance-dashboard__title {
+        font-size: var(--font-size-xxl);
+    }
+
+    .integrated-finance-dashboard__stats {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .integrated-finance-dashboard__charts {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+}
+
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .integrated-finance-dashboard {
+        padding: var(--spacing-lg) var(--spacing-xl);
+    }
+
+    .integrated-finance-dashboard__stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .integrated-finance-dashboard__charts {
+        grid-template-columns: 1fr;
+    }
 }

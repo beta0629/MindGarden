@@ -17,6 +17,7 @@ import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUt
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
 import MotivationCard from '../common/MotivationCard';
+import '../../styles/main.css';
 import './HQDashboard.css';
 
 /**

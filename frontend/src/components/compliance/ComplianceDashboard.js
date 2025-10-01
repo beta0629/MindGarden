@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SimpleHeader from '../layout/SimpleHeader';
+import '../../styles/main.css';
 import './ComplianceDashboard.css';
 
 /**

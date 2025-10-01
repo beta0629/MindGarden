@@ -1,6 +1,8 @@
 import React from 'react';
 import SimpleHeader from './SimpleHeader';
 import LoadingSpinner from '../common/LoadingSpinner';
+import '../../styles/main.css';
+import './SimpleLayout.css';
 
 /**
  * 간단한 레이아웃 컴포넌트
@@ -27,13 +29,7 @@ const SimpleLayout = ({
           )}
           
           {loading ? (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
-              minHeight: '400px',
-              width: '100%'
-            }}>
+            <div className="loading-container">
               <LoadingSpinner 
                 text={loadingText}
                 size="large"

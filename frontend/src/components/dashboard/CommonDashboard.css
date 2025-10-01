@@ -1,0 +1,35 @@
+/* 공통 대시보드 스타일 - 새로운 디자인 시스템 적용 */
+
+.dashboard-container {
+    padding: var(--spacing-lg);
+    max-width: 1200px;
+    margin: 0 auto;
+    background: var(--ios-bg-primary);
+    min-height: 100vh;
+}
+
+.dashboard-container.client {
+    background: var(--ios-bg-secondary);
+}
+
+.dashboard-container.consultant {
+    background: var(--ios-bg-primary);
+}
+
+.dashboard-container.admin {
+    background: var(--ios-bg-primary);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+    .dashboard-container {
+        padding: var(--spacing-md);
+    }
+}
+
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .dashboard-container {
+        padding: var(--spacing-lg) var(--spacing-xl);
+    }
+}

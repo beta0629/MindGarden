@@ -1,5 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
 import DuplicateLoginModal from './DuplicateLoginModal';
+import '../../styles/main.css';
+import './CommonPageTemplate.css';
 
 const CommonPageTemplate = ({ 
   title, 
@@ -33,14 +35,7 @@ const CommonPageTemplate = ({
   }, [logMount, logUnmount, title]);
 
   return (
-    <div className={bodyClass} style={{
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '100vh',
-      minWidth: '768px',
-      maxWidth: '1024px',
-      margin: '0 auto'
-    }}>
+    <div className={`common-page-template ${bodyClass}`}>
       {children}
       
       {/* 중복 로그인 확인 모달 */}

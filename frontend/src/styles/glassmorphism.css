@@ -1,13 +1,633 @@
-/* 리퀴드 글래스(Glassmorphism) 스타일 */
+/* MindGarden 글래스모피즘 스타일 - 개선 계획서 기반 */
 
-/* 기본 글래스 효과 */
+/* 기본 글래스 카드 스타일 */
+.card {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--border-radius-xl);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  transition: var(--transition-bounce);
+  overflow: hidden;
+  position: relative;
+}
+
+/* 카드 호버 효과 */
+.card:hover {
+  background: var(--glass-bg-medium);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-glass-strong);
+  border-color: var(--glass-border-strong);
+}
+
+/* 카드 활성화 효과 (터치 피드백) */
+.card:active {
+  transform: translateY(-4px) scale(0.98);
+  background: var(--glass-bg-strong);
+}
+
+/* 기본 글래스 효과 (기존 호환성) */
 .glass {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  border-radius: var(--border-radius-lg);
+}
+
+/* 카드 헤더 스타일 */
+.card-header {
   background: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--glass-border);
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-md);
+  border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+.card-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--ios-text-primary);
+  margin: 0;
+  line-height: 1.3;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-family-ios);
+}
+
+.card-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin: 6px 0 0 0;
+  font-weight: var(--font-weight-medium);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  font-family: var(--font-family-ios);
+}
+
+/* 카드 본문 스타일 */
+.card-body {
+  padding: var(--spacing-xl);
+  background: transparent;
+  position: relative;
+}
+
+.card-body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.card-text {
+  color: var(--ios-text-primary);
+  line-height: 1.7;
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-base);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  font-family: var(--font-family-ios);
+}
+
+/* 카드 푸터 스타일 */
+.card-footer {
+  background: rgba(255, 255, 255, 0.15);
+  border-top: 1px solid var(--glass-border);
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: 0 0 var(--border-radius-xl) var(--border-radius-xl);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+
+/* 카드 액션 버튼 스타일 */
+.card-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--spacing-md);
+}
+
+.card-actions .btn {
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  border: none;
+  font-weight: var(--font-weight-semibold);
+  transition: var(--transition-bounce);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  font-family: var(--font-family-ios);
+}
+
+.card-actions .btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.card-actions .btn:hover::before {
+  left: 100%;
+}
+
+.card-actions .btn-primary {
+  background: rgba(0, 123, 255, 0.8);
+  color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.card-actions .btn-primary:hover {
+  background: rgba(0, 123, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+}
+
+.card-actions .btn-secondary {
+  background: rgba(248, 249, 250, 0.6);
+  color: var(--ios-text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-actions .btn-secondary:hover {
+  background: rgba(248, 249, 250, 0.8);
+  color: var(--ios-text-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* 통계 카드 스타일 */
+.stat-card {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--border-radius-xxl);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  padding: var(--spacing-xl) var(--spacing-lg);
+  text-align: center;
+  transition: var(--transition-bounce);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    rgba(102, 126, 234, 0.8), 
+    rgba(118, 75, 162, 0.8));
+  border-radius: var(--border-radius-xxl) var(--border-radius-xxl) 0 0;
+}
+
+.stat-card:hover {
+  background: var(--glass-bg-medium);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-glass-strong);
+}
+
+.stat-card:active {
+  transform: translateY(-4px) scale(0.98);
+}
+
+.stat-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--border-radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-md);
+  font-size: 28px;
+  color: white;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: var(--transition-normal);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.stat-icon.primary { background: var(--ios-blue); }
+.stat-icon.success { background: var(--ios-green); }
+.stat-icon.warning { background: var(--ios-orange); }
+.stat-icon.danger { background: var(--ios-red); }
+.stat-icon.info { background: #17a2b8; }
+
+.stat-value {
+  font-size: 36px;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--ios-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-family-ios);
+}
+
+.stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-family: var(--font-family-ios);
+}
+
+.stat-change {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  margin-top: var(--spacing-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px var(--spacing-md);
+  border-radius: var(--border-radius-xl);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.stat-change.positive {
+  background: rgba(40, 167, 69, 0.2);
+  color: #2e7d32;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.stat-change.negative {
+  background: rgba(220, 53, 69, 0.2);
+  color: #c62828;
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+}
+
+/* 관리 카드 스타일 */
+.management-card {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--border-radius-xxl);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  padding: 40px var(--spacing-xl);
+  text-align: center;
+  transition: var(--transition-bounce);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.management-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    rgba(102, 126, 234, 0.8), 
+    rgba(118, 75, 162, 0.8));
+  transform: scaleX(0);
+  transition: transform var(--transition-bounce);
+  border-radius: var(--border-radius-xxl) var(--border-radius-xxl) 0 0;
+}
+
+.management-card:hover::before {
+  transform: scaleX(1);
+}
+
+.management-card:hover {
+  background: var(--glass-bg-medium);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  transform: translateY(-12px) scale(1.03);
+  box-shadow: var(--shadow-glass-strong);
+  border-color: var(--glass-border-strong);
+}
+
+.management-card:active {
+  transform: translateY(-6px) scale(0.98);
+}
+
+.management-card.selected {
+  background: rgba(0, 122, 255, 0.1);
+  border-color: rgba(0, 122, 255, 0.3);
+  transform: scale(0.98);
+}
+
+.management-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--border-radius-xxl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-lg);
+  font-size: 32px;
+  color: white;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transition: var(--transition-bounce);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.management-card:hover .management-icon {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* 아이폰 스타일 아이콘 색상 */
+.management-icon.schedule { background: var(--ios-blue); }
+.management-icon.sessions { background: var(--ios-green); }
+.management-icon.consultants { background: var(--ios-orange); }
+.management-icon.clients { background: var(--ios-red); }
+.management-icon.user-management { background: var(--ios-purple); }
+.management-icon.mappings { background: #af52de; }
+.management-icon.finance { background: var(--ios-pink); }
+.management-icon.revenue { background: #30d158; }
+.management-icon.expense { background: var(--ios-yellow); }
+.management-icon.payment { background: #64d2ff; }
+.management-icon.reports { background: #bf5af2; }
+.management-icon.settings { background: var(--ios-gray); }
+.management-icon.recurring-expense { background: #32d74b; }
+
+.management-content h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--ios-text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+  line-height: 1.3;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-family-ios);
+}
+
+.management-content p {
+  font-size: var(--font-size-base);
+  color: var(--ios-text-secondary);
+  margin: 0;
+  line-height: 1.6;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-family: var(--font-family-ios);
+}
+
+/* 아이폰 스타일 모바일 최적화 */
+@media (max-width: 767px) {
+  /* 모바일에서 호버 효과 제거 */
+  .card:hover,
+  .stat-card:hover,
+  .management-card:hover {
+    transform: none;
+    background: var(--glass-bg-light);
+  }
+  
+  /* 터치 피드백 효과 */
+  .card:active,
+  .stat-card:active,
+  .management-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  /* 아이폰 폰트 크기 조정 */
+  .card-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  .card-subtitle {
+    font-size: var(--font-size-xs);
+  }
+  
+  .card-text {
+    font-size: var(--font-size-sm);
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .stat-label {
+    font-size: var(--font-size-xs);
+  }
+  
+  .management-content h3 {
+    font-size: var(--font-size-lg);
+  }
+  
+  .management-content p {
+    font-size: var(--font-size-sm);
+  }
+  
+  /* 아이폰 카드 크기 조정 */
+  .card {
+    margin-bottom: var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    background: var(--ios-bg-primary);
+    border: 1px solid var(--ipad-card-border);
+    box-shadow: var(--ipad-card-shadow);
+  }
+  
+  .stat-card {
+    padding: var(--spacing-md) var(--spacing-sm);
+    border-radius: var(--border-radius-lg);
+    background: var(--ios-bg-primary);
+    border: 1px solid var(--ipad-card-border);
+    box-shadow: var(--ipad-card-shadow);
+  }
+  
+  .management-card {
+    padding: var(--spacing-lg) var(--spacing-md);
+    border-radius: var(--border-radius-lg);
+    background: var(--ios-bg-primary);
+    border: 1px solid var(--ipad-card-border);
+    box-shadow: var(--ipad-card-shadow);
+  }
+  
+  /* 아이폰 아이콘 크기 조정 */
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    border-radius: var(--border-radius-md);
+    background: var(--ios-blue);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+  }
+  
+  .management-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+    border-radius: var(--border-radius-lg);
+    background: var(--ios-blue);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+  }
+  
+  /* 아이폰 버튼 크기 조정 */
+  .card-actions .btn {
+    font-size: var(--font-size-xs);
+    padding: 6px var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+  }
+  
+  .card-actions .btn-primary {
+    background: var(--ios-blue);
+    color: white;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+  }
+  
+  .card-actions .btn-secondary {
+    background: var(--ipad-btn-secondary);
+    color: var(--ios-blue);
+    border: none;
+  }
+}
+
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* 아이패드 카드 스타일 */
+  .card {
+    border-radius: var(--ipad-border-radius-lg);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    background: var(--ipad-card-bg);
+    border: 1px solid var(--ipad-card-border);
+    box-shadow: var(--ipad-card-shadow);
+    margin-bottom: var(--ipad-spacing-md);
+  }
+  
+  .stat-card {
+    padding: var(--ipad-spacing-lg) var(--ipad-spacing-md);
+    border-radius: var(--ipad-border-radius-xl);
+    background: var(--ipad-card-bg);
+    border: 1px solid var(--ipad-card-border);
+    box-shadow: var(--ipad-card-shadow);
+  }
+  
+  .management-card {
+    padding: var(--ipad-spacing-xl) var(--ipad-spacing-lg);
+    border-radius: var(--ipad-border-radius-xl);
+    background: var(--ipad-card-bg);
+    border: 1px solid var(--ipad-card-border);
+    box-shadow: var(--ipad-card-shadow);
+  }
+  
+  /* 아이패드 폰트 크기 조정 */
+  .card-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .card-subtitle {
+    font-size: var(--font-size-sm);
+  }
+  
+  .card-text {
+    font-size: var(--font-size-base);
+  }
+  
+  .stat-value {
+    font-size: 32px;
+  }
+  
+  .stat-label {
+    font-size: var(--font-size-sm);
+  }
+  
+  .management-content h3 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .management-content p {
+    font-size: var(--font-size-base);
+  }
+  
+  /* 아이패드 아이콘 크기 조정 */
+  .stat-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+    border-radius: var(--ipad-border-radius-md);
+  }
+  
+  .management-icon {
+    width: 64px;
+    height: 64px;
+    font-size: 26px;
+    border-radius: var(--ipad-border-radius-lg);
+  }
+  
+  /* 아이패드 버튼 크기 조정 */
+  .card-actions .btn {
+    font-size: var(--font-size-sm);
+    padding: 8px var(--spacing-md);
+    border-radius: var(--ipad-border-radius-sm);
+  }
+  
+  /* 아이패드 호버 효과 (터치 디바이스에서는 제한적) */
+  @media (hover: hover) {
+    .card:hover,
+    .stat-card:hover,
+    .management-card:hover {
+      background: rgba(255, 255, 255, 0.95);
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+  }
+}
+
+/* 아이폰 스타일 폰트 시스템 적용 */
+body {
+  font-family: var(--font-family-ios);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 아이폰 스타일 스크롤바 제거 */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+/* 아이폰 스타일 포커스 링 */
+.card:focus,
+.stat-card:focus,
+.management-card:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
 }
 
 /* 강화된 글래스 효과 */

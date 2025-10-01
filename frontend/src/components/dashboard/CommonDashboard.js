@@ -7,7 +7,8 @@ import { sessionManager } from '../../utils/sessionManager';
 import { DASHBOARD_API } from '../../constants/api';
 import { API_BASE_URL } from '../../constants/api';
 import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
-// import '../../styles/dashboard/dashboard.css'; // 인라인 스타일로 변경
+import '../../styles/main.css';
+import './CommonDashboard.css';
 import { DASHBOARD_DEFAULT_DATA, DASHBOARD_ERROR_MESSAGES } from '../../constants/dashboard';
 import SimpleLayout from '../layout/SimpleLayout';
 import WelcomeSection from './WelcomeSection';
@@ -771,13 +772,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
   return (
     <SimpleLayout>
-      <div className={`dashboard-container ${user?.role?.toLowerCase() || ''}`} style={{
-        padding: '20px 20px 20px 40px',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        background: '#f8f9fa',
-        minHeight: '100vh'
-      }}>
+      <div className={`dashboard-container ${user?.role?.toLowerCase() || ''}`}>
         
         {/* 웰컴 섹션 */}
         <WelcomeSection 

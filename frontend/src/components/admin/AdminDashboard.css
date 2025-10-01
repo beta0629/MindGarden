@@ -1,53 +1,7 @@
-/* 관리자 대시보드 스타일 - CSS 변수 사용 */
-:root {
-    /* 색상 변수 */
-    --admin-bg-color: #f8f9fa;
-    --admin-text-primary: #2c3e50;
-    --admin-text-secondary: #6c757d;
-    --admin-border-color: #e9ecef;
-    --admin-white: #ffffff;
-    
-    /* 간격 변수 */
-    --admin-spacing-xs: 4px;
-    --admin-spacing-sm: 8px;
-    --admin-spacing-md: 12px;
-    --admin-spacing-lg: 16px;
-    --admin-spacing-xl: 20px;
-    --admin-spacing-xxl: 24px;
-    --admin-spacing-xxxl: 32px;
-    
-    /* 폰트 크기 변수 */
-    --admin-font-xs: 0.75rem;
-    --admin-font-sm: 0.875rem;
-    --admin-font-md: 1rem;
-    --admin-font-lg: 1.1rem;
-    --admin-font-xl: 1.2rem;
-    --admin-font-xxl: 1.3rem;
-    --admin-font-xxxl: 1.5rem;
-    --admin-font-huge: 1.8rem;
-    --admin-font-giant: 2rem;
-    
-    /* 폰트 두께 변수 */
-    --admin-font-weight-normal: 400;
-    --admin-font-weight-medium: 500;
-    --admin-font-weight-semibold: 600;
-    --admin-font-weight-bold: 700;
-    
-    /* 보더 반경 변수 */
-    --admin-radius-sm: 6px;
-    --admin-radius-md: 8px;
-    --admin-radius-lg: 12px;
-    --admin-radius-xl: 16px;
-    --admin-radius-round: 50%;
-    
-    /* 그림자 변수 */
-    --admin-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --admin-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --admin-shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.08);
-    --admin-shadow-xl: 0 8px 30px rgba(0, 0, 0, 0.12);
-    --admin-shadow-xxl: 0 8px 32px rgba(0, 0, 0, 0.15);
-    
-    /* 전환 효과 변수 */
+/* 관리자 대시보드 스타일 - 새로운 디자인 시스템 적용 */
+/* CSS 변수는 main.css에서 관리되므로 여기서는 제거 */
+
+/* 전환 효과 변수 */
     --admin-transition-fast: 0.2s ease;
     --admin-transition-normal: 0.3s ease;
     --admin-transition-slow: 0.5s ease;
@@ -174,67 +128,56 @@
     margin: 0;
 }
 
-/* 관리 기능 그리드 */
+/* 관리 기능 그리드 - 새로운 BEM 네이밍 적용 */
 .management-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--admin-spacing-xl);
+    gap: var(--spacing-xl);
 }
 
-.management-card {
-    background: var(--admin-white);
-    border-radius: var(--admin-radius-xl);
-    padding: var(--admin-spacing-xxl);
-    box-shadow: var(--admin-shadow-lg);
-    border: 1px solid var(--admin-border-color);
-    transition: var(--admin-transition-normal);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: var(--admin-spacing-xl);
-}
+/* management-card 스타일은 glassmorphism.css에서 관리 */
 
-.management-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--admin-shadow-xl);
-    border-color: #667eea;
-}
+/* management-card 호버 효과는 glassmorphism.css에서 관리 */
 
 .management-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: var(--admin-radius-xl);
+    width: 80px;
+    height: 80px;
+    border-radius: var(--border-radius-xxl);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--admin-font-xxxl);
+    font-size: 32px;
     color: var(--admin-white);
     flex-shrink: 0;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    transition: var(--transition-bounce);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .management-icon.schedule {
-    background: var(--admin-color-schedule);
+    background: var(--ios-blue);
 }
 
 .management-icon.sessions {
-    background: var(--admin-color-sessions);
+    background: var(--ios-green);
 }
 
 .management-icon.consultants {
-    background: var(--admin-color-consultant-mgmt);
+    background: var(--ios-orange);
 }
 
 .management-icon.clients {
-    background: var(--admin-color-client-mgmt);
+    background: var(--ios-red);
 }
 
 .management-icon.user-management {
-    background: var(--admin-color-user-management);
-    color: #4A90E2;
+    background: var(--ios-purple);
 }
 
 .management-icon.mappings {
-    background: var(--admin-color-mappings);
+    background: #af52de;
 }
 
 /* 재무 관리 아이콘 스타일 */
@@ -370,12 +313,7 @@
     }
     
     .overview-card,
-    .management-card {
-        padding: var(--admin-spacing-xl);
-        flex-direction: column;
-        text-align: center;
-        gap: var(--admin-spacing-lg);
-    }
+    /* management-card 반응형 스타일은 glassmorphism.css에서 관리 */
     
     .card-icon,
     .management-icon {
@@ -404,9 +342,7 @@
     }
     
     .overview-card,
-    .management-card {
-        padding: var(--admin-spacing-lg);
-    }
+    /* management-card 모바일 스타일은 glassmorphism.css에서 관리 */
     
     .card-value {
         font-size: var(--admin-font-huge);

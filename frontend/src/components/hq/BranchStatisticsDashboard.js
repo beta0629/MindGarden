@@ -12,6 +12,7 @@ import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
 import LoadingSpinner from '../common/LoadingSpinner';
+import '../../styles/main.css';
 import './BranchStatisticsDashboard.css';
 
 /**

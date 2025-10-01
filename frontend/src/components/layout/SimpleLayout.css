@@ -1,29 +1,63 @@
-/* 간단한 레이아웃 스타일 */
+/* SimpleLayout 스타일 - 새로운 디자인 시스템 적용 */
+
 .simple-layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #f8f9fa;
+    min-height: 100vh;
+    background: var(--ios-bg-primary);
+    font-family: var(--font-family-ios);
 }
 
 .simple-main {
-  flex: 1;
-  padding: 20px 0;
+    flex: 1;
+    padding: var(--spacing-lg);
 }
 
 .simple-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
-  .simple-main {
-    padding: 15px 0;
-  }
-  
-  .simple-container {
-    padding: 0 15px;
-  }
+.page-header {
+    margin-bottom: var(--spacing-xxl);
+    text-align: center;
+}
+
+.page-title {
+    font-size: var(--font-size-xxxl);
+    font-weight: var(--font-weight-bold);
+    color: var(--ios-text-primary);
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-family: var(--font-family-ios);
+}
+
+/* 로딩 컨테이너 */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    width: 100%;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+    .simple-main {
+        padding: var(--spacing-md);
+    }
+    
+    .page-title {
+        font-size: var(--font-size-xxl);
+    }
+    
+    .page-header {
+        margin-bottom: var(--spacing-xl);
+    }
+}
+
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .simple-main {
+        padding: var(--spacing-lg) var(--spacing-xl);
+    }
 }

@@ -1,0 +1,31 @@
+/* ===== 간격 시스템 ===== */
+
+:root {
+  /* 간격 시스템 (4px 기준) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+
+  /* 아이패드 전용 간격 */
+  --ipad-spacing-xs: 6px;
+  --ipad-spacing-sm: 12px;
+  --ipad-spacing-md: 18px;
+  --ipad-spacing-lg: 24px;
+  --ipad-spacing-xl: 36px;
+  --ipad-spacing-xxl: 48px;
+}
+
+/* 아이패드 간격 적용 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  :root {
+    --spacing-xs: var(--ipad-spacing-xs);
+    --spacing-sm: var(--ipad-spacing-sm);
+    --spacing-md: var(--ipad-spacing-md);
+    --spacing-lg: var(--ipad-spacing-lg);
+    --spacing-xl: var(--ipad-spacing-xl);
+    --spacing-xxl: var(--ipad-spacing-xxl);
+  }
+}

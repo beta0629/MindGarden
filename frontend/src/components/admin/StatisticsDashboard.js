@@ -12,6 +12,8 @@ import PropTypes from 'prop-types';
 import Chart from '../common/Chart';
 import DetailedStatsGrid from '../common/DetailedStatsGrid';
 import StatsCardGrid from '../common/StatsCardGrid';
+import '../../styles/main.css';
+import './StatisticsDashboard.css';
 import { 
   CHART_TYPES, 
   CHART_COLORS, 

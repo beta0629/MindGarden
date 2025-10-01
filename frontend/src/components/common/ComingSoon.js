@@ -1,5 +1,6 @@
 import React from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
+import '../../styles/main.css';
 import './ComingSoon.css';
 
 /**

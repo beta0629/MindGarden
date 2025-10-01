@@ -1,0 +1,32 @@
+/* ===== 보더 및 반경 시스템 ===== */
+
+:root {
+  /* 보더 반경 */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+  --border-radius-xl: 20px;
+  --border-radius-xxl: 24px;
+
+  /* 아이패드 전용 보더 반경 */
+  --ipad-border-radius-sm: 10px;
+  --ipad-border-radius-md: 14px;
+  --ipad-border-radius-lg: 18px;
+  --ipad-border-radius-xl: 22px;
+  --ipad-border-radius-xxl: 26px;
+
+  /* 전환 효과 */
+  --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* 아이패드 보더 반경 적용 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  :root {
+    --border-radius-sm: var(--ipad-border-radius-sm);
+    --border-radius-md: var(--ipad-border-radius-md);
+    --border-radius-lg: var(--ipad-border-radius-lg);
+    --border-radius-xl: var(--ipad-border-radius-xl);
+    --border-radius-xxl: var(--ipad-border-radius-xxl);
+  }
+}

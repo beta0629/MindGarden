@@ -223,13 +223,7 @@ code {
 }
 
 /* 기본 카드 스타일 */
-.card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 20px;
-  margin: 10px 0;
-}
+/* .card 스타일은 glassmorphism.css에서 관리 */
 
 /* 기본 버튼 스타일 */
 .btn {

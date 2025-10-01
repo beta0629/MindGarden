@@ -1,0 +1,71 @@
+/* ===== 색상 시스템 ===== */
+/* 아이폰 시스템 색상 */
+
+:root {
+  /* 아이폰 시스템 색상 */
+  --ios-blue: #007aff;
+  --ios-green: #34c759;
+  --ios-orange: #ff9500;
+  --ios-red: #ff3b30;
+  --ios-purple: #5856d6;
+  --ios-pink: #ff2d92;
+  --ios-yellow: #ffcc00;
+  --ios-gray: #8e8e93;
+
+  /* 아이패드 색상 시스템 */
+  --ipad-blue: #007aff;
+  --ipad-green: #34c759;
+  --ipad-orange: #ff9500;
+  --ipad-red: #ff3b30;
+  --ipad-purple: #5856d6;
+  --ipad-pink: #ff2d92;
+  --ipad-yellow: #ffcc00;
+  --ipad-gray: #8e8e93;
+
+  /* 시맨틱 색상 */
+  --color-primary: var(--ios-blue);
+  --color-secondary: #6c757d;
+  --color-success: var(--ios-green);
+  --color-danger: var(--ios-red);
+  --color-warning: var(--ios-orange);
+  --color-info: #17a2b8;
+  --color-light: #f8f9fa;
+  --color-dark: #343a40;
+
+  /* 아이폰 텍스트 색상 */
+  --ios-text-primary: #1d1d1f;
+  --ios-text-secondary: #86868b;
+  --ios-text-tertiary: #c7c7cc;
+
+  /* 아이패드 텍스트 색상 */
+  --ipad-text-primary: #1d1d1f;
+  --ipad-text-secondary: #86868b;
+  --ipad-text-tertiary: #c7c7cc;
+
+  /* 아이폰 배경 색상 */
+  --ios-bg-primary: #ffffff;
+  --ios-bg-secondary: #f2f2f7;
+  --ios-bg-tertiary: #ffffff;
+
+  /* 아이패드 배경 색상 */
+  --ipad-bg-primary: #ffffff;
+  --ipad-bg-secondary: #f2f2f7;
+  --ipad-bg-tertiary: #ffffff;
+
+  /* 글래스모피즘 색상 */
+  --glass-bg-light: rgba(255, 255, 255, 0.25);
+  --glass-bg-medium: rgba(255, 255, 255, 0.35);
+  --glass-bg-strong: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-border-strong: rgba(255, 255, 255, 0.3);
+
+  /* 아이패드 카드 색상 */
+  --ipad-card-bg: rgba(255, 255, 255, 0.9);
+  --ipad-card-border: rgba(0, 0, 0, 0.05);
+  --ipad-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  /* 아이패드 버튼 색상 */
+  --ipad-btn-primary: #007aff;
+  --ipad-btn-secondary: rgba(142, 142, 147, 0.12);
+  --ipad-btn-destructive: #ff3b30;
+}

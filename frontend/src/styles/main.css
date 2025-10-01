@@ -1,0 +1,49 @@
+/* ===== MindGarden CSS 아키텍처 - ITCSS 구조 ===== */
+/* Inverted Triangle CSS - 특이성 순서로 import */
+
+/* 01. Settings - CSS 변수, 색상, 폰트 */
+@import './01-settings/_colors.css';
+@import './01-settings/_typography.css';
+@import './01-settings/_spacing.css';
+@import './01-settings/_shadows.css';
+@import './01-settings/_borders.css';
+@import './01-settings/_z-index.css';
+
+/* 02. Tools - 믹신, 함수 (현재 비어있음) */
+/* @import './02-tools/_mixins.css'; */
+/* @import './02-tools/_functions.css'; */
+
+/* 03. Generic - 리셋, normalize (현재 비어있음) */
+/* @import './03-generic/_reset.css'; */
+/* @import './03-generic/_normalize.css'; */
+
+/* 04. Elements - 기본 HTML 요소 (현재 비어있음) */
+/* @import './04-elements/_body.css'; */
+/* @import './04-elements/_headings.css'; */
+/* @import './04-elements/_links.css'; */
+/* @import './04-elements/_buttons.css'; */
+
+/* 05. Objects - 레이아웃, 그리드 (현재 비어있음) */
+/* @import './05-objects/_container.css'; */
+/* @import './05-objects/_grid.css'; */
+/* @import './05-objects/_layout.css'; */
+
+/* 06. Components - 재사용 가능한 컴포넌트 */
+@import './06-components/_cards.css';
+@import './06-components/_buttons.css';
+@import './06-components/_modals.css';
+/* @import './06-components/_forms.css'; */
+/* @import './06-components/_tables.css'; */
+
+/* 07. Utilities - 유틸리티 클래스 (현재 비어있음) */
+/* @import './07-utilities/_spacing.css'; */
+/* @import './07-utilities/_text.css'; */
+/* @import './07-utilities/_display.css'; */
+
+/* 08. Themes - 테마별 스타일 (현재 비어있음) */
+/* @import './08-themes/_light.css'; */
+/* @import './08-themes/_dark.css'; */
+
+/* ===== 기존 스타일 임포트 (호환성 유지) ===== */
+/* 기존 index.css의 유틸리티 클래스들 */
+@import './index.css';

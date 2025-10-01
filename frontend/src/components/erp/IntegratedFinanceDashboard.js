@@ -9,6 +9,7 @@ import SimpleHeader from '../layout/SimpleHeader';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
 import LoadingSpinner from '../common/LoadingSpinner';
+import '../../styles/main.css';
 import './IntegratedFinanceDashboard.css';
 
 // 공통 유틸리티 함수들

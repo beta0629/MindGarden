@@ -1,0 +1,247 @@
+/* MindGarden CSS 변수 시스템 - 개선 계획서 기반 */
+
+:root {
+  /* Z-Index 레이어 시스템 */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
+
+  /* 아이폰 스타일 색상 시스템 */
+  --ios-blue: #007aff;
+  --ios-green: #34c759;
+  --ios-orange: #ff9500;
+  --ios-red: #ff3b30;
+  --ios-purple: #5856d6;
+  --ios-pink: #ff2d92;
+  --ios-yellow: #ffcc00;
+  --ios-gray: #8e8e93;
+
+  /* 아이폰 텍스트 색상 */
+  --ios-text-primary: #1d1d1f;
+  --ios-text-secondary: #86868b;
+  --ios-text-tertiary: #c7c7cc;
+
+  /* 아이폰 배경 색상 */
+  --ios-bg-primary: #ffffff;
+  --ios-bg-secondary: #f2f2f7;
+  --ios-bg-tertiary: #ffffff;
+
+  /* 글래스모피즘 색상 */
+  --glass-bg-light: rgba(255, 255, 255, 0.25);
+  --glass-bg-medium: rgba(255, 255, 255, 0.35);
+  --glass-bg-strong: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-border-strong: rgba(255, 255, 255, 0.3);
+
+  /* 기본 색상 시스템 (기존 호환성 유지) */
+  --color-primary: var(--ios-blue);
+  --color-secondary: #6c757d;
+  --color-success: var(--ios-green);
+  --color-danger: var(--ios-red);
+  --color-warning: var(--ios-orange);
+  --color-info: #17a2b8;
+  --color-light: #f8f9fa;
+  --color-dark: #343a40;
+
+  /* 간격 시스템 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+
+  /* 모바일 우선 폰트 시스템 - 개선 계획서 기준 */
+  --font-size-xs: 10px;        /* 매우 작은 텍스트 */
+  --font-size-sm: 12px;        /* 작은 텍스트 */
+  --font-size-base: 14px;      /* 기본 텍스트 */
+  --font-size-lg: 16px;        /* 큰 텍스트 */
+  --font-size-xl: 18px;        /* 제목 */
+  --font-size-xxl: 20px;       /* 큰 제목 */
+  --font-size-xxxl: 22px;      /* 최대 제목 크기 */
+
+  /* 데스크톱 폰트 시스템 */
+  --font-size-base-desktop: 16px;
+  --font-size-sm-desktop: 14px;
+  --font-size-lg-desktop: 18px;
+  --font-size-xl-desktop: 20px;
+  --font-size-xxl-desktop: 24px;
+
+  /* 폰트 두께 */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* 아이폰 폰트 패밀리 */
+  --font-family-ios: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  /* 보더 반경 */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+  --border-radius-xl: 20px;
+  --border-radius-xxl: 24px;
+
+  /* 글래스모피즘 그림자 */
+  --shadow-glass: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  --shadow-glass-strong: 
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-glass-hover: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+  /* 기본 그림자 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+
+  /* 전환 효과 */
+  --transition-fast: 0.1s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.4s ease;
+  --transition-bounce: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* 브레이크포인트 */
+  --breakpoint-xs: 0px;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-xxl: 1400px;
+
+  /* 컨테이너 최대 너비 */
+  --container-sm: 540px;
+  --container-md: 720px;
+  --container-lg: 960px;
+  --container-xl: 1140px;
+  --container-xxl: 1320px;
+
+  /* 그리드 시스템 */
+  --grid-columns: 12;
+  --grid-gutter: 16px;
+  --grid-gutter-sm: 8px;
+  --grid-gutter-lg: 24px;
+}
+
+/* 아이패드 스타일 변수 */
+:root {
+  /* 아이패드 색상 시스템 */
+  --ipad-blue: #007aff;
+  --ipad-green: #34c759;
+  --ipad-orange: #ff9500;
+  --ipad-red: #ff3b30;
+  --ipad-purple: #5856d6;
+  --ipad-pink: #ff2d92;
+  --ipad-yellow: #ffcc00;
+  --ipad-gray: #8e8e93;
+  
+  /* 아이패드 텍스트 색상 */
+  --ipad-text-primary: #1d1d1f;
+  --ipad-text-secondary: #86868b;
+  --ipad-text-tertiary: #c7c7cc;
+  
+  /* 아이패드 배경 색상 */
+  --ipad-bg-primary: #ffffff;
+  --ipad-bg-secondary: #f2f2f7;
+  --ipad-bg-tertiary: #ffffff;
+  
+  /* 아이패드 카드 색상 */
+  --ipad-card-bg: rgba(255, 255, 255, 0.9);
+  --ipad-card-border: rgba(0, 0, 0, 0.05);
+  --ipad-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  
+  /* 아이패드 버튼 색상 */
+  --ipad-btn-primary: #007aff;
+  --ipad-btn-secondary: rgba(142, 142, 147, 0.12);
+  --ipad-btn-destructive: #ff3b30;
+}
+
+/* 아이패드 폰트 크기 조정 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  :root {
+    --font-size-xs: 10px;
+    --font-size-sm: 11px;
+    --font-size-base: 13px;
+    --font-size-lg: 15px;
+    --font-size-xl: 17px;
+    --font-size-xxl: 19px;
+    --font-size-xxxl: 21px;
+    
+    /* 아이패드 전용 간격 */
+    --ipad-spacing-xs: 6px;
+    --ipad-spacing-sm: 12px;
+    --ipad-spacing-md: 18px;
+    --ipad-spacing-lg: 24px;
+    --ipad-spacing-xl: 36px;
+    --ipad-spacing-xxl: 48px;
+    
+    /* 아이패드 전용 보더 반경 */
+    --ipad-border-radius-sm: 10px;
+    --ipad-border-radius-md: 14px;
+    --ipad-border-radius-lg: 18px;
+    --ipad-border-radius-xl: 22px;
+    --ipad-border-radius-xxl: 26px;
+  }
+}
+
+/* 데스크톱 폰트 크기 조정 */
+@media (min-width: 992px) {
+  :root {
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-xxl: 1.5rem;
+    --font-size-xxxl: 1.75rem;
+  }
+}
+
+/* 터치 디바이스 감지 */
+@media (hover: none) and (pointer: coarse) {
+  :root {
+    /* 터치 디바이스용 최소 터치 영역 */
+    --touch-target-min: 44px;
+    --touch-spacing: 12px;
+  }
+}
+
+/* 고해상도 디스플레이 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  :root {
+    /* 고해상도 디스플레이용 미세 조정 */
+    --border-width: 0.5px;
+    --shadow-blur: 1px;
+  }
+}
+
+/* 다크 모드 지원 (향후 확장) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ios-text-primary: #ffffff;
+    --ios-text-secondary: #8e8e93;
+    --ios-text-tertiary: #636366;
+    --ios-bg-primary: #000000;
+    --ios-bg-secondary: #1c1c1e;
+    --ios-bg-tertiary: #2c2c2e;
+    
+    --glass-bg-light: rgba(0, 0, 0, 0.25);
+    --glass-bg-medium: rgba(0, 0, 0, 0.35);
+    --glass-bg-strong: rgba(0, 0, 0, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-border-strong: rgba(255, 255, 255, 0.2);
+  }
+}

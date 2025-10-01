@@ -135,45 +135,45 @@
 .fc-daygrid-more-link:hover {
   background: #e9ecef;
   color: #0056b3;
-  text-decoration: none !important;
+  text-decoration: none;
 }
 
 /* 시간별 뷰 최적화 */
 .fc-timegrid-event {
-  margin: 1px 2px !important;
-  padding: 2px 6px !important;
-  font-size: 0.85rem !important;
-  border-radius: 4px !important;
+  margin: 1px 2px;
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  border-radius: 4px;
 }
 
 .fc-timegrid-event-title {
-  font-weight: 500 !important;
-  color: #fff !important;
+  font-weight: 500;
+  color: #fff;
 }
 
 /* 일정 색상별 스타일 강화 */
 .fc-event[data-event-type="초기상담"],
 .fc-event[style*="background-color: rgb(76, 175, 80)"] {
-  background-color: #4CAF50 !important;
-  border-color: #4CAF50 !important;
+  background-color: #4CAF50;
+  border-color: #4CAF50;
 }
 
 .fc-event[data-event-type="진행상담"],
 .fc-event[style*="background-color: rgb(33, 150, 243)"] {
-  background-color: #2196F3 !important;
-  border-color: #2196F3 !important;
+  background-color: #2196F3;
+  border-color: #2196F3;
 }
 
 .fc-event[data-event-type="종결상담"],
 .fc-event[style*="background-color: rgb(255, 152, 0)"] {
-  background-color: #FF9800 !important;
-  border-color: #FF9800 !important;
+  background-color: #FF9800;
+  border-color: #FF9800;
 }
 
 .fc-event[data-event-type="긴급상담"],
 .fc-event[style*="background-color: rgb(244, 67, 54)"] {
-  background-color: #f44336 !important;
-  border-color: #f44336 !important;
+  background-color: #f44336;
+  border-color: #f44336;
 }
 
 /* 휴가 이벤트 스타일 */

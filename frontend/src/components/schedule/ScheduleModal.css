@@ -373,23 +373,23 @@
 
 /* 상담사 카드 */
 .consultant-card {
-  min-height: 220px !important;
-  background: var(--schedule-modal-white) !important;
-  border-radius: var(--consultant-card-border-radius) !important;
-  padding: var(--consultant-card-padding) !important;
-  border: 2px solid var(--schedule-modal-border) !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-  display: flex !important;
-  flex-direction: row !important;
-  justify-content: flex-start !important;
-  align-items: flex-start !important;
-  text-align: left !important;
-  position: relative !important;
-  overflow: visible !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-  margin: 0 !important;
-  gap: 16px !important;
+  min-height: 220px;
+  background: var(--schedule-modal-white);
+  border-radius: var(--consultant-card-border-radius);
+  padding: var(--consultant-card-padding);
+  border: 2px solid var(--schedule-modal-border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  position: relative;
+  overflow: visible;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 0;
+  gap: 16px;
 }
 
 .consultant-card:hover {

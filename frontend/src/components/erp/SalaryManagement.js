@@ -542,10 +542,9 @@ const SalaryManagement = () => {
                         {/* 미리보기 결과 표시 */}
                         {previewResult && (
                             <div className="preview-result">
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                    <h5 style={{ margin: 0, color: '#2e7d32' }}>💰 급여 계산 미리보기</h5>
-                                    <span style={{ 
-                                        fontSize: 'var(--font-size-xs)', 
+                                <div className="salary-preview-header">
+                                    <h5 className="salary-preview-title">💰 급여 계산 미리보기</h5>
+                                    <span className="salary-preview-timestamp"
                                         color: '#666',
                                         backgroundColor: '#4caf50',
                                         color: 'white',
@@ -555,7 +554,7 @@ const SalaryManagement = () => {
                                         미리보기
                                     </span>
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                                <div className="salary-preview-grid">
                                     <div>
                                         <strong>상담사:</strong> {previewResult.consultantName}
                                     </div>

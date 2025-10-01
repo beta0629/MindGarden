@@ -250,12 +250,12 @@ const ConsultantMessages = () => {
         {!loading && (
           <div>
             {filteredMessages.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', textAlign: 'center', color: '#7f8c8d' }}>
-                <i className="bi bi-chat-dots" style={{ fontSize: '4rem', marginBottom: '20px', opacity: '0.5' }}></i>
-                <h3 style={{ marginBottom: '10px', color: '#2c3e50' }}>
+              <div className="consultant-messages-empty">
+                <i className="bi bi-chat-dots consultant-messages-empty-icon"></i>
+                <h3 className="consultant-messages-empty-title">
                   {messages.length === 0 ? "전송된 메시지가 없습니다" : "검색 결과가 없습니다"}
                 </h3>
-                <p style={{ margin: '0', fontSize: '1.1rem' }}>
+                <p className="consultant-messages-empty-description">
                   {messages.length === 0 ? "아직 전송한 메시지가 없습니다." : "다른 검색어를 사용해보세요."}
                 </p>
                 {messages.length === 0 && (

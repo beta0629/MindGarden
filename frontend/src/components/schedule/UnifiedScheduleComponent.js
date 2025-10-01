@@ -1086,8 +1086,8 @@ const UnifiedScheduleComponent = ({
                         className="unified-schedule-loading-content"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                            <h3 style={{ margin: '0 0 8px 0', color: '#2c3e50' }}>
+                        <div className="unified-schedule-modal-header">
+                            <h3 className="unified-schedule-modal-title">
                                 📅 {selectedDate ? selectedDate.toLocaleDateString('ko-KR', {
                                     year: 'numeric',
                                     month: 'long',
@@ -1095,7 +1095,7 @@ const UnifiedScheduleComponent = ({
                                     weekday: 'long'
                                 }) : ''}
                             </h3>
-                            <p style={{ margin: 0, color: '#6c757d' }}>원하는 작업을 선택하세요</p>
+                            <p className="unified-schedule-modal-subtitle">원하는 작업을 선택하세요</p>
                         </div>
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

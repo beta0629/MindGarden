@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SALARY_CSS_CLASSES, SALARY_MESSAGES, TAX_TYPE_LABELS } from '../../constants/salaryConstants';
 import { apiGet } from '../../utils/ajax';
+import './TaxDetailsModal.css';
 
 /**
  * 세금 내역 보기 모달 컴포넌트
@@ -80,16 +81,15 @@ const TaxDetailsModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className={`${SALARY_CSS_CLASSES.MODAL} modal-overlay`} style={modalOverlayStyle}>
-      <div className="modal-content" style={modalContentStyle}>
+    <div className="tax-details-modal-overlay">
+      <div className="tax-details-modal-content">
         {/* 헤더 */}
-        <div className="modal-header" style={modalHeaderStyle}>
-          <h3 style={modalTitleStyle}>
+        <div className="tax-details-modal-header">
+          <h3 className="tax-details-modal-title">
             세금 내역 상세
           </h3>
           <button 
-            className="modal-close-btn" 
-            style={closeButtonStyle}
+            className="tax-details-modal-close-btn"
             onClick={onClose}
             aria-label="닫기"
           >
@@ -98,7 +98,7 @@ const TaxDetailsModal = ({
         </div>
 
         {/* 상담사 정보 */}
-        <div className="consultant-info" style={consultantInfoStyle}>
+        <div className="tax-details-consultant-info">
           <div className="info-item">
             <span className="label">상담사:</span>
             <span className="value">{consultantName || '정보 없음'}</span>
@@ -110,31 +110,30 @@ const TaxDetailsModal = ({
         </div>
 
         {/* 내용 */}
-        <div className="modal-body" style={modalBodyStyle}>
+        <div className="tax-details-modal-body">
           {loading ? (
-            <div className="loading-container" style={loadingStyle}>
+            <div className="tax-details-loading">
               <div className="spinner"></div>
               <p>세금 내역을 불러오는 중...</p>
             </div>
           ) : error ? (
-            <div className="error-container" style={errorStyle}>
+            <div className="tax-details-error">
               <p>❌ {error}</p>
               <button 
-                className={SALARY_CSS_CLASSES.BUTTON_PRIMARY}
+                className="tax-details-retry-button"
                 onClick={loadTaxDetails}
-                style={retryButtonStyle}
               >
                 다시 시도
               </button>
             </div>
           ) : taxDetails.length === 0 ? (
-            <div className="empty-container" style={emptyStyle}>
+            <div className="tax-details-empty">
               <p>📋 세금 내역이 없습니다.</p>
             </div>
           ) : (
             <div className="tax-details-container">
               {/* 세금 내역 테이블 */}
-              <table className={SALARY_CSS_CLASSES.TABLE} style={tableStyle}>
+              <table className="tax-details-table">
                 <thead>
                   <tr className={SALARY_CSS_CLASSES.TABLE_HEADER}>
                     <th>세금 유형</th>
@@ -170,7 +169,7 @@ const TaxDetailsModal = ({
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="total-row" style={totalRowStyle}>
+                  <tr className="tax-details-total-row">
                     <td colSpan="4" className="total-label">
                       <strong>총 세금</strong>
                     </td>
@@ -186,11 +185,10 @@ const TaxDetailsModal = ({
         </div>
 
         {/* 푸터 */}
-        <div className="modal-footer" style={modalFooterStyle}>
+        <div className="tax-details-modal-footer">
           <button 
-            className={SALARY_CSS_CLASSES.BUTTON_SECONDARY}
+            className="tax-details-footer-button"
             onClick={onClose}
-            style={footerButtonStyle}
           >
             닫기
           </button>
@@ -198,131 +196,6 @@ const TaxDetailsModal = ({
       </div>
     </div>
   );
-};
-
-// 인라인 스타일 정의
-const modalOverlayStyle = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 1000
-};
-
-const modalContentStyle = {
-  backgroundColor: 'white',
-  borderRadius: '8px',
-  width: '90%',
-  maxWidth: '800px',
-  maxHeight: '90vh',
-  overflow: 'hidden',
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
-};
-
-const modalHeaderStyle = {
-  padding: '20px',
-  borderBottom: '1px solid #e5e7eb',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  backgroundColor: '#f8fafc'
-};
-
-const modalTitleStyle = {
-  margin: 0,
-  fontSize: 'var(--font-size-lg)',
-  fontWeight: '600',
-  color: '#1f2937'
-};
-
-const closeButtonStyle = {
-  background: 'none',
-  border: 'none',
-  fontSize: 'var(--font-size-xxl)',
-  cursor: 'pointer',
-  color: '#6b7280',
-  padding: '0',
-  width: '30px',
-  height: '30px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
-};
-
-const consultantInfoStyle = {
-  padding: '15px 20px',
-  backgroundColor: '#f1f5f9',
-  borderBottom: '1px solid #e5e7eb',
-  display: 'flex',
-  gap: '30px'
-};
-
-const modalBodyStyle = {
-  padding: '20px',
-  maxHeight: '60vh',
-  overflowY: 'auto'
-};
-
-const loadingStyle = {
-  textAlign: 'center',
-  padding: '40px 20px'
-};
-
-const errorStyle = {
-  textAlign: 'center',
-  padding: '40px 20px',
-  color: '#dc2626'
-};
-
-const emptyStyle = {
-  textAlign: 'center',
-  padding: '40px 20px',
-  color: '#6b7280'
-};
-
-const tableStyle = {
-  width: '100%',
-  borderCollapse: 'collapse',
-  fontSize: 'var(--font-size-sm)'
-};
-
-const totalRowStyle = {
-  backgroundColor: '#f8fafc',
-  fontWeight: 'bold'
-};
-
-const modalFooterStyle = {
-  padding: '15px 20px',
-  borderTop: '1px solid #e5e7eb',
-  display: 'flex',
-  justifyContent: 'flex-end',
-  backgroundColor: '#f8fafc'
-};
-
-const footerButtonStyle = {
-  padding: '8px 16px',
-  borderRadius: '4px',
-  border: '1px solid #d1d5db',
-  backgroundColor: 'white',
-  color: '#374151',
-  cursor: 'pointer',
-  fontSize: 'var(--font-size-sm)'
-};
-
-const retryButtonStyle = {
-  padding: '8px 16px',
-  borderRadius: '4px',
-  border: 'none',
-  backgroundColor: '#3b82f6',
-  color: 'white',
-  cursor: 'pointer',
-  fontSize: 'var(--font-size-sm)',
-  marginTop: '10px'
 };
 
 export default TaxDetailsModal;

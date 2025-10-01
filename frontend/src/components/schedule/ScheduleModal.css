@@ -98,7 +98,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px var(--schedule-modal-padding);
+  padding: var(--spacing-lg) var(--schedule-modal-padding);
   border-bottom: 2px solid var(--schedule-modal-border);
   background: var(--schedule-modal-primary-gradient);
   color: var(--schedule-modal-white);
@@ -612,7 +612,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px var(--schedule-modal-padding);
+  padding: var(--spacing-lg) var(--schedule-modal-padding);
   border-top: 1px solid var(--schedule-modal-border);
   background-color: var(--schedule-modal-light-gray);
   gap: 12px;
@@ -620,7 +620,7 @@
 
 /* 버튼 스타일 */
 .btn {
-  padding: 12px 24px;
+  padding: var(--spacing-sm) var(--spacing-xl);
   border: none;
   border-radius: 8px;
   font-size: 14px;
@@ -754,7 +754,7 @@
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .schedule-modal-overlay {
-    padding: 10px;
+    padding: var(--spacing-sm);
   }
   
   .schedule-modal {

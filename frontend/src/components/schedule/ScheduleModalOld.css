@@ -437,7 +437,7 @@
 /* 매우 작은 화면 (480px 이하) */
 @media (max-width: 480px) {
     .schedule-modal-overlay {
-        padding: 5px;
+        padding: var(--spacing-xs);
         justify-content: center;
         align-items: center;
         width: 100vw;

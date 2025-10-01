@@ -764,7 +764,7 @@
   }
   
   .schedule-modal-header {
-    padding: 16px 20px;
+    padding: var(--spacing-md) var(--spacing-lg);
   }
   
   .schedule-modal-title {
@@ -784,7 +784,7 @@
   }
   
   .schedule-modal-content {
-    padding: 16px 20px;
+    padding: var(--spacing-md) var(--spacing-lg);
   }
   
   .filter-section {
@@ -836,7 +836,7 @@
   
   .consultant-availability {
     font-size: 10px;
-    padding: 3px 6px;
+    padding: var(--spacing-xs) var(--spacing-xs);
   }
   
   .consultant-registration-date {
@@ -844,7 +844,7 @@
   }
   
   .modal-footer {
-    padding: 16px 20px;
+    padding: var(--spacing-md) var(--spacing-lg);
     flex-direction: column;
     gap: 8px;
   }

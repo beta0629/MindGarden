@@ -914,7 +914,7 @@ div[class*="consultant-specialty-display"] div,
     
     .basic-management-tab .consultant-specialty-display {
         font-size: 11px;
-        padding: 6px 8px;
+        padding: var(--spacing-xs) var(--spacing-sm);
         min-height: 36px;
     }
     
@@ -963,7 +963,7 @@ div[class*="consultant-specialty-display"] div,
     }
     
     .basic-management-tab .btn-sm {
-        padding: 8px 12px;
+        padding: var(--spacing-sm) var(--spacing-sm);
         font-size: 12px;
     }
 }
@@ -1000,7 +1000,7 @@ div[class*="consultant-specialty-display"] div,
     
     .basic-management-tab .consultant-specialty-display {
         font-size: 12px;
-        padding: 10px 12px;
+        padding: var(--spacing-sm) var(--spacing-sm);
         min-height: 70px;
         max-height: 90px;
     }

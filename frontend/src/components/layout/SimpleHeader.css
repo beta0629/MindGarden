@@ -22,7 +22,7 @@
   --header-height: 60px;
   --header-height-mobile: 56px;
   --header-max-width: 1200px;
-  --header-padding: 20px;
+  --header-padding: var(--spacing-lg);
   --header-padding-mobile: 15px;
   --header-button-size: 40px;
   --header-button-size-mobile: 36px;
@@ -247,7 +247,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 15px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 3px solid var(--color-danger);
   border-radius: 25px;
   background: var(--color-danger);
@@ -367,7 +367,7 @@
   }
   
   .simple-logout-button {
-    padding: 6px 10px;
+    padding: var(--spacing-xs) var(--spacing-sm);
     font-size: var(--header-button-font-size-mobile);
     margin-right: 6px;
   }
@@ -421,7 +421,7 @@
   
   .simple-menu-toggle,
   .simple-login-button {
-    padding: 6px var(--header-gap);
+    padding: var(--spacing-xs) var(--header-gap);
     font-size: var(--header-button-font-size-mobile);
   }
 }

@@ -18,6 +18,34 @@
     --user-mgmt-transition: 0.3s ease;
 }
 
+/* 빈 상태 아이콘 */
+.empty-icon {
+  font-size: var(--font-size-xxl);
+}
+
+/* 모달 스타일 */
+.user-management-modal {
+  z-index: var(--z-index-modal-overlay);
+}
+
+.user-management-modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.user-management-form-label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--ios-text-primary);
+}
+
 /* 사용자 카드 스타일 */
 .user-card {
     border: 1px solid var(--user-mgmt-border);

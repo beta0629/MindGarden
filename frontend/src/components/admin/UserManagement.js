@@ -250,12 +250,12 @@ const UserManagement = ({ onUpdate, showToast }) => {
                     <LoadingSpinner text="사용자 목록을 불러오는 중..." size="medium" />
                 ) : users.length === 0 ? (
                     <div className="text-center py-4 text-muted">
-                        <FaUsers className="mb-3" style={{ fontSize: '2rem' }} />
+                        <FaUsers className="mb-3 empty-icon" />
                         <p>등록된 사용자가 없습니다.</p>
                     </div>
                 ) : filteredUsers.length === 0 ? (
                     <div className="text-center py-4 text-muted">
-                        <FaSearch className="mb-3" style={{ fontSize: '2rem' }} />
+                        <FaSearch className="mb-3 empty-icon" />
                         <p>검색 결과가 없습니다.</p>
                         <small>다른 검색어나 필터를 시도해보세요.</small>
                     </div>
@@ -346,18 +346,10 @@ const UserManagement = ({ onUpdate, showToast }) => {
                 show={showRoleModal} 
                 onHide={() => setShowRoleModal(false)} 
                 size="lg"
-                style={{ zIndex: 9999 }}
+                className="user-management-modal"
             >
                 <Modal.Header closeButton>
-                    <Modal.Title style={{ 
-                        fontSize: 'var(--font-size-lg)', 
-                        fontWeight: '600', 
-                        color: '#333',
-                        margin: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}>
+                    <Modal.Title className="user-management-modal-title">
                         <i className="bi bi-person-gear"></i>
                         사용자 역할 변경
                     </Modal.Title>
@@ -389,13 +381,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                             )}
                             
                             <Form.Group className="mb-3">
-                                <Form.Label style={{
-                                    display: 'block',
-                                    marginBottom: '8px',
-                                    fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '500',
-                                    color: '#333'
-                                }}>
+                                <Form.Label className="user-management-form-label">
                                     새로운 역할
                                 </Form.Label>
                                 <select

@@ -58,19 +58,19 @@
 
 /* 재무 요약 카드 스타일 */
 .branch-financial-management .border-success {
-    border-left: 4px solid #28a745 !important;
+    border-left: 4px solid var(--color-success);
 }
 
 .branch-financial-management .border-danger {
-    border-left: 4px solid #dc3545 !important;
+    border-left: 4px solid var(--color-danger);
 }
 
 .branch-financial-management .border-primary {
-    border-left: 4px solid #007bff !important;
+    border-left: 4px solid var(--color-primary);
 }
 
 .branch-financial-management .border-info {
-    border-left: 4px solid #17a2b8 !important;
+    border-left: 4px solid var(--color-info);
 }
 
 /* 테이블 스타일 */
@@ -196,5 +196,5 @@
 .branch-financial-management .card.border-danger:hover,
 .branch-financial-management .card.border-primary:hover,
 .branch-financial-management .card.border-info:hover {
-    border-left-width: 6px !important;
+    border-left-width: 6px;
 }

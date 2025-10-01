@@ -188,9 +188,9 @@
 }
 
 .amount-highlight {
-    font-size: 16px !important;
-    font-weight: 700 !important;
-    color: #28a745 !important;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-success);
 }
 
 /* 참여자 정보 */

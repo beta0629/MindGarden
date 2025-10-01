@@ -129,7 +129,7 @@
 }
 
 .simple-hamburger-sub-item {
-  padding: 14px 24px 14px 48px !important;
+  padding: 14px 24px 14px 48px;
   font-size: 14px;
   color: #6c757d;
   background: white;
@@ -257,7 +257,7 @@
 }
 
 .hamburger-logout-button:hover {
-  background-color: #c82333 !important;
+  background-color: var(--color-danger-hover);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
 }

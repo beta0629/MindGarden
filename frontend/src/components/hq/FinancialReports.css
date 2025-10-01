@@ -162,7 +162,7 @@
 @media print {
     .financial-reports .btn,
     .financial-reports .nav-tabs {
-        display: none !important;
+        display: none;
     }
     
     .financial-reports .card {

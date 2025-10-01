@@ -1,0 +1,115 @@
+/* FinancialTransactionForm 스타일 - ErpModal 패턴 재사용 */
+
+.financial-transaction-form-error {
+  background-color: var(--ios-red-light);
+  color: var(--ios-red-dark);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--ios-red);
+}
+
+.financial-transaction-form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.financial-transaction-form-label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.financial-transaction-form-input,
+.financial-transaction-form-select,
+.financial-transaction-form-textarea {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--ios-border-light);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  background-color: var(--ios-bg-primary);
+  color: var(--ios-text-primary);
+  transition: border-color var(--transition-normal);
+}
+
+.financial-transaction-form-input:focus,
+.financial-transaction-form-select:focus,
+.financial-transaction-form-textarea:focus {
+  outline: none;
+  border-color: var(--ios-blue);
+  box-shadow: 0 0 0 3px var(--ios-blue-light);
+}
+
+.financial-transaction-form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.financial-transaction-form-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.financial-transaction-form-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.financial-transaction-form-checkbox-label {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  cursor: pointer;
+}
+
+.financial-transaction-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--ios-border-light);
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .financial-transaction-form-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .financial-transaction-form-actions .mg-btn {
+    width: 100%;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .financial-transaction-form-error {
+    background-color: var(--ios-red-light-dark);
+    color: var(--ios-red-dark);
+    border-color: var(--ios-red);
+  }
+  
+  .financial-transaction-form-label {
+    color: var(--ios-text-primary-dark);
+  }
+  
+  .financial-transaction-form-input,
+  .financial-transaction-form-select,
+  .financial-transaction-form-textarea {
+    background-color: var(--ios-bg-primary-dark);
+    color: var(--ios-text-primary-dark);
+    border-color: var(--ios-border-light-dark);
+  }
+  
+  .financial-transaction-form-checkbox-label {
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .financial-transaction-form-actions {
+    border-top-color: var(--ios-border-light-dark);
+  }
+}

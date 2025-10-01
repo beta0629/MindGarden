@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ErpModal from './common/ErpModal';
+import './FinancialTransactionForm.css';
 
 /**
  * 수입/지출 거래 등록 폼 컴포넌트 (공통 코드 사용)
@@ -96,50 +98,12 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
   );
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '10px',
-        padding: '30px',
-        width: '90%',
-        maxWidth: '500px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px'
-        }}>
-          <h2 style={{ margin: 0, color: '#2c3e50' }}>
-            💰 수입/지출 등록
-          </h2>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: 'var(--font-size-xxl)',
-              cursor: 'pointer',
-              color: '#666'
-            }}
-          >
-            ×
-          </button>
-        </div>
+    <ErpModal
+      isOpen={true}
+      onClose={onClose}
+      title="💰 수입/지출 등록"
+      size="medium"
+    >
 
         {error && (
           <div style={{
@@ -355,22 +319,13 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             <button
               type="submit"
               disabled={loading}
-              style={{
-                padding: '10px 20px',
-                border: 'none',
-                borderRadius: '5px',
-                backgroundColor: loading ? '#ccc' : '#3498db',
-                color: 'white',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: 'var(--font-size-sm)'
-              }}
+              className="mg-btn mg-btn--primary"
             >
               {loading ? '등록 중...' : '등록하기'}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ErpModal>
   );
 };
 

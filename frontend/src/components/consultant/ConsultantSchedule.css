@@ -486,55 +486,55 @@ textarea {
 }
 
 .fc-event[data-event-type="진행상담"] {
-  background-color: #2196F3 !important;
-  border-color: #2196F3 !important;
+  background-color: #2196F3;
+  border-color: #2196F3;
 }
 
 .fc-event[data-event-type="종결상담"] {
-  background-color: #FF9800 !important;
-  border-color: #FF9800 !important;
+  background-color: #FF9800;
+  border-color: #FF9800;
 }
 
 .fc-event[data-event-type="긴급상담"] {
-  background-color: #f44336 !important;
-  border-color: #f44336 !important;
+  background-color: #f44336;
+  border-color: #f44336;
 }
 
 /* 일정 표시 최적화 추가 */
 .fc-daygrid-day-frame {
-  min-height: 80px !important;
+  min-height: 80px;
 }
 
 .fc-daygrid-day-events {
-  margin-top: 2px !important;
+  margin-top: 2px;
 }
 
 .fc-daygrid-day-number {
-  padding: 4px !important;
-  font-weight: 600 !important;
+  padding: 4px;
+  font-weight: 600;
 }
 
 /* 일정이 많을 때 스크롤 가능하도록 */
 .fc-daygrid-day-events {
-  max-height: 120px !important;
-  overflow-y: auto !important;
-  scrollbar-width: thin !important;
+  max-height: 120px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .fc-daygrid-day-events::-webkit-scrollbar {
-  width: 4px !important;
+  width: 4px;
 }
 
 .fc-daygrid-day-events::-webkit-scrollbar-track {
-  background: #f1f1f1 !important;
-  border-radius: 2px !important;
+  background: #f1f1f1;
+  border-radius: 2px;
 }
 
 .fc-daygrid-day-events::-webkit-scrollbar-thumb {
-  background: #c1c1c1 !important;
-  border-radius: 2px !important;
+  background: #c1c1c1;
+  border-radius: 2px;
 }
 
 .fc-daygrid-day-events::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8 !important;
+  background: #a8a8a8;
 }

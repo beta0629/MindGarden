@@ -278,7 +278,7 @@ img {
 }
 
 .loading-spinner.d-none {
-    display: none !important;
+    display: none;
 }
 
 /* 로딩 스피너 컨테이너 - 글자 고정 */
@@ -414,7 +414,7 @@ img {
 
 /* ===== 인쇄 스타일 ===== */
 @media print {
-    .no-print { display: none !important; }
+    .no-print { display: none; }
     
     body {
         background: white;

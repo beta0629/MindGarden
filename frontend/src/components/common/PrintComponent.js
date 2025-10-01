@@ -69,10 +69,10 @@ const PrintComponent = forwardRef(({
         paddingTop: '10px'
       },
       '.no-print': {
-        display: 'none !important'
+        display: 'none'
       },
       '.print-only': {
-        display: 'block !important'
+        display: 'block'
       },
       'table': {
         width: '100%',

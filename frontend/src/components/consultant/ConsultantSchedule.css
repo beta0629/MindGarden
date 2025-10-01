@@ -101,18 +101,18 @@
 
 /* 일정 표시 최적화 */
 .fc-daygrid-event {
-  margin: 1px 0 !important;
-  padding: 2px 4px !important;
-  font-size: 0.8rem !important;
-  line-height: 1.2 !important;
-  border-radius: 4px !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  margin: 1px 0;
+  padding: 2px 4px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .fc-daygrid-event-dot {
-  display: none !important;
+  display: none;
 }
 
 .fc-daygrid-event-title {

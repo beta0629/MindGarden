@@ -26,7 +26,7 @@
   max-width: 90vw;
   max-height: 90vh;
   width: 800px;
-  z-index: 100000 !important;
+  z-index: var(--z-index-modal);
   position: relative;
   overflow: hidden;
   contain: layout style paint;
@@ -143,35 +143,35 @@
 
 /* 모달 내부 select 요소 격리 */
 .recurring-expense-modal select {
-  position: relative !important;
-  z-index: 1 !important;
-  transform: none !important;
-  contain: none !important;
-  will-change: auto !important;
+  position: relative;
+  z-index: var(--z-index-select);
+  transform: none;
+  contain: none;
+  will-change: auto;
 }
 
 .recurring-expense-modal select:focus {
-  position: relative !important;
-  z-index: 2 !important;
-  transform: none !important;
-  contain: none !important;
-  will-change: auto !important;
+  position: relative;
+  z-index: var(--z-index-dropdown);
+  transform: none;
+  contain: none;
+  will-change: auto;
 }
 
 /* 모달 내부 모든 select 요소 고정 */
 .recurring-expense-modal select,
 .recurring-expense-modal select option {
-  position: relative !important;
-  transform: none !important;
-  contain: none !important;
-  will-change: auto !important;
+  position: relative;
+  transform: none;
+  contain: none;
+  will-change: auto;
 }
 
 /* 모달 외부 드롭다운 비활성화 */
 body.modal-open select:not(.recurring-expense-modal select) {
-  z-index: 0 !important;
-  opacity: 0.3 !important;
-  pointer-events: none !important;
+  z-index: var(--z-index-hidden);
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 /* 통계 섹션 */

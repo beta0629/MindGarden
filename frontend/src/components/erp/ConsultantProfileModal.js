@@ -455,7 +455,7 @@ const ConsultantProfileModal = ({
                             <form onSubmit={handleSalaryProfileSubmit} style={{ marginTop: '20px', padding: '20px', background: '#f8f9fa', borderRadius: '8px' }}>
                                 <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e3f2fd', borderRadius: '6px', borderLeft: '4px solid #2196f3' }}>
                                     <h5 style={{ margin: '0 0 10px 0', color: '#1976d2', fontSize: 'var(--font-size-sm)', fontWeight: '600' }}>💡 안내사항</h5>
-                                    <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#424242', lineHeight: '1.5' }}>
+                                    <ul style={{ margin: 0, paddingLeft: '20px', fontSize: 'var(--font-size-sm)', color: '#424242', lineHeight: '1.5' }}>
                                         <li>상담사 등급에 따라 기본 급여가 자동으로 설정됩니다</li>
                                         <li>등급이 올라갈수록 2,000원씩 증가합니다</li>
                                         <li>기본 설정값은 계약서에 따라 다를 수 있습니다</li>
@@ -469,7 +469,7 @@ const ConsultantProfileModal = ({
                                         <select
                                             value={salaryFormData.salaryType}
                                             onChange={(e) => setSalaryFormData({...salaryFormData, salaryType: e.target.value})}
-                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px' }}
+                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: 'var(--font-size-sm)' }}
                                             required
                                         >
                                             <option value="">급여 유형 선택</option>
@@ -511,7 +511,7 @@ const ConsultantProfileModal = ({
                                                     }
                                                 }
                                             }}
-                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px' }}
+                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: 'var(--font-size-sm)' }}
                                             required
                                         >
                                             <option value="">등급 선택</option>
@@ -546,12 +546,12 @@ const ConsultantProfileModal = ({
                                         <select
                                             value={salaryFormData.isBusinessRegistered ? 'true' : 'false'}
                                             onChange={(e) => setSalaryFormData({...salaryFormData, isBusinessRegistered: e.target.value === 'true'})}
-                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px' }}
+                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: 'var(--font-size-sm)' }}
                                         >
                                             <option value="false">일반 프리랜서 (3.3% 원천징수만)</option>
                                             <option value="true">사업자 등록 (부가세 10% + 원천징수 3.3%)</option>
                                         </select>
-                                        <small style={{ color: '#6c757d', fontSize: '12px' }}>
+                                        <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)' }}>
                                             사업자 등록 여부에 따라 세금 계산이 달라집니다
                                         </small>
                                     </div>
@@ -566,9 +566,9 @@ const ConsultantProfileModal = ({
                                                     value={salaryFormData.businessRegistrationNumber}
                                                     onChange={(e) => setSalaryFormData({...salaryFormData, businessRegistrationNumber: e.target.value})}
                                                     placeholder="123-45-67890"
-                                                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px' }}
+                                                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: 'var(--font-size-sm)' }}
                                                 />
-                                                <small style={{ color: '#6c757d', fontSize: '12px' }}>
+                                                <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)' }}>
                                                     사업자 등록번호를 입력하세요 (예: 123-45-67890)
                                                 </small>
                                             </div>
@@ -579,9 +579,9 @@ const ConsultantProfileModal = ({
                                                     value={salaryFormData.businessName}
                                                     onChange={(e) => setSalaryFormData({...salaryFormData, businessName: e.target.value})}
                                                     placeholder="사업자명을 입력하세요"
-                                                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px' }}
+                                                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: 'var(--font-size-sm)' }}
                                                 />
-                                                <small style={{ color: '#6c757d', fontSize: '12px' }}>
+                                                <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)' }}>
                                                     사업자 등록증에 기재된 사업자명을 입력하세요
                                                 </small>
                                             </div>

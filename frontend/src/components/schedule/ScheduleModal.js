@@ -666,8 +666,8 @@ const ScheduleModalNew = ({
                                     padding: '8px 0',
                                     borderBottom: '1px solid #e9ecef'
                                 }}>
-                                    <strong style={{ color: '#495057', fontSize: '14px' }}>시간:</strong>
-                                    <span style={{ color: '#495057', fontSize: '14px' }}>
+                                    <strong style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>시간:</strong>
+                                    <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>
                                         {selectedTimeSlot?.time} - {selectedTimeSlot?.endTime} ({getDurationFromCode(selectedDuration)}분)
                                         {/* 디버깅용 로그 */}
                                         {console.log('🔍 스케줄 세부사항 시간 표시:', {
@@ -684,8 +684,8 @@ const ScheduleModalNew = ({
                                     alignItems: 'center',
                                     padding: '8px 0'
                                 }}>
-                                    <strong style={{ color: '#495057', fontSize: '14px' }}>유형:</strong>
-                                    <span style={{ color: '#495057', fontSize: '14px' }}>{convertConsultationTypeToKorean(consultationType)}</span>
+                                    <strong style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>유형:</strong>
+                                    <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>{convertConsultationTypeToKorean(consultationType)}</span>
                                 </div>
                             </div>
                             

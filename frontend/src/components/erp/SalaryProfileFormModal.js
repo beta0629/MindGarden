@@ -524,7 +524,7 @@ const SalaryProfileFormModal = ({
                                         {grade.name}
                                         {grade.code === formData.grade && (
                                             <span style={{ 
-                                                fontSize: '10px', 
+                                                fontSize: 'var(--font-size-xs)', 
                                                 backgroundColor: '#007bff', 
                                                 color: 'white', 
                                                 padding: '2px 6px', 
@@ -611,7 +611,7 @@ const SalaryProfileFormModal = ({
                                 <option value="false">일반 프리랜서 (3.3% 원천징수만)</option>
                                 <option value="true">사업자 등록 프리랜서 (3.3% 원천징수 + 10% 부가세)</option>
                             </select>
-                            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                            <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
                                 • 일반 프리랜서: 원천징수 3.3%만 적용<br/>
                                 • 사업자 등록: 원천징수 3.3% + 부가세 10% 적용
                             </div>
@@ -630,7 +630,7 @@ const SalaryProfileFormModal = ({
                                     onChange={(e) => handleInputChange('businessRegistrationNumber', e.target.value)}
                                     placeholder="123-45-67890"
                                 />
-                                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                                <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
                                     사업자 등록번호를 입력하세요 (예: 123-45-67890)
                                 </div>
                             </div>
@@ -643,7 +643,7 @@ const SalaryProfileFormModal = ({
                                     onChange={(e) => handleInputChange('businessName', e.target.value)}
                                     placeholder="사업자명을 입력하세요"
                                 />
-                                <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                                <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
                                     사업자 등록증에 기재된 사업자명을 입력하세요
                                 </div>
                             </div>
@@ -669,7 +669,7 @@ const SalaryProfileFormModal = ({
                                 + 옵션 추가
                             </button>
                         </div>
-                        <p style={{ fontSize: '12px', color: '#6c757d', margin: '0 0 16px 0' }}>
+                        <p style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', margin: '0 0 16px 0' }}>
                             {getGradeOptionsDescription(formData.grade || consultant.grade)}
                         </p>
                         

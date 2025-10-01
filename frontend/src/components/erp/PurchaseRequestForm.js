@@ -312,7 +312,7 @@ const PurchaseRequestForm = () => {
                   marginBottom: '16px', 
                   fontWeight: '600',
                   color: '#333',
-                  fontSize: '16px'
+                  fontSize: 'var(--font-size-base)'
                 }}>
                   선택된 아이템 수량 설정 *
                 </label>
@@ -421,7 +421,7 @@ const PurchaseRequestForm = () => {
                   padding: '12px',
                   border: '1px solid #ddd',
                   borderRadius: '4px',
-                  fontSize: '14px',
+                  fontSize: 'var(--font-size-sm)',
                   resize: 'vertical'
                 }}
               />
@@ -469,7 +469,7 @@ const PurchaseRequestForm = () => {
                     borderRadius: '6px',
                     textAlign: 'right',
                     fontWeight: '700',
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     color: '#1976d2'
                   }}>
                     총 금액: {formatCurrency(selectedItems.reduce((total, item) => {
@@ -519,7 +519,7 @@ const PurchaseRequestForm = () => {
         size="small"
       >
         <div style={{ textAlign: 'center', padding: '20px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', marginBottom: '16px' }}>✅</div>
           <h3 style={{ margin: '0 0 16px 0', color: '#28a745' }}>
             구매 요청이 성공적으로 제출되었습니다!
           </h3>

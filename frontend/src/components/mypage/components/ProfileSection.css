@@ -5,9 +5,9 @@
   --profile-section-bg: white;
   --profile-section-radius: 8px;
   --profile-section-padding: 20px;
-  --profile-section-margin: 20px;
+  --profile-section-margin: var(--spacing-base);
   --profile-section-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --profile-header-margin: 20px;
+  --profile-header-margin: var(--spacing-base);
   --profile-header-padding: 15px;
   --profile-header-border: 1px solid #e9ecef;
   --profile-header-gap: 20px;
@@ -25,8 +25,8 @@
   --profile-edit-btn-hover-transform: translateY(-1px);
   --profile-edit-btn-hover-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
   --profile-form-max-width: 600px;
-  --profile-form-group-margin: 20px;
-  --profile-label-margin: 8px;
+  --profile-form-group-margin: var(--spacing-base);
+  --profile-label-margin: var(--spacing-sm);
   --profile-label-font-weight: 500;
   --profile-label-color: #333;
   --profile-input-padding: 10px;
@@ -38,7 +38,7 @@
   --profile-select-arrow-size: var(--font-size-base);
   --profile-select-arrow-position: right 10px center;
   --profile-select-padding-right: 40px;
-  --profile-actions-margin: 30px;
+  --profile-actions-margin: var(--spacing-xl);
   --profile-actions-padding: 20px;
   --profile-actions-border: 1px solid #e9ecef;
   --profile-save-btn-padding: 12px 24px;

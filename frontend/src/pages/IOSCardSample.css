@@ -11,7 +11,7 @@
 
 .ios-sample-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: var(--spacing-xxl);
   padding: 20px;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 20px;
@@ -36,7 +36,7 @@
 }
 
 .ios-sample-section {
-  margin-bottom: 40px;
+  margin-bottom: var(--spacing-xxl);
 }
 
 .ios-section-title {
@@ -52,7 +52,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-base);
 }
 
 /* 관리 카드 그리드 */
@@ -60,7 +60,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-base);
 }
 
 /* 기본 카드 그리드 */
@@ -68,7 +68,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-base);
 }
 
 /* 아이폰 스타일 기본 카드 */

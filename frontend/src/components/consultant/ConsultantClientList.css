@@ -1,6 +1,6 @@
 /* 상담사 내담자 목록 스타일 */
 .consultant-client-list-container {
-  padding: 20px;
+  padding: var(--spacing-lg);
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -40,7 +40,7 @@
   flex-wrap: wrap;
   align-items: center;
   background: #fff;
-  padding: 20px;
+  padding: var(--spacing-lg);
   border-radius: 15px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   border: 1px solid #e9ecef;
@@ -67,7 +67,7 @@
 
 .search-input {
   width: 100%;
-  padding: 14px 15px 14px 45px;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) var(--spacing-xxxl);
   border: 2px solid #e9ecef;
   border-radius: 12px;
   font-size: 1rem;
@@ -108,7 +108,7 @@
 
 .filter-select {
   width: 100%;
-  padding: 14px 40px 14px 35px;
+  padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-sm) var(--spacing-xxl);
   border: 2px solid #e9ecef;
   border-radius: 12px;
   font-size: 1rem;
@@ -151,7 +151,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: var(--spacing-xxxl) var(--spacing-lg);
   text-align: center;
 }
 
@@ -167,13 +167,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: var(--spacing-xxxl) var(--spacing-lg);
   text-align: center;
 }
 
 .error-container .alert {
   margin-bottom: 20px;
-  padding: 15px 20px;
+  padding: var(--spacing-md) var(--spacing-lg);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -186,7 +186,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 20px;
+  padding: var(--spacing-xxxl) var(--spacing-lg);
   text-align: center;
   color: #7f8c8d;
 }
@@ -239,7 +239,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 24px 20px;
+  padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-bottom: 1px solid #e9ecef;
 }
@@ -271,7 +271,7 @@
 }
 
 .status-badge {
-  padding: 6px 12px;
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -309,7 +309,7 @@
 }
 
 .client-card-body {
-  padding: 24px;
+  padding: var(--spacing-xl);
   /* flex: 1; */
   /* display: flex; */
   /* flex-direction: column; */
@@ -338,7 +338,7 @@
   color: #6c757d;
   font-size: 0.95rem;
   min-height: 24px; /* 최소 높이 보장 */
-  padding: 4px 0;
+  padding: var(--spacing-xs) 0;
   transition: color 0.2s ease;
 }
 
@@ -354,7 +354,7 @@
 }
 
 .client-card-footer {
-  padding: 20px 24px 24px;
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);
   border-top: 1px solid #e9ecef;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   /* margin-top: auto; */
@@ -362,7 +362,7 @@
 
 .client-card-footer .btn {
   width: 100%;
-  padding: 12px 20px;
+  padding: var(--spacing-sm) var(--spacing-lg);
   border-radius: 12px;
   font-weight: 600;
   font-size: 0.95rem;
@@ -402,7 +402,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 20px;
+  padding: var(--spacing-lg);
 }
 
 .client-detail-modal {
@@ -596,7 +596,7 @@
   }
   
   .client-card-body {
-    padding: 20px;
+    padding: var(--spacing-lg);
   }
   
   .client-card-footer {
@@ -619,7 +619,7 @@
   .modal-header,
   .modal-body,
   .modal-footer {
-    padding: 20px;
+    padding: var(--spacing-lg);
   }
   
   .modal-footer {

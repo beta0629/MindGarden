@@ -399,7 +399,7 @@ const PaymentManagement = () => {
     
     if (statusOption) {
       return (
-        <span className="badge" style={{ backgroundColor: statusOption.color, color: 'white' }}>
+        <span className="badge" data-badge-color={statusOption.color}>
           {statusOption.icon} {statusOption.label}
         </span>
       );

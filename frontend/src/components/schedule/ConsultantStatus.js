@@ -215,7 +215,7 @@ const ConsultantStatus = () => {
                                             e.target.nextSibling.style.display = 'flex';
                                         }}
                                     />
-                                    <div className="consultant-status-default-icon" style={{display: 'none'}}>👨‍⚕️</div>
+                                    <div className="consultant-status-default-icon consultant-status-hidden">👨‍⚕️</div>
                                 </div>
                                 <div className="consultant-status-info">
                                     <div className="consultant-status-name">{consultant.name}</div>

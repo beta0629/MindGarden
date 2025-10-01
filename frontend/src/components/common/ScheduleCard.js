@@ -47,14 +47,6 @@ const ScheduleCard = ({
     return timeString.substring(0, 5); // HH:mm 형식으로 변환
   };
 
-  // 상태별 스타일
-  const getStatusStyle = (status) => {
-    return {
-      backgroundColor: STATUS_COLORS[status] || 'var(--color-neutral)',
-      color: STATUS_TEXT_COLORS[status] || 'var(--color-text-primary)'
-    };
-  };
-
   // 액션 버튼 렌더링
   const renderActionButtons = () => {
     if (!showActions) return null;
@@ -151,7 +143,7 @@ const ScheduleCard = ({
           <h3>{schedule.title || '제목 없음'}</h3>
           <span 
             className="schedule-status-badge"
-            style={getStatusStyle(schedule.status)}
+            data-status={schedule.status}
           >
             {STATUS_LABELS[schedule.status] || schedule.status}
           </span>

@@ -112,7 +112,10 @@ const ConsultationHistory = () => {
     
     if (statusOption) {
       return (
-        <span className={`status-badge status-${status.toLowerCase()}`} style={{ color: statusOption.color }}>
+        <span 
+          className={`status-badge status-${status.toLowerCase()}`} 
+          data-color={statusOption.color}
+        >
           {statusOption.icon} {statusOption.label}
         </span>
       );

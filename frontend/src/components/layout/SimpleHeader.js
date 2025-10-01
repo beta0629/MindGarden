@@ -205,24 +205,6 @@ const SimpleHeader = () => {
                 className="simple-header-logout-button"
                 onClick={handleLogout}
                 title="로그아웃"
-                style={{
-                  marginLeft: '12px',
-                  marginRight: '8px',
-                  padding: '8px 12px',
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: 'var(--font-size-sm)',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#c82333'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#dc3545'}
               >
                 <i className="bi bi-box-arrow-right"></i>
                 <span>로그아웃</span>

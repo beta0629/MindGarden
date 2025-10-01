@@ -104,7 +104,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                     </div>
                 ) : consultants.length === 0 ? (
                     <div className="text-center py-4 text-muted">
-                        <FaUserTie className="mb-3" style={{ fontSize: '2rem' }} />
+                        <FaUserTie className="mb-3 consultant-management-empty-icon" />
                         <p>등록된 상담사가 없습니다.</p>
                     </div>
                 ) : (

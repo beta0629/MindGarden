@@ -247,16 +247,11 @@ const ConsultantAvailability = () => {
     if (!sessionManagerIsLoggedIn || !sessionManagerUser) {
       return (
         <SimpleLayout>
-          <div style={{ textAlign: 'center', padding: '50px' }}>
-            <div style={{ 
-              background: '#f8f9fa', 
-              padding: '30px', 
-              borderRadius: '10px',
-              border: '1px solid #dee2e6'
-            }}>
-              <i className="bi bi-exclamation-triangle" style={{ fontSize: 'var(--font-size-xxxl)', color: '#6c757d', marginBottom: '20px' }}></i>
-              <h3 style={{ color: '#495057', marginBottom: '10px' }}>로그인이 필요합니다</h3>
-              <p style={{ color: '#6c757d', marginBottom: '20px' }}>상담 가능 시간을 관리하려면 로그인해주세요.</p>
+          <div className="consultant-availability-error-container">
+            <div className="consultant-availability-error-box consultant-availability-error-box--login">
+              <i className="bi bi-exclamation-triangle consultant-availability-error-icon"></i>
+              <h3 className="consultant-availability-error-title">로그인이 필요합니다</h3>
+              <p className="consultant-availability-error-message">상담 가능 시간을 관리하려면 로그인해주세요.</p>
               <button 
                 className="btn btn-primary"
                 onClick={() => window.location.href = '/login'}
@@ -277,17 +272,12 @@ const ConsultantAvailability = () => {
     if (!hasPermission) {
       return (
         <SimpleLayout>
-          <div style={{ textAlign: 'center', padding: '50px' }}>
-            <div style={{ 
-              background: '#fff3cd', 
-              padding: '30px', 
-              borderRadius: '10px',
-              border: '1px solid #ffeaa7'
-            }}>
-              <i className="bi bi-shield-exclamation" style={{ fontSize: 'var(--font-size-xxxl)', color: '#856404', marginBottom: '20px' }}></i>
-              <h3 style={{ color: '#856404', marginBottom: '10px' }}>접근 권한이 없습니다</h3>
-              <p style={{ color: '#856404', marginBottom: '20px' }}>상담 가능 시간 관리는 상담사 또는 관리자만 접근할 수 있습니다.</p>
-              <p style={{ color: '#856404', marginBottom: '20px', fontSize: 'var(--font-size-sm)' }}>
+          <div className="consultant-availability-error-container">
+            <div className="consultant-availability-error-box consultant-availability-error-box--permission">
+              <i className="bi bi-shield-exclamation consultant-availability-error-icon"></i>
+              <h3 className="consultant-availability-error-title">접근 권한이 없습니다</h3>
+              <p className="consultant-availability-error-message">상담 가능 시간 관리는 상담사 또는 관리자만 접근할 수 있습니다.</p>
+              <p className="consultant-availability-error-detail">
                 현재 사용자 역할: {userRole || '없음'}
               </p>
               <button 

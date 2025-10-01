@@ -1034,7 +1034,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                             {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
                                 <button 
                                     onClick={handleVacationClick}
-                                    style={{
+                                    className="schedule-calendar-modal-btn"
                                         display: 'flex',
                                         alignItems: 'center',
                                         padding: '16px',
@@ -1200,7 +1200,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                                     endTime: timeSlot.endTime
                                                 }))}
                                                 disabled={isBooked}
-                                                style={{
+                                                className="schedule-calendar-modal-btn"
                                                     padding: '12px 8px',
                                                     border: '1px solid #e2e8f0',
                                                     borderRadius: '6px',

@@ -154,8 +154,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               onChange={handleInputChange}
               required
               disabled={loadingCodes}
-              style={{
-                width: '100%',
+              className="financial-transaction-select"
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
@@ -188,8 +187,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               onChange={handleInputChange}
               required
               disabled={!formData.category || loadingCodes}
-              style={{
-                width: '100%',
+              className="financial-transaction-select"
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
@@ -225,8 +223,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               min="0"
               step="1"
               placeholder="금액을 입력하세요"
-              style={{
-                width: '100%',
+              className="financial-transaction-select"
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
@@ -246,8 +243,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               value={formData.transactionDate}
               onChange={handleInputChange}
               required
-              style={{
-                width: '100%',
+              className="financial-transaction-select"
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
@@ -267,8 +263,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               onChange={handleInputChange}
               rows="3"
               placeholder="거래에 대한 추가 설명을 입력하세요"
-              style={{
-                width: '100%',
+              className="financial-transaction-select"
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',

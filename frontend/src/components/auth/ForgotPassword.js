@@ -101,11 +101,6 @@ const ForgotPassword = () => {
                         placeholder="example@email.com"
                         disabled={isLoading}
                         className="forgot-password-input"
-                          padding: '16px',
-                          fontSize: 'var(--font-size-base)',
-                          border: '2px solid #e2e8f0',
-                          borderRadius: '12px',
-                          outline: 'none',
                           transition: 'all 0.2s ease',
                           fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
                           backgroundColor: isLoading ? '#f7fafc' : '#ffffff'

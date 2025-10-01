@@ -289,11 +289,6 @@ const ConsultantMessages = () => {
                       <div className="consultant-messages-card-header">
                         <div className="consultant-messages-card-type">
                           <span className="consultant-messages-card-type-icon"
-                            backgroundColor: typeInfo.color + '20',
-                            color: typeInfo.color,
-                            padding: '4px 8px',
-                            borderRadius: '12px',
-                            fontSize: '0.8rem',
                             fontWeight: '600'
                           }}>
                             {typeInfo.icon} {typeInfo.label}

@@ -262,11 +262,6 @@ const ConsultantMessages = () => {
                   <button 
                     onClick={() => setShowSendModal(true)}
                     className="consultant-messages-empty-btn"
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      border: '1px solid #3498db',
-                      background: 'transparent',
-                      color: '#3498db',
                       cursor: 'pointer'
                     }}
                   >

@@ -1102,11 +1102,6 @@ const UnifiedScheduleComponent = ({
                             <button 
                                 onClick={handleScheduleClick}
                                 className="unified-schedule-modal-btn"
-                                    alignItems: 'center',
-                                    padding: '16px',
-                                    border: '2px solid #e9ecef',
-                                    borderRadius: '8px',
-                                    background: 'white',
                                     cursor: 'pointer',
                                     width: '100%',
                                     textAlign: 'left',

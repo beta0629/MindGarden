@@ -1144,8 +1144,6 @@ const UnifiedScheduleComponent = ({
                             <button 
                                 onClick={() => setIsDateActionModalOpen(false)}
                                 className="unified-schedule-modal-close-btn"
-                                    transition: 'all 0.3s ease'
-                                }}
                                 onMouseOver={(e) => {
                                     e.target.style.background = '#5a6268';
                                     e.target.style.transform = 'translateY(-1px)';

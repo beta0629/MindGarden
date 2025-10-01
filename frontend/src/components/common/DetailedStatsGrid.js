@@ -108,8 +108,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
       </div>
 
       {/* 상담사 현황 */}
-      <div className="detailed-stats-card detailed-stats-card--consultants"
-      }}>
+      <div className="detailed-stats-card detailed-stats-card--consultants">
         <div className="detailed-stats-card-header">
           alignItems: 'center',
           marginBottom: '20px'

@@ -4,15 +4,15 @@
   /* 폰트 패밀리 */
   --font-family-ios: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
-  /* 모바일 우선 폰트 시스템 - 최적화된 크기 */
-  --font-size-xs: 10px;        /* 매우 작은 텍스트 */
-  --font-size-sm: 11px;        /* 작은 텍스트 */
-  --font-size-base: 13px;      /* 기본 텍스트 */
-  --font-size-md: 14px;        /* 중간 텍스트 */
-  --font-size-lg: 15px;        /* 큰 텍스트 */
-  --font-size-xl: 16px;        /* 제목 */
-  --font-size-xxl: 18px;       /* 큰 제목 */
-  --font-size-xxxl: 20px;      /* 최대 제목 크기 */
+/* 모바일 우선 폰트 시스템 - 더 작은 크기로 조정 */
+--font-size-xs: 9px;         /* 매우 작은 텍스트 */
+--font-size-sm: 10px;        /* 작은 텍스트 */
+--font-size-base: 12px;      /* 기본 텍스트 */
+--font-size-md: 13px;        /* 중간 텍스트 */
+--font-size-lg: 14px;        /* 큰 텍스트 */
+--font-size-xl: 15px;        /* 제목 */
+--font-size-xxl: 16px;       /* 큰 제목 */
+--font-size-xxxl: 18px;      /* 최대 제목 크기 */
 
   /* 데스크톱 폰트 시스템 */
   --font-size-base-desktop: 16px;
@@ -38,6 +38,20 @@
 /* 아이패드 폰트 크기 조정 */
 @media (min-width: 768px) and (max-width: 1024px) {
   :root {
+    --font-size-xs: 10px;
+    --font-size-sm: 11px;
+    --font-size-base: 13px;
+    --font-size-md: 14px;
+    --font-size-lg: 15px;
+    --font-size-xl: 16px;
+    --font-size-xxl: 18px;
+    --font-size-xxxl: 20px;
+  }
+}
+
+/* 데스크톱 폰트 크기 조정 */
+@media (min-width: 1025px) {
+  :root {
     --font-size-xs: 11px;
     --font-size-sm: 12px;
     --font-size-base: 14px;
@@ -45,20 +59,6 @@
     --font-size-lg: 16px;
     --font-size-xl: 18px;
     --font-size-xxl: 20px;
-    --font-size-xxxl: 22px;
-  }
-}
-
-/* 데스크톱 폰트 크기 조정 */
-@media (min-width: 1025px) {
-  :root {
-    --font-size-xs: 12px;
-    --font-size-sm: 13px;
-    --font-size-base: 15px;
-    --font-size-md: 16px;
-    --font-size-lg: 18px;
-    --font-size-xl: 20px;
-    --font-size-xxl: 24px;
-    --font-size-xxxl: 28px;
+    --font-size-xxxl: 24px;
   }
 }

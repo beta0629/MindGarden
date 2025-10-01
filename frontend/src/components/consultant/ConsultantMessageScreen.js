@@ -378,7 +378,7 @@ const ConsultantMessageScreen = () => {
   if (loading) {
     return (
       <SimpleLayout title="메시지 전송">
-        <div style={styles.loadingOverlay}>
+        <div className="consultant-message-screen-loading">
           <LoadingSpinner variant="pulse" size="large" text="데이터를 불러오는 중..." />
         </div>
       </SimpleLayout>

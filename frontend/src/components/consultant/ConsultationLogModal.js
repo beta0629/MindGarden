@@ -616,9 +616,9 @@ const ConsultationLogModal = ({
 
   if (loading) {
     return (
-      <div style={styles.modalOverlay}>
-        <div style={styles.modalContent}>
-          <div style={styles.loadingOverlay}>
+      <div className="consultation-log-modal-overlay">
+        <div className="consultation-log-modal-content">
+          <div className="consultation-log-modal-loading">
             <LoadingSpinner variant="pulse" size="large" text="데이터를 불러오는 중..." />
           </div>
         </div>

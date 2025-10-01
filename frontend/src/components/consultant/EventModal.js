@@ -365,9 +365,9 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
   };
 
   return (
-    <div style={styles.modalOverlay}>
-      <div style={styles.modalContent}>
-        <div style={styles.modalHeader}>
+    <div className="event-modal-overlay">
+      <div className="event-modal-content">
+        <div className="event-modal-header">
           <h2 style={styles.modalTitle}>{mode === 'add' ? '새 일정 추가' : '일정 수정'}</h2>
           <button style={styles.closeBtn} onClick={onClose}>×</button>
         </div>

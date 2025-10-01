@@ -518,7 +518,7 @@ const ConsultationRecordScreen = () => {
   if (loading) {
     return (
       <SimpleLayout title="상담일지 작성">
-        <div style={styles.loadingOverlay}>
+        <div className="consultation-record-screen-loading">
           <LoadingSpinner variant="pulse" size="large" text="데이터를 불러오는 중..." />
         </div>
       </SimpleLayout>

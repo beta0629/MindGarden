@@ -223,7 +223,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto var(--spacing-md);
-  font-size: 28px;
+  font-size: var(--font-size-xxl);
   color: white;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -244,7 +244,7 @@
 .stat-icon.info { background: #17a2b8; }
 
 .stat-value {
-  font-size: 36px;
+  font-size: var(--font-size-xxxl);
   font-weight: var(--font-weight-extrabold);
   color: var(--ios-text-primary);
   margin: 0 0 var(--spacing-sm) 0;
@@ -433,7 +433,7 @@
   }
   
   .stat-value {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
   }
   
   .stat-label {
@@ -479,7 +479,7 @@
   .stat-icon {
     width: 44px;
     height: 44px;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     border-radius: var(--border-radius-md);
     background: var(--ios-blue);
     color: white;
@@ -489,7 +489,7 @@
   .management-icon {
     width: 48px;
     height: 48px;
-    font-size: 22px;
+    font-size: var(--font-size-xl);
     border-radius: var(--border-radius-lg);
     background: var(--ios-blue);
     color: white;
@@ -579,14 +579,14 @@
   .stat-icon {
     width: 56px;
     height: 56px;
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     border-radius: var(--ipad-border-radius-md);
   }
   
   .management-icon {
     width: 64px;
     height: 64px;
-    font-size: 26px;
+    font-size: var(--font-size-xxl);
     border-radius: var(--ipad-border-radius-lg);
   }
   

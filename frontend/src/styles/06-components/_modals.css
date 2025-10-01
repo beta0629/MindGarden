@@ -116,7 +116,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   transition: var(--transition-normal);
 }
 
@@ -301,7 +301,7 @@
     right: var(--spacing-md);
     width: 28px;
     height: 28px;
-    font-size: 16px;
+    font-size: var(--font-size-base);
   }
   
   .mg-modal__body {

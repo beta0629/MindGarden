@@ -21,7 +21,7 @@
 }
 
 .ios-sample-title {
-  font-size: 28px;
+  font-size: var(--font-size-xxl);
   font-weight: 700;
   color: #1d1d1f;
   margin: 0 0 8px 0;
@@ -29,7 +29,7 @@
 }
 
 .ios-sample-subtitle {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   color: #86868b;
   margin: 0;
   font-weight: 400;
@@ -40,7 +40,7 @@
 }
 
 .ios-section-title {
-  font-size: 22px;
+  font-size: var(--font-size-xl);
   font-weight: 600;
   color: #1d1d1f;
   margin: 0 0 20px 0;
@@ -107,7 +107,7 @@
 }
 
 .card-title {
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   font-weight: 700;
   color: #1a1a1a;
   margin: 0;
@@ -116,7 +116,7 @@
 }
 
 .card-subtitle {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: rgba(26, 26, 26, 0.7);
   margin: 6px 0 0 0;
   font-weight: 500;
@@ -147,7 +147,7 @@
   color: rgba(26, 26, 26, 0.8);
   line-height: 1.7;
   margin: 0 0 20px 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
@@ -168,7 +168,7 @@
 }
 
 .card-actions .btn {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   padding: 12px 24px;
   border-radius: 12px;
   border: none;
@@ -273,7 +273,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
-  font-size: 28px;
+  font-size: var(--font-size-xxl);
   color: white;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -289,7 +289,7 @@
 }
 
 .stat-value {
-  font-size: 36px;
+  font-size: var(--font-size-xxxl);
   font-weight: 800;
   color: #1a1a1a;
   margin: 0 0 12px 0;
@@ -298,7 +298,7 @@
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: rgba(26, 26, 26, 0.7);
   margin: 0;
   font-weight: 600;
@@ -308,7 +308,7 @@
 }
 
 .stat-change {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   margin-top: 12px;
   display: inline-flex;
@@ -396,7 +396,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 24px;
-  font-size: 32px;
+  font-size: var(--font-size-xxxl);
   color: white;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
@@ -411,7 +411,7 @@
 }
 
 .management-content h3 {
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   font-weight: 700;
   color: #1a1a1a;
   margin: 0 0 12px 0;
@@ -420,7 +420,7 @@
 }
 
 .management-content p {
-  font-size: 15px;
+  font-size: var(--font-size-md);
   color: rgba(26, 26, 26, 0.7);
   margin: 0;
   line-height: 1.6;
@@ -487,14 +487,14 @@
 .ios-selected-info h3 {
   color: #007aff;
   margin: 0 0 8px 0;
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
 }
 
 .ios-selected-info p {
   color: rgba(0, 122, 255, 0.8);
   margin: 0;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 /* 모바일 반응형 */
@@ -504,11 +504,11 @@
   }
   
   .ios-sample-title {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
   }
   
   .ios-sample-subtitle {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
   
   .ios-stat-grid {
@@ -545,15 +545,15 @@
   }
   
   .card-title {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
   }
   
   .card-subtitle {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
   
   .card-text {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
   
   .stat-card {
@@ -562,17 +562,17 @@
   }
   
   .stat-value {
-    font-size: 28px;
+    font-size: var(--font-size-xxl);
   }
   
   .stat-label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
   
   .stat-icon {
     width: 56px;
     height: 56px;
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     border-radius: 16px;
   }
   
@@ -584,20 +584,20 @@
   .management-icon {
     width: 64px;
     height: 64px;
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     border-radius: 20px;
   }
   
   .management-content h3 {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
   }
   
   .management-content p {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
   
   .card-actions .btn {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     padding: 8px 16px;
     border-radius: 8px;
   }

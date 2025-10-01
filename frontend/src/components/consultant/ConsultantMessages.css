@@ -1,0 +1,84 @@
+/* ConsultantMessages 스타일 - 새로운 디자인 시스템 적용 */
+
+.consultant-messages-login-required {
+  text-align: center;
+  padding: var(--spacing-xxxl);
+}
+
+.consultant-messages-container {
+  padding: var(--spacing-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.consultant-messages-header {
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+.consultant-messages-title {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.consultant-messages-icon {
+  color: var(--ios-blue);
+}
+
+.consultant-messages-subtitle {
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-base);
+  margin: 0;
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .consultant-messages-container {
+    padding: var(--spacing-md);
+  }
+  
+  .consultant-messages-header {
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .consultant-messages-title {
+    font-size: var(--font-size-xl);
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .consultant-messages-subtitle {
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .consultant-messages-title {
+    font-size: var(--font-size-xl);
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .consultant-messages-title {
+    color: var(--ios-text-primary-dark);
+  }
+  
+  .consultant-messages-subtitle {
+    color: var(--ios-text-secondary-dark);
+  }
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+  .consultant-messages-title {
+    transition: none;
+  }
+}

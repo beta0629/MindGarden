@@ -5,6 +5,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import LoadingSpinner from '../common/LoadingSpinner';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
+import './ConsultantMessages.css';
 
 /**
  * 상담사 메시지 관리 페이지
@@ -169,7 +170,7 @@ const ConsultantMessages = () => {
   if (!isLoggedIn) {
     return (
       <SimpleLayout title="메시지 관리">
-        <div style={{ textAlign: 'center', padding: '50px' }}>
+        <div className="consultant-messages-login-required">
           <h3>로그인이 필요합니다.</h3>
         </div>
       </SimpleLayout>
@@ -178,23 +179,14 @@ const ConsultantMessages = () => {
 
   return (
     <SimpleLayout title="메시지 관리">
-      <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="consultant-messages-container">
         {/* 헤더 */}
-        <div style={{ marginBottom: '30px', textAlign: 'center' }}>
-          <h1 style={{ 
-            fontSize: '2rem', 
-            fontWeight: '600', 
-            color: '#2c3e50', 
-            marginBottom: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px'
-          }}>
-            <i className="bi bi-chat-dots" style={{ color: '#3498db' }}></i>
+        <div className="consultant-messages-header">
+          <h1 className="consultant-messages-title">
+            <i className="bi bi-chat-dots consultant-messages-icon"></i>
             메시지 관리
           </h1>
-          <p style={{ color: '#7f8c8d', fontSize: '1.1rem', margin: '0' }}>
+          <p className="consultant-messages-subtitle">
             내담자들과의 메시지를 관리할 수 있습니다.
           </p>
         </div>

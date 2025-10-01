@@ -52,7 +52,7 @@
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-secondary);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .schedule-search-input {
@@ -267,7 +267,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
@@ -275,7 +275,7 @@
   padding: var(--spacing-xs) var(--spacing-sm);
   border: 1px solid var(--color-neutral-dark);
   border-radius: var(--border-radius-small);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   background: var(--color-surface);
   cursor: pointer;
 }
@@ -313,7 +313,7 @@
 
 .pagination-pages {
   padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   white-space: nowrap;
 }
@@ -388,21 +388,21 @@
   }
   
   .schedule-search-input {
-    font-size: 16px; /* iOS 줌 방지 */
+    font-size: var(--font-size-base); /* iOS 줌 방지 */
   }
   
   .schedule-filter-select,
   .schedule-sort-select {
-    font-size: 16px; /* iOS 줌 방지 */
+    font-size: var(--font-size-base); /* iOS 줌 방지 */
   }
   
   .pagination-btn {
     padding: var(--spacing-xs);
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     min-width: 32px;
   }
   
   .pagination-info {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 }

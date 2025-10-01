@@ -62,7 +62,7 @@
 .close-button {
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: var(--font-size-xxl);
   color: white;
   cursor: pointer;
   padding: 4px;

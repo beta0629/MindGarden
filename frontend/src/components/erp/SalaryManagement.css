@@ -42,7 +42,7 @@
 
 .no-data p {
     margin: 0;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 /* 세금 명세서 스타일 */
@@ -62,7 +62,7 @@
     color: white;
     font-weight: 600;
     padding: 12px 20px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .spec-section {
@@ -78,7 +78,7 @@
     color: white;
     padding: 8px 16px;
     font-weight: 600;
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -89,7 +89,7 @@
     padding: 12px 20px;
     border-bottom: 1px solid #f1f3f4;
     align-items: center;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .spec-item:last-child {
@@ -104,7 +104,7 @@
 .item-rate {
     text-align: center;
     color: #6c757d;
-    font-size: 13px;
+    font-size: var(--font-size-sm);
 }
 
 .item-amount {
@@ -128,14 +128,14 @@
 
 .total-label {
     font-weight: 700;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     color: #212529;
 }
 
 .total-amount {
     text-align: right;
     font-weight: 700;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     color: #dc3545;
     font-family: 'Courier New', monospace;
 }
@@ -159,7 +159,7 @@
 .salary-header h2 {
     margin: 0;
     color: #2c3e50;
-    font-size: 28px;
+    font-size: var(--font-size-xxl);
     font-weight: 600;
 }
 
@@ -175,7 +175,7 @@
     border-radius: 6px;
     position: relative;
     z-index: 1;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background: white;
     min-width: 150px;
     /* 드롭다운 고정을 위한 추가 속성 */
@@ -221,7 +221,7 @@
 }
 
 .control-group label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     color: #666;
     margin-bottom: 2px;
@@ -241,7 +241,7 @@
 .calculations-history h4 {
     margin: 0 0 16px 0;
     color: #2c3e50;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
 }
 
@@ -261,7 +261,7 @@
     border: none;
     background: transparent;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -293,7 +293,7 @@
 .section-header h3 {
     margin: 0;
     color: #2c3e50;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     font-weight: 600;
 }
 
@@ -327,14 +327,14 @@
 .profile-info h4 {
     margin: 0 0 8px 0;
     color: #2c3e50;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
 }
 
 .profile-info p {
     margin: 4px 0;
     color: #6c757d;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .profile-actions {
@@ -375,14 +375,14 @@
 .calculation-header h4 {
     margin: 0;
     color: #2c3e50;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
 }
 
 .status {
     padding: 4px 12px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     text-transform: uppercase;
 }
@@ -445,7 +445,7 @@
 .tax-calculations-history h4 {
     margin: 0 0 16px 0;
     color: #2c3e50;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
 }
 
@@ -478,7 +478,7 @@
 .statistics-card h4 {
     margin: 0 0 16px 0;
     color: #2c3e50;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
 }
 
@@ -498,7 +498,7 @@
 }
 
 .stat-label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
     margin-bottom: 8px;
     text-transform: uppercase;
@@ -506,7 +506,7 @@
 }
 
 .stat-value {
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     font-weight: 600;
     color: #2c3e50;
 }
@@ -518,7 +518,7 @@
     border: none;
     padding: 10px 20px;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;
@@ -534,7 +534,7 @@
     border: none;
     padding: 8px 16px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;

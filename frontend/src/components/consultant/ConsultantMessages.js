@@ -201,8 +201,7 @@ const ConsultantMessages = () => {
                 placeholder="제목, 내용, 내담자명으로 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                  width: '100%',
+                className="consultant-messages-search-input"
                   padding: '12px 15px 12px 40px',
                   border: '2px solid #e9ecef',
                   borderRadius: '12px',
@@ -215,7 +214,7 @@ const ConsultantMessages = () => {
             </div>
           </div>
           
-          <div style={{ minWidth: '180px' }}>
+          <div className="consultant-messages-filter-container">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}

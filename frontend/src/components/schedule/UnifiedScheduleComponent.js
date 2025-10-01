@@ -985,7 +985,7 @@ const UnifiedScheduleComponent = ({
                                     <div key={option.value || `status-${index}`} className="legend-item">
                                         <span 
                                             className="legend-color" 
-                                            style={{ backgroundColor: option.color }}
+                                            data-bg-color={option.color}
                                         ></span>
                                         <span className="legend-text">
                                             {option.icon && <span className="legend-icon">{option.icon}</span>}
@@ -995,7 +995,7 @@ const UnifiedScheduleComponent = ({
                                 ))
                             ) : (
                                 <div key="loading-status" className="legend-item">
-                                    <span className="legend-color" style={{ backgroundColor: '#e5e7eb' }}></span>
+                                    <span className="legend-color" data-bg-color="#e5e7eb"></span>
                                     <span>로딩 중...</span>
                                 </div>
                             )}

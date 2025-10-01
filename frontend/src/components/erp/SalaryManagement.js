@@ -418,7 +418,7 @@ const SalaryManagement = () => {
                             <button 
                                 className="btn-primary"
                                 onClick={() => setIsProfileFormOpen(true)}
-                                style={{ padding: '12px 24px', fontSize: 'var(--font-size-base)' }}
+                                className="salary-management-create-btn"
                             >
                                 지금 프로필 작성하기
                             </button>
@@ -469,8 +469,7 @@ const SalaryManagement = () => {
                     <div className="section-header">
                         <h3>급여 계산</h3>
                         {salaryProfiles.length === 0 && (
-                            <div className="profile-warning" style={{
-                                backgroundColor: '#fff3cd',
+                            <div className="profile-warning"
                                 border: '1px solid #ffeaa7',
                                 borderRadius: '4px',
                                 padding: '12px 16px',

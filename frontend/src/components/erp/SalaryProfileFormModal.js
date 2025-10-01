@@ -447,7 +447,7 @@ const SalaryProfileFormModal = ({
                                 <option value="false">일반 프리랜서 (3.3% 원천징수만)</option>
                                 <option value="true">사업자 등록 프리랜서 (3.3% 원천징수 + 10% 부가세)</option>
                             </select>
-                            <div className="tax-info-text">>
+                            <div className="tax-info-text">
                                 • 일반 프리랜서: 원천징수 3.3%만 적용<br/>
                                 • 사업자 등록: 원천징수 3.3% + 부가세 10% 적용
                             </div>
@@ -466,7 +466,7 @@ const SalaryProfileFormModal = ({
                                     onChange={(e) => handleInputChange('businessRegistrationNumber', e.target.value)}
                                     placeholder="123-45-67890"
                                 />
-                                <div className="tax-info-text">>
+                                <div className="tax-info-text">
                                     사업자 등록번호를 입력하세요 (예: 123-45-67890)
                                 </div>
                             </div>
@@ -479,7 +479,7 @@ const SalaryProfileFormModal = ({
                                     onChange={(e) => handleInputChange('businessName', e.target.value)}
                                     placeholder="사업자명을 입력하세요"
                                 />
-                                <div className="tax-info-text">>
+                                <div className="tax-info-text">
                                     사업자 등록증에 기재된 사업자명을 입력하세요
                                 </div>
                             </div>
@@ -487,39 +487,32 @@ const SalaryProfileFormModal = ({
                     )}
 
                     {/* 계약 조건 */}
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>계약 조건</label>
+                    <div className="consultant-profile-form-item consultant-profile-form-item--full-width">
+                        <label className="consultant-profile-form-label">계약 조건</label>
                         <textarea
-                            style={{...inputStyle, height: '80px', resize: 'vertical'}}
+                            className="consultant-profile-form-textarea"
                             value={formData.contractTerms}
                             onChange={(e) => handleInputChange('contractTerms', e.target.value)}
                             placeholder="계약 조건을 입력하세요"
+                            rows="3"
                         />
                     </div>
 
                     {/* 급여 옵션 */}
-                    <div style={formGroupStyle}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <div className="consultant-profile-form-item consultant-profile-form-item--full-width">
+                        <div className="option-header">
                             <label className="consultant-profile-form-label">급여 옵션 (등급별 자동 추가됨)</label>
                             <button className="mg-btn mg-btn--success option-add-btn" onClick={addOption}>
                                 + 옵션 추가
                             </button>
                         </div>
-                        <p style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', margin: '0 0 16px 0' }}>
+                        <p className="option-description">
                             {getGradeOptionsDescription(formData.grade || consultant.grade)}
                         </p>
                         
                         {selectedOptions.map((option, index) => (
-                            <div key={index} style={{ 
-                                display: 'flex', 
-                                gap: '12px', 
-                                alignItems: 'center', 
-                                marginBottom: '12px',
-                                padding: '12px',
-                                backgroundColor: '#f8f9fa',
-                                borderRadius: '6px'
-                            }}>
-                                <div style={{ flex: 1 }}>
+                            <div key={index} className="option-item">
+                                <div className="option-item-field">
                                     <select
                                         className="consultant-profile-form-select"
                                         value={option.type}
@@ -533,7 +526,7 @@ const SalaryProfileFormModal = ({
                                         ))}
                                     </select>
                                 </div>
-                                <div style={{ flex: 1 }}>
+                                <div className="option-item-field">
                                     <input
                                         type="number"
                                         className="consultant-profile-form-input"
@@ -542,7 +535,7 @@ const SalaryProfileFormModal = ({
                                         placeholder="금액"
                                     />
                                 </div>
-                                <div style={{ flex: 1 }}>
+                                <div className="option-item-field">
                                     <input
                                         type="text"
                                         className="consultant-profile-form-input"
@@ -562,7 +555,7 @@ const SalaryProfileFormModal = ({
                     </div>
                 </div>
 
-                <div className="consultant-profile-form-actions" style={{ marginTop: 'var(--spacing-xl)', paddingTop: 'var(--spacing-lg)', borderTop: '1px solid var(--ios-border-light)' }}>
+                <div className="consultant-profile-form-actions">
                     <button 
                         className="mg-btn mg-btn--secondary"
                         onClick={onClose}

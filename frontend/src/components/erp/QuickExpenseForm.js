@@ -192,23 +192,16 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
           </div>
         )}
 
-        <div style={{
-          textAlign: 'center',
-          padding: '15px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '5px',
-          marginBottom: '20px'
-        }}>
-          <p style={{ margin: 0, color: '#666', fontSize: 'var(--font-size-sm)' }}>
+        <div className="quick-expense-info-box">
+          <p className="quick-expense-info-text">
             💡 버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
           </p>
         </div>
 
-        <div style={{ textAlign: 'center' }}>
+        <div className="quick-expense-close-container">
           <button
             onClick={onClose}
-            style={{
-              padding: '10px 20px',
+            className="quick-expense-close-btn"
               border: '1px solid #ddd',
               borderRadius: '5px',
               backgroundColor: 'white',

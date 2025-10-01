@@ -900,7 +900,7 @@ const SessionManagement = () => {
                                     <span className="session-mgmt-label">상태:</span>
                                     <span 
                                         className="session-mgmt-value session-mgmt-status-badge"
-                                        style={{ backgroundColor: getStatusColor(selectedMapping.status) }}
+                                        data-bg-color={getStatusColor(selectedMapping.status)}
                                     >
                                         {getStatusText(selectedMapping.status)}
                                     </span>
@@ -954,7 +954,7 @@ const SessionManagement = () => {
                                 <button 
                                     className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-secondary"
                                     onClick={() => setSelectedClient(null)}
-                                    style={{ marginLeft: '15px' }}
+                                    className="session-mgmt-close-btn"
                                 >
                                     전체 보기
                                 </button>
@@ -967,8 +967,7 @@ const SessionManagement = () => {
                             
                             if (hasActiveFilters) {
                                 return (
-                                    <p style={{ 
-                                        margin: '4px 0 0 0', 
+                                    <p className="session-mgmt-client-info"
                                         fontSize: 'var(--font-size-sm)', 
                                         color: '#6b7280',
                                         fontWeight: 'normal'
@@ -978,8 +977,7 @@ const SessionManagement = () => {
                                 );
                             } else {
                                 return (
-                                    <p style={{ 
-                                        margin: '4px 0 0 0', 
+                                    <p className="session-mgmt-client-info"
                                         fontSize: 'var(--font-size-sm)', 
                                         color: '#6b7280',
                                         fontWeight: 'normal'
@@ -1006,8 +1004,7 @@ const SessionManagement = () => {
                                     placeholder="내담자, 상담사, 패키지명 검색..."
                                     value={mappingSearchTerm}
                                     onChange={(e) => setMappingSearchTerm(e.target.value)}
-                                    style={{
-                                        width: '100%',
+                                    className="session-mgmt-search-input"
                                         padding: '8px 12px',
                                         border: '1px solid #d1d5db',
                                         borderRadius: '6px',
@@ -1022,8 +1019,7 @@ const SessionManagement = () => {
                             <select
                                 value={mappingFilterStatus}
                                 onChange={(e) => setMappingFilterStatus(e.target.value)}
-                                style={{
-                                    padding: '8px 12px',
+                                className="session-mgmt-status-select"
                                     border: '1px solid #d1d5db',
                                     borderRadius: '6px',
                                     fontSize: 'var(--font-size-sm)',
@@ -1056,7 +1052,7 @@ const SessionManagement = () => {
                                 </div>
                                 <span 
                                     className="session-mgmt-status-badge"
-                                    style={{ backgroundColor: getStatusColor(mapping.status) }}
+                                    data-bg-color={getStatusColor(mapping.status)}
                                 >
                                     {getStatusText(mapping.status)}
                                 </span>
@@ -1258,7 +1254,7 @@ const SessionManagement = () => {
                                     value={newSessionData.packagePrice}
                                     readOnly
                                     placeholder="패키지를 선택하면 자동으로 설정됩니다"
-                                    style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
+                                    className="session-mgmt-disabled-input"
                                 />
                             </div>
                             
@@ -1334,7 +1330,7 @@ const SessionManagement = () => {
                                         </div>
                                     <span 
                                         className="session-mgmt-status-badge"
-                                        style={{ backgroundColor: getExtensionStatusColor(request.status) }}
+                                        data-bg-color={getExtensionStatusColor(request.status)}
                                     >
                                         {getExtensionStatusText(request.status)}
                                     </span>
@@ -1423,7 +1419,7 @@ const SessionManagement = () => {
                     {extensionRequests.length === 0 && (
                         <div className="session-mgmt-no-results">
                             <p>회기 추가 요청이 없습니다.</p>
-                            <p style={{ fontSize: 'var(--font-size-sm)', color: '#6b7280', marginTop: '10px' }}>
+                            <p className="session-mgmt-empty-hint">
                                 회기 추가 요청을 생성하면 여기에 표시됩니다.
                             </p>
                         </div>

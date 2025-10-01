@@ -78,8 +78,7 @@ const ForgotPassword = () => {
                     <div className="forgot-password-icon">
                       🔑
                     </div>
-                    <h1 style={{
-                      fontSize: 'var(--font-size-xxl)',
+                    <h1 className="forgot-password-title"
                       fontWeight: '700',
                       color: '#2d3748',
                       marginBottom: '12px'

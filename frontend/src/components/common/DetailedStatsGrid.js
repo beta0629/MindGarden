@@ -85,25 +85,22 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           gap: '8px',
           marginBottom: '8px'
         }}>
-          <span style={{ fontSize: 'var(--font-size-base)', color: '#7B68EE' }}>↗</span>
-          <span style={{ fontSize: 'var(--font-size-sm)', color: '#495057' }}>{statistics.clientGrowth || 0}명</span>
+          <span className="detailed-stats-card-growth-icon">↗</span>
+          <span className="detailed-stats-card-growth-value">{statistics.clientGrowth || 0}명</span>
         </div>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.clientGrowthRate || 0}% 증감률
         </div>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.lastMonthClients || 0} 지난 달
         </div>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d'
         }}>
           지난 달 대비 지난 달 대비 내담자 변화
@@ -161,22 +158,19 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           <span style={{ fontSize: 'var(--font-size-base)', color: '#7B68EE' }}>↗</span>
           <span style={{ fontSize: 'var(--font-size-sm)', color: '#495057' }}>{statistics.consultantGrowth || 0}명</span>
         </div>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.consultantGrowthRate || 0}% 증감률
         </div>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.lastMonthConsultants || 0} 지난 달
         </div>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d'
         }}>
           지난 달 대비 지난 달 대비 상담사 변화
@@ -226,15 +220,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 완료율</p>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.completedSchedulesInPeriod || 0} / {statistics.totalSchedulesInPeriod || 0} 완료/전체
         </div>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d'
         }}>
           이번 달 기준 이번 달 기준 상담 완료율
@@ -284,15 +276,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 취소율</p>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.cancelledSchedulesInPeriod || 0} / {statistics.totalSchedulesInPeriod || 0} 취소/전체
         </div>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d'
         }}>
           이번 달 기준 이번 달 기준 상담 취소율
@@ -342,15 +332,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>최근 7일 상담</p>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           완료: {statistics.weeklyCompleted || 0}, 취소: {statistics.weeklyCancelled || 0}
         </div>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d'
         }}>
           최근 7일간 최근 7일간 상담 현황
@@ -400,15 +388,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>오늘 상담</p>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           완료: {statistics.completedToday || 0}, 예약: {statistics.bookedToday || 0}
         </div>
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
+        <div className="detailed-stats-card-growth-label"
           color: '#6c757d'
         }}>
           오늘 기준 오늘 기준 상담 현황

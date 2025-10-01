@@ -281,13 +281,13 @@ const ItemManagement = () => {
           <div className="item-management-grid">
             {items.map(item => (
               <div key={item.id} className="item-management-card">
-                <div style={{ marginBottom: '12px' }}>
-                  <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>{item.name}</h4>
-                  <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginBottom: '8px' }}>
+                <div className="item-management-card-header">
+                  <h4 className="item-management-card-title">{item.name}</h4>
+                  <div className="item-management-card-category">
                     {getCategoryLabel(item.category)}
                   </div>
                   {item.description && (
-                    <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginBottom: '8px' }}>
+                    <div className="item-management-card-description">
                       {item.description}
                     </div>
                   )}

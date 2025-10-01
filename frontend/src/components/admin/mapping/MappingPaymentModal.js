@@ -100,15 +100,7 @@ const MappingPaymentModal = ({
     const currentReference = paymentData.paymentReference || generateReferenceNumber(paymentData.paymentMethod);
 
     return (
-        <div className="mapping-payment-modal-overlay"
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000,
-            '--input-bg': '#ffffff',
-            '--input-color': '#333333',
-            '--input-border': '#e1e8ed'
-        }}>
+        <div className="mapping-payment-modal-overlay">
             <div className="mapping-payment-modal-content"
             }}>
                 <h3 style={{

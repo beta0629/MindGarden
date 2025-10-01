@@ -298,7 +298,7 @@ const ConsultantMessages = () => {
                             <span className="consultant-messages-urgent-icon">🚨</span>
                           )}
                         </div>
-                        <span style={{ color: '#6c757d', fontSize: '0.85rem' }}>
+                        <span className="consultant-messages-date">
                           {formatDate(message.createdAt)}
                         </span>
                       </div>

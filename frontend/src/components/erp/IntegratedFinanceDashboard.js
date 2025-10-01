@@ -401,9 +401,6 @@ const OverviewTab = ({ data }) => {
       
       {/* KPI 카드들 */}
       <div className="finance-kpi-grid"
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '20px',
-        marginBottom: '30px'
       }}>
         <KPICard
           title="총 아이템 수"

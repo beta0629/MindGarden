@@ -257,9 +257,6 @@ const ItemManagement = () => {
         {/* 성공/오류 메시지 */}
         {success && (
           <div className="item-management-success"
-            padding: '12px', 
-            backgroundColor: '#d1edff', 
-            color: '#0c5460',
             border: '1px solid #74c0fc',
             borderRadius: '4px'
           }}>

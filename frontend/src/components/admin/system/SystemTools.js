@@ -135,9 +135,9 @@ const SystemTools = ({
                     };
 
                     return (
-                        <div key={tool.id} style={getCardStyles(tool.id)}>
+                        <div key={tool.id} className={`system-tool-card system-tool-card--${tool.id}`}>
                             <button 
-                                style={getToolStyles(tool.id)}
+                                className={`system-tool-btn system-tool-btn--${tool.id}`}
                                 onClick={tool.onClick}
                                 disabled={loading}
                                 title={tool.description}

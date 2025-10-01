@@ -115,7 +115,7 @@ const SummaryPanels = ({ user, consultationData }) => {
                       )}
                     </div>
                   ) : (
-                    <div style={{ color: '#adb5bd', fontStyle: 'italic' }}>{DASHBOARD_MESSAGES.NO_UPCOMING}</div>
+                    <div className="summary-no-data">{DASHBOARD_MESSAGES.NO_UPCOMING}</div>
                   )}
                 </div>
               </div>
@@ -127,10 +127,9 @@ const SummaryPanels = ({ user, consultationData }) => {
               <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>{DASHBOARD_LABELS.THIS_WEEK_CONSULTATIONS}</div>
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
-                  <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#495057' }}>{weeklyCount}건</div>
+                  <div className="summary-value-count">{weeklyCount}건</div>
                   {consultationData?.weeklyConsultations > 0 && (
-                    <div style={{ 
-                      fontSize: '0.85em', 
+                    <div className="summary-value-detail"> 
                       color: '#6c757d', 
                       marginTop: '6px',
                       padding: '6px 10px',

@@ -332,7 +332,7 @@
     
     .branch-header-card .d-flex {
         flex-direction: column;
-        align-items: flex-start !important;
+        align-items: flex-start;
         gap: 1rem;
     }
     

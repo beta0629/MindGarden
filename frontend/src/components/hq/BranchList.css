@@ -215,7 +215,7 @@
     
     .branch-list-header .d-flex {
         flex-direction: column;
-        align-items: flex-start !important;
+        align-items: flex-start;
         gap: 1rem;
     }
     
@@ -280,7 +280,7 @@
 }
 
 .branch-list .text-muted {
-    color: #6c757d !important;
+    color: var(--color-text-secondary);
 }
 
 /* 검색 결과 안내 */

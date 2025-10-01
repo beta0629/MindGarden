@@ -114,7 +114,7 @@
 }
 
 .no-branch-selected .text-muted {
-    color: #6c757d !important;
+    color: var(--color-text-secondary);
 }
 
 /* 반응형 디자인 */
@@ -254,7 +254,7 @@
 
 /* 텍스트 색상 */
 .text-muted {
-    color: #6c757d !important;
+    color: var(--color-text-secondary);
 }
 
 /* 아이콘 스타일 */

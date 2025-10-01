@@ -99,7 +99,7 @@
 }
 
 .form-label .text-danger {
-    color: #dc3545 !important;
+    color: var(--color-danger);
     font-weight: 700;
 }
 
@@ -296,8 +296,8 @@
 .btn-modern:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
+    transform: none;
+    box-shadow: none;
 }
 
 /* 애니메이션 */

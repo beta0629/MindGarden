@@ -19,9 +19,6 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
           </h2>
           <button 
             className="consultation-guide-close-btn"
-              borderRadius: '8px',
-              transition: 'all 0.3s ease'
-            }}
             onClick={onClose}
             onMouseEnter={(e) => {
               e.target.style.background = '#f8f9fa';

@@ -437,9 +437,7 @@ const OverviewTab = ({ data }) => {
       
       {/* 매핑 연동 상태 섹션 */}
       <div className="finance-mapping-section">
-        <h3 className="finance-mapping-title"
-          gap: '8px'
-        }}>
+        <h3 className="finance-mapping-title">
           <i className="bi bi-link-45deg" style={{ color: '#007bff' }}></i>
           매핑시스템 연동 상태
         </h3>

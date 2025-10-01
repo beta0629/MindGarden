@@ -689,12 +689,12 @@ const TimeSlotGrid = ({
                 <h5 style={{ 
                     margin: '0', 
                     color: '#2c3e50', 
-                    fontSize: '18px', 
+                    fontSize: 'var(--font-size-lg)', 
                     fontWeight: '600',
                     fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
                 }}>시간 선택</h5>
                 <div style={{ 
-                    fontSize: '12px', 
+                    fontSize: 'var(--font-size-xs)', 
                     color: '#6c757d', 
                     backgroundColor: '#f8f9fa', 
                     padding: '4px 8px', 
@@ -718,7 +718,7 @@ const TimeSlotGrid = ({
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '6px', 
-                    fontSize: '12px', 
+                    fontSize: 'var(--font-size-xs)', 
                     color: '#495057' 
                 }}>
                     <span style={{ 
@@ -734,7 +734,7 @@ const TimeSlotGrid = ({
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '6px', 
-                    fontSize: '12px', 
+                    fontSize: 'var(--font-size-xs)', 
                     color: '#495057' 
                 }}>
                     <span style={{ 
@@ -750,7 +750,7 @@ const TimeSlotGrid = ({
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '6px', 
-                    fontSize: '12px', 
+                    fontSize: 'var(--font-size-xs)', 
                     color: '#495057' 
                 }}>
                     <span style={{ 
@@ -766,7 +766,7 @@ const TimeSlotGrid = ({
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '6px', 
-                    fontSize: '12px', 
+                    fontSize: 'var(--font-size-xs)', 
                     color: '#495057' 
                 }}>
                     <span style={{ 
@@ -782,7 +782,7 @@ const TimeSlotGrid = ({
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '6px', 
-                    fontSize: '12px', 
+                    fontSize: 'var(--font-size-xs)', 
                     color: '#495057' 
                 }}>
                     <span style={{ 
@@ -811,7 +811,7 @@ const TimeSlotGrid = ({
                     }}>
                         <div style={{ 
                             minWidth: '60px', 
-                            fontSize: '14px', 
+                            fontSize: 'var(--font-size-sm)', 
                             fontWeight: '600', 
                             color: '#495057', 
                             textAlign: 'center', 
@@ -918,7 +918,7 @@ const TimeSlotGrid = ({
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            fontSize: '10px',
+                                            fontSize: 'var(--font-size-xs)',
                                             color: 'white',
                                             fontWeight: 'bold',
                                             lineHeight: '1'
@@ -926,7 +926,7 @@ const TimeSlotGrid = ({
                                             {getSlotIcon(slot).text}
                                         </div>
                                         <div style={{ 
-                                            fontSize: '12px', 
+                                            fontSize: 'var(--font-size-xs)', 
                                             fontWeight: '600', 
                                             color: slot.selected ? '#28a745' : '#495057',
                                             lineHeight: '1'
@@ -934,7 +934,7 @@ const TimeSlotGrid = ({
                                             {slot.time}
                                         </div>
                                         <div style={{ 
-                                            fontSize: '10px', 
+                                            fontSize: 'var(--font-size-xs)', 
                                             color: '#6c757d',
                                             lineHeight: '1'
                                         }}>

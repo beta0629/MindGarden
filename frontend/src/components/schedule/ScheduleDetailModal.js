@@ -325,7 +325,7 @@ const ScheduleDetailModal = ({
                 <h4>예약 확정</h4>
                 <p>내담자의 입금을 확인하셨습니까?</p>
                 <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
+                    <label style={{ display: 'block', marginBottom: '5px', fontSize: 'var(--font-size-sm)' }}>
                         관리자 메모 (선택사항):
                     </label>
                     <textarea
@@ -338,7 +338,7 @@ const ScheduleDetailModal = ({
                             padding: '8px',
                             border: '1px solid #ddd',
                             borderRadius: '4px',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             resize: 'vertical'
                         }}
                     />
@@ -455,7 +455,7 @@ const ScheduleDetailModal = ({
                                         }
                                     }}
                                     style={{ 
-                                        fontSize: '16px',
+                                        fontSize: 'var(--font-size-base)',
                                         fontWeight: 'bold',
                                         color: '#f59e0b',
                                         margin: '0 0 10px 0'
@@ -472,7 +472,7 @@ const ScheduleDetailModal = ({
                                         }
                                     }}
                                     style={{ 
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         color: '#92400e',
                                         margin: '0'
                                     }}

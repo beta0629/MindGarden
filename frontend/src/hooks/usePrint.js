@@ -34,7 +34,7 @@ const usePrint = (options = {}) => {
       },
       'body': {
         fontFamily: 'Arial, sans-serif',
-        fontSize: '12px',
+        fontSize: 'var(--font-size-xs)',
         lineHeight: '1.4',
         color: '#000',
         backgroundColor: '#fff'
@@ -46,12 +46,12 @@ const usePrint = (options = {}) => {
         paddingBottom: '10px'
       },
       '.print-title': {
-        fontSize: '18px',
+        fontSize: 'var(--font-size-lg)',
         fontWeight: 'bold',
         margin: '0 0 10px 0'
       },
       '.print-subtitle': {
-        fontSize: '14px',
+        fontSize: 'var(--font-size-sm)',
         color: '#666',
         margin: '0'
       },

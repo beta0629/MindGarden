@@ -313,7 +313,7 @@ const TabletHomepage = () => {
                   border: '1px solid rgba(255, 255, 255, 0.3)'
                 }}>
                   <span style={{
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     fontWeight: '600',
                     color: 'rgba(255, 255, 255, 0.95)',
                     fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"

@@ -229,7 +229,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                       transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                     }}>
                       <div style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '600',
                         color: '#495057',
                         marginBottom: '8px',
@@ -238,7 +238,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                         {new Date(consultation.date).toLocaleDateString('ko-KR')} {consultation.startTime} - {consultation.endTime}
                       </div>
                       <div style={{
-                        fontSize: '13px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#6c757d',
                         marginBottom: '8px',
                         fontWeight: '500'
@@ -246,7 +246,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                         {consultation.consultantName} 상담사
                       </div>
                       <div style={{
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         padding: '4px 12px',
                         borderRadius: '16px',
                         display: 'inline-block',
@@ -268,7 +268,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                       padding: '8px',
                       background: '#e9ecef',
                       borderRadius: '8px',
-                      fontSize: '13px',
+                      fontSize: 'var(--font-size-sm)',
                       color: '#6c757d'
                     }}>
                       +{todayConsultations.length - 3}건의 추가 상담이 있습니다
@@ -314,19 +314,19 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               boxShadow: '0 2px 8px rgba(102, 126, 234, 0.2)'
             }}>
               <i className="bi bi-calendar-check" style={{
-                fontSize: '20px',
+                fontSize: 'var(--font-size-xl)',
                 color: 'white'
               }}></i>
             </div>
             <div className="info-content">
               <h3 className="info-title" style={{
-                fontSize: '18px',
+                fontSize: 'var(--font-size-lg)',
                 fontWeight: '600',
                 margin: '0 0 12px 0',
                 color: '#2d3748'
               }}>오늘의 상담</h3>
               <p className="info-value" style={{
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 color: '#6c757d',
                 margin: '0 0 16px 0',
                 lineHeight: '1.5'
@@ -389,7 +389,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                           marginBottom: '12px' 
                         }}>
                           <div style={{
-                            fontSize: '16px',
+                            fontSize: 'var(--font-size-base)',
                             fontWeight: '700',
                             color: '#2d3748',
                             lineHeight: '1.3'
@@ -397,7 +397,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                             {consultation.startTime} - {consultation.endTime}
                           </div>
                           <div style={{
-                            fontSize: '11px',
+                            fontSize: 'var(--font-size-xs)',
                             padding: '4px 10px',
                             borderRadius: '12px',
                             display: 'inline-block',
@@ -411,7 +411,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                           </div>
                         </div>
                         <div style={{
-                          fontSize: '14px',
+                          fontSize: 'var(--font-size-sm)',
                           color: '#4a5568',
                           fontWeight: '600',
                           marginBottom: '8px',
@@ -423,7 +423,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                         </div>
                         {consultation.clientName && (
                           <div style={{
-                            fontSize: '13px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#6c757d',
                             display: 'flex',
                             alignItems: 'center'
@@ -444,7 +444,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#6c757d',
-                  fontSize: '14px',
+                  fontSize: 'var(--font-size-sm)',
                   textAlign: 'center',
                   padding: '40px 20px'
                 }}>
@@ -529,19 +529,19 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                 boxShadow: '0 2px 8px rgba(63, 81, 181, 0.2)'
               }}>
                 <i className="bi bi-people" style={{
-                  fontSize: '20px',
+                  fontSize: 'var(--font-size-xl)',
                   color: 'white'
                 }}></i>
               </div>
               <div className="info-content">
                 <h3 className="info-title" style={{
-                  fontSize: '18px',
+                  fontSize: 'var(--font-size-lg)',
                   fontWeight: '600',
                   margin: '0 0 12px 0',
                   color: '#2d3748'
                 }}>상담사 목록</h3>
                 <p className="info-value" style={{
-                  fontSize: '14px',
+                  fontSize: 'var(--font-size-sm)',
                   color: '#6c757d',
                   margin: '0 0 12px 0',
                   lineHeight: '1.5'
@@ -590,19 +590,19 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               boxShadow: '0 2px 8px rgba(96, 125, 139, 0.2)'
             }}>
               <i className="bi bi-lightbulb" style={{
-                fontSize: '20px',
+                fontSize: 'var(--font-size-xl)',
                 color: 'white'
               }}></i>
             </div>
             <div className="info-content">
               <h3 className="info-title" style={{
-                fontSize: '18px',
+                fontSize: 'var(--font-size-lg)',
                 fontWeight: '600',
                 margin: '0 0 12px 0',
                 color: '#2d3748'
               }}>오늘의 팁</h3>
               <p className="info-value" style={{
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 color: '#6c757d',
                 margin: '0',
                 lineHeight: '1.5'

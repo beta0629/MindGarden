@@ -268,7 +268,7 @@ const ConsultantMessages = () => {
                 )}
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '20px' }}>
+              <div className="consultant-messages-grid">
                 {filteredMessages.map((message) => {
                   const typeInfo = getMessageTypeInfo(message.messageType);
                   

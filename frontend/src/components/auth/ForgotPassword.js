@@ -81,8 +81,7 @@ const ForgotPassword = () => {
                     <h1 className="forgot-password-title">
                       비밀번호 찾기
                     </h1>
-                    <p style={{
-                      fontSize: 'var(--font-size-base)',
+                    <p className="forgot-password-description"
                       color: '#718096',
                       lineHeight: '1.5'
                     }}>

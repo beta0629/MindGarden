@@ -715,19 +715,19 @@ const SalaryManagement = () => {
                                         </div>
                                         <div className="detail-row">
                                             <span>건강보험 (3.545%):</span>
-                                            <span style={{color: '#dc3545'}}>
+                                            <span className="salary-management-health-insurance">
                                                 -{formatCurrency(taxStatistics.healthInsurance || 0)}
                                             </span>
                                         </div>
                                         <div className="detail-row">
                                             <span>장기요양보험 (0.545%):</span>
-                                            <span style={{color: '#dc3545'}}>
+                                            <span className="salary-management-health-insurance">
                                                 -{formatCurrency(taxStatistics.longTermCare || 0)}
                                             </span>
                                         </div>
                                         <div className="detail-row">
                                             <span>고용보험 (0.9%):</span>
-                                            <span style={{color: '#dc3545'}}>
+                                            <span className="salary-management-health-insurance">
                                                 -{formatCurrency(taxStatistics.employmentInsurance || 0)}
                                             </span>
                                         </div>

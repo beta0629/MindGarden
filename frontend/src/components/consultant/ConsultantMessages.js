@@ -307,12 +307,7 @@ const ConsultantMessages = () => {
                         {message.title}
                       </h4>
                       
-                      <p className="consultant-messages-content" 
-                        fontSize: '0.9rem', 
-                        marginBottom: '10px',
-                        lineHeight: '1.4',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
+                      <p className="consultant-messages-content"
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden'
                       }}>

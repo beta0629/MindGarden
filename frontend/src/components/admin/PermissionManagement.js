@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import '../../styles/main.css';
 import './PermissionManagement.css';
 
 const PERMISSION_CATEGORIES = {

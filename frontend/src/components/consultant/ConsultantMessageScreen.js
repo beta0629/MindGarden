@@ -213,7 +213,7 @@ const ConsultantMessageScreen = () => {
       backgroundColor: '#f8f9ff'
     },
     messageTypeIcon: {
-      fontSize: '24px',
+      fontSize: 'var(--font-size-xxl)',
       marginBottom: '8px'
     },
     messageTypeLabel: {
@@ -268,7 +268,7 @@ const ConsultantMessageScreen = () => {
     statusBadge: {
       padding: '4px 12px',
       borderRadius: '20px',
-      fontSize: '12px',
+      fontSize: 'var(--font-size-xs)',
       fontWeight: '600',
       textTransform: 'uppercase',
       letterSpacing: '0.5px'

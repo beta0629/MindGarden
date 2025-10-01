@@ -159,7 +159,7 @@ const PrivacyPolicy = () => {
             padding: '15px',
             marginBottom: '15px'
           }}>
-            <p style={{ margin: '0', fontSize: '14px', color: '#856404' }}>
+            <p style={{ margin: '0', fontSize: 'var(--font-size-sm)', color: '#856404' }}>
               <strong>주의:</strong> 상담 서비스 제공을 위해 상담사에게 필요한 최소한의 정보만 제공되며, 
               이는 상담 서비스의 질적 향상을 위한 목적으로만 사용됩니다.
             </p>
@@ -215,7 +215,7 @@ const PrivacyPolicy = () => {
             <li>개인정보 정정·삭제요구</li>
             <li>개인정보 처리정지요구</li>
           </ul>
-          <p style={{ marginTop: '15px', fontSize: '14px', color: '#6c757d' }}>
+          <p style={{ marginTop: '15px', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
             권리 행사는 회사에 대해 서면, 전화, 전자우편, 모사전송(FAX) 등을 통하여 하실 수 있으며 회사는 이에 대해 지체없이 조치하겠습니다.
           </p>
         </div>
@@ -295,7 +295,7 @@ const PrivacyPolicy = () => {
           padding: '20px',
           textAlign: 'center'
         }}>
-          <p style={{ margin: '0', fontSize: '14px', color: '#0c5460' }}>
+          <p style={{ margin: '0', fontSize: 'var(--font-size-sm)', color: '#0c5460' }}>
             <strong>본 개인정보처리방침은 2025년 1월 17일부터 시행됩니다.</strong>
           </p>
         </div>

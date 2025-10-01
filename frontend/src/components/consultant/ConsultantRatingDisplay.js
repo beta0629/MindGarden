@@ -159,13 +159,13 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                         {ratingStats.averageHeartScore}
                     </div>
                     <div style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#666',
                         marginBottom: '8px'
                     }}>
                         평균 하트 점수
                     </div>
-                    <div style={{ fontSize: '20px' }}>
+                    <div style={{ fontSize: 'var(--font-size-xl)' }}>
                         {renderHeartScore(Math.round(ratingStats.averageHeartScore))}
                     </div>
                 </div>
@@ -187,7 +187,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                         {ratingStats.totalRatingCount}
                     </div>
                     <div style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#666'
                     }}>
                         총 평가 수
@@ -198,7 +198,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
             {/* 점수별 분포 */}
             <div style={{ marginBottom: '24px' }}>
                 <h4 style={{
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     fontWeight: '600',
                     color: '#333',
                     marginBottom: '12px'
@@ -228,11 +228,11 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                                     border: '1px solid #e9ecef'
                                 }}
                             >
-                                <div style={{ fontSize: '16px', marginBottom: '4px' }}>
+                                <div style={{ fontSize: 'var(--font-size-base)', marginBottom: '4px' }}>
                                     {'💖'.repeat(score)}
                                 </div>
                                 <div style={{
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     fontWeight: '600',
                                     color: '#333'
                                 }}>
@@ -254,7 +254,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
             {ratingStats.recentRatings && ratingStats.recentRatings.length > 0 && (
                 <div>
                     <h4 style={{
-                        fontSize: '16px',
+                        fontSize: 'var(--font-size-base)',
                         fontWeight: '600',
                         color: '#333',
                         marginBottom: '12px'
@@ -285,7 +285,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                                     marginBottom: '8px'
                                 }}>
                                     <div style={{
-                                        fontSize: '16px'
+                                        fontSize: 'var(--font-size-base)'
                                     }}>
                                         {renderHeartScore(rating.heartScore)}
                                     </div>
@@ -298,7 +298,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                                 </div>
                                 {rating.comment && (
                                     <div style={{
-                                        fontSize: '13px',
+                                        fontSize: 'var(--font-size-sm)',
                                         color: '#555',
                                         marginBottom: '8px',
                                         fontStyle: 'italic'

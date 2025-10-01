@@ -347,7 +347,7 @@ const EventModal = ({ event, mode, onSave, onDelete, onClose, userRole = 'CONSUL
       gap: '8px'
     },
     statusIcon: {
-      fontSize: '16px'
+      fontSize: 'var(--font-size-base)'
     }
   };
 

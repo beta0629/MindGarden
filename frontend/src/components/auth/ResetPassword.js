@@ -5,6 +5,7 @@ import SimpleHeader from '../layout/SimpleHeader';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import ENV from '../../constants/environment';
+import './AuthPageCommon.css';
 
 const ResetPassword = () => {
   const navigate = useNavigate();

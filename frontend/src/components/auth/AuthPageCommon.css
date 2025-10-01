@@ -1,0 +1,145 @@
+/* Auth 페이지 공통 스타일 - ForgotPassword, ResetPassword 등에서 재사용 */
+
+.auth-page-container {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.auth-page-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xxl);
+}
+
+.auth-page-icon-container {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--spacing-lg);
+  background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-blue-dark) 100%);
+  border-radius: var(--border-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-page-icon {
+  font-size: var(--font-size-xxl);
+  color: var(--ios-text-primary-light);
+}
+
+.auth-page-title {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.2;
+}
+
+.auth-page-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--ios-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.auth-page-form-group {
+  margin-bottom: var(--spacing-xl);
+}
+
+.auth-page-success-container {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+  text-align: center;
+}
+
+.auth-page-success-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--spacing-lg);
+  background: linear-gradient(135deg, var(--ios-green) 0%, var(--ios-green-dark) 100%);
+  border-radius: var(--border-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-page-success-message {
+  font-size: var(--font-size-base);
+  color: var(--ios-text-secondary);
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.5;
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .auth-page-container,
+  .auth-page-success-container {
+    max-width: 100%;
+    padding: 0 var(--spacing-md);
+  }
+  
+  .auth-page-header {
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .auth-page-icon-container {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .auth-page-icon {
+    font-size: var(--font-size-xl);
+  }
+  
+  .auth-page-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .auth-page-subtitle {
+    font-size: var(--font-size-sm);
+  }
+  
+  .auth-page-form-group {
+    margin-bottom: var(--spacing-lg);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .auth-page-container,
+  .auth-page-success-container {
+    max-width: 420px;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .auth-page-title {
+    color: var(--ios-text-primary-dark);
+  }
+  
+  .auth-page-subtitle,
+  .auth-page-success-message {
+    color: var(--ios-text-secondary-dark);
+  }
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+  .auth-page-icon-container,
+  .auth-page-success-icon {
+    transition: none;
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .auth-page-icon-container,
+  .auth-page-success-icon {
+    border: 2px solid var(--ios-border-dark);
+  }
+}
+

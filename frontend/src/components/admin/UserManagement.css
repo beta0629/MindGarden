@@ -202,41 +202,41 @@ select {
     -webkit-appearance: menulist;
     -moz-appearance: menulist;
     min-height: 38px;
-    box-sizing: border-box !important;
+    box-sizing: border-box;
 }
 
 select:focus {
-    border-color: #80bdff !important;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
-    outline: none !important;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
 }
 
 /* 모달 z-index 강화 */
 .modal {
-    z-index: 9999 !important;
+    z-index: 9999;
 }
 
 .modal-backdrop {
-    z-index: 9998 !important;
+    z-index: 9998;
 }
 
 /* React Bootstrap Modal 스타일 오버라이드 */
 .modal.show {
-    z-index: 9999 !important;
+    z-index: 9999;
 }
 
 .modal-backdrop.show {
-    z-index: 9998 !important;
+    z-index: 9998;
 }
 
 /* 역할 선택 드롭다운 특별 스타일 */
 .role-select-dropdown {
-    z-index: 1 !important;
-    position: relative !important;
-    background-color: #fff !important;
-    border: 2px solid #007bff !important;
-    border-radius: 6px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    transform: none !important;
-    contain: none !important;
+    z-index: 1;
+    position: relative;
+    background-color: #fff;
+    border: 2px solid #007bff;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: none;
+    contain: none;
 }

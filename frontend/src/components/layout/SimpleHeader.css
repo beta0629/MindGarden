@@ -244,31 +244,31 @@
 
 /* 로그아웃 버튼 - 강제 표시 */
 .simple-logout-button {
-  display: flex !important;
+  display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 15px !important;
-  border: 3px solid #dc3545 !important;
-  border-radius: 25px !important;
-  background: #dc3545 !important;
-  color: white !important;
+  padding: 10px 15px;
+  border: 3px solid var(--color-danger);
+  border-radius: 25px;
+  background: var(--color-danger);
+  color: white;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  margin-right: 10px !important;
-  position: fixed !important; /* fixed로 강제 */
-  top: 10px !important;
-  right: 60px !important;
-  z-index: 99999 !important; /* 더 높은 z-index */
-  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4) !important;
-  animation: pulse 2s infinite !important;
+  font-size: 16px;
+  font-weight: 700;
+  margin-right: 10px;
+  position: fixed; /* fixed로 강제 */
+  top: 10px;
+  right: 60px;
+  z-index: 99999; /* 더 높은 z-index */
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+  animation: pulse 2s infinite;
 }
 
 .simple-logout-button:hover {
-  background: #c82333 !important;
-  transform: translateY(-1px) scale(1.05) !important;
-  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6) !important;
+  background: var(--color-danger-hover);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
 }
 
 /* 로그아웃 버튼 애니메이션 */

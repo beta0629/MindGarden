@@ -331,8 +331,9 @@ const SalaryProfileFormModal = ({
             size="large"
             className="salary-profile-modal-content"
         >
-                    {/* 기본 정보 */}
-                    <div className="consultant-info-section">
+            <div>
+                {/* 기본 정보 */}
+                <div className="consultant-info-section">
                         <h4 className="consultant-info-title">상담사 정보</h4>
                         <p className="consultant-info-item"><strong>이름:</strong> {consultant.name}</p>
                         <p className="consultant-info-item"><strong>현재 등급:</strong> {convertGradeToKorean(consultant.grade)}</p>
@@ -553,7 +554,6 @@ const SalaryProfileFormModal = ({
                             </div>
                         ))}
                     </div>
-                </div>
 
                 <div className="consultant-profile-form-actions">
                     <button 
@@ -571,6 +571,7 @@ const SalaryProfileFormModal = ({
                         {loading ? '저장 중...' : '저장'}
                     </button>
                 </div>
+            </div>
         </ErpModal>
     );
 };

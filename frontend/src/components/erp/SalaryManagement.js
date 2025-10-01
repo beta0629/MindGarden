@@ -473,11 +473,6 @@ const SalaryManagement = () => {
                                 <button 
                                     onClick={() => setActiveTab('profiles')}
                                     className="salary-management-profile-link"
-                                        background: 'none',
-                                        border: 'none',
-                                        color: '#856404',
-                                        textDecoration: 'underline',
-                                        cursor: 'pointer'
                                     }}
                                 >
                                     지금 작성하기
@@ -547,12 +542,7 @@ const SalaryManagement = () => {
                         
                         {/* 미리보기 결과 표시 */}
                         {previewResult && (
-                            <div className="preview-result"
-                                border: '2px solid #4caf50',
-                                borderRadius: '8px',
-                                padding: '16px',
-                                marginBottom: '16px'
-                            }}>
+                            <div className="preview-result">
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                     <h5 style={{ margin: 0, color: '#2e7d32' }}>💰 급여 계산 미리보기</h5>
                                     <span style={{ 

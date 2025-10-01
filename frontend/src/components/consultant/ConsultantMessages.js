@@ -224,11 +224,6 @@ const ConsultantMessages = () => {
           <button
             onClick={() => setShowSendModal(true)}
             className="consultant-messages-send-btn"
-              borderRadius: '12px',
-              fontWeight: '600',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
               gap: '8px',
               border: '2px solid #3498db',
               background: '#3498db',

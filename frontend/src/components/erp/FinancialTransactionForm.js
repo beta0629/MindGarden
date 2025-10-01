@@ -182,12 +182,6 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               required
               disabled={!formData.category || loadingCodes}
               className="financial-transaction-select"
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '5px',
-                fontSize: 'var(--font-size-sm)',
-                opacity: (!formData.category || loadingCodes) ? 0.6 : 1
-              }}
             >
               <option value="">세부 카테고리를 선택하세요</option>
               {filteredSubcategories.map(subcategory => (

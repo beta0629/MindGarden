@@ -44,59 +44,20 @@
   margin-bottom: var(--spacing-lg);
 }
 
-.summary-card {
+/* 새로운 디자인 시스템 사용 */
+.stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-md);
-  background: var(--color-background-secondary);
-  padding: var(--spacing-lg);
-  border-radius: var(--border-radius-md);
-  width: 100%;
-  min-height: 200px;
+  margin-bottom: var(--spacing-lg);
 }
 
-.summary-item {
-  text-align: center;
-  padding: var(--spacing-md);
-  background: white;
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
-}
-
-.summary-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.summary-label {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-sm);
-  font-weight: var(--font-weight-semibold);
-}
-
-.summary-value {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
-  margin: 0;
-  line-height: 1.2;
-}
-
-.summary-value.total {
-  color: var(--color-primary);
-}
-
-.summary-value.used {
-  color: var(--color-success);
-}
-
-.summary-value.remaining {
-  color: var(--color-warning);
-}
-
-.summary-value.amount {
-  color: var(--color-purple);
+/* 모바일에서 1열 그리드 */
+@media (max-width: 767px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
 }
 
 .recent-payments h5 {

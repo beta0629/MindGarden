@@ -113,12 +113,12 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
 
         <form onSubmit={handleSubmit}>
           {/* 거래 유형 */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#2c3e50' }}>
+          <div className="financial-transaction-form-group">
+            <label className="financial-transaction-label">
               거래 유형
             </label>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <div className="financial-transaction-radio-group">
+              <label className="financial-transaction-radio-label">
                 <input
                   type="radio"
                   name="transactionType"

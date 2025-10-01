@@ -213,8 +213,7 @@ const AdminApprovalDashboard = () => {
                   </div>
                 )}
 
-                <div style={{ 
-                  display: 'flex', 
+                <div className="approval-request-actions"
                   gap: '8px', 
                   justifyContent: 'flex-end',
                   marginTop: '16px'
@@ -249,10 +248,9 @@ const AdminApprovalDashboard = () => {
       >
         {selectedRequest && (
           <div>
-            <div style={{ marginBottom: '16px' }}>
+            <div className="approval-request-details">
               <h4>승인할 구매 요청</h4>
-              <div style={{ 
-                padding: '12px', 
+              <div className="approval-request-info-box" 
                 backgroundColor: '#f8f9fa', 
                 borderRadius: '4px',
                 marginBottom: '16px'

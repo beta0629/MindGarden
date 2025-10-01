@@ -898,7 +898,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     <div key={option.value || `status-${index}`} className="legend-item">
                                         <span 
                                             className="legend-color" 
-                                            style={{ '--legend-color': option.color }}
+                                            data-legend-color={option.color}
                                         ></span>
                                         <span className="legend-text">
                                             {option.icon && <span className="legend-icon">{option.icon}</span>}
@@ -992,8 +992,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             {isDateActionModalOpen && (
                 console.log('📅 인라인 모달 렌더링 중...', { isDateActionModalOpen, selectedDate, userRole }),
                 <div 
-                    style={{
-                        position: 'fixed',
+                    className="schedule-calendar-loading-overlay"
                         top: 0,
                         left: 0,
                         right: 0,

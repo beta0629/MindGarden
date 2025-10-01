@@ -276,8 +276,7 @@ const ConsultantMessages = () => {
                     <div
                       key={message.id}
                       onClick={() => handleMessageClick(message)}
-                      style={{
-                        background: '#fff',
+                      className="consultant-messages-card"
                         borderRadius: '12px',
                         padding: '20px',
                         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',

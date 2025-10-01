@@ -3,6 +3,7 @@ import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import { CLIENT_SELECTOR_CONSTANTS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import '../../styles/main.css';
 import './ClientSelector.css';
 
 /**

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiPut, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import ConsultationLogModal from '../consultant/ConsultationLogModal';
+import '../../styles/main.css';
 import './ScheduleDetailModal.css';
 
 /**

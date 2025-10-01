@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import './TimeSlotGrid.css';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { API_BASE_URL } from '../../constants/api';
+import '../../styles/main.css';
+import './TimeSlotGrid.css';
 import { 
   BUSINESS_HOURS, 
   TIME_SLOT_INTERVAL, 

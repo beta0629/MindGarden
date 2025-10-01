@@ -1,355 +1,186 @@
-/* TimeSlotGrid.css */
+/* TimeSlotGrid 스타일 - 새로운 디자인 시스템 적용 */
 
 .time-slot-grid {
-    width: 100%;
-    max-height: 500px;
-    overflow-y: auto;
+  font-family: var(--font-family-ios);
 }
 
-.grid-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #e9ecef;
+.time-slot-grid__container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(var(--blur-md));
 }
 
-.grid-header h5 {
-    margin: 0;
-    color: #2c3e50;
-    font-size: 18px;
-    font-weight: 600;
+.time-slot-grid__hour-group {
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--ios-separator);
 }
 
-.duration-info {
-    font-size: 12px;
-    color: #6c757d;
-    background-color: #f8f9fa;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
+.time-slot-grid__hour-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
-.time-legend {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 16px;
-    padding: 12px;
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    flex-wrap: wrap;
+.time-slot-grid__hour-label {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: #495057;
+.time-slot-grid__slots {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
 }
 
-.legend-icon {
-    font-size: 14px;
+.time-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xxs);
+  padding: var(--spacing-sm) var(--spacing-xs);
+  border: 2px solid var(--ios-separator);
+  border-radius: var(--border-radius-sm);
+  background: var(--ios-bg-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 80px;
+  text-align: center;
+  position: relative;
 }
 
-.slots-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.time-slot--available {
+  border-color: var(--ios-green);
+  background: rgba(52, 199, 89, 0.05);
 }
 
-.hour-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.time-slot--available:hover {
+  background: rgba(52, 199, 89, 0.15);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
-.hour-label {
-    min-width: 60px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #495057;
-    text-align: center;
-    background-color: #e9ecef;
-    padding: 8px 4px;
-    border-radius: 4px;
+.time-slot--booked {
+  border-color: var(--ios-blue);
+  background: rgba(0, 122, 255, 0.05);
+  cursor: default;
 }
 
-.slots-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+.time-slot--pending {
+  border-color: var(--ios-orange);
+  background: rgba(255, 149, 0, 0.05);
 }
 
-.time-slot-grid .time-slot {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    gap: 4px !important;
-    padding: 12px 8px !important;
-    border: 2px solid #e9ecef !important;
-    border-radius: 8px !important;
-    background-color: #fff !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    min-width: 80px !important;
-    text-align: center !important;
-    position: relative !important;
+.time-slot--completed {
+  border-color: var(--ios-text-tertiary);
+  background: var(--ios-bg-tertiary);
+  cursor: default;
+  opacity: 0.6;
 }
 
-.time-slot-grid .time-slot:hover {
-    border-color: #007bff !important;
-    background-color: #f8f9ff !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.15) !important;
+.time-slot--cancelled {
+  border-color: var(--ios-red);
+  background: rgba(255, 59, 48, 0.05);
+  cursor: default;
+  opacity: 0.6;
 }
 
-.time-slot-grid .time-slot.selected {
-    border-color: #28a745 !important;
-    background-color: #f8fff9 !important;
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25) !important;
-    transform: translateY(-2px) !important;
-    font-weight: 600 !important;
+.time-slot--unavailable {
+  border-color: var(--ios-separator);
+  background: var(--ios-bg-tertiary);
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
-.time-slot-grid .time-slot.unavailable {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-    background-color: #f8f9fa !important;
+.time-slot--selected {
+  border-color: var(--ios-blue);
+  background: rgba(0, 122, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
-.time-slot-grid .time-slot.unavailable:hover {
-    transform: none !important;
-    border-color: #e9ecef !important;
-    background-color: #f8f9fa !important;
-    box-shadow: none !important;
+.time-slot__time {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
 }
 
-.time-slot-grid .time-slot.past {
-    background-color: #e9ecef !important;
-    color: #adb5bd !important;
-    cursor: not-allowed !important;
-    opacity: 0.5 !important;
-    border: 1px solid #dee2e6 !important;
+.time-slot__status {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-secondary);
 }
 
-.time-slot-grid .time-slot.past:hover {
-    background-color: #e9ecef !important;
-    transform: none !important;
-    box-shadow: none !important;
+.time-slot__client {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-tertiary);
+  margin-top: var(--spacing-xxs);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.time-slot-grid .time-slot.conflict {
-    border-color: #dc3545 !important;
-    background-color: #fff5f5 !important;
+.time-slot__badge {
+  position: absolute;
+  top: var(--spacing-xxs);
+  right: var(--spacing-xxs);
+  width: 8px;
+  height: 8px;
+  border-radius: var(--border-radius-full);
+  background: var(--ios-red);
 }
 
-.time-slot-grid .time-slot.conflict:hover {
-    border-color: #c82333 !important;
-    background-color: #fff5f5 !important;
+.time-slot__badge--pending {
+  background: var(--ios-orange);
 }
 
-.time-slot-grid .time-slot.vacation {
-    border-color: #ffc107 !important;
-    background-color: #fff8e1 !important;
-    cursor: not-allowed !important;
+.time-slot__badge--completed {
+  background: var(--ios-green);
 }
 
-.time-slot-grid .time-slot.vacation:hover {
-    transform: none !important;
-    border-color: #ffc107 !important;
-    background-color: #fff8e1 !important;
-    box-shadow: none !important;
-}
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+  .time-slot-grid__container {
+    padding: var(--spacing-md);
+  }
 
-.slot-icon {
-    font-size: 16px;
-    line-height: 1;
-}
+  .time-slot-grid__hour-label {
+    font-size: var(--font-size-sm);
+  }
 
-.slot-time {
-    font-size: 12px;
-    font-weight: 600;
-    color: #495057;
-    line-height: 1;
-}
+  .time-slot-grid__slots {
+    gap: var(--spacing-xxs);
+  }
 
-.time-slot.selected .slot-time {
-    color: #28a745;
-}
+  .time-slot {
+    min-width: 70px;
+    padding: var(--spacing-xs);
+  }
 
-.slot-duration {
+  .time-slot__time {
+    font-size: var(--font-size-xs);
+  }
+
+  .time-slot__status,
+  .time-slot__client {
     font-size: 10px;
-    color: #6c757d;
-    line-height: 1;
-}
+  }
 
-.no-slots {
-    text-align: center;
-    padding: 40px 20px;
-    color: #6c757d;
-}
-
-.no-slots p {
-    margin: 0 0 8px 0;
-    font-size: 16px;
-    font-weight: 500;
-}
-
-.no-slots small {
-    font-size: 14px;
-    opacity: 0.8;
-}
-
-.existing-schedules {
-    margin-top: 20px;
-    padding: 16px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
-}
-
-.existing-schedules h6 {
-    margin: 0 0 12px 0;
-    color: #495057;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.schedule-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.existing-schedule {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background-color: #fff;
-    border-radius: 6px;
-    border: 1px solid #e9ecef;
-    font-size: 12px;
-}
-
-.schedule-time {
-    color: #007bff;
-    font-weight: 600;
-    font-family: monospace;
-}
-
-.schedule-title {
-    color: #495057;
-    font-weight: 500;
-}
-
-.loading-time-slots {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-}
-
-.loading-spinner {
-    padding: 20px 40px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    font-size: 16px;
-    color: #495057;
-    text-align: center;
-}
-
-/* 애니메이션 */
-@keyframes slotSelect {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.05);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
-.time-slot.selected {
-    animation: slotSelect 0.3s ease;
-}
-
-/* 반응형 */
-@media (max-width: 768px) {
-    .grid-header {
-        flex-direction: column;
-        gap: 8px;
-        align-items: flex-start;
-    }
-    
-    .duration-info {
-        align-self: flex-end;
-    }
-    
-    .time-legend {
-        gap: 8px;
-    }
-    
-    .legend-item {
-        font-size: 11px;
-    }
-    
-    .hour-group {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-    
-    .hour-label {
-        min-width: auto;
-        align-self: flex-start;
-    }
-    
-    .slots-row {
-        width: 100%;
-        justify-content: flex-start;
-    }
-    
-    .time-slot {
-        min-width: 70px;
-        padding: 8px 6px;
-    }
-    
-    .slot-time {
-        font-size: 11px;
-    }
-    
-    .slot-duration {
-        font-size: 9px;
-    }
-}
-
-/* 포커스 스타일 (접근성) */
-.time-slot:focus {
-    outline: 2px solid #007bff;
-    outline-offset: 2px;
-}
-
-/* 스크롤바 스타일 */
-.time-slot-grid::-webkit-scrollbar {
+  .time-slot__badge {
     width: 6px;
+    height: 6px;
+  }
 }
 
-.time-slot-grid::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
-
-.time-slot-grid::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-}
-
-.time-slot-grid::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .time-slot {
+    min-width: 75px;
+  }
 }

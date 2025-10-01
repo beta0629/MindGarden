@@ -795,63 +795,34 @@ const SessionManagement = () => {
                             
                             if (hasActiveFilters) {
                                 return (
-                                    <p style={{ 
-                                        margin: '4px 0 0 0', 
-                                        fontSize: 'var(--font-size-sm)', 
-                                        color: '#6b7280',
-                                        fontWeight: 'normal'
-                                    }}>
+                                    <p className="session-mgmt-count-text">
                                         검색 결과: {filteredCount}명 (전체 {totalCount}명 중)
                                     </p>
                                 );
                             } else {
                                 return (
-                                    <p style={{ 
-                                        margin: '4px 0 0 0', 
-                                        fontSize: 'var(--font-size-sm)', 
-                                        color: '#6b7280',
-                                        fontWeight: 'normal'
-                                    }}>
+                                    <p className="session-mgmt-count-text">
                                         최근 내담자 {filteredCount}명 표시 (전체 {totalCount}명 중)
                                     </p>
                                 );
                             }
                         })()}
                     </div>
-                    <div style={{
-                        display: 'flex',
-                        gap: '15px',
-                        alignItems: 'center',
-                        flexWrap: 'nowrap'
-                    }}>
-                        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+                    <div className="session-mgmt-search-row">
+                        <div className="session-mgmt-search-wrapper">
                             <input
                                 type="text"
                                 placeholder="내담자 이름 또는 이메일 검색..."
                                 value={clientSearchTerm}
                                 onChange={(e) => setClientSearchTerm(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '6px',
-                                    fontSize: 'var(--font-size-sm)',
-                                    outline: 'none',
-                                    transition: 'border-color 0.2s ease'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                                className="session-mgmt-search-input"
                             />
                         </div>
                         <select
                             value={clientFilterStatus}
                             onChange={(e) => setClientFilterStatus(e.target.value)}
                             disabled={loadingCodes}
-                            style={{
-                                padding: '8px 12px',
-                                border: '1px solid #d1d5db',
-                                borderRadius: '6px',
-                                fontSize: 'var(--font-size-sm)',
+                            className="session-mgmt-status-select"
                                 backgroundColor: 'white',
                                 minWidth: '120px',
                                 outline: 'none',

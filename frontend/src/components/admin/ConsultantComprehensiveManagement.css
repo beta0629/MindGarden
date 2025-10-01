@@ -31,8 +31,8 @@
     white-space: normal;
     word-wrap: break-word;
     word-break: break-word;
-    overflow: visible !important;
-    text-overflow: unset !important;
+    overflow: visible;
+    text-overflow: unset;
 }
 
 /* 상담사 종합관리 탭 카드 스타일 */
@@ -197,14 +197,14 @@
     padding: var(--spacing-xs) var(--spacing-sm);
     margin: 2px 0;
     border-radius: var(--border-radius-sm);
-    font-size: 14px !important;
-    line-height: 1.5 !important;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
 .specialty-select option:checked {
-    background: #f0f9ff !important;
-    color: #1e40af !important;
-    font-weight: 600 !important;
+    background: #f0f9ff;
+    color: #1e40af;
+    font-weight: 600;
 }
 
 /* 모달 입력 필드 스타일 */
@@ -212,8 +212,8 @@
 .consultant-form input[type="email"],
 .consultant-form input[type="tel"],
 .consultant-form input[type="password"] {
-    width: 100% !important;
-    padding: 12px 16px !important;
+    width: 100%;
+    padding: 12px 16px;
     border: 2px solid #e5e7eb !important;
     border-radius: 8px !important;
     background: #ffffff !important;

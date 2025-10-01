@@ -145,20 +145,20 @@
 
 /* 로딩 텍스트 - 완전히 분리된 스타일 (절대 회전하지 않음) */
 .loading-spinner-text {
-  font-size: 16px !important;
-  color: #6b7280 !important;
-  font-weight: 500 !important;
-  margin: 0 !important;
-  margin-top: 16px !important;
-  position: static !important; /* 텍스트 회전 방지 */
-  z-index: 1000 !important;
-  text-align: center !important;
-  line-height: 1.5 !important;
-  font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif !important;
-  transform: none !important; /* 텍스트 변형 강제 방지 */
-  animation: none !important; /* 텍스트 애니메이션 강제 방지 */
-  will-change: auto !important; /* GPU 가속 방지 */
-  backface-visibility: visible !important;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  margin: 0;
+  margin-top: var(--spacing-md);
+  position: static; /* 텍스트 회전 방지 */
+  z-index: var(--z-index-tooltip);
+  text-align: center;
+  line-height: 1.5;
+  font-family: var(--font-family-ios);
+  transform: none; /* 텍스트 변형 강제 방지 */
+  animation: none; /* 텍스트 애니메이션 강제 방지 */
+  will-change: auto; /* GPU 가속 방지 */
+  backface-visibility: visible;
 }
 
 /* ==================== 애니메이션 ==================== */

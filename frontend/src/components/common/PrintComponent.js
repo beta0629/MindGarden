@@ -1,5 +1,6 @@
 import React, { useRef, forwardRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
+import './PrintComponent.css';
 
 /**
  * 공통 프린트 컴포넌트
@@ -131,16 +132,7 @@ const PrintComponent = forwardRef(({
       {/* 프린트 버튼 */}
       <button 
         onClick={handlePrint}
-        style={{
-          backgroundColor: '#007bff',
-          color: 'white',
-          border: 'none',
-          padding: '8px 16px',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontSize: 'var(--font-size-sm)',
-          marginRight: '10px'
-        }}
+        className="print-button"
       >
         🖨️ 프린트
       </button>
@@ -148,7 +140,7 @@ const PrintComponent = forwardRef(({
       {/* 프린트할 내용 */}
       <div 
         ref={printRef}
-        style={{ display: 'none' }}
+        className="print-content-hidden"
       >
         <div className="print-header">
           <div className="print-title">{title}</div>

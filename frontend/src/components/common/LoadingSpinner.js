@@ -55,35 +55,15 @@ const LoadingSpinner = ({
 
   return (
     <div className={containerClass}>
-      <div style={{ 
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative'
-      }}>
+      <div className="loading-spinner-inner">
         {/* 스피너는 별도 컨테이너에서 회전 */}
-        <div style={{ position: 'relative' }}>
+        <div className="loading-spinner-icon-container">
           {renderSpinner()}
         </div>
         
         {/* 텍스트는 완전히 분리된 영역에 배치 (회전하지 않음) */}
         {showText && (
-          <div 
-            className="loading-spinner-text" 
-            style={{
-              fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif',
-              position: 'static',
-              transform: 'none',
-              animation: 'none',
-              marginTop: '16px',
-              fontSize: 'var(--font-size-base)',
-              color: '#6b7280',
-              fontWeight: '500',
-              textAlign: 'center',
-              lineHeight: '1.5'
-            }}
-          >
+          <div className="loading-spinner-text">
             {text}
           </div>
         )}

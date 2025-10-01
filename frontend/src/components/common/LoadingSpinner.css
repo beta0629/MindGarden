@@ -5,23 +5,31 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 20px;
+  padding: var(--spacing-lg);
 }
 
 /* 기본 로딩 스피너 아이콘 - 스케줄 정확한 스타일 적용 */
 .loading-spinner-icon {
   position: relative;
   border-radius: 50%;
-  border: 4px solid #f3f4f6;
-  border-top: 4px solid #3b82f6;
+  border: 4px solid var(--ios-border-light);
+  border-top: 4px solid var(--ios-blue);
   animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-md);
   flex-shrink: 0; /* 크기 고정 */
 }
 
-/* 로딩 스피너 내부 - 사용하지 않음 */
+/* 로딩 스피너 내부 */
 .loading-spinner-inner {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.loading-spinner-icon-container {
+  position: relative;
 }
 
 /* 크기별 스타일 - 스케줄 정확한 크기 적용 */
@@ -146,7 +154,7 @@
 /* 로딩 텍스트 - 완전히 분리된 스타일 (절대 회전하지 않음) */
 .loading-spinner-text {
   font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+  color: var(--ios-text-secondary);
   font-weight: var(--font-weight-medium);
   margin: 0;
   margin-top: var(--spacing-md);
@@ -154,7 +162,7 @@
   z-index: var(--z-index-tooltip);
   text-align: center;
   line-height: 1.5;
-  font-family: var(--font-family-ios);
+  font-family: var(--font-family-base);
   transform: none; /* 텍스트 변형 강제 방지 */
   animation: none; /* 텍스트 애니메이션 강제 방지 */
   will-change: auto; /* GPU 가속 방지 */
@@ -223,7 +231,7 @@
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 9999;
+  z-index: var(--z-index-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -235,19 +243,19 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: var(--spacing-xl);
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
   min-width: 200px;
-  font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  font-family: var(--font-family-base);
   text-align: center; /* 텍스트 중앙 정렬 보장 */
 }
 
 /* 반응형 - 개선된 모바일 지원 */
 @media (max-width: 768px) {
   .loading-spinner-container {
-    padding: 16px;
+    padding: var(--spacing-md);
   }
   
   .loading-spinner-medium {
@@ -262,11 +270,11 @@
   
   .loading-spinner-text {
     font-size: var(--font-size-sm);
-    margin-top: 12px;
+    margin-top: var(--spacing-sm);
   }
   
   .loading-spinner-inline {
-    padding: 20px;
+    padding: var(--spacing-lg);
     min-width: 160px;
   }
   
@@ -285,7 +293,7 @@
 
 @media (max-width: 480px) {
   .loading-spinner-container {
-    padding: 12px;
+    padding: var(--spacing-sm);
   }
   
   .loading-spinner-small {
@@ -300,6 +308,6 @@
   
   .loading-spinner-text {
     font-size: var(--font-size-xs);
-    margin-top: 10px;
+    margin-top: var(--spacing-xs);
   }
 }

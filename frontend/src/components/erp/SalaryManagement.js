@@ -599,7 +599,7 @@ const SalaryManagement = () => {
                                     {calculation.taxAmount && (
                                         <div className="detail-row tax-row">
                                             <span>원천징수 (3.3%):</span>
-                                            <span style={{color: '#dc3545'}}>-{formatCurrency(calculation.taxAmount)}</span>
+                                            <span className="salary-management-tax-amount">-{formatCurrency(calculation.taxAmount)}</span>
                                         </div>
                                     )}
                                     <div className="detail-row total">

@@ -738,7 +738,7 @@ const TabletLogin = () => {
                     background: 'none',
                     border: 'none',
                     color: '#667eea',
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     fontWeight: '500',
                     cursor: 'pointer',
                     textDecoration: 'underline',
@@ -906,7 +906,7 @@ const TabletLogin = () => {
               borderRadius: '12px',
               boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
               zIndex: 10001,
-              fontSize: '15px',
+              fontSize: 'var(--font-size-md)',
               fontWeight: '400',
               fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
               width: '520px',
@@ -922,7 +922,7 @@ const TabletLogin = () => {
             
             {/* 메시지 */}
             <div style={{ 
-              fontSize: '16px',
+              fontSize: 'var(--font-size-base)',
               fontWeight: '500',
               marginBottom: '8px',
               color: '#495057',
@@ -934,7 +934,7 @@ const TabletLogin = () => {
             
             {/* 닫기 안내 */}
             <div style={{ 
-              fontSize: '13px',
+              fontSize: 'var(--font-size-sm)',
               color: '#6c757d',
               fontWeight: '400',
               opacity: 0.8,

@@ -126,7 +126,7 @@ const MappingPaymentModal = ({
                 <h3 style={{
                     margin: '0 0 20px 0',
                     color: '#2c5aa0',
-                    fontSize: '18px',
+                    fontSize: 'var(--font-size-lg)',
                     fontWeight: '600'
                 }}>
                     💰 결제 확인
@@ -139,13 +139,13 @@ const MappingPaymentModal = ({
                         borderRadius: '8px',
                         marginBottom: '16px'
                     }}>
-                        <div style={{ fontSize: '14px', color: '#6c757d', marginBottom: '4px' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d', marginBottom: '4px' }}>
                             매핑 정보
                         </div>
-                        <div style={{ fontSize: '16px', fontWeight: '600' }}>
+                        <div style={{ fontSize: 'var(--font-size-base)', fontWeight: '600' }}>
                             {mapping.consultantName} → {mapping.clientName}
                         </div>
-                        <div style={{ fontSize: '14px', color: '#6c757d', marginTop: '4px' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d', marginTop: '4px' }}>
                             {mapping.packageName} - {mapping.packagePrice?.toLocaleString()}원
                         </div>
                     </div>
@@ -155,7 +155,7 @@ const MappingPaymentModal = ({
                     <label style={{
                         display: 'block',
                         marginBottom: '8px',
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '500',
                         color: '#333'
                     }}>
@@ -168,7 +168,7 @@ const MappingPaymentModal = ({
                             width: '100%',
                             padding: '10px 12px',
                             borderRadius: '8px',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             cursor: 'pointer',
                             backgroundColor: '#ffffff',
                             color: '#333333',
@@ -191,7 +191,7 @@ const MappingPaymentModal = ({
                         <label style={{
                             display: 'block',
                             marginBottom: '8px',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             fontWeight: '500',
                             color: '#333'
                         }}>
@@ -211,7 +211,7 @@ const MappingPaymentModal = ({
                                 width: '100%',
                                 padding: '10px 12px',
                                 borderRadius: '8px',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 backgroundColor: 'var(--input-bg, #ffffff)',
                                 color: 'var(--input-color, #333333)',
                                 border: '2px solid var(--input-border, #e1e8ed)',
@@ -230,7 +230,7 @@ const MappingPaymentModal = ({
                         <small style={{
                             display: 'block',
                             marginTop: '4px',
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#6c757d'
                         }}>
                             자동으로 참조번호가 생성됩니다. 필요시 수정할 수 있습니다.
@@ -242,7 +242,7 @@ const MappingPaymentModal = ({
                     <label style={{
                         display: 'block',
                         marginBottom: '8px',
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '500',
                         color: '#333'
                     }}>
@@ -260,7 +260,7 @@ const MappingPaymentModal = ({
                             width: '100%',
                             padding: '10px 12px',
                             borderRadius: '8px',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             backgroundColor: '#ffffff',
                             color: '#333333',
                             border: '2px solid #e1e8ed',
@@ -288,7 +288,7 @@ const MappingPaymentModal = ({
                             backgroundColor: 'white',
                             color: '#666',
                             cursor: loading ? 'not-allowed' : 'pointer',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             fontWeight: '500'
                         }}
                     >
@@ -304,7 +304,7 @@ const MappingPaymentModal = ({
                             backgroundColor: loading ? '#ccc' : '#007bff',
                             color: 'white',
                             cursor: loading ? 'not-allowed' : 'pointer',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             fontWeight: '500'
                         }}
                     >

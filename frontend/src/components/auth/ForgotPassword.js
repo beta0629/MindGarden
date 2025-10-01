@@ -90,14 +90,14 @@ const ForgotPassword = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '28px',
+                      fontSize: 'var(--font-size-xxl)',
                       margin: '0 auto 24px',
                       color: 'white'
                     }}>
                       🔑
                     </div>
                     <h1 style={{
-                      fontSize: '28px',
+                      fontSize: 'var(--font-size-xxl)',
                       fontWeight: '700',
                       color: '#2d3748',
                       marginBottom: '12px'
@@ -105,7 +105,7 @@ const ForgotPassword = () => {
                       비밀번호 찾기
                     </h1>
                     <p style={{
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       color: '#718096',
                       lineHeight: '1.5'
                     }}>
@@ -119,7 +119,7 @@ const ForgotPassword = () => {
                     <div style={{ marginBottom: '24px' }}>
                       <label style={{
                         display: 'block',
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '600',
                         color: '#4a5568',
                         marginBottom: '8px'
@@ -136,7 +136,7 @@ const ForgotPassword = () => {
                         style={{
                           width: '100%',
                           padding: '16px',
-                          fontSize: '16px',
+                          fontSize: 'var(--font-size-base)',
                           border: '2px solid #e2e8f0',
                           borderRadius: '12px',
                           outline: 'none',
@@ -161,7 +161,7 @@ const ForgotPassword = () => {
                       style={{
                         width: '100%',
                         padding: '16px',
-                        fontSize: '16px',
+                        fontSize: 'var(--font-size-base)',
                         fontWeight: '600',
                         color: 'white',
                         background: isLoading || !formData.email 
@@ -214,7 +214,7 @@ const ForgotPassword = () => {
                       style={{
                         color: '#667eea',
                         textDecoration: 'none',
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '500',
                         transition: 'color 0.2s ease'
                       }}
@@ -293,7 +293,7 @@ const ForgotPassword = () => {
                       style={{
                         width: '100%',
                         padding: '12px',
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '500',
                         color: '#667eea',
                         background: 'transparent',
@@ -321,7 +321,7 @@ const ForgotPassword = () => {
                         display: 'block',
                         width: '100%',
                         padding: '12px',
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '500',
                         color: '#718096',
                         textDecoration: 'none',

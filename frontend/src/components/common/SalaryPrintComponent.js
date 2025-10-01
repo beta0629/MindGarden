@@ -52,7 +52,7 @@ const SalaryPrintComponent = ({
             display: 'flex',
             justifyContent: 'space-between',
             marginBottom: '20px',
-            fontSize: '14px'
+            fontSize: 'var(--font-size-sm)'
           },
           '.salary-table': {
             width: '100%',
@@ -86,14 +86,14 @@ const SalaryPrintComponent = ({
           '.net-row': {
             backgroundColor: '#d4edda',
             fontWeight: 'bold',
-            fontSize: '16px'
+            fontSize: 'var(--font-size-base)'
           }
         }
       }}
     >
       <div className="salary-header">
-        <h1 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>급여 계산서</h1>
-        <div style={{ fontSize: '16px', color: '#666' }}>
+        <h1 style={{ margin: '0 0 10px 0', fontSize: 'var(--font-size-xxl)' }}>급여 계산서</h1>
+        <div style={{ fontSize: 'var(--font-size-base)', color: '#666' }}>
           {period} 급여 지급 내역
         </div>
       </div>
@@ -151,7 +151,7 @@ const SalaryPrintComponent = ({
 
       {includeCalculationDetails && (
         <div style={{ marginTop: '30px' }}>
-          <h3 style={{ marginBottom: '15px', fontSize: '16px' }}>계산 상세</h3>
+          <h3 style={{ marginBottom: '15px', fontSize: 'var(--font-size-base)' }}>계산 상세</h3>
           <table className="salary-table">
             <tbody>
               <tr>
@@ -177,7 +177,7 @@ const SalaryPrintComponent = ({
       )}
 
       <div style={{ marginTop: '40px', textAlign: 'center' }}>
-        <div style={{ fontSize: '12px', color: '#666' }}>
+        <div style={{ fontSize: 'var(--font-size-xs)', color: '#666' }}>
           본 급여 계산서는 마인드가든 통합 상담관리 시스템에서 자동 생성되었습니다.
         </div>
         <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>

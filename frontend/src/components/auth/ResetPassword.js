@@ -149,7 +149,7 @@ const ResetPassword = () => {
                   animation: 'spin 1s linear infinite'
                 }} />
                 <p style={{
-                  fontSize: '16px',
+                  fontSize: 'var(--font-size-base)',
                   color: '#718096'
                 }}>
                   토큰을 검증하고 있습니다...
@@ -201,14 +201,14 @@ const ResetPassword = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '28px',
+                      fontSize: 'var(--font-size-xxl)',
                       margin: '0 auto 24px',
                       color: 'white'
                     }}>
                       🔒
                     </div>
                     <h1 style={{
-                      fontSize: '28px',
+                      fontSize: 'var(--font-size-xxl)',
                       fontWeight: '700',
                       color: '#2d3748',
                       marginBottom: '12px'
@@ -216,7 +216,7 @@ const ResetPassword = () => {
                       새 비밀번호 설정
                     </h1>
                     <p style={{
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       color: '#718096',
                       lineHeight: '1.5'
                     }}>
@@ -229,7 +229,7 @@ const ResetPassword = () => {
                     <div style={{ marginBottom: '24px' }}>
                       <label style={{
                         display: 'block',
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '600',
                         color: '#4a5568',
                         marginBottom: '8px'
@@ -247,7 +247,7 @@ const ResetPassword = () => {
                           style={{
                             width: '100%',
                             padding: '16px 50px 16px 16px',
-                            fontSize: '16px',
+                            fontSize: 'var(--font-size-base)',
                             border: '2px solid #e2e8f0',
                             borderRadius: '12px',
                             outline: 'none',
@@ -276,7 +276,7 @@ const ResetPassword = () => {
                             border: 'none',
                             color: '#718096',
                             cursor: 'pointer',
-                            fontSize: '18px'
+                            fontSize: 'var(--font-size-lg)'
                           }}
                         >
                           {showPassword ? '👁️' : '👁️‍🗨️'}
@@ -287,7 +287,7 @@ const ResetPassword = () => {
                     <div style={{ marginBottom: '24px' }}>
                       <label style={{
                         display: 'block',
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '600',
                         color: '#4a5568',
                         marginBottom: '8px'
@@ -305,7 +305,7 @@ const ResetPassword = () => {
                           style={{
                             width: '100%',
                             padding: '16px 50px 16px 16px',
-                            fontSize: '16px',
+                            fontSize: 'var(--font-size-base)',
                             border: '2px solid #e2e8f0',
                             borderRadius: '12px',
                             outline: 'none',
@@ -334,7 +334,7 @@ const ResetPassword = () => {
                             border: 'none',
                             color: '#718096',
                             cursor: 'pointer',
-                            fontSize: '18px'
+                            fontSize: 'var(--font-size-lg)'
                           }}
                         >
                           {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
@@ -369,7 +369,7 @@ const ResetPassword = () => {
                       style={{
                         width: '100%',
                         padding: '16px',
-                        fontSize: '16px',
+                        fontSize: 'var(--font-size-base)',
                         fontWeight: '600',
                         color: 'white',
                         background: isLoading || !formData.newPassword || !formData.confirmPassword
@@ -438,7 +438,7 @@ const ResetPassword = () => {
                   </h1>
                   
                   <p style={{
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     color: '#718096',
                     lineHeight: '1.6',
                     marginBottom: '32px'
@@ -453,7 +453,7 @@ const ResetPassword = () => {
                       display: 'block',
                       width: '100%',
                       padding: '16px',
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
                       color: 'white',
                       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

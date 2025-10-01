@@ -86,7 +86,7 @@ const MappingCard = ({
                         padding: '4px 12px',
                         borderRadius: '20px',
                         color: 'white',
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         fontWeight: '600',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px',
@@ -97,7 +97,7 @@ const MappingCard = ({
                     </span>
                 </div>
                 <div style={{
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#6c757d',
                     fontWeight: '500',
                     display: 'flex',
@@ -186,7 +186,7 @@ const MappingCard = ({
                 }}>
                     <div style={{ flex: 1, textAlign: 'center' }}>
                         <div style={{
-                            fontSize: '11px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#6c757d',
                             fontWeight: '600',
                             textTransform: 'uppercase',
@@ -194,7 +194,7 @@ const MappingCard = ({
                             marginBottom: '4px'
                         }}>상담사</div>
                         <div style={{
-                            fontSize: '16px',
+                            fontSize: 'var(--font-size-base)',
                             fontWeight: '600',
                             color: '#2c3e50',
                             marginBottom: '2px'
@@ -202,20 +202,20 @@ const MappingCard = ({
                             {mapping.consultant?.name || mapping.consultantName || '상담사 정보 없음'}
                         </div>
                         <div style={{
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#6c757d'
                         }}>
                             {mapping.consultant?.email || ''}
                         </div>
                     </div>
                     <div style={{
-                        fontSize: '20px',
+                        fontSize: 'var(--font-size-xl)',
                         color: '#007bff',
                         fontWeight: 'bold'
                     }}>→</div>
                     <div style={{ flex: 1, textAlign: 'center' }}>
                         <div style={{
-                            fontSize: '11px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#6c757d',
                             fontWeight: '600',
                             textTransform: 'uppercase',
@@ -223,7 +223,7 @@ const MappingCard = ({
                             marginBottom: '4px'
                         }}>내담자</div>
                         <div style={{
-                            fontSize: '16px',
+                            fontSize: 'var(--font-size-base)',
                             fontWeight: '600',
                             color: '#2c3e50',
                             marginBottom: '2px'
@@ -231,7 +231,7 @@ const MappingCard = ({
                             {mapping.client?.name || mapping.clientName || '내담자 정보 없음'}
                         </div>
                         <div style={{
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#6c757d'
                         }}>
                             {mapping.client?.email || ''}
@@ -255,7 +255,7 @@ const MappingCard = ({
                         border: '1px solid #e9ecef'
                     }}>
                         <span style={{
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#6c757d',
                             fontWeight: '500'
                         }}>패키지:</span>
@@ -275,7 +275,7 @@ const MappingCard = ({
                         border: '1px solid #e9ecef'
                     }}>
                         <span style={{
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#6c757d',
                             fontWeight: '500'
                         }}>총 세션:</span>
@@ -295,7 +295,7 @@ const MappingCard = ({
                         border: '1px solid #e9ecef'
                     }}>
                         <span style={{
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#6c757d',
                             fontWeight: '500'
                         }}>남은 세션:</span>
@@ -315,7 +315,7 @@ const MappingCard = ({
                         border: '1px solid #e9ecef'
                     }}>
                         <span style={{
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#6c757d',
                             fontWeight: '500'
                         }}>가격:</span>
@@ -338,7 +338,7 @@ const MappingCard = ({
                         marginBottom: '16px'
                     }}>
                         <span style={{
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#856404',
                             fontWeight: '600',
                             display: 'block',
@@ -368,7 +368,7 @@ const MappingCard = ({
                             padding: '4px 8px',
                             border: 'none',
                             borderRadius: '6px',
-                            fontSize: '11px',
+                            fontSize: 'var(--font-size-xs)',
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
@@ -401,7 +401,7 @@ const MappingCard = ({
                             padding: '4px 8px',
                             border: 'none',
                             borderRadius: '6px',
-                            fontSize: '11px',
+                            fontSize: 'var(--font-size-xs)',
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
@@ -453,7 +453,7 @@ const MappingCard = ({
                                 padding: '4px 8px',
                                 border: 'none',
                                 borderRadius: '6px',
-                                fontSize: '11px',
+                                fontSize: 'var(--font-size-xs)',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
@@ -480,7 +480,7 @@ const MappingCard = ({
                                 padding: '4px 8px',
                                 border: 'none',
                                 borderRadius: '6px',
-                                fontSize: '11px',
+                                fontSize: 'var(--font-size-xs)',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
@@ -511,7 +511,7 @@ const MappingCard = ({
                                 padding: '4px 8px',
                                 border: 'none',
                                 borderRadius: '6px',
-                                fontSize: '11px',
+                                fontSize: 'var(--font-size-xs)',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
@@ -538,7 +538,7 @@ const MappingCard = ({
                                 padding: '4px 8px',
                                 border: 'none',
                                 borderRadius: '6px',
-                                fontSize: '11px',
+                                fontSize: 'var(--font-size-xs)',
                                 fontWeight: '600',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
@@ -566,7 +566,7 @@ const MappingCard = ({
                                     padding: '4px 8px',
                                     border: 'none',
                                     borderRadius: '6px',
-                                    fontSize: '11px',
+                                    fontSize: 'var(--font-size-xs)',
                                     fontWeight: '600',
                                     cursor: 'pointer',
                                     transition: 'all 0.2s',
@@ -624,7 +624,7 @@ const MappingCard = ({
                             padding: '4px 8px',
                             border: '1px solid #17a2b8',
                             borderRadius: '6px',
-                            fontSize: '11px',
+                            fontSize: 'var(--font-size-xs)',
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s',

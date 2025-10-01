@@ -993,11 +993,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 console.log('📅 인라인 모달 렌더링 중...', { isDateActionModalOpen, selectedDate, userRole }),
                 <div 
                     className="schedule-calendar-loading-overlay"
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 10000
-                    }}
                     onClick={() => setIsDateActionModalOpen(false)}
                 >
                     <div 

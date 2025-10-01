@@ -327,8 +327,6 @@ const VacationStatistics = ({ className = "" }) => {
                                                         data-bg-color={`${consultantColor}20`}
                                                         data-text-color={consultantColor}
                                                         data-border-color={consultantColor}
-                                                            display: 'inline-block'
-                                                        }}
                                                     >
                                                         {getVacationTypeKorean(type)} {count}회
                                                     </span>

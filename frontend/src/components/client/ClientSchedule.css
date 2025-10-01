@@ -1,0 +1,81 @@
+/* ClientSchedule 스타일 - 새로운 디자인 시스템 적용 */
+
+.client-schedule-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+}
+
+.client-schedule-error {
+  text-align: center;
+  padding: var(--spacing-xxl);
+}
+
+.client-schedule-error-icon {
+  font-size: var(--font-size-xxxl);
+  color: var(--ios-red);
+  margin-bottom: var(--spacing-md);
+  display: block;
+}
+
+.client-schedule-error-title {
+  color: var(--ios-red);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.client-schedule-error-message {
+  color: var(--ios-text-secondary);
+  margin-bottom: var(--spacing-xl);
+  font-size: var(--font-size-base);
+}
+
+.client-schedule-container {
+  padding: var(--spacing-xl);
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+  min-height: 100vh;
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .client-schedule-container {
+    padding: var(--spacing-md);
+  }
+  
+  .client-schedule-error {
+    padding: var(--spacing-lg);
+  }
+  
+  .client-schedule-error-icon {
+    font-size: var(--font-size-xxl);
+  }
+  
+  .client-schedule-error-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  .client-schedule-error-message {
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .client-schedule-container {
+    background: linear-gradient(135deg, #1a1d2e 0%, #16213e 100%);
+  }
+  
+  .client-schedule-error-icon {
+    color: var(--ios-red-dark);
+  }
+  
+  .client-schedule-error-title {
+    color: var(--ios-red-dark);
+  }
+  
+  .client-schedule-error-message {
+    color: var(--ios-text-secondary-dark);
+  }
+}

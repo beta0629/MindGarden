@@ -7,6 +7,7 @@ import { DASHBOARD_API } from '../../constants/api';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ScheduleCalendar from '../schedule/ScheduleCalendar';
+import './ClientSchedule.css';
 
 const ClientSchedule = () => {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const ClientSchedule = () => {
   if (sessionLoading || loading) {
     return (
       <SimpleLayout>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <div className="client-schedule-loading">
           <LoadingSpinner />
         </div>
       </SimpleLayout>
@@ -38,12 +39,12 @@ const ClientSchedule = () => {
   if (error) {
     return (
       <SimpleLayout>
-        <div style={{ textAlign: 'center', padding: '40px' }}>
-          <i className="bi bi-exclamation-triangle" style={{ fontSize: 'var(--font-size-xxxl)', color: '#dc3545', marginBottom: '16px' }}></i>
-          <h3 style={{ color: '#dc3545', marginBottom: '16px' }}>오류가 발생했습니다</h3>
-          <p style={{ color: '#6c757d', marginBottom: '24px' }}>{error}</p>
+        <div className="client-schedule-error">
+          <i className="bi bi-exclamation-triangle client-schedule-error-icon"></i>
+          <h3 className="client-schedule-error-title">오류가 발생했습니다</h3>
+          <p className="client-schedule-error-message">{error}</p>
           <button 
-            className="btn btn-primary"
+            className="mg-btn mg-btn--primary"
             onClick={() => window.location.reload()}
           >
             다시 시도
@@ -55,11 +56,7 @@ const ClientSchedule = () => {
 
   return (
     <SimpleLayout title="내 일정">
-      <div style={{
-        padding: '24px',
-        background: 'linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%)',
-        minHeight: '100vh'
-      }}>
+      <div className="client-schedule-container">
         <div style={{
           textAlign: 'center',
           marginBottom: '32px',

@@ -218,49 +218,49 @@ img {
 .mb-1 { margin-bottom: var(--spacing-xs); }
 .mb-2 { margin-bottom: var(--spacing-sm); }
 .mb-3 { margin-bottom: var(--spacing-md); }
-.mb-4 { margin-bottom: var(--spacing-lg) !important; }
-.mb-5 { margin-bottom: var(--spacing-xl) !important; }
+.mb-4 { margin-bottom: var(--spacing-lg); }
+.mb-5 { margin-bottom: var(--spacing-xl); }
 
-.p-0 { padding: 0 !important; }
-.p-1 { padding: var(--spacing-xs) !important; }
-.p-2 { padding: var(--spacing-sm) !important; }
-.p-3 { padding: var(--spacing-md) !important; }
-.p-4 { padding: var(--spacing-lg) !important; }
-.p-5 { padding: var(--spacing-xl) !important; }
+.p-0 { padding: 0; }
+.p-1 { padding: var(--spacing-xs); }
+.p-2 { padding: var(--spacing-sm); }
+.p-3 { padding: var(--spacing-md); }
+.p-4 { padding: var(--spacing-lg); }
+.p-5 { padding: var(--spacing-xl); }
 
-.pt-0 { padding-top: 0 !important; }
-.pt-1 { padding-top: var(--spacing-xs) !important; }
-.pt-2 { padding-top: var(--spacing-sm) !important; }
-.pt-3 { padding-top: var(--spacing-md) !important; }
-.pt-4 { padding-top: var(--spacing-lg) !important; }
-.pt-5 { padding-top: var(--spacing-xl) !important; }
+.pt-0 { padding-top: 0; }
+.pt-1 { padding-top: var(--spacing-xs); }
+.pt-2 { padding-top: var(--spacing-sm); }
+.pt-3 { padding-top: var(--spacing-md); }
+.pt-4 { padding-top: var(--spacing-lg); }
+.pt-5 { padding-top: var(--spacing-xl); }
 
-.pb-0 { padding-bottom: 0 !important; }
-.pb-1 { padding-bottom: var(--spacing-xs) !important; }
-.pb-2 { padding-bottom: var(--spacing-sm) !important; }
-.pb-3 { padding-bottom: var(--spacing-md) !important; }
-.pb-4 { padding-bottom: var(--spacing-lg) !important; }
-.pb-5 { padding-bottom: var(--spacing-xl) !important; }
+.pb-0 { padding-bottom: 0; }
+.pb-1 { padding-bottom: var(--spacing-xs); }
+.pb-2 { padding-bottom: var(--spacing-sm); }
+.pb-3 { padding-bottom: var(--spacing-md); }
+.pb-4 { padding-bottom: var(--spacing-lg); }
+.pb-5 { padding-bottom: var(--spacing-xl); }
 
 /* ===== 반응형 유틸리티 ===== */
 @media (max-width: 576px) {
-    .d-sm-none { display: none !important; }
-    .d-sm-block { display: block !important; }
+    .d-sm-none { display: none; }
+    .d-sm-block { display: block; }
 }
 
 @media (max-width: 768px) {
-    .d-md-none { display: none !important; }
-    .d-md-block { display: block !important; }
+    .d-md-none { display: none; }
+    .d-md-block { display: block; }
 }
 
 @media (max-width: 992px) {
-    .d-lg-none { display: none !important; }
-    .d-lg-block { display: block !important; }
+    .d-lg-none { display: none; }
+    .d-lg-block { display: block; }
 }
 
 @media (max-width: 1200px) {
-    .d-xl-none { display: none !important; }
-    .d-xl-block { display: block !important; }
+    .d-xl-none { display: none; }
+    .d-xl-block { display: block; }
 }
 
 /* ===== 로딩 스피너 ===== */

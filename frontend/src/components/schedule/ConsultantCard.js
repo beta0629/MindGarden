@@ -259,7 +259,7 @@ const ConsultantCardNew = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '20px',
+                fontSize: 'var(--font-size-xl)',
                 fontWeight: '700',
                 color: '#ffffff',
                 flexShrink: '0',
@@ -283,7 +283,7 @@ const ConsultantCardNew = ({
                 textAlign: 'left'
             }}>
                 <h5 style={{
-                    fontSize: '18px',
+                    fontSize: 'var(--font-size-lg)',
                     fontWeight: '700',
                     color: '#495057',
                     margin: '0',
@@ -295,7 +295,7 @@ const ConsultantCardNew = ({
                     textAlign: 'left'
                 }}>{consultant.name}</h5>
                 <p style={{
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     color: '#6c757d',
                     margin: '0',
                     fontWeight: '400',
@@ -306,7 +306,7 @@ const ConsultantCardNew = ({
                     textAlign: 'left'
                 }}>{consultant.email || '이메일 없음'}</p>
                 <p style={{
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     color: '#6c757d',
                     margin: '0',
                     fontWeight: '400',
@@ -317,7 +317,7 @@ const ConsultantCardNew = ({
                     textAlign: 'left'
                 }}>{consultant.phone || '전화번호 없음'}</p>
                 <p style={{
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#6c757d',
                     fontWeight: '400',
                     margin: '0',
@@ -344,7 +344,7 @@ const ConsultantCardNew = ({
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         fontWeight: '600',
                         padding: '4px 8px',
                         borderRadius: '12px',
@@ -367,7 +367,7 @@ const ConsultantCardNew = ({
                         {getAvailabilityText()}
                     </div>
                     <p style={{
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         color: '#6c757d',
                         fontWeight: '400',
                         margin: '0',
@@ -387,7 +387,7 @@ const ConsultantCardNew = ({
                         border: '1px solid #e9ecef'
                     }}>
                         <div style={{
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             fontWeight: '600',
                             color: '#495057',
                             marginBottom: '4px',
@@ -399,7 +399,7 @@ const ConsultantCardNew = ({
                             상담 가능 시간
                         </div>
                         <div style={{
-                            fontSize: '11px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#6c757d',
                             lineHeight: '1.4'
                         }}>
@@ -435,7 +435,7 @@ const ConsultantCardNew = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     fontWeight: '700',
                     animation: 'selectionPulse 0.3s ease'
                 }}>

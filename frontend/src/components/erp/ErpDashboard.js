@@ -178,37 +178,37 @@ const ErpDashboard = ({ user: propUser }) => {
         marginBottom: '32px'
       }}>
         <ErpCard title="총 아이템 수">
-          <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#007bff' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', color: '#007bff' }}>
             {stats.totalItems.toLocaleString()}
           </div>
-          <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginTop: '4px' }}>
             등록된 비품 수
           </div>
         </ErpCard>
 
         <ErpCard title="승인 대기 요청">
-          <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffc107' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', color: '#ffc107' }}>
             {stats.pendingRequests.toLocaleString()}
           </div>
-          <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginTop: '4px' }}>
             관리자 승인 대기
           </div>
         </ErpCard>
 
         <ErpCard title="총 주문 수">
-          <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#28a745' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', color: '#28a745' }}>
             {stats.totalOrders.toLocaleString()}
           </div>
-          <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginTop: '4px' }}>
             완료된 구매 주문
           </div>
         </ErpCard>
 
         <ErpCard title="예산 사용률">
-          <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#dc3545' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', color: '#dc3545' }}>
             {getBudgetUsagePercentage()}%
           </div>
-          <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginTop: '4px' }}>
             {formatCurrency(stats.usedBudget)} / {formatCurrency(stats.totalBudget)}
           </div>
         </ErpCard>

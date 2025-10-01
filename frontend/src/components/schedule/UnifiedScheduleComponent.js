@@ -1140,10 +1140,10 @@ const UnifiedScheduleComponent = ({
                                     e.target.style.background = 'white';
                                 }}
                             >
-                                <span style={{ fontSize: '24px', marginRight: '12px' }}>📋</span>
+                                <span style={{ fontSize: 'var(--font-size-xxl)', marginRight: '12px' }}>📋</span>
                                 <div>
                                     <div style={{ fontWeight: '600', marginBottom: '4px' }}>일정 등록</div>
-                                    <div style={{ fontSize: '14px', color: '#6c757d' }}>상담 일정을 등록합니다</div>
+                                    <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>상담 일정을 등록합니다</div>
                                 </div>
                             </button>
                             
@@ -1171,10 +1171,10 @@ const UnifiedScheduleComponent = ({
                                         e.target.style.background = 'white';
                                     }}
                                 >
-                                    <span style={{ fontSize: '24px', marginRight: '12px' }}>🏖️</span>
+                                    <span style={{ fontSize: 'var(--font-size-xxl)', marginRight: '12px' }}>🏖️</span>
                                     <div>
                                         <div style={{ fontWeight: '600', marginBottom: '4px' }}>휴가 등록</div>
-                                        <div style={{ fontSize: '14px', color: '#6c757d' }}>상담사의 휴가를 등록합니다</div>
+                                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>상담사의 휴가를 등록합니다</div>
                                     </div>
                                 </button>
                             )}
@@ -1247,7 +1247,7 @@ const UnifiedScheduleComponent = ({
                         boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
                         overflow: 'auto'
                     }}>
-                        <h3 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '18px', fontWeight: '600' }}>
+                        <h3 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: 'var(--font-size-lg)', fontWeight: '600' }}>
                             🕐 시간을 선택하세요
                         </h3>
                         
@@ -1257,7 +1257,7 @@ const UnifiedScheduleComponent = ({
                                 상담 유형:
                             </label>
                             <select
-                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px' }}
+                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: 'var(--font-size-sm)' }}
                                 defaultValue="INDIVIDUAL"
                             >
                                 <option value="INDIVIDUAL">개인상담 (INDIVIDUAL)</option>
@@ -1272,7 +1272,7 @@ const UnifiedScheduleComponent = ({
                                 상담 시간:
                             </label>
                             <select
-                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '14px' }}
+                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: 'var(--font-size-sm)' }}
                                 defaultValue="50_MIN"
                             >
                                 <option value="30_MIN">30분 (30분)</option>
@@ -1328,7 +1328,7 @@ const UnifiedScheduleComponent = ({
                                                     flexDirection: 'column',
                                                     alignItems: 'center',
                                                     gap: '4px',
-                                                    fontSize: '12px'
+                                                    fontSize: 'var(--font-size-xs)'
                                                 }}
                                             >
                                                 <div style={{ 
@@ -1339,7 +1339,7 @@ const UnifiedScheduleComponent = ({
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
-                                                    fontSize: '10px',
+                                                    fontSize: 'var(--font-size-xs)',
                                                     color: isBooked ? '#9ca3af' : (isSelected ? '#3b82f6' : 'white')
                                                 }}>
                                                     {isBooked ? '✗' : '가'}

@@ -545,7 +545,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // ê¸°ë
         }}>
           <h1 style={{
             margin: '0',
-            fontSize: '32px',
+            fontSize: 'var(--font-size-xxxl)',
             fontWeight: '700',
             color: '#2c3e50',
             display: 'flex',
@@ -554,13 +554,13 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // ê¸°ë
           }}>
             <i className="bi bi-graph-up" style={{
               color: '#4CAF50',
-              fontSize: '28px'
+              fontSize: 'var(--font-size-xxl)'
             }}></i>
             í†µê³„ ëŒ€ì‹œë³´ë“œ
           </h1>
           <p style={{
             margin: '0',
-            fontSize: '16px',
+            fontSize: 'var(--font-size-base)',
             color: '#6c757d',
             fontWeight: '400'
           }}>
@@ -579,7 +579,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // ê¸°ë
               borderRadius: '8px',
               backgroundColor: 'transparent',
               color: '#667eea',
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               fontWeight: '600',
               cursor: 'pointer',
               display: 'flex',
@@ -624,7 +624,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // ê¸°ë
           minWidth: '150px'
         }}>
           <label style={{
-            fontSize: '14px',
+            fontSize: 'var(--font-size-sm)',
             fontWeight: '600',
             color: '#495057',
             margin: '0'
@@ -634,7 +634,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // ê¸°ë
               padding: '12px 16px',
               border: '1px solid #e9ecef',
               borderRadius: '8px',
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               backgroundColor: '#ffffff',
               color: '#495057',
               cursor: 'pointer',
@@ -671,7 +671,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // ê¸°ë
           minWidth: '150px'
         }}>
           <label style={{
-            fontSize: '14px',
+            fontSize: 'var(--font-size-sm)',
             fontWeight: '600',
             color: '#495057',
             margin: '0'
@@ -681,7 +681,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // ê¸°ë
               padding: '12px 16px',
               border: '1px solid #e9ecef',
               borderRadius: '8px',
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               backgroundColor: '#ffffff',
               color: '#495057',
               cursor: 'pointer',
@@ -718,7 +718,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // ê¸°ë
           minWidth: '200px'
         }}>
           <label style={{
-            fontSize: '14px',
+            fontSize: 'var(--font-size-sm)',
             fontWeight: '600',
             color: '#495057',
             margin: '0'
@@ -805,7 +805,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // ê¸°ë
             borderRadius: '8px',
             backgroundColor: '#667eea',
             color: '#ffffff',
-            fontSize: '14px',
+            fontSize: 'var(--font-size-sm)',
             fontWeight: '600',
             cursor: 'pointer',
             display: 'flex',

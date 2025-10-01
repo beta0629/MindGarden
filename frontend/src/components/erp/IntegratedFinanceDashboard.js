@@ -252,7 +252,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         justifyContent: 'center',
         alignItems: 'center',
         height: '400px',
-        fontSize: '18px',
+        fontSize: 'var(--font-size-lg)',
         color: '#e74c3c'
       }}>
         오류: {error}
@@ -284,7 +284,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         <div>
           <h1 style={{
             margin: 0,
-            fontSize: '32px',
+            fontSize: 'var(--font-size-xxxl)',
             fontWeight: 'bold',
             color: 'white',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
@@ -293,7 +293,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
           </h1>
           <p style={{
             margin: '8px 0 0 0',
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             color: 'rgba(255,255,255,0.9)',
             fontWeight: '300'
           }}>
@@ -313,7 +313,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 padding: '12px 16px',
                 borderRadius: '12px',
                 border: 'none',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 backgroundColor: 'rgba(255,255,255,0.3)',
                 color: 'white',
                 backdropFilter: 'blur(10px)',
@@ -343,7 +343,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               padding: '12px 16px',
               borderRadius: '12px',
               border: 'none',
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               backgroundColor: 'rgba(255,255,255,0.2)',
               color: 'white',
               backdropFilter: 'blur(10px)',
@@ -369,7 +369,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               border: 'none',
               borderRadius: '12px',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               fontWeight: '600',
               boxShadow: '0 4px 15px rgba(255,179,186,0.3)',
               transition: 'all 0.3s ease'
@@ -386,7 +386,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               border: 'none',
               borderRadius: '12px',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               fontWeight: '600',
               boxShadow: '0 4px 15px rgba(0,184,148,0.3)',
               transition: 'all 0.3s ease'
@@ -403,7 +403,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               border: 'none',
               borderRadius: '12px',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               fontWeight: '600',
               boxShadow: '0 4px 15px rgba(116,185,255,0.3)',
               transition: 'all 0.3s ease'
@@ -445,7 +445,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
               color: activeTab === tab.key ? 'white' : '#2c3e50',
               borderRadius: '12px',
               cursor: 'pointer',
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               fontWeight: activeTab === tab.key ? '600' : '500',
               transition: 'all 0.3s ease',
               boxShadow: activeTab === tab.key 
@@ -576,7 +576,7 @@ const OverviewTab = ({ data }) => {
         <h3 style={{ 
           marginBottom: '16px', 
           color: '#495057',
-          fontSize: '18px',
+          fontSize: 'var(--font-size-lg)',
           fontWeight: '600',
           display: 'flex',
           alignItems: 'center',

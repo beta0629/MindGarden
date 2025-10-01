@@ -398,13 +398,13 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
               }}>
                 <i className={`bi ${message.icon}`} style={{
                   color: 'white',
-                  fontSize: '20px'
+                  fontSize: 'var(--font-size-xl)'
                 }}></i>
               </div>
               
               <div style={{ flex: 1 }}>
                 <h3 style={{
-                  fontSize: '18px',
+                  fontSize: 'var(--font-size-lg)',
                   fontWeight: '600',
                   color: '#2c3e50',
                   margin: '0 0 8px 0',
@@ -414,7 +414,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
                 </h3>
                 
                 <p style={{
-                  fontSize: '14px',
+                  fontSize: 'var(--font-size-sm)',
                   color: '#6c757d',
                   margin: '0',
                   lineHeight: '1.5'
@@ -430,14 +430,14 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
                     gap: '8px'
                   }}>
                     <span style={{
-                      fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
                       color: message.color,
                       fontWeight: '500'
                     }}>
                       자세히 보기
                     </span>
                     <i className="bi bi-arrow-right" style={{
-                      fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
                       color: message.color
                     }}></i>
                   </div>

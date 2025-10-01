@@ -78,11 +78,7 @@ const ForgotPassword = () => {
                     <div className="forgot-password-icon">
                       🔑
                     </div>
-                    <h1 className="forgot-password-title"
-                      fontWeight: '700',
-                      color: '#2d3748',
-                      marginBottom: '12px'
-                    }}>
+                    <h1 className="forgot-password-title">
                       비밀번호 찾기
                     </h1>
                     <p style={{

@@ -330,8 +330,7 @@ const ConsultantMessages = () => {
 
         {/* 새 메시지 작성 모달 */}
         {showSendModal && (
-          <div className="consultant-messages-send-modal-overlay"
-          }}>
+          <div className="consultant-messages-send-modal-overlay">
             <div style={{
               background: '#fff',
               borderRadius: '15px',

@@ -101,10 +101,6 @@ const ForgotPassword = () => {
                         placeholder="example@email.com"
                         disabled={isLoading}
                         className="forgot-password-input"
-                          transition: 'all 0.2s ease',
-                          fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
-                          backgroundColor: isLoading ? '#f7fafc' : '#ffffff'
-                        }}
                         onFocus={(e) => {
                           e.target.style.borderColor = '#667eea';
                           e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';

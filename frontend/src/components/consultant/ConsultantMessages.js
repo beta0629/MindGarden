@@ -288,9 +288,7 @@ const ConsultantMessages = () => {
                     >
                       <div className="consultant-messages-card-header">
                         <div className="consultant-messages-card-type">
-                          <span className="consultant-messages-card-type-icon"
-                            fontWeight: '600'
-                          }}>
+                          <span className="consultant-messages-card-type-icon">
                             {typeInfo.icon} {typeInfo.label}
                           </span>
                           {message.isImportant && (

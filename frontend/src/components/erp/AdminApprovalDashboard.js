@@ -254,7 +254,7 @@ const AdminApprovalDashboard = () => {
             </div>
 
             <div className="approval-request-comment-group">
-              <label className="approval-request-comment-label"
+              <label className="approval-request-comment-label">
                 marginBottom: '8px', 
                 fontWeight: '600' 
               }}>
@@ -318,7 +318,7 @@ const AdminApprovalDashboard = () => {
             </div>
 
             <div className="approval-request-comment-group">
-              <label className="approval-request-comment-label"
+              <label className="approval-request-comment-label">
                 marginBottom: '8px', 
                 fontWeight: '600' 
               }}>

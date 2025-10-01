@@ -69,7 +69,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#495057'
           }}>내담자 현황</h3>
         </div>
-        <div className="detailed-stats-card-value"
+        <div className="detailed-stats-card-value">
           fontWeight: '700',
           color: '#7B68EE',
           marginBottom: '8px'
@@ -142,7 +142,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#495057'
           }}>상담사 현황</h3>
         </div>
-        <div className="detailed-stats-card-value"
+        <div className="detailed-stats-card-value">
           fontWeight: '700',
           color: '#7B68EE',
           marginBottom: '8px'
@@ -215,7 +215,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#495057'
           }}>완료율</h3>
         </div>
-        <div className="detailed-stats-card-value"
+        <div className="detailed-stats-card-value">
           fontWeight: '700',
           color: '#4CAF50',
           marginBottom: '8px'
@@ -273,7 +273,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#495057'
           }}>취소율</h3>
         </div>
-        <div className="detailed-stats-card-value"
+        <div className="detailed-stats-card-value">
           fontWeight: '700',
           color: '#F44336',
           marginBottom: '8px'
@@ -331,7 +331,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#495057'
           }}>주간 현황</h3>
         </div>
-        <div className="detailed-stats-card-value"
+        <div className="detailed-stats-card-value">
           fontWeight: '700',
           color: '#FF9800',
           marginBottom: '8px'
@@ -389,7 +389,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#495057'
           }}>오늘 현황</h3>
         </div>
-        <div className="detailed-stats-card-value"
+        <div className="detailed-stats-card-value">
           fontWeight: '700',
           color: '#2196F3',
           marginBottom: '8px'

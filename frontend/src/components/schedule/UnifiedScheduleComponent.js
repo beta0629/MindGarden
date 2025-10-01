@@ -1079,8 +1079,7 @@ const UnifiedScheduleComponent = ({
             {isDateActionModalOpen && (
                 console.log('📅 인라인 모달 렌더링 중...', { isDateActionModalOpen, selectedDate, userRole }),
                 <div 
-                    style={{
-                        position: 'fixed',
+                    className="unified-schedule-loading-overlay"
                         top: 0,
                         left: 0,
                         right: 0,
@@ -1094,8 +1093,7 @@ const UnifiedScheduleComponent = ({
                     onClick={() => setIsDateActionModalOpen(false)}
                 >
                     <div 
-                        style={{
-                            background: 'white',
+                        className="unified-schedule-loading-content"
                             borderRadius: '16px',
                             padding: '24px',
                             maxWidth: '400px',

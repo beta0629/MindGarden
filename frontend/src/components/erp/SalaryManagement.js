@@ -472,8 +472,7 @@ const SalaryManagement = () => {
                                 ⚠️ 급여 프로필이 작성되지 않았습니다. 
                                 <button 
                                     onClick={() => setActiveTab('profiles')}
-                                    style={{
-                                        marginLeft: '8px',
+                                    className="salary-management-profile-link"
                                         background: 'none',
                                         border: 'none',
                                         color: '#856404',
@@ -548,8 +547,7 @@ const SalaryManagement = () => {
                         
                         {/* 미리보기 결과 표시 */}
                         {previewResult && (
-                            <div className="preview-result" style={{
-                                backgroundColor: '#e8f5e8',
+                            <div className="preview-result"
                                 border: '2px solid #4caf50',
                                 borderRadius: '8px',
                                 padding: '16px',

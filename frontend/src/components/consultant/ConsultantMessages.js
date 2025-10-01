@@ -223,8 +223,7 @@ const ConsultantMessages = () => {
 
           <button
             onClick={() => setShowSendModal(true)}
-            style={{
-              padding: '12px 20px',
+            className="consultant-messages-send-btn"
               borderRadius: '12px',
               fontWeight: '600',
               transition: 'all 0.3s ease',
@@ -253,9 +252,9 @@ const ConsultantMessages = () => {
 
         {/* 로딩 상태 */}
         {loading && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center' }}>
+          <div className="consultant-messages-loading-container">
             <LoadingSpinner text="메시지 목록을 불러오는 중..." size="medium" />
-            <p style={{ marginTop: '15px', color: '#7f8c8d', fontSize: '1.1rem' }}>잠시만 기다려주세요...</p>
+            <p className="consultant-messages-loading-text">잠시만 기다려주세요...</p>
           </div>
         )}
 

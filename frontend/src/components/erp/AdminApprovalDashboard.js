@@ -269,11 +269,11 @@ const AdminApprovalDashboard = () => {
                 />
             </div>
 
-            <div style={{ textAlign: 'right' }}>
+            <div className="approval-request-actions">
               <ErpButton
                 variant="secondary"
                 onClick={() => setShowApprovalModal(false)}
-                style={{ marginRight: '8px' }}
+                className="approval-request-approve-btn"
               >
                 취소
               </ErpButton>
@@ -329,11 +329,11 @@ const AdminApprovalDashboard = () => {
                 />
             </div>
 
-            <div style={{ textAlign: 'right' }}>
+            <div className="approval-request-actions">
               <ErpButton
                 variant="secondary"
                 onClick={() => setShowRejectionModal(false)}
-                style={{ marginRight: '8px' }}
+                className="approval-request-approve-btn"
               >
                 취소
               </ErpButton>

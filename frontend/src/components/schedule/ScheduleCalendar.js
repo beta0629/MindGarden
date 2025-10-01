@@ -1015,11 +1015,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                             <button 
                                 onClick={handleScheduleClick}
                                 className="schedule-calendar-modal-btn"
-                                    alignItems: 'center',
-                                    padding: '16px',
-                                    border: '2px solid #e9ecef',
-                                    borderRadius: '8px',
-                                    background: 'white',
                                     cursor: 'pointer',
                                     width: '100%',
                                     textAlign: 'left',

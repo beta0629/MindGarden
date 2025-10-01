@@ -756,10 +756,10 @@ div[class*="consultant-specialty-display"] div,
 }
 
 .basic-management-tab .consultant-specialty-display:empty::before {
-    content: "전문분야 미설정" !important;
-    color: #9ca3af !important;
-    font-style: italic !important;
-    font-weight: 400 !important;
+    content: "전문분야 미설정";
+    color: #9ca3af;
+    font-style: italic;
+    font-weight: 400;
 }
 
 .basic-management-tab .consultant-join-info {

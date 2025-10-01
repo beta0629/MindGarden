@@ -315,12 +315,7 @@ const ConsultantMessages = () => {
                         <span className="consultant-messages-client">
                           받는 사람: {message.clientName || '알 수 없음'}
                         </span>
-                        <span className={`consultant-messages-status ${message.isRead ? 'read' : 'unread'}`} 
-                          fontSize: '0.8rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}>
+                        <span className={`consultant-messages-status ${message.isRead ? 'read' : 'unread'}`}>
                           <i className={`bi bi-${message.isRead ? 'check-circle' : 'circle'}`}></i>
                           {message.isRead ? '읽음' : '안읽음'}
                         </span>

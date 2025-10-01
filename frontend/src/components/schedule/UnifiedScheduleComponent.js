@@ -1178,22 +1178,12 @@ const UnifiedScheduleComponent = ({
             {/* 시간 선택 모달 */}
             {showTimeSelectionModal && selectedSchedule && (
                 <div className="unified-schedule-time-modal-overlay"
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     zIndex: 1000
                 }}>
                     <div className="unified-schedule-time-modal-content"
-                        borderRadius: '12px',
-                        padding: '24px',
-                        width: '600px',
-                        maxWidth: '90vw',
-                        maxHeight: '80vh',
                         boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
                         overflow: 'auto'
                     }}>

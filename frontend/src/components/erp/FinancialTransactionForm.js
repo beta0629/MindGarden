@@ -171,7 +171,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               ))}
             </select>
             {loadingCodes && (
-              <div style={{ fontSize: 'var(--font-size-xs)', color: '#666', marginTop: '5px' }}>
+              <div className="financial-transaction-loading">
                 공통 코드 로딩 중...
               </div>
             )}

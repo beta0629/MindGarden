@@ -1024,10 +1024,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     e.target.style.background = 'white';
                                 }}
                             >
-                                <span style={{ fontSize: 'var(--font-size-xxl)', marginRight: '12px' }}>📋</span>
+                                <span className="schedule-calendar-modal-btn-icon">📋</span>
                                 <div>
-                                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>일정 등록</div>
-                                    <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>상담 일정을 등록합니다</div>
+                                    <div className="schedule-calendar-modal-btn-title">일정 등록</div>
+                                    <div className="schedule-calendar-modal-btn-description">상담 일정을 등록합니다</div>
                                 </div>
                             </button>
                             

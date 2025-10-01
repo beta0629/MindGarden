@@ -300,8 +300,7 @@ const AdminApprovalDashboard = () => {
           <div>
             <div className="approval-request-comment-group">
               <h4>거부할 구매 요청</h4>
-              <div style={{ 
-                padding: '12px', 
+              <div className="approval-request-info-box" 
                 backgroundColor: '#f8f9fa', 
                 borderRadius: '4px',
                 marginBottom: '16px'

@@ -108,8 +108,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
       </div>
 
       {/* 상담사 현황 */}
-      <div style={{
-        backgroundColor: '#E8E0FF',
+      <div className="detailed-stats-card detailed-stats-card--consultants"
         borderRadius: '12px',
         padding: '24px',
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
@@ -131,7 +130,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-person-badge-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
+            <i className="bi bi-person-badge-fill detailed-stats-card-icon-svg"></i>
           </div>
           <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',

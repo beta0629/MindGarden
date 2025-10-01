@@ -293,11 +293,11 @@ const ItemManagement = () => {
                   )}
                 </div>
                 
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#007bff' }}>
+                <div className="item-management-card-footer">
+                  <div className="item-management-card-price">
                     {formatCurrency(item.unitPrice)}
                   </div>
-                  <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
+                  <div className="item-management-card-stock">
                     재고: {item.stockQuantity}개
                   </div>
                   {item.supplier && (

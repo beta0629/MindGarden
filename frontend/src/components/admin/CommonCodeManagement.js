@@ -831,7 +831,7 @@ const CommonCodeManagement = () => {
                     <div className="form-header">
                         <h3>{editingCode ? '코드 수정' : '새 코드 추가'}</h3>
                         <button 
-                            className="btn btn-sm btn-outline-secondary"
+                            className="mg-btn mg-btn--sm mg-btn--outline mg-btn--secondary"
                             onClick={handleCancelForm}
                         >
                             <i className="bi bi-x"></i>

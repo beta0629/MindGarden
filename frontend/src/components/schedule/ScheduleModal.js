@@ -763,7 +763,7 @@ const ScheduleModalNew = ({
                 }}>
                     {step > 1 && (
                         <button 
-                            className="btn btn-secondary" 
+                            className="mg-btn mg-btn--secondary" 
                             onClick={handlePrevStep}
                             disabled={loading}
                             style={{

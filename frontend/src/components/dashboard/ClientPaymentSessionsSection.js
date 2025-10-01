@@ -187,100 +187,23 @@ const ClientPaymentSessionsSection = ({ userId }) => {
 
       <div className="payment-sessions-content">
         {/* 회기 현황 요약 */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '30px',
-            background: '#f8f9fa',
-            padding: '32px',
-            borderRadius: '16px',
-            width: '100%',
-            minHeight: '200px'
-          }}>
-            <div style={{
-              textAlign: 'center',
-              padding: '20px',
-              background: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-              transition: 'transform 0.2s ease'
-            }}>
-              <div style={{
-                fontSize: '1rem',
-                color: '#6c757d',
-                marginBottom: '12px',
-                fontWeight: '600'
-              }}>총 회기수</div>
-              <div style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                margin: '0',
-                color: '#007bff'
-              }}>{paymentData.totalSessions}회</div>
+        <div className="sessions-summary">
+          <div className="stats-grid">
+            <div className="stat-card stat-card--primary">
+              <div className="stat-card__label">총 회기수</div>
+              <div className="stat-card__value stat-card__value--primary">{paymentData.totalSessions}회</div>
             </div>
-            <div style={{
-              textAlign: 'center',
-              padding: '20px',
-              background: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-              transition: 'transform 0.2s ease'
-            }}>
-              <div style={{
-                fontSize: '1rem',
-                color: '#6c757d',
-                marginBottom: '12px',
-                fontWeight: '600'
-              }}>사용한 회기</div>
-              <div style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                margin: '0',
-                color: '#28a745'
-              }}>{paymentData.usedSessions}회</div>
+            <div className="stat-card stat-card--success">
+              <div className="stat-card__label">사용한 회기</div>
+              <div className="stat-card__value stat-card__value--success">{paymentData.usedSessions}회</div>
             </div>
-            <div style={{
-              textAlign: 'center',
-              padding: '20px',
-              background: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-              transition: 'transform 0.2s ease'
-            }}>
-              <div style={{
-                fontSize: '1rem',
-                color: '#6c757d',
-                marginBottom: '12px',
-                fontWeight: '600'
-              }}>남은 회기</div>
-              <div style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                margin: '0',
-                color: '#ffc107'
-              }}>{paymentData.remainingSessions}회</div>
+            <div className="stat-card stat-card--warning">
+              <div className="stat-card__label">남은 회기</div>
+              <div className="stat-card__value stat-card__value--warning">{paymentData.remainingSessions}회</div>
             </div>
-            <div style={{
-              textAlign: 'center',
-              padding: '20px',
-              background: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-              transition: 'transform 0.2s ease'
-            }}>
-              <div style={{
-                fontSize: '1rem',
-                color: '#6c757d',
-                marginBottom: '12px',
-                fontWeight: '600'
-              }}>총 결제금액</div>
-              <div style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                margin: '0',
-                color: '#6f42c1'
-              }}>{formatCurrency(paymentData.totalAmount)}</div>
+            <div className="stat-card stat-card--info">
+              <div className="stat-card__label">총 결제금액</div>
+              <div className="stat-card__value stat-card__value--info">{formatCurrency(paymentData.totalAmount)}</div>
             </div>
           </div>
         </div>

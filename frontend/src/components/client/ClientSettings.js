@@ -295,7 +295,7 @@ const ClientSettings = () => {
             {/* 저장 버튼 */}
             <div style={{ textAlign: 'center', marginTop: '32px' }}>
               <button
-                className="btn btn-primary btn-lg"
+                className="mg-btn mg-btn--primary mg-btn--lg"
                 onClick={handleSave}
                 disabled={loading}
                 style={{

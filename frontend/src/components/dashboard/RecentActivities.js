@@ -45,7 +45,7 @@ const RecentActivities = ({ consultationData }) => {
         </h3>
         {hasMoreActivities && (
           <button 
-            className="btn btn-outline-primary btn-sm"
+            className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
             onClick={handleViewAll}
             style={{
               fontSize: 'var(--font-size-sm)',

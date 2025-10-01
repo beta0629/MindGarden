@@ -45,7 +45,7 @@ const ScheduleQuickAccess = ({ user }) => {
           스케줄 관리
         </h3>
         <button 
-          className="btn btn-outline-primary btn-sm"
+          className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
           onClick={handleScheduleClick}
           style={{
             fontSize: 'var(--font-size-sm)',

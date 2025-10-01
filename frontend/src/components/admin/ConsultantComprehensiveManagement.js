@@ -1068,13 +1068,13 @@ const ConsultantComprehensiveManagement = () => {
                         {/* 기본관리 기능들 */}
                         <div className="basic-actions">
                             <button 
-                                className="btn btn-primary"
+                                className="mg-btn mg-btn--primary"
                                 onClick={() => handleOpenModal('create')}
                             >
                                 ➕ 새 상담사 등록
                             </button>
                             <button 
-                                className="btn btn-secondary"
+                                className="mg-btn mg-btn--secondary"
                                 onClick={loadConsultants}
                             >
                                 🔄 새로고침
@@ -1124,7 +1124,7 @@ const ConsultantComprehensiveManagement = () => {
                                     {/* 수정/삭제 버튼 추가 */}
                                     <div className="consultant-comp-consultant-actions">
                                         <button 
-                                            className="btn btn-sm btn-primary"
+                                            className="mg-btn mg-btn--sm mg-btn--primary"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleOpenModal('edit', consultant);
@@ -1134,7 +1134,7 @@ const ConsultantComprehensiveManagement = () => {
                                             수정
                                         </button>
                                         <button 
-                                            className="btn btn-sm btn-danger"
+                                            className="mg-btn mg-btn--sm mg-btn--danger"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleOpenModal('delete', consultant);

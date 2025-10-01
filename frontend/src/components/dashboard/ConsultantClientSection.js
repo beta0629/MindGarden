@@ -174,7 +174,7 @@ const ConsultantClientSection = ({ userId }) => {
           <h3 style={{ color: '#dc3545', marginBottom: '8px' }}>오류가 발생했습니다</h3>
           <p style={{ color: '#6c757d', marginBottom: '20px' }}>{error}</p>
           <button 
-            className="btn btn-primary"
+            className="mg-btn mg-btn--primary"
             onClick={loadClients}
           >
             다시 시도

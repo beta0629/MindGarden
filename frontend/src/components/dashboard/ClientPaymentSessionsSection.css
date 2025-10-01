@@ -48,15 +48,63 @@
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
+  background: var(--ios-bg-tertiary);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
+  min-height: 200px;
 }
+
+/* 통계 카드 스타일 */
+.stat-card {
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-normal);
+  border: 1px solid var(--ios-border-light);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-card__label {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.stat-card__value {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+  font-family: var(--font-family-ios);
+}
+
+.stat-card__value--primary { color: var(--ios-blue); }
+.stat-card__value--success { color: var(--ios-green); }
+.stat-card__value--warning { color: var(--ios-orange); }
+.stat-card__value--info { color: var(--ios-purple); }
 
 /* 모바일에서 1열 그리드 */
 @media (max-width: 767px) {
   .stats-grid {
     grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+  
+  .stat-card {
+    padding: var(--spacing-md);
+  }
+  
+  .stat-card__value {
+    font-size: var(--font-size-xl);
   }
 }
 

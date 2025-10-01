@@ -1672,10 +1672,10 @@ const ClientComprehensiveManagement = () => {
                         
                         {/* 기본관리 기능들 */}
                         <div className="basic-actions">
-                            <button className="btn btn-primary" onClick={handleCreateClient}>
+                            <button className="mg-btn mg-btn--primary" onClick={handleCreateClient}>
                                 ➕ 새 내담자 등록
                             </button>
-                            <button className="btn btn-secondary" onClick={loadAllData}>
+                            <button className="mg-btn mg-btn--secondary" onClick={loadAllData}>
                                 🔄 새로고침
                             </button>
                         </div>

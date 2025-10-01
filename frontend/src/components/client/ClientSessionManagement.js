@@ -121,7 +121,7 @@ const ClientSessionManagement = () => {
             <h3>오류가 발생했습니다</h3>
             <p>{error}</p>
             <button 
-              className="btn btn-primary"
+              className="mg-btn mg-btn--primary"
               onClick={loadSessionData}
             >
               다시 시도

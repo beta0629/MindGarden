@@ -1,5 +1,6 @@
 import React from 'react';
 import ErpCard from '../common/ErpCard';
+import './RefundAccountingStatus.css';
 
 /**
  * 회계 처리 현황 컴포넌트
@@ -13,61 +14,30 @@ const RefundAccountingStatus = ({ erpSyncStatus }) => {
 
     return (
         <ErpCard title="회계 처리 현황">
-            <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-                gap: '15px'
-            }}>
-                <div style={{
-                    padding: '15px',
-                    backgroundColor: '#d4edda',
-                    borderRadius: '8px',
-                    border: '1px solid #c3e6cb'
-                }}>
-                    <div style={{ 
-                        fontWeight: '600', 
-                        marginBottom: '5px',
-                        fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                    }}>
+            <div className="refund-accounting-grid">
+                <div className="refund-accounting-card refund-accounting-card--success">
+                    <div className="refund-accounting-label">
                         오늘 처리
                     </div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#155724' }}>
+                    <div className="refund-accounting-value refund-accounting-value--success">
                         {accountingStatus.processedToday || 0}건
                     </div>
                 </div>
 
-                <div style={{
-                    padding: '15px',
-                    backgroundColor: '#fff3cd',
-                    borderRadius: '8px',
-                    border: '1px solid #ffeaa7'
-                }}>
-                    <div style={{ 
-                        fontWeight: '600', 
-                        marginBottom: '5px',
-                        fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                    }}>
+                <div className="refund-accounting-card refund-accounting-card--warning">
+                    <div className="refund-accounting-label">
                         승인 대기
                     </div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#856404' }}>
+                    <div className="refund-accounting-value refund-accounting-value--warning">
                         {accountingStatus.pendingApproval || 0}건
                     </div>
                 </div>
 
-                <div style={{
-                    padding: '15px',
-                    backgroundColor: '#e2e3e5',
-                    borderRadius: '8px',
-                    border: '1px solid #d6d8db'
-                }}>
-                    <div style={{ 
-                        fontWeight: '600', 
-                        marginBottom: '5px',
-                        fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                    }}>
+                <div className="refund-accounting-card refund-accounting-card--neutral">
+                    <div className="refund-accounting-label">
                         총 환불 금액
                     </div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#383d41' }}>
+                    <div className="refund-accounting-value refund-accounting-value--neutral">
                         {formatCurrency(accountingStatus.totalRefundAmount)}
                     </div>
                 </div>

@@ -1,0 +1,51 @@
+.refund-accounting-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.refund-accounting-card {
+    padding: 15px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.refund-accounting-card--success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.refund-accounting-card--warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+}
+
+.refund-accounting-card--neutral {
+    background-color: #e2e3e5;
+    border-color: #d6d8db;
+}
+
+.refund-accounting-label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+}
+
+.refund-accounting-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.refund-accounting-value--success {
+    color: #155724;
+}
+
+.refund-accounting-value--warning {
+    color: #856404;
+}
+
+.refund-accounting-value--neutral {
+    color: #383d41;
+}
+

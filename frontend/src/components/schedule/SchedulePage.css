@@ -22,7 +22,7 @@
 .header-content h1 {
     margin: 0 0 8px 0;
     color: #2c3e50;
-    font-size: 28px;
+    font-size: var(--font-size-xxl);
     font-weight: 700;
 }
 
@@ -33,7 +33,7 @@
 }
 
 .user-name {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
     color: #495057;
 }
@@ -43,7 +43,7 @@
     color: white;
     padding: 4px 12px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 600;
     text-transform: uppercase;
 }
@@ -69,7 +69,7 @@
     padding: 8px 16px;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -163,7 +163,7 @@
 .sidebar-section h3 {
     margin: 0 0 16px 0;
     color: #2c3e50;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
 }
 
@@ -183,14 +183,14 @@
 }
 
 .stat-value {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     font-weight: 700;
     color: #007bff;
     margin-bottom: 4px;
 }
 
 .stat-label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
     font-weight: 500;
 }
@@ -209,7 +209,7 @@
     padding: 8px 12px;
     background: #f8f9fa;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #495057;
 }
 
@@ -255,19 +255,19 @@
 .access-denied h2 {
     margin: 0 0 12px 0;
     color: #dc3545;
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     font-weight: 600;
 }
 
 .access-denied p {
     margin: 0 0 20px 0;
     color: #6c757d;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     line-height: 1.5;
 }
 
 .current-role {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #495057;
 }
 
@@ -297,7 +297,7 @@
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    font-size: 16px;
+    font-size: var(--font-size-base);
     color: #495057;
     text-align: center;
     min-width: 200px;
@@ -314,7 +314,7 @@
 }
 
 .loading-spinner-text {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     color: #6b7280;
     font-weight: 500;
     margin: 0;
@@ -356,7 +356,7 @@
     }
     
     .header-content h1 {
-        font-size: 24px;
+        font-size: var(--font-size-xxl);
     }
     
     .page-actions {
@@ -370,7 +370,7 @@
     
     .btn {
         padding: 6px 12px;
-        font-size: 12px;
+        font-size: var(--font-size-xs);
     }
     
     .stats-grid {
@@ -383,7 +383,7 @@
     }
     
     .stat-value {
-        font-size: 20px;
+        font-size: var(--font-size-xl);
     }
     
     .access-denied {
@@ -396,11 +396,11 @@
     }
     
     .access-denied h2 {
-        font-size: 20px;
+        font-size: var(--font-size-xl);
     }
     
     .access-denied p {
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
 }
 

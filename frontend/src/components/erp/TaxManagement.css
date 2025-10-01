@@ -19,7 +19,7 @@
 .tax-header h2 {
     margin: 0;
     color: #2c3e50;
-    font-size: 28px;
+    font-size: var(--font-size-xxl);
     font-weight: 600;
 }
 
@@ -33,7 +33,7 @@
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background: white;
     min-width: 150px;
 }
@@ -54,7 +54,7 @@
     border: none;
     background: transparent;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -86,7 +86,7 @@
 .section-header h3 {
     margin: 0;
     color: #2c3e50;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     font-weight: 600;
 }
 
@@ -115,13 +115,13 @@
 .stat-card h4 {
     margin: 0 0 12px 0;
     color: #6c757d;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     text-transform: uppercase;
 }
 
 .stat-value {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     font-weight: 600;
     color: #2c3e50;
 }
@@ -136,7 +136,7 @@
 .tax-type-breakdown h4 {
     margin: 0 0 16px 0;
     color: #2c3e50;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
 }
 
@@ -173,14 +173,14 @@
 }
 
 .type-name {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     color: #2c3e50;
     margin-bottom: 4px;
 }
 
 .type-amount {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
     color: #28a745;
 }
@@ -217,14 +217,14 @@
 .calculation-header h4 {
     margin: 0;
     color: #2c3e50;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
 }
 
 .tax-type-badge {
     padding: 4px 12px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     color: white;
     text-transform: uppercase;
@@ -263,7 +263,7 @@
 
 .calculation-description p {
     margin: 0;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #6c757d;
     font-style: italic;
 }
@@ -293,7 +293,7 @@
     padding: 10px 12px;
     border: 1px solid #ddd;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: border-color 0.2s ease;
 }
 
@@ -310,7 +310,7 @@
     border: none;
     padding: 10px 20px;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;

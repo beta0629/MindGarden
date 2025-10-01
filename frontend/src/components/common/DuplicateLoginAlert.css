@@ -53,7 +53,7 @@
 }
 
 .alert-title {
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     font-weight: 600;
     color: #1f2937;
     margin: 0;
@@ -64,14 +64,14 @@
 }
 
 .alert-message {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     color: #374151;
     margin: 0 0 12px 0;
     line-height: 1.5;
 }
 
 .alert-submessage {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #6b7280;
     margin: 0;
     line-height: 1.4;
@@ -88,7 +88,7 @@
 .btn-confirm {
     padding: 10px 20px;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;

@@ -17,7 +17,7 @@
   --profile-edit-btn-color: white;
   --profile-edit-btn-radius: 6px;
   --profile-edit-btn-font-weight: 500;
-  --profile-edit-btn-font-size: 14px;
+  --profile-edit-btn-font-size: var(--font-size-sm);
   --profile-edit-btn-min-width: 80px;
   --profile-edit-btn-transition: all 0.3s ease;
   --profile-edit-btn-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
@@ -31,11 +31,11 @@
   --profile-label-color: #333;
   --profile-input-padding: 10px;
   --profile-input-radius: 4px;
-  --profile-input-font-size: 14px;
+  --profile-input-font-size: var(--font-size-sm);
   --profile-input-focus-border: #007bff;
   --profile-input-focus-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
   --profile-input-disabled-bg: #f8f9fa;
-  --profile-select-arrow-size: 16px;
+  --profile-select-arrow-size: var(--font-size-base);
   --profile-select-arrow-position: right 10px center;
   --profile-select-padding-right: 40px;
   --profile-actions-margin: 30px;
@@ -45,7 +45,7 @@
   --profile-save-btn-bg: #28a745;
   --profile-save-btn-color: white;
   --profile-save-btn-radius: 4px;
-  --profile-save-btn-font-size: 16px;
+  --profile-save-btn-font-size: var(--font-size-base);
   --profile-save-btn-hover-bg: #218838;
   --profile-mobile-gap: 15px;
   --profile-mobile-edit-padding: 8px 16px;

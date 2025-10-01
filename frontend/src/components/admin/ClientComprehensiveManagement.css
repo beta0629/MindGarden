@@ -12,13 +12,13 @@
 .client-comp-header h2 {
     color: #2c3e50;
     margin-bottom: 10px;
-    font-size: 28px;
+    font-size: var(--font-size-xxl);
     font-weight: 600;
 }
 
 .client-comp-header p {
     color: #7f8c8d;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     margin: 0 0 20px 0;
 }
 
@@ -35,7 +35,7 @@
     background: white;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     transition: all 0.3s ease;
     color: #7f8c8d;
@@ -92,14 +92,14 @@
 }
 
 .client-comp-stat-number {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     font-weight: 700;
     color: #2c3e50;
     margin-bottom: 5px;
 }
 
 .client-comp-stat-label {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #7f8c8d;
     font-weight: 500;
 }
@@ -129,7 +129,7 @@
 .client-comp-section-header h3 {
     color: #2c3e50;
     margin: 0;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
 }
 
 .client-comp-filters {
@@ -141,7 +141,7 @@
     padding: 8px 12px;
     border: 2px solid #e1e8ed;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     width: 200px;
 }
 
@@ -154,7 +154,7 @@
     padding: 8px 12px;
     border: 2px solid #e1e8ed;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background: white;
     cursor: pointer;
 }
@@ -196,11 +196,11 @@
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
 }
 
 .client-comp-client-avatar svg {
-    font-size: 20px;
+    font-size: var(--font-size-xl);
 }
 
 .client-comp-client-info {
@@ -214,7 +214,7 @@
 }
 
 .client-comp-client-email {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #7f8c8d;
     margin-bottom: 3px;
 }
@@ -248,7 +248,7 @@
 .section-header h3 {
     color: #2c3e50;
     margin: 0;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
 }
 
 .filters {
@@ -260,7 +260,7 @@
     padding: 8px 12px;
     border: 2px solid #e1e8ed;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     width: 200px;
 }
 
@@ -273,7 +273,7 @@
     padding: 8px 12px;
     border: 2px solid #e1e8ed;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background: white;
     cursor: pointer;
 }
@@ -315,11 +315,11 @@
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
 }
 
 .client-avatar svg {
-    font-size: 20px;
+    font-size: var(--font-size-xl);
 }
 
 .client-info {
@@ -336,7 +336,7 @@
 }
 
 .client-email {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #7f8c8d;
     margin-bottom: 2px;
 }
@@ -348,7 +348,7 @@
 }
 
 .client-grade {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #95a5a6;
     margin-bottom: 4px;
 }
@@ -381,7 +381,7 @@
     padding: 4px 8px;
     border-radius: 4px;
     color: white;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
 }
 
@@ -402,7 +402,7 @@
 .selected-client-info h3 {
     color: #2c3e50;
     margin: 0 0 20px 0;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
 }
 
 .mapping-info {
@@ -458,7 +458,7 @@
 .detail-header h3 {
     color: #2c3e50;
     margin: 0 0 15px 0;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
 }
 
 .tab-buttons {
@@ -472,7 +472,7 @@
     background: white;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: all 0.3s ease;
     color: #7f8c8d;
 }
@@ -508,7 +508,7 @@
 .overview-card h4 {
     color: #2c3e50;
     margin: 0 0 15px 0;
-    font-size: 16px;
+    font-size: var(--font-size-base);
 }
 
 .info-list {
@@ -557,7 +557,7 @@
 }
 
 .consultation-time {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #7f8c8d;
     min-width: 120px;
 }
@@ -581,14 +581,14 @@
 }
 
 .session-stat .stat-number {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     font-weight: 700;
     color: #a8e6a3;
     margin-bottom: 5px;
 }
 
 .session-stat .stat-label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #7f8c8d;
 }
 
@@ -613,7 +613,7 @@
 
 .progress-text {
     text-align: center;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #7f8c8d;
 }
 
@@ -628,7 +628,7 @@
 .basic-management-content h3 {
     color: #2c3e50;
     margin: 0 0 10px 0;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
 }
 
 .basic-management-content p {
@@ -657,7 +657,7 @@
     padding: 10px 16px;
     border: 2px solid #e1e8ed;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     width: 300px;
     transition: border-color 0.3s ease;
 }
@@ -672,7 +672,7 @@
     padding: 10px 16px;
     border: 2px solid #e1e8ed;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background: white;
     cursor: pointer;
     transition: border-color 0.3s ease;
@@ -726,12 +726,12 @@
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     flex-shrink: 0;
 }
 
 .card-header .client-avatar svg {
-    font-size: 20px;
+    font-size: var(--font-size-xl);
 }
 
 .client-basic-info {
@@ -740,7 +740,7 @@
 }
 
 .client-basic-info .client-name {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
     color: #2c3e50;
     margin: 0 0 5px 0;
@@ -750,7 +750,7 @@
 }
 
 .client-basic-info .client-email {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #7f8c8d;
     margin: 0;
     white-space: nowrap;
@@ -810,7 +810,7 @@
 
 .action-buttons .btn {
     padding: 8px 16px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     border-radius: 6px;
     transition: all 0.3s ease;
 }
@@ -853,13 +853,13 @@
 }
 
 .no-data p {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     margin: 0 0 8px 0;
     color: #95a5a6;
 }
 
 .no-data-sub {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #bdc3c7;
     margin: 0;
 }
@@ -869,7 +869,7 @@
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     transition: all 0.3s ease;
     text-decoration: none;
@@ -950,11 +950,11 @@
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .client-avatar svg {
-    font-size: 16px;
+    font-size: var(--font-size-base);
 }
 
 .action-buttons-cell {
@@ -964,7 +964,7 @@
 
 .btn-sm {
     padding: 6px 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
 }
 
 .btn-danger {
@@ -1045,21 +1045,21 @@
 .client-modal-header h3 {
     margin: 0 0 4px 0;
     color: #2c3e50;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
 }
 
 .modal-description {
     margin: 0;
     color: #6c757d;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 400;
 }
 
 .client-modal-close {
     background: none;
     border: none;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     color: #6c757d;
     cursor: pointer;
     padding: 4px;
@@ -1091,14 +1091,14 @@
 .client-comp-container .form-group label {
     font-weight: 500;
     color: #2c3e50;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .client-comp-container .form-group input {
     padding: 12px 16px;
     border: 2px solid #e9ecef;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: border-color 0.2s ease;
 }
 
@@ -1114,7 +1114,7 @@
 
 .form-help {
     color: #6c757d;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     margin-top: 4px;
     line-height: 1.4;
 }
@@ -1127,13 +1127,13 @@
 .delete-confirmation p {
     margin: 0 0 16px 0;
     color: #2c3e50;
-    font-size: 16px;
+    font-size: var(--font-size-base);
 }
 
 .delete-confirmation .warning-text {
     color: #dc3545;
     font-weight: 500;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .client-modal-footer {
@@ -1150,7 +1150,7 @@
     padding: 10px 20px;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -1272,11 +1272,11 @@
     .card-header .client-avatar {
         width: 40px;
         height: 40px;
-        font-size: 16px;
+        font-size: var(--font-size-base);
     }
     
     .client-basic-info .client-name {
-        font-size: 16px;
+        font-size: var(--font-size-base);
     }
     
     .client-basic-info .client-email {
@@ -1342,7 +1342,7 @@
     padding: 15px 12px;
     display: flex;
     align-items: center;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #495057;
 }
 
@@ -1361,7 +1361,7 @@
     align-items: center;
     justify-content: center;
     color: #6c757d;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .client-name {
@@ -1373,7 +1373,7 @@
     display: inline-block;
     padding: 4px 8px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     background: #e3f2fd;
     color: #1976d2;
@@ -1383,7 +1383,7 @@
     display: inline-block;
     padding: 4px 8px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     color: white;
 }
@@ -1399,7 +1399,7 @@
 
 .action-buttons .btn {
     padding: 6px 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     border-radius: 4px;
     border: none;
     cursor: pointer;
@@ -1433,7 +1433,7 @@
     padding: 12px 16px;
     border: 2px solid #e1e8ed;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background: white;
     color: #495057;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -1461,7 +1461,7 @@
     padding: 10px 16px;
     border: 2px solid #e1e8ed;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background: white;
     color: #495057;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -1482,7 +1482,7 @@
     padding: 10px 16px;
     border: 2px solid #e1e8ed;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background: white;
     color: #495057;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;

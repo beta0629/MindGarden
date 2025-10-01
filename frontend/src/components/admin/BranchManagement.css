@@ -37,7 +37,7 @@
 }
 
 .branch-management-header h2 {
-    font-size: 28px;
+    font-size: var(--font-size-xxl);
     font-weight: 700;
     color: var(--branch-gray-900);
     margin: 0;
@@ -71,7 +71,7 @@
     padding: 10px 12px;
     border: 2px solid var(--branch-gray-300);
     border-radius: var(--branch-border-radius);
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: var(--branch-transition);
 }
 
@@ -87,7 +87,7 @@
     color: var(--branch-white);
     border: none;
     border-radius: var(--branch-border-radius);
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: var(--branch-transition);
@@ -111,7 +111,7 @@
     padding: 10px 12px;
     border: 2px solid var(--branch-gray-300);
     border-radius: var(--branch-border-radius);
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background-color: var(--branch-white);
     cursor: pointer;
     transition: var(--branch-transition);
@@ -136,7 +136,7 @@
 .branch-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .branch-table thead {
@@ -191,7 +191,7 @@
     display: inline-block;
     padding: 4px 8px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     text-align: center;
 }
@@ -221,7 +221,7 @@
     display: inline-block;
     padding: 4px 8px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     text-align: center;
 }
@@ -263,7 +263,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     padding: 4px;
     border-radius: 4px;
     transition: var(--branch-transition);
@@ -281,7 +281,7 @@
     padding: 4px 8px;
     border: 1px solid var(--branch-gray-300);
     border-radius: 4px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     background-color: var(--branch-white);
     cursor: pointer;
     min-width: 80px;
@@ -302,7 +302,7 @@
     color: var(--branch-gray-700);
     border-radius: var(--branch-border-radius);
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: var(--branch-transition);
 }
 
@@ -329,7 +329,7 @@
     color: var(--branch-white);
     border: none;
     border-radius: var(--branch-border-radius);
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: var(--branch-transition);
@@ -350,7 +350,7 @@
     color: var(--branch-gray-700);
     border: 2px solid var(--branch-gray-300);
     border-radius: var(--branch-border-radius);
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: var(--branch-transition);
@@ -384,7 +384,7 @@
     border: none;
     border-radius: var(--branch-border-radius);
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: var(--branch-transition);
 }
 
@@ -415,7 +415,7 @@
 }
 
 .form-group label {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     color: var(--branch-gray-700);
     margin-bottom: 4px;
@@ -427,7 +427,7 @@
     padding: 10px 12px;
     border: 2px solid var(--branch-gray-300);
     border-radius: var(--branch-border-radius);
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: var(--branch-transition);
 }
 
@@ -457,13 +457,13 @@
 }
 
 .form-help {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: var(--branch-gray-500);
     margin-top: 4px;
 }
 
 .error-text {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: var(--branch-error-color);
     margin-top: 4px;
 }
@@ -495,7 +495,7 @@
 }
 
 .detail-section h3 {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
     color: var(--branch-gray-900);
     margin: 0 0 16px 0;
@@ -518,7 +518,7 @@
 }
 
 .detail-item label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     color: var(--branch-gray-500);
     text-transform: uppercase;
@@ -526,13 +526,13 @@
 }
 
 .detail-item span {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: var(--branch-gray-900);
     font-weight: 500;
 }
 
 .branch-description {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     line-height: 1.6;
     color: var(--branch-gray-700);
     background-color: var(--branch-gray-100);
@@ -624,7 +624,7 @@
     }
     
     .branch-table {
-        font-size: 12px;
+        font-size: var(--font-size-xs);
     }
     
     .branch-table th,

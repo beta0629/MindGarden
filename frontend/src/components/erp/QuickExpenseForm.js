@@ -130,75 +130,32 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '10px',
-        padding: '30px',
-        width: '90%',
-        maxWidth: '600px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px'
-        }}>
-          <h2 style={{ margin: 0, color: '#2c3e50' }}>
+    <div className="quick-expense-modal-overlay">
+      <div className="quick-expense-modal">
+        <div className="quick-expense-modal-header">
+          <h2 className="quick-expense-modal-title">
             ⚡ 빠른 지출 등록
           </h2>
           <button
             onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: 'var(--font-size-xxl)',
-              cursor: 'pointer',
-              color: '#666'
-            }}
+            className="quick-expense-modal-close"
           >
             ×
           </button>
         </div>
 
         {error && (
-          <div style={{
-            backgroundColor: '#f8d7da',
-            color: '#721c24',
-            padding: '10px',
-            borderRadius: '5px',
-            marginBottom: '20px',
-            border: '1px solid #f5c6cb'
-          }}>
+          <div className="quick-expense-error">
             {error}
           </div>
         )}
 
         {loadingCodes ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+          <div className="quick-expense-loading">
             공통 코드 로딩 중...
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-            gap: '15px',
-            marginBottom: '20px'
-          }}>
+          <div className="quick-expense-categories">
             {getQuickExpenses().map((expense, index) => {
               
               return (

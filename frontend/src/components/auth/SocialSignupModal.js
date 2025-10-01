@@ -322,7 +322,7 @@ const SocialSignupModal = ({
             <div className="social-provider">
               <span className="provider-icon">
                 <i className={`bi bi-${socialUser?.provider === 'KAKAO' ? 'chat-dots-fill' : 'chat-square-fill'}`} 
-                   style={{ color: socialUser?.provider === 'KAKAO' ? '#FEE500' : '#03C75A' }}></i>
+                   data-provider-color={socialUser?.provider === 'KAKAO' ? '#FEE500' : '#03C75A'}></i>
               </span>
               <span className="provider-name">
                 {socialUser?.provider === 'KAKAO' ? '카카오' : '네이버'} 계정으로 {socialUser?.needsBranchMapping ? '지점 매핑' : '가입'}
@@ -498,7 +498,7 @@ const SocialSignupModal = ({
                   <div className="consent-item">
                     <div className="consent-status">
                       <i className={`bi bi-${privacyConsents.privacy ? 'check-circle-fill' : 'circle'}`} 
-                         style={{ color: privacyConsents.privacy ? '#28a745' : '#6c757d' }}></i>
+                         data-consent-status={privacyConsents.privacy ? 'agreed' : 'pending'}></i>
                       <span className={privacyConsents.privacy ? 'consent-agreed' : 'consent-pending'}>
                         개인정보 처리방침 동의
                       </span>
@@ -508,7 +508,7 @@ const SocialSignupModal = ({
                   <div className="consent-item">
                     <div className="consent-status">
                       <i className={`bi bi-${privacyConsents.terms ? 'check-circle-fill' : 'circle'}`} 
-                         style={{ color: privacyConsents.terms ? '#28a745' : '#6c757d' }}></i>
+                         data-consent-status={privacyConsents.terms ? 'agreed' : 'pending'}></i>
                       <span className={privacyConsents.terms ? 'consent-agreed' : 'consent-pending'}>
                         이용약관 동의
                       </span>
@@ -518,7 +518,7 @@ const SocialSignupModal = ({
                   <div className="consent-item">
                     <div className="consent-status">
                       <i className={`bi bi-${privacyConsents.marketing ? 'check-circle-fill' : 'circle'}`} 
-                         style={{ color: privacyConsents.marketing ? '#28a745' : '#6c757d' }}></i>
+                         data-consent-status={privacyConsents.marketing ? 'agreed' : 'pending'}></i>
                       <span className={privacyConsents.marketing ? 'consent-agreed' : 'consent-pending'}>
                         마케팅 정보 수신 동의 (선택)
                       </span>

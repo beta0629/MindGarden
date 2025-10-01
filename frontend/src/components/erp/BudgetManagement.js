@@ -331,12 +331,7 @@ const BudgetManagement = () => {
           {/* 콘텐츠 영역 */}
           <div className="erp-content">
           {loading && (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
-              padding: '40px'
-            }}>
+            <div className="budget-management-loading">
               <LoadingSpinner 
                 text="데이터를 불러오는 중..."
                 size="medium"
@@ -501,7 +496,7 @@ const BudgetManagement = () => {
                                     <div className="erp-progress-bar">
                                       <div 
                                         className={`erp-progress-fill ${isOverBudget ? 'over-budget' : ''}`}
-                                        style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                                        data-width={Math.min(usagePercentage, 100)}
                                       ></div>
                                     </div>
                                   </div>
@@ -734,7 +729,7 @@ const BudgetManagement = () => {
                                       <div className="erp-progress-bar">
                                         <div 
                                           className={`erp-progress-fill ${isOverBudget ? 'over-budget' : ''}`}
-                                          style={{ width: `${Math.min(usageRate, 100)}%` }}
+                                          data-width={Math.min(usageRate, 100)}
                                         ></div>
                                       </div>
                                     </div>
@@ -767,7 +762,7 @@ const BudgetManagement = () => {
 
           {/* 예산 생성 모달 */}
           {showCreateModal && (
-            <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal show d-block budget-management-modal-backdrop">
               <div className="modal-dialog">
                 <div className="modal-content">
                   <div className="modal-header">

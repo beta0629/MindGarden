@@ -267,7 +267,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         />
                         <div style={{
                             textAlign: 'right',
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#6c757d',
                             marginTop: '4px'
                         }}>

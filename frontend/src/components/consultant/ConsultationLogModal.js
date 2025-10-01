@@ -1024,7 +1024,7 @@ const ConsultationLogModal = ({
                   max="100"
                   style={styles.formInput}
                 />
-                <span style={{fontSize: '12px', color: '#6c757d'}}>{formData.progressScore}점</span>
+                <span style={{fontSize: 'var(--font-size-xs)', color: '#6c757d'}}>{formData.progressScore}점</span>
               </div>
 
               {/* 목표 달성도 */}

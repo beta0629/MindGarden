@@ -982,7 +982,7 @@ const CommonCodeManagement = () => {
                                         </h4>
                                         <span style={{
                                             color: '#6c757d',
-                                            fontSize: '12px',
+                                            fontSize: 'var(--font-size-xs)',
                                             background: '#e9ecef',
                                             padding: '2px 6px',
                                             borderRadius: '4px',
@@ -994,7 +994,7 @@ const CommonCodeManagement = () => {
                                     <span style={{
                                         padding: '4px 12px',
                                         borderRadius: '20px',
-                                        fontSize: '12px',
+                                        fontSize: 'var(--font-size-xs)',
                                         fontWeight: '500',
                                         backgroundColor: code.isActive ? '#d4edda' : '#f8d7da',
                                         color: code.isActive ? '#155724' : '#721c24'
@@ -1021,7 +1021,7 @@ const CommonCodeManagement = () => {
                                 }}>
                                     <span style={{
                                         color: '#6c757d',
-                                        fontSize: '12px'
+                                        fontSize: 'var(--font-size-xs)'
                                     }}>
                                         정렬: {code.sortOrder}
                                     </span>
@@ -1036,7 +1036,7 @@ const CommonCodeManagement = () => {
                                                 borderRadius: '6px',
                                                 backgroundColor: 'transparent',
                                                 color: '#007bff',
-                                                fontSize: '12px',
+                                                fontSize: 'var(--font-size-xs)',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.3s ease'
                                             }}
@@ -1052,7 +1052,7 @@ const CommonCodeManagement = () => {
                                                 borderRadius: '6px',
                                                 backgroundColor: 'transparent',
                                                 color: code.isActive ? '#ffc107' : '#28a745',
-                                                fontSize: '12px',
+                                                fontSize: 'var(--font-size-xs)',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.3s ease'
                                             }}
@@ -1068,7 +1068,7 @@ const CommonCodeManagement = () => {
                                                 borderRadius: '6px',
                                                 backgroundColor: 'transparent',
                                                 color: '#dc3545',
-                                                fontSize: '12px',
+                                                fontSize: 'var(--font-size-xs)',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.3s ease'
                                             }}

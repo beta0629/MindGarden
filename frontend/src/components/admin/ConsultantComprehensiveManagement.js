@@ -1459,7 +1459,7 @@ const ConsultantComprehensiveManagement = () => {
                                         </label>
                                         <div style={{ 
                                             marginBottom: '8px', 
-                                            fontSize: '12px', 
+                                            fontSize: 'var(--font-size-xs)', 
                                             color: '#6b7280',
                                             display: 'flex',
                                             alignItems: 'center',

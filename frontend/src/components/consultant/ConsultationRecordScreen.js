@@ -269,7 +269,7 @@ const ConsultationRecordScreen = () => {
     statusBadge: {
       padding: '4px 12px',
       borderRadius: '20px',
-      fontSize: '12px',
+      fontSize: 'var(--font-size-xs)',
       fontWeight: '600',
       textTransform: 'uppercase',
       letterSpacing: '0.5px'
@@ -787,7 +787,7 @@ const ConsultationRecordScreen = () => {
             <div style={styles.progressBar}>
               <div style={{...styles.progressFill, width: `${formData.progressScore}%`}}></div>
             </div>
-            <span style={{fontSize: '14px', color: '#6c757d'}}>{formData.progressScore}점</span>
+            <span style={{fontSize: 'var(--font-size-sm)', color: '#6c757d'}}>{formData.progressScore}점</span>
           </div>
 
           <div style={styles.formGroup}>

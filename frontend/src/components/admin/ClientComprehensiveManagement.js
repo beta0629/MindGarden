@@ -2060,9 +2060,9 @@ const ClientComprehensiveManagement = () => {
                                     borderRadius: '12px',
                                     boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)'
                                 }}>
-                                    <div style={{ fontSize: '64px', marginBottom: '24px' }}>👥</div>
-                                    <p style={{ fontSize: '20px', marginBottom: '12px', fontWeight: '500' }}>등록된 내담자가 없습니다.</p>
-                                    <p style={{ fontSize: '16px', color: '#adb5bd' }}>새 내담자를 등록해보세요.</p>
+                                    <div style={{ fontSize: 'var(--font-size-xxxl)', marginBottom: '24px' }}>👥</div>
+                                    <p style={{ fontSize: 'var(--font-size-xl)', marginBottom: '12px', fontWeight: '500' }}>등록된 내담자가 없습니다.</p>
+                                    <p style={{ fontSize: 'var(--font-size-base)', color: '#adb5bd' }}>새 내담자를 등록해보세요.</p>
                                 </div>
                             )}
                         </div>

@@ -19,7 +19,7 @@
 
 .chart-container canvas {
   max-width: 100%;
-  height: 100% !important;
+  height: 100%;
 }
 
 /* 로딩 상태 */
@@ -192,23 +192,23 @@
 
 /* 차트 툴팁 커스터마이징 */
 .chartjs-tooltip {
-  background: rgba(0, 0, 0, 0.8) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 0.5rem !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-  padding: 0.75rem 1rem !important;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-sm) var(--spacing-md);
 }
 
 .chartjs-tooltip-title {
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  font-size: 0.875rem !important;
-  margin-bottom: 0.5rem !important;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-xs);
 }
 
 .chartjs-tooltip-body {
-  color: #ffffff !important;
-  font-size: 0.8rem !important;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
 }
 
 .chartjs-tooltip-body-item {

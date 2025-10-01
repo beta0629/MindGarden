@@ -1,6 +1,6 @@
 /* 상담사 일정관리 페이지 스타일 */
 .consultant-schedule {
-  padding: 20px;
+  padding: var(--spacing-lg);
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -36,7 +36,7 @@
   background: linear-gradient(135deg, #4CAF50, #45a049);
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: var(--spacing-sm) var(--spacing-xl);
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
@@ -54,7 +54,7 @@
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: var(--spacing-sm) var(--spacing-xl);
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
@@ -72,7 +72,7 @@
   background: linear-gradient(135deg, #FF9800, #F57C00);
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: var(--spacing-sm) var(--spacing-xl);
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
@@ -89,7 +89,7 @@
 .calendar-container {
   background: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: var(--spacing-lg);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -102,7 +102,7 @@
 /* 일정 표시 최적화 */
 .fc-daygrid-event {
   margin: 1px 0;
-  padding: 2px 4px;
+  padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.8rem;
   line-height: 1.2;
   border-radius: 4px;
@@ -124,7 +124,7 @@
 .fc-daygrid-more-link {
   background: #f8f9fa;
   color: #007bff;
-  padding: 2px 6px;
+  padding: var(--spacing-xs) var(--spacing-md);
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 500;
@@ -141,7 +141,7 @@
 /* 시간별 뷰 최적화 */
 .fc-timegrid-event {
   margin: 1px 2px;
-  padding: 2px 6px;
+  padding: var(--spacing-xs) var(--spacing-md);
   font-size: 0.85rem;
   border-radius: 4px;
 }
@@ -208,7 +208,7 @@
   color: #495057;
   font-weight: 500;
   border-radius: 6px;
-  padding: 8px 16px;
+  padding: var(--spacing-sm) var(--spacing-md);
   transition: all 0.2s ease;
 }
 
@@ -286,7 +286,7 @@
 .modal-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 20px;
+  padding: var(--spacing-lg);
   border-radius: 12px 12px 0 0;
   display: flex;
   justify-content: space-between;
@@ -321,7 +321,7 @@
 
 /* 폼 스타일 */
 form {
-  padding: 30px;
+  padding: var(--spacing-xxl);
 }
 
 .consultant-schedule .form-group {
@@ -344,7 +344,7 @@ label {
 
 input, select, textarea {
   width: 100%;
-  padding: 12px 16px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 2px solid #e1e5e9;
   border-radius: 8px;
   font-size: 1rem;
@@ -375,7 +375,7 @@ textarea {
 }
 
 .save-btn, .cancel-btn, .delete-btn {
-  padding: 12px 24px;
+  padding: var(--spacing-sm) var(--spacing-xl);
   border: none;
   border-radius: 8px;
   font-size: 1rem;
@@ -419,7 +419,7 @@ textarea {
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .consultant-schedule {
-    padding: 15px;
+    padding: var(--spacing-md);
   }
   
   .schedule-header h1 {
@@ -449,7 +449,7 @@ textarea {
   }
   
   form {
-    padding: 20px;
+    padding: var(--spacing-lg);
   }
   
   .modal-actions {
@@ -510,7 +510,7 @@ textarea {
 }
 
 .fc-daygrid-day-number {
-  padding: 4px;
+  padding: var(--spacing-xs);
   font-weight: 600;
 }
 

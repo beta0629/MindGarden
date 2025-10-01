@@ -524,9 +524,6 @@ const OverviewTab = ({ data }) => {
 
       {/* 수입/지출 요약 */}
       <div className="finance-kpi-grid"
-        gridTemplateColumns: '1fr 1fr',
-        gap: '24px',
-        marginBottom: '40px'
       }}>
         <div style={{
           padding: '28px',

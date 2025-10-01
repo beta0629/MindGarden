@@ -101,8 +101,7 @@ const MappingPaymentModal = ({
 
     return (
         <div className="mapping-payment-modal-overlay">
-            <div className="mapping-payment-modal-content"
-            }}>
+            <div className="mapping-payment-modal-content">
                 <h3 style={{
                     margin: '0 0 20px 0',
                     color: '#2c5aa0',

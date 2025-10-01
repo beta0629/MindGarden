@@ -61,14 +61,14 @@
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: center !important;
+  align-items: center;
   z-index: 1000;
   padding: 20px;
   backdrop-filter: blur(4px);
   box-sizing: border-box;
-  margin: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
 }
 
 /* 모달 컨테이너 */
@@ -83,14 +83,14 @@
   flex-direction: column;
   overflow: hidden;
   animation: modalSlideIn var(--animation-duration) var(--animation-easing);
-  margin: 0 auto !important;
+  margin: 0 auto;
   box-sizing: border-box;
-  position: relative !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
   flex-shrink: 0;
-  border: none !important;
-  outline: none !important;
+  border: none;
+  outline: none;
 }
 
 /* 모달 헤더 */

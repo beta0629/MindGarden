@@ -70,27 +70,17 @@ const SummaryPanels = ({ user, consultationData }) => {
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
                   {upcomingCount > 0 ? (
                     <div>
-                      <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#495057' }}>{upcomingCount}건</div>
+                      <div className="summary-value-number">{upcomingCount}건</div>
                       {/* 최근 3일치 상담만 표시 */}
                       {consultationData?.upcomingConsultations?.slice(0, 3).map((schedule, index) => (
-                        <div key={index} style={{ 
-                          fontSize: '0.85em', 
-                          color: '#6c757d', 
-                          marginTop: '6px',
-                          padding: '6px 10px',
-                          backgroundColor: '#fdf2f8',
-                          borderRadius: '6px',
-                          border: '1px solid #fce7f3',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}>
-                          <div style={{ fontWeight: '500', color: '#495057' }}>
+                        <div key={index} className="summary-schedule-item">
+                          <div className="summary-schedule-datetime">
                             {new Date(schedule.date).toLocaleDateString('ko-KR')} {schedule.startTime} - {schedule.endTime}
                           </div>
-                          <div style={{ 
-                            color: schedule.status === 'CONFIRMED' ? '#be185d' : '#6c757d',
-                            fontSize: '0.8em',
-                            marginTop: '2px'
-                          }}>
+                          <div 
+                            className="summary-schedule-status"
+                            data-status={schedule.status}
+                          >
                             {schedule.status === 'CONFIRMED' ? '확정' : schedule.status === 'BOOKED' ? '예약' : schedule.status}
                           </div>
                         </div>

@@ -1,179 +1,96 @@
-/* StepIndicator.css */
-
-.step-indicator {
-    margin-bottom: 16px;
-    display: block;
-    visibility: visible;
-    opacity: 1;
-    width: 100%;
-    background: #f8f9fa;
-    padding: var(--spacing-md);
-    border-radius: 8px;
-    border: none;
+.step-indicator-container {
+    margin-bottom: 2rem;
+    padding: 20px;
+    background-color: white;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.progress-bar {
-    width: 100%;
-    height: 4px;
-    background-color: #e9ecef;
-    border-radius: 2px;
-    overflow: hidden;
-    margin-bottom: 8px;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #007bff, #28a745);
-    border-radius: 2px;
-    transition: width 0.3s ease;
-}
-
-.steps-container {
+.step-indicator-steps {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: flex-start;
     position: relative;
-    width: 100%;
-    overflow: visible;
+    margin-bottom: 16px;
 }
 
-.step-item {
+.step-indicator-step {
     display: flex;
     flex-direction: column;
     align-items: center;
     flex: 1;
     position: relative;
-    opacity: 0.5;
-    transition: all 0.3s ease;
 }
 
-.step-item.active {
-    opacity: 1;
-}
-
-.step-item.current {
-    opacity: 1;
-    transform: scale(1.05);
-}
-
-.step-icon {
+.step-indicator-icon {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #e9ecef;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-base);
     margin-bottom: 8px;
+    font-size: var(--font-size-base);
+    border-width: 2px;
+    border-style: solid;
     transition: all 0.3s ease;
-    border: 3px solid transparent;
 }
 
-.step-item.active .step-icon {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
-}
-
-.step-item.current .step-icon {
+.step-indicator-icon.active {
     background-color: #28a745;
     color: white;
     border-color: #28a745;
-    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.2);
 }
 
-.step-content {
+.step-indicator-icon.inactive {
+    background-color: #e9ecef;
+    color: #6c757d;
+    border-color: #dee2e6;
+}
+
+.step-indicator-title {
+    font-size: var(--font-size-xs);
     text-align: center;
+    line-height: 1.3;
 }
 
-.step-number {
-    font-size: var(--font-size-xs);
+.step-indicator-title.active {
     font-weight: 600;
-    color: #6c757d;
-    margin-bottom: 2px;
-}
-
-.step-item.active .step-number {
-    color: #007bff;
-}
-
-.step-item.current .step-number {
     color: #28a745;
 }
 
-.step-title {
-    font-size: var(--font-size-xs);
-    color: #6c757d;
+.step-indicator-title.inactive {
     font-weight: 500;
-    line-height: 1.2;
+    color: #6c757d;
 }
 
-.step-item.active .step-title {
-    color: #495057;
-}
-
-.step-item.current .step-title {
-    color: #28a745;
-    font-weight: 600;
-}
-
-/* 연결선 */
-.step-item:not(:last-child)::after {
-    content: '';
+.step-indicator-line {
     position: absolute;
     top: 20px;
-    left: 50%;
-    width: 100%;
+    left: calc(50% + 20px);
+    right: calc(-50% + 20px);
     height: 2px;
+    z-index: 1;
+}
+
+.step-indicator-line.active {
+    background-color: #28a745;
+}
+
+.step-indicator-line.inactive {
+    background-color: #dee2e6;
+}
+
+.step-indicator-progress-bar {
+    height: 4px;
     background-color: #e9ecef;
-    z-index: -1;
-    transform: translateX(50%);
+    border-radius: 2px;
+    overflow: hidden;
 }
 
-.step-item.active:not(:last-child)::after {
-    background-color: #007bff;
-}
-
-/* 1단계일 때 2단계로 가는 연결선 숨김 */
-.step-item.current:first-child:not(:last-child)::after {
-    display: none;
-}
-
-/* 모바일 반응형 */
-@media (max-width: 768px) {
-    .step-icon {
-        width: 32px;
-        height: 32px;
-        font-size: var(--font-size-sm);
-    }
-    
-    .step-title {
-        font-size: var(--font-size-xs);
-    }
-    
-    .step-number {
-        font-size: var(--font-size-xs);
-    }
-    
-    .step-item:not(:last-child)::after {
-        top: 16px;
-    }
-}
-
-/* 애니메이션 */
-@keyframes stepPulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
-    }
-}
-
-.step-item.current .step-icon {
-    animation: stepPulse 2s infinite;
+.step-indicator-progress-fill {
+    height: 100%;
+    background-color: #28a745;
+    transition: width 0.5s ease;
 }

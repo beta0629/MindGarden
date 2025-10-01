@@ -1,5 +1,5 @@
 import React from 'react';
-// import './StepIndicator.css'; // 인라인 스타일로 변경
+import './StepIndicator.css';
 
 /**
  * 단계별 진행 표시기 컴포넌트
@@ -26,74 +26,28 @@ const StepIndicator = ({
     console.log('StepIndicator 렌더링:', { currentStep, totalSteps, steps });
 
     return (
-        <div style={{
-            marginBottom: '2rem',
-            padding: '20px',
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            border: '1px solid #e9ecef',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
-        }}>
+        <div className="step-indicator-container">
             {/* 간단한 진행 표시기 */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                position: 'relative',
-                marginBottom: '16px'
-            }}>
+            <div className="step-indicator-steps">
                 {steps.map((step, index) => {
                     const isActive = currentStep >= step.id;
                     const isCompleted = currentStep > step.id;
                     
                     return (
-                        <div key={step.id} style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            flex: 1,
-                            position: 'relative'
-                        }}>
+                        <div key={step.id} className="step-indicator-step">
                             {/* 단계 아이콘 */}
-                            <div style={{
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%',
-                                backgroundColor: isActive ? '#28a745' : '#e9ecef',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginBottom: '8px',
-                                fontSize: 'var(--font-size-base)',
-                                color: isActive ? 'white' : '#6c757d',
-                                border: `2px solid ${isActive ? '#28a745' : '#dee2e6'}`,
-                                transition: 'all 0.3s ease'
-                            }}>
+                            <div className={`step-indicator-icon ${isActive ? 'active' : 'inactive'}`}>
                                 {isCompleted ? '✓' : step.icon}
                             </div>
                             
                             {/* 단계 제목 */}
-                            <div style={{
-                                fontSize: 'var(--font-size-xs)',
-                                fontWeight: isActive ? '600' : '500',
-                                color: isActive ? '#28a745' : '#6c757d',
-                                textAlign: 'center',
-                                lineHeight: '1.3'
-                            }}>
+                            <div className={`step-indicator-title ${isActive ? 'active' : 'inactive'}`}>
                                 {step.title}
                             </div>
                             
                             {/* 연결선 */}
                             {index < steps.length - 1 && (
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '20px',
-                                    left: 'calc(50% + 20px)',
-                                    right: 'calc(-50% + 20px)',
-                                    height: '2px',
-                                    backgroundColor: isActive ? '#28a745' : '#dee2e6',
-                                    zIndex: 1
-                                }} />
+                                <div className={`step-indicator-line ${isActive ? 'active' : 'inactive'}`} />
                             )}
                         </div>
                     );
@@ -101,18 +55,11 @@ const StepIndicator = ({
             </div>
             
             {/* 진행률 바 */}
-            <div style={{
-                height: '4px',
-                backgroundColor: '#e9ecef',
-                borderRadius: '2px',
-                overflow: 'hidden'
-            }}>
-                <div style={{
-                    width: `${progressPercentage}%`,
-                    height: '100%',
-                    backgroundColor: '#28a745',
-                    transition: 'width 0.5s ease'
-                }} />
+            <div className="step-indicator-progress-bar">
+                <div 
+                    className="step-indicator-progress-fill"
+                    style={{ width: `${progressPercentage}%` }}
+                />
             </div>
         </div>
     );

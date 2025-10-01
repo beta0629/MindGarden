@@ -1209,22 +1209,22 @@ const DailyReportTab = ({ period }) => {
           gap: '16px'
         }}>
           <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3498db', marginBottom: '8px' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#3498db', marginBottom: '8px' }}>
               {reportData?.transactionCount?.consultations || 0}
             </div>
-            <div style={{ fontSize: '14px', color: '#666' }}>상담 건수</div>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: '#666' }}>상담 건수</div>
           </div>
           <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#27ae60', marginBottom: '8px' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#27ae60', marginBottom: '8px' }}>
               {reportData?.transactionCount?.purchases || 0}
             </div>
-            <div style={{ fontSize: '14px', color: '#666' }}>구매 건수</div>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: '#666' }}>구매 건수</div>
           </div>
           <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f39c12', marginBottom: '8px' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#f39c12', marginBottom: '8px' }}>
               {reportData?.transactionCount?.payments || 0}
             </div>
-            <div style={{ fontSize: '14px', color: '#666' }}>결제 건수</div>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: '#666' }}>결제 건수</div>
           </div>
         </div>
       </div>
@@ -1291,7 +1291,7 @@ const MonthlyReportTab = ({ period }) => {
           boxShadow: '0 8px 32px rgba(0,184,148,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💚 월간 수입</h3>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>💚 월간 수입</h3>
           <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ marginBottom: '6px' }}>상담수익: {formatCurrency(reportData?.monthlyIncome?.consultationRevenue || 0)}</div>
             <div style={{ marginBottom: '6px' }}>기타수익: {formatCurrency(reportData?.monthlyIncome?.otherRevenue || 0)}</div>
@@ -1309,7 +1309,7 @@ const MonthlyReportTab = ({ period }) => {
           boxShadow: '0 8px 32px rgba(255,118,117,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>❤️ 월간 지출</h3>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>❤️ 월간 지출</h3>
           <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ marginBottom: '6px' }}>급여지출: {formatCurrency(reportData?.monthlyExpenses?.salaryExpense || 0)}</div>
             <div style={{ marginBottom: '6px' }}>임대료: {formatCurrency(reportData?.monthlyExpenses?.rentExpense || 0)}</div>
@@ -1331,7 +1331,7 @@ const MonthlyReportTab = ({ period }) => {
           boxShadow: '0 8px 32px rgba(116,185,255,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💙 월간 순이익</h3>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>💙 월간 순이익</h3>
           <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', marginBottom: '8px' }}>
             {formatCurrency(reportData?.monthlyNetIncome || 0)}
           </div>
@@ -1355,22 +1355,22 @@ const MonthlyReportTab = ({ period }) => {
           gap: '16px'
         }}>
           <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3498db', marginBottom: '8px' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#3498db', marginBottom: '8px' }}>
               {reportData?.transactionCount?.consultations || 0}
             </div>
-            <div style={{ fontSize: '14px', color: '#666' }}>상담 건수</div>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: '#666' }}>상담 건수</div>
           </div>
           <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#27ae60', marginBottom: '8px' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#27ae60', marginBottom: '8px' }}>
               {reportData?.transactionCount?.purchases || 0}
             </div>
-            <div style={{ fontSize: '14px', color: '#666' }}>구매 건수</div>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: '#666' }}>구매 건수</div>
           </div>
           <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f39c12', marginBottom: '8px' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#f39c12', marginBottom: '8px' }}>
               {reportData?.transactionCount?.payments || 0}
             </div>
-            <div style={{ fontSize: '14px', color: '#666' }}>결제 건수</div>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: '#666' }}>결제 건수</div>
           </div>
         </div>
       </div>
@@ -1502,22 +1502,22 @@ const YearlyReportTab = ({ period }) => {
           gap: '16px'
         }}>
           <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#3498db', marginBottom: '8px' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#3498db', marginBottom: '8px' }}>
               {reportData?.transactionCount?.consultations || 0}
             </div>
-            <div style={{ fontSize: '14px', color: '#666' }}>상담 건수</div>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: '#666' }}>상담 건수</div>
           </div>
           <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#27ae60', marginBottom: '8px' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#27ae60', marginBottom: '8px' }}>
               {reportData?.transactionCount?.purchases || 0}
             </div>
-            <div style={{ fontSize: '14px', color: '#666' }}>구매 건수</div>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: '#666' }}>구매 건수</div>
           </div>
           <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f39c12', marginBottom: '8px' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#f39c12', marginBottom: '8px' }}>
               {reportData?.transactionCount?.payments || 0}
             </div>
-            <div style={{ fontSize: '14px', color: '#666' }}>결제 건수</div>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: '#666' }}>결제 건수</div>
           </div>
         </div>
       </div>

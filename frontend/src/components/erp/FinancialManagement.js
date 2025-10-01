@@ -497,7 +497,7 @@ const FinancialManagement = () => {
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
-                          fontSize: '12px',
+                          fontSize: 'var(--font-size-xs)',
                           cursor: 'pointer'
                         }}
                       >
@@ -512,7 +512,7 @@ const FinancialManagement = () => {
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
-                          fontSize: '12px',
+                          fontSize: 'var(--font-size-xs)',
                           cursor: 'pointer'
                         }}
                       >
@@ -563,7 +563,7 @@ const FinancialManagement = () => {
                                     transaction.description?.includes('상담료 입금 확인') ||
                                     transaction.description?.includes('상담료 환불')) && (
                                     <span style={{
-                                      fontSize: '10px',
+                                      fontSize: 'var(--font-size-xs)',
                                       padding: '2px 6px',
                                       backgroundColor: '#e3f2fd',
                                       color: '#1976d2',
@@ -585,12 +585,12 @@ const FinancialManagement = () => {
                                   {transaction.category}
                                   {/* 매핑 연동 거래 세부 정보 */}
                                   {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' && (
-                                    <div style={{ fontSize: '11px', color: '#28a745', marginTop: '2px' }}>
+                                    <div style={{ fontSize: 'var(--font-size-xs)', color: '#28a745', marginTop: '2px' }}>
                                       💰 입금확인 자동생성
                                     </div>
                                   )}
                                   {transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING_REFUND' && (
-                                    <div style={{ fontSize: '11px', color: '#dc3545', marginTop: '2px' }}>
+                                    <div style={{ fontSize: 'var(--font-size-xs)', color: '#dc3545', marginTop: '2px' }}>
                                       📤 환불처리 자동생성
                                     </div>
                                   )}
@@ -908,7 +908,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           paddingBottom: '15px',
           borderBottom: '2px solid #f1f3f4'
         }}>
-          <h2 style={{ margin: 0, fontSize: '20px', color: '#333' }}>
+          <h2 style={{ margin: 0, fontSize: 'var(--font-size-xl)', color: '#333' }}>
             💰 거래 상세 정보 #{transaction.id}
           </h2>
           <button
@@ -916,7 +916,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '24px',
+              fontSize: 'var(--font-size-xxl)',
               cursor: 'pointer',
               color: '#666'
             }}
@@ -932,7 +932,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
           borderRadius: '8px',
           marginBottom: '20px'
         }}>
-          <h3 style={{ marginBottom: '12px', fontSize: '16px', color: '#495057' }}>
+          <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: '#495057' }}>
             📊 기본 정보
           </h3>
           
@@ -943,7 +943,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 marginLeft: '8px',
                 padding: '2px 8px',
                 borderRadius: '12px',
-                fontSize: '12px',
+                fontSize: 'var(--font-size-xs)',
                 backgroundColor: transaction.transactionType === 'INCOME' ? '#d4edda' : '#f8d7da',
                 color: transaction.transactionType === 'INCOME' ? '#155724' : '#721c24'
               }}>
@@ -1042,7 +1042,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                       marginLeft: '8px',
                       padding: '2px 8px',
                       borderRadius: '12px',
-                      fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
                       backgroundColor: mappingDetail.isConsistent ? '#d4edda' : '#f8d7da',
                       color: mappingDetail.isConsistent ? '#155724' : '#721c24'
                     }}>
@@ -1062,7 +1062,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                     <div style={{ marginTop: '8px' }}>
                       {mappingDetail.relatedTransactions.map((relatedTx, index) => (
                         <div key={index} style={{
-                          fontSize: '12px',
+                          fontSize: 'var(--font-size-xs)',
                           padding: '4px 8px',
                           backgroundColor: '#f1f3f4',
                           borderRadius: '4px',

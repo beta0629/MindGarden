@@ -23,7 +23,7 @@ const StatisticsCard = ({
     <div 
       className={`statistics-card ${loading ? 'loading' : ''} ${error ? 'error' : ''}`}
       onClick={onClick}
-      style={{ '--stats-color': color }}
+      data-stats-color={color}
     >
       <div className="statistics-card-content">
         <div className="statistics-card-icon">

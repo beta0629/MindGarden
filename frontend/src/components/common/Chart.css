@@ -30,6 +30,10 @@
   min-height: 200px;
 }
 
+.chart-loading[data-height] {
+  height: attr(data-height);
+}
+
 .chart-loading-spinner {
   text-align: center;
 }
@@ -54,6 +58,10 @@
   align-items: center;
   justify-content: center;
   min-height: 200px;
+}
+
+.chart-error[data-height] {
+  height: attr(data-height);
 }
 
 .chart-error-content {
@@ -84,6 +92,10 @@
   align-items: center;
   justify-content: center;
   min-height: 200px;
+}
+
+.chart-empty[data-height] {
+  height: attr(data-height);
 }
 
 .chart-empty-content {
@@ -307,6 +319,11 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+/* data-height 속성 지원 */
+.chart-container[data-height] {
+  height: attr(data-height);
 }
 
 /* 원형/도넛 차트 컨테이너 */

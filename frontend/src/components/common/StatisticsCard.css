@@ -1,79 +1,99 @@
-/**
- * 통계 카드 컴포넌트 스타일
- * 
- * @author MindGarden
- * @version 1.0.0
- * @since 2025-09-05
- */
+/* StatisticsCard 스타일 - 새로운 디자인 시스템 적용 */
 
 .statistics-card {
-  background: var(--stats-card-bg);
-  border: var(--stats-card-border);
-  border-radius: var(--stats-card-border-radius);
-  padding: var(--stats-card-padding);
-  margin: var(--stats-card-margin);
-  box-shadow: var(--stats-card-shadow);
-  transition: var(--stats-card-transition);
-  min-height: var(--stats-card-min-height);
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--ios-border-light);
+  transition: all var(--transition-normal);
   cursor: pointer;
   position: relative;
   overflow: hidden;
 }
 
 .statistics-card:hover {
-  box-shadow: var(--stats-card-hover-shadow);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.statistics-card--primary {
+  border-left: 4px solid var(--ios-blue);
+}
+
+.statistics-card--secondary {
+  border-left: 4px solid var(--ios-gray);
+}
+
+.statistics-card--success {
+  border-left: 4px solid var(--ios-green);
+}
+
+.statistics-card--warning {
+  border-left: 4px solid var(--ios-yellow);
+}
+
+.statistics-card--danger {
+  border-left: 4px solid var(--ios-red);
+}
+
+.statistics-card--info {
+  border-left: 4px solid var(--ios-blue);
 }
 
 .statistics-card.loading {
   opacity: 0.7;
-  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .statistics-card.error {
-  border-color: var(--color-error);
-  background: var(--color-error-light);
+  border-left-color: var(--ios-red);
+  background: var(--ios-red-light);
 }
 
 .statistics-card-content {
   display: flex;
   align-items: center;
-  height: 100%;
   gap: var(--spacing-md);
 }
 
 .statistics-card-icon {
-  width: var(--stats-icon-size);
-  height: var(--stats-icon-size);
-  border-radius: var(--stats-icon-border-radius);
-  padding: var(--stats-icon-padding);
-  margin-bottom: var(--stats-icon-margin-bottom);
-  background: var(--stats-color);
-  color: white;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius-md);
+  background: var(--ios-bg-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all var(--transition-normal);
 }
 
 .statistics-card-icon i {
-  font-size: 1.5rem;
+  font-size: var(--font-size-xl);
+  color: var(--ios-text-secondary);
+  transition: all var(--transition-normal);
+}
+
+.statistics-card:hover .statistics-card-icon {
+  background: var(--ios-bg-tertiary);
+  transform: scale(1.05);
+}
+
+.statistics-card:hover .statistics-card-icon i {
+  color: var(--ios-text-primary);
 }
 
 .statistics-card-info {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   min-width: 0;
 }
 
 .statistics-card-value {
-  font-size: var(--stats-number-font-size);
-  font-weight: var(--stats-number-font-weight);
-  color: var(--stats-number-color);
-  margin-bottom: var(--stats-number-margin-bottom);
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-xs);
   line-height: 1.2;
   display: flex;
   align-items: center;
@@ -81,50 +101,149 @@
 }
 
 .statistics-card-title {
-  font-size: var(--stats-label-font-size);
-  font-weight: var(--stats-label-font-weight);
-  color: var(--stats-label-color);
-  margin-bottom: var(--stats-label-margin-bottom);
-  line-height: 1.3;
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.statistics-card-change {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.statistics-card-change--positive {
+  color: var(--ios-green-dark);
+}
+
+.statistics-card-change--negative {
+  color: var(--ios-red-dark);
+}
+
+.statistics-card-change--neutral {
+  color: var(--ios-text-secondary);
+}
+
+.statistics-card-change-icon {
+  font-size: var(--font-size-xs);
 }
 
 .loading-spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid var(--color-neutral-light);
-  border-top: 2px solid var(--stats-color);
-  border-radius: 50%;
+  border: 2px solid var(--ios-border-light);
+  border-top: 2px solid var(--ios-blue);
+  border-radius: var(--border-radius-full);
   animation: spin 1s linear infinite;
 }
 
 .error-text {
-  color: var(--color-error);
-  font-size: 0.9rem;
+  color: var(--ios-red);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
+/* 색상별 스타일 */
+.statistics-card[data-stats-color="primary"] .statistics-card-icon {
+  background: var(--ios-blue-light);
+}
+
+.statistics-card[data-stats-color="primary"] .statistics-card-icon i {
+  color: var(--ios-blue-dark);
+}
+
+.statistics-card[data-stats-color="secondary"] .statistics-card-icon {
+  background: var(--ios-gray-light);
+}
+
+.statistics-card[data-stats-color="secondary"] .statistics-card-icon i {
+  color: var(--ios-gray-dark);
+}
+
+.statistics-card[data-stats-color="success"] .statistics-card-icon {
+  background: var(--ios-green-light);
+}
+
+.statistics-card[data-stats-color="success"] .statistics-card-icon i {
+  color: var(--ios-green-dark);
+}
+
+.statistics-card[data-stats-color="warning"] .statistics-card-icon {
+  background: var(--ios-yellow-light);
+}
+
+.statistics-card[data-stats-color="warning"] .statistics-card-icon i {
+  color: var(--ios-yellow-dark);
+}
+
+.statistics-card[data-stats-color="danger"] .statistics-card-icon {
+  background: var(--ios-red-light);
+}
+
+.statistics-card[data-stats-color="danger"] .statistics-card-icon i {
+  color: var(--ios-red-dark);
+}
+
+.statistics-card[data-stats-color="info"] .statistics-card-icon {
+  background: var(--ios-blue-light);
+}
+
+.statistics-card[data-stats-color="info"] .statistics-card-icon i {
+  color: var(--ios-blue-dark);
+}
+
+/* 애니메이션 */
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-/* 반응형 디자인 */
-@media (max-width: 768px) {
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
   .statistics-card {
-    padding: var(--stats-mobile-card-padding);
-    margin: var(--spacing-sm);
+    padding: var(--spacing-md);
   }
   
   .statistics-card-icon {
-    width: var(--stats-mobile-icon-size);
-    height: var(--stats-mobile-icon-size);
+    width: 40px;
+    height: 40px;
   }
   
   .statistics-card-icon i {
-    font-size: 1.2rem;
+    font-size: var(--font-size-lg);
   }
   
   .statistics-card-value {
-    font-size: var(--stats-mobile-number-font-size);
+    font-size: var(--font-size-xl);
+  }
+  
+  .statistics-card-title {
+    font-size: var(--font-size-xs);
+  }
+  
+  .statistics-card-content {
+    gap: var(--spacing-sm);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .statistics-card {
+    padding: var(--spacing-md);
+  }
+  
+  .statistics-card-icon {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .statistics-card-value {
+    font-size: var(--font-size-xl);
   }
   
   .statistics-card-title {
@@ -132,14 +251,81 @@
   }
 }
 
-@media (max-width: 480px) {
-  .statistics-card-content {
-    flex-direction: column;
-    text-align: center;
-    gap: var(--spacing-sm);
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .statistics-card {
+    background: var(--ios-bg-primary-dark);
+    border-color: var(--ios-border-light-dark);
   }
   
   .statistics-card-icon {
-    margin-bottom: 0;
+    background: var(--ios-bg-secondary-dark);
+  }
+  
+  .statistics-card-icon i {
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .statistics-card:hover .statistics-card-icon {
+    background: var(--ios-bg-tertiary-dark);
+  }
+  
+  .statistics-card:hover .statistics-card-icon i {
+    color: var(--ios-text-primary-dark);
+  }
+  
+  .statistics-card-value {
+    color: var(--ios-text-primary-dark);
+  }
+  
+  .statistics-card-title {
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .statistics-card.error {
+    background: var(--ios-red-light-dark);
+  }
+  
+  .error-text {
+    color: var(--ios-red-dark);
+  }
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+  .statistics-card {
+    transition: none;
+  }
+  
+  .statistics-card:hover {
+    transform: none;
+  }
+  
+  .statistics-card-icon {
+    transition: none;
+  }
+  
+  .statistics-card:hover .statistics-card-icon {
+    transform: none;
+  }
+  
+  .loading-spinner {
+    animation: none;
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .statistics-card {
+    border-width: 2px;
+  }
+  
+  .statistics-card--primary,
+  .statistics-card--secondary,
+  .statistics-card--success,
+  .statistics-card--warning,
+  .statistics-card--danger,
+  .statistics-card--info {
+    border-left-width: 6px;
   }
 }

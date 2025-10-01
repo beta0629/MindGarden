@@ -180,7 +180,7 @@ const Chart = ({
   // 로딩 상태
   if (loading) {
     return (
-      <div className="chart-container chart-loading" style={{ height }}>
+      <div className="chart-container chart-loading" data-height={height}>
         <div className="chart-loading-spinner">
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">로딩 중...</span>
@@ -194,7 +194,7 @@ const Chart = ({
   // 에러 상태
   if (error) {
     return (
-      <div className="chart-container chart-error" style={{ height }}>
+      <div className="chart-container chart-error" data-height={height}>
         <div className="chart-error-content">
           <i className="bi bi-exclamation-triangle chart-error-icon"></i>
           <p className="chart-error-text">차트를 불러올 수 없습니다</p>
@@ -212,7 +212,7 @@ const Chart = ({
       datasetsLength: processedData?.datasets?.length
     });
     return (
-      <div className="chart-container chart-empty" style={{ height }}>
+      <div className="chart-container chart-empty" data-height={height}>
         <div className="chart-empty-content">
           <i className="bi bi-graph-up chart-empty-icon"></i>
           <p className="chart-empty-text">표시할 데이터가 없습니다</p>
@@ -242,7 +242,7 @@ const Chart = ({
     <div 
       id={chartId.current}
       className={getChartContainerClass()} 
-      style={{ height }}
+      data-height={height}
     >
       <div className="chart-wrapper">
         {renderChart()}

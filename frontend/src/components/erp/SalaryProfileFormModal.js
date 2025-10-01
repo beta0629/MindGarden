@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
+import ErpModal from './common/ErpModal';
 import './SalaryProfileFormModal.css';
 
 const SalaryProfileFormModal = ({ 
@@ -323,34 +324,26 @@ const SalaryProfileFormModal = ({
     if (!isOpen || !consultant) return null;
 
     return (
-        <div style={modalOverlayStyle} onClick={onClose}>
-            <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-                <div style={modalHeaderStyle}>
-                    <h3 style={{ margin: 0, color: '#2c3e50', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>
-                        급여 프로필 생성 - {consultant.name}
-                    </h3>
-                    <button 
-                        style={{ background: 'none', border: 'none', fontSize: 'var(--font-size-xxl)', cursor: 'pointer' }}
-                        onClick={onClose}
-                    >
-                        ×
-                    </button>
-                </div>
-                
-                <div style={modalBodyStyle}>
+        <ErpModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={`급여 프로필 생성 - ${consultant.name}`}
+            size="large"
+            className="salary-profile-modal-content"
+        >
                     {/* 기본 정보 */}
-                    <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-                        <h4 style={{ margin: '0 0 12px 0', color: '#495057' }}>상담사 정보</h4>
-                        <p style={{ margin: '4px 0', color: '#6c757d' }}><strong>이름:</strong> {consultant.name}</p>
-                        <p style={{ margin: '4px 0', color: '#6c757d' }}><strong>현재 등급:</strong> {convertGradeToKorean(consultant.grade)}</p>
-                        <p style={{ margin: '4px 0', color: '#6c757d' }}><strong>기본 급여:</strong> {getGradeBaseSalary(formData.grade || consultant.grade).toLocaleString()}원</p>
+                    <div className="consultant-info-section">
+                        <h4 className="consultant-info-title">상담사 정보</h4>
+                        <p className="consultant-info-item"><strong>이름:</strong> {consultant.name}</p>
+                        <p className="consultant-info-item"><strong>현재 등급:</strong> {convertGradeToKorean(consultant.grade)}</p>
+                        <p className="consultant-info-item"><strong>기본 급여:</strong> {getGradeBaseSalary(formData.grade || consultant.grade).toLocaleString()}원</p>
                     </div>
 
                     {/* 상담사 등급 선택 */}
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>상담사 등급</label>
+                    <div className="consultant-profile-form-item">
+                        <label className="consultant-profile-form-label">상담사 등급</label>
                         <select 
-                            style={selectStyle}
+                            className="consultant-profile-form-select"
                             value={formData.grade}
                             onChange={(e) => handleGradeChange(e.target.value)}
                         >
@@ -361,96 +354,49 @@ const SalaryProfileFormModal = ({
                                 </option>
                             ))}
                         </select>
-                        <p style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', margin: '4px 0 0 0' }}>
+                        <p className="consultant-profile-form-help">
                             등급을 변경하면 기본 급여와 옵션 금액이 자동으로 업데이트됩니다.
                         </p>
                     </div>
 
                     {/* 등급표 */}
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>상담사 등급표</label>
-                        <div style={{ 
-                            backgroundColor: '#f8f9fa', 
-                            borderRadius: '8px', 
-                            padding: '16px',
-                            border: '1px solid #e9ecef'
-                        }}>
-                            <div style={{ 
-                                display: 'grid', 
-                                gridTemplateColumns: '140px 100px 100px 100px 100px', 
-                                gap: '8px',
-                                marginBottom: '12px',
-                                fontWeight: '600',
-                                fontSize: 'var(--font-size-sm)',
-                                color: '#495057',
-                                borderBottom: '2px solid #dee2e6',
-                                paddingBottom: '8px'
-                            }}>
+                    <div className="consultant-profile-form-item">
+                        <label className="consultant-profile-form-label">상담사 등급표</label>
+                        <div className="grade-table-container">
+                            <div className="grade-table-header">
                                 <div>등급</div>
-                                <div style={{ textAlign: 'right' }}>기본급여</div>
-                                <div style={{ textAlign: 'right' }}>가족상담</div>
-                                <div style={{ textAlign: 'right' }}>초기상담</div>
-                                <div style={{ textAlign: 'right' }}>추가금액</div>
+                                <div className="grade-table-cell--right">기본급여</div>
+                                <div className="grade-table-cell--right">가족상담</div>
+                                <div className="grade-table-cell--right">초기상담</div>
+                                <div className="grade-table-cell--right">추가금액</div>
                             </div>
                             
                             {gradeTableData.map((grade, index) => (
-                                <div key={grade.code} style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '140px 100px 100px 100px 100px',
-                                    gap: '8px',
-                                    padding: '8px 0',
-                                    borderBottom: index < 3 ? '1px solid #e9ecef' : 'none',
-                                    fontSize: 'var(--font-size-sm)',
-                                    color: '#6c757d',
-                                    alignItems: 'center'
-                                }}>
-                                    <div style={{ 
-                                        fontWeight: '500', 
-                                        color: '#495057',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px'
-                                    }}>
+                                <div key={grade.code} className="grade-table-row">
+                                    <div className="grade-table-cell grade-table-cell--name">
                                         {grade.name}
                                         {grade.code === formData.grade && (
-                                            <span style={{ 
-                                                fontSize: 'var(--font-size-xs)', 
-                                                backgroundColor: '#007bff', 
-                                                color: 'white', 
-                                                padding: '2px 6px', 
-                                                borderRadius: '10px' 
-                                            }}>
+                                            <span className="grade-selected-badge">
                                                 선택됨
                                             </span>
                                         )}
                                     </div>
-                                    <div style={{ textAlign: 'right' }}>
+                                    <div className="grade-table-cell--right">
                                         {grade.baseSalary.toLocaleString()}원
                                     </div>
-                                    <div style={{ textAlign: 'right' }}>
+                                    <div className="grade-table-cell--right">
                                         {grade.options && grade.options[0] ? grade.options[0].amount.toLocaleString() : '0'}원
                                     </div>
-                                    <div style={{ textAlign: 'right' }}>
+                                    <div className="grade-table-cell--right">
                                         {grade.options && grade.options[1] ? grade.options[1].amount.toLocaleString() : '0'}원
                                     </div>
-                                    <div style={{ 
-                                        color: grade.multiplier > 1 ? '#28a745' : '#6c757d',
-                                        fontWeight: grade.multiplier > 1 ? '500' : 'normal',
-                                        textAlign: 'right'
-                                    }}>
+                                    <div className={`grade-table-cell--right ${grade.multiplier > 1 ? 'grade-table-cell--highlight' : ''}`}>
                                         {grade.multiplier > 1 ? `+${((grade.multiplier - 1) * 2000).toLocaleString()}원` : '-'}
                                     </div>
                                 </div>
                             ))}
                             
-                            <div style={{ 
-                                marginTop: '12px', 
-                                padding: '8px', 
-                                backgroundColor: '#e3f2fd', 
-                                borderRadius: '4px',
-                                fontSize: 'var(--font-size-xs)',
-                                color: '#1976d2'
-                            }}>
+                            <div className="grade-table-notice">
                                 <strong>💡 등급별 급여 체계:</strong><br/>
                                 • 기본 급여: 등급별 차등 지급<br/>
                                 • 옵션 금액: 등급이 올라갈수록 2,000원씩 추가<br/>
@@ -461,10 +407,10 @@ const SalaryProfileFormModal = ({
                     </div>
 
                     {/* 급여 유형 */}
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>급여 유형</label>
+                    <div className="consultant-profile-form-item">
+                        <label className="consultant-profile-form-label">급여 유형</label>
                         <select 
-                            style={selectStyle}
+                            className="consultant-profile-form-select"
                             value={formData.salaryType}
                             onChange={(e) => handleInputChange('salaryType', e.target.value)}
                         >
@@ -478,11 +424,11 @@ const SalaryProfileFormModal = ({
                     </div>
 
                     {/* 기본 급여 */}
-                    <div style={formGroupStyle}>
-                        <label style={labelStyle}>기본 급여 (원)</label>
+                    <div className="consultant-profile-form-item">
+                        <label className="consultant-profile-form-label">기본 급여 (원)</label>
                         <input
                             type="number"
-                            style={inputStyle}
+                            className="consultant-profile-form-input"
                             value={formData.baseSalary}
                             onChange={(e) => handleInputChange('baseSalary', parseInt(e.target.value) || 0)}
                             placeholder="기본 급여를 입력하세요"
@@ -491,17 +437,17 @@ const SalaryProfileFormModal = ({
 
                     {/* 사업자 등록 여부 (프리랜서만) */}
                     {formData.salaryType === 'FREELANCE' && (
-                        <div style={formGroupStyle}>
-                            <label style={labelStyle}>사업자 등록 여부</label>
+                        <div className="consultant-profile-form-item">
+                            <label className="consultant-profile-form-label">사업자 등록 여부</label>
                             <select 
-                                style={selectStyle}
+                                className="consultant-profile-form-select"
                                 value={formData.isBusinessRegistered ? 'true' : 'false'}
                                 onChange={(e) => handleInputChange('isBusinessRegistered', e.target.value === 'true')}
                             >
                                 <option value="false">일반 프리랜서 (3.3% 원천징수만)</option>
                                 <option value="true">사업자 등록 프리랜서 (3.3% 원천징수 + 10% 부가세)</option>
                             </select>
-                            <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
+                            <div className="tax-info-text">>
                                 • 일반 프리랜서: 원천징수 3.3%만 적용<br/>
                                 • 사업자 등록: 원천징수 3.3% + 부가세 10% 적용
                             </div>
@@ -511,29 +457,29 @@ const SalaryProfileFormModal = ({
                     {/* 사업자 등록 시 추가 필드 */}
                     {formData.salaryType === 'FREELANCE' && formData.isBusinessRegistered && (
                         <>
-                            <div style={formGroupStyle}>
-                                <label style={labelStyle}>사업자 등록번호 *</label>
+                            <div className="consultant-profile-form-item">
+                                <label className="consultant-profile-form-label">사업자 등록번호 *</label>
                                 <input
                                     type="text"
-                                    style={inputStyle}
+                                    className="consultant-profile-form-input"
                                     value={formData.businessRegistrationNumber}
                                     onChange={(e) => handleInputChange('businessRegistrationNumber', e.target.value)}
                                     placeholder="123-45-67890"
                                 />
-                                <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
+                                <div className="tax-info-text">>
                                     사업자 등록번호를 입력하세요 (예: 123-45-67890)
                                 </div>
                             </div>
-                            <div style={formGroupStyle}>
-                                <label style={labelStyle}>사업자명 *</label>
+                            <div className="consultant-profile-form-item">
+                                <label className="consultant-profile-form-label">사업자명 *</label>
                                 <input
                                     type="text"
-                                    style={inputStyle}
+                                    className="consultant-profile-form-input"
                                     value={formData.businessName}
                                     onChange={(e) => handleInputChange('businessName', e.target.value)}
                                     placeholder="사업자명을 입력하세요"
                                 />
-                                <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
+                                <div className="tax-info-text">>
                                     사업자 등록증에 기재된 사업자명을 입력하세요
                                 </div>
                             </div>
@@ -554,8 +500,8 @@ const SalaryProfileFormModal = ({
                     {/* 급여 옵션 */}
                     <div style={formGroupStyle}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <label style={labelStyle}>급여 옵션 (등급별 자동 추가됨)</label>
-                            <button style={addButtonStyle} onClick={addOption}>
+                            <label className="consultant-profile-form-label">급여 옵션 (등급별 자동 추가됨)</label>
+                            <button className="mg-btn mg-btn--success option-add-btn" onClick={addOption}>
                                 + 옵션 추가
                             </button>
                         </div>
@@ -575,7 +521,7 @@ const SalaryProfileFormModal = ({
                             }}>
                                 <div style={{ flex: 1 }}>
                                     <select
-                                        style={selectStyle}
+                                        className="consultant-profile-form-select"
                                         value={option.type}
                                         onChange={(e) => handleOptionChange(index, 'type', e.target.value)}
                                     >
@@ -590,7 +536,7 @@ const SalaryProfileFormModal = ({
                                 <div style={{ flex: 1 }}>
                                     <input
                                         type="number"
-                                        style={inputStyle}
+                                        className="consultant-profile-form-input"
                                         value={option.amount}
                                         onChange={(e) => handleOptionChange(index, 'amount', parseInt(e.target.value) || 0)}
                                         placeholder="금액"
@@ -599,14 +545,14 @@ const SalaryProfileFormModal = ({
                                 <div style={{ flex: 1 }}>
                                     <input
                                         type="text"
-                                        style={inputStyle}
+                                        className="consultant-profile-form-input"
                                         value={option.name}
                                         onChange={(e) => handleOptionChange(index, 'name', e.target.value)}
                                         placeholder="옵션명"
                                     />
                                 </div>
                                 <button 
-                                    style={removeButtonStyle}
+                                    className="mg-btn mg-btn--danger option-remove-btn"
                                     onClick={() => removeOption(index)}
                                 >
                                     삭제
@@ -616,24 +562,23 @@ const SalaryProfileFormModal = ({
                     </div>
                 </div>
 
-                <div style={modalFooterStyle}>
+                <div className="consultant-profile-form-actions" style={{ marginTop: 'var(--spacing-xl)', paddingTop: 'var(--spacing-lg)', borderTop: '1px solid var(--ios-border-light)' }}>
                     <button 
-                        style={secondaryButtonStyle}
+                        className="mg-btn mg-btn--secondary"
                         onClick={onClose}
                         disabled={loading}
                     >
                         취소
                     </button>
                     <button 
-                        style={primaryButtonStyle}
+                        className="mg-btn mg-btn--primary"
                         onClick={handleSave}
                         disabled={loading}
                     >
                         {loading ? '저장 중...' : '저장'}
                     </button>
                 </div>
-            </div>
-        </div>
+        </ErpModal>
     );
 };
 

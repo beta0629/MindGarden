@@ -656,13 +656,8 @@ const TimeSlotGrid = ({
 
     if (loading) {
         return (
-            <div style={{ width: '100%', maxHeight: '500px', overflowY: 'auto' }}>
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
-                    minHeight: '200px' 
-                }}>
+            <div className="time-slot-grid-container">
+                <div className="time-slot-grid-loading">
                     <LoadingSpinner 
                         text="시간 로딩 중..." 
                         size="medium" 
@@ -677,57 +672,17 @@ const TimeSlotGrid = ({
     const groupedSlots = groupSlotsByHour();
 
     return (
-        <div style={{ width: '100%', maxHeight: '500px', overflowY: 'auto' }}>
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                marginBottom: '16px', 
-                paddingBottom: '12px', 
-                borderBottom: '2px solid #e9ecef' 
-            }}>
-                <h5 style={{ 
-                    margin: '0', 
-                    color: '#2c3e50', 
-                    fontSize: 'var(--font-size-lg)', 
-                    fontWeight: '600',
-                    fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                }}>시간 선택</h5>
-                <div style={{ 
-                    fontSize: 'var(--font-size-xs)', 
-                    color: '#6c757d', 
-                    backgroundColor: '#f8f9fa', 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontWeight: '500' 
-                }}>
+        <div className="time-slot-grid-container">
+            <div className="time-slot-grid-header">
+                <h5 className="time-slot-grid-title">시간 선택</h5>
+                <div className="time-slot-grid-duration-badge">
                     상담 시간: {duration}분 (휴식 10분 포함)
                 </div>
             </div>
 
-            <div style={{ 
-                display: 'flex', 
-                gap: '16px', 
-                marginBottom: '16px', 
-                padding: '12px', 
-                backgroundColor: '#f8f9fa', 
-                borderRadius: '6px', 
-                flexWrap: 'wrap' 
-            }}>
-                <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '6px', 
-                    fontSize: 'var(--font-size-xs)', 
-                    color: '#495057' 
-                }}>
-                    <span style={{ 
-                        width: '12px', 
-                        height: '12px', 
-                        backgroundColor: '#28a745', 
-                        borderRadius: '50%',
-                        display: 'inline-block'
-                    }}></span>
+            <div className="time-slot-grid-legend">
+                <div className="time-slot-legend-item">
+                    <span className="time-slot-legend-color time-slot-legend-color--available"></span>
                     <span>사용 가능</span>
                 </div>
                 <div style={{ 

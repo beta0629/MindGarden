@@ -1,186 +1,160 @@
 /* TimeSlotGrid 스타일 - 새로운 디자인 시스템 적용 */
 
-.time-slot-grid {
-  font-family: var(--font-family-ios);
+.time-slot-grid-container {
+  width: 100%;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
-.time-slot-grid__container {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-lg);
-  box-shadow: var(--shadow-md);
-  backdrop-filter: blur(var(--blur-md));
-}
-
-.time-slot-grid__hour-group {
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--ios-separator);
-}
-
-.time-slot-grid__hour-group:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
-}
-
-.time-slot-grid__hour-label {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--ios-text-primary);
-  margin-bottom: var(--spacing-sm);
+.time-slot-grid-loading {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: var(--spacing-xs);
+  min-height: 200px;
 }
 
-.time-slot-grid__slots {
+.time-slot-grid-header {
   display: flex;
-  gap: var(--spacing-xs);
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--ios-border-light);
+}
+
+.time-slot-grid-title {
+  margin: 0;
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-base);
+}
+
+.time-slot-grid-duration-badge {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-secondary);
+  background-color: var(--ios-bg-secondary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.time-slot-grid-legend {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background-color: var(--ios-bg-secondary);
+  border-radius: var(--border-radius-sm);
   flex-wrap: wrap;
 }
 
-.time-slot {
+.time-slot-legend-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--spacing-xxs);
-  padding: var(--spacing-sm) var(--spacing-xs);
-  border: 2px solid var(--ios-separator);
-  border-radius: var(--border-radius-sm);
-  background: var(--ios-bg-primary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  min-width: 80px;
-  text-align: center;
-  position: relative;
-}
-
-.time-slot--available {
-  border-color: var(--ios-green);
-  background: rgba(52, 199, 89, 0.05);
-}
-
-.time-slot--available:hover {
-  background: rgba(52, 199, 89, 0.15);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-}
-
-.time-slot--booked {
-  border-color: var(--ios-blue);
-  background: rgba(0, 122, 255, 0.05);
-  cursor: default;
-}
-
-.time-slot--pending {
-  border-color: var(--ios-orange);
-  background: rgba(255, 149, 0, 0.05);
-}
-
-.time-slot--completed {
-  border-color: var(--ios-text-tertiary);
-  background: var(--ios-bg-tertiary);
-  cursor: default;
-  opacity: 0.6;
-}
-
-.time-slot--cancelled {
-  border-color: var(--ios-red);
-  background: rgba(255, 59, 48, 0.05);
-  cursor: default;
-  opacity: 0.6;
-}
-
-.time-slot--unavailable {
-  border-color: var(--ios-separator);
-  background: var(--ios-bg-tertiary);
-  cursor: not-allowed;
-  opacity: 0.4;
-}
-
-.time-slot--selected {
-  border-color: var(--ios-blue);
-  background: rgba(0, 122, 255, 0.2);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
-}
-
-.time-slot__time {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
   color: var(--ios-text-primary);
 }
 
-.time-slot__status {
-  font-size: var(--font-size-xs);
-  color: var(--ios-text-secondary);
-}
-
-.time-slot__client {
-  font-size: var(--font-size-xs);
-  color: var(--ios-text-tertiary);
-  margin-top: var(--spacing-xxs);
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.time-slot__badge {
-  position: absolute;
-  top: var(--spacing-xxs);
-  right: var(--spacing-xxs);
-  width: 8px;
-  height: 8px;
+.time-slot-legend-color {
+  width: 12px;
+  height: 12px;
   border-radius: var(--border-radius-full);
-  background: var(--ios-red);
+  display: inline-block;
 }
 
-.time-slot__badge--pending {
-  background: var(--ios-orange);
+.time-slot-legend-color--available {
+  background-color: var(--ios-green);
 }
 
-.time-slot__badge--completed {
-  background: var(--ios-green);
+.time-slot-legend-color--selected {
+  background-color: var(--ios-blue);
 }
 
-/* 반응형 디자인 */
+.time-slot-legend-color--booked {
+  background-color: var(--ios-gray);
+}
+
+.time-slot-legend-color--unavailable {
+  background-color: var(--ios-red-light);
+}
+
+/* 모바일 반응형 디자인 */
 @media (max-width: 767px) {
-  .time-slot-grid__container {
-    padding: var(--spacing-md);
+  .time-slot-grid-container {
+    max-height: 400px;
   }
-
-  .time-slot-grid__hour-label {
-    font-size: var(--font-size-sm);
+  
+  .time-slot-grid-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
   }
-
-  .time-slot-grid__slots {
-    gap: var(--spacing-xxs);
+  
+  .time-slot-grid-title {
+    font-size: var(--font-size-base);
   }
-
-  .time-slot {
-    min-width: 70px;
+  
+  .time-slot-grid-duration-badge {
+    font-size: var(--font-size-2xs);
+  }
+  
+  .time-slot-grid-legend {
+    gap: var(--spacing-sm);
     padding: var(--spacing-xs);
   }
-
-  .time-slot__time {
-    font-size: var(--font-size-xs);
-  }
-
-  .time-slot__status,
-  .time-slot__client {
-    font-size: var(--font-size-xs);
-  }
-
-  .time-slot__badge {
-    width: 6px;
-    height: 6px;
+  
+  .time-slot-legend-item {
+    font-size: var(--font-size-2xs);
   }
 }
 
-/* 아이패드 스타일 최적화 */
+/* 태블릿 반응형 디자인 */
 @media (min-width: 768px) and (max-width: 1024px) {
-  .time-slot {
-    min-width: 75px;
+  .time-slot-grid-title {
+    font-size: var(--font-size-base);
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .time-slot-grid-header {
+    border-bottom-color: var(--ios-border-light-dark);
+  }
+  
+  .time-slot-grid-title {
+    color: var(--ios-text-primary-dark);
+  }
+  
+  .time-slot-grid-duration-badge {
+    color: var(--ios-text-secondary-dark);
+    background-color: var(--ios-bg-secondary-dark);
+  }
+  
+  .time-slot-grid-legend {
+    background-color: var(--ios-bg-secondary-dark);
+  }
+  
+  .time-slot-legend-item {
+    color: var(--ios-text-primary-dark);
+  }
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+  .time-slot-grid-container {
+    scroll-behavior: auto;
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .time-slot-grid-header {
+    border-bottom-width: 3px;
+  }
+  
+  .time-slot-legend-color {
+    border: 2px solid var(--ios-border-dark);
   }
 }

@@ -107,7 +107,7 @@ const FinancialCalendarView = () => {
     <div className="financial-calendar-view-container">
       {/* 헤더 */}
       <div className="financial-calendar-view-header">
-        <h2 style={{ margin: 0, fontSize: 'var(--font-size-xxl)', color: '#333' }}>
+        <h2 className="financial-calendar-view-title">
           📅 재무 달력
         </h2>
         

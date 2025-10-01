@@ -109,13 +109,7 @@ const MappingPaymentModal = ({
             '--input-color': '#333333',
             '--input-border': '#e1e8ed'
         }}>
-            <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '24px',
-                width: '400px',
-                maxWidth: '90vw',
-                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+            <div className="mapping-payment-modal-content"
             }}>
                 <h3 style={{
                     margin: '0 0 20px 0',

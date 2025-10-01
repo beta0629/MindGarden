@@ -729,13 +729,7 @@ const TabletLogin = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/forgot-password')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#667eea',
-                    fontSize: 'var(--font-size-sm)',
-                    fontWeight: '500',
-                    cursor: 'pointer',
+                  className="tablet-login-forgot-password-btn"
                     textDecoration: 'underline',
                     fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
                     transition: 'color 0.2s ease'

@@ -735,7 +735,7 @@ const BranchManagement = () => {
                                                             color: '#6c757d'
                                                         }}>
                                                             <FaUsers style={{ fontSize: '2rem', marginBottom: '12px', color: '#dee2e6' }} />
-                                                            <p style={{ margin: '0 0 8px 0', fontSize: '16px' }}>이 지점에는 사용자가 없습니다.</p>
+                                                            <p style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)' }}>이 지점에는 사용자가 없습니다.</p>
                                                             <small>다른 지점을 선택하거나 필터를 조정해보세요.</small>
                                                         </div>
                                                     ) : (
@@ -838,7 +838,7 @@ const BranchManagement = () => {
                                                                                     }}>
                                                                                         {user.name}
                                                                                     </div>
-                                                                                    <small style={{ color: '#6c757d', fontSize: '12px' }}>
+                                                                                    <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)' }}>
                                                                                         {user.email}
                                                                                     </small>
                                                                                 </div>
@@ -882,7 +882,7 @@ const BranchManagement = () => {
                                                                             </Badge>
                                                                         </td>
                                                                         <td style={{ padding: '12px 16px' }}>
-                                                                            <small style={{ color: '#6c757d', fontSize: '12px' }}>
+                                                                            <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)' }}>
                                                                                 {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
                                                                             </small>
                                                                         </td>
@@ -918,7 +918,7 @@ const BranchManagement = () => {
                                 <h5 style={{
                                     margin: 0,
                                     color: '#495057',
-                                    fontSize: '16px',
+                                    fontSize: 'var(--font-size-base)',
                                     fontWeight: '600',
                                     display: 'flex',
                                     alignItems: 'center'
@@ -952,7 +952,7 @@ const BranchManagement = () => {
                                             }}>
                                                 <h6 style={{
                                                     margin: '0 0 8px 0',
-                                                    fontSize: '14px',
+                                                    fontSize: 'var(--font-size-sm)',
                                                     fontWeight: '600',
                                                     display: 'flex',
                                                     alignItems: 'center'
@@ -995,14 +995,14 @@ const BranchManagement = () => {
                                         <h5 style={{
                                             color: '#6c757d',
                                             marginBottom: '12px',
-                                            fontSize: '18px'
+                                            fontSize: 'var(--font-size-lg)'
                                         }}>
                                             이동할 사용자를 선택해주세요
                                         </h5>
                                         <p style={{
                                             color: '#6c757d',
                                             marginBottom: '20px',
-                                            fontSize: '14px'
+                                            fontSize: 'var(--font-size-sm)'
                                         }}>
                                             "지점 목록" 탭에서 지점을 선택하고 사용자를 체크한 후<br />
                                             다시 이 탭으로 돌아오시면 이동 기능을 사용할 수 있습니다.
@@ -1012,7 +1012,7 @@ const BranchManagement = () => {
                                             onClick={() => setActiveTab('branches')}
                                             style={{
                                                 borderRadius: '8px',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 padding: '8px 16px'
                                             }}
                                         >

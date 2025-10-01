@@ -225,7 +225,7 @@ const StatsCardGrid = ({
           <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
             예약된 상담
           </h3>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#FF9800', margin: '0 0 4px 0' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: '700', color: '#FF9800', margin: '0 0 4px 0' }}>
             {statistics.bookedSchedules || 0}
           </div>
           <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: '#6c757d' }}>
@@ -257,13 +257,13 @@ const StatsCardGrid = ({
           fontSize: 'var(--font-size-xxl)',
           color: '#ffffff'
         }}>
-          <i className="bi bi-check-circle-fill" style={{ fontSize: '24px' }}></i>
+          <i className="bi bi-check-circle-fill" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
         </div>
         <div>
           <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
             완료된 상담
           </h3>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#4CAF50', margin: '0 0 4px 0' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: '700', color: '#4CAF50', margin: '0 0 4px 0' }}>
             {statistics.completedSchedules || 0}
           </div>
           <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: '#6c757d' }}>
@@ -295,13 +295,13 @@ const StatsCardGrid = ({
           fontSize: 'var(--font-size-xxl)',
           color: '#ffffff'
         }}>
-          <i className="bi bi-x-circle-fill" style={{ fontSize: '24px' }}></i>
+          <i className="bi bi-x-circle-fill" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
         </div>
         <div>
           <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
             취소된 상담
           </h3>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#F44336', margin: '0 0 4px 0' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: '700', color: '#F44336', margin: '0 0 4px 0' }}>
             {statistics.cancelledSchedules || 0}
           </div>
           <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: '#6c757d' }}>

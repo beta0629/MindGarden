@@ -100,9 +100,7 @@ const DuplicateLoginAlert = ({
                 <div className="countdown-bar">
                     <div 
                         className="countdown-progress"
-                        style={{ 
-                            '--progress-width': `${((countdown - timeLeft) / countdown) * 100}%` 
-                        }}
+                        data-progress-width={((countdown - timeLeft) / countdown) * 100}
                     />
                 </div>
             </div>

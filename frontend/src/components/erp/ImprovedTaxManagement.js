@@ -281,9 +281,7 @@ const ImprovedTaxManagement = () => {
           {/* 콘텐츠 영역 */}
           <div className="erp-content">
           {loading && (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
+            <div className="tax-management-loading"> 
               alignItems: 'center', 
               padding: '40px'
             }}>

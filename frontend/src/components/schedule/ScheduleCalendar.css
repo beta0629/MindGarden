@@ -12,14 +12,14 @@
 
 /* 캘린더 셀 높이 증가 및 스크롤 설정 */
 .fc-daygrid-day {
-    min-height: 120px !important;
-    height: auto !important;
+    min-height: 120px;
+    height: auto;
 }
 
 .fc-daygrid-day-events {
-    max-height: 80px !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    max-height: 80px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* 스크롤바 스타일링 */
@@ -43,10 +43,10 @@
 
 /* 완료된 이벤트 스타일링 */
 .fc-event.status-completed {
-    opacity: 0.6 !important;
-    background-color: #b8b8b8 !important;
-    border-color: #b8b8b8 !important;
-    color: #666 !important;
+    opacity: 0.6;
+    background-color: var(--color-text-disabled);
+    border-color: var(--color-text-disabled);
+    color: var(--color-text-secondary);
     font-style: italic;
 }
 

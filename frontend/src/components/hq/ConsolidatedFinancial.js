@@ -245,7 +245,7 @@ const ConsolidatedFinancial = () => {
 
     return (
         <SimpleLayout title="통합 재무현황">
-            <Container fluid className="consolidated-financial py-4" style={{ paddingLeft: '2rem', paddingRight: '2rem' }}>
+            <Container fluid className="consolidated-financial py-4">
                 {/* 헤더 */}
                 <Row className="mb-4">
                     <Col>

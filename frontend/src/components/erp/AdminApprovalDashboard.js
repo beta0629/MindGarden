@@ -194,8 +194,8 @@ const AdminApprovalDashboard = () => {
         <div className="approval-dashboard-grid">
           {requests.map(request => (
             <ErpCard key={request.id} title={`구매 요청 #${request.id}`}>
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+              <div className="approval-request-info">
+                <div className="approval-request-grid">
                   <div><strong>요청자:</strong> {request.requester?.name || '알 수 없음'}</div>
                   <div><strong>요청일:</strong> {formatDate(request.createdAt)}</div>
                   <div><strong>아이템:</strong> {request.item?.name || '알 수 없음'}</div>
@@ -205,9 +205,9 @@ const AdminApprovalDashboard = () => {
                 </div>
                 
                 {request.reason && (
-                  <div style={{ marginBottom: '12px' }}>
+                  <div className="approval-request-reason">
                     <strong>사유:</strong>
-                    <div style={{ 
+                    <div className="approval-request-reason-text" 
                       marginTop: '4px', 
                       padding: '8px', 
                       backgroundColor: '#f8f9fa', 

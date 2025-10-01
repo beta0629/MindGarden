@@ -67,7 +67,7 @@
 .calendar-header h2 {
     margin: 0;
     color: #2c3e50;
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     font-weight: 600;
 }
 
@@ -82,7 +82,7 @@
     border: 1px solid #ddd;
     border-radius: 6px;
     background: white;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #333;
     cursor: pointer;
     min-width: 180px;
@@ -104,7 +104,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
 }
 
@@ -115,7 +115,7 @@
 }
 
 .legend-icon {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     line-height: 1;
 }
 
@@ -158,7 +158,7 @@
     color: white;
     border-radius: 6px;
     padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     transition: all 0.2s ease;
 }
@@ -192,7 +192,7 @@
     border-radius: 6px;
     border: none;
     padding: var(--spacing-xs) var(--spacing-md);
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -267,7 +267,7 @@
     }
     
     .legend-item {
-        font-size: 11px;
+        font-size: var(--font-size-xs);
     }
     
     .fc-header-toolbar {
@@ -282,7 +282,7 @@
     
     .fc-button {
         padding: var(--spacing-xs) var(--spacing-sm);
-        font-size: 12px;
+        font-size: var(--font-size-xs);
     }
 }
 
@@ -293,11 +293,11 @@
     }
     
     .calendar-header h2 {
-        font-size: 20px;
+        font-size: var(--font-size-xl);
     }
     
     .legend-item {
-        font-size: 11px;
+        font-size: var(--font-size-xs);
     }
 }
 

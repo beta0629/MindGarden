@@ -212,11 +212,6 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               step="1"
               placeholder="금액을 입력하세요"
               className="financial-transaction-select"
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '5px',
-                fontSize: 'var(--font-size-sm)'
-              }}
             />
           </div>
 
@@ -232,11 +227,6 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               onChange={handleInputChange}
               required
               className="financial-transaction-select"
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '5px',
-                fontSize: 'var(--font-size-sm)'
-              }}
             />
           </div>
 
@@ -252,43 +242,19 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               rows="3"
               placeholder="거래에 대한 추가 설명을 입력하세요"
               className="financial-transaction-select"
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '5px',
-                fontSize: 'var(--font-size-sm)',
-                resize: 'vertical'
-              }}
-            />
-          </div>
-
-          {/* 세금 포함 여부 */}
-          <div style={{ marginBottom: '30px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                name="taxIncluded"
                 checked={formData.taxIncluded}
                 onChange={handleInputChange}
-                style={{ marginRight: '8px' }}
+                className="financial-transaction-checkbox"
               />
-              <span style={{ color: '#2c3e50' }}>세금 포함</span>
-            </label>
+              <span className="financial-transaction-checkbox-label">세금 포함</span>
           </div>
 
           {/* 버튼들 */}
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+          <div className="financial-transaction-buttons">
             <button
               type="button"
               onClick={onClose}
-              style={{
-                padding: '10px 20px',
-                border: '1px solid #ddd',
-                borderRadius: '5px',
-                backgroundColor: 'white',
-                color: '#666',
-                cursor: 'pointer',
-                fontSize: 'var(--font-size-sm)'
-              }}
+              className="financial-transaction-cancel-btn"
             >
               취소
             </button>

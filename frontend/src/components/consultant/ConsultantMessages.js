@@ -286,9 +286,9 @@ const ConsultantMessages = () => {
                         e.target.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.08)';
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{
+                      <div className="consultant-messages-card-header">
+                        <div className="consultant-messages-card-type">
+                          <span className="consultant-messages-card-type-icon"
                             backgroundColor: typeInfo.color + '20',
                             color: typeInfo.color,
                             padding: '4px 8px',

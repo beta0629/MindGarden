@@ -100,8 +100,7 @@ const ForgotPassword = () => {
                         onChange={handleInputChange}
                         placeholder="example@email.com"
                         disabled={isLoading}
-                        style={{
-                          width: '100%',
+                        className="forgot-password-input"
                           padding: '16px',
                           fontSize: 'var(--font-size-base)',
                           border: '2px solid #e2e8f0',

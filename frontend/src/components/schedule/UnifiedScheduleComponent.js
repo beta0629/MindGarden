@@ -1131,9 +1131,9 @@ const UnifiedScheduleComponent = ({
                                         e.target.style.background = 'white';
                                     }}
                                 >
-                                    <span style={{ fontSize: 'var(--font-size-xxl)', marginRight: '12px' }}>🏖️</span>
+                                    <span className="unified-schedule-modal-btn-icon">🏖️</span>
                                     <div>
-                                        <div style={{ fontWeight: '600', marginBottom: '4px' }}>휴가 등록</div>
+                                        <div className="unified-schedule-modal-btn-title">휴가 등록</div>
                                         <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>상담사의 휴가를 등록합니다</div>
                                     </div>
                                 </button>

@@ -416,9 +416,8 @@ const SalaryManagement = () => {
                                 위의 "새 프로필 생성" 버튼을 클릭하여 급여 프로필을 작성해주세요.
                             </p>
                             <button 
-                                className="btn-primary"
-                                onClick={() => setIsProfileFormOpen(true)}
                                 className="salary-management-create-btn"
+                                onClick={() => setIsProfileFormOpen(true)}
                             >
                                 지금 프로필 작성하기
                             </button>
@@ -470,11 +469,6 @@ const SalaryManagement = () => {
                         <h3>급여 계산</h3>
                         {salaryProfiles.length === 0 && (
                             <div className="profile-warning"
-                                border: '1px solid #ffeaa7',
-                                borderRadius: '4px',
-                                padding: '12px 16px',
-                                marginLeft: '20px',
-                                color: '#856404'
                             }}>
                                 ⚠️ 급여 프로필이 작성되지 않았습니다. 
                                 <button 

@@ -407,13 +407,7 @@ const SalaryManagement = () => {
                     </div>
                     
                     {salaryProfiles.length === 0 && !loading && (
-                        <div className="no-profiles-message"
-                            padding: '40px 20px',
-                            backgroundColor: '#f8f9fa',
-                            border: '2px dashed #dee2e6',
-                            borderRadius: '8px',
-                            margin: '20px 0'
-                        }}>
+                        <div className="no-profiles-message">
                             <h4 className="salary-no-profiles-title">
                                 📋 급여 프로필이 없습니다
                             </h4>

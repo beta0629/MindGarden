@@ -3,19 +3,19 @@
 /* AddressInput 상수 변수 */
 :root {
   --address-container-margin: 20px;
-  --address-select-padding: 10px;
+  --address-select-padding: var(--spacing-sm);
   --address-select-radius: 4px;
   --address-select-font-size: 14px;
   --address-select-bg: white;
   --address-select-focus-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
   --address-select-disabled-bg: #f8f9fa;
   --address-postal-container-gap: 10px;
-  --address-input-padding: 10px;
+  --address-input-padding: var(--spacing-sm);
   --address-input-radius: 4px;
   --address-input-font-size: 14px;
   --address-input-focus-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
   --address-input-disabled-bg: #f8f9fa;
-  --address-search-btn-padding: 10px 16px;
+  --address-search-btn-padding: var(--spacing-sm) var(--spacing-md);
   --address-search-btn-bg: #007bff;
   --address-search-btn-color: white;
   --address-search-btn-radius: 4px;

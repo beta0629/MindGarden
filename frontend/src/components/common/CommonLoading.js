@@ -1,5 +1,6 @@
 import React from 'react';
 import LoadingSpinner from './LoadingSpinner';
+import './CommonLoading.css';
 
 /**
  * 공통 로딩 컴포넌트 - 간편 사용을 위한 래퍼
@@ -27,13 +28,7 @@ export const InlineLoading = ({ text = "로딩 중...", size = "medium" }) => (
 
 // 페이지 로딩 (페이지 중앙, 스케줄 스타일)
 export const PageLoading = ({ text = "페이지를 불러오는 중..." }) => (
-    <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '400px',
-        width: '100%'
-    }}>
+    <div className="page-loading-container">
         <LoadingSpinner 
             text={text}
             size="large"

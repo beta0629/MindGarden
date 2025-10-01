@@ -36,7 +36,7 @@ const ComingSoon = ({ title = "준비중", description = "해당 기능은 현�
             </div>
           </div>
           <button 
-            className="btn btn-primary coming-soon-button"
+            className="coming-soon-button"
             onClick={() => window.history.back()}
           >
             <i className="bi bi-arrow-left"></i>

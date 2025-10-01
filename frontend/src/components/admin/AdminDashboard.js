@@ -802,7 +802,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="card__icon card__icon--large card__icon--compliance">
                                 <i className="bi bi-shield-check"></i>
                             </div>
-                            <div className="management-card__content">
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
                                 <h3>컴플라이언스 대시보드</h3>
                                 <p>개인정보보호법 준수 현황을 모니터링합니다</p>
                             </div>
@@ -812,7 +812,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="card__icon card__icon--large card__icon--info">
                                 <i className="bi bi-graph-up"></i>
                             </div>
-                            <div className="management-card__content">
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
                                 <h3>개인정보 처리 현황</h3>
                                 <p>개인정보 처리 현황 및 통계를 관리합니다</p>
                             </div>
@@ -843,7 +843,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="card__icon card__icon--large card__icon--primary">
                                 <FaChartLine />
                             </div>
-                            <div className="management-card__content">
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
                                 <h3>ERP 대시보드</h3>
                                 <p>전체 ERP 현황을 한눈에 확인합니다</p>
                             </div>
@@ -853,7 +853,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="card__icon card__icon--large card__icon--warning">
                                 <FaShoppingCart />
                             </div>
-                            <div className="management-card__content">
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
                                 <h3>구매 요청</h3>
                                 <p>상담사 구매 요청을 관리합니다</p>
                             </div>
@@ -863,7 +863,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="card__icon card__icon--large card__icon--success">
                                 <FaCheckCircle />
                             </div>
-                            <div className="management-card__content">
+                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
                                 <h3>관리자 승인</h3>
                                 <p>구매 요청을 검토하고 승인합니다</p>
                             </div>

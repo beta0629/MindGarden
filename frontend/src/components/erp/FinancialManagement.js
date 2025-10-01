@@ -342,7 +342,7 @@ const FinancialManagement = () => {
                 <i className="bi bi-exclamation-triangle-fill"></i>
                 {error}
               </div>
-              <button className="btn btn-outline-primary" onClick={loadData}>
+              <button className="mg-btn mg-btn--outline mg-btn--primary" onClick={loadData}>
                 <i className="bi bi-arrow-clockwise"></i>
                 다시 시도
               </button>
@@ -362,11 +362,11 @@ const FinancialManagement = () => {
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <h2>재무 거래 내역</h2>
                     <div className="d-flex gap-2">
-                      <button className="btn btn-primary">
+                      <button className="mg-btn mg-btn--primary">
                         <i className="bi bi-plus"></i>
                         거래 추가
                       </button>
-                      <button className="btn btn-outline-secondary">
+                      <button className="mg-btn mg-btn--outline mg-btn--secondary">
                         <i className="bi bi-download"></i>
                         내보내기
                       </button>
@@ -609,10 +609,10 @@ const FinancialManagement = () => {
                               <td>{formatDate(transaction.transactionDate)}</td>
                               <td>
                                 <div className="d-flex gap-1">
-                                  <button className="btn btn-sm btn-outline-primary">
+                                  <button className="mg-btn mg-btn--sm mg-btn--outline mg-btn--primary">
                                     <i className="bi bi-eye"></i>
                                   </button>
-                                  <button className="btn btn-sm btn-outline-secondary">
+                                  <button className="mg-btn mg-btn--sm mg-btn--outline mg-btn--secondary">
                                     <i className="bi bi-pencil"></i>
                                   </button>
                                 </div>
@@ -787,25 +787,25 @@ const FinancialManagement = () => {
                     <h3>⚡ 빠른 액션</h3>
                     <div className="d-flex gap-2 flex-wrap">
                       <button 
-                        className="btn btn-primary"
+                        className="mg-btn mg-btn--primary"
                         onClick={() => setActiveTab('transactions')}
                       >
                         📋 거래 내역 보기
                       </button>
                       <button 
-                        className="btn btn-success"
+                        className="mg-btn mg-btn--success"
                         onClick={() => setActiveTab('calendar')}
                       >
                         📅 달력 뷰 보기
                       </button>
                       <button 
-                        className="btn btn-info"
+                        className="mg-btn mg-btn--info"
                         onClick={() => window.location.href = '/branch_super_admin/mapping-management'}
                       >
                         🔗 매핑 시스템 확인
                       </button>
                       <button 
-                        className="btn btn-secondary"
+                        className="mg-btn mg-btn--secondary"
                         onClick={() => window.location.href = '/erp/finance-dashboard'}
                       >
                         🏢 통합 재무 대시보드

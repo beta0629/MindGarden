@@ -473,7 +473,6 @@ const SalaryManagement = () => {
                                 <button 
                                     onClick={() => setActiveTab('profiles')}
                                     className="salary-management-profile-link"
-                                    }}
                                 >
                                     지금 작성하기
                                 </button>

@@ -224,11 +224,6 @@ const ConsultantMessages = () => {
           <button
             onClick={() => setShowSendModal(true)}
             className="consultant-messages-send-btn"
-              gap: '8px',
-              border: '2px solid #3498db',
-              background: '#3498db',
-              color: '#fff',
-              cursor: 'pointer',
               fontSize: '0.9rem'
             }}
             onMouseEnter={(e) => {

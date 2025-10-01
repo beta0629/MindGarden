@@ -1080,16 +1080,10 @@ const UnifiedScheduleComponent = ({
                 console.log('📅 인라인 모달 렌더링 중...', { isDateActionModalOpen, selectedDate, userRole }),
                 <div 
                     className="unified-schedule-loading-overlay"
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 10000
-                    }}
                     onClick={() => setIsDateActionModalOpen(false)}
                 >
                     <div 
                         className="unified-schedule-loading-content"
-                        }}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div style={{ textAlign: 'center', marginBottom: '24px' }}>

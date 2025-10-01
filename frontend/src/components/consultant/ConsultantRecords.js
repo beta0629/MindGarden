@@ -365,28 +365,16 @@ const ConsultantRecords = () => {
                   <div className="record-card-footer">
                     {record.isSessionCompleted ? (
                       <button
-                        className="btn btn-outline-primary btn-sm"
+                        className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm consultant-record-view-btn"
                         onClick={() => handleViewRecord(record.id)}
-                        className="consultant-record-view-btn" 
-                          alignItems: 'center', 
-                          gap: '6px',
-                          width: '100%',
-                          justifyContent: 'center'
-                        }}
                       >
                         <i className="bi bi-eye"></i>
                         상담일지 조회
                       </button>
                     ) : (
                       <button
-                        className="btn btn-primary btn-sm"
+                        className="mg-btn mg-btn--primary mg-btn--sm consultant-record-detail-btn"
                         onClick={() => navigate(`/consultant/consultation-record/${record.id}`)}
-                        className="consultant-record-detail-btn" 
-                          alignItems: 'center', 
-                          gap: '6px',
-                          width: '100%',
-                          justifyContent: 'center'
-                        }}
                       >
                         <i className="bi bi-pencil-square"></i>
                         상담일지 작성

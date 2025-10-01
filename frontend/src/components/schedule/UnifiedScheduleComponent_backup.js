@@ -728,8 +728,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                             ).map((consultant, index) => (
                                 <div key={`consultant-${consultant.id}-${index}`} className="legend-item">
                                     <span 
-                                        className="legend-color" 
-                                        style={{ backgroundColor: getConsultantColor(consultant.id) }}
+                                        className="legend-color"
                                     ></span>
                                     <span>{consultant.name}</span>
                                 </div>

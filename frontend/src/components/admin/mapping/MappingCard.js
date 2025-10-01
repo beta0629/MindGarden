@@ -54,13 +54,7 @@ const MappingCard = ({
     };
 
     return (
-        <div className="mapping-card-mobile" style={{
-            background: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            overflow: 'hidden',
-            transition: 'all 0.3s ease',
-            border: '1px solid #e1e8ed'
+        <div className="mapping-card-mobile"
         }}
         onMouseEnter={(e) => {
             e.target.style.transform = 'translateY(-2px)';

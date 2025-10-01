@@ -330,8 +330,8 @@ const MessageSendModal = ({
   };
 
   return (
-    <div style={styles.modalOverlay}>
-      <div style={styles.modalContent}>
+    <div className="message-send-modal-overlay">
+      <div className="message-send-modal-content">
         {/* 헤더 */}
         <div style={styles.header}>
           <h1 style={styles.headerTitle}>📨 내담자에게 메시지 보내기</h1>

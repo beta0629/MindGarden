@@ -104,14 +104,9 @@ const FinancialCalendarView = () => {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div className="financial-calendar-view-container">
       {/* 헤더 */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px'
-      }}>
+      <div className="financial-calendar-view-header">
         <h2 style={{ margin: 0, fontSize: 'var(--font-size-xxl)', color: '#333' }}>
           📅 재무 달력
         </h2>

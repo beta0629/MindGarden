@@ -48,7 +48,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
           <h2 
             style={{
               margin: 0,
-              fontSize: '24px',
+              fontSize: 'var(--font-size-xxl)',
               fontWeight: '700',
               color: '#2c3e50',
               display: 'flex',
@@ -56,14 +56,14 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
               gap: '12px'
             }}
           >
-            <i className="bi bi-book" style={{ color: '#17a2b8', fontSize: '20px' }}></i>
+            <i className="bi bi-book" style={{ color: '#17a2b8', fontSize: 'var(--font-size-xl)' }}></i>
             상담 가이드
           </h2>
           <button 
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '20px',
+              fontSize: 'var(--font-size-xl)',
               color: '#6c757d',
               cursor: 'pointer',
               padding: '8px',
@@ -95,7 +95,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
             <h3 
               style={{
                 margin: '0 0 16px 0',
-                fontSize: '18px',
+                fontSize: 'var(--font-size-lg)',
                 fontWeight: '600',
                 color: '#2c3e50',
                 display: 'flex',
@@ -105,7 +105,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                 borderBottom: '2px solid #e9ecef'
               }}
             >
-              <i className="bi bi-info-circle" style={{ fontSize: '16px' }}></i>
+              <i className="bi bi-info-circle" style={{ fontSize: 'var(--font-size-base)' }}></i>
               상담 전 준비사항
             </h3>
             <ul 
@@ -124,8 +124,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>편안한 장소에서 조용한 환경을 준비해주세요</span>
+                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>편안한 장소에서 조용한 환경을 준비해주세요</span>
               </li>
               <li 
                 style={{
@@ -136,8 +136,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>상담 시간 10분 전에 미리 준비해주세요</span>
+                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담 시간 10분 전에 미리 준비해주세요</span>
               </li>
               <li 
                 style={{
@@ -148,8 +148,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>상담하고 싶은 주제나 고민을 미리 정리해보세요</span>
+                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담하고 싶은 주제나 고민을 미리 정리해보세요</span>
               </li>
               <li 
                 style={{
@@ -160,8 +160,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: 'none'
                 }}
               >
-                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>충분한 시간을 확보해주세요 (최소 50분)</span>
+                <i className="bi bi-check-circle" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>충분한 시간을 확보해주세요 (최소 50분)</span>
               </li>
             </ul>
           </div>
@@ -170,7 +170,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
             <h3 
               style={{
                 margin: '0 0 16px 0',
-                fontSize: '18px',
+                fontSize: 'var(--font-size-lg)',
                 fontWeight: '600',
                 color: '#2c3e50',
                 display: 'flex',
@@ -180,7 +180,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                 borderBottom: '2px solid #e9ecef'
               }}
             >
-              <i className="bi bi-heart" style={{ fontSize: '16px' }}></i>
+              <i className="bi bi-heart" style={{ fontSize: 'var(--font-size-base)' }}></i>
               상담 중 주의사항
             </h3>
             <ul 
@@ -199,8 +199,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>솔직하고 진정성 있게 이야기해주세요</span>
+                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>솔직하고 진정성 있게 이야기해주세요</span>
               </li>
               <li 
                 style={{
@@ -211,8 +211,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>상담사님의 질문에 최대한 구체적으로 답변해주세요</span>
+                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담사님의 질문에 최대한 구체적으로 답변해주세요</span>
               </li>
               <li 
                 style={{
@@ -223,7 +223,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
+                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
                 <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>궁금한 점이 있으면 언제든지 물어보세요</span>
               </li>
               <li 
@@ -235,7 +235,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: 'none'
                 }}
               >
-                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
+                <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
                 <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>상담 내용은 비밀이 보장됩니다</span>
               </li>
             </ul>
@@ -245,7 +245,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
             <h3 
               style={{
                 margin: '0 0 16px 0',
-                fontSize: '18px',
+                fontSize: 'var(--font-size-lg)',
                 fontWeight: '600',
                 color: '#2c3e50',
                 display: 'flex',
@@ -320,7 +320,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
             <h3 
               style={{
                 margin: '0 0 16px 0',
-                fontSize: '18px',
+                fontSize: 'var(--font-size-lg)',
                 fontWeight: '600',
                 color: '#2c3e50',
                 display: 'flex',
@@ -395,7 +395,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
             <h3 
               style={{
                 margin: '0 0 16px 0',
-                fontSize: '18px',
+                fontSize: 'var(--font-size-lg)',
                 fontWeight: '600',
                 color: '#2c3e50',
                 display: 'flex',

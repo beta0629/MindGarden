@@ -36,12 +36,12 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           textAlign: 'center'
         }}>
           <i className="fas fa-chart-line" style={{
-            fontSize: '48px',
+            fontSize: 'var(--font-size-xxxl)',
             marginBottom: '16px',
             opacity: '0.5'
           }}></i>
           <p style={{
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             fontWeight: '500',
             margin: '0'
           }}>상세 통계 데이터를 불러오는 중입니다...</p>
@@ -96,21 +96,21 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-people-fill" style={{ fontSize: '20px' }}></i>
+            <i className="bi bi-people-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
           <h3 style={{
             margin: '0',
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
           }}>내담자 현황</h3>
         </div>
         <div style={{
-          fontSize: '36px',
+          fontSize: 'var(--font-size-xxxl)',
           fontWeight: '700',
           color: '#7B68EE',
           marginBottom: '8px'
@@ -119,7 +119,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         </div>
         <p style={{
           margin: '0 0 16px 0',
-          fontSize: '14px',
+          fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 내담자: {statistics.thisMonthClients || 0}명</p>
         <div style={{
@@ -128,25 +128,25 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           gap: '8px',
           marginBottom: '8px'
         }}>
-          <span style={{ fontSize: '16px', color: '#7B68EE' }}>↗</span>
-          <span style={{ fontSize: '14px', color: '#495057' }}>{statistics.clientGrowth || 0}명</span>
+          <span style={{ fontSize: 'var(--font-size-base)', color: '#7B68EE' }}>↗</span>
+          <span style={{ fontSize: 'var(--font-size-sm)', color: '#495057' }}>{statistics.clientGrowth || 0}명</span>
         </div>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.clientGrowthRate || 0}% 증감률
         </div>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.lastMonthClients || 0} 지난 달
         </div>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d'
         }}>
           지난 달 대비 지난 달 대비 내담자 변화
@@ -175,21 +175,21 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-person-badge-fill" style={{ fontSize: '20px' }}></i>
+            <i className="bi bi-person-badge-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
           <h3 style={{
             margin: '0',
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
           }}>상담사 현황</h3>
         </div>
         <div style={{
-          fontSize: '36px',
+          fontSize: 'var(--font-size-xxxl)',
           fontWeight: '700',
           color: '#7B68EE',
           marginBottom: '8px'
@@ -198,7 +198,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         </div>
         <p style={{
           margin: '0 0 16px 0',
-          fontSize: '14px',
+          fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 상담사: {statistics.thisMonthConsultants || 0}명</p>
         <div style={{
@@ -207,25 +207,25 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           gap: '8px',
           marginBottom: '8px'
         }}>
-          <span style={{ fontSize: '16px', color: '#7B68EE' }}>↗</span>
-          <span style={{ fontSize: '14px', color: '#495057' }}>{statistics.consultantGrowth || 0}명</span>
+          <span style={{ fontSize: 'var(--font-size-base)', color: '#7B68EE' }}>↗</span>
+          <span style={{ fontSize: 'var(--font-size-sm)', color: '#495057' }}>{statistics.consultantGrowth || 0}명</span>
         </div>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.consultantGrowthRate || 0}% 증감률
         </div>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.lastMonthConsultants || 0} 지난 달
         </div>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d'
         }}>
           지난 달 대비 지난 달 대비 상담사 변화
@@ -254,7 +254,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             color: '#ffffff',
             marginRight: '16px'
           }}>
@@ -262,13 +262,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           </div>
           <h3 style={{
             margin: '0',
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
           }}>완료율</h3>
         </div>
         <div style={{
-          fontSize: '36px',
+          fontSize: 'var(--font-size-xxxl)',
           fontWeight: '700',
           color: '#4CAF50',
           marginBottom: '8px'
@@ -277,18 +277,18 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         </div>
         <p style={{
           margin: '0 0 16px 0',
-          fontSize: '14px',
+          fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 완료율</p>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.completedSchedulesInPeriod || 0} / {statistics.totalSchedulesInPeriod || 0} 완료/전체
         </div>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d'
         }}>
           이번 달 기준 이번 달 기준 상담 완료율
@@ -317,7 +317,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             color: '#ffffff',
             marginRight: '16px'
           }}>
@@ -325,13 +325,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           </div>
           <h3 style={{
             margin: '0',
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
           }}>취소율</h3>
         </div>
         <div style={{
-          fontSize: '36px',
+          fontSize: 'var(--font-size-xxxl)',
           fontWeight: '700',
           color: '#F44336',
           marginBottom: '8px'
@@ -340,18 +340,18 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         </div>
         <p style={{
           margin: '0 0 16px 0',
-          fontSize: '14px',
+          fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 취소율</p>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           {statistics.cancelledSchedulesInPeriod || 0} / {statistics.totalSchedulesInPeriod || 0} 취소/전체
         </div>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d'
         }}>
           이번 달 기준 이번 달 기준 상담 취소율
@@ -380,7 +380,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             color: '#ffffff',
             marginRight: '16px'
           }}>
@@ -388,13 +388,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           </div>
           <h3 style={{
             margin: '0',
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
           }}>주간 현황</h3>
         </div>
         <div style={{
-          fontSize: '36px',
+          fontSize: 'var(--font-size-xxxl)',
           fontWeight: '700',
           color: '#FF9800',
           marginBottom: '8px'
@@ -403,18 +403,18 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         </div>
         <p style={{
           margin: '0 0 16px 0',
-          fontSize: '14px',
+          fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>최근 7일 상담</p>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           완료: {statistics.weeklyCompleted || 0}, 취소: {statistics.weeklyCancelled || 0}
         </div>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d'
         }}>
           최근 7일간 최근 7일간 상담 현황
@@ -443,7 +443,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             color: '#ffffff',
             marginRight: '16px'
           }}>
@@ -451,13 +451,13 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           </div>
           <h3 style={{
             margin: '0',
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
           }}>오늘 현황</h3>
         </div>
         <div style={{
-          fontSize: '36px',
+          fontSize: 'var(--font-size-xxxl)',
           fontWeight: '700',
           color: '#2196F3',
           marginBottom: '8px'
@@ -466,18 +466,18 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         </div>
         <p style={{
           margin: '0 0 16px 0',
-          fontSize: '14px',
+          fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>오늘 상담</p>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d',
           marginBottom: '4px'
         }}>
           완료: {statistics.completedToday || 0}, 예약: {statistics.bookedToday || 0}
         </div>
         <div style={{
-          fontSize: '12px',
+          fontSize: 'var(--font-size-xs)',
           color: '#6c757d'
         }}>
           오늘 기준 오늘 기준 상담 현황

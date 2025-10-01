@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import notificationManager from '../../../utils/notification';
+import './MappingDepositModal.css';
 
 /**
  * 매핑 입금 확인 모달 컴포넌트
@@ -67,85 +68,39 @@ const MappingDepositModal = ({
     if (!isOpen) return null;
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1500
-        }}>
-            <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '24px',
-                width: '400px',
-                maxWidth: '90vw',
-                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '20px'
-                }}>
-                    <h3 style={{
-                        margin: 0,
-                        fontSize: 'var(--font-size-lg)',
-                        fontWeight: '600',
-                        color: '#333'
-                    }}>
+        <div className="mapping-deposit-modal-overlay">
+            <div className="mapping-deposit-modal-content">
+                <div className="mapping-deposit-modal-header">
+                    <h3 className="mapping-deposit-modal-title">
                         💰 입금 확인
                     </h3>
                     <button
                         onClick={handleClose}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            fontSize: 'var(--font-size-xl)',
-                            cursor: 'pointer',
-                            color: '#666',
-                            padding: '4px'
-                        }}
+                        className="mapping-deposit-modal-close-btn"
                     >
                         ×
                     </button>
                 </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                    <div style={{
-                        padding: '12px',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '8px',
-                        marginBottom: '16px'
-                    }}>
-                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginBottom: '4px' }}>
+                <div className="mapping-deposit-modal-body">
+                    <div className="mapping-deposit-info-box">
+                        <div className="mapping-deposit-info-item">
                             상담사: {mapping.consultant?.username || 'N/A'}
                         </div>
-                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginBottom: '4px' }}>
+                        <div className="mapping-deposit-info-item">
                             내담자: {mapping.client?.username || 'N/A'}
                         </div>
-                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginBottom: '4px' }}>
+                        <div className="mapping-deposit-info-item">
                             패키지: {mapping.packageName || 'N/A'}
                         </div>
-                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', fontWeight: '600' }}>
+                        <div className="mapping-deposit-info-item mapping-deposit-info-item--amount">
                             금액: {mapping.paymentAmount ? `${mapping.paymentAmount.toLocaleString()}원` : 'N/A'}
                         </div>
                     </div>
 
                     <form onSubmit={handleSubmit}>
-                        <div style={{ marginBottom: '16px' }}>
-                            <label style={{
-                                display: 'block',
-                                fontSize: 'var(--font-size-sm)',
-                                fontWeight: '500',
-                                color: '#333',
-                                marginBottom: '8px'
-                            }}>
+                        <div className="mapping-deposit-form-group">
+                            <label className="mapping-deposit-label">
                                 입금 참조번호 *
                             </label>
                             <input
@@ -153,38 +108,15 @@ const MappingDepositModal = ({
                                 value={depositReference}
                                 onChange={(e) => setDepositReference(e.target.value)}
                                 placeholder="입금 확인 번호를 입력하세요"
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 12px',
-                                    border: '1px solid #ddd',
-                                    borderRadius: '6px',
-                                    fontSize: 'var(--font-size-sm)',
-                                    outline: 'none',
-                                    transition: 'border-color 0.2s'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = '#007bff'}
-                                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+                                className="mapping-deposit-input"
                             />
                         </div>
 
-                        <div style={{
-                            display: 'flex',
-                            gap: '12px',
-                            justifyContent: 'flex-end'
-                        }}>
+                        <div className="mapping-deposit-button-group">
                             <button
                                 type="button"
                                 onClick={handleClose}
-                                style={{
-                                    padding: '10px 20px',
-                                    border: '1px solid #ddd',
-                                    borderRadius: '6px',
-                                    backgroundColor: 'white',
-                                    color: '#666',
-                                    cursor: 'pointer',
-                                    fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '500'
-                                }}
+                                className="mapping-deposit-button mapping-deposit-button--cancel"
                                 disabled={isLoading}
                             >
                                 취소
@@ -192,17 +124,7 @@ const MappingDepositModal = ({
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                style={{
-                                    padding: '10px 20px',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    backgroundColor: isLoading ? '#6c757d' : '#007bff',
-                                    color: 'white',
-                                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                                    fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '500',
-                                    transition: 'background-color 0.2s'
-                                }}
+                                className="mapping-deposit-button mapping-deposit-button--submit"
                             >
                                 {isLoading ? '처리 중...' : '입금 확인'}
                             </button>

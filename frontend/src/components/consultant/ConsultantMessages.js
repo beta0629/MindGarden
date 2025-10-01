@@ -224,8 +224,6 @@ const ConsultantMessages = () => {
           <button
             onClick={() => setShowSendModal(true)}
             className="consultant-messages-send-btn"
-              fontSize: '0.9rem'
-            }}
             onMouseEnter={(e) => {
               e.target.style.background = '#2980b9';
               e.target.style.borderColor = '#2980b9';

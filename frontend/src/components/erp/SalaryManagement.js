@@ -604,7 +604,7 @@ const SalaryManagement = () => {
                                     )}
                                     <div className="detail-row total">
                                         <span>실지급액 (세후):</span>
-                                        <span style={{color: '#28a745', fontWeight: 'bold'}}>{formatCurrency(calculation.totalSalary - (calculation.taxAmount || 0))}</span>
+                                        <span className="salary-management-net-salary">{formatCurrency(calculation.totalSalary - (calculation.taxAmount || 0))}</span>
                                     </div>
                                     <div className="detail-row">
                                         <span>상담 건수:</span>

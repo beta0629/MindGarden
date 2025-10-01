@@ -600,7 +600,7 @@
   }
   
   .client-card-footer {
-    padding: 16px 20px 20px;
+    padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
   }
   
   .form-row {
@@ -609,7 +609,7 @@
   }
   
   .modal-overlay {
-    padding: 10px;
+    padding: var(--spacing-sm);
   }
   
   .client-detail-modal {
@@ -646,6 +646,6 @@
   }
   
   .client-card-footer {
-    padding: 10px 15px 15px;
+    padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
   }
 }

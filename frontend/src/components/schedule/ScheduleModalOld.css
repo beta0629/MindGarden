@@ -366,7 +366,7 @@
     }
     
     .schedule-summary {
-        padding: 12px;
+        padding: var(--spacing-sm);
     }
     
     .summary-item {
@@ -415,21 +415,21 @@
     height: 80px;
     flex-shrink: 0;
     margin-bottom: 0;
-    padding: 16px 0;
+    padding: var(--spacing-md) 0;
 }
 
 .schedule-modal-content .consultant-selection-step .consultant-filter {
     height: 200px;
     flex-shrink: 0;
     margin-bottom: 0;
-    padding: 16px 0;
+    padding: var(--spacing-md) 0;
 }
 
 .schedule-modal-content .consultant-selection-step .consultant-grid {
     height: 350px;
     flex-shrink: 0;
     overflow-y: auto;
-    padding: 16px 0;
+    padding: var(--spacing-md) 0;
     background-color: var(--color-background-secondary);
     border-radius: var(--border-radius-md);
 }

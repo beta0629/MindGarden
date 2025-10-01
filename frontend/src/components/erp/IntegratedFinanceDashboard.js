@@ -845,7 +845,7 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
             </div>
           </div>
 
-          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px', marginTop: '12px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-lg)', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px', marginTop: '12px' }}>
             자산 총계: {formatCurrency(balanceSheetData?.assets?.total || 0)}
           </div>
         </div>
@@ -882,7 +882,7 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
             </div>
           </div>
 
-          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px', marginTop: '12px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-lg)', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px', marginTop: '12px' }}>
             부채 총계: {formatCurrency(balanceSheetData?.liabilities?.total || 0)}
           </div>
         </div>
@@ -895,9 +895,9 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
           boxShadow: '0 8px 32px rgba(116,185,255,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💙 자본</h3>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>💙 자본</h3>
           
-          <div style={{ fontSize: '13px', marginBottom: '18px', lineHeight: '1.6' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: '18px', lineHeight: '1.6' }}>
             <div style={{ marginBottom: '6px' }}>자본금: {formatCurrency(balanceSheetData?.equity?.capital?.total || 0)}</div>
             <div style={{ marginBottom: '6px' }}>이익잉여금: {formatCurrency(balanceSheetData?.equity?.retainedEarnings?.total || 0)}</div>
             <div style={{ marginBottom: '6px' }}>당기순이익: {formatCurrency(balanceSheetData?.equity?.retainedEarnings?.netIncome || 0)}</div>
@@ -921,10 +921,10 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
         textAlign: 'center',
         color: 'white'
       }}>
-        <h4 style={{ margin: '0 0 12px 0', fontSize: '18px', fontWeight: '600' }}>
+        <h4 style={{ margin: '0 0 12px 0', fontSize: 'var(--font-size-lg)', fontWeight: '600' }}>
           {balanceSheetData?.summary?.isBalanced ? '✅ 대차대조표 균형' : '❌ 대차대조표 불균형'}
         </h4>
-        <div style={{ fontSize: '15px', lineHeight: '1.6', opacity: '0.9' }}>
+        <div style={{ fontSize: 'var(--font-size-md)', lineHeight: '1.6', opacity: '0.9' }}>
           자산 총계: <strong>{formatCurrency(balanceSheetData?.summary?.totalAssets || 0)}</strong> = 부채 + 자본: <strong>{formatCurrency(balanceSheetData?.summary?.totalLiabilitiesAndEquity || 0)}</strong>
           {!balanceSheetData?.summary?.isBalanced && (
             <div style={{ marginTop: '8px', fontWeight: '600' }}>
@@ -983,7 +983,7 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
           boxShadow: '0 8px 32px rgba(0,184,148,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💚 수익</h3>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>💚 수익</h3>
           <div style={{ fontSize: '15px', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>상담 수익:</span>

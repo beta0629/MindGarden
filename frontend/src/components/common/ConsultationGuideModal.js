@@ -224,7 +224,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                 }}
               >
                 <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>궁금한 점이 있으면 언제든지 물어보세요</span>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>궁금한 점이 있으면 언제든지 물어보세요</span>
               </li>
               <li 
                 style={{
@@ -236,7 +236,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                 }}
               >
                 <i className="bi bi-shield-check" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>상담 내용은 비밀이 보장됩니다</span>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담 내용은 비밀이 보장됩니다</span>
               </li>
             </ul>
           </div>
@@ -255,7 +255,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                 borderBottom: '2px solid #e9ecef'
               }}
             >
-              <i className="bi bi-lightbulb" style={{ fontSize: '16px' }}></i>
+              <i className="bi bi-lightbulb" style={{ fontSize: 'var(--font-size-base)' }}></i>
               효과적인 상담을 위한 팁
             </h3>
             <ul 
@@ -274,8 +274,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-star" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>상담 후 받은 조언을 일상에서 실천해보세요</span>
+                <i className="bi bi-star" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담 후 받은 조언을 일상에서 실천해보세요</span>
               </li>
               <li 
                 style={{
@@ -286,8 +286,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-star" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>상담 일지를 작성해보세요</span>
+                <i className="bi bi-star" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담 일지를 작성해보세요</span>
               </li>
               <li 
                 style={{
@@ -298,8 +298,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-star" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>규칙적인 상담을 통해 지속적인 변화를 만들어가세요</span>
+                <i className="bi bi-star" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>규칙적인 상담을 통해 지속적인 변화를 만들어가세요</span>
               </li>
               <li 
                 style={{
@@ -310,8 +310,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: 'none'
                 }}
               >
-                <i className="bi bi-star" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>상담사님과의 신뢰 관계를 쌓아가세요</span>
+                <i className="bi bi-star" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>상담사님과의 신뢰 관계를 쌓아가세요</span>
               </li>
             </ul>
           </div>

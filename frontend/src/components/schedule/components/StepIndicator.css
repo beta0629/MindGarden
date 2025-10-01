@@ -64,7 +64,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     margin-bottom: 8px;
     transition: all 0.3s ease;
     border: 3px solid transparent;
@@ -88,7 +88,7 @@
 }
 
 .step-number {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 600;
     color: #6c757d;
     margin-bottom: 2px;
@@ -103,7 +103,7 @@
 }
 
 .step-title {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
     font-weight: 500;
     line-height: 1.2;
@@ -145,15 +145,15 @@
     .step-icon {
         width: 32px;
         height: 32px;
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
     
     .step-title {
-        font-size: 10px;
+        font-size: var(--font-size-xs);
     }
     
     .step-number {
-        font-size: 10px;
+        font-size: var(--font-size-xs);
     }
     
     .step-item:not(:last-child)::after {

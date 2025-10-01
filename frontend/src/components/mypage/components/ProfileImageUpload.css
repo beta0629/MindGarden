@@ -12,7 +12,7 @@
   --image-badge-color: white;
   --image-badge-padding: var(--spacing-xs) var(--spacing-sm);
   --image-badge-radius: 10px;
-  --image-badge-font-size: 10px;
+  --image-badge-font-size: var(--font-size-xs);
   --drag-overlay-bg: rgba(0, 123, 255, 0.8);
   --drag-overlay-color: white;
   --drag-overlay-transition: opacity 0.3s;
@@ -24,7 +24,7 @@
   --upload-btn-bg: #007bff;
   --upload-btn-color: white;
   --upload-btn-size: 40px;
-  --upload-btn-font-size: 16px;
+  --upload-btn-font-size: var(--font-size-base);
   --upload-btn-hover-bg: #0056b3;
   --crop-overlay-bg: rgba(0, 0, 0, 0.8);
   --crop-overlay-z-index: 1000;
@@ -35,7 +35,7 @@
   --crop-modal-width: 90%;
   --crop-modal-max-height: 80vh;
   --crop-header-margin: 20px;
-  --close-btn-font-size: 24px;
+  --close-btn-font-size: var(--font-size-xxl);
   --close-btn-color: #6c757d;
   --close-btn-hover-color: #343a40;
   --crop-container-margin: 20px;
@@ -463,7 +463,7 @@
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -475,5 +475,5 @@
 }
 
 .delete-image-btn i {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }

@@ -81,13 +81,9 @@ const ErpPurchaseRequestPanel = ({ user }) => {
           </h3>
         </div>
         <div className={SUMMARY_PANELS_CSS.PANEL_CONTENT}>
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '20px', 
-            color: '#6c757d' 
-          }}>
-            <i className="bi bi-hourglass-split" style={{ fontSize: '1.5em' }}></i>
-            <div style={{ marginTop: '8px' }}>데이터 로딩 중...</div>
+          <div className="erp-purchase-loading">
+            <i className="bi bi-hourglass-split erp-purchase-loading-icon"></i>
+            <div className="erp-purchase-loading-text">데이터 로딩 중...</div>
           </div>
         </div>
       </div>

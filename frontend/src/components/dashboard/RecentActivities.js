@@ -33,12 +33,7 @@ const RecentActivities = ({ consultationData }) => {
 
   return (
     <div className={RECENT_ACTIVITIES_CSS.CONTAINER}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '20px'
-      }}>
+      <div className="recent-activities-header">
         <h3 className={RECENT_ACTIVITIES_CSS.SECTION_TITLE}>
           <i className="bi bi-clock-history"></i>
           최근 활동
@@ -47,26 +42,8 @@ const RecentActivities = ({ consultationData }) => {
           <button 
             className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
             onClick={handleViewAll}
-            style={{
-              fontSize: 'var(--font-size-sm)',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              border: '1px solid #007bff',
-              background: 'transparent',
-              color: '#007bff',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = '#007bff';
-              e.target.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = 'transparent';
-              e.target.style.color = '#007bff';
-            }}
           >
-            <i className="bi bi-arrow-right" style={{ marginRight: '4px' }}></i>
+            <i className="bi bi-arrow-right"></i>
             전체보기
           </button>
         )}

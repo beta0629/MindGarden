@@ -335,3 +335,46 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* 상담 카드 세부 스타일 */
+.consultation-date-time {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.4;
+}
+
+.consultation-consultant-name {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.consultation-status-badge {
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-full);
+  display: inline-block;
+  font-weight: var(--font-weight-semibold);
+  border: 1px solid;
+}
+
+.consultation-status-badge--confirmed {
+  background-color: var(--ios-green-light);
+  color: var(--ios-green-dark);
+  border-color: var(--ios-green);
+}
+
+.consultation-status-badge--booked {
+  background-color: var(--ios-yellow-light);
+  color: var(--ios-yellow-dark);
+  border-color: var(--ios-yellow);
+}
+
+.consultation-status-badge--pending {
+  background-color: var(--ios-gray-light);
+  color: var(--ios-gray-dark);
+  border-color: var(--ios-gray);
+}

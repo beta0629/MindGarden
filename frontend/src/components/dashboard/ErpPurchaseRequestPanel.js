@@ -110,19 +110,10 @@ const ErpPurchaseRequestPanel = ({ user }) => {
           <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>대기 중인 요청</div>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
-              <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#495057' }}>
+              <div className="summary-value-number">
                 {purchaseData.pendingRequests}건
               </div>
-              <div style={{ 
-                fontSize: '0.85em', 
-                color: '#6c757d', 
-                marginTop: '6px',
-                padding: '6px 10px',
-                backgroundColor: '#fff3cd',
-                borderRadius: '6px',
-                border: '1px solid #ffeaa7',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-              }}>
+              <div className="summary-value-badge summary-value-badge--warning">
                 관리자 승인 대기 중
               </div>
             </div>
@@ -136,19 +127,10 @@ const ErpPurchaseRequestPanel = ({ user }) => {
           <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>승인된 요청</div>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
-              <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#495057' }}>
+              <div className="summary-value-number">
                 {purchaseData.approvedRequests}건
               </div>
-              <div style={{ 
-                fontSize: '0.85em', 
-                color: '#6c757d', 
-                marginTop: '6px',
-                padding: '6px 10px',
-                backgroundColor: '#d1edff',
-                borderRadius: '6px',
-                border: '1px solid #74c0fc',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-              }}>
+              <div className="summary-value-badge summary-value-badge--info">
                 이번 달 승인된 요청
               </div>
             </div>
@@ -162,56 +144,26 @@ const ErpPurchaseRequestPanel = ({ user }) => {
           <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>전체 요청</div>
             <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
-              <div style={{ fontSize: '1.1em', fontWeight: '600', color: '#495057' }}>
+              <div className="summary-value-number">
                 {purchaseData.totalRequests}건
               </div>
-              <div style={{ 
-                fontSize: '0.85em', 
-                color: '#6c757d', 
-                marginTop: '6px',
-                padding: '6px 10px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '6px',
-                border: '1px solid #dee2e6',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-              }}>
+              <div className="summary-value-badge summary-value-badge--secondary">
                 지금까지 요청한 총 건수
               </div>
             </div>
           </div>
         </div>
         
-        <div style={{ 
-          display: 'flex', 
-          gap: '12px', 
-          marginTop: '16px',
-          flexWrap: 'wrap'
-        }}>
+        <div className="erp-action-buttons">
           <button 
-            className="btn btn-primary btn-sm"
+            className="mg-btn mg-btn--primary mg-btn--sm"
             onClick={() => window.location.href = '/erp/purchase-requests'}
-            style={{ 
-              flex: '1',
-              minWidth: '140px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
-            }}
           >
             <i className="bi bi-plus-circle"></i> 새 구매 요청
           </button>
           <button 
-            className="btn btn-outline-primary btn-sm"
+            className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
             onClick={() => window.location.href = '/erp/dashboard'}
-            style={{ 
-              flex: '1',
-              minWidth: '140px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
-            }}
           >
             <i className="bi bi-list-ul"></i> 요청 내역
           </button>

@@ -198,6 +198,57 @@
   gap: 0.5rem;
 }
 
+/* ERP 구매 요청 패널 스타일 */
+.summary-value-number {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+}
+
+.summary-value-badge {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin-top: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid;
+  box-shadow: var(--shadow-xs);
+}
+
+.summary-value-badge--warning {
+  background-color: var(--ios-yellow-light);
+  border-color: var(--ios-yellow);
+  color: var(--ios-yellow-dark);
+}
+
+.summary-value-badge--info {
+  background-color: var(--ios-blue-light);
+  border-color: var(--ios-blue);
+  color: var(--ios-blue-dark);
+}
+
+.summary-value-badge--secondary {
+  background-color: var(--ios-gray-light);
+  border-color: var(--ios-gray);
+  color: var(--ios-gray-dark);
+}
+
+.erp-action-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.erp-action-buttons .mg-btn {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .summary-panels {

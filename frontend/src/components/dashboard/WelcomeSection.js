@@ -228,33 +228,13 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                       boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
                       transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                     }}>
-                      <div style={{
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '600',
-                        color: '#495057',
-                        marginBottom: '8px',
-                        lineHeight: '1.4'
-                      }}>
+                      <div className="consultation-date-time">
                         {new Date(consultation.date).toLocaleDateString('ko-KR')} {consultation.startTime} - {consultation.endTime}
                       </div>
-                      <div style={{
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#6c757d',
-                        marginBottom: '8px',
-                        fontWeight: '500'
-                      }}>
+                      <div className="consultation-consultant-name">
                         {consultation.consultantName} 상담사
                       </div>
-                      <div style={{
-                        fontSize: 'var(--font-size-xs)',
-                        padding: '4px 12px',
-                        borderRadius: '16px',
-                        display: 'inline-block',
-                        background: consultation.status === 'CONFIRMED' ? '#d4edda' : '#fff3cd',
-                        color: consultation.status === 'CONFIRMED' ? '#155724' : '#856404',
-                        fontWeight: '600',
-                        border: consultation.status === 'CONFIRMED' ? '1px solid #c3e6cb' : '1px solid #ffeaa7'
-                      }}>
+                      <div className={`consultation-status-badge consultation-status-badge--${consultation.status.toLowerCase()}`}>
                         {consultation.status === 'CONFIRMED' ? '확정' : consultation.status === 'BOOKED' ? '예약' : consultation.status}
                       </div>
                     </div>

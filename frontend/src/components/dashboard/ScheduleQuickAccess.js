@@ -34,7 +34,7 @@ const ScheduleQuickAccess = ({ user }) => {
       }}>
         <h3 style={{
           margin: 0,
-          fontSize: '18px',
+          fontSize: 'var(--font-size-lg)',
           fontWeight: '600',
           color: '#2c3e50',
           display: 'flex',
@@ -48,7 +48,7 @@ const ScheduleQuickAccess = ({ user }) => {
           className="btn btn-outline-primary btn-sm"
           onClick={handleScheduleClick}
           style={{
-            fontSize: '14px',
+            fontSize: 'var(--font-size-sm)',
             padding: '6px 12px',
             borderRadius: '6px',
             border: '1px solid #007bff',
@@ -112,14 +112,14 @@ const ScheduleQuickAccess = ({ user }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '24px'
+            fontSize: 'var(--font-size-xxl)'
           }}>
             <i className="bi bi-calendar-check"></i>
           </div>
           <div>
             <h4 style={{
               margin: 0,
-              fontSize: '20px',
+              fontSize: 'var(--font-size-xl)',
               fontWeight: '600',
               marginBottom: '8px'
             }}>
@@ -127,7 +127,7 @@ const ScheduleQuickAccess = ({ user }) => {
             </h4>
             <p style={{
               margin: 0,
-              fontSize: '16px',
+              fontSize: 'var(--font-size-base)',
               opacity: 0.9,
               lineHeight: '1.4'
             }}>
@@ -135,7 +135,7 @@ const ScheduleQuickAccess = ({ user }) => {
             </p>
           </div>
           <div style={{
-            fontSize: '14px',
+            fontSize: 'var(--font-size-sm)',
             opacity: 0.8,
             display: 'flex',
             alignItems: 'center',

@@ -189,7 +189,7 @@ const WeatherCard = () => {
           <div className="spinner-border spinner-border-sm text-primary" role="status">
             <span className="visually-hidden">로딩중...</span>
           </div>
-          <span style={{ color: '#6c757d', fontSize: '14px' }}>날씨 정보 로딩 중...</span>
+          <span style={{ color: '#6c757d', fontSize: 'var(--font-size-sm)' }}>날씨 정보 로딩 중...</span>
         </div>
       </div>
     );
@@ -215,10 +215,10 @@ const WeatherCard = () => {
         }}>
           <i className="bi bi-exclamation-triangle" style={{
             color: '#ffc107',
-            fontSize: '20px'
+            fontSize: 'var(--font-size-xl)'
           }}></i>
           <span style={{
-            fontSize: '14px',
+            fontSize: 'var(--font-size-sm)',
             color: '#6c757d'
           }}>
             날씨 정보 오류
@@ -230,7 +230,7 @@ const WeatherCard = () => {
             background: 'none',
             border: 'none',
             color: '#007bff',
-            fontSize: '12px',
+            fontSize: 'var(--font-size-xs)',
             cursor: 'pointer',
             textDecoration: 'underline'
           }}
@@ -280,13 +280,13 @@ const WeatherCard = () => {
         }}>
           <i className={`bi ${weatherData.icon}`} style={{
             color: 'white',
-            fontSize: '20px'
+            fontSize: 'var(--font-size-xl)'
           }}></i>
         </div>
         
         <div style={{ flex: 1 }}>
           <h3 style={{
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#2c3e50',
             margin: '0 0 8px 0',
@@ -297,7 +297,7 @@ const WeatherCard = () => {
           
           <div style={{ marginBottom: '8px' }}>
             <span style={{
-              fontSize: '24px',
+              fontSize: 'var(--font-size-xxl)',
               fontWeight: '700',
               color: getTemperatureColor(weatherData.temperature),
               marginRight: '8px'
@@ -305,7 +305,7 @@ const WeatherCard = () => {
               {weatherData.temperature}°C
             </span>
             <span style={{
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               color: '#6c757d'
             }}>
               {weatherData.description}
@@ -315,7 +315,7 @@ const WeatherCard = () => {
           <div style={{
             display: 'flex',
             gap: '16px',
-            fontSize: '12px',
+            fontSize: 'var(--font-size-xs)',
             color: '#6c757d'
           }}>
             <span>
@@ -335,14 +335,14 @@ const WeatherCard = () => {
             gap: '8px'
           }}>
             <span style={{
-              fontSize: '12px',
+              fontSize: 'var(--font-size-xs)',
               color: '#6c757d',
               fontWeight: '500'
             }}>
               {weatherData.location}
             </span>
             <i className="bi bi-arrow-clockwise" style={{
-              fontSize: '12px',
+              fontSize: 'var(--font-size-xs)',
               color: '#6c757d'
             }}></i>
           </div>

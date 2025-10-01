@@ -47,19 +47,19 @@ const StatsCardGrid = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '24px',
+              fontSize: 'var(--font-size-xxl)',
               color: '#6c757d'
             }}>
               <i className="fas fa-chart-bar"></i>
             </div>
             <div>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600', color: '#495057' }}>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
                 로딩 중...
               </h3>
-              <div style={{ fontSize: '24px', fontWeight: '700', color: '#2c3e50', margin: '0 0 4px 0' }}>
+              <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: '700', color: '#2c3e50', margin: '0 0 4px 0' }}>
                 0
               </div>
-              <p style={{ margin: '0', fontSize: '12px', color: '#6c757d' }}>
+              <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: '#6c757d' }}>
                 데이터를 불러오는 중
               </p>
             </div>
@@ -97,19 +97,19 @@ const StatsCardGrid = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '24px',
+              fontSize: 'var(--font-size-xxl)',
               color: '#e53e3e'
             }}>
               <i className="fas fa-exclamation-triangle"></i>
             </div>
             <div>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600', color: '#495057' }}>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#495057' }}>
                 에러
               </h3>
-              <div style={{ fontSize: '24px', fontWeight: '700', color: '#2c3e50', margin: '0 0 4px 0' }}>
+              <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: '700', color: '#2c3e50', margin: '0 0 4px 0' }}>
                 0
               </div>
-              <p style={{ margin: '0', fontSize: '12px', color: '#6c757d' }}>
+              <p style={{ margin: '0', fontSize: 'var(--font-size-xs)', color: '#6c757d' }}>
                 데이터를 불러올 수 없습니다
               </p>
             </div>
@@ -134,7 +134,7 @@ const StatsCardGrid = ({
         marginBottom: '24px'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <i className="fas fa-chart-bar" style={{ fontSize: '48px', color: '#6c757d', marginBottom: '16px' }}></i>
+          <i className="fas fa-chart-bar" style={{ fontSize: 'var(--font-size-xxxl)', color: '#6c757d', marginBottom: '16px' }}></i>
           <p style={{ margin: '0', fontSize: '16px', color: '#6c757d' }}>
             통계 데이터를 불러오는 중입니다...
           </p>

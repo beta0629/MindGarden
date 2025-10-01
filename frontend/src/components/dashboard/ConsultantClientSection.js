@@ -167,7 +167,7 @@ const ConsultantClientSection = ({ userId }) => {
           textAlign: 'center'
         }}>
           <i className="bi bi-exclamation-triangle" style={{
-            fontSize: '48px',
+            fontSize: 'var(--font-size-xxxl)',
             color: '#dc3545',
             marginBottom: '16px'
           }}></i>
@@ -200,7 +200,7 @@ const ConsultantClientSection = ({ userId }) => {
       }}>
         <h3 style={{
           margin: 0,
-          fontSize: '18px',
+          fontSize: 'var(--font-size-lg)',
           fontWeight: '600',
           color: '#2c3e50',
           display: 'flex',
@@ -229,11 +229,11 @@ const ConsultantClientSection = ({ userId }) => {
           color: '#6c757d'
         }}>
           <i className="bi bi-person-x" style={{
-            fontSize: '48px',
+            fontSize: 'var(--font-size-xxxl)',
             marginBottom: '16px',
             color: '#dee2e6'
           }}></i>
-          <p style={{ margin: 0, fontSize: '16px' }}>아직 매칭된 내담자가 없습니다</p>
+          <p style={{ margin: 0, fontSize: 'var(--font-size-base)' }}>아직 매칭된 내담자가 없습니다</p>
         </div>
       ) : (
         <div style={{
@@ -285,14 +285,14 @@ const ConsultantClientSection = ({ userId }) => {
                     justifyContent: 'center',
                     color: 'white',
                     fontWeight: '600',
-                    fontSize: '16px'
+                    fontSize: 'var(--font-size-base)'
                   }}>
                     {client.name ? client.name.charAt(0) : '?'}
                   </div>
                   <div>
                     <h4 style={{
                       margin: 0,
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
                       color: '#2c3e50'
                     }}>
@@ -300,7 +300,7 @@ const ConsultantClientSection = ({ userId }) => {
                     </h4>
                     <p style={{
                       margin: 0,
-                      fontSize: '14px',
+                      fontSize: 'var(--font-size-sm)',
                       color: '#6c757d'
                     }}>
                       {client.email || '이메일 없음'}
@@ -310,7 +310,7 @@ const ConsultantClientSection = ({ userId }) => {
                 <span style={{
                   padding: '4px 8px',
                   borderRadius: '12px',
-                  fontSize: '12px',
+                  fontSize: 'var(--font-size-xs)',
                   fontWeight: '500',
                   background: getStatusColor(client.mappingStatus) + '20',
                   color: getStatusColor(client.mappingStatus)
@@ -332,14 +332,14 @@ const ConsultantClientSection = ({ userId }) => {
                   borderRadius: '6px'
                 }}>
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#6c757d',
                     marginBottom: '4px'
                   }}>
                     총 회기
                   </div>
                   <div style={{
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     fontWeight: '600',
                     color: '#2c3e50'
                   }}>
@@ -353,14 +353,14 @@ const ConsultantClientSection = ({ userId }) => {
                   borderRadius: '6px'
                 }}>
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#6c757d',
                     marginBottom: '4px'
                   }}>
                     사용한 회기
                   </div>
                   <div style={{
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     fontWeight: '600',
                     color: '#2c3e50'
                   }}>
@@ -374,7 +374,7 @@ const ConsultantClientSection = ({ userId }) => {
                 padding: '8px',
                 background: '#e3f2fd',
                 borderRadius: '6px',
-                fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#1976d2',
                     textAlign: 'center'
               }}>

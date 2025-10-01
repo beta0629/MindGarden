@@ -691,7 +691,7 @@ const SalaryManagement = () => {
                                                 </div>
                                                 <div className="detail-row">
                                                     <span>지방소득세 (0.33%):</span>
-                                                    <span style={{color: '#dc3545'}}>
+                                                    <span className="salary-management-local-tax">
                                                         -{formatCurrency(taxStatistics.localIncomeTax || 0)}
                                                     </span>
                                                 </div>

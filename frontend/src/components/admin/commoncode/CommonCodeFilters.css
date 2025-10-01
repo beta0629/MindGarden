@@ -81,8 +81,8 @@
 }
 
 .common-code-filters .search-input {
-    padding-left: 40px !important;
-    padding-right: 40px !important;
+    padding-left: 40px;
+    padding-right: 40px;
 }
 
 .clear-search-btn {
@@ -178,8 +178,8 @@
     }
     
     .search-input {
-        padding-left: 36px !important;
-        padding-right: 36px !important;
+        padding-left: 36px;
+        padding-right: 36px;
         font-size: 16px; /* iOS 줌 방지 */
     }
     

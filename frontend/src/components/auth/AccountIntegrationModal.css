@@ -157,7 +157,7 @@
 }
 
 .countdown {
-    color: #dc2626 !important;
+    color: var(--color-danger);
     font-weight: 500;
 }
 

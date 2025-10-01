@@ -50,7 +50,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div className="detailed-stats-card-icon"
+          <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#7B68EE',
@@ -125,7 +125,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div className="detailed-stats-card-icon"
+          <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#7B68EE',
@@ -200,7 +200,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div className="detailed-stats-card-icon"
+          <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#4CAF50',
@@ -260,7 +260,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div className="detailed-stats-card-icon"
+          <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#F44336',
@@ -320,7 +320,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div className="detailed-stats-card-icon"
+          <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#FF9800',
@@ -380,7 +380,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div className="detailed-stats-card-icon"
+          <div className="detailed-stats-card-icon">
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#2196F3',

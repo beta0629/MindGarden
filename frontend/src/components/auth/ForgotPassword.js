@@ -90,12 +90,7 @@ const ForgotPassword = () => {
                   {/* 폼 */}
                   <form onSubmit={handleSubmit}>
                     <div className="forgot-password-form-group">
-                      <label className="forgot-password-label"
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '600',
-                        color: '#4a5568',
-                        marginBottom: '8px'
-                      }}>
+                      <label className="forgot-password-label">
                         이메일 주소
                       </label>
                       <input

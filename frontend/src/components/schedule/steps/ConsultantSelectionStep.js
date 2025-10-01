@@ -512,7 +512,7 @@ const ConsultantSelectionStepNew = ({
                             margin: '0 0 8px 0'
                         }}>조건에 맞는 상담사가 없습니다.</p>
                         <small style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             opacity: '0.7'
                         }}>필터를 조정해보세요.</small>
                     </div>

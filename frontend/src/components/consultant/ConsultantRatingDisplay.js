@@ -318,7 +318,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                                                 style={{
                                                     backgroundColor: '#e7f3ff',
                                                     color: '#0066cc',
-                                                    fontSize: '11px',
+                                                    fontSize: 'var(--font-size-xs)',
                                                     padding: '2px 6px',
                                                     borderRadius: '10px'
                                                 }}

@@ -408,13 +408,13 @@ const ConsultationCompletionStats = () => {
                                     justifyContent: 'center',
                                     color: 'white',
                                     fontWeight: 'bold',
-                                    fontSize: '16px'
+                                    fontSize: 'var(--font-size-base)'
                                 }}>
                                     {index + 1}
                                 </div>
                                 <div>
                                     <div style={{
-                                        fontSize: '18px',
+                                        fontSize: 'var(--font-size-lg)',
                                         fontWeight: '600',
                                         color: '#495057',
                                         marginBottom: '4px'
@@ -422,7 +422,7 @@ const ConsultationCompletionStats = () => {
                                         {stat.consultantName}
                                     </div>
                                     <div style={{
-                                        fontSize: '12px',
+                                        fontSize: 'var(--font-size-xs)',
                                         color: '#6c757d'
                                     }}>
                                         {stat.consultantPhone}
@@ -435,7 +435,7 @@ const ConsultationCompletionStats = () => {
                                 padding: '6px 12px',
                                 backgroundColor: stat.grade ? '#e9ecef' : '#f8f9fa',
                                 borderRadius: '20px',
-                                fontSize: '12px',
+                                fontSize: 'var(--font-size-xs)',
                                 fontWeight: '500',
                                 color: stat.grade ? '#495057' : '#6c757d'
                             }}>
@@ -448,7 +448,7 @@ const ConsultationCompletionStats = () => {
                             marginBottom: '16px'
                         }}>
                             <div style={{
-                                fontSize: '12px',
+                                fontSize: 'var(--font-size-xs)',
                                 color: '#6c757d',
                                 marginBottom: '6px',
                                 fontWeight: '500'
@@ -483,7 +483,7 @@ const ConsultationCompletionStats = () => {
                                     {stat.completedCount}
                                 </div>
                                 <div style={{
-                                    fontSize: '11px',
+                                    fontSize: 'var(--font-size-xs)',
                                     color: '#6c757d',
                                     fontWeight: '500'
                                 }}>
@@ -501,7 +501,7 @@ const ConsultationCompletionStats = () => {
                                     {stat.totalCount}
                                 </div>
                                 <div style={{
-                                    fontSize: '11px',
+                                    fontSize: 'var(--font-size-xs)',
                                     color: '#6c757d',
                                     fontWeight: '500'
                                 }}>
@@ -520,7 +520,7 @@ const ConsultationCompletionStats = () => {
                                     {stat.completionRate}%
                                 </div>
                                 <div style={{
-                                    fontSize: '11px',
+                                    fontSize: 'var(--font-size-xs)',
                                     color: '#6c757d',
                                     fontWeight: '500'
                                 }}>
@@ -557,7 +557,7 @@ const ConsultationCompletionStats = () => {
                         📊
                     </div>
                     <h3 style={{
-                        fontSize: '18px',
+                        fontSize: 'var(--font-size-lg)',
                         fontWeight: '600',
                         color: '#495057',
                         marginBottom: '8px'

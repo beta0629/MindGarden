@@ -335,12 +335,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
   const personalizedMessages = generatePersonalizedMessages(clientStatusAnalysis);
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-      gap: '20px',
-      marginBottom: '32px'
-    }}>
+    <div className="client-personalized-messages">
       {personalizedMessages.map((message) => {
         // 날씨 카드는 별도 컴포넌트로 렌더링
         if (message.isWeatherCard) {
@@ -355,91 +350,33 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         return (
           <div
             key={message.id}
-            style={{
-              background: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: '16px',
-              padding: '24px',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              transition: 'all 0.3s ease',
-              cursor: message.action && message.action !== 'tip' && message.action !== 'pending' ? 'pointer' : 'default'
-            }}
+            className={`personalized-message-card ${message.action && message.action !== 'tip' && message.action !== 'pending' ? 'clickable' : ''}`}
             onClick={() => {
               if (message.action && message.action !== 'tip' && message.action !== 'pending') {
                 handleCardClick(message.action);
               }
             }}
-            onMouseEnter={(e) => {
-              if (message.action && message.action !== 'tip' && message.action !== 'pending') {
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.12)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
-            }}
           >
-            <div style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '16px'
-            }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: message.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <i className={`bi ${message.icon}`} style={{
-                  color: 'white',
-                  fontSize: 'var(--font-size-xl)'
-                }}></i>
+            <div className="message-card-content">
+              <div className="message-card-icon" style={{ background: message.color }}>
+                <i className={`bi ${message.icon}`}></i>
               </div>
               
-              <div style={{ flex: 1 }}>
-                <h3 style={{
-                  fontSize: 'var(--font-size-lg)',
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  margin: '0 0 8px 0',
-                  lineHeight: '1.3'
-                }}>
+              <div className="message-card-text">
+                <h3 className="message-card-title">
                   {message.title}
                 </h3>
                 
-                <p style={{
-                  fontSize: 'var(--font-size-sm)',
-                  color: '#6c757d',
-                  margin: '0',
-                  lineHeight: '1.5'
-                }}>
+                <p className="message-card-subtitle">
                   {message.subtitle}
                 </p>
                 
                 {message.action && message.action !== 'tip' && message.action !== 'pending' && (
-                  <div style={{
-                    marginTop: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}>
-                    <span style={{
-                      fontSize: 'var(--font-size-xs)',
-                      color: message.color,
-                      fontWeight: '500'
-                    }}>
+                  <div className="message-card-action">
+                    <span className="message-card-action-text" style={{ color: message.color }}>
                       자세히 보기
                     </span>
-                    <i className="bi bi-arrow-right" style={{
-                      fontSize: 'var(--font-size-xs)',
-                      color: message.color
-                    }}></i>
+                    <i className="bi bi-arrow-right message-card-action-icon" style={{ color: message.color }}></i>
                   </div>
                 )}
               </div>

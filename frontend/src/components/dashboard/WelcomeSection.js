@@ -290,27 +290,12 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               <i className="bi bi-calendar-check"></i>
             </div>
             <div className="info-content">
-              <h3 className="info-title" style={{
-                fontSize: 'var(--font-size-lg)',
-                fontWeight: '600',
-                margin: '0 0 12px 0',
-                color: '#2d3748'
-              }}>오늘의 상담</h3>
-              <p className="info-value" style={{
-                fontSize: 'var(--font-size-sm)',
-                color: '#6c757d',
-                margin: '0 0 16px 0',
-                lineHeight: '1.5'
-              }}>
+              <h3 className="info-title">오늘의 상담</h3>
+              <p className="info-value">
                 {todayConsultations.length > 0 
                   ? (
                     <span>
-                      <span style={{
-                        fontSize: '1.3em',
-                        fontWeight: '700',
-                        color: '#007bff',
-                        textShadow: '0 1px 2px rgba(0, 123, 255, 0.3)'
-                      }}>{todayConsultations.length}</span>
+                      <span className="consultation-count">{todayConsultations.length}</span>
                       건의 상담이 오늘 예정되어 있습니다
                     </span>
                   )
@@ -320,63 +305,23 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
               {todayConsultations.length > 0 ? (
                 <div className="consultation-cards-grid">
                   {todayConsultations.map((consultation, index) => (
-                    <div key={index} className="consultation-card"
-                    onMouseEnter={(e) => {
-                      e.target.style.background = '#e3f2fd';
-                      e.target.style.borderColor = '#2196f3';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = '#f8f9fa';
-                      e.target.style.borderColor = '#e9ecef';
-                    }}>
+                    <div key={index} className="consultation-card">
                       <div>
-                        <div style={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between', 
-                          alignItems: 'flex-start', 
-                          marginBottom: '12px' 
-                        }}>
-                          <div style={{
-                            fontSize: 'var(--font-size-base)',
-                            fontWeight: '700',
-                            color: '#2d3748',
-                            lineHeight: '1.3'
-                          }}>
+                        <div className="consultation-header">
+                          <div className="consultation-time">
                             {consultation.startTime} - {consultation.endTime}
                           </div>
-                          <div style={{
-                            fontSize: 'var(--font-size-xs)',
-                            padding: '4px 10px',
-                            borderRadius: '12px',
-                            display: 'inline-block',
-                            background: consultation.status === 'CONFIRMED' ? '#d4edda' : '#fff3cd',
-                            color: consultation.status === 'CONFIRMED' ? '#155724' : '#856404',
-                            fontWeight: '600',
-                            whiteSpace: 'nowrap',
-                            border: consultation.status === 'CONFIRMED' ? '1px solid #c3e6cb' : '1px solid #ffeaa7'
-                          }}>
+                          <div className={`consultation-status consultation-status--${consultation.status.toLowerCase()}`}>
                             {consultation.status === 'CONFIRMED' ? '확정' : consultation.status === 'BOOKED' ? '예약' : consultation.status}
                           </div>
                         </div>
-                        <div style={{
-                          fontSize: 'var(--font-size-sm)',
-                          color: '#4a5568',
-                          fontWeight: '600',
-                          marginBottom: '8px',
-                          display: 'flex',
-                          alignItems: 'center'
-                        }}>
-                          <span style={{ marginRight: '6px' }}>👤</span>
+                        <div className="consultation-consultant">
+                          <span className="consultation-icon">👤</span>
                           {consultation.consultantName} 상담사
                         </div>
                         {consultation.clientName && (
-                          <div style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: '#6c757d',
-                            display: 'flex',
-                            alignItems: 'center'
-                          }}>
-                            <span style={{ marginRight: '6px' }}>👥</span>
+                          <div className="consultation-client">
+                            <span className="consultation-icon">👥</span>
                             {consultation.clientName}
                           </div>
                         )}

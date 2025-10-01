@@ -83,14 +83,8 @@ const RatableConsultationsSection = () => {
 
     if (loading) {
         return (
-            <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '24px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                marginBottom: '24px'
-            }}>
-                <div style={{ textAlign: 'center', color: '#666' }}>
+            <div className="ratable-consultations-section">
+                <div className="loading-message">
                     평가 가능한 상담을 불러오는 중...
                 </div>
             </div>
@@ -101,51 +95,22 @@ const RatableConsultationsSection = () => {
 
     return (
         <>
-            <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '24px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                marginBottom: '24px'
-            }}>
+            <div className="ratable-consultations-section">
                 {/* 섹션 헤더 */}
-                <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{
-                        fontSize: 'var(--font-size-lg)',
-                        fontWeight: '600',
-                        color: '#333',
-                        marginBottom: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}>
+                <div className="section-header">
+                    <h3 className="section-title">
                         💖 상담사님께 감사 인사를
-                        <span style={{
-                            backgroundColor: '#e7f3ff',
-                            color: '#0066cc',
-                            fontSize: 'var(--font-size-xs)',
-                            fontWeight: '500',
-                            padding: '2px 8px',
-                            borderRadius: '12px'
-                        }}>
+                        <span className="badge badge--primary">
                             {ratableSchedules.length}개
                         </span>
                     </h3>
-                    <p style={{
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#666',
-                        margin: 0
-                    }}>
+                    <p className="section-description">
                         완료된 상담에 대해 하트 점수로 평가해주세요
                     </p>
                 </div>
 
                 {/* 평가 가능한 상담 목록 */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px'
-                }}>
+                <div className="ratable-schedules-list">
                     {showTestData ? (
                         <div style={{
                             textAlign: 'center',

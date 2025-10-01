@@ -147,7 +147,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
                     </div>
                     <div className="record-actions">
                       <button 
-                        className="btn btn-sm btn-outline-secondary"
+                        className="mg-btn mg-btn--sm mg-btn--outline mg-btn--secondary"
                         onClick={() => navigate(`/consultant/consultation-record-view/${record.id}`)}
                       >
                         보기
@@ -164,7 +164,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
                 <h4>아직 작성된 상담일지가 없습니다</h4>
                 <p>첫 번째 상담일지를 작성해보세요</p>
                 <button 
-                  className="btn btn-primary"
+                  className="mg-btn mg-btn--primary"
                   onClick={handleCreateRecord}
                 >
                   상담일지 작성하기

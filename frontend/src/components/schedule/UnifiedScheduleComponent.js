@@ -1140,7 +1140,7 @@ const UnifiedScheduleComponent = ({
                             )}
                         </div>
                         
-                        <div style={{ textAlign: 'center', marginTop: '24px' }}>
+                        <div className="unified-schedule-modal-footer">
                             <button 
                                 onClick={() => setIsDateActionModalOpen(false)}
                                 style={{

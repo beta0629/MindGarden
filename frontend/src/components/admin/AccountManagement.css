@@ -82,7 +82,7 @@
 .btn-sm {
   padding: 6px 12px;
   font-size: var(--font-size-xs);
-  margin: 2px;
+  margin: var(--spacing-xs);
 }
 
 .account-form-overlay {
@@ -261,7 +261,7 @@
   
   .account-form {
     padding: 20px;
-    margin: 10px;
+    margin: var(--spacing-sm);
   }
   
   .account-table {
@@ -279,7 +279,7 @@
   
   .btn-sm {
     width: 100%;
-    margin: 2px 0;
+    margin: var(--spacing-xs) 0;
   }
 }
 

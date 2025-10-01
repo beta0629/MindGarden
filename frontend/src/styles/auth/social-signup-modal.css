@@ -109,7 +109,7 @@
 }
 
 .social-description {
-  margin: 12px 0 0 0;
+  margin: var(--spacing-sm) 0 0 0;
   font-size: var(--font-size-sm);
   color: #64748b;
   line-height: 1.5;
@@ -307,7 +307,7 @@
   border: 1px solid #e9ecef;
   border-radius: 12px;
   padding: 20px;
-  margin-top: 20px;
+  margin-top: var(--spacing-base);
 }
 
 .privacy-consent-title {

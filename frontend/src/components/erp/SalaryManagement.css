@@ -28,7 +28,7 @@
 
 /* 세금 통계 섹션 */
 .tax-statistics {
-    margin-top: 20px;
+    margin-top: var(--spacing-base);
 }
 
 .no-data {
@@ -51,7 +51,7 @@
     border: 1px solid #e9ecef;
     border-radius: 8px;
     overflow: hidden;
-    margin-top: 16px;
+    margin-top: var(--spacing-md);
     width: 100%;
 }
 
@@ -149,7 +149,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: var(--spacing-xl);
     padding: 20px;
     background: white;
     border-radius: 12px;
@@ -235,7 +235,7 @@
 }
 
 .calculations-history {
-    margin-top: 24px;
+    margin-top: var(--spacing-xl);
 }
 
 .calculations-history h4 {
@@ -248,7 +248,7 @@
 .salary-tabs {
     display: flex;
     gap: 4px;
-    margin-bottom: 24px;
+    margin-bottom: var(--spacing-xl);
     background: white;
     padding: 4px;
     border-radius: 8px;
@@ -338,7 +338,7 @@
 }
 
 .profile-actions {
-    margin-top: 16px;
+    margin-top: var(--spacing-md);
     display: flex;
     gap: 8px;
 }
@@ -439,7 +439,7 @@
 
 /* 세금 관리 섹션 */
 .tax-calculations-history {
-    margin-top: 24px;
+    margin-top: var(--spacing-xl);
 }
 
 .tax-calculations-history h4 {

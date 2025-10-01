@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
+import './SalaryProfileFormModal.css';
 
 const SalaryProfileFormModal = ({ 
     isOpen, 
@@ -320,117 +321,6 @@ const SalaryProfileFormModal = ({
     };
 
     if (!isOpen || !consultant) return null;
-
-    const modalOverlayStyle = {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1001,
-        padding: '20px'
-    };
-
-    const modalContentStyle = {
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-        maxWidth: '1000px',
-        width: '100%',
-        maxHeight: '95vh',
-        overflowY: 'auto'
-    };
-
-    const modalHeaderStyle = {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '20px 24px',
-        borderBottom: '1px solid #e9ecef',
-        background: '#f8f9fa',
-        borderRadius: '12px 12px 0 0'
-    };
-
-    const modalBodyStyle = {
-        padding: '24px'
-    };
-
-    const modalFooterStyle = {
-        display: 'flex',
-        justifyContent: 'flex-end',
-        gap: '12px',
-        padding: '20px 24px',
-        borderTop: '1px solid #e9ecef',
-        background: '#f8f9fa',
-        borderRadius: '0 0 12px 12px'
-    };
-
-    const formGroupStyle = {
-        marginBottom: '20px'
-    };
-
-    const labelStyle = {
-        display: 'block',
-        marginBottom: '8px',
-        fontWeight: '600',
-        color: '#495057',
-        fontSize: 'var(--font-size-sm)'
-    };
-
-    const inputStyle = {
-        width: '100%',
-        padding: '10px 12px',
-        border: '1px solid #ced4da',
-        borderRadius: '6px',
-        fontSize: 'var(--font-size-sm)',
-        boxSizing: 'border-box'
-    };
-
-    const selectStyle = {
-        ...inputStyle,
-        backgroundColor: 'white'
-    };
-
-    const buttonStyle = {
-        padding: '10px 20px',
-        borderRadius: '6px',
-        fontWeight: '500',
-        fontSize: 'var(--font-size-sm)',
-        cursor: 'pointer',
-        border: 'none',
-        minWidth: '100px'
-    };
-
-    const primaryButtonStyle = {
-        ...buttonStyle,
-        backgroundColor: '#007bff',
-        color: 'white'
-    };
-
-    const secondaryButtonStyle = {
-        ...buttonStyle,
-        backgroundColor: '#6c757d',
-        color: 'white'
-    };
-
-    const addButtonStyle = {
-        ...buttonStyle,
-        backgroundColor: '#28a745',
-        color: 'white',
-        marginBottom: '16px'
-    };
-
-    const removeButtonStyle = {
-        ...buttonStyle,
-        backgroundColor: '#dc3545',
-        color: 'white',
-        padding: '5px 10px',
-        fontSize: 'var(--font-size-xs)'
-    };
 
     return (
         <div style={modalOverlayStyle} onClick={onClose}>

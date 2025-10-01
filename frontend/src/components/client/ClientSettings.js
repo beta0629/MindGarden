@@ -72,7 +72,7 @@ const ClientSettings = () => {
   if (sessionLoading) {
     return (
       <SimpleLayout>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <div className="client-settings-loading">
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">로딩중...</span>
           </div>

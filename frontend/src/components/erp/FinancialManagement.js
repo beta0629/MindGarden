@@ -321,12 +321,7 @@ const FinancialManagement = () => {
         {/* 콘텐츠 영역 */}
         <div className="erp-content">
           {loading && (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
-              padding: '40px'
-            }}>
+            <div className="financial-management-loading">
               <LoadingSpinner 
                 text="데이터를 불러오는 중..."
                 size="medium"

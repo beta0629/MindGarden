@@ -262,8 +262,6 @@ const ConsultantMessages = () => {
                   <button 
                     onClick={() => setShowSendModal(true)}
                     className="consultant-messages-empty-btn"
-                      cursor: 'pointer'
-                    }}
                   >
                     첫 메시지 보내기
                   </button>

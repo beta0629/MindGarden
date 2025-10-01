@@ -1,7 +1,7 @@
 /* 상담 일지 모달 스타일 */
 .consultation-log-modal {
-  max-width: 900px !important;
-  width: 95% !important;
+  max-width: 900px;
+  width: 95%;
 }
 
 .form-sections {
@@ -174,7 +174,7 @@
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .consultation-log-modal {
-    width: 98% !important;
+    width: 98%;
     margin: 10px;
   }
   

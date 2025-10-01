@@ -40,11 +40,11 @@ body {
 }
 
 .hidden {
-  display: none !important;
+  display: none;
 }
 
 .visible {
-  display: block !important;
+  display: block;
 }
 
 /* 애니메이션 */

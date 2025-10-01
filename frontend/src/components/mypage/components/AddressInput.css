@@ -32,16 +32,16 @@
 .address-type-select {
   width: 100%;
   padding: var(--address-select-padding);
-  border: none !important;
+  border: none;
   border-radius: var(--address-select-radius);
   font-size: var(--address-select-font-size);
   background-color: var(--address-select-bg);
-  box-shadow: none !important;
+  box-shadow: none;
 }
 
 .address-type-select:focus {
   outline: none;
-  box-shadow: var(--address-select-focus-shadow) !important;
+  box-shadow: var(--address-select-focus-shadow);
 }
 
 .address-type-select:disabled {
@@ -58,15 +58,15 @@
 .postal-code-input {
   flex: 1;
   padding: var(--address-input-padding);
-  border: none !important;
+  border: none;
   border-radius: var(--address-input-radius);
   font-size: var(--address-input-font-size);
-  box-shadow: none !important;
+  box-shadow: none;
 }
 
 .postal-code-input:focus {
   outline: none;
-  box-shadow: var(--address-input-focus-shadow) !important;
+  box-shadow: var(--address-input-focus-shadow);
 }
 
 .postal-code-input:disabled {

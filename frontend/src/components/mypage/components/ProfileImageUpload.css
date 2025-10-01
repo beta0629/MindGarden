@@ -69,8 +69,8 @@
   display: inline-block;
   border-radius: 50%;
   overflow: hidden;
-  width: var(--profile-image-size) !important;
-  height: var(--profile-image-size) !important;
+  width: var(--profile-image-size);
+  height: var(--profile-image-size);
   border: var(--profile-image-border);
 }
 

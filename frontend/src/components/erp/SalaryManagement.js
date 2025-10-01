@@ -685,7 +685,7 @@ const SalaryManagement = () => {
                                             <>
                                                 <div className="detail-row">
                                                     <span>원천징수세 (3.3%):</span>
-                                                    <span style={{color: '#dc3545'}}>
+                                                    <span className="salary-management-withholding-tax">
                                                         -{formatCurrency(taxStatistics.withholdingTax || 0)}
                                                     </span>
                                                 </div>

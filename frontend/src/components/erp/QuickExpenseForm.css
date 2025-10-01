@@ -1,0 +1,30 @@
+/* QuickExpenseForm 스타일 - FinancialTransactionForm 패턴 재사용 */
+@import './FinancialTransactionForm.css';
+
+/* QuickExpenseForm 전용 추가 스타일 (필요시) */
+
+.quick-expense-form-notice {
+  background-color: var(--ios-blue-light);
+  color: var(--ios-blue-dark);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-xs);
+  border-left: 4px solid var(--ios-blue);
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .quick-expense-form-notice {
+    font-size: var(--font-size-2xs);
+    padding: var(--spacing-xs);
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .quick-expense-form-notice {
+    background-color: var(--ios-blue-light-dark);
+    color: var(--ios-blue-dark);
+  }
+}

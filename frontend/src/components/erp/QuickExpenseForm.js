@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ErpModal from './common/ErpModal';
+import './QuickExpenseForm.css';
 
 /**
  * 빠른 지출 등록 컴포넌트 (공통 코드 사용)

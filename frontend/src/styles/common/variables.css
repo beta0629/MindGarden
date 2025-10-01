@@ -65,8 +65,8 @@
   --toast-mobile-content-padding: 12px;
   --toast-mobile-content-gap: 8px;
   --toast-mobile-icon-size: 18px;
-  --toast-mobile-message-font-size: 13px;
-  --toast-mobile-close-font-size: 16px;
+  --toast-mobile-message-font-size: var(--font-size-sm);
+  --toast-mobile-close-font-size: var(--font-size-base);
   --toast-mobile-close-size: 18px;
   --toast-dark-bg: #2d3748;
   --toast-dark-color: #e2e8f0;
@@ -148,7 +148,7 @@
   --toast-content-padding: 16px;
   --toast-content-gap: 12px;
   --toast-icon-size: 20px;
-  --toast-message-font-size: 14px;
+  --toast-message-font-size: var(--font-size-sm);
   --toast-message-line-height: 1.4;
   --toast-message-color: #6B7280;  /* 회색 글자색상으로 통일 */
   --toast-message-font-weight: 500;
@@ -156,7 +156,7 @@
   /* Toast 닫기 버튼 */
   --toast-close-bg: none;
   --toast-close-border: none;
-  --toast-close-font-size: 18px;
+  --toast-close-font-size: var(--font-size-lg);
   --toast-close-color: #999999;
   --toast-close-padding: 0;
   --toast-close-size: 20px;
@@ -184,8 +184,8 @@
   --toast-mobile-content-padding: 12px;
   --toast-mobile-content-gap: 8px;
   --toast-mobile-icon-size: 18px;
-  --toast-mobile-message-font-size: 13px;
-  --toast-mobile-close-font-size: 16px;
+  --toast-mobile-message-font-size: var(--font-size-sm);
+  --toast-mobile-close-font-size: var(--font-size-base);
   --toast-mobile-close-size: 18px;
   
   /* Toast 다크 모드 */
@@ -232,21 +232,21 @@
   --transfer-btn-danger-hover-bg: #ff8a80;
   --transfer-btn-padding: var(--spacing-sm) var(--spacing-lg);
   --transfer-btn-border-radius: var(--border-radius-small);
-  --transfer-btn-font-size: 14px;
+  --transfer-btn-font-size: var(--font-size-sm);
   --transfer-btn-font-weight: 500;
   --transfer-btn-transition: var(--transition-fast);
   
   /* 상담사 변경 폼 */
   --transfer-form-gap: var(--spacing-lg);
   --transfer-form-label-color: var(--color-text-primary);
-  --transfer-form-label-font-size: 14px;
+  --transfer-form-label-font-size: var(--font-size-sm);
   --transfer-form-label-font-weight: 600;
   --transfer-form-label-margin-bottom: var(--spacing-sm);
   --transfer-form-input-bg: var(--color-surface);
   --transfer-form-input-border: 1px solid var(--color-neutral-dark);
   --transfer-form-input-border-radius: var(--border-radius-small);
   --transfer-form-input-padding: var(--spacing-sm) var(--spacing-md);
-  --transfer-form-input-font-size: 14px;
+  --transfer-form-input-font-size: var(--font-size-sm);
   --transfer-form-input-color: var(--color-text-primary);
   --transfer-form-input-focus-border: var(--color-primary);
   --transfer-form-input-focus-shadow: 0 0 0 2px rgba(184, 230, 184, 0.2);
@@ -258,7 +258,7 @@
   --transfer-select-border: 1px solid var(--color-neutral-dark);
   --transfer-select-border-radius: var(--border-radius-small);
   --transfer-select-padding: var(--spacing-sm) var(--spacing-md);
-  --transfer-select-font-size: 14px;
+  --transfer-select-font-size: var(--font-size-sm);
   --transfer-select-color: var(--color-text-primary);
   --transfer-select-focus-border: var(--color-primary);
   --transfer-select-focus-shadow: 0 0 0 2px rgba(184, 230, 184, 0.2);
@@ -272,7 +272,7 @@
   --transfer-status-terminated: var(--color-error);
   --transfer-status-badge-padding: var(--spacing-xs) var(--spacing-sm);
   --transfer-status-badge-border-radius: var(--border-radius-small);
-  --transfer-status-badge-font-size: 12px;
+  --transfer-status-badge-font-size: var(--font-size-xs);
   --transfer-status-badge-font-weight: 600;
   
   /* 상담사 변경 이력 */
@@ -293,7 +293,7 @@
 --transfer-mobile-card-padding: var(--spacing-md);
 --transfer-mobile-form-gap: var(--spacing-md);
 --transfer-mobile-btn-padding: var(--spacing-sm) var(--spacing-md);
---transfer-mobile-btn-font-size: 13px;
+--transfer-mobile-btn-font-size: var(--font-size-sm);
 
 /* ========================================
    통계 및 스케줄 관리 변수
@@ -323,7 +323,7 @@
 --stats-number-margin-bottom: var(--spacing-xs);
 
 /* 통계 라벨 */
---stats-label-font-size: 14px;
+--stats-label-font-size: var(--font-size-sm);
 --stats-label-font-weight: 500;
 --stats-label-color: var(--color-text-secondary);
 --stats-label-margin-bottom: var(--spacing-sm);
@@ -353,7 +353,7 @@
 /* 스케줄 상태 배지 */
 --schedule-status-badge-padding: var(--spacing-xs) var(--spacing-sm);
 --schedule-status-badge-border-radius: var(--border-radius-small);
---schedule-status-badge-font-size: 12px;
+--schedule-status-badge-font-size: var(--font-size-xs);
 --schedule-status-badge-font-weight: 600;
 --schedule-status-badge-text-transform: uppercase;
 
@@ -381,7 +381,7 @@
 --schedule-search-input-border: 1px solid var(--color-neutral-dark);
 --schedule-search-input-border-radius: var(--border-radius-small);
 --schedule-search-input-padding: var(--spacing-sm) var(--spacing-md);
---schedule-search-input-font-size: 14px;
+--schedule-search-input-font-size: var(--font-size-sm);
 --schedule-search-input-color: var(--color-text-primary);
 --schedule-search-input-focus-border: var(--color-primary);
 --schedule-search-input-focus-shadow: 0 0 0 2px rgba(184, 230, 184, 0.2);
@@ -391,7 +391,7 @@
 --schedule-sort-select-border: 1px solid var(--color-neutral-dark);
 --schedule-sort-select-border-radius: var(--border-radius-small);
 --schedule-sort-select-padding: var(--spacing-sm) var(--spacing-md);
---schedule-sort-select-font-size: 14px;
+--schedule-sort-select-font-size: var(--font-size-sm);
 --schedule-sort-select-color: var(--color-text-primary);
 
 /* 스케줄 페이지네이션 */
@@ -407,7 +407,7 @@
 --schedule-pagination-btn-border: 1px solid var(--color-neutral-dark);
 --schedule-pagination-btn-border-radius: var(--border-radius-small);
 --schedule-pagination-btn-padding: var(--spacing-xs) var(--spacing-sm);
---schedule-pagination-btn-font-size: 14px;
+--schedule-pagination-btn-font-size: var(--font-size-sm);
 --schedule-pagination-btn-color: var(--color-text-primary);
 --schedule-pagination-btn-hover-bg: var(--color-primary-light);
 --schedule-pagination-btn-hover-color: var(--color-text-light);

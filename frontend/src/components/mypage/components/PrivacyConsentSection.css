@@ -96,7 +96,7 @@
 }
 
 .consent-status-value {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
@@ -224,7 +224,7 @@
   }
   
   .consent-status-label {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
   
   .consent-status-value {

@@ -207,12 +207,7 @@ const AdminApprovalDashboard = () => {
                 {request.reason && (
                   <div className="approval-request-reason">
                     <strong>사유:</strong>
-                    <div className="approval-request-reason-text" 
-                      marginTop: '4px', 
-                      padding: '8px', 
-                      backgroundColor: '#f8f9fa', 
-                      borderRadius: '4px',
-                      fontSize: 'var(--font-size-sm)'
+                    <div className="approval-request-reason-text"
                     }}>
                       {request.reason}
                     </div>

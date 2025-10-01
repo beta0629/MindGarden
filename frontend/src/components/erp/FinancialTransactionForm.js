@@ -107,11 +107,6 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
 
         {error && (
           <div className="financial-transaction-error"
-            color: '#721c24',
-            padding: '10px',
-            borderRadius: '5px',
-            marginBottom: '20px',
-            border: '1px solid #f5c6cb'
           }}>
             {error}
           </div>

@@ -50,7 +50,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                 borderBottom: '2px solid #e9ecef'
               }}
             >
-              <i className="bi bi-info-circle" style={{ fontSize: 'var(--font-size-base)' }}></i>
+              <i className="bi bi-info-circle consultation-guide-icon"></i>
               상담 전 준비사항
             </h3>
             <ul 

@@ -42,7 +42,7 @@
 
 .erp-report-modal-header h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
     color: white;
 }
@@ -50,7 +50,7 @@
 .erp-report-close-btn {
     background: none;
     border: none;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     cursor: pointer;
     color: white;
     padding: 4px;
@@ -95,7 +95,7 @@
     margin-bottom: 8px;
     font-weight: 500;
     color: #374151;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .radio-group {
@@ -123,7 +123,7 @@
 }
 
 .radio-item span {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #374151;
 }
 
@@ -133,7 +133,7 @@
     padding: 12px 16px;
     border: 2px solid #e5e7eb;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: all 0.2s ease;
     background: white;
     box-sizing: border-box;
@@ -159,7 +159,7 @@
     border: none;
     padding: 12px 24px;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -197,7 +197,7 @@
 .report-header h4 {
     margin: 0;
     color: #374151;
-    font-size: 16px;
+    font-size: var(--font-size-base);
 }
 
 .btn-download {
@@ -206,7 +206,7 @@
     border: none;
     padding: 8px 16px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -236,14 +236,14 @@
 }
 
 .summary-item .label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #64748b;
     margin-bottom: 8px;
     font-weight: 500;
 }
 
 .summary-item .value {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
     color: #1e293b;
 }
@@ -268,7 +268,7 @@
 .category-breakdown h5 {
     margin: 0 0 16px 0;
     color: #374151;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 600;
 }
 
@@ -289,13 +289,13 @@
 }
 
 .category-name {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #374151;
     font-weight: 500;
 }
 
 .category-amount {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #1e293b;
     font-weight: 600;
 }

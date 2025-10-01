@@ -527,7 +527,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     color: #6b7280;
 }
 
@@ -658,7 +658,7 @@
     background-color: #d4edda;
     border: 1px solid #c3e6cb;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     color: #155724;
 }
 

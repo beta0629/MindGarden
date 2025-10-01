@@ -39,7 +39,7 @@ const MappingFilters = ({
             }}>
                 <h3 style={{
                     margin: 0,
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     fontWeight: '600',
                     color: '#2c3e50'
                 }}>🔍 필터 및 검색</h3>
@@ -48,7 +48,7 @@ const MappingFilters = ({
                         padding: '6px 12px',
                         border: 'none',
                         borderRadius: '6px',
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         fontWeight: '600',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
@@ -81,7 +81,7 @@ const MappingFilters = ({
                 <div style={{ flex: 1 }}>
                     <label style={{
                         display: 'block',
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         fontWeight: '600',
                         color: '#6c757d',
                         marginBottom: '8px',
@@ -99,7 +99,7 @@ const MappingFilters = ({
                             padding: '8px 12px',
                             border: '1px solid #e1e8ed',
                             borderRadius: '6px',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             backgroundColor: 'white',
                             color: '#2c3e50',
                             cursor: 'pointer'
@@ -116,7 +116,7 @@ const MappingFilters = ({
                 <div style={{ flex: 2 }}>
                     <label style={{
                         display: 'block',
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         fontWeight: '600',
                         color: '#6c757d',
                         marginBottom: '8px',
@@ -138,7 +138,7 @@ const MappingFilters = ({
                                 paddingRight: searchTerm ? '40px' : '12px',
                                 border: '1px solid #e1e8ed',
                                 borderRadius: '6px',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 backgroundColor: 'white',
                                 color: '#2c3e50'
                             }}

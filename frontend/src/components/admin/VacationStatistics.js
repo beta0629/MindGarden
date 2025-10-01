@@ -312,7 +312,7 @@ const VacationStatistics = ({ className = "" }) => {
                                                             fontWeight: '500',
                                                             borderRadius: '12px',
                                                             padding: '4px 8px',
-                                                            fontSize: '12px',
+                                                            fontSize: 'var(--font-size-xs)',
                                                             margin: '2px',
                                                             display: 'inline-block'
                                                         }}
@@ -335,7 +335,7 @@ const VacationStatistics = ({ className = "" }) => {
                                                             fontWeight: '500',
                                                             borderRadius: '12px',
                                                             padding: '4px 8px',
-                                                            fontSize: '12px',
+                                                            fontSize: 'var(--font-size-xs)',
                                                             margin: '2px',
                                                             display: 'inline-block'
                                                         }}

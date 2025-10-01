@@ -113,7 +113,7 @@ const SystemTools = ({
                     const getDescriptionStyles = (toolId) => {
                         const baseDescStyles = {
                             marginTop: '8px',
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             fontWeight: '500',
                             lineHeight: '1.4',
                             textAlign: 'center',
@@ -173,12 +173,12 @@ const SystemTools = ({
                             >
                                 <IconComponent 
                                     style={{ 
-                                        fontSize: '24px',
+                                        fontSize: 'var(--font-size-xxl)',
                                         transition: 'transform 0.3s ease',
                                         animation: loading ? 'spin 1s linear infinite' : 'none'
                                     }} 
                                 />
-                                <span style={{ fontSize: '14px', fontWeight: '600' }}>{tool.label}</span>
+                                <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: '600' }}>{tool.label}</span>
                             </button>
                             <div style={getDescriptionStyles(tool.id)}>
                                 {tool.description}

@@ -48,7 +48,7 @@ const RecentActivities = ({ consultationData }) => {
             className="btn btn-outline-primary btn-sm"
             onClick={handleViewAll}
             style={{
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               padding: '6px 12px',
               borderRadius: '6px',
               border: '1px solid #007bff',

@@ -303,11 +303,11 @@ const DiscountPaymentConfirmationModal = ({
                   <span>할인 금액:</span>
                   <span>-{formatAmount(discountInfo.discountAmount)}원 ({discountInfo.discountRate}%)</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px', borderTop: '1px solid #dee2e6', paddingTop: '5px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: 'var(--font-size-base)', borderTop: '1px solid #dee2e6', paddingTop: '5px' }}>
                   <span>최종 금액:</span>
                   <span style={{ color: '#007bff' }}>{formatAmount(discountInfo.finalAmount)}원</span>
                 </div>
-                <div style={{ marginTop: '10px', fontSize: '14px', color: '#6c757d' }}>
+                <div style={{ marginTop: '10px', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
                   적용된 할인: {discountInfo.discountName}
                 </div>
               </div>
@@ -334,8 +334,8 @@ const DiscountPaymentConfirmationModal = ({
                     }}
                     >
                       <div style={{ fontWeight: 'bold' }}>{discount.name}</div>
-                      <div style={{ fontSize: '14px', color: '#6c757d' }}>{discount.description}</div>
-                      <div style={{ fontSize: '12px', color: discount.isApplicable ? '#28a745' : '#dc3545' }}>
+                      <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>{discount.description}</div>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: discount.isApplicable ? '#28a745' : '#dc3545' }}>
                         {discount.isApplicable ? '적용 가능' : discount.reason}
                       </div>
                     </div>

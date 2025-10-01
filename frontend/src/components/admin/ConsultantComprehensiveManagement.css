@@ -785,7 +785,7 @@ div[class*="consultant-specialty-display"] div,
 
 /* 카드 액션 - 상담사 종합관리와 동일한 스타일 */
 .basic-management-tab .card-actions {
-    padding: 16px 0 0 0;
+    padding: var(--spacing-md) 0 0 0;
     display: flex;
     gap: 8px;
     margin-top: auto;
@@ -834,7 +834,7 @@ div[class*="consultant-specialty-display"] div,
 /* 상담사 없음 */
 .no-consultants {
     text-align: center;
-    padding: 40px;
+    padding: var(--spacing-xxxl);
     color: #6b7280;
 }
 
@@ -870,13 +870,13 @@ div[class*="consultant-specialty-display"] div,
     
     .basic-management-tab .consultant-specialty-display {
         font-size: 12px;
-        padding: 6px 10px;
+        padding: var(--spacing-xs) var(--spacing-sm);
     }
 }
 
 @media (max-width: 480px) {
     .consultant-comp-container {
-        padding: 12px;
+        padding: var(--spacing-sm);
     }
     
     .consultant-comp-header {
@@ -888,7 +888,7 @@ div[class*="consultant-specialty-display"] div,
     }
     
     .basic-management-tab .consultant-card {
-        padding: 12px;
+        padding: var(--spacing-sm);
         min-height: 160px;
     }
     
@@ -975,7 +975,7 @@ div[class*="consultant-specialty-display"] div,
     }
     
     .basic-management-tab .consultant-card {
-        padding: 12px;
+        padding: var(--spacing-sm);
         min-height: 220px;
     }
     
@@ -1015,7 +1015,7 @@ div[class*="consultant-specialty-display"] div,
     }
     
     .basic-management-tab .btn-sm {
-        padding: 6px 10px;
+        padding: var(--spacing-xs) var(--spacing-sm);
         font-size: 11px;
     }
 }
@@ -1070,7 +1070,7 @@ div[class*="consultant-specialty-display"] div,
 
 @media (max-width: 480px) {
     .consultant-comp-container {
-        padding: 12px;
+        padding: var(--spacing-sm);
     }
     
     .consultant-comp-stats-overview {
@@ -1079,7 +1079,7 @@ div[class*="consultant-specialty-display"] div,
     }
     
     .consultant-comp-stat-card {
-        padding: 12px;
+        padding: var(--spacing-sm);
     }
     
     .consultant-comp-stat-icon {
@@ -1098,11 +1098,11 @@ div[class*="consultant-specialty-display"] div,
     
     .consultant-comp-consultant-list-section,
     .consultant-detail-section {
-        padding: 12px;
+        padding: var(--spacing-sm);
     }
     
     .consultant-comp-consultant-card {
-        padding: 12px;
+        padding: var(--spacing-sm);
         gap: 8px;
     }
     

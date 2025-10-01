@@ -274,7 +274,7 @@
     
     .mapping-card-mobile .participant-info > div {
         width: 100%;
-        padding: 8px 12px;
+        padding: var(--spacing-sm) var(--spacing-sm);
         border-radius: 6px;
         background: #f8f9fa;
     }
@@ -287,14 +287,14 @@
     
     .mapping-card-mobile .session-info > div {
         width: 100%;
-        padding: 8px 12px;
+        padding: var(--spacing-sm) var(--spacing-sm);
         border-radius: 6px;
         background: #f8f9fa;
         text-align: center;
     }
     
     .no-mappings {
-        padding: 40px 16px;
+        padding: var(--spacing-xxxl) var(--spacing-md);
     }
     
     .no-mappings-icon {
@@ -312,7 +312,7 @@
 
 @media (max-width: 480px) {
     .mapping-management {
-        padding: 12px;
+        padding: var(--spacing-sm);
     }
     
     .mapping-header {
@@ -324,11 +324,11 @@
     }
     
     .mapping-grid {
-        padding: 12px;
+        padding: var(--spacing-sm);
     }
     
     .btn {
-        padding: 10px 20px;
+        padding: var(--spacing-sm) var(--spacing-lg);
         font-size: 13px;
     }
 }

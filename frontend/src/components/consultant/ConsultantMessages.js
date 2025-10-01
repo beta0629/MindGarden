@@ -292,7 +292,7 @@ const ConsultantMessages = () => {
                             {typeInfo.icon} {typeInfo.label}
                           </span>
                           {message.isImportant && (
-                            <span style={{ color: '#ffc107', fontSize: '1.2rem' }}>⭐</span>
+                            <span className="consultant-messages-important-icon">⭐</span>
                           )}
                           {message.isUrgent && (
                             <span style={{ color: '#dc3545', fontSize: '1.2rem' }}>🚨</span>

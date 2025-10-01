@@ -702,7 +702,7 @@ const SalaryManagement = () => {
                                         {taxStatistics.vat > 0 && (
                                             <div className="detail-row">
                                                 <span>부가가치세 (10%):</span>
-                                                <span style={{color: '#dc3545'}}>
+                                                <span className="salary-management-vat">
                                                     -{formatCurrency(taxStatistics.vat || 0)}
                                                 </span>
                                             </div>

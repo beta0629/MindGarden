@@ -689,8 +689,8 @@
     text-align: center;
     width: 100%;
     max-width: 100%;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
     transform: none;
     position: relative;
     z-index: 999;
@@ -869,8 +869,8 @@ div[class*="consultant-specialty-display"] div,
     }
     
     .basic-management-tab .consultant-specialty-display {
-        font-size: 12px !important;
-        padding: 6px 10px !important;
+        font-size: 12px;
+        padding: 6px 10px;
     }
 }
 
@@ -913,9 +913,9 @@ div[class*="consultant-specialty-display"] div,
     }
     
     .basic-management-tab .consultant-specialty-display {
-        font-size: 11px !important;
-        padding: 6px 8px !important;
-        min-height: 36px !important;
+        font-size: 11px;
+        padding: 6px 8px;
+        min-height: 36px;
     }
     
     .basic-management-tab .join-label,
@@ -956,10 +956,10 @@ div[class*="consultant-specialty-display"] div,
     }
     
     .basic-management-tab .consultant-specialty-display {
-        font-size: 13px !important;
-        padding: 12px 16px !important;
-        min-height: 80px !important;
-        max-height: 100px !important;
+        font-size: 13px;
+        padding: 12px 16px;
+        min-height: 80px;
+        max-height: 100px;
     }
     
     .basic-management-tab .btn-sm {
@@ -999,10 +999,10 @@ div[class*="consultant-specialty-display"] div,
     }
     
     .basic-management-tab .consultant-specialty-display {
-        font-size: 12px !important;
-        padding: 10px 12px !important;
-        min-height: 70px !important;
-        max-height: 90px !important;
+        font-size: 12px;
+        padding: 10px 12px;
+        min-height: 70px;
+        max-height: 90px;
     }
     
     .basic-management-tab .consultant-join-info {

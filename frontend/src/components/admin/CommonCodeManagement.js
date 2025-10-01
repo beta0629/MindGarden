@@ -593,13 +593,7 @@ const CommonCodeManagement = () => {
             </div>
 
             {/* 필터 UI */}
-            <div style={{
-                background: 'white',
-                padding: '20px',
-                borderRadius: '12px',
-                marginBottom: '20px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
+            <div className="common-code-management-filter">
                 <div style={{
                     display: 'flex',
                     gap: '15px',

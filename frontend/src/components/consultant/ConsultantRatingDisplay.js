@@ -149,12 +149,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
             {/* 최근 평가 */}
             {ratingStats.recentRatings && ratingStats.recentRatings.length > 0 && (
                 <div>
-                    <h4 style={{
-                        fontSize: 'var(--font-size-base)',
-                        fontWeight: '600',
-                        color: '#333',
-                        marginBottom: '12px'
-                    }}>
+                    <h4 className="consultant-rating-display-title">
                         최근 평가
                     </h4>
                     <div style={{

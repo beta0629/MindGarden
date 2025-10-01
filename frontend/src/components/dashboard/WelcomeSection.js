@@ -90,15 +90,8 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
   };
 
   return (
-    <div className={WELCOME_SECTION_CSS.CONTAINER} style={{ marginBottom: '2rem' }}>
-      <div className="welcome-card" style={{
-        background: '#667eea',
-        borderRadius: '12px',
-        padding: '1.5rem',
-        color: 'white',
-        boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
-        marginBottom: '1.5rem'
-      }}>
+    <div className={WELCOME_SECTION_CSS.CONTAINER}>
+      <div className="welcome-card">
         <div className="welcome-profile" style={{
           display: 'flex',
           alignItems: 'center',

@@ -918,11 +918,7 @@ const ClientComprehensiveManagement = () => {
 
     return (
         <SimpleLayout>
-            <div style={{
-                padding: '20px',
-                backgroundColor: '#f8f9fa',
-                minHeight: '100vh'
-            }}>
+            <div className="client-comprehensive-management-container">
             <div style={{
                 backgroundColor: 'white',
                 borderRadius: '12px',

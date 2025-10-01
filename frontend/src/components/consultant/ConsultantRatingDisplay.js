@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
+import './ConsultantRatingDisplay.css';
 
 /**
  * 상담사용 평가 표시 컴포넌트
@@ -55,14 +56,8 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
 
     if (loading) {
         return (
-            <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '24px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                marginBottom: '24px'
-            }}>
-                <div style={{ textAlign: 'center', color: '#666' }}>
+            <div className="consultant-rating-display">
+                <div className="loading-message">
                     평가 통계를 불러오는 중...
                 </div>
             </div>
@@ -71,29 +66,11 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
 
     if (!ratingStats || ratingStats.totalRatingCount === 0) {
         return (
-            <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '24px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                marginBottom: '24px'
-            }}>
-                <h3 style={{
-                    fontSize: 'var(--font-size-lg)',
-                    fontWeight: '600',
-                    color: '#333',
-                    marginBottom: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                }}>
+            <div className="consultant-rating-display">
+                <h3 className="section-title">
                     💖 내담자 평가
                 </h3>
-                <div style={{
-                    textAlign: 'center',
-                    color: '#666',
-                    padding: '20px'
-                }}>
+                <div className="empty-state">
                     아직 받은 평가가 없습니다.
                     <br />
                     상담을 완료하면 내담자님들이 평가를 남겨주실 거예요!
@@ -103,113 +80,49 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
     }
 
     return (
-        <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            marginBottom: '24px'
-        }}>
+        <div className="consultant-rating-display">
             {/* 섹션 헤더 */}
-            <div style={{ marginBottom: '24px' }}>
-                <h3 style={{
-                    fontSize: 'var(--font-size-lg)',
-                    fontWeight: '600',
-                    color: '#333',
-                    marginBottom: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                }}>
+            <div className="section-header">
+                <h3 className="section-title">
                     💖 내담자 평가
-                    <span style={{
-                        backgroundColor: '#ffe6f0',
-                        color: '#d63384',
-                        fontSize: 'var(--font-size-xs)',
-                        fontWeight: '500',
-                        padding: '2px 8px',
-                        borderRadius: '12px'
-                    }}>
+                    <span className="badge badge--primary">
                         {ratingStats.totalRatingCount}개
                     </span>
                 </h3>
             </div>
 
             {/* 평가 통계 */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '16px',
-                marginBottom: '24px'
-            }}>
+            <div className="rating-stats-grid">
                 {/* 평균 점수 */}
-                <div style={{
-                    backgroundColor: '#fff0f6',
-                    padding: '20px',
-                    borderRadius: '12px',
-                    textAlign: 'center',
-                    border: '1px solid #ffc2d6'
-                }}>
-                    <div style={{
-                        fontSize: 'var(--font-size-xxxl)',
-                        fontWeight: '700',
-                        color: '#d63384',
-                        marginBottom: '8px'
-                    }}>
+                <div className="rating-stat-card rating-stat-card--pink">
+                    <div className="stat-value">
                         {ratingStats.averageHeartScore}
                     </div>
-                    <div style={{
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#666',
-                        marginBottom: '8px'
-                    }}>
+                    <div className="stat-label">
                         평균 하트 점수
                     </div>
-                    <div style={{ fontSize: 'var(--font-size-xl)' }}>
+                    <div className="heart-display">
                         {renderHeartScore(Math.round(ratingStats.averageHeartScore))}
                     </div>
                 </div>
 
                 {/* 총 평가 수 */}
-                <div style={{
-                    backgroundColor: '#f0f9ff',
-                    padding: '20px',
-                    borderRadius: '12px',
-                    textAlign: 'center',
-                    border: '1px solid #bfdbfe'
-                }}>
-                    <div style={{
-                        fontSize: 'var(--font-size-xxxl)',
-                        fontWeight: '700',
-                        color: '#0066cc',
-                        marginBottom: '8px'
-                    }}>
+                <div className="rating-stat-card rating-stat-card--blue">
+                    <div className="stat-value">
                         {ratingStats.totalRatingCount}
                     </div>
-                    <div style={{
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#666'
-                    }}>
+                    <div className="stat-label">
                         총 평가 수
                     </div>
                 </div>
             </div>
 
             {/* 점수별 분포 */}
-            <div style={{ marginBottom: '24px' }}>
-                <h4 style={{
-                    fontSize: 'var(--font-size-base)',
-                    fontWeight: '600',
-                    color: '#333',
-                    marginBottom: '12px'
-                }}>
+            <div className="rating-distribution">
+                <h4 className="distribution-title">
                     하트 점수 분포
                 </h4>
-                <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    flexWrap: 'wrap'
-                }}>
+                <div className="distribution-grid">
                     {[5, 4, 3, 2, 1].map(score => {
                         const count = ratingStats.heartScoreDistribution[score] || 0;
                         const percentage = ratingStats.totalRatingCount > 0 
@@ -217,31 +130,14 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                             : 0;
 
                         return (
-                            <div
-                                key={score}
-                                style={{
-                                    backgroundColor: '#f8f9fa',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    textAlign: 'center',
-                                    minWidth: '80px',
-                                    border: '1px solid #e9ecef'
-                                }}
-                            >
-                                <div style={{ fontSize: 'var(--font-size-base)', marginBottom: '4px' }}>
+                            <div key={score} className="distribution-card">
+                                <div className="distribution-hearts">
                                     {'💖'.repeat(score)}
                                 </div>
-                                <div style={{
-                                    fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '600',
-                                    color: '#333'
-                                }}>
+                                <div className="distribution-count">
                                     {count}개
                                 </div>
-                                <div style={{
-                                    fontSize: 'var(--font-size-xs)',
-                                    color: '#666'
-                                }}>
+                                <div className="distribution-percentage">
                                     ({percentage}%)
                                 </div>
                             </div>

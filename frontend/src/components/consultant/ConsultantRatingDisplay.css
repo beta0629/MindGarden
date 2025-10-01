@@ -1,0 +1,314 @@
+/* ConsultantRatingDisplay 스타일 - 새로운 디자인 시스템 적용 */
+
+.consultant-rating-display {
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--ios-border-light);
+  margin-bottom: var(--spacing-xxl);
+}
+
+.loading-message {
+  text-align: center;
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-base);
+}
+
+.section-header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.badge {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xxs) var(--spacing-sm);
+  border-radius: var(--border-radius-full);
+  display: inline-block;
+}
+
+.badge--primary {
+  background-color: var(--ios-pink-light);
+  color: var(--ios-pink-dark);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--ios-text-secondary);
+  padding: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+/* 평가 통계 그리드 */
+.rating-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* 통계 카드 */
+.rating-stat-card {
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  text-align: center;
+  border: 1px solid;
+  transition: all var(--transition-normal);
+}
+
+.rating-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.rating-stat-card--pink {
+  background-color: var(--ios-pink-light);
+  border-color: var(--ios-pink);
+}
+
+.rating-stat-card--blue {
+  background-color: var(--ios-blue-light);
+  border-color: var(--ios-blue);
+}
+
+.rating-stat-card--green {
+  background-color: var(--ios-green-light);
+  border-color: var(--ios-green);
+}
+
+.stat-value {
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-sm);
+}
+
+.rating-stat-card--pink .stat-value {
+  color: var(--ios-pink-dark);
+}
+
+.rating-stat-card--blue .stat-value {
+  color: var(--ios-blue-dark);
+}
+
+.rating-stat-card--green .stat-value {
+  color: var(--ios-green-dark);
+}
+
+.stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.heart-display {
+  font-size: var(--font-size-xl);
+}
+
+/* 평가 분포 */
+.rating-distribution {
+  margin-bottom: var(--spacing-xl);
+}
+
+.distribution-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.distribution-grid {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.distribution-card {
+  background: var(--ios-bg-secondary);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  text-align: center;
+  min-width: 80px;
+  border: 1px solid var(--ios-border-light);
+  transition: all var(--transition-normal);
+}
+
+.distribution-card:hover {
+  background: var(--ios-bg-tertiary);
+  transform: translateY(-1px);
+}
+
+.distribution-hearts {
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-xxs);
+}
+
+.distribution-count {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-xxs);
+}
+
+.distribution-percentage {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-secondary);
+}
+
+.distribution-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--ios-bg-secondary);
+  border-radius: var(--border-radius-sm);
+}
+
+.distribution-score {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--ios-text-primary);
+  min-width: 40px;
+}
+
+.distribution-hearts {
+  font-size: var(--font-size-base);
+  min-width: 80px;
+}
+
+.distribution-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--ios-gray-light);
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+}
+
+.distribution-fill {
+  height: 100%;
+  background: var(--ios-pink);
+  border-radius: var(--border-radius-sm);
+  transition: width var(--transition-normal);
+}
+
+.distribution-count {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-secondary);
+  min-width: 30px;
+  text-align: right;
+}
+
+/* 최근 평가 */
+.recent-ratings {
+  margin-bottom: var(--spacing-xl);
+}
+
+.recent-ratings-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.ratings-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.rating-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--ios-bg-secondary);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--ios-border-light);
+  transition: all var(--transition-normal);
+}
+
+.rating-item:hover {
+  background: var(--ios-bg-tertiary);
+}
+
+.rating-hearts {
+  font-size: var(--font-size-base);
+  min-width: 60px;
+}
+
+.rating-info {
+  flex: 1;
+}
+
+.rating-client {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-xxs);
+}
+
+.rating-comment {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.rating-date {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-secondary);
+  white-space: nowrap;
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .consultant-rating-display {
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .section-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .rating-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .rating-stat-card {
+    padding: var(--spacing-md);
+  }
+  
+  .stat-value {
+    font-size: var(--font-size-xxl);
+  }
+  
+  .distribution-item {
+    padding: var(--spacing-xs);
+  }
+  
+  .rating-item {
+    padding: var(--spacing-xs);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .rating-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

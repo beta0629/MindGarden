@@ -799,37 +799,27 @@ const AdminDashboard = ({ user: propUser }) => {
                     </h2>
                     <div className="management-grid">
                         <div className="management-card" onClick={() => navigate('/admin/compliance')}>
-                            <div className={`card__icon card__icon--large card__icon-- compliance`}>
+                            <div className="card__icon card__icon--large card__icon--compliance">
                                 <i className="bi bi-shield-check"></i>
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <div className="management-card__content">
                                 <h3>컴플라이언스 대시보드</h3>
                                 <p>개인정보보호법 준수 현황을 모니터링합니다</p>
                             </div>
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/admin/compliance/dashboard')}>
-                            <div className={`card__icon card__icon--large card__icon-- compliance-dashboard`}>
+                            <div className="card__icon card__icon--large card__icon--info">
                                 <i className="bi bi-graph-up"></i>
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>종합 모니터링</h3>
-                                <p>실시간 컴플라이언스 현황을 확인합니다</p>
-                            </div>
-                        </div>
-                        
-                        <div className="management-card" onClick={() => navigate('/admin/compliance/personal-data-processing')}>
-                            <div className={`card__icon card__icon--large card__icon-- personal-data`}>
-                                <i className="bi bi-person-lines-fill"></i>
-                            </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <div className="management-card__content">
                                 <h3>개인정보 처리 현황</h3>
                                 <p>개인정보 처리 현황 및 통계를 관리합니다</p>
                             </div>
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/admin/compliance/destruction')}>
-                            <div className={`card__icon card__icon--large card__icon-- data-destruction`}>
+                            <div className="card__icon card__icon--large card__icon--danger">
                                 <i className="bi bi-trash"></i>
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>

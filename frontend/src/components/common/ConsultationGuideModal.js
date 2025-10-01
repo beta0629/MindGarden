@@ -9,8 +9,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
     <div className="consultation-guide-overlay" onClick={onClose}>
       <div className="consultation-guide-modal" onClick={(e) => e.stopPropagation()}>
         <div 
-          style={{
-            display: 'flex',
+          className="consultation-guide-header"
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '24px 32px',
@@ -19,8 +18,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
           }}
         >
           <h2 
-            style={{
-              margin: 0,
+            className="consultation-guide-title"
               fontSize: 'var(--font-size-xxl)',
               fontWeight: '700',
               color: '#2c3e50',

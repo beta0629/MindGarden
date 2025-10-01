@@ -328,8 +328,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            style={{
-              flex: 1,
+            className="integrated-finance-tab-btn"
               padding: '14px 18px',
               border: 'none',
               background: activeTab === tab.key 
@@ -353,8 +352,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       </div>
 
       {/* 콘텐츠 영역 */}
-      <div style={{
-        backgroundColor: 'white',
+      <div className="integrated-finance-content"
         borderRadius: '10px',
         padding: '20px',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)'

@@ -1,0 +1,159 @@
+/* ClientPersonalizedMessages 스타일 - 새로운 디자인 시스템 적용 */
+
+.client-messages {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xxl);
+  font-family: var(--font-family-ios);
+}
+
+.client-message-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(var(--blur-md));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all var(--transition-normal);
+}
+
+.client-message-card--clickable {
+  cursor: pointer;
+}
+
+.client-message-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.client-message-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.client-message-card__icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xl);
+  flex-shrink: 0;
+}
+
+.client-message-card__icon--primary {
+  background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+  color: white;
+}
+
+.client-message-card__icon--success {
+  background: linear-gradient(135deg, var(--ios-green), #34c759);
+  color: white;
+}
+
+.client-message-card__icon--warning {
+  background: linear-gradient(135deg, var(--ios-orange), #ff9500);
+  color: white;
+}
+
+.client-message-card__icon--info {
+  background: linear-gradient(135deg, var(--ios-blue), #5ac8fa);
+  color: white;
+}
+
+.client-message-card__content {
+  flex: 1;
+}
+
+.client-message-card__title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin: 0 0 var(--spacing-xxs) 0;
+}
+
+.client-message-card__message {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin: 0;
+  line-height: var(--line-height-relaxed);
+}
+
+.client-message-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--ios-separator);
+}
+
+.client-message-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-tertiary);
+}
+
+.client-message-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xxs) var(--spacing-sm);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.client-message-card__badge--urgent {
+  background: rgba(255, 59, 48, 0.1);
+  color: var(--ios-red);
+}
+
+.client-message-card__badge--new {
+  background: rgba(0, 122, 255, 0.1);
+  color: var(--ios-blue);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+  .client-messages {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .client-message-card {
+    padding: var(--spacing-md);
+  }
+
+  .client-message-card__icon {
+    width: 40px;
+    height: 40px;
+    font-size: var(--font-size-lg);
+  }
+
+  .client-message-card__title {
+    font-size: var(--font-size-sm);
+  }
+
+  .client-message-card__message {
+    font-size: var(--font-size-xs);
+  }
+
+  .client-message-card__meta,
+  .client-message-card__badge {
+    font-size: 10px;
+  }
+}
+
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .client-messages {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -1,0 +1,116 @@
+/* FormInput 스타일 - 새로운 디자인 시스템 적용 */
+
+.form-input-wrapper {
+  margin-bottom: var(--spacing-lg);
+  font-family: var(--font-family-ios);
+}
+
+.form-input-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.form-input-label--error {
+  color: var(--ios-red);
+}
+
+.form-input-required {
+  color: var(--ios-red);
+  margin-left: var(--spacing-xxs);
+}
+
+.form-input-container {
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--spacing-md);
+  font-size: var(--font-size-md);
+  border: 2px solid var(--ios-separator);
+  border-radius: var(--border-radius-md);
+  outline: none;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family-ios);
+  background-color: var(--ios-bg-primary);
+}
+
+.form-input--with-right-element {
+  padding-right: 50px;
+}
+
+.form-input--error {
+  border-color: var(--ios-red);
+}
+
+.form-input--disabled {
+  background-color: var(--ios-bg-tertiary);
+  cursor: not-allowed;
+}
+
+.form-input:focus {
+  border-color: var(--ios-blue);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.form-input--error:focus {
+  border-color: var(--ios-red);
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.1);
+}
+
+.form-input-right-element {
+  position: absolute;
+  right: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.form-input-helper {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-tertiary);
+  margin-top: var(--spacing-xs);
+}
+
+.form-input-error {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xxs);
+  font-size: var(--font-size-xs);
+  color: var(--ios-red);
+  margin-top: var(--spacing-xs);
+}
+
+.form-input-error-icon {
+  font-size: var(--font-size-sm);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+  .form-input {
+    font-size: var(--font-size-base);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .form-input-label {
+    font-size: var(--font-size-xs);
+  }
+
+  .form-input-helper,
+  .form-input-error {
+    font-size: 10px;
+  }
+}
+
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .form-input {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+}

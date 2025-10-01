@@ -1,4 +1,6 @@
 import React from 'react';
+import '../../styles/main.css';
+import './FormInput.css';
 
 /**
  * 공통 폼 입력 컴포넌트
@@ -31,27 +33,20 @@ const FormInput = ({
   const inputId = `input-${name}`;
 
   return (
-    <div style={{ marginBottom: '24px' }}>
+    <div className="form-input-wrapper">
       {label && (
         <label 
           htmlFor={inputId}
-          style={{
-            display: 'block',
-            fontSize: '14px',
-            fontWeight: '600',
-            color: error ? '#e53e3e' : '#4a5568',
-            marginBottom: '8px',
-            fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-          }}
+          className={`form-input-label ${error ? 'form-input-label--error' : ''}`}
         >
           {label}
           {required && (
-            <span style={{ color: '#e53e3e', marginLeft: '4px' }}>*</span>
+            <span className="form-input-required">*</span>
           )}
         </label>
       )}
       
-      <div style={{ position: 'relative' }}>
+      <div className="form-input-container">
         <input
           id={inputId}
           type={type}
@@ -61,50 +56,20 @@ const FormInput = ({
           placeholder={placeholder}
           disabled={disabled}
           required={required}
-          style={{
-            width: '100%',
-            padding: rightElement ? '16px 50px 16px 16px' : '16px',
-            fontSize: '16px',
-            border: `2px solid ${error ? '#e53e3e' : '#e2e8f0'}`,
-            borderRadius: '12px',
-            outline: 'none',
-            transition: 'all 0.2s ease',
-            fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
-            backgroundColor: disabled ? '#f7fafc' : '#ffffff'
-          }}
-          onFocus={(e) => {
-            if (!error) {
-              e.target.style.borderColor = '#667eea';
-              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-            }
-          }}
-          onBlur={(e) => {
-            e.target.style.borderColor = error ? '#e53e3e' : '#e2e8f0';
-            e.target.style.boxShadow = 'none';
-          }}
+          className={`form-input ${rightElement ? 'form-input--with-right-element' : ''} ${error ? 'form-input--error' : ''} ${disabled ? 'form-input--disabled' : ''}`}
           {...props}
         />
         
         {rightElement && (
-          <div style={{
-            position: 'absolute',
-            right: '16px',
-            top: '50%',
-            transform: 'translateY(-50%)'
-          }}>
+          <div className="form-input-right-element">
             {rightElement}
           </div>
         )}
       </div>
       
       {error && (
-        <p style={{
-          fontSize: '12px',
-          color: '#e53e3e',
-          marginTop: '6px',
-          marginBottom: 0,
-          fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-        }}>
+        <p className="form-input-error">
+          <i className="bi bi-exclamation-circle form-input-error-icon"></i>
           {error}
         </p>
       )}

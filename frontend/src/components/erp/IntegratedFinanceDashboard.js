@@ -296,7 +296,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             >
               <option value="">지점 선택</option>
               {branches.map(branch => (
-                <option key={branch.codeValue} value={branch.codeValue} style={{color: '#333'}}>
+                <option key={branch.codeValue} value={branch.codeValue}>
                   {branch.codeLabel}
                 </option>
               ))}
@@ -382,9 +382,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
       </div>
 
       {/* 탭 메뉴 */}
-      <div style={{
-        display: 'flex',
-        marginBottom: '30px',
+      <div className="integrated-finance-tabs">
         backgroundColor: 'rgba(255,255,255,0.95)',
         borderRadius: '16px',
         padding: '8px',

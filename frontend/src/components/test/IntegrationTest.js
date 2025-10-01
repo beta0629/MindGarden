@@ -220,7 +220,7 @@ const IntegrationTest = () => {
         }}>
           <h1 style={{
             margin: 0,
-            fontSize: '28px',
+            fontSize: 'var(--font-size-xxl)',
             fontWeight: '700',
             color: '#1f2937',
             display: 'flex',
@@ -228,7 +228,7 @@ const IntegrationTest = () => {
             gap: '12px'
           }}>
             <span style={{
-              fontSize: '32px',
+              fontSize: 'var(--font-size-xxxl)',
               color: '#3b82f6'
             }}>🔧</span>
             {PAGE_TITLES.MAIN}
@@ -246,7 +246,7 @@ const IntegrationTest = () => {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
@@ -280,14 +280,14 @@ const IntegrationTest = () => {
         }}>
           <h3 style={{
             margin: '0 0 20px 0',
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#1f2937',
             display: 'flex',
             alignItems: 'center',
             gap: '8px'
           }}>
-            <span style={{ fontSize: '24px' }}>⚡</span>
+            <span style={{ fontSize: 'var(--font-size-xxl)' }}>⚡</span>
             테스트 실행
           </h3>
           <div style={{
@@ -304,7 +304,7 @@ const IntegrationTest = () => {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 fontWeight: '600',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s ease',
@@ -339,7 +339,7 @@ const IntegrationTest = () => {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 fontWeight: '600',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s ease',
@@ -374,7 +374,7 @@ const IntegrationTest = () => {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 fontWeight: '600',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s ease',
@@ -409,7 +409,7 @@ const IntegrationTest = () => {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 fontWeight: '600',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s ease',
@@ -463,7 +463,7 @@ const IntegrationTest = () => {
             }}></div>
             <p style={{
               margin: 0,
-              fontSize: '16px',
+              fontSize: 'var(--font-size-base)',
               fontWeight: '500',
               color: '#6b7280'
             }}>{MESSAGES.LOADING.RUNNING_TEST}</p>
@@ -482,14 +482,14 @@ const IntegrationTest = () => {
           }}>
             <h3 style={{
               margin: '0 0 20px 0',
-              fontSize: '20px',
+              fontSize: 'var(--font-size-xl)',
               fontWeight: '600',
               color: '#1f2937',
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
             }}>
-              <span style={{ fontSize: '24px' }}>📊</span>
+              <span style={{ fontSize: 'var(--font-size-xxl)' }}>📊</span>
               통합 테스트 결과
             </h3>
             <div style={{
@@ -507,7 +507,7 @@ const IntegrationTest = () => {
               }}>
                 <h4 style={{
                   margin: 0,
-                  fontSize: '18px',
+                  fontSize: 'var(--font-size-lg)',
                   fontWeight: '600',
                   color: '#1f2937'
                 }}>{testResults.testName}</h4>
@@ -516,7 +516,7 @@ const IntegrationTest = () => {
                   backgroundColor: testResults.success ? '#10b981' : '#ef4444',
                   color: 'white',
                   borderRadius: '20px',
-                  fontSize: '12px',
+                  fontSize: 'var(--font-size-xs)',
                   fontWeight: '600'
                 }}>
                   {testResults.success ? '성공' : '실패'}
@@ -528,16 +528,16 @@ const IntegrationTest = () => {
                 gap: '12px',
                 marginBottom: '20px'
               }}>
-                <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
                   <strong style={{ color: '#374151' }}>시작 시간:</strong> {formatDateTime(testResults.startTime)}
                 </p>
-                <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
                   <strong style={{ color: '#374151' }}>종료 시간:</strong> {formatDateTime(testResults.endTime)}
                 </p>
-                <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
                   <strong style={{ color: '#374151' }}>실행 시간:</strong> {testResults.executionTimeMs}ms
                 </p>
-                <p style={{ margin: 0, fontSize: '14px', color: '#6b7280', gridColumn: '1 / -1' }}>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280', gridColumn: '1 / -1' }}>
                   <strong style={{ color: '#374151' }}>메시지:</strong> {testResults.message || testResults.errorMessage}
                 </p>
               </div>
@@ -552,7 +552,7 @@ const IntegrationTest = () => {
                 }}>
                   <h5 style={{
                     margin: '0 0 16px 0',
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     fontWeight: '600',
                     color: '#1f2937'
                   }}>개별 테스트 결과:</h5>
@@ -576,7 +576,7 @@ const IntegrationTest = () => {
                           marginBottom: '8px'
                         }}>
                           <span style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             fontWeight: '600',
                             color: '#1f2937'
                           }}>{result.testName}</span>
@@ -623,7 +623,7 @@ const IntegrationTest = () => {
           }}>
             <h3 style={{
               margin: '0 0 20px 0',
-              fontSize: '20px',
+              fontSize: 'var(--font-size-xl)',
               fontWeight: '600',
               color: '#1f2937',
               display: 'flex',
@@ -648,7 +648,7 @@ const IntegrationTest = () => {
               }}>
                 <h4 style={{
                   margin: 0,
-                  fontSize: '18px',
+                  fontSize: 'var(--font-size-lg)',
                   fontWeight: '600',
                   color: '#1f2937'
                 }}>시스템 상태</h4>
@@ -657,7 +657,7 @@ const IntegrationTest = () => {
                   backgroundColor: healthStatus.overallStatus === 'HEALTHY' ? '#10b981' : '#ef4444',
                   color: 'white',
                   borderRadius: '20px',
-                  fontSize: '12px',
+                  fontSize: 'var(--font-size-xs)',
                   fontWeight: '600'
                 }}>
                   {healthStatus.overallStatus}
@@ -669,13 +669,13 @@ const IntegrationTest = () => {
                 gap: '12px',
                 marginBottom: '20px'
               }}>
-                <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
                   <strong style={{ color: '#374151' }}>확인 시간:</strong> {formatDateTime(healthStatus.timestamp)}
                 </p>
-                <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
                   <strong style={{ color: '#374151' }}>사용자 수:</strong> {healthStatus.userCount}
                 </p>
-                <p style={{ margin: 0, fontSize: '14px', color: '#6b7280', gridColumn: '1 / -1' }}>
+                <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280', gridColumn: '1 / -1' }}>
                   <strong style={{ color: '#374151' }}>메시지:</strong> {healthStatus.message}
                 </p>
               </div>
@@ -689,7 +689,7 @@ const IntegrationTest = () => {
               }}>
                 <h5 style={{
                   margin: '0 0 16px 0',
-                  fontSize: '16px',
+                  fontSize: 'var(--font-size-base)',
                   fontWeight: '600',
                   color: '#1f2937'
                 }}>서비스 상태:</h5>
@@ -717,7 +717,7 @@ const IntegrationTest = () => {
                       border: '1px solid #e5e7eb'
                     }}>
                       <span style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '500',
                         color: '#374151'
                       }}>{service.name}:</span>
@@ -751,14 +751,14 @@ const IntegrationTest = () => {
           }}>
             <h3 style={{
               margin: '0 0 20px 0',
-              fontSize: '20px',
+              fontSize: 'var(--font-size-xl)',
               fontWeight: '600',
               color: '#1f2937',
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
             }}>
-              <span style={{ fontSize: '24px' }}>⚡</span>
+              <span style={{ fontSize: 'var(--font-size-xxl)' }}>⚡</span>
               성능 테스트 결과
             </h3>
             <div style={{
@@ -776,7 +776,7 @@ const IntegrationTest = () => {
               }}>
                 <h4 style={{
                   margin: 0,
-                  fontSize: '18px',
+                  fontSize: 'var(--font-size-lg)',
                   fontWeight: '600',
                   color: '#1f2937'
                 }}>성능 측정 결과</h4>
@@ -785,7 +785,7 @@ const IntegrationTest = () => {
                   backgroundColor: performanceResults.success ? '#10b981' : '#ef4444',
                   color: 'white',
                   borderRadius: '20px',
-                  fontSize: '12px',
+                  fontSize: 'var(--font-size-xs)',
                   fontWeight: '600'
                 }}>
                   {performanceResults.success ? '완료' : '실패'}
@@ -799,13 +799,13 @@ const IntegrationTest = () => {
                     gap: '12px',
                     marginBottom: '20px'
                   }}>
-                    <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                    <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
                       <strong style={{ color: '#374151' }}>평균 응답 시간:</strong> {performanceResults.averageResponseTime?.toFixed(2)}ms
                     </p>
-                    <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                    <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
                       <strong style={{ color: '#374151' }}>최대 응답 시간:</strong> {performanceResults.maxResponseTime}ms
                     </p>
-                    <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                    <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
                       <strong style={{ color: '#374151' }}>최소 응답 시간:</strong> {performanceResults.minResponseTime}ms
                     </p>
                   </div>
@@ -818,7 +818,7 @@ const IntegrationTest = () => {
                   }}>
                     <h5 style={{
                       margin: '0 0 12px 0',
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
                       color: '#1f2937'
                     }}>개별 응답 시간:</h5>
@@ -845,7 +845,7 @@ const IntegrationTest = () => {
                 </div>
               ) : (
                 <div>
-                  <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                  <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
                     <strong style={{ color: '#374151' }}>오류:</strong> {performanceResults.error}
                   </p>
                 </div>
@@ -866,7 +866,7 @@ const IntegrationTest = () => {
           }}>
             <h3 style={{
               margin: '0 0 20px 0',
-              fontSize: '20px',
+              fontSize: 'var(--font-size-xl)',
               fontWeight: '600',
               color: '#1f2937',
               display: 'flex',
@@ -891,7 +891,7 @@ const IntegrationTest = () => {
               }}>
                 <h4 style={{
                   margin: 0,
-                  fontSize: '18px',
+                  fontSize: 'var(--font-size-lg)',
                   fontWeight: '600',
                   color: '#1f2937'
                 }}>보안 검증 결과</h4>
@@ -900,7 +900,7 @@ const IntegrationTest = () => {
                   backgroundColor: securityResults.success ? '#10b981' : '#ef4444',
                   color: 'white',
                   borderRadius: '20px',
-                  fontSize: '12px',
+                  fontSize: 'var(--font-size-xs)',
                   fontWeight: '600'
                 }}>
                   {securityResults.success ? '완료' : '실패'}
@@ -985,7 +985,7 @@ const IntegrationTest = () => {
                 </div>
               ) : (
                 <div>
-                  <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>
+                  <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: '#6b7280' }}>
                     <strong style={{ color: '#374151' }}>오류:</strong> {securityResults.error}
                   </p>
                 </div>

@@ -821,26 +821,26 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
           <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>💚 자산</h3>
           
           <div style={{ marginBottom: '18px' }}>
-            <h4 style={{ fontSize: '15px', color: 'rgba(255,255,255,0.9)', margin: '0 0 8px 0', fontWeight: '500' }}>유동자산</h4>
-            <div style={{ fontSize: '13px', marginLeft: '12px', lineHeight: '1.6' }}>
+            <h4 style={{ fontSize: 'var(--font-size-md)', color: 'rgba(255,255,255,0.9)', margin: '0 0 8px 0', fontWeight: '500' }}>유동자산</h4>
+            <div style={{ fontSize: 'var(--font-size-sm)', marginLeft: '12px', lineHeight: '1.6' }}>
               <div style={{ marginBottom: '4px' }}>현금: {formatCurrency(balanceSheetData?.assets?.currentAssets?.cash || 0)}</div>
               <div style={{ marginBottom: '4px' }}>예금: {formatCurrency(balanceSheetData?.assets?.currentAssets?.bankDeposits || 0)}</div>
               <div style={{ marginBottom: '4px' }}>매출채권: {formatCurrency(balanceSheetData?.assets?.currentAssets?.accountsReceivable || 0)}</div>
               <div style={{ marginBottom: '4px' }}>재고자산: {formatCurrency(balanceSheetData?.assets?.currentAssets?.inventory || 0)}</div>
             </div>
-            <div style={{ fontWeight: 'bold', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '8px', marginTop: '8px', fontSize: '14px' }}>
+            <div style={{ fontWeight: 'bold', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '8px', marginTop: '8px', fontSize: 'var(--font-size-sm)' }}>
               유동자산 합계: {formatCurrency(balanceSheetData?.assets?.currentAssets?.total || 0)}
             </div>
           </div>
 
           <div>
-            <h4 style={{ fontSize: '15px', color: 'rgba(255,255,255,0.9)', margin: '0 0 8px 0', fontWeight: '500' }}>고정자산</h4>
-            <div style={{ fontSize: '13px', marginLeft: '12px', lineHeight: '1.6' }}>
+            <h4 style={{ fontSize: 'var(--font-size-md)', color: 'rgba(255,255,255,0.9)', margin: '0 0 8px 0', fontWeight: '500' }}>고정자산</h4>
+            <div style={{ fontSize: 'var(--font-size-sm)', marginLeft: '12px', lineHeight: '1.6' }}>
               <div style={{ marginBottom: '4px' }}>사무용품: {formatCurrency(balanceSheetData?.assets?.fixedAssets?.officeEquipment || 0)}</div>
               <div style={{ marginBottom: '4px' }}>컴퓨터 장비: {formatCurrency(balanceSheetData?.assets?.fixedAssets?.computerEquipment || 0)}</div>
               <div style={{ marginBottom: '4px' }}>임대료지불보증금: {formatCurrency(balanceSheetData?.assets?.fixedAssets?.leaseDeposits || 0)}</div>
             </div>
-            <div style={{ fontWeight: 'bold', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '8px', marginTop: '8px', fontSize: '14px' }}>
+            <div style={{ fontWeight: 'bold', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '8px', marginTop: '8px', fontSize: 'var(--font-size-sm)' }}>
               고정자산 합계: {formatCurrency(balanceSheetData?.assets?.fixedAssets?.netAmount || 0)}
             </div>
           </div>
@@ -858,26 +858,26 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
           boxShadow: '0 8px 32px rgba(255,118,117,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>❤️ 부채</h3>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>❤️ 부채</h3>
           
           <div style={{ marginBottom: '18px' }}>
-            <h4 style={{ fontSize: '15px', color: 'rgba(255,255,255,0.9)', margin: '0 0 8px 0', fontWeight: '500' }}>유동부채</h4>
-            <div style={{ fontSize: '13px', marginLeft: '12px', lineHeight: '1.6' }}>
+            <h4 style={{ fontSize: 'var(--font-size-md)', color: 'rgba(255,255,255,0.9)', margin: '0 0 8px 0', fontWeight: '500' }}>유동부채</h4>
+            <div style={{ fontSize: 'var(--font-size-sm)', marginLeft: '12px', lineHeight: '1.6' }}>
               <div style={{ marginBottom: '4px' }}>매입채무: {formatCurrency(balanceSheetData?.liabilities?.currentLiabilities?.accountsPayable || 0)}</div>
               <div style={{ marginBottom: '4px' }}>단기차입금: {formatCurrency(balanceSheetData?.liabilities?.currentLiabilities?.shortTermLoans || 0)}</div>
               <div style={{ marginBottom: '4px' }}>미지급비용: {formatCurrency(balanceSheetData?.liabilities?.currentLiabilities?.accruedExpenses || 0)}</div>
             </div>
-            <div style={{ fontWeight: 'bold', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '8px', marginTop: '8px', fontSize: '14px' }}>
+            <div style={{ fontWeight: 'bold', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '8px', marginTop: '8px', fontSize: 'var(--font-size-sm)' }}>
               유동부채 합계: {formatCurrency(balanceSheetData?.liabilities?.currentLiabilities?.total || 0)}
             </div>
           </div>
 
           <div>
-            <h4 style={{ fontSize: '15px', color: 'rgba(255,255,255,0.9)', margin: '0 0 8px 0', fontWeight: '500' }}>비유동부채</h4>
-            <div style={{ fontSize: '13px', marginLeft: '12px', lineHeight: '1.6' }}>
+            <h4 style={{ fontSize: 'var(--font-size-md)', color: 'rgba(255,255,255,0.9)', margin: '0 0 8px 0', fontWeight: '500' }}>비유동부채</h4>
+            <div style={{ fontSize: 'var(--font-size-sm)', marginLeft: '12px', lineHeight: '1.6' }}>
               <div style={{ marginBottom: '4px' }}>장기차입금: {formatCurrency(balanceSheetData?.liabilities?.longTermLiabilities?.longTermLoans || 0)}</div>
             </div>
-            <div style={{ fontWeight: 'bold', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '8px', marginTop: '8px', fontSize: '14px' }}>
+            <div style={{ fontWeight: 'bold', borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '8px', marginTop: '8px', fontSize: 'var(--font-size-sm)' }}>
               비유동부채 합계: {formatCurrency(balanceSheetData?.liabilities?.longTermLiabilities?.total || 0)}
             </div>
           </div>

@@ -646,71 +646,38 @@ const MappingManagement = () => {
                         </div>
 
                         {/* 모달 내용 */}
-                        <div style={{
-                            padding: '24px',
-                            maxHeight: '60vh',
-                            overflowY: 'auto'
-                        }}>
+                        <div className="mapping-refund-modal-body">
                             {/* 매핑 정보 */}
-                            <div style={{
-                                backgroundColor: '#f8f9fa',
-                                padding: '16px',
-                                borderRadius: '8px',
-                                marginBottom: '20px'
-                            }}>
-                                <h4 style={{
-                                    margin: '0 0 12px 0',
-                                    fontSize: 'var(--font-size-base)',
-                                    fontWeight: '600',
-                                    color: '#343a40'
-                                }}>
+                            <div className="mapping-refund-info">
+                                <h4 className="mapping-refund-info-title">
                                     환불 대상 매핑 정보
                                 </h4>
-                                <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d', lineHeight: '1.5' }}>
+                                <div className="mapping-refund-info-content">
                                     <p><strong>상담사:</strong> {refundMapping.consultantName}</p>
                                     <p><strong>내담자:</strong> {refundMapping.clientName}</p>
                                     <p><strong>패키지:</strong> {refundMapping.packageName}</p>
                                     <p><strong>총 회기:</strong> {refundMapping.totalSessions}회</p>
                                     <p><strong>사용 회기:</strong> {refundMapping.usedSessions}회</p>
-                                    <p style={{ color: '#dc3545', fontWeight: '600' }}>
+                                    <p className="mapping-refund-info-sessions">
                                         <strong>환불 회기:</strong> {refundMapping.remainingSessions}회
                                     </p>
                                 </div>
                             </div>
 
                             {/* 환불 사유 입력 */}
-                            <div>
-                                <h4 style={{
-                                    margin: '0 0 12px 0',
-                                    fontSize: 'var(--font-size-base)',
-                                    fontWeight: '600',
-                                    color: '#343a40'
-                                }}>
-                                    환불 사유 <span style={{ color: '#dc3545' }}>*</span>
+                            <div className="mapping-refund-reason">
+                                <h4 className="mapping-refund-reason-title">
+                                    환불 사유 <span className="mapping-refund-required">*</span>
                                 </h4>
                                 <textarea
                                     value={refundReason}
                                     onChange={(e) => setRefundReason(e.target.value)}
                                     placeholder="환불 사유를 상세히 입력해주세요..."
                                     rows={4}
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px',
-                                        border: `2px solid ${!refundReason.trim() ? '#dc3545' : '#e9ecef'}`,
-                                        borderRadius: '8px',
-                                        fontSize: 'var(--font-size-sm)',
-                                        fontFamily: 'inherit',
-                                        resize: 'vertical',
-                                        minHeight: '80px'
-                                    }}
+                                    className={`mapping-refund-reason-input ${!refundReason.trim() ? 'mapping-refund-reason-input--error' : ''}`}
                                 />
                                 {!refundReason.trim() && (
-                                    <div style={{
-                                        color: '#dc3545',
-                                        fontSize: 'var(--font-size-xs)',
-                                        marginTop: '4px',
-                                        fontWeight: '500'
-                                    }}>
+                                    <div className="mapping-refund-reason-error">
                                         ⚠️ 환불 사유를 반드시 입력해주세요.
                                     </div>
                                 )}
@@ -718,33 +685,18 @@ const MappingManagement = () => {
                         </div>
 
                         {/* 모달 푸터 */}
-                        <div style={{
-                            padding: '20px 24px',
-                            borderTop: '1px solid #e9ecef',
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            gap: '12px'
-                        }}>
+                        <div className="mapping-refund-modal-footer">
                             <button
                                 onClick={handleCloseRefundModal}
                                 disabled={loading}
-                                style={{
-                                    padding: '12px 24px',
-                                    backgroundColor: 'white',
-                                    border: '2px solid #6c757d',
-                                    borderRadius: '8px',
-                                    fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '600',
-                                    color: '#6c757d',
-                                    cursor: loading ? 'not-allowed' : 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
+                                className="mg-btn mg-btn--secondary"
                             >
                                 취소
                             </button>
                             <button
                                 onClick={handleRefundProcess}
                                 disabled={loading}
+                                className="mg-btn mg-btn--danger"
                                 style={{
                                     padding: '12px 24px',
                                     backgroundColor: !refundReason.trim() ? '#6c757d' : '#dc3545',

@@ -71,85 +71,26 @@ const ConsultantFilterNew = ({
                 </div>
 
                 {/* 초기화 버튼 */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    minWidth: '100px'
-                }}>
-                    <label style={{
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '600',
-                        color: '#495057',
-                        margin: '0'
-                    }}>&nbsp;</label>
+                <div className="consultant-filter-field consultant-filter-field--reset">
+                    <label className="consultant-filter-label">&nbsp;</label>
                     <button
-                        style={{
-                            height: '40px',
-                            padding: '8px 16px',
-                            border: 'none',
-                            borderRadius: '8px',
-                            background: '#ffffff',
-                            color: '#6c757d',
-                            fontSize: 'var(--font-size-sm)',
-                            fontWeight: '500',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            minWidth: '80px',
-                            justifyContent: 'center'
-                        }}
+                        className="mg-btn mg-btn--sm mg-btn--secondary"
                         onClick={onResetFilters}
-                        onMouseEnter={(e) => {
-                            e.target.style.background = '#6c757d';
-                            e.target.style.color = '#ffffff';
-                            e.target.style.transform = 'translateY(-2px)';
-                            e.target.style.boxShadow = '0 4px 12px rgba(108, 117, 125, 0.3)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.background = '#ffffff';
-                            e.target.style.color = '#6c757d';
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = 'none';
-                        }}
                     >
                         🔄 {SCHEDULE_MODAL_CONSTANTS.FILTER.RESET_BUTTON_TEXT}
                     </button>
                 </div>
 
                 {/* 상담사 수 표시 */}
-                <div style={{
-                            fontSize: 'var(--font-size-sm)',
-                    fontWeight: '600',
-                    color: '#495057',
-                    marginLeft: 'auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '40px'
-                }}>
+                <div className="consultant-filter-count">
                     {consultantCount}{SCHEDULE_MODAL_CONSTANTS.FILTER.CONSULTANT_COUNT_TEXT}
                 </div>
             </div>
 
             {/* 가용성 필터 */}
-            <div style={{
-                display: 'flex',
-                gap: '16px',
-                alignItems: 'center',
-                flexWrap: 'wrap'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    minWidth: '200px'
-                }}>
-                    <label style={{
-                        fontSize: 'var(--font-size-sm)',
-                        fontWeight: '600',
-                        color: '#495057',
+            <div className="consultant-filter-availability">
+                <div className="consultant-filter-availability-field">
+                    <label className="consultant-filter-label">
                         margin: '0'
                     }}>가용성</label>
                     <div style={{

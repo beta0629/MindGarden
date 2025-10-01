@@ -179,7 +179,7 @@ const PrivacyConsentSection = () => {
               <div className="consent-status-item">
                 <div className="consent-status-icon">
                   <i className={`bi bi-${consentStatus.marketingConsent ? 'check-circle-fill' : 'circle'}`} 
-                     style={{ color: consentStatus.marketingConsent ? '#28a745' : '#6c757d' }}></i>
+                     data-consent-color={consentStatus.marketingConsent ? '#28a745' : '#6c757d'}></i>
                 </div>
                 <div className="consent-status-info">
                   <span className="consent-status-label">마케팅 정보 수신</span>

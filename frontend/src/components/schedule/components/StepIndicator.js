@@ -58,7 +58,7 @@ const StepIndicator = ({
             <div className="step-indicator-progress-bar">
                 <div 
                     className="step-indicator-progress-fill"
-                    style={{ width: `${progressPercentage}%` }}
+                    data-width={progressPercentage}
                 />
             </div>
         </div>

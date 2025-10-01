@@ -226,7 +226,7 @@ const ClientPaymentSessionsSection = ({ userId }) => {
                   <div className="payment-status">
                     <span 
                       className="status-badge"
-                      style={{ color: getStatusColor(payment.status) }}
+                      data-status-color={getStatusColor(payment.status)}
                     >
                       {getStatusText(payment.status)}
                     </span>

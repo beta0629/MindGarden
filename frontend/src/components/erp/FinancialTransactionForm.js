@@ -106,8 +106,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
     >
 
         {error && (
-          <div className="financial-transaction-error"
-          }}>
+          <div className="financial-transaction-error">
             {error}
           </div>
         )}

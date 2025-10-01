@@ -207,8 +207,7 @@ const AdminApprovalDashboard = () => {
                 {request.reason && (
                   <div className="approval-request-reason">
                     <strong>사유:</strong>
-                    <div className="approval-request-reason-text"
-                    }}>
+                    <div className="approval-request-reason-text">
                       {request.reason}
                     </div>
                   </div>

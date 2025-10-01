@@ -90,7 +90,7 @@
 }
 
 .filter-section {
-  min-width: 300px !important;
+  min-width: 300px;
   position: relative;
 }
 
@@ -107,7 +107,7 @@
 }
 
 .filter-select {
-  width: 100% !important;
+  width: 100%;
   padding: 14px 40px 14px 35px;
   border: 2px solid #e9ecef;
   border-radius: 12px;
@@ -117,10 +117,10 @@
   transition: all 0.3s ease;
   color: #2c3e50;
   font-weight: 500;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  min-width: 250px !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 250px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   position: relative;
   appearance: none;

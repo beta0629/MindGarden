@@ -38,8 +38,8 @@
 }
 
 .consultant-status-profile-image {
-    width: 60px !important;
-    height: 60px !important;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid #a8e6a3;

@@ -166,24 +166,24 @@
 
 /* 반응형 유틸리티 */
 @media (max-width: 768px) {
-  .mobile-hidden { display: none !important; }
+  .mobile-hidden { display: none; }
 }
 
 @media (min-width: 769px) {
-  .desktop-hidden { display: none !important; }
+  .desktop-hidden { display: none; }
 }
 
 /* 프린트 스타일 */
 @media print {
-  .no-print { display: none !important; }
+  .no-print { display: none; }
   
   body {
-    background: white !important;
-    color: black !important;
+    background: white;
+    color: black;
   }
   
   .tablet-bottom-navigation,
   .homepage-header {
-    display: none !important;
+    display: none;
   }
 }

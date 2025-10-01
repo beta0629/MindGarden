@@ -10,14 +10,14 @@
 .mypage-container input,
 .mypage-container select,
 .mypage-container textarea {
-  border: none !important;
-  box-shadow: none !important;
+  border: none;
+  box-shadow: none;
 }
 
 .mypage-container input:focus,
 .mypage-container select:focus,
 .mypage-container textarea:focus {
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
 /* MyPage 상수 변수 */

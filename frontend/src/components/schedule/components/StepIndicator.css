@@ -137,7 +137,7 @@
 
 /* 1단계일 때 2단계로 가는 연결선 숨김 */
 .step-item.current:first-child:not(:last-child)::after {
-    display: none !important;
+    display: none;
 }
 
 /* 모바일 반응형 */

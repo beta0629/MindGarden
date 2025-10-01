@@ -1,0 +1,223 @@
+/* PrivacyConsentModal 스타일 - 새로운 디자인 시스템 적용 */
+
+.privacy-consent-header {
+  background: var(--ios-bg-secondary);
+  border-bottom: 1px solid var(--ios-border-light);
+  padding: var(--spacing-lg) var(--spacing-xl);
+}
+
+.privacy-consent-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin: 0;
+}
+
+.privacy-consent-body {
+  padding: var(--spacing-xl);
+}
+
+.privacy-consent-intro {
+  margin-bottom: var(--spacing-lg);
+}
+
+.privacy-consent-intro-text {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin: 0 0 var(--spacing-lg) 0;
+  line-height: 1.5;
+}
+
+.privacy-consent-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.privacy-consent-section-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.privacy-consent-section-badge {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xxs) var(--spacing-sm);
+  border-radius: var(--border-radius-full);
+  display: inline-block;
+}
+
+.privacy-consent-section-badge--required {
+  background: var(--ios-red-light);
+  color: var(--ios-red-dark);
+}
+
+.privacy-consent-section-badge--optional {
+  background: var(--ios-gray-light);
+  color: var(--ios-gray-dark);
+}
+
+.privacy-consent-item {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--ios-bg-secondary);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--ios-border-light);
+}
+
+.privacy-consent-item-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.privacy-consent-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ios-blue);
+}
+
+.privacy-consent-item-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin: 0;
+  flex: 1;
+}
+
+.privacy-consent-item-content {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-secondary);
+  line-height: 1.5;
+  margin-left: var(--spacing-lg);
+}
+
+.privacy-consent-footer {
+  background: var(--ios-bg-secondary);
+  border-top: 1px solid var(--ios-border-light);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.privacy-consent-summary {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+}
+
+.privacy-consent-summary strong {
+  color: var(--ios-text-primary);
+}
+
+.privacy-consent-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.privacy-consent-button {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  min-width: 80px;
+}
+
+.privacy-consent-button--secondary {
+  background: var(--ios-gray-light);
+  color: var(--ios-gray-dark);
+}
+
+.privacy-consent-button--secondary:hover {
+  background: var(--ios-gray);
+  color: white;
+}
+
+.privacy-consent-button--primary {
+  background: var(--ios-blue);
+  color: white;
+}
+
+.privacy-consent-button--primary:hover {
+  background: var(--ios-blue-dark);
+}
+
+.privacy-consent-button--primary:disabled {
+  background: var(--ios-gray-light);
+  color: var(--ios-gray-dark);
+  cursor: not-allowed;
+}
+
+.privacy-consent-expand-button {
+  background: none;
+  border: none;
+  color: var(--ios-blue);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  padding: var(--spacing-xxs);
+  margin-left: var(--spacing-sm);
+  transition: all var(--transition-normal);
+}
+
+.privacy-consent-expand-button:hover {
+  color: var(--ios-blue-dark);
+  text-decoration: underline;
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .privacy-consent-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .privacy-consent-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  .privacy-consent-body {
+    padding: var(--spacing-lg);
+  }
+  
+  .privacy-consent-footer {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .privacy-consent-buttons {
+    width: 100%;
+    justify-content: stretch;
+  }
+  
+  .privacy-consent-button {
+    flex: 1;
+  }
+  
+  .privacy-consent-item {
+    padding: var(--spacing-sm);
+  }
+  
+  .privacy-consent-item-content {
+    margin-left: var(--spacing-md);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .privacy-consent-footer {
+    flex-wrap: wrap;
+  }
+  
+  .privacy-consent-buttons {
+    flex: 1;
+    justify-content: flex-end;
+  }
+}

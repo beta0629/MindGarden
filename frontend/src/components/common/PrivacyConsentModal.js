@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Button } from 'react-bootstrap';
+import './PrivacyConsentModal.css';
 
 /**
  * 개인정보 수집 및 이용 동의 모달 컴포넌트
@@ -55,42 +56,26 @@ const PrivacyConsentModal = ({
       centered
       backdrop="static"
     >
-      <Modal.Header style={{
-        background: '#f8f9fa',
-        borderBottom: '1px solid #e9ecef',
-        padding: '20px 24px'
-      }}>
-        <Modal.Title style={{
-          fontSize: 'var(--font-size-xl)',
-          fontWeight: '600',
-          color: '#2c3e50',
-          margin: 0
-        }}>
+      <Modal.Header className="privacy-consent-header">
+        <Modal.Title className="privacy-consent-title">
           {title}
         </Modal.Title>
       </Modal.Header>
 
-      <Modal.Body style={{ padding: '24px' }}>
-        <div style={{ marginBottom: '20px' }}>
-          <p style={{
-            fontSize: 'var(--font-size-sm)',
-            color: '#6c757d',
-            margin: '0 0 20px 0',
-            lineHeight: '1.5'
-          }}>
+      <Modal.Body className="privacy-consent-body">
+        <div className="privacy-consent-intro">
+          <p className="privacy-consent-intro-text">
             마인드가든 서비스 이용을 위해 아래 개인정보 수집 및 이용에 동의해주세요.
           </p>
         </div>
 
         {/* 필수 동의 항목 */}
-        <div style={{ marginBottom: '24px' }}>
-          <h5 style={{
-            fontSize: 'var(--font-size-base)',
-            fontWeight: '600',
-            color: '#495057',
-            marginBottom: '16px'
-          }}>
+        <div className="privacy-consent-section">
+          <h5 className="privacy-consent-section-title">
             필수 동의 항목
+            <span className="privacy-consent-section-badge privacy-consent-section-badge--required">
+              필수
+            </span>
           </h5>
 
           {/* 개인정보 처리방침 동의 */}

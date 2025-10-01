@@ -17,34 +17,10 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
   // 통계 데이터가 없으면 빈 그리드 반환
   if (!statistics || Object.keys(statistics).length === 0) {
     return (
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '24px',
-        margin: '32px 0'
-      }}>
-        <div style={{
-          gridColumn: '1 / -1',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '48px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '12px',
-          color: '#6c757d',
-          textAlign: 'center'
-        }}>
-          <i className="fas fa-chart-line" style={{
-            fontSize: 'var(--font-size-xxxl)',
-            marginBottom: '16px',
-            opacity: '0.5'
-          }}></i>
-          <p style={{
-            fontSize: 'var(--font-size-lg)',
-            fontWeight: '500',
-            margin: '0'
-          }}>상세 통계 데이터를 불러오는 중입니다...</p>
+      <div className="detailed-stats-grid">
+        <div className="detailed-stats-empty">
+          <i className="fas fa-chart-line detailed-stats-empty-icon"></i>
+          <p className="detailed-stats-empty-text">상세 통계 데이터를 불러오는 중입니다...</p>
         </div>
       </div>
     );

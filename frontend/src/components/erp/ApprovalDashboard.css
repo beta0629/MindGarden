@@ -1,0 +1,185 @@
+/* ApprovalDashboard 공통 스타일 - AdminApprovalDashboard, SuperAdminApprovalDashboard 재사용 */
+
+.approval-dashboard-container {
+  padding: var(--spacing-xl);
+  background-color: var(--ios-bg-secondary);
+  min-height: 100vh;
+}
+
+.approval-dashboard-error {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--ios-red-light);
+  color: var(--ios-red-dark);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--ios-red);
+  font-size: var(--font-size-sm);
+}
+
+.approval-dashboard-empty {
+  text-align: center;
+  padding: var(--spacing-xxl);
+  color: var(--ios-text-secondary);
+}
+
+.approval-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.approval-request-details {
+  margin-bottom: var(--spacing-md);
+}
+
+.approval-request-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.approval-request-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2xs);
+}
+
+.approval-request-label {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.approval-request-value {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.approval-request-description {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background-color: var(--ios-bg-secondary);
+  border-radius: var(--border-radius-sm);
+  border-left: 3px solid var(--ios-blue);
+}
+
+.approval-request-description-label {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
+  display: block;
+}
+
+.approval-request-description-text {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-primary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.approval-request-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  justify-content: flex-end;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--ios-border-light);
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .approval-dashboard-container {
+    padding: var(--spacing-md);
+  }
+  
+  .approval-dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .approval-request-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .approval-request-actions {
+    flex-direction: column;
+  }
+  
+  .approval-request-actions .mg-btn,
+  .approval-request-actions button {
+    width: 100%;
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .approval-dashboard-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .approval-dashboard-container {
+    background-color: var(--ios-bg-secondary-dark);
+  }
+  
+  .approval-dashboard-error {
+    background-color: var(--ios-red-light-dark);
+    color: var(--ios-red-dark);
+    border-color: var(--ios-red);
+  }
+  
+  .approval-dashboard-empty {
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .approval-request-label {
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .approval-request-value {
+    color: var(--ios-text-primary-dark);
+  }
+  
+  .approval-request-description {
+    background-color: var(--ios-bg-secondary-dark);
+  }
+  
+  .approval-request-description-label {
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .approval-request-description-text {
+    color: var(--ios-text-primary-dark);
+  }
+  
+  .approval-request-actions {
+    border-top-color: var(--ios-border-light-dark);
+  }
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+  .approval-dashboard-grid {
+    transition: none;
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .approval-dashboard-error {
+    border-width: 2px;
+  }
+  
+  .approval-request-description {
+    border-left-width: 4px;
+  }
+  
+  .approval-request-actions {
+    border-top-width: 2px;
+  }
+}

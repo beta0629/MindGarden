@@ -6,6 +6,7 @@ import LoadingSpinner from '../common/LoadingSpinner';
 import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
 import { useSession } from '../../hooks/useSession';
+import './ApprovalDashboard.css';
 
 /**
  * 수퍼 관리자 승인 대시보드 컴포넌트
@@ -163,7 +164,7 @@ const SuperAdminApprovalDashboard = () => {
 
   return (
     <SimpleLayout>
-      <div style={{ padding: '24px', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+      <div className="approval-dashboard-container">
         <ErpHeader
           title="수퍼 관리자 승인 대시보드"
           subtitle="관리자 승인된 구매 요청의 최종 승인"
@@ -178,35 +179,19 @@ const SuperAdminApprovalDashboard = () => {
         />
 
       {error && (
-        <div style={{ 
-          marginBottom: '16px', 
-          padding: '12px', 
-          backgroundColor: '#f8d7da', 
-          color: '#721c24',
-          border: '1px solid #f5c6cb',
-          borderRadius: '4px'
-        }}>
+        <div className="approval-dashboard-error">
           {error}
         </div>
       )}
 
       {requests.length === 0 ? (
         <ErpCard title="승인 대기 목록">
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '40px', 
-            color: '#666',
-            fontSize: 'var(--font-size-base)'
-          }}>
+          <div className="approval-dashboard-empty">
             수퍼 관리자 승인 대기 중인 구매 요청이 없습니다.
           </div>
         </ErpCard>
       ) : (
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', 
-          gap: '20px' 
-        }}>
+        <div className="approval-dashboard-grid">
           {requests.map(request => (
             <ErpCard key={request.id} title={`구매 요청 #${request.id}`}>
               <div style={{ marginBottom: '16px' }}>

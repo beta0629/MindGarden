@@ -1035,11 +1035,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 <button 
                                     onClick={handleVacationClick}
                                     className="schedule-calendar-modal-btn"
-                                        border: '2px solid #e9ecef',
-                                        borderRadius: '8px',
-                                        background: 'white',
-                                        cursor: 'pointer',
-                                        width: '100%',
                                         textAlign: 'left',
                                         transition: 'all 0.3s ease'
                                     }}

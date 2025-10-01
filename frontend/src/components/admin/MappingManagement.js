@@ -663,7 +663,7 @@ const MappingManagement = () => {
                             }}>
                                 <h3 style={{
                                     margin: 0,
-                                    fontSize: '18px',
+                                    fontSize: 'var(--font-size-lg)',
                                     fontWeight: '600',
                                     color: '#343a40'
                                 }}>
@@ -674,7 +674,7 @@ const MappingManagement = () => {
                                     style={{
                                         background: 'none',
                                         border: 'none',
-                                        fontSize: '24px',
+                                        fontSize: 'var(--font-size-xxl)',
                                         cursor: 'pointer',
                                         color: '#6c757d',
                                         padding: '0',
@@ -705,13 +705,13 @@ const MappingManagement = () => {
                             }}>
                                 <h4 style={{
                                     margin: '0 0 12px 0',
-                                    fontSize: '16px',
+                                    fontSize: 'var(--font-size-base)',
                                     fontWeight: '600',
                                     color: '#343a40'
                                 }}>
                                     환불 대상 매핑 정보
                                 </h4>
-                                <div style={{ fontSize: '14px', color: '#6c757d', lineHeight: '1.5' }}>
+                                <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d', lineHeight: '1.5' }}>
                                     <p><strong>상담사:</strong> {refundMapping.consultantName}</p>
                                     <p><strong>내담자:</strong> {refundMapping.clientName}</p>
                                     <p><strong>패키지:</strong> {refundMapping.packageName}</p>
@@ -727,7 +727,7 @@ const MappingManagement = () => {
                             <div>
                                 <h4 style={{
                                     margin: '0 0 12px 0',
-                                    fontSize: '16px',
+                                    fontSize: 'var(--font-size-base)',
                                     fontWeight: '600',
                                     color: '#343a40'
                                 }}>
@@ -743,7 +743,7 @@ const MappingManagement = () => {
                                         padding: '12px',
                                         border: `2px solid ${!refundReason.trim() ? '#dc3545' : '#e9ecef'}`,
                                         borderRadius: '8px',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         fontFamily: 'inherit',
                                         resize: 'vertical',
                                         minHeight: '80px'
@@ -752,7 +752,7 @@ const MappingManagement = () => {
                                 {!refundReason.trim() && (
                                     <div style={{
                                         color: '#dc3545',
-                                        fontSize: '12px',
+                                        fontSize: 'var(--font-size-xs)',
                                         marginTop: '4px',
                                         fontWeight: '500'
                                     }}>
@@ -778,7 +778,7 @@ const MappingManagement = () => {
                                     backgroundColor: 'white',
                                     border: '2px solid #6c757d',
                                     borderRadius: '8px',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     fontWeight: '600',
                                     color: '#6c757d',
                                     cursor: loading ? 'not-allowed' : 'pointer',
@@ -795,7 +795,7 @@ const MappingManagement = () => {
                                     backgroundColor: !refundReason.trim() ? '#6c757d' : '#dc3545',
                                     border: `2px solid ${!refundReason.trim() ? '#6c757d' : '#dc3545'}`,
                                     borderRadius: '8px',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     fontWeight: '600',
                                     color: 'white',
                                     cursor: loading ? 'not-allowed' : 'pointer',

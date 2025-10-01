@@ -95,7 +95,7 @@ const MappingDepositModal = ({
                 }}>
                     <h3 style={{
                         margin: 0,
-                        fontSize: '18px',
+                        fontSize: 'var(--font-size-lg)',
                         fontWeight: '600',
                         color: '#333'
                     }}>
@@ -106,7 +106,7 @@ const MappingDepositModal = ({
                         style={{
                             background: 'none',
                             border: 'none',
-                            fontSize: '20px',
+                            fontSize: 'var(--font-size-xl)',
                             cursor: 'pointer',
                             color: '#666',
                             padding: '4px'
@@ -123,16 +123,16 @@ const MappingDepositModal = ({
                         borderRadius: '8px',
                         marginBottom: '16px'
                     }}>
-                        <div style={{ fontSize: '14px', color: '#666', marginBottom: '4px' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginBottom: '4px' }}>
                             상담사: {mapping.consultant?.username || 'N/A'}
                         </div>
-                        <div style={{ fontSize: '14px', color: '#666', marginBottom: '4px' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginBottom: '4px' }}>
                             내담자: {mapping.client?.username || 'N/A'}
                         </div>
-                        <div style={{ fontSize: '14px', color: '#666', marginBottom: '4px' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginBottom: '4px' }}>
                             패키지: {mapping.packageName || 'N/A'}
                         </div>
-                        <div style={{ fontSize: '14px', color: '#666', fontWeight: '600' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', fontWeight: '600' }}>
                             금액: {mapping.paymentAmount ? `${mapping.paymentAmount.toLocaleString()}원` : 'N/A'}
                         </div>
                     </div>
@@ -158,7 +158,7 @@ const MappingDepositModal = ({
                                     padding: '10px 12px',
                                     border: '1px solid #ddd',
                                     borderRadius: '6px',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     outline: 'none',
                                     transition: 'border-color 0.2s'
                                 }}
@@ -182,7 +182,7 @@ const MappingDepositModal = ({
                                     backgroundColor: 'white',
                                     color: '#666',
                                     cursor: 'pointer',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     fontWeight: '500'
                                 }}
                                 disabled={isLoading}
@@ -199,7 +199,7 @@ const MappingDepositModal = ({
                                     backgroundColor: isLoading ? '#6c757d' : '#007bff',
                                     color: 'white',
                                     cursor: isLoading ? 'not-allowed' : 'pointer',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     fontWeight: '500',
                                     transition: 'background-color 0.2s'
                                 }}

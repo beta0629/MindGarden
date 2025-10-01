@@ -447,7 +447,7 @@ const ConsultationLogModal = ({
       borderRadius: '12px 12px 0 0'
     },
     headerTitle: {
-      fontSize: '20px',
+      fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
       color: '#2c3e50',
       margin: 0
@@ -455,7 +455,7 @@ const ConsultationLogModal = ({
     closeBtn: {
       background: 'none',
       border: 'none',
-      fontSize: '24px',
+      fontSize: 'var(--font-size-xxl)',
       cursor: 'pointer',
       color: '#6c757d',
       padding: '4px',
@@ -473,7 +473,7 @@ const ConsultationLogModal = ({
       border: '1px solid #e9ecef'
     },
     clientInfoTitle: {
-      fontSize: '16px',
+      fontSize: 'var(--font-size-base)',
       fontWeight: '600',
       color: '#495057',
       marginBottom: '12px'
@@ -492,7 +492,7 @@ const ConsultationLogModal = ({
       border: '1px solid #e9ecef'
     },
     clientInfoLabel: {
-      fontSize: '12px',
+      fontSize: 'var(--font-size-xs)',
       color: '#6c757d',
       marginBottom: '6px',
       fontWeight: '500',
@@ -500,7 +500,7 @@ const ConsultationLogModal = ({
       letterSpacing: '0.5px'
     },
     clientInfoValue: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       color: '#212529',
       fontWeight: '600',
       wordBreak: 'break-word'
@@ -512,7 +512,7 @@ const ConsultationLogModal = ({
       border: '1px solid #e9ecef'
     },
     formTitle: {
-      fontSize: '18px',
+      fontSize: 'var(--font-size-lg)',
       fontWeight: '600',
       color: '#2c3e50',
       marginBottom: '20px',
@@ -529,7 +529,7 @@ const ConsultationLogModal = ({
       flexDirection: 'column'
     },
     formLabel: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
       color: '#495057',
       marginBottom: '8px'
@@ -538,7 +538,7 @@ const ConsultationLogModal = ({
       padding: '10px 12px',
       border: '2px solid #e9ecef',
       borderRadius: '6px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       backgroundColor: '#fff',
       color: '#495057',
       transition: 'all 0.2s ease',
@@ -548,7 +548,7 @@ const ConsultationLogModal = ({
       padding: '10px 12px',
       border: '2px solid #e9ecef',
       borderRadius: '6px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       backgroundColor: '#fff',
       color: '#495057',
       cursor: 'pointer',
@@ -559,7 +559,7 @@ const ConsultationLogModal = ({
       padding: '10px 12px',
       border: '2px solid #e9ecef',
       borderRadius: '6px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       backgroundColor: '#fff',
       color: '#495057',
       minHeight: '80px',
@@ -579,7 +579,7 @@ const ConsultationLogModal = ({
     button: {
       padding: '12px 24px',
       borderRadius: '8px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
@@ -646,7 +646,7 @@ const ConsultationLogModal = ({
             borderRadius: '8px',
             padding: '12px',
             marginBottom: '20px',
-            fontSize: '14px',
+            fontSize: 'var(--font-size-sm)',
             color: '#856404'
           }}>
             <div style={{display: 'flex', alignItems: 'center', marginBottom: '8px'}}>

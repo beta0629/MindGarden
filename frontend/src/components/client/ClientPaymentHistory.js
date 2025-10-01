@@ -409,7 +409,7 @@ const ClientPaymentHistory = () => {
                 </div>
                 <div 
                   className="payment-status"
-                  style={{ color: getStatusColor(mapping.paymentStatus) }}
+                  data-status-color={getStatusColor(mapping.paymentStatus)}
                 >
                   {getStatusText(mapping.paymentStatus)}
                 </div>

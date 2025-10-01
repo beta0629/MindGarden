@@ -1,4 +1,14 @@
 /* 개인정보 동의 관리 섹션 스타일 */
+
+/* 동의 아이콘 색상 */
+.consent-icon--checked {
+  color: var(--ios-green);
+}
+
+.consent-icon--unchecked {
+  color: var(--ios-text-secondary);
+}
+
 .privacy-consent-container {
   max-width: 800px;
   margin: 0 auto;

@@ -154,8 +154,7 @@ const PrivacyConsentSection = () => {
             <div className="consent-status-list">
               <div className="consent-status-item">
                 <div className="consent-status-icon">
-                  <i className={`bi bi-${consentStatus.privacyConsent ? 'check-circle-fill' : 'circle'}`} 
-                     style={{ color: consentStatus.privacyConsent ? '#28a745' : '#6c757d' }}></i>
+                  <i className={`bi bi-${consentStatus.privacyConsent ? 'check-circle-fill' : 'circle'} consent-icon ${consentStatus.privacyConsent ? 'consent-icon--checked' : 'consent-icon--unchecked'}`}></i>
                 </div>
                 <div className="consent-status-info">
                   <span className="consent-status-label">개인정보 처리방침</span>
@@ -167,8 +166,7 @@ const PrivacyConsentSection = () => {
               
               <div className="consent-status-item">
                 <div className="consent-status-icon">
-                  <i className={`bi bi-${consentStatus.termsConsent ? 'check-circle-fill' : 'circle'}`} 
-                     style={{ color: consentStatus.termsConsent ? '#28a745' : '#6c757d' }}></i>
+                  <i className={`bi bi-${consentStatus.termsConsent ? 'check-circle-fill' : 'circle'} consent-icon ${consentStatus.termsConsent ? 'consent-icon--checked' : 'consent-icon--unchecked'}`}></i>
                 </div>
                 <div className="consent-status-info">
                   <span className="consent-status-label">이용약관</span>

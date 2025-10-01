@@ -580,9 +580,9 @@ const MyPage = () => {
                       <div className="social-account-info">
                         <div className="social-provider-icon">
                           {account.provider === 'KAKAO' ? (
-                            <i className="bi bi-chat-dots-fill" style={{ color: '#FEE500' }}></i>
+                            <i className="bi bi-chat-dots-fill social-icon social-icon--kakao"></i>
                           ) : account.provider === 'NAVER' ? (
-                            <i className="bi bi-n-circle-fill" style={{ color: '#03C75A' }}></i>
+                            <i className="bi bi-n-circle-fill social-icon social-icon--naver"></i>
                           ) : (
                             <i className="bi bi-person-circle"></i>
                           )}

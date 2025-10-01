@@ -1,5 +1,20 @@
 /* ProfileImageUpload 컴포넌트 스타일 */
 
+/* 프로필 이미지 미리보기 */
+.profile-image-preview {
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+.crop-preview-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: var(--border-radius-full);
+  border: 2px solid var(--ios-blue);
+}
+
 /* ProfileImageUpload 상수 변수 */
 :root {
   --profile-image-section-margin: var(--spacing-base);

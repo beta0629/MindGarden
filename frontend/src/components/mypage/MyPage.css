@@ -6,6 +6,19 @@
   min-height: 100vh;
 }
 
+/* 소셜 아이콘 색상 */
+.social-icon--kakao {
+  color: #FEE500;
+}
+
+.social-icon--naver {
+  color: #03C75A;
+}
+
+.social-icon--google {
+  color: #4285F4;
+}
+
 /* MyPage 전용 - 입력 요소만 테두리 제거 */
 .mypage-container input,
 .mypage-container select,

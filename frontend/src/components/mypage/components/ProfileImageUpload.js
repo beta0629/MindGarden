@@ -278,13 +278,8 @@ const ProfileImageUpload = ({
                 <img 
                   src={cropImage} 
                   alt="크롭할 이미지"
-                  className="crop-image"
+                  className="crop-image profile-image-preview"
                   draggable="false"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '400px',
-                    objectFit: 'contain'
-                  }}
                 />
                 <div className="crop-preview">
                   <div className="crop-preview-label">미리보기:</div>
@@ -292,13 +287,7 @@ const ProfileImageUpload = ({
                     <img 
                       src={cropImage} 
                       alt="크롭 미리보기"
-                      style={{
-                        width: '100px',
-                        height: '100px',
-                        objectFit: 'cover',
-                        borderRadius: '50%',
-                        border: '2px solid #007bff'
-                      }}
+                      className="crop-preview-img"
                     />
                   </div>
                 </div>

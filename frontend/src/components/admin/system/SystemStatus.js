@@ -38,7 +38,7 @@ const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
                         <FaServer />
                         <span 
                             className="status-dot"
-                            style={{ backgroundColor: getStatusColor(systemStatus.server) }}
+                            data-status={systemStatus.server}
                         ></span>
                     </div>
                     <div className="status-info">
@@ -52,7 +52,7 @@ const SystemStatus = ({ onStatusCheck, systemStatus, loading }) => {
                         <FaDatabase />
                         <span 
                             className="status-dot"
-                            style={{ backgroundColor: getStatusColor(systemStatus.database) }}
+                            data-status={systemStatus.database}
                         ></span>
                     </div>
                     <div className="status-info">

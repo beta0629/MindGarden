@@ -143,7 +143,7 @@ const ClientMessageSection = ({ userId }) => {
                 className={`message-item ${!message.isRead ? 'unread' : ''}`}
                 onClick={() => handleMessageClick(message)}
               >
-                <div className="message-type-icon" style={{ color: typeInfo.color }}>
+                <div className="message-type-icon" data-message-color={typeInfo.color}>
                   {typeInfo.icon}
                 </div>
                 <div className="message-content">
@@ -183,9 +183,10 @@ const ClientMessageSection = ({ userId }) => {
             </div>
             <div className="modal-content">
               <div className="message-meta-info">
-                <span className="message-type-badge" style={{ 
-                  backgroundColor: getMessageTypeInfo(selectedMessage.messageType).color 
-                }}>
+                <span 
+                  className="message-type-badge" 
+                  data-badge-bg={getMessageTypeInfo(selectedMessage.messageType).color}
+                >
                   {getMessageTypeInfo(selectedMessage.messageType).icon} {getMessageTypeInfo(selectedMessage.messageType).label}
                 </span>
                 <span className="message-date">

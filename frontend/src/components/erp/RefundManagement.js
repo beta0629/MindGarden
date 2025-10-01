@@ -91,19 +91,14 @@ const RefundManagement = () => {
             loadingText="환불 데이터를 불러오는 중..."
             loadingVariant="default"
         >
-            <div className="erp-system" style={{ 
-                padding: '20px',
-                paddingLeft: '40px',
-                maxWidth: '1400px',
-                margin: '0 auto'
-            }}>
+            <div className="erp-system erp-refund-container">
                 <ErpHeader 
                     title="환불 관리 시스템"
                     subtitle="상담 환불 현황 및 ERP 연동 관리"
                 />
 
                 {/* 뒤로가기 버튼 */}
-                <div style={{ marginBottom: '20px' }}>
+                <div className="erp-refund-back-button">
                     <ErpButton
                         variant="secondary"
                         onClick={() => navigate('/erp/dashboard')}

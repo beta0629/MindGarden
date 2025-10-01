@@ -178,7 +178,7 @@ const TaxManagement = () => {
                                         <div key={type} className="breakdown-item">
                                             <div 
                                                 className="type-color" 
-                                                style={{ backgroundColor: taxTypeInfo?.color || '#6c757d' }}
+                                                data-color={taxTypeInfo?.color || '#6c757d'}
                                             ></div>
                                             <div className="type-info">
                                                 <span className="type-name">
@@ -227,9 +227,10 @@ const TaxManagement = () => {
                             <div key={calculation.id} className="calculation-card">
                                 <div className="calculation-header">
                                     <h4>{calculation.taxName}</h4>
-                                    <span className="tax-type-badge" style={{ 
-                                        backgroundColor: taxTypes.find(t => t.value === calculation.taxType)?.color || '#6c757d' 
-                                    }}>
+                                    <span 
+                                        className="tax-type-badge" 
+                                        data-badge-bg={taxTypes.find(t => t.value === calculation.taxType)?.color || '#6c757d'}
+                                    >
                                         {calculation.taxType}
                                     </span>
                                 </div>

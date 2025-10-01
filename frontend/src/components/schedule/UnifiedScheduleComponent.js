@@ -1122,11 +1122,6 @@ const UnifiedScheduleComponent = ({
                                 <button 
                                     onClick={handleVacationClick}
                                     className="unified-schedule-modal-btn"
-                                        cursor: 'pointer',
-                                        width: '100%',
-                                        textAlign: 'left',
-                                        transition: 'all 0.3s ease'
-                                    }}
                                     onMouseOver={(e) => {
                                         e.target.style.borderColor = '#ffc107';
                                         e.target.style.background = '#fffbf0';

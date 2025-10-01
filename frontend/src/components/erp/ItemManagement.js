@@ -278,17 +278,9 @@ const ItemManagement = () => {
 
         {/* 아이템 목록 */}
         <ErpCard title={`아이템 목록 (${items.length}개)`}>
-          <div className="item-management-grid"
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-            gap: '16px' 
-          }}>
+          <div className="item-management-grid">
             {items.map(item => (
-              <div key={item.id} className="item-management-card"
-                border: '1px solid #e9ecef',
-                borderRadius: '12px',
-                backgroundColor: '#fff',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}>
+              <div key={item.id} className="item-management-card">
                 <div style={{ marginBottom: '12px' }}>
                   <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>{item.name}</h4>
                   <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginBottom: '8px' }}>

@@ -164,14 +164,6 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                   onClick={() => handleQuickExpense(expense.categoryCode, expense.subcategoryCode)}
                   disabled={loading}
                   className="quick-expense-category-btn"
-                    border: 'none',
-                    borderRadius: '10px',
-                    backgroundColor: loading ? '#f8f9fa' : 'white',
-                    color: loading ? '#ccc' : expense.color,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    fontSize: 'var(--font-size-sm)',
-                    fontWeight: 'bold',
-                    textAlign: 'center',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
                     border: `2px solid ${loading ? '#ddd' : expense.color}`,
                     transition: 'all 0.3s ease'

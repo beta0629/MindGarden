@@ -349,8 +349,6 @@ const TabletHomepage = () => {
 
             <div className={`services-section-mobile ${isLoaded ? 'loaded' : ''}`}>
               <div className="services-section-mobile-header">
-                marginBottom: '60px'
-              }}>
                 <h2 className="services-title-mobile">
                   전문적이고 안전한 상담 서비스
                 </h2>

@@ -142,6 +142,7 @@
     background: linear-gradient(90deg, #ef4444, #dc2626);
     transition: width 1s linear;
     position: relative;
+    width: var(--progress-width, 0%);
 }
 
 .countdown-progress::after {

@@ -1,0 +1,135 @@
+/* DuplicateLoginModal 스타일 - 새로운 디자인 시스템 적용 */
+
+.duplicate-login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-index-modal-overlay);
+  animation: fadeIn var(--transition-normal);
+}
+
+.duplicate-login-modal-content {
+  background-color: var(--ios-bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-xl);
+  text-align: center;
+  animation: slideIn var(--transition-normal);
+}
+
+.duplicate-login-icon {
+  font-size: var(--font-size-xxxl);
+  margin-bottom: var(--spacing-md);
+  color: var(--ios-yellow);
+}
+
+.duplicate-login-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-sm);
+  color: var(--ios-text-primary);
+}
+
+.duplicate-login-message {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin-bottom: var(--spacing-xl);
+  line-height: 1.5;
+}
+
+.duplicate-login-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .duplicate-login-modal-content {
+    width: 95%;
+    padding: var(--spacing-lg);
+  }
+  
+  .duplicate-login-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .duplicate-login-message {
+    font-size: var(--font-size-xs);
+  }
+  
+  .duplicate-login-actions {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .duplicate-login-actions .mg-btn {
+    width: 100%;
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .duplicate-login-modal-content {
+    max-width: 380px;
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .duplicate-login-modal-content {
+    background-color: var(--ios-bg-primary-dark);
+  }
+  
+  .duplicate-login-title {
+    color: var(--ios-text-primary-dark);
+  }
+  
+  .duplicate-login-message {
+    color: var(--ios-text-secondary-dark);
+  }
+}
+
+/* 접근성 개선 */
+@media (prefers-reduced-motion: reduce) {
+  .duplicate-login-modal-overlay,
+  .duplicate-login-modal-content {
+    animation: none;
+  }
+}
+
+/* 고대비 모드 지원 */
+@media (prefers-contrast: high) {
+  .duplicate-login-modal-content {
+    border: 2px solid var(--ios-border-dark);
+  }
+}

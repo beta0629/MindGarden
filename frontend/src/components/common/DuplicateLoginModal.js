@@ -4,6 +4,7 @@ import { authAPI } from '../../utils/ajax';
 import { getDashboardPath } from '../../utils/session';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
+import './DuplicateLoginModal.css';
 
 const DuplicateLoginModal = () => {
   const { duplicateLoginModal, setDuplicateLoginModal } = useSession();
@@ -84,104 +85,35 @@ const DuplicateLoginModal = () => {
   }
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        maxWidth: '400px',
-        width: '90%',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-        textAlign: 'center'
-      }}>
+    <div className="duplicate-login-modal-overlay">
+      <div className="duplicate-login-modal-content">
         {/* 아이콘 */}
-        <div style={{
-          fontSize: 'var(--font-size-xxxl)',
-          marginBottom: '16px',
-          color: '#f59e0b'
-        }}>
+        <div className="duplicate-login-icon">
           ⚠️
         </div>
         
         {/* 제목 */}
-        <h3 style={{
-          fontSize: 'var(--font-size-lg)',
-          fontWeight: '600',
-          marginBottom: '12px',
-          color: '#1f2937'
-        }}>
+        <h3 className="duplicate-login-title">
           중복 로그인 감지
         </h3>
         
         {/* 메시지 */}
-        <p style={{
-          fontSize: 'var(--font-size-sm)',
-          color: '#6b7280',
-          marginBottom: '24px',
-          lineHeight: '1.5'
-        }}>
+        <p className="duplicate-login-message">
           {duplicateLoginModal.message}
         </p>
         
         {/* 버튼들 */}
-        <div style={{
-          display: 'flex',
-          gap: '12px',
-          justifyContent: 'center'
-        }}>
+        <div className="duplicate-login-actions">
           <button
             onClick={handleCancel}
-            style={{
-              padding: '10px 20px',
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              backgroundColor: 'white',
-              color: '#6b7280',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = '#f9fafb';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = 'white';
-            }}
+            className="mg-btn mg-btn--secondary"
           >
             취소
           </button>
           
           <button
             onClick={handleConfirm}
-            style={{
-              padding: '10px 20px',
-              border: 'none',
-              borderRadius: '8px',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => {
-              e.target.style.backgroundColor = '#2563eb';
-            }}
-            onMouseOut={(e) => {
-              e.target.style.backgroundColor = '#3b82f6';
-            }}
+            className="mg-btn mg-btn--primary"
           >
             기존 세션 종료하고 로그인
           </button>

@@ -277,11 +277,6 @@ const ConsultantMessages = () => {
                       key={message.id}
                       onClick={() => handleMessageClick(message)}
                       className="consultant-messages-card"
-                        borderRadius: '12px',
-                        padding: '20px',
-                        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
-                        border: '1px solid #e9ecef',
-                        cursor: 'pointer',
                         transition: 'all 0.3s ease'
                       }}
                       onMouseEnter={(e) => {

@@ -256,8 +256,7 @@ const ItemManagement = () => {
 
         {/* 성공/오류 메시지 */}
         {success && (
-          <div style={{ 
-            marginBottom: '16px', 
+          <div className="item-management-success"
             padding: '12px', 
             backgroundColor: '#d1edff', 
             color: '#0c5460',
@@ -269,8 +268,7 @@ const ItemManagement = () => {
         )}
 
         {error && (
-          <div style={{ 
-            marginBottom: '16px', 
+          <div className="item-management-success"
             padding: '12px', 
             backgroundColor: '#f8d7da', 
             color: '#721c24',

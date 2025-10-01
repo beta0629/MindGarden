@@ -969,7 +969,7 @@ const UnifiedScheduleComponent = ({
                                 <div key={`consultant-${consultant.id}-${index}`} className="legend-item">
                                     <span 
                                         className="legend-color" 
-                                        style={{ backgroundColor: getConsultantColor(consultant.id) }}
+                                        data-bg-color={getConsultantColor(consultant.id)}
                                     ></span>
                                     <span>{consultant.name}</span>
                                 </div>

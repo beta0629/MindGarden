@@ -407,18 +407,17 @@ const SalaryManagement = () => {
                     </div>
                     
                     {salaryProfiles.length === 0 && !loading && (
-                        <div className="no-profiles-message" style={{
-                            textAlign: 'center',
+                        <div className="no-profiles-message"
                             padding: '40px 20px',
                             backgroundColor: '#f8f9fa',
                             border: '2px dashed #dee2e6',
                             borderRadius: '8px',
                             margin: '20px 0'
                         }}>
-                            <h4 style={{ color: '#6c757d', marginBottom: '16px' }}>
+                            <h4 className="salary-no-profiles-title">
                                 📋 급여 프로필이 없습니다
                             </h4>
-                            <p style={{ color: '#6c757d', marginBottom: '20px' }}>
+                            <p className="salary-no-profiles-description">
                                 급여 계산을 하기 위해서는 먼저 상담사별 급여 프로필을 작성해야 합니다.<br/>
                                 위의 "새 프로필 생성" 버튼을 클릭하여 급여 프로필을 작성해주세요.
                             </p>

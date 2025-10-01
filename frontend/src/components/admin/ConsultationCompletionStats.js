@@ -205,7 +205,7 @@ const ConsultationCompletionStats = () => {
                     </h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <label style={{ 
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#6c757d',
                             fontWeight: '500'
                         }}>
@@ -218,7 +218,7 @@ const ConsultationCompletionStats = () => {
                                 padding: '6px 12px',
                                 border: '1px solid #ced4da',
                                 borderRadius: '4px',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 backgroundColor: '#fff'
                             }}
                         >
@@ -256,13 +256,13 @@ const ConsultationCompletionStats = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         margin: '0 auto 16px',
-                        fontSize: '24px',
+                        fontSize: 'var(--font-size-xxl)',
                         color: 'white'
                     }}>
                         👥
                     </div>
                     <div style={{ 
-                        fontSize: '32px',
+                        fontSize: 'var(--font-size-xxxl)',
                         fontWeight: 'bold',
                         color: '#007bff',
                         marginBottom: '8px'
@@ -270,7 +270,7 @@ const ConsultationCompletionStats = () => {
                         {statistics.length}
                     </div>
                     <div style={{ 
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#6c757d',
                         fontWeight: '500'
                     }}>
@@ -295,13 +295,13 @@ const ConsultationCompletionStats = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         margin: '0 auto 16px',
-                        fontSize: '24px',
+                        fontSize: 'var(--font-size-xxl)',
                         color: 'white'
                     }}>
                         ✅
                     </div>
                     <div style={{ 
-                        fontSize: '32px',
+                        fontSize: 'var(--font-size-xxxl)',
                         fontWeight: 'bold',
                         color: '#28a745',
                         marginBottom: '8px'
@@ -309,7 +309,7 @@ const ConsultationCompletionStats = () => {
                         {statistics.reduce((sum, stat) => sum + stat.completedCount, 0)}
                     </div>
                     <div style={{ 
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#6c757d',
                         fontWeight: '500'
                     }}>
@@ -334,13 +334,13 @@ const ConsultationCompletionStats = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         margin: '0 auto 16px',
-                        fontSize: '24px',
+                        fontSize: 'var(--font-size-xxl)',
                         color: 'white'
                     }}>
                         📊
                     </div>
                     <div style={{ 
-                        fontSize: '32px',
+                        fontSize: 'var(--font-size-xxxl)',
                         fontWeight: 'bold',
                         color: '#ffc107',
                         marginBottom: '8px'
@@ -351,7 +351,7 @@ const ConsultationCompletionStats = () => {
                         }
                     </div>
                     <div style={{ 
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#6c757d',
                         fontWeight: '500'
                     }}>
@@ -456,7 +456,7 @@ const ConsultationCompletionStats = () => {
                                 전문분야
                             </div>
                             <div style={{
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 color: '#495057',
                                 lineHeight: '1.4'
                             }}>
@@ -475,7 +475,7 @@ const ConsultationCompletionStats = () => {
                         }}>
                             <div style={{ textAlign: 'center' }}>
                                 <div style={{
-                                    fontSize: '24px',
+                                    fontSize: 'var(--font-size-xxl)',
                                     fontWeight: 'bold',
                                     color: '#28a745',
                                     marginBottom: '4px'
@@ -493,7 +493,7 @@ const ConsultationCompletionStats = () => {
                             
                             <div style={{ textAlign: 'center' }}>
                                 <div style={{
-                                    fontSize: '24px',
+                                    fontSize: 'var(--font-size-xxl)',
                                     fontWeight: 'bold',
                                     color: '#6c757d',
                                     marginBottom: '4px'
@@ -511,7 +511,7 @@ const ConsultationCompletionStats = () => {
                             
                             <div style={{ textAlign: 'center' }}>
                                 <div style={{
-                                    fontSize: '24px',
+                                    fontSize: 'var(--font-size-xxl)',
                                     fontWeight: 'bold',
                                     color: stat.completionRate >= 80 ? '#28a745' : 
                                            stat.completionRate >= 60 ? '#ffc107' : '#dc3545',
@@ -551,7 +551,7 @@ const ConsultationCompletionStats = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         margin: '0 auto 20px',
-                        fontSize: '32px',
+                        fontSize: 'var(--font-size-xxxl)',
                         color: '#6c757d'
                     }}>
                         📊
@@ -565,7 +565,7 @@ const ConsultationCompletionStats = () => {
                         상담 완료 건수 데이터가 없습니다
                     </h3>
                     <p style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#6c757d',
                         margin: 0
                     }}>

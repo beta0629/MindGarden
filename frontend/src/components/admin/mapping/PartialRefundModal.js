@@ -184,7 +184,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '24px',
+              fontSize: 'var(--font-size-xxl)',
               cursor: loading ? 'not-allowed' : 'pointer',
               color: '#6c757d'
             }}
@@ -202,7 +202,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             marginBottom: '20px'
           }}>
             <h4 style={{ margin: '0 0 12px 0', color: '#495057' }}>📋 매핑 정보</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: 'var(--font-size-sm)' }}>
               <div><strong>내담자:</strong> {mapping.clientName}</div>
               <div><strong>상담사:</strong> {mapping.consultantName}</div>
               <div><strong>총 회기:</strong> {mapping.totalSessions}회</div>
@@ -221,7 +221,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             border: '1px solid #ffeaa7'
           }}>
             <h4 style={{ margin: '0 0 12px 0', color: '#856404' }}>📦 환불 대상 (최근 추가 패키지)</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: 'var(--font-size-sm)' }}>
               <div><strong>패키지명:</strong> {lastAddedPackage.packageName}</div>
               <div><strong>패키지 회기수:</strong> {lastAddedPackage.sessions}회</div>
               <div><strong>패키지 가격:</strong> {lastAddedPackage.price?.toLocaleString()}원</div>
@@ -232,7 +232,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
               padding: '8px', 
               backgroundColor: '#ffeaa7', 
               borderRadius: '4px',
-              fontSize: '12px',
+              fontSize: 'var(--font-size-xs)',
               color: '#856404'
             }}>
               ⚠️ 부분 환불은 가장 최근에 추가된 패키지를 우선으로 처리됩니다. (단회기, 임의 회기수도 가능)
@@ -254,7 +254,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
               ⏰ 청약 철회 기간 확인
             </h4>
             <div style={{ 
-              fontSize: '14px', 
+              fontSize: 'var(--font-size-sm)', 
               color: withdrawalCheck.isValid ? '#155724' : '#721c24',
               fontWeight: '600'
             }}>
@@ -262,7 +262,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             </div>
             {mapping.paymentDate && (
               <div style={{ 
-                fontSize: '12px', 
+                fontSize: 'var(--font-size-xs)', 
                 color: withdrawalCheck.isValid ? '#155724' : '#721c24',
                 marginTop: '4px'
               }}>
@@ -275,7 +275,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
                 padding: '8px', 
                 backgroundColor: '#f5c6cb', 
                 borderRadius: '4px',
-                fontSize: '12px',
+                fontSize: 'var(--font-size-xs)',
                 color: '#721c24'
               }}>
                 ❌ 15일 초과로 청약 철회 불가능합니다. 특별한 사유가 있는 경우에만 처리하세요.
@@ -305,14 +305,14 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
                 padding: '12px',
                 border: '2px solid #dee2e6',
                 borderRadius: '8px',
-                fontSize: '16px',
+                fontSize: 'var(--font-size-base)',
                 outline: 'none',
                 transition: 'border-color 0.2s'
               }}
               onFocus={(e) => e.target.style.borderColor = '#007bff'}
               onBlur={(e) => e.target.style.borderColor = '#dee2e6'}
             />
-            <small style={{ color: '#6c757d', fontSize: '12px' }}>
+            <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)' }}>
               최대 {Math.min(mapping.remainingSessions, lastAddedPackage.sessions)}회까지 환불 가능 (최근 추가 패키지 기준)
             </small>
           </div>
@@ -357,7 +357,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
                 padding: '12px',
                 border: '2px solid #dee2e6',
                 borderRadius: '8px',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 outline: 'none',
                 resize: 'vertical',
                 transition: 'border-color 0.2s'
@@ -365,7 +365,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
               onFocus={(e) => e.target.style.borderColor = '#007bff'}
               onBlur={(e) => e.target.style.borderColor = '#dee2e6'}
             />
-            <small style={{ color: '#6c757d', fontSize: '12px' }}>
+            <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)' }}>
               {reason.length}/500자 (최소 5자 이상 입력)
             </small>
           </div>
@@ -382,7 +382,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
                 borderRadius: '8px',
                 backgroundColor: 'white',
                 color: '#6c757d',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 fontWeight: '600',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s'
@@ -400,7 +400,7 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
                 backgroundColor: loading || !reason.trim() || reason.trim().length < 5 ? '#6c757d' : 
                              !withdrawalCheck.isValid ? '#ffc107' : '#dc3545',
                 color: 'white',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 fontWeight: '600',
                 cursor: loading || !reason.trim() || reason.trim().length < 5 ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s'

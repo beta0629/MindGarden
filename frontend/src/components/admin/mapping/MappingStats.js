@@ -204,7 +204,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 padding: '40px',
                 textAlign: 'center'
             }}>
-                <div style={{ color: '#7B68EE', fontSize: '16px' }}>
+                <div style={{ color: '#7B68EE', fontSize: 'var(--font-size-base)' }}>
                     매핑 통계를 불러오는 중...
                 </div>
             </div>
@@ -228,12 +228,12 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
             }}>
                 <h3 style={{
                     margin: '0 0 8px 0',
-                    fontSize: '18px',
+                    fontSize: 'var(--font-size-lg)',
                     fontWeight: '600'
                 }}>📊 매핑 통계</h3>
                 <p style={{
                     margin: '0',
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     opacity: 0.9
                 }}>현재 매핑 상태별 통계입니다.</p>
             </div>
@@ -273,7 +273,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         }}
                     >
                         <div style={{
-                            fontSize: '24px',
+                            fontSize: 'var(--font-size-xxl)',
                             width: '40px',
                             height: '40px',
                             display: 'flex',
@@ -287,7 +287,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         </div>
                         <div style={{ flex: 1 }}>
                             <div style={{
-                                fontSize: '12px',
+                                fontSize: 'var(--font-size-xs)',
                                 fontWeight: '600',
                                 color: '#6c757d',
                                 textTransform: 'uppercase',
@@ -295,7 +295,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                                 marginBottom: '2px'
                             }}>{stat.label}</div>
                             <div style={{
-                                fontSize: '20px',
+                                fontSize: 'var(--font-size-xl)',
                                 fontWeight: '700',
                                 lineHeight: 1,
                                 color: stat.color
@@ -304,7 +304,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                             </div>
                         </div>
                         <div style={{
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             fontWeight: '600',
                             color: '#6c757d',
                             background: 'rgba(255, 255, 255, 0.2)',
@@ -320,7 +320,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                                 right: '8px',
                                 background: 'rgba(255, 255, 255, 0.9)',
                                 color: '#059669',
-                                fontSize: '10px',
+                                fontSize: 'var(--font-size-xs)',
                                 fontWeight: '600',
                                 padding: '2px 6px',
                                 borderRadius: '4px',
@@ -348,7 +348,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     gap: '4px'
                 }}>
                     <span style={{
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         color: '#6c757d',
                         fontWeight: '500'
                     }}>총 매핑 수:</span>
@@ -365,7 +365,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     gap: '4px'
                 }}>
                     <span style={{
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         color: '#6c757d',
                         fontWeight: '500'
                     }}>활성 비율:</span>
@@ -384,7 +384,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     gap: '4px'
                 }}>
                     <span style={{
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         color: '#6c757d',
                         fontWeight: '500'
                     }}>승인 대기 비율:</span>

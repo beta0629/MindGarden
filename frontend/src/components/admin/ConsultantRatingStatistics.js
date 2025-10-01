@@ -77,7 +77,7 @@ const ConsultantRatingStatistics = () => {
             {/* 섹션 헤더 */}
             <div style={{ marginBottom: '24px' }}>
                 <h3 style={{
-                    fontSize: '20px',
+                    fontSize: 'var(--font-size-xl)',
                     fontWeight: '600',
                     color: '#333',
                     margin: 0,
@@ -89,7 +89,7 @@ const ConsultantRatingStatistics = () => {
                     💖 상담사 평가 통계
                 </h3>
                 <p style={{
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     color: '#666',
                     margin: 0
                 }}>
@@ -111,7 +111,7 @@ const ConsultantRatingStatistics = () => {
                     textAlign: 'center'
                 }}>
                     <div style={{
-                        fontSize: '24px',
+                        fontSize: 'var(--font-size-xxl)',
                         fontWeight: '700',
                         color: '#e91e63',
                         marginBottom: '4px'
@@ -119,7 +119,7 @@ const ConsultantRatingStatistics = () => {
                         {statistics.totalRatings}개
                     </div>
                     <div style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#666'
                     }}>
                         총 평가 수
@@ -133,7 +133,7 @@ const ConsultantRatingStatistics = () => {
                     textAlign: 'center'
                 }}>
                     <div style={{
-                        fontSize: '24px',
+                        fontSize: 'var(--font-size-xxl)',
                         fontWeight: '700',
                         color: '#ff6b6b',
                         marginBottom: '4px',
@@ -145,7 +145,7 @@ const ConsultantRatingStatistics = () => {
                         💖 {statistics.averageScore.toFixed(1)}
                     </div>
                     <div style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#666'
                     }}>
                         전체 평균 점수
@@ -159,7 +159,7 @@ const ConsultantRatingStatistics = () => {
                     textAlign: 'center'
                 }}>
                     <div style={{
-                        fontSize: '24px',
+                        fontSize: 'var(--font-size-xxl)',
                         fontWeight: '700',
                         color: '#4caf50',
                         marginBottom: '4px'
@@ -167,7 +167,7 @@ const ConsultantRatingStatistics = () => {
                         {statistics.topConsultants.length}명
                     </div>
                     <div style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#666'
                     }}>
                         평가받은 상담사
@@ -178,7 +178,7 @@ const ConsultantRatingStatistics = () => {
             {/* 상담사 랭킹 */}
             <div style={{ marginBottom: '24px' }}>
                 <h4 style={{
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     fontWeight: '600',
                     color: '#333',
                     marginBottom: '12px'
@@ -218,7 +218,7 @@ const ConsultantRatingStatistics = () => {
                                     </div>
                                     <div>
                                         <div style={{
-                                            fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                             fontWeight: '600',
                                             color: '#333'
                                         }}>
@@ -238,7 +238,7 @@ const ConsultantRatingStatistics = () => {
                                     gap: '4px'
                                 }}>
                                     <span style={{
-                                        fontSize: '16px',
+                                        fontSize: 'var(--font-size-base)',
                                         fontWeight: '700',
                                         color: '#e91e63'
                                     }}>
@@ -264,7 +264,7 @@ const ConsultantRatingStatistics = () => {
             {/* 최근 평가 동향 */}
             <div>
                 <h4 style={{
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     fontWeight: '600',
                     color: '#333',
                     marginBottom: '12px'

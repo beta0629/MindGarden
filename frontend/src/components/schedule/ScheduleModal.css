@@ -24,7 +24,7 @@
   --schedule-modal-max-height: 98vh;
   --schedule-modal-min-height: 500px;
   --schedule-modal-border-radius: 16px;
-  --schedule-modal-padding: 24px;
+  --schedule-modal-padding: var(--spacing-xl);
   
   /* 단계별 높이 변수 */
   --step-header-height: 80px;
@@ -38,12 +38,12 @@
   /* 상담사 카드 변수 */
   --consultant-card-min-height: 180px;
   --consultant-card-border-radius: 16px;
-  --consultant-card-padding: 20px;
+  --consultant-card-padding: var(--spacing-lg);
   --consultant-card-margin-bottom: 16px;
   
   /* 필터 버튼 변수 */
   --filter-button-height: 40px;
-  --filter-button-padding: 8px 16px;
+  --filter-button-padding: var(--spacing-sm) var(--spacing-md);
   --filter-button-border-radius: 8px;
   
   /* 반응형 브레이크포인트 */
@@ -63,7 +63,7 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 20px;
+  padding: var(--spacing-lg);
   backdrop-filter: blur(4px);
   box-sizing: border-box;
   margin: 0;
@@ -148,7 +148,7 @@
   color: var(--schedule-modal-white);
   font-size: 24px;
   cursor: pointer;
-  padding: 4px;
+  padding: var(--spacing-xs);
   border-radius: 4px;
   transition: all 0.2s ease;
   width: 32px;
@@ -180,7 +180,7 @@
   align-items: center;
   text-align: center;
   margin-bottom: 20px;
-  padding: 16px 0;
+  padding: var(--spacing-md) 0;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-radius: 12px;
   border: none;
@@ -205,7 +205,7 @@
   height: var(--filter-section-height);
   background: var(--schedule-modal-light-gray);
   border-radius: 12px;
-  padding: 20px;
+  padding: var(--spacing-lg);
   margin-bottom: 20px;
   border: none;
   display: flex;
@@ -236,7 +236,7 @@
 
 .search-input {
   width: 100%;
-  padding: 12px 16px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: none;
   border-radius: var(--filter-button-border-radius);
   font-size: 14px;
@@ -252,7 +252,7 @@
 
 .specialty-select {
   width: 100%;
-  padding: 12px 16px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: none;
   border-radius: var(--filter-button-border-radius);
   font-size: 14px;
@@ -361,7 +361,7 @@
 .consultant-grid {
   height: var(--consultant-grid-height);
   overflow-y: auto;
-  padding: 20px;
+  padding: var(--spacing-lg);
   background: var(--schedule-modal-light-gray);
   border-radius: 12px;
   display: grid;
@@ -515,7 +515,7 @@
   gap: 6px;
   font-size: 12px;
   font-weight: 600;
-  padding: 4px 8px;
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: 12px;
   background: var(--schedule-modal-light-gray);
   color: var(--schedule-modal-text);
@@ -560,7 +560,7 @@
 /* 선택된 상담사 정보 */
 .selected-consultant-info {
   margin-top: 20px;
-  padding: 16px;
+  padding: var(--spacing-md);
   background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
   border-radius: 12px;
   border: none;
@@ -586,7 +586,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 40px 20px;
+  padding: var(--spacing-xxxl) var(--spacing-lg);
   color: var(--schedule-modal-text-light);
 }
 
@@ -789,7 +789,7 @@
   
   .filter-section {
     height: auto;
-    padding: 16px;
+    padding: var(--spacing-md);
   }
   
   .filter-row {
@@ -811,7 +811,7 @@
   
   .consultant-card {
     height: 180px;
-    padding: 16px;
+    padding: var(--spacing-md);
     margin: 0;
     flex-direction: row;
     gap: 12px;

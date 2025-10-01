@@ -90,54 +90,16 @@ const ConsultantFilterNew = ({
             {/* 가용성 필터 */}
             <div className="consultant-filter-availability">
                 <div className="consultant-filter-availability-field">
-                    <label className="consultant-filter-label">
-                        margin: '0'
-                    }}>가용성</label>
-                    <div style={{
-                        display: 'flex',
-                        gap: '8px',
-                        flexWrap: 'wrap'
-                    }}>
+                    <label className="consultant-filter-label">가용성</label>
+                    <div className="consultant-filter-availability-buttons">
                         {SCHEDULE_MODAL_CONSTANTS.AVAILABILITY_OPTIONS.map(option => (
                             <button
                                 key={option.value}
-                                style={{
-                                    height: '40px',
-                                    padding: '8px 16px',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    background: filters.availability === option.value ? option.color : '#ffffff',
-                                    color: filters.availability === option.value ? '#ffffff' : '#495057',
-                                    fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '500',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    minWidth: '80px',
-                                    justifyContent: 'center'
-                                }}
+                                className={`consultant-filter-availability-btn ${filters.availability === option.value ? 'active' : ''}`}
+                                data-option-color={option.color}
                                 onClick={() => handleAvailabilityChange(option.value)}
-                                onMouseEnter={(e) => {
-                                    if (filters.availability !== option.value) {
-                                        e.target.style.transform = 'translateY(-2px)';
-                                        e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (filters.availability !== option.value) {
-                                        e.target.style.transform = 'translateY(0)';
-                                        e.target.style.boxShadow = 'none';
-                                    }
-                                }}
                             >
-                                <div style={{
-                                    width: '8px',
-                                    height: '8px',
-                                    borderRadius: '50%',
-                                    background: 'currentColor'
-                                }}></div>
+                                <div className="consultant-filter-availability-dot"></div>
                                 {option.label}
                             </button>
                         ))}

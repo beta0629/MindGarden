@@ -156,3 +156,182 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* 웰컴 정보 카드들 */
+.welcome-info-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+}
+
+.welcome-info-card {
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--ios-border-light);
+  transition: all var(--transition-normal);
+}
+
+.welcome-info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* 오늘의 상담 카드 - 큰 카드 */
+.today-consultation-card {
+  grid-column: span 2;
+  max-height: 500px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 정보 아이콘 */
+.info-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.info-icon i {
+  font-size: var(--font-size-xl);
+  color: white;
+}
+
+.info-icon--consultation {
+  background: var(--ios-blue);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+}
+
+.info-icon--tip {
+  background: var(--ios-gray);
+  box-shadow: 0 2px 8px rgba(96, 125, 139, 0.2);
+}
+
+/* 정보 콘텐츠 */
+.info-content {
+  flex: 1;
+}
+
+.info-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--ios-text-primary);
+}
+
+.info-value {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin: 0 0 var(--spacing-md) 0;
+  line-height: 1.5;
+}
+
+/* 상담 카드 그리드 */
+.consultation-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: var(--spacing-sm);
+}
+
+/* 개별 상담 카드 */
+.consultation-card {
+  background: var(--ios-bg-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--ios-border-light);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.consultation-card:hover {
+  background: var(--ios-blue-light);
+  border-color: var(--ios-blue);
+  transform: translateY(-2px);
+}
+
+/* 날씨 카드 래퍼 */
+.weather-card-wrapper {
+  grid-column: span 1;
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .welcome-info-cards {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .today-consultation-card {
+    grid-column: span 1;
+    max-height: none;
+  }
+  
+  .consultation-cards-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    max-height: none;
+    padding-right: 0;
+  }
+  
+  .consultation-card {
+    min-height: 120px;
+    padding: var(--spacing-md);
+  }
+  
+  .welcome-info-card {
+    padding: var(--spacing-lg);
+  }
+  
+  .info-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .info-icon i {
+    font-size: var(--font-size-lg);
+  }
+  
+  .info-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .info-value {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .welcome-info-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .today-consultation-card {
+    grid-column: span 2;
+  }
+  
+  .consultation-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

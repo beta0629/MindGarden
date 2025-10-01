@@ -283,40 +283,11 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
 
       {/* 상담사/관리자용 정보 카드 */}
       {user?.role !== 'CLIENT' && (
-        <div className="welcome-info-cards" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '20px'
-        }}>
+        <div className="welcome-info-cards">
           {/* 오늘의 상담 - 큰 카드 */}
-          <div className="welcome-info-card today-consultation-card" style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '24px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-            border: '1px solid #e9ecef',
-            transition: 'all 0.3s ease',
-            gridColumn: 'span 2',
-            maxHeight: '500px',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div className="info-icon" style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: '#667eea',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '16px',
-              boxShadow: '0 2px 8px rgba(102, 126, 234, 0.2)'
-            }}>
-              <i className="bi bi-calendar-check" style={{
-                fontSize: 'var(--font-size-xl)',
-                color: 'white'
-              }}></i>
+          <div className="welcome-info-card today-consultation-card">
+            <div className="info-icon info-icon--consultation">
+              <i className="bi bi-calendar-check"></i>
             </div>
             <div className="info-content">
               <h3 className="info-title" style={{
@@ -347,32 +318,9 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                 }
               </p>
               {todayConsultations.length > 0 ? (
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: '20px',
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  maxHeight: '400px',
-                  overflowY: 'auto',
-                  paddingRight: '8px'
-                }}>
+                <div className="consultation-cards-grid">
                   {todayConsultations.map((consultation, index) => (
-                    <div key={index} style={{
-                      background: '#f8f9fa',
-                      borderRadius: '16px',
-                      padding: '20px',
-                      border: '1px solid #e9ecef',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer',
-                      minHeight: '140px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                      boxSizing: 'border-box'
-                    }}
+                    <div key={index} className="consultation-card"
                     onMouseEnter={(e) => {
                       e.target.style.background = '#e3f2fd';
                       e.target.style.borderColor = '#2196f3';
@@ -570,29 +518,9 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
           )}
           
           {/* 오늘의 팁 */}
-          <div className="welcome-info-card" style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '24px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-            border: '1px solid #e9ecef',
-            transition: 'all 0.3s ease'
-          }}>
-            <div className="info-icon" style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: '#607d8b',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '16px',
-              boxShadow: '0 2px 8px rgba(96, 125, 139, 0.2)'
-            }}>
-              <i className="bi bi-lightbulb" style={{
-                fontSize: 'var(--font-size-xl)',
-                color: 'white'
-              }}></i>
+          <div className="welcome-info-card">
+            <div className="info-icon info-icon--tip">
+              <i className="bi bi-lightbulb"></i>
             </div>
             <div className="info-content">
               <h3 className="info-title" style={{
@@ -611,7 +539,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
           </div>
 
           {/* 오늘의 날씨 */}
-          <div style={{ gridColumn: 'span 1' }}>
+          <div className="weather-card-wrapper">
             <WeatherCard />
           </div>
         </div>

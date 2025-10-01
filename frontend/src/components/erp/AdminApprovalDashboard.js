@@ -196,7 +196,7 @@ const AdminApprovalDashboard = () => {
             textAlign: 'center', 
             padding: '40px', 
             color: '#666',
-            fontSize: '16px'
+            fontSize: 'var(--font-size-base)'
           }}>
             승인 대기 중인 구매 요청이 없습니다.
           </div>
@@ -227,7 +227,7 @@ const AdminApprovalDashboard = () => {
                       padding: '8px', 
                       backgroundColor: '#f8f9fa', 
                       borderRadius: '4px',
-                      fontSize: '14px'
+                      fontSize: 'var(--font-size-sm)'
                     }}>
                       {request.reason}
                     </div>
@@ -302,7 +302,7 @@ const AdminApprovalDashboard = () => {
                   padding: '8px',
                   border: '1px solid #ddd',
                   borderRadius: '4px',
-                  fontSize: '14px'
+                  fontSize: 'var(--font-size-sm)'
                 }}
               />
             </div>
@@ -369,7 +369,7 @@ const AdminApprovalDashboard = () => {
                   padding: '8px',
                   border: '1px solid #ddd',
                   borderRadius: '4px',
-                  fontSize: '14px'
+                  fontSize: 'var(--font-size-sm)'
                 }}
               />
             </div>

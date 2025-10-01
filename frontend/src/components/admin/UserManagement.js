@@ -350,7 +350,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
             >
                 <Modal.Header closeButton>
                     <Modal.Title style={{ 
-                        fontSize: '18px', 
+                        fontSize: 'var(--font-size-lg)', 
                         fontWeight: '600', 
                         color: '#333',
                         margin: 0,
@@ -392,7 +392,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                 <Form.Label style={{
                                     display: 'block',
                                     marginBottom: '8px',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     fontWeight: '500',
                                     color: '#333'
                                 }}>
@@ -406,7 +406,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                     style={{
                                         width: '100%',
                                         padding: '8px 12px',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         border: '2px solid #007bff',
                                         borderRadius: '6px',
                                         backgroundColor: '#fff',
@@ -447,7 +447,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                     onClick={() => setShowRoleModal(false)}
                                     style={{
                                         padding: '8px 16px',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         border: '1px solid #6c757d',
                                         borderRadius: '4px',
                                         backgroundColor: '#6c757d',
@@ -469,7 +469,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                     disabled={form.newRole === selectedUser.role}
                                     style={{
                                         padding: '8px 16px',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         border: '1px solid #007bff',
                                         borderRadius: '4px',
                                         backgroundColor: form.newRole === selectedUser.role ? '#6c757d' : '#007bff',

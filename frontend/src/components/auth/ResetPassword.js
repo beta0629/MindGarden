@@ -351,7 +351,7 @@ const ResetPassword = () => {
                       border: '1px solid #e2e8f0'
                     }}>
                       <p style={{
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         color: '#4a5568',
                         lineHeight: '1.4',
                         margin: 0
@@ -421,7 +421,7 @@ const ResetPassword = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '28px',
+                    fontSize: 'var(--font-size-xxl)',
                     margin: '0 auto 24px',
                     color: 'white'
                   }}>
@@ -429,7 +429,7 @@ const ResetPassword = () => {
                   </div>
                   
                   <h1 style={{
-                    fontSize: '28px',
+                    fontSize: 'var(--font-size-xxl)',
                     fontWeight: '700',
                     color: '#2d3748',
                     marginBottom: '16px'

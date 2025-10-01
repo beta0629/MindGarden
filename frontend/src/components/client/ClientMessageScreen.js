@@ -36,7 +36,7 @@ const ClientMessageScreen = () => {
       border: '1px solid #e9ecef'
     },
     headerTitle: {
-      fontSize: '28px',
+      fontSize: 'var(--font-size-xxl)',
       fontWeight: '700',
       color: '#2c3e50',
       marginBottom: '8px',
@@ -45,7 +45,7 @@ const ClientMessageScreen = () => {
       gap: '12px'
     },
     headerSubtitle: {
-      fontSize: '16px',
+      fontSize: 'var(--font-size-base)',
       color: '#6c757d',
       marginBottom: '20px'
     },
@@ -70,13 +70,13 @@ const ClientMessageScreen = () => {
       border: '1px solid #e9ecef'
     },
     statValue: {
-      fontSize: '24px',
+      fontSize: 'var(--font-size-xxl)',
       fontWeight: '700',
       color: '#007bff',
       marginBottom: '4px'
     },
     statLabel: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       color: '#6c757d',
       fontWeight: '500'
     },
@@ -88,7 +88,7 @@ const ClientMessageScreen = () => {
       border: '1px solid #e9ecef'
     },
     messagesTitle: {
-      fontSize: '20px',
+      fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
       color: '#2c3e50',
       marginBottom: '20px',
@@ -128,7 +128,7 @@ const ClientMessageScreen = () => {
       marginBottom: '8px'
     },
     messageTitle: {
-      fontSize: '16px',
+      fontSize: 'var(--font-size-base)',
       fontWeight: '600',
       color: '#2c3e50',
       marginBottom: '4px'
@@ -137,11 +137,11 @@ const ClientMessageScreen = () => {
       display: 'flex',
       alignItems: 'center',
       gap: '8px',
-      fontSize: '12px',
+      fontSize: 'var(--font-size-xs)',
       color: '#6c757d'
     },
     messageContent: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       color: '#495057',
       lineHeight: '1.5',
       marginBottom: '8px'
@@ -150,7 +150,7 @@ const ClientMessageScreen = () => {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      fontSize: '12px',
+      fontSize: 'var(--font-size-xs)',
       color: '#6c757d'
     },
     messageBadges: {
@@ -213,18 +213,18 @@ const ClientMessageScreen = () => {
       borderBottom: '1px solid #e9ecef'
     },
     messageDetailTitle: {
-      fontSize: '20px',
+      fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
       color: '#2c3e50',
       marginBottom: '8px'
     },
     messageDetailMeta: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       color: '#6c757d',
       marginBottom: '16px'
     },
     messageDetailContent: {
-      fontSize: '16px',
+      fontSize: 'var(--font-size-base)',
       color: '#495057',
       lineHeight: '1.6',
       marginBottom: '20px',
@@ -235,7 +235,7 @@ const ClientMessageScreen = () => {
       paddingTop: '20px'
     },
     replyTitle: {
-      fontSize: '16px',
+      fontSize: 'var(--font-size-base)',
       fontWeight: '600',
       color: '#2c3e50',
       marginBottom: '12px'
@@ -245,7 +245,7 @@ const ClientMessageScreen = () => {
       padding: '12px 16px',
       border: '2px solid #e9ecef',
       borderRadius: '8px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       minHeight: '100px',
       resize: 'vertical',
       fontFamily: 'inherit',
@@ -259,7 +259,7 @@ const ClientMessageScreen = () => {
     button: {
       padding: '10px 20px',
       borderRadius: '6px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
@@ -282,7 +282,7 @@ const ClientMessageScreen = () => {
       right: '16px',
       background: 'none',
       border: 'none',
-      fontSize: '24px',
+      fontSize: 'var(--font-size-xxl)',
       cursor: 'pointer',
       color: '#6c757d'
     },

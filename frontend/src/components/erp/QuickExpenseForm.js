@@ -164,7 +164,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '24px',
+              fontSize: 'var(--font-size-xxl)',
               cursor: 'pointer',
               color: '#666'
             }}
@@ -211,7 +211,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                     backgroundColor: loading ? '#f8f9fa' : 'white',
                     color: loading ? '#ccc' : expense.color,
                     cursor: loading ? 'not-allowed' : 'pointer',
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     fontWeight: 'bold',
                     textAlign: 'center',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
@@ -231,13 +231,13 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                     }
                   }}
                 >
-                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>
+                  <div style={{ fontSize: 'var(--font-size-xxl)', marginBottom: '8px' }}>
                     {expense.icon}
                   </div>
-                  <div style={{ fontSize: '12px', marginBottom: '4px' }}>
+                  <div style={{ fontSize: 'var(--font-size-xs)', marginBottom: '4px' }}>
                     {expense.displayName}
                   </div>
-                  <div style={{ fontSize: '10px', opacity: 0.7 }}>
+                  <div style={{ fontSize: 'var(--font-size-xs)', opacity: 0.7 }}>
                     {expense.subDisplayName}
                   </div>
                 </button>
@@ -253,7 +253,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
           borderRadius: '5px',
           marginBottom: '20px'
         }}>
-          <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
+          <p style={{ margin: 0, color: '#666', fontSize: 'var(--font-size-sm)' }}>
             💡 버튼을 클릭하면 금액 입력창이 나타납니다 (부가세 포함 금액 입력)
           </p>
         </div>
@@ -268,7 +268,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
               backgroundColor: 'white',
               color: '#666',
               cursor: 'pointer',
-              fontSize: '14px'
+              fontSize: 'var(--font-size-sm)'
             }}
           >
             닫기

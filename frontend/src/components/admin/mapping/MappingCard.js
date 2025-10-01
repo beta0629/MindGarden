@@ -260,7 +260,7 @@ const MappingCard = ({
                             fontWeight: '500'
                         }}>패키지:</span>
                         <span style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#2c3e50',
                             fontWeight: '600'
                         }}>{mapping.packageName || '기본 패키지'}</span>
@@ -280,7 +280,7 @@ const MappingCard = ({
                             fontWeight: '500'
                         }}>총 세션:</span>
                         <span style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#2c3e50',
                             fontWeight: '600'
                         }}>{mapping.totalSessions}회</span>
@@ -300,7 +300,7 @@ const MappingCard = ({
                             fontWeight: '500'
                         }}>남은 세션:</span>
                         <span style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#2c3e50',
                             fontWeight: '600'
                         }}>{mapping.remainingSessions}회</span>
@@ -320,7 +320,7 @@ const MappingCard = ({
                             fontWeight: '500'
                         }}>가격:</span>
                         <span style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#2c3e50',
                             fontWeight: '600'
                         }}>
@@ -345,7 +345,7 @@ const MappingCard = ({
                             marginBottom: '4px'
                         }}>메모:</span>
                         <span style={{
-                            fontSize: '13px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#856404',
                             lineHeight: 1.4
                         }}>{mapping.notes}</span>
@@ -432,7 +432,7 @@ const MappingCard = ({
                     <div style={{
                         padding: '4px 8px',
                         borderRadius: '6px',
-                        fontSize: '10px',
+                        fontSize: 'var(--font-size-xs)',
                         fontWeight: '600',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -596,7 +596,7 @@ const MappingCard = ({
                         padding: '4px 8px',
                         border: 'none',
                         borderRadius: '6px',
-                        fontSize: '11px',
+                        fontSize: 'var(--font-size-xs)',
                         fontWeight: '600',
                         cursor: 'pointer',
                         transition: 'all 0.2s',

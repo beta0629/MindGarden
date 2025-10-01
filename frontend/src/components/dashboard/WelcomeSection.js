@@ -449,7 +449,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                   padding: '40px 20px'
                 }}>
                   <div>
-                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
+                    <div style={{ fontSize: 'var(--font-size-xxxl)', marginBottom: '16px' }}>📅</div>
                     <div>오늘 예정된 상담이 없습니다</div>
                   </div>
                 </div>
@@ -472,7 +472,7 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                       borderRadius: '6px',
                       padding: '8px 16px',
                       color: '#667eea',
-                      fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
                       fontWeight: '500',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease'
@@ -554,14 +554,14 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
                   gap: '8px'
                 }}>
                   <span style={{
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#3f51b5',
                     fontWeight: '500'
                   }}>
                     자세히 보기
                   </span>
                   <i className="bi bi-arrow-right" style={{
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#3f51b5'
                   }}></i>
                 </div>

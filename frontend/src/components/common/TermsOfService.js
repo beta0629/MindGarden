@@ -19,7 +19,7 @@ const TermsOfService = () => {
         color: '#333'
       }}>
         <h1 style={{
-          fontSize: '28px',
+          fontSize: 'var(--font-size-xxl)',
           fontWeight: '700',
           color: '#2c3e50',
           marginBottom: '30px',
@@ -37,7 +37,7 @@ const TermsOfService = () => {
           marginBottom: '30px',
           border: '1px solid #e9ecef'
         }}>
-          <p style={{ margin: '0', fontSize: '14px', color: '#6c757d' }}>
+          <p style={{ margin: '0', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
             <strong>시행일자:</strong> 2025년 1월 17일<br />
             <strong>최종 수정일:</strong> 2025년 1월 17일
           </p>
@@ -45,7 +45,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -61,7 +61,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -81,7 +81,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -103,7 +103,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -126,7 +126,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -150,7 +150,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -172,7 +172,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -195,7 +195,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -217,7 +217,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -239,7 +239,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -261,7 +261,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -280,7 +280,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -302,7 +302,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -321,7 +321,7 @@ const TermsOfService = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',

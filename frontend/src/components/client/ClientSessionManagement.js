@@ -169,19 +169,19 @@ const ClientSessionManagement = () => {
         }}>
           <h1 style={{
             margin: '0 0 12px 0',
-            fontSize: '32px',
+            fontSize: 'var(--font-size-xxxl)',
             fontWeight: '700',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '16px'
           }}>
-            <i className="bi bi-clock-history" style={{ fontSize: '28px' }}></i>
+            <i className="bi bi-clock-history" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
             회기 관리
           </h1>
           <p style={{
             margin: '0',
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             opacity: '0.9',
             fontWeight: '400'
           }}>
@@ -363,9 +363,9 @@ const ClientSessionManagement = () => {
                     alignItems: 'center',
                     gap: '8px'
                   }}>
-                    <i className="bi bi-person" style={{ color: '#007bff', fontSize: '18px' }}></i>
+                    <i className="bi bi-person" style={{ color: '#007bff', fontSize: 'var(--font-size-lg)' }}></i>
                     <span style={{
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
                       color: '#2c3e50'
                     }}>상담사: {mapping.consultant?.consultantName || '미지정'}</span>
@@ -373,7 +373,7 @@ const ClientSessionManagement = () => {
                   <span style={{
                     padding: '4px 12px',
                     borderRadius: '20px',
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     fontWeight: '500',
                     backgroundColor: mapping.status === 'ACTIVE' ? '#d4edda' : '#f8d7da',
                     color: mapping.status === 'ACTIVE' ? '#155724' : '#721c24'
@@ -399,13 +399,13 @@ const ClientSessionManagement = () => {
                     boxSizing: 'border-box'
                   }}>
                     <span style={{
-                      fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
                       color: '#6c757d',
                       marginBottom: '4px',
                       fontWeight: '500'
                     }}>총 회기</span>
                     <span style={{
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
                       color: '#2c3e50'
                     }}>{mapping.totalSessions}회</span>
@@ -420,13 +420,13 @@ const ClientSessionManagement = () => {
                     boxSizing: 'border-box'
                   }}>
                     <span style={{
-                      fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
                       color: '#6c757d',
                       marginBottom: '4px',
                       fontWeight: '500'
                     }}>사용</span>
                     <span style={{
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
                       color: '#2c3e50'
                     }}>{mapping.usedSessions || 0}회</span>
@@ -441,13 +441,13 @@ const ClientSessionManagement = () => {
                     boxSizing: 'border-box'
                   }}>
                     <span style={{
-                      fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
                       color: '#6c757d',
                       marginBottom: '4px',
                       fontWeight: '500'
                     }}>남은 회기</span>
                     <span style={{
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
                       color: '#2c3e50'
                     }}>{mapping.remainingSessions || 0}회</span>
@@ -462,13 +462,13 @@ const ClientSessionManagement = () => {
                     boxSizing: 'border-box'
                   }}>
                     <span style={{
-                      fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
                       color: '#6c757d',
                       marginBottom: '4px',
                       fontWeight: '500'
                     }}>상담사</span>
                     <span style={{
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
                       color: '#2c3e50'
                     }}>{mapping.consultant?.consultantName || '미지정'}</span>
@@ -483,13 +483,13 @@ const ClientSessionManagement = () => {
                     boxSizing: 'border-box'
                   }}>
                     <span style={{
-                      fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
                       color: '#6c757d',
                       marginBottom: '4px',
                       fontWeight: '500'
                     }}>연결일</span>
                     <span style={{
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
                       color: '#2c3e50'
                     }}>

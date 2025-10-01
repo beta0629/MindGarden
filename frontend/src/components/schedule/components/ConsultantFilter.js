@@ -62,7 +62,7 @@ const ConsultantFilterNew = ({
                     flex: '1'
                 }}>
                     <label style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '600',
                         color: '#495057',
                         margin: '0'
@@ -74,7 +74,7 @@ const ConsultantFilterNew = ({
                             padding: '12px 16px',
                             border: 'none',
                             borderRadius: '8px',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             transition: 'all 0.2s ease',
                             background: '#ffffff'
                         }}
@@ -101,7 +101,7 @@ const ConsultantFilterNew = ({
                     minWidth: '150px'
                 }}>
                     <label style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '600',
                         color: '#495057',
                         margin: '0'
@@ -112,7 +112,7 @@ const ConsultantFilterNew = ({
                             padding: '12px 16px',
                             border: 'none',
                             borderRadius: '8px',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             background: '#ffffff',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease'
@@ -145,7 +145,7 @@ const ConsultantFilterNew = ({
                     minWidth: '100px'
                 }}>
                     <label style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '600',
                         color: '#495057',
                         margin: '0'
@@ -158,7 +158,7 @@ const ConsultantFilterNew = ({
                             borderRadius: '8px',
                             background: '#ffffff',
                             color: '#6c757d',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             fontWeight: '500',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
@@ -188,7 +188,7 @@ const ConsultantFilterNew = ({
 
                 {/* 상담사 수 표시 */}
                 <div style={{
-                    fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                     fontWeight: '600',
                     color: '#495057',
                     marginLeft: 'auto',
@@ -214,7 +214,7 @@ const ConsultantFilterNew = ({
                     minWidth: '200px'
                 }}>
                     <label style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '600',
                         color: '#495057',
                         margin: '0'
@@ -234,7 +234,7 @@ const ConsultantFilterNew = ({
                                     borderRadius: '8px',
                                     background: filters.availability === option.value ? option.color : '#ffffff',
                                     color: filters.availability === option.value ? '#ffffff' : '#495057',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     fontWeight: '500',
                                     cursor: 'pointer',
                                     transition: 'all 0.2s ease',

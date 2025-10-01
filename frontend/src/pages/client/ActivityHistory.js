@@ -179,7 +179,7 @@ const ActivityHistory = () => {
               key={type}
               className={`btn ${filter === type ? 'btn-primary' : 'btn-outline-primary'}`}
               onClick={() => setFilter(type)}
-              style={{ fontSize: '14px', padding: '6px 12px' }}
+              style={{ fontSize: 'var(--font-size-sm)', padding: '6px 12px' }}
             >
               {getActivityTypeLabel(type)}
             </button>
@@ -216,7 +216,7 @@ const ActivityHistory = () => {
                   justifyContent: 'center',
                   flexShrink: 0
                 }}>
-                  <i className={`bi ${activity.icon}`} style={{ color: 'white', fontSize: '18px' }}></i>
+                  <i className={`bi ${activity.icon}`} style={{ color: 'white', fontSize: 'var(--font-size-lg)' }}></i>
                 </div>
 
                 {/* 내용 */}
@@ -227,13 +227,13 @@ const ActivityHistory = () => {
                     alignItems: 'flex-start',
                     marginBottom: '5px'
                   }}>
-                    <h5 style={{ margin: 0, color: '#2c3e50', fontSize: '16px' }}>
+                    <h5 style={{ margin: 0, color: '#2c3e50', fontSize: 'var(--font-size-base)' }}>
                       {activity.title}
                     </h5>
                     <span style={{
                       padding: '4px 8px',
                       borderRadius: '12px',
-                      fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
                       fontWeight: '600',
                       backgroundColor: getStatusColor(activity.status) + '20',
                       color: getStatusColor(activity.status)
@@ -245,7 +245,7 @@ const ActivityHistory = () => {
                   <p style={{ 
                     margin: '0 0 8px 0', 
                     color: '#6c757d', 
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     lineHeight: '1.4'
                   }}>
                     {activity.description}
@@ -254,7 +254,7 @@ const ActivityHistory = () => {
                   <div style={{ 
                     display: 'flex', 
                     gap: '15px', 
-                    fontSize: '12px', 
+                    fontSize: 'var(--font-size-xs)', 
                     color: '#adb5bd' 
                   }}>
                     <span>
@@ -280,7 +280,7 @@ const ActivityHistory = () => {
             textAlign: 'center',
             color: '#6c757d'
           }}>
-            <i className="bi bi-inbox" style={{ fontSize: '48px', marginBottom: '15px' }}></i>
+            <i className="bi bi-inbox" style={{ fontSize: 'var(--font-size-xxxl)', marginBottom: '15px' }}></i>
             <h5>활동 내역이 없습니다</h5>
             <p>선택한 조건에 해당하는 활동이 없습니다.</p>
           </div>

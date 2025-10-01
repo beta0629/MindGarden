@@ -903,7 +903,7 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
             <div style={{ marginBottom: '6px' }}>당기순이익: {formatCurrency(balanceSheetData?.equity?.retainedEarnings?.netIncome || 0)}</div>
           </div>
 
-          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-lg)', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
             자본 총계: {formatCurrency(balanceSheetData?.equity?.total || 0)}
           </div>
         </div>
@@ -984,7 +984,7 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
           color: 'white'
         }}>
           <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>💚 수익</h3>
-          <div style={{ fontSize: '15px', marginBottom: '12px', lineHeight: '1.6' }}>
+          <div style={{ fontSize: 'var(--font-size-md)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>상담 수익:</span>
               <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.revenue?.consultationRevenue || 0)}</span>
@@ -994,7 +994,7 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
               <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.revenue?.otherRevenue || 0)}</span>
             </div>
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '12px', marginTop: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: 'var(--font-size-base)' }}>
                 <span>수익 총계:</span>
                 <span>{formatCurrency(incomeStatementData?.revenue?.total || 0)}</span>
               </div>
@@ -1010,8 +1010,8 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
           boxShadow: '0 8px 32px rgba(255,118,117,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>❤️ 비용</h3>
-          <div style={{ fontSize: '15px', marginBottom: '12px', lineHeight: '1.6' }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>❤️ 비용</h3>
+          <div style={{ fontSize: 'var(--font-size-md)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span>급여비용:</span>
               <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.expenses?.salaryExpense || 0)}</span>
@@ -1037,7 +1037,7 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
               <span style={{ fontWeight: '600' }}>{formatCurrency(incomeStatementData?.expenses?.otherExpense || 0)}</span>
             </div>
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.3)', paddingTop: '12px', marginTop: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: 'var(--font-size-base)' }}>
                 <span>비용 총계:</span>
                 <span>{formatCurrency(incomeStatementData?.expenses?.total || 0)}</span>
               </div>
@@ -1076,7 +1076,7 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
           background: 'rgba(255,255,255,0.05)',
           borderRadius: '50%'
         }}></div>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: '600', position: 'relative', zIndex: 1 }}>💙 당기순이익</h3>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: 'var(--font-size-xxl)', fontWeight: '600', position: 'relative', zIndex: 1 }}>💙 당기순이익</h3>
         <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
           {formatCurrency(incomeStatementData?.netIncome || 0)}
         </div>
@@ -1147,12 +1147,12 @@ const DailyReportTab = ({ period }) => {
           boxShadow: '0 8px 32px rgba(0,184,148,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💚 일간 수입</h3>
-          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>💚 일간 수입</h3>
+          <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ marginBottom: '6px' }}>상담료: {formatCurrency(reportData?.dailyIncome?.consultationFees || 0)}</div>
             <div style={{ marginBottom: '6px' }}>기타수입: {formatCurrency(reportData?.dailyIncome?.otherIncome || 0)}</div>
           </div>
-          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-lg)', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
             총 수입: {formatCurrency(reportData?.dailyIncome?.total || 0)}
           </div>
         </div>
@@ -1165,14 +1165,14 @@ const DailyReportTab = ({ period }) => {
           boxShadow: '0 8px 32px rgba(255,118,117,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>❤️ 일간 지출</h3>
-          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>❤️ 일간 지출</h3>
+          <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ marginBottom: '6px' }}>급여: {formatCurrency(reportData?.dailyExpenses?.salary || 0)}</div>
             <div style={{ marginBottom: '6px' }}>사무용품: {formatCurrency(reportData?.dailyExpenses?.officeSupplies || 0)}</div>
             <div style={{ marginBottom: '6px' }}>관리비: {formatCurrency(reportData?.dailyExpenses?.utilities || 0)}</div>
             <div style={{ marginBottom: '6px' }}>기타지출: {formatCurrency(reportData?.dailyExpenses?.otherExpenses || 0)}</div>
           </div>
-          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-lg)', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
             총 지출: {formatCurrency(reportData?.dailyExpenses?.total || 0)}
           </div>
         </div>
@@ -1185,11 +1185,11 @@ const DailyReportTab = ({ period }) => {
           boxShadow: '0 8px 32px rgba(116,185,255,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💙 일간 순이익</h3>
-          <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>💙 일간 순이익</h3>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', marginBottom: '8px' }}>
             {formatCurrency(reportData?.dailyNetIncome || 0)}
           </div>
-          <div style={{ fontSize: '14px', opacity: '0.9' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', opacity: '0.9' }}>
             수입 - 지출
           </div>
         </div>
@@ -1202,7 +1202,7 @@ const DailyReportTab = ({ period }) => {
         borderRadius: '16px',
         boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
       }}>
-        <h3 style={{ marginBottom: '18px', fontSize: '20px', fontWeight: '600', color: '#2c3e50' }}>📊 일간 거래 건수</h3>
+        <h3 style={{ marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600', color: '#2c3e50' }}>📊 일간 거래 건수</h3>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
@@ -1292,11 +1292,11 @@ const MonthlyReportTab = ({ period }) => {
           color: 'white'
         }}>
           <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💚 월간 수입</h3>
-          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ marginBottom: '6px' }}>상담수익: {formatCurrency(reportData?.monthlyIncome?.consultationRevenue || 0)}</div>
             <div style={{ marginBottom: '6px' }}>기타수익: {formatCurrency(reportData?.monthlyIncome?.otherRevenue || 0)}</div>
           </div>
-          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-lg)', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
             총 수입: {formatCurrency(reportData?.monthlyIncome?.total || 0)}
           </div>
         </div>
@@ -1310,7 +1310,7 @@ const MonthlyReportTab = ({ period }) => {
           color: 'white'
         }}>
           <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>❤️ 월간 지출</h3>
-          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ marginBottom: '6px' }}>급여지출: {formatCurrency(reportData?.monthlyExpenses?.salaryExpense || 0)}</div>
             <div style={{ marginBottom: '6px' }}>임대료: {formatCurrency(reportData?.monthlyExpenses?.rentExpense || 0)}</div>
             <div style={{ marginBottom: '6px' }}>관리비: {formatCurrency(reportData?.monthlyExpenses?.utilityExpense || 0)}</div>
@@ -1318,7 +1318,7 @@ const MonthlyReportTab = ({ period }) => {
             <div style={{ marginBottom: '6px' }}>세금: {formatCurrency(reportData?.monthlyExpenses?.taxExpense || 0)}</div>
             <div style={{ marginBottom: '6px' }}>구매비용: {formatCurrency(reportData?.monthlyExpenses?.purchaseExpense || 0)}</div>
           </div>
-          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-lg)', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
             총 지출: {formatCurrency(reportData?.monthlyExpenses?.total || 0)}
           </div>
         </div>
@@ -1332,10 +1332,10 @@ const MonthlyReportTab = ({ period }) => {
           color: 'white'
         }}>
           <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💙 월간 순이익</h3>
-          <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', marginBottom: '8px' }}>
             {formatCurrency(reportData?.monthlyNetIncome || 0)}
           </div>
-          <div style={{ fontSize: '14px', opacity: '0.9' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', opacity: '0.9' }}>
             수입 - 지출
           </div>
         </div>
@@ -1438,11 +1438,11 @@ const YearlyReportTab = ({ period }) => {
           color: 'white'
         }}>
           <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💚 년간 수입</h3>
-          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ marginBottom: '6px' }}>상담수익: {formatCurrency(reportData?.yearlyIncome?.consultationRevenue || 0)}</div>
             <div style={{ marginBottom: '6px' }}>기타수익: {formatCurrency(reportData?.yearlyIncome?.otherRevenue || 0)}</div>
           </div>
-          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-lg)', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
             총 수입: {formatCurrency(reportData?.yearlyIncome?.total || 0)}
           </div>
         </div>
@@ -1456,7 +1456,7 @@ const YearlyReportTab = ({ period }) => {
           color: 'white'
         }}>
           <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>❤️ 년간 지출</h3>
-          <div style={{ fontSize: '13px', marginBottom: '12px', lineHeight: '1.6' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ marginBottom: '6px' }}>급여지출: {formatCurrency(reportData?.yearlyExpenses?.salaryExpense || 0)}</div>
             <div style={{ marginBottom: '6px' }}>임대료: {formatCurrency(reportData?.yearlyExpenses?.rentExpense || 0)}</div>
             <div style={{ marginBottom: '6px' }}>관리비: {formatCurrency(reportData?.yearlyExpenses?.utilityExpense || 0)}</div>
@@ -1465,7 +1465,7 @@ const YearlyReportTab = ({ period }) => {
             <div style={{ marginBottom: '6px' }}>구매비용: {formatCurrency(reportData?.yearlyExpenses?.purchaseExpense || 0)}</div>
             <div style={{ marginBottom: '6px' }}>기타지출: {formatCurrency(reportData?.yearlyExpenses?.otherExpense || 0)}</div>
           </div>
-          <div style={{ fontWeight: 'bold', fontSize: '18px', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
+          <div style={{ fontWeight: 'bold', fontSize: 'var(--font-size-lg)', borderTop: '2px solid rgba(255,255,255,0.5)', paddingTop: '12px' }}>
             총 지출: {formatCurrency(reportData?.yearlyExpenses?.total || 0)}
           </div>
         </div>
@@ -1479,10 +1479,10 @@ const YearlyReportTab = ({ period }) => {
           color: 'white'
         }}>
           <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💙 년간 순이익</h3>
-          <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>
+          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', marginBottom: '8px' }}>
             {formatCurrency(reportData?.yearlyNetIncome || 0)}
           </div>
-          <div style={{ fontSize: '14px', opacity: '0.9' }}>
+          <div style={{ fontSize: 'var(--font-size-sm)', opacity: '0.9' }}>
             수입 - 지출
           </div>
         </div>

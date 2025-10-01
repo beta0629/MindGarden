@@ -39,7 +39,7 @@ const ClientSchedule = () => {
     return (
       <SimpleLayout>
         <div style={{ textAlign: 'center', padding: '40px' }}>
-          <i className="bi bi-exclamation-triangle" style={{ fontSize: '48px', color: '#dc3545', marginBottom: '16px' }}></i>
+          <i className="bi bi-exclamation-triangle" style={{ fontSize: 'var(--font-size-xxxl)', color: '#dc3545', marginBottom: '16px' }}></i>
           <h3 style={{ color: '#dc3545', marginBottom: '16px' }}>오류가 발생했습니다</h3>
           <p style={{ color: '#6c757d', marginBottom: '24px' }}>{error}</p>
           <button 
@@ -70,7 +70,7 @@ const ClientSchedule = () => {
           backdropFilter: 'blur(10px)'
         }}>
           <h2 style={{
-            fontSize: '28px',
+            fontSize: 'var(--font-size-xxl)',
             fontWeight: '700',
             color: '#2c3e50',
             marginBottom: '12px',
@@ -79,11 +79,11 @@ const ClientSchedule = () => {
             justifyContent: 'center',
             gap: '12px'
           }}>
-            <i className="bi bi-calendar3" style={{ color: '#3498db', fontSize: '32px' }}></i>
+            <i className="bi bi-calendar3" style={{ color: '#3498db', fontSize: 'var(--font-size-xxxl)' }}></i>
             내 일정
           </h2>
           <p style={{
-            fontSize: '16px',
+            fontSize: 'var(--font-size-base)',
             color: '#6c757d',
             margin: '0',
             lineHeight: '1.6'

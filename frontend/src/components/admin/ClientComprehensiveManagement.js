@@ -1332,7 +1332,7 @@ const ClientComprehensiveManagement = () => {
                                                             display: 'inline-block',
                                                             padding: '2px 8px',
                                                             borderRadius: '12px',
-                                                            fontSize: '12px',
+                                                            fontSize: 'var(--font-size-xs)',
                                                             fontWeight: '500',
                                                             color: 'white',
                                                             backgroundColor: getStatusColorSync(mapping.status)
@@ -1345,7 +1345,7 @@ const ClientComprehensiveManagement = () => {
                                                         display: 'inline-block',
                                                         padding: '2px 8px',
                                                         borderRadius: '12px',
-                                                        fontSize: '12px',
+                                                        fontSize: 'var(--font-size-xs)',
                                                         fontWeight: '500',
                                                         color: '#6c757d',
                                                         backgroundColor: '#f8f9fa'
@@ -1370,7 +1370,7 @@ const ClientComprehensiveManagement = () => {
                                             whiteSpace: 'nowrap'
                                         }}>{client.phone || '전화번호 없음'}</div>
                                         <div style={{
-                                            fontSize: '12px',
+                                            fontSize: 'var(--font-size-xs)',
                                             color: '#6c757d',
                                             marginBottom: '4px',
                                             display: 'flex',
@@ -1381,14 +1381,14 @@ const ClientComprehensiveManagement = () => {
                                             <span>등급: {getGradeTextSync(client.grade) || '브론즈'}</span>
                                         </div>
                                         <div style={{
-                                            fontSize: '12px',
+                                            fontSize: 'var(--font-size-xs)',
                                             color: '#6c757d',
                                             marginBottom: '2px'
                                         }}>
                                             등록일: {client.createdAt ? new Date(client.createdAt).toLocaleDateString('ko-KR') : '-'}
                                         </div>
                                         <div style={{
-                                            fontSize: '12px',
+                                            fontSize: 'var(--font-size-xs)',
                                             color: '#6c757d'
                                         }}>
                                             총 상담: {getClientConsultations().filter(c => c.clientId === client.id).length}회
@@ -1858,7 +1858,7 @@ const ClientComprehensiveManagement = () => {
                                                     <div style={{ flex: '1' }}>
                                                         <h3 style={{
                                                             margin: '0 0 4px 0',
-                                                            fontSize: '18px',
+                                                            fontSize: 'var(--font-size-lg)',
                                                             fontWeight: '600',
                                                             color: '#2c3e50'
                                                         }}>
@@ -1911,7 +1911,7 @@ const ClientComprehensiveManagement = () => {
                                                             display: 'inline-block',
                                                             padding: '4px 12px',
                                                             borderRadius: '16px',
-                                                            fontSize: '12px',
+                                                            fontSize: 'var(--font-size-xs)',
                                                             fontWeight: '600',
                                                             background: '#e3f2fd',
                                                             color: '#1976d2'
@@ -1936,7 +1936,7 @@ const ClientComprehensiveManagement = () => {
                                                                 display: 'inline-block',
                                                                 padding: '4px 12px',
                                                                 borderRadius: '16px',
-                                                                fontSize: '12px',
+                                                                fontSize: 'var(--font-size-xs)',
                                                                 fontWeight: '600',
                                                                 color: 'white',
                                                                 backgroundColor: getStatusColorSync(mapping.status)
@@ -1948,7 +1948,7 @@ const ClientComprehensiveManagement = () => {
                                                                 display: 'inline-block',
                                                                 padding: '4px 12px',
                                                                 borderRadius: '16px',
-                                                                fontSize: '12px',
+                                                                fontSize: 'var(--font-size-xs)',
                                                                 fontWeight: '600',
                                                                 color: 'white',
                                                                 backgroundColor: '#6c757d'
@@ -2356,7 +2356,7 @@ const ClientComprehensiveManagement = () => {
                                             <small style={{
                                                 display: 'block',
                                                 marginTop: '8px',
-                                                fontSize: '12px',
+                                                fontSize: 'var(--font-size-xs)',
                                                 color: '#6c757d',
                                                 lineHeight: '1.4'
                                             }}>
@@ -2367,7 +2367,7 @@ const ClientComprehensiveManagement = () => {
                                             <small style={{
                                                 display: 'block',
                                                 marginTop: '8px',
-                                                fontSize: '12px',
+                                                fontSize: 'var(--font-size-xs)',
                                                 color: '#6c757d',
                                                 lineHeight: '1.4'
                                             }}>
@@ -2556,7 +2556,7 @@ const ClientComprehensiveManagement = () => {
                                                     {mapping.consultantName}와의 매핑
                                                 </div>
                                                 <div style={{
-                                                    fontSize: '12px',
+                                                    fontSize: 'var(--font-size-xs)',
                                                     color: '#6c757d'
                                                 }}>
                                                     {mapping.packageName} | 남은 회기: {mapping.remainingSessions}회
@@ -2587,7 +2587,7 @@ const ClientComprehensiveManagement = () => {
                                 {selectedMappings.length === 0 && (
                                     <div style={{
                                         color: '#dc3545',
-                                        fontSize: '12px',
+                                                                fontSize: 'var(--font-size-xs)',
                                         marginTop: '8px',
                                         fontWeight: '500'
                                     }}>
@@ -2625,7 +2625,7 @@ const ClientComprehensiveManagement = () => {
                                 {!refundReason.trim() && (
                                     <div style={{
                                         color: '#dc3545',
-                                        fontSize: '12px',
+                                                                fontSize: 'var(--font-size-xs)',
                                         marginTop: '4px',
                                         fontWeight: '500'
                                     }}>

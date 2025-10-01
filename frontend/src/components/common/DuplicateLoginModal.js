@@ -107,7 +107,7 @@ const DuplicateLoginModal = () => {
       }}>
         {/* 아이콘 */}
         <div style={{
-          fontSize: '48px',
+          fontSize: 'var(--font-size-xxxl)',
           marginBottom: '16px',
           color: '#f59e0b'
         }}>
@@ -116,7 +116,7 @@ const DuplicateLoginModal = () => {
         
         {/* 제목 */}
         <h3 style={{
-          fontSize: '18px',
+          fontSize: 'var(--font-size-lg)',
           fontWeight: '600',
           marginBottom: '12px',
           color: '#1f2937'
@@ -126,7 +126,7 @@ const DuplicateLoginModal = () => {
         
         {/* 메시지 */}
         <p style={{
-          fontSize: '14px',
+          fontSize: 'var(--font-size-sm)',
           color: '#6b7280',
           marginBottom: '24px',
           lineHeight: '1.5'
@@ -148,7 +148,7 @@ const DuplicateLoginModal = () => {
               borderRadius: '8px',
               backgroundColor: 'white',
               color: '#6b7280',
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               fontWeight: '500',
               cursor: 'pointer',
               transition: 'all 0.2s'
@@ -171,7 +171,7 @@ const DuplicateLoginModal = () => {
               borderRadius: '8px',
               backgroundColor: '#3b82f6',
               color: 'white',
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               fontWeight: '500',
               cursor: 'pointer',
               transition: 'all 0.2s'

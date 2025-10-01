@@ -297,25 +297,25 @@ const ItemManagement = () => {
               }}>
                 <div style={{ marginBottom: '12px' }}>
                   <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>{item.name}</h4>
-                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '8px' }}>
+                  <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginBottom: '8px' }}>
                     {getCategoryLabel(item.category)}
                   </div>
                   {item.description && (
-                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                    <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginBottom: '8px' }}>
                       {item.description}
                     </div>
                   )}
                 </div>
                 
                 <div style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#007bff' }}>
+                  <div style={{ fontSize: 'var(--font-size-base)', fontWeight: '600', color: '#007bff' }}>
                     {formatCurrency(item.unitPrice)}
                   </div>
-                  <div style={{ fontSize: '14px', color: '#6c757d' }}>
+                  <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
                     재고: {item.stockQuantity}개
                   </div>
                   {item.supplier && (
-                    <div style={{ fontSize: '12px', color: '#999' }}>
+                    <div style={{ fontSize: 'var(--font-size-xs)', color: '#999' }}>
                       공급업체: {item.supplier}
                     </div>
                   )}

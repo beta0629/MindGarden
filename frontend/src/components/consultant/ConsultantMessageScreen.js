@@ -56,7 +56,7 @@ const ConsultantMessageScreen = () => {
       border: '1px solid #e9ecef'
     },
     headerTitle: {
-      fontSize: '28px',
+      fontSize: 'var(--font-size-xxl)',
       fontWeight: '700',
       color: '#2c3e50',
       marginBottom: '8px',
@@ -65,7 +65,7 @@ const ConsultantMessageScreen = () => {
       gap: '12px'
     },
     headerSubtitle: {
-      fontSize: '16px',
+      fontSize: 'var(--font-size-base)',
       color: '#6c757d',
       marginBottom: '20px'
     },
@@ -78,7 +78,7 @@ const ConsultantMessageScreen = () => {
       border: '1px solid #e9ecef'
     },
     clientInfoTitle: {
-      fontSize: '20px',
+      fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
       color: '#2c3e50',
       marginBottom: '16px',
@@ -97,14 +97,14 @@ const ConsultantMessageScreen = () => {
       gap: '4px'
     },
     clientInfoLabel: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
       color: '#6c757d',
       textTransform: 'uppercase',
       letterSpacing: '0.5px'
     },
     clientInfoValue: {
-      fontSize: '16px',
+      fontSize: 'var(--font-size-base)',
       color: '#2c3e50',
       fontWeight: '500'
     },
@@ -116,7 +116,7 @@ const ConsultantMessageScreen = () => {
       border: '1px solid #e9ecef'
     },
     messageTitle: {
-      fontSize: '20px',
+      fontSize: 'var(--font-size-xl)',
       fontWeight: '600',
       color: '#2c3e50',
       marginBottom: '20px',
@@ -135,7 +135,7 @@ const ConsultantMessageScreen = () => {
       gap: '8px'
     },
     formLabel: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
       color: '#495057',
       marginBottom: '4px'
@@ -144,7 +144,7 @@ const ConsultantMessageScreen = () => {
       padding: '12px 16px',
       border: '2px solid #e9ecef',
       borderRadius: '8px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       transition: 'all 0.2s ease',
       backgroundColor: '#fff'
     },
@@ -152,7 +152,7 @@ const ConsultantMessageScreen = () => {
       padding: '12px 16px',
       border: '2px solid #e9ecef',
       borderRadius: '8px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       minHeight: '120px',
       resize: 'vertical',
       fontFamily: 'inherit',
@@ -163,7 +163,7 @@ const ConsultantMessageScreen = () => {
       padding: '12px 16px',
       border: '2px solid #e9ecef',
       borderRadius: '8px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       backgroundColor: '#fff',
       cursor: 'pointer',
       transition: 'all 0.2s ease'
@@ -189,7 +189,7 @@ const ConsultantMessageScreen = () => {
       cursor: 'pointer'
     },
     checkboxLabel: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       fontWeight: '500',
       color: '#495057',
       cursor: 'pointer'
@@ -217,7 +217,7 @@ const ConsultantMessageScreen = () => {
       marginBottom: '8px'
     },
     messageTypeLabel: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
       color: '#495057'
     },
@@ -232,7 +232,7 @@ const ConsultantMessageScreen = () => {
     button: {
       padding: '12px 24px',
       borderRadius: '8px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.2s ease',

@@ -293,14 +293,14 @@ const ConsultantProfileModal = ({
     const labelStyle = {
         fontWeight: '600',
         color: '#6c757d',
-        fontSize: '14px',
+        fontSize: 'var(--font-size-sm)',
         textTransform: 'uppercase',
         letterSpacing: '0.5px'
     };
 
     const spanStyle = {
         color: '#2c3e50',
-        fontSize: '15px',
+        fontSize: 'var(--font-size-md)',
         padding: '8px 0',
         borderBottom: '1px solid #e9ecef'
     };
@@ -318,7 +318,7 @@ const ConsultantProfileModal = ({
     const closeButtonStyle = {
         background: 'none',
         border: 'none',
-        fontSize: '24px',
+        fontSize: 'var(--font-size-xxl)',
         color: '#6c757d',
         cursor: 'pointer',
         padding: '0',
@@ -335,7 +335,7 @@ const ConsultantProfileModal = ({
         padding: '10px 20px',
         borderRadius: '6px',
         fontWeight: '500',
-        fontSize: '14px',
+        fontSize: 'var(--font-size-sm)',
         cursor: 'pointer',
         transition: 'all 0.2s ease',
         border: 'none',
@@ -348,7 +348,7 @@ const ConsultantProfileModal = ({
         padding: '10px 20px',
         borderRadius: '6px',
         fontWeight: '500',
-        fontSize: '14px',
+        fontSize: 'var(--font-size-sm)',
         cursor: 'pointer',
         transition: 'all 0.2s ease',
         border: 'none',
@@ -361,7 +361,7 @@ const ConsultantProfileModal = ({
         <div style={modalOverlayStyle} onClick={onClose}>
             <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
                 <div style={modalHeaderStyle}>
-                    <h3 style={{ margin: 0, color: '#2c3e50', fontSize: '20px', fontWeight: '600' }}>
+                    <h3 style={{ margin: 0, color: '#2c3e50', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>
                         급여 프로필 생성 - {consultant.name}
                     </h3>
                     <button style={closeButtonStyle} onClick={onClose}>
@@ -372,7 +372,7 @@ const ConsultantProfileModal = ({
                 <div style={modalBodyStyle}>
                     <div style={infoSectionStyle}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                            <h4 style={{ margin: 0, color: '#495057', fontSize: '16px', fontWeight: '600' }}>급여 프로필</h4>
+                            <h4 style={{ margin: 0, color: '#495057', fontSize: 'var(--font-size-base)', fontWeight: '600' }}>급여 프로필</h4>
                             {(() => {
                                 console.log('수정 버튼 표시 조건 확인:');
                                 console.log('- salaryProfile:', !!salaryProfile);
@@ -384,7 +384,7 @@ const ConsultantProfileModal = ({
                                     style={{
                                         ...btnPrimaryStyle,
                                         padding: '8px 16px',
-                                        fontSize: '12px',
+                                        fontSize: 'var(--font-size-xs)',
                                         minWidth: 'auto'
                                     }}
                                     onClick={() => setShowSalaryForm(true)}
@@ -454,7 +454,7 @@ const ConsultantProfileModal = ({
                         {showSalaryForm && (
                             <form onSubmit={handleSalaryProfileSubmit} style={{ marginTop: '20px', padding: '20px', background: '#f8f9fa', borderRadius: '8px' }}>
                                 <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e3f2fd', borderRadius: '6px', borderLeft: '4px solid #2196f3' }}>
-                                    <h5 style={{ margin: '0 0 10px 0', color: '#1976d2', fontSize: '14px', fontWeight: '600' }}>💡 안내사항</h5>
+                                    <h5 style={{ margin: '0 0 10px 0', color: '#1976d2', fontSize: 'var(--font-size-sm)', fontWeight: '600' }}>💡 안내사항</h5>
                                     <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#424242', lineHeight: '1.5' }}>
                                         <li>상담사 등급에 따라 기본 급여가 자동으로 설정됩니다</li>
                                         <li>등급이 올라갈수록 2,000원씩 증가합니다</li>
@@ -531,7 +531,7 @@ const ConsultantProfileModal = ({
                                             padding: '8px', 
                                             borderRadius: '4px', 
                                             border: '1px solid #ddd', 
-                                            fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                             backgroundColor: '#f8f9fa',
                                             color: '#495057'
                                         }}>
@@ -594,7 +594,7 @@ const ConsultantProfileModal = ({
                                             backgroundColor: '#f8f9fa', 
                                             borderRadius: '4px', 
                                             border: '1px solid #e9ecef',
-                                            fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                             color: '#6c757d'
                                         }}>
                                             💡 옵션 유형은 상담 완료 시 자동으로 적용됩니다

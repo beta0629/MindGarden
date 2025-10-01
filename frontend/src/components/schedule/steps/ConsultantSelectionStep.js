@@ -439,13 +439,13 @@ const ConsultantSelectionStepNew = ({
             }}>
                 <h4 style={{
                     margin: '0 0 8px 0',
-                    fontSize: '24px',
+                    fontSize: 'var(--font-size-xxl)',
                     fontWeight: '700',
                     color: '#495057'
                 }}>👨‍⚕️ 상담사를 선택하세요</h4>
                 <p style={{
                     margin: '0',
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     color: '#6c757d',
                     fontWeight: '500'
                 }}>
@@ -502,12 +502,12 @@ const ConsultantSelectionStepNew = ({
                         color: '#6c757d'
                     }}>
                         <div style={{
-                            fontSize: '48px',
+                            fontSize: 'var(--font-size-xxxl)',
                             marginBottom: '16px',
                             opacity: '0.5'
                         }}>👨‍⚕️</div>
                         <p style={{
-                            fontSize: '18px',
+                            fontSize: 'var(--font-size-lg)',
                             fontWeight: '600',
                             margin: '0 0 8px 0'
                         }}>조건에 맞는 상담사가 없습니다.</p>
@@ -539,7 +539,7 @@ const ConsultantSelectionStepNew = ({
                     border: 'none'
                 }}>
                     <div style={{
-                        fontSize: '16px',
+                        fontSize: 'var(--font-size-base)',
                         fontWeight: '600',
                         color: '#495057',
                         textAlign: 'center'

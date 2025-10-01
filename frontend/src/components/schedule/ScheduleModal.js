@@ -521,7 +521,7 @@ const ScheduleModalNew = ({
                                     gap: '8px'
                                 }}>
                                     <label style={{
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         fontWeight: '600',
                                         color: '#495057',
                                         margin: '0'
@@ -535,7 +535,7 @@ const ScheduleModalNew = ({
                                             padding: '12px 16px',
                                             border: '2px solid #e9ecef',
                                             borderRadius: '8px',
-                                            fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                             color: '#495057',
                                             backgroundColor: '#ffffff',
                                             outline: 'none',
@@ -554,7 +554,7 @@ const ScheduleModalNew = ({
                                         {consultationTypeOptions.map(option => (
                                             <option key={option.value} value={option.value} style={{
                                                 padding: '8px',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 color: '#495057',
                                                 backgroundColor: '#ffffff',
                                                 fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
@@ -571,7 +571,7 @@ const ScheduleModalNew = ({
                                     gap: '8px'
                                 }}>
                                     <label style={{
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         fontWeight: '600',
                                         color: '#495057',
                                         margin: '0'
@@ -585,7 +585,7 @@ const ScheduleModalNew = ({
                                             padding: '12px 16px',
                                             border: '2px solid #e9ecef',
                                             borderRadius: '8px',
-                                            fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                             color: '#495057',
                                             backgroundColor: '#ffffff',
                                             outline: 'none',
@@ -604,7 +604,7 @@ const ScheduleModalNew = ({
                                         {durationOptions.map(option => (
                                             <option key={option.value} value={option.value} style={{
                                                 padding: '8px',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 color: '#495057',
                                                 backgroundColor: '#ffffff',
                                                 fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
@@ -646,8 +646,8 @@ const ScheduleModalNew = ({
                                     padding: '8px 0',
                                     borderBottom: '1px solid #e9ecef'
                                 }}>
-                                    <strong style={{ color: '#495057', fontSize: '14px' }}>상담사:</strong>
-                                    <span style={{ color: '#495057', fontSize: '14px' }}>{selectedConsultant?.name}</span>
+                                    <strong style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>상담사:</strong>
+                                    <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>{selectedConsultant?.name}</span>
                                 </div>
                                 <div style={{
                                     display: 'flex',
@@ -656,8 +656,8 @@ const ScheduleModalNew = ({
                                     padding: '8px 0',
                                     borderBottom: '1px solid #e9ecef'
                                 }}>
-                                    <strong style={{ color: '#495057', fontSize: '14px' }}>내담자:</strong>
-                                    <span style={{ color: '#495057', fontSize: '14px' }}>{selectedClient?.name}</span>
+                                    <strong style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>내담자:</strong>
+                                    <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>{selectedClient?.name}</span>
                                 </div>
                                 <div style={{
                                     display: 'flex',
@@ -701,7 +701,7 @@ const ScheduleModalNew = ({
                                         padding: '12px 16px',
                                         border: '1px solid #e9ecef',
                                         borderRadius: '8px',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         color: '#495057',
                                         backgroundColor: '#ffffff',
                                         outline: 'none',
@@ -730,7 +730,7 @@ const ScheduleModalNew = ({
                                         padding: '12px 16px',
                                         border: '1px solid #e9ecef',
                                         borderRadius: '8px',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         color: '#495057',
                                         backgroundColor: '#ffffff',
                                         outline: 'none',
@@ -773,7 +773,7 @@ const ScheduleModalNew = ({
                                 backgroundColor: '#6c757d',
                                 color: 'white',
                                 cursor: loading ? 'not-allowed' : 'pointer',
-                                fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                 fontWeight: '500',
                                 opacity: loading ? 0.6 : 1,
                                 transition: 'all 0.2s ease'
@@ -803,7 +803,7 @@ const ScheduleModalNew = ({
                                 backgroundColor: '#007bff',
                                 color: 'white',
                                 cursor: (step === 1 && !selectedConsultant) || (step === 2 && !selectedClient) || (step === 3 && !selectedTimeSlot) ? 'not-allowed' : 'pointer',
-                                fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                 fontWeight: '500',
                                 opacity: (step === 1 && !selectedConsultant) || (step === 2 && !selectedClient) || (step === 3 && !selectedTimeSlot) ? 0.6 : 1,
                                 transition: 'all 0.2s ease'
@@ -823,7 +823,7 @@ const ScheduleModalNew = ({
                                 backgroundColor: '#28a745',
                                 color: 'white',
                                 cursor: loading ? 'not-allowed' : 'pointer',
-                                fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                 fontWeight: '500',
                                 opacity: loading ? 0.6 : 1,
                                 transition: 'all 0.2s ease'

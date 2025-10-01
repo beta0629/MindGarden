@@ -650,7 +650,7 @@ const ConsultationLogModal = ({
             color: '#856404'
           }}>
             <div style={{display: 'flex', alignItems: 'center', marginBottom: '8px'}}>
-              <span style={{fontSize: '16px', marginRight: '8px'}}>⚠️</span>
+              <span style={{fontSize: 'var(--font-size-base)', marginRight: '8px'}}>⚠️</span>
               <strong>필수 입력 항목 안내</strong>
             </div>
             <div style={{marginLeft: '24px', lineHeight: '1.5'}}>
@@ -735,7 +735,7 @@ const ConsultationLogModal = ({
                   required
                   disabled
                 />
-                <small style={{ color: '#6c757d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)', marginTop: '4px', display: 'block' }}>
                   스케줄에서 선택한 날짜로 고정됩니다
                 </small>
               </div>
@@ -756,7 +756,7 @@ const ConsultationLogModal = ({
                     cursor: 'not-allowed'
                   }}
                 />
-                <small style={{ color: '#666', fontSize: '12px' }}>
+                <small style={{ color: '#666', fontSize: 'var(--font-size-xs)' }}>
                   스케줄에서 자동으로 설정됩니다
                 </small>
               </div>
@@ -779,7 +779,7 @@ const ConsultationLogModal = ({
                   required
                 />
                 {validationErrors.sessionDurationMinutes && (
-                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  <small style={{ color: '#dc3545', fontSize: 'var(--font-size-xs)', marginTop: '4px', display: 'block' }}>
                     {validationErrors.sessionDurationMinutes}
                   </small>
                 )}
@@ -805,7 +805,7 @@ const ConsultationLogModal = ({
                     </option>
                   ))}
                 </select>
-                <small style={{ color: '#666', fontSize: '12px' }}>
+                <small style={{ color: '#666', fontSize: 'var(--font-size-xs)' }}>
                   스케줄에서 자동으로 설정됩니다
                 </small>
               </div>
@@ -827,7 +827,7 @@ const ConsultationLogModal = ({
                   required
                 />
                 {validationErrors.clientCondition && (
-                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  <small style={{ color: '#dc3545', fontSize: 'var(--font-size-xs)', marginTop: '4px', display: 'block' }}>
                     {validationErrors.clientCondition}
                   </small>
                 )}
@@ -850,7 +850,7 @@ const ConsultationLogModal = ({
                   required
                 />
                 {validationErrors.mainIssues && (
-                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  <small style={{ color: '#dc3545', fontSize: 'var(--font-size-xs)', marginTop: '4px', display: 'block' }}>
                     {validationErrors.mainIssues}
                   </small>
                 )}
@@ -873,7 +873,7 @@ const ConsultationLogModal = ({
                   required
                 />
                 {validationErrors.interventionMethods && (
-                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  <small style={{ color: '#dc3545', fontSize: 'var(--font-size-xs)', marginTop: '4px', display: 'block' }}>
                     {validationErrors.interventionMethods}
                   </small>
                 )}
@@ -896,7 +896,7 @@ const ConsultationLogModal = ({
                   required
                 />
                 {validationErrors.clientResponse && (
-                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  <small style={{ color: '#dc3545', fontSize: 'var(--font-size-xs)', marginTop: '4px', display: 'block' }}>
                     {validationErrors.clientResponse}
                   </small>
                 )}
@@ -962,7 +962,7 @@ const ConsultationLogModal = ({
                   ))}
                 </select>
                 {validationErrors.riskAssessment && (
-                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  <small style={{ color: '#dc3545', fontSize: 'var(--font-size-xs)', marginTop: '4px', display: 'block' }}>
                     {validationErrors.riskAssessment}
                   </small>
                 )}
@@ -1007,7 +1007,7 @@ const ConsultationLogModal = ({
                   required
                 />
                 {validationErrors.progressEvaluation && (
-                  <small style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  <small style={{ color: '#dc3545', fontSize: 'var(--font-size-xs)', marginTop: '4px', display: 'block' }}>
                     {validationErrors.progressEvaluation}
                   </small>
                 )}
@@ -1180,7 +1180,7 @@ const ConsultationLogModal = ({
                   }}
                   disabled
                 />
-                <small style={{ color: '#6c757d', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                <small style={{ color: '#6c757d', fontSize: 'var(--font-size-xs)', marginTop: '4px', display: 'block' }}>
                   관리자가 스케줄에서 지정합니다
                 </small>
               </div>

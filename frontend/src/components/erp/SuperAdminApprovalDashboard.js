@@ -196,7 +196,7 @@ const SuperAdminApprovalDashboard = () => {
             textAlign: 'center', 
             padding: '40px', 
             color: '#666',
-            fontSize: '16px'
+            fontSize: 'var(--font-size-base)'
           }}>
             수퍼 관리자 승인 대기 중인 구매 요청이 없습니다.
           </div>
@@ -228,10 +228,10 @@ const SuperAdminApprovalDashboard = () => {
                     borderRadius: '4px',
                     border: '1px solid #b3d9ff'
                   }}>
-                    <div style={{ fontSize: '12px', color: '#0066cc', fontWeight: '600', marginBottom: '4px' }}>
+                    <div style={{ fontSize: 'var(--font-size-xs)', color: '#0066cc', fontWeight: '600', marginBottom: '4px' }}>
                       관리자 승인 완료
                     </div>
-                    <div style={{ fontSize: '14px' }}>
+                    <div style={{ fontSize: 'var(--font-size-sm)' }}>
                       <div><strong>승인자:</strong> {request.adminApprover.name}</div>
                       <div><strong>승인일:</strong> {formatDate(request.adminApprovedAt)}</div>
                       {request.adminComment && (
@@ -249,7 +249,7 @@ const SuperAdminApprovalDashboard = () => {
                       padding: '8px', 
                       backgroundColor: '#f8f9fa', 
                       borderRadius: '4px',
-                      fontSize: '14px'
+                      fontSize: 'var(--font-size-sm)'
                     }}>
                       {request.reason}
                     </div>
@@ -325,7 +325,7 @@ const SuperAdminApprovalDashboard = () => {
                   padding: '8px',
                   border: '1px solid #ddd',
                   borderRadius: '4px',
-                  fontSize: '14px'
+                  fontSize: 'var(--font-size-sm)'
                 }}
               />
             </div>
@@ -393,7 +393,7 @@ const SuperAdminApprovalDashboard = () => {
                   padding: '8px',
                   border: '1px solid #ddd',
                   borderRadius: '4px',
-                  fontSize: '14px'
+                  fontSize: 'var(--font-size-sm)'
                 }}
               />
             </div>

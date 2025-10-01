@@ -425,7 +425,7 @@ const SalaryManagement = () => {
                             <button 
                                 className="btn-primary"
                                 onClick={() => setIsProfileFormOpen(true)}
-                                style={{ padding: '12px 24px', fontSize: '16px' }}
+                                style={{ padding: '12px 24px', fontSize: 'var(--font-size-base)' }}
                             >
                                 지금 프로필 작성하기
                             </button>
@@ -573,7 +573,7 @@ const SalaryManagement = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                     <h5 style={{ margin: 0, color: '#2e7d32' }}>💰 급여 계산 미리보기</h5>
                                     <span style={{ 
-                                        fontSize: '12px', 
+                                        fontSize: 'var(--font-size-xs)', 
                                         color: '#666',
                                         backgroundColor: '#4caf50',
                                         color: 'white',
@@ -609,7 +609,7 @@ const SalaryManagement = () => {
                                     backgroundColor: '#fff3cd', 
                                     border: '1px solid #ffeaa7',
                                     borderRadius: '4px',
-                                    fontSize: '12px',
+                                    fontSize: 'var(--font-size-xs)',
                                     color: '#856404'
                                 }}>
                                     ⚠️ 실제 급여는 매월 기산일에 배치로 처리됩니다.
@@ -776,7 +776,7 @@ const SalaryManagement = () => {
                                         </div>
                                         <div className="detail-row total">
                                             <span>총 공제액:</span>
-                                            <span style={{color: '#dc3545', fontWeight: 'bold', fontSize: '16px'}}>
+                                            <span style={{color: '#dc3545', fontWeight: 'bold', fontSize: 'var(--font-size-base)'}}>
                                                 -{formatCurrency(taxStatistics.totalTaxAmount || 0)}
                                             </span>
                                         </div>

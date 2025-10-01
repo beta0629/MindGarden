@@ -258,7 +258,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-check-circle-fill" style={{ fontSize: '20px' }}></i>
+            <i className="bi bi-check-circle-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
           <h3 style={{
             margin: '0',
@@ -321,7 +321,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-x-circle-fill" style={{ fontSize: '20px' }}></i>
+            <i className="bi bi-x-circle-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
           <h3 style={{
             margin: '0',
@@ -384,7 +384,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-calendar-week-fill" style={{ fontSize: '20px' }}></i>
+            <i className="bi bi-calendar-week-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
           <h3 style={{
             margin: '0',
@@ -447,7 +447,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-calendar-day-fill" style={{ fontSize: '20px' }}></i>
+            <i className="bi bi-calendar-day-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
           <h3 style={{
             margin: '0',

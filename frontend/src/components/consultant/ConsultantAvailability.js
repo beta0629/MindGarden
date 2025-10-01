@@ -254,7 +254,7 @@ const ConsultantAvailability = () => {
               borderRadius: '10px',
               border: '1px solid #dee2e6'
             }}>
-              <i className="bi bi-exclamation-triangle" style={{ fontSize: '48px', color: '#6c757d', marginBottom: '20px' }}></i>
+              <i className="bi bi-exclamation-triangle" style={{ fontSize: 'var(--font-size-xxxl)', color: '#6c757d', marginBottom: '20px' }}></i>
               <h3 style={{ color: '#495057', marginBottom: '10px' }}>로그인이 필요합니다</h3>
               <p style={{ color: '#6c757d', marginBottom: '20px' }}>상담 가능 시간을 관리하려면 로그인해주세요.</p>
               <button 
@@ -284,10 +284,10 @@ const ConsultantAvailability = () => {
               borderRadius: '10px',
               border: '1px solid #ffeaa7'
             }}>
-              <i className="bi bi-shield-exclamation" style={{ fontSize: '48px', color: '#856404', marginBottom: '20px' }}></i>
+              <i className="bi bi-shield-exclamation" style={{ fontSize: 'var(--font-size-xxxl)', color: '#856404', marginBottom: '20px' }}></i>
               <h3 style={{ color: '#856404', marginBottom: '10px' }}>접근 권한이 없습니다</h3>
               <p style={{ color: '#856404', marginBottom: '20px' }}>상담 가능 시간 관리는 상담사 또는 관리자만 접근할 수 있습니다.</p>
-              <p style={{ color: '#856404', marginBottom: '20px', fontSize: '14px' }}>
+              <p style={{ color: '#856404', marginBottom: '20px', fontSize: 'var(--font-size-sm)' }}>
                 현재 사용자 역할: {userRole || '없음'}
               </p>
               <button 

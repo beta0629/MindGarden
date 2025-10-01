@@ -381,14 +381,14 @@ const FinancialManagement = () => {
                     marginBottom: '20px',
                     border: '1px solid #dee2e6'
                   }}>
-                    <h3 style={{ marginBottom: '15px', fontSize: '16px', color: '#495057' }}>
+                    <h3 style={{ marginBottom: '15px', fontSize: 'var(--font-size-base)', color: '#495057' }}>
                       🔍 필터 및 검색
                     </h3>
                     
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
                       {/* 거래 유형 필터 */}
                       <div>
-                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', fontWeight: '600' }}>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: 'var(--font-size-xs)', fontWeight: '600' }}>
                           거래 유형
                         </label>
                         <select
@@ -399,7 +399,7 @@ const FinancialManagement = () => {
                             padding: '8px 12px',
                             border: '1px solid #ced4da',
                             borderRadius: '4px',
-                            fontSize: '14px'
+                            fontSize: 'var(--font-size-sm)'
                           }}
                         >
                           <option value="ALL">전체</option>
@@ -410,7 +410,7 @@ const FinancialManagement = () => {
                       
                       {/* 카테고리 필터 */}
                       <div>
-                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', fontWeight: '600' }}>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: 'var(--font-size-xs)', fontWeight: '600' }}>
                           카테고리
                         </label>
                         <select
@@ -421,7 +421,7 @@ const FinancialManagement = () => {
                             padding: '8px 12px',
                             border: '1px solid #ced4da',
                             borderRadius: '4px',
-                            fontSize: '14px'
+                            fontSize: 'var(--font-size-sm)'
                           }}
                         >
                           <option value="ALL">전체</option>
@@ -436,7 +436,7 @@ const FinancialManagement = () => {
                       
                       {/* 연동 유형 필터 */}
                       <div>
-                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', fontWeight: '600' }}>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: 'var(--font-size-xs)', fontWeight: '600' }}>
                           연동 유형
                         </label>
                         <select
@@ -447,7 +447,7 @@ const FinancialManagement = () => {
                             padding: '8px 12px',
                             border: '1px solid #ced4da',
                             borderRadius: '4px',
-                            fontSize: '14px'
+                            fontSize: 'var(--font-size-sm)'
                           }}
                         >
                           <option value="ALL">전체</option>
@@ -461,7 +461,7 @@ const FinancialManagement = () => {
                       
                       {/* 검색 */}
                       <div>
-                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '12px', fontWeight: '600' }}>
+                        <label style={{ display: 'block', marginBottom: '5px', fontSize: 'var(--font-size-xs)', fontWeight: '600' }}>
                           검색
                         </label>
                         <input
@@ -474,7 +474,7 @@ const FinancialManagement = () => {
                             padding: '8px 12px',
                             border: '1px solid #ced4da',
                             borderRadius: '4px',
-                            fontSize: '14px'
+                            fontSize: 'var(--font-size-sm)'
                           }}
                         />
                       </div>
@@ -551,7 +551,7 @@ const FinancialManagement = () => {
                                       color: '#007bff',
                                       textDecoration: 'underline',
                                       cursor: 'pointer',
-                                      fontSize: '14px',
+                                      fontSize: 'var(--font-size-sm)',
                                       fontWeight: '600'
                                     }}
                                   >

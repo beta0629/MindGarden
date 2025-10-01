@@ -123,15 +123,15 @@ const ErpButton = ({
     const sizes = {
       small: {
         padding: '6px 12px',
-        fontSize: '12px'
+        fontSize: 'var(--font-size-xs)'
       },
       medium: {
         padding: '8px 16px',
-        fontSize: '14px'
+        fontSize: 'var(--font-size-sm)'
       },
       large: {
         padding: '12px 24px',
-        fontSize: '16px'
+        fontSize: 'var(--font-size-base)'
       }
     };
     return sizes[size] || sizes.medium;

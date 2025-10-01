@@ -63,7 +63,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
             <span style={{
                 padding: '4px 8px',
                 borderRadius: '4px',
-                fontSize: '12px',
+                fontSize: 'var(--font-size-xs)',
                 fontWeight: 'bold',
                 color: 'white',
                 backgroundColor: config.color
@@ -85,7 +85,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
             <span style={{
                 padding: '4px 8px',
                 borderRadius: '4px',
-                fontSize: '12px',
+                fontSize: 'var(--font-size-xs)',
                 fontWeight: 'bold',
                 color: 'white',
                 backgroundColor: config.color

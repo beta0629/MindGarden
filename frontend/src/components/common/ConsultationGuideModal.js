@@ -330,7 +330,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                 borderBottom: '2px solid #e9ecef'
               }}
             >
-              <i className="bi bi-telephone" style={{ fontSize: '16px' }}></i>
+              <i className="bi bi-telephone" style={{ fontSize: 'var(--font-size-base)' }}></i>
               기술적 준비사항
             </h3>
             <ul 
@@ -349,8 +349,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-wifi" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>안정적인 인터넷 연결을 확인해주세요</span>
+                <i className="bi bi-wifi" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>안정적인 인터넷 연결을 확인해주세요</span>
               </li>
               <li 
                 style={{
@@ -361,8 +361,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-camera-video" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>카메라와 마이크가 정상 작동하는지 확인해주세요</span>
+                <i className="bi bi-camera-video" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>카메라와 마이크가 정상 작동하는지 확인해주세요</span>
               </li>
               <li 
                 style={{
@@ -373,8 +373,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: '1px solid #f8f9fa'
                 }}
               >
-                <i className="bi bi-battery-full" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>기기 배터리를 충분히 충전해주세요</span>
+                <i className="bi bi-battery-full" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>기기 배터리를 충분히 충전해주세요</span>
               </li>
               <li 
                 style={{
@@ -385,8 +385,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                   borderBottom: 'none'
                 }}
               >
-                <i className="bi bi-headphones" style={{ color: '#28a745', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                <span style={{ color: '#495057', fontSize: '14px', lineHeight: '1.5' }}>이어폰이나 헤드셋을 사용하면 더 좋습니다</span>
+                <i className="bi bi-headphones" style={{ color: '#28a745', fontSize: 'var(--font-size-base)', marginTop: '2px', flexShrink: 0 }}></i>
+                <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)', lineHeight: '1.5' }}>이어폰이나 헤드셋을 사용하면 더 좋습니다</span>
               </li>
             </ul>
           </div>
@@ -405,7 +405,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                 borderBottom: '2px solid #e9ecef'
               }}
             >
-              <i className="bi bi-question-circle" style={{ fontSize: '16px' }}></i>
+              <i className="bi bi-question-circle" style={{ fontSize: 'var(--font-size-base)' }}></i>
               자주 묻는 질문
             </h3>
             <div 
@@ -431,16 +431,16 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                     marginBottom: '8px',
                     fontWeight: '600',
                     color: '#2c3e50',
-                    fontSize: '14px'
+                    fontSize: 'var(--font-size-sm)'
                   }}
                 >
-                  <i className="bi bi-question-circle-fill" style={{ color: '#17a2b8', fontSize: '14px' }}></i>
+                  <i className="bi bi-question-circle-fill" style={{ color: '#17a2b8', fontSize: 'var(--font-size-sm)' }}></i>
                   <span>상담 시간을 변경할 수 있나요?</span>
                 </div>
                 <div 
                   style={{
                     color: '#6c757d',
-                    fontSize: '13px',
+                    fontSize: 'var(--font-size-sm)',
                     lineHeight: '1.5',
                     marginLeft: '22px'
                   }}
@@ -464,16 +464,16 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                     marginBottom: '8px',
                     fontWeight: '600',
                     color: '#2c3e50',
-                    fontSize: '14px'
+                    fontSize: 'var(--font-size-sm)'
                   }}
                 >
-                  <i className="bi bi-question-circle-fill" style={{ color: '#17a2b8', fontSize: '14px' }}></i>
+                  <i className="bi bi-question-circle-fill" style={{ color: '#17a2b8', fontSize: 'var(--font-size-sm)' }}></i>
                   <span>상담 내용이 비밀이 보장되나요?</span>
                 </div>
                 <div 
                   style={{
                     color: '#6c757d',
-                    fontSize: '13px',
+                    fontSize: 'var(--font-size-sm)',
                     lineHeight: '1.5',
                     marginLeft: '22px'
                   }}
@@ -497,16 +497,16 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
                     marginBottom: '8px',
                     fontWeight: '600',
                     color: '#2c3e50',
-                    fontSize: '14px'
+                    fontSize: 'var(--font-size-sm)'
                   }}
                 >
-                  <i className="bi bi-question-circle-fill" style={{ color: '#17a2b8', fontSize: '14px' }}></i>
+                  <i className="bi bi-question-circle-fill" style={{ color: '#17a2b8', fontSize: 'var(--font-size-sm)' }}></i>
                   <span>상담을 건너뛸 수 있나요?</span>
                 </div>
                 <div 
                   style={{
                     color: '#6c757d',
-                    fontSize: '13px',
+                    fontSize: 'var(--font-size-sm)',
                     lineHeight: '1.5',
                     marginLeft: '22px'
                   }}
@@ -533,7 +533,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
               alignItems: 'center',
               gap: '8px',
               padding: '12px 24px',
-              fontSize: '16px',
+              fontSize: 'var(--font-size-base)',
               fontWeight: '600',
               borderRadius: '8px',
               border: 'none',

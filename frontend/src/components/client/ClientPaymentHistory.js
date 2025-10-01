@@ -215,19 +215,19 @@ const ClientPaymentHistory = () => {
         }}>
           <h1 style={{
             margin: '0 0 12px 0',
-            fontSize: '32px',
+            fontSize: 'var(--font-size-xxxl)',
             fontWeight: '700',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '16px'
           }}>
-            <i className="bi bi-credit-card" style={{ fontSize: '28px' }}></i>
+            <i className="bi bi-credit-card" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
             결제 내역
           </h1>
           <p style={{
             margin: '0',
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             opacity: '0.9',
             fontWeight: '400'
           }}>

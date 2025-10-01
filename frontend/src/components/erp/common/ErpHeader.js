@@ -25,7 +25,7 @@ const ErpHeader = ({
   };
 
   const titleStyle = {
-    fontSize: '24px',
+    fontSize: 'var(--font-size-xxl)',
     fontWeight: '700',
     color: '#333333',
     margin: 0,
@@ -33,7 +33,7 @@ const ErpHeader = ({
   };
 
   const subtitleStyle = {
-    fontSize: '14px',
+    fontSize: 'var(--font-size-sm)',
     color: '#666666',
     margin: 0
   };

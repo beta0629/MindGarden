@@ -585,7 +585,7 @@ const IntegrationTest = () => {
                             backgroundColor: result.success ? '#10b981' : '#ef4444',
                             color: 'white',
                             borderRadius: '12px',
-                            fontSize: '11px',
+                            fontSize: 'var(--font-size-xs)',
                             fontWeight: '600'
                           }}>
                             {result.success ? '성공' : '실패'}
@@ -594,11 +594,11 @@ const IntegrationTest = () => {
                         <div>
                           <p style={{
                             margin: '0 0 4px 0',
-                            fontSize: '13px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#6b7280'
                           }}>{result.details}</p>
                           <small style={{
-                            fontSize: '11px',
+                            fontSize: 'var(--font-size-xs)',
                             color: '#9ca3af'
                           }}>{formatDateTime(result.timestamp)}</small>
                         </div>
@@ -630,7 +630,7 @@ const IntegrationTest = () => {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <span style={{ fontSize: '24px' }}>💚</span>
+              <span style={{ fontSize: 'var(--font-size-xxl)' }}>💚</span>
               시스템 헬스 상태
             </h3>
             <div style={{
@@ -726,7 +726,7 @@ const IntegrationTest = () => {
                         backgroundColor: service.status === 'HEALTHY' ? '#10b981' : '#ef4444',
                         color: 'white',
                         borderRadius: '12px',
-                        fontSize: '11px',
+                        fontSize: 'var(--font-size-xs)',
                         fontWeight: '600'
                       }}>
                         {service.status}
@@ -833,7 +833,7 @@ const IntegrationTest = () => {
                           backgroundColor: '#f8f9fa',
                           borderRadius: '6px',
                           border: '1px solid #e5e7eb',
-                          fontSize: '13px',
+                          fontSize: 'var(--font-size-sm)',
                           color: '#374151',
                           textAlign: 'center'
                         }}>
@@ -873,7 +873,7 @@ const IntegrationTest = () => {
               alignItems: 'center',
               gap: '8px'
             }}>
-              <span style={{ fontSize: '24px' }}>🔒</span>
+              <span style={{ fontSize: 'var(--font-size-xxl)' }}>🔒</span>
               보안 테스트 결과
             </h3>
             <div style={{
@@ -921,7 +921,7 @@ const IntegrationTest = () => {
                     borderRadius: '6px',
                     border: '1px solid #e5e7eb'
                   }}>
-                    <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
+                    <span style={{ fontSize: 'var(--font-size-sm)', color: '#374151', fontWeight: '500' }}>
                       <strong>암호화 작동:</strong>
                     </span>
                     <span style={{
@@ -929,7 +929,7 @@ const IntegrationTest = () => {
                       backgroundColor: securityResults.encryptionWorking ? '#10b981' : '#ef4444',
                       color: 'white',
                       borderRadius: '12px',
-                      fontSize: '11px',
+                      fontSize: 'var(--font-size-xs)',
                       fontWeight: '600'
                     }}>
                       {securityResults.encryptionWorking ? '정상' : '오류'}
@@ -944,7 +944,7 @@ const IntegrationTest = () => {
                     borderRadius: '6px',
                     border: '1px solid #e5e7eb'
                   }}>
-                    <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
+                    <span style={{ fontSize: 'var(--font-size-sm)', color: '#374151', fontWeight: '500' }}>
                       <strong>역할 검증:</strong>
                     </span>
                     <span style={{
@@ -952,7 +952,7 @@ const IntegrationTest = () => {
                       backgroundColor: securityResults.roleValidationWorking ? '#10b981' : '#ef4444',
                       color: 'white',
                       borderRadius: '12px',
-                      fontSize: '11px',
+                      fontSize: 'var(--font-size-xs)',
                       fontWeight: '600'
                     }}>
                       {securityResults.roleValidationWorking ? '정상' : '오류'}
@@ -968,7 +968,7 @@ const IntegrationTest = () => {
                     border: '1px solid #e5e7eb',
                     gridColumn: '1 / -1'
                   }}>
-                    <span style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>
+                    <span style={{ fontSize: 'var(--font-size-sm)', color: '#374151', fontWeight: '500' }}>
                       <strong>보안 점수:</strong>
                     </span>
                     <span style={{
@@ -976,7 +976,7 @@ const IntegrationTest = () => {
                       backgroundColor: securityResults.securityScore >= 80 ? '#10b981' : securityResults.securityScore >= 60 ? '#f59e0b' : '#ef4444',
                       color: 'white',
                       borderRadius: '12px',
-                      fontSize: '11px',
+                      fontSize: 'var(--font-size-xs)',
                       fontWeight: '600'
                     }}>
                       {securityResults.securityScore}/100

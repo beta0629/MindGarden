@@ -19,7 +19,7 @@ const PrivacyPolicy = () => {
         color: '#333'
       }}>
         <h1 style={{
-          fontSize: '28px',
+          fontSize: 'var(--font-size-xxl)',
           fontWeight: '700',
           color: '#2c3e50',
           marginBottom: '30px',
@@ -37,7 +37,7 @@ const PrivacyPolicy = () => {
           marginBottom: '30px',
           border: '1px solid #e9ecef'
         }}>
-          <p style={{ margin: '0', fontSize: '14px', color: '#6c757d' }}>
+          <p style={{ margin: '0', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
             <strong>시행일자:</strong> 2025년 1월 17일<br />
             <strong>최종 수정일:</strong> 2025년 1월 17일
           </p>
@@ -45,7 +45,7 @@ const PrivacyPolicy = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -68,7 +68,7 @@ const PrivacyPolicy = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -87,7 +87,7 @@ const PrivacyPolicy = () => {
             padding: '20px',
             marginBottom: '15px'
           }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '10px', color: '#495057' }}>
+            <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: '600', marginBottom: '10px', color: '#495057' }}>
               각각의 개인정보 처리 및 보유기간은 다음과 같습니다:
             </h3>
             <ul style={{ paddingLeft: '20px', margin: '0' }}>
@@ -101,7 +101,7 @@ const PrivacyPolicy = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -117,7 +117,7 @@ const PrivacyPolicy = () => {
             padding: '20px',
             marginBottom: '15px'
           }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '10px', color: '#495057' }}>
+            <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: '600', marginBottom: '10px', color: '#495057' }}>
               필수 수집 항목:
             </h3>
             <ul style={{ paddingLeft: '20px', margin: '0 0 15px 0' }}>
@@ -127,7 +127,7 @@ const PrivacyPolicy = () => {
               <li>상담 목적 및 상담 이력</li>
             </ul>
             
-            <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '10px', color: '#495057' }}>
+            <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: '600', marginBottom: '10px', color: '#495057' }}>
               선택 수집 항목:
             </h3>
             <ul style={{ paddingLeft: '20px', margin: '0' }}>
@@ -140,7 +140,7 @@ const PrivacyPolicy = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -168,7 +168,7 @@ const PrivacyPolicy = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -197,7 +197,7 @@ const PrivacyPolicy = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -222,7 +222,7 @@ const PrivacyPolicy = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -244,7 +244,7 @@ const PrivacyPolicy = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',
@@ -274,7 +274,7 @@ const PrivacyPolicy = () => {
 
         <div style={{ marginBottom: '30px' }}>
           <h2 style={{
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             marginBottom: '15px',

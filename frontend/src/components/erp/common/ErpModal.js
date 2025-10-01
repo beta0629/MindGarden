@@ -88,7 +88,7 @@ const ErpModal = ({
   };
 
   const titleStyle = {
-    fontSize: '18px',
+    fontSize: 'var(--font-size-lg)',
     fontWeight: '600',
     color: '#333333',
     margin: 0
@@ -97,7 +97,7 @@ const ErpModal = ({
   const closeButtonStyle = {
     background: 'none',
     border: 'none',
-    fontSize: '24px',
+    fontSize: 'var(--font-size-xxl)',
     color: '#666666',
     cursor: 'pointer',
     padding: '0',

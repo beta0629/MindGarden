@@ -77,7 +77,7 @@ const LoadingSpinner = ({
               transform: 'none',
               animation: 'none',
               marginTop: '16px',
-              fontSize: '16px',
+              fontSize: 'var(--font-size-base)',
               color: '#6b7280',
               fontWeight: '500',
               textAlign: 'center',

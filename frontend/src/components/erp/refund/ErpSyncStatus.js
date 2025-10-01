@@ -94,7 +94,7 @@ const ErpSyncStatus = ({ erpSyncStatus }) => {
                 padding: '10px',
                 backgroundColor: '#e9ecef',
                 borderRadius: '6px',
-                fontSize: '13px',
+                fontSize: 'var(--font-size-sm)',
                 color: '#6c757d',
                 fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
             }}>

@@ -1347,7 +1347,7 @@ const UnifiedScheduleComponent = ({
                                                 <div style={{ fontWeight: '500' }}>
                                                     {timeSlot.startTime}
                                                 </div>
-                                                <div style={{ fontSize: '10px', color: isBooked ? '#9ca3af' : '#6b7280' }}>
+                                                <div style={{ fontSize: 'var(--font-size-xs)', color: isBooked ? '#9ca3af' : '#6b7280' }}>
                                                     {timeSlot.duration}
                                                 </div>
                                             </button>

@@ -531,7 +531,7 @@ const emailInputStyle = {
   padding: '8px 12px',
   border: '1px solid #d1d5db',
   borderRadius: '4px',
-  fontSize: '14px'
+  fontSize: 'var(--font-size-sm)'
 };
 
 const emailErrorStyle = {
@@ -564,7 +564,7 @@ const footerButtonStyle = {
   backgroundColor: 'white',
   color: '#374151',
   cursor: 'pointer',
-  fontSize: '14px'
+  fontSize: 'var(--font-size-sm)'
 };
 
 // 새로 추가된 스타일들
@@ -575,12 +575,12 @@ const headerContentStyle = {
 };
 
 const headerIconStyle = {
-  fontSize: '24px'
+  fontSize: 'var(--font-size-xxl)'
 };
 
 const modalSubtitleStyle = {
   margin: '4px 0 0 0',
-  fontSize: '14px',
+  fontSize: 'var(--font-size-sm)',
   color: '#6b7280'
 };
 
@@ -592,7 +592,7 @@ const summaryHeaderStyle = {
 };
 
 const summaryIconStyle = {
-  fontSize: '20px'
+  fontSize: 'var(--font-size-xl)'
 };
 
 const summaryTitleStyle = {
@@ -613,7 +613,7 @@ const summaryItemStyle = {
 };
 
 const summaryItemIconStyle = {
-  fontSize: '18px'
+  fontSize: 'var(--font-size-lg)'
 };
 
 const summaryLabelStyle = {
@@ -626,7 +626,7 @@ const summaryLabelStyle = {
 
 const summaryValueStyle = {
   display: 'block',
-  fontSize: '14px',
+  fontSize: 'var(--font-size-sm)',
   color: '#1f2937',
   fontWeight: '600'
 };

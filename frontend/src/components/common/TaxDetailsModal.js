@@ -235,7 +235,7 @@ const modalHeaderStyle = {
 
 const modalTitleStyle = {
   margin: 0,
-  fontSize: '18px',
+  fontSize: 'var(--font-size-lg)',
   fontWeight: '600',
   color: '#1f2937'
 };
@@ -243,7 +243,7 @@ const modalTitleStyle = {
 const closeButtonStyle = {
   background: 'none',
   border: 'none',
-  fontSize: '24px',
+  fontSize: 'var(--font-size-xxl)',
   cursor: 'pointer',
   color: '#6b7280',
   padding: '0',
@@ -288,7 +288,7 @@ const emptyStyle = {
 const tableStyle = {
   width: '100%',
   borderCollapse: 'collapse',
-  fontSize: '14px'
+  fontSize: 'var(--font-size-sm)'
 };
 
 const totalRowStyle = {
@@ -311,7 +311,7 @@ const footerButtonStyle = {
   backgroundColor: 'white',
   color: '#374151',
   cursor: 'pointer',
-  fontSize: '14px'
+  fontSize: 'var(--font-size-sm)'
 };
 
 const retryButtonStyle = {
@@ -321,7 +321,7 @@ const retryButtonStyle = {
   backgroundColor: '#3b82f6',
   color: 'white',
   cursor: 'pointer',
-  fontSize: '14px',
+  fontSize: 'var(--font-size-sm)',
   marginTop: '10px'
 };
 

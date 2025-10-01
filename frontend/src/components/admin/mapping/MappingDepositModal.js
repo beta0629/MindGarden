@@ -141,7 +141,7 @@ const MappingDepositModal = ({
                         <div style={{ marginBottom: '16px' }}>
                             <label style={{
                                 display: 'block',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 fontWeight: '500',
                                 color: '#333',
                                 marginBottom: '8px'

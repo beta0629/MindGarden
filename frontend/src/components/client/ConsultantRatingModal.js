@@ -123,7 +123,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                     {/* 헤더 */}
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                         <h2 style={{
-                            fontSize: '22px',
+                            fontSize: 'var(--font-size-xl)',
                             fontWeight: '600',
                             color: '#333',
                             marginBottom: '8px'
@@ -131,7 +131,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                             상담사 평가
                         </h2>
                         <p style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#666',
                             margin: 0
                         }}>
@@ -146,13 +146,13 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         borderRadius: '8px',
                         marginBottom: '24px'
                     }}>
-                        <div style={{ fontSize: '14px', color: '#495057', marginBottom: '4px' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#495057', marginBottom: '4px' }}>
                             📅 상담일: {schedule.consultationDate} {schedule.consultationTime}
                         </div>
-                        <div style={{ fontSize: '14px', color: '#495057', marginBottom: '4px' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#495057', marginBottom: '4px' }}>
                             👩‍⚕️ 상담사: {schedule.consultantName}님
                         </div>
-                        <div style={{ fontSize: '14px', color: '#495057' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#495057' }}>
                             💼 상담 유형: {schedule.consultationType}
                         </div>
                     </div>
@@ -160,7 +160,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                     {/* 하트 점수 선택 */}
                     <div style={{ marginBottom: '24px' }}>
                         <h3 style={{
-                            fontSize: '16px',
+                            fontSize: 'var(--font-size-base)',
                             fontWeight: '600',
                             color: '#333',
                             marginBottom: '12px'
@@ -179,7 +179,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                                     style={{
                                         background: 'none',
                                         border: 'none',
-                                        fontSize: '32px',
+                                        fontSize: 'var(--font-size-xxxl)',
                                         cursor: 'pointer',
                                         padding: '4px',
                                         transition: 'transform 0.2s ease',
@@ -195,7 +195,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                         </div>
                         <div style={{
                             textAlign: 'center',
-                            fontSize: '13px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#6c757d'
                         }}>
                             {heartScore > 0 && `${heartScore}개의 하트를 선택하셨습니다`}
@@ -205,7 +205,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                     {/* 평가 태그 */}
                     <div style={{ marginBottom: '24px' }}>
                         <h3 style={{
-                            fontSize: '16px',
+                            fontSize: 'var(--font-size-base)',
                             fontWeight: '600',
                             color: '#333',
                             marginBottom: '12px'
@@ -226,7 +226,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                                         border: selectedTags.includes(tag) ? '2px solid #007bff' : '1px solid #dee2e6',
                                         backgroundColor: selectedTags.includes(tag) ? '#e7f3ff' : '#ffffff',
                                         color: selectedTags.includes(tag) ? '#007bff' : '#495057',
-                                        fontSize: '13px',
+                                        fontSize: 'var(--font-size-sm)',
                                         cursor: 'pointer',
                                         transition: 'all 0.2s ease'
                                     }}
@@ -241,7 +241,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                     {/* 코멘트 */}
                     <div style={{ marginBottom: '24px' }}>
                         <h3 style={{
-                            fontSize: '16px',
+                            fontSize: 'var(--font-size-base)',
                             fontWeight: '600',
                             color: '#333',
                             marginBottom: '12px'
@@ -258,7 +258,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                                 padding: '12px',
                                 borderRadius: '8px',
                                 border: '1px solid #dee2e6',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif",
                                 resize: 'none',
                                 outline: 'none'
@@ -281,7 +281,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                             display: 'flex',
                             alignItems: 'center',
                             cursor: 'pointer',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#495057'
                         }}>
                             <input
@@ -309,7 +309,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                                 border: '1px solid #dee2e6',
                                 backgroundColor: '#ffffff',
                                 color: '#495057',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 fontWeight: '500',
                                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
                                 opacity: isSubmitting ? 0.6 : 1
@@ -326,7 +326,7 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
                                 border: 'none',
                                 backgroundColor: heartScore === 0 ? '#dee2e6' : '#007bff',
                                 color: heartScore === 0 ? '#6c757d' : '#ffffff',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 fontWeight: '500',
                                 cursor: (heartScore === 0 || isSubmitting) ? 'not-allowed' : 'pointer',
                                 opacity: isSubmitting ? 0.6 : 1

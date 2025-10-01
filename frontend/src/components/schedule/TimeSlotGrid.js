@@ -956,11 +956,11 @@ const TimeSlotGrid = ({
                 }}>
                     <p style={{ 
                         margin: '0 0 8px 0', 
-                        fontSize: '16px', 
+                        fontSize: 'var(--font-size-base)', 
                         fontWeight: '500' 
                     }}>사용 가능한 시간이 없습니다.</p>
                     <small style={{ 
-                        fontSize: '14px', 
+                        fontSize: 'var(--font-size-sm)', 
                         opacity: '0.8' 
                     }}>상담 시간과 휴식 시간을 고려한 결과입니다.</small>
                 </div>
@@ -977,7 +977,7 @@ const TimeSlotGrid = ({
                     <h6 style={{ 
                         margin: '0 0 12px 0', 
                         color: '#495057', 
-                        fontSize: '14px', 
+                        fontSize: 'var(--font-size-sm)', 
                         fontWeight: '600' 
                     }}>기존 스케줄</h6>
                     <div style={{ 
@@ -994,7 +994,7 @@ const TimeSlotGrid = ({
                                 backgroundColor: '#fff', 
                                 borderRadius: '6px', 
                                 border: '1px solid #e9ecef', 
-                                fontSize: '12px' 
+                                fontSize: 'var(--font-size-xs)' 
                             }}>
                                 <span style={{ 
                                     color: '#007bff', 

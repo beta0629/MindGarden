@@ -100,7 +100,7 @@ const ClientSettings = () => {
         }}>
           <div style={{ marginBottom: '32px' }}>
             <h2 style={{
-              fontSize: '28px',
+              fontSize: 'var(--font-size-xxl)',
               fontWeight: '700',
               color: '#2c3e50',
               marginBottom: '8px',
@@ -108,11 +108,11 @@ const ClientSettings = () => {
               alignItems: 'center',
               gap: '12px'
             }}>
-              <i className="bi bi-gear" style={{ color: '#3498db', fontSize: '32px' }}></i>
+              <i className="bi bi-gear" style={{ color: '#3498db', fontSize: 'var(--font-size-xxxl)' }}></i>
               계정 설정
             </h2>
             <p style={{
-              fontSize: '16px',
+              fontSize: 'var(--font-size-base)',
               color: '#6c757d',
               margin: '0'
             }}>
@@ -142,7 +142,7 @@ const ClientSettings = () => {
               border: '1px solid #e9ecef'
             }}>
               <h3 style={{
-                fontSize: '20px',
+                fontSize: 'var(--font-size-xl)',
                 fontWeight: '600',
                 color: '#495057',
                 marginBottom: '20px',
@@ -163,8 +163,8 @@ const ClientSettings = () => {
                   borderBottom: '1px solid #dee2e6'
                 }}>
                   <div>
-                    <h4 style={{ margin: '0', fontSize: '16px', color: '#495057' }}>전체 알림</h4>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6c757d' }}>
+                    <h4 style={{ margin: '0', fontSize: 'var(--font-size-base)', color: '#495057' }}>전체 알림</h4>
+                    <p style={{ margin: '4px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
                       모든 알림을 받습니다
                     </p>
                   </div>
@@ -187,8 +187,8 @@ const ClientSettings = () => {
                   borderBottom: '1px solid #dee2e6'
                 }}>
                   <div>
-                    <h4 style={{ margin: '0', fontSize: '16px', color: '#495057' }}>이메일 알림</h4>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6c757d' }}>
+                    <h4 style={{ margin: '0', fontSize: 'var(--font-size-base)', color: '#495057' }}>이메일 알림</h4>
+                    <p style={{ margin: '4px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
                       상담 예약 및 리마인더를 이메일로 받습니다
                     </p>
                   </div>
@@ -210,8 +210,8 @@ const ClientSettings = () => {
                   padding: '12px 0'
                 }}>
                   <div>
-                    <h4 style={{ margin: '0', fontSize: '16px', color: '#495057' }}>SMS 알림</h4>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6c757d' }}>
+                    <h4 style={{ margin: '0', fontSize: 'var(--font-size-base)', color: '#495057' }}>SMS 알림</h4>
+                    <p style={{ margin: '4px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
                       긴급 알림을 SMS로 받습니다
                     </p>
                   </div>
@@ -236,7 +236,7 @@ const ClientSettings = () => {
               border: '1px solid #e9ecef'
             }}>
               <h3 style={{
-                fontSize: '20px',
+                fontSize: 'var(--font-size-xl)',
                 fontWeight: '600',
                 color: '#495057',
                 marginBottom: '20px',
@@ -258,7 +258,7 @@ const ClientSettings = () => {
                 }}>
                   <div>
                     <h4 style={{ margin: '0', fontSize: '16px', color: '#495057' }}>프라이버시 모드</h4>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6c757d' }}>
+                    <p style={{ margin: '4px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
                       상담사가 내 정보를 볼 수 없도록 제한합니다
                     </p>
                   </div>
@@ -300,7 +300,7 @@ const ClientSettings = () => {
                 disabled={loading}
                 style={{
                   padding: '12px 32px',
-                  fontSize: '16px',
+                  fontSize: 'var(--font-size-base)',
                   fontWeight: '600',
                   borderRadius: '12px',
                   display: 'flex',

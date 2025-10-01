@@ -31,7 +31,7 @@ const RefundFilters = ({
                             padding: '8px 12px',
                             border: '2px solid #ddd',
                             borderRadius: '6px',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
                         }}
                     >
@@ -52,7 +52,7 @@ const RefundFilters = ({
                             padding: '8px 12px',
                             border: '2px solid #ddd',
                             borderRadius: '6px',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
                         }}
                     >

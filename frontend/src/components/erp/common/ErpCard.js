@@ -18,7 +18,7 @@ const ErpCard = ({ title, children, style = {}, className = '', glassEffect = tr
   };
 
   const titleStyle = {
-    fontSize: '20px',
+    fontSize: 'var(--font-size-xl)',
     fontWeight: '600',
     color: glassEffect ? '#ffffff' : '#333333',
     marginBottom: '20px',

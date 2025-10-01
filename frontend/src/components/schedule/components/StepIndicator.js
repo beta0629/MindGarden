@@ -64,7 +64,7 @@ const StepIndicator = ({
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 marginBottom: '8px',
-                                fontSize: '16px',
+                                fontSize: 'var(--font-size-base)',
                                 color: isActive ? 'white' : '#6c757d',
                                 border: `2px solid ${isActive ? '#28a745' : '#dee2e6'}`,
                                 transition: 'all 0.3s ease'
@@ -74,7 +74,7 @@ const StepIndicator = ({
                             
                             {/* 단계 제목 */}
                             <div style={{
-                                fontSize: '12px',
+                                fontSize: 'var(--font-size-xs)',
                                 fontWeight: isActive ? '600' : '500',
                                 color: isActive ? '#28a745' : '#6c757d',
                                 textAlign: 'center',

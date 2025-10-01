@@ -185,7 +185,7 @@ const MessageSendModal = ({
       borderRadius: '12px 12px 0 0'
     },
     headerTitle: {
-      fontSize: '18px',
+      fontSize: 'var(--font-size-lg)',
       fontWeight: '600',
       color: '#2c3e50',
       margin: 0
@@ -193,7 +193,7 @@ const MessageSendModal = ({
     closeBtn: {
       background: 'none',
       border: 'none',
-      fontSize: '24px',
+      fontSize: 'var(--font-size-xxl)',
       cursor: 'pointer',
       color: '#6c757d',
       padding: '4px',
@@ -211,13 +211,13 @@ const MessageSendModal = ({
       border: '1px solid #e9ecef'
     },
     clientInfoTitle: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
       color: '#495057',
       marginBottom: '8px'
     },
     clientInfoText: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       color: '#6c757d'
     },
     formGroup: {
@@ -225,7 +225,7 @@ const MessageSendModal = ({
     },
     formLabel: {
       display: 'block',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
       color: '#495057',
       marginBottom: '8px'
@@ -235,7 +235,7 @@ const MessageSendModal = ({
       padding: '12px 16px',
       border: '2px solid #e9ecef',
       borderRadius: '8px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       backgroundColor: '#fff',
       color: '#495057',
       transition: 'all 0.2s ease',
@@ -246,7 +246,7 @@ const MessageSendModal = ({
       padding: '12px 16px',
       border: '2px solid #e9ecef',
       borderRadius: '8px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       backgroundColor: '#fff',
       color: '#495057',
       cursor: 'pointer',
@@ -258,7 +258,7 @@ const MessageSendModal = ({
       padding: '12px 16px',
       border: '2px solid #e9ecef',
       borderRadius: '8px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       backgroundColor: '#fff',
       color: '#495057',
       minHeight: '120px',
@@ -283,7 +283,7 @@ const MessageSendModal = ({
       cursor: 'pointer'
     },
     checkboxLabel: {
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       color: '#495057',
       cursor: 'pointer'
     },
@@ -298,7 +298,7 @@ const MessageSendModal = ({
     button: {
       padding: '12px 24px',
       borderRadius: '8px',
-      fontSize: '14px',
+      fontSize: 'var(--font-size-sm)',
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.2s ease',

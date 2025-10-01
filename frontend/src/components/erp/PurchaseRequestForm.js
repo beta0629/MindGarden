@@ -247,7 +247,7 @@ const PurchaseRequestForm = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: 'white',
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         fontWeight: 'bold'
                       }}>
                         ✓
@@ -257,7 +257,7 @@ const PurchaseRequestForm = () => {
                     {/* 아이템명 */}
                     <div style={{ 
                       fontWeight: '700', 
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       marginBottom: '8px',
                       color: '#212529',
                       lineHeight: '1.3'
@@ -267,7 +267,7 @@ const PurchaseRequestForm = () => {
                     
                     {/* 카테고리 */}
                     <div style={{ 
-                      fontSize: '12px', 
+                      fontSize: 'var(--font-size-xs)', 
                       color: '#6c757d', 
                       marginBottom: '12px',
                       textTransform: 'uppercase',
@@ -279,7 +279,7 @@ const PurchaseRequestForm = () => {
                     
                     {/* 가격 */}
                     <div style={{ 
-                      fontSize: '18px', 
+                      fontSize: 'var(--font-size-lg)', 
                       fontWeight: '700', 
                       color: '#007bff',
                       marginBottom: '8px'
@@ -289,7 +289,7 @@ const PurchaseRequestForm = () => {
                     
                     {/* 재고 */}
                     <div style={{ 
-                      fontSize: '13px', 
+                      fontSize: 'var(--font-size-sm)', 
                       color: '#6c757d',
                       backgroundColor: '#f8f9fa',
                       padding: '4px 8px',
@@ -337,7 +337,7 @@ const PurchaseRequestForm = () => {
                         <div style={{ fontWeight: '600', marginBottom: '4px' }}>
                           {item.name}
                         </div>
-                        <div style={{ fontSize: '14px', color: '#6c757d' }}>
+                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
                           {formatCurrency(item.unitPrice)} × {itemQuantities[item.id] || 1} = {formatCurrency(item.unitPrice * (itemQuantities[item.id] || 1))}
                         </div>
                       </div>
@@ -355,7 +355,7 @@ const PurchaseRequestForm = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '18px',
+                            fontSize: 'var(--font-size-lg)',
                             fontWeight: 'bold'
                           }}
                         >
@@ -372,7 +372,7 @@ const PurchaseRequestForm = () => {
                             border: '1px solid #ddd',
                             borderRadius: '4px',
                             textAlign: 'center',
-                            fontSize: '14px'
+                            fontSize: 'var(--font-size-sm)'
                           }}
                         />
                         <button
@@ -388,7 +388,7 @@ const PurchaseRequestForm = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '18px',
+                            fontSize: 'var(--font-size-lg)',
                             fontWeight: 'bold'
                           }}
                         >

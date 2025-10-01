@@ -237,7 +237,7 @@ const BranchManagement = () => {
                                                 <h5 style={{
                                                     margin: 0,
                                                     color: '#495057',
-                                                    fontSize: '16px',
+                                                    fontSize: 'var(--font-size-base)',
                                                     fontWeight: '600',
                                                     display: 'flex',
                                                     alignItems: 'center'
@@ -251,7 +251,7 @@ const BranchManagement = () => {
                                                     onClick={() => setShowBranchRegistrationModal(true)}
                                                     style={{
                                                         padding: '4px 12px',
-                                                        fontSize: '12px',
+                                                        fontSize: 'var(--font-size-xs)',
                                                         borderRadius: '6px'
                                                     }}
                                                 >
@@ -324,7 +324,7 @@ const BranchManagement = () => {
                                                                 alignItems: 'flex-start'
                                                             }}>
                                                                 <strong style={{
-                                                                    fontSize: '14px',
+                                                                    fontSize: 'var(--font-size-sm)',
                                                                     color: selectedBranch?.id === branch.id ? '#007bff' : '#495057',
                                                                     fontWeight: '600',
                                                                     marginBottom: '2px',
@@ -338,7 +338,7 @@ const BranchManagement = () => {
                                                                     {branch.branchName}
                                                                 </strong>
                                                                 <small style={{
-                                                                    fontSize: '12px',
+                                                                    fontSize: 'var(--font-size-xs)',
                                                                     color: '#6c757d',
                                                                     fontFamily: 'monospace',
                                                                     whiteSpace: 'nowrap',
@@ -387,7 +387,7 @@ const BranchManagement = () => {
                                                         <h5 style={{
                                                             margin: 0,
                                                             color: '#495057',
-                                                            fontSize: '16px',
+                                                            fontSize: 'var(--font-size-base)',
                                                             fontWeight: '600',
                                                             display: 'flex',
                                                             alignItems: 'center'
@@ -415,7 +415,7 @@ const BranchManagement = () => {
                                                                         {branchStatistics.totalUsers || 0}
                                                                     </div>
                                                                     <div style={{
-                                                                        fontSize: '12px',
+                                                                        fontSize: 'var(--font-size-xs)',
                                                                         color: '#6c757d',
                                                                         fontWeight: '500'
                                                                     }}>
@@ -440,7 +440,7 @@ const BranchManagement = () => {
                                                                         {branchStatistics.consultants || 0}
                                                                     </div>
                                                                     <div style={{
-                                                                        fontSize: '12px',
+                                                                        fontSize: 'var(--font-size-xs)',
                                                                         color: '#6c757d',
                                                                         fontWeight: '500'
                                                                     }}>
@@ -465,7 +465,7 @@ const BranchManagement = () => {
                                                                         {branchStatistics.clients || 0}
                                                                     </div>
                                                                     <div style={{
-                                                                        fontSize: '12px',
+                                                                        fontSize: 'var(--font-size-xs)',
                                                                         color: '#6c757d',
                                                                         fontWeight: '500'
                                                                     }}>
@@ -490,7 +490,7 @@ const BranchManagement = () => {
                                                                         {branchStatistics.admins || 0}
                                                                     </div>
                                                                     <div style={{
-                                                                        fontSize: '12px',
+                                                                        fontSize: 'var(--font-size-xs)',
                                                                         color: '#6c757d',
                                                                         fontWeight: '500'
                                                                     }}>
@@ -515,7 +515,7 @@ const BranchManagement = () => {
                                                                         {branchStatistics.activeUsers || 0}
                                                                     </div>
                                                                     <div style={{
-                                                                        fontSize: '12px',
+                                                                        fontSize: 'var(--font-size-xs)',
                                                                         color: '#6c757d',
                                                                         fontWeight: '500'
                                                                     }}>
@@ -540,7 +540,7 @@ const BranchManagement = () => {
                                                                         {branchStatistics.inactiveUsers || 0}
                                                                     </div>
                                                                     <div style={{
-                                                                        fontSize: '12px',
+                                                                        fontSize: 'var(--font-size-xs)',
                                                                         color: '#6c757d',
                                                                         fontWeight: '500'
                                                                     }}>
@@ -571,7 +571,7 @@ const BranchManagement = () => {
                                                         <h5 style={{
                                                             margin: 0,
                                                             color: '#495057',
-                                                            fontSize: '16px',
+                                                            fontSize: 'var(--font-size-base)',
                                                             fontWeight: '600',
                                                             display: 'flex',
                                                             alignItems: 'center'
@@ -590,7 +590,7 @@ const BranchManagement = () => {
                                                                 style={{
                                                                     marginRight: '8px',
                                                                     borderRadius: '6px',
-                                                                    fontSize: '12px',
+                                                                    fontSize: 'var(--font-size-xs)',
                                                                     padding: '6px 12px'
                                                                 }}
                                                             >
@@ -603,7 +603,7 @@ const BranchManagement = () => {
                                                                 onClick={() => loadBranchUsers(selectedBranch.code)}
                                                                 style={{
                                                                     borderRadius: '6px',
-                                                                    fontSize: '12px',
+                                                                    fontSize: 'var(--font-size-xs)',
                                                                     padding: '6px 12px'
                                                                 }}
                                                             >
@@ -671,7 +671,7 @@ const BranchManagement = () => {
                                                                 checked={includeInactive}
                                                                 onChange={(e) => setIncludeInactive(e.target.checked)}
                                                                 style={{
-                                                                    fontSize: '14px',
+                                                                    fontSize: 'var(--font-size-sm)',
                                                                     color: '#495057'
                                                                 }}
                                                             />
@@ -687,7 +687,7 @@ const BranchManagement = () => {
                                                                 }}
                                                                 style={{
                                                                     borderRadius: '6px',
-                                                                    fontSize: '12px',
+                                                                    fontSize: 'var(--font-size-xs)',
                                                                     padding: '6px 12px'
                                                                 }}
                                                             >
@@ -751,7 +751,7 @@ const BranchManagement = () => {
                                                                     <tr>
                                                                         <th style={{
                                                                             padding: '12px 16px',
-                                                                            fontSize: '14px',
+                                                                            fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
                                                                             background: '#f8f9fa',
@@ -765,7 +765,7 @@ const BranchManagement = () => {
                                                                         </th>
                                                                         <th style={{
                                                                             padding: '12px 16px',
-                                                                            fontSize: '14px',
+                                                                            fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
                                                                             background: '#f8f9fa',
@@ -773,7 +773,7 @@ const BranchManagement = () => {
                                                                         }}>사용자</th>
                                                                         <th style={{
                                                                             padding: '12px 16px',
-                                                                            fontSize: '14px',
+                                                                            fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
                                                                             background: '#f8f9fa',
@@ -781,7 +781,7 @@ const BranchManagement = () => {
                                                                         }}>역할</th>
                                                                         <th style={{
                                                                             padding: '12px 16px',
-                                                                            fontSize: '14px',
+                                                                            fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
                                                                             background: '#f8f9fa',
@@ -789,7 +789,7 @@ const BranchManagement = () => {
                                                                         }}>지점</th>
                                                                         <th style={{
                                                                             padding: '12px 16px',
-                                                                            fontSize: '14px',
+                                                                            fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
                                                                             background: '#f8f9fa',
@@ -797,7 +797,7 @@ const BranchManagement = () => {
                                                                         }}>상태</th>
                                                                         <th style={{
                                                                             padding: '12px 16px',
-                                                                            fontSize: '14px',
+                                                                            fontSize: 'var(--font-size-sm)',
                                                                             fontWeight: '600',
                                                                             color: '#495057',
                                                                             background: '#f8f9fa',
@@ -832,7 +832,7 @@ const BranchManagement = () => {
                                                                                 <div>
                                                                                     <div style={{
                                                                                         fontWeight: '600',
-                                                                                        fontSize: '14px',
+                                                                                        fontSize: 'var(--font-size-sm)',
                                                                                         color: '#495057',
                                                                                         marginBottom: '2px'
                                                                                     }}>
@@ -971,7 +971,7 @@ const BranchManagement = () => {
                                                     onClick={() => setShowTransferModal(true)}
                                                     style={{
                                                         borderRadius: '8px',
-                                                        fontSize: '16px',
+                                                        fontSize: 'var(--font-size-base)',
                                                         padding: '12px 24px',
                                                         fontWeight: '600'
                                                     }}

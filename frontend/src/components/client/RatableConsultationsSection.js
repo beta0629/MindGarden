@@ -111,7 +111,7 @@ const RatableConsultationsSection = () => {
                 {/* 섹션 헤더 */}
                 <div style={{ marginBottom: '20px' }}>
                     <h3 style={{
-                        fontSize: '18px',
+                        fontSize: 'var(--font-size-lg)',
                         fontWeight: '600',
                         color: '#333',
                         marginBottom: '8px',
@@ -123,7 +123,7 @@ const RatableConsultationsSection = () => {
                         <span style={{
                             backgroundColor: '#e7f3ff',
                             color: '#0066cc',
-                            fontSize: '12px',
+                            fontSize: 'var(--font-size-xs)',
                             fontWeight: '500',
                             padding: '2px 8px',
                             borderRadius: '12px'
@@ -132,7 +132,7 @@ const RatableConsultationsSection = () => {
                         </span>
                     </h3>
                     <p style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#666',
                         margin: 0
                     }}>
@@ -155,11 +155,11 @@ const RatableConsultationsSection = () => {
                             borderRadius: '8px',
                             border: '1px solid #ffeaa7'
                         }}>
-                            <div style={{ fontSize: '24px', marginBottom: '12px' }}>🔧</div>
-                            <div style={{ fontSize: '15px', marginBottom: '8px' }}>
+                            <div style={{ fontSize: 'var(--font-size-xxl)', marginBottom: '12px' }}>🔧</div>
+                            <div style={{ fontSize: 'var(--font-size-md)', marginBottom: '8px' }}>
                                 평가 시스템 준비 중입니다
                             </div>
-                            <div style={{ fontSize: '13px', color: '#856404' }}>
+                            <div style={{ fontSize: 'var(--font-size-sm)', color: '#856404' }}>
                                 데이터베이스 테이블 생성 중... 잠시 후 다시 시도해주세요
                             </div>
                         </div>
@@ -172,11 +172,11 @@ const RatableConsultationsSection = () => {
                             borderRadius: '8px',
                             border: '1px solid #e9ecef'
                         }}>
-                            <div style={{ fontSize: '24px', marginBottom: '12px' }}>💭</div>
-                            <div style={{ fontSize: '15px', marginBottom: '8px' }}>
+                            <div style={{ fontSize: 'var(--font-size-xxl)', marginBottom: '12px' }}>💭</div>
+                            <div style={{ fontSize: 'var(--font-size-md)', marginBottom: '8px' }}>
                                 평가 가능한 상담이 없습니다
                             </div>
-                            <div style={{ fontSize: '13px', color: '#999' }}>
+                            <div style={{ fontSize: 'var(--font-size-sm)', color: '#999' }}>
                                 상담을 완료하시면 평가할 수 있어요
                             </div>
                         </div>
@@ -213,7 +213,7 @@ const RatableConsultationsSection = () => {
                                         {schedule.consultationDate} {schedule.consultationTime}
                                     </div>
                                     <div style={{
-                                        fontSize: '12px',
+                                        fontSize: 'var(--font-size-xs)',
                                         color: '#28a745',
                                         marginTop: '2px'
                                     }}>

@@ -900,10 +900,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     e.target.style.background = 'white';
                                 }}
                             >
-                                <span style={{ fontSize: '24px', marginRight: '12px' }}>📋</span>
+                                <span style={{ fontSize: 'var(--font-size-xxl)', marginRight: '12px' }}>📋</span>
                                 <div>
                                     <div style={{ fontWeight: '600', marginBottom: '4px' }}>일정 등록</div>
-                                    <div style={{ fontSize: '14px', color: '#6c757d' }}>상담 일정을 등록합니다</div>
+                                    <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>상담 일정을 등록합니다</div>
                                 </div>
                             </button>
                             
@@ -931,10 +931,10 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                         e.target.style.background = 'white';
                                     }}
                                 >
-                                    <span style={{ fontSize: '24px', marginRight: '12px' }}>🏖️</span>
+                                    <span style={{ fontSize: 'var(--font-size-xxl)', marginRight: '12px' }}>🏖️</span>
                                     <div>
                                         <div style={{ fontWeight: '600', marginBottom: '4px' }}>휴가 등록</div>
-                                        <div style={{ fontSize: '14px', color: '#6c757d' }}>상담사의 휴가를 등록합니다</div>
+                                        <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>상담사의 휴가를 등록합니다</div>
                                     </div>
                                 </button>
                             )}

@@ -378,7 +378,7 @@ const SalaryProfileFormModal = ({
         marginBottom: '8px',
         fontWeight: '600',
         color: '#495057',
-        fontSize: '14px'
+        fontSize: 'var(--font-size-sm)'
     };
 
     const inputStyle = {
@@ -386,7 +386,7 @@ const SalaryProfileFormModal = ({
         padding: '10px 12px',
         border: '1px solid #ced4da',
         borderRadius: '6px',
-        fontSize: '14px',
+        fontSize: 'var(--font-size-sm)',
         boxSizing: 'border-box'
     };
 
@@ -399,7 +399,7 @@ const SalaryProfileFormModal = ({
         padding: '10px 20px',
         borderRadius: '6px',
         fontWeight: '500',
-        fontSize: '14px',
+        fontSize: 'var(--font-size-sm)',
         cursor: 'pointer',
         border: 'none',
         minWidth: '100px'
@@ -429,18 +429,18 @@ const SalaryProfileFormModal = ({
         backgroundColor: '#dc3545',
         color: 'white',
         padding: '5px 10px',
-        fontSize: '12px'
+        fontSize: 'var(--font-size-xs)'
     };
 
     return (
         <div style={modalOverlayStyle} onClick={onClose}>
             <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
                 <div style={modalHeaderStyle}>
-                    <h3 style={{ margin: 0, color: '#2c3e50', fontSize: '20px', fontWeight: '600' }}>
+                    <h3 style={{ margin: 0, color: '#2c3e50', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>
                         급여 프로필 생성 - {consultant.name}
                     </h3>
                     <button 
-                        style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}
+                        style={{ background: 'none', border: 'none', fontSize: 'var(--font-size-xxl)', cursor: 'pointer' }}
                         onClick={onClose}
                     >
                         ×
@@ -471,7 +471,7 @@ const SalaryProfileFormModal = ({
                                 </option>
                             ))}
                         </select>
-                        <p style={{ fontSize: '12px', color: '#6c757d', margin: '4px 0 0 0' }}>
+                        <p style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', margin: '4px 0 0 0' }}>
                             등급을 변경하면 기본 급여와 옵션 금액이 자동으로 업데이트됩니다.
                         </p>
                     </div>
@@ -491,7 +491,7 @@ const SalaryProfileFormModal = ({
                                 gap: '8px',
                                 marginBottom: '12px',
                                 fontWeight: '600',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 color: '#495057',
                                 borderBottom: '2px solid #dee2e6',
                                 paddingBottom: '8px'
@@ -510,7 +510,7 @@ const SalaryProfileFormModal = ({
                                     gap: '8px',
                                     padding: '8px 0',
                                     borderBottom: index < 3 ? '1px solid #e9ecef' : 'none',
-                                    fontSize: '13px',
+                                    fontSize: 'var(--font-size-sm)',
                                     color: '#6c757d',
                                     alignItems: 'center'
                                 }}>
@@ -558,7 +558,7 @@ const SalaryProfileFormModal = ({
                                 padding: '8px', 
                                 backgroundColor: '#e3f2fd', 
                                 borderRadius: '4px',
-                                fontSize: '12px',
+                                fontSize: 'var(--font-size-xs)',
                                 color: '#1976d2'
                             }}>
                                 <strong>💡 등급별 급여 체계:</strong><br/>

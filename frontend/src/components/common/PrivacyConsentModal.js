@@ -61,7 +61,7 @@ const PrivacyConsentModal = ({
         padding: '20px 24px'
       }}>
         <Modal.Title style={{
-          fontSize: '20px',
+          fontSize: 'var(--font-size-xl)',
           fontWeight: '600',
           color: '#2c3e50',
           margin: 0
@@ -73,7 +73,7 @@ const PrivacyConsentModal = ({
       <Modal.Body style={{ padding: '24px' }}>
         <div style={{ marginBottom: '20px' }}>
           <p style={{
-            fontSize: '14px',
+            fontSize: 'var(--font-size-sm)',
             color: '#6c757d',
             margin: '0 0 20px 0',
             lineHeight: '1.5'
@@ -85,7 +85,7 @@ const PrivacyConsentModal = ({
         {/* 필수 동의 항목 */}
         <div style={{ marginBottom: '24px' }}>
           <h5 style={{
-            fontSize: '16px',
+            fontSize: 'var(--font-size-base)',
             fontWeight: '600',
             color: '#495057',
             marginBottom: '16px'
@@ -119,7 +119,7 @@ const PrivacyConsentModal = ({
               />
               <div style={{ flex: 1 }}>
                 <div style={{
-                  fontSize: '14px',
+                  fontSize: 'var(--font-size-sm)',
                   fontWeight: '500',
                   color: '#495057',
                   marginBottom: '4px'
@@ -127,7 +127,7 @@ const PrivacyConsentModal = ({
                   개인정보 처리방침에 동의합니다 <span style={{ color: '#dc3545' }}>*</span>
                 </div>
                 <div style={{
-                  fontSize: '12px',
+                  fontSize: 'var(--font-size-xs)',
                   color: '#6c757d',
                   marginBottom: '8px'
                 }}>
@@ -140,7 +140,7 @@ const PrivacyConsentModal = ({
                     background: 'none',
                     border: 'none',
                     color: '#007bff',
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     textDecoration: 'underline',
                     cursor: 'pointer',
                     padding: 0
@@ -158,12 +158,12 @@ const PrivacyConsentModal = ({
                 background: '#ffffff',
                 border: '1px solid #dee2e6',
                 borderRadius: '6px',
-                fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                 color: '#495057',
                 maxHeight: '200px',
                 overflowY: 'auto'
               }}>
-                <h6 style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>
+                <h6 style={{ fontSize: 'var(--font-size-sm)', fontWeight: '600', marginBottom: '8px' }}>
                   수집하는 개인정보 항목
                 </h6>
                 <ul style={{ paddingLeft: '16px', margin: '0 0 12px 0' }}>
@@ -171,7 +171,7 @@ const PrivacyConsentModal = ({
                   <li>선택: 프로필 사진, 마케팅 정보 수신 동의</li>
                 </ul>
                 
-                <h6 style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>
+                <h6 style={{ fontSize: 'var(--font-size-sm)', fontWeight: '600', marginBottom: '8px' }}>
                   개인정보 수집 및 이용 목적
                 </h6>
                 <ul style={{ paddingLeft: '16px', margin: '0 0 12px 0' }}>
@@ -181,7 +181,7 @@ const PrivacyConsentModal = ({
                   <li>고객 지원</li>
                 </ul>
 
-                <h6 style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>
+                <h6 style={{ fontSize: 'var(--font-size-sm)', fontWeight: '600', marginBottom: '8px' }}>
                   보유 및 이용 기간
                 </h6>
                 <p style={{ margin: '0', fontSize: '11px' }}>
@@ -216,7 +216,7 @@ const PrivacyConsentModal = ({
               />
               <div style={{ flex: 1 }}>
                 <div style={{
-                  fontSize: '14px',
+                  fontSize: 'var(--font-size-sm)',
                   fontWeight: '500',
                   color: '#495057',
                   marginBottom: '4px'
@@ -224,7 +224,7 @@ const PrivacyConsentModal = ({
                   이용약관에 동의합니다 <span style={{ color: '#dc3545' }}>*</span>
                 </div>
                 <div style={{
-                  fontSize: '12px',
+                  fontSize: 'var(--font-size-xs)',
                   color: '#6c757d',
                   marginBottom: '8px'
                 }}>
@@ -237,7 +237,7 @@ const PrivacyConsentModal = ({
                     background: 'none',
                     border: 'none',
                     color: '#007bff',
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     textDecoration: 'underline',
                     cursor: 'pointer',
                     padding: 0
@@ -255,12 +255,12 @@ const PrivacyConsentModal = ({
                 background: '#ffffff',
                 border: '1px solid #dee2e6',
                 borderRadius: '6px',
-                fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                 color: '#495057',
                 maxHeight: '200px',
                 overflowY: 'auto'
               }}>
-                <h6 style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>
+                <h6 style={{ fontSize: 'var(--font-size-sm)', fontWeight: '600', marginBottom: '8px' }}>
                   주요 내용
                 </h6>
                 <ul style={{ paddingLeft: '16px', margin: '0 0 12px 0' }}>
@@ -279,7 +279,7 @@ const PrivacyConsentModal = ({
         {showMarketingConsent && (
           <div style={{ marginBottom: '24px' }}>
             <h5 style={{
-              fontSize: '16px',
+              fontSize: 'var(--font-size-base)',
               fontWeight: '600',
               color: '#495057',
               marginBottom: '16px'
@@ -311,7 +311,7 @@ const PrivacyConsentModal = ({
                 />
                 <div style={{ flex: 1 }}>
                   <div style={{
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     fontWeight: '500',
                     color: '#495057',
                     marginBottom: '4px'
@@ -319,7 +319,7 @@ const PrivacyConsentModal = ({
                     마케팅 정보 수신에 동의합니다 (선택)
                   </div>
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#6c757d'
                   }}>
                     이벤트 정보, 맞춤형 서비스 제공을 위한 마케팅 정보 수신에 동의합니다.
@@ -336,7 +336,7 @@ const PrivacyConsentModal = ({
           border: '1px solid #bee5eb',
           borderRadius: '6px',
           padding: '12px',
-          fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
           color: '#0c5460'
         }}>
           <p style={{ margin: '0' }}>
@@ -356,7 +356,7 @@ const PrivacyConsentModal = ({
           onClick={onClose}
           style={{
             padding: '8px 16px',
-            fontSize: '14px',
+            fontSize: 'var(--font-size-sm)',
             borderRadius: '6px'
           }}
         >
@@ -368,7 +368,7 @@ const PrivacyConsentModal = ({
           disabled={isSubmitDisabled}
           style={{
             padding: '8px 16px',
-            fontSize: '14px',
+            fontSize: 'var(--font-size-sm)',
             borderRadius: '6px',
             opacity: isSubmitDisabled ? 0.6 : 1
           }}

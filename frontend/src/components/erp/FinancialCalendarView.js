@@ -349,7 +349,7 @@ const FinancialCalendarView = () => {
               style={{
                 background: 'none',
                 border: 'none',
-                fontSize: '20px',
+                fontSize: 'var(--font-size-xl)',
                 cursor: 'pointer',
                 color: '#6c757d'
               }}
@@ -514,10 +514,10 @@ const FinancialCalendarView = () => {
                 borderRadius: '8px',
                 textAlign: 'center'
               }}>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#155724' }}>
+                <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'bold', color: '#155724' }}>
                   +{formatCurrency(monthlyIncome)}원
                 </div>
-                <div style={{ fontSize: '14px', color: '#155724' }}>💰 월 총 수입</div>
+                <div style={{ fontSize: 'var(--font-size-sm)', color: '#155724' }}>💰 월 총 수입</div>
               </div>
               
               <div style={{
@@ -526,10 +526,10 @@ const FinancialCalendarView = () => {
                 borderRadius: '8px',
                 textAlign: 'center'
               }}>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#721c24' }}>
+                <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'bold', color: '#721c24' }}>
                   -{formatCurrency(monthlyExpense)}원
                 </div>
-                <div style={{ fontSize: '14px', color: '#721c24' }}>💸 월 총 지출</div>
+                <div style={{ fontSize: 'var(--font-size-sm)', color: '#721c24' }}>💸 월 총 지출</div>
               </div>
               
               <div style={{
@@ -539,7 +539,7 @@ const FinancialCalendarView = () => {
                 textAlign: 'center'
               }}>
                 <div style={{
-                  fontSize: '20px',
+                  fontSize: 'var(--font-size-xl)',
                   fontWeight: 'bold',
                   color: monthlyProfit >= 0 ? '#004085' : '#721c24'
                 }}>
@@ -559,10 +559,10 @@ const FinancialCalendarView = () => {
                 borderRadius: '8px',
                 textAlign: 'center'
               }}>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#383d41' }}>
+                <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'bold', color: '#383d41' }}>
                   {totalTransactions}건
                 </div>
-                <div style={{ fontSize: '14px', color: '#383d41' }}>📊 총 거래</div>
+                <div style={{ fontSize: 'var(--font-size-sm)', color: '#383d41' }}>📊 총 거래</div>
               </div>
             </div>
           );

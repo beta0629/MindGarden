@@ -619,7 +619,7 @@ const CommonCodeManagement = () => {
                                 padding: '10px 40px 10px 12px',
                                 border: '2px solid #e1e5e9',
                                 borderRadius: '8px',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 outline: 'none',
                                 transition: 'border-color 0.2s ease',
                                 backgroundColor: '#f8f9fa'
@@ -633,7 +633,7 @@ const CommonCodeManagement = () => {
                             top: '50%',
                             transform: 'translateY(-50%)',
                             color: '#6c757d',
-                            fontSize: '16px'
+                            fontSize: 'var(--font-size-base)'
                         }}></i>
                     </div>
                     
@@ -645,7 +645,7 @@ const CommonCodeManagement = () => {
                             padding: '10px 12px',
                             border: '2px solid #e1e5e9',
                             borderRadius: '8px',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             backgroundColor: '#f8f9fa',
                             minWidth: '150px',
                             outline: 'none',
@@ -676,7 +676,7 @@ const CommonCodeManagement = () => {
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '8px',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 cursor: 'pointer',
                                 transition: 'background-color 0.2s ease',
                                 display: 'flex',
@@ -694,7 +694,7 @@ const CommonCodeManagement = () => {
                 
                 {/* 필터 상태 표시 */}
                 <div style={{
-                    fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                     color: '#6c757d',
                     display: 'flex',
                     alignItems: 'center',
@@ -770,7 +770,7 @@ const CommonCodeManagement = () => {
                         borderRadius: '8px',
                         backgroundColor: 'transparent',
                         color: '#6c757d',
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '500',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
@@ -788,7 +788,7 @@ const CommonCodeManagement = () => {
                     <h2 style={{
                         color: '#2c3e50',
                         margin: '0 0 4px 0',
-                        fontSize: '20px',
+                        fontSize: 'var(--font-size-xl)',
                         fontWeight: '600',
                         lineHeight: '1.3'
                     }}>
@@ -797,7 +797,7 @@ const CommonCodeManagement = () => {
                     <p style={{
                         color: '#6c757d',
                         margin: '0',
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         lineHeight: '1.4'
                     }}>
                         {selectedGroup} - 코드를 추가, 수정, 삭제할 수 있습니다.
@@ -813,7 +813,7 @@ const CommonCodeManagement = () => {
                         borderRadius: '8px',
                         backgroundColor: '#007bff',
                         color: 'white',
-                        fontSize: '14px',
+                        fontSize: 'var(--font-size-sm)',
                         fontWeight: '500',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
@@ -975,7 +975,7 @@ const CommonCodeManagement = () => {
                                         <h4 style={{
                                             color: '#2c3e50',
                                             margin: '0 0 4px 0',
-                                            fontSize: '16px',
+                                            fontSize: 'var(--font-size-base)',
                                             fontWeight: '600'
                                         }}>
                                             {code.codeLabel}
@@ -1007,7 +1007,7 @@ const CommonCodeManagement = () => {
                                         <p style={{
                                             color: '#6c757d',
                                             margin: '0',
-                                            fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                             lineHeight: '1.4'
                                         }}>
                                             {code.codeDescription}

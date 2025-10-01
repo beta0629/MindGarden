@@ -1188,7 +1188,7 @@ const ConsultantComprehensiveManagement = () => {
                         }}>
                             <h3 style={{
                                 margin: 0,
-                                fontSize: '18px',
+                                fontSize: 'var(--font-size-lg)',
                                 fontWeight: '600',
                                 color: '#2c3e50'
                             }}>
@@ -1201,7 +1201,7 @@ const ConsultantComprehensiveManagement = () => {
                                 style={{
                                     background: 'none',
                                     border: 'none',
-                                    fontSize: '24px',
+                                    fontSize: 'var(--font-size-xxl)',
                                     cursor: 'pointer',
                                     color: '#6c757d',
                                     padding: '4px',
@@ -1238,7 +1238,7 @@ const ConsultantComprehensiveManagement = () => {
                                         marginBottom: '24px'
                                     }}>
                                         <p style={{
-                                            fontSize: '16px',
+                                            fontSize: 'var(--font-size-base)',
                                             color: '#495057',
                                             margin: '0 0 16px 0',
                                             lineHeight: '1.5'
@@ -1246,7 +1246,7 @@ const ConsultantComprehensiveManagement = () => {
                                             정말로 <strong style={{ color: '#dc3545' }}>{editingConsultant?.name}</strong> 상담사를 삭제하시겠습니까?
                                         </p>
                                         <p style={{
-                                            fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                             color: '#dc3545',
                                             margin: '0 0 24px 0',
                                             fontWeight: '500'
@@ -1264,7 +1264,7 @@ const ConsultantComprehensiveManagement = () => {
                                             border: deletionStatus?.requiresTransfer ? '1px solid #ffeaa7' : 'none'
                                         }}>
                                             <h4 style={{
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 fontWeight: '600',
                                                 color: deletionStatus?.requiresTransfer ? '#856404' : '#495057',
                                                 margin: '0 0 16px 0'
@@ -1278,7 +1278,7 @@ const ConsultantComprehensiveManagement = () => {
                                                     padding: '12px',
                                                     borderRadius: '6px',
                                                     marginBottom: '16px',
-                                                    fontSize: '13px',
+                                                    fontSize: 'var(--font-size-sm)',
                                                     color: '#856404'
                                                 }}>
                                                     <strong>이전이 필요한 데이터:</strong><br/>
@@ -1297,7 +1297,7 @@ const ConsultantComprehensiveManagement = () => {
                                             <div style={{ marginBottom: '16px' }}>
                                                 <label style={{
                                                     display: 'block',
-                                                    fontSize: '14px',
+                                                    fontSize: 'var(--font-size-sm)',
                                                     fontWeight: '500',
                                                     color: '#374151',
                                                     marginBottom: '8px'
@@ -1312,7 +1312,7 @@ const ConsultantComprehensiveManagement = () => {
                                                         padding: '10px 12px',
                                                         border: '1px solid #d1d5db',
                                                         borderRadius: '6px',
-                                                        fontSize: '14px',
+                                                        fontSize: 'var(--font-size-sm)',
                                                         fontFamily: 'inherit',
                                                         backgroundColor: '#ffffff'
                                                     }}
@@ -1332,7 +1332,7 @@ const ConsultantComprehensiveManagement = () => {
                                                 <div>
                                                     <label style={{
                                                         display: 'block',
-                                                        fontSize: '14px',
+                                                        fontSize: 'var(--font-size-sm)',
                                                         fontWeight: '500',
                                                         color: '#374151',
                                                         marginBottom: '8px'
@@ -1349,7 +1349,7 @@ const ConsultantComprehensiveManagement = () => {
                                                             padding: '10px 12px',
                                                             border: '1px solid #d1d5db',
                                                             borderRadius: '6px',
-                                                            fontSize: '14px',
+                                                            fontSize: 'var(--font-size-sm)',
                                                             fontFamily: 'inherit',
                                                             backgroundColor: '#ffffff',
                                                             resize: 'vertical'
@@ -1364,7 +1364,7 @@ const ConsultantComprehensiveManagement = () => {
                                                     padding: '12px',
                                                     backgroundColor: '#e3f2fd',
                                                     borderRadius: '6px',
-                                                    fontSize: '13px',
+                                                    fontSize: 'var(--font-size-sm)',
                                                     color: '#1565c0'
                                                 }}>
                                                     💡 선택된 상담사로 모든 활성 매핑과 예정된 스케줄이 자동으로 이전됩니다.
@@ -1391,7 +1391,7 @@ const ConsultantComprehensiveManagement = () => {
                                                 borderRadius: '8px',
                                                 background: '#ffffff',
                                                 color: '#374151',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 fontFamily: 'inherit',
                                                 boxSizing: 'border-box',
                                                 transition: 'all 0.2s ease'
@@ -1415,7 +1415,7 @@ const ConsultantComprehensiveManagement = () => {
                                                 borderRadius: '8px',
                                                 background: '#ffffff',
                                                 color: '#374151',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 fontFamily: 'inherit',
                                                 boxSizing: 'border-box',
                                                 transition: 'all 0.2s ease'
@@ -1439,7 +1439,7 @@ const ConsultantComprehensiveManagement = () => {
                                                 borderRadius: '8px',
                                                 background: '#ffffff',
                                                 color: '#374151',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 fontFamily: 'inherit',
                                                 boxSizing: 'border-box',
                                                 transition: 'all 0.2s ease'
@@ -1451,7 +1451,7 @@ const ConsultantComprehensiveManagement = () => {
                                         <label style={{ 
                                             display: 'block', 
                                             marginBottom: '12px', 
-                                            fontSize: '16px', 
+                                            fontSize: 'var(--font-size-base)', 
                                             fontWeight: '600', 
                                             color: '#1f2937' 
                                         }}>
@@ -1487,7 +1487,7 @@ const ConsultantComprehensiveManagement = () => {
                                                 borderRadius: '12px',
                                                 background: '#ffffff',
                                                 color: '#374151',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 minHeight: '180px',
                                                 height: '180px',
                                                 width: '100%',
@@ -1515,7 +1515,7 @@ const ConsultantComprehensiveManagement = () => {
                                                                 margin: '2px 0',
                                                                 borderRadius: '6px',
                                                                 border: 'none',
-                                                                fontSize: '14px',
+                                                                fontSize: 'var(--font-size-sm)',
                                                                 lineHeight: '1.5'
                                                             }}
                                                         >
@@ -1550,7 +1550,7 @@ const ConsultantComprehensiveManagement = () => {
                                                 borderRadius: '8px',
                                                 background: '#ffffff',
                                                 color: '#374151',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 fontFamily: 'inherit',
                                                 boxSizing: 'border-box',
                                                 transition: 'all 0.2s ease'
@@ -1577,7 +1577,7 @@ const ConsultantComprehensiveManagement = () => {
                                     borderRadius: '8px',
                                     backgroundColor: '#ffffff',
                                     color: '#6c757d',
-                                    fontSize: '14px',
+                                                        fontSize: 'var(--font-size-sm)',
                                     fontWeight: '500',
                                     cursor: 'pointer',
                                     transition: 'all 0.2s ease',
@@ -1602,7 +1602,7 @@ const ConsultantComprehensiveManagement = () => {
                                     borderRadius: '8px',
                                     backgroundColor: modalType === 'delete' ? '#dc3545' : '#007bff',
                                     color: '#ffffff',
-                                    fontSize: '14px',
+                                                        fontSize: 'var(--font-size-sm)',
                                     fontWeight: '500',
                                     cursor: 'pointer',
                                     transition: 'all 0.2s ease',

@@ -79,7 +79,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                 marginBottom: '24px'
             }}>
                 <h3 style={{
-                    fontSize: '18px',
+                    fontSize: 'var(--font-size-lg)',
                     fontWeight: '600',
                     color: '#333',
                     marginBottom: '16px',
@@ -113,7 +113,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
             {/* 섹션 헤더 */}
             <div style={{ marginBottom: '24px' }}>
                 <h3 style={{
-                    fontSize: '18px',
+                    fontSize: 'var(--font-size-lg)',
                     fontWeight: '600',
                     color: '#333',
                     marginBottom: '8px',
@@ -125,7 +125,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                     <span style={{
                         backgroundColor: '#ffe6f0',
                         color: '#d63384',
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         fontWeight: '500',
                         padding: '2px 8px',
                         borderRadius: '12px'
@@ -151,7 +151,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                     border: '1px solid #ffc2d6'
                 }}>
                     <div style={{
-                        fontSize: '32px',
+                        fontSize: 'var(--font-size-xxxl)',
                         fontWeight: '700',
                         color: '#d63384',
                         marginBottom: '8px'
@@ -179,7 +179,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                     border: '1px solid #bfdbfe'
                 }}>
                     <div style={{
-                        fontSize: '32px',
+                        fontSize: 'var(--font-size-xxxl)',
                         fontWeight: '700',
                         color: '#0066cc',
                         marginBottom: '8px'
@@ -239,7 +239,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                                     {count}개
                                 </div>
                                 <div style={{
-                                    fontSize: '12px',
+                                    fontSize: 'var(--font-size-xs)',
                                     color: '#666'
                                 }}>
                                     ({percentage}%)
@@ -290,7 +290,7 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
                                         {renderHeartScore(rating.heartScore)}
                                     </div>
                                     <div style={{
-                                        fontSize: '12px',
+                                        fontSize: 'var(--font-size-xs)',
                                         color: '#666'
                                     }}>
                                         {rating.clientName} • {new Date(rating.ratedAt).toLocaleDateString()}

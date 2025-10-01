@@ -234,10 +234,10 @@ const OAuth2Callback = () => {
         padding: '20px',
         textAlign: 'center'
       }}>
-        <div style={{ fontSize: '24px', marginBottom: '20px' }}>
+        <div style={{ fontSize: 'var(--font-size-xxl)', marginBottom: '20px' }}>
           🔄 로그인 처리 중...
         </div>
-        <div style={{ fontSize: '16px', color: '#666' }}>
+        <div style={{ fontSize: 'var(--font-size-base)', color: '#666' }}>
           잠시만 기다려주세요.
         </div>
       </div>
@@ -255,10 +255,10 @@ const OAuth2Callback = () => {
         padding: '20px',
         textAlign: 'center'
       }}>
-        <div style={{ fontSize: '24px', marginBottom: '20px', color: '#e74c3c' }}>
+        <div style={{ fontSize: 'var(--font-size-xxl)', marginBottom: '20px', color: '#e74c3c' }}>
           ❌ 로그인 실패
         </div>
-        <div style={{ fontSize: '16px', color: '#666', marginBottom: '20px' }}>
+        <div style={{ fontSize: 'var(--font-size-base)', color: '#666', marginBottom: '20px' }}>
           {error}
         </div>
         <div style={{ fontSize: '14px', color: '#999' }}>

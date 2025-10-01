@@ -797,7 +797,7 @@ const SessionManagement = () => {
                                 return (
                                     <p style={{ 
                                         margin: '4px 0 0 0', 
-                                        fontSize: '14px', 
+                                        fontSize: 'var(--font-size-sm)', 
                                         color: '#6b7280',
                                         fontWeight: 'normal'
                                     }}>
@@ -808,7 +808,7 @@ const SessionManagement = () => {
                                 return (
                                     <p style={{ 
                                         margin: '4px 0 0 0', 
-                                        fontSize: '14px', 
+                                        fontSize: 'var(--font-size-sm)', 
                                         color: '#6b7280',
                                         fontWeight: 'normal'
                                     }}>
@@ -835,7 +835,7 @@ const SessionManagement = () => {
                                     padding: '8px 12px',
                                     border: '1px solid #d1d5db',
                                     borderRadius: '6px',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     outline: 'none',
                                     transition: 'border-color 0.2s ease'
                                 }}
@@ -851,7 +851,7 @@ const SessionManagement = () => {
                                 padding: '8px 12px',
                                 border: '1px solid #d1d5db',
                                 borderRadius: '6px',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 backgroundColor: 'white',
                                 minWidth: '120px',
                                 outline: 'none',
@@ -1007,7 +1007,7 @@ const SessionManagement = () => {
                                 return (
                                     <p style={{ 
                                         margin: '4px 0 0 0', 
-                                        fontSize: '14px', 
+                                        fontSize: 'var(--font-size-sm)', 
                                         color: '#6b7280',
                                         fontWeight: 'normal'
                                     }}>
@@ -1018,7 +1018,7 @@ const SessionManagement = () => {
                                 return (
                                     <p style={{ 
                                         margin: '4px 0 0 0', 
-                                        fontSize: '14px', 
+                                        fontSize: 'var(--font-size-sm)', 
                                         color: '#6b7280',
                                         fontWeight: 'normal'
                                     }}>
@@ -1049,7 +1049,7 @@ const SessionManagement = () => {
                                         padding: '8px 12px',
                                         border: '1px solid #d1d5db',
                                         borderRadius: '6px',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         outline: 'none',
                                         transition: 'border-color 0.2s ease'
                                     }}
@@ -1064,7 +1064,7 @@ const SessionManagement = () => {
                                     padding: '8px 12px',
                                     border: '1px solid #d1d5db',
                                     borderRadius: '6px',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     backgroundColor: 'white',
                                     minWidth: '120px',
                                     outline: 'none',
@@ -1461,7 +1461,7 @@ const SessionManagement = () => {
                     {extensionRequests.length === 0 && (
                         <div className="session-mgmt-no-results">
                             <p>회기 추가 요청이 없습니다.</p>
-                            <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '10px' }}>
+                            <p style={{ fontSize: 'var(--font-size-sm)', color: '#6b7280', marginTop: '10px' }}>
                                 회기 추가 요청을 생성하면 여기에 표시됩니다.
                             </p>
                         </div>

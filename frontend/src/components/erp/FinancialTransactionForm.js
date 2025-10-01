@@ -132,7 +132,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '24px',
+              fontSize: 'var(--font-size-xxl)',
               cursor: 'pointer',
               color: '#666'
             }}
@@ -202,7 +202,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 opacity: loadingCodes ? 0.6 : 1
               }}
             >
@@ -214,7 +214,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               ))}
             </select>
             {loadingCodes && (
-              <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+              <div style={{ fontSize: 'var(--font-size-xs)', color: '#666', marginTop: '5px' }}>
                 공통 코드 로딩 중...
               </div>
             )}
@@ -236,7 +236,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 opacity: (!formData.category || loadingCodes) ? 0.6 : 1
               }}
             >
@@ -248,7 +248,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               ))}
             </select>
             {!formData.category && (
-              <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+              <div style={{ fontSize: 'var(--font-size-xs)', color: '#666', marginTop: '5px' }}>
                 먼저 카테고리를 선택해주세요
               </div>
             )}
@@ -273,7 +273,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '14px'
+                fontSize: 'var(--font-size-sm)'
               }}
             />
           </div>
@@ -294,7 +294,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '14px'
+                fontSize: 'var(--font-size-sm)'
               }}
             />
           </div>
@@ -315,7 +315,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                 padding: '10px',
                 border: '1px solid #ddd',
                 borderRadius: '5px',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 resize: 'vertical'
               }}
             />
@@ -347,7 +347,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                 backgroundColor: 'white',
                 color: '#666',
                 cursor: 'pointer',
-                fontSize: '14px'
+                fontSize: 'var(--font-size-sm)'
               }}
             >
               취소
@@ -362,7 +362,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                 backgroundColor: loading ? '#ccc' : '#3498db',
                 color: 'white',
                 cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '14px'
+                fontSize: 'var(--font-size-sm)'
               }}
             >
               {loading ? '등록 중...' : '등록하기'}

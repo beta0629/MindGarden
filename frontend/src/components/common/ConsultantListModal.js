@@ -41,7 +41,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
         }}>
           <h2 style={{
             margin: 0,
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50'
           }}>
@@ -52,7 +52,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '24px',
+              fontSize: 'var(--font-size-xxl)',
               cursor: 'pointer',
               color: '#6c757d',
               padding: '4px',
@@ -76,7 +76,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
         {consultantList && consultantList.length > 0 ? (
           <div>
             <div style={{
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               color: '#6c757d',
               marginBottom: '16px'
             }}>
@@ -113,13 +113,13 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
                   }}>
                     <i className="bi bi-person" style={{
                       color: 'white',
-                      fontSize: '16px'
+                      fontSize: 'var(--font-size-base)'
                     }}></i>
                   </div>
                   
                   <div style={{ flex: 1 }}>
                     <div style={{
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       fontWeight: '600',
                       color: '#2c3e50',
                       marginBottom: '4px'
@@ -127,14 +127,14 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
                       {consultant.name}
                     </div>
                     <div style={{
-                      fontSize: '14px',
+                      fontSize: 'var(--font-size-sm)',
                       color: '#6c757d'
                     }}>
                       {consultant.specialty || '상담 심리학'}
                     </div>
                     {consultant.intro && (
                       <div style={{
-                        fontSize: '13px',
+                        fontSize: 'var(--font-size-sm)',
                         color: '#868e96',
                         marginTop: '4px',
                         lineHeight: '1.4'
@@ -164,13 +164,13 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
               border: '2px solid #e9ecef'
             }}>
               <i className="bi bi-person-x" style={{
-                fontSize: '32px',
+                fontSize: 'var(--font-size-xxxl)',
                 color: '#6c757d'
               }}></i>
             </div>
             
             <h3 style={{
-              fontSize: '18px',
+              fontSize: 'var(--font-size-lg)',
               fontWeight: '600',
               color: '#2c3e50',
               margin: '0 0 8px 0'
@@ -179,7 +179,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
             </h3>
             
             <p style={{
-              fontSize: '14px',
+              fontSize: 'var(--font-size-sm)',
               color: '#6c757d',
               margin: '0 0 20px 0',
               lineHeight: '1.5'
@@ -196,7 +196,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
                 border: 'none',
                 borderRadius: '8px',
                 padding: '10px 20px',
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 fontWeight: '500',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'

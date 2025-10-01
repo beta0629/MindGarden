@@ -213,7 +213,7 @@ const SimpleHeader = () => {
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
-                  fontSize: '14px',
+                  fontSize: 'var(--font-size-sm)',
                   fontWeight: '500',
                   cursor: 'pointer',
                   display: 'flex',

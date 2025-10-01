@@ -240,7 +240,7 @@ const ForgotPassword = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '28px',
+                    fontSize: 'var(--font-size-xxl)',
                     margin: '0 auto 24px',
                     color: 'white'
                   }}>
@@ -248,7 +248,7 @@ const ForgotPassword = () => {
                   </div>
                   
                   <h1 style={{
-                    fontSize: '28px',
+                    fontSize: 'var(--font-size-xxl)',
                     fontWeight: '700',
                     color: '#2d3748',
                     marginBottom: '16px'
@@ -257,7 +257,7 @@ const ForgotPassword = () => {
                   </h1>
                   
                   <p style={{
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     color: '#718096',
                     lineHeight: '1.6',
                     marginBottom: '32px'
@@ -275,7 +275,7 @@ const ForgotPassword = () => {
                     border: '1px solid #e2e8f0'
                   }}>
                     <p style={{
-                      fontSize: '14px',
+                      fontSize: 'var(--font-size-sm)',
                       color: '#4a5568',
                       lineHeight: '1.5',
                       margin: 0

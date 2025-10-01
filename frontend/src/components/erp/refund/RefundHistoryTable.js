@@ -24,7 +24,7 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
             <span style={{
                 padding: '4px 8px',
                 borderRadius: '4px',
-                fontSize: '12px',
+                fontSize: 'var(--font-size-xs)',
                 fontWeight: '600',
                 backgroundColor: config.color,
                 color: 'white'
@@ -42,7 +42,7 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
                         <table style={{
                             width: '100%',
                             borderCollapse: 'collapse',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
                         }}>
                             <thead>
@@ -109,7 +109,7 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
                                 이전
                             </ErpButton>
                             
-                            <span style={{ fontSize: '14px', color: '#666' }}>
+                            <span style={{ fontSize: 'var(--font-size-sm)', color: '#666' }}>
                                 {pageInfo.currentPage + 1} / {pageInfo.totalPages} 페이지
                             </span>
                             
@@ -128,7 +128,7 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
                     textAlign: 'center', 
                     padding: '40px',
                     color: '#666',
-                    fontSize: '16px'
+                    fontSize: 'var(--font-size-base)'
                 }}>
                     선택한 기간에 환불 이력이 없습니다.
                 </div>

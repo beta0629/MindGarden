@@ -63,7 +63,7 @@ const PrintComponent = forwardRef(({
       '.print-footer': {
         marginTop: '30px',
         textAlign: 'center',
-        fontSize: '10px',
+        fontSize: 'var(--font-size-xs)',
         color: '#666',
         borderTop: '1px solid #ccc',
         paddingTop: '10px'
@@ -98,10 +98,10 @@ const PrintComponent = forwardRef(({
         fontWeight: 'bold'
       },
       '.text-lg': {
-        fontSize: '16px'
+        fontSize: 'var(--font-size-base)'
       },
       '.text-xl': {
-        fontSize: '18px'
+        fontSize: 'var(--font-size-lg)'
       },
       '.mb-4': {
         marginBottom: '16px'

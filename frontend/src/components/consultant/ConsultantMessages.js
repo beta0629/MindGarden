@@ -192,25 +192,10 @@ const ConsultantMessages = () => {
         </div>
 
         {/* 검색 및 필터 */}
-        <div className="consultant-messages-search-container"
-          gap: '20px',
-          marginBottom: '30px',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          background: '#fff',
-          padding: '20px',
-          borderRadius: '15px',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-          border: '1px solid #e9ecef'
-        }}>
+        <div className="consultant-messages-search-container">
           <div className="consultant-messages-search-field">
             <div className="consultant-messages-search-input-container">
-              <i className="bi bi-search consultant-messages-search-icon"
-                left: '12px',
-                color: '#7f8c8d',
-                zIndex: 2,
-                fontSize: '1rem'
-              }}></i>
+              <i className="bi bi-search consultant-messages-search-icon"></i>
               <input
                 type="text"
                 placeholder="제목, 내용, 내담자명으로 검색..."

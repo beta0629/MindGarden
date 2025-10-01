@@ -536,36 +536,11 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
             상담소 전체 통계 및 상담 내역을 한눈에 확인하세요
           </p>
         </div>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
+        <div className="stats-dashboard-actions">
           <button 
-            style={{
-              padding: '12px 24px',
-              border: '2px solid #667eea',
-              borderRadius: '8px',
-              backgroundColor: 'transparent',
-              color: '#667eea',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'all 0.2s ease'
-            }}
+            className="mg-btn mg-btn--outline mg-btn--primary"
             onClick={handleRefresh}
             disabled={loading}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#667eea';
-              e.target.style.color = '#ffffff';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'transparent';
-              e.target.style.color = '#667eea';
-            }}
           >
             <i className="bi bi-arrow-clockwise"></i>
             새로고침
@@ -574,52 +549,13 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
       </div>
 
       {/* 필터 섹션 */}
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '12px',
-        padding: '20px',
-        marginBottom: '24px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        border: '1px solid #e9ecef',
-        display: 'flex',
-        gap: '20px',
-        alignItems: 'end',
-        flexWrap: 'wrap'
-      }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          minWidth: '150px'
-        }}>
-          <label style={{
-            fontSize: 'var(--font-size-sm)',
-            fontWeight: '600',
-            color: '#495057',
-            margin: '0'
-          }}>기간</label>
+      <div className="stats-dashboard-filters">
+        <div className="stats-dashboard-filter-field">
+          <label className="stats-dashboard-filter-label">기간</label>
           <select 
-            style={{
-              padding: '12px 16px',
-              border: '1px solid #e9ecef',
-              borderRadius: '8px',
-              fontSize: 'var(--font-size-sm)',
-              backgroundColor: '#ffffff',
-              color: '#495057',
-              cursor: 'pointer',
-              outline: 'none',
-              transition: 'all 0.2s ease'
-            }}
+            className="stats-dashboard-filter-select"
             value={filters.dateRange}
             onChange={(e) => handleFilterChange('dateRange', e.target.value)}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#667eea';
-              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e9ecef';
-              e.target.style.boxShadow = 'none';
-            }}
           >
             {loadingFilterCodes ? (
               <option disabled>날짜 범위 옵션을 불러오는 중...</option>
@@ -633,40 +569,12 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
           </select>
         </div>
         
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          minWidth: '150px'
-        }}>
-          <label style={{
-            fontSize: 'var(--font-size-sm)',
-            fontWeight: '600',
-            color: '#495057',
-            margin: '0'
-          }}>차트 타입</label>
+        <div className="stats-dashboard-filter-field">
+          <label className="stats-dashboard-filter-label">차트 타입</label>
           <select 
-            style={{
-              padding: '12px 16px',
-              border: '1px solid #e9ecef',
-              borderRadius: '8px',
-              fontSize: 'var(--font-size-sm)',
-              backgroundColor: '#ffffff',
-              color: '#495057',
-              cursor: 'pointer',
-              outline: 'none',
-              transition: 'all 0.2s ease'
-            }}
+            className="stats-dashboard-filter-select"
             value={filters.chartType}
             onChange={(e) => handleFilterChange('chartType', e.target.value)}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#667eea';
-              e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#e9ecef';
-              e.target.style.boxShadow = 'none';
-            }}
           >
             {loadingFilterCodes ? (
               <option disabled>차트 유형 옵션을 불러오는 중...</option>

@@ -100,7 +100,7 @@
   --mypage-loading-font-size: 1.1rem;
   --mypage-loading-color: #666;
   --mypage-login-min-height: 400px;
-  --mypage-login-padding: 40px;
+  --mypage-login-padding: var(--spacing-xxxl);
   --mypage-login-message-bg: white;
   --mypage-login-message-radius: 12px;
   --mypage-login-message-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -112,7 +112,7 @@
   --mypage-login-text-size: 16px;
   --mypage-login-text-margin: 24px;
   --mypage-login-actions-gap: 16px;
-  --mypage-login-btn-padding: 12px 24px;
+  --mypage-login-btn-padding: var(--spacing-sm) var(--spacing-xl);
   --mypage-login-btn-radius: 6px;
   --mypage-login-btn-size: 16px;
   --mypage-login-btn-bg: #007bff;
@@ -130,10 +130,10 @@
   --mypage-social-profile-border: 2px solid #e9ecef;
   --mypage-unlink-btn-bg: #dc3545;
   --mypage-unlink-btn-color: white;
-  --mypage-unlink-btn-padding: 8px 16px;
+  --mypage-unlink-btn-padding: var(--spacing-sm) var(--spacing-md);
   --mypage-unlink-btn-radius: 6px;
   --mypage-unlink-btn-hover-bg: #c82333;
-  --mypage-no-accounts-padding: 40px 20px;
+  --mypage-no-accounts-padding: var(--spacing-xxxl) var(--spacing-lg);
   --mypage-no-accounts-color: #666;
   --mypage-link-bg: #f8f9fa;
   --mypage-link-radius: 10px;

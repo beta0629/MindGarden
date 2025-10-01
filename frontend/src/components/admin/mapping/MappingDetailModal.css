@@ -369,7 +369,7 @@
 .transaction-card {
     background: #f8f9fa;
     border-radius: 12px;
-    padding: 16px;
+    padding: var(--spacing-md);
     border-left: 4px solid #007bff;
 }
 
@@ -381,7 +381,7 @@
 }
 
 .transaction-type {
-    padding: 4px 8px;
+    padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: 4px;
     font-size: 12px;
     font-weight: 600;
@@ -399,7 +399,7 @@
 }
 
 .transaction-status {
-    padding: 4px 8px;
+    padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: 4px;
     font-size: 12px;
     font-weight: 600;
@@ -435,7 +435,7 @@
 
 .no-erp-data {
     text-align: center;
-    padding: 40px;
+    padding: var(--spacing-xxxl);
     color: #6c757d;
 }
 
@@ -495,7 +495,7 @@
 
 .no-history {
     text-align: center;
-    padding: 40px;
+    padding: var(--spacing-xxxl);
     color: #6c757d;
 }
 
@@ -509,7 +509,7 @@
     background: #fff3cd;
     border: 1px solid #ffeaa7;
     border-radius: 8px;
-    padding: 16px;
+    padding: var(--spacing-md);
     color: #856404;
     font-size: 14px;
     line-height: 1.5;

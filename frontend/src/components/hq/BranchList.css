@@ -270,7 +270,7 @@
     }
     
     .branch-card-body {
-        padding: 12px;
+        padding: var(--spacing-sm);
     }
 }
 

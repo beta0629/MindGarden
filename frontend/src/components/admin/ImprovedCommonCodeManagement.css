@@ -357,7 +357,7 @@
 
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: var(--spacing-xxxl) var(--spacing-lg);
 }
 
 .empty-icon {
@@ -419,13 +419,13 @@
   color: #6c757d;
   font-size: 0.9rem;
   background: #e9ecef;
-  padding: 4px 8px;
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: 4px;
   font-family: monospace;
 }
 
 .status-badge {
-  padding: 4px 12px;
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 500;
@@ -469,7 +469,7 @@
 }
 
 .code-actions .btn {
-  padding: 6px 10px;
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: 6px;
   font-size: 0.85rem;
   transition: all 0.3s ease;
@@ -481,7 +481,7 @@
 
 /* 버튼 스타일 */
 .btn {
-  padding: 12px 20px;
+  padding: var(--spacing-sm) var(--spacing-lg);
   border: none;
   border-radius: 10px;
   font-size: 1rem;
@@ -567,14 +567,14 @@
 }
 
 .btn-sm {
-  padding: 6px 12px;
+  padding: var(--spacing-xs) var(--spacing-sm);
   font-size: 0.85rem;
 }
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .improved-common-code-management {
-    padding: 16px;
+    padding: var(--spacing-md);
   }
   
   .step-indicator {
@@ -613,12 +613,12 @@
   .group-cards {
     grid-template-columns: 1fr;
     gap: 16px;
-    padding: 16px;
+    padding: var(--spacing-md);
   }
   
   .group-card {
     min-height: 120px;
-    padding: 16px;
+    padding: var(--spacing-md);
   }
   
   .group-card-header h3 {
@@ -655,7 +655,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: var(--spacing-xxxl) var(--spacing-lg);
 }
 
 .loading-spinner {

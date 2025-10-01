@@ -109,11 +109,6 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
 
       {/* 상담사 현황 */}
       <div className="detailed-stats-card detailed-stats-card--consultants"
-        borderRadius: '12px',
-        padding: '24px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        border: '1px solid #D1C4E9',
-        transition: 'all 0.3s ease'
       }}>
         <div className="detailed-stats-card-header">
           alignItems: 'center',

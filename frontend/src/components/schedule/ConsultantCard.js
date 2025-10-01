@@ -341,9 +341,7 @@ const ConsultantCardNew = ({
 
             {/* 선택 표시 */}
             {selected && (
-                <div style={{
-                    position: 'absolute',
-                    top: '8px',
+                <div className="consultant-card-selected-badge">
                     right: '8px',
                     width: '24px',
                     height: '24px',

@@ -405,32 +405,32 @@
 }
 
 .consultant-avatar {
-  width: 50px !important;
-  height: 50px !important;
-  border-radius: 50% !important;
-  background: var(--schedule-modal-primary-gradient) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 20px !important;
-  font-weight: 700 !important;
-  color: var(--schedule-modal-white) !important;
-  flex-shrink: 0 !important;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
-  border: 2px solid #e9ecef !important;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--schedule-modal-primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--schedule-modal-white);
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  border: 2px solid #e9ecef;
 }
 
 .consultant-info {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 4px !important;
-  overflow: visible !important;
-  justify-content: flex-start !important;
-  align-items: flex-start !important;
-  height: 100% !important;
-  min-width: 0 !important;
-  text-align: left !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: visible;
+  justify-content: flex-start;
+  align-items: flex-start;
+  height: 100%;
+  min-width: 0;
+  text-align: left;
 }
 
 .consultant-name {

@@ -3,6 +3,7 @@ import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
 import LoadingSpinner from '../common/LoadingSpinner';
+import './ItemManagement.css';
 import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
@@ -231,12 +232,12 @@ const ItemManagement = () => {
 
   return (
     <SimpleLayout>
-      <div style={{ padding: '24px', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+      <div className="item-management-container">
         <ErpHeader
           title="아이템 관리"
           subtitle="비품 아이템을 관리하세요"
           actions={
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div className="action-buttons">
               <ErpButton
                 variant="secondary"
                 onClick={() => window.history.back()}

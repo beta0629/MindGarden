@@ -1,5 +1,6 @@
 import React from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
+import './PrivacyPolicy.css';
 
 /**
  * 이용약관 컴포넌트
@@ -11,33 +12,13 @@ import SimpleLayout from '../layout/SimpleLayout';
 const TermsOfService = () => {
   return (
     <SimpleLayout>
-      <div style={{ 
-        maxWidth: '800px', 
-        margin: '0 auto', 
-        padding: '40px 20px',
-        lineHeight: '1.6',
-        color: '#333'
-      }}>
-        <h1 style={{
-          fontSize: 'var(--font-size-xxl)',
-          fontWeight: '700',
-          color: '#2c3e50',
-          marginBottom: '30px',
-          textAlign: 'center',
-          borderBottom: '2px solid #3498db',
-          paddingBottom: '20px'
-        }}>
+      <div className="privacy-policy-container">
+        <h1 className="privacy-policy-title">
           이용약관
         </h1>
 
-        <div style={{
-          background: '#f8f9fa',
-          padding: '20px',
-          borderRadius: '8px',
-          marginBottom: '30px',
-          border: '1px solid #e9ecef'
-        }}>
-          <p style={{ margin: '0', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
+        <div className="privacy-policy-info-box">
+          <p className="privacy-policy-info-text">
             <strong>시행일자:</strong> 2025년 1월 17일<br />
             <strong>최종 수정일:</strong> 2025년 1월 17일
           </p>

@@ -81,10 +81,7 @@ const ForgotPassword = () => {
                     <h1 className="forgot-password-title">
                       비밀번호 찾기
                     </h1>
-                    <p className="forgot-password-description"
-                      color: '#718096',
-                      lineHeight: '1.5'
-                    }}>
+                    <p className="forgot-password-description">
                       가입하신 이메일 주소를 입력하시면<br />
                       비밀번호 재설정 링크를 발송해드립니다
                     </p>

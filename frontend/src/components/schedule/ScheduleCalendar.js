@@ -996,8 +996,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     onClick={() => setIsDateActionModalOpen(false)}
                 >
                     <div 
-                        style={{
-                            background: 'white',
+                        className="schedule-calendar-modal-content"
                             borderRadius: '16px',
                             padding: '24px',
                             maxWidth: '400px',
@@ -1006,8 +1005,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                            <h3 style={{ margin: '0 0 8px 0', color: '#2c3e50' }}>
+                        <div className="schedule-calendar-modal-header">
+                            <h3 className="schedule-calendar-modal-title">
                                 📅 {selectedDate ? selectedDate.toLocaleDateString('ko-KR', {
                                     year: 'numeric',
                                     month: 'long',

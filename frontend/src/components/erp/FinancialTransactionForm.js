@@ -127,9 +127,9 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                   onChange={handleInputChange}
                   style={{ marginRight: '5px' }}
                 />
-                <span style={{ color: '#27ae60', fontWeight: 'bold' }}>💚 수입</span>
+                <span className="financial-transaction-radio-label-text">💚 수입</span>
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+              <label className="financial-transaction-radio-label">
                 <input
                   type="radio"
                   name="transactionType"

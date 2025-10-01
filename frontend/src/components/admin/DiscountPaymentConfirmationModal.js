@@ -210,9 +210,9 @@ const DiscountPaymentConfirmationModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" style={PAYMENT_CONFIRMATION_MODAL_CSS.OVERLAY}>
-      <div className="modal-content" style={PAYMENT_CONFIRMATION_MODAL_CSS.CONTENT}>
-        <div className="modal-header" style={PAYMENT_CONFIRMATION_MODAL_CSS.HEADER}>
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="modal-header">
           <h2>할인 적용 결제 확인</h2>
           <button 
             className="close-button" 

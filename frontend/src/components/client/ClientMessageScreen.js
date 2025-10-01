@@ -433,7 +433,7 @@ const ClientMessageScreen = () => {
   if (loading) {
     return (
       <SimpleLayout title="상담사 메시지">
-        <div style={styles.loadingOverlay}>
+        <div className="client-message-screen-loading">
           <LoadingSpinner variant="pulse" size="large" text="메시지를 불러오는 중..." />
         </div>
       </SimpleLayout>

@@ -295,7 +295,7 @@ const ConsultantMessages = () => {
                             <span className="consultant-messages-important-icon">⭐</span>
                           )}
                           {message.isUrgent && (
-                            <span style={{ color: '#dc3545', fontSize: '1.2rem' }}>🚨</span>
+                            <span className="consultant-messages-urgent-icon">🚨</span>
                           )}
                         </div>
                         <span style={{ color: '#6c757d', fontSize: '0.85rem' }}>

@@ -1,0 +1,25 @@
+.refund-filters-container {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.refund-filter-group {
+    display: flex;
+    align-items: center;
+}
+
+.refund-filter-label {
+    margin-right: 8px;
+    font-weight: 600;
+}
+
+.refund-filter-select {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: var(--font-size-sm);
+    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+}
+

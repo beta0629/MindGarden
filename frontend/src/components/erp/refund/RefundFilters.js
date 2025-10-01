@@ -2,6 +2,7 @@ import React from 'react';
 import ErpCard from '../common/ErpCard';
 import ErpButton from '../common/ErpButton';
 import { FaSync, FaDownload } from 'react-icons/fa';
+import './RefundFilters.css';
 
 /**
  * 환불 필터 및 제어 컴포넌트
@@ -16,24 +17,13 @@ const RefundFilters = ({
 }) => {
     return (
         <ErpCard title="필터 및 제어">
-            <div style={{ 
-                display: 'flex', 
-                gap: '15px', 
-                alignItems: 'center',
-                flexWrap: 'wrap'
-            }}>
-                <div>
-                    <label style={{ marginRight: '8px', fontWeight: '600' }}>기간:</label>
+            <div className="refund-filters-container">
+                <div className="refund-filter-group">
+                    <label className="refund-filter-label">기간:</label>
                     <select 
                         value={selectedPeriod} 
                         onChange={(e) => onPeriodChange(e.target.value)}
-                        style={{
-                            padding: '8px 12px',
-                            border: '2px solid #ddd',
-                            borderRadius: '6px',
-                            fontSize: 'var(--font-size-sm)',
-                            fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                        }}
+                        className="refund-filter-select"
                     >
                         <option value="today">오늘</option>
                         <option value="week">최근 7일</option>
@@ -43,18 +33,12 @@ const RefundFilters = ({
                     </select>
                 </div>
 
-                <div>
-                    <label style={{ marginRight: '8px', fontWeight: '600' }}>상태:</label>
+                <div className="refund-filter-group">
+                    <label className="refund-filter-label">상태:</label>
                     <select 
                         value={selectedStatus} 
                         onChange={(e) => onStatusChange(e.target.value)}
-                        style={{
-                            padding: '8px 12px',
-                            border: '2px solid #ddd',
-                            borderRadius: '6px',
-                            fontSize: 'var(--font-size-sm)',
-                            fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                        }}
+                        className="refund-filter-select"
                     >
                         <option value="all">전체</option>
                         <option value="completed">완료</option>

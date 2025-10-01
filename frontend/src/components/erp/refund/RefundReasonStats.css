@@ -1,0 +1,32 @@
+.refund-reason-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.refund-reason-stat-card {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.refund-reason-stat-label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+}
+
+.refund-reason-stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.refund-reason-stats-empty {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+}
+

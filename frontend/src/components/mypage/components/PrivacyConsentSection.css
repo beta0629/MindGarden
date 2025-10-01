@@ -36,7 +36,7 @@
 
 .consent-status-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: #495057;
 }
@@ -44,7 +44,7 @@
 .consent-status-badge {
   padding: 6px 12px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -78,7 +78,7 @@
 }
 
 .consent-status-icon {
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   min-width: 24px;
 }
 
@@ -89,7 +89,7 @@
 }
 
 .consent-status-label {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: #495057;
   margin-bottom: 2px;
@@ -136,7 +136,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   border-radius: 8px;
   transition: all 0.2s ease;
@@ -167,12 +167,12 @@
 
 .consent-notice .alert i {
   margin-right: 8px;
-  font-size: 16px;
+  font-size: var(--font-size-base);
 }
 
 .consent-notice .alert p {
   margin: 8px 0 0 0;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 /* 반응형 디자인 */
@@ -188,7 +188,7 @@
   }
   
   .consent-status-header h3 {
-    font-size: 16px;
+    font-size: var(--font-size-base);
   }
   
   .consent-actions {
@@ -206,7 +206,7 @@
   }
   
   .consent-status-icon {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
   }
 }
 
@@ -228,6 +228,6 @@
   }
   
   .consent-status-value {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 }

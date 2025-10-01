@@ -400,7 +400,7 @@ const OverviewTab = ({ data }) => {
       <h2 className="finance-overview-title">📊 재무 개요</h2>
       
       {/* KPI 카드들 */}
-      <div className="finance-kpi-grid">
+      <div className="finance-kpi-grid">>
         <KPICard
           title="총 아이템 수"
           value={data.erpStats?.totalItems || 0}
@@ -523,7 +523,7 @@ const OverviewTab = ({ data }) => {
       </div>
 
       {/* 수입/지출 요약 */}
-      <div className="finance-kpi-grid">
+      <div className="finance-kpi-grid">>
         <div style={{
           padding: '28px',
           background: 'linear-gradient(135deg, #bae7d9, #c7f0db)',
@@ -980,7 +980,7 @@ const DailyReportTab = ({ period }) => {
     <div>
       <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>📅 일간 재무 리포트</h2>
       
-      <div className="finance-kpi-grid"
+      <div className="finance-kpi-grid">
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '20px',
         marginBottom: '30px'
@@ -1123,7 +1123,7 @@ const MonthlyReportTab = ({ period }) => {
     <div>
       <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>📊 월간 재무 리포트</h2>
       
-      <div className="finance-kpi-grid"
+      <div className="finance-kpi-grid">
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '20px',
         marginBottom: '30px'
@@ -1268,7 +1268,7 @@ const YearlyReportTab = ({ period }) => {
     <div>
       <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>📈 년간 재무 리포트</h2>
       
-      <div className="finance-kpi-grid"
+      <div className="finance-kpi-grid">
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '20px',
         marginBottom: '30px'

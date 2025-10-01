@@ -63,7 +63,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-people-fill detailed-stats-card-icon-svg"></i>
           </div>
-          <h3 className="detailed-stats-card-title"
+          <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
@@ -138,7 +138,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-person-badge-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
-          <h3 className="detailed-stats-card-title"
+          <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
@@ -213,7 +213,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-check-circle-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
-          <h3 className="detailed-stats-card-title"
+          <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
@@ -273,7 +273,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-x-circle-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
-          <h3 className="detailed-stats-card-title"
+          <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
@@ -333,7 +333,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-calendar-week-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
-          <h3 className="detailed-stats-card-title"
+          <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
@@ -393,7 +393,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-calendar-day-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
-          <h3 className="detailed-stats-card-title"
+          <h3 className="detailed-stats-card-title">
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'

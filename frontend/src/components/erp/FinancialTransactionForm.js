@@ -155,12 +155,6 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               required
               disabled={loadingCodes}
               className="financial-transaction-select"
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '5px',
-                fontSize: 'var(--font-size-sm)',
-                opacity: loadingCodes ? 0.6 : 1
-              }}
             >
               <option value="">카테고리를 선택하세요</option>
               {currentCategories.map(category => (

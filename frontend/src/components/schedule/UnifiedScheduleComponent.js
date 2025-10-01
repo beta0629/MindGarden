@@ -1121,8 +1121,7 @@ const UnifiedScheduleComponent = ({
                             {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
                                 <button 
                                     onClick={handleVacationClick}
-                                    style={{
-                                        display: 'flex',
+                                    className="unified-schedule-modal-btn"
                                         alignItems: 'center',
                                         padding: '16px',
                                         border: '2px solid #e9ecef',

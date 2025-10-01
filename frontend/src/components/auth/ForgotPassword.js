@@ -89,9 +89,8 @@ const ForgotPassword = () => {
 
                   {/* 폼 */}
                   <form onSubmit={handleSubmit}>
-                    <div style={{ marginBottom: '24px' }}>
-                      <label style={{
-                        display: 'block',
+                    <div className="forgot-password-form-group">
+                      <label className="forgot-password-label"
                         fontSize: 'var(--font-size-sm)',
                         fontWeight: '600',
                         color: '#4a5568',

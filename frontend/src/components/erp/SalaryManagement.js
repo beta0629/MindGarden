@@ -672,7 +672,7 @@ const SalaryManagement = () => {
                                     <div className="calculation-details">
                                         <div className="detail-row">
                                             <span>총 세금액:</span>
-                                            <span style={{color: '#dc3545', fontWeight: 'bold'}}>
+                                            <span className="salary-management-total-tax">
                                                 {formatCurrency(taxStatistics.totalTaxAmount || 0)}
                                             </span>
                                         </div>

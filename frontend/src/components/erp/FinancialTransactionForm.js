@@ -125,7 +125,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                   value="INCOME"
                   checked={formData.transactionType === 'INCOME'}
                   onChange={handleInputChange}
-                  style={{ marginRight: '5px' }}
+                  className="financial-transaction-radio-input"
                 />
                 <span className="financial-transaction-radio-label-text">💚 수입</span>
               </label>
@@ -136,7 +136,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
                   value="EXPENSE"
                   checked={formData.transactionType === 'EXPENSE'}
                   onChange={handleInputChange}
-                  style={{ marginRight: '5px' }}
+                  className="financial-transaction-radio-input"
                 />
                 <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>❤️ 지출</span>
               </label>

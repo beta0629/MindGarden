@@ -997,12 +997,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 >
                     <div 
                         className="schedule-calendar-modal-content"
-                            borderRadius: '16px',
-                            padding: '24px',
-                            maxWidth: '400px',
-                            width: '90%',
-                            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)'
-                        }}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="schedule-calendar-modal-header">

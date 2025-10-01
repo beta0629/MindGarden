@@ -202,8 +202,6 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
           <button
             onClick={onClose}
             className="quick-expense-close-btn"
-              fontSize: 'var(--font-size-sm)'
-            }}
           >
             닫기
           </button>

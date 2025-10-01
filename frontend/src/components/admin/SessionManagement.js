@@ -1005,21 +1005,12 @@ const SessionManagement = () => {
                                     value={mappingSearchTerm}
                                     onChange={(e) => setMappingSearchTerm(e.target.value)}
                                     className="session-mgmt-search-input"
-                                        transition: 'border-color 0.2s ease'
-                                    }}
-                                    onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                                    onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                                 />
                             </div>
                             <select
                                 value={mappingFilterStatus}
                                 onChange={(e) => setMappingFilterStatus(e.target.value)}
                                 className="session-mgmt-status-select"
-                                    outline: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'border-color 0.2s ease'
-                                }}
-                                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
                                 onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                             >
                                 <option value="ALL">전체 상태</option>

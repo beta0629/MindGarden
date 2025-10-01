@@ -708,7 +708,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     
                     {PermissionChecks.canManageClients(userPermissions) && (
                         <div className="management-card" onClick={() => navigate('/admin/client-comprehensive')}>
-                            <div className={`card__icon card__icon--large card__icon-- clients`}>
+                            <div className={`card__icon card__icon--large card__icon--clients`}>
                                 <FaUsers />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -720,7 +720,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     
                     {PermissionChecks.canManageUsers(userPermissions) && (
                         <div className="management-card" onClick={() => navigate('/admin/user-management')}>
-                            <div className={`card__icon card__icon--large card__icon-- user-management`}>
+                            <div className={`card__icon card__icon--large card__icon--user-management`}>
                                 <FaUserCog />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -732,7 +732,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     
                     {PermissionChecks.canViewMappings(userPermissions) && (
                         <div className="management-card" onClick={() => navigate('/admin/mapping-management')}>
-                            <div className={`card__icon card__icon--large card__icon-- mappings`}>
+                            <div className={`card__icon card__icon--large card__icon--mappings`}>
                                 <FaLink />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -840,37 +840,37 @@ const AdminDashboard = ({ user: propUser }) => {
                     </h2>
                     <div className="management-grid">
                         <div className="management-card" onClick={() => navigate('/erp/dashboard')}>
-                            <div className={`card__icon card__icon--large card__icon-- erp-dashboard`}>
+                            <div className="card__icon card__icon--large card__icon--primary">
                                 <FaChartLine />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <div className="management-card__content">
                                 <h3>ERP 대시보드</h3>
                                 <p>전체 ERP 현황을 한눈에 확인합니다</p>
                             </div>
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/erp/purchase-requests')}>
-                            <div className={`card__icon card__icon--large card__icon-- purchase-requests`}>
+                            <div className="card__icon card__icon--large card__icon--warning">
                                 <FaShoppingCart />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <div className="management-card__content">
                                 <h3>구매 요청</h3>
                                 <p>상담사 구매 요청을 관리합니다</p>
                             </div>
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/erp/approvals')}>
-                            <div className={`card__icon card__icon--large card__icon-- approvals`}>
+                            <div className="card__icon card__icon--large card__icon--success">
                                 <FaCheckCircle />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
+                            <div className="management-card__content">
                                 <h3>관리자 승인</h3>
                                 <p>구매 요청을 검토하고 승인합니다</p>
                             </div>
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/erp/super-approvals')}>
-                            <div className={`card__icon card__icon--large card__icon-- super-approvals`}>
+                            <div className={`card__icon card__icon--large card__icon--super-approvals`}>
                                 <FaCheckCircle />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -880,7 +880,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/erp/items')}>
-                            <div className={`card__icon card__icon--large card__icon-- items`}>
+                            <div className={`card__icon card__icon--large card__icon--items`}>
                                 <FaBox />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -891,7 +891,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         
                         {/* 새로 추가된 ERP 보고서 카드 */}
                         <div className="management-card" onClick={() => setShowErpReport(true)}>
-                            <div className={`card__icon card__icon--large card__icon-- erp-reports`}>
+                            <div className={`card__icon card__icon--large card__icon--erp-reports`}>
                                 <FaFileExport />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -901,7 +901,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/erp/budgets')}>
-                            <div className={`card__icon card__icon--large card__icon-- budgets`}>
+                            <div className={`card__icon card__icon--large card__icon--budgets`}>
                                 <FaWallet />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -911,7 +911,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/erp/orders')}>
-                            <div className={`card__icon card__icon--large card__icon-- orders`}>
+                            <div className={`card__icon card__icon--large card__icon--orders`}>
                                 <FaTruck />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -922,7 +922,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         
                         {PermissionChecks.canViewIntegratedFinance(userPermissions) && (
                             <div className="management-card" onClick={() => navigate('/admin/erp/financial')}>
-                                <div className={`card__icon card__icon--large card__icon-- finance-integrated`}>
+                                <div className={`card__icon card__icon--large card__icon--finance-integrated`}>
                                     <FaDollarSign />
                                 </div>
                                 <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -944,7 +944,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     </h2>
                     <div className="management-grid">
                         <div className="management-card" onClick={() => navigate('/hq/dashboard')}>
-                            <div className={`card__icon card__icon--large card__icon-- branch-list`}>
+                            <div className={`card__icon card__icon--large card__icon--branch-list`}>
                                 <FaBuilding />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -954,7 +954,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/admin/branch-create')}>
-                            <div className={`card__icon card__icon--large card__icon-- branch-create`}>
+                            <div className={`card__icon card__icon--large card__icon--branch-create`}>
                                 <FaMapMarkerAlt />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -964,7 +964,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/admin/branch-hierarchy')}>
-                            <div className={`card__icon card__icon--large card__icon-- branch-hierarchy`}>
+                            <div className={`card__icon card__icon--large card__icon--branch-hierarchy`}>
                                 <FaCogs />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -974,7 +974,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/admin/branch-managers')}>
-                            <div className={`card__icon card__icon--large card__icon-- branch-managers`}>
+                            <div className={`card__icon card__icon--large card__icon--branch-managers`}>
                                 <FaUserCog />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -984,7 +984,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/admin/branch-status')}>
-                            <div className={`card__icon card__icon--large card__icon-- branch-status`}>
+                            <div className={`card__icon card__icon--large card__icon--branch-status`}>
                                 <FaToggleOn />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -994,7 +994,7 @@ const AdminDashboard = ({ user: propUser }) => {
                         </div>
                         
                         <div className="management-card" onClick={() => navigate('/admin/branch-consultants')}>
-                            <div className={`card__icon card__icon--large card__icon-- branch-consultants`}>
+                            <div className={`card__icon card__icon--large card__icon--branch-consultants`}>
                                 <FaUserTie />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -1015,7 +1015,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     </h2>
                     <div className="management-grid">
                         <div className="management-card" onClick={() => setShowPerformanceMetrics(true)}>
-                            <div className={`card__icon card__icon--large card__icon-- performance-metrics`}>
+                            <div className={`card__icon card__icon--large card__icon--performance-metrics`}>
                                 <FaChartBar />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -1036,7 +1036,7 @@ const AdminDashboard = ({ user: propUser }) => {
                     </h2>
                     <div className="management-grid">
                         <div className="management-card" onClick={() => setShowSpecialtyManagement(true)}>
-                            <div className={`card__icon card__icon--large card__icon-- specialty-management`}>
+                            <div className={`card__icon card__icon--large card__icon--specialty-management`}>
                                 <FaUserGraduate />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
@@ -1060,7 +1060,7 @@ const AdminDashboard = ({ user: propUser }) => {
                             console.log('🔄 반복 지출 모달 열기 버튼 클릭');
                             setShowRecurringExpense(true);
                         }}>
-                            <div className={`card__icon card__icon--large card__icon-- recurring-expense`}>
+                            <div className={`card__icon card__icon--large card__icon--recurring-expense`}>
                                 <FaRedo />
                             </div>
                             <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>

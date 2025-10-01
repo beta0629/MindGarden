@@ -241,7 +241,7 @@
 }
 
 .hero-title-mobile {
-  font-size: 32px;
+  font-size: var(--font-size-xxxl);
   font-weight: 700;
   margin-bottom: 16px;
   line-height: 1.2;
@@ -253,7 +253,7 @@
 }
 
 .hero-subtitle-mobile {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   line-height: 1.6;
   margin-bottom: 32px;
   color: rgba(255, 255, 255, 0.9);
@@ -279,7 +279,7 @@
 }
 
 .services-title-mobile {
-  font-size: 28px;
+  font-size: var(--font-size-xxl);
   font-weight: 700;
   color: #2d3748;
   margin-bottom: 12px;
@@ -288,7 +288,7 @@
 }
 
 .services-subtitle-mobile {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   color: #718096;
   line-height: 1.6;
   text-align: center;
@@ -315,12 +315,12 @@
   }
   
   .hero-title-mobile {
-    font-size: 42px;
+    font-size: var(--font-size-xxxl);
     margin-bottom: 20px;
   }
   
   .hero-subtitle-mobile {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     max-width: 600px;
     margin-bottom: 40px;
   }
@@ -330,12 +330,12 @@
   }
   
   .services-title-mobile {
-    font-size: 32px;
+    font-size: var(--font-size-xxxl);
     margin-bottom: 16px;
   }
   
   .services-subtitle-mobile {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     margin-bottom: 60px;
   }
   
@@ -349,15 +349,15 @@
 /* 데스크톱 반응형 */
 @media (min-width: 1024px) {
   .hero-title-mobile {
-    font-size: 48px;
+    font-size: var(--font-size-xxxl);
   }
   
   .hero-subtitle-mobile {
-    font-size: 20px;
+    font-size: var(--font-size-xl);
   }
   
   .services-title-mobile {
-    font-size: 36px;
+    font-size: var(--font-size-xxxl);
   }
   
   .services-grid-mobile {
@@ -420,13 +420,13 @@
   }
   
   .hero-title-mobile {
-    font-size: 26px;
+    font-size: var(--font-size-xxl);
     margin-bottom: 12px;
     word-break: keep-all;
   }
   
   .hero-subtitle-mobile {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     margin-bottom: 24px;
     padding: 0 8px;
     word-break: keep-all;
@@ -439,12 +439,12 @@
   }
   
   .services-title-mobile {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     word-break: keep-all;
   }
   
   .services-subtitle-mobile {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     margin-bottom: 30px;
     padding: 0 8px;
     word-break: keep-all;
@@ -548,18 +548,18 @@
   .service-icon {
     width: 48px;
     height: 48px;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     margin-bottom: 16px;
   }
   
   .service-title {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     margin-bottom: 8px;
     word-break: keep-all;
   }
   
   .service-description {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     word-break: keep-all;
     padding: 0 4px;
   }
@@ -574,17 +574,17 @@
   .service-icon {
     width: 60px;
     height: 60px;
-    font-size: 26px;
+    font-size: var(--font-size-xxl);
     margin-bottom: 22px;
   }
   
   .service-title {
-    font-size: 19px;
+    font-size: var(--font-size-lg);
     margin-bottom: 11px;
   }
   
   .service-description {
-    font-size: 15px;
+    font-size: var(--font-size-md);
   }
 }
 
@@ -597,17 +597,17 @@
   .service-icon {
     width: 64px;
     height: 64px;
-    font-size: 28px;
+    font-size: var(--font-size-xxl);
     margin-bottom: 24px;
   }
   
   .service-title {
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     margin-bottom: 12px;
   }
   
   .service-description {
-    font-size: 16px;
+    font-size: var(--font-size-base);
   }
 }
 
@@ -626,7 +626,7 @@
   padding: 14px 24px;
   border-radius: 12px;
   border: none;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
   cursor: pointer;
@@ -672,7 +672,7 @@
   
   .hero-btn {
     flex: 1;
-    font-size: 17px;
+    font-size: var(--font-size-lg);
     padding: 16px 28px;
   }
 }

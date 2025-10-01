@@ -116,25 +116,25 @@
 }
 
 .fc-daygrid-event-title {
-  font-weight: 500 !important;
-  color: #fff !important;
+  font-weight: 500;
+  color: #fff;
 }
 
 /* 더보기 링크 스타일 */
 .fc-daygrid-more-link {
-  background: #f8f9fa !important;
-  color: #007bff !important;
-  padding: 2px 6px !important;
-  border-radius: 4px !important;
-  font-size: 0.75rem !important;
-  font-weight: 500 !important;
-  text-decoration: none !important;
-  border: 1px solid #dee2e6 !important;
+  background: #f8f9fa;
+  color: #007bff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid #dee2e6;
 }
 
 .fc-daygrid-more-link:hover {
-  background: #e9ecef !important;
-  color: #0056b3 !important;
+  background: #e9ecef;
+  color: #0056b3;
   text-decoration: none !important;
 }
 

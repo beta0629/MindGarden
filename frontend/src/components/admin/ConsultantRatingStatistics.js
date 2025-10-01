@@ -51,13 +51,7 @@ const ConsultantRatingStatistics = () => {
 
     if (loading) {
         return (
-            <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '24px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                marginBottom: '24px'
-            }}>
+            <div className="consultant-rating-statistics-container">
                 <div style={{ textAlign: 'center', color: '#666' }}>
                     평가 통계를 불러오는 중...
                 </div>

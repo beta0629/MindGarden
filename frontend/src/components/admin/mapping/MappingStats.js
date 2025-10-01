@@ -195,15 +195,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
 
     if (loading) {
         return (
-            <div style={{
-                background: 'white',
-                borderRadius: '12px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                marginBottom: '24px',
-                border: '1px solid #e1e8ed',
-                padding: '40px',
-                textAlign: 'center'
-            }}>
+            <div className="mapping-stats-container">
                 <div style={{ color: '#7B68EE', fontSize: 'var(--font-size-base)' }}>
                     매핑 통계를 불러오는 중...
                 </div>

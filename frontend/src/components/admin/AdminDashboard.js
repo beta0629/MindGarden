@@ -413,12 +413,7 @@ const AdminDashboard = ({ user: propUser }) => {
     if (sessionLoading) {
         return (
             <div className="admin-dashboard">
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
-                    minHeight: '400px'
-                }}>
+                <div className="admin-dashboard-content">
                     <LoadingSpinner 
                         text="세션 확인 중..."
                         size="large"

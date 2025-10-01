@@ -216,13 +216,7 @@ const BranchManagement = () => {
                         }>
                             <Row>
                                 <Col md={3}>
-                                    <Card style={{
-                                        height: '100%',
-                                        border: '1px solid #e9ecef',
-                                        borderRadius: '12px',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                        overflow: 'hidden'
-                                    }}>
+                                    <Card className="branch-management-card">
                                         <Card.Header style={{
                                             background: '#f8f9fa',
                                             borderBottom: '1px solid #e9ecef',

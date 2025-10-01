@@ -89,14 +89,8 @@ const QuickActions = ({ user }) => {
         {/* 상담사 신청 버튼 (내담자 전용) - 임시 비활성화 */}
         {false && user?.role === 'CLIENT' && (
           <button 
-            className={`${QUICK_ACTIONS_CSS.ACTION_BUTTON} consultant-application-btn`}
+            className={`${QUICK_ACTIONS_CSS.ACTION_BUTTON} consultant-application-btn quick-actions-gradient-btn`}
             onClick={() => setShowConsultantApplicationModal(true)}
-            style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              border: 'none',
-              color: 'white',
-              boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
-            }}
           >
             <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} bi-person-plus`}></i>
             <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>상담사 신청</span>

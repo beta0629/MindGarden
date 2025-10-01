@@ -695,19 +695,8 @@ const MappingManagement = () => {
                             </button>
                             <button
                                 onClick={handleRefundProcess}
-                                disabled={loading}
-                                className="mg-btn mg-btn--danger"
-                                style={{
-                                    padding: '12px 24px',
-                                    backgroundColor: !refundReason.trim() ? '#6c757d' : '#dc3545',
-                                    border: `2px solid ${!refundReason.trim() ? '#6c757d' : '#dc3545'}`,
-                                    borderRadius: '8px',
-                                    fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '600',
-                                    color: 'white',
-                                    cursor: loading ? 'not-allowed' : 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
+                                disabled={loading || !refundReason.trim()}
+                                className={`mg-btn mg-btn--danger ${!refundReason.trim() ? 'mg-btn--disabled' : ''}`}
                             >
                                 {loading ? '처리 중...' : '환불 처리'}
                             </button>

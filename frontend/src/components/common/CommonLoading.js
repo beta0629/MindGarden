@@ -50,13 +50,7 @@ export const ButtonLoading = ({ text = "처리 중..." }) => (
 
 // 데이터 로딩 (테이블/리스트용, 스케줄 스타일)
 export const DataLoading = ({ text = "데이터를 불러오는 중..." }) => (
-    <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        padding: '40px',
-        width: '100%'
-    }}>
+    <div className="data-loading-container">
         <LoadingSpinner 
             text={text}
             size="medium"

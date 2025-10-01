@@ -15,7 +15,7 @@
 .branch-list-header .card-header {
     background: #f8f9fa;
     border-bottom: 1px solid #e9ecef;
-    padding: 16px 20px;
+    padding: var(--spacing-md) var(--spacing-lg);
 }
 
 .branch-list-header h5 {
@@ -30,7 +30,7 @@
 .branch-add-button {
     border-radius: 8px;
     font-weight: 500;
-    padding: 8px 16px;
+    padding: var(--spacing-sm) var(--spacing-md);
     font-size: 14px;
 }
 
@@ -88,14 +88,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
+    padding: var(--spacing-sm) var(--spacing-md);
     background: #f8f9fa;
     border-bottom: 1px solid #e9ecef;
 }
 
 .branch-status-badge {
     font-size: 11px;
-    padding: 4px 8px;
+    padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: 12px;
     font-weight: 500;
 }
@@ -106,7 +106,7 @@
 }
 
 .branch-action-btn {
-    padding: 4px 8px;
+    padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: 6px;
     font-size: 12px;
     border: none;
@@ -126,7 +126,7 @@
 
 /* 지점 카드 본문 */
 .branch-card-body {
-    padding: 16px;
+    padding: var(--spacing-md);
 }
 
 .branch-name {
@@ -156,7 +156,7 @@
 
 .branch-code code {
     background: #f8f9fa;
-    padding: 2px 6px;
+    padding: var(--spacing-xs) var(--spacing-md);
     border-radius: 4px;
     font-size: 12px;
     color: #e83e8c;
@@ -183,7 +183,7 @@
     font-size: 13px;
     color: #495057;
     background: #f8f9fa;
-    padding: 4px 8px;
+    padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: 6px;
     border: 1px solid #e9ecef;
 }
@@ -196,7 +196,7 @@
 
 /* 지점 카드 푸터 */
 .branch-card-footer {
-    padding: 12px 16px;
+    padding: var(--spacing-sm) var(--spacing-md);
     background: #f8f9fa;
     border-top: 1px solid #e9ecef;
 }

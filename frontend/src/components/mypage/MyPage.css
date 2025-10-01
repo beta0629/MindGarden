@@ -23,9 +23,9 @@
 /* MyPage 상수 변수 */
 :root {
   --mypage-container-max-width: 1200px;
-  --mypage-container-padding: 20px;
+  --mypage-container-padding: var(--spacing-lg);
   --mypage-container-bg: #f8f9fa;
-  --mypage-header-padding: 30px 0;
+  --mypage-header-padding: var(--spacing-xxl) 0;
   --mypage-header-bg: white;
   --mypage-header-radius: 12px;
   --mypage-header-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -38,7 +38,7 @@
   --mypage-nav-radius: 12px;
   --mypage-nav-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   --mypage-nav-border: 1px solid #e9ecef;
-  --mypage-nav-item-padding: 20px 30px;
+  --mypage-nav-item-padding: var(--spacing-lg) var(--spacing-xxl);
   --mypage-nav-item-min-width: 120px;
   --mypage-nav-item-color: #555;
   --mypage-nav-item-hover-bg: #f8f9fa;
@@ -48,7 +48,7 @@
   --mypage-nav-item-active-border: #667eea;
   --mypage-main-bg: white;
   --mypage-main-radius: 12px;
-  --mypage-main-padding: 30px;
+  --mypage-main-padding: var(--spacing-xxl);
   --mypage-main-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   --mypage-section-margin: 30px;
   --mypage-section-header-border: 2px solid #f0f2f5;
@@ -56,7 +56,7 @@
   --mypage-section-title-size: 1.8rem;
   --mypage-edit-btn-bg: #667eea;
   --mypage-edit-btn-color: white;
-  --mypage-edit-btn-padding: 10px 20px;
+  --mypage-edit-btn-padding: var(--spacing-sm) var(--spacing-lg);
   --mypage-edit-btn-radius: 6px;
   --mypage-edit-btn-hover-bg: #5a6fd8;
   --mypage-form-gap: 25px;
@@ -68,7 +68,7 @@
   --mypage-upload-btn-color: white;
   --mypage-upload-btn-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   --mypage-upload-btn-hover-bg: #5a6fd8;
-  --mypage-input-padding: 12px 16px;
+  --mypage-input-padding: var(--spacing-sm) var(--spacing-md);
   --mypage-input-radius: 8px;
   --mypage-input-bg: #fafbfc;
   --mypage-input-focus-bg: white;
@@ -79,21 +79,21 @@
   --mypage-actions-border: 1px solid #f0f2f5;
   --mypage-save-btn-bg: #28a745;
   --mypage-save-btn-color: white;
-  --mypage-save-btn-padding: 12px 30px;
+  --mypage-save-btn-padding: var(--spacing-sm) var(--spacing-xxl);
   --mypage-save-btn-radius: 8px;
   --mypage-save-btn-hover-bg: #218838;
   --mypage-list-gap: 20px;
   --mypage-item-bg: #f8f9fa;
   --mypage-item-radius: 10px;
   --mypage-item-border: 1px solid #e9ecef;
-  --mypage-item-padding: 20px;
+  --mypage-item-padding: var(--spacing-lg);
   --mypage-item-title-color: #333;
   --mypage-item-title-size: 1.1rem;
   --mypage-item-text-color: #666;
   --mypage-item-text-size: 0.9rem;
   --mypage-item-btn-bg: #667eea;
   --mypage-item-btn-color: white;
-  --mypage-item-btn-padding: 8px 20px;
+  --mypage-item-btn-padding: var(--spacing-sm) var(--spacing-lg);
   --mypage-item-btn-radius: 6px;
   --mypage-item-btn-hover-bg: #5a6fd8;
   --mypage-loading-height: 200px;

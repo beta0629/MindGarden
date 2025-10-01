@@ -8,7 +8,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: var(--spacing-xl);
   padding-bottom: 20px;
   border-bottom: 2px solid #e9ecef;
 }
@@ -30,7 +30,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
-  margin-bottom: 30px;
+  margin-bottom: var(--spacing-xl);
 }
 
 .stat-card {
@@ -61,7 +61,7 @@
 .stat-title {
   font-size: 0.9rem;
   opacity: 0.9;
-  margin-bottom: 10px;
+  margin-bottom: var(--spacing-sm);
   font-weight: 500;
 }
 
@@ -75,7 +75,7 @@
 .filters {
   display: flex;
   gap: 20px;
-  margin-bottom: 30px;
+  margin-bottom: var(--spacing-xl);
   padding: 20px;
   background: #f8f9fa;
   border-radius: 8px;

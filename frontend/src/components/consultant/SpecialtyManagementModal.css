@@ -82,7 +82,7 @@
     background: white;
     padding: 20px;
     border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-base);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -112,7 +112,7 @@
 .stat-label {
     font-size: var(--font-size-xs);
     color: #64748b;
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-sm);
     font-weight: 500;
 }
 
@@ -141,7 +141,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: var(--spacing-md);
 }
 
 .section-header h4 {
@@ -202,7 +202,7 @@
 .consultant-name {
     font-weight: 600;
     color: #374151;
-    margin-bottom: 4px;
+    margin-bottom: var(--spacing-xs);
     font-size: var(--font-size-sm);
 }
 
@@ -248,16 +248,16 @@
 }
 
 .specialty-form {
-    margin-bottom: 24px;
+    margin-bottom: var(--spacing-xl);
 }
 
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: var(--spacing-md);
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-sm);
     font-weight: 500;
     color: #374151;
     font-size: var(--font-size-sm);

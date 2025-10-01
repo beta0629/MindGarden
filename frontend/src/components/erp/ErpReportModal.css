@@ -82,17 +82,17 @@
     background: white;
     padding: 20px;
     border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-base);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-base);
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-sm);
     font-weight: 500;
     color: #374151;
     font-size: var(--font-size-sm);
@@ -189,7 +189,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-base);
     padding-bottom: 12px;
     border-bottom: 1px solid #e5e7eb;
 }
@@ -222,7 +222,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: var(--spacing-xl);
 }
 
 .summary-item {
@@ -238,7 +238,7 @@
 .summary-item .label {
     font-size: var(--font-size-xs);
     color: #64748b;
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-sm);
     font-weight: 500;
 }
 
@@ -262,7 +262,7 @@
 
 /* 카테고리 분석 */
 .category-breakdown {
-    margin-top: 20px;
+    margin-top: var(--spacing-base);
 }
 
 .category-breakdown h5 {

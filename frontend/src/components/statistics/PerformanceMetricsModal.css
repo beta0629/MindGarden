@@ -82,7 +82,7 @@
     background: white;
     padding: 20px;
     border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-base);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -99,7 +99,7 @@
 }
 
 .form-group label {
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-sm);
     font-weight: 500;
     color: #374151;
     font-size: var(--font-size-sm);
@@ -193,7 +193,7 @@
     border-top: 4px solid #667eea;
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin-bottom: 16px;
+    margin-bottom: var(--spacing-md);
 }
 
 @keyframes spin {

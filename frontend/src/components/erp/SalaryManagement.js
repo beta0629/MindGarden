@@ -544,13 +544,7 @@ const SalaryManagement = () => {
                             <div className="preview-result">
                                 <div className="salary-preview-header">
                                     <h5 className="salary-preview-title">💰 급여 계산 미리보기</h5>
-                                    <span className="salary-preview-timestamp"
-                                        color: '#666',
-                                        backgroundColor: '#4caf50',
-                                        color: 'white',
-                                        padding: '4px 8px',
-                                        borderRadius: '4px'
-                                    }}>
+                                    <span className="salary-preview-timestamp">
                                         미리보기
                                     </span>
                                 </div>

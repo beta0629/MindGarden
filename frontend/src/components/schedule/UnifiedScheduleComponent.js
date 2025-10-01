@@ -1098,7 +1098,7 @@ const UnifiedScheduleComponent = ({
                             <p className="unified-schedule-modal-subtitle">원하는 작업을 선택하세요</p>
                         </div>
                         
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div className="unified-schedule-modal-actions">
                             <button 
                                 onClick={handleScheduleClick}
                                 style={{

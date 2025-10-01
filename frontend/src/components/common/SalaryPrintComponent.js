@@ -92,8 +92,8 @@ const SalaryPrintComponent = ({
       }}
     >
       <div className="salary-header">
-        <h1 style={{ margin: '0 0 10px 0', fontSize: 'var(--font-size-xxl)' }}>급여 계산서</h1>
-        <div style={{ fontSize: 'var(--font-size-base)', color: '#666' }}>
+        <h1 className="salary-title">급여 계산서</h1>
+        <div className="salary-subtitle">
           {period} 급여 지급 내역
         </div>
       </div>
@@ -113,9 +113,9 @@ const SalaryPrintComponent = ({
       <table className="salary-table">
         <thead>
           <tr>
-            <th style={{ width: '40%' }}>항목</th>
-            <th style={{ width: '30%' }}>금액</th>
-            <th style={{ width: '30%' }}>비고</th>
+            <th className="salary-table-header salary-table-header--item">항목</th>
+            <th className="salary-table-header salary-table-header--amount">금액</th>
+            <th className="salary-table-header salary-table-header--note">비고</th>
           </tr>
         </thead>
         <tbody>

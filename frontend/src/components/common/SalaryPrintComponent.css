@@ -1,0 +1,238 @@
+/* SalaryPrintComponent 스타일 - 새로운 디자인 시스템 적용 */
+
+.salary-title {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--ios-text-primary);
+}
+
+.salary-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--ios-text-secondary);
+}
+
+.salary-table-header {
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  background: var(--ios-bg-secondary);
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 2px solid var(--ios-border-light);
+}
+
+.salary-table-header--item {
+  width: 40%;
+}
+
+.salary-table-header--amount {
+  width: 30%;
+}
+
+.salary-table-header--note {
+  width: 30%;
+}
+
+.salary-table-cell {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--ios-border-light);
+  color: var(--ios-text-secondary);
+}
+
+.salary-table-cell--label {
+  font-weight: var(--font-weight-medium);
+  color: var(--ios-text-primary);
+}
+
+.salary-table-cell--amount {
+  text-align: right;
+  font-weight: var(--font-weight-medium);
+  color: var(--ios-text-primary);
+}
+
+.salary-table-cell--note {
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.salary-total-row {
+  background: var(--ios-bg-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.salary-total-cell {
+  padding: var(--spacing-md);
+  border-top: 2px solid var(--ios-border-light);
+  border-bottom: 2px solid var(--ios-border-light);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+}
+
+.salary-total-cell--label {
+  font-size: var(--font-size-base);
+}
+
+.salary-total-cell--amount {
+  text-align: right;
+  font-size: var(--font-size-lg);
+  color: var(--ios-blue-dark);
+}
+
+.salary-summary {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: var(--ios-bg-secondary);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--ios-border-light);
+}
+
+.salary-summary-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.salary-summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--ios-border-light);
+}
+
+.salary-summary-item:last-child {
+  border-bottom: none;
+}
+
+.salary-summary-label {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+}
+
+.salary-summary-value {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--ios-text-primary);
+}
+
+.salary-footer {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  text-align: center;
+  border-top: 2px solid var(--ios-border-light);
+}
+
+.salary-footer-text {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin: 0;
+}
+
+.salary-signature {
+  margin-top: var(--spacing-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.salary-signature-item {
+  text-align: center;
+  flex: 1;
+}
+
+.salary-signature-label {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.salary-signature-line {
+  border-bottom: 1px solid var(--ios-border-light);
+  height: 40px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.salary-signature-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--ios-text-primary);
+}
+
+/* 인쇄용 스타일 */
+@media print {
+  .salary-title {
+    color: black;
+  }
+  
+  .salary-subtitle {
+    color: #666;
+  }
+  
+  .salary-table-header {
+    background: #f5f5f5;
+    color: black;
+  }
+  
+  .salary-table-cell {
+    color: black;
+  }
+  
+  .salary-table-cell--amount {
+    color: black;
+  }
+  
+  .salary-summary {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+  }
+  
+  .salary-footer-text {
+    color: #666;
+  }
+  
+  .salary-signature-line {
+    border-bottom: 1px solid #ddd;
+  }
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .salary-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .salary-table-header {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+  }
+  
+  .salary-table-cell {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+  }
+  
+  .salary-summary {
+    padding: var(--spacing-md);
+  }
+  
+  .salary-signature {
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+  
+  .salary-signature-item {
+    width: 100%;
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .salary-table-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .salary-table-cell {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+}

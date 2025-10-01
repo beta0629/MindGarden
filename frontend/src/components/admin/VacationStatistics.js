@@ -280,9 +280,13 @@ const VacationStatistics = ({ className = "" }) => {
                         {vacationStats.consultantStats.map(consultant => {
                             const consultantColor = getConsultantColor(consultant.consultantId);
                             return (
-                                <div key={consultant.consultantId} className="consultant-item" style={{ borderLeft: `4px solid ${consultantColor}` }}>
+                                <div 
+                                    key={consultant.consultantId} 
+                                    className="consultant-item" 
+                                    data-consultant-color={consultantColor}
+                                >
                                     <div className="consultant-info">
-                                        <div className="consultant-avatar" style={{ backgroundColor: consultantColor }}>
+                                        <div className="consultant-avatar" data-bg-color={consultantColor}>
                                             {consultant.consultantName.charAt(0)}
                                         </div>
                                         <div className="consultant-details">
@@ -291,7 +295,7 @@ const VacationStatistics = ({ className = "" }) => {
                                         </div>
                                     </div>
                                     <div className="vacation-info">
-                                        <div className="vacation-days" style={{ color: consultantColor }}>
+                                        <div className="vacation-days" data-text-color={consultantColor}>
                                             <span className="days-count">
                                                 {typeof consultant.vacationDays === 'number' 
                                                     ? consultant.vacationDays.toFixed(1)
@@ -366,12 +370,12 @@ const VacationStatistics = ({ className = "" }) => {
                         {vacationStats.topVacationConsultants.map((consultant, index) => {
                             const consultantColor = getConsultantColor(consultant.consultantId);
                             return (
-                                <div key={index} className="top-item" style={{ borderLeft: `4px solid ${consultantColor}` }}>
-                                    <div className="rank-badge" style={{ backgroundColor: consultantColor }}>
+                                <div key={index} className="top-item" data-border-color={consultantColor}>
+                                    <div className="rank-badge" data-bg-color={consultantColor}>
                                         {index + 1}
                                     </div>
                                     <div className="consultant-name">{consultant.consultantName}</div>
-                                    <div className="vacation-count" style={{ color: consultantColor }}>
+                                    <div className="vacation-count" data-text-color={consultantColor}>
                                         {typeof consultant.vacationDays === 'number' 
                                             ? consultant.vacationDays.toFixed(1)
                                             : consultant.vacationDays}일

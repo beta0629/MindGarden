@@ -213,7 +213,7 @@ const HQDashboard = ({ user: propUser }) => {
                 <Row className="mb-4">
                     <Col>
                         <Alert variant="info" className="d-flex align-items-center">
-                            <FaBuilding className="me-3" style={{ fontSize: '1.5rem' }} />
+                            <FaBuilding className="me-3 hq-alert-icon" />
                             <div>
                                 <h5 className="mb-1">본사 관리자 대시보드</h5>
                                 <p className="mb-0">
@@ -230,7 +230,7 @@ const HQDashboard = ({ user: propUser }) => {
                     <Col md={3}>
                         <Card className="h-100 border-primary">
                             <Card.Body className="text-center">
-                                <FaBuilding className="text-primary mb-2" style={{ fontSize: '2rem' }} />
+                                <FaBuilding className="text-primary mb-2 hq-stat-icon" />
                                 <h3 className="text-primary">{dashboardData.branchStats.activeBranches}</h3>
                                 <p className="text-muted mb-0">활성 지점</p>
                                 <small className="text-muted">전체 {dashboardData.branchStats.totalBranches}개</small>
@@ -240,7 +240,7 @@ const HQDashboard = ({ user: propUser }) => {
                     <Col md={3}>
                         <Card className="h-100 border-success">
                             <Card.Body className="text-center">
-                                <FaUserTie className="text-success mb-2" style={{ fontSize: '2rem' }} />
+                                <FaUserTie className="text-success mb-2 hq-stat-icon" />
                                 <h3 className="text-success">{dashboardData.branchStats.totalConsultants}</h3>
                                 <p className="text-muted mb-0">전체 상담사</p>
                                 <small className="text-muted">활동 중인 상담사</small>
@@ -250,7 +250,7 @@ const HQDashboard = ({ user: propUser }) => {
                     <Col md={3}>
                         <Card className="h-100 border-info">
                             <Card.Body className="text-center">
-                                <FaUser className="text-info mb-2" style={{ fontSize: '2rem' }} />
+                                <FaUser className="text-info mb-2 hq-stat-icon" />
                                 <h3 className="text-info">{dashboardData.branchStats.totalClients}</h3>
                                 <p className="text-muted mb-0">전체 내담자</p>
                                 <small className="text-muted">등록된 내담자</small>
@@ -260,7 +260,7 @@ const HQDashboard = ({ user: propUser }) => {
                     <Col md={3}>
                         <Card className="h-100 border-warning">
                             <Card.Body className="text-center">
-                                <FaCrown className="text-warning mb-2" style={{ fontSize: '2rem' }} />
+                                <FaCrown className="text-warning mb-2 hq-stat-icon" />
                                 <h3 className="text-warning">{dashboardData.branchStats.totalAdmins}</h3>
                                 <p className="text-muted mb-0">전체 관리자</p>
                                 <small className="text-muted">지점 관리자 포함</small>
@@ -394,7 +394,7 @@ const HQDashboard = ({ user: propUser }) => {
                             <Card.Body>
                                 {dashboardData.branchList.length === 0 ? (
                                     <div className="text-center py-4 text-muted">
-                                        <FaBuilding className="mb-3" style={{ fontSize: '2rem' }} />
+                                        <FaBuilding className="mb-3 hq-empty-icon" />
                                         <p>등록된 지점이 없습니다.</p>
                                     </div>
                                 ) : (
@@ -402,8 +402,7 @@ const HQDashboard = ({ user: propUser }) => {
                                         {dashboardData.branchList.slice(0, 6).map((branch) => (
                                             <Col key={branch.id} md={6} lg={4} className="mb-3">
                                                 <Card 
-                                                    className={`h-100 branch-card ${!branch.isActive ? 'inactive' : ''}`}
-                                                    style={{ cursor: 'pointer' }}
+                                                    className={`h-100 branch-card ${!branch.isActive ? 'inactive' : ''} branch-card-clickable`}
                                                     onClick={() => handleBranchDetail(branch.branchCode)}
                                                 >
                                                     <Card.Body>

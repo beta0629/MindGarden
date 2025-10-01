@@ -176,11 +176,11 @@ const ConsultantRecords = () => {
   if (sessionLoading) {
     return (
       <SimpleLayout title="상담 기록">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center' }}>
-          <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+        <div className="consultant-records-loading">
+          <div className="spinner-border text-primary consultant-records-spinner" role="status">
             <span className="visually-hidden">로딩 중...</span>
           </div>
-          <p style={{ marginTop: '15px', color: '#7f8c8d', fontSize: '1.1rem' }}>세션 정보를 불러오는 중...</p>
+          <p className="consultant-records-loading-text">세션 정보를 불러오는 중...</p>
         </div>
       </SimpleLayout>
     );
@@ -189,7 +189,7 @@ const ConsultantRecords = () => {
   if (!isLoggedIn) {
     return (
       <SimpleLayout title="상담 기록">
-        <div style={{ textAlign: 'center', padding: '50px' }}>
+        <div className="consultant-records-login-required">
           <h3>로그인이 필요합니다.</h3>
           <p>상담 기록을 보려면 로그인해주세요.</p>
         </div>
@@ -284,7 +284,7 @@ const ConsultantRecords = () => {
               <button 
                 className="btn btn-outline-primary"
                 onClick={() => navigate('/consultant/schedule')}
-                style={{ marginTop: '15px' }}
+                className="consultant-records-empty-button"
               >
                 <i className="bi bi-calendar"></i>
                 일정 관리로 이동
@@ -298,33 +298,19 @@ const ConsultantRecords = () => {
                     <div className="record-status">
                       <span 
                         className="status-badge"
-                        style={{ backgroundColor: getStatusColor(record.status) }}
+                        data-status-color={getStatusColor(record.status)}
                       >
                         {getStatusLabel(record.status)}
                       </span>
                       {record.isSessionCompleted && (
-                        <span 
-                          className="completion-badge"
-                          style={{
-                            backgroundColor: '#28a745',
-                            color: '#fff',
-                            padding: '4px 8px',
-                            borderRadius: '12px',
-                            fontSize: '0.75rem',
-                            fontWeight: '600',
-                            marginLeft: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
+                        <span className="completion-badge completion-badge-completed">
                           <i className="bi bi-check-circle"></i>
                           완료
                         </span>
                       )}
                     </div>
                     <div className="record-date">
-                      <i className="bi bi-calendar-check" style={{ marginRight: '5px', color: '#3498db' }}></i>
+                      <i className="bi bi-calendar-check record-date-icon"></i>
                       {record.consultationDate ? (() => {
                         try {
                           const date = new Date(record.consultationDate);

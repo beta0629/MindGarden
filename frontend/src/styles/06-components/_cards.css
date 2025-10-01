@@ -176,7 +176,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto var(--spacing-lg);
-  font-size: 32px;
+  font-size: var(--font-size-xxxl);
   color: white;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
@@ -188,14 +188,14 @@
 .card__icon--small {
   width: 64px;
   height: 64px;
-  font-size: 28px;
+  font-size: var(--font-size-xxl);
   border-radius: var(--border-radius-xl);
 }
 
 .card__icon--large {
   width: 80px;
   height: 80px;
-  font-size: 32px;
+  font-size: var(--font-size-xxxl);
   border-radius: var(--border-radius-xxl);
 }
 
@@ -268,7 +268,7 @@
 }
 
 .stat-card__value {
-  font-size: 36px;
+  font-size: var(--font-size-xxxl);
   font-weight: var(--font-weight-extrabold);
   color: var(--ios-text-primary);
   margin: 0 0 var(--spacing-sm) 0;
@@ -420,7 +420,7 @@
   }
   
   .stat-card__value {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
   }
   
   .stat-card__label {
@@ -466,7 +466,7 @@
   .card__icon--small {
     width: 44px;
     height: 44px;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     border-radius: var(--border-radius-md);
     background: var(--ios-blue);
     color: white;
@@ -476,7 +476,7 @@
   .card__icon--large {
     width: 48px;
     height: 48px;
-    font-size: 22px;
+    font-size: var(--font-size-xl);
     border-radius: var(--border-radius-lg);
     background: var(--ios-blue);
     color: white;
@@ -527,7 +527,7 @@
   }
   
   .stat-card__value {
-    font-size: 32px;
+    font-size: var(--font-size-xxxl);
   }
   
   .stat-card__label {
@@ -546,14 +546,14 @@
   .card__icon--small {
     width: 56px;
     height: 56px;
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     border-radius: var(--ipad-border-radius-md);
   }
   
   .card__icon--large {
     width: 64px;
     height: 64px;
-    font-size: 26px;
+    font-size: var(--font-size-xxl);
     border-radius: var(--ipad-border-radius-lg);
   }
   

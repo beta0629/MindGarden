@@ -210,7 +210,7 @@
   }
 
   .schedule-detail-modal__info-label {
-    font-size: 10px;
+    font-size: var(--font-size-xs);
   }
 
   .schedule-detail-modal__info-value {

@@ -210,7 +210,7 @@
   }
 
   .client-card__details {
-    font-size: 10px;
+    font-size: var(--font-size-xs);
   }
 
   .client-card__check {
@@ -225,7 +225,7 @@
 
   .client-card__session-label,
   .client-card__status {
-    font-size: 10px;
+    font-size: var(--font-size-xs);
   }
 
   .client-card__session-value {

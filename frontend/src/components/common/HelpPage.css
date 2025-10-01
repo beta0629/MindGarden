@@ -30,7 +30,7 @@
 
 .help-page__title-icon {
     color: var(--ios-blue);
-    font-size: 36px;
+    font-size: var(--font-size-xxxl);
 }
 
 .help-page__subtitle {

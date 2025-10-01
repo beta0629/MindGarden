@@ -168,7 +168,7 @@
   }
 
   .consultant-card__specialty {
-    font-size: 10px;
+    font-size: var(--font-size-xs);
     padding: 2px var(--spacing-xs);
   }
 
@@ -181,11 +181,11 @@
   }
 
   .consultant-card__stat-label {
-    font-size: 10px;
+    font-size: var(--font-size-xs);
   }
 
   .consultant-card__badge {
-    font-size: 10px;
+    font-size: var(--font-size-xs);
     padding: 2px var(--spacing-xs);
   }
 }

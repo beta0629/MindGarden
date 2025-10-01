@@ -147,7 +147,7 @@
 
   .client-message-card__meta,
   .client-message-card__badge {
-    font-size: 10px;
+    font-size: var(--font-size-xs);
   }
 }
 

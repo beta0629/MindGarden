@@ -169,7 +169,7 @@
 
   .time-slot__status,
   .time-slot__client {
-    font-size: 10px;
+    font-size: var(--font-size-xs);
   }
 
   .time-slot__badge {

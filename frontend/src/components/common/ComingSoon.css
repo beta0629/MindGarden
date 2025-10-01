@@ -21,7 +21,7 @@
 }
 
 .coming-soon-icon {
-  font-size: 64px;
+  font-size: var(--font-size-xxxl);
   color: var(--ios-blue);
   margin-bottom: var(--spacing-xl);
   animation: pulse 2s infinite;
@@ -126,7 +126,7 @@
   }
   
   .coming-soon-icon {
-    font-size: 48px;
+    font-size: var(--font-size-xxxl);
     margin-bottom: var(--spacing-lg);
   }
   

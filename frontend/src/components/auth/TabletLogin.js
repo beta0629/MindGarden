@@ -725,12 +725,7 @@ const TabletLogin = () => {
               </button>
               
               {/* 비밀번호 찾기 링크 */}
-              <div style={{
-                textAlign: 'center',
-                marginTop: '16px',
-                paddingTop: '16px',
-                borderTop: '1px solid #e2e8f0'
-              }}>
+              <div className="tablet-login-forgot-password">
                 <button
                   type="button"
                   onClick={() => navigate('/forgot-password')}

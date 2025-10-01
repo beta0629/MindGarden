@@ -111,8 +111,8 @@ const SalaryExportModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className={`${SALARY_CSS_CLASSES.MODAL} modal-overlay`} style={modalOverlayStyle}>
-      <div className="modal-content" style={modalContentStyle}>
+    <div className={`${SALARY_CSS_CLASSES.MODAL} modal-overlay`}>
+      <div className="modal-content">
         {/* 헤더 */}
         <div style={{
           padding: '20px',

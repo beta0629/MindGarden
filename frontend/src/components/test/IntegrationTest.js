@@ -200,13 +200,7 @@ const IntegrationTest = () => {
 
   return (
     <SimpleLayout>
-      <div style={{
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: '24px',
-        backgroundColor: '#f8f9fa',
-        minHeight: '100vh'
-      }}>
+      <div className="integration-test-container">
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',

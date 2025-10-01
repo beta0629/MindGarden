@@ -177,7 +177,6 @@ const ErpButton = ({
   return (
     <button
       type={type}
-      style={buttonStyle}
       className={finalClassName}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}

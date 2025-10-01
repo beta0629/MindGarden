@@ -112,7 +112,7 @@ const FinancialCalendarView = () => {
         alignItems: 'center',
         marginBottom: '20px'
       }}>
-        <h2 style={{ margin: 0, fontSize: '24px', color: '#333' }}>
+        <h2 style={{ margin: 0, fontSize: 'var(--font-size-xxl)', color: '#333' }}>
           📅 재무 달력
         </h2>
         
@@ -131,7 +131,7 @@ const FinancialCalendarView = () => {
             ◀ 이전
           </button>
           
-          <h3 style={{ margin: 0, fontSize: '18px', minWidth: '120px', textAlign: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', minWidth: '120px', textAlign: 'center' }}>
             {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
           </h3>
           
@@ -210,7 +210,7 @@ const FinancialCalendarView = () => {
               color: 'white',
               textAlign: 'center',
               fontWeight: '600',
-              fontSize: '14px'
+              fontSize: 'var(--font-size-sm)'
             }}
           >
             {dayName}
@@ -254,7 +254,7 @@ const FinancialCalendarView = () => {
             >
               {/* 날짜 */}
               <div style={{
-                fontSize: '14px',
+                fontSize: 'var(--font-size-sm)',
                 fontWeight: isToday ? 'bold' : 'normal',
                 color: isToday ? '#856404' : '#333',
                 marginBottom: '4px'
@@ -268,7 +268,7 @@ const FinancialCalendarView = () => {
                   {/* 수입 */}
                   {dayData.income > 0 && (
                     <div style={{
-                      fontSize: '10px',
+                      fontSize: 'var(--font-size-xs)',
                       padding: '2px 4px',
                       backgroundColor: '#d4edda',
                       color: '#155724',
@@ -282,7 +282,7 @@ const FinancialCalendarView = () => {
                   {/* 지출 */}
                   {dayData.expense > 0 && (
                     <div style={{
-                      fontSize: '10px',
+                      fontSize: 'var(--font-size-xs)',
                       padding: '2px 4px',
                       backgroundColor: '#f8d7da',
                       color: '#721c24',
@@ -295,7 +295,7 @@ const FinancialCalendarView = () => {
                   
                   {/* 거래 건수 */}
                   <div style={{
-                    fontSize: '9px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#6c757d',
                     textAlign: 'center',
                     marginTop: 'auto'
@@ -371,10 +371,10 @@ const FinancialCalendarView = () => {
               borderRadius: '8px',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#155724' }}>
+              <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'bold', color: '#155724' }}>
                 +{formatCurrency(dayDetail.income)}원
               </div>
-              <div style={{ fontSize: '12px', color: '#155724' }}>💰 총 수입</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', color: '#155724' }}>💰 총 수입</div>
             </div>
             
             <div style={{
@@ -383,10 +383,10 @@ const FinancialCalendarView = () => {
               borderRadius: '8px',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#721c24' }}>
+              <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'bold', color: '#721c24' }}>
                 -{formatCurrency(dayDetail.expense)}원
               </div>
-              <div style={{ fontSize: '12px', color: '#721c24' }}>💸 총 지출</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', color: '#721c24' }}>💸 총 지출</div>
             </div>
             
             <div style={{
@@ -395,10 +395,10 @@ const FinancialCalendarView = () => {
               borderRadius: '8px',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#004085' }}>
+              <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'bold', color: '#004085' }}>
                 {formatCurrency(dayDetail.income - dayDetail.expense)}원
               </div>
-              <div style={{ fontSize: '12px', color: '#004085' }}>💎 순이익</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', color: '#004085' }}>💎 순이익</div>
             </div>
           </div>
 
@@ -426,7 +426,7 @@ const FinancialCalendarView = () => {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{
-                          fontSize: '12px',
+                          fontSize: 'var(--font-size-xs)',
                           padding: '2px 6px',
                           borderRadius: '10px',
                           backgroundColor: transaction.transactionType === 'INCOME' ? '#d4edda' : '#f8d7da',
@@ -438,7 +438,7 @@ const FinancialCalendarView = () => {
                         {(transaction.relatedEntityType === 'CONSULTANT_CLIENT_MAPPING' || 
                           transaction.description?.includes('상담료 입금 확인')) && (
                           <span style={{
-                            fontSize: '10px',
+                            fontSize: 'var(--font-size-xs)',
                             padding: '2px 6px',
                             backgroundColor: '#e3f2fd',
                             color: '#1976d2',
@@ -450,17 +450,17 @@ const FinancialCalendarView = () => {
                         )}
                       </div>
                       
-                      <div style={{ fontSize: '14px', fontWeight: '500', marginTop: '4px' }}>
+                      <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: '500', marginTop: '4px' }}>
                         {transaction.category} - {transaction.subcategory || ''}
                       </div>
                       
-                      <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '2px' }}>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '2px' }}>
                         {transaction.description || '-'}
                       </div>
                     </div>
                     
                     <div style={{
-                      fontSize: '16px',
+                      fontSize: 'var(--font-size-base)',
                       fontWeight: 'bold',
                       color: transaction.transactionType === 'INCOME' ? '#28a745' : '#dc3545'
                     }}>
@@ -546,7 +546,7 @@ const FinancialCalendarView = () => {
                   {formatCurrency(monthlyProfit)}원
                 </div>
                 <div style={{
-                  fontSize: '14px',
+                  fontSize: 'var(--font-size-sm)',
                   color: monthlyProfit >= 0 ? '#004085' : '#721c24'
                 }}>
                   💎 월 순이익

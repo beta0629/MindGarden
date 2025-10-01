@@ -124,7 +124,7 @@ const SalaryExportModal = ({
         }}>
           <h3 style={{
             margin: 0,
-            fontSize: '18px',
+            fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#1f2937'
           }}>
@@ -136,7 +136,7 @@ const SalaryExportModal = ({
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '24px',
+              fontSize: 'var(--font-size-xxl)',
               cursor: 'pointer',
               color: '#6b7280',
               padding: '0',
@@ -167,7 +167,7 @@ const SalaryExportModal = ({
           }}>
             <h4 style={{
               margin: '0 0 15px 0',
-              fontSize: '16px',
+              fontSize: 'var(--font-size-base)',
               fontWeight: '600',
               color: '#1f2937'
             }}>
@@ -187,16 +187,16 @@ const SalaryExportModal = ({
                 borderRadius: '8px',
                 border: '1px solid #e5e7eb'
               }}>
-                <div style={{ fontSize: '18px' }}>👤</div>
+                <div style={{ fontSize: 'var(--font-size-lg)' }}>👤</div>
                 <div>
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#6b7280',
                     fontWeight: '500',
                     marginBottom: '2px'
                   }}>상담사</div>
                   <div style={{
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     color: '#1f2937',
                     fontWeight: '600'
                   }}>{consultantName || '정보 없음'}</div>
@@ -211,16 +211,16 @@ const SalaryExportModal = ({
                 borderRadius: '8px',
                 border: '1px solid #e5e7eb'
               }}>
-                <div style={{ fontSize: '18px' }}>📅</div>
+                <div style={{ fontSize: 'var(--font-size-lg)' }}>📅</div>
                 <div>
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#6b7280',
                     fontWeight: '500',
                     marginBottom: '2px'
                   }}>기간</div>
                   <div style={{
-                    fontSize: '14px',
+                    fontSize: 'var(--font-size-sm)',
                     color: '#1f2937',
                     fontWeight: '600'
                   }}>{period || '정보 없음'}</div>
@@ -235,16 +235,16 @@ const SalaryExportModal = ({
                 borderRadius: '8px',
                 border: '1px solid #e5e7eb'
               }}>
-                <div style={{ fontSize: '18px' }}>💵</div>
+                <div style={{ fontSize: 'var(--font-size-lg)' }}>💵</div>
                 <div>
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: 'var(--font-size-xs)',
                     color: '#6b7280',
                     fontWeight: '500',
                     marginBottom: '2px'
                   }}>총 급여</div>
                   <div style={{
-                    fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
                     color: '#059669',
                     fontWeight: '700'
                   }}>
@@ -257,7 +257,7 @@ const SalaryExportModal = ({
 
           {/* 출력 옵션 */}
           <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600' }}>출력 옵션</h4>
+            <h4 style={{ margin: '0 0 15px 0', fontSize: 'var(--font-size-base)', fontWeight: '600' }}>출력 옵션</h4>
             
             {/* 출력 형식 선택 */}
             <div style={{ marginBottom: '20px' }}>
@@ -328,13 +328,13 @@ const SalaryExportModal = ({
                       padding: '8px 12px',
                       border: '1px solid #d1d5db',
                       borderRadius: '4px',
-                      fontSize: '14px'
+                      fontSize: 'var(--font-size-sm)'
                     }}
                   />
                   {emailAddress && !isEmailValid(emailAddress) && (
                     <p style={{
                       color: '#dc2626',
-                      fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
                       marginTop: '4px'
                     }}>
                       올바른 이메일 주소를 입력해주세요.
@@ -378,7 +378,7 @@ const SalaryExportModal = ({
               backgroundColor: 'white',
               color: '#374151',
               cursor: 'pointer',
-              fontSize: '14px'
+              fontSize: 'var(--font-size-sm)'
             }}
           >
             취소
@@ -393,7 +393,7 @@ const SalaryExportModal = ({
               backgroundColor: '#3b82f6',
               color: 'white',
               cursor: 'pointer',
-              fontSize: '14px'
+              fontSize: 'var(--font-size-sm)'
             }}
           >
             {loading ? '처리 중...' : '출력'}
@@ -439,7 +439,7 @@ const modalHeaderStyle = {
 
 const modalTitleStyle = {
   margin: 0,
-  fontSize: '18px',
+  fontSize: 'var(--font-size-lg)',
   fontWeight: '600',
   color: '#1f2937'
 };
@@ -447,7 +447,7 @@ const modalTitleStyle = {
 const closeButtonStyle = {
   background: 'none',
   border: 'none',
-  fontSize: '24px',
+  fontSize: 'var(--font-size-xxl)',
   cursor: 'pointer',
   color: '#6b7280',
   padding: '0',
@@ -536,7 +536,7 @@ const emailInputStyle = {
 
 const emailErrorStyle = {
   color: '#dc2626',
-  fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
   marginTop: '4px'
 };
 
@@ -597,7 +597,7 @@ const summaryIconStyle = {
 
 const summaryTitleStyle = {
   margin: 0,
-  fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
   fontWeight: '600',
   color: '#1f2937'
 };
@@ -618,7 +618,7 @@ const summaryItemIconStyle = {
 
 const summaryLabelStyle = {
   display: 'block',
-  fontSize: '12px',
+                      fontSize: 'var(--font-size-xs)',
   color: '#6b7280',
   fontWeight: '500',
   marginBottom: '2px'
@@ -633,7 +633,7 @@ const summaryValueStyle = {
 
 const summaryAmountStyle = {
   display: 'block',
-  fontSize: '16px',
+                    fontSize: 'var(--font-size-base)',
   color: '#059669',
   fontWeight: '700'
 };

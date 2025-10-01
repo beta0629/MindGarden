@@ -88,12 +88,7 @@ const SummaryPanels = ({ user, consultationData }) => {
                       
                       {/* 더 많은 상담이 있을 때 자세히 보기 링크 */}
                       {upcomingCount > 3 && (
-                        <div style={{
-                          textAlign: 'center',
-                          marginTop: '8px',
-                          paddingTop: '8px',
-                          borderTop: '1px solid #fce7f3'
-                        }}>
+                        <div className="summary-panels-more-indicator">
                           <a 
                             href="/consultant/schedule" 
                             style={{

@@ -49,12 +49,7 @@ const ConsultantListModal = ({ isOpen, onClose, consultantList }) => {
                       {consultant.specialty || '상담 심리학'}
                     </div>
                     {consultant.intro && (
-                      <div style={{
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#868e96',
-                        marginTop: '4px',
-                        lineHeight: '1.4'
-                      }}>
+                      <div className="consultant-list-modal-intro">
                         {consultant.intro}
                       </div>
                     )}

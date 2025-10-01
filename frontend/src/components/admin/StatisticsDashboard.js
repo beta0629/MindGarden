@@ -588,12 +588,7 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // ê¸°ë
           </select>
         </div>
         
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          minWidth: '200px'
-        }}>
+        <div className="statistics-dashboard-chart-container">
           <label style={{
             fontSize: 'var(--font-size-sm)',
             fontWeight: '600',

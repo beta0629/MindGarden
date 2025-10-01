@@ -172,11 +172,7 @@ const SystemTools = ({
                                 }}
                             >
                                 <IconComponent 
-                                    style={{ 
-                                        fontSize: 'var(--font-size-xxl)',
-                                        transition: 'transform 0.3s ease',
-                                        animation: loading ? 'spin 1s linear infinite' : 'none'
-                                    }} 
+                                    className="system-tools-icon"
                                 />
                                 <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: '600' }}>{tool.label}</span>
                             </button>

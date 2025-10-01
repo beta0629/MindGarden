@@ -57,15 +57,7 @@ const ClientSchedule = () => {
   return (
     <SimpleLayout title="내 일정">
       <div className="client-schedule-container">
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '32px',
-          padding: '24px',
-          background: 'rgba(255, 255, 255, 0.9)',
-          borderRadius: '16px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-          backdropFilter: 'blur(10px)'
-        }}>
+        <div className="client-schedule-empty-state">
           <h2 style={{
             fontSize: 'var(--font-size-xxl)',
             fontWeight: '700',

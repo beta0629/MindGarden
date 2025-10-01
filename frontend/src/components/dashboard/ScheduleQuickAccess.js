@@ -18,56 +18,15 @@ const ScheduleQuickAccess = ({ user }) => {
   };
 
   return (
-    <div style={{
-      background: 'white',
-      borderRadius: '12px',
-      padding: '24px',
-      marginBottom: '24px',
-      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-      border: '1px solid #e9ecef'
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '20px'
-      }}>
-        <h3 style={{
-          margin: 0,
-          fontSize: 'var(--font-size-lg)',
-          fontWeight: '600',
-          color: '#2c3e50',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
-        }}>
-          <i className="bi bi-calendar-check" style={{ color: '#007bff' }}></i>
+    <div className="schedule-quick-access">
+      <div className="schedule-quick-access-header">
+        <h3 className="schedule-quick-access-title">
+          <i className="bi bi-calendar-check schedule-quick-access-icon"></i>
           스케줄 관리
         </h3>
         <button 
           className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
           onClick={handleScheduleClick}
-          style={{
-            fontSize: 'var(--font-size-sm)',
-            padding: '6px 12px',
-            borderRadius: '6px',
-            border: '1px solid #007bff',
-            background: 'transparent',
-            color: '#007bff',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = '#007bff';
-            e.target.style.color = 'white';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = 'transparent';
-            e.target.style.color = '#007bff';
-          }}
         >
           <i className="bi bi-arrow-right"></i>
           전체보기
@@ -76,66 +35,22 @@ const ScheduleQuickAccess = ({ user }) => {
 
       {/* 통합 스케줄 카드 */}
       <div
-        style={{
-          border: '1px solid #e9ecef',
-          borderRadius: '12px',
-          padding: '24px',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden',
-          textAlign: 'center'
-        }}
+        className="schedule-quick-access-card"
         onClick={handleScheduleClick}
-        onMouseEnter={(e) => {
-          e.target.style.transform = 'translateY(-2px)';
-          e.target.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.3)';
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.transform = 'translateY(0)';
-          e.target.style.boxShadow = 'none';
-        }}
       >
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '16px'
-        }}>
-          <div style={{
-            width: '60px',
-            height: '60px',
-            borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 'var(--font-size-xxl)'
-          }}>
+        <div className="schedule-quick-access-card-content">
+          <div className="schedule-quick-access-card-icon">
             <i className="bi bi-calendar-check"></i>
           </div>
-          <div>
-            <h4 style={{
-              margin: 0,
-              fontSize: 'var(--font-size-xl)',
-              fontWeight: '600',
-              marginBottom: '8px'
-            }}>
+          <div className="schedule-quick-access-card-text">
+            <h4 className="schedule-quick-access-card-title">
               스케줄 관리
             </h4>
-            <p style={{
-              margin: 0,
-              fontSize: 'var(--font-size-base)',
-              opacity: 0.9,
-              lineHeight: '1.4'
-            }}>
+            <p className="schedule-quick-access-card-description">
               오늘의 스케줄, 다가오는 상담, 새 일정 등록
             </p>
           </div>
-          <div style={{
-            fontSize: 'var(--font-size-sm)',
+          <div className="schedule-quick-access-card-arrow">
             opacity: 0.8,
             display: 'flex',
             alignItems: 'center',

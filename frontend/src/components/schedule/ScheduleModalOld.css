@@ -11,7 +11,7 @@
     justify-content: center;
     align-items: center;
     z-index: 1000; /* 상세 모달보다 낮은 z-index */
-    padding: 20px;
+    padding: var(--spacing-lg);
     backdrop-filter: blur(4px);
     box-sizing: border-box;
     /* 강력한 중앙 정렬을 위한 추가 속성 */
@@ -44,7 +44,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
+    padding: var(--spacing-lg) var(--spacing-xl);
     border-bottom: 2px solid #e9ecef;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -94,7 +94,7 @@
     color: white;
     font-size: 24px;
     cursor: pointer;
-    padding: 4px;
+    padding: var(--spacing-xs);
     border-radius: 4px;
     transition: all 0.2s ease;
     width: 32px;
@@ -113,7 +113,7 @@
 
 .schedule-modal-content {
     flex: 1;
-    padding: 24px;
+    padding: var(--spacing-xl);
     overflow-y: auto;
     min-height: 500px;
 }
@@ -122,7 +122,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
+    padding: var(--spacing-lg) var(--spacing-xl);
     border-top: 1px solid #e9ecef;
     background-color: #f8f9fa;
     gap: 12px;
@@ -130,7 +130,7 @@
 
 /* 버튼 스타일 */
 .schedule-modal .btn {
-    padding: 10px 20px;
+    padding: var(--spacing-sm) var(--spacing-lg);
     border: none;
     border-radius: 6px;
     font-size: 14px;
@@ -199,7 +199,7 @@
 .schedule-modal .form-group textarea,
 .schedule-modal .form-group select {
     width: 100%;
-    padding: 10px 12px;
+    padding: var(--spacing-sm) var(--spacing-sm);
     border: 1px solid #ced4da;
     border-radius: 6px;
     font-size: 14px;
@@ -229,7 +229,7 @@
 .schedule-summary {
     background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
     border-radius: 8px;
-    padding: 16px;
+    padding: var(--spacing-md);
     margin-bottom: 20px;
     border: 2px solid #2196f3;
 }
@@ -254,7 +254,7 @@
 /* 상담 유형 선택 */
 .consultation-type-selector {
     margin-bottom: 20px;
-    padding: 16px;
+    padding: var(--spacing-md);
     background-color: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #e9ecef;
@@ -270,7 +270,7 @@
 
 .consultation-type-selector select {
     width: 100%;
-    padding: 10px 12px;
+    padding: var(--spacing-sm) var(--spacing-sm);
     border: 1px solid #ced4da;
     border-radius: 6px;
     font-size: 14px;
@@ -309,7 +309,7 @@
 /* 반응형 */
 @media (max-width: 768px) {
     .schedule-modal-overlay {
-        padding: 10px;
+        padding: var(--spacing-sm);
         justify-content: center;
         align-items: center;
         width: 100vw;
@@ -326,7 +326,7 @@
     }
     
     .schedule-modal-header {
-        padding: 16px 20px;
+        padding: var(--spacing-md) var(--spacing-lg);
     }
     
     .schedule-modal-header h3 {
@@ -347,22 +347,22 @@
     }
     
     .modal-progress {
-        padding: 12px 20px;
+        padding: var(--spacing-sm) var(--spacing-lg);
     }
     
     .schedule-modal-content {
-        padding: 16px 20px;
+        padding: var(--spacing-md) var(--spacing-lg);
     }
     
     .modal-footer {
-        padding: 16px 20px;
+        padding: var(--spacing-md) var(--spacing-lg);
         flex-direction: column;
         gap: 8px;
     }
     
     .btn {
         width: 100%;
-        padding: 12px 20px;
+        padding: var(--spacing-sm) var(--spacing-lg);
     }
     
     .schedule-summary {

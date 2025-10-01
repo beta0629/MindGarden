@@ -4,7 +4,7 @@
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: var(--spacing-lg);
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -78,7 +78,7 @@
 }
 
 .consultant-filter-select {
-    padding: 8px 12px;
+    padding: var(--spacing-sm) var(--spacing-sm);
     border: 1px solid #ddd;
     border-radius: 6px;
     background: white;
@@ -157,7 +157,7 @@
     border-color: #007bff;
     color: white;
     border-radius: 6px;
-    padding: 8px 16px;
+    padding: var(--spacing-sm) var(--spacing-md);
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s ease;
@@ -191,7 +191,7 @@
 .fc-event {
     border-radius: 6px;
     border: none;
-    padding: 2px 6px;
+    padding: var(--spacing-xs) var(--spacing-md);
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
@@ -251,7 +251,7 @@
 /* 모바일 반응형 */
 @media (max-width: 768px) {
     .schedule-calendar {
-        padding: 10px;
+        padding: var(--spacing-sm);
         margin: 10px;
     }
     
@@ -281,7 +281,7 @@
     }
     
     .fc-button {
-        padding: 6px 12px;
+        padding: var(--spacing-xs) var(--spacing-sm);
         font-size: 12px;
     }
 }
@@ -289,7 +289,7 @@
 /* 태블릿 */
 @media (max-width: 1024px) and (min-width: 769px) {
     .schedule-calendar {
-        padding: 15px;
+        padding: var(--spacing-md);
     }
     
     .calendar-header h2 {

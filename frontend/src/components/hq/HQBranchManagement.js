@@ -233,7 +233,7 @@ const HQBranchManagement = () => {
                             ) : (
                                 <div className="no-branch-selected">
                                     <div className="text-center py-5">
-                                        <FaBuilding className="text-muted mb-3" style={{ fontSize: '3rem' }} />
+                                        <FaBuilding className="text-muted mb-3 hq-branch-empty-icon" />
                                         <h5 className="text-muted">지점을 선택해주세요</h5>
                                         <p className="text-muted">
                                             지점 목록에서 관리할 지점을 선택하면 상세 정보를 확인할 수 있습니다.

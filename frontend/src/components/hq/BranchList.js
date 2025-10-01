@@ -201,7 +201,7 @@ const BranchList = ({
                         </div>
                     ) : filteredBranches.length === 0 ? (
                         <div className="text-center py-5">
-                            <FaBuilding className="text-muted mb-3" style={{ fontSize: '3rem' }} />
+                            <FaBuilding className="text-muted mb-3 branch-list-empty-icon" />
                             <h6 className="text-muted mb-2">
                                 {searchTerm ? '검색 결과가 없습니다' : '등록된 지점이 없습니다'}
                             </h6>

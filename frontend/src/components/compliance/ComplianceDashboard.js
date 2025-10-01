@@ -132,13 +132,13 @@ const ComplianceDashboard = () => {
                     <div className="overall-metrics">
                         <div className="metric-item">
                             <div className="metric-label">종합 점수</div>
-                            <div className="metric-value" style={{ color: getComplianceLevelColor(overallStatus.complianceLevel) }}>
+                            <div className="metric-value" data-compliance-color={getComplianceLevelColor(overallStatus.complianceLevel)}>
                                 {overallStatus.overallScore || 0}점
                             </div>
                         </div>
                         <div className="metric-item">
                             <div className="metric-label">준수 수준</div>
-                            <div className="metric-value" style={{ color: getComplianceLevelColor(overallStatus.complianceLevel) }}>
+                            <div className="metric-value" data-compliance-color={getComplianceLevelColor(overallStatus.complianceLevel)}>
                                 {getComplianceLevelIcon(overallStatus.complianceLevel)} {overallStatus.complianceLevel || '미평가'}
                             </div>
                         </div>

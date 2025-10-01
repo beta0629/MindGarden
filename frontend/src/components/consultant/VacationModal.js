@@ -153,7 +153,7 @@ const VacationModal = ({ isOpen, onClose, onSuccess, selectedDate, consultantId 
                     <span className="vacation-type-label">{type.label}</span>
                     <span 
                       className="vacation-type-color" 
-                      style={{ backgroundColor: type.color }}
+                      data-color={type.color}
                     ></span>
                   </div>
                 </label>

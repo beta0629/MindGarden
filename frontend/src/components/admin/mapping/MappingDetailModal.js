@@ -328,9 +328,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                         <div className="progress-bar">
                                                             <div 
                                                                 className="progress-fill"
-                                                                style={{
-                                                                    width: `${Math.min(100, Math.max(0, ((mapping?.usedSessions || 0) / Math.max(1, mapping?.totalSessions || 1)) * 100))}%`
-                                                                }}
+                                                                data-progress={Math.min(100, Math.max(0, ((mapping?.usedSessions || 0) / Math.max(1, mapping?.totalSessions || 1)) * 100))}
                                                             ></div>
                                                         </div>
                                                         <span className="progress-text">

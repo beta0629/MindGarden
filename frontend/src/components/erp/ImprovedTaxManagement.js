@@ -440,7 +440,7 @@ const ImprovedTaxManagement = () => {
                             <tr>
                               <td colSpan="8" className="text-center py-4">
                                 <div className="text-muted">
-                                  <i className="bi bi-calculator" style={{ fontSize: '2rem' }}></i>
+                                  <i className="bi bi-calculator tax-management-empty-icon"></i>
                                   <p className="mt-2 mb-0">세금 항목이 없습니다.</p>
                                 </div>
                               </td>
@@ -560,7 +560,7 @@ const ImprovedTaxManagement = () => {
 
           {/* 세금 항목 생성 모달 */}
           {showCreateModal && (
-            <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal show d-block tax-management-modal-backdrop">
               <div className="modal-dialog">
                 <div className="modal-content">
                   <div className="modal-header">

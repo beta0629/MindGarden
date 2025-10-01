@@ -1177,16 +1177,8 @@ const UnifiedScheduleComponent = ({
 
             {/* 시간 선택 모달 */}
             {showTimeSelectionModal && selectedSchedule && (
-                <div className="unified-schedule-time-modal-overlay"
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div className="unified-schedule-time-modal-content"
-                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-                        overflow: 'auto'
-                    }}>
+                <div className="unified-schedule-time-modal-overlay">
+                    <div className="unified-schedule-time-modal-content">
                         <h3 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: 'var(--font-size-lg)', fontWeight: '600' }}>
                             🕐 시간을 선택하세요
                         </h3>

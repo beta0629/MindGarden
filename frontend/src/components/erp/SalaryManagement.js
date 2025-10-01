@@ -770,12 +770,7 @@ const SalaryManagement = () => {
             )}
 
             {loading && (
-                <div className="salary-management-loading-overlay"
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 9999
-                }}>
+                <div className="salary-management-loading-overlay">
                     <LoadingSpinner 
                         text="급여 데이터를 처리하는 중..."
                         size="large"

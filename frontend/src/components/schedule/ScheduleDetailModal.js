@@ -324,23 +324,15 @@ const ScheduleDetailModal = ({
             <div className="schedule-detail-confirm-modal">
                 <h4>예약 확정</h4>
                 <p>내담자의 입금을 확인하셨습니까?</p>
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px', fontSize: 'var(--font-size-sm)' }}>
+                <div className="schedule-detail-admin-note-group">
+                    <label className="schedule-detail-admin-note-label">
                         관리자 메모 (선택사항):
                     </label>
                     <textarea
                         value={adminNote}
                         onChange={(e) => setAdminNote(e.target.value)}
                         placeholder="입금 확인 완료"
-                        style={{
-                            width: '100%',
-                            height: '60px',
-                            padding: '8px',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px',
-                            fontSize: 'var(--font-size-sm)',
-                            resize: 'vertical'
-                        }}
+                        className="schedule-detail-admin-note-textarea"
                     />
                 </div>
                 <div className="schedule-detail-confirm-buttons">
@@ -428,55 +420,11 @@ const ScheduleDetailModal = ({
                     <div className="action-buttons">
                         {isVacationEvent() ? (
                             // 휴가 이벤트인 경우 - 휴가 관련 정보 표시
-                            <div 
-                                ref={(el) => {
-                                    if (el) {
-                                        el.style.setProperty('text-align', 'center', 'important');
-                                        el.style.setProperty('display', 'flex', 'important');
-                                        el.style.setProperty('flex-direction', 'column', 'important');
-                                        el.style.setProperty('align-items', 'center', 'important');
-                                        el.style.setProperty('justify-content', 'center', 'important');
-                                    }
-                                }}
-                                style={{ 
-                                    padding: '20px',
-                                    backgroundColor: '#fef3c7',
-                                    borderRadius: '8px',
-                                    margin: '20px 0',
-                                    width: '100%'
-                                }}
-                            >
-                                <p 
-                                    ref={(el) => {
-                                        if (el) {
-                                            el.style.setProperty('text-align', 'center', 'important');
-                                            el.style.setProperty('display', 'block', 'important');
-                                            el.style.setProperty('width', '100%', 'important');
-                                        }
-                                    }}
-                                    style={{ 
-                                        fontSize: 'var(--font-size-base)',
-                                        fontWeight: 'bold',
-                                        color: '#f59e0b',
-                                        margin: '0 0 10px 0'
-                                    }}
-                                >
+                            <div className="schedule-detail-vacation-notice">
+                                <p className="schedule-detail-vacation-title">
                                     🏖️ 이 이벤트는 상담사의 휴가입니다.
                                 </p>
-                                <p 
-                                    ref={(el) => {
-                                        if (el) {
-                                            el.style.setProperty('text-align', 'center', 'important');
-                                            el.style.setProperty('display', 'block', 'important');
-                                            el.style.setProperty('width', '100%', 'important');
-                                        }
-                                    }}
-                                    style={{ 
-                                        fontSize: 'var(--font-size-sm)',
-                                        color: '#92400e',
-                                        margin: '0'
-                                    }}
-                                >
+                                <p className="schedule-detail-vacation-description">
                                     해당 시간대에는 상담이 불가능합니다.
                                 </p>
                             </div>

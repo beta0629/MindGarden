@@ -16,8 +16,8 @@
     box-sizing: border-box;
     /* 강력한 중앙 정렬을 위한 추가 속성 */
     margin: 0;
-    width: 100vw !important;
-    height: 100vh !important;
+    width: 100vw;
+    height: 100vh;
 }
 
 .schedule-modal {
@@ -31,12 +31,12 @@
     flex-direction: column;
     overflow: hidden;
     animation: modalSlideIn 0.3s ease;
-    margin: 0 auto !important; /* 중앙 정렬 확실히 */
+    margin: 0 auto; /* 중앙 정렬 확실히 */
     box-sizing: border-box;
     /* 강력한 중앙 정렬을 위한 추가 속성 */
-    position: relative !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
     flex-shrink: 0;
 }
 
@@ -404,9 +404,9 @@
 
 /* 상담사 선택 단계 레이아웃 상수 고정 */
 .schedule-modal-content .consultant-selection-step {
-    height: 600px !important;
-    max-height: 600px !important;
-    display: flex !important;
+    height: 600px;
+    max-height: 600px;
+    display: flex;
     flex-direction: column;
     overflow: hidden;
 }

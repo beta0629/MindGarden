@@ -709,7 +709,7 @@ const SalaryManagement = () => {
                                         )}
                                         <div className="detail-row">
                                             <span>국민연금 (4.5%):</span>
-                                            <span style={{color: '#dc3545'}}>
+                                            <span className="salary-management-national-pension">
                                                 -{formatCurrency(taxStatistics.nationalPension || 0)}
                                             </span>
                                         </div>

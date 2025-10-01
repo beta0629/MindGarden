@@ -1143,8 +1143,7 @@ const UnifiedScheduleComponent = ({
                         <div className="unified-schedule-modal-footer">
                             <button 
                                 onClick={() => setIsDateActionModalOpen(false)}
-                                style={{
-                                    background: '#6c757d',
+                                className="unified-schedule-modal-close-btn"
                                     color: 'white',
                                     border: 'none',
                                     padding: '12px 24px',

@@ -211,11 +211,6 @@ const ConsultantMessages = () => {
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="consultant-messages-filter-select"
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                color: '#2c3e50',
-                fontWeight: '500'
-              }}
             >
               <option value="ALL">전체 유형</option>
               {messageTypes.map(type => (

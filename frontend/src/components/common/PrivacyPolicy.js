@@ -1,5 +1,6 @@
 import React from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
+import './PrivacyPolicy.css';
 
 /**
  * 개인정보 처리방침 컴포넌트
@@ -11,53 +12,26 @@ import SimpleLayout from '../layout/SimpleLayout';
 const PrivacyPolicy = () => {
   return (
     <SimpleLayout>
-      <div style={{ 
-        maxWidth: '800px', 
-        margin: '0 auto', 
-        padding: '40px 20px',
-        lineHeight: '1.6',
-        color: '#333'
-      }}>
-        <h1 style={{
-          fontSize: 'var(--font-size-xxl)',
-          fontWeight: '700',
-          color: '#2c3e50',
-          marginBottom: '30px',
-          textAlign: 'center',
-          borderBottom: '2px solid #3498db',
-          paddingBottom: '20px'
-        }}>
+      <div className="privacy-policy-container">
+        <h1 className="privacy-policy-title">
           개인정보 처리방침
         </h1>
 
-        <div style={{
-          background: '#f8f9fa',
-          padding: '20px',
-          borderRadius: '8px',
-          marginBottom: '30px',
-          border: '1px solid #e9ecef'
-        }}>
-          <p style={{ margin: '0', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
+        <div className="privacy-policy-info-box">
+          <p className="privacy-policy-info-text">
             <strong>시행일자:</strong> 2025년 1월 17일<br />
             <strong>최종 수정일:</strong> 2025년 1월 17일
           </p>
         </div>
 
-        <div style={{ marginBottom: '30px' }}>
-          <h2 style={{
-            fontSize: 'var(--font-size-xl)',
-            fontWeight: '600',
-            color: '#2c3e50',
-            marginBottom: '15px',
-            paddingLeft: '10px',
-            borderLeft: '4px solid #3498db'
-          }}>
+        <div className="privacy-policy-section">
+          <h2 className="privacy-policy-section-title">
             1. 개인정보의 처리목적
           </h2>
-          <p style={{ marginBottom: '15px' }}>
+          <p className="privacy-policy-section-content">
             마인드가든(이하 "회사")은 다음의 목적을 위하여 개인정보를 처리합니다. 처리하고 있는 개인정보는 다음의 목적 이외의 용도로는 이용되지 않으며, 이용 목적이 변경되는 경우에는 개인정보보호법 제18조에 따라 별도의 동의를 받는 등 필요한 조치를 이행할 예정입니다.
           </p>
-          <ul style={{ paddingLeft: '20px' }}>
+          <ul className="privacy-policy-list">
             <li>회원 가입 및 관리: 회원 식별, 가입의사 확인, 본인확인, 회원자격 유지·관리</li>
             <li>상담 서비스 제공: 상담 예약, 상담 진행, 상담 기록 관리</li>
             <li>결제 및 환불 처리: 서비스 이용료 결제, 환불 처리</li>

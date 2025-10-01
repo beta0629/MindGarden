@@ -1,0 +1,171 @@
+/* PrivacyPolicy 스타일 - 새로운 디자인 시스템 적용 */
+
+.privacy-policy-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-xxl) var(--spacing-xl);
+  line-height: 1.6;
+  color: var(--ios-text-primary);
+}
+
+.privacy-policy-title {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+  border-bottom: 2px solid var(--ios-blue);
+  padding-bottom: var(--spacing-lg);
+}
+
+.privacy-policy-info-box {
+  background: var(--ios-bg-secondary);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  margin-bottom: var(--spacing-xl);
+  border: 1px solid var(--ios-border-light);
+}
+
+.privacy-policy-info-text {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+}
+
+.privacy-policy-section {
+  margin-bottom: var(--spacing-xxl);
+}
+
+.privacy-policy-section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-md);
+  padding-left: var(--spacing-sm);
+  border-left: 3px solid var(--ios-blue);
+}
+
+.privacy-policy-section-content {
+  font-size: var(--font-size-base);
+  color: var(--ios-text-secondary);
+  line-height: 1.7;
+  margin-bottom: var(--spacing-lg);
+}
+
+.privacy-policy-list {
+  margin: var(--spacing-md) 0;
+  padding-left: var(--spacing-lg);
+}
+
+.privacy-policy-list li {
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-base);
+  color: var(--ios-text-secondary);
+  line-height: 1.6;
+}
+
+.privacy-policy-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-lg) 0;
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.privacy-policy-table th,
+.privacy-policy-table td {
+  padding: var(--spacing-md);
+  text-align: left;
+  border-bottom: 1px solid var(--ios-border-light);
+}
+
+.privacy-policy-table th {
+  background: var(--ios-bg-secondary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.privacy-policy-table td {
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.privacy-policy-table tbody tr:hover {
+  background: var(--ios-bg-secondary);
+}
+
+.privacy-policy-highlight {
+  background: var(--ios-yellow-light);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  border-left: 3px solid var(--ios-yellow);
+  margin: var(--spacing-md) 0;
+}
+
+.privacy-policy-highlight-text {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--ios-yellow-dark);
+  font-weight: var(--font-weight-medium);
+}
+
+.privacy-policy-contact {
+  background: var(--ios-blue-light);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  margin-top: var(--spacing-xxl);
+  border: 1px solid var(--ios-blue);
+}
+
+.privacy-policy-contact-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-blue-dark);
+  margin-bottom: var(--spacing-sm);
+}
+
+.privacy-policy-contact-text {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  line-height: 1.6;
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .privacy-policy-container {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+  
+  .privacy-policy-title {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .privacy-policy-info-box {
+    padding: var(--spacing-md);
+  }
+  
+  .privacy-policy-section-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .privacy-policy-table {
+    font-size: var(--font-size-xs);
+  }
+  
+  .privacy-policy-table th,
+  .privacy-policy-table td {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .privacy-policy-container {
+    padding: var(--spacing-xl) var(--spacing-lg);
+  }
+}

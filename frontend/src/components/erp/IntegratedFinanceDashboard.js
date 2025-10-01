@@ -247,14 +247,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
   if (error) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '400px',
-        fontSize: 'var(--font-size-lg)',
-        color: '#e74c3c'
-      }}>
+      <div className="error-container">
         오류: {error}
       </div>
     );
@@ -263,40 +256,14 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   return (
     <div>
       <SimpleHeader />
-      <div style={{
-        padding: '20px',
-        backgroundColor: '#f8f9fa',
-        minHeight: '100vh',
-        fontFamily: 'Arial, sans-serif'
-      }}>
+      <div className="integrated-finance-container">
         {/* 헤더 */}
-      <div className="integrated-finance-header" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '40px',
-        padding: '30px',
-          background: 'linear-gradient(135deg, #a8d8ea 0%, #c7ceea 100%)',
-        borderRadius: '20px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-        color: 'white'
-      }}>
-        <div>
-          <h1 style={{
-            margin: 0,
-            fontSize: 'var(--font-size-xxxl)',
-            fontWeight: 'bold',
-            color: 'white',
-            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-          }}>
+      <div className="integrated-finance-header">
+        <div className="header-content">
+          <h1 className="header-title">
             📊 통합 회계 관리 시스템
           </h1>
-          <p style={{
-            margin: '8px 0 0 0',
-            fontSize: 'var(--font-size-lg)',
-            color: 'rgba(255,255,255,0.9)',
-            fontWeight: '300'
-          }}>
+          <p className="header-subtitle">
             {isHQUser 
               ? `${selectedBranch ? (selectedBranch === 'HQ' ? '전체 지점 통합' : `${selectedBranch} 지점`) : '지점을 선택하세요'} - 수입/지출 관리`
               : `${user?.branchCode || ''} 지점 - 수입/지출 관리`

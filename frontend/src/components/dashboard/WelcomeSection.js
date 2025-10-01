@@ -4,7 +4,8 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import { WELCOME_SECTION_CSS } from '../../constants/css';
 import { DASHBOARD_MESSAGES } from '../../constants/dashboard';
 import WeatherCard from './WeatherCard';
-// import './WelcomeSection.css'; // 인라인 스타일로 변경
+import '../../styles/main.css';
+import './WelcomeSection.css';
 
 const WelcomeSection = ({ user, currentTime, consultationData }) => {
   const [imageLoadError, setImageLoadError] = useState(false);

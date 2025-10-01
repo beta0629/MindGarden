@@ -4,6 +4,8 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import WeatherCard from './WeatherCard';
 import ConsultantListModal from '../common/ConsultantListModal';
 import ConsultationGuideModal from '../common/ConsultationGuideModal';
+import '../../styles/main.css';
+import './ClientPersonalizedMessages.css';
 
 /**
  * 내담자 상태에 따른 맞춤형 메시지 컴포넌트

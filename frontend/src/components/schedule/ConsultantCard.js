@@ -1,5 +1,7 @@
 import React from 'react';
 import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../constants/css-variables';
+import '../../styles/main.css';
+import './ConsultantCard.css';
 
 /**
  * 새로운 디자인의 상담사 카드 컴포넌트

@@ -1,0 +1,80 @@
+/* Homepage 스타일 - 새로운 디자인 시스템 적용 */
+
+.homepage {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  font-family: var(--font-family-ios);
+}
+
+.homepage__hero {
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(var(--blur-lg));
+}
+
+.homepage__title {
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--ios-text-primary);
+  margin: 0 0 var(--spacing-md) 0;
+  background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.homepage__subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--ios-text-secondary);
+  margin: 0 0 var(--spacing-xl) 0;
+  line-height: var(--line-height-relaxed);
+}
+
+.homepage__content {
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.homepage__section {
+  margin-bottom: var(--spacing-xxl);
+}
+
+.homepage__section-title {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  text-align: center;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+  .homepage__hero {
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+
+  .homepage__title {
+    font-size: var(--font-size-xxl);
+  }
+
+  .homepage__subtitle {
+    font-size: var(--font-size-base);
+  }
+
+  .homepage__content {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+
+  .homepage__section-title {
+    font-size: var(--font-size-lg);
+  }
+}
+
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .homepage__content {
+    padding: var(--spacing-xxl) var(--spacing-xl);
+  }
+}

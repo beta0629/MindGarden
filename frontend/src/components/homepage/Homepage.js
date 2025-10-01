@@ -7,6 +7,8 @@ import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
 import { getDashboardPath } from '../../utils/session';
 import notificationManager from '../../utils/notification';
+import '../../styles/main.css';
+import './Homepage.css';
 
 const TabletHomepage = () => {
   const navigate = useNavigate();

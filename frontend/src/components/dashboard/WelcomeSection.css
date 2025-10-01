@@ -1,260 +1,158 @@
-/* 웰컴 섹션 - 두 번째 스크린샷과 같은 깔끔한 카드 형태 */
+/* WelcomeSection 스타일 - 새로운 디자인 시스템 적용 */
+
 .welcome-section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-xxl);
+  font-family: var(--font-family-ios);
 }
 
-.welcome-card {
-  background: var(--dashboard-consultant-primary);
-  border-radius: 12px;
-  padding: 1.5rem;
-  color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-  margin-bottom: 1.5rem;
+.welcome-section__card {
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  border: 1px solid rgba(0, 122, 255, 0.2);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(var(--blur-md));
 }
 
-/* 내담자 대시보드 색상 */
-.dashboard-container.client .welcome-card {
-  background: var(--dashboard-client-primary);
-  box-shadow: 0 4px 12px rgba(168, 230, 168, 0.15);
-}
-
-.welcome-profile {
+.welcome-section__header {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
 }
 
-.profile-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+.welcome-section__greeting {
   display: flex;
   align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  flex-shrink: 0;
+  gap: var(--spacing-md);
 }
 
-.profile-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
+.welcome-section__icon {
+  font-size: 48px;
 }
 
-.welcome-content {
+.welcome-section__text {
   flex: 1;
 }
 
-.welcome-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+.welcome-section__title {
+  font-size: var(--font-size-xxl);
+  font-weight: var(--font-weight-bold);
+  color: var(--ios-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
 }
 
-.welcome-message {
-  font-size: 1rem;
-  margin: 0 0 0.5rem 0;
-  opacity: 0.9;
-  line-height: 1.4;
-}
-
-.welcome-time {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
-
-.welcome-time i {
-  font-size: 1rem;
-}
-
-.welcome-info-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.welcome-info-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e9ecef;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.welcome-info-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.welcome-info-card .info-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: var(--dashboard-consultant-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
-}
-
-/* 내담자 대시보드 아이콘 색상 */
-.dashboard-container.client .welcome-info-card .info-icon {
-  background: var(--dashboard-client-primary);
-  box-shadow: 0 2px 4px rgba(168, 230, 168, 0.2);
-}
-
-.welcome-info-card .info-icon i {
-  font-size: 1.2rem;
-  color: white;
-}
-
-.welcome-info-card .info-content {
-  position: relative;
-}
-
-.welcome-info-card .info-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0 0 0.5rem 0;
-  color: #2d3748;
-}
-
-.welcome-info-card .info-value {
-  font-size: 0.9rem;
-  color: #4a5568;
+.welcome-section__subtitle {
+  font-size: var(--font-size-base);
+  color: var(--ios-text-secondary);
   margin: 0;
-  line-height: 1.5;
 }
 
-/* 내담자 전용 - 오늘의 상담 큰 카드 */
-.today-consultation-card {
-  grid-column: 1 / -1; /* 전체 너비 사용 */
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+.welcome-section__time {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-tertiary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: var(--border-radius-full);
 }
 
-.today-consultation-card .info-icon {
-  background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
+.welcome-section__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
 }
 
-.today-consultation-card .info-icon i {
-  font-size: 1.8rem;
+.welcome-section__stat {
+  background: rgba(255, 255, 255, 0.7);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  text-align: center;
+  backdrop-filter: blur(var(--blur-sm));
+  transition: all var(--transition-fast);
 }
 
-.today-consultation-card .info-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 1rem;
+.welcome-section__stat:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
 }
 
-.today-consultation-card .info-value {
-  font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 1.5rem;
+.welcome-section__stat-value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--ios-blue);
+  margin: 0 0 var(--spacing-xxs) 0;
 }
 
-.today-consultation-card .consultation-details {
-  margin-top: 1rem;
-}
-
-.today-consultation-card .consultation-item {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 0.75rem;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.today-consultation-card .consultation-item:last-child {
-  margin-bottom: 0;
-}
-
-.today-consultation-card .consultation-time {
-  font-size: 1rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.5rem;
-}
-
-.today-consultation-card .consultation-consultant {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 0.25rem;
-}
-
-.today-consultation-card .consultation-status {
-  font-size: 0.8rem;
-  color: #a8f5a8;
-  font-weight: 500;
-  background: rgba(168, 245, 168, 0.2);
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  display: inline-block;
+.welcome-section__stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-secondary);
+  margin: 0;
 }
 
 /* 반응형 디자인 */
-@media (max-width: 768px) {
-  .welcome-card {
-    padding: 1rem;
+@media (max-width: 767px) {
+  .welcome-section__card {
+    padding: var(--spacing-md);
   }
-  
-  .welcome-profile {
-    gap: 0.75rem;
+
+  .welcome-section__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
   }
-  
-  .profile-avatar {
-    width: 50px;
-    height: 50px;
+
+  .welcome-section__greeting {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
   }
-  
-  .welcome-title {
-    font-size: 1.3rem;
+
+  .welcome-section__icon {
+    font-size: 36px;
   }
-  
-  .welcome-message {
-    font-size: 0.9rem;
+
+  .welcome-section__title {
+    font-size: var(--font-size-lg);
   }
-  
-  .welcome-info-cards {
-    grid-template-columns: 1fr;
+
+  .welcome-section__subtitle {
+    font-size: var(--font-size-sm);
   }
-  
-  .welcome-info-card {
-    padding: 1rem;
+
+  .welcome-section__time {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .welcome-section__stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+  }
+
+  .welcome-section__stat {
+    padding: var(--spacing-sm);
+  }
+
+  .welcome-section__stat-value {
+    font-size: var(--font-size-base);
+  }
+
+  .welcome-section__stat-label {
+    font-size: 10px;
   }
 }
 
-@media (max-width: 480px) {
-  .welcome-profile {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.5rem;
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .welcome-section__card {
+    padding: var(--spacing-lg);
   }
-  
-  .profile-avatar {
-    width: 60px;
-    height: 60px;
-  }
-  
-  .welcome-title {
-    font-size: 1.2rem;
+
+  .welcome-section__stats {
+    grid-template-columns: repeat(3, 1fr);
   }
 }

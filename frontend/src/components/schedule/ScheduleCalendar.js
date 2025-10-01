@@ -882,7 +882,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 <div key={`consultant-${consultant.id}-${index}`} className="legend-item">
                                     <span 
                                         className="legend-color" 
-                                        style={{ backgroundColor: getConsultantColor(consultant.id) }}
+                                        style={{ '--legend-color': getConsultantColor(consultant.id) }}
                                     ></span>
                                     <span>{consultant.name}</span>
                                 </div>
@@ -898,7 +898,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     <div key={option.value || `status-${index}`} className="legend-item">
                                         <span 
                                             className="legend-color" 
-                                            style={{ backgroundColor: option.color }}
+                                            style={{ '--legend-color': option.color }}
                                         ></span>
                                         <span className="legend-text">
                                             {option.icon && <span className="legend-icon">{option.icon}</span>}
@@ -908,7 +908,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 ))
                             ) : (
                                 <div key="loading-status" className="legend-item">
-                                    <span className="legend-color" style={{ backgroundColor: '#e5e7eb' }}></span>
+                                    <span className="legend-color legend-color--loading"></span>
                                     <span>로딩 중...</span>
                                 </div>
                             )}

@@ -125,6 +125,14 @@
     border-radius: 3px;
 }
 
+.legend-color {
+    background-color: var(--legend-color, var(--ios-border-light));
+}
+
+.legend-color--loading {
+    background-color: var(--ios-border-light);
+}
+
 .legend-color.booked {
     background-color: #007bff;
 }

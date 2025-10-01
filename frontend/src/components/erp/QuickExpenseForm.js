@@ -164,10 +164,6 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                   onClick={() => handleQuickExpense(expense.categoryCode, expense.subcategoryCode)}
                   disabled={loading}
                   className="quick-expense-category-btn"
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                    border: `2px solid ${loading ? '#ddd' : expense.color}`,
-                    transition: 'all 0.3s ease'
-                  }}
                   onMouseOver={(e) => {
                     if (!loading) {
                       e.target.style.transform = 'translateY(-2px)';

@@ -1008,14 +1008,13 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                     weekday: 'long'
                                 }) : ''}
                             </h3>
-                            <p style={{ margin: 0, color: '#6c757d' }}>원하는 작업을 선택하세요</p>
+                            <p className="schedule-calendar-modal-subtitle">원하는 작업을 선택하세요</p>
                         </div>
                         
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div className="schedule-calendar-modal-actions">
                             <button 
                                 onClick={handleScheduleClick}
-                                style={{
-                                    display: 'flex',
+                                className="schedule-calendar-modal-btn"
                                     alignItems: 'center',
                                     padding: '16px',
                                     border: '2px solid #e9ecef',

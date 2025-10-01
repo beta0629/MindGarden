@@ -261,8 +261,7 @@ const ConsultantMessages = () => {
                 {messages.length === 0 && (
                   <button 
                     onClick={() => setShowSendModal(true)}
-                    style={{
-                      marginTop: '15px',
+                    className="consultant-messages-empty-btn"
                       padding: '8px 16px',
                       borderRadius: '8px',
                       border: '1px solid #3498db',

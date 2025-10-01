@@ -1101,8 +1101,7 @@ const UnifiedScheduleComponent = ({
                         <div className="unified-schedule-modal-actions">
                             <button 
                                 onClick={handleScheduleClick}
-                                style={{
-                                    display: 'flex',
+                                className="unified-schedule-modal-btn"
                                     alignItems: 'center',
                                     padding: '16px',
                                     border: '2px solid #e9ecef',

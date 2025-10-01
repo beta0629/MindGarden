@@ -307,7 +307,7 @@ const ItemManagement = () => {
                   )}
                 </div>
                 
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="item-management-card-actions">
                   <ErpButton
                     variant="outline-primary"
                     size="small"

@@ -733,7 +733,7 @@ const SalaryManagement = () => {
                                         </div>
                                         <div className="detail-row total">
                                             <span>총 공제액:</span>
-                                            <span style={{color: '#dc3545', fontWeight: 'bold', fontSize: 'var(--font-size-base)'}}>
+                                            <span className="salary-management-total-deduction">
                                                 -{formatCurrency(taxStatistics.totalTaxAmount || 0)}
                                             </span>
                                         </div>
@@ -770,8 +770,7 @@ const SalaryManagement = () => {
             )}
 
             {loading && (
-                <div style={{ 
-                    position: 'fixed',
+                <div className="salary-management-loading-overlay"
                     top: 0,
                     left: 0,
                     width: '100%',

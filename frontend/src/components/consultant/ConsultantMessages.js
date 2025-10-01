@@ -311,12 +311,11 @@ const ConsultantMessages = () => {
                         {message.content}
                       </p>
                       
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#3498db', fontSize: '0.85rem', fontWeight: '500' }}>
+                      <div className="consultant-messages-footer">
+                        <span className="consultant-messages-client">
                           받는 사람: {message.clientName || '알 수 없음'}
                         </span>
-                        <span style={{ 
-                          color: message.isRead ? '#28a745' : '#6c757d', 
+                        <span className={`consultant-messages-status ${message.isRead ? 'read' : 'unread'}`} 
                           fontSize: '0.8rem',
                           display: 'flex',
                           alignItems: 'center',

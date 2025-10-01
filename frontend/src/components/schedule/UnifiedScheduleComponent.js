@@ -1177,8 +1177,7 @@ const UnifiedScheduleComponent = ({
 
             {/* 시간 선택 모달 */}
             {showTimeSelectionModal && selectedSchedule && (
-                <div style={{
-                    position: 'fixed',
+                <div className="unified-schedule-time-modal-overlay"
                     top: 0,
                     left: 0,
                     right: 0,
@@ -1189,8 +1188,7 @@ const UnifiedScheduleComponent = ({
                     justifyContent: 'center',
                     zIndex: 1000
                 }}>
-                    <div style={{
-                        backgroundColor: 'white',
+                    <div className="unified-schedule-time-modal-content"
                         borderRadius: '12px',
                         padding: '24px',
                         width: '600px',

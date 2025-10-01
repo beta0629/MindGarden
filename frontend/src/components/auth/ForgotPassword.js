@@ -70,8 +70,7 @@ const ForgotPassword = () => {
         
         <main className="tablet-main">
           <div className="tablet-container">
-            <div style={{
-              maxWidth: '480px',
+            <div className="forgot-password-form-container"
               margin: '80px auto',
               padding: '40px 32px',
               background: '#ffffff',
@@ -82,9 +81,8 @@ const ForgotPassword = () => {
               {!isEmailSent ? (
                 <>
                   {/* 헤더 */}
-                  <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                    <div style={{
-                      width: '64px',
+                  <div className="forgot-password-header">
+                    <div className="forgot-password-icon"
                       height: '64px',
                       backgroundColor: '#667eea',
                       borderRadius: '16px',

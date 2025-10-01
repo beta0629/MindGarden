@@ -130,8 +130,7 @@ const ResetPassword = () => {
           <SimpleHeader />
           <main className="tablet-main">
             <div className="tablet-container">
-              <div style={{
-                maxWidth: '480px',
+              <div className="reset-password-form-container"
                 margin: '80px auto',
                 padding: '60px 32px',
                 background: '#ffffff',
@@ -140,8 +139,7 @@ const ResetPassword = () => {
                 textAlign: 'center',
                 fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
               }}>
-                <div style={{
-                  width: '48px',
+                <div className="reset-password-icon"
                   height: '48px',
                   border: '4px solid #e2e8f0',
                   borderTop: '4px solid #667eea',

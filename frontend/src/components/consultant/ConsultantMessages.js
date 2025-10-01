@@ -303,9 +303,7 @@ const ConsultantMessages = () => {
                         </span>
                       </div>
                       
-                      <h4 style={{ 
-                        fontSize: '1.1rem', 
-                        fontWeight: '600', 
+                      <h4 className="consultant-messages-title" 
                         color: '#2c3e50', 
                         marginBottom: '8px',
                         marginTop: '0'

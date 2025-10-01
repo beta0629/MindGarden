@@ -400,8 +400,7 @@ const OverviewTab = ({ data }) => {
       <h2 className="finance-overview-title">📊 재무 개요</h2>
       
       {/* KPI 카드들 */}
-      <div className="finance-kpi-grid"
-      }}>
+      <div className="finance-kpi-grid">
         <KPICard
           title="총 아이템 수"
           value={data.erpStats?.totalItems || 0}

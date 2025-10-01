@@ -256,7 +256,7 @@ const ItemManagement = () => {
 
         {/* 성공/오류 메시지 */}
         {success && (
-          <div className="item-management-success"
+          <div className="item-management-success">
             border: '1px solid #74c0fc',
             borderRadius: '4px'
           }}>
@@ -265,7 +265,7 @@ const ItemManagement = () => {
         )}
 
         {error && (
-          <div className="item-management-success"
+          <div className="item-management-success">
             padding: '12px', 
             backgroundColor: '#f8d7da', 
             color: '#721c24',

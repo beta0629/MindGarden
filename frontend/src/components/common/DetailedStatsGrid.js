@@ -46,7 +46,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
     <div className="detailed-stats-grid">
       {/* 내담자 현황 */}
       <div className="detailed-stats-card detailed-stats-card--clients">
-        <div className="detailed-stats-card-header"
+        <div className="detailed-stats-card-header">
           alignItems: 'center',
           marginBottom: '20px'
         }}>
@@ -82,7 +82,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 내담자: {statistics.thisMonthClients || 0}명</p>
-        <div className="detailed-stats-card-header"
+        <div className="detailed-stats-card-header">
           alignItems: 'center',
           gap: '8px',
           marginBottom: '8px'
@@ -121,7 +121,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         border: '1px solid #D1C4E9',
         transition: 'all 0.3s ease'
       }}>
-        <div className="detailed-stats-card-header"
+        <div className="detailed-stats-card-header">
           alignItems: 'center',
           marginBottom: '20px'
         }}>
@@ -157,7 +157,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 상담사: {statistics.thisMonthConsultants || 0}명</p>
-        <div className="detailed-stats-card-header"
+        <div className="detailed-stats-card-header">
           alignItems: 'center',
           gap: '8px',
           marginBottom: '8px'
@@ -196,7 +196,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         border: '1px solid #C8E6C9',
         transition: 'all 0.3s ease'
       }}>
-        <div className="detailed-stats-card-header"
+        <div className="detailed-stats-card-header">
           alignItems: 'center',
           marginBottom: '20px'
         }}>
@@ -256,7 +256,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         border: '1px solid #FFCDD2',
         transition: 'all 0.3s ease'
       }}>
-        <div className="detailed-stats-card-header"
+        <div className="detailed-stats-card-header">
           alignItems: 'center',
           marginBottom: '20px'
         }}>
@@ -316,7 +316,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         border: '1px solid #FFCCBC',
         transition: 'all 0.3s ease'
       }}>
-        <div className="detailed-stats-card-header"
+        <div className="detailed-stats-card-header">
           alignItems: 'center',
           marginBottom: '20px'
         }}>
@@ -376,7 +376,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         border: '1px solid #BBDEFB',
         transition: 'all 0.3s ease'
       }}>
-        <div className="detailed-stats-card-header"
+        <div className="detailed-stats-card-header">
           alignItems: 'center',
           marginBottom: '20px'
         }}>

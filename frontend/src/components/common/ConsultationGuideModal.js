@@ -36,7 +36,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
         <div 
           className="consultation-guide-content"
         >
-          <div className="consultation-guide-intro"
+          <div className="consultation-guide-intro">
             <h3 
               style={{
                 margin: '0 0 16px 0',
@@ -111,7 +111,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
             </ul>
           </div>
 
-          <div className="consultation-guide-intro"
+          <div className="consultation-guide-intro">
             <h3 
               style={{
                 margin: '0 0 16px 0',
@@ -186,7 +186,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
             </ul>
           </div>
 
-          <div className="consultation-guide-intro"
+          <div className="consultation-guide-intro">
             <h3 
               style={{
                 margin: '0 0 16px 0',
@@ -261,7 +261,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
             </ul>
           </div>
 
-          <div className="consultation-guide-intro"
+          <div className="consultation-guide-intro">
             <h3 
               style={{
                 margin: '0 0 16px 0',

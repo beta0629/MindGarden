@@ -329,12 +329,6 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className="integrated-finance-tab-btn"
-              transition: 'all 0.3s ease',
-              boxShadow: activeTab === tab.key 
-                ? '0 4px 15px rgba(168,216,234,0.3)' 
-                : 'none',
-              transform: activeTab === tab.key ? 'translateY(-2px)' : 'none'
-            }}
           >
             {tab.label}
           </button>

@@ -76,7 +76,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         }}>
           {statistics.thisMonthClients || 0}
         </div>
-        <p className="detailed-stats-card-description"
+        <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 내담자: {statistics.thisMonthClients || 0}명</p>
@@ -149,7 +149,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         }}>
           {statistics.thisMonthConsultants || 0}
         </div>
-        <p className="detailed-stats-card-description"
+        <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 상담사: {statistics.thisMonthConsultants || 0}명</p>
@@ -222,7 +222,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         }}>
           {statistics.completionRate || 0}%
         </div>
-        <p className="detailed-stats-card-description"
+        <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 완료율</p>
@@ -280,7 +280,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         }}>
           {statistics.cancellationRate || 0}%
         </div>
-        <p className="detailed-stats-card-description"
+        <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 취소율</p>
@@ -338,7 +338,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         }}>
           {statistics.weeklySchedules || 0}
         </div>
-        <p className="detailed-stats-card-description"
+        <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>최근 7일 상담</p>
@@ -396,7 +396,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         }}>
           {statistics.totalToday || 0}
         </div>
-        <p className="detailed-stats-card-description"
+        <p className="detailed-stats-card-description">
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>오늘 상담</p>

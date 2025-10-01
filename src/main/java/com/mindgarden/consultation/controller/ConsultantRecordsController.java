@@ -12,7 +12,6 @@ import com.mindgarden.consultation.service.DynamicPermissionService;
 import com.mindgarden.consultation.service.ScheduleService;
 import com.mindgarden.consultation.service.UserService;
 import com.mindgarden.consultation.util.PermissionCheckUtils;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

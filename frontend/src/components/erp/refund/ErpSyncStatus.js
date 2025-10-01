@@ -1,5 +1,6 @@
 import React from 'react';
 import ErpCard from '../common/ErpCard';
+import './ErpSyncStatus.css';
 
 /**
  * ERP 동기화 상태 컴포넌트
@@ -7,97 +8,45 @@ import ErpCard from '../common/ErpCard';
 const ErpSyncStatus = ({ erpSyncStatus }) => {
     return (
         <ErpCard title="ERP 동기화 상태">
-            <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-                gap: '15px'
-            }}>
-                <div style={{
-                    padding: '15px',
-                    backgroundColor: erpSyncStatus.erpSystemAvailable ? '#d4edda' : '#f8d7da',
-                    borderRadius: '8px',
-                    border: `1px solid ${erpSyncStatus.erpSystemAvailable ? '#c3e6cb' : '#f5c6cb'}`
-                }}>
-                    <div style={{ 
-                        fontWeight: '600', 
-                        marginBottom: '5px',
-                        fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                    }}>
+            <div className="erp-sync-grid">
+                <div className={`erp-sync-card ${erpSyncStatus.erpSystemAvailable ? 'erp-sync-card--success' : 'erp-sync-card--error'}`}>
+                    <div className="erp-sync-label">
                         ERP 시스템 상태
                     </div>
-                    <div style={{ 
-                        fontSize: '1.2rem', 
-                        fontWeight: 'bold', 
-                        color: erpSyncStatus.erpSystemAvailable ? '#155724' : '#721c24'
-                    }}>
+                    <div className={`erp-sync-value ${erpSyncStatus.erpSystemAvailable ? 'erp-sync-value--success' : 'erp-sync-value--error'}`}>
                         {erpSyncStatus.erpSystemAvailable ? '정상 연결' : '연결 오류'}
                     </div>
                 </div>
 
-                <div style={{
-                    padding: '15px',
-                    backgroundColor: '#d1ecf1',
-                    borderRadius: '8px',
-                    border: '1px solid #bee5eb'
-                }}>
-                    <div style={{ 
-                        fontWeight: '600', 
-                        marginBottom: '5px',
-                        fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                    }}>
+                <div className="erp-sync-card erp-sync-card--info">
+                    <div className="erp-sync-label">
                         전송 성공률
                     </div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#0c5460' }}>
+                    <div className="erp-sync-value erp-sync-value--info">
                         {erpSyncStatus.erpSuccessRate || 0}%
                     </div>
                 </div>
 
-                <div style={{
-                    padding: '15px',
-                    backgroundColor: '#fff3cd',
-                    borderRadius: '8px',
-                    border: '1px solid #ffeaa7'
-                }}>
-                    <div style={{ 
-                        fontWeight: '600', 
-                        marginBottom: '5px',
-                        fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                    }}>
+                <div className="erp-sync-card erp-sync-card--warning">
+                    <div className="erp-sync-label">
                         대기 중
                     </div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#856404' }}>
+                    <div className="erp-sync-value erp-sync-value--warning">
                         {erpSyncStatus.pendingErpRequests || 0}건
                     </div>
                 </div>
 
-                <div style={{
-                    padding: '15px',
-                    backgroundColor: '#f8d7da',
-                    borderRadius: '8px',
-                    border: '1px solid #f5c6cb'
-                }}>
-                    <div style={{ 
-                        fontWeight: '600', 
-                        marginBottom: '5px',
-                        fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                    }}>
+                <div className="erp-sync-card erp-sync-card--error">
+                    <div className="erp-sync-label">
                         실패
                     </div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#721c24' }}>
+                    <div className="erp-sync-value erp-sync-value--error">
                         {erpSyncStatus.failedErpRequests || 0}건
                     </div>
                 </div>
             </div>
 
-            <div style={{ 
-                marginTop: '15px',
-                padding: '10px',
-                backgroundColor: '#e9ecef',
-                borderRadius: '6px',
-                fontSize: 'var(--font-size-sm)',
-                color: '#6c757d',
-                fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-            }}>
+            <div className="erp-sync-footer">
                 마지막 동기화: {erpSyncStatus.lastSyncTime || '정보 없음'}
             </div>
         </ErpCard>

@@ -1,0 +1,70 @@
+.erp-sync-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.erp-sync-card {
+    padding: 15px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.erp-sync-card--success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.erp-sync-card--error {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.erp-sync-card--info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.erp-sync-card--warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+}
+
+.erp-sync-label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+}
+
+.erp-sync-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.erp-sync-value--success {
+    color: #155724;
+}
+
+.erp-sync-value--error {
+    color: #721c24;
+}
+
+.erp-sync-value--info {
+    color: #0c5460;
+}
+
+.erp-sync-value--warning {
+    color: #856404;
+}
+
+.erp-sync-footer {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    font-size: var(--font-size-sm);
+    color: #6c757d;
+    font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+}
+

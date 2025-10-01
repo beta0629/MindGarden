@@ -214,30 +214,30 @@
 .consultant-form input[type="password"] {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid #e5e7eb !important;
-    border-radius: 8px !important;
-    background: #ffffff !important;
-    color: #374151 !important;
-    font-size: 14px !important;
-    font-family: inherit !important;
-    box-sizing: border-box !important;
-    transition: all 0.2s ease !important;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #374151;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
 }
 
 .consultant-form input[type="text"]:focus,
 .consultant-form input[type="email"]:focus,
 .consultant-form input[type="tel"]:focus,
 .consultant-form input[type="password"]:focus {
-    outline: none !important;
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .consultant-form input[type="text"]::placeholder,
 .consultant-form input[type="email"]::placeholder,
 .consultant-form input[type="tel"]::placeholder,
 .consultant-form input[type="password"]::placeholder {
-    color: #9ca3af !important;
+    color: #9ca3af;
 }
 
 .consultant-comp-consultant-grid {

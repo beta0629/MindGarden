@@ -163,8 +163,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                   key={index}
                   onClick={() => handleQuickExpense(expense.categoryCode, expense.subcategoryCode)}
                   disabled={loading}
-                  style={{
-                    padding: '20px',
+                  className="quick-expense-category-btn"
                     border: 'none',
                     borderRadius: '10px',
                     backgroundColor: loading ? '#f8f9fa' : 'white',
@@ -190,13 +189,13 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
                     }
                   }}
                 >
-                  <div style={{ fontSize: 'var(--font-size-xxl)', marginBottom: '8px' }}>
+                  <div className="quick-expense-category-icon">
                     {expense.icon}
                   </div>
-                  <div style={{ fontSize: 'var(--font-size-xs)', marginBottom: '4px' }}>
+                  <div className="quick-expense-category-name">
                     {expense.displayName}
                   </div>
-                  <div style={{ fontSize: 'var(--font-size-xs)', opacity: 0.7 }}>
+                  <div className="quick-expense-category-subname">
                     {expense.subDisplayName}
                   </div>
                 </button>

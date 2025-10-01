@@ -348,8 +348,7 @@ const TabletHomepage = () => {
 
 
             <div className={`services-section-mobile ${isLoaded ? 'loaded' : ''}`}>
-              <div style={{
-                textAlign: 'center',
+              <div className="services-section-mobile-header">
                 marginBottom: '60px'
               }}>
                 <h2 className="services-title-mobile">

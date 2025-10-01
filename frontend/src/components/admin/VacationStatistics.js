@@ -310,13 +310,8 @@ const VacationStatistics = ({ className = "" }) => {
                                                         key={type}
                                                         className="type-badge"
                                                         data-bg-color={`${consultantColor}20`}
-                                                            color: consultantColor,
-                                                            border: `1px solid ${consultantColor}`,
-                                                            fontWeight: '500',
-                                                            borderRadius: '12px',
-                                                            padding: '4px 8px',
-                                                            fontSize: 'var(--font-size-xs)',
-                                                            margin: '2px',
+                                                        data-text-color={consultantColor}
+                                                        data-border-color={consultantColor}
                                                             display: 'inline-block'
                                                         }}
                                                         title={`${getVacationTypeKorean(type)}: ${days.toFixed(1)}일`}
@@ -332,13 +327,8 @@ const VacationStatistics = ({ className = "" }) => {
                                                         key={type}
                                                         className="type-badge"
                                                         data-bg-color={`${consultantColor}20`}
-                                                            color: consultantColor,
-                                                            border: `1px solid ${consultantColor}`,
-                                                            fontWeight: '500',
-                                                            borderRadius: '12px',
-                                                            padding: '4px 8px',
-                                                            fontSize: 'var(--font-size-xs)',
-                                                            margin: '2px',
+                                                        data-text-color={consultantColor}
+                                                        data-border-color={consultantColor}
                                                             display: 'inline-block'
                                                         }}
                                                     >

@@ -100,7 +100,7 @@
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: #666;
   z-index: 2;
   pointer-events: none;

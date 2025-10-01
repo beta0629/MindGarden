@@ -73,12 +73,12 @@
 
 .schedule-modal-header h3 {
     margin: 0;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     font-weight: 600;
 }
 
 .selected-date {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 500;
     opacity: 0.95;
     text-align: center;
@@ -92,7 +92,7 @@
     background: none;
     border: none;
     color: white;
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     cursor: pointer;
     padding: var(--spacing-xs);
     border-radius: 4px;
@@ -133,7 +133,7 @@
     padding: var(--spacing-sm) var(--spacing-lg);
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -190,7 +190,7 @@
 .schedule-modal .form-group label {
     display: block;
     margin-bottom: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     color: #495057;
 }
@@ -202,7 +202,7 @@
     padding: var(--spacing-sm) var(--spacing-sm);
     border: 1px solid #ced4da;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: all 0.2s ease;
     background-color: #fff;
 }
@@ -239,7 +239,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .summary-item:last-child {
@@ -263,7 +263,7 @@
 .consultation-type-selector label {
     display: block;
     margin-bottom: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     color: #495057;
 }
@@ -273,7 +273,7 @@
     padding: var(--spacing-sm) var(--spacing-sm);
     border: 1px solid #ced4da;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background-color: #fff;
     cursor: pointer;
 }
@@ -330,18 +330,18 @@
     }
     
     .schedule-modal-header h3 {
-        font-size: 18px;
+        font-size: var(--font-size-lg);
     }
     
     .selected-date {
-        font-size: 14px;
+        font-size: var(--font-size-sm);
         text-align: center;
     }
     
     .schedule-modal-close-btn {
         top: 12px;
         right: 16px;
-        font-size: 20px;
+        font-size: var(--font-size-xl);
         width: 28px;
         height: 28px;
     }
@@ -454,7 +454,7 @@
     }
     
     .selected-date {
-        font-size: 12px;
+        font-size: var(--font-size-xs);
         text-align: center;
     }
 }

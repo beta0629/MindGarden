@@ -524,46 +524,15 @@ const StatisticsDashboard = ({ userRole = 'ADMIN', userId = null }) => { // 기�
   };
 
   return (
-    <div style={{
-      padding: '24px',
-      backgroundColor: '#f8f9fa',
-      minHeight: '100vh'
-    }}>
+    <div className="statistics-dashboard-container">
       {/* 헤더 */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: '32px',
-        paddingBottom: '16px',
-        borderBottom: '2px solid #e9ecef'
-      }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px'
-        }}>
-          <h1 style={{
-            margin: '0',
-            fontSize: 'var(--font-size-xxxl)',
-            fontWeight: '700',
-            color: '#2c3e50',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <i className="bi bi-graph-up" style={{
-              color: '#4CAF50',
-              fontSize: 'var(--font-size-xxl)'
-            }}></i>
+      <div className="statistics-dashboard-header">
+        <div className="statistics-dashboard-title-section">
+          <h1 className="statistics-dashboard-title">
+            <i className="bi bi-graph-up statistics-dashboard-icon"></i>
             통계 대시보드
           </h1>
-          <p style={{
-            margin: '0',
-            fontSize: 'var(--font-size-base)',
-            color: '#6c757d',
-            fontWeight: '400'
-          }}>
+          <p className="statistics-dashboard-subtitle">
             상담소 전체 통계 및 상담 내역을 한눈에 확인하세요
           </p>
         </div>

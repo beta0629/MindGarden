@@ -1,12 +1,48 @@
 /* StatisticsDashboard 스타일 - 새로운 디자인 시스템 적용 */
 
-.statistics-dashboard {
-    padding: var(--spacing-lg);
-    max-width: 1400px;
-    margin: 0 auto;
-    background: var(--ios-bg-primary);
+.statistics-dashboard,
+.statistics-dashboard-container {
+    padding: var(--spacing-xl);
+    background-color: var(--ios-bg-secondary);
     min-height: 100vh;
-    font-family: var(--font-family-ios);
+    font-family: var(--font-family-base);
+}
+
+.statistics-dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-xxl);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--ios-border-light);
+}
+
+.statistics-dashboard-title-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.statistics-dashboard-title {
+    margin: 0;
+    font-size: var(--font-size-xxxl);
+    font-weight: var(--font-weight-bold);
+    color: var(--ios-text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.statistics-dashboard-icon {
+    color: var(--ios-green);
+    font-size: var(--font-size-xxl);
+}
+
+.statistics-dashboard-subtitle {
+    margin: 0;
+    font-size: var(--font-size-base);
+    color: var(--ios-text-secondary);
+    font-weight: var(--font-weight-regular);
 }
 
 .statistics-dashboard__header {

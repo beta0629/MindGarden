@@ -312,8 +312,6 @@ const VacationStatistics = ({ className = "" }) => {
                                                         data-bg-color={`${consultantColor}20`}
                                                         data-text-color={consultantColor}
                                                         data-border-color={consultantColor}
-                                                            display: 'inline-block'
-                                                        }}
                                                         title={`${getVacationTypeKorean(type)}: ${days.toFixed(1)}일`}
                                                     >
                                                         {getVacationTypeKorean(type)} {days.toFixed(1)}일

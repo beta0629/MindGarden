@@ -40,7 +40,7 @@
 
 .page-header h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: var(--font-size-xxl);
   font-weight: 600;
   color: #2c3e50;
   display: flex;
@@ -142,12 +142,12 @@
 }
 
 .card-icon i {
-  font-size: 24px;
+  font-size: var(--font-size-xxl);
 }
 
 .card-content h3 {
   margin: 0 0 8px 0;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: #6c757d;
   text-transform: uppercase;
@@ -163,7 +163,7 @@
 }
 
 .card-content .unit {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: #6c757d;
   margin-left: 4px;
 }
@@ -186,13 +186,13 @@
 
 .progress-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: #2c3e50;
 }
 
 .progress-text {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   color: #28a745;
 }
@@ -293,7 +293,7 @@
 
 .package-header h4 {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   color: #2c3e50;
 }
@@ -301,7 +301,7 @@
 .package-status {
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
   background: #d4edda;
   color: #155724;
@@ -330,14 +330,14 @@
 
 
 .detail-item .label {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: #6c757d;
   margin-bottom: 4px;
   font-weight: 500;
 }
 
 .detail-item .value {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 700;
   color: #2c3e50;
 }
@@ -381,7 +381,7 @@
 
 .consultation-history h3 i {
   color: #007bff;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
 }
 
 .consultation-list {
@@ -416,7 +416,7 @@
 }
 
 .consultation-date {
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   color: #2c3e50;
   display: flex;
@@ -426,7 +426,7 @@
 
 .consultation-date i {
   color: #007bff;
-  font-size: 16px;
+  font-size: var(--font-size-base);
 }
 
 .consultation-content {
@@ -434,7 +434,7 @@
 }
 
 .consultation-title {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: #2c3e50;
   margin-bottom: 12px;
@@ -445,7 +445,7 @@
 
 .consultation-title i {
   color: #28a745;
-  font-size: 16px;
+  font-size: var(--font-size-base);
 }
 
 .consultation-details {
@@ -455,7 +455,7 @@
 }
 
 .consultation-duration {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: #6c757d;
   display: flex;
   align-items: center;
@@ -467,11 +467,11 @@
 
 .consultation-duration i {
   color: #6c757d;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .consultation-status {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 20px;
@@ -488,7 +488,7 @@
   padding: 8px;
   background: #f8f9fa;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: #6c757d;
 }
 
@@ -518,7 +518,7 @@
 
 .no-consultations p {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 500;
 }
 
@@ -535,7 +535,7 @@
   }
   
   .page-header h1 {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
   }
   
   .session-summary {

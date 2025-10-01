@@ -1499,7 +1499,7 @@ html {
 
 /* 태블릿 로딩 텍스트 - 고정 */
 .tablet-loading-text {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   font-weight: 500;
   margin-top: 8px;

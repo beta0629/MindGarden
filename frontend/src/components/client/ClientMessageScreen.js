@@ -160,7 +160,7 @@ const ClientMessageScreen = () => {
     badge: {
       padding: '2px 8px',
       borderRadius: '12px',
-      fontSize: '10px',
+      fontSize: 'var(--font-size-xs)',
       fontWeight: '600',
       textTransform: 'uppercase',
       letterSpacing: '0.5px'
@@ -304,17 +304,17 @@ const ClientMessageScreen = () => {
       color: '#6c757d'
     },
     emptyIcon: {
-      fontSize: '48px',
+      fontSize: 'var(--font-size-xxxl)',
       marginBottom: '16px'
     },
     emptyTitle: {
-      fontSize: '18px',
+      fontSize: 'var(--font-size-lg)',
       fontWeight: '600',
       marginBottom: '8px',
       color: '#495057'
     },
     emptyMessage: {
-      fontSize: '14px'
+      fontSize: 'var(--font-size-sm)'
     }
   };
 

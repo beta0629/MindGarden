@@ -512,7 +512,7 @@ const ClientSessionManagement = () => {
         }}>
           <h3 style={{
             margin: '0 0 20px 0',
-            fontSize: '20px',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: '600',
             color: '#2c3e50',
             display: 'flex',
@@ -556,11 +556,11 @@ const ClientSessionManagement = () => {
                       gap: '8px',
                       marginBottom: '4px'
                     }}>
-                      <i className="bi bi-calendar3" style={{ color: '#007bff', fontSize: '16px' }}></i>
+                      <i className="bi bi-calendar3" style={{ color: '#007bff', fontSize: 'var(--font-size-base)' }}></i>
                       {formatDate(schedule.date)}
                     </div>
                     <div style={{
-                      fontSize: '14px',
+                      fontSize: 'var(--font-size-sm)',
                       color: getStatusColor(schedule.status === '완료'),
                       fontWeight: '500'
                     }}>
@@ -574,14 +574,14 @@ const ClientSessionManagement = () => {
                       gap: '8px',
                       marginBottom: '4px'
                     }}>
-                      <i className="bi bi-chat-dots" style={{ color: '#28a745', fontSize: '16px' }}></i>
+                      <i className="bi bi-chat-dots" style={{ color: '#28a745', fontSize: 'var(--font-size-base)' }}></i>
                       {schedule.title || '상담'}
                     </div>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '16px',
-                      fontSize: '14px',
+                      fontSize: 'var(--font-size-sm)',
                       color: '#6c757d'
                     }}>
                       <span style={{
@@ -589,7 +589,7 @@ const ClientSessionManagement = () => {
                         alignItems: 'center',
                         gap: '4px'
                       }}>
-                        <i className="bi bi-clock" style={{ fontSize: '12px' }}></i>
+                        <i className="bi bi-clock" style={{ fontSize: 'var(--font-size-xs)' }}></i>
                         {schedule.startTime} - {schedule.endTime}
                       </span>
                     </div>
@@ -606,8 +606,8 @@ const ClientSessionManagement = () => {
               borderRadius: '8px',
               border: '2px dashed #dee2e6'
             }}>
-              <i className="bi bi-calendar-x" style={{ fontSize: '64px', marginBottom: '20px', color: '#dee2e6' }}></i>
-              <p style={{ margin: '0', fontSize: '18px', fontWeight: '500' }}>아직 상담 일정이 없습니다.</p>
+              <i className="bi bi-calendar-x" style={{ fontSize: 'var(--font-size-xxxl)', marginBottom: '20px', color: '#dee2e6' }}></i>
+              <p style={{ margin: '0', fontSize: 'var(--font-size-lg)', fontWeight: '500' }}>아직 상담 일정이 없습니다.</p>
             </div>
           )}
         </div>

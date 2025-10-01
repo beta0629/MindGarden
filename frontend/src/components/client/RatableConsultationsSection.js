@@ -199,7 +199,7 @@ const RatableConsultationsSection = () => {
                             }}>
                                 <div>
                                     <div style={{
-                                        fontSize: '15px',
+                                        fontSize: 'var(--font-size-md)',
                                         fontWeight: '500',
                                         color: '#333',
                                         marginBottom: '4px'
@@ -207,7 +207,7 @@ const RatableConsultationsSection = () => {
                                         {schedule.consultantName}님과의 상담
                                     </div>
                                     <div style={{
-                                        fontSize: '13px',
+                                        fontSize: 'var(--font-size-sm)',
                                         color: '#666'
                                     }}>
                                         {schedule.consultationDate} {schedule.consultationTime}
@@ -228,7 +228,7 @@ const RatableConsultationsSection = () => {
                                         border: 'none',
                                         backgroundColor: '#ff6b9d',
                                         color: '#ffffff',
-                                        fontSize: '13px',
+                                        fontSize: 'var(--font-size-sm)',
                                         fontWeight: '500',
                                         cursor: 'pointer',
                                         transition: 'all 0.2s ease',

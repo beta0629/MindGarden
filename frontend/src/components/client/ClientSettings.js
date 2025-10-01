@@ -257,7 +257,7 @@ const ClientSettings = () => {
                   borderBottom: '1px solid #dee2e6'
                 }}>
                   <div>
-                    <h4 style={{ margin: '0', fontSize: '16px', color: '#495057' }}>프라이버시 모드</h4>
+                    <h4 style={{ margin: '0', fontSize: 'var(--font-size-base)', color: '#495057' }}>프라이버시 모드</h4>
                     <p style={{ margin: '4px 0 0 0', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
                       상담사가 내 정보를 볼 수 없도록 제한합니다
                     </p>
@@ -276,7 +276,7 @@ const ClientSettings = () => {
                 <div style={{
                   padding: '12px 0'
                 }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '16px', color: '#495057' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: 'var(--font-size-base)', color: '#495057' }}>
                     언어 설정
                   </label>
                   <select

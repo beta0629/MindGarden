@@ -319,7 +319,7 @@ const ConsolidatedFinancial = () => {
                     <Col md={3}>
                         <Card className="h-100 border-success">
                             <Card.Body className="text-center">
-                                <FaArrowUp className="text-success mb-2" style={{ fontSize: '2rem' }} />
+                                <FaArrowUp className="text-success mb-2 consolidated-stat-icon" />
                                 <h3 className="text-success">{formatCurrency(consolidatedData.summary.totalRevenue)}</h3>
                                 <p className="text-muted mb-0">총 수익</p>
                             </Card.Body>
@@ -328,7 +328,7 @@ const ConsolidatedFinancial = () => {
                     <Col md={3}>
                         <Card className="h-100 border-danger">
                             <Card.Body className="text-center">
-                                <FaArrowDown className="text-danger mb-2" style={{ fontSize: '2rem' }} />
+                                <FaArrowDown className="text-danger mb-2 consolidated-stat-icon" />
                                 <h3 className="text-danger">{formatCurrency(consolidatedData.summary.totalExpense)}</h3>
                                 <p className="text-muted mb-0">총 지출</p>
                             </Card.Body>
@@ -337,7 +337,7 @@ const ConsolidatedFinancial = () => {
                     <Col md={3}>
                         <Card className="h-100 border-primary">
                             <Card.Body className="text-center">
-                                <FaDollarSign className="text-primary mb-2" style={{ fontSize: '2rem' }} />
+                                <FaDollarSign className="text-primary mb-2 consolidated-stat-icon" />
                                 <h3 className={`${consolidatedData.summary.netProfit >= 0 ? 'text-success' : 'text-danger'}`}>
                                     {formatCurrency(consolidatedData.summary.netProfit)}
                                 </h3>
@@ -348,7 +348,7 @@ const ConsolidatedFinancial = () => {
                     <Col md={3}>
                         <Card className="h-100 border-info">
                             <Card.Body className="text-center">
-                                <FaChartLine className="text-info mb-2" style={{ fontSize: '2rem' }} />
+                                <FaChartLine className="text-info mb-2 consolidated-stat-icon" />
                                 <h3 className={`${consolidatedData.summary.profitMargin >= 0 ? 'text-success' : 'text-danger'}`}>
                                     {consolidatedData.summary.profitMargin.toFixed(1)}%
                                 </h3>
@@ -401,7 +401,7 @@ const ConsolidatedFinancial = () => {
                                     />
                                 ) : (
                                     <div className="text-center py-5">
-                                        <FaChartLine className="text-muted mb-3" style={{ fontSize: '3rem' }} />
+                                        <FaChartLine className="text-muted mb-3 consolidated-empty-icon" />
                                         <h5 className="text-muted">트렌드 데이터가 없습니다</h5>
                                         <p className="text-muted">선택한 기간에 대한 월별 트렌드 데이터가 없습니다.</p>
                                     </div>
@@ -422,7 +422,7 @@ const ConsolidatedFinancial = () => {
                                 </h5>
                             </Card.Header>
                             <Card.Body>
-                                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                <div className="consolidated-branch-table-container">
                                     <Table striped bordered hover responsive>
                                         <thead>
                                             <tr>
@@ -482,10 +482,10 @@ const ConsolidatedFinancial = () => {
                                                         <Badge bg="primary">{item.percentage}%</Badge>
                                                     </div>
                                                     <p className="text-muted mb-0">{formatCurrency(item.amount)}</p>
-                                                    <div className="progress mt-2" style={{ height: '8px' }}>
+                                                    <div className="progress mt-2 consolidated-category-progress">
                                                         <div 
                                                             className="progress-bar" 
-                                                            style={{ width: `${item.percentage}%` }}
+                                                            data-width={item.percentage}
                                                         ></div>
                                                     </div>
                                                 </div>
@@ -494,7 +494,7 @@ const ConsolidatedFinancial = () => {
                                     </Row>
                                 ) : (
                                     <div className="text-center py-5">
-                                        <FaChartLine className="text-muted mb-3" style={{ fontSize: '3rem' }} />
+                                        <FaChartLine className="text-muted mb-3 consolidated-empty-icon" />
                                         <h5 className="text-muted">분석 데이터가 없습니다</h5>
                                         <p className="text-muted">카테고리별 지출 분석 데이터가 없습니다.</p>
                                     </div>

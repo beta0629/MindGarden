@@ -15,7 +15,7 @@
     display: flex;
     align-items: flex-start;
     gap: 15px;
-    padding: 20px;
+    padding: var(--spacing-lg);
     border: 2px solid #e1e8ed;
     border-radius: 12px;
     cursor: pointer;
@@ -106,7 +106,7 @@
 
 .consultant-status-badge {
     display: inline-block;
-    padding: 2px 8px;
+    padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: 12px;
     font-size: 11px;
     font-weight: 500;
@@ -142,7 +142,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: var(--spacing-md);
     font-size: 14px;
     color: #6b7280;
     text-align: center;

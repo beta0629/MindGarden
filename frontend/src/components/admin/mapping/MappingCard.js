@@ -55,7 +55,6 @@ const MappingCard = ({
 
     return (
         <div className="mapping-card-mobile"
-        }}
         onMouseEnter={(e) => {
             e.target.style.transform = 'translateY(-2px)';
             e.target.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)';

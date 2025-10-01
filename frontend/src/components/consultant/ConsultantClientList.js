@@ -321,11 +321,6 @@ const ConsultantClientList = () => {
       {/* 검색 및 필터 */}
       <div 
         className="consultant-client-list-controls"
-          padding: '20px',
-          borderRadius: '15px',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-          border: '1px solid #e9ecef'
-        }}
       >
         <div className="search-section" style={{ flex: '1', minWidth: '300px' }}>
           <div 

@@ -21,8 +21,7 @@ const RefundHistoryTable = ({ refundHistory, pageInfo, onPageChange }) => {
         const config = statusConfig[status] || { text: '알수없음', color: '#6c757d' };
 
         return (
-            <span className="refund-history-table-status"
-            }}>
+            <span className="refund-history-table-status">
                 {config.text}
             </span>
         );

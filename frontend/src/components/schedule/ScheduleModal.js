@@ -362,12 +362,7 @@ const ScheduleModalNew = ({
     if (!isOpen) return null;
 
     return (
-        <div className={COMPONENT_CSS.SCHEDULE_MODAL.OVERLAY} onClick={handleClose}
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-        }}>
+        <div className={COMPONENT_CSS.SCHEDULE_MODAL.OVERLAY} onClick={handleClose}>
             <div className={COMPONENT_CSS.SCHEDULE_MODAL.MODAL} onClick={(e) => e.stopPropagation()} style={{
                 backgroundColor: 'white',
                 borderRadius: '12px',

@@ -158,9 +158,7 @@ const ClientSessionManagement = () => {
     <SimpleLayout title="회기 관리">
       <div className="client-session-management">
         {/* 페이지 헤드라인 */}
-        <div className="client-session-management-header"
-          boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)'
-        }}>
+        <div className="client-session-management-header">
           <h1 style={{
             margin: '0 0 12px 0',
             fontSize: 'var(--font-size-xxxl)',

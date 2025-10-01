@@ -171,8 +171,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
       </div>
 
       {/* 완료율 */}
-      <div className="detailed-stats-completion-rate"
-      }}>
+      <div className="detailed-stats-completion-rate">
         <div className="detailed-stats-card-header">
           alignItems: 'center',
           marginBottom: '20px'

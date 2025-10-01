@@ -201,11 +201,7 @@ const IntegrationTest = () => {
   return (
     <SimpleLayout>
       <div className="integration-test-container">
-        <div className="integration-test-header"
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e5e7eb'
-        }}>
+        <div className="integration-test-header">
           <h1 style={{
             margin: 0,
             fontSize: 'var(--font-size-xxl)',

@@ -91,11 +91,6 @@ const ConsultantRatingModal = ({ isOpen, onClose, schedule, onRatingComplete }) 
         <>
             {/* 배경 오버레이 */}
             <div className="consultant-rating-modal-overlay"
-                    zIndex: 1000,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}
                 onClick={onClose}
             >
                 {/* 모달 컨테이너 */}

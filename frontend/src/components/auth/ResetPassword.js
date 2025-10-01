@@ -131,9 +131,7 @@ const ResetPassword = () => {
           <main className="tablet-main">
             <div className="tablet-container">
               <div className="reset-password-form-container">
-                <div className="reset-password-icon"
-                  animation: 'spin 1s linear infinite'
-                }} />
+                <div className="reset-password-icon" />
                 <p style={{
                   fontSize: 'var(--font-size-base)',
                   color: '#718096'

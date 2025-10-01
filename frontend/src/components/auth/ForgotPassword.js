@@ -75,12 +75,7 @@ const ForgotPassword = () => {
                 <>
                   {/* 헤더 */}
                   <div className="forgot-password-header">
-                    <div className="forgot-password-icon"
-                      justifyContent: 'center',
-                      fontSize: 'var(--font-size-xxl)',
-                      margin: '0 auto 24px',
-                      color: 'white'
-                    }}>
+                    <div className="forgot-password-icon">
                       🔑
                     </div>
                     <h1 style={{

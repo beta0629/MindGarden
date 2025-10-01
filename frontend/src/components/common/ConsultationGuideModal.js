@@ -19,11 +19,6 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
           </h2>
           <button 
             className="consultation-guide-close-btn"
-              border: 'none',
-              fontSize: 'var(--font-size-xl)',
-              color: '#6c757d',
-              cursor: 'pointer',
-              padding: '8px',
               borderRadius: '8px',
               transition: 'all 0.3s ease'
             }}
@@ -43,11 +38,8 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
 
         <div 
           className="consultation-guide-content"
-            overflowY: 'auto',
-            flex: 1
-          }}
         >
-          <div style={{ marginBottom: '32px' }}>
+          <div className="consultation-guide-intro"
             <h3 
               style={{
                 margin: '0 0 16px 0',
@@ -122,7 +114,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
             </ul>
           </div>
 
-          <div style={{ marginBottom: '32px' }}>
+          <div className="consultation-guide-intro"
             <h3 
               style={{
                 margin: '0 0 16px 0',
@@ -197,7 +189,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
             </ul>
           </div>
 
-          <div style={{ marginBottom: '32px' }}>
+          <div className="consultation-guide-intro"
             <h3 
               style={{
                 margin: '0 0 16px 0',
@@ -272,7 +264,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
             </ul>
           </div>
 
-          <div style={{ marginBottom: '32px' }}>
+          <div className="consultation-guide-intro"
             <h3 
               style={{
                 margin: '0 0 16px 0',

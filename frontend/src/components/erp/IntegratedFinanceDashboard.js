@@ -400,8 +400,7 @@ const OverviewTab = ({ data }) => {
       <h2 className="finance-overview-title">📊 재무 개요</h2>
       
       {/* KPI 카드들 */}
-      <div style={{
-        display: 'grid',
+      <div className="finance-kpi-grid"
         gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
         gap: '20px',
         marginBottom: '30px'
@@ -437,18 +436,8 @@ const OverviewTab = ({ data }) => {
       </div>
       
       {/* 매핑 연동 상태 섹션 */}
-      <div className="finance-mapping-section"
-        borderRadius: '12px',
-        padding: '20px',
-        marginBottom: '30px',
-        border: '1px solid #e9ecef'
-      }}>
-        <h3 className="finance-mapping-title" 
-          color: '#495057',
-          fontSize: 'var(--font-size-lg)',
-          fontWeight: '600',
-          display: 'flex',
-          alignItems: 'center',
+      <div className="finance-mapping-section">
+        <h3 className="finance-mapping-title"
           gap: '8px'
         }}>
           <i className="bi bi-link-45deg" style={{ color: '#007bff' }}></i>
@@ -540,8 +529,7 @@ const OverviewTab = ({ data }) => {
       </div>
 
       {/* 수입/지출 요약 */}
-      <div style={{
-        display: 'grid',
+      <div className="finance-kpi-grid"
         gridTemplateColumns: '1fr 1fr',
         gap: '24px',
         marginBottom: '40px'
@@ -1002,8 +990,7 @@ const DailyReportTab = ({ period }) => {
     <div>
       <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>📅 일간 재무 리포트</h2>
       
-      <div style={{
-        display: 'grid',
+      <div className="finance-kpi-grid"
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '20px',
         marginBottom: '30px'
@@ -1146,8 +1133,7 @@ const MonthlyReportTab = ({ period }) => {
     <div>
       <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>📊 월간 재무 리포트</h2>
       
-      <div style={{
-        display: 'grid',
+      <div className="finance-kpi-grid"
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '20px',
         marginBottom: '30px'
@@ -1292,8 +1278,7 @@ const YearlyReportTab = ({ period }) => {
     <div>
       <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>📈 년간 재무 리포트</h2>
       
-      <div style={{
-        display: 'grid',
+      <div className="finance-kpi-grid"
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '20px',
         marginBottom: '30px'

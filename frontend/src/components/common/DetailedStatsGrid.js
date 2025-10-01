@@ -46,13 +46,11 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
     <div className="detailed-stats-grid">
       {/* 내담자 현황 */}
       <div className="detailed-stats-card detailed-stats-card--clients">
-        <div style={{
-          display: 'flex',
+        <div className="detailed-stats-card-header"
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div style={{
-            width: '48px',
+          <div className="detailed-stats-card-icon"
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#7B68EE',
@@ -65,8 +63,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-people-fill detailed-stats-card-icon-svg"></i>
           </div>
-          <h3 style={{
-            margin: '0',
+          <h3 className="detailed-stats-card-title"
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
@@ -85,8 +82,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 내담자: {statistics.thisMonthClients || 0}명</p>
-        <div style={{
-          display: 'flex',
+        <div className="detailed-stats-card-header"
           alignItems: 'center',
           gap: '8px',
           marginBottom: '8px'
@@ -125,13 +121,11 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         border: '1px solid #D1C4E9',
         transition: 'all 0.3s ease'
       }}>
-        <div style={{
-          display: 'flex',
+        <div className="detailed-stats-card-header"
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div style={{
-            width: '48px',
+          <div className="detailed-stats-card-icon"
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#7B68EE',
@@ -144,8 +138,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-person-badge-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
-          <h3 style={{
-            margin: '0',
+          <h3 className="detailed-stats-card-title"
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
@@ -164,8 +157,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           fontSize: 'var(--font-size-sm)',
           color: '#6c757d'
         }}>이번 달 상담사: {statistics.thisMonthConsultants || 0}명</p>
-        <div style={{
-          display: 'flex',
+        <div className="detailed-stats-card-header"
           alignItems: 'center',
           gap: '8px',
           marginBottom: '8px'
@@ -204,13 +196,11 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         border: '1px solid #C8E6C9',
         transition: 'all 0.3s ease'
       }}>
-        <div style={{
-          display: 'flex',
+        <div className="detailed-stats-card-header"
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div style={{
-            width: '48px',
+          <div className="detailed-stats-card-icon"
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#4CAF50',
@@ -223,8 +213,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-check-circle-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
-          <h3 style={{
-            margin: '0',
+          <h3 className="detailed-stats-card-title"
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
@@ -267,13 +256,11 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         border: '1px solid #FFCDD2',
         transition: 'all 0.3s ease'
       }}>
-        <div style={{
-          display: 'flex',
+        <div className="detailed-stats-card-header"
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div style={{
-            width: '48px',
+          <div className="detailed-stats-card-icon"
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#F44336',
@@ -286,8 +273,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-x-circle-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
-          <h3 style={{
-            margin: '0',
+          <h3 className="detailed-stats-card-title"
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
@@ -330,13 +316,11 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         border: '1px solid #FFCCBC',
         transition: 'all 0.3s ease'
       }}>
-        <div style={{
-          display: 'flex',
+        <div className="detailed-stats-card-header"
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div style={{
-            width: '48px',
+          <div className="detailed-stats-card-icon"
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#FF9800',
@@ -349,8 +333,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-calendar-week-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
-          <h3 style={{
-            margin: '0',
+          <h3 className="detailed-stats-card-title"
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'
@@ -393,13 +376,11 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
         border: '1px solid #BBDEFB',
         transition: 'all 0.3s ease'
       }}>
-        <div style={{
-          display: 'flex',
+        <div className="detailed-stats-card-header"
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <div style={{
-            width: '48px',
+          <div className="detailed-stats-card-icon"
             height: '48px',
             borderRadius: '12px',
             backgroundColor: '#2196F3',
@@ -412,8 +393,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
           }}>
             <i className="bi bi-calendar-day-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
           </div>
-          <h3 style={{
-            margin: '0',
+          <h3 className="detailed-stats-card-title"
             fontSize: 'var(--font-size-lg)',
             fontWeight: '600',
             color: '#495057'

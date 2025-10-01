@@ -14,12 +14,11 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
           <h2 
             className="consultation-guide-title"
           >
-            <i className="bi bi-book" style={{ color: '#17a2b8', fontSize: 'var(--font-size-xl)' }}></i>
+            <i className="bi bi-book consultation-guide-icon"></i>
             상담 가이드
           </h2>
           <button 
-            style={{
-              background: 'none',
+            className="consultation-guide-close-btn"
               border: 'none',
               fontSize: 'var(--font-size-xl)',
               color: '#6c757d',
@@ -43,8 +42,7 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
         </div>
 
         <div 
-          style={{
-            padding: '32px',
+          className="consultation-guide-content"
             overflowY: 'auto',
             flex: 1
           }}

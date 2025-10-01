@@ -397,7 +397,7 @@ const OverviewTab = ({ data }) => {
 
   return (
     <div>
-      <h2 style={{ marginBottom: '20px', color: '#2c3e50' }}>📊 재무 개요</h2>
+      <h2 className="finance-overview-title">📊 재무 개요</h2>
       
       {/* KPI 카드들 */}
       <div style={{
@@ -437,15 +437,13 @@ const OverviewTab = ({ data }) => {
       </div>
       
       {/* 매핑 연동 상태 섹션 */}
-      <div style={{
-        backgroundColor: '#f8f9fa',
+      <div className="finance-mapping-section"
         borderRadius: '12px',
         padding: '20px',
         marginBottom: '30px',
         border: '1px solid #e9ecef'
       }}>
-        <h3 style={{ 
-          marginBottom: '16px', 
+        <h3 className="finance-mapping-title" 
           color: '#495057',
           fontSize: 'var(--font-size-lg)',
           fontWeight: '600',

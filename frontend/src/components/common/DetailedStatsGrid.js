@@ -63,7 +63,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
             color: '#ffffff',
             marginRight: '16px'
           }}>
-            <i className="bi bi-people-fill" style={{ fontSize: 'var(--font-size-xl)' }}></i>
+            <i className="bi bi-people-fill detailed-stats-card-icon-svg"></i>
           </div>
           <h3 style={{
             margin: '0',

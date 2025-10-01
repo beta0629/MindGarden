@@ -959,7 +959,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
               <strong>금액:</strong>
               <span style={{
                 marginLeft: '8px',
-                fontSize: '16px',
+                fontSize: 'var(--font-size-base)',
                 fontWeight: 'bold',
                 color: transaction.transactionType === 'INCOME' ? '#28a745' : '#dc3545'
               }}>
@@ -986,7 +986,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             marginBottom: '20px',
             border: '2px solid #1976d2'
           }}>
-            <h3 style={{ marginBottom: '12px', fontSize: '16px', color: '#1976d2' }}>
+            <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: '#1976d2' }}>
               🔗 매핑 연동 정보
             </h3>
             
@@ -1014,7 +1014,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                 
                 <div style={{ gridColumn: 'span 2' }}>
                   <strong>패키지 가격:</strong>
-                  <span style={{ marginLeft: '8px', fontSize: '16px', fontWeight: 'bold', color: '#28a745' }}>
+                  <span style={{ marginLeft: '8px', fontSize: 'var(--font-size-base)', fontWeight: 'bold', color: '#28a745' }}>
                     {formatCurrency(mappingDetail.packagePrice)}
                   </span>
                 </div>
@@ -1023,12 +1023,12 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                   <strong>결제 금액:</strong>
                   <span style={{ 
                     marginLeft: '8px', 
-                    fontSize: '14px', 
+                    fontSize: 'var(--font-size-sm)', 
                     color: mappingDetail.packagePrice === mappingDetail.paymentAmount ? '#28a745' : '#dc3545'
                   }}>
                     {formatCurrency(mappingDetail.paymentAmount)}
                     {mappingDetail.packagePrice !== mappingDetail.paymentAmount && (
-                      <span style={{ fontSize: '12px', color: '#dc3545', marginLeft: '4px' }}>
+                      <span style={{ fontSize: 'var(--font-size-xs)', color: '#dc3545', marginLeft: '4px' }}>
                         (⚠️ 패키지 가격과 다름)
                       </span>
                     )}
@@ -1049,7 +1049,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
                       {mappingDetail.isConsistent ? '✅ 정상' : '⚠️ 불일치'}
                     </span>
                     {!mappingDetail.isConsistent && (
-                      <div style={{ fontSize: '12px', color: '#dc3545', marginTop: '4px' }}>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: '#dc3545', marginTop: '4px' }}>
                         {mappingDetail.consistencyMessage}
                       </div>
                     )}
@@ -1093,7 +1093,7 @@ const TransactionDetailModal = ({ transaction, onClose }) => {
             marginBottom: '20px',
             border: '2px solid #ffc107'
           }}>
-            <h3 style={{ marginBottom: '12px', fontSize: '16px', color: '#856404' }}>
+            <h3 style={{ marginBottom: '12px', fontSize: 'var(--font-size-base)', color: '#856404' }}>
               🔗 연동 정보
             </h3>
             

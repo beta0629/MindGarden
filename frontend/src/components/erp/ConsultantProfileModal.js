@@ -599,7 +599,7 @@ const ConsultantProfileModal = ({
                                         }}>
                                             💡 옵션 유형은 상담 완료 시 자동으로 적용됩니다
                                             <br />
-                                            <small style={{ fontSize: '12px' }}>
+                                            <small style={{ fontSize: 'var(--font-size-xs)' }}>
                                                 • 초기상담: +5,000원<br />
                                                 • 가족상담: +3,000원<br />
                                                 • 기타 상담 유형에 따라 자동 계산
@@ -612,7 +612,7 @@ const ConsultantProfileModal = ({
                                             value={salaryFormData.contractTerms}
                                             onChange={(e) => setSalaryFormData({...salaryFormData, contractTerms: e.target.value})}
                                             placeholder="계약 조건을 입력하세요"
-                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '14px', minHeight: '60px', width: '100%' }}
+                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: 'var(--font-size-sm)', minHeight: '60px', width: '100%' }}
                                             rows="3"
                                         />
                                     </div>

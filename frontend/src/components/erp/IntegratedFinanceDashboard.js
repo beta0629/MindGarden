@@ -1348,7 +1348,7 @@ const MonthlyReportTab = ({ period }) => {
         borderRadius: '16px',
         boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
       }}>
-        <h3 style={{ marginBottom: '18px', fontSize: '20px', fontWeight: '600', color: '#2c3e50' }}>📊 월간 거래 건수</h3>
+        <h3 style={{ marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600', color: '#2c3e50' }}>📊 월간 거래 건수</h3>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
@@ -1437,7 +1437,7 @@ const YearlyReportTab = ({ period }) => {
           boxShadow: '0 8px 32px rgba(0,184,148,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💚 년간 수입</h3>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>💚 년간 수입</h3>
           <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ marginBottom: '6px' }}>상담수익: {formatCurrency(reportData?.yearlyIncome?.consultationRevenue || 0)}</div>
             <div style={{ marginBottom: '6px' }}>기타수익: {formatCurrency(reportData?.yearlyIncome?.otherRevenue || 0)}</div>
@@ -1455,7 +1455,7 @@ const YearlyReportTab = ({ period }) => {
           boxShadow: '0 8px 32px rgba(255,118,117,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>❤️ 년간 지출</h3>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>❤️ 년간 지출</h3>
           <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: '12px', lineHeight: '1.6' }}>
             <div style={{ marginBottom: '6px' }}>급여지출: {formatCurrency(reportData?.yearlyExpenses?.salaryExpense || 0)}</div>
             <div style={{ marginBottom: '6px' }}>임대료: {formatCurrency(reportData?.yearlyExpenses?.rentExpense || 0)}</div>
@@ -1478,7 +1478,7 @@ const YearlyReportTab = ({ period }) => {
           boxShadow: '0 8px 32px rgba(116,185,255,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💙 년간 순이익</h3>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>💙 년간 순이익</h3>
           <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', marginBottom: '8px' }}>
             {formatCurrency(reportData?.yearlyNetIncome || 0)}
           </div>
@@ -1495,7 +1495,7 @@ const YearlyReportTab = ({ period }) => {
         borderRadius: '16px',
         boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
       }}>
-        <h3 style={{ marginBottom: '18px', fontSize: '20px', fontWeight: '600', color: '#2c3e50' }}>📊 년간 거래 건수</h3>
+        <h3 style={{ marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600', color: '#2c3e50' }}>📊 년간 거래 건수</h3>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
@@ -1557,14 +1557,14 @@ const KPICard = ({ title, value, subtitle, color, icon }) => {
         background: 'rgba(255,255,255,0.1)',
         borderRadius: '50%'
       }}></div>
-      <div style={{ fontSize: '32px', marginBottom: '12px', position: 'relative', zIndex: 1 }}>{icon}</div>
-      <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
+      <div style={{ fontSize: 'var(--font-size-xxxl)', marginBottom: '12px', position: 'relative', zIndex: 1 }}>{icon}</div>
+      <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
         {value}
       </div>
-      <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '6px', position: 'relative', zIndex: 1 }}>
+      <div style={{ fontSize: 'var(--font-size-base)', fontWeight: '600', marginBottom: '6px', position: 'relative', zIndex: 1 }}>
         {title}
       </div>
-      <div style={{ fontSize: '13px', opacity: '0.9', position: 'relative', zIndex: 1 }}>
+      <div style={{ fontSize: 'var(--font-size-sm)', opacity: '0.9', position: 'relative', zIndex: 1 }}>
         {subtitle}
       </div>
     </div>

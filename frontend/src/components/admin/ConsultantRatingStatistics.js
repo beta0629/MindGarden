@@ -211,7 +211,7 @@ const ConsultantRatingStatistics = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        fontSize: '12px',
+                                        fontSize: 'var(--font-size-xs)',
                                         fontWeight: '600'
                                     }}>
                                         {index + 1}
@@ -225,7 +225,7 @@ const ConsultantRatingStatistics = () => {
                                             {consultant.consultantName}
                                         </div>
                                         <div style={{
-                                            fontSize: '12px',
+                                            fontSize: 'var(--font-size-xs)',
                                             color: '#666'
                                         }}>
                                             총 {consultant.totalRatingCount}개 평가
@@ -285,7 +285,7 @@ const ConsultantRatingStatistics = () => {
                                 padding: '8px 4px'
                             }}>
                                 <div style={{
-                                    fontSize: '12px',
+                                    fontSize: 'var(--font-size-xs)',
                                     color: '#666',
                                     marginBottom: '4px'
                                 }}>
@@ -299,7 +299,7 @@ const ConsultantRatingStatistics = () => {
                                     alignItems: 'end',
                                     justifyContent: 'center',
                                     color: 'white',
-                                    fontSize: '10px',
+                                    fontSize: 'var(--font-size-xs)',
                                     fontWeight: '600'
                                 }}>
                                     {trend.count > 0 ? trend.count : ''}
@@ -333,7 +333,7 @@ const ConsultantRatingStatistics = () => {
                         border: 'none',
                         padding: '8px 16px',
                         borderRadius: '6px',
-                        fontSize: '12px',
+                        fontSize: 'var(--font-size-xs)',
                         cursor: 'pointer',
                         transition: 'background-color 0.2s ease'
                     }}

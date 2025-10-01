@@ -328,10 +328,10 @@ const PartialRefundModal = ({ mapping, isOpen, onClose, onSuccess }) => {
             <div style={{ fontWeight: 'bold', color: '#1976d2', marginBottom: '4px' }}>
               💵 예상 환불 금액
             </div>
-            <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#1976d2' }}>
+            <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'bold', color: '#1976d2' }}>
               {refundAmount.toLocaleString()}원
             </div>
-            <small style={{ color: '#1976d2', fontSize: '12px' }}>
+            <small style={{ color: '#1976d2', fontSize: 'var(--font-size-xs)' }}>
               환불 후 남은 회기: {mapping.remainingSessions - refundSessions}회
             </small>
           </div>

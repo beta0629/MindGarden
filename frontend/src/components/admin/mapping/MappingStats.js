@@ -353,7 +353,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         fontWeight: '500'
                     }}>총 매핑 수:</span>
                     <span style={{
-                        fontSize: '16px',
+                        fontSize: 'var(--font-size-base)',
                         fontWeight: '700',
                         color: '#2c3e50'
                     }}>{stats.total}건</span>
@@ -370,7 +370,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         fontWeight: '500'
                     }}>활성 비율:</span>
                     <span style={{
-                        fontSize: '16px',
+                        fontSize: 'var(--font-size-base)',
                         fontWeight: '700',
                         color: '#2c3e50'
                     }}>
@@ -389,7 +389,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         fontWeight: '500'
                     }}>승인 대기 비율:</span>
                     <span style={{
-                        fontSize: '16px',
+                        fontSize: 'var(--font-size-base)',
                         fontWeight: '700',
                         color: '#2c3e50'
                     }}>

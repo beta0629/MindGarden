@@ -277,8 +277,6 @@ const ConsultantMessages = () => {
                       key={message.id}
                       onClick={() => handleMessageClick(message)}
                       className="consultant-messages-card"
-                        transition: 'all 0.3s ease'
-                      }}
                       onMouseEnter={(e) => {
                         e.target.style.transform = 'translateY(-2px)';
                         e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.12)';

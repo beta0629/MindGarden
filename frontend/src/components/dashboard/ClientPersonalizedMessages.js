@@ -358,7 +358,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
             }}
           >
             <div className="message-card-content">
-              <div className="message-card-icon" style={{ background: message.color }}>
+              <div className="message-card-icon" data-message-color={message.color}>
                 <i className={`bi ${message.icon}`}></i>
               </div>
               
@@ -372,11 +372,11 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
                 </p>
                 
                 {message.action && message.action !== 'tip' && message.action !== 'pending' && (
-                  <div className="message-card-action">
-                    <span className="message-card-action-text" style={{ color: message.color }}>
+                  <div className="message-card-action" data-message-color={message.color}>
+                    <span className="message-card-action-text">
                       자세히 보기
                     </span>
-                    <i className="bi bi-arrow-right message-card-action-icon" style={{ color: message.color }}></i>
+                    <i className="bi bi-arrow-right message-card-action-icon"></i>
                   </div>
                 )}
               </div>

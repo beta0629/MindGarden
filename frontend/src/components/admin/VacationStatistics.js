@@ -309,8 +309,7 @@ const VacationStatistics = ({ className = "" }) => {
                                                     <span 
                                                         key={type}
                                                         className="type-badge"
-                                                        style={{ 
-                                                            backgroundColor: `${consultantColor}20`,
+                                                        data-bg-color={`${consultantColor}20`}
                                                             color: consultantColor,
                                                             border: `1px solid ${consultantColor}`,
                                                             fontWeight: '500',
@@ -332,8 +331,7 @@ const VacationStatistics = ({ className = "" }) => {
                                                     <span 
                                                         key={type}
                                                         className="type-badge"
-                                                        style={{ 
-                                                            backgroundColor: `${consultantColor}20`,
+                                                        data-bg-color={`${consultantColor}20`}
                                                             color: consultantColor,
                                                             border: `1px solid ${consultantColor}`,
                                                             fontWeight: '500',

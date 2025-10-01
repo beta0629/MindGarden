@@ -367,8 +367,7 @@ const ConsultantRecords = () => {
                       <button
                         className="btn btn-outline-primary btn-sm"
                         onClick={() => handleViewRecord(record.id)}
-                        style={{ 
-                          display: 'flex', 
+                        className="consultant-record-view-btn" 
                           alignItems: 'center', 
                           gap: '6px',
                           width: '100%',
@@ -382,8 +381,7 @@ const ConsultantRecords = () => {
                       <button
                         className="btn btn-primary btn-sm"
                         onClick={() => navigate(`/consultant/consultation-record/${record.id}`)}
-                        style={{ 
-                          display: 'flex', 
+                        className="consultant-record-detail-btn" 
                           alignItems: 'center', 
                           gap: '6px',
                           width: '100%',

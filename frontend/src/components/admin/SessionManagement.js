@@ -823,15 +823,6 @@ const SessionManagement = () => {
                             onChange={(e) => setClientFilterStatus(e.target.value)}
                             disabled={loadingCodes}
                             className="session-mgmt-status-select"
-                                backgroundColor: 'white',
-                                minWidth: '120px',
-                                outline: 'none',
-                                cursor: loadingCodes ? 'not-allowed' : 'pointer',
-                                opacity: loadingCodes ? 0.6 : 1,
-                                transition: 'border-color 0.2s ease'
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                            onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                         >
                             <option value="ALL">전체</option>
                             {mappingStatusOptions.map((status, index) => (

@@ -24,13 +24,8 @@ const BranchFilterCard = ({
     onApplyFilters
 }) => {
     return (
-        <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ 
-                backgroundColor: 'white', 
-                border: '1px solid #dee2e6', 
-                borderRadius: '0.375rem',
-                boxShadow: '0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'
-            }}>
+        <div className="branch-financial-management-section">
+            <div className="branch-financial-management-card">
                 <div style={{ 
                     padding: '1rem 1.25rem', 
                     borderBottom: '1px solid #dee2e6',

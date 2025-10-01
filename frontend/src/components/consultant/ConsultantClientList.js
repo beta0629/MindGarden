@@ -297,7 +297,7 @@ const ConsultantClientList = () => {
   if (!isLoggedIn) {
     return (
       <SimpleLayout title="내담자 목록">
-        <div style={{ textAlign: 'center', padding: '50px' }}>
+        <div className="consultant-client-list-login-required">
           <h3>로그인이 필요합니다.</h3>
         </div>
       </SimpleLayout>

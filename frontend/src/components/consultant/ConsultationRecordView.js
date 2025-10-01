@@ -50,7 +50,7 @@ const ConsultationRecordView = () => {
   if (loading) {
     return (
       <SimpleLayout title="상담기록 조회">
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+        <div className="consultation-record-view-loading">
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">로딩 중...</span>
           </div>

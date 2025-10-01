@@ -25,13 +25,8 @@ const ReportFilterCard = ({
     onLoadData
 }) => {
     return (
-        <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ 
-                backgroundColor: 'white', 
-                border: '1px solid #dee2e6', 
-                borderRadius: '0.375rem',
-                boxShadow: '0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'
-            }}>
+        <div className="financial-reports-section">
+            <div className="financial-reports-card">
                 <div style={{ padding: '1.25rem' }}>
                     <div style={{ 
                         display: 'grid', 

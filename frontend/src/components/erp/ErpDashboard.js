@@ -156,7 +156,7 @@ const ErpDashboard = ({ user: propUser }) => {
   return (
     <div className="glass-background">
       <SimpleLayout>
-        <div style={{ padding: '24px', minHeight: '100vh' }}>
+        <div className="erp-dashboard-container">
         <ErpHeader
           title="ERP 관리 시스템"
           subtitle="상담사 비품 구매 및 예산 관리"

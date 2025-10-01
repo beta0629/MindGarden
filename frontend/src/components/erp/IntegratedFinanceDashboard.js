@@ -598,11 +598,11 @@ const OverviewTab = ({ data }) => {
             border: '1px solid #dee2e6',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#28a745' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#28a745' }}>
               {financialData.incomeByCategory?.CONSULTATION ? 
                 `₩${formatNumber(financialData.incomeByCategory.CONSULTATION)}` : '₩0'}
             </div>
-            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
               💰 매핑 입금확인 수입
             </div>
           </div>
@@ -614,11 +614,11 @@ const OverviewTab = ({ data }) => {
             border: '1px solid #dee2e6',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc3545' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#dc3545' }}>
               {financialData.expenseByCategory?.CONSULTATION ? 
                 `₩${formatNumber(financialData.expenseByCategory.CONSULTATION)}` : '₩0'}
             </div>
-            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
               📤 매핑 환불처리 지출
             </div>
           </div>
@@ -630,10 +630,10 @@ const OverviewTab = ({ data }) => {
             border: '1px solid #dee2e6',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#007bff' }}>
+            <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', color: '#007bff' }}>
               {financialData.transactionCount || 0}
             </div>
-            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
               🔄 총 연동 거래 건수
             </div>
           </div>
@@ -645,17 +645,17 @@ const OverviewTab = ({ data }) => {
             border: '1px solid #dee2e6',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#17a2b8' }}>
+            <div style={{ fontSize: 'var(--font-size-base)', fontWeight: 'bold', color: '#17a2b8' }}>
               실시간 연동
             </div>
-            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: '#6c757d', marginTop: '4px' }}>
               ✅ 매핑 ↔ ERP 자동 동기화
             </div>
             <button
               style={{
                 marginTop: '8px',
                 padding: '4px 8px',
-                fontSize: '10px',
+                fontSize: 'var(--font-size-xs)',
                 border: '1px solid #17a2b8',
                 borderRadius: '4px',
                 backgroundColor: 'transparent',
@@ -695,11 +695,11 @@ const OverviewTab = ({ data }) => {
             background: 'rgba(255,255,255,0.1)',
             borderRadius: '50%'
           }}></div>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: '600', position: 'relative', zIndex: 1 }}>💚 수입</h3>
-          <div style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: 'var(--font-size-xl)', fontWeight: '600', position: 'relative', zIndex: 1 }}>💚 수입</h3>
+          <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
             {formatCurrency(totalIncome)}
           </div>
-          <div style={{ fontSize: '15px', opacity: '0.9', position: 'relative', zIndex: 1 }}>
+          <div style={{ fontSize: 'var(--font-size-md)', opacity: '0.9', position: 'relative', zIndex: 1 }}>
             {getIncomeDescription()}
           </div>
         </div>
@@ -721,11 +721,11 @@ const OverviewTab = ({ data }) => {
             background: 'rgba(255,255,255,0.1)',
             borderRadius: '50%'
           }}></div>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: '600', position: 'relative', zIndex: 1 }}>❤️ 지출</h3>
-          <div style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: 'var(--font-size-xl)', fontWeight: '600', position: 'relative', zIndex: 1 }}>❤️ 지출</h3>
+          <div style={{ fontSize: 'var(--font-size-xxl)', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
             {formatCurrency(totalExpense)}
           </div>
-          <div style={{ fontSize: '15px', opacity: '0.9', position: 'relative', zIndex: 1 }}>
+          <div style={{ fontSize: 'var(--font-size-md)', opacity: '0.9', position: 'relative', zIndex: 1 }}>
             {getExpenseDescription()}
           </div>
         </div>
@@ -760,11 +760,11 @@ const OverviewTab = ({ data }) => {
           background: 'rgba(255,255,255,0.05)',
           borderRadius: '50%'
         }}></div>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: '600', position: 'relative', zIndex: 1 }}>💙 순이익</h3>
-        <div style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: 'var(--font-size-xxl)', fontWeight: '600', position: 'relative', zIndex: 1 }}>💙 순이익</h3>
+        <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
           {formatCurrency(netProfit)}
         </div>
-        <div style={{ fontSize: '16px', opacity: '0.9', position: 'relative', zIndex: 1 }}>
+        <div style={{ fontSize: 'var(--font-size-base)', opacity: '0.9', position: 'relative', zIndex: 1 }}>
           수입 - 지출
         </div>
       </div>
@@ -818,7 +818,7 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
           boxShadow: '0 8px 32px rgba(0,184,148,0.2)',
           color: 'white'
         }}>
-          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: '20px', fontWeight: '600' }}>💚 자산</h3>
+          <h3 style={{ color: 'white', marginBottom: '18px', fontSize: 'var(--font-size-xl)', fontWeight: '600' }}>💚 자산</h3>
           
           <div style={{ marginBottom: '18px' }}>
             <h4 style={{ fontSize: '15px', color: 'rgba(255,255,255,0.9)', margin: '0 0 8px 0', fontWeight: '500' }}>유동자산</h4>
@@ -1077,10 +1077,10 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
           borderRadius: '50%'
         }}></div>
         <h3 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: '600', position: 'relative', zIndex: 1 }}>💙 당기순이익</h3>
-        <div style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
+        <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', marginBottom: '8px', position: 'relative', zIndex: 1 }}>
           {formatCurrency(incomeStatementData?.netIncome || 0)}
         </div>
-        <div style={{ fontSize: '16px', opacity: '0.9', position: 'relative', zIndex: 1 }}>
+        <div style={{ fontSize: 'var(--font-size-base)', opacity: '0.9', position: 'relative', zIndex: 1 }}>
           수익 총계 - 비용 총계
         </div>
       </div>

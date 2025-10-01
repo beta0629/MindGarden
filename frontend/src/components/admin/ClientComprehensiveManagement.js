@@ -932,14 +932,14 @@ const ClientComprehensiveManagement = () => {
             }}>
                 <h2 style={{
                     margin: '0 0 8px 0',
-                    fontSize: '24px',
+                    fontSize: 'var(--font-size-xxl)',
                     fontWeight: '600',
                     color: '#2c3e50'
                 }}>👥 내담자 관리</h2>
                 <p style={{
                     margin: '0 0 20px 0',
                     color: '#6c757d',
-                    fontSize: '14px'
+                    fontSize: 'var(--font-size-sm)'
                 }}>내담자의 모든 정보를 종합적으로 관리하고 분석할 수 있습니다.</p>
                 
                 {/* 메인 탭 메뉴 */}
@@ -956,7 +956,7 @@ const ClientComprehensiveManagement = () => {
                             backgroundColor: mainTab === 'comprehensive' ? '#007bff' : '#e9ecef',
                             color: mainTab === 'comprehensive' ? 'white' : '#495057',
                             cursor: 'pointer',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             fontWeight: '500',
                             transition: 'all 0.2s ease'
                         }}
@@ -972,7 +972,7 @@ const ClientComprehensiveManagement = () => {
                             backgroundColor: mainTab === 'basic' ? '#007bff' : '#e9ecef',
                             color: mainTab === 'basic' ? 'white' : '#495057',
                             cursor: 'pointer',
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             fontWeight: '500',
                             transition: 'all 0.2s ease'
                         }}
@@ -1003,7 +1003,7 @@ const ClientComprehensiveManagement = () => {
                     gap: '16px'
                 }}>
                     <div style={{
-                        fontSize: '32px',
+                        fontSize: 'var(--font-size-xxxl)',
                         width: '48px',
                         height: '48px',
                         display: 'flex',
@@ -1014,13 +1014,13 @@ const ClientComprehensiveManagement = () => {
                     }}>👥</div>
                     <div>
                         <div style={{
-                            fontSize: '24px',
+                            fontSize: 'var(--font-size-xxl)',
                             fontWeight: '700',
                             color: '#2c3e50',
                             marginBottom: '4px'
                         }}>{stats.totalClients}</div>
                         <div style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#6c757d'
                         }}>총 내담자</div>
                     </div>
@@ -1035,7 +1035,7 @@ const ClientComprehensiveManagement = () => {
                     gap: '16px'
                 }}>
                     <div style={{
-                        fontSize: '32px',
+                        fontSize: 'var(--font-size-xxxl)',
                         width: '48px',
                         height: '48px',
                         display: 'flex',
@@ -1046,13 +1046,13 @@ const ClientComprehensiveManagement = () => {
                     }}>🔗</div>
                     <div>
                         <div style={{
-                            fontSize: '24px',
+                            fontSize: 'var(--font-size-xxl)',
                             fontWeight: '700',
                             color: '#2c3e50',
                             marginBottom: '4px'
                         }}>{stats.activeMappings}</div>
                         <div style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#6c757d'
                         }}>활성 매핑</div>
                     </div>
@@ -1067,7 +1067,7 @@ const ClientComprehensiveManagement = () => {
                     gap: '16px'
                 }}>
                     <div style={{
-                        fontSize: '32px',
+                        fontSize: 'var(--font-size-xxxl)',
                         width: '48px',
                         height: '48px',
                         display: 'flex',
@@ -1078,13 +1078,13 @@ const ClientComprehensiveManagement = () => {
                     }}>💬</div>
                     <div>
                         <div style={{
-                            fontSize: '24px',
+                            fontSize: 'var(--font-size-xxl)',
                             fontWeight: '700',
                             color: '#2c3e50',
                             marginBottom: '4px'
                         }}>{stats.totalConsultations}</div>
                         <div style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#6c757d'
                         }}>총 상담</div>
                     </div>
@@ -1099,7 +1099,7 @@ const ClientComprehensiveManagement = () => {
                     gap: '16px'
                 }}>
                     <div style={{
-                        fontSize: '32px',
+                        fontSize: 'var(--font-size-xxxl)',
                         width: '48px',
                         height: '48px',
                         display: 'flex',
@@ -1110,13 +1110,13 @@ const ClientComprehensiveManagement = () => {
                     }}>✅</div>
                     <div>
                         <div style={{
-                            fontSize: '24px',
+                            fontSize: 'var(--font-size-xxl)',
                             fontWeight: '700',
                             color: '#2c3e50',
                             marginBottom: '4px'
                         }}>{stats.completionRate}%</div>
                         <div style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#6c757d'
                         }}>완료율</div>
                     </div>
@@ -1141,7 +1141,7 @@ const ClientComprehensiveManagement = () => {
                     }}>
                         <h3 style={{
                             margin: '0',
-                            fontSize: '20px',
+                            fontSize: 'var(--font-size-xl)',
                             fontWeight: '600',
                             color: '#2c3e50'
                         }}>내담자 목록</h3>
@@ -1174,7 +1174,7 @@ const ClientComprehensiveManagement = () => {
                                         padding: '10px 40px 10px 12px',
                                         border: '2px solid #e1e5e9',
                                         borderRadius: '8px',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         outline: 'none',
                                         transition: 'border-color 0.2s ease',
                                         backgroundColor: '#f8f9fa'
@@ -1188,7 +1188,7 @@ const ClientComprehensiveManagement = () => {
                                     top: '50%',
                                     transform: 'translateY(-50%)',
                                     color: '#6c757d',
-                                    fontSize: '16px'
+                                    fontSize: 'var(--font-size-base)'
                                 }}></i>
                             </div>
                             
@@ -1200,7 +1200,7 @@ const ClientComprehensiveManagement = () => {
                                     padding: '10px 12px',
                                     border: '2px solid #e1e5e9',
                                     borderRadius: '8px',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     backgroundColor: '#f8f9fa',
                                     minWidth: '150px',
                                     outline: 'none',
@@ -1231,7 +1231,7 @@ const ClientComprehensiveManagement = () => {
                                         color: 'white',
                                         border: 'none',
                                         borderRadius: '8px',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         cursor: 'pointer',
                                         transition: 'background-color 0.2s ease',
                                         display: 'flex',
@@ -1249,7 +1249,7 @@ const ClientComprehensiveManagement = () => {
                         
                         {/* 필터 상태 표시 */}
                         <div style={{
-                            fontSize: '14px',
+                            fontSize: 'var(--font-size-sm)',
                             color: '#6c757d',
                             display: 'flex',
                             alignItems: 'center',
@@ -1302,7 +1302,7 @@ const ClientComprehensiveManagement = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        fontSize: '20px',
+                                        fontSize: 'var(--font-size-xl)',
                                         color: '#6c757d',
                                         flexShrink: 0
                                     }}>
@@ -1316,7 +1316,7 @@ const ClientComprehensiveManagement = () => {
                                             marginBottom: '4px'
                                         }}>
                                             <div style={{
-                                                fontSize: '16px',
+                                                fontSize: 'var(--font-size-base)',
                                                 fontWeight: '600',
                                                 color: '#2c3e50',
                                                 overflow: 'hidden',
@@ -1354,7 +1354,7 @@ const ClientComprehensiveManagement = () => {
                                             </div>
                                         </div>
                                         <div style={{
-                                            fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                             color: '#6c757d',
                                             marginBottom: '2px',
                                             overflow: 'hidden',
@@ -1362,7 +1362,7 @@ const ClientComprehensiveManagement = () => {
                                             whiteSpace: 'nowrap'
                                         }}>{client.email}</div>
                                         <div style={{
-                                            fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                             color: '#6c757d',
                                             marginBottom: '8px',
                                             overflow: 'hidden',
@@ -1419,7 +1419,7 @@ const ClientComprehensiveManagement = () => {
                         }}>
                             <h3 style={{
                                 margin: '0',
-                                fontSize: '20px',
+                                fontSize: 'var(--font-size-xl)',
                                 fontWeight: '600',
                                 color: '#2c3e50'
                             }}>{selectedClient.name} 상세 정보</h3>
@@ -1436,7 +1436,7 @@ const ClientComprehensiveManagement = () => {
                                         backgroundColor: activeTab === 'overview' ? '#007bff' : '#f8f9fa',
                                         color: activeTab === 'overview' ? 'white' : '#495057',
                                         cursor: 'pointer',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         fontWeight: '500',
                                         transition: 'all 0.2s ease'
                                     }}
@@ -1452,7 +1452,7 @@ const ClientComprehensiveManagement = () => {
                                         backgroundColor: activeTab === 'mapping' ? '#007bff' : '#f8f9fa',
                                         color: activeTab === 'mapping' ? 'white' : '#495057',
                                         cursor: 'pointer',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         fontWeight: '500',
                                         transition: 'all 0.2s ease'
                                     }}
@@ -1468,7 +1468,7 @@ const ClientComprehensiveManagement = () => {
                                         backgroundColor: activeTab === 'consultations' ? '#007bff' : '#f8f9fa',
                                         color: activeTab === 'consultations' ? 'white' : '#495057',
                                         cursor: 'pointer',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         fontWeight: '500',
                                         transition: 'all 0.2s ease'
                                     }}
@@ -1484,7 +1484,7 @@ const ClientComprehensiveManagement = () => {
                                         backgroundColor: activeTab === 'sessions' ? '#007bff' : '#f8f9fa',
                                         color: activeTab === 'sessions' ? 'white' : '#495057',
                                         cursor: 'pointer',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         fontWeight: '500',
                                         transition: 'all 0.2s ease'
                                     }}
@@ -1708,7 +1708,7 @@ const ClientComprehensiveManagement = () => {
                                             padding: '10px 40px 10px 12px',
                                             border: '2px solid #e1e5e9',
                                             borderRadius: '8px',
-                                            fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                             outline: 'none',
                                             transition: 'border-color 0.2s ease',
                                             backgroundColor: '#f8f9fa'
@@ -1722,7 +1722,7 @@ const ClientComprehensiveManagement = () => {
                                         top: '50%',
                                         transform: 'translateY(-50%)',
                                         color: '#6c757d',
-                                        fontSize: '16px'
+                                        fontSize: 'var(--font-size-base)'
                                     }}></i>
                                 </div>
                                 
@@ -1734,7 +1734,7 @@ const ClientComprehensiveManagement = () => {
                                         padding: '10px 12px',
                                         border: '2px solid #e1e5e9',
                                         borderRadius: '8px',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         backgroundColor: '#f8f9fa',
                                         minWidth: '150px',
                                         outline: 'none',
@@ -1765,7 +1765,7 @@ const ClientComprehensiveManagement = () => {
                                             color: 'white',
                                             border: 'none',
                                             borderRadius: '8px',
-                                            fontSize: '14px',
+                                            fontSize: 'var(--font-size-sm)',
                                             cursor: 'pointer',
                                             transition: 'background-color 0.2s ease',
                                             display: 'flex',
@@ -1783,7 +1783,7 @@ const ClientComprehensiveManagement = () => {
                             
                             {/* 필터 상태 표시 */}
                             <div style={{
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 color: '#6c757d',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -1850,7 +1850,7 @@ const ClientComprehensiveManagement = () => {
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
                                                         color: 'white',
-                                                        fontSize: '20px',
+                                                        fontSize: 'var(--font-size-xl)',
                                                         marginRight: '12px'
                                                     }}>
                                                         <FaUser />
@@ -1866,7 +1866,7 @@ const ClientComprehensiveManagement = () => {
                                                         </h3>
                                                         <p style={{
                                                             margin: '0',
-                                                            fontSize: '14px',
+                                                            fontSize: 'var(--font-size-sm)',
                                                             color: '#6c757d'
                                                         }}>
                                                             {client.email || '이메일 없음'}
@@ -1883,12 +1883,12 @@ const ClientComprehensiveManagement = () => {
                                                         marginBottom: '12px'
                                                     }}>
                                                         <span style={{
-                                                            fontSize: '14px',
+                                                            fontSize: 'var(--font-size-sm)',
                                                             color: '#6c757d',
                                                             fontWeight: '500'
                                                         }}>전화번호</span>
                                                         <span style={{
-                                                            fontSize: '14px',
+                                                            fontSize: 'var(--font-size-sm)',
                                                             color: '#2c3e50',
                                                             fontWeight: '500'
                                                         }}>
@@ -1903,7 +1903,7 @@ const ClientComprehensiveManagement = () => {
                                                         marginBottom: '12px'
                                                     }}>
                                                         <span style={{
-                                                            fontSize: '14px',
+                                                            fontSize: 'var(--font-size-sm)',
                                                             color: '#6c757d',
                                                             fontWeight: '500'
                                                         }}>등급</span>
@@ -1927,7 +1927,7 @@ const ClientComprehensiveManagement = () => {
                                                         marginBottom: '12px'
                                                     }}>
                                                         <span style={{
-                                                            fontSize: '14px',
+                                                            fontSize: 'var(--font-size-sm)',
                                                             color: '#6c757d',
                                                             fontWeight: '500'
                                                         }}>상태</span>
@@ -1965,12 +1965,12 @@ const ClientComprehensiveManagement = () => {
                                                         marginBottom: '12px'
                                                     }}>
                                                         <span style={{
-                                                            fontSize: '14px',
+                                                            fontSize: 'var(--font-size-sm)',
                                                             color: '#6c757d',
                                                             fontWeight: '500'
                                                         }}>가입일</span>
                                                         <span style={{
-                                                            fontSize: '14px',
+                                                            fontSize: 'var(--font-size-sm)',
                                                             color: '#2c3e50',
                                                             fontWeight: '500'
                                                         }}>
@@ -1987,12 +1987,12 @@ const ClientComprehensiveManagement = () => {
                                                         alignItems: 'center'
                                                     }}>
                                                         <span style={{
-                                                            fontSize: '14px',
+                                                            fontSize: 'var(--font-size-sm)',
                                                             color: '#6c757d',
                                                             fontWeight: '500'
                                                         }}>총 상담</span>
                                                         <span style={{
-                                                            fontSize: '16px',
+                                                            fontSize: 'var(--font-size-base)',
                                                             color: '#2c3e50',
                                                             fontWeight: '600'
                                                         }}>
@@ -2012,7 +2012,7 @@ const ClientComprehensiveManagement = () => {
                                                         style={{
                                                             flex: '1',
                                                             padding: '10px 16px',
-                                                            fontSize: '14px',
+                                                            fontSize: 'var(--font-size-sm)',
                                                             borderRadius: '8px',
                                                             border: 'none',
                                                             cursor: 'pointer',
@@ -2031,7 +2031,7 @@ const ClientComprehensiveManagement = () => {
                                                         style={{
                                                             flex: '1',
                                                             padding: '10px 16px',
-                                                            fontSize: '14px',
+                                                            fontSize: 'var(--font-size-sm)',
                                                             borderRadius: '8px',
                                                             border: 'none',
                                                             cursor: 'pointer',
@@ -2110,7 +2110,7 @@ const ClientComprehensiveManagement = () => {
                             <div style={{ flex: '1' }}>
                                 <h3 style={{
                                     margin: '0 0 8px 0',
-                                    fontSize: '20px',
+                                    fontSize: 'var(--font-size-xl)',
                                     fontWeight: '600',
                                     color: '#2c3e50'
                                 }}>
@@ -2121,7 +2121,7 @@ const ClientComprehensiveManagement = () => {
                                 {modalType === 'create' && (
                                     <p style={{
                                         margin: '0',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         color: '#6c757d',
                                         lineHeight: '1.5'
                                     }}>
@@ -2131,7 +2131,7 @@ const ClientComprehensiveManagement = () => {
                                 {modalType === 'edit' && (
                                     <p style={{
                                         margin: '0',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         color: '#6c757d',
                                         lineHeight: '1.5'
                                     }}>
@@ -2142,7 +2142,7 @@ const ClientComprehensiveManagement = () => {
                             <button style={{
                                 background: 'none',
                                 border: 'none',
-                                fontSize: '24px',
+                                fontSize: 'var(--font-size-xxl)',
                                 cursor: 'pointer',
                                 color: '#6c757d',
                                 padding: '0',
@@ -2174,7 +2174,7 @@ const ClientComprehensiveManagement = () => {
                                     padding: '20px 0'
                                 }}>
                                     <p style={{
-                                        fontSize: '16px',
+                                        fontSize: 'var(--font-size-base)',
                                         color: '#2c3e50',
                                         margin: '0 0 16px 0',
                                         lineHeight: '1.5'
@@ -2182,7 +2182,7 @@ const ClientComprehensiveManagement = () => {
                                         정말로 <strong style={{ color: '#dc3545' }}>{editingClient?.name}</strong> 내담자를 삭제하시겠습니까?
                                     </p>
                                     <p style={{
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         color: '#dc3545',
                                         margin: '0',
                                         fontWeight: '500',
@@ -2216,7 +2216,7 @@ const ClientComprehensiveManagement = () => {
                                                 padding: '12px 16px',
                                                 border: '2px solid #e1e8ed',
                                                 borderRadius: '8px',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 background: 'white',
                                                 color: '#495057',
                                                 transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
@@ -2255,7 +2255,7 @@ const ClientComprehensiveManagement = () => {
                                                 padding: '12px 16px',
                                                 border: '2px solid #e1e8ed',
                                                 borderRadius: '8px',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 background: 'white',
                                                 color: '#495057',
                                                 transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
@@ -2294,7 +2294,7 @@ const ClientComprehensiveManagement = () => {
                                                 padding: '12px 16px',
                                                 border: '2px solid #e1e8ed',
                                                 borderRadius: '8px',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 background: 'white',
                                                 color: '#495057',
                                                 transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
@@ -2335,7 +2335,7 @@ const ClientComprehensiveManagement = () => {
                                                 padding: '12px 16px',
                                                 border: '2px solid #e1e8ed',
                                                 borderRadius: '8px',
-                                                fontSize: '14px',
+                                                fontSize: 'var(--font-size-sm)',
                                                 background: 'white',
                                                 color: '#495057',
                                                 transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
@@ -2389,7 +2389,7 @@ const ClientComprehensiveManagement = () => {
                         }}>
                             <button style={{
                                 padding: '10px 20px',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 fontWeight: '500',
                                 borderRadius: '8px',
                                 border: '1px solid #dee2e6',
@@ -2412,7 +2412,7 @@ const ClientComprehensiveManagement = () => {
                             <button 
                                 style={{
                                     padding: '10px 20px',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     fontWeight: '500',
                                     borderRadius: '8px',
                                     border: 'none',
@@ -2473,7 +2473,7 @@ const ClientComprehensiveManagement = () => {
                         }}>
                             <h3 style={{
                                 margin: 0,
-                                fontSize: '20px',
+                                fontSize: 'var(--font-size-xl)',
                                 fontWeight: '600',
                                 color: '#343a40'
                             }}>
@@ -2484,7 +2484,7 @@ const ClientComprehensiveManagement = () => {
                                 style={{
                                     background: 'none',
                                     border: 'none',
-                                    fontSize: '24px',
+                                    fontSize: 'var(--font-size-xxl)',
                                     cursor: 'pointer',
                                     color: '#6c757d',
                                     padding: '0',
@@ -2511,7 +2511,7 @@ const ClientComprehensiveManagement = () => {
                         }}>
                             <p style={{
                                 margin: '0 0 20px 0',
-                                fontSize: '14px',
+                                fontSize: 'var(--font-size-sm)',
                                 color: '#6c757d',
                                 lineHeight: '1.5'
                             }}>
@@ -2522,7 +2522,7 @@ const ClientComprehensiveManagement = () => {
                             <div style={{ marginBottom: '20px' }}>
                                 <h4 style={{
                                     margin: '0 0 12px 0',
-                                    fontSize: '16px',
+                                    fontSize: 'var(--font-size-base)',
                                     fontWeight: '600',
                                     color: '#343a40'
                                 }}>
@@ -2548,7 +2548,7 @@ const ClientComprehensiveManagement = () => {
                                         }}>
                                             <div>
                                                 <div style={{
-                                                    fontSize: '14px',
+                                                    fontSize: 'var(--font-size-sm)',
                                                     fontWeight: '600',
                                                     color: '#343a40',
                                                     marginBottom: '4px'
@@ -2600,7 +2600,7 @@ const ClientComprehensiveManagement = () => {
                             <div>
                                 <h4 style={{
                                     margin: '0 0 12px 0',
-                                    fontSize: '16px',
+                                    fontSize: 'var(--font-size-base)',
                                     fontWeight: '600',
                                     color: '#343a40'
                                 }}>
@@ -2616,7 +2616,7 @@ const ClientComprehensiveManagement = () => {
                                         padding: '12px',
                                         border: `2px solid ${!refundReason.trim() ? '#dc3545' : '#e9ecef'}`,
                                         borderRadius: '8px',
-                                        fontSize: '14px',
+                                        fontSize: 'var(--font-size-sm)',
                                         fontFamily: 'inherit',
                                         resize: 'vertical',
                                         minHeight: '80px'
@@ -2652,7 +2652,7 @@ const ClientComprehensiveManagement = () => {
                                     backgroundColor: 'white',
                                     border: '2px solid #6c757d',
                                     borderRadius: '8px',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     fontWeight: '600',
                                     color: '#6c757d',
                                     cursor: loading ? 'not-allowed' : 'pointer',
@@ -2683,7 +2683,7 @@ const ClientComprehensiveManagement = () => {
                                     backgroundColor: (selectedMappings.length === 0 || !refundReason.trim()) ? '#6c757d' : '#dc3545',
                                     border: `2px solid ${(selectedMappings.length === 0 || !refundReason.trim()) ? '#6c757d' : '#dc3545'}`,
                                     borderRadius: '8px',
-                                    fontSize: '14px',
+                                    fontSize: 'var(--font-size-sm)',
                                     fontWeight: '600',
                                     color: 'white',
                                     cursor: loading ? 'not-allowed' : 'pointer',

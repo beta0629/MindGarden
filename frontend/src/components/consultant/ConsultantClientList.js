@@ -320,14 +320,7 @@ const ConsultantClientList = () => {
 
       {/* 검색 및 필터 */}
       <div 
-        className="client-list-controls"
-        style={{
-          display: 'flex',
-          gap: '20px',
-          marginBottom: '30px',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          background: '#fff',
+        className="consultant-client-list-controls"
           padding: '20px',
           borderRadius: '15px',
           boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',

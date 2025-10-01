@@ -26,11 +26,7 @@ const BranchFilterCard = ({
     return (
         <div className="branch-financial-management-section">
             <div className="branch-financial-management-card">
-                <div style={{ 
-                    padding: '1rem 1.25rem', 
-                    borderBottom: '1px solid #dee2e6',
-                    backgroundColor: '#f8f9fa'
-                }}>
+                <div className="branch-financial-management-card-header">
                     <h5 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '500' }}>
                         <FaFilter style={{ marginRight: '0.5rem' }} />
                         지점 선택 및 필터

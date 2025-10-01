@@ -27,13 +27,8 @@ const ReportFilterCard = ({
     return (
         <div className="financial-reports-section">
             <div className="financial-reports-card">
-                <div style={{ padding: '1.25rem' }}>
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-                        gap: '1rem',
-                        alignItems: 'end'
-                    }}>
+                <div className="financial-reports-card-content">
+                    <div className="financial-reports-card-grid">
                         <div>
                             <label style={{ 
                                 display: 'block', 

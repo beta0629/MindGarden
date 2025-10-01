@@ -171,12 +171,7 @@ const ErpDashboard = ({ user: propUser }) => {
         />
 
       {/* 통계 카드들 */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-        gap: '20px',
-        marginBottom: '32px'
-      }}>
+      <div className="erp-dashboard-stats-grid">
         <ErpCard title="총 아이템 수">
           <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', color: '#007bff' }}>
             {stats.totalItems.toLocaleString()}

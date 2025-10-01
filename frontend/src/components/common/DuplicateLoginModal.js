@@ -9,10 +9,6 @@ import './DuplicateLoginModal.css';
 const DuplicateLoginModal = () => {
   const { duplicateLoginModal, setDuplicateLoginModal } = useSession();
   
-  // 디버깅용 로그 (개발 환경에서만)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 DuplicateLoginModal 렌더링:', duplicateLoginModal);
-  }
 
   const handleConfirm = async () => {
     if (!duplicateLoginModal.loginData) {

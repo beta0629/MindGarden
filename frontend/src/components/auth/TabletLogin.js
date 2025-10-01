@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleHeader from '../layout/SimpleHeader';
 import SocialSignupModal from './SocialSignupModal';
+import DuplicateLoginModal from '../common/DuplicateLoginModal';
 import { authAPI } from '../../utils/ajax';
 import { testLogin } from '../../utils/ajax';
 import { API_BASE_URL } from '../../constants/api';
@@ -176,7 +177,6 @@ const TabletLogin = () => {
       const result = await authAPI.login(formData);
       
       if (result.success) {
-        console.log('✅ 로그인 성공:', result.user);
         
         // sessionManager에 사용자 정보 설정 (SessionContext 로딩 상태 영향 없이)
         sessionManager.setUser(result.user, {
@@ -188,15 +188,12 @@ const TabletLogin = () => {
         showTooltip('로그인에 성공했습니다.', 'success');
         
         // 세션 설정 완료 후 잠시 대기 (시간 단축)
-        console.log('⏳ 세션 설정 완료, 잠시 대기...');
         await new Promise(resolve => setTimeout(resolve, 500));
         
         // 공통 리다이렉션 함수 사용
-        console.log('✅ 로그인 성공, 대시보드로 이동:', result.user.role);
         redirectToDashboardWithFallback(result.user.role, navigate);
       } else if (result.requiresConfirmation) {
         // 중복 로그인 확인 요청
-        console.log('🔔 중복 로그인 확인 요청:', result.message);
         setIsLoading(false);
         
         // 중복 로그인 모달 표시
@@ -206,9 +203,7 @@ const TabletLogin = () => {
           loginData: formData
         };
         
-        console.log('🔔 중복 로그인 모달 데이터:', modalData);
         setDuplicateLoginModal(modalData);
-        console.log('🔔 중복 로그인 모달 설정 완료');
       } else {
         console.log('❌ 로그인 실패:', result.message);
         // 로딩 해제 후 알림 표시
@@ -378,10 +373,6 @@ const TabletLogin = () => {
 
 
   const checkOAuthCallback = async () => {
-    console.log('🔍 checkOAuthCallback 함수 실행됨');
-    console.log('📍 현재 URL:', window.location.href);
-    console.log('🔗 URL 검색 파라미터:', window.location.search);
-    console.log('🔍 컴포넌트 상태:', { showSocialSignupModal, socialUserInfo });
     
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -859,6 +850,9 @@ const TabletLogin = () => {
         socialUser={socialUserInfo}
         onSignupSuccess={handleSocialSignupSuccess}
       />
+
+      {/* 중복 로그인 모달 */}
+      <DuplicateLoginModal />
 
       {/* 전문적인 로그인 알림 (CSS 충돌 방지용) */}
       {tooltip.show && (

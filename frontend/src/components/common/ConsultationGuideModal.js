@@ -1,40 +1,13 @@
 import React from 'react';
+import './ConsultationGuideModal.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const ConsultationGuideModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '20px'
-      }}
-      onClick={onClose}
-    >
-      <div 
-        style={{
-          background: 'white',
-          borderRadius: '16px',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-          maxWidth: '800px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="consultation-guide-overlay" onClick={onClose}>
+      <div className="consultation-guide-modal" onClick={(e) => e.stopPropagation()}>
         <div 
           style={{
             display: 'flex',

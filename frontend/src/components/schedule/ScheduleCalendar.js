@@ -882,7 +882,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 <div key={`consultant-${consultant.id}-${index}`} className="legend-item">
                                     <span 
                                         className="legend-color" 
-                                        style={{ '--legend-color': getConsultantColor(consultant.id) }}
+                                        data-legend-color={getConsultantColor(consultant.id)}
                                     ></span>
                                     <span>{consultant.name}</span>
                                 </div>

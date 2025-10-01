@@ -192,8 +192,7 @@ const ConsultantMessages = () => {
         </div>
 
         {/* 검색 및 필터 */}
-        <div style={{
-          display: 'flex',
+        <div className="consultant-messages-search-container"
           gap: '20px',
           marginBottom: '30px',
           flexWrap: 'wrap',
@@ -204,10 +203,9 @@ const ConsultantMessages = () => {
           boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
           border: '1px solid #e9ecef'
         }}>
-          <div style={{ flex: '1', minWidth: '300px' }}>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <i className="bi bi-search" style={{
-                position: 'absolute',
+          <div className="consultant-messages-search-field">
+            <div className="consultant-messages-search-input-container">
+              <i className="bi bi-search consultant-messages-search-icon"
                 left: '12px',
                 color: '#7f8c8d',
                 zIndex: 2,

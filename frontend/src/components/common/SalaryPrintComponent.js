@@ -150,37 +150,37 @@ const SalaryPrintComponent = ({
       </table>
 
       {includeCalculationDetails && (
-        <div style={{ marginTop: '30px' }}>
-          <h3 style={{ marginBottom: '15px', fontSize: 'var(--font-size-base)' }}>계산 상세</h3>
+        <div className="salary-calculation-details">
+          <h3 className="salary-calculation-title">계산 상세</h3>
           <table className="salary-table">
             <tbody>
               <tr>
-                <td className="label" style={{ width: '30%' }}>상담 완료 건수</td>
-                <td style={{ width: '20%' }}>{salaryData.consultationCount || 0}건</td>
-                <td style={{ width: '50%', textAlign: 'left' }}>
+                <td className="label salary-table-label">상담 완료 건수</td>
+                <td className="salary-table-value">{salaryData.consultationCount || 0}건</td>
+                <td className="salary-table-desc">
                   {period} 기간 중 완료된 상담 건수
                 </td>
               </tr>
               <tr>
                 <td className="label">계산 상태</td>
                 <td>{salaryData.status || 'PENDING'}</td>
-                <td style={{ textAlign: 'left' }}>급여 계산 상태</td>
+                <td className="salary-table-desc">급여 계산 상태</td>
               </tr>
               <tr>
                 <td className="label">지급 예정일</td>
                 <td>{salaryData.payDate || '-'}</td>
-                <td style={{ textAlign: 'left' }}>실제 지급 예정일</td>
+                <td className="salary-table-desc">실제 지급 예정일</td>
               </tr>
             </tbody>
           </table>
         </div>
       )}
 
-      <div style={{ marginTop: '40px', textAlign: 'center' }}>
-        <div style={{ fontSize: 'var(--font-size-xs)', color: '#666' }}>
+      <div className="salary-footer">
+        <div className="salary-footer-text">
           본 급여 계산서는 마인드가든 통합 상담관리 시스템에서 자동 생성되었습니다.
         </div>
-        <div style={{ fontSize: 'var(--font-size-xs)', color: '#666', marginTop: '5px' }}>
+        <div className="salary-footer-text">
           문의사항이 있으시면 관리자에게 연락해주세요.
         </div>
       </div>

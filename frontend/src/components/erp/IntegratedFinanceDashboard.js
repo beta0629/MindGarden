@@ -329,11 +329,6 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className="integrated-finance-tab-btn"
-              color: activeTab === tab.key ? 'white' : '#2c3e50',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              fontSize: 'var(--font-size-sm)',
-              fontWeight: activeTab === tab.key ? '600' : '500',
               transition: 'all 0.3s ease',
               boxShadow: activeTab === tab.key 
                 ? '0 4px 15px rgba(168,216,234,0.3)' 

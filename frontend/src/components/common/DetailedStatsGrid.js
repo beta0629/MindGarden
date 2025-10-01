@@ -45,8 +45,7 @@ const DetailedStatsGrid = ({ statistics = {} }) => {
   return (
     <div className="detailed-stats-grid">
       {/* 내담자 현황 */}
-      <div className="detailed-stats-card detailed-stats-card--clients"
-      }}>
+      <div className="detailed-stats-card detailed-stats-card--clients">
         <div style={{
           display: 'flex',
           alignItems: 'center',

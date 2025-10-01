@@ -13,8 +13,6 @@ const ConsultationGuideModal = ({ isOpen, onClose }) => {
         >
           <h2 
             className="consultation-guide-title"
-              gap: '12px'
-            }}
           >
             <i className="bi bi-book" style={{ color: '#17a2b8', fontSize: 'var(--font-size-xl)' }}></i>
             상담 가이드

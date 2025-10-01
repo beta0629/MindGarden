@@ -967,21 +967,13 @@ const SessionManagement = () => {
                             
                             if (hasActiveFilters) {
                                 return (
-                                    <p className="session-mgmt-client-info"
-                                        fontSize: 'var(--font-size-sm)', 
-                                        color: '#6b7280',
-                                        fontWeight: 'normal'
-                                    }}>
+                                    <p className="session-mgmt-client-info">
                                         검색 결과: {filteredCount}개 (전체 {totalCount}개 중)
                                     </p>
                                 );
                             } else {
                                 return (
-                                    <p className="session-mgmt-client-info"
-                                        fontSize: 'var(--font-size-sm)', 
-                                        color: '#6b7280',
-                                        fontWeight: 'normal'
-                                    }}>
+                                    <p className="session-mgmt-client-info">
                                         최근 매핑 {filteredCount}개 표시 (전체 {totalCount}개 중)
                                     </p>
                                 );

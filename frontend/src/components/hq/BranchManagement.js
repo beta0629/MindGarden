@@ -352,7 +352,7 @@ const BranchManagement = () => {
                                                             <Badge 
                                                                 bg={branch.isActive ? 'success' : 'secondary'}
                                                                 style={{
-                                                                    fontSize: '11px',
+                                                                    fontSize: 'var(--font-size-xs)',
                                                                     padding: '4px 8px',
                                                                     borderRadius: '12px'
                                                                 }}
@@ -407,7 +407,7 @@ const BranchManagement = () => {
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
-                                                                        fontSize: '24px',
+                                                                        fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
                                                                         color: '#007bff',
                                                                         marginBottom: '4px'
@@ -432,7 +432,7 @@ const BranchManagement = () => {
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
-                                                                        fontSize: '24px',
+                                                                        fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
                                                                         color: '#28a745',
                                                                         marginBottom: '4px'
@@ -457,7 +457,7 @@ const BranchManagement = () => {
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
-                                                                        fontSize: '24px',
+                                                                        fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
                                                                         color: '#007bff',
                                                                         marginBottom: '4px'
@@ -482,7 +482,7 @@ const BranchManagement = () => {
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
-                                                                        fontSize: '24px',
+                                                                        fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
                                                                         color: '#ffc107',
                                                                         marginBottom: '4px'
@@ -507,7 +507,7 @@ const BranchManagement = () => {
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
-                                                                        fontSize: '24px',
+                                                                        fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
                                                                         color: '#17a2b8',
                                                                         marginBottom: '4px'
@@ -532,7 +532,7 @@ const BranchManagement = () => {
                                                                     border: '1px solid #e9ecef'
                                                                 }}>
                                                                     <div style={{
-                                                                        fontSize: '24px',
+                                                                        fontSize: 'var(--font-size-xxl)',
                                                                         fontWeight: '700',
                                                                         color: '#6c757d',
                                                                         marginBottom: '4px'
@@ -641,7 +641,7 @@ const BranchManagement = () => {
                                                                     style={{
                                                                         border: '1px solid #ced4da',
                                                                         borderRadius: '0 6px 6px 0',
-                                                                        fontSize: '14px'
+                                                                        fontSize: 'var(--font-size-sm)'
                                                                     }}
                                                                 />
                                                             </InputGroup>
@@ -654,7 +654,7 @@ const BranchManagement = () => {
                                                                 style={{
                                                                     border: '1px solid #ced4da',
                                                                     borderRadius: '6px',
-                                                                    fontSize: '14px'
+                                                                    fontSize: 'var(--font-size-sm)'
                                                                 }}
                                                             >
                                                                 <option value="">모든 역할</option>
@@ -848,7 +848,7 @@ const BranchManagement = () => {
                                                                             <Badge 
                                                                                 bg={getRoleBadgeVariant(user.role)}
                                                                                 style={{
-                                                                                    fontSize: '11px',
+                                                                                    fontSize: 'var(--font-size-xs)',
                                                                                     padding: '4px 8px',
                                                                                     borderRadius: '12px'
                                                                                 }}
@@ -860,7 +860,7 @@ const BranchManagement = () => {
                                                                             <Badge 
                                                                                 bg="info"
                                                                                 style={{
-                                                                                    fontSize: '11px',
+                                                                                    fontSize: 'var(--font-size-xs)',
                                                                                     padding: '4px 8px',
                                                                                     borderRadius: '12px'
                                                                                 }}
@@ -873,7 +873,7 @@ const BranchManagement = () => {
                                                                             <Badge 
                                                                                 bg={user.isActive ? 'success' : 'secondary'}
                                                                                 style={{
-                                                                                    fontSize: '11px',
+                                                                                    fontSize: 'var(--font-size-xs)',
                                                                                     padding: '4px 8px',
                                                                                     borderRadius: '12px'
                                                                                 }}

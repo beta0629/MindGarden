@@ -261,7 +261,7 @@ const OAuth2Callback = () => {
         <div style={{ fontSize: 'var(--font-size-base)', color: '#666', marginBottom: '20px' }}>
           {error}
         </div>
-        <div style={{ fontSize: '14px', color: '#999' }}>
+        <div style={{ fontSize: 'var(--font-size-sm)', color: '#999' }}>
           잠시 후 로그인 페이지로 이동합니다...
         </div>
       </div>

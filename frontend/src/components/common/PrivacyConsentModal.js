@@ -184,7 +184,7 @@ const PrivacyConsentModal = ({
                 <h6 style={{ fontSize: 'var(--font-size-sm)', fontWeight: '600', marginBottom: '8px' }}>
                   보유 및 이용 기간
                 </h6>
-                <p style={{ margin: '0', fontSize: '11px' }}>
+                <p style={{ margin: '0', fontSize: 'var(--font-size-xs)' }}>
                   회원 탈퇴 시까지 (단, 관계법령에 의해 보존이 필요한 경우 해당 기간까지)
                 </p>
               </div>

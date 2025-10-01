@@ -345,7 +345,7 @@ const TermsOfService = () => {
           padding: '20px',
           textAlign: 'center'
         }}>
-          <p style={{ margin: '0', fontSize: '14px', color: '#0c5460' }}>
+          <p style={{ margin: '0', fontSize: 'var(--font-size-sm)', color: '#0c5460' }}>
             <strong>본 이용약관은 2025년 1월 17일부터 시행됩니다.</strong>
           </p>
         </div>

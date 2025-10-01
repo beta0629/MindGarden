@@ -70,24 +70,12 @@ const ForgotPassword = () => {
         
         <main className="tablet-main">
           <div className="tablet-container">
-            <div className="forgot-password-form-container"
-              margin: '80px auto',
-              padding: '40px 32px',
-              background: '#ffffff',
-              borderRadius: '20px',
-              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-              fontFamily: "'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif"
-            }}>
+            <div className="forgot-password-form-container">
               {!isEmailSent ? (
                 <>
                   {/* 헤더 */}
                   <div className="forgot-password-header">
                     <div className="forgot-password-icon"
-                      height: '64px',
-                      backgroundColor: '#667eea',
-                      borderRadius: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: 'var(--font-size-xxl)',
                       margin: '0 auto 24px',

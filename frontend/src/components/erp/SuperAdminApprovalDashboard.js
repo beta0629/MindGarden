@@ -206,12 +206,7 @@ const SuperAdminApprovalDashboard = () => {
 
                 {/* 관리자 승인 정보 */}
                 {request.adminApprover && (
-                  <div className="approval-admin-info" 
-                    padding: '8px', 
-                    backgroundColor: '#e7f3ff', 
-                    borderRadius: '4px',
-                    border: '1px solid #b3d9ff'
-                  }}>
+                  <div className="approval-admin-info">
                     <div style={{ fontSize: 'var(--font-size-xs)', color: '#0066cc', fontWeight: '600', marginBottom: '4px' }}>
                       관리자 승인 완료
                     </div>

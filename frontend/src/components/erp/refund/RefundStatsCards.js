@@ -1,5 +1,6 @@
 import React from 'react';
 import ErpCard from '../common/ErpCard';
+import './RefundStatsCards.css';
 
 /**
  * 환불 통계 카드 컴포넌트
@@ -21,60 +22,40 @@ const RefundStatsCards = ({ refundStats, selectedPeriod, erpSyncStatus }) => {
     };
 
     return (
-        <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-            gap: '20px',
-            marginBottom: '30px'
-        }}>
+        <div className="refund-stats-grid">
             <ErpCard title="환불 건수">
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#dc3545' }}>
+                <div className="refund-stats-value refund-stats-value--danger">
                     {refundStats.summary?.totalRefundCount || 0}건
                 </div>
-                <div style={{ color: '#666', fontSize: '0.9rem' }}>
+                <div className="refund-stats-label">
                     {getPeriodLabel(selectedPeriod)} 환불 처리
                 </div>
             </ErpCard>
 
             <ErpCard title="환불 금액">
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#6f42c1' }}>
+                <div className="refund-stats-value refund-stats-value--purple">
                     {formatCurrency(refundStats.summary?.totalRefundAmount)}
                 </div>
-                <div style={{ color: '#666', fontSize: '0.9rem' }}>
+                <div className="refund-stats-label">
                     평균: {formatCurrency(refundStats.summary?.averageRefundPerCase)}
                 </div>
             </ErpCard>
 
             <ErpCard title="환불 회기">
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#fd7e14' }}>
+                <div className="refund-stats-value refund-stats-value--orange">
                     {refundStats.summary?.totalRefundedSessions || 0}회
                 </div>
-                <div style={{ color: '#666', fontSize: '0.9rem' }}>
+                <div className="refund-stats-label">
                     총 환불된 상담 회기
                 </div>
             </ErpCard>
 
             <ErpCard title="ERP 연동 상태">
-                <div style={{
-                    padding: '15px',
-                    backgroundColor: erpSyncStatus.erpSystemAvailable ? '#d4edda' : '#f8d7da',
-                    borderRadius: '8px',
-                    border: `1px solid ${erpSyncStatus.erpSystemAvailable ? '#c3e6cb' : '#f5c6cb'}`,
-                    textAlign: 'center'
-                }}>
-                    <div style={{ 
-                        fontSize: '1.5rem', 
-                        fontWeight: 'bold', 
-                        color: erpSyncStatus.erpSystemAvailable ? '#155724' : '#721c24',
-                        marginBottom: '5px'
-                    }}>
+                <div className={`refund-erp-sync-status ${erpSyncStatus.erpSystemAvailable ? 'refund-erp-sync-status--available' : 'refund-erp-sync-status--error'}`}>
+                    <div className="refund-erp-sync-status-icon">
                         {erpSyncStatus.erpSystemAvailable ? '정상' : '오류'}
                     </div>
-                    <div style={{ 
-                        color: erpSyncStatus.erpSystemAvailable ? '#155724' : '#721c24', 
-                        fontSize: '0.9rem',
-                        fontWeight: '500'
-                    }}>
+                    <div className="refund-erp-sync-status-message">
                         성공률: {erpSyncStatus.erpSuccessRate || 0}%
                     </div>
                 </div>

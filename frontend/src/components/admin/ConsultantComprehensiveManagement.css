@@ -5,8 +5,8 @@
 .basic-management-tab .consultant-card *,
 .basic-management-tab .consultant-specialty-display,
 .basic-management-tab .consultant-specialty-display * {
-    writing-mode: horizontal-tb !important;
-    text-orientation: mixed !important;
+    writing-mode: horizontal-tb;
+    text-orientation: mixed;
 }
 
 /* 전역 CSS 충돌 방지를 위한 리셋 */
@@ -17,20 +17,20 @@
 /* 전문분야 섹션 제외한 다른 요소들만 리셋 적용 */
 .basic-management-tab .consultant-specialty:not(.consultant-specialty-display),
 .basic-management-tab [class*="specialty"]:not(.consultant-specialty-display) {
-    transform: none !important;
-    white-space: normal !important;
-    word-wrap: break-word !important;
-    word-break: break-word !important;
-    overflow: visible !important;
-    text-overflow: unset !important;
+    transform: none;
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow: visible;
+    text-overflow: unset;
 }
 
 /* 상담사 종합관리 탭 스타일 보호 */
 .consultant-comp-container .consultant-comp-consultant-specialty {
-    transform: none !important;
-    white-space: normal !important;
-    word-wrap: break-word !important;
-    word-break: break-word !important;
+    transform: none;
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
     overflow: visible !important;
     text-overflow: unset !important;
 }
@@ -171,32 +171,32 @@
 
 /* 모달 전문분야 select 스타일 */
 .specialty-select {
-    background: #ffffff !important;
-    color: #374151 !important;
-    border: 2px solid #e5e7eb !important;
-    border-radius: 12px !important;
-    padding: 16px 20px !important;
-    font-size: 14px !important;
-    line-height: 1.6 !important;
-    min-height: 180px !important;
-    height: 180px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    transition: all 0.2s ease !important;
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    border: 2px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    min-height: 180px;
+    height: 180px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
 }
 
 .specialty-select:focus {
-    outline: none !important;
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .specialty-select option {
-    background: #ffffff !important;
-    color: #374151 !important;
-    padding: 8px 12px !important;
-    margin: 2px 0 !important;
-    border-radius: 6px !important;
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    margin: 2px 0;
+    border-radius: var(--border-radius-sm);
     font-size: 14px !important;
     line-height: 1.5 !important;
 }

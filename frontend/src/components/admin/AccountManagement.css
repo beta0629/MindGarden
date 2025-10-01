@@ -16,7 +16,7 @@
 .account-header h2 {
   color: #2c3e50;
   margin: 0;
-  font-size: 28px;
+  font-size: var(--font-size-xxl);
   font-weight: 600;
 }
 
@@ -25,7 +25,7 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   transition: all 0.3s ease;
   text-decoration: none;
@@ -81,7 +81,7 @@
 
 .btn-sm {
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   margin: 2px;
 }
 
@@ -112,7 +112,7 @@
 .account-form h3 {
   margin: 0 0 20px 0;
   color: #2c3e50;
-  font-size: 24px;
+  font-size: var(--font-size-xxl);
   font-weight: 600;
 }
 
@@ -125,7 +125,7 @@
   margin-bottom: 8px;
   color: #34495e;
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .form-group input,
@@ -135,7 +135,7 @@
   padding: 12px;
   border: 2px solid #e9ecef;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   transition: border-color 0.3s ease;
   box-sizing: border-box;
 }
@@ -194,13 +194,13 @@
   padding: 15px 12px;
   text-align: left;
   border-bottom: 2px solid #e9ecef;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .account-table td {
   padding: 15px 12px;
   border-bottom: 1px solid #e9ecef;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   vertical-align: middle;
 }
 
@@ -211,7 +211,7 @@
 .status {
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
 }
 
@@ -230,7 +230,7 @@
   color: white;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
 }
 
@@ -244,7 +244,7 @@
   text-align: center;
   padding: 40px;
   color: #6c757d;
-  font-size: 16px;
+  font-size: var(--font-size-base);
 }
 
 /* 반응형 디자인 */
@@ -265,7 +265,7 @@
   }
   
   .account-table {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
   
   .account-table th,

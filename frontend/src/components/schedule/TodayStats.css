@@ -8,7 +8,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     color: #374151;
 }
@@ -16,7 +16,7 @@
 .refresh-btn {
     background: none;
     border: none;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     cursor: pointer;
     padding: 4px;
     border-radius: 4px;
@@ -51,7 +51,7 @@
 }
 
 .stat-value {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     font-weight: bold;
     color: #1e40af;
     line-height: 1;
@@ -59,7 +59,7 @@
 }
 
 .stat-label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #64748b;
     text-align: center;
     line-height: 1.2;
@@ -101,7 +101,7 @@
     }
     
     .stat-value {
-        font-size: 20px;
+        font-size: var(--font-size-xl);
     }
     
     .stat-label {

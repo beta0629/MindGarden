@@ -46,7 +46,7 @@
 .badge {
   display: inline-block;
   padding: 4px 8px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: bold;
   text-align: center;
   white-space: nowrap;
@@ -121,12 +121,12 @@
 .test-details-text p {
   margin: 5px 0;
   color: #666;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .test-details-text small {
   color: #999;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 
 .service-status {

@@ -22,7 +22,7 @@
 
 .statistics-title {
     margin: 0;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
     color: #2c3e50;
     display: flex;
@@ -32,7 +32,7 @@
 
 .title-icon {
     color: #e74c3c;
-    font-size: 16px;
+    font-size: var(--font-size-base);
 }
 
 .refresh-btn {
@@ -65,7 +65,7 @@
     padding: 8px 12px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     transition: all 0.2s ease;
     display: flex;
@@ -80,7 +80,7 @@
 }
 
 .statistics-view-btn i {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
 }
 
 .spinning {
@@ -115,14 +115,14 @@
 }
 
 .stat-number {
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     font-weight: 700;
     margin-bottom: 4px;
     color: #2c3e50;
 }
 
 .stat-label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
     font-weight: 500;
 }
@@ -187,7 +187,7 @@
     }
     
     .stat-number {
-        font-size: 20px;
+        font-size: var(--font-size-xl);
     }
     
     .stat-label {

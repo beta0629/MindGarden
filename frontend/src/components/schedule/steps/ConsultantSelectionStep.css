@@ -14,14 +14,14 @@
 .schedule-modal .step-header h4 {
     margin: 0 0 8px 0;
     color: #2c3e50;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     font-weight: 600;
 }
 
 .schedule-modal .step-description {
     margin: 0;
     color: #6c757d;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     line-height: 1.4;
 }
 
@@ -40,19 +40,19 @@
 }
 
 .no-consultants-icon {
-    font-size: 48px;
+    font-size: var(--font-size-xxxl);
     margin-bottom: 16px;
     opacity: 0.5;
 }
 
 .no-consultants p {
     margin: 0 0 8px 0;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 500;
 }
 
 .no-consultants small {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     opacity: 0.8;
 }
 
@@ -70,13 +70,13 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     color: #1976d2;
     font-weight: 600;
 }
 
 .consultant-specialty {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #7b1fa2;
     font-weight: 500;
     background-color: rgba(255, 255, 255, 0.7);
@@ -107,7 +107,7 @@
     }
     
     .step-header h4 {
-        font-size: 18px;
+        font-size: var(--font-size-lg);
     }
     
     .step-description {
@@ -119,14 +119,14 @@
     }
     
     .selection-summary {
-        font-size: 14px;
+        font-size: var(--font-size-sm);
         flex-direction: column;
         align-items: flex-start;
         gap: 4px;
     }
     
     .consultant-specialty {
-        font-size: 12px;
+        font-size: var(--font-size-xs);
     }
 }
 

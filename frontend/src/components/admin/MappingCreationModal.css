@@ -600,17 +600,17 @@
 }
 
 .readonly-input {
-    background-color: #f8f9fa !important;
-    border-color: #e9ecef !important;
-    color: #495057 !important;
+    background-color: var(--color-background-disabled);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
     cursor: not-allowed;
     flex: 1;
 }
 
 .readonly-input:focus {
-    outline: none !important;
-    border-color: #e9ecef !important;
-    box-shadow: none !important;
+    outline: none;
+    border-color: var(--color-border);
+    box-shadow: none;
 }
 
 .auto-fill-badge {
@@ -627,8 +627,8 @@
 
 /* 패키지 선택 시 하이라이트 효과 */
 .package-selected {
-    border-color: #28a745 !important;
-    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2) !important;
+    border-color: var(--color-success);
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
 }
 
 /* 자동 매핑 애니메이션 */
@@ -637,8 +637,8 @@
 }
 
 .auto-filled-field.updated .readonly-input {
-    background-color: #d4edda !important;
-    border-color: #c3e6cb !important;
+    background-color: var(--color-success-light);
+    border-color: var(--color-success);
     animation: highlight 0.6s ease;
 }
 

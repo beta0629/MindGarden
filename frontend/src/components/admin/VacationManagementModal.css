@@ -124,20 +124,20 @@
 
 /* 셀렉트 박스 기본 스타일 */
 .form-group select {
-    background-color: white !important;
-    color: #333 !important;
-    border: 2px solid #e9ecef !important;
+    background-color: white;
+    color: var(--color-text-primary);
+    border: 2px solid var(--color-border);
 }
 
 .form-group select:focus {
-    background-color: white !important;
-    color: #333 !important;
-    border-color: #007bff !important;
+    background-color: white;
+    color: var(--color-text-primary);
+    border-color: var(--color-primary);
 }
 
 .form-group select option {
-    background-color: white !important;
-    color: #333 !important;
+    background-color: white;
+    color: var(--color-text-primary);
 }
 
 .form-row {

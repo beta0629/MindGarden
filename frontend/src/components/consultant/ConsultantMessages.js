@@ -202,9 +202,6 @@ const ConsultantMessages = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="consultant-messages-search-input"
-                  background: '#f8f9fa',
-                  color: '#2c3e50'
-                }}
               />
             </div>
           </div>
@@ -214,11 +211,6 @@ const ConsultantMessages = () => {
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="consultant-messages-filter-select"
-                padding: '12px 15px',
-                border: '2px solid #e9ecef',
-                borderRadius: '12px',
-                fontSize: '0.9rem',
-                background: '#f8f9fa',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 color: '#2c3e50',

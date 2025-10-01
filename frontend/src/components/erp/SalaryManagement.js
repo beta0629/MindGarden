@@ -468,8 +468,7 @@ const SalaryManagement = () => {
                     <div className="section-header">
                         <h3>급여 계산</h3>
                         {salaryProfiles.length === 0 && (
-                            <div className="profile-warning"
-                            }}>
+                            <div className="profile-warning">
                                 ⚠️ 급여 프로필이 작성되지 않았습니다. 
                                 <button 
                                     onClick={() => setActiveTab('profiles')}

@@ -163,7 +163,7 @@ const BranchDetail = ({
             <div className="branch-detail-empty">
                 <Card className="text-center">
                     <Card.Body className="py-5">
-                        <FaBuilding className="text-muted mb-3" style={{ fontSize: '3rem' }} />
+                        <FaBuilding className="text-muted mb-3 branch-detail-empty-icon" />
                         <h5 className="text-muted">지점을 선택해주세요</h5>
                         <p className="text-muted">왼쪽 목록에서 지점을 선택하면 상세 정보를 확인할 수 있습니다.</p>
                     </Card.Body>
@@ -180,7 +180,7 @@ const BranchDetail = ({
                     <Row className="align-items-center">
                         <Col>
                             <div className="d-flex align-items-center">
-                                <FaBuilding className="me-3 text-primary" style={{ fontSize: '1.5rem' }} />
+                                <FaBuilding className="me-3 text-primary branch-detail-icon" />
                                 <div>
                                     <h4 className="mb-1">{branch.name}</h4>
                                     <div className="d-flex align-items-center gap-3">

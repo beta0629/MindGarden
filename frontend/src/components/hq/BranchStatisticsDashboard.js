@@ -297,7 +297,7 @@ const BranchStatisticsDashboard = ({ selectedBranchId, onBranchSelect }) => {
                 <Card.Body>
                     {branchComparison.length === 0 ? (
                         <div className="text-center py-4">
-                            <FaChartBar className="text-muted mb-3" style={{ fontSize: '3rem' }} />
+                            <FaChartBar className="text-muted mb-3 branch-stats-empty-icon" />
                             <p className="text-muted">비교할 지점 데이터가 없습니다.</p>
                         </div>
                     ) : (
@@ -462,7 +462,7 @@ const BranchStatisticsDashboard = ({ selectedBranchId, onBranchSelect }) => {
                     <Card.Body>
                         <div className="trend-chart-placeholder">
                             <div className="text-center py-5">
-                                <FaChartBar className="text-muted mb-3" style={{ fontSize: '3rem' }} />
+                                <FaChartBar className="text-muted mb-3 branch-stats-empty-icon" />
                                 <p className="text-muted">
                                     차트 컴포넌트는 추후 구현 예정입니다.
                                 </p>

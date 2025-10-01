@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './SessionUserProfile.css';
 import { useSession } from '../../hooks/useSession';
 import { getRoleDisplayName, getRoleDisplayNameEn } from '../../utils/roleHelper';
 
@@ -105,7 +106,7 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
       <div 
         className="user-info" 
         onClick={onProfileClick}
-        style={{ cursor: 'pointer' }}
+        className="user-info-clickable"
       >
         <div className="user-avatar">
           {profileImageUrl ? (
@@ -115,12 +116,7 @@ const SessionUserProfile = ({ onProfileClick, showRole = true }) => {
               className="profile-image"
               onError={handleImageError}
               onLoad={handleImageLoad}
-              style={{ 
-                width: '100%', 
-                height: '100%', 
-                objectFit: 'cover',
-                display: 'block'
-              }}
+              className="profile-image-loaded"
             />
           ) : (
             <i className="bi bi-person-circle profile-icon"></i>

@@ -1,0 +1,339 @@
+/* SessionUserProfile 스타일 - 새로운 디자인 시스템 적용 */
+
+.user-info-clickable {
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.user-info-clickable:hover {
+  transform: translateY(-1px);
+}
+
+.profile-image-loaded {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  transition: all var(--transition-normal);
+}
+
+.user-info:hover {
+  background: var(--ios-bg-secondary);
+}
+
+.user-avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius-full);
+  overflow: hidden;
+  background: var(--ios-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: var(--border-radius-full);
+}
+
+.profile-icon {
+  font-size: var(--font-size-xl);
+  color: var(--ios-text-secondary);
+}
+
+.image-type-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: var(--ios-blue);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xxs) var(--spacing-xs);
+  border-radius: var(--border-radius-full);
+  border: 2px solid var(--ios-bg-primary);
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-xxs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin-bottom: var(--spacing-xxs);
+}
+
+.user-branch {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-secondary);
+  background: var(--ios-bg-secondary);
+  padding: var(--spacing-xxs) var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.user-status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--border-radius-full);
+  background: var(--ios-green);
+  flex-shrink: 0;
+}
+
+.user-status-indicator--online {
+  background: var(--ios-green);
+}
+
+.user-status-indicator--offline {
+  background: var(--ios-gray);
+}
+
+.user-status-indicator--away {
+  background: var(--ios-yellow);
+}
+
+.user-status-text {
+  font-size: var(--font-size-xs);
+  color: var(--ios-text-secondary);
+}
+
+.user-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-left: var(--spacing-sm);
+}
+
+.user-action-button {
+  padding: var(--spacing-xs);
+  border: 1px solid var(--ios-border-light);
+  border-radius: var(--border-radius-sm);
+  background: var(--ios-bg-primary);
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+}
+
+.user-action-button:hover {
+  background: var(--ios-bg-tertiary);
+  color: var(--ios-text-primary);
+  border-color: var(--ios-blue);
+}
+
+.user-action-button--primary {
+  background: var(--ios-blue);
+  color: white;
+  border-color: var(--ios-blue);
+}
+
+.user-action-button--primary:hover {
+  background: var(--ios-blue-dark);
+}
+
+.user-action-button--danger {
+  background: var(--ios-red);
+  color: white;
+  border-color: var(--ios-red);
+}
+
+.user-action-button--danger:hover {
+  background: var(--ios-red-dark);
+}
+
+.tablet-user-profile {
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  border: 1px solid var(--ios-border-light);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.tablet-user-profile:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.tablet-user-profile--compact {
+  padding: var(--spacing-sm);
+}
+
+.tablet-user-profile--compact .user-avatar {
+  width: 40px;
+  height: 40px;
+}
+
+.tablet-user-profile--compact .user-name {
+  font-size: var(--font-size-sm);
+}
+
+.tablet-user-profile--compact .user-role {
+  font-size: var(--font-size-xs);
+}
+
+.tablet-user-profile--compact .user-branch {
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-xxs);
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .user-info {
+    padding: var(--spacing-xs);
+    gap: var(--spacing-sm);
+  }
+  
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .profile-icon {
+    font-size: var(--font-size-lg);
+  }
+  
+  .user-name {
+    font-size: var(--font-size-sm);
+  }
+  
+  .user-role {
+    font-size: var(--font-size-xs);
+  }
+  
+  .user-branch {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xxs);
+  }
+  
+  .user-actions {
+    flex-direction: row;
+    margin-left: var(--spacing-xs);
+  }
+  
+  .user-action-button {
+    min-width: 28px;
+    height: 28px;
+    padding: var(--spacing-xxs);
+  }
+  
+  .tablet-user-profile {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .user-info {
+    gap: var(--spacing-md);
+  }
+  
+  .user-avatar {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .user-name {
+    font-size: var(--font-size-sm);
+  }
+  
+  .user-role {
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .tablet-user-profile {
+    background: var(--ios-bg-primary-dark);
+    border-color: var(--ios-border-light-dark);
+  }
+  
+  .user-info:hover {
+    background: var(--ios-bg-secondary-dark);
+  }
+  
+  .user-avatar {
+    background: var(--ios-bg-secondary-dark);
+  }
+  
+  .profile-icon {
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .user-name {
+    color: var(--ios-text-primary-dark);
+  }
+  
+  .user-role {
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .user-branch {
+    background: var(--ios-bg-secondary-dark);
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .user-status-text {
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .user-action-button {
+    background: var(--ios-bg-primary-dark);
+    border-color: var(--ios-border-light-dark);
+    color: var(--ios-text-secondary-dark);
+  }
+  
+  .user-action-button:hover {
+    background: var(--ios-bg-tertiary-dark);
+    color: var(--ios-text-primary-dark);
+  }
+}

@@ -1014,7 +1014,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                         <div className="schedule-calendar-modal-actions">
                             <button 
                                 onClick={handleScheduleClick}
-                                className="schedule-calendar-modal-btn"
+                                className="schedule-calendar-modal-btn">
                                 onMouseOver={(e) => {
                                     e.target.style.borderColor = '#007bff';
                                     e.target.style.background = '#f8f9ff';
@@ -1034,7 +1034,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                             {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
                                 <button 
                                     onClick={handleVacationClick}
-                                    className="schedule-calendar-modal-btn"
+                                    className="schedule-calendar-modal-btn">
                                         textAlign: 'left',
                                         transition: 'all 0.3s ease'
                                     }}
@@ -1192,7 +1192,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                                     endTime: timeSlot.endTime
                                                 }))}
                                                 disabled={isBooked}
-                                                className="schedule-calendar-modal-btn"
+                                                className="schedule-calendar-modal-btn">
                                                     padding: '12px 8px',
                                                     border: '1px solid #e2e8f0',
                                                     borderRadius: '6px',

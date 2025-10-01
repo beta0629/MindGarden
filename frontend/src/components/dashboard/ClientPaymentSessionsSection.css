@@ -196,32 +196,36 @@
 /* 모바일 최적화 - 1열 그리드로 변경 */
 @media (max-width: 767px) {
   .client-payment-sessions-section {
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+    padding: 16px !important;
+    margin-bottom: 16px !important;
   }
   
   .section-header h3 {
-    font-size: var(--font-size-lg);
+    font-size: 18px !important;
   }
   
   .summary-card {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md);
-    min-height: auto;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 16px !important;
+    min-height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
   
   .summary-item {
-    padding: var(--spacing-sm);
+    padding: 12px !important;
+    width: 100% !important;
+    margin-bottom: 8px !important;
   }
   
   .summary-label {
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--spacing-xs);
+    font-size: 14px !important;
+    margin-bottom: 8px !important;
   }
   
   .summary-value {
-    font-size: var(--font-size-xl);
+    font-size: 20px !important;
   }
   
   .payment-item {

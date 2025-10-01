@@ -232,7 +232,7 @@ code {
   border-radius: 4px;
   padding: 8px 16px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .btn:hover {

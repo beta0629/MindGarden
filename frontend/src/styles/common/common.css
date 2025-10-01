@@ -98,7 +98,7 @@
 }
 
 html {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     scroll-behavior: smooth;
 }
 
@@ -303,7 +303,7 @@ img {
 
 /* 로딩 텍스트 - 고정 */
 .loading-spinner-text {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     color: #6b7280;
     font-weight: 500;
     margin: 0;

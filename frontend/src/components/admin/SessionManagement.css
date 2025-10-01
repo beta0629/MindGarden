@@ -12,13 +12,13 @@
 .session-mgmt-header h2 {
     color: #2c3e50;
     margin-bottom: 10px;
-    font-size: 28px;
+    font-size: var(--font-size-xxl);
     font-weight: 600;
 }
 
 .session-mgmt-header p {
     color: #7f8c8d;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     margin: 0;
 }
 
@@ -34,7 +34,7 @@
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     transition: all 0.3s ease;
     text-decoration: none;
@@ -87,7 +87,7 @@
     padding: 12px 40px 12px 15px;
     border: 2px solid #e1e8ed;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: border-color 0.3s ease;
 }
 
@@ -108,7 +108,7 @@
     padding: 12px 15px;
     border: 2px solid #e1e8ed;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background: white;
     cursor: pointer;
 }
@@ -165,7 +165,7 @@
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
 }
 
 .session-mgmt-address-text {
@@ -182,7 +182,7 @@
 
 .session-mgmt-btn-sm {
     padding: 6px 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
 }
 
 .session-mgmt-btn-danger {
@@ -241,13 +241,13 @@
 .session-mgmt-modal-header h3 {
     margin: 0;
     color: #2c3e50;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
 }
 
 .session-mgmt-close-btn {
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     cursor: pointer;
     color: #95a5a6;
     padding: 0;
@@ -284,7 +284,7 @@
     padding: 12px;
     border: 2px solid #e1e8ed;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     transition: border-color 0.3s ease;
     box-sizing: border-box;
 }
@@ -380,7 +380,7 @@
 }
 
 .session-mgmt-client-email {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #7f8c8d;
     margin-bottom: 3px;
 }
@@ -435,7 +435,7 @@
     padding: 4px 8px;
     border-radius: 4px;
     color: white;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: 500;
 }
 
@@ -515,12 +515,12 @@
 .session-mgmt-card-title h4 {
     margin: 0;
     color: #2c3e50;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
 }
 
 .session-mgmt-card-subtitle {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
     background: #e9ecef;
     padding: 2px 8px;
@@ -551,13 +551,13 @@
 .session-mgmt-info-label {
     font-weight: 500;
     color: #6c757d;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     min-width: 80px;
 }
 
 .session-mgmt-info-value {
     color: #2c3e50;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     text-align: right;
     flex: 1;
@@ -580,7 +580,7 @@
 
 .session-mgmt-session-label {
     display: block;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
     margin-bottom: 5px;
     font-weight: 500;
@@ -588,7 +588,7 @@
 
 .session-mgmt-session-value {
     display: block;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: 600;
     color: #2c3e50;
 }
@@ -637,7 +637,7 @@
 .session-mgmt-card-actions .session-mgmt-btn {
     flex: 1;
     padding: 8px 16px;
-    font-size: 13px;
+    font-size: var(--font-size-sm);
 }
 
 /* 내담자 선택 섹션 */
@@ -656,7 +656,7 @@
 
 .session-mgmt-client-selection-header h3 {
     color: #2c3e50;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     font-weight: 600;
     margin: 0;
 }
@@ -676,7 +676,7 @@
     padding: 10px 15px;
     border: 2px solid #e9ecef;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     width: 300px;
     transition: border-color 0.3s ease;
 }
@@ -691,7 +691,7 @@
     padding: 10px 15px;
     border: 2px solid #e9ecef;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     background: white;
     cursor: pointer;
     transition: border-color 0.3s ease;
@@ -714,7 +714,7 @@
 
 .session-mgmt-no-results p {
     margin: 0;
-    font-size: 16px;
+    font-size: var(--font-size-base);
 }
 
 .session-mgmt-client-list {
@@ -752,14 +752,14 @@
 }
 
 .session-mgmt-client-name {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
     color: #2c3e50;
     margin-bottom: 5px;
 }
 
 .session-mgmt-client-email {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: #6c757d;
     margin-bottom: 8px;
 }
@@ -771,7 +771,7 @@
 }
 
 .session-mgmt-mapping-count {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
     background: #f8f9fa;
     padding: 2px 8px;
@@ -779,7 +779,7 @@
 }
 
 .session-mgmt-active-count {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #28a745;
     background: #d4edda;
     padding: 2px 8px;
@@ -796,7 +796,7 @@
 
 .session-mgmt-selected-indicator {
     color: #3498db;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: bold;
 }
 
@@ -812,7 +812,7 @@
     padding: 12px 24px;
     border: none;
     background: none;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 500;
     color: #6c757d;
     cursor: pointer;
@@ -848,14 +848,14 @@
 
 .session-mgmt-extensions-header h3 {
     color: #2c3e50;
-    font-size: 20px;
+    font-size: var(--font-size-xl);
     font-weight: 600;
     margin: 0 0 8px 0;
 }
 
 .session-mgmt-extensions-header p {
     color: #6c757d;
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     margin: 0;
 }
 
@@ -887,13 +887,13 @@
 
 .session-mgmt-extension-card .session-mgmt-card-title h4 {
     color: #2c3e50;
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
     margin: 0 0 4px 0;
 }
 
 .session-mgmt-extension-card .session-mgmt-card-subtitle {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
     background: #e9ecef;
     padding: 2px 8px;
@@ -916,7 +916,7 @@
 
 .session-mgmt-extension-card .session-mgmt-btn-sm {
     padding: 6px 12px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     min-width: 80px;
 }
 
@@ -931,7 +931,7 @@
 }
 
 .session-mgmt-status-text {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
     font-weight: 500;
     padding: 6px 12px;
@@ -1034,14 +1034,14 @@
 }
 
 .session-mgmt-session-label {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: #6c757d;
     margin-bottom: 4px;
     font-weight: 500;
 }
 
 .session-mgmt-session-value {
-    font-size: 16px;
+    font-size: var(--font-size-base);
     font-weight: 600;
     color: #2c3e50;
 }

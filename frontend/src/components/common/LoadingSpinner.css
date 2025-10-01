@@ -261,7 +261,7 @@
   }
   
   .loading-spinner-text {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
     margin-top: 12px;
   }
   
@@ -299,7 +299,7 @@
   }
   
   .loading-spinner-text {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     margin-top: 10px;
   }
 }

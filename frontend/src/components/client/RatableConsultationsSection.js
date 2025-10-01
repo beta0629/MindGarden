@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import ConsultantRatingModal from './ConsultantRatingModal';
+import './RatableConsultationsSection.css';
 
 /**
  * 평가 가능한 상담 목록 섹션
@@ -112,103 +113,43 @@ const RatableConsultationsSection = () => {
                 {/* 평가 가능한 상담 목록 */}
                 <div className="ratable-schedules-list">
                     {showTestData ? (
-                        <div style={{
-                            textAlign: 'center',
-                            padding: '32px',
-                            color: '#666',
-                            backgroundColor: '#fff3cd',
-                            borderRadius: '8px',
-                            border: '1px solid #ffeaa7'
-                        }}>
-                            <div style={{ fontSize: 'var(--font-size-xxl)', marginBottom: '12px' }}>🔧</div>
-                            <div style={{ fontSize: 'var(--font-size-md)', marginBottom: '8px' }}>
+                        <div className="ratable-empty-state ratable-empty-state--warning">
+                            <div className="empty-state-icon">🔧</div>
+                            <div className="empty-state-title">
                                 평가 시스템 준비 중입니다
                             </div>
-                            <div style={{ fontSize: 'var(--font-size-sm)', color: '#856404' }}>
+                            <div className="empty-state-description">
                                 데이터베이스 테이블 생성 중... 잠시 후 다시 시도해주세요
                             </div>
                         </div>
                     ) : ratableSchedules.length === 0 ? (
-                        <div style={{
-                            textAlign: 'center',
-                            padding: '32px',
-                            color: '#666',
-                            backgroundColor: '#f8f9fa',
-                            borderRadius: '8px',
-                            border: '1px solid #e9ecef'
-                        }}>
-                            <div style={{ fontSize: 'var(--font-size-xxl)', marginBottom: '12px' }}>💭</div>
-                            <div style={{ fontSize: 'var(--font-size-md)', marginBottom: '8px' }}>
+                        <div className="ratable-empty-state ratable-empty-state--info">
+                            <div className="empty-state-icon">💭</div>
+                            <div className="empty-state-title">
                                 평가 가능한 상담이 없습니다
                             </div>
-                            <div style={{ fontSize: 'var(--font-size-sm)', color: '#999' }}>
+                            <div className="empty-state-description">
                                 상담을 완료하시면 평가할 수 있어요
                             </div>
                         </div>
                     ) : (
                         ratableSchedules.map(schedule => (
-                        <div
-                            key={schedule.scheduleId}
-                            style={{
-                                border: '1px solid #e9ecef',
-                                borderRadius: '8px',
-                                padding: '16px',
-                                backgroundColor: '#fefefe',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center'
-                            }}>
-                                <div>
-                                    <div style={{
-                                        fontSize: 'var(--font-size-md)',
-                                        fontWeight: '500',
-                                        color: '#333',
-                                        marginBottom: '4px'
-                                    }}>
+                        <div key={schedule.scheduleId} className="ratable-schedule-card">
+                            <div className="schedule-card-content">
+                                <div className="schedule-info">
+                                    <div className="schedule-consultant">
                                         {schedule.consultantName}님과의 상담
                                     </div>
-                                    <div style={{
-                                        fontSize: 'var(--font-size-sm)',
-                                        color: '#666'
-                                    }}>
+                                    <div className="schedule-datetime">
                                         {schedule.consultationDate} {schedule.consultationTime}
                                     </div>
-                                    <div style={{
-                                        fontSize: 'var(--font-size-xs)',
-                                        color: '#28a745',
-                                        marginTop: '2px'
-                                    }}>
+                                    <div className="schedule-status">
                                         ✅ 상담 완료
                                     </div>
                                 </div>
                                 <button
+                                    className="mg-btn mg-btn--primary mg-btn--sm rating-button"
                                     onClick={() => handleRateConsultant(schedule)}
-                                    style={{
-                                        padding: '8px 16px',
-                                        borderRadius: '20px',
-                                        border: 'none',
-                                        backgroundColor: '#ff6b9d',
-                                        color: '#ffffff',
-                                        fontSize: 'var(--font-size-sm)',
-                                        fontWeight: '500',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.target.style.backgroundColor = '#ff5588';
-                                        e.target.style.transform = 'scale(1.05)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.target.style.backgroundColor = '#ff6b9d';
-                                        e.target.style.transform = 'scale(1)';
-                                    }}
                                 >
                                     💖 평가하기
                                 </button>

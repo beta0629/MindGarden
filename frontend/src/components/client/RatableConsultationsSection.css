@@ -1,0 +1,218 @@
+/* RatableConsultationsSection 스타일 - 새로운 디자인 시스템 적용 */
+
+.ratable-consultations-section {
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--ios-border-light);
+  margin-bottom: var(--spacing-xxl);
+}
+
+.loading-message {
+  text-align: center;
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-base);
+}
+
+.section-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.badge {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xxs) var(--spacing-sm);
+  border-radius: var(--border-radius-full);
+  display: inline-block;
+}
+
+.badge--primary {
+  background-color: var(--ios-blue-light);
+  color: var(--ios-blue-dark);
+}
+
+.section-description {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin: 0;
+}
+
+.ratable-schedules-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* 빈 상태 스타일 */
+.ratable-empty-state {
+  text-align: center;
+  padding: var(--spacing-xxl);
+  color: var(--ios-text-secondary);
+  border-radius: var(--border-radius-md);
+  border: 1px solid;
+}
+
+.ratable-empty-state--warning {
+  background-color: var(--ios-yellow-light);
+  border-color: var(--ios-yellow);
+  color: var(--ios-yellow-dark);
+}
+
+.ratable-empty-state--info {
+  background-color: var(--ios-gray-light);
+  border-color: var(--ios-gray);
+}
+
+.empty-state-icon {
+  font-size: var(--font-size-xxl);
+  margin-bottom: var(--spacing-sm);
+}
+
+.empty-state-title {
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.empty-state-description {
+  font-size: var(--font-size-sm);
+}
+
+/* 상담 카드 스타일 */
+.ratable-schedule-card {
+  border: 1px solid var(--ios-border-light);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  background: var(--ios-bg-secondary);
+  transition: all var(--transition-normal);
+}
+
+.ratable-schedule-card:hover {
+  background: var(--ios-bg-tertiary);
+  border-color: var(--ios-blue);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.schedule-card-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.schedule-info {
+  flex: 1;
+}
+
+.schedule-consultant {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--ios-text-primary);
+  margin-bottom: var(--spacing-xxs);
+}
+
+.schedule-datetime {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.schedule-status {
+  font-size: var(--font-size-xs);
+  color: var(--ios-green);
+  font-weight: var(--font-weight-medium);
+}
+
+.rating-button {
+  background: var(--ios-pink);
+  border: none;
+  color: white;
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
+}
+
+.rating-button:hover {
+  background: var(--ios-pink-dark);
+  transform: scale(1.05);
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 767px) {
+  .ratable-consultations-section {
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .section-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .ratable-empty-state {
+    padding: var(--spacing-lg);
+  }
+  
+  .empty-state-icon {
+    font-size: var(--font-size-xl);
+  }
+  
+  .empty-state-title {
+    font-size: var(--font-size-sm);
+  }
+  
+  .empty-state-description {
+    font-size: var(--font-size-xs);
+  }
+  
+  .ratable-schedule-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .schedule-card-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .rating-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .schedule-consultant {
+    font-size: var(--font-size-sm);
+  }
+  
+  .schedule-datetime {
+    font-size: var(--font-size-xs);
+  }
+  
+  .schedule-status {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* 태블릿 반응형 디자인 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .ratable-consultations-section {
+    padding: var(--spacing-lg);
+  }
+  
+  .schedule-card-content {
+    gap: var(--spacing-sm);
+  }
+}

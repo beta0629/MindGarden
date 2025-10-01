@@ -129,15 +129,7 @@ const SummaryPanels = ({ user, consultationData }) => {
                 <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
                   <div className="summary-value-count">{weeklyCount}건</div>
                   {consultationData?.weeklyConsultations > 0 && (
-                    <div className="summary-value-detail"> 
-                      color: '#6c757d', 
-                      marginTop: '6px',
-                      padding: '6px 10px',
-                      backgroundColor: '#fdf2f8',
-                      borderRadius: '6px',
-                      border: '1px solid #fce7f3',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                    }}>
+                    <div className="summary-value-detail">
                       이번 주 상담 일정
                     </div>
                   )}

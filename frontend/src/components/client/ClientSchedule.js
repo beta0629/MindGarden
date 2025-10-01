@@ -90,12 +90,6 @@ const ClientSchedule = () => {
         </div>
         
         <div className="client-schedule-calendar-wrapper">
-          borderRadius: '20px',
-          padding: '24px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-          backdropFilter: 'blur(15px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)'
-        }}>
           <ScheduleCalendar 
             userRole={user?.role || 'CLIENT'}
             userId={user?.id || null}

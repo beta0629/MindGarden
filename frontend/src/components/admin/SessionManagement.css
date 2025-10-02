@@ -781,6 +781,7 @@ body .session-mgmt-form-group textarea:focus,
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 24px;
     margin-top: 32px;
+    padding: 0 20px;
 }
 
 .session-mgmt-client-card {
@@ -963,6 +964,7 @@ body .session-mgmt-mapping-actions,
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 24px;
     margin-top: 32px;
+    padding: 0 20px;
 }
 
 /* 매핑 카드 */
@@ -1376,6 +1378,7 @@ body .session-mgmt-mapping-actions,
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 20px;
+    padding: 0 20px;
 }
 
 /* 회기 추가 요청 카드 */
@@ -1486,10 +1489,12 @@ body .session-mgmt-mapping-actions,
     
     .session-mgmt-client-list {
         grid-template-columns: 1fr;
+        padding: 0 16px;
     }
     
     .session-mgmt-mappings-grid {
         grid-template-columns: 1fr;
+        padding: 0 16px;
     }
     
     .session-mgmt-sessions-info {
@@ -1516,6 +1521,7 @@ body .session-mgmt-mapping-actions,
     
     .session-mgmt-extensions-grid {
         grid-template-columns: 1fr;
+        padding: 0 16px;
     }
     
     .session-mgmt-extension-card .session-mgmt-card-actions {

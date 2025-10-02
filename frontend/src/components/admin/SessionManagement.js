@@ -808,7 +808,6 @@ const SessionManagement = () => {
     };
 
     return (
-    return (
         <SimpleLayout>
             <div className="session-mgmt-container">
                 {/* 헤더 섹션 */}

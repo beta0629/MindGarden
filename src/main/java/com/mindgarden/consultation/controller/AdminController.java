@@ -1344,35 +1344,25 @@ public class AdminController {
         try {
             log.info("🔧 매핑 생성: 상담사={}, 내담자={}", dto.getConsultantId(), dto.getClientId());
             
-            // 환경별 처리
-            String currentBranchCode;
-            boolean isProduction = isProductionEnvironment();
-            
-            if (isProduction) {
-                // 운영 환경: 세션 체크 및 권한 확인
-                User currentUser = SessionUtils.getCurrentUser(session);
-                if (currentUser == null) {
-                    log.warn("❌ 세션이 없습니다. 로그인이 필요합니다.");
-                    return ResponseEntity.status(401).body(Map.of(
-                        "success", false,
-                        "message", "로그인이 필요합니다.",
-                        "errorCode", "UNAUTHORIZED"
-                    ));
-                }
-                
-                // 동적 권한 체크
-                ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
-                if (permissionResponse != null) {
-                    return permissionResponse;
-                }
-                
-                currentBranchCode = currentUser.getBranchCode();
-                log.info("🔧 현재 사용자 지점코드: {}", currentBranchCode);
-            } else {
-                // 개발 환경: 세션 체크 생략 (편의성)
-                currentBranchCode = "DEV";
-                log.info("🔧 개발 환경: 지점코드={}", currentBranchCode);
+            // 세션 체크 및 권한 확인 (운영 환경과 동일)
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                log.warn("❌ 세션이 없습니다. 로그인이 필요합니다.");
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다.",
+                    "errorCode", "UNAUTHORIZED"
+                ));
             }
+            
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
+            }
+            
+            String currentBranchCode = currentUser.getBranchCode();
+            log.info("🔧 현재 사용자 지점코드: {}", currentBranchCode);
             
             ConsultantClientMapping mapping = adminService.createMapping(dto);
             

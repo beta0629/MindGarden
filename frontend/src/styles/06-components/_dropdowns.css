@@ -1,6 +1,6 @@
 /* ===== 통합 드롭다운 컴포넌트 스타일 ===== */
 
-/* 전체 애플리케이션의 모든 드롭다운에 대한 공통 규칙 */
+/* 전체 애플리케이션의 모든 드롭다운에 대한 공통 규칙 - 구조적 재설계 */
 select, 
 .custom-select,
 .dropdown,
@@ -13,12 +13,13 @@ select,
 .custom-select__dropdown,
 .ant-select-dropdown,
 .react-select__menu {
-  /* 드롭다운이 스크롤과 독립적으로 동작하도록 */
+  /* 드롭다운 기본 위치 */
   position: relative;
   z-index: var(--z-dropdown);
+  isolation: isolate; /* stacking context 생성 */
 }
 
-/* 모든 드롭다운 메뉴의 공통 스타일 */
+/* 모든 드롭다운 메뉴의 공통 스타일 - 구조적 재설계 */
 select option,
 .custom-select__dropdown,
 .dropdown-menu,
@@ -27,12 +28,15 @@ select option,
 .select-dropdown,
 .ant-select-dropdown,
 .react-select__menu {
+  /* 드롭다운 메뉴는 fixed 위치로 스크롤 독립적 동작 */
   position: fixed !important;
-  z-index: var(--z-dropdown) !important;
-  /* 스크롤과 독립적으로 동작 */
+  z-index: var(--z-dropdown-fixed) !important;
+  /* 성능 최적화 */
   transform: translateZ(0);
   will-change: transform;
-  /* 스크롤 시에도 고정 위치 유지 */
+  /* stacking context 생성 */
+  isolation: isolate;
+  /* 위치는 JavaScript로 동적 조정 */
   top: auto !important;
   left: auto !important;
   right: auto !important;

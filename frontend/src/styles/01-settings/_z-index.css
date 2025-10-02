@@ -1,20 +1,46 @@
-/* ===== Z-Index 레이어 시스템 ===== */
+/* ===== Z-Index 레이어 시스템 - 완전 재구조화 ===== */
 
 :root {
-  /* Z-Index 레이어 시스템 */
+  /* 기본 레이어 */
   --z-base: 0;
-  --z-index-hidden: 0;
-  --z-index-select: 1;
-  --z-dropdown: 10020;
-  --z-index-dropdown: 9999;
-  --z-header: 10010;
-  --z-sticky: 1020;
-  --z-fixed: 1030;
-  --z-modal-backdrop: 1040;
-  --z-index-modal-overlay: 10000;
-  --z-modal: 1050;
-  --z-index-modal: 10001;
-  --z-popover: 1060;
-  --z-tooltip: 1070;
-  --z-toast: 1080;
+  --z-hidden: -1;
+  
+  /* 콘텐츠 레이어 (1-100) */
+  --z-content: 1;
+  --z-content-hover: 10;
+  --z-content-active: 20;
+  
+  /* 네비게이션 레이어 (100-200) */
+  --z-nav: 100;
+  --z-nav-sticky: 110;
+  --z-nav-dropdown: 120;
+  
+  /* 헤더 레이어 (1000-1100) - 최고 우선순위 */
+  --z-header: 1000;
+  --z-header-sticky: 1010;
+  --z-header-dropdown: 1020;
+  --z-header-menu: 1030;
+  --z-header-user: 1040;
+  
+  /* 드롭다운 레이어 (2000-2100) */
+  --z-dropdown: 2000;
+  --z-dropdown-fixed: 2010;
+  --z-dropdown-modal: 2020;
+  
+  /* 오버레이 레이어 (5000-6000) */
+  --z-overlay: 5000;
+  --z-overlay-backdrop: 5010;
+  
+  /* 모달 레이어 (10000-10100) */
+  --z-modal: 10000;
+  --z-modal-backdrop: 10010;
+  --z-modal-content: 10020;
+  
+  /* 알림 레이어 (20000-20100) */
+  --z-notification: 20000;
+  --z-toast: 20010;
+  --z-alert: 20020;
+  
+  /* 최고 우선순위 레이어 (99999) */
+  --z-supreme: 99999;
 }

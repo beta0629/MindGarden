@@ -2,7 +2,7 @@ import React, { useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
 import { initializeDesignSystem } from './utils/designSystemHelper';
-import { initAllDropdowns, initHeaderDropdowns } from './utils/dropdownPositionHelper';
+import unifiedLayoutManager from './utils/unifiedLayoutSystem';
 import TabletHomepage from './components/homepage/Homepage';
 import TabletLogin from './components/auth/TabletLogin';
 import TabletRegister from './components/auth/TabletRegister';
@@ -154,13 +154,12 @@ function AppContent() {
     });
   }, []);
 
-  // 드롭다운 위치 관리 시스템 초기화
+  // 통합 레이아웃 시스템 초기화
   useEffect(() => {
-    // 모든 드롭다운 초기화
-    initAllDropdowns();
-    initHeaderDropdowns();
+    // 통합 레이아웃 시스템 초기화
+    unifiedLayoutManager.init();
     
-    console.log('🎯 드롭다운 위치 관리 시스템 초기화 완료');
+    console.log('🏗️ 통합 레이아웃 시스템 초기화 완료');
   }, []);
 
   // 중복 로그인 체크 시작/중지 (개발 환경에서는 비활성화)

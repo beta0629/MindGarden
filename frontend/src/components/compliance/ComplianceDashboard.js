@@ -351,6 +351,7 @@ const ComplianceDashboard = () => {
                     🎓 교육 계획 수립
                 </button>
             </div>
+            </div>
         </SimpleLayout>
     );
 };

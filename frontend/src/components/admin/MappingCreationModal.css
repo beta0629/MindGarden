@@ -81,15 +81,24 @@
     position: relative;
     display: flex;
     align-items: center;
-    background: var(--color-bg-secondary, #F5F5F7);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: var(--border-radius-lg);
-    border: 1px solid var(--color-border-secondary, #E5E5E7);
-    transition: border-color 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.2s ease;
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .search-input-wrapper:focus-within {
-    border-color: var(--color-primary, #007AFF);
-    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    border-color: rgba(0, 122, 255, 0.6);
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 8px 24px rgba(0, 122, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
 .search-icon {
@@ -156,10 +165,12 @@
     margin-top: var(--spacing-md);
 }
 
-/* 선택 카드 */
+/* 선택 카드 - 글래스모피즘 */
 .selection-card {
-    background: var(--color-bg-primary, #FFFFFF);
-    border: 2px solid var(--color-border-secondary, #E5E5E7);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-lg);
     cursor: pointer;
@@ -169,18 +180,28 @@
     gap: var(--spacing-md);
     position: relative;
     overflow: hidden;
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .selection-card:hover {
-    border-color: var(--color-primary-light, rgba(0, 122, 255, 0.3));
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.1);
+    border-color: rgba(0, 122, 255, 0.4);
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 8px 24px rgba(0, 122, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
 }
 
 .selection-card.selected {
-    border-color: var(--color-primary, #007AFF);
-    background: var(--color-primary-light, rgba(0, 122, 255, 0.05));
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+    border-color: rgba(0, 122, 255, 0.6);
+    background: rgba(0, 122, 255, 0.15);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 
+        0 8px 24px rgba(0, 122, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* 카드 아바타 */

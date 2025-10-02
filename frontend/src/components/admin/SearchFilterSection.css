@@ -1,0 +1,146 @@
+/* ===== SearchFilterSection 스타일 - 아이폰 스타일과 글래스모피즘 적용 ===== */
+
+.search-filter-section {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+}
+
+.search-container {
+    flex: 1;
+    min-width: 300px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    font-size: 16px;
+    color: var(--text-secondary, #666666);
+    z-index: 1;
+}
+
+.search-input {
+    width: 100%;
+    padding: 16px 20px 16px 48px;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--text-primary, #1a1a1a);
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--color-primary, #007AFF);
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 0 0 3px rgba(0, 122, 255, 0.1),
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.search-input::placeholder {
+    color: var(--text-secondary, #666666);
+    opacity: 0.8;
+}
+
+.filter-container {
+    min-width: 200px;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 16px 20px;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--text-primary, #1a1a1a);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 16px;
+    padding-right: 48px;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--color-primary, #007AFF);
+    background-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 0 0 3px rgba(0, 122, 255, 0.1),
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.filter-select option {
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--text-primary, #1a1a1a);
+    padding: 8px 12px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .search-filter-section {
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .search-container,
+    .filter-container {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .search-input,
+    .filter-select {
+        padding: 14px 18px 14px 44px;
+        font-size: 15px;
+    }
+    
+    .search-icon {
+        left: 14px;
+        font-size: 15px;
+    }
+    
+    .filter-select {
+        padding-right: 44px;
+        background-position: right 14px center;
+        background-size: 14px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .search-filter-section {
+        gap: 18px;
+    }
+    
+    .search-input,
+    .filter-select {
+        padding: 15px 19px;
+        font-size: 15px;
+    }
+}

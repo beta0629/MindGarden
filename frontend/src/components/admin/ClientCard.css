@@ -1,0 +1,190 @@
+/* ===== ClientCard 스타일 - 아이폰 스타일과 글래스모피즘 적용 ===== */
+
+.client-card {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.client-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.3);
+    border-color: var(--color-primary, #007AFF);
+    box-shadow: 
+        0 8px 24px rgba(0, 122, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.client-card.selected {
+    background: rgba(0, 122, 255, 0.1);
+    border-color: var(--color-primary, #007AFF);
+    box-shadow: 
+        0 8px 24px rgba(0, 122, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* 카드 헤더 */
+.client-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.client-profile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+}
+
+.client-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary, #007AFF), var(--color-accent, #5856D6));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.client-info {
+    flex: 1;
+}
+
+.client-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary, #1a1a1a);
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.client-name i {
+    font-size: 16px;
+    color: var(--color-primary, #007AFF);
+}
+
+.client-email {
+    font-size: 14px;
+    color: var(--text-secondary, #666666);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.client-email i {
+    font-size: 14px;
+    color: var(--text-secondary, #666666);
+}
+
+.selected-indicator {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-primary, #007AFF);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+/* 카드 바디 */
+.client-card-body {
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mapping-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mapping-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-secondary, #666666);
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mapping-count i {
+    font-size: 16px;
+    color: var(--color-primary, #007AFF);
+}
+
+.active-mapping {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--color-success, #34C759);
+    background: rgba(52, 199, 89, 0.2);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(52, 199, 89, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.active-mapping i {
+    font-size: 16px;
+    color: var(--color-success, #34C759);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .client-card {
+        padding: 20px;
+        gap: 16px;
+    }
+    
+    .client-profile {
+        gap: 12px;
+    }
+    
+    .client-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .client-name {
+        font-size: 16px;
+    }
+    
+    .client-email {
+        font-size: 13px;
+    }
+    
+    .mapping-count,
+    .active-mapping {
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+}

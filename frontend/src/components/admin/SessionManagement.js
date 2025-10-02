@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
+import ClientCard from './ClientCard';
 import './SessionManagement.css';
 
 /**
@@ -885,29 +886,14 @@ const SessionManagement = () => {
                         const activeMappings = clientMappings.filter(mapping => mapping.status === 'ACTIVE');
                         
                         return (
-                            <div 
+                            <ClientCard
                                 key={client.id}
-                                className={`session-mgmt-client-card ${selectedClient?.id === client.id ? 'selected' : ''}`}
-                                onClick={() => handleClientSelect(client)}
-                            >
-                                <div className="session-mgmt-client-info">
-                                    <div className="session-mgmt-client-name">{client.name}</div>
-                                    <div className="session-mgmt-client-email">{client.email}</div>
-                                    <div className="session-mgmt-client-mapping-info">
-                                        <span className="session-mgmt-mapping-count">
-                                            매핑 {clientMappings.length}개
-                                        </span>
-                                        {activeMappings.length > 0 && (
-                                            <span className="session-mgmt-active-count">
-                                                (활성 {activeMappings.length}개)
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="session-mgmt-client-status">
-                                    {selectedClient?.id === client.id && <span className="session-mgmt-selected-indicator">✓</span>}
-                                </div>
-                            </div>
+                                client={client}
+                                clientMappings={clientMappings}
+                                activeMappings={activeMappings}
+                                isSelected={selectedClient?.id === client.id}
+                                onClick={handleClientSelect}
+                            />
                         );
                     })}
                 </div>

@@ -1,0 +1,425 @@
+/* ===== ScheduleModal 스타일 - 새로운 디자인 시스템 적용 ===== */
+
+.schedule-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--modal-backdrop, rgba(0, 0, 0, 0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal-schedule, 10020);
+  backdrop-filter: var(--ios-backdrop-blur-sm);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
+  animation: fadeIn 0.2s ease-out;
+  padding: var(--spacing-md, 1rem);
+}
+
+.schedule-modal {
+  background: var(--modal-bg, rgba(250, 250, 250, 0.98));
+  border-radius: var(--border-radius-lg, 16px);
+  box-shadow: var(--modal-shadow, 0 25px 50px rgba(0, 0, 0, 0.1));
+  border: 1px solid var(--modal-border, rgba(209, 209, 214, 0.8));
+  backdrop-filter: var(--ios-backdrop-blur-xl);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-xl);
+  animation: slideIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  width: 100%;
+  max-height: 90vh;
+  min-height: 600px;
+  overflow: hidden;
+}
+
+/* 모달 헤더 */
+.schedule-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg, 1.5rem);
+  border-bottom: 1px solid var(--color-border-secondary, #E8E8ED);
+  background: var(--color-bg-tertiary, #F8F9FA);
+  border-radius: var(--border-radius-lg, 16px) var(--border-radius-lg, 16px) 0 0;
+}
+
+.schedule-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 1rem);
+}
+
+.schedule-modal-title {
+  margin: 0;
+  font-size: var(--font-size-xl, 1.25rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #1D1D1F);
+}
+
+.schedule-modal-header-center {
+  flex: 1;
+  text-align: center;
+}
+
+.selected-date {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-secondary, #424245);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.schedule-modal-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.schedule-modal-close-btn {
+  background: none;
+  border: none;
+  font-size: var(--font-size-lg, 1.125rem);
+  color: var(--color-text-muted, #8E8E93);
+  cursor: pointer;
+  padding: var(--spacing-sm, 0.5rem);
+  border-radius: var(--border-radius-md, 12px);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.schedule-modal-close-btn:hover {
+  background: var(--color-bg-accent, #E8E8ED);
+  color: var(--color-text-primary, #1D1D1F);
+}
+
+/* 모달 콘텐츠 */
+.schedule-modal-content {
+  flex: 1;
+  padding: var(--spacing-lg, 1.5rem);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 단계 헤더 */
+.step-header {
+  margin-bottom: var(--spacing-lg, 1.5rem);
+}
+
+.step-description {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-secondary, #424245);
+  margin: var(--spacing-sm, 0.5rem) 0;
+}
+
+/* 상담사 그리드 */
+.consultant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-md, 1rem);
+  margin-bottom: var(--spacing-lg, 1.5rem);
+}
+
+.consultant-card {
+  background: var(--color-bg-primary, #FAFAFA);
+  border: 1px solid var(--color-border-secondary, #E8E8ED);
+  border-radius: var(--border-radius-md, 12px);
+  padding: var(--spacing-md, 1rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+}
+
+.consultant-card:hover {
+  border-color: var(--color-primary, #007AFF);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.consultant-card.selected {
+  border-color: var(--color-primary, #007AFF);
+  background: var(--color-primary-light, #E3F2FD);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
+}
+
+/* 필터 섹션 */
+.filter-section {
+  background: var(--color-bg-secondary, #F5F5F7);
+  border-radius: var(--border-radius-md, 12px);
+  padding: var(--spacing-md, 1rem);
+  margin-bottom: var(--spacing-lg, 1.5rem);
+  border: 1px solid var(--color-border-secondary, #E8E8ED);
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-md, 12px);
+  font-size: var(--font-size-base, 1rem);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-primary, #1D1D1F);
+  margin-bottom: var(--spacing-md, 1rem);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #007AFF);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.specialty-select {
+  padding: var(--spacing-sm, 0.75rem);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-md, 12px);
+  font-size: var(--font-size-base, 1rem);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-primary, #1D1D1F);
+  margin-right: var(--spacing-md, 1rem);
+}
+
+.availability-filter {
+  display: flex;
+  gap: var(--spacing-sm, 0.75rem);
+  margin-bottom: var(--spacing-md, 1rem);
+  flex-wrap: wrap;
+}
+
+.filter-button {
+  padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-md, 12px);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-secondary, #424245);
+  font-size: var(--font-size-sm, 0.875rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-button:hover {
+  background: var(--color-bg-accent, #E8E8ED);
+  border-color: var(--color-border-accent, #A1A1A6);
+}
+
+.filter-button.active {
+  background: var(--color-primary, #007AFF);
+  color: var(--color-text-inverse, #FFFFFF);
+  border-color: var(--color-primary, #007AFF);
+}
+
+.reset-button {
+  padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border-secondary, #E8E8ED);
+  border-radius: var(--border-radius-md, 12px);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-secondary, #424245);
+  font-size: var(--font-size-sm, 0.875rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.5rem);
+}
+
+.reset-button:hover {
+  background: var(--color-bg-accent, #E8E8ED);
+  color: var(--color-text-primary, #1D1D1F);
+}
+
+/* 선택된 상담사 정보 */
+.selected-consultant-info {
+  background: var(--color-primary-light, #E3F2FD);
+  border: 1px solid var(--color-primary, #007AFF);
+  border-radius: var(--border-radius-md, 12px);
+  padding: var(--spacing-md, 1rem);
+  margin-bottom: var(--spacing-lg, 1.5rem);
+}
+
+.selection-summary {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-primary, #1D1D1F);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.consultant-specialty {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #424245);
+  margin-top: var(--spacing-xs, 0.25rem);
+}
+
+/* 상담사 없음 */
+.no-consultants {
+  text-align: center;
+  padding: var(--spacing-xl, 2rem);
+  color: var(--color-text-muted, #8E8E93);
+  font-size: var(--font-size-base, 1rem);
+}
+
+/* 모달 푸터 */
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg, 1.5rem);
+  border-top: 1px solid var(--color-border-secondary, #E8E8ED);
+  background: var(--color-bg-tertiary, #F8F9FA);
+  border-radius: 0 0 var(--border-radius-lg, 16px) var(--border-radius-lg, 16px);
+}
+
+.modal-footer-button {
+  padding: var(--spacing-md, 1rem) var(--spacing-lg, 1.5rem);
+  border: none;
+  border-radius: var(--border-radius-md, 12px);
+  font-size: var(--font-size-base, 1rem);
+  font-weight: var(--font-weight-semibold, 600);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 0.75rem);
+}
+
+.modal-footer-button--primary {
+  background: var(--color-primary, #007AFF);
+  color: var(--color-text-inverse, #FFFFFF);
+}
+
+.modal-footer-button--primary:hover {
+  background: var(--color-primary-hover, #0056CC);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.modal-footer-button--primary:disabled {
+  background: var(--color-text-muted, #8E8E93);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.modal-footer-button--secondary {
+  background: transparent;
+  color: var(--color-text-secondary, #424245);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+}
+
+.modal-footer-button--secondary:hover {
+  background: var(--color-bg-accent, #E8E8ED);
+  color: var(--color-text-primary, #1D1D1F);
+}
+
+/* 애니메이션 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1024px) {
+  .schedule-modal {
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .consultant-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .schedule-modal-overlay {
+    padding: var(--spacing-sm, 0.5rem);
+  }
+  
+  .schedule-modal {
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: var(--border-radius-md, 12px);
+  }
+  
+  .schedule-modal-header {
+    padding: var(--spacing-md, 1rem);
+    flex-direction: column;
+    gap: var(--spacing-sm, 0.75rem);
+    text-align: center;
+  }
+  
+  .schedule-modal-content {
+    padding: var(--spacing-md, 1rem);
+  }
+  
+  .consultant-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm, 0.75rem);
+  }
+  
+  .filter-section {
+    padding: var(--spacing-sm, 0.75rem);
+  }
+  
+  .availability-filter {
+    flex-direction: column;
+    gap: var(--spacing-xs, 0.5rem);
+  }
+  
+  .modal-footer {
+    padding: var(--spacing-md, 1rem);
+    flex-direction: column;
+    gap: var(--spacing-md, 1rem);
+  }
+  
+  .modal-footer-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .schedule-modal-overlay {
+    padding: 0;
+  }
+  
+  .schedule-modal {
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .schedule-modal-header {
+    padding: var(--spacing-sm, 0.75rem);
+  }
+  
+  .schedule-modal-content {
+    padding: var(--spacing-sm, 0.75rem);
+  }
+  
+  .consultant-card {
+    min-height: 100px;
+    padding: var(--spacing-sm, 0.75rem);
+  }
+  
+  .modal-footer {
+    padding: var(--spacing-sm, 0.75rem);
+  }
+}

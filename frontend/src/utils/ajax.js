@@ -49,8 +49,14 @@ const checkSessionAndRedirect = async (response) => {
   const currentPath = window.location.pathname;
   const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
   
-  // 401, 403, 500 오류 시 세션 체크
-  if (response.status === 401 || response.status === 403 || response.status >= 500) {
+  // 401 오류는 인증이 필요한 API이므로 조용히 처리 (리다이렉트하지 않음)
+  if (response.status === 401) {
+    console.log('🔐 401 오류 - 인증 필요하지만 리다이렉트하지 않음');
+    return false;
+  }
+  
+  // 403, 500 오류 시에만 세션 체크
+  if (response.status === 403 || response.status >= 500) {
     // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
     if (isLoginPage) {
       console.log('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');

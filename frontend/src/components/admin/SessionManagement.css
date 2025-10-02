@@ -1079,7 +1079,7 @@ body .session-mgmt-mapping-actions,
 
 .session-mgmt-session-value {
     display: block;
-    font-size: var(--font-size-lg);
+    font-size: 14px;
     font-weight: 600;
     color: var(--color-text-primary, #1a1a1a);
 }
@@ -1544,13 +1544,13 @@ body .session-mgmt-mapping-actions,
     }
 }
 
-/* 현재 회기 현황 스타일 */
+/* 현재 회기 현황 스타일 - 컴팩트 */
 .session-mgmt-current-sessions {
     display: flex;
-    gap: 20px;
-    padding: 15px;
+    gap: 12px;
+    padding: 8px 12px;
     background: #f8f9fa;
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid #e9ecef;
 }
 
@@ -1562,14 +1562,14 @@ body .session-mgmt-mapping-actions,
 }
 
 .session-mgmt-session-label {
-    font-size: var(--font-size-xs);
+    font-size: 10px;
     color: #6c757d;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     font-weight: 500;
 }
 
 .session-mgmt-session-value {
-    font-size: var(--font-size-base);
+    font-size: 12px;
     font-weight: 600;
     color: #2c3e50;
 }

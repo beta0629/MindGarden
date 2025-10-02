@@ -10,14 +10,14 @@
 }
 
 .session-mgmt-header h2 {
-    color: #2c3e50;
+    color: var(--color-text-primary, #1a1a1a);
     margin-bottom: var(--spacing-sm);
     font-size: var(--font-size-xxl);
     font-weight: 600;
 }
 
 .session-mgmt-header p {
-    color: #7f8c8d;
+    color: var(--color-text-secondary, #666666);
     font-size: var(--font-size-base);
     margin: 0;
 }
@@ -44,27 +44,27 @@
 }
 
 .session-mgmt-btn-primary {
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--color-primary, #007AFF) 0%, var(--color-primary-hover, #0056CC) 100%);
+    color: var(--color-text-inverse, #FFFFFF);
     font-weight: 600;
-    border: 2px solid #e74c3c;
-    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+    border: 2px solid var(--color-primary, #007AFF);
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
 }
 
 .session-mgmt-btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
-    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
-    border-color: #c0392b;
+    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+    background: linear-gradient(135deg, var(--color-primary-hover, #0056CC) 0%, var(--color-primary-dark, #004499) 100%);
+    border-color: var(--color-primary-hover, #0056CC);
 }
 
 .session-mgmt-btn-secondary {
-    background: #95a5a6;
-    color: white;
+    background: var(--color-secondary, #8E8E93);
+    color: var(--color-text-inverse, #FFFFFF);
 }
 
 .session-mgmt-btn-secondary:hover {
-    background: #7f8c8d;
+    background: var(--color-secondary-hover, #6C6C70);
     transform: translateY(-2px);
 }
 
@@ -85,15 +85,21 @@
 .session-mgmt-search-input {
     width: 100%;
     padding: 12px 40px 12px 15px;
-    border: 2px solid #e1e8ed;
-    border-radius: 8px;
+    border: 2px solid var(--color-border, #E5E5E7);
+    border-radius: var(--border-radius-md);
     font-size: var(--font-size-sm);
     transition: border-color 0.3s ease;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--color-text-primary, #1a1a1a);
 }
 
 .session-mgmt-search-input:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: var(--color-primary, #007AFF);
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
 .session-mgmt-search-icon {
@@ -101,47 +107,57 @@
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: #95a5a6;
+    color: var(--color-text-secondary, #666666);
 }
 
 .session-mgmt-filter-select {
     padding: 12px 15px;
-    border: 2px solid #e1e8ed;
-    border-radius: 8px;
+    border: 2px solid var(--color-border, #E5E5E7);
+    border-radius: var(--border-radius-md);
     font-size: var(--font-size-sm);
-    background: white;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     cursor: pointer;
+    color: var(--color-text-primary, #1a1a1a);
 }
 
 /* 테이블 스타일 */
 .session-mgmt-clients-table {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
 
 .session-mgmt-table-header {
     display: grid;
     grid-template-columns: 2fr 2fr 1.5fr 2fr 1fr 1.5fr;
-    background: #f8f9fa;
+    background: rgba(248, 249, 250, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 15px 20px;
     font-weight: 600;
-    color: #2c3e50;
-    border-bottom: 2px solid #e1e8ed;
+    color: var(--color-text-primary, #1a1a1a);
+    border-bottom: 2px solid var(--color-border, #E5E5E7);
 }
 
 .session-mgmt-table-row {
     display: grid;
     grid-template-columns: 2fr 2fr 1.5fr 2fr 1fr 1.5fr;
     padding: 15px 20px;
-    border-bottom: 1px solid #e1e8ed;
+    border-bottom: 1px solid var(--color-border, #E5E5E7);
     align-items: center;
     transition: background-color 0.3s ease;
 }
 
 .session-mgmt-table-row:hover {
-    background-color: #f8f9fa;
+    background-color: rgba(248, 249, 250, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .session-mgmt-table-cell {
@@ -159,13 +175,15 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-    color: white;
+    background: var(--color-avatar-gradient, linear-gradient(135deg, #A8E0FF 0%, #8EE0FF 100%));
+    color: var(--color-text-inverse, #FFFFFF);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
     font-size: var(--font-size-sm);
+    border: 2px solid var(--color-bg-primary, #FFFFFF);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .session-mgmt-address-text {
@@ -186,22 +204,22 @@
 }
 
 .session-mgmt-btn-danger {
-    background: #e74c3c;
-    color: white;
+    background: var(--color-danger, #FF3B30);
+    color: var(--color-text-inverse, #FFFFFF);
 }
 
 .session-mgmt-btn-danger:hover {
-    background: #c0392b;
+    background: var(--color-danger-hover, #FF2D55);
     transform: translateY(-1px);
 }
 
 .session-mgmt-btn-warning {
-    background: #f39c12;
-    color: white;
+    background: var(--color-warning, #FF9500);
+    color: var(--color-text-inverse, #FFFFFF);
 }
 
 .session-mgmt-btn-warning:hover {
-    background: #e67e22;
+    background: var(--color-warning-hover, #FF6B00);
     transform: translateY(-1px);
 }
 
@@ -221,13 +239,19 @@
 }
 
 .session-mgmt-modal-content {
-    background: white;
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: var(--border-radius-xxl);
+    border: 1px solid rgba(255, 255, 255, 0.4);
     max-width: 500px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .session-mgmt-modal-header {
@@ -235,12 +259,16 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-base);
-    border-bottom: 1px solid #e1e8ed;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--border-radius-xxl) var(--border-radius-xxl) 0 0;
 }
 
 .session-mgmt-modal-header h3 {
     margin: 0;
-    color: #2c3e50;
+    color: var(--color-text-primary, #1a1a1a);
     font-size: var(--font-size-xl);
 }
 
@@ -359,20 +387,28 @@
     align-items: center;
     gap: 15px;
     padding: 15px;
-    border: 2px solid #e1e8ed;
-    border-radius: 8px;
+    border: 2px solid var(--color-border, #E5E5E7);
+    border-radius: var(--border-radius-md);
     cursor: pointer;
     transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .session-mgmt-client-card:hover {
-    border-color: #3498db;
+    border-color: var(--color-primary, #007AFF);
     transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);
 }
 
 .session-mgmt-client-card.selected {
-    border-color: #3498db;
-    background: #f8f9ff;
+    border-color: var(--color-primary, #007AFF);
+    background: rgba(0, 122, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
 }
 
 .session-mgmt-client-info {
@@ -489,17 +525,24 @@
 
 /* 매핑 카드 */
 .session-mgmt-mapping-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     overflow: hidden;
     transition: all 0.3s ease;
-    border: 1px solid #e9ecef;
 }
 
 .session-mgmt-mapping-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 8px 24px rgba(0, 122, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* 카드 헤더 */
@@ -614,15 +657,15 @@
 }
 
 .session-mgmt-session-value.total {
-    color: #3498db;
+    color: var(--color-primary, #007AFF);
 }
 
 .session-mgmt-session-value.used {
-    color: #e74c3c;
+    color: var(--color-danger, #FF3B30);
 }
 
 .session-mgmt-session-value.remaining {
-    color: #27ae60;
+    color: var(--color-success, #34C759);
 }
 
 /* 카드 액션 버튼 */
@@ -655,7 +698,7 @@
 }
 
 .session-mgmt-client-selection-header h3 {
-    color: #2c3e50;
+    color: var(--color-text-primary, #1a1a1a);
     font-size: var(--font-size-xl);
     font-weight: 600;
     margin: 0;
@@ -754,13 +797,13 @@
 .session-mgmt-client-name {
     font-size: var(--font-size-base);
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--color-text-primary, #1a1a1a);
     margin-bottom: 5px;
 }
 
 .session-mgmt-client-email {
     font-size: var(--font-size-sm);
-    color: #6c757d;
+    color: var(--color-text-secondary, #666666);
     margin-bottom: 8px;
 }
 
@@ -780,10 +823,13 @@
 
 .session-mgmt-active-count {
     font-size: var(--font-size-xs);
-    color: #28a745;
-    background: #d4edda;
+    color: var(--color-success, #34C759);
+    background: rgba(52, 199, 89, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 2px 8px;
-    border-radius: 12px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid rgba(52, 199, 89, 0.3);
 }
 
 .session-mgmt-client-status {
@@ -822,15 +868,15 @@
 }
 
 .session-mgmt-tab:hover {
-    color: #e74c3c;
-    background: #fdf2f2;
-    border-bottom-color: #e74c3c;
+    color: var(--color-primary, #007AFF);
+    background: rgba(0, 122, 255, 0.1);
+    border-bottom-color: var(--color-primary, #007AFF);
 }
 
 .session-mgmt-tab.active {
-    color: #e74c3c;
-    border-bottom-color: #e74c3c;
-    background: #fdf2f2;
+    color: var(--color-primary, #007AFF);
+    border-bottom-color: var(--color-primary, #007AFF);
+    background: rgba(0, 122, 255, 0.1);
     font-weight: 600;
 }
 
@@ -921,12 +967,12 @@
 }
 
 .session-mgmt-btn-success {
-    background: #28a745;
-    color: white;
+    background: var(--color-success, #34C759);
+    color: var(--color-text-inverse, #FFFFFF);
 }
 
 .session-mgmt-btn-success:hover {
-    background: #218838;
+    background: var(--color-success-hover, #30B050);
     transform: translateY(-1px);
 }
 

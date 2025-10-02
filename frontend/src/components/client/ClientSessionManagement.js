@@ -159,24 +159,11 @@ const ClientSessionManagement = () => {
       <div className="client-session-management">
         {/* 페이지 헤드라인 */}
         <div className="client-session-management-header">
-          <h1 style={{
-            margin: '0 0 12px 0',
-            fontSize: 'var(--font-size-xxxl)',
-            fontWeight: '700',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '16px'
-          }}>
-            <i className="bi bi-clock-history" style={{ fontSize: 'var(--font-size-xxl)' }}></i>
+          <h1 className="client-session-management-title">
+            <i className="bi bi-clock-history client-session-management-title-icon"></i>
             회기 관리
           </h1>
-          <p style={{
-            margin: '0',
-            fontSize: 'var(--font-size-lg)',
-            opacity: '0.9',
-            fontWeight: '400'
-          }}>
+          <p className="client-session-management-subtitle">
             상담 회기 현황과 사용 내역을 확인하세요
           </p>
         </div>

@@ -1205,8 +1205,6 @@ const SessionManagement = () => {
                     </div>
                 </div>
             )}
-                </>
-            )}
 
             {/* 회기 추가 요청 탭 내용 */}
             {activeTab === 'extensions' && (

@@ -153,7 +153,7 @@ function AppContent() {
       enableThemeWatcher: true, // 테마 변경 감지 활성화
       enableDeviceWatcher: true, // 디바이스 변경 감지 활성화
       loadConsultantColors: true, // 상담사 색상 로드 활성화
-      autoDetectTheme: true, // 시스템 테마 자동 감지
+      autoDetectTheme: false, // 시스템 테마 자동 감지 비활성화 (iOS 라이트 모드 고정)
       zIndexOffsets: {
         // 테마별 z-index 오프셋 커스터마이징
         light: 0,

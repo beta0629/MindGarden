@@ -1,5 +1,7 @@
-/* ===== iOS 스타일 테마 (기본) ===== */
-:root {
+/* ===== iOS 스타일 테마 (라이트 모드 강제) ===== */
+:root,
+[data-theme="light"],
+[data-theme="ios"] {
   /* iOS 기본 색상 팔레트 */
   --color-primary: #007AFF;
   --color-primary-hover: #0056CC;
@@ -13,25 +15,25 @@
   --color-secondary-light: #F2F2F7;
   --color-secondary-dark: #1C1C1E;
 
-  /* iOS 배경 색상 */
-  --color-bg-primary: #FFFFFF;
-  --color-bg-secondary: #F2F2F7;
-  --color-bg-tertiary: #FFFFFF;
-  --color-bg-accent: #E5E5EA;
-  --color-bg-glass: rgba(255, 255, 255, 0.8);
-  --color-bg-glass-strong: rgba(255, 255, 255, 0.95);
+  /* iOS 배경 색상 (부드럽게 조정) */
+  --color-bg-primary: #FAFAFA;
+  --color-bg-secondary: #F5F5F7;
+  --color-bg-tertiary: #F8F9FA;
+  --color-bg-accent: #E8E8ED;
+  --color-bg-glass: rgba(250, 250, 250, 0.8);
+  --color-bg-glass-strong: rgba(250, 250, 250, 0.95);
 
-  /* iOS 텍스트 색상 */
-  --color-text-primary: #000000;
-  --color-text-secondary: #3C3C43;
-  --color-text-tertiary: #3C3C43;
+  /* iOS 텍스트 색상 (부드럽게 조정) */
+  --color-text-primary: #1D1D1F;
+  --color-text-secondary: #424245;
+  --color-text-tertiary: #636366;
   --color-text-muted: #8E8E93;
   --color-text-inverse: #FFFFFF;
 
-  /* iOS 테두리 색상 */
-  --color-border-primary: #C6C6C8;
-  --color-border-secondary: #E5E5EA;
-  --color-border-accent: #8E8E93;
+  /* iOS 테두리 색상 (부드럽게 조정) */
+  --color-border-primary: #D1D1D6;
+  --color-border-secondary: #E8E8ED;
+  --color-border-accent: #A1A1A6;
   --color-border-focus: #007AFF;
 
   /* iOS 상태 색상 */
@@ -59,29 +61,29 @@
   --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.12);
   --shadow-glass-strong: 0 8px 32px rgba(0, 0, 0, 0.24);
 
-  /* iOS 스타일 색상 (기존 호환성) */
-  --ios-bg-primary: rgba(255, 255, 255, 0.95);
-  --ios-bg-secondary: rgba(242, 242, 247, 0.95);
-  --ios-border: rgba(198, 198, 200, 0.8);
-  --ios-text-primary: #000000;
-  --ios-text-secondary: #3C3C43;
+  /* iOS 스타일 색상 (부드럽게 조정) */
+  --ios-bg-primary: rgba(250, 250, 250, 0.95);
+  --ios-bg-secondary: rgba(245, 245, 247, 0.95);
+  --ios-border: rgba(209, 209, 214, 0.8);
+  --ios-text-primary: #1D1D1F;
+  --ios-text-secondary: #424245;
 
-  /* iOS 헤더 */
-  --header-bg: rgba(255, 255, 255, 0.95);
-  --header-border: rgba(198, 198, 200, 0.8);
-  --header-text: #000000;
+  /* iOS 헤더 (부드럽게 조정) */
+  --header-bg: rgba(250, 250, 250, 0.95);
+  --header-border: rgba(209, 209, 214, 0.8);
+  --header-text: #1D1D1F;
   --header-text-muted: #8E8E93;
 
-  /* iOS 모달 */
-  --modal-bg: rgba(255, 255, 255, 0.98);
-  --modal-backdrop: rgba(0, 0, 0, 0.4);
-  --modal-border: rgba(198, 198, 200, 0.8);
-  --modal-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  /* iOS 모달 (부드럽게 조정) */
+  --modal-bg: rgba(250, 250, 250, 0.98);
+  --modal-backdrop: rgba(0, 0, 0, 0.3);
+  --modal-border: rgba(209, 209, 214, 0.8);
+  --modal-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
 
-  /* iOS 드롭다운 */
-  --dropdown-bg: rgba(255, 255, 255, 0.98);
-  --dropdown-border: rgba(198, 198, 200, 0.8);
-  --dropdown-shadow: 0 10px 15px rgba(0, 0, 0, 0.12);
+  /* iOS 드롭다운 (부드럽게 조정) */
+  --dropdown-bg: rgba(250, 250, 250, 0.98);
+  --dropdown-border: rgba(209, 209, 214, 0.8);
+  --dropdown-shadow: 0 10px 15px rgba(0, 0, 0, 0.08);
 
   /* iOS 특화 변수들 */
   --ios-blur-intensity: 20px;
@@ -90,13 +92,13 @@
   --ios-button-radius: 12px;
   --ios-input-radius: 10px;
 
-  /* iOS 글라스모피즘 변수들 */
-  --glass-bg-light: rgba(255, 255, 255, 0.8);
-  --glass-bg-medium: rgba(255, 255, 255, 0.9);
-  --glass-bg-strong: rgba(255, 255, 255, 0.95);
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-border-strong: rgba(255, 255, 255, 0.3);
-  --glass-text: #000000;
+  /* iOS 글라스모피즘 변수들 (부드럽게 조정) */
+  --glass-bg-light: rgba(250, 250, 250, 0.8);
+  --glass-bg-medium: rgba(250, 250, 250, 0.9);
+  --glass-bg-strong: rgba(250, 250, 250, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-border-strong: rgba(255, 255, 255, 0.4);
+  --glass-text: #1D1D1F;
 
   /* iOS 백드롭 필터 */
   --ios-backdrop-blur-sm: blur(4px);
@@ -110,51 +112,56 @@
   --font-family-ios-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
 }
 
-/* iOS 스타일 다크 모드 */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* iOS 다크 모드 색상 */
-    --color-bg-primary: #000000;
-    --color-bg-secondary: #1C1C1E;
-    --color-bg-tertiary: #2C2C2E;
-    --color-bg-accent: #38383A;
-    --color-bg-glass: rgba(28, 28, 30, 0.8);
-    --color-bg-glass-strong: rgba(28, 28, 30, 0.95);
+/* iOS 스타일은 라이트 모드만 사용 - 다크 테마 강제 오버라이드 */
+[data-theme="dark"] {
+  /* 다크 테마를 강제로 부드러운 라이트 모드로 설정 */
+  --color-bg-primary: #FAFAFA !important;
+  --color-bg-secondary: #F5F5F7 !important;
+  --color-bg-tertiary: #F8F9FA !important;
+  --color-bg-accent: #E8E8ED !important;
+  --color-bg-glass: rgba(250, 250, 250, 0.8) !important;
+  --color-bg-glass-strong: rgba(250, 250, 250, 0.95) !important;
 
-    --color-text-primary: #FFFFFF;
-    --color-text-secondary: #EBEBF5;
-    --color-text-tertiary: #EBEBF5;
-    --color-text-muted: #8E8E93;
-    --color-text-inverse: #000000;
+  --color-text-primary: #1D1D1F !important;
+  --color-text-secondary: #424245 !important;
+  --color-text-tertiary: #636366 !important;
+  --color-text-muted: #8E8E93 !important;
+  --color-text-inverse: #FFFFFF !important;
 
-    --color-border-primary: #38383A;
-    --color-border-secondary: #2C2C2E;
-    --color-border-accent: #48484A;
+  --color-border-primary: #D1D1D6 !important;
+  --color-border-secondary: #E8E8ED !important;
+  --color-border-accent: #A1A1A6 !important;
 
-    --ios-bg-primary: rgba(28, 28, 30, 0.95);
-    --ios-bg-secondary: rgba(44, 44, 46, 0.95);
-    --ios-border: rgba(56, 56, 58, 0.8);
-    --ios-text-primary: #FFFFFF;
-    --ios-text-secondary: #EBEBF5;
+  --ios-bg-primary: rgba(250, 250, 250, 0.95) !important;
+  --ios-bg-secondary: rgba(245, 245, 247, 0.95) !important;
+  --ios-border: rgba(209, 209, 214, 0.8) !important;
+  --ios-text-primary: #1D1D1F !important;
+  --ios-text-secondary: #424245 !important;
 
-    --header-bg: rgba(28, 28, 30, 0.95);
-    --header-border: rgba(56, 56, 58, 0.8);
-    --header-text: #FFFFFF;
-    --header-text-muted: #8E8E93;
+  --header-bg: rgba(250, 250, 250, 0.95) !important;
+  --header-border: rgba(209, 209, 214, 0.8) !important;
+  --header-text: #1D1D1F !important;
+  --header-text-muted: #8E8E93 !important;
 
-    --modal-bg: rgba(28, 28, 30, 0.98);
-    --modal-backdrop: rgba(0, 0, 0, 0.6);
-    --modal-border: rgba(56, 56, 58, 0.8);
+  --modal-bg: rgba(250, 250, 250, 0.98) !important;
+  --modal-backdrop: rgba(0, 0, 0, 0.3) !important;
+  --modal-border: rgba(209, 209, 214, 0.8) !important;
 
-    --dropdown-bg: rgba(28, 28, 30, 0.98);
-    --dropdown-border: rgba(56, 56, 58, 0.8);
+  --dropdown-bg: rgba(250, 250, 250, 0.98) !important;
+  --dropdown-border: rgba(209, 209, 214, 0.8) !important;
 
-    /* iOS 다크 모드 글라스모피즘 */
-    --glass-bg-light: rgba(28, 28, 30, 0.8);
-    --glass-bg-medium: rgba(28, 28, 30, 0.9);
-    --glass-bg-strong: rgba(28, 28, 30, 0.95);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-border-strong: rgba(255, 255, 255, 0.2);
-    --glass-text: #FFFFFF;
-  }
+  --glass-bg-light: rgba(250, 250, 250, 0.8) !important;
+  --glass-bg-medium: rgba(250, 250, 250, 0.9) !important;
+  --glass-bg-strong: rgba(250, 250, 250, 0.95) !important;
+  --glass-border: rgba(255, 255, 255, 0.3) !important;
+  --glass-border-strong: rgba(255, 255, 255, 0.4) !important;
+  --glass-text: #1D1D1F !important;
+
+  /* 기존 디자인 시스템 다크 테마 변수들도 부드러운 라이트 모드로 오버라이드 */
+  --text-primary: #1D1D1F !important;
+  --text-secondary: #424245 !important;
+  --text-tertiary: #636366 !important;
+  --bg-primary: #FAFAFA !important;
+  --bg-secondary: #F5F5F7 !important;
+  --bg-tertiary: #F8F9FA !important;
 }

@@ -113,8 +113,8 @@ const ComplianceDashboard = () => {
     }
 
     return (
-        <div className="compliance-dashboard">
-            <SimpleHeader title="컴플라이언스 관리" />
+        <SimpleLayout title="컴플라이언스 관리">
+            <div className="compliance-dashboard">
             <div className="dashboard-header">
                 <h1>⚖️ 컴플라이언스 모니터링 대시보드</h1>
                 <p>개인정보보호법 및 관련 법령 준수 현황을 실시간으로 모니터링합니다.</p>
@@ -351,7 +351,7 @@ const ComplianceDashboard = () => {
                     🎓 교육 계획 수립
                 </button>
             </div>
-            </SimpleLayout>
+        </SimpleLayout>
         );
     };
 

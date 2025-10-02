@@ -16,8 +16,8 @@
   border: none;
   cursor: pointer;
   transition: var(--transition-bounce);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: var(--ios-backdrop-blur-lg);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-lg);
   position: relative;
   overflow: hidden;
   outline: none;
@@ -221,8 +221,8 @@
 /* 글래스모피즘 버튼 */
 .mg-btn--glass {
   background: var(--glass-bg-light);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: var(--ios-backdrop-blur-xl);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-xl);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-glass);
   color: var(--ios-text-primary);
@@ -230,8 +230,8 @@
 
 .mg-btn--glass:hover {
   background: var(--glass-bg-medium);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  backdrop-filter: var(--ios-backdrop-blur-2xl);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-2xl);
   border-color: var(--glass-border-strong);
   box-shadow: var(--shadow-glass-strong);
 }

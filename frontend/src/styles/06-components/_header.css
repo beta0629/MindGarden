@@ -3,8 +3,8 @@
 /* 기본 헤더 - 공통부 우선순위 */
 .mg-header {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: var(--ios-backdrop-blur-xl);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-xl);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
   z-index: var(--z-header); /* 공통부 z-index */

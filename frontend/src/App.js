@@ -149,7 +149,7 @@ function AppContent() {
   // 동적 테마 시스템 초기화
   useEffect(() => {
     initializeDynamicThemeSystem({
-      theme: 'light', // 기본 테마
+      theme: 'ios', // iOS 스타일 기본 테마
       enableThemeWatcher: true, // 테마 변경 감지 활성화
       enableDeviceWatcher: true, // 디바이스 변경 감지 활성화
       loadConsultantColors: true, // 상담사 색상 로드 활성화

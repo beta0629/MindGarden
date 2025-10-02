@@ -9,6 +9,7 @@
 @import './01-settings/_z-index.css';
 
 /* ===== 3. 테마 시스템 ===== */
+@import './themes/ios-theme.css';
 @import './themes/light-theme.css';
 @import './themes/dark-theme.css';
 @import './themes/high-contrast-theme.css';

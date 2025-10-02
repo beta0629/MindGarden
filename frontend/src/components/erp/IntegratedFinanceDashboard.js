@@ -5,7 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
-import SimpleHeader from '../layout/SimpleHeader';
+import SimpleLayout from '../layout/SimpleLayout';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -254,8 +254,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <div>
-      <SimpleHeader />
+    <SimpleLayout title="📊 통합 회계 관리 시스템">
       <div className="integrated-finance-container">
         {/* 헤더 */}
       <div className="integrated-finance-header">
@@ -366,7 +365,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
         />
       )}
       </div>
-    </div>
+    </SimpleLayout>
   );
 };
 

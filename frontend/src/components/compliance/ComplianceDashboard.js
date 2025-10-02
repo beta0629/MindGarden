@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import SimpleHeader from '../layout/SimpleHeader';
+import SimpleLayout from '../layout/SimpleLayout';
 import '../../styles/main.css';
 import './ComplianceDashboard.css';
 
@@ -89,20 +89,21 @@ const ComplianceDashboard = () => {
 
     if (loading) {
         return (
-            <div className="compliance-dashboard">
-                <SimpleHeader title="컴플라이언스 관리" />
+            <SimpleLayout title="컴플라이언스 관리">
+                <div className="compliance-dashboard">
                 <div className="loading-container">
                     <div className="loading-spinner"></div>
                     <p>컴플라이언스 데이터를 불러오는 중...</p>
                 </div>
-            </div>
+                </div>
+            </SimpleLayout>
         );
     }
 
     if (error) {
         return (
-            <div className="compliance-dashboard">
-                <SimpleHeader title="컴플라이언스 관리" />
+            <SimpleLayout title="컴플라이언스 관리">
+                <div className="compliance-dashboard">
                 <div className="error-container">
                     <h2>❌ 오류 발생</h2>
                     <p>{error}</p>
@@ -110,7 +111,8 @@ const ComplianceDashboard = () => {
                         다시 시도
                     </button>
                 </div>
-            </div>
+                </div>
+            </SimpleLayout>
         );
     }
 
@@ -353,8 +355,9 @@ const ComplianceDashboard = () => {
                     🎓 교육 계획 수립
                 </button>
             </div>
-        </div>
-    );
-};
+                </div>
+            </SimpleLayout>
+        );
+    };
 
 export default ComplianceDashboard;

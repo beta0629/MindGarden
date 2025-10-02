@@ -1,6 +1,7 @@
 /**
  * 드롭다운 위치 계산 및 고정 유틸리티
  * 전체 애플리케이션의 모든 드롭다운이 스크롤과 독립적으로 동작하도록 도움
+ * CustomSelect는 자체 위치 관리를 사용하므로 제외됨
  */
 
 /**
@@ -69,6 +70,12 @@ export const calculateDropdownPosition = (triggerElement, dropdownElement, optio
  */
 export const initSingleDropdown = (dropdown) => {
   if (!dropdown || !dropdown.nodeType) return;
+  
+  // CustomSelect는 제외 (자체 위치 관리 사용)
+  if (dropdown.classList.contains('custom-select')) {
+    console.log('🚫 CustomSelect는 자체 위치 관리를 사용하므로 제외');
+    return;
+  }
   
   const trigger = dropdown.querySelector('.custom-select__trigger, [data-dropdown-trigger]');
   const menu = dropdown.querySelector('.custom-select__dropdown, [data-dropdown-menu]');

@@ -709,6 +709,145 @@
   }
 }
 
+/* ===== 반응형 디자인 ===== */
+
+/* 태블릿 (768px 이하) */
+@media (max-width: 768px) {
+  :root {
+    --schedule-modal-width: 95vw;
+    --schedule-modal-max-height: 90vh;
+    --schedule-modal-min-height: 300px;
+    --schedule-modal-padding: var(--spacing-md);
+  }
+
+  .schedule-modal {
+    margin: var(--spacing-sm);
+    border-radius: 12px;
+  }
+
+  .schedule-modal-overlay {
+    padding: var(--spacing-sm);
+  }
+
+  .schedule-modal-header {
+    padding: var(--spacing-md);
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .schedule-modal-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .selected-date {
+    font-size: var(--font-size-sm);
+  }
+
+  .schedule-modal-content {
+    padding: var(--spacing-md);
+  }
+
+  .modal-footer {
+    padding: var(--spacing-md);
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .btn {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+/* 모바일 (480px 이하) */
+@media (max-width: 480px) {
+  :root {
+    --schedule-modal-width: 100vw;
+    --schedule-modal-max-height: 95vh;
+    --schedule-modal-min-height: 250px;
+    --schedule-modal-padding: var(--spacing-sm);
+  }
+
+  .schedule-modal {
+    margin: 0;
+    border-radius: 8px;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  .schedule-modal-overlay {
+    padding: 0;
+  }
+
+  .schedule-modal-header {
+    padding: var(--spacing-sm);
+    min-height: 60px;
+  }
+
+  .schedule-modal-title {
+    font-size: var(--font-size-md);
+  }
+
+  .selected-date {
+    font-size: var(--font-size-xs);
+  }
+
+  .schedule-modal-content {
+    padding: var(--spacing-sm);
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .modal-footer {
+    padding: var(--spacing-sm);
+    position: sticky;
+    bottom: 0;
+    background: white;
+    border-top: 1px solid var(--schedule-modal-border);
+  }
+
+  /* 상담사 그리드 모바일 최적화 */
+  .consultant-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .consultant-card {
+    min-height: 120px;
+    padding: var(--spacing-sm);
+  }
+
+  /* 필터 섹션 모바일 최적화 */
+  .filter-section {
+    height: auto;
+    min-height: 120px;
+  }
+
+  .filter-buttons {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .filter-btn {
+    flex: 1;
+    min-width: 80px;
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs);
+  }
+}
+
+/* 대형 화면 (1200px 이상) */
+@media (min-width: 1200px) {
+  :root {
+    --schedule-modal-width: 900px;
+    --schedule-modal-max-height: 80vh;
+  }
+
+  .schedule-modal {
+    max-width: var(--schedule-modal-width);
+  }
+}
+
 /* 애니메이션 */
 @keyframes modalSlideIn {
   from {

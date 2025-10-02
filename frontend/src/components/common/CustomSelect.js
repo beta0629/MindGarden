@@ -49,25 +49,33 @@ const CustomSelect = ({
 
   // 드롭다운 위치 조정 및 포커스 관리
   useEffect(() => {
-    if (isOpen && dropdownRef.current) {
+    if (isOpen && dropdownRef.current && selectRef.current) {
       const rect = selectRef.current.getBoundingClientRect();
       const dropdown = dropdownRef.current;
       const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
       const dropdownHeight = 200; // 예상 드롭다운 높이
 
       // CustomSelect는 자체 위치 계산을 사용 (dropdownPositionHelper와 충돌 방지)
-      dropdown.style.position = 'absolute';
-      dropdown.style.zIndex = 'var(--z-dropdown)';
+      dropdown.style.position = 'fixed';
+      dropdown.style.zIndex = '1000';
+      dropdown.style.left = `${rect.left}px`;
+      dropdown.style.width = `${rect.width}px`;
 
       // 화면 하단에 공간이 부족하면 위쪽으로 표시
       if (rect.bottom + dropdownHeight > viewportHeight) {
         dropdown.style.top = 'auto';
-        dropdown.style.bottom = '100%';
+        dropdown.style.bottom = `${viewportHeight - rect.top}px`;
         dropdown.style.marginBottom = '4px';
       } else {
-        dropdown.style.top = '100%';
+        dropdown.style.top = `${rect.bottom}px`;
         dropdown.style.bottom = 'auto';
         dropdown.style.marginTop = '4px';
+      }
+
+      // 화면 오른쪽으로 벗어나지 않도록 조정
+      if (rect.left + rect.width > viewportWidth) {
+        dropdown.style.left = `${viewportWidth - rect.width - 16}px`;
       }
 
       // 드롭다운이 열릴 때 포커스 설정

@@ -365,11 +365,13 @@ const ScheduleModalNew = ({
         <div className={COMPONENT_CSS.SCHEDULE_MODAL.OVERLAY} onClick={handleClose}>
             <div className={COMPONENT_CSS.SCHEDULE_MODAL.MODAL} onClick={(e) => e.stopPropagation()} style={{
                 backgroundColor: 'white',
-                borderRadius: '12px',
+                borderRadius: window.innerWidth <= 480 ? '0px' : '12px',
                 boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-                width: '90%',
-                maxWidth: '700px',
-                maxHeight: '80vh',
+                width: window.innerWidth <= 480 ? '100vw' : '90%',
+                maxWidth: window.innerWidth <= 480 ? 'none' : 
+                          window.innerWidth <= 768 ? '95vw' : '700px',
+                maxHeight: window.innerWidth <= 480 ? '100vh' : '80vh',
+                height: window.innerWidth <= 480 ? '100vh' : 'auto',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column'

@@ -434,10 +434,52 @@
     border-radius: var(--border-radius-md);
 }
 
-/* 매우 작은 화면 (480px 이하) */
+/* 태블릿 (768px 이하) */
+@media (max-width: 768px) {
+    .schedule-modal {
+        max-width: 95vw;
+        max-height: 90vh;
+        margin: var(--spacing-sm);
+    }
+
+    .schedule-modal-overlay {
+        padding: var(--spacing-sm);
+    }
+
+    .schedule-modal-header {
+        padding: var(--spacing-md);
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .schedule-modal-title {
+        font-size: var(--font-size-lg);
+    }
+
+    .selected-date {
+        font-size: var(--font-size-sm);
+    }
+
+    .schedule-modal-content {
+        padding: var(--spacing-md);
+    }
+
+    .modal-footer {
+        padding: var(--spacing-md);
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .btn {
+        width: 100%;
+        min-width: auto;
+    }
+}
+
+/* 모바일 (480px 이하) */
 @media (max-width: 480px) {
     .schedule-modal-overlay {
-        padding: var(--spacing-xs);
+        padding: 0;
         justify-content: center;
         align-items: center;
         width: 100vw;
@@ -445,8 +487,76 @@
     }
     
     .schedule-modal {
-        width: 100%;
-        max-height: 98vh;
+        width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .schedule-modal-header {
+        padding: var(--spacing-sm);
+        min-height: 60px;
+    }
+
+    .schedule-modal-title {
+        font-size: var(--font-size-md);
+    }
+
+    .selected-date {
+        font-size: var(--font-size-xs);
+    }
+
+    .schedule-modal-content {
+        padding: var(--spacing-sm);
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .modal-footer {
+        padding: var(--spacing-sm);
+        position: sticky;
+        bottom: 0;
+        background: white;
+        border-top: 1px solid #e9ecef;
+    }
+
+    /* 상담사 선택 단계 모바일 최적화 */
+    .schedule-modal-content .consultant-selection-step {
+        height: auto;
+        max-height: none;
+    }
+
+    .schedule-modal-content .consultant-selection-step .consultant-grid {
+        height: auto;
+        max-height: 300px;
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+
+    .consultant-card {
+        min-height: 120px;
+        padding: var(--spacing-sm);
+    }
+
+    .filter-buttons {
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+    }
+
+    .filter-btn {
+        flex: 1;
+        min-width: 80px;
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-xs);
+    }
+}
+
+/* 대형 화면 (1200px 이상) */
+@media (min-width: 1200px) {
+    .schedule-modal {
+        max-width: 900px;
+        max-height: 80vh;
         margin: 0 auto;
         border-radius: 8px;
         left: 50%;

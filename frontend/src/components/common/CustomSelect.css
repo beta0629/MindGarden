@@ -64,22 +64,31 @@
 }
 
 .custom-select__dropdown {
-  position: fixed;
+  position: fixed !important;
   top: auto;
   left: auto;
   right: auto;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: var(--ios-backdrop-blur-xl);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-xl);
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: var(--border-radius-lg);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  z-index: var(--z-dropdown, 1000);
+  z-index: 1000 !important;
   max-height: 200px;
   overflow: hidden;
   margin-top: 4px;
   /* 드롭다운이 헤더와 함께 고정되도록 개선 */
   transform: translateY(0);
+  /* JavaScript로 위치가 설정되므로 초기 위치는 숨김 */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.custom-select.open .custom-select__dropdown {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .custom-select__search {

@@ -346,27 +346,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
             console.log('매핑 생성 데이터:', mappingData);
 
-            // 실제 매핑 생성 API 사용
+            // 실제 매핑 생성 API 사용 (운영 환경과 동일)
             try {
-                // 환경별 API 호출 방식 결정
-                const isProduction = process.env.NODE_ENV === 'production' || 
-                                   window.location.hostname !== 'localhost';
-                
-                let response;
-                if (isProduction) {
-                    // 운영 환경: CSRF 토큰 사용
-                    response = await csrfTokenManager.post(`${API_BASE_URL}/api/admin/mappings`, mappingData);
-                } else {
-                    // 개발 환경: 일반 fetch 사용
-                    response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify(mappingData)
-                    });
-                }
+                // CSRF 토큰 사용 (운영 환경과 동일)
+                const response = await csrfTokenManager.post(`${API_BASE_URL}/api/admin/mappings`, mappingData);
 
                 if (response.ok) {
                     const result = await response.json();

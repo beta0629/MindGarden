@@ -35,11 +35,11 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         break;
       case 'mapping':
         navigate('/client/consultant-mapping');
-        setIsLoading(false); // 즉시 로딩 해제
+        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
         break;
       case 'payment':
         navigate('/client/payment');
-        setIsLoading(false); // 즉시 로딩 해제
+        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
         break;
       case 'consultants':
         setIsConsultantModalOpen(true);
@@ -49,11 +49,11 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         // 최근 활동 상세 페이지로 이동
         console.log('최근 활동 상세 페이지로 이동');
         navigate('/client/activity-history');
-        setIsLoading(false); // 즉시 로딩 해제
+        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
         break;
       case 'welcome':
         navigate('/client/profile');
-        setIsLoading(false); // 즉시 로딩 해제
+        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
         break;
       case 'pending':
         // 대기 상태에서는 아무것도 하지 않음
@@ -66,7 +66,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         break;
       case 'general':
         navigate('/client/profile');
-        setIsLoading(false); // 즉시 로딩 해제
+        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
         break;
       case 'tip':
         // 팁은 클릭해도 아무것도 하지 않음
@@ -74,21 +74,21 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         break;
       case 'wellness':
         navigate('/client/wellness');
-        setIsLoading(false); // 즉시 로딩 해제
+        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
         break;
       case 'messages':
         navigate('/client/messages');
-        setIsLoading(false); // 즉시 로딩 해제
+        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
         break;
       case 'session-status':
         // 회기 관리 상세 페이지로 이동
         navigate('/client/session-management');
-        setIsLoading(false); // 즉시 로딩 해제
+        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
         break;
       case 'payment-history':
         // 결제 내역 상세 페이지로 이동
         navigate('/client/payment-history');
-        setIsLoading(false); // 즉시 로딩 해제
+        setTimeout(() => setIsLoading(false), 100); // 0.1초로 단축
         break;
       case 'consultation-guide':
         // 상담 가이드 모달 열기

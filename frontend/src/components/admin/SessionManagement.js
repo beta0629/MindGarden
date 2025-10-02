@@ -985,9 +985,8 @@ const SessionManagement = () => {
                             {selectedClient ? `${selectedClient.name} 회기 관리 현황` : '전체 회기 관리 현황'}
                             {selectedClient && (
                                 <button 
-                                    className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-secondary"
+                                    className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-secondary session-mgmt-close-btn"
                                     onClick={() => setSelectedClient(null)}
-                                    className="session-mgmt-close-btn"
                                 >
                                     전체 보기
                                 </button>
@@ -1465,7 +1464,6 @@ const SessionManagement = () => {
                     <div className="session-mgmt-loading-spinner">로딩 중...</div>
                 </div>
             )}
-            </div>
         </SimpleLayout>
     );
 };

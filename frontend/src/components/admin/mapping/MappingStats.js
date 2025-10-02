@@ -272,7 +272,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                             alignItems: 'center',
                             justifyContent: 'center',
                             borderRadius: '50%',
-                            background: 'rgba(255, 255, 255, 0.2)',
+                            background: 'var(--color-bg-glass, rgba(255, 255, 255, 0.2))',
                             color: stat.color
                         }}>
                             {stat.icon}
@@ -281,7 +281,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                             <div style={{
                                 fontSize: 'var(--font-size-xs)',
                                 fontWeight: '600',
-                                color: '#6c757d',
+                                color: 'var(--color-text-secondary, #424245)',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.5px',
                                 marginBottom: '2px'
@@ -298,8 +298,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         <div style={{
                             fontSize: 'var(--font-size-xs)',
                             fontWeight: '600',
-                            color: '#6c757d',
-                            background: 'rgba(255, 255, 255, 0.2)',
+                            color: 'var(--color-text-secondary, #424245)',
+                            background: 'var(--color-bg-glass, rgba(255, 255, 255, 0.2))',
                             padding: '4px 8px',
                             borderRadius: '12px'
                         }}>
@@ -310,13 +310,13 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                                 position: 'absolute',
                                 top: '8px',
                                 right: '8px',
-                                background: 'rgba(255, 255, 255, 0.9)',
-                                color: '#059669',
+                                background: 'var(--color-bg-glass-strong, rgba(255, 255, 255, 0.9))',
+                                color: 'var(--color-success, #28A745)',
                                 fontSize: 'var(--font-size-xs)',
                                 fontWeight: '600',
                                 padding: '2px 6px',
                                 borderRadius: '4px',
-                                border: '1px solid #10b981',
+                                border: '1px solid var(--color-success, #28A745)',
                                 animation: 'pulse 2s infinite'
                             }}>
                                 💳 결제 확인
@@ -330,8 +330,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 display: 'flex',
                 justifyContent: 'space-around',
                 padding: '16px 20px',
-                background: '#f8f9fa',
-                borderTop: '1px solid #e1e8ed'
+                background: 'var(--color-bg-secondary, #F5F5F7)',
+                borderTop: '1px solid var(--color-border-secondary, #E8E8ED)'
             }}>
                 <div style={{
                     display: 'flex',
@@ -347,7 +347,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     <span style={{
                         fontSize: 'var(--font-size-base)',
                         fontWeight: '700',
-                        color: '#2c3e50'
+                        color: 'var(--color-text-primary, #1D1D1F)'
                     }}>{stats.total}건</span>
                 </div>
                 <div style={{
@@ -364,7 +364,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     <span style={{
                         fontSize: 'var(--font-size-base)',
                         fontWeight: '700',
-                        color: '#2c3e50'
+                        color: 'var(--color-text-primary, #1D1D1F)'
                     }}>
                         {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
                     </span>
@@ -383,7 +383,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     <span style={{
                         fontSize: 'var(--font-size-base)',
                         fontWeight: '700',
-                        color: '#2c3e50'
+                        color: 'var(--color-text-primary, #1D1D1F)'
                     }}>
                         {stats.total > 0 ? Math.round((stats.pending / stats.total) * 100) : 0}%
                     </span>

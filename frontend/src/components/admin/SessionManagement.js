@@ -901,9 +901,9 @@ const SessionManagement = () => {
                                 </div>
                             )}
                         </div>
-                    </div>
-                </>
-            )}
+                    </>
+                )}
+            </div>
 
             {/* 선택된 내담자 정보 */}
             {selectedClient && (

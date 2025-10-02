@@ -2,10 +2,10 @@
 
 /* 기본 헤더 - 공통부 우선순위 */
 .mg-header {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--header-bg, rgba(250, 250, 250, 0.95)) !important;
   backdrop-filter: var(--ios-backdrop-blur-xl);
   -webkit-backdrop-filter: var(--ios-backdrop-blur-xl);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--header-border, rgba(209, 209, 214, 0.8));
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
   z-index: var(--z-header); /* 공통부 z-index */
   transition: all 0.3s ease;
@@ -284,7 +284,7 @@
 .mg-header__user-name {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  color: var(--color-text-primary) !important;
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -294,12 +294,13 @@
 
 .mg-header__user-role {
   font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary) !important;
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 120px;
+  font-weight: var(--font-weight-medium);
 }
 
 /* 햄버거 메뉴 버튼 */

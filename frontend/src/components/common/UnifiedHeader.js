@@ -70,17 +70,12 @@ const UnifiedHeader = ({
     if (!showBackButton) return false;
     
     const currentPath = location.pathname;
-    const noBackPaths = ['/', '/login', '/signup', '/dashboard'];
+    const noBackPaths = ['/', '/login', '/signup'];
     
-    // 홈페이지, 로그인, 회원가입, 메인 대시보드에서는 백 버튼 숨김
+    // 홈페이지, 로그인, 회원가입에서만 백 버튼 숨김
     if (noBackPaths.includes(currentPath)) return false;
     
-    // 사용자 역할별 메인 대시보드에서도 숨김
-    if (user?.role) {
-      const dashboardPath = getDashboardPath(user.role);
-      if (currentPath === dashboardPath) return false;
-    }
-    
+    // 다른 모든 페이지에서는 백 버튼 표시
     return true;
   };
 

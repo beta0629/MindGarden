@@ -53,6 +53,12 @@
   --color-info-light: #E5F7FE;
   --color-info-dark: #4BB5E6;
 
+  /* MindGarden 브랜드 색상 (연두빛) */
+  --color-mindgarden: #7ED321;
+  --color-mindgarden-light: #B8E994;
+  --color-mindgarden-dark: #6BCF7F;
+  --color-mindgarden-accent: #82CC6E;
+
   /* iOS 그림자 */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.12);
@@ -164,4 +170,10 @@
   --bg-primary: #FAFAFA !important;
   --bg-secondary: #F5F5F7 !important;
   --bg-tertiary: #F8F9FA !important;
+
+  /* MindGarden 브랜드 색상 유지 */
+  --color-mindgarden: #7ED321 !important;
+  --color-mindgarden-light: #B8E994 !important;
+  --color-mindgarden-dark: #6BCF7F !important;
+  --color-mindgarden-accent: #82CC6E !important;
 }

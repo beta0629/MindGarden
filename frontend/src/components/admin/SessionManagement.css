@@ -1,11 +1,89 @@
-/* ===== SessionManagement 스타일 - 아이폰 스타일과 글래스모피즘 적용 ===== */
+/* ===== SessionManagement 스타일 - 내담자 관리 페이지 스타일 ===== */
 
 .session-mgmt-container {
-    padding: 40px 20px;
-    max-width: 1400px;
+    padding: 30px;
+    max-width: 1200px;
     margin: 0 auto;
-    background: linear-gradient(135deg, rgba(248, 249, 250, 0.8) 0%, rgba(233, 236, 239, 0.6) 100%);
+    background: #f8fafc;
     min-height: 100vh;
+}
+
+/* 헤더 섹션 */
+.session-mgmt-header {
+    margin-bottom: 30px;
+}
+
+.header-title h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-title h1 i {
+    color: #3b82f6;
+    font-size: 28px;
+}
+
+.header-title p {
+    font-size: 16px;
+    color: #6b7280;
+    margin: 0 0 24px 0;
+}
+
+.header-tabs {
+    display: flex;
+    gap: 8px;
+    background: white;
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tab-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.tab-btn.active {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.tab-btn i {
+    font-size: 16px;
+}
+
+/* 메인 카드 */
+.session-mgmt-main-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    margin-bottom: 30px;
 }
 
 .session-mgmt-header {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
-import SessionManagementHeader from './SessionManagementHeader';
+import StatisticsDashboard from './StatisticsDashboard';
 import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
 import ClientCard from './ClientCard';
@@ -810,46 +810,72 @@ const SessionManagement = () => {
     return (
         <SimpleLayout>
             <div className="session-mgmt-container">
-                <SessionManagementHeader
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                    onAddSession={() => setActiveTab('extensions')}
+                {/* 헤더 섹션 */}
+                <div className="session-mgmt-header">
+                    <div className="header-title">
+                        <h1>
+                            <i className="bi bi-calendar-check"></i>
+                            내담자 회기 관리
+                        </h1>
+                        <p>내담자의 상담 회기를 등록하고 관리할 수 있습니다</p>
+                    </div>
+                    
+                    <div className="header-tabs">
+                        <button 
+                            className={`tab-btn ${activeTab === 'mappings' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('mappings')}
+                        >
+                            <i className="bi bi-diagram-3"></i>
+                            회기 관리
+                        </button>
+                        <button 
+                            className={`tab-btn ${activeTab === 'extensions' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('extensions')}
+                        >
+                            <i className="bi bi-plus-circle"></i>
+                            회기 추가 요청
+                        </button>
+                    </div>
+                </div>
+
+                {/* 통계 대시보드 */}
+                <StatisticsDashboard
+                    totalClients={clients.length}
+                    activeMappings={mappings.filter(m => m.status === 'ACTIVE').length}
+                    totalSessions={mappings.reduce((sum, m) => sum + (m.usedSessions || 0), 0)}
+                    completionRate={mappings.length > 0 ? Math.round((mappings.filter(m => m.status === 'COMPLETED').length / mappings.length) * 100) : 0}
                 />
 
-            {/* 회기 관리 탭 내용 */}
-            {activeTab === 'mappings' && (
-                <>
-                    {/* 내담자 선택 섹션 */}
-                    <div className="session-mgmt-client-selection-section">
-                        <SectionHeader
-                            title="내담자 선택"
-                            subtitle={(() => {
-                                const hasActiveFilters = clientSearchTerm || clientFilterStatus !== 'ALL';
-                                const filteredCount = getFilteredClients().length;
-                                const totalCount = clients.length;
-                                
-                                if (hasActiveFilters) {
-                                    return `검색 결과: ${filteredCount}명 (전체 ${totalCount}명 중)`;
-                                } else {
-                                    return `최근 내담자 ${filteredCount}명 표시 (전체 ${totalCount}명 중)`;
-                                }
-                            })()}
-                            icon="bi-person-check"
-                            stats={[
-                                { label: '전체 내담자', value: clients.length },
-                                { label: '활성 매핑', value: mappings.filter(m => m.status === 'ACTIVE').length }
-                            ]}
-                        />
-                        
-                        <SearchFilterSection
-                            searchTerm={clientSearchTerm}
-                            onSearchChange={setClientSearchTerm}
-                            filterValue={clientFilterStatus}
-                            onFilterChange={setClientFilterStatus}
-                            filterOptions={mappingStatusOptions}
-                            placeholder="내담자 검색..."
-                            filterLabel="전체"
-                        />
+                {/* 회기 관리 탭 내용 */}
+                {activeTab === 'mappings' && (
+                    <>
+                        {/* 내담자 선택 섹션 */}
+                        <div className="session-mgmt-main-card">
+                            <SectionHeader
+                                title="내담자 선택"
+                                subtitle={(() => {
+                                    const hasActiveFilters = clientSearchTerm || clientFilterStatus !== 'ALL';
+                                    const filteredCount = getFilteredClients().length;
+                                    const totalCount = clients.length;
+                                    
+                                    if (hasActiveFilters) {
+                                        return `검색 결과: ${filteredCount}명 (전체 ${totalCount}명 중)`;
+                                    } else {
+                                        return `최근 내담자 ${filteredCount}명 표시 (전체 ${totalCount}명 중)`;
+                                    }
+                                })()}
+                                icon="bi-person-check"
+                            />
+                            
+                            <SearchFilterSection
+                                searchTerm={clientSearchTerm}
+                                onSearchChange={setClientSearchTerm}
+                                filterValue={clientFilterStatus}
+                                onFilterChange={setClientFilterStatus}
+                                filterOptions={mappingStatusOptions}
+                                placeholder="내담자 검색..."
+                                filterLabel="전체"
+                            />
                 <div className="session-mgmt-client-list">
                     {getFilteredClients().map(client => {
                         const clientMappings = mappings.filter(mapping => mapping.clientId === client.id);

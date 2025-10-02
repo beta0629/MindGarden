@@ -1,129 +1,98 @@
-/* StatisticsDashboard 스타일 - 새로운 디자인 시스템 적용 */
+/* ===== StatisticsDashboard 스타일 - 내담자 관리 페이지 스타일 ===== */
 
-.statistics-dashboard,
-.statistics-dashboard-container {
-    padding: var(--spacing-xl);
-    background-color: var(--ios-bg-secondary);
-    min-height: 100vh;
-    font-family: var(--font-family-base);
+.statistics-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
 }
 
-.statistics-dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--spacing-xxl);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 2px solid var(--ios-border-light);
-}
-
-.statistics-dashboard-title-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-}
-
-.statistics-dashboard-title {
-    margin: 0;
-    font-size: var(--font-size-xxxl);
-    font-weight: var(--font-weight-bold);
-    color: var(--ios-text-primary);
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 16px;
+    transition: all 0.3s ease;
 }
 
-.statistics-dashboard-icon {
-    color: var(--ios-green);
-    font-size: var(--font-size-xxl);
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-.statistics-dashboard-subtitle {
-    margin: 0;
-    font-size: var(--font-size-base);
-    color: var(--ios-text-secondary);
-    font-weight: var(--font-weight-regular);
+.stat-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
 }
 
-.statistics-dashboard__header {
-    margin-bottom: var(--spacing-xxl);
-    text-align: center;
+.stat-card--primary .stat-card__icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
 }
 
-.statistics-dashboard__title {
-    font-size: var(--font-size-xxxl);
-    font-weight: var(--font-weight-bold);
-    color: var(--ios-text-primary);
-    margin: 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+.stat-card--success .stat-card__icon {
+    background: linear-gradient(135deg, #10b981, #059669);
 }
 
-.statistics-dashboard__filters {
-    margin-bottom: var(--spacing-xxl);
+.stat-card--info .stat-card__icon {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
 }
 
-.statistics-dashboard__stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xxl);
+.stat-card--warning .stat-card__icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
-.statistics-dashboard__charts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xxl);
+.stat-card__content {
+    flex: 1;
 }
 
-.statistics-dashboard__tables {
-    margin-bottom: var(--spacing-xxl);
+.stat-card__value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1;
+    margin-bottom: 4px;
 }
 
-.statistics-dashboard__section {
-    margin-bottom: var(--spacing-xxl);
-}
-
-.statistics-dashboard__section-title {
-    font-size: var(--font-size-xxl);
-    font-weight: var(--font-weight-semibold);
-    color: var(--ios-text-primary);
-    margin: 0 0 var(--spacing-lg) 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+.stat-card__label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
 }
 
 /* 반응형 디자인 */
-@media (max-width: 767px) {
+@media (max-width: 768px) {
     .statistics-dashboard {
-        padding: var(--spacing-md);
-    }
-
-    .statistics-dashboard__title {
-        font-size: var(--font-size-xxl);
-    }
-
-    .statistics-dashboard__stats {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
-    }
-
-    .statistics-dashboard__charts {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
-    }
-}
-
-/* 아이패드 스타일 최적화 */
-@media (min-width: 768px) and (max-width: 1024px) {
-    .statistics-dashboard {
-        padding: var(--spacing-lg) var(--spacing-xl);
-    }
-
-    .statistics-dashboard__stats {
         grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
     }
-
-    .statistics-dashboard__charts {
-        grid-template-columns: 1fr;
+    
+    .stat-card {
+        padding: 20px;
+        gap: 12px;
+    }
+    
+    .stat-card__icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+    
+    .stat-card__value {
+        font-size: 24px;
+    }
+    
+    .stat-card__label {
+        font-size: 13px;
     }
 }

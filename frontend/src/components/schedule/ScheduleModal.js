@@ -367,10 +367,10 @@ const ScheduleModalNew = ({
                 backgroundColor: 'white',
                 borderRadius: window.innerWidth <= 480 ? '0px' : '12px',
                 boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-                width: window.innerWidth <= 480 ? '100vw' : '90%',
+                width: window.innerWidth <= 480 ? '100vw' : '80%',
                 maxWidth: window.innerWidth <= 480 ? 'none' : 
-                          window.innerWidth <= 768 ? '95vw' : '700px',
-                maxHeight: window.innerWidth <= 480 ? '100vh' : '80vh',
+                          window.innerWidth <= 768 ? '90vw' : '500px',
+                maxHeight: window.innerWidth <= 480 ? '100vh' : '70vh',
                 height: window.innerWidth <= 480 ? '100vh' : 'auto',
                 overflow: 'hidden',
                 display: 'flex',

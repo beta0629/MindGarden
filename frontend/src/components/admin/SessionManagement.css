@@ -517,10 +517,11 @@ body .session-mgmt-modal-overlay,
     backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
     display: flex !important;
-    align-items: center !important;
+    align-items: flex-start !important;
     justify-content: center !important;
     z-index: 1000 !important;
-    padding: 20px !important;
+    padding: 80px 20px 20px 20px !important;
+    overflow-y: auto !important;
 }
 
 #root .session-mgmt-modal-content,
@@ -533,14 +534,14 @@ body .session-mgmt-modal-content,
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
     max-width: 600px !important;
     width: 100% !important;
-    max-height: 90vh !important;
+    max-height: calc(100vh - 120px) !important;
     overflow-y: auto !important;
     box-shadow: 
         0 20px 40px rgba(0, 0, 0, 0.15),
         0 0 0 1px rgba(255, 255, 255, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
     position: relative !important;
-    overflow: hidden !important;
+    margin-top: 20px !important;
 }
 
 #root .session-mgmt-modal-header,
@@ -602,6 +603,37 @@ body .session-mgmt-modal-body,
     background: rgba(255, 255, 255, 0.7) !important;
     backdrop-filter: blur(5px) !important;
     -webkit-backdrop-filter: blur(5px) !important;
+    max-height: calc(100vh - 200px) !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(0, 122, 255, 0.3) transparent !important;
+}
+
+/* 웹킷 브라우저용 스크롤바 스타일 */
+#root .session-mgmt-modal-body::-webkit-scrollbar,
+body .session-mgmt-modal-body::-webkit-scrollbar,
+.session-mgmt-modal-body::-webkit-scrollbar {
+    width: 6px !important;
+}
+
+#root .session-mgmt-modal-body::-webkit-scrollbar-track,
+body .session-mgmt-modal-body::-webkit-scrollbar-track,
+.session-mgmt-modal-body::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 3px !important;
+}
+
+#root .session-mgmt-modal-body::-webkit-scrollbar-thumb,
+body .session-mgmt-modal-body::-webkit-scrollbar-thumb,
+.session-mgmt-modal-body::-webkit-scrollbar-thumb {
+    background: rgba(0, 122, 255, 0.3) !important;
+    border-radius: 3px !important;
+}
+
+#root .session-mgmt-modal-body::-webkit-scrollbar-thumb:hover,
+body .session-mgmt-modal-body::-webkit-scrollbar-thumb:hover,
+.session-mgmt-modal-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 122, 255, 0.5) !important;
 }
 
 #root .session-mgmt-form-group,

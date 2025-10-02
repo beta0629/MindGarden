@@ -64,6 +64,63 @@ export const calculateDropdownPosition = (triggerElement, dropdownElement, optio
 };
 
 /**
+ * 개별 드롭다운 요소 초기화
+ * @param {HTMLElement} dropdown - 드롭다운 컨테이너 요소
+ */
+export const initSingleDropdown = (dropdown) => {
+  if (!dropdown || !dropdown.nodeType) return;
+  
+  const trigger = dropdown.querySelector('.custom-select__trigger, [data-dropdown-trigger]');
+  const menu = dropdown.querySelector('.custom-select__dropdown, [data-dropdown-menu]');
+  
+  if (!trigger || !menu) return;
+
+  // 드롭다운 열림/닫힘 상태 변경 감지
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+        const isOpen = dropdown.classList.contains('open') || 
+                      dropdown.classList.contains('active') ||
+                      menu.style.display !== 'none';
+        
+        if (isOpen) {
+          calculateDropdownPosition(trigger, menu);
+        }
+      }
+    });
+  });
+
+  observer.observe(dropdown, { attributes: true, attributeFilter: ['class'] });
+  
+  // 수동으로 드롭다운 열기 이벤트 처리
+  const handleDropdownOpen = () => {
+    setTimeout(() => {
+      calculateDropdownPosition(trigger, menu);
+    }, 10);
+  };
+
+  trigger.addEventListener('click', handleDropdownOpen);
+  
+  // 창 크기 변경 시 위치 재계산
+  const handleResize = () => {
+    if (dropdown.classList.contains('open')) {
+      calculateDropdownPosition(trigger, menu);
+    }
+  };
+
+  window.addEventListener('resize', handleResize);
+  window.addEventListener('scroll', handleResize);
+
+  // 정리 함수 반환
+  return () => {
+    observer.disconnect();
+    trigger.removeEventListener('click', handleDropdownOpen);
+    window.removeEventListener('resize', handleResize);
+    window.removeEventListener('scroll', handleResize);
+  };
+};
+
+/**
  * 모든 드롭다운에 공통 이벤트 리스너 추가
  * @param {string} selector - 드롭다운 컨테이너 선택자
  */
@@ -71,54 +128,7 @@ export const initDropdownPositioning = (selector = '.custom-select') => {
   const dropdowns = document.querySelectorAll(selector);
   
   dropdowns.forEach(dropdown => {
-    const trigger = dropdown.querySelector('.custom-select__trigger, [data-dropdown-trigger]');
-    const menu = dropdown.querySelector('.custom-select__dropdown, [data-dropdown-menu]');
-    
-    if (!trigger || !menu) return;
-
-    // 드롭다운 열림/닫힘 상태 변경 감지
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          const isOpen = dropdown.classList.contains('open') || 
-                        dropdown.classList.contains('active') ||
-                        menu.style.display !== 'none';
-          
-          if (isOpen) {
-            calculateDropdownPosition(trigger, menu);
-          }
-        }
-      });
-    });
-
-    observer.observe(dropdown, { attributes: true, attributeFilter: ['class'] });
-    
-    // 수동으로 드롭다운 열기 이벤트 처리
-    const handleDropdownOpen = () => {
-      setTimeout(() => {
-        calculateDropdownPosition(trigger, menu);
-      }, 10);
-    };
-
-    trigger.addEventListener('click', handleDropdownOpen);
-    
-    // 창 크기 변경 시 위치 재계산
-    const handleResize = () => {
-      if (dropdown.classList.contains('open')) {
-        calculateDropdownPosition(trigger, menu);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleResize);
-
-    // 정리 함수 반환
-    return () => {
-      observer.disconnect();
-      trigger.removeEventListener('click', handleDropdownOpen);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleResize);
-    };
+    initSingleDropdown(dropdown);
   });
 };
 
@@ -141,12 +151,13 @@ export const initAllDropdowns = () => {
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
           if (node.classList && node.classList.contains('custom-select')) {
-            initDropdownPositioning(node);
+            // 개별 드롭다운 초기화
+            initSingleDropdown(node);
           }
           // 하위 요소에서 드롭다운 찾기
           const childDropdowns = node.querySelectorAll && node.querySelectorAll('.custom-select');
           if (childDropdowns) {
-            childDropdowns.forEach(initDropdownPositioning);
+            childDropdowns.forEach(initSingleDropdown);
           }
         }
       });

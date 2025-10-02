@@ -847,7 +847,7 @@ const SessionManagement = () => {
                             filterValue={clientFilterStatus}
                             onFilterChange={setClientFilterStatus}
                             filterOptions={mappingStatusOptions}
-                            placeholder="내담자 이름 또는 이메일 검색..."
+                            placeholder="내담자 검색..."
                             filterLabel="전체"
                         />
                 <div className="session-mgmt-client-list">
@@ -989,7 +989,7 @@ const SessionManagement = () => {
                             <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
                                 <input
                                     type="text"
-                                    placeholder="내담자, 상담사, 패키지명 검색..."
+                                    placeholder="매핑 검색..."
                                     value={mappingSearchTerm}
                                     onChange={(e) => setMappingSearchTerm(e.target.value)}
                                     className="session-mgmt-search-input"

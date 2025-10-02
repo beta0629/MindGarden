@@ -1,0 +1,276 @@
+/* ===== 통합 드롭다운 컴포넌트 스타일 ===== */
+
+/* 전체 애플리케이션의 모든 드롭다운에 대한 공통 규칙 */
+select, 
+.custom-select,
+.dropdown,
+[role="listbox"],
+[role="menu"],
+.select-wrapper,
+.dropdown-menu,
+.dropdown-toggle,
+.select-dropdown,
+.custom-select__dropdown,
+.ant-select-dropdown,
+.react-select__menu {
+  /* 드롭다운이 스크롤과 독립적으로 동작하도록 */
+  position: relative;
+  z-index: var(--z-dropdown);
+}
+
+/* 모든 드롭다운 메뉴의 공통 스타일 */
+select option,
+.custom-select__dropdown,
+.dropdown-menu,
+[role="listbox"] > *,
+[role="menu"] > *,
+.select-dropdown,
+.ant-select-dropdown,
+.react-select__menu {
+  position: fixed !important;
+  z-index: var(--z-dropdown) !important;
+  /* 스크롤과 독립적으로 동작 */
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* 기본 드롭다운 컨테이너 */
+.mg-dropdown {
+  position: relative;
+  display: inline-block;
+  z-index: var(--z-dropdown);
+}
+
+/* 드롭다운 트리거 버튼 */
+.mg-dropdown__trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--ios-bg-secondary);
+  border: 1px solid var(--ios-border);
+  border-radius: var(--border-radius-md);
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
+.mg-dropdown__trigger:hover {
+  background: var(--ios-bg-tertiary);
+  border-color: var(--ios-border-hover);
+}
+
+.mg-dropdown__trigger:focus {
+  outline: none;
+  border-color: var(--ios-accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* 드롭다운 아이콘 */
+.mg-dropdown__icon {
+  width: 16px;
+  height: 16px;
+  transition: transform var(--transition-normal);
+}
+
+.mg-dropdown--open .mg-dropdown__icon {
+  transform: rotate(180deg);
+}
+
+/* 드롭다운 메뉴 */
+.mg-dropdown__menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: var(--spacing-xs);
+  background: var(--ios-bg-primary);
+  border: 1px solid var(--ios-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-xl);
+  z-index: var(--z-dropdown);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all var(--transition-normal);
+  max-height: 300px;
+  overflow-y: auto;
+  min-width: 200px;
+}
+
+.mg-dropdown--open .mg-dropdown__menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* 드롭다운 아이템 */
+.mg-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-regular);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.mg-dropdown__item:hover {
+  background: var(--ios-bg-secondary);
+}
+
+.mg-dropdown__item:focus {
+  outline: none;
+  background: var(--ios-bg-secondary);
+}
+
+.mg-dropdown__item--active {
+  background: var(--ios-accent-light);
+  color: var(--ios-accent);
+}
+
+.mg-dropdown__item--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mg-dropdown__item--disabled:hover {
+  background: transparent;
+}
+
+/* 드롭다운 구분선 */
+.mg-dropdown__divider {
+  height: 1px;
+  background: var(--ios-border);
+  margin: var(--spacing-xs) 0;
+}
+
+/* 헤더 내 드롭다운 특별 처리 */
+.mg-header .mg-dropdown {
+  z-index: var(--z-header);
+}
+
+.mg-header--sticky .mg-dropdown {
+  z-index: var(--z-header);
+}
+
+.mg-header--sticky .mg-dropdown__menu {
+  position: fixed;
+  z-index: var(--z-dropdown);
+}
+
+/* 반응형 처리 */
+@media (max-width: 768px) {
+  .mg-dropdown__trigger {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    min-height: 36px;
+  }
+  
+  .mg-dropdown__menu {
+    min-width: 180px;
+    max-height: 250px;
+  }
+  
+  .mg-dropdown__item {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .mg-dropdown__trigger {
+    padding: var(--spacing-xs);
+    min-height: 32px;
+  }
+  
+  .mg-dropdown__menu {
+    min-width: 160px;
+    max-height: 200px;
+  }
+}
+
+/* ===== 전체 애플리케이션 드롭다운 고정 처리 ===== */
+
+/* 헤더 내 모든 드롭다운 요소들 */
+.mg-header .custom-select,
+.mg-header select,
+.mg-header .dropdown,
+.simple-header .custom-select,
+.simple-header select,
+.simple-header .dropdown {
+  position: relative;
+  z-index: var(--z-header);
+}
+
+/* sticky 헤더 내 드롭다운 메뉴 */
+.mg-header--sticky .custom-select__dropdown,
+.mg-header--sticky .dropdown-menu,
+.simple-header .custom-select__dropdown,
+.simple-header .dropdown-menu {
+  position: fixed !important;
+  z-index: var(--z-dropdown) !important;
+  /* 헤더와 함께 고정되도록 */
+  transform: translateZ(0);
+}
+
+/* 모든 페이지의 드롭다운 메뉴 */
+.custom-select__dropdown,
+.dropdown-menu,
+.select-dropdown,
+.ant-select-dropdown,
+.react-select__menu {
+  /* 스크롤과 독립적으로 동작 */
+  position: fixed !important;
+  z-index: var(--z-dropdown) !important;
+  transform: translateZ(0);
+  will-change: transform;
+  /* 부드러운 애니메이션 */
+  transition: all var(--transition-normal);
+}
+
+/* 드롭다운 컨테이너가 sticky인 경우 */
+.sticky .custom-select,
+.sticky select,
+.sticky .dropdown {
+  position: relative;
+  z-index: var(--z-sticky);
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .mg-dropdown__trigger {
+    background: var(--ios-bg-secondary-dark, #2c2c2e);
+    border-color: var(--ios-border-dark, #38383a);
+    color: var(--ios-text-primary-dark, #ffffff);
+  }
+  
+  .mg-dropdown__trigger:hover {
+    background: var(--ios-bg-tertiary-dark, #3a3a3c);
+    border-color: var(--ios-border-hover-dark, #48484a);
+  }
+  
+  .mg-dropdown__menu {
+    background: var(--ios-bg-primary-dark, #1c1c1e);
+    border-color: var(--ios-border-dark, #38383a);
+  }
+  
+  .mg-dropdown__item {
+    color: var(--ios-text-primary-dark, #ffffff);
+  }
+  
+  .mg-dropdown__item:hover {
+    background: var(--ios-bg-secondary-dark, #2c2c2e);
+  }
+}

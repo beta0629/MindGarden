@@ -2,6 +2,7 @@ package com.mindgarden.consultation.service.impl;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -418,8 +419,19 @@ public class BranchServiceImpl extends BaseServiceImpl<Branch, Long> implements 
     @Transactional(readOnly = true)
     public List<User> getBranchConsultants(Long branchId) {
         Branch branch = findActiveByIdOrThrow(branchId);
-        return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
+        List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
                 branch, UserRole.CONSULTANT);
+        
+        // branchId가 null인 상담사들도 branchCode로 매칭하여 추가
+        List<User> additionalConsultants = userRepository.findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsername(
+                branch.getBranchCode(), UserRole.CONSULTANT);
+        
+        // 중복 제거를 위해 ID 기준으로 합치기
+        Map<Long, User> consultantMap = new HashMap<>();
+        consultants.forEach(consultant -> consultantMap.put(consultant.getId(), consultant));
+        additionalConsultants.forEach(consultant -> consultantMap.put(consultant.getId(), consultant));
+        
+        return new ArrayList<>(consultantMap.values());
     }
     
     @Override

@@ -107,6 +107,24 @@
   height: 32px;
 }
 
+/* ===== 헤더 내 드롭다운 고정 처리 ===== */
+.mg-header--sticky .mg-header__actions,
+.mg-header--sticky .mg-header__user-menu {
+  position: relative;
+  z-index: var(--z-dropdown);
+}
+
+/* 헤더 내 모든 드롭다운 요소들이 sticky 동작하도록 */
+.mg-header--sticky * {
+  position: relative;
+}
+
+.mg-header--sticky .mg-header__container {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+}
+
 /* 로고 반응형 */
 @media (max-width: 768px) {
   .mg-header__logo-text {

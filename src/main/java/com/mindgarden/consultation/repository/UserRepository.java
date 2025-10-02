@@ -449,6 +449,12 @@ public interface UserRepository extends BaseRepository<User, Long> {
     List<User> findByBranchCode(String branchCode);
     
     /**
+     * 지점 코드와 역할로 사용자 조회 (삭제되지 않은 사용자만)
+     */
+    @Query("SELECT u FROM User u WHERE u.branchCode = ?1 AND u.role = ?2 AND u.isDeleted = false ORDER BY u.username")
+    List<User> findByBranchCodeAndRoleAndIsDeletedFalseOrderByUsername(String branchCode, UserRole role);
+    
+    /**
      * 여러 역할로 사용자 조회
      */
     @Query("SELECT u FROM User u WHERE u.role IN :roles AND u.isDeleted = false ORDER BY u.username")

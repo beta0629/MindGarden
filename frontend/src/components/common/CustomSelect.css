@@ -64,10 +64,10 @@
 }
 
 .custom-select__dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  position: fixed;
+  top: auto;
+  left: auto;
+  right: auto;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -78,6 +78,8 @@
   max-height: 200px;
   overflow: hidden;
   margin-top: 4px;
+  /* 드롭다운이 헤더와 함께 고정되도록 개선 */
+  transform: translateY(0);
 }
 
 .custom-select__search {

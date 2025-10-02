@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/common-codes")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@PreAuthorize("isAuthenticated()")
 public class CommonCodeController {
 
     private final CommonCodeService commonCodeService;

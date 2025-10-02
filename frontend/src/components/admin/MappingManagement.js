@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { 
     MAPPING_API_ENDPOINTS, 
     MAPPING_MESSAGES,
@@ -498,7 +499,11 @@ const MappingManagement = () => {
             <SimpleLayout>
                 <div className="mapping-management">
                     <div className="loading-container">
-                        <div className="loading-spinner">{MAPPING_MESSAGES.LOADING}</div>
+                        <UnifiedLoading 
+                            text="매핑 목록을 불러오는 중..." 
+                            size="large" 
+                            type="inline"
+                        />
                     </div>
                 </div>
             </SimpleLayout>

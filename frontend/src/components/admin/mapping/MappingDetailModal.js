@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../../utils/ajax';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import './MappingDetailModal.css';
 
 /**
@@ -101,10 +102,11 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
                 {loading ? (
                     <div className="mapping-detail-loading">
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
-                        <p>상세 정보를 불러오는 중...</p>
+                        <UnifiedLoading 
+                            text="상세 정보를 불러오는 중..." 
+                            size="medium" 
+                            type="inline"
+                        />
                     </div>
                 ) : (
                     <div className="mapping-detail-content">

@@ -494,6 +494,14 @@ const SessionManagement = () => {
             packagePrice: '',
             notes: ''
         });
+        
+        // 디버깅을 위한 로그
+        console.log('회기 추가 요청 모달 열기:', {
+            selectedClient: selectedClient.name,
+            existingMapping,
+            defaultConsultantId,
+            consultants: consultants.length
+        });
         setShowAddModal(true);
     };
 

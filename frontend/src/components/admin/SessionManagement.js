@@ -128,20 +128,66 @@ const SessionManagement = () => {
             if (response && response.length > 0) {
                 const options = response.map(code => {
                     let sessions = 20; // 기본값
-                    if (code.extraData) {
-                        try {
-                            const extraData = JSON.parse(code.extraData);
-                            sessions = extraData.sessions || 20;
-                        } catch (e) {
-                            console.warn('extraData 파싱 실패:', e);
+                    let price = 0;
+                    
+                    // 코드 값에 따라 세션 수와 가격 설정
+                    if (code.codeValue === 'BASIC') {
+                        sessions = 20;
+                        price = 200000;
+                    } else if (code.codeValue === 'STANDARD') {
+                        sessions = 20;
+                        price = 400000;
+                    } else if (code.codeValue === 'PREMIUM') {
+                        sessions = 20;
+                        price = 600000;
+                    } else if (code.codeValue === 'VIP') {
+                        sessions = 20;
+                        price = 1000000;
+                    } else if (code.codeValue.startsWith('SINGLE_')) {
+                        sessions = 1; // 단회기는 1회기
+                        // SINGLE_30000 -> 30000
+                        const priceStr = code.codeValue.replace('SINGLE_', '');
+                        price = parseInt(priceStr, 10);
+                        // NaN 체크
+                        if (isNaN(price)) {
+                            console.warn(`단회기 가격 파싱 실패: ${code.codeValue} -> ${priceStr}`);
+                            price = 30000; // 기본값
                         }
+                    } else {
+                        // extraData에서 세션 수 가져오기
+                        if (code.extraData) {
+                            try {
+                                const extraData = JSON.parse(code.extraData);
+                                sessions = extraData.sessions || 20;
+                            } catch (e) {
+                                console.warn('extraData 파싱 실패:', e);
+                            }
+                        }
+                        price = code.codeDescription ? parseFloat(code.codeDescription) : 0;
+                    }
+                    
+                    // 패키지별 라벨 생성
+                    let label;
+                    if (code.codeValue === 'BASIC') {
+                        label = '기본 패키지';
+                    } else if (code.codeValue === 'STANDARD') {
+                        label = '표준 패키지';
+                    } else if (code.codeValue === 'PREMIUM') {
+                        label = '프리미엄 패키지';
+                    } else if (code.codeValue === 'VIP') {
+                        label = 'VIP 패키지';
+                    } else if (code.codeValue.startsWith('SINGLE_')) {
+                        // SINGLE_ 패키지는 코드값 그대로 사용 (SINGLE_30000, SINGLE_35000 등)
+                        label = code.codeValue;
+                    } else {
+                        label = code.codeLabel;
                     }
                     
                     return {
                         value: code.codeValue,
-                        label: code.codeLabel,
+                        label: label,
                         description: code.codeDescription,
-                        price: code.codeDescription ? parseFloat(code.codeDescription) : 0,
+                        price: price,
                         sessions: sessions,
                         icon: code.icon,
                         color: code.colorCode

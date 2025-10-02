@@ -17,7 +17,7 @@ const MappingCard = ({
     mapping, 
     statusInfo = {
         label: mapping?.status || 'UNKNOWN',
-        color: '#6c757d',
+        color: 'var(--color-text-secondary, #424245)',
         icon: '📋'
     },
     onApprove, 
@@ -68,8 +68,8 @@ const MappingCard = ({
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '16px 20px',
-                background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                borderBottom: '1px solid #e1e8ed'
+                background: 'var(--color-bg-secondary, #F5F5F7)',
+                borderBottom: '1px solid var(--color-border-secondary, #E8E8ED)'
             }}>
                 <div>
                     <span style={{
@@ -91,7 +91,7 @@ const MappingCard = ({
                 </div>
                 <div style={{
                     fontSize: 'var(--font-size-xs)',
-                    color: '#6c757d',
+                    color: 'var(--color-text-secondary, #424245)',
                     fontWeight: '500',
                     display: 'flex',
                     flexDirection: 'column',
@@ -100,7 +100,7 @@ const MappingCard = ({
                     {/* 시작일 */}
                     {mapping.startDate ? (
                         <div>
-                            <span style={{ fontWeight: '600', color: '#495057' }}>시작일:</span> {
+                            <span style={{ fontWeight: '600', color: 'var(--color-text-primary, #1D1D1F)' }}>시작일:</span> {
                                 (() => {
                                     try {
                                         return new Date(mapping.startDate).toLocaleDateString('ko-KR');
@@ -115,7 +115,7 @@ const MappingCard = ({
                     {/* 생성일 (매핑 생성일) */}
                     {mapping.createdAt ? (
                         <div>
-                            <span style={{ fontWeight: '600', color: '#495057' }}>생성일:</span> {
+                            <span style={{ fontWeight: '600', color: 'var(--color-text-primary, #1D1D1F)' }}>생성일:</span> {
                                 (() => {
                                     try {
                                         return new Date(mapping.createdAt).toLocaleDateString('ko-KR');
@@ -130,7 +130,7 @@ const MappingCard = ({
                     {/* 승인일 */}
                     {mapping.adminApprovalDate ? (
                         <div>
-                            <span style={{ fontWeight: '600', color: '#28a745' }}>승인일:</span> {
+                            <span style={{ fontWeight: '600', color: 'var(--color-success, #28A745)' }}>승인일:</span> {
                                 (() => {
                                     try {
                                         return new Date(mapping.adminApprovalDate).toLocaleDateString('ko-KR');
@@ -145,7 +145,7 @@ const MappingCard = ({
                     {/* 결제일 */}
                     {mapping.paymentDate ? (
                         <div>
-                            <span style={{ fontWeight: '600', color: '#007bff' }}>결제일:</span> {
+                            <span style={{ fontWeight: '600', color: 'var(--color-primary, #007AFF)' }}>결제일:</span> {
                                 (() => {
                                     try {
                                         return new Date(mapping.paymentDate).toLocaleDateString('ko-KR');
@@ -159,7 +159,7 @@ const MappingCard = ({
                     
                     {/* 날짜 정보가 없는 경우 */}
                     {!mapping.startDate && !mapping.createdAt && !mapping.adminApprovalDate && !mapping.paymentDate && (
-                        <div style={{ color: '#dc3545', fontStyle: 'italic' }}>
+                        <div style={{ color: 'var(--color-danger, #DC3545)', fontStyle: 'italic' }}>
                             날짜 정보 없음
                         </div>
                     )}
@@ -173,14 +173,14 @@ const MappingCard = ({
                     gap: '16px',
                     marginBottom: '20px',
                     padding: '16px',
-                    background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
+                    background: 'var(--color-primary-light, rgba(0, 122, 255, 0.1))',
                     borderRadius: '8px',
-                    border: '1px solid #e1e8ed'
+                    border: '1px solid var(--color-border-secondary, #E8E8ED)'
                 }}>
                     <div style={{ flex: 1, textAlign: 'center' }}>
                         <div style={{
                             fontSize: 'var(--font-size-xs)',
-                            color: '#6c757d',
+                            color: 'var(--color-text-secondary, #424245)',
                             fontWeight: '600',
                             textTransform: 'uppercase',
                             letterSpacing: '0.5px',
@@ -189,7 +189,7 @@ const MappingCard = ({
                         <div style={{
                             fontSize: 'var(--font-size-base)',
                             fontWeight: '600',
-                            color: '#2c3e50',
+                            color: 'var(--color-text-primary, #1D1D1F)',
                             marginBottom: '2px'
                         }}>
                             {mapping.consultant?.name || mapping.consultantName || '상담사 정보 없음'}
@@ -203,13 +203,13 @@ const MappingCard = ({
                     </div>
                     <div style={{
                         fontSize: 'var(--font-size-xl)',
-                        color: '#007bff',
+                        color: 'var(--color-primary, #007AFF)',
                         fontWeight: 'bold'
                     }}>→</div>
                     <div style={{ flex: 1, textAlign: 'center' }}>
                         <div style={{
                             fontSize: 'var(--font-size-xs)',
-                            color: '#6c757d',
+                            color: 'var(--color-text-secondary, #424245)',
                             fontWeight: '600',
                             textTransform: 'uppercase',
                             letterSpacing: '0.5px',
@@ -218,7 +218,7 @@ const MappingCard = ({
                         <div style={{
                             fontSize: 'var(--font-size-base)',
                             fontWeight: '600',
-                            color: '#2c3e50',
+                            color: 'var(--color-text-primary, #1D1D1F)',
                             marginBottom: '2px'
                         }}>
                             {mapping.client?.name || mapping.clientName || '내담자 정보 없음'}
@@ -243,18 +243,18 @@ const MappingCard = ({
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         padding: '8px 12px',
-                        background: '#f8f9fa',
+                        background: 'var(--color-bg-secondary, #F5F5F7)',
                         borderRadius: '6px',
-                        border: '1px solid #e9ecef'
+                        border: '1px solid var(--color-border-secondary, #E8E8ED)'
                     }}>
                         <span style={{
                             fontSize: 'var(--font-size-xs)',
-                            color: '#6c757d',
+                            color: 'var(--color-text-secondary, #424245)',
                             fontWeight: '500'
                         }}>패키지:</span>
                         <span style={{
                             fontSize: 'var(--font-size-sm)',
-                            color: '#2c3e50',
+                            color: 'var(--color-text-primary, #1D1D1F)',
                             fontWeight: '600'
                         }}>{mapping.packageName || '기본 패키지'}</span>
                     </div>
@@ -263,18 +263,18 @@ const MappingCard = ({
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         padding: '8px 12px',
-                        background: '#f8f9fa',
+                        background: 'var(--color-bg-secondary, #F5F5F7)',
                         borderRadius: '6px',
-                        border: '1px solid #e9ecef'
+                        border: '1px solid var(--color-border-secondary, #E8E8ED)'
                     }}>
                         <span style={{
                             fontSize: 'var(--font-size-xs)',
-                            color: '#6c757d',
+                            color: 'var(--color-text-secondary, #424245)',
                             fontWeight: '500'
                         }}>총 세션:</span>
                         <span style={{
                             fontSize: 'var(--font-size-sm)',
-                            color: '#2c3e50',
+                            color: 'var(--color-text-primary, #1D1D1F)',
                             fontWeight: '600'
                         }}>{mapping.totalSessions}회</span>
                     </div>
@@ -283,18 +283,18 @@ const MappingCard = ({
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         padding: '8px 12px',
-                        background: '#f8f9fa',
+                        background: 'var(--color-bg-secondary, #F5F5F7)',
                         borderRadius: '6px',
-                        border: '1px solid #e9ecef'
+                        border: '1px solid var(--color-border-secondary, #E8E8ED)'
                     }}>
                         <span style={{
                             fontSize: 'var(--font-size-xs)',
-                            color: '#6c757d',
+                            color: 'var(--color-text-secondary, #424245)',
                             fontWeight: '500'
                         }}>남은 세션:</span>
                         <span style={{
                             fontSize: 'var(--font-size-sm)',
-                            color: '#2c3e50',
+                            color: 'var(--color-text-primary, #1D1D1F)',
                             fontWeight: '600'
                         }}>{mapping.remainingSessions}회</span>
                     </div>
@@ -303,18 +303,18 @@ const MappingCard = ({
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         padding: '8px 12px',
-                        background: '#f8f9fa',
+                        background: 'var(--color-bg-secondary, #F5F5F7)',
                         borderRadius: '6px',
-                        border: '1px solid #e9ecef'
+                        border: '1px solid var(--color-border-secondary, #E8E8ED)'
                     }}>
                         <span style={{
                             fontSize: 'var(--font-size-xs)',
-                            color: '#6c757d',
+                            color: 'var(--color-text-secondary, #424245)',
                             fontWeight: '500'
                         }}>가격:</span>
                         <span style={{
                             fontSize: 'var(--font-size-sm)',
-                            color: '#2c3e50',
+                            color: 'var(--color-text-primary, #1D1D1F)',
                             fontWeight: '600'
                         }}>
                             {mapping.packagePrice?.toLocaleString() || 0}원
@@ -325,21 +325,21 @@ const MappingCard = ({
                 {mapping.notes && (
                     <div style={{
                         padding: '12px',
-                        background: '#fff3cd',
+                        background: 'var(--color-warning-light, #fff3cd)',
                         borderRadius: '6px',
-                        border: '1px solid #ffeaa7',
+                        border: '1px solid var(--color-warning-border, #ffeaa7)',
                         marginBottom: '16px'
                     }}>
                         <span style={{
                             fontSize: 'var(--font-size-xs)',
-                            color: '#856404',
+                            color: 'var(--color-warning-dark, #856404)',
                             fontWeight: '600',
                             display: 'block',
                             marginBottom: '4px'
                         }}>메모:</span>
                         <span style={{
                             fontSize: 'var(--font-size-sm)',
-                            color: '#856404',
+                            color: 'var(--color-warning-dark, #856404)',
                             lineHeight: 1.4
                         }}>{mapping.notes}</span>
                     </div>
@@ -350,8 +350,8 @@ const MappingCard = ({
                 display: 'flex',
                 gap: '8px',
                 padding: '16px 20px',
-                background: '#f8f9fa',
-                borderTop: '1px solid #e1e8ed',
+                background: 'var(--color-bg-secondary, #F5F5F7)',
+                borderTop: '1px solid var(--color-border-secondary, #E8E8ED)',
                 justifyContent: 'flex-end'
             }}>
                 {/* 결제 확인 버튼 - PENDING 상태일 때만 표시 */}
@@ -379,7 +379,7 @@ const MappingCard = ({
                             e.target.style.transform = 'translateY(-1px)';
                         }}
                         onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#28a745';
+                            e.target.style.backgroundColor = 'var(--color-success, #28A745)';
                             e.target.style.transform = 'translateY(0)';
                         }}
                     >
@@ -401,7 +401,7 @@ const MappingCard = ({
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px',
-                            backgroundColor: '#007bff',
+                            backgroundColor: 'var(--color-primary, #007AFF)',
                             color: 'var(--color-text-inverse, #FFFFFF)'
                         }}
                         onClick={() => {
@@ -412,7 +412,7 @@ const MappingCard = ({
                             e.target.style.transform = 'translateY(-1px)';
                         }}
                         onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#007bff';
+                            e.target.style.backgroundColor = 'var(--color-primary, #007AFF)';
                             e.target.style.transform = 'translateY(0)';
                         }}
                     >
@@ -462,7 +462,7 @@ const MappingCard = ({
                                 e.target.style.transform = 'translateY(-1px)';
                             }}
                             onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = '#28a745';
+                                e.target.style.backgroundColor = 'var(--color-success, #28A745)';
                                 e.target.style.transform = 'translateY(0)';
                             }}
                         >
@@ -480,7 +480,7 @@ const MappingCard = ({
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '4px',
-                                backgroundColor: '#dc3545',
+                                backgroundColor: 'var(--color-danger, #DC3545)',
                                 color: 'var(--color-text-inverse, #FFFFFF)'
                             }}
                             onClick={() => onReject?.(mapping.id)}
@@ -489,7 +489,7 @@ const MappingCard = ({
                                 e.target.style.transform = 'translateY(-1px)';
                             }}
                             onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = '#dc3545';
+                                e.target.style.backgroundColor = 'var(--color-danger, #DC3545)';
                                 e.target.style.transform = 'translateY(0)';
                             }}
                         >

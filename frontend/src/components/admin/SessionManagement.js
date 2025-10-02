@@ -7,6 +7,7 @@ import SearchFilterSection from './SearchFilterSection';
 import SectionHeader from './SectionHeader';
 import ClientCard from './ClientCard';
 import MappingCard from './MappingCard';
+import LoadingSpinner from '../common/LoadingSpinner';
 import './SessionManagement.css';
 
 /**
@@ -1046,7 +1047,7 @@ const SessionManagement = () => {
                                 />
                             ))}
                         </div>
-                    </div>
+            </div>
 
             {/* 회기 추가 요청 모달 */}
             {showAddModal && (
@@ -1450,9 +1451,12 @@ const SessionManagement = () => {
             )}
 
             {loading && (
-                <div className="session-mgmt-loading-overlay">
-                    <div className="session-mgmt-loading-spinner">로딩 중...</div>
-                </div>
+                <LoadingSpinner 
+                    text="데이터를 불러오는 중..." 
+                    variant="default"
+                    size="large"
+                    fullscreen={true}
+                />
             )}
         </SimpleLayout>
     );

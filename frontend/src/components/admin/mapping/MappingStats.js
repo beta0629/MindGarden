@@ -205,18 +205,19 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
 
     return (
         <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            marginBottom: '24px',
-            border: '1px solid #e1e8ed',
+            background: 'var(--color-bg-primary, #FAFAFA)',
+            borderRadius: 'var(--border-radius-lg, 16px)',
+            boxShadow: 'var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.1))',
+            marginBottom: 'var(--spacing-lg, 1.5rem)',
+            border: '1px solid var(--color-border-secondary, #E8E8ED)',
             overflow: 'hidden'
         }}>
             <div style={{
-                padding: '20px',
-                background: 'linear-gradient(135deg, #E8E0FF 0%, #D1C4E9 100%)',
-                color: '#7B68EE',
-                textAlign: 'center'
+                padding: 'var(--spacing-lg, 1.5rem)',
+                background: 'var(--color-bg-secondary, #F5F5F7)',
+                color: 'var(--color-text-primary, #1D1D1F)',
+                textAlign: 'center',
+                borderBottom: '1px solid var(--color-border-secondary, #E8E8ED)'
             }}>
                 <h3 style={{
                     margin: '0 0 8px 0',
@@ -233,8 +234,9 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
             <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '16px',
-                padding: '20px'
+                gap: 'var(--spacing-md, 1rem)',
+                padding: 'var(--spacing-lg, 1.5rem)',
+                background: 'var(--color-bg-primary, #FAFAFA)'
             }}>
                 {statCards.map((stat, index) => (
                     <div 
@@ -242,26 +244,27 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '12px',
-                            padding: '16px',
-                            borderRadius: '8px',
-                            border: '1px solid #e1e8ed',
+                            gap: 'var(--spacing-sm, 0.75rem)',
+                            padding: 'var(--spacing-md, 1rem)',
+                            borderRadius: 'var(--border-radius-md, 12px)',
+                            border: '1px solid var(--color-border-secondary, #E8E8ED)',
                             transition: 'all 0.3s ease',
                             position: 'relative',
                             overflow: 'hidden',
                             cursor: 'pointer',
                             userSelect: 'none',
-                            background: stat.bgColor
+                            background: 'var(--color-bg-primary, #FAFAFA)',
+                            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1))'
                         }}
                         onClick={() => onStatCardClick && onStatCardClick(stat)}
                         title={`${stat.label} 클릭하여 ${stat.action === 'payment' ? '결제 확인' : '상세 조회'}`}
                         onMouseEnter={(e) => {
                             e.target.style.transform = 'translateY(-2px)';
-                            e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                            e.target.style.boxShadow = 'var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15))';
                         }}
                         onMouseLeave={(e) => {
                             e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = 'none';
+                            e.target.style.boxShadow = 'var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1))';
                         }}
                     >
                         <div style={{
@@ -329,7 +332,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-around',
-                padding: '16px 20px',
+                padding: 'var(--spacing-md, 1rem) var(--spacing-lg, 1.5rem)',
                 background: 'var(--color-bg-secondary, #F5F5F7)',
                 borderTop: '1px solid var(--color-border-secondary, #E8E8ED)'
             }}>

@@ -215,6 +215,59 @@
     gap: 12px;
 }
 
+.mapping-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, var(--color-primary, #007AFF), var(--color-accent, #5856D6));
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+}
+
+.action-btn.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+}
+
+.action-btn.secondary {
+    background: rgba(142, 142, 147, 0.2);
+    color: var(--text-primary, #1a1a1a);
+    border: 1px solid rgba(142, 142, 147, 0.3);
+}
+
+.action-btn.secondary:hover {
+    background: rgba(142, 142, 147, 0.3);
+    transform: translateY(-1px);
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.action-btn i {
+    font-size: 16px;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .mapping-card-header {

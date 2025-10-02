@@ -1,10 +1,12 @@
 .step-indicator-container {
-    margin-bottom: 2rem;
-    padding: 20px;
-    background-color: white;
-    border-radius: 12px;
-    border: 1px solid #e9ecef;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: var(--spacing-lg, 1.5rem);
+    padding: var(--spacing-lg, 1.5rem);
+    background: var(--color-bg-primary, #FAFAFA);
+    border-radius: var(--border-radius-md, 12px);
+    border: 1px solid var(--color-border-secondary, #E8E8ED);
+    box-shadow: var(--shadow-glass, 0 4px 12px rgba(0, 0, 0, 0.08));
+    backdrop-filter: var(--ios-backdrop-blur-sm);
+    -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
 }
 
 .step-indicator-steps {
@@ -12,7 +14,7 @@
     align-items: center;
     justify-content: space-between;
     position: relative;
-    margin-bottom: 16px;
+    margin-bottom: var(--spacing-md, 1rem);
 }
 
 .step-indicator-step {
@@ -30,39 +32,43 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 8px;
-    font-size: var(--font-size-base);
+    margin-bottom: var(--spacing-sm, 0.75rem);
+    font-size: var(--font-size-base, 1rem);
     border-width: 2px;
     border-style: solid;
     transition: all 0.3s ease;
+    z-index: 2;
+    position: relative;
 }
 
 .step-indicator-icon.active {
-    background-color: #28a745;
-    color: white;
-    border-color: #28a745;
+    background-color: var(--color-primary, #007AFF);
+    color: var(--color-text-inverse, #FFFFFF);
+    border-color: var(--color-primary, #007AFF);
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
 }
 
 .step-indicator-icon.inactive {
-    background-color: #e9ecef;
-    color: #6c757d;
-    border-color: #dee2e6;
+    background-color: var(--color-bg-accent, #E8E8ED);
+    color: var(--color-text-muted, #8E8E93);
+    border-color: var(--color-border-secondary, #E8E8ED);
 }
 
 .step-indicator-title {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-xs, 0.75rem);
     text-align: center;
     line-height: 1.3;
+    font-weight: var(--font-weight-medium, 500);
 }
 
 .step-indicator-title.active {
-    font-weight: 600;
-    color: #28a745;
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--color-primary, #007AFF);
 }
 
 .step-indicator-title.inactive {
-    font-weight: 500;
-    color: #6c757d;
+    font-weight: var(--font-weight-medium, 500);
+    color: var(--color-text-muted, #8E8E93);
 }
 
 .step-indicator-line {
@@ -72,25 +78,28 @@
     right: calc(-50% + 20px);
     height: 2px;
     z-index: 1;
+    transition: all 0.3s ease;
 }
 
 .step-indicator-line.active {
-    background-color: #28a745;
+    background-color: var(--color-primary, #007AFF);
 }
 
 .step-indicator-line.inactive {
-    background-color: #dee2e6;
+    background-color: var(--color-border-secondary, #E8E8ED);
 }
 
 .step-indicator-progress-bar {
     height: 4px;
-    background-color: #e9ecef;
-    border-radius: 2px;
+    background-color: var(--color-bg-accent, #E8E8ED);
+    border-radius: var(--border-radius-sm, 6px);
     overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .step-indicator-progress-fill {
     height: 100%;
-    background-color: #28a745;
+    background: linear-gradient(90deg, var(--color-primary, #007AFF), var(--color-primary-hover, #0056CC));
     transition: width 0.5s ease;
+    box-shadow: 0 1px 3px rgba(0, 122, 255, 0.3);
 }

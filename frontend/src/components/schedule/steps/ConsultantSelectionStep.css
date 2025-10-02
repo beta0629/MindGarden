@@ -1,150 +1,294 @@
-/* ConsultantSelectionStep.css */
+/* ===== ConsultantSelectionStep 스타일 - 새로운 디자인 시스템 적용 ===== */
 
-.schedule-modal .consultant-selection-step {
-    width: 100%;
-    max-height: 600px;
-    overflow-y: auto;
+.consultant-selection-step {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, 1.5rem);
 }
 
-.schedule-modal .step-header {
-    text-align: center;
-    flex-shrink: 0;
+.consultant-selection-header {
+  text-align: center;
+  margin-bottom: var(--spacing-md, 1rem);
 }
 
-.schedule-modal .step-header h4 {
-    margin: 0 0 8px 0;
-    color: #2c3e50;
-    font-size: var(--font-size-xl);
-    font-weight: 600;
+.consultant-selection-title {
+  font-size: var(--font-size-xl, 1.25rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #1D1D1F);
+  margin: 0 0 var(--spacing-sm, 0.75rem) 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm, 0.75rem);
 }
 
-.schedule-modal .step-description {
-    margin: 0;
-    color: #6c757d;
-    font-size: var(--font-size-sm);
-    line-height: 1.4;
+.consultant-selection-description {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-secondary, #424245);
+  margin: 0;
 }
 
-.schedule-modal .consultant-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 16px;
-    padding: 16px 0;
+/* 필터 섹션 */
+.consultant-filter-section {
+  background: var(--color-bg-secondary, #F5F5F7);
+  border-radius: var(--border-radius-md, 12px);
+  padding: var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border-secondary, #E8E8ED);
+  box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
+  backdrop-filter: var(--ios-backdrop-blur-sm);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
 }
 
-.no-consultants {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 40px 20px;
-    color: #6c757d;
+.consultant-search-input {
+  width: 100%;
+  padding: var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-md, 12px);
+  font-size: var(--font-size-base, 1rem);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-primary, #1D1D1F);
+  margin-bottom: var(--spacing-md, 1rem);
+  transition: all 0.2s ease;
 }
 
-.no-consultants-icon {
-    font-size: var(--font-size-xxxl);
-    margin-bottom: 16px;
-    opacity: 0.5;
+.consultant-search-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #007AFF);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  background: var(--color-bg-primary, #FAFAFA);
 }
 
-.no-consultants p {
-    margin: 0 0 8px 0;
-    font-size: var(--font-size-base);
-    font-weight: 500;
+.consultant-filter-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 1rem);
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-md, 1rem);
 }
 
-.no-consultants small {
-    font-size: var(--font-size-sm);
-    opacity: 0.8;
+.consultant-specialty-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 0.75rem);
 }
 
+.consultant-specialty-label {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-secondary, #424245);
+  white-space: nowrap;
+}
+
+.consultant-specialty-select {
+  padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-md, 12px);
+  font-size: var(--font-size-sm, 0.875rem);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-primary, #1D1D1F);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.consultant-specialty-select:focus {
+  outline: none;
+  border-color: var(--color-primary, #007AFF);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+}
+
+.consultant-reset-button {
+  padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
+  border: 1px solid var(--color-border-secondary, #E8E8ED);
+  border-radius: var(--border-radius-md, 12px);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-secondary, #424245);
+  font-size: var(--font-size-sm, 0.875rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.5rem);
+}
+
+.consultant-reset-button:hover {
+  background: var(--color-bg-accent, #E8E8ED);
+  color: var(--color-text-primary, #1D1D1F);
+  border-color: var(--color-border-primary, #D1D1D6);
+}
+
+.consultant-availability-filter {
+  display: flex;
+  gap: var(--spacing-sm, 0.75rem);
+  flex-wrap: wrap;
+}
+
+.consultant-filter-button {
+  padding: var(--spacing-xs, 0.5rem) var(--spacing-sm, 0.75rem);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-sm, 8px);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-secondary, #424245);
+  font-size: var(--font-size-xs, 0.75rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.consultant-filter-button:hover {
+  background: var(--color-bg-accent, #E8E8ED);
+  border-color: var(--color-border-accent, #A1A1A6);
+}
+
+.consultant-filter-button.active {
+  background: var(--color-primary, #007AFF);
+  color: var(--color-text-inverse, #FFFFFF);
+  border-color: var(--color-primary, #007AFF);
+}
+
+.consultant-count-info {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #424245);
+  margin-bottom: var(--spacing-sm, 0.75rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.consultant-availability-legend {
+  display: flex;
+  gap: var(--spacing-sm, 0.75rem);
+  flex-wrap: wrap;
+}
+
+.consultant-legend-item {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted, #8E8E93);
+}
+
+/* 상담사 그리드 */
+.consultant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--spacing-md, 1rem);
+  margin-bottom: var(--spacing-lg, 1.5rem);
+}
+
+/* 선택된 상담사 정보 */
 .selected-consultant-info {
-    margin-top: 20px;
-    padding: 16px;
-    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-    border-radius: 8px;
-    border: 2px solid #2196f3;
-    animation: slideInUp 0.3s ease;
-    flex-shrink: 0;
+  background: var(--color-primary-light, #E3F2FD);
+  border: 1px solid var(--color-primary, #007AFF);
+  border-radius: var(--border-radius-md, 12px);
+  padding: var(--spacing-md, 1rem);
+  margin-bottom: var(--spacing-lg, 1.5rem);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
 }
 
-.selection-summary {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: var(--font-size-base);
-    color: #1976d2;
-    font-weight: 600;
+.selected-consultant-title {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-primary, #1D1D1F);
+  font-weight: var(--font-weight-semibold, 600);
+  margin: 0 0 var(--spacing-xs, 0.5rem) 0;
 }
 
-.consultant-specialty {
-    font-size: var(--font-size-sm);
-    color: #7b1fa2;
-    font-weight: 500;
-    background-color: rgba(255, 255, 255, 0.7);
-    padding: 2px 8px;
-    border-radius: 12px;
+.selected-consultant-details {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-secondary, #424245);
+  margin: 0;
 }
 
-/* 기존 로딩 스타일 제거 - 공통 LoadingSpinner 사용 */
-
-/* 애니메이션 */
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* 상담사 없음 */
+.no-consultants {
+  text-align: center;
+  padding: var(--spacing-xl, 2rem);
+  color: var(--color-text-muted, #8E8E93);
+  font-size: var(--font-size-base, 1rem);
+  background: var(--color-bg-secondary, #F5F5F7);
+  border-radius: var(--border-radius-md, 12px);
+  border: 1px solid var(--color-border-secondary, #E8E8ED);
 }
 
-/* 반응형 */
+/* 로딩 상태 */
+.consultant-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xl, 2rem);
+  color: var(--color-text-secondary, #424245);
+}
+
+/* 반응형 디자인 */
 @media (max-width: 768px) {
-    .schedule-modal .consultant-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-        padding: 12px 0;
-    }
-    
-    .step-header h4 {
-        font-size: var(--font-size-lg);
-    }
-    
-    .step-description {
-        font-size: 13px;
-    }
-    
-    .selected-consultant-info {
-        padding: 12px;
-    }
-    
-    .selection-summary {
-        font-size: var(--font-size-sm);
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-    }
-    
-    .consultant-specialty {
-        font-size: var(--font-size-xs);
-    }
+  .consultant-selection-step {
+    gap: var(--spacing-md, 1rem);
+  }
+  
+  .consultant-filter-section {
+    padding: var(--spacing-sm, 0.75rem);
+  }
+  
+  .consultant-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm, 0.75rem);
+  }
+  
+  .consultant-specialty-filter {
+    justify-content: space-between;
+  }
+  
+  .consultant-availability-filter {
+    justify-content: center;
+  }
+  
+  .consultant-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm, 0.75rem);
+  }
+  
+  .consultant-count-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs, 0.5rem);
+  }
+  
+  .consultant-availability-legend {
+    justify-content: center;
+  }
 }
 
-/* 스크롤바 스타일 */
-.schedule-modal .consultant-selection-step::-webkit-scrollbar {
-    width: 6px;
-}
-
-.schedule-modal .consultant-selection-step::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
-
-.schedule-modal .consultant-selection-step::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-}
-
-.schedule-modal .consultant-selection-step::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+@media (max-width: 480px) {
+  .consultant-selection-title {
+    font-size: var(--font-size-lg, 1.125rem);
+    flex-direction: column;
+    gap: var(--spacing-xs, 0.5rem);
+  }
+  
+  .consultant-selection-description {
+    font-size: var(--font-size-sm, 0.875rem);
+  }
+  
+  .consultant-filter-section {
+    padding: var(--spacing-xs, 0.5rem);
+  }
+  
+  .consultant-search-input {
+    padding: var(--spacing-sm, 0.75rem);
+    font-size: var(--font-size-sm, 0.875rem);
+  }
+  
+  .consultant-specialty-select {
+    padding: var(--spacing-xs, 0.5rem) var(--spacing-sm, 0.75rem);
+    font-size: var(--font-size-xs, 0.75rem);
+  }
+  
+  .consultant-reset-button {
+    padding: var(--spacing-xs, 0.5rem) var(--spacing-sm, 0.75rem);
+    font-size: var(--font-size-xs, 0.75rem);
+  }
+  
+  .consultant-filter-button {
+    padding: var(--spacing-xs, 0.5rem);
+    font-size: var(--font-size-xs, 0.75rem);
+  }
 }

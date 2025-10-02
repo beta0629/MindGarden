@@ -3,7 +3,7 @@ import ConsultantCard from '../ConsultantCard';
 import ConsultantFilter from '../components/ConsultantFilter';
 import LoadingSpinner from '../../common/LoadingSpinner';
 import notificationManager from '../../../utils/notification';
-import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../../constants/css-variables';
+import './ConsultantSelectionStep.css';
 
 /**
  * 새로운 디자인의 상담사 선택 단계 컴포넌트
@@ -25,7 +25,7 @@ const ConsultantSelectionStepNew = ({
     const [loading, setLoading] = useState(false);
     const [filters, setFilters] = useState({
         specialty: '',
-        availability: SCHEDULE_MODAL_CONSTANTS.AVAILABILITY.ALL,
+        availability: 'all',
         search: ''
     });
 
@@ -329,12 +329,12 @@ const ConsultantSelectionStepNew = ({
         }
 
         // 가용성 필터
-        if (filters.availability === SCHEDULE_MODAL_CONSTANTS.AVAILABILITY.AVAILABLE) {
+        if (filters.availability === 'available') {
             filtered = filtered.filter(consultant => consultant.available && !consultant.busy);
-        } else if (filters.availability === SCHEDULE_MODAL_CONSTANTS.AVAILABILITY.BUSY) {
+        } else if (filters.availability === 'busy') {
             // 바쁨 필터: busy 상태이지만 휴가가 아닌 상담사 (스케줄로 인한 바쁨)
             filtered = filtered.filter(consultant => consultant.busy && !consultant.isVacation);
-        } else if (filters.availability === SCHEDULE_MODAL_CONSTANTS.AVAILABILITY.UNAVAILABLE) {
+        } else if (filters.availability === 'unavailable') {
             // 휴무 필터: 휴가 중인 상담사
             filtered = filtered.filter(consultant => consultant.isVacation);
         }

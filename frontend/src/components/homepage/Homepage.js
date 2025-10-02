@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
-import SimpleHeader from '../layout/SimpleHeader';
+import SimpleLayout from '../layout/SimpleLayout';
 import TabletBottomNavigation from '../layout/TabletBottomNavigation';
 import { HOMEPAGE_CONSTANTS } from '../../constants/css-variables';
 import { useSession } from '../../contexts/SessionContext';
@@ -146,12 +146,8 @@ const TabletHomepage = () => {
       description="전문 상담사와 함께 마음의 평화를 찾아보세요. 언제 어디서나 편리하게 상담을 받을 수 있습니다."
       bodyClass="tablet-page"
     >
-      <div className="tablet-homepage tablet-page">
-        {/* 공통 헤더 */}
-        <SimpleHeader 
-          onHamburgerToggle={handleHamburgerToggle}
-          onProfileClick={handleProfileClick}
-        />
+      <SimpleLayout title="">
+        <div className="tablet-homepage tablet-page">
         
         {/* 햄버거 메뉴 */}
         {isMenuOpen && (
@@ -398,9 +394,10 @@ const TabletHomepage = () => {
           </div>
         </main>
         
-        {/* 공통 하단 네비게이션 */}
-        <TabletBottomNavigation userRole={null} />
-      </div>
+          {/* 공통 하단 네비게이션 */}
+          <TabletBottomNavigation userRole={null} />
+        </div>
+      </SimpleLayout>
     </CommonPageTemplate>
   );
 };

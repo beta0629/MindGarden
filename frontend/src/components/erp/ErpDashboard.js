@@ -155,24 +155,18 @@ const ErpDashboard = ({ user: propUser }) => {
 
   return (
     <div className="glass-background">
-      <SimpleLayout>
+      <SimpleLayout 
+        title="ERP 관리 시스템"
+        extraActions={
+          <ErpButton
+            variant="primary"
+            onClick={loadDashboardData}
+          >
+            새로고침
+          </ErpButton>
+        }
+      >
         <div className="erp-dashboard-container">
-        <UnifiedHeader
-          title="ERP 관리 시스템"
-          logoType="text"
-          showUserMenu={true}
-          showHamburger={true}
-          variant="default"
-          sticky={true}
-          extraActions={
-            <ErpButton
-              variant="primary"
-              onClick={loadDashboardData}
-            >
-              새로고침
-            </ErpButton>
-          }
-        />
 
       {/* 통계 카드들 */}
       <div className="erp-dashboard-stats-grid">

@@ -14,7 +14,8 @@ const SimpleLayout = ({
   title, 
   loading = false, 
   loadingText = "페이지를 불러오는 중...",
-  loadingVariant = "default"
+  loadingVariant = "default",
+  extraActions = null
 }) => {
   return (
     <div className="simple-layout">
@@ -25,6 +26,7 @@ const SimpleLayout = ({
         showHamburger={true}
         variant="default"
         sticky={true}
+        extraActions={extraActions}
       />
       
       <main className="simple-main">

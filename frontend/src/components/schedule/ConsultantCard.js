@@ -1,6 +1,4 @@
 import React from 'react';
-import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../constants/css-variables';
-import '../../styles/main.css';
 import './ConsultantCard.css';
 
 /**
@@ -73,9 +71,9 @@ const ConsultantCardNew = ({
      * 가용성 상태에 따른 색상 반환
      */
     const getAvailabilityColor = () => {
-        if (!consultant.available) return SCHEDULE_MODAL_CONSTANTS.DANGER_COLOR;
-        if (consultant.busy) return SCHEDULE_MODAL_CONSTANTS.WARNING_COLOR;
-        return SCHEDULE_MODAL_CONSTANTS.SUCCESS_COLOR;
+        if (!consultant.available) return '#dc3545'; // danger color
+        if (consultant.busy) return '#ffc107'; // warning color
+        return '#28a745'; // success color
     };
 
     /**

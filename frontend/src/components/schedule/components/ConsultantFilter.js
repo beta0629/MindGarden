@@ -1,5 +1,5 @@
 import React from 'react';
-import { COMPONENT_CSS, SCHEDULE_MODAL_CONSTANTS } from '../../../constants/css-variables';
+import './ConsultantFilter.css';
 
 /**
  * 새로운 디자인의 상담사 필터 컴포넌트
@@ -17,6 +17,26 @@ const ConsultantFilterNew = ({
     onResetFilters,
     consultantCount 
 }) => {
+    // 전문분야 옵션
+    const specialtyOptions = [
+        { value: '', label: '전체' },
+        { value: '우울증', label: '우울증' },
+        { value: '불안장애', label: '불안장애' },
+        { value: '가족상담', label: '가족상담' },
+        { value: '부부상담', label: '부부상담' },
+        { value: '트라우마', label: '트라우마' },
+        { value: 'PTSD', label: 'PTSD' },
+        { value: 'ADHD', label: 'ADHD' },
+        { value: '자폐스펙트럼', label: '자폐스펙트럼' }
+    ];
+
+    // 가용성 필터 옵션
+    const availabilityOptions = [
+        { value: 'all', label: '전체', color: '#6c757d' },
+        { value: 'available', label: '여유', color: '#28a745' },
+        { value: 'busy', label: '바쁨', color: '#ffc107' },
+        { value: 'unavailable', label: '휴무', color: '#dc3545' }
+    ];
     /**
      * 검색 입력 변경 핸들러
      */
@@ -48,7 +68,7 @@ const ConsultantFilterNew = ({
                     <input
                         type="text"
                         className="consultant-filter-input"
-                        placeholder={SCHEDULE_MODAL_CONSTANTS.FILTER.SEARCH_PLACEHOLDER}
+                        placeholder="상담사 이름, 직책, 전문분야로 검색..."
                         value={filters.search}
                         onChange={handleSearchChange}
                     />
@@ -62,7 +82,7 @@ const ConsultantFilterNew = ({
                         value={filters.specialty}
                         onChange={handleSpecialtyChange}
                     >
-                        {SCHEDULE_MODAL_CONSTANTS.SPECIALTIES.map(specialty => (
+                        {specialtyOptions.map(specialty => (
                             <option key={specialty.value} value={specialty.value}>
                                 {specialty.label}
                             </option>
@@ -77,13 +97,13 @@ const ConsultantFilterNew = ({
                         className="mg-btn mg-btn--sm mg-btn--secondary"
                         onClick={onResetFilters}
                     >
-                        🔄 {SCHEDULE_MODAL_CONSTANTS.FILTER.RESET_BUTTON_TEXT}
+                        🔄 초기화
                     </button>
                 </div>
 
                 {/* 상담사 수 표시 */}
                 <div className="consultant-filter-count">
-                    {consultantCount}{SCHEDULE_MODAL_CONSTANTS.FILTER.CONSULTANT_COUNT_TEXT}
+                    {consultantCount}명의 상담사
                 </div>
             </div>
 
@@ -92,7 +112,7 @@ const ConsultantFilterNew = ({
                 <div className="consultant-filter-availability-field">
                     <label className="consultant-filter-label">가용성</label>
                     <div className="consultant-filter-availability-buttons">
-                        {SCHEDULE_MODAL_CONSTANTS.AVAILABILITY_OPTIONS.map(option => (
+                        {availabilityOptions.map(option => (
                             <button
                                 key={option.value}
                                 className={`consultant-filter-availability-btn ${filters.availability === option.value ? 'active' : ''}`}

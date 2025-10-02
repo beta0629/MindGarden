@@ -1,7 +1,7 @@
-/* ClientSelector 스타일 - 새로운 디자인 시스템 적용 */
+/* ===== ClientSelector 스타일 - 새로운 디자인 시스템 적용 ===== */
 
 .client-selector {
-  font-family: var(--font-family-ios);
+  font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
 }
 
 .client-selector__search {
@@ -10,17 +10,19 @@
 
 .client-selector__search-input {
   width: 100%;
-  padding: var(--spacing-md);
-  font-size: var(--font-size-base);
-  border: 2px solid var(--ios-separator);
-  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md, 1rem);
+  font-size: var(--font-size-base, 1rem);
+  border: 2px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-md, 12px);
   outline: none;
-  transition: all var(--transition-fast);
-  font-family: var(--font-family-ios);
+  transition: all 0.2s ease;
+  font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-primary, #1D1D1F);
 }
 
 .client-selector__search-input:focus {
-  border-color: var(--ios-blue);
+  border-color: var(--color-primary, #007AFF);
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
@@ -31,32 +33,33 @@
 }
 
 .client-card {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-md);
-  border: 2px solid var(--ios-separator);
+  background: var(--color-bg-primary, rgba(250, 250, 250, 0.95));
+  border-radius: var(--border-radius-lg, 16px);
+  padding: var(--spacing-md, 1rem);
+  border: 2px solid var(--color-border-primary, #D1D1D6);
   cursor: pointer;
-  transition: all var(--transition-normal);
-  backdrop-filter: blur(var(--blur-md));
-  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  backdrop-filter: var(--ios-backdrop-blur-md);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-md);
+  box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
 }
 
 .client-card--selected {
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%);
-  border-color: var(--ios-blue);
+  background: var(--color-primary-light, rgba(0, 122, 255, 0.1));
+  border-color: var(--color-primary, #007AFF);
   box-shadow: 0 8px 25px rgba(0, 122, 255, 0.2);
 }
 
 .client-card--unavailable {
   opacity: 0.5;
   cursor: not-allowed;
-  background: var(--ios-bg-tertiary);
+  background: var(--color-bg-tertiary, #F8F9FA);
 }
 
 .client-card:hover:not(.client-card--unavailable):not(.client-card--selected) {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--ios-blue);
+  box-shadow: var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15));
+  border-color: var(--color-primary, #007AFF);
 }
 
 .client-card__header {

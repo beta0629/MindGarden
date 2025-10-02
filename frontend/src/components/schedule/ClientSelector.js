@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
-import { CLIENT_SELECTOR_CONSTANTS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import '../../styles/main.css';
 import './ClientSelector.css';
@@ -200,7 +199,18 @@ const ClientSelector = ({
      * 내담자와 상담사 간의 매핑 확인
      */
     const getClientMappingInfo = async (client) => {
-        const { API_ENDPOINTS, MESSAGES, MAPPING_STATUS } = CLIENT_SELECTOR_CONSTANTS;
+        // API 엔드포인트와 상수 정의
+        const API_ENDPOINTS = {
+            CHECK_MAPPING: '/api/admin/mappings/check'
+        };
+        const MESSAGES = {
+            NO_MAPPING: '매핑이 설정되지 않은 내담자입니다.',
+            NO_SESSIONS: '남은 세션이 없는 내담자입니다.'
+        };
+        const MAPPING_STATUS = {
+            ACTIVE: 'ACTIVE',
+            INACTIVE: 'INACTIVE'
+        };
         
         try {
             console.log('🔍 매핑 정보 확인 시작:', {
@@ -288,7 +298,10 @@ const ClientSelector = ({
      * 내담자 카드 클릭 핸들러
      */
     const handleClientClick = async (client) => {
-        const { MESSAGES } = CLIENT_SELECTOR_CONSTANTS;
+        const MESSAGES = {
+            NO_MAPPING: '매핑이 설정되지 않은 내담자입니다.',
+            NO_SESSIONS: '남은 세션이 없는 내담자입니다.'
+        };
         
         try {
             // 매핑 정보 확인

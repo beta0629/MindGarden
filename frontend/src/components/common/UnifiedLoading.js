@@ -129,7 +129,7 @@ const UnifiedLoading = ({
   ].filter(Boolean).join(' ');
 
   // DOM에 전달하지 않을 props 필터링
-  const { fullscreen, ...domProps } = props;
+  const { fullscreen, inline, ...domProps } = props;
 
   return (
     <div className={containerClasses} {...domProps}>

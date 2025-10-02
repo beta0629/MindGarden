@@ -83,28 +83,18 @@ public class SecurityConfig {
                     .anyRequest().permitAll() // 나머지는 허용
                 );
         } else {
-            // 개발 환경: 세션 기반 인증 사용
+            // 개발 환경: 편의성 우선
             http
                 // CSRF 비활성화 (개발 편의성)
                 .csrf(csrf -> csrf.disable())
                 
-                // 세션 관리 활성화 (매핑 생성 등을 위해)
+                // 세션 관리 비활성화 (개발 편의성)
                 .sessionManagement(session -> session
-                    .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
+                    .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS)
                 )
                 
-                // API 엔드포인트별 권한 설정
-                .authorizeHttpRequests(authz -> authz
-                    .requestMatchers("/api/auth/**").permitAll() // 인증 API는 허용
-                    .requestMatchers("/api/common-codes/**").permitAll() // 공통코드 API는 허용
-                    .requestMatchers("/api/admin/css-themes/**").permitAll() // CSS 테마 API는 허용
-                    .requestMatchers("/api/admin/**").authenticated() // 관리자 API는 인증 필요
-                    .requestMatchers("/api/erp/**").authenticated() // ERP API는 인증 필요
-                    .requestMatchers("/api/schedules/**").authenticated() // 스케줄 API는 인증 필요
-                    .requestMatchers("/api/payments/**").authenticated() // 결제 API는 인증 필요
-                    .requestMatchers("/api/consultant/**").authenticated() // 상담사 API는 인증 필요
-                    .anyRequest().permitAll() // 나머지는 허용
-                );
+                // 모든 요청 허용 (개발 편의성)
+                .authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
         }
         
         return http.build();
@@ -117,10 +107,15 @@ public class SecurityConfig {
         String activeProfile = System.getProperty("spring.profiles.active");
         String envProfile = System.getenv("SPRING_PROFILES_ACTIVE");
         
-        // 시스템 프로퍼티 또는 환경변수에서 프로파일 확인
-        String profile = activeProfile != null ? activeProfile : envProfile;
+        // 운영 환경 판단: prod, production 프로필 또는 운영 서버 도메인
+        boolean isProdProfile = "prod".equals(activeProfile) || "prod".equals(envProfile) || 
+                               "production".equals(activeProfile) || "production".equals(envProfile);
         
-        return "prod".equals(profile) || "production".equals(profile);
+        // 추가: 운영 서버 도메인 체크 (beta74.cafe24.com)
+        boolean isProdDomain = System.getenv("SERVER_DOMAIN") != null && 
+                              System.getenv("SERVER_DOMAIN").contains("cafe24.com");
+        
+        return isProdProfile || isProdDomain;
     }
     
     

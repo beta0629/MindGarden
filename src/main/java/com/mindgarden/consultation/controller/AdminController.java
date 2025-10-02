@@ -1344,8 +1344,35 @@ public class AdminController {
         try {
             log.info("🔧 매핑 생성: 상담사={}, 내담자={}", dto.getConsultantId(), dto.getClientId());
             
-            // 개발 환경에서는 세션 체크 생략
-            String currentBranchCode = "DEV"; // 개발 환경용 기본값
+            // 환경별 처리
+            String currentBranchCode;
+            boolean isProduction = isProductionEnvironment();
+            
+            if (isProduction) {
+                // 운영 환경: 세션 체크 및 권한 확인
+                User currentUser = SessionUtils.getCurrentUser(session);
+                if (currentUser == null) {
+                    log.warn("❌ 세션이 없습니다. 로그인이 필요합니다.");
+                    return ResponseEntity.status(401).body(Map.of(
+                        "success", false,
+                        "message", "로그인이 필요합니다.",
+                        "errorCode", "UNAUTHORIZED"
+                    ));
+                }
+                
+                // 동적 권한 체크
+                ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
+                if (permissionResponse != null) {
+                    return permissionResponse;
+                }
+                
+                currentBranchCode = currentUser.getBranchCode();
+                log.info("🔧 현재 사용자 지점코드: {}", currentBranchCode);
+            } else {
+                // 개발 환경: 세션 체크 생략
+                currentBranchCode = "DEV";
+                log.info("🔧 개발 환경: 지점코드={}", currentBranchCode);
+            }
             
             ConsultantClientMapping mapping = adminService.createMapping(dto);
             
@@ -3367,5 +3394,16 @@ public class AdminController {
                 "message", "지출 카테고리 목록 조회 중 오류가 발생했습니다: " + e.getMessage()
             ));
         }
+    }
+    
+    /**
+     * 운영 환경 여부 확인
+     */
+    private boolean isProductionEnvironment() {
+        String activeProfile = System.getProperty("spring.profiles.active");
+        String envProfile = System.getenv("SPRING_PROFILES_ACTIVE");
+        
+        return "prod".equals(activeProfile) || "prod".equals(envProfile) || 
+               "production".equals(activeProfile) || "production".equals(envProfile);
     }
 }

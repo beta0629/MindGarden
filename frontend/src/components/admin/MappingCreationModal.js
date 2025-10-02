@@ -348,14 +348,25 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
             // 실제 매핑 생성 API 사용
             try {
-                const response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify(mappingData)
-                });
+                // 환경별 API 호출 방식 결정
+                const isProduction = process.env.NODE_ENV === 'production' || 
+                                   window.location.hostname !== 'localhost';
+                
+                let response;
+                if (isProduction) {
+                    // 운영 환경: CSRF 토큰 사용
+                    response = await csrfTokenManager.post(`${API_BASE_URL}/api/admin/mappings`, mappingData);
+                } else {
+                    // 개발 환경: 일반 fetch 사용
+                    response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(mappingData)
+                    });
+                }
 
                 if (response.ok) {
                     const result = await response.json();

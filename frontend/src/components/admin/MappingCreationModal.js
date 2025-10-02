@@ -348,7 +348,14 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
             // 실제 매핑 생성 API 사용
             try {
-                const response = await csrfTokenManager.post(`${API_BASE_URL}/api/admin/mappings`, mappingData);
+                const response = await fetch(`${API_BASE_URL}/api/admin/mappings`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(mappingData)
+                });
 
                 if (response.ok) {
                     const result = await response.json();

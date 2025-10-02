@@ -83,14 +83,14 @@ public class SecurityConfig {
                     .anyRequest().permitAll() // 나머지는 허용
                 );
         } else {
-            // 개발 환경: 편의성 우선
+            // 개발 환경: 세션 사용하되 인증은 생략
             http
                 // CSRF 비활성화 (개발 편의성)
                 .csrf(csrf -> csrf.disable())
                 
-                // 세션 관리 비활성화 (개발 편의성)
+                // 세션 관리 활성화 (매핑 생성 등을 위해)
                 .sessionManagement(session -> session
-                    .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS)
+                    .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
                 )
                 
                 // 모든 요청 허용 (개발 편의성)

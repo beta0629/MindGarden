@@ -558,10 +558,18 @@ public class AdminController {
         try {
             log.info("🔍 매핑 목록 조회 (중앙화)");
             
-            // 동적 권한 체크
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_VIEW", dynamicPermissionService);
-            if (permissionResponse != null) {
-                return permissionResponse;
+            // 환경별 처리
+            boolean isProduction = isProductionEnvironment();
+            
+            if (isProduction) {
+                // 운영 환경: 권한 체크
+                ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_VIEW", dynamicPermissionService);
+                if (permissionResponse != null) {
+                    return permissionResponse;
+                }
+            } else {
+                // 개발 환경: 권한 체크 생략
+                log.info("🔍 개발 환경: 권한 체크 생략");
             }
             
             // 모든 매핑 조회 (지점 필터링 제거)

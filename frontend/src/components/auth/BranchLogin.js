@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
 import SimpleLayout from '../layout/SimpleLayout';
+import UnifiedHeader from '../common/UnifiedHeader';
 import { API_ENDPOINTS } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';
@@ -154,7 +155,7 @@ const BranchLogin = () => {
       description="본사 또는 지점별로 로그인하세요"
       bodyClass="branch-login-page"
     >
-      <SimpleHeader title="지점별 로그인" />
+      <UnifiedHeader title="지점별 로그인" />
       
       <div className="branch-login-container">
         <div className="login-card">

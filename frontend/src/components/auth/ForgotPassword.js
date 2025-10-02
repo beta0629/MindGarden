@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
+import UnifiedHeader from '../common/UnifiedHeader';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -66,7 +67,7 @@ const ForgotPassword = () => {
       bodyClass="tablet-page"
     >
       <div className="tablet-page">
-        <SimpleHeader />
+        <UnifiedHeader />
         
         <main className="tablet-main">
           <div className="tablet-container">

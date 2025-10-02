@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
+import UnifiedHeader from '../common/UnifiedHeader';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -127,7 +128,7 @@ const ResetPassword = () => {
         bodyClass="tablet-page"
       >
         <div className="tablet-page">
-          <SimpleHeader />
+          <UnifiedHeader />
           <main className="tablet-main">
             <div className="tablet-container">
               <div className="reset-password-form-container">
@@ -157,7 +158,7 @@ const ResetPassword = () => {
       bodyClass="tablet-page"
     >
       <div className="tablet-page">
-        <SimpleHeader />
+        <UnifiedHeader />
         
         <main className="tablet-main">
           <div className="tablet-container">

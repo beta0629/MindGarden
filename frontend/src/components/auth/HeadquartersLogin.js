@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
+import UnifiedHeader from '../common/UnifiedHeader';
 import SimpleLayout from '../layout/SimpleLayout';
 import { API_ENDPOINTS } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
@@ -146,7 +147,7 @@ const HeadquartersLogin = () => {
         description="본사 정보를 불러오는 중..."
         bodyClass="branch-login-page"
       >
-        <SimpleHeader title="본사 로그인" />
+        <UnifiedHeader title="본사 로그인" />
         <div className="branch-login-container">
           <div className="login-card">
             <div className="loading-spinner">
@@ -167,7 +168,7 @@ const HeadquartersLogin = () => {
         description="본사 정보를 불러올 수 없습니다"
         bodyClass="branch-login-page"
       >
-        <SimpleHeader title="본사 로그인" />
+        <UnifiedHeader title="본사 로그인" />
         <div className="branch-login-container">
           <div className="login-card">
             <div className="error-state">
@@ -205,7 +206,7 @@ const HeadquartersLogin = () => {
       description="본사 관리자 로그인"
       bodyClass="branch-login-page"
     >
-      <SimpleHeader title="본사 로그인" />
+      <UnifiedHeader title="본사 로그인" />
       
       <div className="branch-login-container">
         <div className="login-card">

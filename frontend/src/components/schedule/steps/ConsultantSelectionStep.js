@@ -385,7 +385,7 @@ const ConsultantSelectionStepNew = ({
     const handleResetFilters = () => {
         setFilters({
             specialty: '',
-            availability: SCHEDULE_MODAL_CONSTANTS.AVAILABILITY.ALL,
+            availability: 'all',
             search: ''
         });
     };

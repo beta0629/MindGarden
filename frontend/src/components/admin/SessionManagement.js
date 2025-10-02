@@ -603,16 +603,16 @@ const SessionManagement = () => {
      */
     const getStatusColor = (status) => {
         const colorMap = {
-            'ACTIVE': 'var(--color-success, #34C759)',
-            'INACTIVE': 'var(--color-secondary, #8E8E93)',
-            'SUSPENDED': 'var(--color-warning, #FF9500)',
-            'TERMINATED': 'var(--color-danger, #FF3B30)',
-            'COMPLETED': 'var(--color-primary, #007AFF)',
-            'PENDING_PAYMENT': 'var(--ios-orange, #FF9500)',
-            'PAYMENT_CONFIRMED': 'var(--color-success, #34C759)',
-            'SESSIONS_EXHAUSTED': 'var(--ios-purple, #5856D6)'
+            'ACTIVE': 'var(--color-success, #34c759)',
+            'INACTIVE': 'var(--color-secondary, #6c757d)',
+            'SUSPENDED': 'var(--color-warning, #ff9500)',
+            'TERMINATED': 'var(--color-danger, #ff3b30)',
+            'COMPLETED': 'var(--color-primary, #007aff)',
+            'PENDING_PAYMENT': 'var(--ios-orange, #ff9500)',
+            'PAYMENT_CONFIRMED': 'var(--color-success, #34c759)',
+            'SESSIONS_EXHAUSTED': 'var(--ios-purple, #5856d6)'
         };
-        return colorMap[status] || 'var(--color-secondary, #8E8E93)';
+        return colorMap[status] || 'var(--color-secondary, #6c757d)';
     };
 
     /**
@@ -634,13 +634,13 @@ const SessionManagement = () => {
      */
     const getExtensionStatusColor = (status) => {
         const colorMap = {
-            'PENDING': 'var(--ios-orange, #FF9500)',
-            'PAYMENT_CONFIRMED': 'var(--color-success, #34C759)',
-            'ADMIN_APPROVED': 'var(--color-primary, #007AFF)',
-            'REJECTED': 'var(--color-danger, #FF3B30)',
-            'COMPLETED': 'var(--color-success, #34C759)'
+            'PENDING': 'var(--ios-orange, #ff9500)',
+            'PAYMENT_CONFIRMED': 'var(--color-success, #34c759)',
+            'ADMIN_APPROVED': 'var(--color-primary, #007aff)',
+            'REJECTED': 'var(--color-danger, #ff3b30)',
+            'COMPLETED': 'var(--color-success, #34c759)'
         };
-        return colorMap[status] || 'var(--color-secondary, #8E8E93)';
+        return colorMap[status] || 'var(--color-secondary, #6c757d)';
     };
 
     /**

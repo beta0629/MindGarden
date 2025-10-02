@@ -53,35 +53,35 @@ const ConsultantClientList = () => {
     return iconMap[status] || '❓';
   };
 
-  // 기본 색상 반환 함수
+  // 기본 색상 반환 함수 (디자인 시스템 변수 사용)
   const getDefaultColor = (status) => {
     const colorMap = {
-      'ACTIVE': '#10b981',
-      'INACTIVE': '#6b7280',
-      'PENDING': '#f59e0b',
-      'COMPLETED': '#059669',
-      'SUSPENDED': '#dc2626',
-      'DELETED': '#6b7280',
-      'APPROVED': '#10b981',
-      'REJECTED': '#ef4444',
-      'PAYMENT_CONFIRMED': '#10b981',
-      'PAYMENT_PENDING': '#f59e0b',
-      'PAYMENT_REJECTED': '#ef4444',
-      'TERMINATED': '#6b7280',
-      'REQUESTED': '#3b82f6',
-      'BOOKED': '#8b5cf6',
-      'IN_PROGRESS': '#f59e0b',
-      'CANCELLED': '#ef4444',
-      'NO_SHOW': '#dc2626',
-      'RESCHEDULED': '#8b5cf6',
-      'AVAILABLE': '#10b981',
-      'CONFIRMED': '#10b981',
-      'WAITING': '#f59e0b',
-      'EXPIRED': '#6b7280',
-      'BLOCKED': '#dc2626',
-      'MAINTENANCE': '#f59e0b'
+      'ACTIVE': 'var(--color-success, #34c759)',
+      'INACTIVE': 'var(--color-secondary, #6c757d)',
+      'PENDING': 'var(--color-warning, #ff9500)',
+      'COMPLETED': 'var(--color-success, #34c759)',
+      'SUSPENDED': 'var(--color-danger, #ff3b30)',
+      'DELETED': 'var(--color-secondary, #6c757d)',
+      'APPROVED': 'var(--color-success, #34c759)',
+      'REJECTED': 'var(--color-danger, #ff3b30)',
+      'PAYMENT_CONFIRMED': 'var(--color-success, #34c759)',
+      'PAYMENT_PENDING': 'var(--color-warning, #ff9500)',
+      'PAYMENT_REJECTED': 'var(--color-danger, #ff3b30)',
+      'TERMINATED': 'var(--color-secondary, #6c757d)',
+      'REQUESTED': 'var(--color-primary, #007aff)',
+      'BOOKED': 'var(--ios-purple, #5856d6)',
+      'IN_PROGRESS': 'var(--color-warning, #ff9500)',
+      'CANCELLED': 'var(--color-danger, #ff3b30)',
+      'NO_SHOW': 'var(--color-danger, #ff3b30)',
+      'RESCHEDULED': 'var(--ios-purple, #5856d6)',
+      'AVAILABLE': 'var(--color-success, #34c759)',
+      'CONFIRMED': 'var(--color-success, #34c759)',
+      'WAITING': 'var(--color-warning, #ff9500)',
+      'EXPIRED': 'var(--color-secondary, #6c757d)',
+      'BLOCKED': 'var(--color-danger, #ff3b30)',
+      'MAINTENANCE': 'var(--color-warning, #ff9500)'
     };
-    return colorMap[status] || '#6b7280';
+    return colorMap[status] || 'var(--color-secondary, #6c757d)';
   };
 
   // 사용자 상태 코드 로드

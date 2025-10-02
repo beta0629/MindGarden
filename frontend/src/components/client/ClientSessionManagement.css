@@ -121,12 +121,12 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  color: var(--color-text-primary, #1a1a1a);
+  color: var(--text-primary, #1d1d1f);
 }
 
 .client-session-management-title-icon {
   font-size: var(--font-size-xxl);
-  color: var(--color-primary, #007AFF);
+  color: var(--color-primary, #007aff);
 }
 
 .client-session-management-subtitle {
@@ -134,7 +134,7 @@
   font-size: var(--font-size-lg);
   opacity: 0.9;
   font-weight: 400;
-  color: var(--color-text-secondary, #666666);
+  color: var(--text-secondary, #86868b);
 }
 
 /* 햄버거 메뉴 드롭다운 */
@@ -168,7 +168,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--color-text-primary, #1a1a1a);
+  color: var(--text-primary, #1d1d1f);
   font-size: var(--font-size-sm);
   transition: all 0.2s ease;
 }

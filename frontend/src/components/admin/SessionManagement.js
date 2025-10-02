@@ -1235,7 +1235,7 @@ const SessionManagement = () => {
                             });
                             
                             return (
-                                <div key={request.id} className="card card--small">
+                                <div key={request.id} className="card card--compact">
                                     <div className="card__header">
                                         <div className="card__title">요청 #{request.id}</div>
                                         <div className="card__subtitle">

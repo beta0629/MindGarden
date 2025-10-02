@@ -49,21 +49,11 @@ const checkSessionAndRedirect = async (response) => {
   const currentPath = window.location.pathname;
   const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
   
-    // 매핑 생성 API는 세션 체크 제외 (개발/운영 환경 모두)
-    const isMappingCreation = response.url && response.url.includes('/api/admin/mappings') && 
-                             response.url.split('?')[0].endsWith('/api/admin/mappings');
-  
   // 401, 403, 500 오류 시 세션 체크
   if (response.status === 401 || response.status === 403 || response.status >= 500) {
     // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
     if (isLoginPage) {
       console.log('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
-      return false;
-    }
-    
-    // 매핑 생성 API는 세션 체크 제외
-    if (isMappingCreation) {
-      console.log('🔐 매핑 생성 API - 세션 체크 스킵');
       return false;
     }
     

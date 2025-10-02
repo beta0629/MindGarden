@@ -19,7 +19,7 @@ select,
   isolation: isolate; /* stacking context 생성 */
 }
 
-/* 모든 드롭다운 메뉴의 공통 스타일 - 구조적 재설계 */
+/* 모든 드롭다운 메뉴의 공통 스타일 - 구조적 단순화 */
 select option,
 .custom-select__dropdown,
 .dropdown-menu,
@@ -29,18 +29,13 @@ select option,
 .ant-select-dropdown,
 .react-select__menu {
   /* 드롭다운 메뉴는 fixed 위치로 스크롤 독립적 동작 */
-  position: fixed !important;
-  z-index: var(--z-dropdown-fixed) !important;
+  position: fixed;
+  z-index: var(--z-dropdown-fixed);
   /* 성능 최적화 */
   transform: translateZ(0);
   will-change: transform;
   /* stacking context 생성 */
   isolation: isolate;
-  /* 위치는 JavaScript로 동적 조정 */
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  bottom: auto !important;
 }
 
 /* 기본 드롭다운 컨테이너 */

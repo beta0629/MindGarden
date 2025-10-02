@@ -46,3 +46,6 @@
 /* ===== 기존 스타일 임포트 (호환성 유지) ===== */
 /* 기존 index.css의 유틸리티 클래스들 */
 @import './index.css';
+
+/* ===== 전역 레이아웃 수정 ===== */
+@import './07-global/_layout-fixes.css';

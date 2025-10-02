@@ -1,22 +1,23 @@
 /* ===== 통합 헤더 컴포넌트 (UnifiedHeader) 스타일 ===== */
 
-/* 기본 헤더 - 구조적 재설계 */
+/* 기본 헤더 - 구조적 단순화 */
 .mg-header {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
-  z-index: var(--z-header); /* 구조적 z-index 사용 */
+  z-index: var(--z-header); /* 단일 z-index 사용 */
   transition: all 0.3s ease;
-  position: relative;
-  isolation: isolate; /* 새로운 stacking context 생성 */
+  position: sticky;
+  top: 0;
+  isolation: isolate; /* stacking context 생성 */
 }
 
 .mg-header--sticky {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: var(--z-header-sticky); /* 구조적 z-index 사용 */
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header); /* 동일한 z-index 사용 */
   isolation: isolate; /* stacking context 생성 */
 }
 
@@ -150,10 +151,10 @@
 }
 
 /* ===== 헤더 내 드롭다운 고정 처리 ===== */
-.mg-header--sticky .mg-header__actions,
-.mg-header--sticky .mg-header__user-menu {
+.mg-header__actions,
+.mg-header__user-menu {
   position: relative;
-  z-index: 100000 !important; /* 헤더 요소들이 최상위에 표시되도록 */
+  z-index: var(--z-header); /* 헤더와 동일한 z-index */
 }
 
 /* 헤더 내 모든 드롭다운 요소들이 sticky 동작하도록 */

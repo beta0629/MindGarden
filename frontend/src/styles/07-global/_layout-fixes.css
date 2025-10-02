@@ -1,0 +1,73 @@
+/* ===== 전역 레이아웃 수정 - 구조적 단순화 ===== */
+
+/* 모든 페이지 콘텐츠가 헤더보다 낮은 z-index를 가지도록 설정 */
+.simple-layout,
+.simple-main,
+.simple-container,
+.mypage-container,
+.compliance-dashboard,
+.integrated-finance-container,
+.admin-dashboard,
+.consultant-dashboard,
+.client-dashboard {
+  position: relative;
+  z-index: var(--z-content); /* 콘텐츠 레이어 */
+}
+
+/* 페이지 내부 콘텐츠들도 콘텐츠 레이어 */
+.page-header,
+.page-title,
+.mypage-top-nav,
+.mypage-main-content,
+.compliance-menu,
+.finance-kpi-grid,
+.admin-content,
+.consultant-content,
+.client-content {
+  position: relative;
+  z-index: var(--z-content);
+}
+
+/* 드롭다운은 드롭다운 레이어 */
+select,
+.custom-select,
+.dropdown,
+.dropdown-menu,
+.select-dropdown,
+.custom-select__dropdown {
+  position: relative;
+  z-index: var(--z-dropdown);
+}
+
+/* 드롭다운 옵션들은 고정 드롭다운 레이어 */
+select option,
+.dropdown-menu li,
+.select-dropdown li,
+.custom-select__dropdown li {
+  position: fixed;
+  z-index: var(--z-dropdown-fixed);
+}
+
+/* 모달과 알림은 모달 레이어 */
+.modal,
+.modal-overlay,
+.notification,
+.toast,
+.alert {
+  z-index: var(--z-modal);
+}
+
+/* 헤더는 헤더 레이어 */
+.mg-header,
+.simple-header {
+  z-index: var(--z-header);
+  position: sticky;
+  top: 0;
+}
+
+/* 헤더 내부 요소들도 헤더 레이어 */
+.mg-header *,
+.simple-header * {
+  position: relative;
+  z-index: var(--z-header);
+}

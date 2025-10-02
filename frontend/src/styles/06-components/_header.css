@@ -1,13 +1,13 @@
 /* ===== 통합 헤더 컴포넌트 (UnifiedHeader) 스타일 ===== */
 
-/* 기본 헤더 - 구조적 단순화 */
+/* 기본 헤더 - 공통부 우선순위 */
 .mg-header {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
-  z-index: var(--z-header); /* 단일 z-index 사용 */
+  z-index: var(--z-header); /* 공통부 z-index */
   transition: all 0.3s ease;
   position: sticky;
   top: 0;
@@ -17,7 +17,7 @@
 .mg-header--sticky {
   position: sticky;
   top: 0;
-  z-index: var(--z-header); /* 동일한 z-index 사용 */
+  z-index: var(--z-header-sticky); /* 공통부 sticky z-index */
   isolation: isolate; /* stacking context 생성 */
 }
 

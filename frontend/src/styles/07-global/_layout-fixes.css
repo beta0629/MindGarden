@@ -1,6 +1,6 @@
-/* ===== 전역 레이아웃 수정 - 구조적 단순화 ===== */
+/* ===== 전역 레이아웃 수정 - 공통부/개별부 구분 ===== */
 
-/* 모든 페이지 콘텐츠가 헤더보다 낮은 z-index를 가지도록 설정 */
+/* 개별부 (모든 페이지 콘텐츠) - 낮은 z-index */
 .simple-layout,
 .simple-main,
 .simple-container,
@@ -11,10 +11,10 @@
 .consultant-dashboard,
 .client-dashboard {
   position: relative;
-  z-index: var(--z-content); /* 콘텐츠 레이어 */
+  z-index: var(--z-page); /* 개별부 레이어 */
 }
 
-/* 페이지 내부 콘텐츠들도 콘텐츠 레이어 */
+/* 페이지 내부 콘텐츠들도 개별부 레이어 */
 .page-header,
 .page-title,
 .mypage-top-nav,
@@ -25,7 +25,7 @@
 .consultant-content,
 .client-content {
   position: relative;
-  z-index: var(--z-content);
+  z-index: var(--z-content); /* 콘텐츠 레이어 */
 }
 
 /* 드롭다운은 드롭다운 레이어 */

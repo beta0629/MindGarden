@@ -1,28 +1,31 @@
-/* ===== Z-Index 레이어 시스템 - 구조적 단순화 ===== */
+/* ===== Z-Index 레이어 시스템 - 공통부/개별부 구분 ===== */
 
 :root {
-  /* 기본 레이어 - 충돌 방지 */
+  /* 기본 레이어 */
   --z-base: 0;
   --z-hidden: -1;
   
-  /* 콘텐츠 레이어 (1-10) */
+  /* 개별부 (페이지 콘텐츠) - 낮은 z-index */
   --z-content: 1;
   --z-content-hover: 2;
   --z-content-active: 3;
+  --z-page: 10;
   
-  /* 드롭다운 레이어 (100-200) */
+  /* 드롭다운 - 개별부보다 높게 */
   --z-dropdown: 100;
-  --z-dropdown-fixed: 110;
-  --z-dropdown-menu: 120;
+  --z-dropdown-fixed: 101;
+  --z-dropdown-menu: 102;
   
-  /* 헤더 레이어 (1000) - 단일 값으로 충돌 방지 */
+  /* 공통부 (헤더) - 개별부보다 높게 */
   --z-header: 1000;
+  --z-header-sticky: 1000;
+  --z-header-menu: 1000;
   
-  /* 모달 레이어 (2000) */
-  --z-modal: 2000;
-  --z-modal-backdrop: 2010;
+  /* 모달 - 공통부보다 높게 */
+  --z-modal: 10000;
+  --z-modal-backdrop: 10001;
   
-  /* 알림 레이어 (3000) */
-  --z-notification: 3000;
-  --z-toast: 3010;
+  /* 알림 - 최고 우선순위 */
+  --z-notification: 20000;
+  --z-toast: 20001;
 }

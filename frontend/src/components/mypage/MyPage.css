@@ -2,8 +2,9 @@
   max-width: var(--mypage-container-max-width);
   margin: 0 auto;
   padding: var(--mypage-container-padding);
-  background: var(--mypage-container-bg);
+  background: var(--color-bg-primary);
   min-height: 100vh;
+  font-family: var(--font-family-ios);
 }
 
 /* 소셜 아이콘 색상 */
@@ -197,52 +198,60 @@
 }
 
 .mypage-top-nav {
-  background: var(--mypage-nav-bg);
-  border-radius: var(--mypage-nav-radius);
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-lg);
   padding: 0;
-  box-shadow: var(--mypage-nav-shadow);
+  box-shadow: var(--shadow-glass);
   overflow: hidden;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .mypage-nav {
   display: flex;
   gap: 0;
-  border-bottom: var(--mypage-nav-border);
+  border-bottom: 1px solid var(--ios-border-light);
 }
 
 .nav-item {
-  padding: var(--mypage-nav-item-padding);
+  padding: var(--spacing-lg) var(--spacing-xl);
   border: none;
   background: transparent;
   border-radius: 0;
   text-align: center;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   cursor: pointer;
-  transition: all 0.3s ease;
-  color: var(--mypage-nav-item-color);
+  transition: var(--transition-normal);
+  color: var(--color-text-secondary);
   border-bottom: 3px solid transparent;
-  min-width: var(--mypage-nav-item-min-width);
-  font-weight: 500;
+  min-width: 120px;
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-ios);
 }
 
 .nav-item:hover {
-  background: var(--mypage-nav-item-hover-bg);
-  color: var(--mypage-nav-item-hover-color);
-  border-bottom-color: #dee2e6;
+  background: rgba(102, 126, 234, 0.05);
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-border-light);
 }
 
 .nav-item.active {
-  background: var(--mypage-nav-item-active-bg);
-  color: var(--mypage-nav-item-active-color);
-  font-weight: 600;
-  border-bottom-color: var(--mypage-nav-item-active-border);
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  border-bottom-color: var(--color-primary);
 }
 
 .mypage-main-content {
-  background: var(--mypage-main-bg);
-  border-radius: var(--mypage-main-radius);
-  padding: var(--mypage-main-padding);
-  box-shadow: var(--mypage-main-shadow);
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xxl);
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: var(--font-family-ios);
 }
 
 .mypage-section {
@@ -266,18 +275,23 @@
 }
 
 .edit-btn {
-  padding: var(--mypage-edit-btn-padding);
-  background: var(--mypage-edit-btn-bg);
-  color: var(--mypage-edit-btn-color);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-primary);
+  color: white;
   border: none;
-  border-radius: var(--mypage-edit-btn-radius);
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.3s ease;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-ios);
+  transition: var(--transition-normal);
+  box-shadow: var(--shadow-glass);
 }
 
 .edit-btn:hover {
-  background: var(--mypage-edit-btn-hover-bg);
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glass-strong);
 }
 
 .profile-form {
@@ -394,19 +408,23 @@
 }
 
 .save-btn {
-  padding: var(--mypage-save-btn-padding);
-  background: var(--mypage-save-btn-bg);
-  color: var(--mypage-save-btn-color);
+  padding: var(--spacing-sm) var(--spacing-xl);
+  background: var(--color-success);
+  color: white;
   border: none;
-  border-radius: var(--mypage-save-btn-radius);
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: background 0.3s ease;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-ios);
+  transition: var(--transition-normal);
+  box-shadow: var(--shadow-glass);
 }
 
 .save-btn:hover {
-  background: var(--mypage-save-btn-hover-bg);
+  background: var(--color-success-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glass-strong);
 }
 
 .settings-list,

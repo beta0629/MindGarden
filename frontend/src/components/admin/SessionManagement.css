@@ -504,105 +504,158 @@ body .session-mgmt-btn-warning:hover,
     border-color: #FF6B00 !important;
 }
 
-/* 모달 스타일 */
+/* 모달 스타일 - iOS 스타일 + 글래스모피즘 강화 */
+#root .session-mgmt-modal-overlay,
+body .session-mgmt-modal-overlay,
 .session-mgmt-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: var(--spacing-base);
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 1000 !important;
+    padding: 20px !important;
 }
 
+#root .session-mgmt-modal-content,
+body .session-mgmt-modal-content,
 .session-mgmt-modal-content {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
-    border-radius: var(--border-radius-xxl);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    max-width: 500px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    max-width: 600px !important;
+    width: 100% !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
     box-shadow: 
-        0 25px 50px rgba(0, 0, 0, 0.1),
+        0 20px 40px rgba(0, 0, 0, 0.15),
         0 0 0 1px rgba(255, 255, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 
+#root .session-mgmt-modal-header,
+body .session-mgmt-modal-header,
 .session-mgmt-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-base);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: var(--border-radius-xxl) var(--border-radius-xxl) 0 0;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 24px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background: rgba(240, 248, 255, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border-radius: 20px 20px 0 0 !important;
+    position: relative !important;
 }
 
+#root .session-mgmt-modal-header h3,
+body .session-mgmt-modal-header h3,
 .session-mgmt-modal-header h3 {
-    margin: 0;
-    color: var(--color-text-primary, #1a1a1a);
-    font-size: var(--font-size-xl);
+    margin: 0 !important;
+    color: #2c3e50 !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
 }
 
+#root .session-mgmt-close-btn,
+body .session-mgmt-close-btn,
 .session-mgmt-close-btn {
-    background: none;
-    border: none;
-    font-size: var(--font-size-xxl);
-    cursor: pointer;
-    color: #95a5a6;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: rgba(255, 255, 255, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    font-size: 18px !important;
+    cursor: pointer !important;
+    color: #666 !important;
+    padding: 8px !important;
+    border-radius: 50% !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
+#root .session-mgmt-close-btn:hover,
+body .session-mgmt-close-btn:hover,
 .session-mgmt-close-btn:hover {
-    color: #e74c3c;
+    color: #e74c3c !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
+#root .session-mgmt-modal-body,
+body .session-mgmt-modal-body,
 .session-mgmt-modal-body {
-    padding: var(--spacing-base);
+    padding: 24px !important;
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
 }
 
+#root .session-mgmt-form-group,
+body .session-mgmt-form-group,
 .session-mgmt-form-group {
-    margin-bottom: 20px;
+    margin-bottom: 24px !important;
 }
 
+#root .session-mgmt-form-group label,
+body .session-mgmt-form-group label,
 .session-mgmt-form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #2c3e50;
+    display: block !important;
+    margin-bottom: 12px !important;
+    font-weight: 600 !important;
+    color: #2c3e50 !important;
+    font-size: 14px !important;
 }
 
+#root .session-mgmt-form-group input,
+#root .session-mgmt-form-group select,
+#root .session-mgmt-form-group textarea,
+body .session-mgmt-form-group input,
+body .session-mgmt-form-group select,
+body .session-mgmt-form-group textarea,
 .session-mgmt-form-group input,
 .session-mgmt-form-group select,
 .session-mgmt-form-group textarea {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #e1e8ed;
-    border-radius: 8px;
-    font-size: var(--font-size-sm);
-    transition: border-color 0.3s ease;
-    box-sizing: border-box;
+    width: 100% !important;
+    padding: 14px 16px !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    font-size: 14px !important;
+    transition: all 0.3s ease !important;
+    box-sizing: border-box !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
 }
 
+#root .session-mgmt-form-group input:focus,
+#root .session-mgmt-form-group select:focus,
+#root .session-mgmt-form-group textarea:focus,
+body .session-mgmt-form-group input:focus,
+body .session-mgmt-form-group select:focus,
+body .session-mgmt-form-group textarea:focus,
 .session-mgmt-form-group input:focus,
 .session-mgmt-form-group select:focus,
 .session-mgmt-form-group textarea:focus {
-    outline: none;
-    border-color: #3498db;
+    outline: none !important;
+    border-color: #007AFF !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2) !important;
+    transform: translateY(-2px) !important;
 }
 
 .session-mgmt-form-row {

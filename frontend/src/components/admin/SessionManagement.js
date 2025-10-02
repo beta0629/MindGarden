@@ -1003,9 +1003,8 @@ const SessionManagement = () => {
                         </button>
                     ) : null}
                 />
-                    
-                </div>
-                        <div className="session-mgmt-mappings-grid">
+                
+                <div className="session-mgmt-mappings-grid">
                             {getFilteredMappings().map(mapping => (
                                 <MappingCard
                                     key={mapping.id}

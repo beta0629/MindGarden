@@ -352,7 +352,7 @@ const ComplianceDashboard = () => {
                 </button>
             </div>
         </SimpleLayout>
-        );
-    };
+    );
+};
 
 export default ComplianceDashboard;

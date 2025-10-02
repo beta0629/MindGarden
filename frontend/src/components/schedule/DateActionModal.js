@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../styles/main.css';
+import './DateActionModal.css';
 
 /**
  * 날짜 액션 선택 모달 컴포넌트
@@ -37,93 +37,46 @@ const DateActionModal = ({
 
     return (
         <div 
-            className="confirm-modal"
+            className="date-action-modal"
             onClick={onClose}
         >
             <div 
-                className="confirm-content"
+                className="date-action-modal-content"
                 onClick={(e) => e.stopPropagation()}
             >
-                <h3>📅 {formatDate(selectedDate)}</h3>
-                <p>원하는 작업을 선택하세요</p>
+                <div className="date-action-modal-header">
+                    <h3 className="date-action-modal-title">📅 {formatDate(selectedDate)}</h3>
+                    <p className="date-action-modal-subtitle">원하는 작업을 선택하세요</p>
+                </div>
                 
-                <div className="confirm-buttons" style={{ flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+                <div className="date-action-modal-buttons">
                     <button 
                         onClick={onScheduleClick}
-                        className="btn-confirm"
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            textAlign: 'left',
-                            padding: 'var(--spacing-lg)',
-                            gap: 'var(--spacing-md)',
-                            width: '100%',
-                            justifyContent: 'flex-start',
-                            backgroundColor: 'var(--color-primary)',
-                            color: 'var(--color-text-light)',
-                            border: 'none',
-                            borderRadius: 'var(--border-radius-medium)',
-                            fontSize: 'var(--font-size-base)',
-                            fontWeight: 'var(--font-weight-semibold)',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                        }}
+                        className="date-action-button date-action-button--primary"
                     >
-                        <span style={{ fontSize: 'var(--font-size-xl)', flexShrink: 0 }}>📋</span>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ 
-                                fontSize: 'var(--font-size-lg)', 
-                                fontWeight: 'var(--font-weight-semibold)',
-                                marginBottom: 'var(--spacing-xs)'
-                            }}>일정 등록</div>
-                            <div style={{ 
-                                fontSize: 'var(--font-size-sm)',
-                                opacity: 0.9
-                            }}>상담 일정을 등록합니다</div>
+                        <span className="date-action-button-icon">📋</span>
+                        <div className="date-action-button-content">
+                            <div className="date-action-button-title">일정 등록</div>
+                            <div className="date-action-button-description">상담 일정을 등록합니다</div>
                         </div>
                     </button>
                     
                     {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
                         <button 
                             onClick={onVacationClick}
-                            className="btn-confirm"
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                textAlign: 'left',
-                                padding: 'var(--spacing-lg)',
-                                gap: 'var(--spacing-md)',
-                                width: '100%',
-                                justifyContent: 'flex-start',
-                                backgroundColor: 'var(--color-accent)',
-                                color: 'var(--color-text-primary)',
-                                border: 'none',
-                                borderRadius: 'var(--border-radius-medium)',
-                                fontSize: 'var(--font-size-base)',
-                                fontWeight: 'var(--font-weight-semibold)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
-                            }}
+                            className="date-action-button date-action-button--secondary"
                         >
-                            <span style={{ fontSize: 'var(--font-size-xl)', flexShrink: 0 }}>🏖️</span>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ 
-                                    fontSize: 'var(--font-size-lg)', 
-                                    fontWeight: 'var(--font-weight-semibold)',
-                                    marginBottom: 'var(--spacing-xs)'
-                                }}>휴가 등록</div>
-                                <div style={{ 
-                                    fontSize: 'var(--font-size-sm)',
-                                    opacity: 0.8
-                                }}>상담사의 휴가를 등록합니다</div>
+                            <span className="date-action-button-icon">🏖️</span>
+                            <div className="date-action-button-content">
+                                <div className="date-action-button-title">휴가 등록</div>
+                                <div className="date-action-button-description">상담사의 휴가를 등록합니다</div>
                             </div>
                         </button>
                     )}
                     
                     <button 
                         onClick={onClose}
-                        className="btn-cancel"
-                        style={{ marginTop: 'var(--spacing-md)' }}
+                        className="date-action-cancel-button"
                     >
                         취소
                     </button>

@@ -37,7 +37,7 @@ const MappingFilters = ({
                 <div className="mapping-filters-status">
                     <label className="mapping-filters-label">
                         <i className="bi bi-funnel"></i>
-                        {' '}상태 필터
+                        상태 필터
                     </label>
                     <select 
                         value={filterStatus} 

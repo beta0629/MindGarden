@@ -162,7 +162,7 @@
 }
 
 .schedule-modal-close-btn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--color-bg-glass, rgba(255, 255, 255, 0.2));
   transform: scale(1.1);
 }
 
@@ -184,7 +184,7 @@
   text-align: center;
   margin-bottom: 20px;
   padding: var(--spacing-md) 0;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: linear-gradient(135deg, var(--color-bg-secondary, #F5F5F7) 0%, var(--color-bg-tertiary, #F8F9FA) 100%);
   border-radius: 12px;
   border: none;
 }
@@ -250,7 +250,7 @@
 .search-input:focus {
   outline: none;
   border-color: var(--schedule-modal-primary);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
 .specialty-select {
@@ -267,7 +267,7 @@
 .specialty-select:focus {
   outline: none;
   border-color: var(--schedule-modal-primary);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
 .availability-filter {
@@ -296,7 +296,7 @@
 
 .filter-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
 }
 
 .filter-button.active {
@@ -402,7 +402,7 @@
 }
 
 .consultant-card.selected {
-  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  background: var(--color-primary-light, rgba(0, 122, 255, 0.1));
   border-color: var(--schedule-modal-primary);
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
 }
@@ -535,21 +535,21 @@
 }
 
 .consultant-availability.available {
-  background: #d4edda;
+  background: var(--color-success-light, #d4edda);
   color: var(--schedule-modal-success);
-  border: 1px solid #c3e6cb;
+  border: 1px solid var(--color-success-border, #c3e6cb);
 }
 
 .consultant-availability.busy {
-  background: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeaa7;
+  background: var(--color-warning-light, #fff3cd);
+  color: var(--color-warning-dark, #856404);
+  border: 1px solid var(--color-warning-border, #ffeaa7);
 }
 
 .consultant-availability.unavailable {
-  background: #f8d7da;
+  background: var(--color-danger-light, #f8d7da);
   color: var(--schedule-modal-danger);
-  border: 1px solid #f5c6cb;
+  border: 1px solid var(--color-danger-border, #f5c6cb);
 }
 
 .availability-dot {
@@ -564,7 +564,7 @@
 .selected-consultant-info {
   margin-top: 20px;
   padding: var(--spacing-md);
-  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  background: var(--color-primary-light, rgba(0, 122, 255, 0.1));
   border-radius: 12px;
   border: none;
 }
@@ -660,8 +660,8 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #5a6268;
-  border-color: #5a6268;
+  background: var(--color-gray-dark, #5a6268);
+  border-color: var(--color-gray-dark, #5a6268);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(108, 117, 125, 0.3);
 }
@@ -673,8 +673,8 @@
 }
 
 .btn-success:hover:not(:disabled) {
-  background: #218838;
-  border-color: #218838;
+  background: var(--color-success-dark, #218838);
+  border-color: var(--color-success-dark, #218838);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
 }

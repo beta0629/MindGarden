@@ -8,6 +8,7 @@ import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import TimeSelectionModal from './TimeSelectionModal';
 import UnifiedLoading from '../common/UnifiedLoading';
+import LoadingSpinner from '../common/LoadingSpinner';
 import CustomSelect from '../common/CustomSelect';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';

@@ -50,18 +50,52 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             // CORS 설정
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            
-            // CSRF 비활성화 (권한 체크는 컨트롤러에서 처리)
-            .csrf(csrf -> csrf.disable())
-            
-            // 세션 관리 비활성화 (권한 체크는 컨트롤러에서 처리)
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS)
-            )
-            
-            // 모든 요청 허용 (권한 체크는 컨트롤러에서 처리)
-            .authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+        
+        // 환경별 보안 설정
+        if (isProductionEnvironment()) {
+            // 운영 환경: 보안 강화
+            http
+                // CSRF 활성화 (운영 환경에서는 보안 필수)
+                .csrf(csrf -> csrf
+                    .csrfTokenRepository(csrfTokenRepository())
+                    .ignoringRequestMatchers("/api/auth/**") // 인증 관련 API는 CSRF 제외
+                )
+                
+                // 세션 관리 활성화
+                .sessionManagement(session -> session
+                    .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
+                    .maximumSessions(1) // 동시 세션 1개만 허용
+                    .maxSessionsPreventsLogin(false) // 초과 시 기존 세션 만료
+                    .sessionRegistry(sessionRegistry())
+                )
+                
+                // API 엔드포인트별 권한 설정
+                .authorizeHttpRequests(authz -> authz
+                    .requestMatchers("/api/auth/**").permitAll() // 인증 관련 API는 허용
+                    .requestMatchers("/api/common-codes/**").permitAll() // 공통코드는 허용
+                    .requestMatchers("/api/admin/css-themes/**").permitAll() // CSS 테마는 허용
+                    .requestMatchers("/api/admin/**").authenticated() // 관리자 API는 인증 필요
+                    .requestMatchers("/api/erp/**").authenticated() // ERP API는 인증 필요
+                    .requestMatchers("/api/schedules/**").authenticated() // 스케줄 API는 인증 필요
+                    .requestMatchers("/api/payments/**").authenticated() // 결제 API는 인증 필요
+                    .requestMatchers("/api/consultant/**").authenticated() // 상담사 API는 인증 필요
+                    .anyRequest().permitAll() // 나머지는 허용
+                );
+        } else {
+            // 개발 환경: 편의성 우선
+            http
+                // CSRF 비활성화 (개발 편의성)
+                .csrf(csrf -> csrf.disable())
+                
+                // 세션 관리 비활성화 (개발 편의성)
+                .sessionManagement(session -> session
+                    .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS)
+                )
+                
+                // 모든 요청 허용 (개발 편의성)
+                .authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
+        }
         
         return http.build();
     }

@@ -49,7 +49,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
-@PreAuthorize("isAuthenticated()")
 public class AdminController {
 
     private final AdminService adminService;
@@ -1345,13 +1344,22 @@ public class AdminController {
         try {
             log.info("🔧 매핑 생성: 상담사={}, 내담자={}", dto.getConsultantId(), dto.getClientId());
             
+            // 세션 체크
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                log.warn("❌ 세션이 없습니다. 로그인이 필요합니다.");
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다.",
+                    "errorCode", "UNAUTHORIZED"
+                ));
+            }
+            
             // 동적 권한 체크
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
             if (permissionResponse != null) {
                 return permissionResponse;
             }
-            
-            User currentUser = SessionUtils.getCurrentUser(session);
             
             String currentBranchCode = currentUser.getBranchCode();
             log.info("🔧 현재 사용자 지점코드: {}", currentBranchCode);

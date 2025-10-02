@@ -10,6 +10,7 @@ import MappingCard from './MappingCard';
 import LoadingSpinner from '../common/LoadingSpinner';
 import '../../styles/design-system.css';
 import '../../styles/06-components/_buttons.css';
+import '../../styles/06-components/_cards.css';
 import './SessionManagement.css';
 
 /**
@@ -1232,97 +1233,106 @@ const SessionManagement = () => {
                             });
                             
                             return (
-                                <div key={request.id} className="session-mgmt-extension-card">
-                                    <div className="session-mgmt-card-header">
-                                        <div className="session-mgmt-card-title">
-                                            <h4>요청 #{request.id}</h4>
-                                            <span className="session-mgmt-card-subtitle">
-                                                {consultantName} → {clientName}
-                                            </span>
+                                <div key={request.id} className="card card--small">
+                                    <div className="card__header">
+                                        <div className="card__title">요청 #{request.id}</div>
+                                        <div className="card__subtitle">
+                                            {consultantName} → {clientName}
                                         </div>
-                                    <span 
-                                        className="session-mgmt-status-badge"
-                                        data-bg-color={getExtensionStatusColor(request.status)}
-                                    >
-                                        {getExtensionStatusText(request.status)}
-                                    </span>
-                                </div>
-                                
-                                <div className="session-mgmt-card-content">
-                                    <div className="session-mgmt-info-row">
-                                        <span className="session-mgmt-info-label">추가 회기:</span>
-                                        <span className="session-mgmt-info-value">{request.additionalSessions}회</span>
-                                    </div>
-                                    
-                                    <div className="session-mgmt-info-row">
-                                        <span className="session-mgmt-info-label">패키지:</span>
-                                        <span className="session-mgmt-info-value">{request.packageName}</span>
-                                    </div>
-                                    
-                                    <div className="session-mgmt-info-row">
-                                        <span className="session-mgmt-info-label">금액:</span>
-                                        <span className="session-mgmt-info-value">{request.packagePrice?.toLocaleString()}원</span>
-                                    </div>
-                                    
-                                    <div className="session-mgmt-info-row">
-                                        <span className="session-mgmt-info-label">요청일:</span>
-                                        <span className="session-mgmt-info-value">
-                                            {new Date(request.createdAt).toLocaleDateString('ko-KR')}
+                                        <span 
+                                            className="mg-btn mg-btn--small"
+                                            style={{ 
+                                                backgroundColor: getExtensionStatusColor(request.status),
+                                                color: 'white',
+                                                marginTop: '8px',
+                                                float: 'right'
+                                            }}
+                                        >
+                                            {getExtensionStatusText(request.status)}
                                         </span>
                                     </div>
-                                    
-                                    {request.reason && (
-                                        <div className="session-mgmt-info-row">
-                                            <span className="session-mgmt-info-label">사유:</span>
-                                            <span className="session-mgmt-info-value">{request.reason}</span>
-                                        </div>
-                                    )}
-                                </div>
                                 
-                                <div className="session-mgmt-card-actions">
-                                    {request.status === 'PENDING' && (
-                                        <button 
-                                            className="mg-btn mg-btn--small mg-btn--primary"
-                                            onClick={() => handlePaymentConfirm(request)}
-                                        >
-                                            💳 입금 확인
-                                        </button>
-                                    )}
+                                    <div className="card__body">
+                                        <div className="session-mgmt-info-row">
+                                            <span className="session-mgmt-info-label">추가 회기:</span>
+                                            <span className="session-mgmt-info-value">{request.additionalSessions}회</span>
+                                        </div>
+                                        
+                                        <div className="session-mgmt-info-row">
+                                            <span className="session-mgmt-info-label">패키지:</span>
+                                            <span className="session-mgmt-info-value">{request.packageName}</span>
+                                        </div>
+                                        
+                                        <div className="session-mgmt-info-row">
+                                            <span className="session-mgmt-info-label">금액:</span>
+                                            <span className="session-mgmt-info-value">{request.packagePrice?.toLocaleString()}원</span>
+                                        </div>
+                                        
+                                        <div className="session-mgmt-info-row">
+                                            <span className="session-mgmt-info-label">요청일:</span>
+                                            <span className="session-mgmt-info-value">
+                                                {new Date(request.createdAt).toLocaleDateString('ko-KR')}
+                                            </span>
+                                        </div>
+                                        
+                                        {request.reason && (
+                                            <div className="session-mgmt-info-row">
+                                                <span className="session-mgmt-info-label">사유:</span>
+                                                <span className="session-mgmt-info-value">{request.reason}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                
+                                    <div className="card__footer">
+                                        <div className="card__actions">
+                                            {request.status === 'PENDING' && (
+                                                <button 
+                                                    className="mg-btn mg-btn--small mg-btn--primary"
+                                                    onClick={() => handlePaymentConfirm(request)}
+                                                >
+                                                    입금 확인
+                                                </button>
+                                            )}
                                     
-                                    {request.status === 'PAYMENT_CONFIRMED' && (
-                                        <>
-                                            <button 
-                                                className="mg-btn mg-btn--small mg-btn--success"
-                                                onClick={() => handleAdminApproval(request)}
-                                            >
-                                                ✅ 승인
-                                            </button>
-                                            <button 
-                                                className="mg-btn mg-btn--small mg-btn--danger"
-                                                onClick={() => handleRejectRequest(request.id)}
-                                            >
-                                                ❌ 거부
-                                            </button>
-                                        </>
-                                    )}
+                                            {request.status === 'PAYMENT_CONFIRMED' && (
+                                                <>
+                                                    <button 
+                                                        className="mg-btn mg-btn--small mg-btn--success"
+                                                        onClick={() => handleAdminApproval(request)}
+                                                    >
+                                                        승인
+                                                    </button>
+                                                    <button 
+                                                        className="mg-btn mg-btn--small mg-btn--danger"
+                                                        onClick={() => handleRejectRequest(request.id)}
+                                                    >
+                                                        거부
+                                                    </button>
+                                                </>
+                                            )}
+                                            
+                                            {request.status === 'ADMIN_APPROVED' && (
+                                                <button 
+                                                    className="mg-btn mg-btn--small mg-btn--warning"
+                                                    onClick={() => handleCompleteRequest(request.id)}
+                                                >
+                                                    요청 완료
+                                                </button>
+                                            )}
+                                            
+                                            {request.status === 'REJECTED' && (
+                                                <span className="mg-btn mg-btn--small mg-btn--secondary" style={{ cursor: 'default' }}>
+                                                    거부됨
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
                                     
-                                    {request.status === 'ADMIN_APPROVED' && (
-                                        <button 
-                                            className="mg-btn mg-btn--small mg-btn--warning"
-                                            onClick={() => handleCompleteRequest(request.id)}
-                                        >
-                                            ✅ 요청 완료
-                                        </button>
-                                    )}
-                                    
-                                    {request.status === 'REJECTED' && (
-                                        <span className="session-mgmt-status-text">거부됨</span>
-                                    )}
-                                    
-                                    {request.status === 'COMPLETED' && (
-                                        <span className="session-mgmt-status-text">완료됨</span>
-                                    )}
-                                </div>
+                                            {request.status === 'COMPLETED' && (
+                                                <span className="mg-btn mg-btn--small mg-btn--success" style={{ cursor: 'default' }}>
+                                                    완료됨
+                                                </span>
+                                            )}
                             </div>
                             );
                         })}

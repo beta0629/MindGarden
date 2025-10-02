@@ -407,7 +407,7 @@
 }
 
 .mapping-modal .btn-success {
-    background-color: #059669;
+    background-color: var(--color-success, #28A745);
     color: var(--color-text-inverse, #FFFFFF);
 }
 

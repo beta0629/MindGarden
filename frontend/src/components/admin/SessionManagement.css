@@ -457,9 +457,13 @@ body .session-mgmt-btn-primary:hover,
     gap: 8px;
 }
 
+#root .session-mgmt-btn-sm,
+body .session-mgmt-btn-sm,
 .session-mgmt-btn-sm {
-    padding: 6px 12px;
-    font-size: var(--font-size-xs);
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+    min-width: auto !important;
 }
 
 #root .session-mgmt-btn-danger,
@@ -841,6 +845,8 @@ body .session-mgmt-detail-row,
     margin-bottom: 12px !important;
     padding: 8px 0 !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
 }
 
 #root .session-mgmt-label,
@@ -849,6 +855,8 @@ body .session-mgmt-label,
     font-weight: 600 !important;
     color: #2c3e50 !important;
     font-size: 14px !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
 }
 
 #root .session-mgmt-value,
@@ -857,6 +865,9 @@ body .session-mgmt-value,
     color: #007AFF !important;
     font-weight: 600 !important;
     font-size: 15px !important;
+    flex: 1 !important;
+    text-align: right !important;
+    white-space: nowrap !important;
 }
 
 #root .session-mgmt-status-badge,

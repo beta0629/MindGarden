@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import notificationManager from '../../utils/notification';
 import './ClientMessageSection.css';
 
@@ -113,7 +113,7 @@ const ClientMessageSection = ({ userId }) => {
           <h3>📨 상담사 메시지</h3>
         </div>
         <div className="message-loading">
-          <LoadingSpinner variant="dots" size="small" text="메시지를 불러오는 중..." />
+          <UnifiedLoading variant="dots" size="small" text="메시지를 불러오는 중..." type="inline" />
         </div>
       </div>
     );

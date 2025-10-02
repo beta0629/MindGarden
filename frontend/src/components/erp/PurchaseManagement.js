@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import './ErpCommon.css';
 
 /**
@@ -158,7 +158,7 @@ const PurchaseManagement = () => {
         <div className="erp-content">
           {loading && (
             <div className="purchase-management-loading-container">
-              <LoadingSpinner 
+              <UnifiedLoading 
                 text="데이터를 불러오는 중..."
                 size="medium"
                 variant="default"

@@ -5,7 +5,7 @@ import { apiGet, apiPost } from '../../utils/ajax';
 import './ConsultantClientList.css';
 import SimpleLayout from '../layout/SimpleLayout';
 import ClientDetailModal from './ClientDetailModal';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from '../common/UnifiedLoading';
 
 const ConsultantClientList = () => {
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
@@ -289,7 +289,7 @@ const ConsultantClientList = () => {
   if (sessionLoading) {
     return (
       <SimpleLayout title="내담자 목록">
-        <LoadingSpinner text="세션 정보를 불러오는 중..." size="medium" />
+        <UnifiedLoading text="세션 정보를 불러오는 중..." size="medium" type="inline" />
       </SimpleLayout>
     );
   }
@@ -382,7 +382,7 @@ const ConsultantClientList = () => {
       {/* 로딩 상태 */}
       {loading && (
         <div className="loading-container">
-          <LoadingSpinner text="내담자 목록을 불러오는 중..." size="medium" />
+          <UnifiedLoading text="내담자 목록을 불러오는 중..." size="medium" type="inline" />
           <p>잠시만 기다려주세요...</p>
         </div>
       )}

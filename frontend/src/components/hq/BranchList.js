@@ -10,7 +10,7 @@ import {
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { normalizeBranchList, getBranchNameByCode } from '../../utils/branchUtils';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import './BranchList.css';
 
 /**
@@ -197,7 +197,7 @@ const BranchList = ({
                 <Card.Body className="p-0">
                     {loading ? (
                         <div className="text-center py-5">
-                            <LoadingSpinner text="지점 목록을 불러오는 중..." size="medium" />
+                            <UnifiedLoading text="지점 목록을 불러오는 중..." size="medium" type="inline" />
                         </div>
                     ) : filteredBranches.length === 0 ? (
                         <div className="text-center py-5">

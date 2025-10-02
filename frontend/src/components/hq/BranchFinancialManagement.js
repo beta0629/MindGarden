@@ -9,7 +9,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import './BranchFinancialManagement.css';
 
 /**
@@ -375,7 +375,7 @@ const BranchFinancialManagement = () => {
     };
 
     if (sessionLoading || loading) {
-        return <LoadingSpinner />;
+        return <UnifiedLoading type="inline" />;
     }
 
     return (

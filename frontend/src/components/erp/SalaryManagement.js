@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import ConsultantProfileModal from './ConsultantProfileModal';
@@ -771,7 +771,7 @@ const SalaryManagement = () => {
 
             {loading && (
                 <div className="salary-management-loading-overlay">
-                    <LoadingSpinner 
+                    <UnifiedLoading 
                         text="급여 데이터를 처리하는 중..."
                         size="large"
                         variant="default"

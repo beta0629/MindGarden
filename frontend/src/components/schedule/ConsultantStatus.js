@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import './ConsultantStatus.css';
 
 /**
@@ -172,7 +172,7 @@ const ConsultantStatus = () => {
     if (loading) {
         return (
             <div className="consultant-status">
-                <LoadingSpinner 
+                <UnifiedLoading 
                     text="상담사 현황을 불러오는 중..." 
                     size="medium" 
                     variant="bars"

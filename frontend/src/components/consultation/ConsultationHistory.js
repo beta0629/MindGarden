@@ -5,7 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import './ConsultationHistory.css';
 
 const ConsultationHistory = () => {
@@ -166,7 +166,7 @@ const ConsultationHistory = () => {
       <SimpleLayout>
         <div className="consultation-history-page">
           <div className="loading-container">
-            <LoadingSpinner text="세션 확인 중..." size="medium" />
+            <UnifiedLoading text="세션 확인 중..." size="medium" type="inline" />
           </div>
         </div>
       </SimpleLayout>
@@ -178,7 +178,7 @@ const ConsultationHistory = () => {
       <SimpleLayout>
         <div className="consultation-history-page">
           <div className="loading-container">
-            <LoadingSpinner text="상담 내역을 불러오는 중..." size="medium" />
+            <UnifiedLoading text="상담 내역을 불러오는 중..." size="medium" type="inline" />
           </div>
         </div>
       </SimpleLayout>

@@ -3,7 +3,7 @@ import StepIndicator from './components/StepIndicator';
 import ConsultantSelectionStep from './steps/ConsultantSelectionStep';
 import ClientSelectionStep from './steps/ClientSelectionStep';
 import TimeSlotGrid from './TimeSlotGrid';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';

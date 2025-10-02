@@ -13,7 +13,7 @@ import {
 import { apiGet, apiPost } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { normalizeBranchList, getBranchNameByCode } from '../../utils/branchUtils';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import SimpleLayout from '../layout/SimpleLayout';
 import BranchRegistrationModal from './BranchRegistrationModal';
 // CSS 파일 제거 - 인라인 스타일 사용
@@ -267,7 +267,7 @@ const BranchManagement = () => {
                                                     height: '200px',
                                                     flexDirection: 'column'
                                                 }}>
-                                                    <LoadingSpinner text="지점 목록을 불러오는 중..." size="small" />
+                                                    <UnifiedLoading text="지점 목록을 불러오는 중..." size="small" type="inline" />
                                                 </div>
                                             ) : (
                                                 <div style={{
@@ -720,7 +720,7 @@ const BranchManagement = () => {
                                                             height: '200px',
                                                             flexDirection: 'column'
                                                         }}>
-                                                            <LoadingSpinner text="사용자 목록을 불러오는 중..." size="medium" />
+                                                            <UnifiedLoading text="사용자 목록을 불러오는 중..." size="medium" type="inline" />
                                                         </div>
                                                     ) : filteredUsers.length === 0 ? (
                                                         <div style={{

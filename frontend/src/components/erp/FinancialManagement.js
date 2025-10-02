@@ -3,7 +3,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import FinancialCalendarView from './FinancialCalendarView';
 import './ErpCommon.css';
 
@@ -322,7 +322,7 @@ const FinancialManagement = () => {
         <div className="erp-content">
           {loading && (
             <div className="financial-management-loading">
-              <LoadingSpinner 
+              <UnifiedLoading 
                 text="데이터를 불러오는 중..."
                 size="medium"
                 variant="default"

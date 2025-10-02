@@ -6,7 +6,7 @@ import DashboardStats from './components/DashboardStats';
 import DashboardManagement from './components/DashboardManagement';
 import DashboardModals from './components/DashboardModals';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
 import SystemTools from './system/SystemTools';
@@ -71,7 +71,7 @@ const NewAdminDashboard = ({ user: propUser }) => {
         return (
             <SimpleLayout>
                 <div className="loading-container">
-                    <LoadingSpinner />
+                    <UnifiedLoading type="inline" />
                     <p>관리자 대시보드를 불러오는 중...</p>
                 </div>
             </SimpleLayout>

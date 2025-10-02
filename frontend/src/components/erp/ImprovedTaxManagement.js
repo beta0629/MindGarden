@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import './ErpCommon.css';
 
 /**
@@ -282,7 +282,7 @@ const ImprovedTaxManagement = () => {
           <div className="erp-content">
           {loading && (
             <div className="tax-management-loading">
-              <LoadingSpinner 
+              <UnifiedLoading 
                 text="데이터를 불러오는 중..."
                 size="medium"
                 variant="default"

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import ErpHeader from './common/ErpHeader';
 import ErpModal from './common/ErpModal';
 import { useSession } from '../../hooks/useSession';
@@ -159,7 +159,7 @@ const AdminApprovalDashboard = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner text="승인 대기 목록을 불러오는 중..." size="medium" />;
+    return <UnifiedLoading text="승인 대기 목록을 불러오는 중..." size="medium" type="inline" />;
   }
 
   return (

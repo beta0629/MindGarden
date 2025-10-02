@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import notificationManager from '../../utils/notification';
 
 /**
@@ -619,7 +619,7 @@ const ConsultationLogModal = ({
       <div className="consultation-log-modal-overlay">
         <div className="consultation-log-modal-content">
           <div className="consultation-log-modal-loading">
-            <LoadingSpinner variant="pulse" size="large" text="데이터를 불러오는 중..." />
+            <UnifiedLoading variant="pulse" size="large" text="데이터를 불러오는 중..." type="inline" />
           </div>
         </div>
       </div>
@@ -1225,7 +1225,7 @@ const ConsultationLogModal = ({
                 style={{...styles.button, ...styles.primaryButton}}
                 disabled={saving}
               >
-                {saving ? <LoadingSpinner variant="dots" size="small" /> : '💾 저장'}
+                {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '💾 저장'}
               </button>
               <button
                 type="button"
@@ -1233,7 +1233,7 @@ const ConsultationLogModal = ({
                 style={{...styles.button, ...styles.successButton}}
                 disabled={saving}
               >
-                {saving ? <LoadingSpinner variant="dots" size="small" /> : '✅ 완료'}
+                {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '✅ 완료'}
               </button>
             </div>
           </div>

@@ -11,7 +11,7 @@ import {
 } from '../../utils/codeHelper';
 import { useSession } from '../../contexts/SessionContext';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import './ImprovedCommonCodeManagement.css';
 
 /**
@@ -710,7 +710,7 @@ const CommonCodeManagement = () => {
             </div>
 
             {loading ? (
-                <LoadingSpinner text="코드그룹을 불러오는 중..." size="medium" />
+                <UnifiedLoading text="코드그룹을 불러오는 중..." size="medium" type="inline" />
             ) : (
                 <div className="group-cards">
                     {getFilteredCodeGroups().map((group, index) => (
@@ -934,7 +934,7 @@ const CommonCodeManagement = () => {
 
             <div className="codes-list">
                 {loading ? (
-                    <LoadingSpinner text="코드 목록을 불러오는 중..." size="medium" />
+                    <UnifiedLoading text="코드 목록을 불러오는 중..." size="medium" type="inline" />
                 ) : groupCodes.length === 0 ? (
                     <div className="empty-state">
                         <div className="empty-icon">📝</div>

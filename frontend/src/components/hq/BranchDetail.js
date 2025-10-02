@@ -11,7 +11,7 @@ import {
 } from 'react-icons/fa';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import BranchUserTransfer from './BranchUserTransfer';
 import './BranchDetail.css';
 
@@ -308,7 +308,7 @@ const BranchDetail = ({
                         <Card.Body>
                             {loading ? (
                                 <div className="text-center py-4">
-                                    <LoadingSpinner text="통계를 불러오는 중..." size="medium" />
+                                    <UnifiedLoading text="통계를 불러오는 중..." size="medium" type="inline" />
                                 </div>
                             ) : (
                                 <Row>

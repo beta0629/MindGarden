@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { API_BASE_URL } from '../../constants/api';
 import '../../styles/main.css';
 import './TimeSlotGrid.css';
@@ -658,10 +658,11 @@ const TimeSlotGrid = ({
         return (
             <div className="time-slot-grid-container">
                 <div className="time-slot-grid-loading">
-                    <LoadingSpinner 
+                    <UnifiedLoading 
                         text="시간 로딩 중..." 
                         size="medium" 
                         variant="pulse"
+                        type="inline"
                         className="loading-spinner-inline"
                     />
                 </div>

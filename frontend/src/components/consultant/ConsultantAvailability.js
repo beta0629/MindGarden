@@ -3,7 +3,7 @@ import { useSession } from '../../hooks/useSession';
 import { sessionManager } from '../../utils/sessionManager';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import './ConsultantAvailability.css';
 
 const ConsultantAvailability = () => {
@@ -220,7 +220,7 @@ const ConsultantAvailability = () => {
     return (
       <SimpleLayout>
         <div className="loading-container">
-          <LoadingSpinner 
+          <UnifiedLoading 
             text="세션 확인 중..." 
             size="medium"
             className="loading-spinner-inline"
@@ -328,7 +328,7 @@ const ConsultantAvailability = () => {
 
       {/* 로딩 상태 */}
       {loading && (
-        <LoadingSpinner text="상담 가능 시간을 불러오는 중..." size="medium" />
+        <UnifiedLoading text="상담 가능 시간을 불러오는 중..." size="medium" type="inline" />
       )}
 
       {/* 오류 상태 */}

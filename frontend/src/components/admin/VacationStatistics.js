@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaCalendarAlt, FaUserTie, FaChartBar, FaClock } from 'react-icons/fa';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import './VacationStatistics.css';
 
 /**
@@ -182,7 +182,7 @@ const VacationStatistics = ({ className = "" }) => {
     if (loading) {
         return (
             <div className={`vacation-statistics ${className}`}>
-                <LoadingSpinner 
+                <UnifiedLoading 
                     text="휴가 통계를 불러오는 중..." 
                     size="medium"
                     inline={true}

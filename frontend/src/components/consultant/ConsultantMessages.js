@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 import './ConsultantMessages.css';
@@ -162,7 +162,7 @@ const ConsultantMessages = () => {
   if (sessionLoading) {
     return (
       <SimpleLayout title="메시지 관리">
-        <LoadingSpinner text="세션 정보를 불러오는 중..." size="medium" />
+        <UnifiedLoading text="세션 정보를 불러오는 중..." size="medium" type="inline" />
       </SimpleLayout>
     );
   }
@@ -241,7 +241,7 @@ const ConsultantMessages = () => {
         {/* 로딩 상태 */}
         {loading && (
           <div className="consultant-messages-loading-container">
-            <LoadingSpinner text="메시지 목록을 불러오는 중..." size="medium" />
+            <UnifiedLoading text="메시지 목록을 불러오는 중..." size="medium" type="inline" />
             <p className="consultant-messages-loading-text">잠시만 기다려주세요...</p>
           </div>
         )}

@@ -3,7 +3,7 @@ import { Button, Modal, Form, Badge, Container, Row, Col, Card, InputGroup } fro
 import { FaUsers, FaEdit, FaUser, FaUserTie, FaCrown, FaBuilding, FaSearch, FaFilter } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import './UserManagement.css';
@@ -247,7 +247,7 @@ const UserManagement = ({ onUpdate, showToast }) => {
                                     </Col>
                                 </Row>
                 {loading ? (
-                    <LoadingSpinner text="사용자 목록을 불러오는 중..." size="medium" />
+                    <UnifiedLoading text="사용자 목록을 불러오는 중..." size="medium" type="inline" />
                 ) : users.length === 0 ? (
                     <div className="text-center py-4 text-muted">
                         <FaUsers className="mb-3 empty-icon" />

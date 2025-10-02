@@ -5,7 +5,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { DASHBOARD_API } from '../../constants/api';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import ScheduleCalendar from '../schedule/ScheduleCalendar';
 import './ClientSchedule.css';
 
@@ -30,7 +30,7 @@ const ClientSchedule = () => {
     return (
       <SimpleLayout>
         <div className="client-schedule-loading">
-          <LoadingSpinner />
+          <UnifiedLoading type="inline" />
         </div>
       </SimpleLayout>
     );

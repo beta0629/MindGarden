@@ -10,7 +10,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { apiGet } from '../../utils/ajax';
 import { SCHEDULE_API } from '../../constants/api';
-import LoadingSpinner from './LoadingSpinner';
+import UnifiedLoading from './UnifiedLoading';
 import CustomSelect from './CustomSelect';
 import { 
   SORT_OPTIONS, 
@@ -419,7 +419,7 @@ const ScheduleList = ({
 
       <div className="schedule-content">
         {loading ? (
-          <LoadingSpinner text="스케줄을 불러오는 중..." size="medium" />
+          <UnifiedLoading text="스케줄을 불러오는 중..." size="medium" type="inline" />
         ) : displaySchedules.length === 0 ? (
           <div className="schedule-empty">
             <i className="bi bi-calendar-x"></i>

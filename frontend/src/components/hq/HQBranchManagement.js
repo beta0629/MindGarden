@@ -4,7 +4,7 @@ import { FaBuilding, FaChartBar, FaCog } from 'react-icons/fa';
 import { useSession } from '../../contexts/SessionContext';
 import { useNavigate } from 'react-router-dom';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import BranchList from './BranchList';
 import BranchForm from './BranchForm';
 import BranchDetail from './BranchDetail';
@@ -168,7 +168,7 @@ const HQBranchManagement = () => {
         return (
             <SimpleLayout>
                 <div className="hq-branch-management-loading">
-                    <LoadingSpinner text="지점 관리 시스템을 불러오는 중..." size="large" />
+                    <UnifiedLoading text="지점 관리 시스템을 불러오는 중..." size="large" type="inline" />
                 </div>
             </SimpleLayout>
         );

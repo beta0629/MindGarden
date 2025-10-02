@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { apiPost, apiGet } from '../../utils/ajax';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import notificationManager from '../../utils/notification';
 
 /**
@@ -433,7 +433,7 @@ const MessageSendModal = ({
               style={{...styles.button, ...styles.primaryButton}}
               disabled={sending}
             >
-              {sending ? <LoadingSpinner variant="dots" size="small" /> : '📤 메시지 전송'}
+              {sending ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '📤 메시지 전송'}
             </button>
           </div>
         </div>
@@ -441,7 +441,7 @@ const MessageSendModal = ({
         {/* 로딩 오버레이 */}
         {sending && (
           <div style={styles.loadingOverlay}>
-            <LoadingSpinner variant="pulse" size="large" text="메시지 전송 중..." />
+            <UnifiedLoading variant="pulse" size="large" text="메시지 전송 중..." type="inline" />
           </div>
         )}
       </div>

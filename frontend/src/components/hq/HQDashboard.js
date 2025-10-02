@@ -15,7 +15,7 @@ import { showNotification } from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from '../common/UnifiedLoading';
 import MotivationCard from '../common/MotivationCard';
 import '../../styles/main.css';
 import './HQDashboard.css';
@@ -200,7 +200,7 @@ const HQDashboard = ({ user: propUser }) => {
         return (
             <SimpleLayout title="본사 대시보드">
                 <Container fluid className="py-4">
-                    <LoadingSpinner text="대시보드를 불러오는 중..." size="large" />
+                    <UnifiedLoading text="대시보드를 불러오는 중..." size="large" type="inline" />
                 </Container>
             </SimpleLayout>
         );

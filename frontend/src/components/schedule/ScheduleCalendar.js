@@ -8,7 +8,7 @@ import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
 import TimeSelectionModal from './TimeSelectionModal';
 import UnifiedLoading from '../common/UnifiedLoading';
-import LoadingSpinner from '../common/LoadingSpinner';
+// import LoadingSpinner from '../common/LoadingSpinner'; // UnifiedLoading으로 교체
 import CustomSelect from '../common/CustomSelect';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
@@ -965,11 +965,11 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             </div>
 
             {loading && (
-                <LoadingSpinner 
+                <UnifiedLoading 
                     text="스케줄을 불러오는 중..." 
                     size="large" 
                     variant="pulse"
-                    className="loading-spinner-fullscreen"
+                    type="fullscreen"
                 />
             )}
 

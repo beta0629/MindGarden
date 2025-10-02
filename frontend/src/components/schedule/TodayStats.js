@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet } from '../../utils/ajax';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import './TodayStats.css';
 
 /**
@@ -79,7 +79,7 @@ const TodayStats = () => {
     if (loading) {
         return (
             <div className="stats-grid">
-                <LoadingSpinner 
+                <UnifiedLoading 
                     text="오늘의 통계를 불러오는 중..." 
                     size="medium" 
                     variant="dots"

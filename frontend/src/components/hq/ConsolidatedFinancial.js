@@ -10,7 +10,7 @@ import { apiGet } from '../../utils/ajax';
 import { getCodeLabel } from '../../utils/commonCodeUtils';
 import { showNotification } from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import Chart from '../common/Chart';
 import './ConsolidatedFinancial.css';
 
@@ -237,7 +237,7 @@ const ConsolidatedFinancial = () => {
         return (
             <SimpleLayout title="통합 재무현황">
                 <Container fluid className="py-4">
-                    <LoadingSpinner text="재무 데이터를 불러오는 중..." size="large" />
+                    <UnifiedLoading text="재무 데이터를 불러오는 중..." size="large" type="inline" />
                 </Container>
             </SimpleLayout>
         );

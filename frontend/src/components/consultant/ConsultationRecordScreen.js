@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 
@@ -519,7 +519,7 @@ const ConsultationRecordScreen = () => {
     return (
       <SimpleLayout title="상담일지 작성">
         <div className="consultation-record-screen-loading">
-          <LoadingSpinner variant="pulse" size="large" text="데이터를 불러오는 중..." />
+          <UnifiedLoading variant="pulse" size="large" text="데이터를 불러오는 중..." type="inline" />
         </div>
       </SimpleLayout>
     );
@@ -991,7 +991,7 @@ const ConsultationRecordScreen = () => {
             style={{...styles.button, ...styles.primaryButton}}
             disabled={saving}
           >
-            {saving ? <LoadingSpinner variant="dots" size="small" /> : '💾 저장'}
+            {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '💾 저장'}
           </button>
           <button
             type="button"
@@ -999,7 +999,7 @@ const ConsultationRecordScreen = () => {
             style={{...styles.button, ...styles.dangerButton}}
             disabled={saving}
           >
-            {saving ? <LoadingSpinner variant="dots" size="small" /> : '✅ 완료'}
+            {saving ? <UnifiedLoading variant="dots" size="small" type="inline" /> : '✅ 완료'}
           </button>
         </div>
       </div>

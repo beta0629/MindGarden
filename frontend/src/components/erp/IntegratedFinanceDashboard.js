@@ -8,7 +8,7 @@ import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUt
 import SimpleLayout from '../layout/SimpleLayout';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import QuickExpenseForm from './QuickExpenseForm';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/main.css';
 import './IntegratedFinanceDashboard.css';
 
@@ -242,7 +242,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
 
 
   if (loading) {
-    return <LoadingSpinner text="데이터를 불러오는 중..." size="medium" />;
+    return <UnifiedLoading text="데이터를 불러오는 중..." size="medium" type="inline" />;
   }
 
   if (error) {
@@ -648,7 +648,7 @@ const BalanceSheetTab = ({ selectedBranch, isHQUser }) => {
   };
 
   if (loading) {
-    return <LoadingSpinner text="대차대조표를 불러오는 중..." size="medium" />;
+    return <UnifiedLoading text="대차대조표를 불러오는 중..." size="medium" type="inline" />;
   }
 
   return (
@@ -813,7 +813,7 @@ const IncomeStatementTab = ({ selectedBranch, isHQUser }) => {
   };
 
   if (loading) {
-    return <LoadingSpinner text="손익계산서를 불러오는 중..." size="medium" />;
+    return <UnifiedLoading text="손익계산서를 불러오는 중..." size="medium" type="inline" />;
   }
 
   return (
@@ -964,7 +964,7 @@ const DailyReportTab = ({ period }) => {
   };
 
   if (loading) {
-    return <LoadingSpinner text="일간 리포트 데이터를 불러오는 중..." size="medium" />;
+    return <UnifiedLoading text="일간 리포트 데이터를 불러오는 중..." size="medium" type="inline" />;
   }
 
   if (error) {
@@ -1107,7 +1107,7 @@ const MonthlyReportTab = ({ period }) => {
   };
 
   if (loading) {
-    return <LoadingSpinner text="월간 리포트 데이터를 불러오는 중..." size="medium" />;
+    return <UnifiedLoading text="월간 리포트 데이터를 불러오는 중..." size="medium" type="inline" />;
   }
 
   if (error) {
@@ -1252,7 +1252,7 @@ const YearlyReportTab = ({ period }) => {
   };
 
   if (loading) {
-    return <LoadingSpinner text="년간 리포트 데이터를 불러오는 중..." size="medium" />;
+    return <UnifiedLoading text="년간 리포트 데이터를 불러오는 중..." size="medium" type="inline" />;
   }
 
   if (error) {

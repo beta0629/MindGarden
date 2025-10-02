@@ -11,7 +11,7 @@ import {
 import { apiGet } from '../../utils/ajax';
 import { showNotification } from '../../utils/notification';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from "../common/UnifiedLoading";
 import '../../styles/main.css';
 import './BranchStatisticsDashboard.css';
 
@@ -145,7 +145,7 @@ const BranchStatisticsDashboard = ({ selectedBranchId, onBranchSelect }) => {
         return (
             <div className="branch-statistics-dashboard">
                 <div className="text-center py-5">
-                    <LoadingSpinner text="통계 데이터를 불러오는 중..." size="large" />
+                    <UnifiedLoading text="통계 데이터를 불러오는 중..." size="large" type="inline" />
                 </div>
             </div>
         );

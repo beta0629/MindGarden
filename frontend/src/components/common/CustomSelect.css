@@ -93,7 +93,7 @@
 
 .custom-select__search {
   padding: 8px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--color-border-secondary, #E8E8ED);
 }
 
 .custom-select__search-input {
@@ -106,7 +106,7 @@
 }
 
 .custom-select__search-input:focus {
-  border-color: #007bff;
+  border-color: var(--color-primary, #007AFF);
   box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.25);
 }
 
@@ -154,7 +154,7 @@
 
 .custom-select.disabled .custom-select__trigger {
   cursor: not-allowed;
-  background-color: #f8f9fa;
+  background-color: var(--color-bg-secondary, #F5F5F7);
 }
 
 /* 스크롤바 스타일링 */
@@ -163,7 +163,7 @@
 }
 
 .custom-select__options::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-bg-accent, #E8E8ED);
   border-radius: 3px;
 }
 

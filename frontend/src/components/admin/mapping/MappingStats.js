@@ -88,8 +88,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '📊',
                         label: '전체 매핑',
                         value: stats.total,
-                        color: '#6f42c1',
-                        bgColor: '#6f42c120',
+                        color: 'var(--color-primary, #007AFF)',
+                        bgColor: 'var(--color-primary-light, rgba(0, 122, 255, 0.1))',
                         action: 'view_all'
                     }),
                     
@@ -135,8 +135,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '⏳',
                         label: '결제 대기',
                         value: stats.pending,
-                        color: '#ffc107',
-                        bgColor: '#ffc10720',
+                        color: 'var(--color-warning, #FFC107)',
+                        bgColor: 'var(--color-warning-light, rgba(255, 193, 7, 0.1))',
                         action: 'payment'
                     },
                     {
@@ -144,8 +144,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '✅',
                         label: '활성 매핑',
                         value: stats.active,
-                        color: '#28a745',
-                        bgColor: '#28a74520',
+                        color: 'var(--color-success, #28A745)',
+                        bgColor: 'var(--color-success-light, rgba(40, 167, 69, 0.1))',
                         action: 'view'
                     },
                     {
@@ -153,8 +153,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '💰',
                         label: '결제 확인',
                         value: stats.paymentConfirmed,
-                        color: '#17a2b8',
-                        bgColor: '#17a2b820',
+                        color: 'var(--color-info, #17A2B8)',
+                        bgColor: 'var(--color-info-light, rgba(23, 162, 184, 0.1))',
                         action: 'view'
                     },
                     {
@@ -162,8 +162,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '📊',
                         label: '전체 매핑',
                         value: stats.total,
-                        color: '#6f42c1',
-                        bgColor: '#6f42c120',
+                        color: 'var(--color-primary, #007AFF)',
+                        bgColor: 'var(--color-primary-light, rgba(0, 122, 255, 0.1))',
                         action: 'view_all'
                     },
                     {

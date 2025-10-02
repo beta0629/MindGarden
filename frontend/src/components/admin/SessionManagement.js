@@ -367,6 +367,18 @@ const SessionManagement = () => {
     };
 
     /**
+     * 매핑 선택 처리
+     */
+    const handleMappingSelect = (mapping) => {
+        setSelectedMapping(mapping);
+        // 해당 매핑의 내담자 정보 찾기
+        const client = clients.find(client => client.id === mapping.clientId);
+        if (client) {
+            setSelectedClient(client);
+        }
+    };
+
+    /**
      * 필터링된 매핑 목록 반환
      */
     const getFilteredMappings = () => {

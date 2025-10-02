@@ -187,34 +187,34 @@
 }
 
 .card__icon {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--border-radius-xxl);
+  width: 3rem;        /* 48px - 가이드 기준 */
+  height: 3rem;       /* 48px - 가이드 기준 */
+  border-radius: var(--border-radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto var(--spacing-lg);
-  font-size: var(--font-size-xxxl);
+  margin: 0 auto var(--spacing-md);
+  font-size: 1.5rem;  /* 24px - icon-xl 기준 */
   color: white;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: var(--transition-bounce);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .card__icon--small {
-  width: 64px;
-  height: 64px;
-  font-size: var(--font-size-xxl);
-  border-radius: var(--border-radius-xl);
+  width: 3rem;        /* 48px - 가이드 기준 */
+  height: 3rem;       /* 48px - 가이드 기준 */
+  font-size: 1.5rem;  /* 24px - icon-xl 기준 */
+  border-radius: var(--border-radius-lg);
 }
 
 .card__icon--large {
-  width: 80px;
-  height: 80px;
-  font-size: var(--font-size-xxxl);
-  border-radius: var(--border-radius-xxl);
+  width: 4rem;        /* 64px - 더 큰 크기 */
+  height: 4rem;       /* 64px - 더 큰 크기 */
+  font-size: 2rem;    /* 32px - 더 큰 폰트 */
+  border-radius: var(--border-radius-xl);
 }
 
 /* 아이콘 색상 */
@@ -480,25 +480,26 @@
     box-shadow: var(--ipad-card-shadow);
   }
   
-  /* 모바일 아이콘 크기 조정 - 더 작게 */
+  /* 모바일 아이콘 크기 조정 - 크게 */
+  .card__icon {
+    width: 2.5rem;      /* 40px */
+    height: 2.5rem;     /* 40px */
+    font-size: 1.25rem; /* 20px */
+    border-radius: var(--border-radius-md);
+  }
+  
   .card__icon--small {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-    border-radius: 6px;
-    background: var(--ios-blue);
-    color: white;
-    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+    width: 2.25rem;     /* 36px */
+    height: 2.25rem;    /* 36px */
+    font-size: 1.125rem; /* 18px */
+    border-radius: var(--border-radius-sm);
   }
   
   .card__icon--large {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-    border-radius: 8px;
-    background: var(--ios-blue);
-    color: white;
-    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+    width: 3rem;        /* 48px */
+    height: 3rem;       /* 48px */
+    font-size: 1.5rem;  /* 24px */
+    border-radius: var(--border-radius-md);
   }
 }
 
@@ -560,19 +561,27 @@
     font-size: var(--font-size-base);
   }
   
-  /* 아이패드 아이콘 크기 조정 */
-  .card__icon--small {
-    width: 56px;
-    height: 56px;
-    font-size: var(--font-size-xxl);
+  /* 아이패드 아이콘 크기 조정 - 크게 */
+  .card__icon {
+    width: 3rem;        /* 48px */
+    height: 3rem;       /* 48px */
+    font-size: 1.5rem;  /* 24px */
     border-radius: var(--ipad-border-radius-md);
+    margin: 0 auto 12px;
+  }
+  
+  .card__icon--small {
+    width: 2.75rem;     /* 44px */
+    height: 2.75rem;    /* 44px */
+    font-size: 1.25rem; /* 20px */
+    border-radius: var(--ipad-border-radius-sm);
   }
   
   .card__icon--large {
-    width: 64px;
-    height: 64px;
-    font-size: var(--font-size-xxl);
-    border-radius: var(--ipad-border-radius-lg);
+    width: 3.5rem;      /* 56px */
+    height: 3.5rem;     /* 56px */
+    font-size: 1.75rem; /* 28px */
+    border-radius: var(--ipad-border-radius-md);
   }
   
   /* 아이패드 호버 효과 (터치 디바이스에서는 제한적) */

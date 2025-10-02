@@ -1,38 +1,40 @@
-/* ===== MappingCard 스타일 - 아이폰 스타일과 글래스모피즘 적용 ===== */
+/* ===== MappingCard 스타일 - 디자인 가이드 준수 아이폰 스타일 ===== */
 
 .mapping-card {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.18);
+    /* 아이폰 스타일 카드 - 가이드 준수 */
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.1s ease;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    margin-bottom: 12px;
 }
 
+/* 모바일에서는 호버 효과 제거, 터치 피드백만 */
 .mapping-card:hover {
-    transform: translateY(-4px);
-    background: rgba(255, 255, 255, 0.3);
-    border-color: var(--color-primary, #007AFF);
-    box-shadow: 
-        0 8px 24px rgba(0, 122, 255, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: none;
 }
 
-/* 카드 헤더 */
+.mapping-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+}
+
+/* 카드 헤더 - 아이폰 스타일 */
 .mapping-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 16px 12px 16px;
-    background: linear-gradient(135deg, rgba(248, 249, 250, 0.3) 0%, rgba(233, 236, 239, 0.2) 100%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 16px 20px 12px;
+    background: rgba(248, 248, 248, 0.8);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px 12px 0 0;
 }
 
 .client-info {
@@ -43,17 +45,18 @@
 }
 
 .client-avatar {
-    width: 36px;
-    height: 36px;
+    /* 아이폰 스타일 아바타 - 단색 아이콘 */
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-primary, #007AFF), var(--color-accent, #5856D6));
+    background: #007aff;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
 }
 
 .client-details {
@@ -61,80 +64,79 @@
 }
 
 .client-name {
-    font-size: 16px;
+    /* 아이폰 스타일 폰트 */
+    font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary, #1a1a1a);
+    color: #1d1d1f;
     margin: 0 0 4px 0;
     line-height: 1.2;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .client-role {
-    font-size: 14px;
-    color: var(--text-secondary, #666666);
+    font-size: 12px;
+    color: #86868b;
     margin: 0;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 4px 8px;
-    border-radius: 8px;
+    background: rgba(142, 142, 147, 0.12);
+    padding: 2px 6px;
+    border-radius: 6px;
     display: inline-block;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: none;
+    font-weight: 400;
 }
 
 .status-badge {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    border: 1px solid;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
 }
 
 .status-badge.success {
     background: rgba(52, 199, 89, 0.2);
-    color: var(--color-success, #34C759);
-    border-color: rgba(52, 199, 89, 0.3);
+    color: #34c759;
 }
 
 .status-badge.warning {
     background: rgba(255, 149, 0, 0.2);
-    color: var(--color-warning, #FF9500);
-    border-color: rgba(255, 149, 0, 0.3);
+    color: #ff9500;
 }
 
 .status-badge.danger {
     background: rgba(255, 59, 48, 0.2);
-    color: var(--color-danger, #FF3B30);
-    border-color: rgba(255, 59, 48, 0.3);
+    color: #ff3b30;
 }
 
 .status-badge.secondary {
     background: rgba(142, 142, 147, 0.2);
-    color: var(--color-secondary, #8E8E93);
-    border-color: rgba(142, 142, 147, 0.3);
+    color: #8e8e93;
 }
 
 .status-badge i {
-    font-size: 16px;
+    font-size: 12px;
 }
 
-/* 카드 바디 */
+/* 카드 바디 - 아이폰 스타일 */
 .mapping-card-body {
-    padding: 16px;
+    padding: 20px;
     flex: 1;
 }
 
 .consultant-info,
 .package-info {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .info-row:last-child {
@@ -144,35 +146,35 @@
 .info-label {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 14px;
+    gap: 6px;
+    font-size: 12px;
     font-weight: 500;
-    color: var(--text-secondary, #666666);
+    color: #86868b;
 }
 
 .info-label i {
-    font-size: 16px;
-    color: var(--color-primary, #007AFF);
+    font-size: 12px;
+    color: #007aff;
 }
 
 .info-value {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--text-primary, #1a1a1a);
+    color: #1d1d1f;
 }
 
 .session-info {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .session-stats {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    gap: 8px;
+    padding: 10px;
+    background: rgba(248, 248, 248, 0.6);
+    border-radius: 8px;
+    border: none;
 }
 
 .stat-item {
@@ -181,38 +183,41 @@
 
 .stat-label {
     display: block;
-    font-size: 10px;
-    color: var(--text-secondary, #666666);
-    margin-bottom: 4px;
+    font-size: 9px;
+    color: #86868b;
+    margin-bottom: 2px;
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .stat-value {
     display: block;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
     line-height: 1.2;
 }
 
 .stat-value.total {
-    color: var(--text-primary, #1a1a1a);
+    color: #1d1d1f;
 }
 
 .stat-value.used {
-    color: var(--color-danger, #FF3B30);
+    color: #ff3b30;
 }
 
 .stat-value.remaining {
-    color: var(--color-success, #34C759);
+    color: #34c759;
 }
 
-/* 카드 액션 */
+/* 카드 액션 - 아이폰 스타일 */
 .mapping-card-actions {
-    padding: 12px 16px;
-    background: rgba(248, 249, 250, 0.2);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px 20px;
+    background: rgba(248, 248, 248, 0.6);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
     display: flex;
     gap: 8px;
+    border-radius: 0 0 12px 12px;
 }
 
 .mapping-actions {
@@ -223,39 +228,47 @@
 
 .action-btn {
     flex: 1;
-    padding: 8px 12px;
+    padding: 8px 16px;
     border: none;
     border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.1s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .action-btn.primary {
-    background: linear-gradient(135deg, var(--color-primary, #007AFF), var(--color-accent, #5856D6));
+    background: #007aff;
     color: white;
     box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
 }
 
 .action-btn.primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+    transform: none;
+}
+
+.action-btn.primary:active {
+    transform: scale(0.98);
 }
 
 .action-btn.secondary {
-    background: rgba(142, 142, 147, 0.2);
-    color: var(--text-primary, #1a1a1a);
-    border: 1px solid rgba(142, 142, 147, 0.3);
+    background: rgba(142, 142, 147, 0.12);
+    color: #007aff;
+    border: none;
 }
 
 .action-btn.secondary:hover {
-    background: rgba(142, 142, 147, 0.3);
-    transform: translateY(-1px);
+    background: rgba(142, 142, 147, 0.2);
+    transform: none;
+}
+
+.action-btn.secondary:active {
+    transform: scale(0.98);
 }
 
 .action-btn:disabled {
@@ -265,54 +278,100 @@
 }
 
 .action-btn i {
-    font-size: 16px;
+    font-size: 12px;
 }
 
-/* 반응형 디자인 */
+/* 아이폰 스타일 반응형 디자인 - 가이드 준수 */
 @media (max-width: 768px) {
+    .mapping-card {
+        margin-bottom: 8px;
+        border-radius: 8px;
+    }
+    
     .mapping-card-header {
-        padding: 12px;
+        padding: 12px 16px 8px;
     }
     
     .mapping-card-body {
-        padding: 12px;
+        padding: 16px;
     }
     
     .mapping-card-actions {
-        padding: 10px 12px;
+        padding: 8px 16px;
     }
     
     .client-avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 14px;
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
     }
     
     .client-name {
-        font-size: 14px;
+        font-size: 13px;
+    }
+    
+    .client-role {
+        font-size: 11px;
+        padding: 1px 4px;
+    }
+    
+    .status-badge {
+        padding: 3px 6px;
+        font-size: 11px;
+    }
+    
+    .info-label {
+        font-size: 11px;
+    }
+    
+    .info-value {
+        font-size: 12px;
     }
     
     .session-stats {
         grid-template-columns: 1fr;
-        gap: 8px;
-        padding: 10px;
+        gap: 6px;
+        padding: 8px;
     }
     
     .stat-value {
-        font-size: 12px;
+        font-size: 11px;
     }
     
     .stat-label {
-        font-size: 9px;
+        font-size: 8px;
+    }
+    
+    .action-btn {
+        padding: 6px 12px;
+        font-size: 12px;
     }
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {
     .mapping-card-header {
-        padding: 22px;
+        padding: 18px 24px 14px;
     }
     
     .mapping-card-body {
-        padding: 22px;
+        padding: 24px;
+    }
+    
+    .mapping-card-actions {
+        padding: 16px 24px;
+    }
+}
+
+@media (min-width: 1025px) {
+    .mapping-card-header {
+        padding: 20px 28px 16px;
+    }
+    
+    .mapping-card-body {
+        padding: 28px;
+    }
+    
+    .mapping-card-actions {
+        padding: 20px 28px;
     }
 }

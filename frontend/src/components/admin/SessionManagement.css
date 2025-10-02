@@ -1,7 +1,7 @@
 /* ===== SessionManagement 스타일 - 디자인 가이드 적용 ===== */
 
 /* CSS 변수 정의 - 디자인 가이드 파스텔 톤 + iOS 스타일 */
-:root {
+html, body, #root, .session-mgmt-container {
     /* Primary Colors - 부드러운 파스텔 블루 */
     --primary-50: #f0f8ff;
     --primary-100: #e0f2fe;
@@ -68,11 +68,13 @@
     --ios-radius-xl: 20px;
 }
 
+#root .session-mgmt-container,
+body .session-mgmt-container,
 .session-mgmt-container {
     padding: 40px 20px !important;
     max-width: 1400px !important;
     margin: 0 auto !important;
-    background: linear-gradient(135deg, var(--primary-50) 0%, var(--secondary-100) 100%) !important;
+    background: linear-gradient(135deg, #f0f8ff 0%, #f5f7fa 100%) !important;
     min-height: 100vh !important;
     position: relative !important;
 }
@@ -94,15 +96,17 @@
 }
 
 /* 헤더 섹션 - iOS 스타일 + 글래스모피즘 적용 */
+#root .session-mgmt-header,
+body .session-mgmt-header,
 .session-mgmt-header {
     margin-bottom: 40px !important;
-    background: var(--glass-bg) !important;
-    backdrop-filter: var(--glass-backdrop) !important;
-    -webkit-backdrop-filter: var(--glass-backdrop) !important;
-    border-radius: var(--ios-radius-lg) !important;
+    background: rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border-radius: 16px !important;
     padding: 32px !important;
-    border: 1px solid var(--glass-border) !important;
-    box-shadow: var(--ios-shadow-lg) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
     position: relative !important;
     overflow: hidden !important;
 }
@@ -202,10 +206,12 @@
     transform: translateY(-2px);
 }
 
+#root .tab-btn.active,
+body .tab-btn.active,
 .tab-btn.active {
-    background: var(--ios-blue) !important;
+    background: #007AFF !important;
     color: white !important;
-    box-shadow: var(--ios-shadow-md) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
     transform: translateY(-2px) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }

@@ -34,21 +34,21 @@ const StatisticsDashboard = ({
         }
     ];
 
-    return (
+  return (
         <div className="statistics-dashboard">
             {stats.map((stat, index) => (
                 <div key={`stat-${index}`} className={`stat-card stat-card--${stat.color}`}>
                     <div className="stat-card__icon">
                         <i className={`bi ${stat.icon}`}></i>
-                    </div>
+        </div>
                     <div className="stat-card__content">
                         <div className="stat-card__value">{stat.value}</div>
                         <div className="stat-card__label">{stat.label}</div>
-                    </div>
-                </div>
-            ))}
         </div>
-    );
+      </div>
+            ))}
+    </div>
+  );
 };
 
 export default StatisticsDashboard;

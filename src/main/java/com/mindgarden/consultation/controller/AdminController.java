@@ -1342,12 +1342,31 @@ public class AdminController {
     @PostMapping("/mappings")
     public ResponseEntity<?> createMapping(@RequestBody ConsultantClientMappingDto dto, HttpSession session) {
         try {
-            log.info("🔧 매핑 생성: 상담사={}, 내담자={}", dto.getConsultantId(), dto.getClientId());
+            log.info("🔧 매핑 생성 시작: 상담사={}, 내담자={}", dto.getConsultantId(), dto.getClientId());
+            
+            // 세션 상세 정보 로깅
+            log.info("🔧 세션 정보 - ID: {}, 생성시간: {}, 최종접근시간: {}, 유효: {}", 
+                session.getId(), 
+                session.getCreationTime(), 
+                session.getLastAccessedTime(),
+                !session.isNew());
+            
+            // 세션에 저장된 모든 속성 확인
+            java.util.Enumeration<String> attributeNames = session.getAttributeNames();
+            log.info("🔧 세션 속성 목록:");
+            while (attributeNames.hasMoreElements()) {
+                String attrName = attributeNames.nextElement();
+                Object attrValue = session.getAttribute(attrName);
+                log.info("  - {}: {} (타입: {})", attrName, attrValue, 
+                    attrValue != null ? attrValue.getClass().getSimpleName() : "null");
+            }
             
             // 세션 체크 및 권한 확인 (운영 환경과 동일)
             User currentUser = SessionUtils.getCurrentUser(session);
+            log.info("🔧 SessionUtils.getCurrentUser() 결과: {}", currentUser);
+            
             if (currentUser == null) {
-                log.warn("❌ 세션이 없습니다. 로그인이 필요합니다.");
+                log.warn("❌ 세션이 없습니다. 로그인이 필요합니다. 세션ID: {}", session.getId());
                 return ResponseEntity.status(401).body(Map.of(
                     "success", false,
                     "message", "로그인이 필요합니다.",

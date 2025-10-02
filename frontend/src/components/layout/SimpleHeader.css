@@ -73,7 +73,7 @@
   box-shadow: var(--header-shadow);
   position: sticky;
   top: 0;
-  z-index: var(--header-z-index);
+  z-index: var(--z-header); /* 통합 z-index 사용 */
 }
 
 .simple-header-content {
@@ -242,7 +242,7 @@
   font-size: var(--header-branch-size-mobile);
 }
 
-/* 로그아웃 버튼 - 강제 표시 */
+/* 로그아웃 버튼 - 헤더 내 위치로 수정 */
 .simple-logout-button {
   display: flex;
   align-items: center;
@@ -257,10 +257,8 @@
   font-size: var(--font-size-base);
   font-weight: 700;
   margin-right: 10px;
-  position: fixed; /* fixed로 강제 */
-  top: 10px;
-  right: 60px;
-  z-index: 99999; /* 더 높은 z-index */
+  position: relative; /* relative로 변경하여 헤더 내 위치 */
+  z-index: var(--z-header); /* 헤더 z-index 사용 */
   box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
   animation: pulse 2s infinite;
 }

@@ -78,8 +78,8 @@ public class PermissionCheckUtils {
             log.info("✅ Spring Security 컨텍스트에 인증 정보 설정 완료");
         }
         
-        // 3. 권한 체크 - 역할명으로 직접 체크 (JPA Lazy Loading 문제 해결)
-        boolean hasPermission = dynamicPermissionService.hasPermission(currentUser.getRole().name(), permissionCode);
+        // 3. 권한 체크 - User 객체로 직접 체크 (더 안전한 방식)
+        boolean hasPermission = dynamicPermissionService.hasPermission(currentUser, permissionCode);
         log.info("🔍 권한 체크 결과: hasPermission={}, permissionCode={}, roleName={}", 
                 hasPermission, permissionCode, currentUser.getRole().name());
         

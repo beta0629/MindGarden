@@ -6,7 +6,7 @@
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  z-index: var(--z-modal); /* 모달 z-index 사용 */
   display: flex;
   justify-content: flex-end;
   align-items: flex-start;

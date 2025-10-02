@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Alert } from 'react-bootstrap';
 import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaToggleOff, FaCompressAlt, FaClock, FaChartBar, FaUserGraduate, FaRedo, FaFileExport } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from '../common/UnifiedLoading';
 import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
 import SystemTools from './system/SystemTools';
@@ -414,11 +414,11 @@ const AdminDashboard = ({ user: propUser }) => {
         return (
             <div className="admin-dashboard">
                 <div className="admin-dashboard-content">
-                    <LoadingSpinner 
+                    <UnifiedLoading 
                         text="세션 확인 중..."
                         size="large"
                         variant="default"
-                        inline={true}
+                        type="page"
                     />
                 </div>
             </div>

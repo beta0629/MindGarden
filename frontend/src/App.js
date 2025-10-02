@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import './styles/index.css';
+import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
+import { initializeDesignSystem } from './utils/designSystemHelper';
 import TabletHomepage from './components/homepage/Homepage';
 import TabletLogin from './components/auth/TabletLogin';
 import TabletRegister from './components/auth/TabletRegister';
@@ -23,7 +24,10 @@ import ImprovedTaxManagement from './components/erp/ImprovedTaxManagement';
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
 import SchedulePage from './components/schedule/SchedulePage';
-import ScheduleCalendar from './components/schedule/ScheduleCalendar';
+import UnifiedScheduleComponent from './components/schedule/UnifiedScheduleComponent';
+import UnifiedModalTest from './components/test/UnifiedModalTest';
+import UnifiedLoadingTest from './components/test/UnifiedLoadingTest';
+import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
 import ConsultantComprehensiveManagement from './components/admin/ConsultantComprehensiveManagement';
 import ClientComprehensiveManagement from './components/admin/ClientComprehensiveManagement';
 import SessionManagement from './components/admin/SessionManagement';
@@ -35,7 +39,7 @@ import ScheduleList from './components/common/ScheduleList';
 import ComingSoon from './components/common/ComingSoon';
 import PaymentManagement from './components/super-admin/PaymentManagement';
 import SimpleLayout from './components/layout/SimpleLayout';
-import Toast from './components/common/Toast';
+import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
 import PaymentTest from './components/test/PaymentTest';
 import IntegrationTest from './components/test/IntegrationTest';
@@ -73,7 +77,8 @@ import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { sessionManager } from './utils/sessionManager';
 import duplicateLoginManager from './utils/duplicateLoginManager';
-import DuplicateLoginAlert from './components/common/DuplicateLoginAlert';
+import notificationManager from './utils/notification';
+// DuplicateLoginAlert는 UnifiedNotification으로 통합됨
 import BranchMappingModal from './components/common/BranchMappingModal';
 import DuplicateLoginModal from './components/common/DuplicateLoginModal';
 import PrivacyPolicy from './components/common/PrivacyPolicy';
@@ -140,6 +145,14 @@ function AppContent() {
     return logUnmount;
   }, []); // 의존성 배열을 비워서 한 번만 실행
 
+  // 디자인 시스템 초기화
+  useEffect(() => {
+    initializeDesignSystem({
+      loadConsultantColors: true,
+      autoDetectTheme: true
+    });
+  }, []);
+
   // 중복 로그인 체크 시작/중지 (개발 환경에서는 비활성화)
   useEffect(() => {
     // 개발 환경에서는 중복 로그인 체크 비활성화
@@ -166,7 +179,30 @@ function AppContent() {
   useEffect(() => {
     const handleDuplicateLoginEvent = (event) => {
       console.log('⚠️ 중복 로그인 이벤트 수신:', event.detail);
-      setShowDuplicateLoginAlert(true);
+      
+      // UnifiedNotification을 통해 중복 로그인 알림 표시
+      notificationManager.show({
+        id: 'duplicate-login-alert',
+        type: 'warning',
+        title: '중복 로그인 감지',
+        message: '다른 곳에서 로그인되어 현재 세션이 종료됩니다.',
+        showCountdown: true,
+        countdown: 5,
+        actions: [
+          {
+            id: 'confirm',
+            label: '확인',
+            variant: 'primary',
+            showCountdown: true
+          },
+          {
+            id: 'cancel',
+            label: '취소',
+            variant: 'secondary'
+          }
+        ],
+        duration: 5000
+      });
     };
 
     window.addEventListener('duplicateLoginDetected', handleDuplicateLoginEvent);
@@ -210,9 +246,12 @@ function AppContent() {
     <Router>
       <QueryParamHandler onLoginSuccess={handleLoginSuccess}>
         <div className="App">
-          <Toast />
+          <UnifiedNotification type="toast" position="top-right" />
           <Routes>
             <Route path="/" element={<TabletHomepage />} />
+            <Route path="/test/modal" element={<UnifiedModalTest />} />
+            <Route path="/test/loading" element={<UnifiedLoadingTest />} />
+            <Route path="/test/header" element={<UnifiedHeaderTest />} />
             <Route path="/login" element={<TabletLogin />} />
             <Route path="/register" element={<TabletRegister />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -318,7 +357,7 @@ function AppContent() {
             
             <Route path="/admin/schedules" element={
               <SimpleLayout>
-                <ScheduleCalendar 
+                <UnifiedScheduleComponent 
                   userRole={user?.role || 'ADMIN'}
                   userId={user?.id}
                 />
@@ -447,12 +486,15 @@ function AppContent() {
             userRole={user?.role || 'ADMIN'}
           />
           
-          {/* 중복 로그인 알림 */}
-          <DuplicateLoginAlert
-            isVisible={showDuplicateLoginAlert}
-            onConfirm={handleDuplicateLoginConfirm}
-            onCancel={handleDuplicateLoginCancel}
-            countdown={5}
+          {/* 중복 로그인 알림 - UnifiedNotification으로 통합 */}
+          <UnifiedNotification 
+            type="modal" 
+            position="center"
+            onAction={(action) => {
+              if (action.id === 'confirm' || action.id === 'cancel') {
+                duplicateLoginManager.forceLogout();
+              }
+            }}
           />
           
           {/* 지점 매핑 모달 */}

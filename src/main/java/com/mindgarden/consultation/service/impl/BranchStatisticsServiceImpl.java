@@ -137,7 +137,7 @@ public class BranchStatisticsServiceImpl implements BranchStatisticsService {
         
         // 지점의 상담사들 조회 (기존 구현 방식 사용)
         List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, "CONSULTANT");
+                branch, com.mindgarden.consultation.constant.UserRole.CONSULTANT);
         
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("branchId", branchId);

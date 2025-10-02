@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import SimpleLayout from '../layout/SimpleLayout';
 
@@ -379,7 +379,7 @@ const ConsultantMessageScreen = () => {
     return (
       <SimpleLayout title="메시지 전송">
         <div className="consultant-message-screen-loading">
-          <LoadingSpinner variant="pulse" size="large" text="데이터를 불러오는 중..." />
+          <UnifiedLoading variant="pulse" size="large" text="데이터를 불러오는 중..." />
         </div>
       </SimpleLayout>
     );
@@ -548,7 +548,7 @@ const ConsultantMessageScreen = () => {
             style={{...styles.button, ...styles.successButton}}
             disabled={sending || !messageData.title.trim() || !messageData.content.trim()}
           >
-            {sending ? <LoadingSpinner variant="dots" size="small" /> : '📤 메시지 전송'}
+            {sending ? <UnifiedLoading variant="dots" size="small" /> : '📤 메시지 전송'}
           </button>
         </div>
       </div>

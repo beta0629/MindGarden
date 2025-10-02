@@ -1,7 +1,7 @@
 {
     "java.home": "/opt/homebrew/opt/openjdk@17",
     "java.jdt.ls.java.home": "/opt/homebrew/opt/openjdk@17",
-    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -Xmx2g -Xms1g",
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -Xmx4g -Xms1g",
     "java.import.maven.enabled": true,
     "java.autobuild.enabled": true,
     "java.compile.nullAnalysis.mode": "automatic",

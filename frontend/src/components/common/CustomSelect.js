@@ -25,8 +25,10 @@ const CustomSelect = ({
   const selectRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  // 외부 클릭 감지
+  // 외부 클릭 감지 - 더 안정적인 방식
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleClickOutside = (event) => {
       if (selectRef.current && !selectRef.current.contains(event.target)) {
         setIsOpen(false);
@@ -34,13 +36,18 @@ const CustomSelect = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+    // mousedown 대신 click 이벤트 사용, 그리고 약간의 지연
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside);
+    }, 100);
 
-  // 드롭다운 위치 조정
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // 드롭다운 위치 조정 및 포커스 관리
   useEffect(() => {
     if (isOpen && dropdownRef.current) {
       const rect = selectRef.current.getBoundingClientRect();
@@ -58,6 +65,9 @@ const CustomSelect = ({
         dropdown.style.bottom = 'auto';
         dropdown.style.marginTop = '4px';
       }
+
+      // 드롭다운이 열릴 때 포커스 설정
+      selectRef.current.focus();
     }
   }, [isOpen]);
 
@@ -81,6 +91,7 @@ const CustomSelect = ({
     if (!isOpen) {
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
         e.preventDefault();
+        e.stopPropagation();
         setIsOpen(true);
       }
       return;
@@ -88,19 +99,24 @@ const CustomSelect = ({
 
     switch (e.key) {
       case 'Escape':
+        e.preventDefault();
+        e.stopPropagation();
         setIsOpen(false);
         setSearchTerm('');
         break;
       case 'ArrowDown':
         e.preventDefault();
+        e.stopPropagation();
         // 다음 옵션으로 이동 (간단한 구현)
         break;
       case 'ArrowUp':
         e.preventDefault();
+        e.stopPropagation();
         // 이전 옵션으로 이동 (간단한 구현)
         break;
       case 'Enter':
         e.preventDefault();
+        e.stopPropagation();
         if (filteredOptions.length > 0) {
           handleOptionSelect(filteredOptions[0].value);
         }
@@ -118,7 +134,13 @@ const CustomSelect = ({
       {/* 선택된 값 표시 */}
       <div 
         className="custom-select__trigger"
-        onClick={() => !disabled && !loading && setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!disabled && !loading) {
+            setIsOpen(!isOpen);
+          }
+        }}
       >
         <span className="custom-select__value">
           {loading ? '로딩 중...' : selectedOption ? selectedOption.label : placeholder}
@@ -139,6 +161,7 @@ const CustomSelect = ({
                 placeholder="검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
                 className="custom-select__search-input"
                 autoFocus
               />
@@ -156,7 +179,10 @@ const CustomSelect = ({
                 <div
                   key={option.value}
                   className={`custom-select__option ${value === option.value ? 'selected' : ''}`}
-                  onClick={() => handleOptionSelect(option.value)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOptionSelect(option.value);
+                  }}
                 >
                   {option.label}
                 </div>

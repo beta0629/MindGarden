@@ -1,0 +1,237 @@
+/* ========================================
+   MindGarden 통합 디자인 시스템
+   모든 CSS 변수를 한 곳에서 관리
+   ======================================== */
+
+:root {
+  /* ===== Z-Index 레이어 시스템 ===== */
+  --z-base: 0;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
+
+  /* ===== 색상 시스템 ===== */
+  
+  /* iOS 시스템 색상 */
+  --ios-blue: #007aff;
+  --ios-green: #34c759;
+  --ios-orange: #ff9500;
+  --ios-red: #ff3b30;
+  --ios-purple: #5856d6;
+  --ios-pink: #ff2d92;
+  --ios-yellow: #ffcc00;
+  --ios-gray: #8e8e93;
+
+  /* 시맨틱 색상 (iOS 기반) */
+  --color-primary: var(--ios-blue);
+  --color-secondary: #6c757d;
+  --color-success: var(--ios-green);
+  --color-danger: var(--ios-red);
+  --color-warning: var(--ios-orange);
+  --color-info: #17a2b8;
+  --color-light: #f8f9fa;
+  --color-dark: #343a40;
+
+  /* 텍스트 색상 */
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
+  --text-tertiary: #c7c7cc;
+  --text-inverse: #ffffff;
+
+  /* 배경 색상 */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f2f2f7;
+  --bg-tertiary: #ffffff;
+  --bg-dark: #1d1d1f;
+
+  /* 글래스모피즘 색상 */
+  --glass-bg-light: rgba(255, 255, 255, 0.25);
+  --glass-bg-medium: rgba(255, 255, 255, 0.35);
+  --glass-bg-strong: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-border-strong: rgba(255, 255, 255, 0.3);
+
+  /* 상담사별 색상 (기본값) */
+  --consultant-color-1: #3b82f6;
+  --consultant-color-2: #10b981;
+  --consultant-color-3: #f59e0b;
+  --consultant-color-4: #ef4444;
+  --consultant-color-5: #8b5cf6;
+  --consultant-color-6: #06b6d4;
+  --consultant-color-7: #84cc16;
+  --consultant-color-8: #f97316;
+  --consultant-color-9: #ec4899;
+  --consultant-color-10: #6366f1;
+
+  /* ===== 타이포그래피 시스템 ===== */
+  
+  /* 폰트 패밀리 */
+  --font-family-ios: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+
+  /* 모바일 우선 폰트 크기 */
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-xxl: 20px;
+  --font-size-xxxl: 22px;
+
+  /* 데스크톱 폰트 크기 */
+  --font-size-base-desktop: 16px;
+  --font-size-lg-desktop: 18px;
+  --font-size-xl-desktop: 20px;
+  --font-size-xxl-desktop: 24px;
+  --font-size-xxxl-desktop: 28px;
+
+  /* 폰트 두께 */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ===== 간격 시스템 ===== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-xxxl: 64px;
+
+  /* ===== 보더 시스템 ===== */
+  --border-width-thin: 1px;
+  --border-width-medium: 2px;
+  --border-width-thick: 4px;
+
+  --border-radius-xs: 2px;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --border-radius-xxl: 24px;
+  --border-radius-full: 50%;
+
+  /* ===== 그림자 시스템 ===== */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  /* 글래스모피즘 그림자 */
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  --shadow-glass-strong: 0 8px 32px 0 rgba(31, 38, 135, 0.5);
+
+  /* ===== 애니메이션 시스템 ===== */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  --transition-bounce: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* ===== 브레이크포인트 (CSS 변수로 정의) ===== */
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* ===== 컴포넌트별 특수 변수 ===== */
+  
+  /* 버튼 */
+  --btn-height-sm: 32px;
+  --btn-height-md: 40px;
+  --btn-height-lg: 48px;
+  --btn-height-xl: 56px;
+
+  /* 카드 */
+  --card-padding-sm: var(--spacing-md);
+  --card-padding-md: var(--spacing-lg);
+  --card-padding-lg: var(--spacing-xl);
+  --card-radius: var(--border-radius-lg);
+
+  /* 모달 */
+  --modal-max-width: 500px;
+  --modal-padding: var(--spacing-xl);
+  --modal-radius: var(--border-radius-xl);
+
+  /* 헤더 */
+  --header-height: 60px;
+  --header-padding: var(--spacing-md) var(--spacing-lg);
+
+  /* 사이드바 */
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 60px;
+}
+
+/* ===== 다크 테마 변수 ===== */
+[data-theme="dark"] {
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1a6;
+  --text-tertiary: #636366;
+  
+  --bg-primary: #1c1c1e;
+  --bg-secondary: #2c2c2e;
+  --bg-tertiary: #3a3a3c;
+  
+  --glass-bg-light: rgba(0, 0, 0, 0.25);
+  --glass-bg-medium: rgba(0, 0, 0, 0.35);
+  --glass-bg-strong: rgba(0, 0, 0, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-strong: rgba(255, 255, 255, 0.2);
+}
+
+/* ===== 고대비 모드 ===== */
+@media (prefers-contrast: high) {
+  :root {
+    --color-primary: #0056cc;
+    --color-success: #007a00;
+    --color-danger: #cc0000;
+    --color-warning: #cc6600;
+    
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --bg-primary: #ffffff;
+  }
+}
+
+/* ===== 모션 감소 설정 ===== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0.01s;
+    --transition-normal: 0.01s;
+    --transition-slow: 0.01s;
+    --transition-bounce: 0.01s;
+  }
+  
+  * {
+    animation-duration: 0.01s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01s !important;
+  }
+}
+
+/* ===== 인쇄 스타일 ===== */
+@media print {
+  :root {
+    --color-primary: #000000;
+    --color-secondary: #666666;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --shadow-xs: none;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+    --shadow-xl: none;
+    --shadow-2xl: none;
+  }
+}

@@ -8,6 +8,8 @@
  * @since 2025-01-23
  */
 
+import { API_BASE_URL } from '../constants/api';
+
 class CsrfTokenManager {
     constructor() {
         this.token = null;
@@ -59,7 +61,7 @@ class CsrfTokenManager {
      */
     async _fetchToken() {
         try {
-            const response = await fetch('/api/auth/csrf-token', {
+            const response = await fetch(`${API_BASE_URL}/api/auth/csrf-token`, {
                 method: 'GET',
                 credentials: 'include'
             });
@@ -87,6 +89,9 @@ class CsrfTokenManager {
     async fetchWithCsrf(url, options = {}) {
         const token = await this.getToken();
         
+        // URL이 상대 경로인 경우 API_BASE_URL 추가
+        const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+        
         const headers = {
             'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
@@ -98,7 +103,7 @@ class CsrfTokenManager {
             headers['X-XSRF-TOKEN'] = token;
         }
         
-        return fetch(url, {
+        return fetch(fullUrl, {
             ...options,
             headers,
             credentials: 'include'

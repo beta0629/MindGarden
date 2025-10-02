@@ -6,12 +6,15 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
-import LoadingSpinner from '../common/LoadingSpinner';
+import DateActionModal from './DateActionModal';
+import TimeSelectionModal from './TimeSelectionModal';
+import UnifiedLoading from '../common/UnifiedLoading';
 import CustomSelect from '../common/CustomSelect';
-import SimpleLayout from '../layout/SimpleLayout';
+import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
+// import { initializeDesignSystem, getConsultantColor as getConsultantColorFromSystem } from '../../utils/designSystemHelper';
 import './ScheduleCalendar.css';
 import '../common/ScheduleList.css';
 
@@ -27,13 +30,17 @@ import '../common/ScheduleList.css';
  */
 const UnifiedScheduleComponent = ({ 
   user: propUser, 
-  userRole: propUserRole, 
+  userRole: propUserRole,
   userId: propUserId,
   view = 'calendar' // 'calendar', 'list'
 }) => {
-  // 사용자 정보 결정 (prop > null)
-  const userRole = propUserRole || 'CLIENT';
-  const userId = propUserId;
+  // 세션 정보 가져오기
+  const { user: sessionUser } = useSession();
+  
+  // 사용자 정보 결정 (prop > session > null)
+  const currentUser = propUser || sessionUser;
+  const userRole = propUserRole || currentUser?.role || 'CLIENT';
+  const userId = propUserId || currentUser?.id;
     const [events, setEvents] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedInfo, setSelectedInfo] = useState(null);
@@ -146,10 +153,55 @@ const UnifiedScheduleComponent = ({
     const loadConsultants = useCallback(async () => {
         try {
             setLoadingConsultants(true);
-            const response = await apiGet('/api/admin/consultants');
+            
+            // 디버깅을 위한 사용자 정보 로그
+            console.log('🔍 사용자 정보 확인:', {
+                currentUser,
+                currentUserRole: userRole,
+                branchId: currentUser?.branchId,
+                branchCode: currentUser?.branchCode
+            });
+            
+            // 사용자 역할에 따른 API 엔드포인트 결정
+            let apiEndpoint = '/api/admin/consultants';
+            
+            // 지점 어드민인 경우 자신의 지점 상담사만 조회
+            console.log('🔍 조건 확인:', {
+                userRole,
+                isBranchSuperAdmin: userRole === 'BRANCH_SUPER_ADMIN',
+                hasBranchId: !!currentUser?.branchId,
+                branchId: currentUser?.branchId
+            });
+            
+            if (userRole === 'BRANCH_SUPER_ADMIN' && currentUser?.branchId) {
+                apiEndpoint = `/api/admin/consultants/by-branch/${currentUser.branchId}`;
+                console.log('🏢 지점 어드민 - 지점별 상담사 조회:', currentUser.branchId);
+            } else {
+                console.log('🏢 전체 상담사 조회 - 이유:', {
+                    role: userRole,
+                    isBranchSuperAdmin: userRole === 'BRANCH_SUPER_ADMIN',
+                    hasBranchId: !!currentUser?.branchId,
+                    branchId: currentUser?.branchId
+                });
+            }
+            
+            console.log('📡 API 엔드포인트:', apiEndpoint);
+            const response = await apiGet(apiEndpoint);
             
             if (response && response.success) {
-                setConsultants(response.data || []);
+                const consultantData = response.data || [];
+                console.log('👥 로드된 상담사 목록:', consultantData);
+                setConsultants(consultantData);
+                
+                // 김선희, 김선희2 상담사 정보 확인
+                const kimConsultants = consultantData.filter(consultant => 
+                    consultant.name && consultant.name.includes('김선희')
+                );
+                console.log('🎨 김선희 관련 상담사들:', kimConsultants);
+                
+                kimConsultants.forEach(consultant => {
+                    console.log(`🎨 ${consultant.name} - ID: ${consultant.id}, isActive: ${consultant.isActive}`);
+                });
             }
         } catch (error) {
             console.error('상담사 목록 로드 실패:', error);
@@ -157,7 +209,7 @@ const UnifiedScheduleComponent = ({
         } finally {
             setLoadingConsultants(false);
         }
-    }, []);
+    }, [userRole, currentUser?.branchId]);
 
     /**
      * 상태값을 한글로 변환 (동적 로드)
@@ -213,6 +265,9 @@ const UnifiedScheduleComponent = ({
                         // 휴가는 노란색, 나머지는 상담사별 색상 사용
                         const isVacation = schedule.status === 'VACATION';
                         const eventColor = isVacation ? getEventColor(schedule.status) : getConsultantColor(schedule.consultantId);
+                        
+                        // 디버깅: 상담사별 색상 확인
+                        console.log(`🎨 상담사 색상 적용: ${schedule.consultantName} (ID: ${schedule.consultantId}) -> ${eventColor}`);
                         
                         return {
                             id: schedule.id,
@@ -296,8 +351,38 @@ const UnifiedScheduleComponent = ({
         }
     }, [userId, userRole, selectedConsultantId]);
 
+    // 상담사별 색상 상태
+    const [consultantColors, setConsultantColors] = useState([]);
+    
+    // 상담사별 색상 로드 (새로운 디자인 시스템 사용)
+    const loadConsultantColors = useCallback(async () => {
+        try {
+            console.log('🎨 상담사별 색상만 로드 시작');
+            const response = await fetch('/api/admin/css-themes/consultant-colors');
+            const data = await response.json();
+            
+            if (data.success && data.colors) {
+                setConsultantColors(data.colors);
+                console.log('🎨 상담사별 색상 로드 완료:', data.colors);
+            } else {
+                console.warn('🎨 상담사별 색상 로드 실패, 기본값 사용');
+                setConsultantColors([
+                    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+                    '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
+                ]);
+            }
+        } catch (error) {
+            console.error('🎨 상담사별 색상 로드 오류:', error);
+            setConsultantColors([
+                '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+                '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
+            ]);
+        }
+    }, []);
+
     // 스케줄 데이터 로드
     useEffect(() => {
+        loadConsultantColors(); // 상담사별 색상 로드
         loadSchedules();
         loadScheduleStatusCodes();
         
@@ -305,7 +390,7 @@ const UnifiedScheduleComponent = ({
         if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
             loadConsultants();
         }
-    }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole, selectedConsultantId]);
+    }, [loadConsultantColors, loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole, selectedConsultantId]);
 
     // 상담사 이전 이벤트 감지하여 스케줄 새로고침
     useEffect(() => {
@@ -435,25 +520,27 @@ const UnifiedScheduleComponent = ({
     };
 
     /**
-     * 상담사별 색상 반환
+     * 상담사별 색상 반환 (새로운 디자인 시스템 사용)
      */
     const getConsultantColor = (consultantId) => {
-        const colors = [
-            '#3b82f6', // 파란색
-            '#10b981', // 녹색
-            '#f59e0b', // 주황색
-            '#ef4444', // 빨간색
-            '#8b5cf6', // 보라색
-            '#06b6d4', // 청록색
-            '#84cc16', // 라임색
-            '#f97316', // 오렌지색
-            '#ec4899', // 핑크색
-            '#6366f1'  // 인디고색
-        ];
+        console.log(`🎨 getConsultantColor 호출: consultantId=${consultantId}, consultantColors.length=${consultantColors?.length}`);
+        
+        // 색상 배열이 로드되지 않은 경우 기본 색상 반환
+        if (!consultantColors || consultantColors.length === 0) {
+            const defaultColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+            const colorIndex = consultantId % defaultColors.length;
+            const selectedColor = defaultColors[colorIndex];
+            console.log(`🎨 기본 색상 사용: consultantId=${consultantId}, colorIndex=${colorIndex}, color=${selectedColor}`);
+            return selectedColor;
+        }
         
         // 상담사 ID를 기반으로 일관된 색상 할당
-        const colorIndex = consultantId % colors.length;
-        return colors[colorIndex];
+        const colorIndex = consultantId % consultantColors.length;
+        const selectedColor = consultantColors[colorIndex];
+        
+        console.log(`🎨 동적 색상 사용: consultantId=${consultantId}, colorIndex=${colorIndex}, color=${selectedColor}`);
+        
+        return selectedColor;
     };
 
 
@@ -909,9 +996,9 @@ const UnifiedScheduleComponent = ({
 
     return (
         <>
-            <SimpleLayout title="스케줄 관리">
             <div className="schedule-calendar">
             <div className="calendar-header">
+                <h2>📅 스케줄 관리</h2>
                 <div className="header-actions">
                     {/* 상담사용 휴가 등록 버튼 */}
                     {userRole === 'CONSULTANT' && (
@@ -1005,7 +1092,7 @@ const UnifiedScheduleComponent = ({
             </div>
 
             {loading && (
-                <LoadingSpinner 
+                <UnifiedLoading 
                     text="스케줄을 불러오는 중..." 
                     size="large" 
                     variant="default"
@@ -1066,6 +1153,7 @@ const UnifiedScheduleComponent = ({
             )}
 
             {/* 스케줄 상세 정보 모달 */}
+            {console.log('🔍 UnifiedScheduleComponent: isDetailModalOpen =', isDetailModalOpen, 'selectedSchedule =', selectedSchedule)}
             {isDetailModalOpen && (
                 <ScheduleDetailModal
                     isOpen={isDetailModalOpen}
@@ -1075,89 +1163,18 @@ const UnifiedScheduleComponent = ({
                 />
             )}
 
-            {/* 날짜 액션 선택 모달 - 인라인 */}
+
+            {/* 날짜 액션 선택 모달 */}
+            {console.log('🔍 UnifiedScheduleComponent: isDateActionModalOpen =', isDateActionModalOpen)}
             {isDateActionModalOpen && (
-                console.log('📅 인라인 모달 렌더링 중...', { isDateActionModalOpen, selectedDate, userRole }),
-                <div 
-                    className="unified-schedule-loading-overlay"
-                    onClick={() => setIsDateActionModalOpen(false)}
-                >
-                    <div 
-                        className="unified-schedule-loading-content"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="unified-schedule-modal-header">
-                            <h3 className="unified-schedule-modal-title">
-                                📅 {selectedDate ? selectedDate.toLocaleDateString('ko-KR', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                    weekday: 'long'
-                                }) : ''}
-                            </h3>
-                            <p className="unified-schedule-modal-subtitle">원하는 작업을 선택하세요</p>
-                        </div>
-                        
-                        <div className="unified-schedule-modal-actions">
-                            <button 
-                                onClick={handleScheduleClick}
-                                className="unified-schedule-modal-btn"
-                                onMouseOver={(e) => {
-                                    e.target.style.borderColor = '#007bff';
-                                    e.target.style.background = '#f8f9ff';
-                                }}
-                                onMouseOut={(e) => {
-                                    e.target.style.borderColor = '#e9ecef';
-                                    e.target.style.background = 'white';
-                                }}
-                            >
-                                <span className="unified-schedule-modal-btn-icon">📋</span>
-                                <div>
-                                    <div className="unified-schedule-modal-btn-title">일정 등록</div>
-                                    <div className="unified-schedule-modal-btn-description">상담 일정을 등록합니다</div>
-                                </div>
-                            </button>
-                            
-                            {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
-                                <button 
-                                    onClick={handleVacationClick}
-                                    className="unified-schedule-modal-btn"
-                                    onMouseOver={(e) => {
-                                        e.target.style.borderColor = '#ffc107';
-                                        e.target.style.background = '#fffbf0';
-                                    }}
-                                    onMouseOut={(e) => {
-                                        e.target.style.borderColor = '#e9ecef';
-                                        e.target.style.background = 'white';
-                                    }}
-                                >
-                                    <span className="unified-schedule-modal-btn-icon">🏖️</span>
-                                    <div>
-                                        <div className="unified-schedule-modal-btn-title">휴가 등록</div>
-                                        <div className="unified-schedule-modal-btn-description">상담사의 휴가를 등록합니다</div>
-                                    </div>
-                                </button>
-                            )}
-                        </div>
-                        
-                        <div className="unified-schedule-modal-footer">
-                            <button 
-                                onClick={() => setIsDateActionModalOpen(false)}
-                                className="unified-schedule-modal-close-btn"
-                                onMouseOver={(e) => {
-                                    e.target.style.background = '#5a6268';
-                                    e.target.style.transform = 'translateY(-1px)';
-                                }}
-                                onMouseOut={(e) => {
-                                    e.target.style.background = '#6c757d';
-                                    e.target.style.transform = 'translateY(0)';
-                                }}
-                            >
-                                취소
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <DateActionModal
+                    isOpen={isDateActionModalOpen}
+                    onClose={() => setIsDateActionModalOpen(false)}
+                    selectedDate={selectedDate}
+                    userRole={userRole}
+                    onScheduleClick={handleScheduleClick}
+                    onVacationClick={handleVacationClick}
+                />
             )}
 
             {/* 휴가 등록 모달 */}
@@ -1176,155 +1193,16 @@ const UnifiedScheduleComponent = ({
             )}
 
             {/* 시간 선택 모달 */}
-            {showTimeSelectionModal && selectedSchedule && (
-                <div className="unified-schedule-time-modal-overlay">
-                    <div className="unified-schedule-time-modal-content">
-                        <h3 className="unified-schedule-time-modal-title">
-                            🕐 시간을 선택하세요
-                        </h3>
-                        
-                        {/* 상담 유형 선택 */}
-                        <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#4a5568' }}>
-                                상담 유형:
-                            </label>
-                            <select
-                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: 'var(--font-size-sm)' }}
-                                defaultValue="INDIVIDUAL"
-                            >
-                                <option value="INDIVIDUAL">개인상담 (INDIVIDUAL)</option>
-                                <option value="GROUP">그룹상담 (GROUP)</option>
-                                <option value="COUPLE">부부상담 (COUPLE)</option>
-                            </select>
-                        </div>
-
-                        {/* 상담 시간 선택 */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#4a5568' }}>
-                                상담 시간:
-                            </label>
-                            <select
-                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: 'var(--font-size-sm)' }}
-                                defaultValue="50_MIN"
-                            >
-                                <option value="30_MIN">30분 (30분)</option>
-                                <option value="50_MIN">50분 (50분)</option>
-                                <option value="60_MIN">60분 (60분)</option>
-                                <option value="90_MIN">90분 (90분)</option>
-                            </select>
-                        </div>
-
-                        {/* 시간대 선택 그리드 */}
-                        <div style={{ marginBottom: '24px' }}>
-                            <div style={{ marginBottom: '12px', fontWeight: '500', color: '#4a5568' }}>
-                                사용 가능한 시간대:
-                            </div>
-                            {loadingAvailableTimes ? (
-                                <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
-                                    예약 정보를 불러오는 중...
-                                </div>
-                            ) : (
-                                <div style={{ 
-                                    display: 'grid', 
-                                    gridTemplateColumns: 'repeat(2, 1fr)', 
-                                    gap: '8px',
-                                    maxHeight: '400px',
-                                    overflowY: 'auto',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '8px',
-                                    padding: '12px'
-                                }}>
-                                    {generateTimeSlots().map((timeSlot, index) => {
-                                        const isBooked = isTimeSlotBooked(timeSlot.startTime, timeSlot.endTime);
-                                        const isSelected = selectedSchedule.startTime === timeSlot.startTime && 
-                                                          selectedSchedule.endTime === timeSlot.endTime;
-                                        
-                                        return (
-                                            <button
-                                                key={index}
-                                                onClick={() => !isBooked && setSelectedSchedule(prev => ({
-                                                    ...prev,
-                                                    startTime: timeSlot.startTime,
-                                                    endTime: timeSlot.endTime
-                                                }))}
-                                                disabled={isBooked}
-                                                style={{
-                                                    padding: '12px 8px',
-                                                    border: '1px solid #e2e8f0',
-                                                    borderRadius: '6px',
-                                                    background: isBooked ? '#f3f4f6' : (isSelected ? '#3b82f6' : 'white'),
-                                                    color: isBooked ? '#9ca3af' : (isSelected ? 'white' : '#374151'),
-                                                    cursor: isBooked ? 'not-allowed' : 'pointer',
-                                                    transition: 'all 0.2s',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    alignItems: 'center',
-                                                    gap: '4px',
-                                                    fontSize: 'var(--font-size-xs)'
-                                                }}
-                                            >
-                                                <div style={{ 
-                                                    width: '20px', 
-                                                    height: '20px', 
-                                                    borderRadius: '50%', 
-                                                    backgroundColor: isBooked ? '#d1d5db' : (isSelected ? 'white' : '#10b981'),
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: 'var(--font-size-xs)',
-                                                    color: isBooked ? '#9ca3af' : (isSelected ? '#3b82f6' : 'white')
-                                                }}>
-                                                    {isBooked ? '✗' : '가'}
-                                                </div>
-                                                <div style={{ fontWeight: '500' }}>
-                                                    {timeSlot.startTime}
-                                                </div>
-                                                <div style={{ fontSize: 'var(--font-size-xs)', color: isBooked ? '#9ca3af' : '#6b7280' }}>
-                                                    {timeSlot.duration}
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                            <button
-                                onClick={() => setShowTimeSelectionModal(false)}
-                                style={{
-                                    padding: '10px 20px',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '6px',
-                                    background: 'white',
-                                    color: '#4a5568',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                취소
-                            </button>
-                            <button
-                                onClick={handleTimeSelectionConfirm}
-                                style={{
-                                    padding: '10px 20px',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    background: '#3b82f6',
-                                    color: 'white',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                확인
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <TimeSelectionModal
+                isOpen={showTimeSelectionModal}
+                onClose={() => setShowTimeSelectionModal(false)}
+                selectedSchedule={selectedSchedule}
+                onScheduleUpdate={setSelectedSchedule}
+                availableTimes={generateTimeSlots()}
+                isTimeSlotBooked={isTimeSlotBooked}
+                onConfirm={handleTimeSelectionConfirm}
+            />
             </div>
-        </SimpleLayout>
-        
         </>
     );
 };

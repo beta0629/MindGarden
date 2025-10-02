@@ -106,7 +106,7 @@ public class AuthController {
             userInfo.put("role", user.getRole());
             
             // 지점 정보 추가 (공통코드 기반)
-            userInfo.put("branchId", null);
+            userInfo.put("branchId", user.getBranch() != null ? user.getBranch().getId() : null);
             userInfo.put("branchCode", user.getBranchCode());
             userInfo.put("needsBranchMapping", user.getBranchCode() == null);
             

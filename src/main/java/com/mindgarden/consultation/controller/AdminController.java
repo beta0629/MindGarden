@@ -15,6 +15,7 @@ import com.mindgarden.consultation.entity.ConsultantClientMapping;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.UserSocialAccountRepository;
 import com.mindgarden.consultation.service.AdminService;
+import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.ConsultantRatingService;
 import com.mindgarden.consultation.service.ConsultationRecordService;
 import com.mindgarden.consultation.service.DynamicPermissionService;
@@ -50,6 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminController {
 
     private final AdminService adminService;
+    private final BranchService branchService;
     private final ScheduleService scheduleService;
     private final ConsultationRecordService consultationRecordService;
     private final DynamicPermissionService dynamicPermissionService;
@@ -112,6 +114,93 @@ public class AdminController {
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "상담사 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * 지점별 상담사 목록 조회
+     */
+    @GetMapping("/consultants/by-branch/{branchId}")
+    public ResponseEntity<?> getConsultantsByBranch(@PathVariable Long branchId, HttpSession session) {
+        try {
+            log.info("🔍 지점별 상담사 목록 조회: branchId={}", branchId);
+            
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "CONSULTANT_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
+            }
+            
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                log.warn("❌ 현재 사용자 정보가 없습니다.");
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            log.info("🔍 현재 사용자: role={}, branchCode={}", currentUser.getRole(), currentUser.getBranchCode());
+            
+            // 지점 정보 조회
+            log.info("🔍 지점 정보 조회 시작: branchId={}", branchId);
+            var branchResponse = branchService.getBranchResponse(branchId);
+            log.info("🔍 지점 정보 조회 결과: {}", branchResponse != null ? "성공" : "실패");
+            if (branchResponse == null) {
+                log.warn("❌ 지점 정보 조회 실패: branchId={}", branchId);
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "존재하지 않는 지점입니다."
+                ));
+            }
+            
+            // 권한 확인 - BRANCH_SUPER_ADMIN은 자신의 지점만 조회 가능
+            if (currentUser.getRole().name().equals("BRANCH_SUPER_ADMIN")) {
+                Long currentUserBranchId = currentUser.getBranch() != null ? currentUser.getBranch().getId() : null;
+                if (currentUserBranchId == null || !currentUserBranchId.equals(branchId)) {
+                    log.warn("❌ 지점 어드민이 다른 지점 조회 시도: 요청={}, 소속={}", branchId, currentUserBranchId);
+                    return ResponseEntity.status(403).body(Map.of(
+                        "success", false,
+                        "message", "해당 지점의 상담사 조회 권한이 없습니다."
+                    ));
+                }
+            }
+            
+            // 지점별 상담사 조회
+            log.info("🔍 지점별 상담사 조회 시작: branchId={}", branchId);
+            List<User> branchConsultants = branchService.getBranchConsultants(branchId);
+            log.info("🔍 지점별 상담사 조회 완료: branchId={}, count={}", branchId, branchConsultants.size());
+            
+            // 상담사 정보를 Map 형태로 변환
+            List<Map<String, Object>> consultantsData = branchConsultants.stream()
+                .filter(consultant -> !consultant.getIsDeleted() && consultant.getIsActive()) // 삭제되지 않고 활성화된 상담사만
+                .map(consultant -> {
+                    Map<String, Object> consultantData = new HashMap<>();
+                    consultantData.put("id", consultant.getId());
+                    consultantData.put("name", consultant.getUsername());
+                    consultantData.put("email", consultant.getEmail());
+                    consultantData.put("phoneNumber", consultant.getPhone());
+                    consultantData.put("branchCode", consultant.getBranchCode());
+                    consultantData.put("branchId", consultant.getBranch() != null ? consultant.getBranch().getId() : null);
+                    consultantData.put("role", consultant.getRole().name());
+                    consultantData.put("isActive", consultant.getIsActive());
+                    consultantData.put("createdAt", consultant.getCreatedAt());
+                    return consultantData;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            log.info("🔍 지점별 상담사 조회 완료: branchId={}, count={}", branchId, consultantsData.size());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", consultantsData,
+                "count", consultantsData.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 지점별 상담사 목록 조회 실패: branchId={}", branchId, e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "지점별 상담사 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }

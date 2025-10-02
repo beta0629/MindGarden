@@ -419,7 +419,7 @@ public class BranchServiceImpl extends BaseServiceImpl<Branch, Long> implements 
     public List<User> getBranchConsultants(Long branchId) {
         Branch branch = findActiveByIdOrThrow(branchId);
         return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, UserRole.CONSULTANT.name());
+                branch, UserRole.CONSULTANT);
     }
     
     @Override
@@ -427,7 +427,7 @@ public class BranchServiceImpl extends BaseServiceImpl<Branch, Long> implements 
     public List<User> getBranchClients(Long branchId) {
         Branch branch = findActiveByIdOrThrow(branchId);
         return userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, UserRole.CLIENT.name());
+                branch, UserRole.CLIENT);
     }
     
     // === 통계 및 분석 메서드 ===

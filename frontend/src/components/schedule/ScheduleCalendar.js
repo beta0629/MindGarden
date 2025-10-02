@@ -6,7 +6,10 @@ import interactionPlugin from '@fullcalendar/interaction';
 import ScheduleModal from './ScheduleModal';
 import ScheduleDetailModal from './ScheduleDetailModal';
 import VacationManagementModal from '../admin/VacationManagementModal';
-import LoadingSpinner from '../common/LoadingSpinner';
+import TimeSelectionModal from './TimeSelectionModal';
+import UnifiedLoading from '../common/UnifiedLoading';
+import CustomSelect from '../common/CustomSelect';
+import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import notificationManager from '../../utils/notification';
@@ -20,6 +23,13 @@ import './ScheduleCalendar.css';
  * @since 2024-12-19
  */
 const ScheduleCalendar = ({ userRole, userId }) => {
+    // 세션 정보 가져오기
+    const { user: sessionUser } = useSession();
+    
+    // 현재 사용자 정보 결정
+    const currentUser = sessionUser;
+    const currentUserRole = userRole || currentUser?.role || 'CLIENT';
+    const currentUserId = userId || currentUser?.id;
     const [events, setEvents] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedInfo, setSelectedInfo] = useState(null);
@@ -132,10 +142,45 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const loadConsultants = useCallback(async () => {
         try {
             setLoadingConsultants(true);
-            const response = await apiGet('/api/admin/consultants');
+            
+            // 디버깅을 위한 사용자 정보 로그
+            console.log('🔍 사용자 정보 확인:', {
+                currentUser,
+                currentUserRole,
+                branchId: currentUser?.branchId,
+                branchCode: currentUser?.branchCode
+            });
+            
+            // 사용자 역할에 따른 API 엔드포인트 결정
+            let apiEndpoint = '/api/admin/consultants';
+            
+            // 지점 어드민인 경우 자신의 지점 상담사만 조회
+            console.log('🔍 조건 확인:', {
+                currentUserRole,
+                isBranchSuperAdmin: currentUserRole === 'BRANCH_SUPER_ADMIN',
+                hasBranchId: !!currentUser?.branchId,
+                branchId: currentUser?.branchId
+            });
+            
+            if (currentUserRole === 'BRANCH_SUPER_ADMIN' && currentUser?.branchId) {
+                apiEndpoint = `/api/admin/consultants/by-branch/${currentUser.branchId}`;
+                console.log('🏢 지점 어드민 - 지점별 상담사 조회:', currentUser.branchId);
+            } else {
+                console.log('🏢 전체 상담사 조회 - 이유:', {
+                    role: currentUserRole,
+                    isBranchSuperAdmin: currentUserRole === 'BRANCH_SUPER_ADMIN',
+                    hasBranchId: !!currentUser?.branchId,
+                    branchId: currentUser?.branchId
+                });
+            }
+            
+            console.log('📡 API 엔드포인트:', apiEndpoint);
+            const response = await apiGet(apiEndpoint);
             
             if (response && response.success) {
-                setConsultants(response.data || []);
+                const consultantData = response.data || [];
+                console.log('👥 로드된 상담사 목록:', consultantData);
+                setConsultants(consultantData);
             }
         } catch (error) {
             console.error('상담사 목록 로드 실패:', error);
@@ -143,7 +188,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         } finally {
             setLoadingConsultants(false);
         }
-    }, []);
+    }, [currentUserRole, currentUser?.branchId]);
 
     /**
      * 상태값을 한글로 변환 (동적 로드)
@@ -159,13 +204,13 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const loadSchedules = useCallback(async () => {
         setLoading(true);
         try {
-            console.log('📅 스케줄 로드 시작:', { userId, userRole, selectedConsultantId });
+            console.log('📅 스케줄 로드 시작:', { currentUserId, currentUserRole, selectedConsultantId });
             
             // API URL 결정
-            let url = `/api/schedules?userId=${userId}&userRole=${userRole}`;
+            let url = `/api/schedules?currentUserId=${currentUserId}&currentUserRole=${currentUserRole}`;
             
             // 어드민인 경우 상담사 필터링 지원
-            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'HQ_MASTER' || userRole === 'SUPER_HQ_ADMIN') {
+            if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN' || currentUserRole === 'HQ_MASTER' || currentUserRole === 'SUPER_HQ_ADMIN') {
                 url = '/api/schedules/admin';
                 if (selectedConsultantId && selectedConsultantId !== '') {
                     url += `?consultantId=${selectedConsultantId}`;
@@ -232,7 +277,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
             // 어드민인 경우 모든 상담사의 휴가 데이터 로드
             let vacationEvents = [];
-            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
+            if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') {
                 try {
                     const today = new Date();
                     const startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
@@ -280,7 +325,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         } finally {
             setLoading(false);
         }
-    }, [userId, userRole, selectedConsultantId]);
+    }, [currentUserId, currentUserRole, selectedConsultantId]);
 
     // 스케줄 데이터 로드
     useEffect(() => {
@@ -288,17 +333,17 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         loadScheduleStatusCodes();
         
         // 어드민인 경우 상담사 목록도 로드
-        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
+        if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') {
             loadConsultants();
         }
-    }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, userRole, selectedConsultantId]);
+    }, [loadSchedules, loadScheduleStatusCodes, loadConsultants, currentUserRole, selectedConsultantId]);
 
     // 상담사 이전 이벤트 감지하여 스케줄 새로고침
     useEffect(() => {
         const handleConsultantTransferred = (event) => {
             console.log('🔄 상담사 이전 감지 - 스케줄 새로고침:', event.detail);
             loadSchedules();
-            if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') {
+            if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') {
                 loadConsultants(); // 상담사 목록도 새로고침
             }
         };
@@ -308,7 +353,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         return () => {
             window.removeEventListener('consultantTransferred', handleConsultantTransferred);
         };
-    }, [loadSchedules, loadConsultants, userRole]);
+    }, [loadSchedules, loadConsultants, currentUserRole]);
 
     /**
      * 휴가 데이터를 캘린더 이벤트로 변환
@@ -486,7 +531,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const handleDateClick = (info) => {
         console.log('📅 날짜 클릭:', info.dateStr);
         console.log('📅 현재 상태:', { 
-            userRole, 
+            currentUserRole, 
             isDateActionModalOpen, 
             isModalOpen, 
             isVacationModalOpen 
@@ -502,7 +547,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         const isPastDate = clickedDate < today;
         
         // 관리자 또는 상담사만 스케줄 생성 가능
-        if (userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'CONSULTANT') {
+        if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN' || currentUserRole === 'CONSULTANT') {
             // 과거 날짜인 경우 새로운 스케줄 등록 불가 알림
             if (isPastDate) {
                 notificationManager.show('warning', '과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.');
@@ -836,30 +881,28 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 <h2>📅 스케줄 관리</h2>
                 <div className="header-actions">
                     {/* 상담사 선택 (어드민/수퍼어드민만) */}
-                    {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
-                        <select
+                    {(currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') && (
+                        <CustomSelect
                             value={selectedConsultantId}
-                            onChange={(e) => {
+                            onChange={(value) => {
                                 try {
-                                    console.log('👤 상담사 선택 변경:', e.target.value);
-                                    setSelectedConsultantId(e.target.value);
+                                    console.log('👤 상담사 선택 변경:', value);
+                                    setSelectedConsultantId(value);
                                 } catch (error) {
                                     console.error('❌ 상담사 선택 오류:', error);
                                 }
                             }}
+                            placeholder="👥 전체 상담사"
                             className="consultant-filter-select"
-                        >
-                            <option value="">👥 전체 상담사</option>
-                            {loadingConsultants ? (
-                                <option disabled>상담사 목록을 불러오는 중...</option>
-                            ) : (
-                                consultants.map(consultant => (
-                                    <option key={consultant.id} value={consultant.id}>
-                                        👤 {consultant.name}
-                                    </option>
-                                ))
-                            )}
-                        </select>
+                            loading={loadingConsultants}
+                            options={[
+                                { value: '', label: '👥 전체 상담사' },
+                                ...consultants.map(consultant => ({
+                                    value: consultant.id,
+                                    label: `👤 ${consultant.name}`
+                                }))
+                            ]}
+                        />
                     )}
                     
                     <button 
@@ -944,8 +987,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 dateClick={handleDateClick}
                 eventClick={handleEventClick}
                 eventDrop={handleEventDrop}
-                editable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_ADMIN'}
-                droppable={userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN' || userRole === 'BRANCH_ADMIN'}
+                editable={currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN' || currentUserRole === 'BRANCH_ADMIN'}
+                droppable={currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN' || currentUserRole === 'BRANCH_ADMIN'}
                 height="auto"
                 slotMinTime="10:00:00"
                 slotMaxTime="20:00:00"
@@ -972,8 +1015,8 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     onClose={handleModalClose}
                     selectedDate={selectedDate}
                     selectedInfo={selectedInfo}
-                    userRole={userRole}
-                    userId={userId}
+                    currentUserRole={currentUserRole}
+                    currentUserId={currentUserId}
                     onScheduleCreated={handleScheduleCreated}
                 />
             )}
@@ -990,7 +1033,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
 
             {/* 날짜 액션 선택 모달 - 인라인 */}
             {isDateActionModalOpen && (
-                console.log('📅 인라인 모달 렌더링 중...', { isDateActionModalOpen, selectedDate, userRole }),
+                console.log('📅 인라인 모달 렌더링 중...', { isDateActionModalOpen, selectedDate, currentUserRole }),
                 <div 
                     className="schedule-calendar-loading-overlay"
                     onClick={() => setIsDateActionModalOpen(false)}
@@ -1031,7 +1074,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                                 </div>
                             </button>
                             
-                            {(userRole === 'ADMIN' || userRole === 'BRANCH_SUPER_ADMIN') && (
+                            {(currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') && (
                                 <button 
                                     onClick={handleVacationClick}
                                     className="schedule-calendar-modal-btn">
@@ -1090,7 +1133,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                     isOpen={isVacationModalOpen}
                     onClose={() => setIsVacationModalOpen(false)}
                     selectedConsultant={null}
-                    userRole={userRole}
+                    currentUserRole={currentUserRole}
                     selectedDate={selectedDate}
                     onVacationUpdated={() => {
                         console.log('휴가 정보가 업데이트되었습니다.');
@@ -1100,172 +1143,15 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             )}
 
             {/* 시간 선택 모달 */}
-            {showTimeSelectionModal && selectedSchedule && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        backgroundColor: 'white',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        width: '600px',
-                        maxWidth: '90vw',
-                        maxHeight: '80vh',
-                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-                        overflow: 'auto'
-                    }}>
-                        <h3 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: 'var(--font-size-lg)', fontWeight: '600' }}>
-                            🕐 시간을 선택하세요
-                        </h3>
-                        
-                        {/* 상담 유형 선택 */}
-                        <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#4a5568' }}>
-                                상담 유형:
-                            </label>
-                            <select
-                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: 'var(--font-size-sm)' }}
-                                defaultValue="INDIVIDUAL"
-                            >
-                                <option value="INDIVIDUAL">개인상담 (INDIVIDUAL)</option>
-                                <option value="GROUP">그룹상담 (GROUP)</option>
-                                <option value="COUPLE">부부상담 (COUPLE)</option>
-                            </select>
-                        </div>
-
-                        {/* 상담 시간 선택 */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#4a5568' }}>
-                                상담 시간:
-                            </label>
-                            <select
-                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: 'var(--font-size-sm)' }}
-                                defaultValue="50_MIN"
-                            >
-                                <option value="30_MIN">30분 (30분)</option>
-                                <option value="50_MIN">50분 (50분)</option>
-                                <option value="60_MIN">60분 (60분)</option>
-                                <option value="90_MIN">90분 (90분)</option>
-                            </select>
-                        </div>
-
-                        {/* 시간대 선택 그리드 */}
-                        <div style={{ marginBottom: '24px' }}>
-                            <div style={{ marginBottom: '12px', fontWeight: '500', color: '#4a5568' }}>
-                                사용 가능한 시간대:
-                            </div>
-                            {loadingAvailableTimes ? (
-                                <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
-                                    예약 정보를 불러오는 중...
-                                </div>
-                            ) : (
-                                <div style={{ 
-                                    display: 'grid', 
-                                    gridTemplateColumns: 'repeat(2, 1fr)', 
-                                    gap: '8px',
-                                    maxHeight: '400px',
-                                    overflowY: 'auto',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '8px',
-                                    padding: '12px'
-                                }}>
-                                    {generateTimeSlots().map((timeSlot, index) => {
-                                        const isBooked = isTimeSlotBooked(timeSlot.startTime, timeSlot.endTime);
-                                        const isSelected = selectedSchedule.startTime === timeSlot.startTime && 
-                                                          selectedSchedule.endTime === timeSlot.endTime;
-                                        
-                                        return (
-                                            <button
-                                                key={index}
-                                                onClick={() => !isBooked && setSelectedSchedule(prev => ({
-                                                    ...prev,
-                                                    startTime: timeSlot.startTime,
-                                                    endTime: timeSlot.endTime
-                                                }))}
-                                                disabled={isBooked}
-                                                className="schedule-calendar-modal-btn">
-                                                    padding: '12px 8px',
-                                                    border: '1px solid #e2e8f0',
-                                                    borderRadius: '6px',
-                                                    background: isBooked ? '#f3f4f6' : (isSelected ? '#3b82f6' : 'white'),
-                                                    color: isBooked ? '#9ca3af' : (isSelected ? 'white' : '#374151'),
-                                                    cursor: isBooked ? 'not-allowed' : 'pointer',
-                                                    transition: 'all 0.2s',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    alignItems: 'center',
-                                                    gap: '4px',
-                                                    fontSize: 'var(--font-size-xs)'
-                                                }}
-                                            >
-                                                <div style={{ 
-                                                    width: '20px', 
-                                                    height: '20px', 
-                                                    borderRadius: '50%', 
-                                                    backgroundColor: isBooked ? '#d1d5db' : (isSelected ? 'white' : '#10b981'),
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: 'var(--font-size-xs)',
-                                                    color: isBooked ? '#9ca3af' : (isSelected ? '#3b82f6' : 'white')
-                                                }}>
-                                                    {isBooked ? '✗' : '가'}
-                                                </div>
-                                                <div style={{ fontWeight: '500' }}>
-                                                    {timeSlot.startTime}
-                                                </div>
-                                                <div style={{ fontSize: 'var(--font-size-xs)', color: isBooked ? '#9ca3af' : '#6b7280' }}>
-                                                    {timeSlot.duration}
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                            <button
-                                onClick={() => setShowTimeSelectionModal(false)}
-                                style={{
-                                    padding: '10px 20px',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '6px',
-                                    background: 'white',
-                                    color: '#4a5568',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                취소
-                            </button>
-                            <button
-                                onClick={handleTimeSelectionConfirm}
-                                style={{
-                                    padding: '10px 20px',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    background: '#3b82f6',
-                                    color: 'white',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                확인
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <TimeSelectionModal
+                isOpen={showTimeSelectionModal}
+                onClose={() => setShowTimeSelectionModal(false)}
+                selectedSchedule={selectedSchedule}
+                onScheduleUpdate={setSelectedSchedule}
+                availableTimes={generateTimeSlots()}
+                isTimeSlotBooked={isTimeSlotBooked}
+                onConfirm={handleTimeSelectionConfirm}
+            />
         </div>
         
         </>

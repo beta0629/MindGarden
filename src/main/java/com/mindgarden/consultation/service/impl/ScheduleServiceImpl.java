@@ -1474,7 +1474,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             
             // 지점의 상담사들 조회
             List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, getRoleCodeFromCommonCode("CONSULTANT"));
+                branch, com.mindgarden.consultation.constant.UserRole.CONSULTANT);
             if (consultants.isEmpty()) {
                 log.warn("지점에 상담사가 없습니다: branchId={}", branchId);
                 return new ArrayList<>();
@@ -1586,7 +1586,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             
             // 지점의 상담사들 조회
             List<User> consultants = userRepository.findByBranchAndRoleAndIsDeletedFalseOrderByUsername(
-                branch, getRoleCodeFromCommonCode("CONSULTANT"));
+                branch, com.mindgarden.consultation.constant.UserRole.CONSULTANT);
             
             Map<String, Object> status = new HashMap<>();
             status.put("branchId", branchId);

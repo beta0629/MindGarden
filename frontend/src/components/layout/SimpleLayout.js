@@ -1,6 +1,6 @@
 import React from 'react';
-import SimpleHeader from './SimpleHeader';
-import LoadingSpinner from '../common/LoadingSpinner';
+import UnifiedHeader from '../common/UnifiedHeader';
+import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/main.css';
 import './SimpleLayout.css';
 
@@ -18,7 +18,14 @@ const SimpleLayout = ({
 }) => {
   return (
     <div className="simple-layout">
-      <SimpleHeader title={title} />
+      <UnifiedHeader 
+        title={title || 'MindGarden'}
+        logoType="text"
+        showUserMenu={true}
+        showHamburger={true}
+        variant="default"
+        sticky={true}
+      />
       
       <main className="simple-main">
         <div className="simple-container">
@@ -30,11 +37,11 @@ const SimpleLayout = ({
           
           {loading ? (
             <div className="loading-container">
-              <LoadingSpinner 
+              <UnifiedLoading 
                 text={loadingText}
                 size="large"
                 variant={loadingVariant}
-                inline={true}
+                type="page"
               />
             </div>
           ) : (

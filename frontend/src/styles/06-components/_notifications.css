@@ -1,0 +1,436 @@
+/* ===== 통합 알림 컴포넌트 (UnifiedNotification) 스타일 ===== */
+
+/* 기본 알림 컨테이너 */
+.mg-notification-container {
+  position: fixed;
+  z-index: var(--z-notification);
+  pointer-events: none;
+}
+
+/* 위치별 컨테이너 */
+.mg-notification-container--top-right {
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+}
+
+.mg-notification-container--top-center {
+  top: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.mg-notification-container--bottom-right {
+  bottom: var(--spacing-lg);
+  right: var(--spacing-lg);
+}
+
+.mg-notification-container--bottom-center {
+  bottom: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 기본 알림 */
+.mg-notification {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  margin-bottom: var(--spacing-md);
+  max-width: 400px;
+  min-width: 300px;
+  pointer-events: auto;
+  animation: mg-notification-slide-in 0.3s ease-out;
+  overflow: hidden;
+}
+
+/* 토스트 알림 */
+.mg-notification--toast {
+  transition: all 0.3s ease;
+}
+
+.mg-notification--toast:hover {
+  transform: translateX(-4px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+/* 알림 콘텐츠 */
+.mg-notification-content {
+  display: flex;
+  align-items: flex-start;
+  padding: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+/* 알림 아이콘 */
+.mg-notification-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+/* 알림 메시지 */
+.mg-notification-message {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+/* 닫기 버튼 */
+.mg-notification-close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.mg-notification-close:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+/* 진행바 */
+.mg-notification-progress {
+  height: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.mg-notification-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  animation: mg-progress-shrink linear;
+}
+
+/* 알림 타입별 스타일 */
+.mg-notification--success {
+  border-left: 4px solid var(--color-success);
+}
+
+.mg-notification--success .mg-notification-progress-bar {
+  background: linear-gradient(90deg, var(--color-success), #10b981);
+}
+
+.mg-notification--error {
+  border-left: 4px solid var(--color-danger);
+}
+
+.mg-notification--error .mg-notification-progress-bar {
+  background: linear-gradient(90deg, var(--color-danger), #ef4444);
+}
+
+.mg-notification--warning {
+  border-left: 4px solid var(--color-warning);
+}
+
+.mg-notification--warning .mg-notification-progress-bar {
+  background: linear-gradient(90deg, var(--color-warning), #f59e0b);
+}
+
+.mg-notification--info {
+  border-left: 4px solid var(--color-info);
+}
+
+.mg-notification--info .mg-notification-progress-bar {
+  background: linear-gradient(90deg, var(--color-info), #3b82f6);
+}
+
+/* 배너 알림 */
+.mg-notification-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-notification);
+  padding: var(--spacing-md) var(--spacing-lg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  animation: mg-banner-slide-down 0.3s ease-out;
+}
+
+.mg-notification-banner--success {
+  background: rgba(34, 197, 94, 0.1);
+  border-bottom-color: var(--color-success);
+}
+
+.mg-notification-banner--error {
+  background: rgba(239, 68, 68, 0.1);
+  border-bottom-color: var(--color-danger);
+}
+
+.mg-notification-banner--warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-bottom-color: var(--color-warning);
+}
+
+.mg-notification-banner--info {
+  background: rgba(59, 130, 246, 0.1);
+  border-bottom-color: var(--color-info);
+}
+
+.mg-notification-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.mg-notification-banner-icon {
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+}
+
+.mg-notification-banner-message {
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  margin: 0;
+  text-align: center;
+}
+
+.mg-notification-banner-close {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-lg);
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  border-radius: var(--border-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.2s ease;
+}
+
+.mg-notification-banner-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== 모달 알림 스타일 ===== */
+.mg-notification-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal-backdrop);
+  padding: var(--spacing-lg);
+}
+
+.mg-notification--modal {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: var(--border-radius-xxl);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: mg-modal-slide-in 0.3s ease-out;
+}
+
+.mg-notification-header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.mg-notification-icon--large {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-md);
+  font-size: 24px;
+}
+
+.mg-notification--warning .mg-notification-icon--large {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #f59e0b;
+}
+
+.mg-notification--error .mg-notification-icon--large {
+  background: linear-gradient(135deg, #fecaca, #fca5a5);
+  color: #dc2626;
+}
+
+.mg-notification--success .mg-notification-icon--large {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #059669;
+}
+
+.mg-notification--info .mg-notification-icon--large {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #2563eb;
+}
+
+.mg-notification-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-heading);
+  margin: 0;
+}
+
+.mg-notification-body {
+  padding: var(--spacing-lg);
+}
+
+.mg-notification-countdown {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--border-radius-md);
+  text-align: center;
+}
+
+.mg-notification-actions {
+  padding: var(--spacing-lg);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.mg-notification-countdown-bar {
+  height: 4px;
+  background: var(--color-bg-secondary);
+  overflow: hidden;
+}
+
+.mg-notification-countdown-progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+  transition: width 1s linear;
+  border-radius: 2px;
+}
+
+/* ===== 애니메이션 ===== */
+@keyframes mg-notification-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mg-banner-slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mg-progress-shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes mg-modal-slide-in {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 768px) {
+  .mg-notification {
+    max-width: 90vw;
+    margin: var(--spacing-sm);
+  }
+  
+  .mg-notification-content {
+    padding: var(--spacing-md);
+  }
+  
+  .mg-notification-message {
+    font-size: var(--font-size-sm);
+  }
+
+  .mg-notification--modal {
+    max-width: 95vw;
+    margin: var(--spacing-sm);
+  }
+
+  .mg-notification-header {
+    padding: var(--spacing-md);
+  }
+
+  .mg-notification-icon--large {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .mg-notification-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .mg-notification-actions {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .mg-notification-actions .mg-btn {
+    width: 100%;
+  }
+
+  .mg-notification-banner-content {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+}

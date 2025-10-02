@@ -97,9 +97,9 @@ const handleError = (error, status) => {
 // GET 요청
 export const apiGet = async (endpoint, params = {}, options = {}) => {
   try {
-    // 쿼리 파라미터 생성 (프록시 설정을 위해 상대 경로 사용)
+    // 쿼리 파라미터 생성
     const queryString = new URLSearchParams(params).toString();
-    const url = queryString ? `${endpoint}?${queryString}` : endpoint;
+    const url = queryString ? `${API_BASE_URL}${endpoint}?${queryString}` : `${API_BASE_URL}${endpoint}`;
     
     const response = await fetch(url, {
       method: 'GET',

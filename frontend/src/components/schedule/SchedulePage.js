@@ -114,7 +114,7 @@ const SchedulePage = ({ user: propUser }) => {
     }
 
     return (
-        <SimpleLayout title="스케줄 관리">
+        <SimpleLayout>
             <div className="schedule-page">
 
             <div className="schedule-content">

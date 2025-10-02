@@ -24,6 +24,9 @@ docs/design-architecture/
 - **CSS_ARCHITECTURE_IMPROVEMENT_PLAN.md** - CSS 아키텍처 개선 계획
 - **CARD_DESIGN_IMPROVEMENT.md** - 카드 디자인 개선 계획  
 - **RESPONSIVE_DESIGN_IMPROVEMENT_PLAN.md** - 반응형 디자인 개선 계획
+- **MODAL_DESIGN_GUIDE.md** - 모달 디자인 가이드 및 통합 시스템
+- **COMMON_COMPONENTS_UNIFICATION_GUIDE.md** - 공통 컴포넌트 통합 가이드
+- **LOGO_INTEGRATION_GUIDE.md** - 로고 통합 및 확장성 가이드
 
 ### 실행 계획서 (implementation/)
 - **DESIGN_IMPLEMENTATION_PLAN.md** - 디자인 개선 실행 계획서 및 진행 상황
@@ -48,6 +51,12 @@ docs/design-architecture/
 ### 🔄 진행 중인 작업
 - **Phase 2.3: 커스텀 훅 생성**
   - useAdminDashboard 훅 생성 중
+- **Phase 2.4: 모달 디자인 시스템 통합**
+  - 모달 디자인 가이드 작성 완료
+  - 기존 모달 컴포넌트 표준화 진행 중
+- **Phase 2.5: 공통 컴포넌트 통합**
+  - 공통 컴포넌트 통합 가이드 작성 완료
+  - 알림, 로딩, 헤더, 모달 시스템 통합 계획 수립
 
 ### 📋 대기 중인 작업
 - **Phase 2.3: useTheme, useResponsive 훅 생성**

@@ -6,8 +6,8 @@ import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUt
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
-import LoadingSpinner from '../common/LoadingSpinner';
-import ErpHeader from './common/ErpHeader';
+import UnifiedLoading from '../common/UnifiedLoading';
+import UnifiedHeader from '../common/UnifiedHeader';
 import axios from 'axios';
 import '../../styles/main.css';
 import './ErpDashboard.css';
@@ -150,17 +150,21 @@ const ErpDashboard = ({ user: propUser }) => {
   };
 
   if (loading) {
-    return <LoadingSpinner text="대시보드 데이터를 불러오는 중..." size="medium" />;
+    return <UnifiedLoading text="대시보드 데이터를 불러오는 중..." size="medium" type="page" />;
   }
 
   return (
     <div className="glass-background">
       <SimpleLayout>
         <div className="erp-dashboard-container">
-        <ErpHeader
+        <UnifiedHeader
           title="ERP 관리 시스템"
-          subtitle="상담사 비품 구매 및 예산 관리"
-          actions={
+          logoType="text"
+          showUserMenu={true}
+          showHamburger={true}
+          variant="default"
+          sticky={true}
+          extraActions={
             <ErpButton
               variant="primary"
               onClick={loadDashboardData}

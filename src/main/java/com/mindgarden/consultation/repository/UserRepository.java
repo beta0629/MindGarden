@@ -416,7 +416,7 @@ public interface UserRepository extends BaseRepository<User, Long> {
      * 지점과 역할로 사용자 조회
      */
     @Query("SELECT u FROM User u WHERE u.branch = ?1 AND u.role = ?2 AND u.isDeleted = false ORDER BY u.username")
-    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUsername(com.mindgarden.consultation.entity.Branch branch, String role);
+    List<User> findByBranchAndRoleAndIsDeletedFalseOrderByUsername(com.mindgarden.consultation.entity.Branch branch, UserRole role);
     
     /**
      * 지점으로 사용자 조회

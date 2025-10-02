@@ -6,7 +6,6 @@ import java.util.Optional;
 import com.mindgarden.consultation.entity.CssColorSettings;
 import com.mindgarden.consultation.entity.CssThemeMetadata;
 import com.mindgarden.consultation.service.CssThemeService;
-import com.mindgarden.consultation.service.DynamicPermissionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +33,6 @@ import lombok.extern.slf4j.Slf4j;
 public class CssThemeController {
 
     private final CssThemeService cssThemeService;
-    private final DynamicPermissionService dynamicPermissionService;
 
     /**
      * 모든 활성화된 테마 목록 조회
@@ -181,6 +180,56 @@ public class CssThemeController {
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "카테고리별 색상 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 상담사별 색상 조회
+     */
+    @GetMapping("/consultant-colors")
+    public ResponseEntity<?> getConsultantColors(@RequestParam(defaultValue = "default") String themeName) {
+        try {
+            log.info("🎨 상담사별 색상 조회: {}", themeName);
+            
+            // CONSULTANT 카테고리의 색상들 조회
+            List<CssColorSettings> consultantColors = cssThemeService.getThemeColorsByCategory(themeName, "CONSULTANT");
+            
+            // 색상 배열로 변환
+            List<String> colors = consultantColors.stream()
+                .map(CssColorSettings::getColorValue)
+                .collect(java.util.stream.Collectors.toList());
+            
+            // 기본 색상이 없는 경우 fallback 색상 제공
+            if (colors.isEmpty()) {
+                colors = java.util.Arrays.asList(
+                    "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+                    "#06b6d4", "#84cc16", "#f97316", "#ec4899", "#6366f1"
+                );
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "themeName", themeName,
+                "colors", colors,
+                "count", colors.size(),
+                "message", "상담사별 색상을 성공적으로 조회했습니다."
+            ));
+        } catch (Exception e) {
+            log.error("❌ 상담사별 색상 조회 실패: {}", themeName, e);
+            
+            // 에러 시 기본 색상 반환
+            List<String> defaultColors = java.util.Arrays.asList(
+                "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+                "#06b6d4", "#84cc16", "#f97316", "#ec4899", "#6366f1"
+            );
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "themeName", "default",
+                "colors", defaultColors,
+                "count", defaultColors.size(),
+                "message", "기본 상담사별 색상을 반환했습니다."
             ));
         }
     }

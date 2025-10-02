@@ -1,13 +1,8 @@
-/* ===== MindGarden CSS 아키텍처 - ITCSS 구조 ===== */
-/* Inverted Triangle CSS - 특이성 순서로 import */
+/* ===== MindGarden 통합 디자인 시스템 ===== */
+/* 모든 CSS 변수를 한 곳에서 관리 */
 
-/* 01. Settings - CSS 변수, 색상, 폰트 */
-@import './01-settings/_colors.css';
-@import './01-settings/_typography.css';
-@import './01-settings/_spacing.css';
-@import './01-settings/_shadows.css';
-@import './01-settings/_borders.css';
-@import './01-settings/_z-index.css';
+/* 01. 통합 디자인 시스템 변수 */
+@import './design-system.css';
 
 /* 02. Tools - 믹신, 함수 (현재 비어있음) */
 /* @import './02-tools/_mixins.css'; */
@@ -32,6 +27,9 @@
 @import './06-components/_cards.css';
 @import './06-components/_buttons.css';
 @import './06-components/_modals.css';
+@import './06-components/_loading.css';
+@import './06-components/_notifications.css';
+@import './06-components/_header.css';
 /* @import './06-components/_forms.css'; */
 /* @import './06-components/_tables.css'; */
 

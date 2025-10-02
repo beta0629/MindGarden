@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
-import ConfirmModal from '../common/ConfirmModal';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { loadMenuStructure, transformMenuStructure, debugMenuStructure } from '../../utils/menuHelper';
 import { hasMenuAccess, validateMenuPath, logPermissionCheck } from '../../utils/menuPermissionValidator';
 import './SimpleHamburgerMenu.css';
@@ -282,17 +282,34 @@ const SimpleHamburgerMenu = ({ isOpen, onClose }) => {
       </div>
 
       {/* 로그아웃 확인 모달 */}
-      {showLogoutModal && (
-        <ConfirmModal
-          isOpen={showLogoutModal}
-          onClose={() => setShowLogoutModal(false)}
-          onConfirm={confirmLogout}
-          title="로그아웃"
-          message="정말 로그아웃 하시겠습니까?"
-          confirmText="로그아웃"
-          cancelText="취소"
-        />
-      )}
+      <UnifiedModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        title="로그아웃"
+        subtitle="정말 로그아웃 하시겠습니까?"
+        size="small"
+        variant="confirm"
+        actions={
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button 
+              onClick={() => setShowLogoutModal(false)}
+              style={{ padding: '8px 16px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              취소
+            </button>
+            <button 
+              onClick={confirmLogout}
+              style={{ padding: '8px 16px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              로그아웃
+            </button>
+          </div>
+        }
+      >
+        <p style={{ textAlign: 'center', margin: 0 }}>
+          로그아웃하면 현재 세션이 종료됩니다.
+        </p>
+      </UnifiedModal>
     </div>
   );
 };

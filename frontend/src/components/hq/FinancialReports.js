@@ -34,7 +34,7 @@ const ReportFilterCard = ({
                                 display: 'block', 
                                 marginBottom: '0.5rem', 
                                 fontWeight: '500',
-                                color: '#495057'
+                                color: 'var(--color-text-primary, #1D1D1F)'
                             }}>
                                 연도
                             </label>
@@ -45,9 +45,9 @@ const ReportFilterCard = ({
                                     width: '100%',
                                     padding: '0.375rem 0.75rem',
                                     fontSize: '1rem',
-                                    border: '1px solid #ced4da',
+                                    border: '1px solid var(--color-border-primary, #D1D1D6)',
                                     borderRadius: '0.375rem',
-                                    backgroundColor: 'white'
+                                    backgroundColor: 'var(--color-bg-primary, #FAFAFA)'
                                 }}
                             >
                                 {[2023, 2024, 2025].map(year => (
@@ -61,7 +61,7 @@ const ReportFilterCard = ({
                                     display: 'block', 
                                     marginBottom: '0.5rem', 
                                     fontWeight: '500',
-                                    color: '#495057'
+                                    color: 'var(--color-text-primary, #1D1D1F)'
                                 }}>
                                     월
                                 </label>
@@ -72,9 +72,9 @@ const ReportFilterCard = ({
                                         width: '100%',
                                         padding: '0.375rem 0.75rem',
                                         fontSize: '1rem',
-                                        border: '1px solid #ced4da',
+                                        border: '1px solid var(--color-border-primary, #D1D1D6)',
                                         borderRadius: '0.375rem',
-                                        backgroundColor: 'white'
+                                        backgroundColor: 'var(--color-bg-primary, #FAFAFA)'
                                     }}
                                 >
                                     {[1,2,3,4,5,6,7,8,9,10,11,12].map(month => (
@@ -88,7 +88,7 @@ const ReportFilterCard = ({
                                 display: 'block', 
                                 marginBottom: '0.5rem', 
                                 fontWeight: '500',
-                                color: '#495057'
+                                color: 'var(--color-text-primary, #1D1D1F)'
                             }}>
                                 &nbsp;
                             </label>
@@ -99,8 +99,8 @@ const ReportFilterCard = ({
                                     padding: '0.375rem 0.75rem',
                                     fontSize: '0.875rem',
                                     fontWeight: '500',
-                                    color: 'white',
-                                    backgroundColor: '#0d6efd',
+                                    color: 'var(--color-text-inverse, #FFFFFF)',
+                                    backgroundColor: 'var(--color-primary, #007AFF)',
                                     border: 'none',
                                     borderRadius: '0.375rem',
                                     cursor: 'pointer',
@@ -565,16 +565,16 @@ const FinancialReports = () => {
                     {
                         label: '일별 수익',
                         data: trends.map(item => item.revenue),
-                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
-                        borderColor: 'rgba(40, 167, 69, 1)',
+                        backgroundColor: 'var(--color-success-light, rgba(40, 167, 69, 0.2))',
+                        borderColor: 'var(--color-success, #28A745)',
                         borderWidth: 2,
                         fill: true
                     },
                     {
                         label: '일별 지출',
                         data: trends.map(item => item.expense),
-                        backgroundColor: 'rgba(220, 53, 69, 0.2)',
-                        borderColor: 'rgba(220, 53, 69, 1)',
+                        backgroundColor: 'var(--color-danger-light, rgba(220, 53, 69, 0.2))',
+                        borderColor: 'var(--color-danger, #DC3545)',
                         borderWidth: 2,
                         fill: true
                     }
@@ -617,16 +617,16 @@ const FinancialReports = () => {
                     {
                         label: '월별 수익',
                         data: trends.map(item => item.revenue),
-                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
-                        borderColor: 'rgba(40, 167, 69, 1)',
+                        backgroundColor: 'var(--color-success-light, rgba(40, 167, 69, 0.2))',
+                        borderColor: 'var(--color-success, #28A745)',
                         borderWidth: 2,
                         fill: true
                     },
                     {
                         label: '월별 지출',
                         data: trends.map(item => item.expense),
-                        backgroundColor: 'rgba(220, 53, 69, 0.2)',
-                        borderColor: 'rgba(220, 53, 69, 1)',
+                        backgroundColor: 'var(--color-danger-light, rgba(220, 53, 69, 0.2))',
+                        borderColor: 'var(--color-danger, #DC3545)',
                         borderWidth: 2,
                         fill: true
                     }

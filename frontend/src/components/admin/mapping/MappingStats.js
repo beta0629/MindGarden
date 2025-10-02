@@ -171,8 +171,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '❌',
                         label: '종료됨',
                         value: stats.terminated,
-                        color: '#dc3545',
-                        bgColor: '#dc354520',
+                        color: 'var(--color-danger, #DC3545)',
+                        bgColor: 'var(--color-danger-light, rgba(220, 53, 69, 0.1))',
                         action: 'view'
                     },
                     {
@@ -180,8 +180,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '🔚',
                         label: '회기 소진',
                         value: stats.sessionsExhausted,
-                        color: '#fd7e14',
-                        bgColor: '#fd7e1420',
+                        color: 'var(--color-warning, #FFC107)',
+                        bgColor: 'var(--color-warning-light, rgba(255, 193, 7, 0.1))',
                         action: 'view'
                     }
                 ]);
@@ -196,7 +196,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
     if (loading) {
         return (
             <div className="mapping-stats-container">
-                <div style={{ color: '#7B68EE', fontSize: 'var(--font-size-base)' }}>
+                <div style={{ color: 'var(--color-primary, #007AFF)', fontSize: 'var(--font-size-base)' }}>
                     매핑 통계를 불러오는 중...
                 </div>
             </div>
@@ -344,7 +344,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 }}>
                     <span style={{
                         fontSize: 'var(--font-size-xs)',
-                        color: '#6c757d',
+                        color: 'var(--color-text-secondary, #424245)',
                         fontWeight: '500'
                     }}>총 매핑 수:</span>
                     <span style={{
@@ -361,7 +361,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 }}>
                     <span style={{
                         fontSize: 'var(--font-size-xs)',
-                        color: '#6c757d',
+                        color: 'var(--color-text-secondary, #424245)',
                         fontWeight: '500'
                     }}>활성 비율:</span>
                     <span style={{
@@ -380,7 +380,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 }}>
                     <span style={{
                         fontSize: 'var(--font-size-xs)',
-                        color: '#6c757d',
+                        color: 'var(--color-text-secondary, #424245)',
                         fontWeight: '500'
                     }}>승인 대기 비율:</span>
                     <span style={{

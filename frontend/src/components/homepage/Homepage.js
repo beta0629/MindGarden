@@ -302,7 +302,7 @@ const TabletHomepage = () => {
                 <div style={{
                   display: 'inline-block',
                   padding: '8px 24px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  backgroundColor: 'var(--color-bg-glass, rgba(255, 255, 255, 0.2))',
                   borderRadius: '50px',
                   marginBottom: '24px',
                   backdropFilter: 'blur(10px)',

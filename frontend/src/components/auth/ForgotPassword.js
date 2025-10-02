@@ -192,7 +192,7 @@ const ForgotPassword = () => {
                   <div style={{
                     width: '64px',
                     height: '64px',
-                    backgroundColor: '#48bb78',
+                    backgroundColor: 'var(--color-success, #28A745)',
                     borderRadius: '16px',
                     display: 'flex',
                     alignItems: 'center',
@@ -225,7 +225,7 @@ const ForgotPassword = () => {
                   </p>
 
                   <div style={{
-                    backgroundColor: '#f7fafc',
+                    backgroundColor: 'var(--color-bg-primary, #FAFAFA)',
                     padding: '20px',
                     borderRadius: '12px',
                     marginBottom: '32px',

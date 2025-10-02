@@ -451,7 +451,7 @@ const ScheduleModalNew = ({
                                 flexDirection: 'column',
                                 gap: '12px',
                                 padding: '16px',
-                                backgroundColor: '#f8f9fa',
+                                backgroundColor: 'var(--color-bg-secondary, #F5F5F7)',
                                 borderRadius: '8px',
                                 border: '1px solid #e9ecef'
                             }}>
@@ -477,7 +477,7 @@ const ScheduleModalNew = ({
                                             borderRadius: '8px',
                                             fontSize: 'var(--font-size-sm)',
                                             color: '#495057',
-                                            backgroundColor: '#ffffff',
+                                            backgroundColor: 'var(--color-bg-primary, #FAFAFA)',
                                             outline: 'none',
                                             transition: 'all 0.2s ease',
                                             fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
@@ -496,7 +496,7 @@ const ScheduleModalNew = ({
                                                 padding: '8px',
                                                 fontSize: 'var(--font-size-sm)',
                                                 color: '#495057',
-                                                backgroundColor: '#ffffff',
+                                                backgroundColor: 'var(--color-bg-primary, #FAFAFA)',
                                                 fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
                                             }}>
                                                 {option.label} ({option.value})
@@ -527,7 +527,7 @@ const ScheduleModalNew = ({
                                             borderRadius: '8px',
                                             fontSize: 'var(--font-size-sm)',
                                             color: '#495057',
-                                            backgroundColor: '#ffffff',
+                                            backgroundColor: 'var(--color-bg-primary, #FAFAFA)',
                                             outline: 'none',
                                             transition: 'all 0.2s ease',
                                             fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
@@ -546,7 +546,7 @@ const ScheduleModalNew = ({
                                                 padding: '8px',
                                                 fontSize: 'var(--font-size-sm)',
                                                 color: '#495057',
-                                                backgroundColor: '#ffffff',
+                                                backgroundColor: 'var(--color-bg-primary, #FAFAFA)',
                                                 fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
                                             }}>
                                                 {option.label} ({option.durationMinutes}분) ({option.value})
@@ -575,7 +575,7 @@ const ScheduleModalNew = ({
                                 flexDirection: 'column',
                                 gap: '12px',
                                 padding: '16px',
-                                backgroundColor: '#f8f9fa',
+                                backgroundColor: 'var(--color-bg-secondary, #F5F5F7)',
                                 borderRadius: '8px',
                                 marginBottom: '20px'
                             }}>

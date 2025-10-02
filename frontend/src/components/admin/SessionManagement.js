@@ -8,6 +8,8 @@ import SectionHeader from './SectionHeader';
 import ClientCard from './ClientCard';
 import MappingCard from './MappingCard';
 import LoadingSpinner from '../common/LoadingSpinner';
+import '../../styles/design-system.css';
+import '../../styles/06-components/_buttons.css';
 import './SessionManagement.css';
 
 /**
@@ -951,20 +953,20 @@ const SessionManagement = () => {
                             
                             <div className="session-mgmt-mapping-actions">
                                 <button 
-                                    className="session-mgmt-btn session-mgmt-btn-primary"
+                                    className="mg-btn mg-btn--primary"
                                     onClick={handleAddSession}
                                 >
                                     회기 추가 요청
                                 </button>
                                 <button 
-                                    className="session-mgmt-btn session-mgmt-btn-secondary"
+                                    className="mg-btn mg-btn--secondary"
                                     onClick={() => handleStatusChange(selectedMapping.id, 'INACTIVE')}
                                     disabled={selectedMapping.status === 'INACTIVE'}
                                 >
                                     비활성화
                                 </button>
                                 <button 
-                                    className="session-mgmt-btn session-mgmt-btn-warning"
+                                    className="mg-btn mg-btn--warning"
                                     onClick={() => handleStatusChange(selectedMapping.id, 'SUSPENDED')}
                                     disabled={selectedMapping.status === 'SUSPENDED'}
                                 >
@@ -976,7 +978,7 @@ const SessionManagement = () => {
                         <div className="session-mgmt-no-mapping">
                             <p>이 내담자에 대한 상담사 매핑이 없습니다.</p>
                             <button 
-                                className="session-mgmt-btn session-mgmt-btn-primary"
+                                className="mg-btn mg-btn--primary"
                                 onClick={handleAddSession}
                             >
                                 회기 추가 요청
@@ -1004,7 +1006,7 @@ const SessionManagement = () => {
                     icon="bi-diagram-3"
                     actions={selectedClient ? (
                         <button 
-                            className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-secondary session-mgmt-close-btn"
+                            className="mg-btn mg-btn--small mg-btn--secondary"
                             onClick={() => setSelectedClient(null)}
                         >
                             전체 보기
@@ -1186,13 +1188,13 @@ const SessionManagement = () => {
                         
                         <div className="session-mgmt-modal-footer">
                             <button 
-                                className="session-mgmt-btn session-mgmt-btn-secondary"
+                                className="mg-btn mg-btn--secondary"
                                 onClick={() => setShowAddModal(false)}
                             >
                                 취소
                             </button>
                             <button 
-                                className="session-mgmt-btn session-mgmt-btn-primary"
+                                className="mg-btn mg-btn--primary"
                                 onClick={handleCreateSessionExtensionRequest}
                                 disabled={loading}
                             >
@@ -1280,7 +1282,7 @@ const SessionManagement = () => {
                                 <div className="session-mgmt-card-actions">
                                     {request.status === 'PENDING' && (
                                         <button 
-                                            className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-primary"
+                                            className="mg-btn mg-btn--small mg-btn--primary"
                                             onClick={() => handlePaymentConfirm(request)}
                                         >
                                             💳 입금 확인
@@ -1290,13 +1292,13 @@ const SessionManagement = () => {
                                     {request.status === 'PAYMENT_CONFIRMED' && (
                                         <>
                                             <button 
-                                                className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-success"
+                                                className="mg-btn mg-btn--small mg-btn--success"
                                                 onClick={() => handleAdminApproval(request)}
                                             >
                                                 ✅ 승인
                                             </button>
                                             <button 
-                                                className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-danger"
+                                                className="mg-btn mg-btn--small mg-btn--danger"
                                                 onClick={() => handleRejectRequest(request.id)}
                                             >
                                                 ❌ 거부
@@ -1306,7 +1308,7 @@ const SessionManagement = () => {
                                     
                                     {request.status === 'ADMIN_APPROVED' && (
                                         <button 
-                                            className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-warning"
+                                            className="mg-btn mg-btn--small mg-btn--warning"
                                             onClick={() => handleCompleteRequest(request.id)}
                                         >
                                             ✅ 요청 완료
@@ -1397,13 +1399,13 @@ const SessionManagement = () => {
                         
                         <div className="session-mgmt-modal-footer">
                             <button 
-                                className="session-mgmt-btn session-mgmt-btn-secondary"
+                                className="mg-btn mg-btn--secondary"
                                 onClick={() => setShowPaymentModal(false)}
                             >
                                 취소
                             </button>
                             <button 
-                                className="session-mgmt-btn session-mgmt-btn-primary"
+                                className="mg-btn mg-btn--primary"
                                 onClick={handlePaymentConfirmSubmit}
                                 disabled={loading}
                             >
@@ -1440,13 +1442,13 @@ const SessionManagement = () => {
                         
                         <div className="session-mgmt-modal-footer">
                             <button 
-                                className="session-mgmt-btn session-mgmt-btn-secondary"
+                                className="mg-btn mg-btn--secondary"
                                 onClick={() => setShowApprovalModal(false)}
                             >
                                 취소
                             </button>
                             <button 
-                                className="session-mgmt-btn session-mgmt-btn-success"
+                                className="mg-btn mg-btn--success"
                                 onClick={handleAdminApprovalSubmit}
                                 disabled={loading}
                             >

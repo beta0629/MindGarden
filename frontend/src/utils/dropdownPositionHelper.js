@@ -139,10 +139,10 @@ export const initAllDropdowns = () => {
   // DOM이 완전히 로드된 후 실행
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(initDropdownPositioning, 100);
+      setTimeout(() => initDropdownPositioning('.custom-select'), 100);
     });
   } else {
-    setTimeout(initDropdownPositioning, 100);
+    setTimeout(() => initDropdownPositioning('.custom-select'), 100);
   }
 
   // 동적으로 추가된 드롭다운도 감지
@@ -151,13 +151,23 @@ export const initAllDropdowns = () => {
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
           if (node.classList && node.classList.contains('custom-select')) {
-            // 개별 드롭다운 초기화
-            initSingleDropdown(node);
+            // 개별 드롭다운 초기화 - 함수가 정의된 후 실행되도록 지연
+            setTimeout(() => {
+              if (typeof initSingleDropdown === 'function') {
+                initSingleDropdown(node);
+              }
+            }, 10);
           }
           // 하위 요소에서 드롭다운 찾기
           const childDropdowns = node.querySelectorAll && node.querySelectorAll('.custom-select');
           if (childDropdowns) {
-            childDropdowns.forEach(initSingleDropdown);
+            childDropdowns.forEach(child => {
+              setTimeout(() => {
+                if (typeof initSingleDropdown === 'function') {
+                  initSingleDropdown(child);
+                }
+              }, 10);
+            });
           }
         }
       });

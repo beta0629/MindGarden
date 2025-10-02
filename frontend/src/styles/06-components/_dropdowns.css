@@ -32,6 +32,11 @@ select option,
   /* 스크롤과 독립적으로 동작 */
   transform: translateZ(0);
   will-change: transform;
+  /* 스크롤 시에도 고정 위치 유지 */
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
 }
 
 /* 기본 드롭다운 컨테이너 */

@@ -5,9 +5,9 @@
   --z-base: 0;
   --z-index-hidden: 0;
   --z-index-select: 1;
-  --z-dropdown: 1000;
+  --z-dropdown: 10020;
   --z-index-dropdown: 9999;
-  --z-header: 1010;
+  --z-header: 10010;
   --z-sticky: 1020;
   --z-fixed: 1030;
   --z-modal-backdrop: 1040;

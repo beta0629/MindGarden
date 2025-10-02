@@ -83,34 +83,18 @@ public class SecurityConfig {
                     .anyRequest().permitAll() // 나머지는 허용
                 );
         } else {
-            // 개발 환경: 운영 환경과 동일한 보안 설정으로 테스트
+            // 개발 환경: 편의성 우선 (운영 환경과 분리)
             http
-                // CSRF 활성화 (운영 환경과 동일)
-                .csrf(csrf -> csrf
-                    .csrfTokenRepository(csrfTokenRepository())
-                    .ignoringRequestMatchers("/api/auth/**") // 인증 관련 API는 CSRF 제외
-                )
+                // CSRF 비활성화 (개발 편의성)
+                .csrf(csrf -> csrf.disable())
                 
-                // 세션 관리 활성화 (운영 환경과 동일)
+                // 세션 관리 활성화 (매핑 생성 등을 위해)
                 .sessionManagement(session -> session
                     .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
-                    .maximumSessions(1)
-                    .maxSessionsPreventsLogin(false)
-                    .sessionRegistry(sessionRegistry())
                 )
                 
-                // API 엔드포인트별 권한 설정 (운영 환경과 동일)
-                .authorizeHttpRequests(authz -> authz
-                    .requestMatchers("/api/auth/**").permitAll() // 인증 API는 허용
-                    .requestMatchers("/api/common-codes/**").permitAll() // 공통코드 API는 허용
-                    .requestMatchers("/api/admin/css-themes/**").permitAll() // CSS 테마 API는 허용
-                    .requestMatchers("/api/admin/**").authenticated() // 관리자 API는 인증 필요
-                    .requestMatchers("/api/erp/**").authenticated() // ERP API는 인증 필요
-                    .requestMatchers("/api/schedules/**").authenticated() // 스케줄 API는 인증 필요
-                    .requestMatchers("/api/payments/**").authenticated() // 결제 API는 인증 필요
-                    .requestMatchers("/api/consultant/**").authenticated() // 상담사 API는 인증 필요
-                    .anyRequest().permitAll() // 나머지는 허용
-                );
+                // 모든 요청 허용 (개발 편의성)
+                .authorizeHttpRequests(authz -> authz.anyRequest().permitAll());
         }
         
         return http.build();

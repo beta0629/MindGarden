@@ -983,33 +983,6 @@ const SessionManagement = () => {
                         })()}
                     </div>
                     
-                    {/* 전체 회기 관리 현황 필터 (특정 내담자 선택 시에는 숨김) */}
-                    {!selectedClient && (
-                        <div className="session-management-empty-state">
-                            <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-                                <input
-                                    type="text"
-                                    placeholder="매핑 검색..."
-                                    value={mappingSearchTerm}
-                                    onChange={(e) => setMappingSearchTerm(e.target.value)}
-                                    className="session-mgmt-search-input"
-                                />
-                            </div>
-                            <select
-                                value={mappingFilterStatus}
-                                onChange={(e) => setMappingFilterStatus(e.target.value)}
-                                className="session-mgmt-status-select"
-                                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                            >
-                                <option value="ALL">전체 상태</option>
-                                <option value="ACTIVE">활성</option>
-                                <option value="INACTIVE">비활성</option>
-                                <option value="PENDING">대기</option>
-                                <option value="COMPLETED">완료</option>
-                                <option value="SUSPENDED">일시정지</option>
-                            </select>
-                        </div>
-                    )}
                 </div>
                         <div className="session-mgmt-mappings-grid">
                             {getFilteredMappings().map(mapping => (

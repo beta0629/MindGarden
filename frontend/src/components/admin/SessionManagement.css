@@ -295,19 +295,26 @@ body .tab-btn.active,
     gap: 8px;
 }
 
+#root .session-mgmt-btn-primary,
+body .session-mgmt-btn-primary,
 .session-mgmt-btn-primary {
-    background: linear-gradient(135deg, var(--color-primary, #007aff) 0%, var(--ios-blue, #007aff) 100%);
-    color: var(--text-inverse, #ffffff);
-    font-weight: 600;
-    border: 2px solid var(--color-primary, #007aff);
-    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+    background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border: 2px solid #007AFF !important;
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3) !important;
+    border-radius: 12px !important;
+    padding: 12px 20px !important;
+    transition: all 0.3s ease !important;
 }
 
+#root .session-mgmt-btn-primary:hover,
+body .session-mgmt-btn-primary:hover,
 .session-mgmt-btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
-    background: linear-gradient(135deg, var(--ios-blue, #007aff) 0%, var(--ios-blue, #007aff) 100%);
-    border-color: var(--ios-blue, #007aff);
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4) !important;
+    background: linear-gradient(135deg, #0056CC 0%, #003D99 100%) !important;
+    border-color: #0056CC !important;
 }
 
 .session-mgmt-btn-secondary {
@@ -455,24 +462,46 @@ body .tab-btn.active,
     font-size: var(--font-size-xs);
 }
 
+#root .session-mgmt-btn-danger,
+body .session-mgmt-btn-danger,
 .session-mgmt-btn-danger {
-    background: var(--color-danger, #ff3b30);
-    color: var(--text-inverse, #ffffff);
+    background: linear-gradient(135deg, #FF3B30 0%, #D70015 100%) !important;
+    color: white !important;
+    border: 2px solid #FF3B30 !important;
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3) !important;
+    border-radius: 12px !important;
+    padding: 12px 20px !important;
+    transition: all 0.3s ease !important;
 }
 
+#root .session-mgmt-btn-danger:hover,
+body .session-mgmt-btn-danger:hover,
 .session-mgmt-btn-danger:hover {
-    background: var(--ios-red, #ff3b30);
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, #D70015 0%, #B30012 100%) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 24px rgba(255, 59, 48, 0.4) !important;
+    border-color: #D70015 !important;
 }
 
+#root .session-mgmt-btn-warning,
+body .session-mgmt-btn-warning,
 .session-mgmt-btn-warning {
-    background: var(--color-warning, #ff9500);
-    color: var(--text-inverse, #ffffff);
+    background: linear-gradient(135deg, #FF9500 0%, #FF6B00 100%) !important;
+    color: white !important;
+    border: 2px solid #FF9500 !important;
+    box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3) !important;
+    border-radius: 12px !important;
+    padding: 12px 20px !important;
+    transition: all 0.3s ease !important;
 }
 
+#root .session-mgmt-btn-warning:hover,
+body .session-mgmt-btn-warning:hover,
 .session-mgmt-btn-warning:hover {
-    background: var(--ios-orange, #ff9500);
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, #FF6B00 0%, #E55A00 100%) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 24px rgba(255, 149, 0, 0.4) !important;
+    border-color: #FF6B00 !important;
 }
 
 /* 모달 스타일 */
@@ -687,53 +716,84 @@ body .tab-btn.active,
     font-weight: 600;
 }
 
+#root .session-mgmt-selected-client-info,
+body .session-mgmt-selected-client-info,
 .session-mgmt-selected-client-info {
-    background: white;
-    border-radius: 12px;
-    padding: var(--spacing-base);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+    margin-bottom: 24px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 
+#root .session-mgmt-mapping-info,
+body .session-mgmt-mapping-info,
 .session-mgmt-mapping-info {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: var(--spacing-base);
+    background: rgba(240, 248, 255, 0.6) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    margin-bottom: 16px !important;
 }
 
 .session-mgmt-mapping-details {
     margin-bottom: 20px;
 }
 
+#root .session-mgmt-detail-row,
+body .session-mgmt-detail-row,
 .session-mgmt-detail-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-sm);
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 12px !important;
+    padding: 8px 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
+#root .session-mgmt-label,
+body .session-mgmt-label,
 .session-mgmt-label {
-    font-weight: 500;
-    color: #7f8c8d;
+    font-weight: 600 !important;
+    color: #2c3e50 !important;
+    font-size: 14px !important;
 }
 
+#root .session-mgmt-value,
+body .session-mgmt-value,
 .session-mgmt-value {
-    color: #2c3e50;
-    font-weight: 500;
+    color: #007AFF !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
 }
 
+#root .session-mgmt-status-badge,
+body .session-mgmt-status-badge,
 .session-mgmt-status-badge {
-    padding: 6px 12px;
-    border-radius: 8px;
-    color: white;
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    background: var(--color-info, #17a2b8);
+    padding: 8px 16px !important;
+    border-radius: 20px !important;
+    color: white !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    background: #007AFF !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
+#root .session-mgmt-mapping-actions,
+body .session-mgmt-mapping-actions,
 .session-mgmt-mapping-actions {
-    display: flex;
-    gap: 10px;
+    display: flex !important;
+    gap: 12px !important;
+    margin-top: 16px !important;
+    flex-wrap: wrap !important;
 }
 
 .session-mgmt-no-mapping {

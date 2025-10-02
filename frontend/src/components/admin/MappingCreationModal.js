@@ -52,9 +52,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
     
-    // 모달 크기 결정
+    // 모달 크기 결정 (공통 헤더 고려)
     const getModalSize = () => {
-        if (windowWidth <= 480) return 'fullscreen';
+        if (windowWidth <= 480) return 'large'; // fullscreen 대신 large 사용
         if (windowWidth <= 768) return 'large';
         if (windowWidth <= 1024) return 'large';
         return 'large';

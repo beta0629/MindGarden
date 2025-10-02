@@ -57,6 +57,7 @@
 
 .mg-modal--large {
   width: 800px;
+  max-height: calc(100vh - 80px); /* 공통 헤더(64px) + 여백(16px) 고려 */
 }
 
 .mg-modal--fullscreen {
@@ -155,7 +156,7 @@
 @media (max-width: 768px) {
   .mg-modal {
     width: 95vw !important;
-    max-height: 90vh;
+    max-height: calc(100vh - 100px); /* 공통 헤더 + 여백 고려 */
     margin: 20px;
     border-radius: var(--border-radius-lg);
   }

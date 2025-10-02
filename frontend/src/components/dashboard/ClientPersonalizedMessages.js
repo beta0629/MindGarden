@@ -15,64 +15,98 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
   const navigate = useNavigate();
   const [isConsultantModalOpen, setIsConsultantModalOpen] = useState(false);
   const [isConsultationGuideModalOpen, setIsConsultationGuideModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   // 카드 클릭 핸들러
   const handleCardClick = (action) => {
+    // 로딩 중이면 클릭 무시
+    if (isLoading) {
+      console.log('로딩 중 - 클릭 무시');
+      return;
+    }
+    
+    // 로딩 시작
+    setIsLoading(true);
     switch (action) {
       case 'schedule':
         // 상담 일정은 상담사가 관리하므로 메시지로 안내
         alert('상담 일정은 상담사가 관리합니다. 문의사항이 있으시면 메시지를 보내주세요.');
+        setIsLoading(false);
         break;
       case 'mapping':
         navigate('/client/consultant-mapping');
+        // 페이지 이동 후 로딩 해제
+        setTimeout(() => setIsLoading(false), 1000);
         break;
       case 'payment':
         navigate('/client/payment');
+        // 페이지 이동 후 로딩 해제
+        setTimeout(() => setIsLoading(false), 1000);
         break;
       case 'consultants':
         setIsConsultantModalOpen(true);
+        setIsLoading(false);
         break;
       case 'activity':
         // 최근 활동 상세 페이지로 이동
         console.log('최근 활동 상세 페이지로 이동');
         navigate('/client/activity-history');
+        // 페이지 이동 후 로딩 해제
+        setTimeout(() => setIsLoading(false), 1000);
         break;
       case 'welcome':
         navigate('/client/profile');
+        // 페이지 이동 후 로딩 해제
+        setTimeout(() => setIsLoading(false), 1000);
         break;
       case 'pending':
         // 대기 상태에서는 아무것도 하지 않음
+        setIsLoading(false);
         break;
       case 'continue':
         // 상담 일정은 상담사가 관리하므로 메시지로 안내
         alert('상담 일정은 상담사가 관리합니다. 문의사항이 있으시면 메시지를 보내주세요.');
+        setIsLoading(false);
         break;
       case 'general':
         navigate('/client/profile');
+        // 페이지 이동 후 로딩 해제
+        setTimeout(() => setIsLoading(false), 1000);
         break;
       case 'tip':
         // 팁은 클릭해도 아무것도 하지 않음
+        setIsLoading(false);
         break;
       case 'wellness':
         navigate('/client/wellness');
+        // 페이지 이동 후 로딩 해제
+        setTimeout(() => setIsLoading(false), 1000);
         break;
       case 'messages':
         navigate('/client/messages');
+        // 페이지 이동 후 로딩 해제
+        setTimeout(() => setIsLoading(false), 1000);
         break;
       case 'session-status':
         // 회기 관리 상세 페이지로 이동
         navigate('/client/session-management');
+        // 페이지 이동 후 로딩 해제
+        setTimeout(() => setIsLoading(false), 1000);
         break;
       case 'payment-history':
         // 결제 내역 상세 페이지로 이동
         navigate('/client/payment-history');
+        // 페이지 이동 후 로딩 해제
+        setTimeout(() => setIsLoading(false), 1000);
         break;
       case 'consultation-guide':
         // 상담 가이드 모달 열기
         setIsConsultationGuideModalOpen(true);
+        setIsLoading(false);
         break;
       default:
         console.log('Unknown action:', action);
+        setIsLoading(false);
     }
   };
   
@@ -350,11 +384,16 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         return (
           <div
             key={message.id}
-            className={`personalized-message-card ${message.action && message.action !== 'tip' && message.action !== 'pending' ? 'clickable' : ''}`}
+            className={`personalized-message-card ${message.action && message.action !== 'tip' && message.action !== 'pending' ? 'clickable' : ''} ${isLoading ? 'loading' : ''}`}
             onClick={() => {
-              if (message.action && message.action !== 'tip' && message.action !== 'pending') {
+              if (message.action && message.action !== 'tip' && message.action !== 'pending' && !isLoading) {
                 handleCardClick(message.action);
               }
+            }}
+            style={{
+              opacity: isLoading ? 0.6 : 1,
+              cursor: isLoading ? 'not-allowed' : (message.action && message.action !== 'tip' && message.action !== 'pending' ? 'pointer' : 'default'),
+              pointerEvents: isLoading ? 'none' : 'auto'
             }}
           >
             <div className="message-card-content">
@@ -373,10 +412,18 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
                 
                 {message.action && message.action !== 'tip' && message.action !== 'pending' && (
                   <div className="message-card-action" data-message-color={message.color}>
-                    <span className="message-card-action-text">
-                      자세히 보기
-                    </span>
-                    <i className="bi bi-arrow-right message-card-action-icon"></i>
+                    {isLoading ? (
+                      <span className="message-card-action-text">
+                        처리 중...
+                      </span>
+                    ) : (
+                      <>
+                        <span className="message-card-action-text">
+                          자세히 보기
+                        </span>
+                        <i className="bi bi-arrow-right message-card-action-icon"></i>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

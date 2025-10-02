@@ -70,8 +70,8 @@
 
 /* 카드 크기 */
 .card--compact {
-  padding: var(--spacing-sm) var(--spacing-sm);
-  border-radius: var(--border-radius-sm);
+  padding: 6px 8px;
+  border-radius: 6px;
 }
 
 .card--small {
@@ -110,14 +110,14 @@
 .card__header {
   background: rgba(255, 255, 255, 0.1);
   border-bottom: 1px solid var(--glass-border);
-  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-xs);
   border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
 .card__title {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   color: var(--ios-text-primary);
   margin: 0;
@@ -127,12 +127,12 @@
 }
 
 .card--compact .card__title {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   margin-bottom: var(--spacing-xs);
 }
 
 .card__subtitle {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--ios-text-secondary);
   margin: var(--spacing-xs) 0 0 0;
   font-weight: var(--font-weight-medium);
@@ -141,13 +141,13 @@
 }
 
 .card__body {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm);
   background: transparent;
   position: relative;
 }
 
 .card--compact .card__body {
-  padding: var(--spacing-md);
+  padding: var(--spacing-xs);
 }
 
 .card__body::before {
@@ -176,14 +176,14 @@
 .card__footer {
   background: rgba(255, 255, 255, 0.15);
   border-top: 1px solid var(--glass-border);
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: 0 0 var(--border-radius-xl) var(--border-radius-xl);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
 }
 
 .card--compact .card__footer {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-xs);
 }
 
 .card__icon {
@@ -424,13 +424,13 @@
     transition: transform 0.1s ease;
   }
   
-  /* 모바일 폰트 크기 조정 */
+  /* 모바일 폰트 크기 조정 - 더 작게 */
   .card__title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-sm);
   }
   
   .card__subtitle {
-    font-size: var(--font-size-xs);
+    font-size: 10px;
   }
   
   .card__text {
@@ -453,10 +453,10 @@
     font-size: var(--font-size-sm);
   }
   
-  /* 모바일 카드 크기 조정 */
+  /* 모바일 카드 크기 조정 - 매우 컴팩트 */
   .card {
-    margin-bottom: var(--spacing-sm);
-    border-radius: var(--border-radius-md);
+    margin-bottom: 8px;
+    border-radius: 8px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     background: var(--ios-bg-primary);
@@ -465,37 +465,37 @@
   }
   
   .stat-card {
-    padding: var(--spacing-md) var(--spacing-sm);
-    border-radius: var(--border-radius-lg);
+    padding: 12px 8px;
+    border-radius: 8px;
     background: var(--ios-bg-primary);
     border: 1px solid var(--ipad-card-border);
     box-shadow: var(--ipad-card-shadow);
   }
   
   .management-card {
-    padding: var(--spacing-lg) var(--spacing-md);
-    border-radius: var(--border-radius-lg);
+    padding: 16px 12px;
+    border-radius: 8px;
     background: var(--ios-bg-primary);
     border: 1px solid var(--ipad-card-border);
     box-shadow: var(--ipad-card-shadow);
   }
   
-  /* 모바일 아이콘 크기 조정 */
+  /* 모바일 아이콘 크기 조정 - 더 작게 */
   .card__icon--small {
-    width: 44px;
-    height: 44px;
-    font-size: var(--font-size-xl);
-    border-radius: var(--border-radius-md);
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    border-radius: 6px;
     background: var(--ios-blue);
     color: white;
     box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
   }
   
   .card__icon--large {
-    width: 48px;
-    height: 48px;
-    font-size: var(--font-size-xl);
-    border-radius: var(--border-radius-lg);
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    border-radius: 8px;
     background: var(--ios-blue);
     color: white;
     box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);

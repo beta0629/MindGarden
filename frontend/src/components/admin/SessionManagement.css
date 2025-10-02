@@ -841,8 +841,8 @@ body .session-mgmt-selected-client-info,
     background: rgba(255, 255, 255, 0.9) !important;
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
-    border-radius: 16px !important;
-    padding: 24px !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
     margin-bottom: 24px !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -856,8 +856,8 @@ body .session-mgmt-mapping-info,
     background: rgba(240, 248, 255, 0.6) !important;
     backdrop-filter: blur(5px) !important;
     -webkit-backdrop-filter: blur(5px) !important;
-    border-radius: 12px !important;
-    padding: 20px !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
     margin-bottom: 16px !important;
 }
@@ -1055,9 +1055,9 @@ body .session-mgmt-mapping-actions,
 .session-mgmt-sessions-info {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 24px;
-    margin: 24px 0;
-    padding: 24px;
+    gap: 12px;
+    margin: 12px 0;
+    padding: 12px;
     background: rgba(248, 249, 250, 0.3);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -1499,7 +1499,9 @@ body .session-mgmt-mapping-actions,
     
     .session-mgmt-sessions-info {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: 6px;
+        padding: 8px;
+        margin: 8px 0;
     }
     
     .session-mgmt-card-actions {
@@ -1556,8 +1558,8 @@ body .session-mgmt-mapping-actions,
     
     .session-mgmt-current-sessions {
         flex-direction: row;
-        gap: 8px;
-        padding: 6px 8px;
+        gap: 4px;
+        padding: 3px 4px;
     }
     
     .session-mgmt-session-info {
@@ -1567,22 +1569,22 @@ body .session-mgmt-mapping-actions,
     }
     
     .session-mgmt-session-label {
-        font-size: 9px;
-        margin-bottom: 1px;
+        font-size: 7px;
+        margin-bottom: 0px;
     }
     
     .session-mgmt-session-value {
-        font-size: 11px;
+        font-size: 9px;
     }
 }
 
-/* 현재 회기 현황 스타일 - 컴팩트 */
+/* 현재 회기 현황 스타일 - 매우 컴팩트 */
 .session-mgmt-current-sessions {
     display: flex;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: 6px;
+    padding: 4px 6px;
     background: #f8f9fa;
-    border-radius: 6px;
+    border-radius: 4px;
     border: 1px solid #e9ecef;
 }
 
@@ -1591,17 +1593,18 @@ body .session-mgmt-mapping-actions,
     flex-direction: column;
     align-items: center;
     flex: 1;
+    padding: 2px;
 }
 
 .session-mgmt-session-label {
-    font-size: 10px;
+    font-size: 8px;
     color: #6c757d;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
     font-weight: 500;
 }
 
 .session-mgmt-session-value {
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
     color: #2c3e50;
 }

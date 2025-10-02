@@ -54,10 +54,10 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     
     // 모달 크기 결정 (공통 헤더 고려)
     const getModalSize = () => {
-        if (windowWidth <= 480) return 'large'; // fullscreen 대신 large 사용
-        if (windowWidth <= 768) return 'large';
-        if (windowWidth <= 1024) return 'large';
-        return 'large';
+        if (windowWidth <= 480) return 'medium'; // 모바일에서는 medium
+        if (windowWidth <= 768) return 'medium'; // 태블릿에서는 medium
+        if (windowWidth <= 1024) return 'large'; // 데스크톱에서는 large
+        return 'large'; // 큰 화면에서는 large
     };
     
     // 결제 정보

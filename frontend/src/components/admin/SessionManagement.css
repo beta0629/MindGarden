@@ -1521,7 +1521,29 @@ body .session-mgmt-mapping-actions,
     
     .session-mgmt-extensions-grid {
         grid-template-columns: 1fr;
-        padding: 0 16px;
+        padding: 0 12px;
+        gap: 12px;
+    }
+    
+    /* 모바일 카드 더 작게 */
+    .card--compact {
+        padding: 6px 8px;
+    }
+    
+    .card--compact .card__title {
+        font-size: 13px;
+    }
+    
+    .card--compact .card__subtitle {
+        font-size: 11px;
+    }
+    
+    .card--compact .card__body {
+        padding: 8px;
+    }
+    
+    .card--compact .card__footer {
+        padding: 6px 8px;
     }
     
     .session-mgmt-extension-card .session-mgmt-card-actions {
@@ -1533,14 +1555,24 @@ body .session-mgmt-mapping-actions,
     }
     
     .session-mgmt-current-sessions {
-        flex-direction: column;
-        gap: 10px;
+        flex-direction: row;
+        gap: 8px;
+        padding: 6px 8px;
     }
     
     .session-mgmt-session-info {
-        flex-direction: row;
-        justify-content: space-between;
+        flex-direction: column;
         align-items: center;
+        flex: 1;
+    }
+    
+    .session-mgmt-session-label {
+        font-size: 9px;
+        margin-bottom: 1px;
+    }
+    
+    .session-mgmt-session-value {
+        font-size: 11px;
     }
 }
 

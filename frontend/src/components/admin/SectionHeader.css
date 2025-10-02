@@ -33,8 +33,12 @@
     line-height: 1.2;
 }
 
-#root .section-subtitle,
-body .section-subtitle,
+html body #root .section-header .section-subtitle,
+html body .section-header .section-subtitle,
+body #root .section-header .section-subtitle,
+body .section-header .section-subtitle,
+#root .section-header .section-subtitle,
+.section-header .section-subtitle,
 .section-subtitle {
     font-size: 16px !important;
     color: #666666 !important;
@@ -53,8 +57,12 @@ body .section-subtitle,
     transition: all 0.3s ease !important;
 }
 
-#root .section-subtitle:hover,
-body .section-subtitle:hover,
+html body #root .section-header .section-subtitle:hover,
+html body .section-header .section-subtitle:hover,
+body #root .section-header .section-subtitle:hover,
+body .section-header .section-subtitle:hover,
+#root .section-header .section-subtitle:hover,
+.section-header .section-subtitle:hover,
 .section-subtitle:hover {
     background: rgba(255, 255, 255, 0.9) !important;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15) !important;

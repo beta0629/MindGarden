@@ -979,39 +979,29 @@ const SessionManagement = () => {
 
             {/* 매핑 목록 */}
             <div className="session-mgmt-all-mappings-section">
-                <div className="session-mgmt-mappings-header">
-                    <div>
-                        <h3>
-                            {selectedClient ? `${selectedClient.name} 회기 관리 현황` : '전체 회기 관리 현황'}
-                            {selectedClient && (
-                                <button 
-                                    className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-secondary session-mgmt-close-btn"
-                                    onClick={() => setSelectedClient(null)}
-                                >
-                                    전체 보기
-                                </button>
-                            )}
-                        </h3>
-                        {!selectedClient && (() => {
-                            const hasActiveFilters = mappingSearchTerm || mappingFilterStatus !== 'ALL';
-                            const filteredCount = getFilteredMappings().length;
-                            const totalCount = mappings.length;
-                            
-                            if (hasActiveFilters) {
-                                return (
-                                    <p className="session-mgmt-client-info">
-                                        검색 결과: {filteredCount}개 (전체 {totalCount}개 중)
-                                    </p>
-                                );
-                            } else {
-                                return (
-                                    <p className="session-mgmt-client-info">
-                                        최근 매핑 {filteredCount}개 표시 (전체 {totalCount}개 중)
-                                    </p>
-                                );
-                            }
-                        })()}
-                    </div>
+                <SectionHeader
+                    title={selectedClient ? `${selectedClient.name} 회기 관리 현황` : '전체 회기 관리 현황'}
+                    subtitle={!selectedClient ? (() => {
+                        const hasActiveFilters = mappingSearchTerm || mappingFilterStatus !== 'ALL';
+                        const filteredCount = getFilteredMappings().length;
+                        const totalCount = mappings.length;
+                        
+                        if (hasActiveFilters) {
+                            return `검색 결과: ${filteredCount}개 (전체 ${totalCount}개 중)`;
+                        } else {
+                            return `최근 매핑 ${filteredCount}개 표시 (전체 ${totalCount}개 중)`;
+                        }
+                    })() : null}
+                    icon="bi-diagram-3"
+                    actions={selectedClient ? (
+                        <button 
+                            className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-secondary session-mgmt-close-btn"
+                            onClick={() => setSelectedClient(null)}
+                        >
+                            전체 보기
+                        </button>
+                    ) : null}
+                />
                     
                 </div>
                         <div className="session-mgmt-mappings-grid">

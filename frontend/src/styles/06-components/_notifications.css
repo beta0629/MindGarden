@@ -118,6 +118,7 @@
   height: 100%;
   background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
   animation: mg-progress-shrink linear;
+  animation-duration: 0.5s; /* 기본 속도를 0.5초로 단축 */
 }
 
 /* 알림 타입별 스타일 */

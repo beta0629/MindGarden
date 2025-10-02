@@ -62,7 +62,7 @@ class NotificationManager {
     /**
      * 알림 표시
      */
-    show(message, type = 'success', duration = 3000) {
+    show(message, type = 'success', duration = 1000) { // 기본 duration을 3초에서 1초로 단축
         console.log('notificationManager.show 호출됨:', { message, type, duration });
         console.log('현재 리스너 수:', this.listeners.length);
         
@@ -89,28 +89,28 @@ class NotificationManager {
     /**
      * 성공 알림
      */
-    success(message, duration = 3000) {
+    success(message, duration = 1000) { // 기본 duration을 3초에서 1초로 단축
         return this.show(message, 'success', duration);
     }
 
     /**
      * 오류 알림
      */
-    error(message, duration = 5000) {
+    error(message, duration = 2000) { // 기본 duration을 5초에서 2초로 단축
         return this.show(message, 'error', duration);
     }
 
     /**
      * 경고 알림
      */
-    warning(message, duration = 4000) {
+    warning(message, duration = 1500) { // 기본 duration을 4초에서 1.5초로 단축
         return this.show(message, 'warning', duration);
     }
 
     /**
      * 정보 알림
      */
-    info(message, duration = 3000) {
+    info(message, duration = 1000) { // 기본 duration을 3초에서 1초로 단축
         return this.show(message, 'info', duration);
     }
 

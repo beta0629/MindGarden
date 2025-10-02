@@ -88,6 +88,7 @@
   height: 100%;
   background: var(--ios-blue);
   animation: progressBar linear;
+  animation-duration: 0.5s; /* 기본 속도를 0.5초로 단축 */
   transform-origin: left;
 }
 

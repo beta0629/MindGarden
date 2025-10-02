@@ -53,32 +53,44 @@
 
 /* 백 버튼 */
 .mg-header__back-button {
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid var(--color-border-light);
   padding: var(--spacing-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--border-radius-md);
-  transition: all 0.2s ease;
+  border-radius: var(--border-radius-lg);
+  transition: all 0.3s ease;
   color: var(--color-text-primary);
-  font-size: var(--font-size-lg);
-  width: 40px;
-  height: 40px;
+  font-size: 20px;
+  font-weight: bold;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .mg-header__back-button:hover {
-  background: var(--color-bg-secondary);
-  color: var(--color-primary);
-  transform: translateX(-2px);
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+  transform: translateX(-3px) scale(1.05);
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
 }
 
 .mg-header__back-button:focus {
   outline: none;
-  background: var(--color-bg-secondary);
-  box-shadow: 0 0 0 2px var(--color-primary-light);
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.mg-header__back-button:active {
+  transform: translateX(-1px) scale(0.98);
 }
 
 .mg-header__logo {

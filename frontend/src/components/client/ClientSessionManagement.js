@@ -170,84 +170,34 @@ const ClientSessionManagement = () => {
 
         {/* 햄버거 메뉴 드롭다운 */}
         {isMenuOpen && (
-          <div style={{
-            position: 'fixed',
-            top: '80px',
-            right: '20px',
-            backgroundColor: 'white',
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            zIndex: 1000,
-            minWidth: '200px'
-          }}>
-            <div style={{ padding: '8px 0' }}>
+          <div className="client-session-menu-dropdown">
+            <div className="client-session-menu-content">
               <button 
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: 'none',
-                  background: 'none',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
+                className="client-session-menu-item"
                 onClick={() => handleMenuAction('dashboard')}
               >
-                <i className="bi bi-house"></i>
+                <i className="bi bi-house client-session-menu-icon"></i>
                 대시보드
               </button>
               <button 
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: 'none',
-                  background: 'none',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
+                className="client-session-menu-item"
                 onClick={() => handleMenuAction('session-management')}
               >
-                <i className="bi bi-clock-history"></i>
+                <i className="bi bi-clock-history client-session-menu-icon"></i>
                 회기 관리
               </button>
               <button 
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: 'none',
-                  background: 'none',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
+                className="client-session-menu-item"
                 onClick={() => handleMenuAction('payment-history')}
               >
-                <i className="bi bi-credit-card"></i>
+                <i className="bi bi-credit-card client-session-menu-icon"></i>
                 결제 내역
               </button>
               <button 
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: 'none',
-                  background: 'none',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
+                className="client-session-menu-item"
                 onClick={() => handleMenuAction('consultation-guide')}
               >
-                <i className="bi bi-book"></i>
+                <i className="bi bi-book client-session-menu-icon"></i>
                 상담 가이드
               </button>
             </div>

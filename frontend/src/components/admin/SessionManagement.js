@@ -599,20 +599,20 @@ const SessionManagement = () => {
     };
 
     /**
-     * 상태별 색상 반환
+     * 상태별 색상 반환 (디자인 시스템 변수 사용)
      */
     const getStatusColor = (status) => {
         const colorMap = {
-            'ACTIVE': '#10b981',
-            'INACTIVE': '#6b7280',
-            'SUSPENDED': '#f59e0b',
-            'TERMINATED': '#ef4444',
-            'COMPLETED': '#3b82f6',
-            'PENDING_PAYMENT': '#f97316',
-            'PAYMENT_CONFIRMED': '#22c55e',
-            'SESSIONS_EXHAUSTED': '#8b5cf6'
+            'ACTIVE': 'var(--color-success, #34C759)',
+            'INACTIVE': 'var(--color-secondary, #8E8E93)',
+            'SUSPENDED': 'var(--color-warning, #FF9500)',
+            'TERMINATED': 'var(--color-danger, #FF3B30)',
+            'COMPLETED': 'var(--color-primary, #007AFF)',
+            'PENDING_PAYMENT': 'var(--ios-orange, #FF9500)',
+            'PAYMENT_CONFIRMED': 'var(--color-success, #34C759)',
+            'SESSIONS_EXHAUSTED': 'var(--ios-purple, #5856D6)'
         };
-        return colorMap[status] || '#6b7280';
+        return colorMap[status] || 'var(--color-secondary, #8E8E93)';
     };
 
     /**
@@ -630,17 +630,17 @@ const SessionManagement = () => {
     };
 
     /**
-     * 회기 추가 요청 상태별 색상 반환
+     * 회기 추가 요청 상태별 색상 반환 (디자인 시스템 변수 사용)
      */
     const getExtensionStatusColor = (status) => {
         const colorMap = {
-            'PENDING': '#f97316',
-            'PAYMENT_CONFIRMED': '#22c55e',
-            'ADMIN_APPROVED': '#3b82f6',
-            'REJECTED': '#ef4444',
-            'COMPLETED': '#10b981'
+            'PENDING': 'var(--ios-orange, #FF9500)',
+            'PAYMENT_CONFIRMED': 'var(--color-success, #34C759)',
+            'ADMIN_APPROVED': 'var(--color-primary, #007AFF)',
+            'REJECTED': 'var(--color-danger, #FF3B30)',
+            'COMPLETED': 'var(--color-success, #34C759)'
         };
-        return colorMap[status] || '#6b7280';
+        return colorMap[status] || 'var(--color-secondary, #8E8E93)';
     };
 
     /**

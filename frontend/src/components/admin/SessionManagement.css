@@ -583,7 +583,7 @@
     align-items: center;
     margin-bottom: 12px;
     padding: 8px 0;
-    border-bottom: 1px solid #f8f9fa;
+    border-bottom: 1px solid rgba(248, 249, 250, 0.5);
 }
 
 .session-mgmt-info-row:last-child {
@@ -593,13 +593,13 @@
 
 .session-mgmt-info-label {
     font-weight: 500;
-    color: #6c757d;
+    color: var(--color-text-secondary, #666666);
     font-size: var(--font-size-sm);
     min-width: 80px;
 }
 
 .session-mgmt-info-value {
-    color: #2c3e50;
+    color: var(--color-text-primary, #1a1a1a);
     font-size: var(--font-size-sm);
     font-weight: 500;
     text-align: right;
@@ -613,8 +613,11 @@
     gap: 15px;
     margin: var(--spacing-base) 0;
     padding: 15px;
-    background: #f8f9fa;
-    border-radius: 8px;
+    background: rgba(248, 249, 250, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--border-radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .session-mgmt-session-item {
@@ -624,7 +627,7 @@
 .session-mgmt-session-label {
     display: block;
     font-size: var(--font-size-xs);
-    color: #6c757d;
+    color: var(--color-text-secondary, #666666);
     margin-bottom: 5px;
     font-weight: 500;
 }
@@ -633,7 +636,7 @@
     display: block;
     font-size: var(--font-size-lg);
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--color-text-primary, #1a1a1a);
 }
 
 /* 읽기 전용 입력 필드 */
@@ -851,7 +854,11 @@
     display: flex;
     gap: 0;
     margin-top: 20px;
-    border-bottom: 2px solid #e9ecef;
+    border-bottom: 2px solid rgba(233, 236, 239, 0.5);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
 }
 
 .session-mgmt-tab {
@@ -860,7 +867,7 @@
     background: none;
     font-size: var(--font-size-base);
     font-weight: 500;
-    color: #6c757d;
+    color: var(--color-text-secondary, #666666);
     cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
@@ -882,10 +889,15 @@
 
 /* 회기 추가 요청 섹션 */
 .session-mgmt-extensions-section {
-    background: white;
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     padding: var(--spacing-base);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .session-mgmt-extensions-header {
@@ -893,14 +905,14 @@
 }
 
 .session-mgmt-extensions-header h3 {
-    color: #2c3e50;
+    color: var(--color-text-primary, #1a1a1a);
     font-size: var(--font-size-xl);
     font-weight: 600;
     margin: 0 0 8px 0;
 }
 
 .session-mgmt-extensions-header p {
-    color: #6c757d;
+    color: var(--color-text-secondary, #666666);
     font-size: var(--font-size-sm);
     margin: 0;
 }
@@ -913,26 +925,35 @@
 
 /* 회기 추가 요청 카드 */
 .session-mgmt-extension-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 4px 16px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     overflow: hidden;
     transition: all 0.3s ease;
-    border: 1px solid #e9ecef;
 }
 
 .session-mgmt-extension-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 8px 24px rgba(0, 122, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .session-mgmt-extension-card .session-mgmt-card-header {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-bottom: 1px solid #dee2e6;
+    background: rgba(248, 249, 250, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(222, 226, 230, 0.5);
 }
 
 .session-mgmt-extension-card .session-mgmt-card-title h4 {
-    color: #2c3e50;
+    color: var(--color-text-primary, #1a1a1a);
     font-size: var(--font-size-base);
     font-weight: 600;
     margin: 0 0 4px 0;

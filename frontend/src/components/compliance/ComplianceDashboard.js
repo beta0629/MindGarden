@@ -90,11 +90,9 @@ const ComplianceDashboard = () => {
     if (loading) {
         return (
             <SimpleLayout title="컴플라이언스 관리">
-                <div className="compliance-dashboard">
                 <div className="loading-container">
                     <div className="loading-spinner"></div>
                     <p>컴플라이언스 데이터를 불러오는 중...</p>
-                </div>
                 </div>
             </SimpleLayout>
         );
@@ -103,14 +101,12 @@ const ComplianceDashboard = () => {
     if (error) {
         return (
             <SimpleLayout title="컴플라이언스 관리">
-                <div className="compliance-dashboard">
                 <div className="error-container">
                     <h2>❌ 오류 발생</h2>
                     <p>{error}</p>
                     <button onClick={loadComplianceData} className="retry-button">
                         다시 시도
                     </button>
-                </div>
                 </div>
             </SimpleLayout>
         );
@@ -355,7 +351,6 @@ const ComplianceDashboard = () => {
                     🎓 교육 계획 수립
                 </button>
             </div>
-                </div>
             </SimpleLayout>
         );
     };

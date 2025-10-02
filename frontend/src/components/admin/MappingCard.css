@@ -30,7 +30,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 24px 24px 20px 24px;
+    padding: 16px 16px 12px 16px;
     background: linear-gradient(135deg, rgba(248, 249, 250, 0.3) 0%, rgba(233, 236, 239, 0.2) 100%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -38,20 +38,20 @@
 .client-info {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     flex: 1;
 }
 
 .client-avatar {
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--color-primary, #007AFF), var(--color-accent, #5856D6));
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 600;
     box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
 }
@@ -61,7 +61,7 @@
 }
 
 .client-name {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--text-primary, #1a1a1a);
     margin: 0 0 4px 0;
@@ -120,13 +120,13 @@
 
 /* 카드 바디 */
 .mapping-card-body {
-    padding: 24px;
+    padding: 16px;
     flex: 1;
 }
 
 .consultant-info,
 .package-info {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .info-row {
@@ -168,10 +168,10 @@
 .session-stats {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-    padding: 20px;
+    gap: 12px;
+    padding: 12px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+    border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -181,15 +181,15 @@
 
 .stat-label {
     display: block;
-    font-size: 12px;
+    font-size: 10px;
     color: var(--text-secondary, #666666);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     font-weight: 500;
 }
 
 .stat-value {
     display: block;
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 700;
     line-height: 1.2;
 }
@@ -208,11 +208,11 @@
 
 /* 카드 액션 */
 .mapping-card-actions {
-    padding: 20px 24px;
+    padding: 12px 16px;
     background: rgba(248, 249, 250, 0.2);
     border-top: 1px solid rgba(255, 255, 255, 0.2);
     display: flex;
-    gap: 12px;
+    gap: 8px;
 }
 
 .mapping-actions {
@@ -223,17 +223,17 @@
 
 .action-btn {
     flex: 1;
-    padding: 10px 16px;
+    padding: 8px 12px;
     border: none;
-    border-radius: 12px;
-    font-size: 14px;
+    border-radius: 8px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
 }
 
 .action-btn.primary {
@@ -271,35 +271,39 @@
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .mapping-card-header {
-        padding: 20px;
+        padding: 12px;
     }
     
     .mapping-card-body {
-        padding: 20px;
+        padding: 12px;
     }
     
     .mapping-card-actions {
-        padding: 16px 20px;
+        padding: 10px 12px;
     }
     
     .client-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
     }
     
     .client-name {
-        font-size: 16px;
+        font-size: 14px;
     }
     
     .session-stats {
         grid-template-columns: 1fr;
-        gap: 12px;
-        padding: 16px;
+        gap: 8px;
+        padding: 10px;
     }
     
     .stat-value {
-        font-size: 16px;
+        font-size: 12px;
+    }
+    
+    .stat-label {
+        font-size: 9px;
     }
 }
 

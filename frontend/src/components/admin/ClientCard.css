@@ -2,8 +2,8 @@
 
 .client-card {
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 16px;
-    padding: 24px;
+    border-radius: 20px;
+    padding: 32px;
     border: 2px solid rgba(255, 255, 255, 0.18);
     cursor: pointer;
     transition: all 0.3s ease;
@@ -14,7 +14,7 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 28px;
 }
 
 .client-card:hover {
@@ -39,13 +39,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 24px;
 }
 
 .client-profile {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
     flex: 1;
 }
 

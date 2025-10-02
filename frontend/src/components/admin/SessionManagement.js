@@ -1209,9 +1209,11 @@ const SessionManagement = () => {
             {/* 회기 추가 요청 탭 내용 */}
             {activeTab === 'extensions' && (
                 <div className="session-mgmt-extensions-section">
-                    <div className="session-mgmt-extensions-header">
-                        <h3>회기 추가 요청 관리</h3>
-                        <p>회기 추가 요청의 입금 확인 및 관리자 승인을 처리할 수 있습니다.</p>
+                    <div className="card card--medium" style={{ marginBottom: '32px' }}>
+                        <div className="card__header">
+                            <div className="card__title">회기 추가 요청 관리</div>
+                            <div className="card__subtitle">회기 추가 요청의 입금 확인 및 관리자 승인을 처리할 수 있습니다.</div>
+                        </div>
                     </div>
 
                     <div className="session-mgmt-extensions-grid">

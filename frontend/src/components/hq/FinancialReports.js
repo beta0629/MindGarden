@@ -542,16 +542,16 @@ const FinancialReports = () => {
                         {
                             label: '수익',
                             data: [0],
-                            backgroundColor: 'rgba(40, 167, 69, 0.2)',
-                            borderColor: 'rgba(40, 167, 69, 1)',
+                            backgroundColor: 'var(--color-success-light, rgba(40, 167, 69, 0.2))',
+                            borderColor: 'var(--color-success, #28A745)',
                             borderWidth: 2,
                             fill: true
                         },
                         {
                             label: '지출',
                             data: [0],
-                            backgroundColor: 'rgba(220, 53, 69, 0.2)',
-                            borderColor: 'rgba(220, 53, 69, 1)',
+                            backgroundColor: 'var(--color-danger-light, rgba(220, 53, 69, 0.2))',
+                            borderColor: 'var(--color-danger, #DC3545)',
                             borderWidth: 2,
                             fill: true
                         }
@@ -594,16 +594,16 @@ const FinancialReports = () => {
                         {
                             label: '수익',
                             data: [0],
-                            backgroundColor: 'rgba(40, 167, 69, 0.2)',
-                            borderColor: 'rgba(40, 167, 69, 1)',
+                            backgroundColor: 'var(--color-success-light, rgba(40, 167, 69, 0.2))',
+                            borderColor: 'var(--color-success, #28A745)',
                             borderWidth: 2,
                             fill: true
                         },
                         {
                             label: '지출',
                             data: [0],
-                            backgroundColor: 'rgba(220, 53, 69, 0.2)',
-                            borderColor: 'rgba(220, 53, 69, 1)',
+                            backgroundColor: 'var(--color-danger-light, rgba(220, 53, 69, 0.2))',
+                            borderColor: 'var(--color-danger, #DC3545)',
                             borderWidth: 2,
                             fill: true
                         }

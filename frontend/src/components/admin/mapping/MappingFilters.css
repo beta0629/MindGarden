@@ -1,0 +1,207 @@
+/* ===== MappingFilters 스타일 - 새로운 디자인 시스템 적용 ===== */
+
+.mapping-filters {
+  background: var(--color-bg-primary, #FAFAFA);
+  border-radius: var(--border-radius-lg, 16px);
+  padding: var(--spacing-lg, 1.5rem);
+  margin-bottom: var(--spacing-lg, 1.5rem);
+  border: 1px solid var(--color-border-secondary, #E8E8ED);
+  box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.1));
+  backdrop-filter: var(--ios-backdrop-blur-sm);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
+}
+
+.mapping-filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md, 1rem);
+  padding-bottom: var(--spacing-sm, 0.75rem);
+  border-bottom: 1px solid var(--color-border-secondary, #E8E8ED);
+}
+
+.mapping-filters-title {
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary, #1D1D1F);
+  margin: 0;
+  font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+}
+
+.mapping-filters-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-md, 1rem);
+}
+
+.mapping-filters-status,
+.mapping-filters-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm, 0.75rem);
+}
+
+.mapping-filters-label {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary, #1D1D1F);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 0.5rem);
+  font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+}
+
+.mapping-filters-label i {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-secondary, #424245);
+}
+
+.mapping-filters-select,
+.mapping-filters-input {
+  width: 100%;
+  padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
+  font-size: var(--font-size-base, 1rem);
+  font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-md, 12px);
+  background: var(--color-bg-primary, #FAFAFA);
+  color: var(--color-text-primary, #1D1D1F);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.mapping-filters-select:focus,
+.mapping-filters-input:focus {
+  border-color: var(--color-primary, #007AFF);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.mapping-filters-select:hover,
+.mapping-filters-input:hover {
+  border-color: var(--color-border-accent, #A1A1A6);
+}
+
+.mapping-filters-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mapping-filters-input {
+  padding-right: var(--spacing-xl, 2rem);
+}
+
+.mapping-filters-clear-btn {
+  position: absolute;
+  right: var(--spacing-sm, 0.75rem);
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary, #424245);
+  cursor: pointer;
+  padding: var(--spacing-xs, 0.25rem);
+  border-radius: var(--border-radius-sm, 6px);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.mapping-filters-clear-btn:hover {
+  background: var(--color-bg-secondary, #F5F5F7);
+  color: var(--color-danger, #DC3545);
+}
+
+.mapping-filters-clear-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* 버튼 스타일 통합 */
+.mg-btn {
+  padding: var(--spacing-sm, 0.75rem) var(--spacing-md, 1rem);
+  border: none;
+  border-radius: var(--border-radius-md, 12px);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: var(--font-weight-medium, 500);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs, 0.5rem);
+  font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+}
+
+.mg-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mg-btn--sm {
+  padding: var(--spacing-xs, 0.5rem) var(--spacing-sm, 0.75rem);
+  font-size: var(--font-size-xs, 0.75rem);
+}
+
+.mg-btn--secondary {
+  background-color: var(--color-gray, #6c757d);
+  color: var(--color-text-inverse, #FFFFFF);
+}
+
+.mg-btn--secondary:hover:not(:disabled) {
+  background-color: var(--color-gray-dark, #5a6268);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md, 0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .mapping-filters {
+    padding: var(--spacing-md, 1rem);
+  }
+  
+  .mapping-filters-header {
+    flex-direction: column;
+    gap: var(--spacing-sm, 0.75rem);
+    align-items: flex-start;
+  }
+  
+  .mapping-filters-content {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm, 0.75rem);
+  }
+  
+  .mapping-filters-title {
+    font-size: var(--font-size-base, 1rem);
+  }
+  
+  .mapping-filters-select,
+  .mapping-filters-input {
+    padding: var(--spacing-sm, 0.75rem);
+    font-size: var(--font-size-sm, 0.875rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .mapping-filters {
+    padding: var(--spacing-sm, 0.75rem);
+  }
+  
+  .mapping-filters-header {
+    padding-bottom: var(--spacing-xs, 0.5rem);
+  }
+  
+  .mapping-filters-title {
+    font-size: var(--font-size-sm, 0.875rem);
+  }
+  
+  .mg-btn--sm {
+    padding: var(--spacing-xs, 0.5rem);
+    font-size: var(--font-size-xs, 0.75rem);
+  }
+}

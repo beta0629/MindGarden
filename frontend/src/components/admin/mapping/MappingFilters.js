@@ -1,5 +1,6 @@
 import React from 'react';
 import { MAPPING_FILTER_OPTIONS } from '../../../constants/mapping';
+import './MappingFilters.css';
 
 /**
  * 매핑 필터 컴포넌트
@@ -69,12 +70,12 @@ const MappingFilters = ({
                                 className="mapping-filters-clear-btn">
                                 onClick={() => onSearchChange('')}
                                 onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = '#f8f9fa';
-                                    e.target.style.color = '#dc3545';
+                                    e.target.style.backgroundColor = 'var(--color-bg-secondary, #F5F5F7)';
+                                    e.target.style.color = 'var(--color-danger, #DC3545)';
                                 }}
                                 onMouseLeave={(e) => {
                                     e.target.style.backgroundColor = 'transparent';
-                                    e.target.style.color = '#6c757d';
+                                    e.target.style.color = 'var(--color-text-secondary, #424245)';
                                 }}
                             >
                                 <i className="bi bi-x"></i>

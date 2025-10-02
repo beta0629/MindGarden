@@ -168,6 +168,191 @@ export const getAccessibilitySettings = () => {
   };
 };
 
+/**
+ * 테마별 z-index 설정 관리
+ */
+export const ZIndexManager = {
+  // 기본 z-index 값들
+  defaultValues: {
+    // 기본 레이어
+    'z-base': 0,
+    'z-hidden': -1,
+    
+    // 개별부 (페이지 콘텐츠)
+    'z-content': 1,
+    'z-content-hover': 2,
+    'z-content-active': 3,
+    'z-page': 10,
+    'z-component': 5,
+    
+    // 드롭다운
+    'z-dropdown': 100,
+    'z-dropdown-fixed': 101,
+    'z-dropdown-menu': 102,
+    'z-dropdown-overlay': 103,
+    
+    // 공통부 (헤더)
+    'z-header': 1000,
+    'z-header-sticky': 1000,
+    'z-header-menu': 1000,
+    'z-header-dropdown': 1001,
+    'z-header-user': 1002,
+    
+    // 모달
+    'z-modal': 10000,
+    'z-modal-backdrop': 10001,
+    'z-modal-content': 10002,
+    'z-modal-header': 10003,
+    'z-modal-overlay': 10000,
+    
+    // 특수 모달들
+    'z-modal-confirm': 10010,
+    'z-modal-schedule': 10020,
+    'z-modal-performance': 10030,
+    'z-modal-report': 10040,
+    'z-modal-specialty': 10050,
+    
+    // 알림
+    'z-notification': 20000,
+    'z-toast': 20001,
+    'z-alert': 20002,
+    
+    // 기타 UI 요소들
+    'z-tooltip': 5000,
+    'z-popover': 5001,
+    'z-fab': 6000,
+    'z-overlay': 7000
+  },
+
+  // 테마별 z-index 오프셋 설정
+  themeOffsets: {
+    light: 0,
+    dark: 0,
+    highContrast: 1000, // 고대비 모드에서는 모든 z-index를 높게
+    mobile: -500, // 모바일에서는 z-index를 낮게 (성능 최적화)
+    tablet: -200,
+    desktop: 0
+  },
+
+  /**
+   * 테마별 z-index 값 계산
+   * @param {string} themeName - 테마명
+   * @param {string} deviceType - 디바이스 타입
+   * @param {Object} customOffsets - 커스텀 오프셋
+   * @returns {Object} 계산된 z-index 값들
+   */
+  calculateZIndexValues(themeName = 'light', deviceType = 'desktop', customOffsets = {}) {
+    const themeOffset = this.themeOffsets[themeName] || 0;
+    const deviceOffset = this.themeOffsets[deviceType] || 0;
+    const customOffset = customOffsets[themeName] || 0;
+    
+    const totalOffset = themeOffset + deviceOffset + customOffset;
+    
+    const calculatedValues = {};
+    Object.entries(this.defaultValues).forEach(([key, value]) => {
+      calculatedValues[key] = Math.max(0, value + totalOffset);
+    });
+    
+    return calculatedValues;
+  },
+
+  /**
+   * z-index 값들을 CSS 변수로 설정
+   * @param {string} themeName - 테마명
+   * @param {string} deviceType - 디바이스 타입
+   * @param {Object} customOffsets - 커스텀 오프셋
+   */
+  applyZIndexValues(themeName = 'light', deviceType = 'desktop', customOffsets = {}) {
+    const values = this.calculateZIndexValues(themeName, deviceType, customOffsets);
+    const root = document.documentElement;
+    
+    Object.entries(values).forEach(([key, value]) => {
+      root.style.setProperty(`--${key}`, value.toString());
+    });
+    
+    console.log(`🎨 Z-Index 값 적용 완료 (테마: ${themeName}, 디바이스: ${deviceType})`, values);
+  },
+
+  /**
+   * 특정 z-index 값 가져오기
+   * @param {string} key - z-index 키 (예: 'z-modal')
+   * @returns {number} z-index 값
+   */
+  getZIndexValue(key) {
+    const value = getCSSVariable(`--${key}`);
+    return value ? parseInt(value, 10) : this.defaultValues[key] || 0;
+  },
+
+  /**
+   * 동적 z-index 업데이트 (테마 변경 시)
+   * @param {string} newTheme - 새로운 테마
+   */
+  updateForTheme(newTheme) {
+    const deviceType = getDeviceType();
+    this.applyZIndexValues(newTheme, deviceType);
+  },
+
+  /**
+   * 동적 z-index 업데이트 (디바이스 변경 시)
+   * @param {string} newDeviceType - 새로운 디바이스 타입
+   */
+  updateForDevice(newDeviceType) {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    this.applyZIndexValues(currentTheme, newDeviceType);
+  }
+};
+
+/**
+ * 동적 테마 시스템 초기화
+ * @param {Object} config - 초기화 설정
+ */
+export const initializeDynamicThemeSystem = async (config = {}) => {
+  try {
+    console.log('🎨 동적 테마 시스템 초기화 시작');
+    
+    // 기본 디자인 시스템 초기화
+    await initializeDesignSystem(config);
+    
+    // z-index 값들 적용
+    const theme = config.theme || 'light';
+    const deviceType = getDeviceType();
+    ZIndexManager.applyZIndexValues(theme, deviceType, config.zIndexOffsets);
+    
+    // 테마 변경 감지기 설정
+    if (config.enableThemeWatcher !== false) {
+      const themeWatcher = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+            const newTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            ZIndexManager.updateForTheme(newTheme);
+          }
+        });
+      });
+      
+      themeWatcher.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+      });
+    }
+    
+    // 화면 크기 변경 감지기 설정
+    if (config.enableDeviceWatcher !== false) {
+      let resizeTimeout;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          const newDeviceType = getDeviceType();
+          ZIndexManager.updateForDevice(newDeviceType);
+        }, 250);
+      });
+    }
+    
+    console.log('🎨 동적 테마 시스템 초기화 완료');
+  } catch (error) {
+    console.error('🎨 동적 테마 시스템 초기화 오류:', error);
+  }
+};
+
 export default {
   setConsultantColors,
   setTheme,
@@ -175,6 +360,8 @@ export default {
   setCSSVariable,
   getConsultantColor,
   initializeDesignSystem,
+  initializeDynamicThemeSystem,
+  ZIndexManager,
   isBreakpoint,
   getDeviceType,
   getAccessibilitySettings

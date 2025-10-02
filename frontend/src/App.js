@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
-import { initializeDesignSystem } from './utils/designSystemHelper';
+import { initializeDynamicThemeSystem } from './utils/designSystemHelper';
 import unifiedLayoutManager from './utils/unifiedLayoutSystem';
 import TabletHomepage from './components/homepage/Homepage';
 import TabletLogin from './components/auth/TabletLogin';
@@ -146,11 +146,20 @@ function AppContent() {
     return logUnmount;
   }, []); // 의존성 배열을 비워서 한 번만 실행
 
-  // 디자인 시스템 초기화
+  // 동적 테마 시스템 초기화
   useEffect(() => {
-    initializeDesignSystem({
-      loadConsultantColors: true,
-      autoDetectTheme: true
+    initializeDynamicThemeSystem({
+      theme: 'light', // 기본 테마
+      enableThemeWatcher: true, // 테마 변경 감지 활성화
+      enableDeviceWatcher: true, // 디바이스 변경 감지 활성화
+      loadConsultantColors: true, // 상담사 색상 로드 활성화
+      autoDetectTheme: true, // 시스템 테마 자동 감지
+      zIndexOffsets: {
+        // 테마별 z-index 오프셋 커스터마이징
+        light: 0,
+        dark: 0,
+        highContrast: 1000
+      }
     });
   }, []);
 

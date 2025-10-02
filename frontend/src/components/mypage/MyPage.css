@@ -6,7 +6,7 @@
   min-height: 100vh;
   font-family: var(--font-family-ios);
   position: relative;
-  z-index: 1; /* 헤더보다 낮은 z-index */
+  z-index: var(--z-content); /* 콘텐츠 레이어 */
 }
 
 /* 소셜 아이콘 색상 */
@@ -209,7 +209,7 @@
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
-  z-index: 2; /* 헤더보다 낮지만 다른 콘텐츠보다 높음 */
+  z-index: var(--z-page); /* 페이지 레이어 */
 }
 
 .mypage-nav {
@@ -257,7 +257,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   font-family: var(--font-family-ios);
   position: relative;
-  z-index: 1; /* 헤더와 네비게이션보다 낮음 */
+  z-index: var(--z-content); /* 콘텐츠 레이어 */
 }
 
 .mypage-section {

@@ -63,8 +63,8 @@
   --header-pulse-duration: 2s;
   
   /* Header Z-index 변수 */
-  --header-z-index: 1000;
-  --header-logout-z-index: 99999;
+  --header-z-index: var(--z-header);
+  --header-logout-z-index: var(--z-header);
 }
 
 .simple-header {

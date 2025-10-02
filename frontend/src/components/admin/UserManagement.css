@@ -241,20 +241,20 @@ select:focus {
 
 /* 모달 z-index 강화 */
 .modal {
-    z-index: 9999;
+    z-index: var(--z-modal);
 }
 
 .modal-backdrop {
-    z-index: 9998;
+    z-index: var(--z-modal-backdrop);
 }
 
 /* React Bootstrap Modal 스타일 오버라이드 */
 .modal.show {
-    z-index: 9999;
+    z-index: var(--z-modal);
 }
 
 .modal-backdrop.show {
-    z-index: 9998;
+    z-index: var(--z-modal-backdrop);
 }
 
 /* 역할 선택 드롭다운 특별 스타일 */

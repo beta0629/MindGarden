@@ -1,29 +1,23 @@
-/* ===== MindGarden 통합 디자인 시스템 ===== */
-/* 모든 CSS 변수를 한 곳에서 관리 */
+/* ===== MindGarden 변수 중심 CSS 아키텍처 ===== */
+/* 모든 디자인 토큰을 변수로 관리하는 시스템 */
 
-/* 01. 통합 디자인 시스템 변수 */
+/* ===== 1. 핵심 변수 시스템 ===== */
+@import './00-core/_variables.css';
+@import './00-core/_component-variables.css';
+
+/* ===== 2. Z-Index 레이어 시스템 ===== */
+@import './01-settings/_z-index.css';
+
+/* ===== 3. 테마 시스템 ===== */
+@import './themes/light-theme.css';
+@import './themes/dark-theme.css';
+@import './themes/high-contrast-theme.css';
+@import './themes/mobile-theme.css';
+
+/* ===== 4. 기존 디자인 시스템 (호환성 유지) ===== */
 @import './design-system.css';
 
-/* 02. Tools - 믹신, 함수 (현재 비어있음) */
-/* @import './02-tools/_mixins.css'; */
-/* @import './02-tools/_functions.css'; */
-
-/* 03. Generic - 리셋, normalize (현재 비어있음) */
-/* @import './03-generic/_reset.css'; */
-/* @import './03-generic/_normalize.css'; */
-
-/* 04. Elements - 기본 HTML 요소 (현재 비어있음) */
-/* @import './04-elements/_body.css'; */
-/* @import './04-elements/_headings.css'; */
-/* @import './04-elements/_links.css'; */
-/* @import './04-elements/_buttons.css'; */
-
-/* 05. Objects - 레이아웃, 그리드 (현재 비어있음) */
-/* @import './05-objects/_container.css'; */
-/* @import './05-objects/_grid.css'; */
-/* @import './05-objects/_layout.css'; */
-
-/* 06. Components - 재사용 가능한 컴포넌트 */
+/* ===== 5. 컴포넌트 스타일 ===== */
 @import './06-components/_cards.css';
 @import './06-components/_buttons.css';
 @import './06-components/_modals.css';
@@ -31,21 +25,12 @@
 @import './06-components/_notifications.css';
 @import './06-components/_header.css';
 @import './06-components/_dropdowns.css';
-/* @import './06-components/_forms.css'; */
-/* @import './06-components/_tables.css'; */
 
-/* 07. Utilities - 유틸리티 클래스 (현재 비어있음) */
-/* @import './07-utilities/_spacing.css'; */
-/* @import './07-utilities/_text.css'; */
-/* @import './07-utilities/_display.css'; */
-
-/* 08. Themes - 테마별 스타일 (현재 비어있음) */
-/* @import './08-themes/_light.css'; */
-/* @import './08-themes/_dark.css'; */
-
-/* ===== 기존 스타일 임포트 (호환성 유지) ===== */
-/* 기존 index.css의 유틸리티 클래스들 */
-@import './index.css';
-
-/* ===== 전역 레이아웃 수정 ===== */
+/* ===== 6. 전역 레이아웃 수정 ===== */
 @import './07-global/_layout-fixes.css';
+
+/* ===== 7. 유틸리티 클래스 ===== */
+@import './08-utilities/_utilities.css';
+
+/* ===== 8. 기존 스타일 임포트 (호환성 유지) ===== */
+@import './index.css';

@@ -1,5 +1,36 @@
 /* ===== SessionManagement 스타일 - 디자인 가이드 적용 ===== */
 
+/* CSS 충돌 방지를 위한 리셋 */
+.session-mgmt-container * {
+    box-sizing: border-box !important;
+}
+
+.session-mgmt-container button,
+.session-mgmt-container .btn {
+    all: unset !important;
+    display: inline-block !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    border: none !important;
+    outline: none !important;
+    font-family: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+}
+
+.session-mgmt-container input,
+.session-mgmt-container select,
+.session-mgmt-container textarea {
+    all: unset !important;
+    display: block !important;
+    width: 100% !important;
+    font-family: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    box-sizing: border-box !important;
+}
+
 /* CSS 변수 정의 - 디자인 가이드 파스텔 톤 + iOS 스타일 */
 html, body, #root, .session-mgmt-container {
     /* Primary Colors - 부드러운 파스텔 블루 */

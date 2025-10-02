@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
-import SimpleHeader from '../layout/SimpleHeader';
+import SimpleLayout from '../layout/SimpleLayout';
 import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import ENV from '../../constants/environment';

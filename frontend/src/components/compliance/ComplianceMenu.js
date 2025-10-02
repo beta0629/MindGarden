@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import SimpleHeader from '../layout/SimpleHeader';
+import SimpleLayout from '../layout/SimpleLayout';
 import './ComplianceMenu.css';
 
 /**
@@ -79,8 +79,8 @@ const ComplianceMenu = () => {
     ];
 
     return (
-        <div className="compliance-menu">
-            <SimpleHeader title="컴플라이언스 관리" />
+        <SimpleLayout title="컴플라이언스 관리">
+            <div className="compliance-menu">
             <div className="menu-header">
                 <h1>⚖️ 컴플라이언스 관리</h1>
                 <p>개인정보보호법 및 관련 법령 준수를 위한 통합 관리 시스템</p>
@@ -139,7 +139,8 @@ const ComplianceMenu = () => {
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
+        </SimpleLayout>
     );
 };
 

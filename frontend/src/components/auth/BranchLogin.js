@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
-import SimpleHeader from '../layout/SimpleHeader';
+import SimpleLayout from '../layout/SimpleLayout';
 import { API_ENDPOINTS } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import { getDashboardPath, redirectToDashboardWithFallback } from '../../utils/session';

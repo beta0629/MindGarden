@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import CommonPageTemplate from '../common/CommonPageTemplate';
-import SimpleHeader from '../layout/SimpleHeader';
+import SimpleLayout from '../layout/SimpleLayout';
 import SocialSignupModal from './SocialSignupModal';
 import DuplicateLoginModal from '../common/DuplicateLoginModal';
 import { authAPI } from '../../utils/ajax';

@@ -62,52 +62,52 @@
   border-color: var(--color-primary, #007AFF);
 }
 
-.client-card__header {
+.client-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--spacing-md);
 }
 
-.client-card__profile {
+.client-profile {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
   flex: 1;
 }
 
-.client-card__image {
+.client-image {
   width: 48px;
   height: 48px;
   border-radius: var(--border-radius-full);
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.8);
+  border: 2px solid var(--color-bg-glass, rgba(255, 255, 255, 0.8));
   box-shadow: var(--shadow-sm);
 }
 
-.client-card__info {
+.client-info {
   flex: 1;
 }
 
-.client-card__name {
+.client-name {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
-  color: var(--ios-text-primary);
+  color: var(--color-text-primary, #1D1D1F);
   margin: 0 0 var(--spacing-xxs) 0;
 }
 
-.client-card__details {
+.client-details {
   font-size: var(--font-size-xs);
-  color: var(--ios-text-secondary);
+  color: var(--color-text-secondary, #424245);
   margin: 0;
 }
 
-.client-card__check {
+.selected-check {
   width: 28px;
   height: 28px;
   border-radius: var(--border-radius-full);
-  background: var(--ios-blue);
-  color: white;
+  background: var(--color-primary, #007AFF);
+  color: var(--color-text-inverse, #FFFFFF);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -115,66 +115,133 @@
   box-shadow: var(--shadow-md);
 }
 
-.client-card__body {
+.client-body {
   padding-top: var(--spacing-md);
-  border-top: 1px solid var(--ios-separator);
+  border-top: 1px solid var(--color-border-secondary, #E8E8ED);
 }
 
-.client-card__sessions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+/* 패키지 정보 */
+.package-info {
+  margin-bottom: var(--spacing-sm);
 }
 
-.client-card__session {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xxs);
-}
-
-.client-card__session-label {
+.package-label {
   font-size: var(--font-size-xs);
-  color: var(--ios-text-tertiary);
+  color: var(--color-text-tertiary, #636366);
+  margin-right: var(--spacing-xs);
 }
 
-.client-card__session-value {
-  font-size: var(--font-size-base);
+.package-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary, #1D1D1F);
+  background: var(--color-primary-light, rgba(0, 122, 255, 0.1));
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-primary, #007AFF);
+}
+
+/* 세션 정보 */
+.session-info {
+  margin-bottom: var(--spacing-sm);
+}
+
+.session-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary, #636366);
+  margin-right: var(--spacing-xs);
+}
+
+.session-badge {
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--ios-text-primary);
-}
-
-.client-card__session-value--highlight {
-  color: var(--ios-blue);
-}
-
-.client-card__session-value--warning {
-  color: var(--ios-orange);
-}
-
-.client-card__status {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--border-radius-full);
+  display: inline-block;
+}
+
+.session-badge.success {
+  background: var(--color-success-light, rgba(52, 199, 89, 0.1));
+  color: var(--color-success, #28A745);
+}
+
+.session-badge.warning {
+  background: var(--color-warning-light, rgba(255, 149, 0, 0.1));
+  color: var(--color-warning, #FFC107);
+}
+
+.session-badge.danger {
+  background: var(--color-danger-light, rgba(255, 59, 48, 0.1));
+  color: var(--color-danger, #DC3545);
+}
+
+/* 연락처 정보 */
+.contact-info {
+  margin-bottom: var(--spacing-sm);
+}
+
+.contact-label {
   font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary, #636366);
+  margin-right: var(--spacing-xs);
+}
+
+.contact-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary, #1D1D1F);
+}
+
+/* 최근 상담일 */
+.last-consultation {
+  margin-bottom: var(--spacing-sm);
+}
+
+.last-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary, #636366);
+  margin-right: var(--spacing-xs);
+}
+
+.last-date {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary, #1D1D1F);
+}
+
+/* 경고 메시지 */
+.session-warning {
+  background: var(--color-warning-light, #fff3cd);
+  color: var(--color-warning-dark, #856404);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-warning, #FFC107);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
+  margin-top: var(--spacing-sm);
+  text-align: center;
 }
 
-.client-card__status--available {
-  background: rgba(52, 199, 89, 0.1);
-  color: var(--ios-green);
+.mapping-warning {
+  background: var(--color-danger-light, #f8d7da);
+  color: var(--color-danger, #DC3545);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-danger, #DC3545);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  margin-top: var(--spacing-sm);
+  text-align: center;
 }
 
-.client-card__status--unavailable {
-  background: rgba(255, 59, 48, 0.1);
-  color: var(--ios-red);
-}
-
-.client-card__status--pending {
-  background: rgba(255, 149, 0, 0.1);
-  color: var(--ios-orange);
+/* 내담자 수 표시 */
+.client-count {
+  text-align: center;
+  color: var(--color-text-tertiary, #636366);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--color-bg-secondary, #F5F5F7);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border-secondary, #E8E8ED);
 }
 
 /* 드래그 앤 드롭 스타일 */

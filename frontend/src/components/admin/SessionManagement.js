@@ -1053,71 +1053,7 @@ const SessionManagement = () => {
                                 />
                             ))}
                         </div>
-                                
-                                {mapping.packageName && (
-                                    <div className="session-mgmt-info-row">
-                                        <span className="session-mgmt-info-label">패키지:</span>
-                                        <span className="session-mgmt-info-value">{mapping.packageName}</span>
-                                    </div>
-                                )}
-                                
-                                {mapping.paymentAmount && (
-                                    <div className="session-mgmt-info-row">
-                                        <span className="session-mgmt-info-label">결제금액:</span>
-                                        <span className="session-mgmt-info-value">{mapping.paymentAmount.toLocaleString()}원</span>
-                                    </div>
-                                )}
-                                
-                                {mapping.createdAt && (
-                                    <div className="session-mgmt-info-row">
-                                        <span className="session-mgmt-info-label">등록일:</span>
-                                        <span className="session-mgmt-info-value">
-                                            {new Date(mapping.createdAt).toLocaleDateString('ko-KR')}
-                                        </span>
-                                    </div>
-                                )}
-                                
-                                {mapping.adminApprovalDate && (
-                                    <div className="session-mgmt-info-row">
-                                        <span className="session-mgmt-info-label">승인일:</span>
-                                        <span className="session-mgmt-info-value">
-                                            {new Date(mapping.adminApprovalDate).toLocaleDateString('ko-KR')}
-                                        </span>
-                                    </div>
-                                )}
-                                
-                                {mapping.paymentDate && (
-                                    <div className="session-mgmt-info-row">
-                                        <span className="session-mgmt-info-label">결제일:</span>
-                                        <span className="session-mgmt-info-value">
-                                            {new Date(mapping.paymentDate).toLocaleDateString('ko-KR')}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                            
-                            <div className="session-mgmt-card-actions">
-                                <button 
-                                    className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-secondary"
-                                    onClick={() => handleStatusChange(mapping.id, 'INACTIVE')}
-                                    disabled={mapping.status === 'INACTIVE'}
-                                >
-                                    비활성
-                                </button>
-                                <button 
-                                    className="session-mgmt-btn session-mgmt-btn-sm session-mgmt-btn-primary"
-                                    onClick={() => {
-                                        setSelectedMapping(mapping);
-                                        setShowAddModal(true);
-                                    }}
-                                >
-                                    회기 추가 요청
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+                    </div>
 
             {/* 회기 추가 요청 모달 */}
             {showAddModal && (

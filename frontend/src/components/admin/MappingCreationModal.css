@@ -5,7 +5,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--color-overlay, rgba(0, 0, 0, 0.5));
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -15,7 +15,7 @@
 }
 
 .mapping-modal {
-    background: white;
+    background: var(--color-bg-primary, #FAFAFA);
     border-radius: 12px;
     width: 95%;
     max-width: 1400px;
@@ -23,7 +23,7 @@
     min-height: 1000px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.3));
     position: relative;
     z-index: 10000;
 }
@@ -33,9 +33,9 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-lg) var(--spacing-xl);
-    border-bottom: 1px solid #e1e8ed;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    border-bottom: 1px solid var(--color-border-secondary, #E8E8ED);
+    background: linear-gradient(135deg, var(--color-primary, #007AFF) 0%, var(--color-primary-hover, #0056CC) 100%);
+    color: var(--color-text-inverse, #FFFFFF);
     border-radius: 12px 12px 0 0;
     position: relative;
     z-index: 10001;
@@ -50,7 +50,7 @@
 .close-btn {
     background: none;
     border: none;
-    color: white;
+    color: var(--color-text-inverse, #FFFFFF);
     font-size: var(--font-size-xxl);
     cursor: pointer;
     padding: 0;
@@ -64,7 +64,7 @@
 }
 
 .close-btn:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: var(--color-bg-glass, rgba(255, 255, 255, 0.2));
 }
 
 .mapping-modal-content {
@@ -73,7 +73,7 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    background: white;
+    background: var(--color-bg-primary, #FAFAFA);
     position: relative;
     z-index: 10001;
 }
@@ -95,7 +95,7 @@
     left: 25px;
     right: 25px;
     height: 3px;
-    background-color: #e1e8ed;
+    background-color: var(--color-border-secondary, #E8E8ED);
     z-index: 0;
 }
 
@@ -112,8 +112,8 @@
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background-color: #e1e8ed;
-    color: #6b7280;
+    background-color: var(--color-border-secondary, #E8E8ED);
+    color: var(--color-text-secondary, #424245);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -124,19 +124,19 @@
 }
 
 .mapping-modal .step.active .step-number {
-    background-color: #3b82f6;
-    color: white;
+    background-color: var(--color-primary, #007AFF);
+    color: var(--color-text-inverse, #FFFFFF);
 }
 
 .mapping-modal .step-label {
     font-size: var(--font-size-sm);
-    color: #6b7280;
+    color: var(--color-text-secondary, #424245);
     text-align: center;
     font-weight: 500;
 }
 
 .mapping-modal .step.active .step-label {
-    color: #3b82f6;
+    color: var(--color-primary, #007AFF);
     font-weight: 600;
 }
 
@@ -152,7 +152,7 @@
     margin: 0 0 24px 0;
     font-size: var(--font-size-lg);
     font-weight: 600;
-    color: #1f2937;
+    color: var(--color-text-primary, #1D1D1F);
 }
 
 /* 선택 그리드 */
@@ -166,32 +166,32 @@
 }
 
 .mapping-modal .selection-card {
-    border: 2px solid #e1e8ed;
+    border: 2px solid var(--color-border-secondary, #E8E8ED);
     border-radius: 12px;
     padding: var(--spacing-lg);
     cursor: pointer;
     transition: all 0.3s;
-    background: white;
+    background: var(--color-bg-primary, #FAFAFA);
 }
 
 .mapping-modal .selection-card:hover {
-    border-color: #3b82f6;
+    border-color: var(--color-primary, #007AFF);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
 }
 
 .mapping-modal .selection-card.selected {
-    border-color: #3b82f6;
-    background-color: #eff6ff;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    border-color: var(--color-primary, #007AFF);
+    background-color: var(--color-primary-light, rgba(0, 122, 255, 0.1));
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
 }
 
 .mapping-modal .card-avatar {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    color: white;
+    background: linear-gradient(135deg, var(--color-primary, #007AFF), var(--color-primary-hover, #0056CC));
+    color: var(--color-text-inverse, #FFFFFF);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -204,20 +204,20 @@
     margin: 0 0 4px 0;
     font-size: var(--font-size-base);
     font-weight: 600;
-    color: #1f2937;
+    color: var(--color-text-primary, #1D1D1F);
 }
 
 .mapping-modal .card-info p {
     margin: 0 0 8px 0;
     font-size: var(--font-size-sm);
-    color: #6b7280;
+    color: var(--color-text-secondary, #424245);
 }
 
 .role-badge {
     display: inline-block;
     padding: var(--spacing-xs) var(--spacing-sm);
-    background-color: #f3f4f6;
-    color: #374151;
+    background-color: var(--color-bg-secondary, #F5F5F7);
+    color: var(--color-text-primary, #1D1D1F);
     border-radius: 12px;
     font-size: var(--font-size-xs);
     font-weight: 500;
@@ -247,7 +247,7 @@
 .mapping-modal .form-group label {
     font-size: var(--font-size-sm);
     font-weight: 600;
-    color: #374151;
+    color: var(--color-text-primary, #1D1D1F);
     margin-bottom: 6px;
 }
 
@@ -255,7 +255,7 @@
 .mapping-modal .form-group select,
 .mapping-modal .form-group textarea {
     padding: var(--spacing-sm);
-    border: 2px solid #e1e8ed;
+    border: 2px solid var(--color-border-secondary, #E8E8ED);
     border-radius: 8px;
     font-size: var(--font-size-sm);
     transition: border-color 0.2s;
@@ -278,8 +278,8 @@
 .mapping-modal .form-group select:focus,
 .mapping-modal .form-group textarea:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-primary, #007AFF);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
 .mapping-modal .form-group textarea {
@@ -309,18 +309,18 @@
     margin: 0 0 16px 0;
     font-size: var(--font-size-xxl);
     font-weight: 600;
-    color: #059669;
+    color: var(--color-success, #28A745);
 }
 
 .completion-message p {
     margin: 0 0 24px 0;
     font-size: var(--font-size-base);
-    color: #6b7280;
+    color: var(--color-text-secondary, #424245);
     line-height: 1.5;
 }
 
 .mapping-summary {
-    background-color: #f9fafb;
+    background-color: var(--color-bg-primary, #FAFAFA);
     border-radius: 12px;
     padding: var(--spacing-lg);
     margin: var(--spacing-xl) 0;
@@ -332,7 +332,7 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-sm) 0;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--color-border-secondary, #E8E8ED);
 }
 
 .summary-item:last-child {
@@ -340,13 +340,13 @@
 }
 
 .summary-item strong {
-    color: #374151;
+    color: var(--color-text-primary, #1D1D1F);
     font-weight: 600;
 }
 
 .next-steps {
     font-size: var(--font-size-sm);
-    color: #6b7280;
+    color: var(--color-text-secondary, #424245);
     font-style: italic;
     margin-top: 20px;
 }
@@ -357,8 +357,8 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-lg) var(--spacing-xl);
-    border-top: 1px solid #e1e8ed;
-    background-color: #f9fafb;
+    border-top: 1px solid var(--color-border-secondary, #E8E8ED);
+    background-color: var(--color-bg-primary, #FAFAFA);
     border-radius: 0 0 12px 12px;
     flex-shrink: 0;
     position: relative;
@@ -387,32 +387,32 @@
 }
 
 .mapping-modal .btn-primary {
-    background-color: #3b82f6;
-    color: white;
+    background-color: var(--color-primary, #007AFF);
+    color: var(--color-text-inverse, #FFFFFF);
 }
 
 .mapping-modal .btn-primary:hover:not(:disabled) {
-    background-color: #2563eb;
+    background-color: var(--color-primary-hover, #0056CC);
     transform: translateY(-1px);
 }
 
 .mapping-modal .btn-secondary {
-    background-color: #6b7280;
-    color: white;
+    background-color: var(--color-gray, #6c757d);
+    color: var(--color-text-inverse, #FFFFFF);
 }
 
 .mapping-modal .btn-secondary:hover:not(:disabled) {
-    background-color: #4b5563;
+    background-color: var(--color-gray-dark, #5a6268);
     transform: translateY(-1px);
 }
 
 .mapping-modal .btn-success {
     background-color: #059669;
-    color: white;
+    color: var(--color-text-inverse, #FFFFFF);
 }
 
 .mapping-modal .btn-success:hover:not(:disabled) {
-    background-color: #047857;
+    background-color: var(--color-success-dark, #218838);
     transform: translateY(-1px);
 }
 
@@ -420,7 +420,7 @@
 .mapping-modal .step-actions {
     margin-top: auto;
     padding-top: 24px;
-    border-top: 1px solid #e1e8ed;
+    border-top: 1px solid var(--color-border-secondary, #E8E8ED);
     display: flex;
     gap: 12px;
     justify-content: flex-end;
@@ -483,7 +483,7 @@
 .mapping-modal .search-icon {
     position: absolute;
     left: 12px;
-    color: #6b7280;
+    color: var(--color-text-secondary, #424245);
     font-size: var(--font-size-base);
     z-index: 1;
 }
@@ -491,18 +491,18 @@
 .mapping-modal .search-input {
     width: 100%;
     padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) var(--spacing-xxxl);
-    border: 2px solid #e5e7eb;
+    border: 2px solid var(--color-border-secondary, #E8E8ED);
     border-radius: 8px;
     font-size: var(--font-size-sm);
     transition: all 0.2s ease;
-    background-color: #f9fafb;
+    background-color: var(--color-bg-primary, #FAFAFA);
 }
 
 .mapping-modal .search-input:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: var(--color-primary, #007AFF);
     background-color: white;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
 .clear-search-btn {
@@ -510,7 +510,7 @@
     right: 12px;
     background: none;
     border: none;
-    color: #6b7280;
+    color: var(--color-text-secondary, #424245);
     cursor: pointer;
     padding: var(--spacing-xs);
     border-radius: 4px;
@@ -519,8 +519,8 @@
 }
 
 .clear-search-btn:hover {
-    background-color: #f3f4f6;
-    color: #374151;
+    background-color: var(--color-bg-secondary, #F5F5F7);
+    color: var(--color-text-primary, #1D1D1F);
 }
 
 .mapping-modal .search-results-info {
@@ -528,22 +528,22 @@
     justify-content: space-between;
     align-items: center;
     font-size: var(--font-size-sm);
-    color: #6b7280;
+    color: var(--color-text-secondary, #424245);
 }
 
 .mapping-modal .search-count {
-    color: #3b82f6;
+    color: var(--color-primary, #007AFF);
     font-weight: 500;
 }
 
 .total-count {
-    color: #6b7280;
+    color: var(--color-text-secondary, #424245);
 }
 
 .no-results {
     text-align: center;
     padding: var(--spacing-xxxl) var(--spacing-lg);
-    color: #6b7280;
+    color: var(--color-text-secondary, #424245);
 }
 
 .no-results-icon {
@@ -555,19 +555,19 @@
 .no-results h4 {
     margin: 0 0 8px 0;
     font-size: var(--font-size-lg);
-    color: #374151;
+    color: var(--color-text-primary, #1D1D1F);
 }
 
 .no-results p {
     margin: 0;
     font-size: var(--font-size-sm);
-    color: #6b7280;
+    color: var(--color-text-secondary, #424245);
 }
 
 /* 검색 결과 하이라이트 */
 .mapping-modal .selection-card.highlighted {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    border-color: var(--color-primary, #007AFF);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
 }
 
 /* 모바일에서 검색 입력 필드 */
@@ -616,8 +616,8 @@
 .auto-fill-badge {
     position: absolute;
     right: 8px;
-    background-color: #28a745;
-    color: white;
+    background-color: var(--color-success, #28A745);
+    color: var(--color-text-inverse, #FFFFFF);
     font-size: var(--font-size-xs);
     padding: var(--spacing-xs) var(--spacing-md);
     border-radius: 4px;
@@ -643,9 +643,9 @@
 }
 
 @keyframes highlight {
-    0% { background-color: #d4edda; }
-    50% { background-color: #c3e6cb; }
-    100% { background-color: #d4edda; }
+    0% { background-color: var(--color-success-light, #d4edda); }
+    50% { background-color: var(--color-success-light, #c3e6cb); }
+    100% { background-color: var(--color-success-light, #d4edda); }
 }
 
 /* 패키지 정보 표시 */
@@ -655,11 +655,11 @@
     gap: 8px;
     margin-top: 8px;
     padding: var(--spacing-sm) var(--spacing-sm);
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
+    background-color: var(--color-success-light, #d4edda);
+    border: 1px solid var(--color-success-border, #c3e6cb);
     border-radius: 6px;
     font-size: var(--font-size-sm);
-    color: #155724;
+    color: var(--color-success-dark, #155724);
 }
 
 .package-info i {

@@ -368,8 +368,8 @@ const ScheduleModalNew = ({
                 borderRadius: '12px',
                 boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
                 width: '90%',
-                maxWidth: '800px',
-                maxHeight: '90vh',
+                maxWidth: '700px',
+                maxHeight: '80vh',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column'

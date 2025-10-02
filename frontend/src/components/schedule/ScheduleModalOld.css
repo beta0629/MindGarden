@@ -25,8 +25,8 @@
     border-radius: 16px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     width: 100%;
-    max-width: 1200px;
-    max-height: 98vh;
+    max-width: 800px;
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;

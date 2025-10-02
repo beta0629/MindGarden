@@ -20,9 +20,9 @@
   --schedule-modal-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.2);
   
   /* 스케줄 모달 크기 변수 */
-  --schedule-modal-width: 1200px;
-  --schedule-modal-max-height: 98vh;
-  --schedule-modal-min-height: 500px;
+  --schedule-modal-width: 800px;
+  --schedule-modal-max-height: 85vh;
+  --schedule-modal-min-height: 400px;
   --schedule-modal-border-radius: 16px;
   --schedule-modal-padding: var(--spacing-xl);
   

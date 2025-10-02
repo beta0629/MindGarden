@@ -38,11 +38,12 @@
     0 0 0 1px rgba(255, 255, 255, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
   max-width: 90vw;
-  max-height: 90vh;
+  max-height: calc(100vh - 120px); /* 공통헤더(64px) + 여백(56px) 고려 */
   overflow: auto;
   z-index: var(--z-modal);
   transform: scale(0.9) translateY(20px);
   transition: transform 0.3s ease;
+  margin-top: 60px; /* 공통헤더 아래로 위치 조정 */
 }
 
 .mg-modal-overlay--visible .mg-modal {
@@ -161,8 +162,9 @@
 @media (max-width: 768px) {
   .mg-modal {
     width: 95vw !important;
-    max-height: calc(100vh - 100px); /* 공통 헤더 + 여백 고려 */
+    max-height: calc(100vh - 140px); /* 공통 헤더(64px) + 여백(76px) 고려 */
     margin: 20px;
+    margin-top: 80px; /* 모바일에서도 공통헤더 아래로 위치 조정 */
     border-radius: var(--border-radius-lg);
   }
   
@@ -201,6 +203,7 @@
   .mg-modal {
     width: 90vw;
     max-width: 700px;
+    margin-top: 60px; /* 태블릿에서도 공통헤더 아래로 위치 조정 */
   }
 }
 

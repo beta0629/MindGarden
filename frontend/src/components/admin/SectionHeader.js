@@ -25,7 +25,7 @@ const SectionHeader = ({
                     <h2 className="section-title">{title}</h2>
                 </div>
                 {subtitle && (
-                    <p className="section-subtitle">{subtitle}</p>
+                    <div className="section-subtitle">{subtitle}</div>
                 )}
                 {stats && (
                     <div className="section-stats">

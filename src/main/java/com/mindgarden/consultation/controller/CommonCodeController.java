@@ -71,11 +71,18 @@ public class CommonCodeController {
             
             List<CommonCode> codes = commonCodeService.getCommonCodesByGroup(groupCode);
             
+            // 코드가 없으면 빈 배열 반환 (500 오류 방지)
+            if (codes == null || codes.isEmpty()) {
+                log.warn("공통코드 그룹이 존재하지 않음: {}", groupCode);
+                return ResponseEntity.ok(List.of());
+            }
+            
             log.info("공통코드 그룹 조회 완료: {} 개", codes.size());
             return ResponseEntity.ok(codes);
         } catch (Exception e) {
             log.error("공통코드 그룹 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
+            // 오류 발생 시에도 빈 배열 반환 (500 오류 방지)
+            return ResponseEntity.ok(List.of());
         }
     }
 

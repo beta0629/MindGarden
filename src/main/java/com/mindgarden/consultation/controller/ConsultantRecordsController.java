@@ -15,6 +15,7 @@ import com.mindgarden.consultation.util.PermissionCheckUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/consultant")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class ConsultantRecordsController {
     
     private final ConsultationRecordService consultationRecordService;

@@ -401,9 +401,13 @@ const ClientSelector = ({
                                         className="client-image"
                                     />
                                     <div className="client-info">
-                                        <h4 className="client-name">{client.name}</h4>
+                                        <h4 className="client-name">
+                                            <i className="bi bi-person-circle"></i>
+                                            {client.name}
+                                        </h4>
                                         <p className="client-details">
-                                            {client.gender} • {client.age}세
+                                            <i className="bi bi-envelope"></i>
+                                            {client.email}
                                         </p>
                                     </div>
                                 </div>
@@ -416,18 +420,18 @@ const ClientSelector = ({
                             </div>
 
                             <div className="client-body">
-                                {/* 패키지 정보 */}
-                                <div className="package-info">
-                                    <span className="package-label">패키지:</span>
-                                    <span className="package-name">{mappingInfo.packageName}</span>
-                                </div>
-
-                                {/* 세션 정보 */}
-                                <div className="session-info">
-                                    <span className="session-label">남은 세션:</span>
-                                    <span className={`session-badge ${getSessionBadgeColor(mappingInfo.remainingSessions)}`}>
-                                        {mappingInfo.remainingSessions}회
-                                    </span>
+                                {/* 매핑 정보 */}
+                                <div className="mapping-info">
+                                    <div className="mapping-count">
+                                        <i className="bi bi-diagram-3 mapping-count-icon"></i>
+                                        매핑 {mappingInfo.totalSessions || 0}개
+                                    </div>
+                                    {mappingInfo.hasMapping && mappingInfo.remainingSessions > 0 && (
+                                        <div className="active-mapping">
+                                            <i className="bi bi-check-circle-fill active-mapping-icon"></i>
+                                            활성 {mappingInfo.remainingSessions}개
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* 연락처 */}

@@ -5,6 +5,7 @@ import { useSession } from '../../hooks/useSession';
 import { getPackageOptions } from '../../utils/commonCodeUtils';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
+import UnifiedModal from '../common/modals/UnifiedModal';
 import { 
     MAPPING_CREATION_STEPS, 
     MAPPING_CREATION_STEP_LABELS,
@@ -352,17 +353,67 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         onClose();
     };
 
-    if (!isOpen) return null;
+    // 모달 액션 버튼들
+    const renderActions = () => (
+        <>
+            {step > 1 && step < 4 && (
+                <button 
+                    className="btn btn-secondary" 
+                    onClick={() => setStep(step - 1)}
+                    disabled={loading}
+                >
+                    이전
+                </button>
+            )}
+            
+            {step < 3 && (
+                <button 
+                    className="btn btn-primary" 
+                    onClick={() => {
+                        if (step === 1 && selectedConsultant) setStep(2);
+                        else if (step === 2 && selectedClient) setStep(3);
+                    }}
+                    disabled={
+                        (step === 1 && !selectedConsultant) ||
+                        (step === 2 && !selectedClient)
+                    }
+                >
+                    다음
+                </button>
+            )}
+
+            {step === 3 && (
+                <button 
+                    className="btn btn-success" 
+                    onClick={handleCreateMapping}
+                    disabled={loading}
+                >
+                    {loading ? '생성 중...' : '매핑 생성'}
+                </button>
+            )}
+
+            {step === 4 && (
+                <button 
+                    className="btn btn-primary" 
+                    onClick={handleClose}
+                >
+                    완료
+                </button>
+            )}
+        </>
+    );
 
     return (
-        <div className="mapping-modal-overlay" onClick={handleClose}>
-            <div className="mapping-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="mapping-modal-header">
-                    <h2>🔗 상담사-내담자 매핑 생성</h2>
-                    <button className="close-btn" onClick={handleClose}>✕</button>
-                </div>
-
-                <div className="mapping-modal-content">
+        <UnifiedModal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title="🔗 상담사-내담자 매핑 생성"
+            size="large"
+            variant="form"
+            backdropClick={false}
+            loading={loading}
+            actions={renderActions()}
+        >
                     {/* 단계 표시기 */}
                     <div className="step-indicator">
                         <div className={`step ${step >= 1 ? 'active' : ''}`}>
@@ -708,56 +759,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                             </div>
                         </div>
                     )}
-                </div>
-
-                <div className="mapping-modal-footer">
-                    {step > 1 && step < 4 && (
-                        <button 
-                            className="btn btn-secondary" 
-                            onClick={() => setStep(step - 1)}
-                            disabled={loading}
-                        >
-                            이전
-                        </button>
-                    )}
-                    
-                    {step < 3 && (
-                        <button 
-                            className="btn btn-primary" 
-                            onClick={() => {
-                                if (step === 1 && selectedConsultant) setStep(2);
-                                else if (step === 2 && selectedClient) setStep(3);
-                            }}
-                            disabled={
-                                (step === 1 && !selectedConsultant) ||
-                                (step === 2 && !selectedClient)
-                            }
-                        >
-                            다음
-                        </button>
-                    )}
-
-                    {step === 3 && (
-                        <button 
-                            className="btn btn-success" 
-                            onClick={handleCreateMapping}
-                            disabled={loading}
-                        >
-                            {loading ? '생성 중...' : '매핑 생성'}
-                        </button>
-                    )}
-
-                    {step === 4 && (
-                        <button 
-                            className="btn btn-primary" 
-                            onClick={handleClose}
-                        >
-                            완료
-                        </button>
-                    )}
-                </div>
-            </div>
-        </div>
+        </UnifiedModal>
     );
 };
 

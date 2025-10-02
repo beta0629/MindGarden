@@ -129,6 +129,16 @@
     background-color: var(--legend-color, var(--ios-border-light));
 }
 
+/* data-bg-color 속성을 실제 색상으로 적용 */
+.legend-color[data-bg-color] {
+    background-color: attr(data-bg-color) !important;
+}
+
+/* data-legend-color 속성도 지원 */
+.legend-color[data-legend-color] {
+    background-color: attr(data-legend-color) !important;
+}
+
 .legend-color--loading {
     background-color: var(--ios-border-light);
 }

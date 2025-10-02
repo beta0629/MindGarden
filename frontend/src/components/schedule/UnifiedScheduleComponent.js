@@ -1052,15 +1052,18 @@ const UnifiedScheduleComponent = ({
                                 // 활성 상담사이면서 실제 스케줄이 있는 경우만 표시
                                 consultant.isActive !== false && 
                                 events.some(event => event.extendedProps?.consultantId === consultant.id)
-                            ).map((consultant, index) => (
-                                <div key={`consultant-${consultant.id}-${index}`} className="legend-item">
-                                    <span 
-                                        className="legend-color" 
-                                        data-bg-color={getConsultantColor(consultant.id)}
-                                    ></span>
-                                    <span>{consultant.name}</span>
-                                </div>
-                            ))}
+                            ).map((consultant, index) => {
+                                const consultantColor = getConsultantColor(consultant.id);
+                                return (
+                                    <div key={`consultant-${consultant.id}-${index}`} className="legend-item">
+                                        <span 
+                                            className="legend-color" 
+                                            style={{ backgroundColor: consultantColor }}
+                                        ></span>
+                                        <span>{consultant.name}</span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                     

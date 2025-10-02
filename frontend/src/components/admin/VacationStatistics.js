@@ -286,7 +286,10 @@ const VacationStatistics = ({ className = "" }) => {
                                     data-consultant-color={consultantColor}
                                 >
                                     <div className="consultant-info">
-                                        <div className="consultant-avatar" data-bg-color={consultantColor}>
+                                        <div 
+                                            className="consultant-avatar" 
+                                            style={{ backgroundColor: consultantColor }}
+                                        >
                                             {consultant.consultantName.charAt(0)}
                                         </div>
                                         <div className="consultant-details">

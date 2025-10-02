@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
+import { getDashboardPath } from '../../utils/session';
 import UnifiedModal from './modals/UnifiedModal';
 import SimpleHamburgerMenu from '../layout/SimpleHamburgerMenu';
 import '../../styles/main.css';
@@ -36,6 +37,7 @@ const UnifiedHeader = ({
   logoAlt = 'MindGarden',
   showUserMenu = true,
   showHamburger = true,
+  showBackButton = true, // 백 버튼 표시 여부
   variant = 'default', // default, compact, transparent
   sticky = true,
   className = '',
@@ -44,6 +46,7 @@ const UnifiedHeader = ({
   ...props
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = sessionManager.getUser();
   const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
 
@@ -60,6 +63,47 @@ const UnifiedHeader = ({
   // 햄버거 메뉴 토글
   const toggleHamburger = () => {
     setIsHamburgerOpen(!isHamburgerOpen);
+  };
+
+  // 백 버튼 표시 여부 결정
+  const shouldShowBackButton = () => {
+    if (!showBackButton) return false;
+    
+    const currentPath = location.pathname;
+    const noBackPaths = ['/', '/login', '/signup', '/dashboard'];
+    
+    // 홈페이지, 로그인, 회원가입, 메인 대시보드에서는 백 버튼 숨김
+    if (noBackPaths.includes(currentPath)) return false;
+    
+    // 사용자 역할별 메인 대시보드에서도 숨김
+    if (user?.role) {
+      const dashboardPath = getDashboardPath(user.role);
+      if (currentPath === dashboardPath) return false;
+    }
+    
+    return true;
+  };
+
+  // 백 버튼 클릭 핸들러
+  const handleBackClick = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      // 브라우저 히스토리가 없으면 적절한 대시보드로 이동
+      if (user?.role) {
+        const dashboardPath = getDashboardPath(user.role);
+        navigate(dashboardPath);
+      } else {
+        navigate('/');
+      }
+    }
+  };
+
+  // 프로필 클릭 핸들러
+  const handleProfileClick = () => {
+    if (user?.role) {
+      navigate(`/${user.role.toLowerCase()}/mypage`);
+    }
   };
 
   // 로고 렌더링
@@ -120,8 +164,13 @@ const UnifiedHeader = ({
     return (
       <div className="mg-header__user-menu">
         <div className="mg-header__user-info">
-          {/* 프로필 사진 */}
-          <div className="mg-header__user-avatar">
+          {/* 프로필 사진 - 클릭 가능 */}
+          <div 
+            className="mg-header__user-avatar mg-header__user-avatar--clickable"
+            onClick={handleProfileClick}
+            title="마이페이지로 이동"
+            style={{ cursor: 'pointer' }}
+          >
             {profileImageUrl ? (
               <img 
                 src={profileImageUrl} 
@@ -171,6 +220,17 @@ const UnifiedHeader = ({
         <div className="mg-header__container">
           {/* 로고 영역 */}
           <div className="mg-header__brand">
+            {/* 백 버튼 */}
+            {shouldShowBackButton() && (
+              <button 
+                className="mg-header__back-button"
+                onClick={handleBackClick}
+                title="뒤로가기"
+                aria-label="뒤로가기"
+              >
+                <i className="bi bi-arrow-left"></i>
+              </button>
+            )}
             {renderLogo()}
           </div>
 

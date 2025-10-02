@@ -48,6 +48,37 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  gap: var(--spacing-sm);
+}
+
+/* 백 버튼 */
+.mg-header__back-button {
+  background: none;
+  border: none;
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-md);
+  transition: all 0.2s ease;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.mg-header__back-button:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-primary);
+  transform: translateX(-2px);
+}
+
+.mg-header__back-button:focus {
+  outline: none;
+  background: var(--color-bg-secondary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
 }
 
 .mg-header__logo {
@@ -177,6 +208,8 @@
   align-items: center;
   gap: var(--spacing-md);
   flex-shrink: 0;
+  position: relative;
+  z-index: var(--z-header); /* 헤더와 동일한 z-index */
 }
 
 .mg-header__user-info {
@@ -197,6 +230,19 @@
   background: var(--color-bg-secondary);
   border: 2px solid var(--color-border-light);
   flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* 클릭 가능한 프로필 아바타 */
+.mg-header__user-avatar--clickable {
+  cursor: pointer;
+  border-color: var(--color-border-light);
+}
+
+.mg-header__user-avatar--clickable:hover {
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* 프로필 이미지 */
@@ -254,6 +300,8 @@
   gap: 4px;
   border-radius: var(--border-radius-md);
   transition: background-color 0.2s ease;
+  position: relative;
+  z-index: var(--z-header); /* 헤더와 동일한 z-index */
 }
 
 .mg-header__hamburger:hover {

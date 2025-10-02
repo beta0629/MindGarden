@@ -876,28 +876,31 @@ const SessionManagement = () => {
                                 placeholder="내담자 검색..."
                                 filterLabel="전체"
                             />
-                <div className="session-mgmt-client-list">
-                    {getFilteredClients().map(client => {
-                        const clientMappings = mappings.filter(mapping => mapping.clientId === client.id);
-                        const activeMappings = clientMappings.filter(mapping => mapping.status === 'ACTIVE');
-                        
-                        return (
-                            <ClientCard
-                                key={client.id}
-                                client={client}
-                                clientMappings={clientMappings}
-                                activeMappings={activeMappings}
-                                isSelected={selectedClient?.id === client.id}
-                                onClick={handleClientSelect}
-                            />
-                        );
-                    })}
-                </div>
-                {getFilteredClients().length === 0 && (
-                    <div className="session-mgmt-no-results">
-                        <p>검색 조건에 맞는 내담자가 없습니다.</p>
-                    </div>
-                )}
+                            
+                            <div className="session-mgmt-client-list">
+                                {getFilteredClients().map(client => {
+                                    const clientMappings = mappings.filter(mapping => mapping.clientId === client.id);
+                                    const activeMappings = clientMappings.filter(mapping => mapping.status === 'ACTIVE');
+                                    
+                                    return (
+                                        <ClientCard
+                                            key={client.id}
+                                            client={client}
+                                            clientMappings={clientMappings}
+                                            activeMappings={activeMappings}
+                                            isSelected={selectedClient?.id === client.id}
+                                            onClick={handleClientSelect}
+                                        />
+                                    );
+                                })}
+                            </div>
+                            
+                            {getFilteredClients().length === 0 && (
+                                <div className="session-mgmt-no-results">
+                                    <p>검색 조건에 맞는 내담자가 없습니다.</p>
+                                </div>
+                            )}
+                        </div>
             </div>
 
             {/* 선택된 내담자 정보 */}

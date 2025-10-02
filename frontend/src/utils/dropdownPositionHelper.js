@@ -124,7 +124,8 @@ export const initSingleDropdown = (dropdown) => {
  * 모든 드롭다운에 공통 이벤트 리스너 추가
  * @param {string} selector - 드롭다운 컨테이너 선택자
  */
-export const initDropdownPositioning = (selector = '.custom-select') => {
+export const initDropdownPositioning = (selector = '.dropdown, .custom-dropdown') => {
+  // CustomSelect는 제외 (자체 위치 관리)
   const dropdowns = document.querySelectorAll(selector);
   
   dropdowns.forEach(dropdown => {
@@ -136,30 +137,30 @@ export const initDropdownPositioning = (selector = '.custom-select') => {
  * 페이지 로드 시 모든 드롭다운 초기화
  */
 export const initAllDropdowns = () => {
-  // DOM이 완전히 로드된 후 실행
+  // DOM이 완전히 로드된 후 실행 (CustomSelect 제외)
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => initDropdownPositioning('.custom-select'), 100);
+      setTimeout(() => initDropdownPositioning('.dropdown, .custom-dropdown'), 100);
     });
   } else {
-    setTimeout(() => initDropdownPositioning('.custom-select'), 100);
+    setTimeout(() => initDropdownPositioning('.dropdown, .custom-dropdown'), 100);
   }
 
-  // 동적으로 추가된 드롭다운도 감지
+  // 동적으로 추가된 드롭다운도 감지 (CustomSelect 제외)
   const dynamicObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) {
-          if (node.classList && node.classList.contains('custom-select')) {
-            // 개별 드롭다운 초기화 - 함수가 정의된 후 실행되도록 지연
+          // CustomSelect가 아닌 일반 드롭다운만 처리
+          if (node.classList && (node.classList.contains('dropdown') || node.classList.contains('custom-dropdown'))) {
             setTimeout(() => {
               if (typeof initSingleDropdown === 'function') {
                 initSingleDropdown(node);
               }
             }, 10);
           }
-          // 하위 요소에서 드롭다운 찾기
-          const childDropdowns = node.querySelectorAll && node.querySelectorAll('.custom-select');
+          // 하위 요소에서 일반 드롭다운 찾기 (CustomSelect 제외)
+          const childDropdowns = node.querySelectorAll && node.querySelectorAll('.dropdown, .custom-dropdown');
           if (childDropdowns) {
             childDropdowns.forEach(child => {
               setTimeout(() => {
@@ -184,7 +185,7 @@ export const initAllDropdowns = () => {
  * 헤더 내 드롭다운 특별 처리
  */
 export const initHeaderDropdowns = () => {
-  const headerDropdowns = document.querySelectorAll('.mg-header .custom-select, .simple-header .custom-select');
+  const headerDropdowns = document.querySelectorAll('.mg-header .dropdown, .mg-header .custom-dropdown, .simple-header .dropdown, .simple-header .custom-dropdown');
   
   headerDropdowns.forEach(dropdown => {
     const trigger = dropdown.querySelector('.custom-select__trigger');

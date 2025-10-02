@@ -100,15 +100,50 @@ const UnifiedHeader = ({
     }
   };
 
+  // 프로필 이미지 URL 가져오기
+  const getProfileImageUrl = () => {
+    if (user?.profileImageUrl) {
+      return user.profileImageUrl;
+    }
+    if (user?.socialProfileImage) {
+      return user.socialProfileImage;
+    }
+    return null;
+  };
+
   // 사용자 메뉴 렌더링
   const renderUserMenu = () => {
     if (!showUserMenu || !user) return null;
 
+    const profileImageUrl = getProfileImageUrl();
+
     return (
       <div className="mg-header__user-menu">
         <div className="mg-header__user-info">
-          <span className="mg-header__user-name">{user.name}</span>
-          <span className="mg-header__user-role">{user.role}</span>
+          {/* 프로필 사진 */}
+          <div className="mg-header__user-avatar">
+            {profileImageUrl ? (
+              <img 
+                src={profileImageUrl} 
+                alt="프로필" 
+                className="mg-header__profile-image"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+            ) : null}
+            <i 
+              className="bi bi-person-circle mg-header__profile-icon"
+              style={{ display: profileImageUrl ? 'none' : 'block' }}
+            ></i>
+          </div>
+          
+          {/* 사용자 정보 */}
+          <div className="mg-header__user-details">
+            <span className="mg-header__user-name">{user.name || user.nickname || user.username}</span>
+            <span className="mg-header__user-role">{user.role}</span>
+          </div>
         </div>
         <button 
           className="mg-header__hamburger"

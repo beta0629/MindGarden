@@ -20,9 +20,9 @@
   --schedule-modal-shadow-hover: 0 8px 25px rgba(0, 0, 0, 0.2);
   
   /* 스케줄 모달 크기 변수 */
-  --schedule-modal-width: 600px;
-  --schedule-modal-max-height: 75vh;
-  --schedule-modal-min-height: 350px;
+  --schedule-modal-width: 450px;
+  --schedule-modal-max-height: 60vh;
+  --schedule-modal-min-height: 300px;
   --schedule-modal-border-radius: 16px;
   --schedule-modal-padding: var(--spacing-xl);
   
@@ -762,17 +762,18 @@
 /* 모바일 (480px 이하) */
 @media (max-width: 480px) {
   :root {
-    --schedule-modal-width: 100vw;
-    --schedule-modal-max-height: 95vh;
-    --schedule-modal-min-height: 250px;
+    --schedule-modal-width: 95vw;
+    --schedule-modal-max-height: 80vh;
+    --schedule-modal-min-height: 200px;
     --schedule-modal-padding: var(--spacing-sm);
   }
 
   .schedule-modal {
-    margin: 0;
+    margin: var(--spacing-sm);
     border-radius: 8px;
-    height: 100vh;
-    max-height: 100vh;
+    height: auto;
+    max-height: 80vh;
+    max-width: 400px;
   }
 
   .schedule-modal-overlay {

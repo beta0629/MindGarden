@@ -379,12 +379,14 @@
 
 .session-mgmt-client-list {
     display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
     margin-top: 24px;
 }
 
 .session-mgmt-client-card {
     display: flex;
+    justify-content: space-between;
     align-items: center;
     gap: 20px;
     padding: 24px;
@@ -764,35 +766,6 @@
     font-size: var(--font-size-base);
 }
 
-.session-mgmt-client-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 15px;
-}
-
-.session-mgmt-client-card {
-    background: white;
-    border: 2px solid #e9ecef;
-    border-radius: 12px;
-    padding: var(--spacing-base);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.session-mgmt-client-card:hover {
-    border-color: #3498db;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
-}
-
-.session-mgmt-client-card.selected {
-    border-color: #3498db;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-}
 
 .session-mgmt-client-info {
     flex: 1;
@@ -840,8 +813,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
 }
 
 .session-mgmt-selected-indicator {

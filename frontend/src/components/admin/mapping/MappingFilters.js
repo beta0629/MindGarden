@@ -67,7 +67,7 @@ const MappingFilters = ({
                         />
                         {searchTerm && (
                             <button 
-                                className="mapping-filters-clear-btn">
+                                className="mapping-filters-clear-btn"
                                 onClick={() => onSearchChange('')}
                                 onMouseEnter={(e) => {
                                     e.target.style.backgroundColor = 'var(--color-bg-secondary, #F5F5F7)';

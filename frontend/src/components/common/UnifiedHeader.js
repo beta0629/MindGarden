@@ -132,7 +132,7 @@ const UnifiedHeader = ({
               {title || 'MindGarden'}
             </span>
             <span className="mg-header__logo-subtitle">
-              마음의 정원
+              마인드가든
             </span>
           </div>
         );

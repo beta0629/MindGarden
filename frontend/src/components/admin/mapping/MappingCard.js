@@ -78,7 +78,7 @@ const MappingCard = ({
                         gap: '6px',
                         padding: '4px 12px',
                         borderRadius: '20px',
-                        color: 'white',
+                        color: 'var(--color-text-inverse, #FFFFFF)',
                         fontSize: 'var(--font-size-xs)',
                         fontWeight: '600',
                         textTransform: 'uppercase',
@@ -368,8 +368,8 @@ const MappingCard = ({
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px',
-                            backgroundColor: '#28a745',
-                            color: 'white'
+                            backgroundColor: 'var(--color-success, #28A745)',
+                            color: 'var(--color-text-inverse, #FFFFFF)'
                         }}
                         onClick={() => {
                             setShowPaymentModal(true);
@@ -402,7 +402,7 @@ const MappingCard = ({
                             alignItems: 'center',
                             gap: '4px',
                             backgroundColor: '#007bff',
-                            color: 'white'
+                            color: 'var(--color-text-inverse, #FFFFFF)'
                         }}
                         onClick={() => {
                             setShowDepositModal(true);
@@ -430,8 +430,8 @@ const MappingCard = ({
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
-                        backgroundColor: '#28a745',
-                        color: 'white'
+                        backgroundColor: 'var(--color-success, #28A745)',
+                        color: 'var(--color-text-inverse, #FFFFFF)'
                     }}>
                         <i className="bi bi-check-circle"></i>
                         ERP 연동완료
@@ -453,8 +453,8 @@ const MappingCard = ({
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '4px',
-                                backgroundColor: '#28a745',
-                                color: 'white'
+                                backgroundColor: 'var(--color-success, #28A745)',
+                                color: 'var(--color-text-inverse, #FFFFFF)'
                             }}
                             onClick={() => onApprove?.(mapping.id)}
                             onMouseEnter={(e) => {
@@ -481,7 +481,7 @@ const MappingCard = ({
                                 alignItems: 'center',
                                 gap: '4px',
                                 backgroundColor: '#dc3545',
-                                color: 'white'
+                                color: 'var(--color-text-inverse, #FFFFFF)'
                             }}
                             onClick={() => onReject?.(mapping.id)}
                             onMouseEnter={(e) => {
@@ -511,16 +511,16 @@ const MappingCard = ({
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '4px',
-                                backgroundColor: '#ffc107',
-                                color: '#212529'
+                                backgroundColor: 'var(--color-warning, #FFC107)',
+                                color: 'var(--color-text-primary, #1D1D1F)'
                             }}
                             onClick={() => onEdit?.(mapping)}
                             onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = '#e0a800';
+                                e.target.style.backgroundColor = 'var(--color-warning-dark, #e0a800)';
                                 e.target.style.transform = 'translateY(-1px)';
                             }}
                             onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = '#ffc107';
+                                e.target.style.backgroundColor = 'var(--color-warning, #FFC107)';
                                 e.target.style.transform = 'translateY(0)';
                             }}
                         >
@@ -538,16 +538,16 @@ const MappingCard = ({
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '4px',
-                                backgroundColor: '#6c757d',
-                                color: 'white'
+                                backgroundColor: 'var(--color-gray, #6c757d)',
+                                color: 'var(--color-text-inverse, #FFFFFF)'
                             }}
                             onClick={() => onTransfer?.(mapping)}
                             onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = '#5a6268';
+                                e.target.style.backgroundColor = 'var(--color-gray-dark, #5a6268)';
                                 e.target.style.transform = 'translateY(-1px)';
                             }}
                             onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = '#6c757d';
+                                e.target.style.backgroundColor = 'var(--color-gray, #6c757d)';
                                 e.target.style.transform = 'translateY(0)';
                             }}
                         >
@@ -566,16 +566,16 @@ const MappingCard = ({
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '4px',
-                                    backgroundColor: '#dc3545',
-                                    color: 'white'
+                                    backgroundColor: 'var(--color-danger, #DC3545)',
+                                    color: 'var(--color-text-inverse, #FFFFFF)'
                                 }}
                                 onClick={() => onRefund?.(mapping)}
                                 onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = '#c82333';
+                                    e.target.style.backgroundColor = 'var(--color-danger-dark, #c82333)';
                                     e.target.style.transform = 'translateY(-1px)';
                                 }}
                                 onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = '#dc3545';
+                                    e.target.style.backgroundColor = 'var(--color-danger, #DC3545)';
                                     e.target.style.transform = 'translateY(0)';
                                 }}
                             >
@@ -596,16 +596,16 @@ const MappingCard = ({
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
-                        backgroundColor: '#17a2b8',
-                        color: 'white'
+                        backgroundColor: 'var(--color-info, #17A2B8)',
+                        color: 'var(--color-text-inverse, #FFFFFF)'
                     }}
                     onClick={() => onView?.(mapping)}
                     onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = '#138496';
+                        e.target.style.backgroundColor = 'var(--color-info-dark, #138496)';
                         e.target.style.transform = 'translateY(-1px)';
                     }}
                     onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = '#17a2b8';
+                        e.target.style.backgroundColor = 'var(--color-info, #17A2B8)';
                         e.target.style.transform = 'translateY(0)';
                     }}
                 >
@@ -615,7 +615,7 @@ const MappingCard = ({
                     <button 
                         style={{
                             padding: '4px 8px',
-                            border: '1px solid #17a2b8',
+                            border: '1px solid var(--color-info, #17A2B8)',
                             borderRadius: '6px',
                             fontSize: 'var(--font-size-xs)',
                             fontWeight: '600',
@@ -625,17 +625,17 @@ const MappingCard = ({
                             alignItems: 'center',
                             gap: '4px',
                             backgroundColor: 'transparent',
-                            color: '#17a2b8'
+                            color: 'var(--color-info, #17A2B8)'
                         }}
                         onClick={() => onViewTransferHistory?.(mapping.clientId)}
                         onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#17a2b8';
-                            e.target.style.color = 'white';
+                            e.target.style.backgroundColor = 'var(--color-info, #17A2B8)';
+                            e.target.style.color = 'var(--color-text-inverse, #FFFFFF)';
                             e.target.style.transform = 'translateY(-1px)';
                         }}
                         onMouseLeave={(e) => {
                             e.target.style.backgroundColor = 'transparent';
-                            e.target.style.color = '#17a2b8';
+                            e.target.style.color = 'var(--color-info, #17A2B8)';
                             e.target.style.transform = 'translateY(0)';
                         }}
                     >

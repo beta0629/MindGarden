@@ -40,6 +40,25 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     const [clientSearchTerm, setClientSearchTerm] = useState('');
     const [filteredClients, setFilteredClients] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    
+    // 화면 크기 감지
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    
+    // 모달 크기 결정
+    const getModalSize = () => {
+        if (windowWidth <= 480) return 'fullscreen';
+        if (windowWidth <= 768) return 'large';
+        if (windowWidth <= 1024) return 'large';
+        return 'large';
+    };
     
     // 결제 정보
     const [paymentInfo, setPaymentInfo] = useState({
@@ -408,7 +427,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             isOpen={isOpen}
             onClose={handleClose}
             title="🔗 상담사-내담자 매핑 생성"
-            size="large"
+            size={getModalSize()}
             variant="form"
             backdropClick={false}
             loading={loading}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import notificationManager from '../../../utils/notification';
+import csrfTokenManager from '../../../utils/csrfTokenManager';
 import './MappingDepositModal.css';
 
 /**
@@ -31,15 +32,8 @@ const MappingDepositModal = ({
         setIsLoading(true);
         
         try {
-            const response = await fetch(`/api/admin/mappings/${mapping.id}/confirm-deposit`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({
-                    depositReference: depositReference.trim()
-                })
+            const response = await csrfTokenManager.post(`/api/admin/mappings/${mapping.id}/confirm-deposit`, {
+                depositReference: depositReference.trim()
             });
 
             const result = await response.json();

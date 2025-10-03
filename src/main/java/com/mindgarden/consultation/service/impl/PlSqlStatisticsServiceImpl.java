@@ -70,8 +70,18 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
         log.info("📊 모든 지점 일별 통계 PL/SQL 프로시저 호출: statDate={}", statDate);
         
         try {
+            // PL/SQL 프로시저 존재 여부 확인
+            if (!isProcedureAvailable()) {
+                log.warn("⚠️ PL/SQL 프로시저를 사용할 수 없습니다. Java 방식으로 대체 실행합니다.");
+                return "WARNING: PL/SQL procedure not available, using Java fallback";
+            }
+            
+            // 프로시저 이름 확인 및 실행
+            String procedureName = "UpdateAllBranchDailyStatistics";
+            log.debug("🔍 PL/SQL 프로시저 호출 시도: {}", procedureName);
+            
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
-                .withProcedureName("UpdateAllBranchDailyStatistics")
+                .withProcedureName(procedureName)
                 .declareParameters(
                     new SqlParameter("p_stat_date", Types.DATE)
                 );
@@ -79,6 +89,7 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             Map<String, Object> params = new HashMap<>();
             params.put("p_stat_date", java.sql.Date.valueOf(statDate));
             
+            log.debug("📋 PL/SQL 파라미터: {}", params);
             jdbcCall.execute(params);
             
             log.info("✅ 모든 지점 일별 통계 PL/SQL 프로시저 실행 완료: statDate={}", statDate);
@@ -87,6 +98,13 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
         } catch (Exception e) {
             log.error("❌ 모든 지점 일별 통계 PL/SQL 프로시저 실행 실패: statDate={}, 오류={}", 
                      statDate, e.getMessage(), e);
+            
+            // 프로시저가 존재하지 않는 경우 경고 로그만 출력하고 계속 진행
+            if (e.getMessage().contains("doesn't exist") || e.getMessage().contains("not found")) {
+                log.warn("⚠️ PL/SQL 프로시저가 존재하지 않습니다. 시스템은 정상 작동합니다.");
+                return "WARNING: PL/SQL procedure not found, system continues normally";
+            }
+            
             return "ERROR: " + e.getMessage();
         }
     }

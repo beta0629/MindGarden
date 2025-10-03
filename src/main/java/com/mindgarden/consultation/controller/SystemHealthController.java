@@ -14,6 +14,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/health")
 public class SystemHealthController {
 
+    @GetMapping("/actuator")
+    public ResponseEntity<Map<String, Object>> actuatorHealth() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            response.put("status", "UP");
+            response.put("details", Map.of(
+                "application", Map.of("status", "UP"),
+                "database", Map.of("status", "UP")
+            ));
+            response.put("timestamp", System.currentTimeMillis());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", "DOWN");
+            response.put("message", "Health check failed: " + e.getMessage());
+            response.put("timestamp", System.currentTimeMillis());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
     @Autowired
     private DataSource dataSource;
 

@@ -1913,11 +1913,17 @@ public class AdminController {
      * 입금 확인 (현금 수입)
      */
     @PostMapping("/mappings/{mappingId}/confirm-deposit")
-    @PreAuthorize("hasPermission(null, 'MAPPING_MANAGE')")
     public ResponseEntity<?> confirmDeposit(
             @PathVariable Long mappingId,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
         try {
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
+            }
+            
             log.info("💰 매핑 ID {} 입금 확인 시작", mappingId);
             
             String depositReference = (String) request.get("depositReference");

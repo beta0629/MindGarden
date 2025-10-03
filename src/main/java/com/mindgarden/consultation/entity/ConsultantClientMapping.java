@@ -185,16 +185,16 @@ public class ConsultantClientMapping extends BaseEntity {
         if (this.paymentStatus != PaymentStatus.CONFIRMED) {
             throw new IllegalStateException("결제 확인이 완료되지 않았습니다.");
         }
-        this.paymentStatus = PaymentStatus.APPROVED;
+        this.paymentStatus = PaymentStatus.APPROVED;  // APPROVED 상태로 변경 (입금 확인됨)
         this.paymentReference = this.paymentReference + " (입금: " + depositReference + ")";
-        this.status = MappingStatus.DEPOSIT_CONFIRMED;
+        this.status = MappingStatus.ACTIVE;  // ACTIVE 상태로 변경 (입금 확인 완료)
     }
 
     /**
      * 관리자 승인 (입금 확인 후 활성화)
      */
     public void approveByAdmin(String adminName) {
-        if (this.paymentStatus != PaymentStatus.DEP && this.paymentStatus != PaymentStatus.APPROVED) {
+        if (this.paymentStatus != PaymentStatus.APPROVED) {
             throw new IllegalStateException("입금 확인이 완료되지 않았습니다.");
         }
         this.paymentStatus = PaymentStatus.APPROVED;

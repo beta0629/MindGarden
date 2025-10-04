@@ -2623,14 +2623,17 @@ public class AdminController {
         try {
             log.info("🔍 재무 거래 목록 조회: 지점={}, 유형={}, 카테고리={}", branchCode, transactionType, category);
             
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
+            User sessionUser = SessionUtils.getCurrentUser(session);
+            if (sessionUser == null) {
                 log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
                 response.put("message", "로그인이 필요합니다.");
                 return ResponseEntity.status(401).body(response);
             }
+            
+            // 데이터베이스에서 최신 사용자 정보 조회 (branchCode 포함)
+            User currentUser = userService.findById(sessionUser.getId()).orElse(sessionUser);
             
             log.info("👤 현재 사용자: 이메일={}, 역할={}, 지점코드={}", 
                     currentUser.getEmail(), currentUser.getRole(), currentUser.getBranchCode());

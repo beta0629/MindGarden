@@ -83,23 +83,130 @@ Create a complete MindGarden design system showcase page with these requirements
 }
 ```
 
-## Components to Include
-1. Hero Section with glassmorphism effect
-2. Statistics Dashboard with glass cards
-3. Typography showcase
-4. Button variations (primary, secondary, outline, ghost)
-5. Card components (basic, glass, gradient, floating, border, animation)
-6. Form components (input, textarea, select, checkbox, radio, switch, slider)
-7. Modal components (basic, confirm)
-8. Loading states
-9. Client cards
-10. Chart components
-11. Navigation
-12. Notifications
-13. Table
-14. Calendar
-15. Accordion
-16. Color palette showcase
+## Components to Include (상세 요구사항)
+
+### 1. Hero Section (HeroSection.jsx)
+- 글라스모피즘 효과가 적용된 메인 섹션
+- 환영 배지 (아이콘 + 텍스트)
+- 그라데이션 텍스트로 된 메인 타이틀
+- 설명 텍스트
+- CTA 버튼 2개 (primary, outline)
+- 페이드인 애니메이션
+
+### 2. Statistics Dashboard (StatsDashboard.jsx)
+- 4개의 통계 카드 (glass effect)
+- 각 카드에 아이콘, 숫자, 라벨, 변화율 표시
+- 그리드 레이아웃 (데스크탑 4열, 태블릿 2열, 모바일 1열)
+- 호버 효과
+
+### 3. Typography Showcase (TypographyShowcase.jsx)
+- h1, h2, h3, h4, h5, h6 스타일
+- 본문 텍스트 (large, medium, small)
+- 그라데이션 텍스트
+- 강조 텍스트
+- 링크 스타일
+
+### 4. Button Showcase (ButtonShowcase.jsx)
+- Primary 버튼 (민트 그린 배경)
+- Secondary 버튼
+- Outline 버튼
+- Ghost 버튼
+- 각 버튼의 hover, active, disabled 상태
+- 크기 변형 (small, medium, large)
+- 아이콘 버튼
+
+### 5. Card Showcase (CardShowcase.jsx)
+- Basic Card (기본 카드)
+- Glass Card (글라스모피즘 효과)
+- Gradient Card (그라데이션 배경)
+- Floating Card (그림자 효과)
+- Border Card (테두리 강조)
+- Animated Card (호버 시 애니메이션)
+- 각 카드에 이미지, 타이틀, 설명, 버튼 포함
+
+### 6. Form Showcase (FormShowcase.jsx)
+- Text Input (placeholder, focus 효과)
+- Textarea (여러 줄 입력)
+- Select Dropdown (커스텀 스타일)
+- Checkbox (체크박스 여러 개)
+- Radio Button (라디오 버튼 그룹)
+- Switch Toggle (온/오프 스위치)
+- Range Slider (슬라이더)
+- 각 요소에 라벨, 도움말 텍스트, 에러 상태 포함
+
+### 7. Modal Showcase (ModalShowcase.jsx)
+- Basic Modal (기본 모달, 닫기 버튼)
+- Confirm Modal (확인/취소 버튼)
+- 모달 오픈/클로즈 애니메이션
+- 배경 어둡게 처리 (overlay)
+- ESC 키로 닫기 기능
+- 모달 외부 클릭 시 닫기
+
+### 8. Loading Showcase (LoadingShowcase.jsx)
+- Spinner (회전 로딩)
+- Progress Bar (진행률 표시)
+- Skeleton Loading (콘텐츠 로딩)
+- Dots Animation (점 3개 애니메이션)
+- 각각 다른 색상 변형
+
+### 9. Client Card Showcase (ClientCardShowcase.jsx)
+- 클라이언트 프로필 카드
+- 프로필 이미지, 이름, 상태 배지
+- 최근 상담 일자
+- 진행 상태 바
+- 액션 버튼 (상세보기, 메시지)
+
+### 10. Chart Showcase (ChartShowcase.jsx)
+- Bar Chart (막대 그래프, CSS로 구현)
+- Line Chart (선 그래프, CSS로 구현)
+- Pie Chart (원형 그래프, CSS로 구현)
+- Progress Circle (원형 진행률)
+- 각 차트에 레이블, 값 표시
+
+### 11. Navigation Showcase (NavigationShowcase.jsx)
+- Header Navigation (로고, 메뉴, 프로필)
+- Sidebar Navigation (접을 수 있는 사이드바)
+- Mobile Menu (햄버거 메뉴)
+- Breadcrumb (경로 표시)
+- Tabs (탭 네비게이션)
+
+### 12. Notification Showcase (NotificationShowcase.jsx)
+- Success Notification (성공 알림)
+- Error Notification (에러 알림)
+- Warning Notification (경고 알림)
+- Info Notification (정보 알림)
+- Toast 스타일 (우측 상단 나타났다 사라짐)
+- 닫기 버튼
+- 자동 사라지는 애니메이션
+
+### 13. Table Showcase (TableShowcase.jsx)
+- 헤더, 본문, 푸터가 있는 테이블
+- Striped rows (줄무늬 행)
+- Hover 효과
+- 정렬 가능한 헤더
+- 페이지네이션
+- 반응형 (모바일에서 카드형으로 전환)
+
+### 14. Calendar Showcase (CalendarShowcase.jsx)
+- 월간 달력 뷰
+- 오늘 날짜 강조
+- 선택된 날짜 표시
+- 이벤트 표시 (날짜에 점 표시)
+- 이전/다음 달 이동 버튼
+
+### 15. Accordion Showcase (AccordionShowcase.jsx)
+- 여러 개의 아코디언 아이템
+- 펼침/접힘 애니메이션
+- 아이콘 회전 효과
+- 한 번에 하나만 열리는 옵션
+- 여러 개 동시에 열리는 옵션
+
+### 16. Color Palette Showcase (ColorPaletteShowcase.jsx)
+- 모든 색상 변수 표시
+- 색상 코드 표시
+- 색상 이름 표시
+- 클릭 시 색상 코드 복사
+- 각 색상의 사용 예시
 
 ## File Structure (Create React App compatible)
 ```

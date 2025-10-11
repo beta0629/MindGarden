@@ -212,87 +212,33 @@ public class AdminServiceImpl implements AdminService {
             .findByConsultantAndClient(consultant, clientUser);
         
         if (!existingMappings.isEmpty()) {
-            // 중복 매핑이 있는 경우 가장 최근의 활성 매핑을 선택
-            String activeStatus = getMappingStatusCode("ACTIVE");
-            ConsultantClientMapping existing = existingMappings.stream()
-                .filter(m -> m.getStatus().name().equals(activeStatus))
-                .max(Comparator.comparing(ConsultantClientMapping::getCreatedAt))
-                .orElse(existingMappings.get(0));
+            // 기존 매핑이 있는 경우 모든 기존 매핑을 자동 종료 처리
+            log.info("🔍 기존 매핑 발견, 자동 종료 처리: 상담사={}, 내담자={}, 기존 매핑 수={}", 
+                consultant.getName(), clientUser.getName(), existingMappings.size());
             
-            // 활성 상태인지 확인
-            if (!existing.getStatus().name().equals(activeStatus)) {
-                log.warn("⚠️ 비활성 매핑 발견, 새 매핑 생성: 상태={}", existing.getStatus());
-                // 비활성 상태면 새 매핑 생성으로 진행
-            } else if (!branchCode.equals(existing.getBranchCode())) {
-                log.warn("⚠️ 다른 지점의 매핑 발견, 새 매핑 생성: 기존 지점={}, 새 지점={}", 
-                    existing.getBranchCode(), branchCode);
-                // 다른 지점이면 새 매핑 생성으로 진행
-            } else {
-                // 같은 지점의 활성 매핑이 있으면 합산
-                log.info("🔍 기존 활성 매핑 발견, 합산 처리: 상담사={}, 내담자={}, 지점={}", 
-                    consultant.getName(), clientUser.getName(), branchCode);
+            String terminatedStatus = getMappingStatusCode("TERMINATED");
             
-                // 회기수 합산
-                int newTotalSessions = dto.getTotalSessions() != null ? dto.getTotalSessions() : 10;
-                int newRemainingSessions = dto.getRemainingSessions() != null ? dto.getRemainingSessions() : newTotalSessions;
+            for (ConsultantClientMapping existingMapping : existingMappings) {
+                // 기존 매핑을 자동 종료 처리
+                existingMapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
+                existingMapping.setTerminatedAt(LocalDateTime.now());
+                existingMapping.setNotes((existingMapping.getNotes() != null ? existingMapping.getNotes() + "\n" : "") + 
+                    "새로운 매핑 생성으로 인한 자동 종료 - 회기 자동 소진");
                 
-                int updatedTotalSessions = existing.getTotalSessions() + newTotalSessions;
-                int updatedRemainingSessions = existing.getRemainingSessions() + newRemainingSessions;
-                
-                // 기존 매핑 업데이트
-                existing.setTotalSessions(updatedTotalSessions);
-                existing.setRemainingSessions(updatedRemainingSessions);
-                
-                // 새로운 정보로 업데이트 (패키지명, 가격 등)
-                if (dto.getPackageName() != null && !dto.getPackageName().trim().isEmpty()) {
-                    existing.setPackageName(dto.getPackageName());
-                }
-                if (dto.getPackagePrice() != null) {
-                    existing.setPackagePrice(dto.getPackagePrice());
-                }
-                if (dto.getPaymentMethod() != null) {
-                    existing.setPaymentMethod(dto.getPaymentMethod());
-                }
-                if (dto.getPaymentReference() != null) {
-                    existing.setPaymentReference(dto.getPaymentReference());
-                }
-                if (dto.getPaymentAmount() != null) {
-                    existing.setPaymentAmount(dto.getPaymentAmount());
-                }
-                if (dto.getNotes() != null && !dto.getNotes().trim().isEmpty()) {
-                    String currentNotes = existing.getNotes() != null ? existing.getNotes() : "";
-                    String newNotes = currentNotes + (currentNotes.isEmpty() ? "" : "\n") + 
-                        "[추가 매핑] " + dto.getNotes();
-                    existing.setNotes(newNotes);
-                }
-                if (dto.getSpecialConsiderations() != null && !dto.getSpecialConsiderations().trim().isEmpty()) {
-                    existing.setSpecialConsiderations(dto.getSpecialConsiderations());
+                // 남은 회기를 사용된 회기로 이동 (자동 소진)
+                int remainingSessions = existingMapping.getRemainingSessions();
+                if (remainingSessions > 0) {
+                    existingMapping.setUsedSessions(existingMapping.getUsedSessions() + remainingSessions);
+                    existingMapping.setRemainingSessions(0);
+                    log.info("🔄 기존 매핑 회기 자동 소진: 매핑ID={}, 소진 회기={}", 
+                        existingMapping.getId(), remainingSessions);
                 }
                 
-                // 추가 매핑 시 입금 확인 절차 필요 (ERP 연동을 위해)
-                // 기존 매핑이 ACTIVE 상태라도 추가 결제에 대해서는 입금 확인이 필요
-                boolean needsPaymentConfirmation = (dto.getPaymentAmount() != null && dto.getPaymentAmount() > 0) ||
-                                                 (dto.getPackagePrice() != null && dto.getPackagePrice() > 0);
+                existingMapping.setUpdatedAt(LocalDateTime.now());
+                mappingRepository.save(existingMapping);
                 
-                if (needsPaymentConfirmation) {
-                    // 추가 결제가 있는 경우 입금 확인 대기 상태로 설정
-                    String pendingStatus = getPaymentStatusCode("PENDING");
-                    existing.setPaymentStatus(ConsultantClientMapping.PaymentStatus.valueOf(pendingStatus));
-                    log.info("💰 추가 매핑 시 입금 확인 필요: 추가금액={}원", 
-                        dto.getPaymentAmount() != null ? dto.getPaymentAmount() : dto.getPackagePrice());
-                } else {
-                    // 추가 결제가 없는 경우 (무료 회기 추가 등) 기존 상태 유지
-                    log.info("🆓 무료 회기 추가: 입금 확인 불필요");
-                }
-                
-                // 상태는 기존 ACTIVE 상태 유지 (회기 추가는 기존 매핑 확장이므로)
-                
-                existing.setUpdatedAt(LocalDateTime.now());
-                
-                log.info("✅ 기존 매핑 합산 완료: 총 회기수={}, 남은 회기수={}", 
-                    updatedTotalSessions, updatedRemainingSessions);
-                
-                return mappingRepository.save(existing);
+                log.info("✅ 기존 매핑 자동 종료 완료: 매핑ID={}, 상태={}", 
+                    existingMapping.getId(), existingMapping.getStatus());
             }
         }
         

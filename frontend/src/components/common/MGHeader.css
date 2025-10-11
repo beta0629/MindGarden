@@ -1,0 +1,557 @@
+/**
+ * MindGarden 공통 헤더 스타일
+ * 네비게이션과 사용자 메뉴를 포함한 통합 헤더
+ */
+
+.mg-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mg-header__container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+/* ===== 로고 ===== */
+.mg-header__logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.mg-header__logo:hover {
+  opacity: 0.8;
+}
+
+.mg-header__logo-icon {
+  font-size: 24px;
+}
+
+.mg-header__logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+/* ===== 네비게이션 ===== */
+.mg-header__nav {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.mg-header__nav--desktop {
+  display: flex;
+}
+
+.mg-header__nav--mobile {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.mg-header__nav-item {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a5568;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.mg-header__nav-item:hover {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.mg-header__nav-item.active {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.mg-header__nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background: #667eea;
+  border-radius: 1px;
+}
+
+/* ===== 햄버거 메뉴 ===== */
+.mg-header__mobile-menu-button {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.mg-header__mobile-menu-button:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.mg-header__hamburger {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 24px;
+  height: 18px;
+}
+
+.mg-header__hamburger span {
+  width: 100%;
+  height: 2px;
+  background: #4a5568;
+  border-radius: 1px;
+  transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+.mg-header__hamburger.active span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.mg-header__hamburger.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.mg-header__hamburger.active span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* ===== 모바일 메뉴 ===== */
+.mg-header__mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-100%);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.mg-header__mobile-menu.active {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.mg-header__mobile-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.mg-header__mobile-user .mg-header__user-avatar {
+  width: 40px;
+  height: 40px;
+}
+
+.mg-header__user-info {
+  flex: 1;
+}
+
+.mg-header__user-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 2px;
+}
+
+.mg-header__user-email {
+  font-size: 12px;
+  color: #718096;
+}
+
+/* ===== 사용자 액션 ===== */
+.mg-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mg-header__notification {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.mg-header__notification:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.mg-header__notification-icon {
+  font-size: 20px;
+  color: #4a5568;
+}
+
+.mg-header__notification-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #ff6b6b;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1;
+}
+
+/* ===== 사용자 메뉴 ===== */
+.mg-header__user-menu {
+  position: relative;
+}
+
+.mg-header__user-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.mg-header__user-button:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.mg-header__user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.mg-header__user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mg-header__user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.mg-header__user-arrow {
+  font-size: 12px;
+  color: #718096;
+  transition: transform 0.2s ease;
+}
+
+.mg-header__user-menu:hover .mg-header__user-arrow {
+  transform: rotate(180deg);
+}
+
+/* ===== 사용자 드롭다운 ===== */
+.mg-header__user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  overflow: hidden;
+  z-index: 1001;
+}
+
+.mg-header__user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(102, 126, 234, 0.05);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.mg-header__user-avatar-large {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 18px;
+  overflow: hidden;
+}
+
+.mg-header__user-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mg-header__user-details {
+  flex: 1;
+}
+
+.mg-header__user-name-large {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 2px;
+}
+
+.mg-header__user-email {
+  font-size: 12px;
+  color: #718096;
+}
+
+.mg-header__user-menu-items {
+  padding: 8px;
+}
+
+.mg-header__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 14px;
+  color: #4a5568;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.mg-header__menu-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+.mg-header__menu-item--logout {
+  color: #e53e3e;
+}
+
+.mg-header__menu-item--logout:hover {
+  background: rgba(229, 62, 62, 0.1);
+  color: #e53e3e;
+}
+
+.mg-header__menu-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.mg-header__menu-divider {
+  height: 1px;
+  background: rgba(226, 232, 240, 0.6);
+  margin: 8px 0;
+}
+
+/* ===== 알림 드롭다운 ===== */
+.mg-header__notification-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  overflow: hidden;
+  z-index: 1001;
+}
+
+.mg-header__notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: rgba(102, 126, 234, 0.05);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.mg-header__notification-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.mg-header__notification-mark-all {
+  font-size: 12px;
+  color: #667eea;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.mg-header__notification-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.mg-header__notification-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.mg-header__notification-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.mg-header__notification-item:last-child {
+  border-bottom: none;
+}
+
+.mg-header__notification-item-icon {
+  font-size: 16px;
+  width: 24px;
+  text-align: center;
+}
+
+.mg-header__notification-item-content {
+  flex: 1;
+}
+
+.mg-header__notification-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a202c;
+  margin-bottom: 2px;
+}
+
+.mg-header__notification-item-time {
+  font-size: 12px;
+  color: #718096;
+}
+
+.mg-header__notification-footer {
+  padding: 12px 16px;
+  text-align: center;
+  background: rgba(102, 126, 234, 0.05);
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.mg-header__notification-footer a {
+  font-size: 14px;
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.mg-header__notification-footer a:hover {
+  text-decoration: underline;
+}
+
+/* ===== 오버레이 ===== */
+.mg-header__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: transparent;
+}
+
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 768px) {
+  .mg-header__container {
+    padding: 0 16px;
+    height: 56px;
+  }
+  
+  .mg-header__nav {
+    display: none;
+  }
+  
+  .mg-header__logo-text {
+    font-size: 18px;
+  }
+  
+  .mg-header__user-name {
+    display: none;
+  }
+  
+  .mg-header__user-dropdown {
+    width: 260px;
+  }
+  
+  .mg-header__notification-dropdown {
+    width: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mg-header__container {
+    padding: 0 12px;
+  }
+  
+  .mg-header__logo-text {
+    font-size: 16px;
+  }
+  
+  .mg-header__user-dropdown {
+    width: 240px;
+  }
+  
+  .mg-header__notification-dropdown {
+    width: 260px;
+  }
+}

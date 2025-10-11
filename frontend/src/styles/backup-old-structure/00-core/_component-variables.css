@@ -1,0 +1,210 @@
+/* ===== 컴포넌트별 CSS 변수 시스템 ===== */
+
+:root {
+  /* ===== 버튼 컴포넌트 ===== */
+  --btn-padding-x-sm: var(--spacing-sm);
+  --btn-padding-x-md: var(--spacing-md);
+  --btn-padding-x-lg: var(--spacing-lg);
+  --btn-padding-y-sm: var(--spacing-xs);
+  --btn-padding-y-md: var(--spacing-sm);
+  --btn-padding-y-lg: var(--spacing-md);
+
+  --btn-font-size-sm: var(--font-size-sm);
+  --btn-font-size-md: var(--font-size-base);
+  --btn-font-size-lg: var(--font-size-lg);
+
+  --btn-font-weight: var(--font-weight-medium);
+  --btn-line-height: var(--line-height-tight);
+  --btn-border-radius: var(--border-radius-md);
+  --btn-border-width: var(--border-width-thin);
+
+  --btn-transition: all var(--transition-fast);
+  --btn-cursor: pointer;
+  --btn-disabled-opacity: 0.6;
+  --btn-disabled-cursor: not-allowed;
+
+  /* ===== 입력 컴포넌트 ===== */
+  --input-padding-x: var(--spacing-md);
+  --input-padding-y: var(--spacing-sm);
+  --input-font-size: var(--font-size-base);
+  --input-font-family: var(--font-family-base);
+  --input-line-height: var(--line-height-normal);
+
+  --input-border-radius: var(--border-radius-md);
+  --input-border-width: var(--border-width-thin);
+  --input-border-style: solid;
+
+  --input-transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  --input-focus-ring-width: var(--focus-ring-width);
+  --input-focus-ring-offset: var(--focus-ring-offset);
+
+  --input-disabled-opacity: 0.6;
+  --input-disabled-cursor: not-allowed;
+  --input-placeholder-opacity: 0.5;
+
+  /* ===== 카드 컴포넌트 ===== */
+  --card-padding: var(--spacing-lg);
+  --card-margin: var(--spacing-md);
+  --card-border-radius: var(--border-radius-lg);
+  --card-border-width: var(--border-width-thin);
+  --card-border-style: solid;
+
+  --card-shadow: var(--shadow-sm);
+  --card-shadow-hover: var(--shadow-md);
+  --card-transition: box-shadow var(--transition-normal);
+
+  /* ===== 모달 컴포넌트 ===== */
+  --modal-padding: var(--spacing-lg);
+  --modal-margin: var(--spacing-md);
+  --modal-border-radius: var(--border-radius-xl);
+  --modal-border-width: var(--border-width-thin);
+  --modal-border-style: solid;
+
+  --modal-shadow: var(--shadow-2xl);
+  --modal-backdrop-blur: var(--backdrop-blur-md);
+  --modal-transition: all var(--transition-normal);
+
+  --modal-header-padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+  --modal-body-padding: var(--spacing-lg);
+  --modal-footer-padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
+
+  /* ===== 드롭다운 컴포넌트 ===== */
+  --dropdown-padding: var(--spacing-sm) var(--spacing-md);
+  --dropdown-border-radius: var(--border-radius-md);
+  --dropdown-border-width: var(--border-width-thin);
+  --dropdown-border-style: solid;
+
+  --dropdown-shadow: var(--shadow-lg);
+  --dropdown-transition: all var(--transition-fast);
+
+  --dropdown-item-padding: var(--spacing-sm) var(--spacing-md);
+  --dropdown-item-font-size: var(--font-size-sm);
+  --dropdown-item-line-height: var(--line-height-normal);
+
+  /* ===== 네비게이션 컴포넌트 ===== */
+  --nav-height: var(--nav-height);
+  --nav-padding-x: var(--spacing-lg);
+  --nav-padding-y: var(--spacing-md);
+
+  --nav-item-padding: var(--spacing-sm) var(--spacing-md);
+  --nav-item-border-radius: var(--border-radius-md);
+  --nav-item-transition: all var(--transition-fast);
+
+  --nav-link-font-size: var(--font-size-base);
+  --nav-link-font-weight: var(--font-weight-medium);
+  --nav-link-line-height: var(--line-height-tight);
+
+  /* ===== 헤더 컴포넌트 ===== */
+  --header-height: var(--header-height);
+  --header-height-mobile: var(--header-height-mobile);
+  --header-padding-x: var(--spacing-lg);
+  --header-padding-y: var(--spacing-md);
+
+  --header-border-width: var(--border-width-thin);
+  --header-border-style: solid;
+  --header-backdrop-filter: var(--backdrop-blur-lg);
+
+  --header-logo-font-size: var(--font-size-xl);
+  --header-logo-font-weight: var(--font-weight-bold);
+
+  --header-user-menu-padding: var(--spacing-sm);
+  --header-user-menu-border-radius: var(--border-radius-md);
+  --header-user-menu-shadow: var(--shadow-lg);
+
+  /* ===== 폼 컴포넌트 ===== */
+  --form-group-margin: var(--spacing-lg);
+  --form-label-margin: var(--spacing-xs) 0;
+  --form-label-font-size: var(--font-size-sm);
+  --form-label-font-weight: var(--font-weight-medium);
+
+  --form-help-margin: var(--spacing-xs) 0 0;
+  --form-help-font-size: var(--font-size-xs);
+  --form-help-opacity: 0.7;
+
+  --form-error-margin: var(--spacing-xs) 0 0;
+  --form-error-font-size: var(--font-size-xs);
+
+  /* ===== 테이블 컴포넌트 ===== */
+  --table-border-width: var(--border-width-thin);
+  --table-border-style: solid;
+  --table-border-radius: var(--border-radius-md);
+
+  --table-header-padding: var(--spacing-md);
+  --table-cell-padding: var(--spacing-md);
+  --table-cell-font-size: var(--font-size-sm);
+
+  --table-header-font-weight: var(--font-weight-semibold);
+  --table-header-font-size: var(--font-size-sm);
+
+  /* ===== 알림 컴포넌트 ===== */
+  --alert-padding: var(--spacing-md);
+  --alert-border-radius: var(--border-radius-md);
+  --alert-border-width: var(--border-width-thin);
+  --alert-border-style: solid;
+
+  --alert-font-size: var(--font-size-sm);
+  --alert-line-height: var(--line-height-normal);
+
+  --toast-padding: var(--spacing-md);
+  --toast-border-radius: var(--border-radius-md);
+  --toast-shadow: var(--shadow-lg);
+  --toast-max-width: 24rem;
+
+  /* ===== 로딩 컴포넌트 ===== */
+  --spinner-size-sm: 1rem;
+  --spinner-size-md: 1.5rem;
+  --spinner-size-lg: 2rem;
+  --spinner-size-xl: 2.5rem;
+
+  --spinner-border-width: 2px;
+  --spinner-animation-duration: 1s;
+
+  /* ===== 아바타 컴포넌트 ===== */
+  --avatar-size-sm: 2rem;
+  --avatar-size-md: 2.5rem;
+  --avatar-size-lg: 3rem;
+  --avatar-size-xl: 4rem;
+
+  --avatar-border-radius: var(--border-radius-full);
+  --avatar-border-width: var(--border-width-thin);
+  --avatar-border-style: solid;
+
+  /* ===== 배지 컴포넌트 ===== */
+  --badge-padding: var(--spacing-xs) var(--spacing-sm);
+  --badge-font-size: var(--font-size-xs);
+  --badge-font-weight: var(--font-weight-medium);
+  --badge-border-radius: var(--border-radius-full);
+  --badge-line-height: 1;
+
+  /* ===== 툴팁 컴포넌트 ===== */
+  --tooltip-padding: var(--spacing-sm) var(--spacing-md);
+  --tooltip-font-size: var(--font-size-xs);
+  --tooltip-border-radius: var(--border-radius-md);
+  --tooltip-shadow: var(--shadow-lg);
+  --tooltip-max-width: 12rem;
+
+  /* ===== 탭 컴포넌트 ===== */
+  --tab-padding: var(--spacing-sm) var(--spacing-md);
+  --tab-border-radius: var(--border-radius-md);
+  --tab-transition: all var(--transition-fast);
+  --tab-active-border-width: var(--border-width-normal);
+
+  /* ===== 아코디언 컴포넌트 ===== */
+  --accordion-border-width: var(--border-width-thin);
+  --accordion-border-style: solid;
+  --accordion-border-radius: var(--border-radius-md);
+
+  --accordion-header-padding: var(--spacing-md);
+  --accordion-content-padding: var(--spacing-md);
+
+  --accordion-transition: all var(--transition-normal);
+
+  /* ===== 페이지네이션 컴포넌트 ===== */
+  --pagination-padding: var(--spacing-sm) var(--spacing-md);
+  --pagination-border-radius: var(--border-radius-md);
+  --pagination-border-width: var(--border-width-thin);
+  --pagination-border-style: solid;
+
+  --pagination-transition: all var(--transition-fast);
+  --pagination-font-size: var(--font-size-sm);
+}

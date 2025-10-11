@@ -169,18 +169,27 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                 formData
             });
 
-            const response = await apiPost(`/api/admin/mappings/${mapping.id}/update`, {
-                packageName: formData.packageName,
-                packagePrice: parseFloat(formData.packagePrice),
-                totalSessions: parseInt(formData.totalSessions)
+            // PUT 요청으로 매핑 수정 (백엔드의 @PutMapping("/mappings/{id}") 엔드포인트 사용)
+            const response = await fetch(`/api/admin/mappings/${mapping.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    packageName: formData.packageName,
+                    packagePrice: parseFloat(formData.packagePrice),
+                    totalSessions: parseInt(formData.totalSessions)
+                })
             });
 
-            if (response.success) {
-                notificationManager.show(response.message || '매핑 정보가 성공적으로 수정되었습니다.', 'success');
-                onSuccess && onSuccess(response.data);
+            const result = await response.json();
+
+            if (result.success) {
+                notificationManager.show(result.message || '매핑 정보가 성공적으로 수정되었습니다.', 'success');
+                onSuccess && onSuccess(result.data);
                 onClose();
             } else {
-                notificationManager.show(response.message || '매핑 수정에 실패했습니다.', 'error');
+                notificationManager.show(result.message || '매핑 수정에 실패했습니다.', 'error');
             }
 
         } catch (error) {

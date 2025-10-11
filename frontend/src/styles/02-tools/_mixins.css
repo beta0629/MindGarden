@@ -1,0 +1,61 @@
+/* ==========================================================================
+   Mixins - CSS 도구 함수들
+   ========================================================================== */
+
+/* 글래스모피즘 믹스인 */
+@mixin glass-effect($opacity: 0.25, $blur: 20px) {
+  background: rgba(255, 255, 255, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    0 8px 32px rgba(31, 38, 135, 0.37),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* 버튼 믹스인 */
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--glass-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--ios-font-family);
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--glass-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 카드 믹스인 */
+@mixin card-base {
+  @include glass-effect();
+  border-radius: var(--glass-radius-lg);
+  transition: var(--glass-transition);
+  overflow: hidden;
+  position: relative;
+}
+
+/* 반응형 믹스인 */
+@mixin mobile-only {
+  @media (max-width: 767px) {
+    @content;
+  }
+}
+
+@mixin tablet-up {
+  @media (min-width: 768px) {
+    @content;
+  }
+}
+
+@mixin desktop-up {
+  @media (min-width: 1025px) {
+    @content;
+  }
+}

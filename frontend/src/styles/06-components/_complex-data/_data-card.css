@@ -1,0 +1,169 @@
+/* ==========================================================================
+   COMPONENTS - Data Card (복잡한 데이터 전용)
+   ========================================================================== */
+
+/* 기본 데이터 카드 */
+.data-card {
+  @include ios-card();
+  transition: all 0.2s ease;
+  
+  &:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+}
+
+/* 데이터 카드 헤더 */
+.data-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--ios-gray4);
+}
+
+.data-card__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.data-card__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.data-card__actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+/* 데이터 카드 바디 */
+.data-card__body {
+  margin-bottom: var(--spacing-md);
+}
+
+/* 데이터 카드 푸터 */
+.data-card__footer {
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--ios-gray4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 데이터 카드 변형 */
+.data-card--compact {
+  padding: var(--spacing-sm);
+  
+  .data-card__header {
+    padding-bottom: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .data-card__title {
+    font-size: var(--font-size-base);
+  }
+  
+  .data-card__body {
+    margin-bottom: var(--spacing-sm);
+  }
+}
+
+.data-card--spacious {
+  padding: var(--spacing-xl);
+  
+  .data-card__header {
+    padding-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .data-card__title {
+    font-size: var(--font-size-xl);
+  }
+}
+
+.data-card--highlight {
+  border: 2px solid var(--color-primary);
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.data-card--danger {
+  border: 2px solid var(--color-danger);
+  background: rgba(255, 59, 48, 0.05);
+}
+
+.data-card--success {
+  border: 2px solid var(--color-success);
+  background: rgba(52, 199, 89, 0.05);
+}
+
+/* 데이터 표시 영역 */
+.data-card__data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.data-card__data-item {
+  text-align: center;
+  padding: var(--spacing-sm);
+  background: var(--ios-gray6);
+  border-radius: var(--border-radius-md);
+}
+
+.data-card__data-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.data-card__data-value {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* 반응형 대응 */
+@media (max-width: 768px) {
+  .data-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .data-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+  
+  .data-card__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .data-card__data-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-xs);
+  }
+  
+  .data-card__data-item {
+    padding: var(--spacing-xs);
+  }
+  
+  .data-card__data-value {
+    font-size: var(--font-size-base);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .data-card__data-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+

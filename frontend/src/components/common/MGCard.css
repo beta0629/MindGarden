@@ -1,0 +1,183 @@
+/**
+ * MindGarden 공통 카드 스타일
+ * 기존 CSS 변수를 활용한 일관성 있는 카드 디자인
+ */
+
+/* ===== 기본 카드 스타일 ===== */
+.mg-card {
+  /* 배경 */
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 20px;
+  
+  /* 레이아웃 */
+  position: relative;
+  overflow: hidden;
+  
+  /* 전환 효과 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* 미세한 그림자 */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+  
+  /* 백드롭 블러 효과 */
+  backdrop-filter: blur(20px);
+}
+
+/* ===== 카드 변형 ===== */
+.mg-card--default {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+.mg-card--elevated {
+  background: var(--bg-primary);
+  border-color: transparent;
+  box-shadow: var(--shadow-lg);
+}
+
+.mg-card--outlined {
+  background: transparent;
+  border-color: var(--border-color);
+  border-width: 2px;
+}
+
+.mg-card--filled {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+.mg-card--glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+              0 4px 16px rgba(0, 0, 0, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* ===== 패딩 크기 ===== */
+.mg-card--padding-none {
+  padding: 0;
+}
+
+.mg-card--padding-small {
+  padding: var(--spacing-md);
+}
+
+.mg-card--padding-medium {
+  padding: var(--spacing-lg);
+}
+
+.mg-card--padding-large {
+  padding: var(--spacing-xl);
+}
+
+/* ===== 그림자 ===== */
+.mg-card--shadow-none {
+  box-shadow: none;
+}
+
+.mg-card--shadow-small {
+  box-shadow: var(--shadow-sm);
+}
+
+.mg-card--shadow-medium {
+  box-shadow: var(--shadow-md);
+}
+
+.mg-card--shadow-large {
+  box-shadow: var(--shadow-lg);
+}
+
+.mg-card--shadow-extra-large {
+  box-shadow: var(--shadow-xl);
+}
+
+/* ===== 클릭 가능한 카드 ===== */
+.mg-card--clickable {
+  cursor: pointer;
+}
+
+.mg-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-color);
+}
+
+.mg-card--clickable:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.mg-card--clickable:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== 카드 헤더 ===== */
+.mg-card__header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) var(--spacing-lg) calc(-1 * var(--spacing-lg));
+}
+
+.mg-card__header:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== 카드 제목 ===== */
+.mg-card__title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.mg-card__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ===== 카드 본문 ===== */
+.mg-card__body {
+  flex: 1;
+}
+
+/* ===== 카드 푸터 ===== */
+.mg-card__footer {
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  margin: var(--spacing-lg) calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg));
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.mg-card__footer:first-child {
+  margin-top: 0;
+}
+
+/* ===== 카드 액션 ===== */
+.mg-card__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 768px) {
+  .mg-card--padding-large {
+    padding: var(--spacing-lg);
+  }
+  
+  .mg-card__header,
+  .mg-card__footer {
+    padding: var(--spacing-md);
+    margin-left: calc(-1 * var(--spacing-md));
+    margin-right: calc(-1 * var(--spacing-md));
+  }
+}

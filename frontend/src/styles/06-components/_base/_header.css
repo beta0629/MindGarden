@@ -1,0 +1,454 @@
+/* ===== 통합 헤더 컴포넌트 (UnifiedHeader) 스타일 ===== */
+
+/* 기본 헤더 - 공통부 우선순위 */
+.mg-header {
+  background: var(--header-bg, rgba(250, 250, 250, 0.95)) !important;
+  backdrop-filter: var(--ios-backdrop-blur-xl);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-xl);
+  border-bottom: 1px solid var(--header-border, rgba(209, 209, 214, 0.8));
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+  z-index: var(--z-header); /* 공통부 z-index */
+  transition: all 0.3s ease;
+  position: sticky;
+  top: 0;
+  isolation: isolate; /* stacking context 생성 */
+}
+
+.mg-header--sticky {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header-sticky); /* 공통부 sticky z-index */
+  isolation: isolate; /* stacking context 생성 */
+}
+
+.mg-header--compact {
+  padding: var(--spacing-sm) 0;
+}
+
+.mg-header--transparent {
+  background: transparent;
+  border-bottom: none;
+  box-shadow: none;
+}
+
+/* 헤더 컨테이너 */
+.mg-header__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.mg-header--compact .mg-header__container {
+  height: 48px;
+}
+
+/* ===== 브랜드/로고 영역 ===== */
+.mg-header__brand {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--spacing-sm);
+}
+
+/* 백 버튼 */
+.mg-header__back-button {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--color-border-primary);
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-md);
+  transition: all 0.2s ease;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-weight: 500;
+}
+
+.mg-header__back-button:hover {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+  transform: translateX(-1px);
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+}
+
+.mg-header__back-button:focus {
+  outline: none;
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.mg-header__back-button:active {
+  transform: translateX(0px) scale(0.95);
+}
+
+.mg-header__logo {
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.mg-header__logo:hover {
+  transform: scale(1.02);
+  opacity: 0.8;
+}
+
+/* 텍스트 로고 */
+.mg-header__logo--text {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.mg-header__logo-text {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-mindgarden, #007AFF) !important;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.mg-header__logo-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+}
+
+/* 이미지 로고 */
+.mg-header__logo--image {
+  height: 40px;
+  width: auto;
+  max-width: 200px;
+  object-fit: contain;
+}
+
+.mg-header--compact .mg-header__logo--image {
+  height: 32px;
+}
+
+/* 커스텀 로고 (SVG 등) */
+.mg-header__logo--custom {
+  height: 40px;
+  width: auto;
+  max-width: 200px;
+}
+
+.mg-header--compact .mg-header__logo--custom {
+  height: 32px;
+}
+
+/* ===== 헤더 내 드롭다운 고정 처리 ===== */
+.mg-header__actions,
+.mg-header__user-menu {
+  position: relative;
+  z-index: var(--z-header); /* 헤더와 동일한 z-index */
+}
+
+/* 헤더 내 모든 드롭다운 요소들이 sticky 동작하도록 */
+.mg-header--sticky * {
+  position: relative;
+}
+
+.mg-header--sticky .mg-header__container {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+}
+
+/* 로고 반응형 */
+@media (max-width: 768px) {
+  .mg-header__logo-text {
+    font-size: var(--font-size-lg);
+  }
+  
+  .mg-header__logo-subtitle {
+    display: none;
+  }
+  
+  .mg-header__logo--image,
+  .mg-header__logo--custom {
+    height: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mg-header__container {
+    padding: 0 var(--spacing-md);
+  }
+  
+  .mg-header__logo-text {
+    font-size: var(--font-size-md);
+  }
+  
+  .mg-header__logo--image,
+  .mg-header__logo--custom {
+    height: 28px;
+  }
+}
+
+/* ===== 액션 영역 ===== */
+.mg-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex: 1;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .mg-header__actions {
+    display: none;
+  }
+}
+
+/* ===== 사용자 메뉴 영역 ===== */
+.mg-header__user-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-shrink: 0;
+  position: relative;
+  z-index: var(--z-header); /* 헤더와 동일한 z-index */
+}
+
+.mg-header__user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* 프로필 사진 컨테이너 */
+.mg-header__user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary);
+  border: 2px solid var(--color-border-light);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* 클릭 가능한 프로필 아바타 */
+.mg-header__user-avatar--clickable {
+  cursor: pointer;
+  border-color: var(--color-border-light);
+}
+
+.mg-header__user-avatar--clickable:hover {
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 프로필 이미지 */
+.mg-header__profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* 프로필 아이콘 (기본) */
+.mg-header__profile-icon {
+  font-size: 24px;
+  color: var(--color-text-secondary);
+}
+
+/* 사용자 세부 정보 */
+.mg-header__user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0; /* 텍스트 오버플로우 방지 */
+}
+
+.mg-header__user-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary) !important;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.mg-header__user-role {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary) !important;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  font-weight: var(--font-weight-medium);
+}
+
+/* 햄버거 메뉴 버튼 */
+.mg-header__hamburger {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--color-border-primary);
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: var(--border-radius-md);
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: var(--z-header); /* 헤더와 동일한 z-index */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mg-header__hamburger:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+}
+
+.mg-header__hamburger:hover .mg-header__hamburger-icon {
+  background: white;
+}
+
+.mg-header__hamburger-icon {
+  width: 20px;
+  height: 2px;
+  background: var(--color-text-primary);
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .mg-header__user-info {
+    gap: var(--spacing-xs);
+  }
+  
+  .mg-header__user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .mg-header__profile-icon {
+    font-size: 20px;
+  }
+  
+  .mg-header__user-details {
+    display: none; /* 모바일에서는 이름/역할 숨기고 프로필 사진만 표시 */
+  }
+}
+
+/* ===== 다크 모드 지원 (향후 확장) ===== */
+@media (prefers-color-scheme: dark) {
+  .mg-header {
+    background: rgba(20, 20, 20, 0.95);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .mg-header__logo-text {
+    color: var(--color-primary-light, var(--color-primary));
+  }
+  
+  .mg-header__logo-subtitle,
+  .mg-header__user-role {
+    color: var(--color-text-secondary-light, var(--color-text-secondary));
+  }
+  
+  .mg-header__user-name {
+    color: var(--color-text-primary-light, var(--color-text-primary));
+  }
+  
+  .mg-header__hamburger-icon {
+    background: var(--color-text-primary-light, var(--color-text-primary));
+  }
+}
+
+/* ===== 로고 확장성 관련 추가 스타일 ===== */
+
+/* 로고 애니메이션 (hover 시) */
+.mg-header__logo--animated:hover .mg-header__logo-text {
+  animation: logoGlow 0.6s ease-in-out;
+}
+
+@keyframes logoGlow {
+  0%, 100% { 
+    text-shadow: 0 0 0 transparent;
+  }
+  50% { 
+    text-shadow: 0 0 10px rgba(var(--color-primary-rgb, 59, 130, 246), 0.3);
+  }
+}
+
+/* 로고 상태별 스타일 */
+.mg-header__logo--loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.mg-header__logo--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 로고 크기 변형 (특별한 경우) */
+.mg-header__logo--small .mg-header__logo-text {
+  font-size: var(--font-size-md);
+}
+
+.mg-header__logo--large .mg-header__logo-text {
+  font-size: var(--font-size-2xl);
+}
+
+/* 로고 색상 변형 */
+.mg-header__logo--monochrome .mg-header__logo-text {
+  color: var(--color-text-primary);
+}
+
+.mg-header__logo--accent .mg-header__logo-text {
+  color: var(--color-accent);
+}
+
+/* ===== 접근성 개선 ===== */
+.mg-header__logo:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--border-radius-sm);
+}
+
+.mg-header__hamburger:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* 스크린 리더용 숨김 텍스트 */
+.mg-header__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

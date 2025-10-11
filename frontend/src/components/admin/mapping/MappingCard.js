@@ -28,7 +28,8 @@ const MappingCard = ({
     onView,
     onTransfer,
     onViewTransferHistory,
-    onRefund
+    onRefund,
+    onDelete
 }) => {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showDepositModal, setShowDepositModal] = useState(false);
@@ -494,6 +495,66 @@ const MappingCard = ({
                             }}
                         >
                             <i className="bi bi-x-circle"></i> 거부
+                        </button>
+                    </>
+                )}
+                
+                {/* 수정/취소 버튼 - PAYMENT_CONFIRMED 상태에서도 표시 (잘못 등록된 매핑 수정/취소 가능) */}
+                {mapping.paymentStatus === 'CONFIRMED' && (
+                    <>
+                        <button 
+                            style={{
+                                padding: '4px 8px',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontSize: 'var(--font-size-xs)',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                backgroundColor: 'var(--color-warning, #FFC107)',
+                                color: 'var(--color-text-primary, #1D1D1F)'
+                            }}
+                            onClick={() => onEdit?.(mapping)}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = 'var(--color-warning-dark, #e0a800)';
+                                e.target.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'var(--color-warning, #FFC107)';
+                                e.target.style.transform = 'translateY(0)';
+                            }}
+                        >
+                            <i className="bi bi-pencil"></i> 수정
+                        </button>
+                        <button 
+                            style={{
+                                padding: '4px 8px',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontSize: 'var(--font-size-xs)',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                backgroundColor: 'var(--color-danger, #DC3545)',
+                                color: 'var(--color-text-inverse, #FFFFFF)'
+                            }}
+                            onClick={() => onDelete?.(mapping)}
+                            onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = 'var(--color-danger-dark, #c82333)';
+                                e.target.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'var(--color-danger, #DC3545)';
+                                e.target.style.transform = 'translateY(0)';
+                            }}
+                        >
+                            <i className="bi bi-trash"></i> 취소
                         </button>
                     </>
                 )}

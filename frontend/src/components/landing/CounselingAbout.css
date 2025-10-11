@@ -1,0 +1,72 @@
+/**
+ * 상담센터 랜딩페이지 - 소개 섹션 스타일
+ */
+
+.counseling-about {
+  padding: 5rem 0;
+  background: rgba(245, 250, 255, 0.3);
+}
+
+.counseling-about__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.counseling-about__content {
+  text-align: center;
+}
+
+.counseling-about__title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.2;
+}
+
+.counseling-about__description {
+  font-size: 1.125rem;
+  color: #4a5568;
+  line-height: 1.6;
+  max-width: 48rem;
+  margin: 0 auto 3rem auto;
+}
+
+.counseling-about__features {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .counseling-about__features {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.counseling-about__feature {
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.counseling-about__feature:hover {
+  transform: translateY(-2px);
+}
+
+.counseling-about__feature h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 0.5rem 0;
+}
+
+.counseling-about__feature p {
+  font-size: 1rem;
+  color: #4a5568;
+  line-height: 1.5;
+  margin: 0;
+}
+
+
+

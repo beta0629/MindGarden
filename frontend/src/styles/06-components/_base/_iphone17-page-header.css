@@ -1,0 +1,186 @@
+/**
+ * iPhone 17 페이지 헤더 컴포넌트 스타일
+ */
+
+/* ===== 메인 컨테이너 ===== */
+.iphone17-page-header {
+  margin-bottom: var(--spacing-8);
+}
+
+.page-header-content {
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-6);
+  box-shadow: var(--shadow-card);
+  border: 0.5px solid var(--ios-system-gray5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-6);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== 텍스트 섹션 ===== */
+.page-header-text {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+}
+
+.page-header-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: var(--current-theme);
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xl);
+  color: white;
+}
+
+.page-header-title-section {
+  flex: 1;
+}
+
+.page-subtitle-main {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--current-theme);
+  margin: 0 0 var(--spacing-2) 0;
+  line-height: 1.3;
+}
+
+.page-subtitle-secondary {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  margin: 0 0 var(--spacing-1) 0;
+  line-height: 1.3;
+}
+
+.page-description {
+  font-size: var(--font-size-base);
+  color: var(--ios-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ===== 액션 섹션 ===== */
+.page-header-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: center;
+}
+
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 768px) {
+  .page-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-4);
+  }
+  
+  .page-header-text {
+    flex-direction: column;
+    gap: var(--spacing-3);
+  }
+  
+  .page-header-icon {
+    width: 40px;
+    height: 40px;
+    font-size: var(--font-size-lg);
+  }
+  
+  .page-subtitle-main {
+    font-size: var(--font-size-lg);
+  }
+  
+  .page-subtitle-secondary {
+    font-size: var(--font-size-base);
+  }
+  
+  .page-description {
+    font-size: var(--font-size-sm);
+  }
+  
+  .page-header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .iphone17-page-header {
+    margin-bottom: var(--spacing-6);
+  }
+  
+  .page-header-content {
+    padding: var(--spacing-4);
+  }
+  
+  .page-header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+/* ===== 다크모드 ===== */
+.dark-mode .page-header-content {
+  background: var(--ios-bg-tertiary);
+  border-color: var(--ios-system-gray4);
+}
+
+.dark-mode .page-header-icon {
+  background: var(--current-theme);
+}
+
+.dark-mode .page-subtitle-main {
+  color: var(--current-theme);
+}
+
+.dark-mode .page-subtitle-secondary {
+  color: var(--ios-text-primary);
+}
+
+.dark-mode .page-description {
+  color: var(--ios-text-secondary);
+}
+
+/* ===== 호버 효과 ===== */
+.page-header-content:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+}
+
+/* ===== 접근성 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .page-header-content {
+    transition: none;
+  }
+  
+  .page-header-content:hover {
+    transform: none;
+  }
+}
+
+/* ===== 인쇄 스타일 ===== */
+@media print {
+  .iphone17-page-header {
+    margin-bottom: var(--spacing-4);
+    break-inside: avoid;
+  }
+  
+  .page-header-content {
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: none;
+  }
+  
+  .page-header-actions {
+    display: none;
+  }
+}

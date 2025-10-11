@@ -132,17 +132,24 @@ class SessionManager {
                 this.lastCheckTime = now;
                 this.notifyListeners();
                 
-                // 현재 페이지가 로그인 페이지가 아닐 때만 리다이렉트
+                // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
                 const currentPath = window.location.pathname;
-                const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+                const isPublicPage = currentPath === '/login' || 
+                                   currentPath.startsWith('/login/') || 
+                                   currentPath === '/landing' || 
+                                   currentPath === '/' ||
+                                   currentPath.startsWith('/register') ||
+                                   currentPath.startsWith('/forgot-password') ||
+                                   currentPath.startsWith('/reset-password') ||
+                                   currentPath.startsWith('/auth/oauth2/callback');
                 
-                if (!isLoginPage) {
+                if (!isPublicPage) {
                     console.log('🔍 로그인 페이지로 리다이렉트');
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('refreshToken');
                     window.location.href = '/login';
                 } else {
-                    console.log('🔍 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+                    console.log('🔍 공개 페이지에 있음 - 리다이렉트 스킵');
                 }
                 return false;
             }
@@ -217,17 +224,24 @@ class SessionManager {
                         this.user = null;
                         this.sessionInfo = null;
                         
-                        // 현재 페이지가 로그인 페이지가 아닐 때만 리다이렉트
+                        // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
                         const currentPath = window.location.pathname;
-                        const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+                        const isPublicPage = currentPath === '/login' || 
+                                           currentPath.startsWith('/login/') || 
+                                           currentPath === '/landing' || 
+                                           currentPath === '/' ||
+                                           currentPath.startsWith('/register') ||
+                                           currentPath.startsWith('/forgot-password') ||
+                                           currentPath.startsWith('/reset-password') ||
+                                           currentPath.startsWith('/auth/oauth2/callback');
                         
-                        if (!isLoginPage) {
+                        if (!isPublicPage) {
                             console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트');
                             localStorage.removeItem('accessToken');
                             localStorage.removeItem('refreshToken');
                             window.location.href = '/login';
                         } else {
-                            console.log('🔐 네트워크 오류 - 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+                            console.log('🔐 네트워크 오류 - 공개 페이지에 있음 - 리다이렉트 스킵');
                         }
                         return false;
                     }
@@ -236,17 +250,24 @@ class SessionManager {
                     this.user = null;
                     this.sessionInfo = null;
                     
-                    // 현재 페이지가 로그인 페이지가 아닐 때만 리다이렉트
+                    // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
                     const currentPath = window.location.pathname;
-                    const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
+                    const isPublicPage = currentPath === '/login' || 
+                                       currentPath.startsWith('/login/') || 
+                                       currentPath === '/landing' || 
+                                       currentPath === '/' ||
+                                       currentPath.startsWith('/register') ||
+                                       currentPath.startsWith('/forgot-password') ||
+                                       currentPath.startsWith('/reset-password') ||
+                                       currentPath.startsWith('/auth/oauth2/callback');
                     
-                    if (!isLoginPage) {
+                    if (!isPublicPage) {
                         console.log('🔐 네트워크 오류 시 로그인 페이지로 리다이렉트');
                         localStorage.removeItem('accessToken');
                         localStorage.removeItem('refreshToken');
                         window.location.href = '/login';
                     } else {
-                        console.log('🔐 네트워크 오류 - 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+                        console.log('🔐 네트워크 오류 - 공개 페이지에 있음 - 리다이렉트 스킵');
                     }
                     return false;
                 }

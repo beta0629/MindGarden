@@ -1,0 +1,51 @@
+/* ==========================================================================
+   글래스모피즘 디자인 시스템 변수
+   ========================================================================== */
+
+:root {
+  /* 글래스모피즘 기본 변수 */
+  --glass-bg-primary: rgba(255, 255, 255, 0.25);
+  --glass-bg-secondary: rgba(255, 255, 255, 0.35);
+  --glass-bg-tertiary: rgba(255, 255, 255, 0.15);
+  
+  --glass-blur-sm: blur(10px);
+  --glass-blur-md: blur(20px);
+  --glass-blur-lg: blur(25px);
+  
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-border-light: rgba(255, 255, 255, 0.1);
+  --glass-border-strong: rgba(255, 255, 255, 0.3);
+  
+  --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  --glass-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  --glass-shadow-hover: 0 20px 40px rgba(31, 38, 135, 0.5);
+  
+  --glass-radius-sm: 12px;
+  --glass-radius-md: 16px;
+  --glass-radius-lg: 20px;
+  --glass-radius-xl: 24px;
+  
+  /* 아이폰 스타일 색상 변수 */
+  --ios-blue: #007aff;
+  --ios-green: #34c759;
+  --ios-orange: #ff9500;
+  --ios-red: #ff3b30;
+  --ios-purple: #5856d6;
+  --ios-pink: #ff2d92;
+  --ios-yellow: #ffcc00;
+  --ios-gray: #8e8e93;
+  
+  /* 아이폰 텍스트 색상 */
+  --ios-text-primary: #1d1d1f;
+  --ios-text-secondary: #86868b;
+  --ios-text-tertiary: #c7c7cc;
+  
+  /* 아이폰 폰트 */
+  --ios-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  
+  /* 애니메이션 변수 */
+  --glass-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --glass-transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --glass-transition-slow: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+

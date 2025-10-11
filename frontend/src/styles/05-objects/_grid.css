@@ -1,0 +1,139 @@
+/* ==========================================================================
+   OBJECTS - Grid system
+   ========================================================================== */
+
+/* 기본 그리드 */
+.o-grid {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+/* 그리드 컬럼 수 */
+.o-grid--1-col {
+  grid-template-columns: 1fr;
+}
+
+.o-grid--2-col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.o-grid--3-col {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.o-grid--4-col {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.o-grid--5-col {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.o-grid--6-col {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+/* 자동 그리드 (반응형) */
+.o-grid--auto {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.o-grid--auto-sm {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.o-grid--auto-lg {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/* 그리드 간격 */
+.o-grid--gap-sm {
+  gap: var(--spacing-sm);
+}
+
+.o-grid--gap-lg {
+  gap: var(--spacing-lg);
+}
+
+.o-grid--gap-xl {
+  gap: var(--spacing-xl);
+}
+
+.o-grid--gap-none {
+  gap: 0;
+}
+
+/* 그리드 정렬 */
+.o-grid--center {
+  justify-items: center;
+}
+
+.o-grid--start {
+  justify-items: start;
+}
+
+.o-grid--end {
+  justify-items: end;
+}
+
+.o-grid--stretch {
+  justify-items: stretch;
+}
+
+/* 반응형 그리드 */
+@media (max-width: 768px) {
+  .o-grid--2-col,
+  .o-grid--3-col,
+  .o-grid--4-col,
+  .o-grid--5-col,
+  .o-grid--6-col {
+    grid-template-columns: 1fr;
+  }
+  
+  .o-grid--gap-lg,
+  .o-grid--gap-xl {
+    gap: var(--spacing-md);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .o-grid--3-col,
+  .o-grid--4-col,
+  .o-grid--5-col,
+  .o-grid--6-col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .o-grid--4-col,
+  .o-grid--5-col,
+  .o-grid--6-col {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 복잡한 데이터용 그리드 */
+.o-data-grid {
+  display: grid;
+  gap: var(--spacing-sm);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.o-data-grid--compact {
+  gap: var(--spacing-xs);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.o-data-grid--spacious {
+  gap: var(--spacing-md);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+@media (max-width: 768px) {
+  .o-data-grid,
+  .o-data-grid--compact,
+  .o-data-grid--spacious {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+}
+

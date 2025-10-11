@@ -1,0 +1,519 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Variables for MindGarden Theme */
+:root {
+  --mg-cream: #f5f5dc;
+  --mg-light-beige: #fdf5e6;
+  --mg-cocoa: #8b4513;
+  --mg-olive-green: #808000;
+  --mg-mint-green: #98fb98;
+  --mg-soft-mint: #b6e5d8;
+  --mg-dark-gray: #2f2f2f;
+  --mg-medium-gray: #6b6b6b;
+  --mg-light-cream: #fffef7;
+}
+
+/* Scoped MindGarden Styles */
+.mindgarden-design-system {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+    "Droid Sans", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* Glass Morphism Effects */
+.mindgarden-design-system .glass {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mindgarden-design-system .glass-strong {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Gradient Text */
+.mindgarden-design-system .gradient-text {
+  background: linear-gradient(135deg, var(--mg-olive-green), var(--mg-mint-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.mindgarden-design-system .animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.mindgarden-design-system .animate-slide-in {
+  animation: slideIn 0.5s ease-out;
+}
+
+.mindgarden-design-system .animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.mindgarden-design-system .animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+/* Scrollbar Styling */
+.mindgarden-design-system ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.mindgarden-design-system ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.mindgarden-design-system ::-webkit-scrollbar-thumb {
+  background: var(--mg-olive-green);
+  border-radius: 4px;
+}
+
+.mindgarden-design-system ::-webkit-scrollbar-thumb:hover {
+  background: var(--mg-cocoa);
+}
+
+/* Basic Layout Classes */
+.mindgarden-design-system .min-h-screen {
+  min-height: 100vh;
+}
+
+.mindgarden-design-system .fixed {
+  position: fixed;
+}
+
+.mindgarden-design-system .relative {
+  position: relative;
+}
+
+.mindgarden-design-system .absolute {
+  position: absolute;
+}
+
+.mindgarden-design-system .flex {
+  display: flex;
+}
+
+.mindgarden-design-system .grid {
+  display: grid;
+}
+
+.mindgarden-design-system .hidden {
+  display: none;
+}
+
+.mindgarden-design-system .block {
+  display: block;
+}
+
+.mindgarden-design-system .inline-block {
+  display: inline-block;
+}
+
+.mindgarden-design-system .w-full {
+  width: 100%;
+}
+
+.mindgarden-design-system .h-full {
+  height: 100%;
+}
+
+.mindgarden-design-system .p-4 {
+  padding: 1rem;
+}
+
+.mindgarden-design-system .p-6 {
+  padding: 1.5rem;
+}
+
+.mindgarden-design-system .p-8 {
+  padding: 2rem;
+}
+
+.mindgarden-design-system .m-4 {
+  margin: 1rem;
+}
+
+.mindgarden-design-system .mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mindgarden-design-system .mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mindgarden-design-system .mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mindgarden-design-system .mb-8 {
+  margin-bottom: 2rem;
+}
+
+.mindgarden-design-system .text-center {
+  text-align: center;
+}
+
+.mindgarden-design-system .text-left {
+  text-align: left;
+}
+
+.mindgarden-design-system .text-right {
+  text-align: right;
+}
+
+.mindgarden-design-system .font-bold {
+  font-weight: 700;
+}
+
+.mindgarden-design-system .font-medium {
+  font-weight: 500;
+}
+
+.mindgarden-design-system .text-sm {
+  font-size: 0.875rem;
+}
+
+.mindgarden-design-system .text-lg {
+  font-size: 1.125rem;
+}
+
+.mindgarden-design-system .text-xl {
+  font-size: 1.25rem;
+}
+
+.mindgarden-design-system .text-2xl {
+  font-size: 1.5rem;
+}
+
+.mindgarden-design-system .text-3xl {
+  font-size: 1.875rem;
+}
+
+.mindgarden-design-system .rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.mindgarden-design-system .rounded-xl {
+  border-radius: 0.75rem;
+}
+
+.mindgarden-design-system .rounded-full {
+  border-radius: 9999px;
+}
+
+.mindgarden-design-system .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.mindgarden-design-system .shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.mindgarden-design-system .bg-white {
+  background-color: white;
+}
+
+.mindgarden-design-system .text-white {
+  color: white;
+}
+
+.mindgarden-design-system .text-gray-600 {
+  color: #6b7280;
+}
+
+.mindgarden-design-system .border {
+  border-width: 1px;
+}
+
+.mindgarden-design-system .border-2 {
+  border-width: 2px;
+}
+
+.mindgarden-design-system .cursor-pointer {
+  cursor: pointer;
+}
+
+.mindgarden-design-system .transition-all {
+  transition: all 0.15s ease-in-out;
+}
+
+.mindgarden-design-system .transition-colors {
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.mindgarden-design-system .duration-300 {
+  transition-duration: 300ms;
+}
+
+.mindgarden-design-system .duration-500 {
+  transition-duration: 500ms;
+}
+
+.mindgarden-design-system .hover\:bg-opacity-80:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.mindgarden-design-system .hover\:bg-opacity-90:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* Responsive Classes */
+@media (min-width: 768px) {
+  .mindgarden-design-system .md\:p-6 {
+    padding: 1.5rem;
+  }
+  
+  .mindgarden-design-system .md\:p-8 {
+    padding: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mindgarden-design-system .lg\:ml-64 {
+    margin-left: 16rem;
+  }
+  
+  .mindgarden-design-system .lg\:hidden {
+    display: none;
+  }
+  
+  .mindgarden-design-system .lg\:translate-x-0 {
+    transform: translateX(0);
+  }
+}
+
+/* Transform Classes */
+.mindgarden-design-system .-translate-x-full {
+  transform: translateX(-100%);
+}
+
+.mindgarden-design-system .translate-x-0 {
+  transform: translateX(0);
+}
+
+/* Z-index Classes */
+.mindgarden-design-system .z-\[90\] {
+  z-index: 90;
+}
+
+.mindgarden-design-system .z-\[100\] {
+  z-index: 100;
+}
+
+.mindgarden-design-system .z-\[110\] {
+  z-index: 110;
+}
+
+/* Space Classes */
+.mindgarden-design-system .space-y-1 > * + * {
+  margin-top: 0.25rem;
+}
+
+.mindgarden-design-system .space-y-8 > * + * {
+  margin-top: 2rem;
+}
+
+/* Gap Classes */
+.mindgarden-design-system .gap-3 {
+  gap: 0.75rem;
+}
+
+.mindgarden-design-system .gap-4 {
+  gap: 1rem;
+}
+
+.mindgarden-design-system .gap-6 {
+  gap: 1.5rem;
+}
+
+/* Items Classes */
+.mindgarden-design-system .items-center {
+  align-items: center;
+}
+
+.mindgarden-design-system .items-start {
+  align-items: flex-start;
+}
+
+.mindgarden-design-system .items-end {
+  align-items: flex-end;
+}
+
+/* Justify Classes */
+.mindgarden-design-system .justify-center {
+  justify-content: center;
+}
+
+.mindgarden-design-system .justify-between {
+  justify-content: space-between;
+}
+
+/* Overflow Classes */
+.mindgarden-design-system .overflow-y-auto {
+  overflow-y: auto;
+}
+
+.mindgarden-design-system .overflow-hidden {
+  overflow: hidden;
+}
+
+/* Max Width Classes */
+.mindgarden-design-system .max-w-7xl {
+  max-width: 80rem;
+}
+
+.mindgarden-design-system .mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Min Height Classes */
+.mindgarden-design-system .min-h-\[44px\] {
+  min-height: 44px;
+}
+
+/* Flex Shrink Classes */
+.mindgarden-design-system .flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+/* Width and Height Classes */
+.mindgarden-design-system .w-5 {
+  width: 1.25rem;
+}
+
+.mindgarden-design-system .h-5 {
+  height: 1.25rem;
+}
+
+.mindgarden-design-system .w-6 {
+  width: 1.5rem;
+}
+
+.mindgarden-design-system .h-6 {
+  height: 1.5rem;
+}
+
+.mindgarden-design-system .w-12 {
+  width: 3rem;
+}
+
+.mindgarden-design-system .h-12 {
+  height: 3rem;
+}
+
+.mindgarden-design-system .w-64 {
+  width: 16rem;
+}
+
+.mindgarden-design-system .h-screen {
+  height: 100vh;
+}
+
+/* Background Classes */
+.mindgarden-design-system .bg-black\/50 {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.mindgarden-design-system .bg-white\/50 {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.mindgarden-design-system .bg-white\/70 {
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+/* Text Color Classes */
+.mindgarden-design-system .text-\[\#6B6B6B\] {
+  color: #6B6B6B;
+}
+
+.mindgarden-design-system .text-\[\#2F2F2F\] {
+  color: #2F2F2F;
+}
+
+/* Background Color Classes */
+.mindgarden-design-system .bg-\[\#808000\] {
+  background-color: #808000;
+}
+
+.mindgarden-design-system .hover\:bg-\[\#808000\]:hover {
+  background-color: #808000;
+}
+
+/* Border Color Classes */
+.mindgarden-design-system .border-\[\#808000\] {
+  border-color: #808000;
+}
+
+/* Hover Text Color Classes */
+.mindgarden-design-system .hover\:text-white:hover {
+  color: white;
+}
+
+/* Background Gradient Classes */
+.mindgarden-design-system .from-\[\#F5F5DC\] {
+  background-image: linear-gradient(to right, #F5F5DC, var(--tw-gradient-stops));
+}
+
+.mindgarden-design-system .via-\[\#FDF5E6\] {
+  --tw-gradient-stops: var(--tw-gradient-from), #FDF5E6, var(--tw-gradient-to);
+}
+
+.mindgarden-design-system .to-\[\#B6E5D8\] {
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), #B6E5D8;
+}

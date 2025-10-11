@@ -1,0 +1,255 @@
+/* ===== MGFilter 컴포넌트 스타일 ===== */
+
+.mg-filter {
+  position: relative;
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-color);
+}
+
+/* ===== 필터 변형 ===== */
+.mg-filter--compact {
+  padding: var(--spacing-md);
+}
+
+.mg-filter--inline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+}
+
+/* ===== 로딩 상태 ===== */
+.mg-filter--loading {
+  pointer-events: none;
+}
+
+.mg-filter__loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  z-index: 10;
+  backdrop-filter: blur(2px);
+}
+
+.mg-filter__spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color);
+  border-top: 2px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== 필터 내용 ===== */
+.mg-filter__content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.mg-filter--compact .mg-filter__content {
+  gap: var(--spacing-sm);
+}
+
+.mg-filter--inline .mg-filter__content {
+  gap: var(--spacing-sm);
+  flex-wrap: nowrap;
+}
+
+/* ===== 필터 아이템 ===== */
+.mg-filter__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.mg-filter--inline .mg-filter__item {
+  flex-shrink: 0;
+}
+
+/* ===== 필터 입력 ===== */
+.mg-filter__input {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.mg-filter__input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.mg-filter__input--date {
+  min-width: 140px;
+}
+
+.mg-filter__select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  min-width: 120px;
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 32px;
+}
+
+.mg-filter__select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ===== 날짜 범위 ===== */
+.mg-filter__date-range {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.mg-filter__date-separator {
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ===== 체크박스 그룹 ===== */
+.mg-filter__checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.mg-filter--compact .mg-filter__checkbox-group {
+  gap: var(--spacing-sm);
+}
+
+.mg-filter__checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.mg-filter__checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.mg-filter__checkbox-text {
+  user-select: none;
+}
+
+/* ===== 초기화 버튼 ===== */
+.mg-filter__reset {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mg-filter__reset:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.mg-filter__reset:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 768px) {
+  .mg-filter {
+    padding: var(--spacing-md);
+  }
+  
+  .mg-filter__content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+  
+  .mg-filter__item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-xs);
+  }
+  
+  .mg-filter__input,
+  .mg-filter__select {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .mg-filter__date-range {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .mg-filter__date-separator {
+    text-align: center;
+  }
+  
+  .mg-filter__checkbox-group {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .mg-filter__reset {
+    width: 100%;
+    margin-top: var(--spacing-sm);
+  }
+}
+
+/* ===== 다크 모드 지원 ===== */
+@media (prefers-color-scheme: dark) {
+  .mg-filter__loading {
+    background: rgba(26, 32, 44, 0.8);
+  }
+}
+
+
+

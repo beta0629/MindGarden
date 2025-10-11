@@ -39,6 +39,10 @@ import StatisticsDashboard from './components/admin/StatisticsDashboard';
 import ScheduleList from './components/common/ScheduleList';
 import ComingSoon from './components/common/ComingSoon';
 import PaymentManagement from './components/super-admin/PaymentManagement';
+import MindGardenDesignSample from './pages/MindGardenDesignSample';
+import PremiumDesignSample from './pages/PremiumDesignSample';
+import AdvancedDesignSample from './pages/AdvancedDesignSample';
+import MindGardenDesignSystemShowcase from './pages/MindGardenDesignSystemShowcase';
 import SimpleLayout from './components/layout/SimpleLayout';
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
@@ -85,6 +89,7 @@ import DuplicateLoginModal from './components/common/DuplicateLoginModal';
 import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
 import IOSCardSample from './pages/IOSCardSample';
+import CounselingCenterLanding from './pages/CounselingCenterLanding';
 
 // URL 쿼리 파라미터 처리 컴포넌트
 function QueryParamHandler({ children, onLoginSuccess }) {
@@ -117,6 +122,36 @@ function QueryParamHandler({ children, onLoginSuccess }) {
 // 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
 function AppContent() {
   const { user, sessionInfo, isLoading, checkSession, logout, branchMappingModal, setBranchMappingModal, handleBranchMappingSuccess } = useSession();
+  
+  // 공개 경로 정의 (인증 없이 접근 가능)
+  const publicPaths = [
+    '/login',
+    '/register', 
+    '/forgot-password',
+    '/reset-password',
+    '/oauth2/callback',
+    '/design-system',
+    '/design-system-v2',
+    '/test/notifications',
+    '/test/payment', 
+    '/test/integration',
+    '/test/ios-cards',
+    '/test/design-sample',
+    '/test/premium-sample',
+    '/test/advanced-sample'
+  ];
+  
+  const isPublicPath = publicPaths.includes(location.pathname);
+  
+  // 공개 경로가 아닐 때만 세션 체크 실행
+  useEffect(() => {
+    if (!isPublicPath) {
+      console.log('🔍 세션 확인 시작...');
+      checkSession();
+    } else {
+      console.log('🔓 공개 경로 - 세션 체크 건너뛰기:', location.pathname);
+    }
+  }, [checkSession, isPublicPath, location.pathname]);
   
   // 통계 모달 상태
   const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);
@@ -267,6 +302,7 @@ function AppContent() {
           <UnifiedNotification type="toast" position="top-right" />
           <Routes>
             <Route path="/" element={<TabletHomepage />} />
+            <Route path="/landing" element={<CounselingCenterLanding />} />
             <Route path="/test/modal" element={<UnifiedModalTest />} />
             <Route path="/test/loading" element={<UnifiedLoadingTest />} />
             <Route path="/test/header" element={<UnifiedHeaderTest />} />
@@ -489,6 +525,10 @@ function AppContent() {
             <Route path="/test/payment" element={<PaymentTest />} />
             <Route path="/test/integration" element={<IntegrationTest />} />
             <Route path="/test/ios-cards" element={<IOSCardSample />} />
+            <Route path="/test/design-sample" element={<MindGardenDesignSample />} />
+            <Route path="/test/premium-sample" element={<PremiumDesignSample />} />
+            <Route path="/test/advanced-sample" element={<AdvancedDesignSample />} />
+            <Route path="/design-system" element={<MindGardenDesignSystemShowcase />} />
             
             {/* 추후 홈페이지 추가 시 사용할 경로들 */}
             {/* <Route path="/homepage" element={<Homepage />} /> */}

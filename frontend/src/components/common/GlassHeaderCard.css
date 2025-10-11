@@ -1,0 +1,60 @@
+/* iPhone 17 디자인 시스템 적용 */
+/* 이 파일은 자동으로 마이그레이션되었습니다 */
+
+/* GlassHeaderCard 컴포넌트 전용 스타일 */
+/* 기본 스타일은 _glass-components.css에서 상속 */
+
+.glass-header-card {
+  /* 애니메이션 효과 */
+  animation: fadeInDown 0.6s ease-out both;
+}
+
+.tab-navigation {
+  display: flex;
+  gap: var(--border-radius-lg);
+  align-items: center;
+}
+
+.tab-navigation .glass-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--border-radius-md);
+  font-size: 14px;
+  padding: var(--border-radius-lg) 20px;
+  border-radius: var(--border-radius-lg);
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--ios-font-family);
+}
+
+.tab-navigation .glass-btn i {
+  font-size: var(--spacing-lg);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 반응형 조정 */
+@media (max-width: 76var(--border-radius-md)) {
+  .tab-navigation {
+    flex-direction: column;
+    gap: var(--border-radius-md);
+    width: 100%;
+  }
+  
+  .tab-navigation .glass-btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 13px;
+    padding: 10px var(--spacing-lg);
+  }
+}
+

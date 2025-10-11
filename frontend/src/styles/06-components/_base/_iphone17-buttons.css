@@ -1,0 +1,320 @@
+/* ========================================
+   iPhone 17 버튼 컴포넌트
+   iPhone 17 디자인 언어를 적용한 버튼 시스템
+   ======================================== */
+
+/* ===== 기본 버튼 ===== */
+.iphone17-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-3) var(--spacing-5);
+  border: none;
+  border-radius: var(--border-radius-lg);
+  font-family: var(--font-family-ios);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.iphone17-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3);
+}
+
+.iphone17-btn:active {
+  transform: scale(0.98);
+}
+
+/* ===== 프라이머리 버튼 ===== */
+.iphone17-btn-primary {
+  background: var(--current-theme);
+  color: white;
+  box-shadow: var(--shadow-card);
+}
+
+.iphone17-btn-primary:hover {
+  background: var(--current-theme);
+  opacity: 0.9;
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+}
+
+.iphone17-btn-primary:active {
+  background: var(--current-theme);
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
+/* ===== 세컨더리 버튼 ===== */
+.iphone17-btn-secondary {
+  background: var(--ios-bg-primary);
+  color: var(--ios-text-primary);
+  border: 0.5px solid var(--ios-system-gray4);
+  box-shadow: var(--shadow-card);
+}
+
+.iphone17-btn-secondary:hover {
+  background: var(--ios-bg-secondary);
+  border-color: var(--ios-system-gray3);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+}
+
+.iphone17-btn-secondary:active {
+  background: var(--ios-bg-tertiary);
+  transform: scale(0.98);
+}
+
+/* ===== 고스트 버튼 ===== */
+.iphone17-btn-ghost {
+  background: transparent;
+  color: var(--current-theme);
+  border: none;
+}
+
+.iphone17-btn-ghost:hover {
+  background: rgba(0, 122, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.iphone17-btn-ghost:active {
+  background: rgba(0, 122, 255, 0.2);
+  transform: scale(0.98);
+}
+
+/* ===== 글래스모피즘 버튼 ===== */
+.iphone17-btn-glass {
+  background: var(--glass-bg-primary);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  color: var(--ios-text-primary);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+}
+
+.iphone17-btn-glass:hover {
+  background: var(--glass-bg-secondary);
+  border-color: var(--glass-border-strong);
+  box-shadow: var(--shadow-floating);
+  transform: translateY(-1px);
+}
+
+.iphone17-btn-glass:active {
+  background: var(--glass-bg-tertiary);
+  transform: scale(0.98);
+}
+
+/* ===== 버튼 크기 ===== */
+.iphone17-btn-sm {
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-sm);
+  border-radius: var(--border-radius-md);
+}
+
+.iphone17-btn-lg {
+  padding: var(--spacing-4) var(--spacing-6);
+  font-size: var(--font-size-lg);
+  border-radius: var(--border-radius-xl);
+}
+
+.iphone17-btn-xl {
+  padding: var(--spacing-5) var(--spacing-8);
+  font-size: var(--font-size-xl);
+  border-radius: var(--border-radius-2xl);
+}
+
+/* ===== 버튼 아이콘 ===== */
+.iphone17-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-lg);
+}
+
+.iphone17-btn-icon.iphone17-btn-sm {
+  width: 36px;
+  height: 36px;
+  font-size: var(--font-size-base);
+}
+
+.iphone17-btn-icon.iphone17-btn-lg {
+  width: 52px;
+  height: 52px;
+  font-size: var(--font-size-xl);
+}
+
+/* ===== 테마 선택기 버튼 ===== */
+.iphone17-theme-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--border-radius-full);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  position: relative;
+}
+
+.iphone17-theme-btn:hover {
+  transform: scale(1.1);
+  border-color: var(--ios-system-gray3);
+}
+
+.iphone17-theme-btn.active {
+  border-color: var(--ios-text-primary);
+  transform: scale(1.15);
+}
+
+.iphone17-theme-btn.active::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== 다크모드 토글 버튼 ===== */
+.iphone17-dark-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--border-radius-lg);
+  background: var(--ios-bg-primary);
+  border: 0.5px solid var(--ios-system-gray5);
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-card);
+}
+
+.iphone17-dark-toggle:hover {
+  background: var(--ios-bg-secondary);
+  border-color: var(--ios-system-gray4);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
+}
+
+.iphone17-dark-toggle:active {
+  transform: scale(0.98);
+}
+
+/* ===== 버튼 그룹 ===== */
+.iphone17-btn-group {
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: center;
+}
+
+.iphone17-btn-group.vertical {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.iphone17-btn-group.vertical .iphone17-btn {
+  width: 100%;
+}
+
+/* ===== 다크모드 지원 ===== */
+.dark-mode .iphone17-btn-secondary {
+  background: var(--ios-bg-primary);
+  color: var(--ios-text-primary);
+  border-color: var(--ios-system-gray4);
+}
+
+.dark-mode .iphone17-btn-secondary:hover {
+  background: var(--ios-bg-secondary);
+  border-color: var(--ios-system-gray3);
+}
+
+.dark-mode .iphone17-btn-secondary:active {
+  background: var(--ios-bg-tertiary);
+}
+
+.dark-mode .iphone17-dark-toggle {
+  background: var(--ios-bg-primary);
+  border-color: var(--ios-system-gray4);
+  color: var(--ios-text-primary);
+}
+
+.dark-mode .iphone17-dark-toggle:hover {
+  background: var(--ios-bg-secondary);
+  border-color: var(--ios-system-gray3);
+}
+
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 768px) {
+  .iphone17-btn {
+    padding: var(--spacing-3) var(--spacing-4);
+    font-size: var(--font-size-sm);
+  }
+  
+  .iphone17-btn-lg {
+    padding: var(--spacing-4) var(--spacing-5);
+    font-size: var(--font-size-base);
+  }
+  
+  .iphone17-btn-xl {
+    padding: var(--spacing-4) var(--spacing-6);
+    font-size: var(--font-size-lg);
+  }
+  
+  .iphone17-btn-icon {
+    width: 40px;
+    height: 40px;
+    font-size: var(--font-size-base);
+  }
+  
+  .iphone17-theme-btn {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .iphone17-dark-toggle {
+    width: 40px;
+    height: 40px;
+    font-size: var(--font-size-base);
+  }
+}
+
+/* ===== 접근성 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .iphone17-btn,
+  .iphone17-theme-btn,
+  .iphone17-dark-toggle {
+    transition: none;
+  }
+  
+  .iphone17-btn:hover,
+  .iphone17-btn:active,
+  .iphone17-theme-btn:hover,
+  .iphone17-dark-toggle:hover {
+    transform: none;
+  }
+}
+
+/* ===== 포커스 스타일 ===== */
+@media (prefers-reduced-motion: no-preference) {
+  .iphone17-btn:focus-visible {
+    outline: 2px solid var(--current-theme);
+    outline-offset: 2px;
+  }
+}

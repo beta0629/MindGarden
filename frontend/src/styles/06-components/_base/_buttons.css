@@ -1,0 +1,342 @@
+/* ===== 버튼 컴포넌트 ===== */
+/* BEM 네이밍 컨벤션 적용 */
+
+/* 기본 버튼 */
+.mg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-ios);
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-bounce);
+  backdrop-filter: var(--ios-backdrop-blur-lg);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-lg);
+  position: relative;
+  overflow: hidden;
+  outline: none;
+}
+
+.mg-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.mg-btn:hover::before {
+  left: 100%;
+}
+
+.mg-btn:active {
+  transform: scale(0.98);
+}
+
+.mg-btn:focus {
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
+}
+
+/* 버튼 변형 */
+.mg-btn--primary {
+  background: rgba(0, 123, 255, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.mg-btn--primary:hover {
+  background: rgba(0, 123, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+}
+
+.mg-btn--secondary {
+  background: rgba(248, 249, 250, 0.6);
+  color: var(--ios-text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.mg-btn--secondary:hover {
+  background: rgba(248, 249, 250, 0.8);
+  color: var(--ios-text-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.mg-btn--success {
+  background: rgba(52, 199, 89, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3);
+}
+
+.mg-btn--success:hover {
+  background: rgba(52, 199, 89, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(52, 199, 89, 0.4);
+}
+
+.mg-btn--warning {
+  background: rgba(255, 149, 0, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(255, 149, 0, 0.3);
+}
+
+.mg-btn--warning:hover {
+  background: rgba(255, 149, 0, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 149, 0, 0.4);
+}
+
+.mg-btn--danger {
+  background: rgba(255, 59, 48, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+}
+
+.mg-btn--danger:hover {
+  background: rgba(255, 59, 48, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 59, 48, 0.4);
+}
+
+.mg-btn--info {
+  background: rgba(88, 86, 214, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(88, 86, 214, 0.3);
+}
+
+.mg-btn--info:hover {
+  background: rgba(88, 86, 214, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(88, 86, 214, 0.4);
+}
+
+/* 버튼 크기 */
+.mg-btn--small {
+  padding: 6px var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  border-radius: var(--border-radius-sm);
+}
+
+.mg-btn--medium {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  border-radius: var(--border-radius-md);
+}
+
+.mg-btn--large {
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-lg);
+  border-radius: var(--border-radius-lg);
+}
+
+/* 버튼 상태 */
+.mg-btn--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.mg-btn--loading {
+  position: relative;
+  color: transparent;
+}
+
+.mg-btn--loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: mg-btn-loading 1s linear infinite;
+}
+
+@keyframes mg-btn-loading {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 버튼 그룹 */
+.mg-btn-group {
+  display: inline-flex;
+  gap: var(--spacing-sm);
+}
+
+.mg-btn-group .mg-btn {
+  border-radius: 0;
+}
+
+.mg-btn-group .mg-btn:first-child {
+  border-radius: var(--border-radius-md) 0 0 var(--border-radius-md);
+}
+
+.mg-btn-group .mg-btn:last-child {
+  border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0;
+}
+
+.mg-btn-group .mg-btn:only-child {
+  border-radius: var(--border-radius-md);
+}
+
+/* 아이콘 버튼 */
+.mg-btn--icon {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--border-radius-lg);
+}
+
+.mg-btn--icon--small {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--border-radius-md);
+}
+
+.mg-btn--icon--large {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--border-radius-xl);
+}
+
+/* 글래스모피즘 버튼 */
+.mg-btn--glass {
+  background: var(--glass-bg-light);
+  backdrop-filter: var(--ios-backdrop-blur-xl);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-xl);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  color: var(--ios-text-primary);
+}
+
+.mg-btn--glass:hover {
+  background: var(--glass-bg-medium);
+  backdrop-filter: var(--ios-backdrop-blur-2xl);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-2xl);
+  border-color: var(--glass-border-strong);
+  box-shadow: var(--shadow-glass-strong);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 767px) {
+  /* 모바일에서 호버 효과 제거 */
+  .mg-btn:hover {
+    transform: none;
+  }
+  
+  /* 터치 피드백 효과 */
+  .mg-btn:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+  
+  /* 모바일 버튼 크기 조정 */
+  .mg-btn--small {
+    padding: 6px var(--spacing-sm);
+    font-size: var(--font-size-xs);
+  }
+  
+  .mg-btn--medium {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+  
+  .mg-btn--large {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-base);
+  }
+  
+  /* 모바일 아이콘 버튼 크기 조정 */
+  .mg-btn--icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius-md);
+  }
+  
+  .mg-btn--icon--small {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--border-radius-sm);
+  }
+  
+  .mg-btn--icon--large {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--border-radius-lg);
+  }
+}
+
+/* 아이패드 스타일 최적화 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .mg-btn {
+    border-radius: var(--ipad-border-radius-sm);
+  }
+  
+  .mg-btn--small {
+    border-radius: var(--ipad-border-radius-sm);
+  }
+  
+  .mg-btn--large {
+    border-radius: var(--ipad-border-radius-md);
+  }
+  
+  /* 아이패드 호버 효과 (터치 디바이스에서는 제한적) */
+  @media (hover: hover) {
+    .mg-btn:hover {
+      transform: translateY(-2px);
+    }
+  }
+}
+
+/* 액션 버튼 (아이폰 스타일) */
+.mg-btn--action {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  padding: var(--spacing-lg);
+  gap: var(--spacing-md);
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.mg-btn--action .mg-btn__icon {
+  font-size: var(--font-size-xxl);
+  flex-shrink: 0;
+}
+
+.mg-btn--action .mg-btn__content {
+  flex: 1;
+}
+
+.mg-btn--action .mg-btn__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-xs);
+  color: inherit;
+}
+
+.mg-btn--action .mg-btn__description {
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+  color: inherit;
+  line-height: 1.4;
+}

@@ -1,0 +1,71 @@
+/* ==========================================================================
+   COMPONENTS - Dropdowns (기본 컴포넌트)
+   ========================================================================== */
+
+/* 기본 드롭다운 */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown__trigger {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: all 0.2s ease;
+}
+
+.dropdown__trigger:hover {
+  background: var(--color-primary-dark);
+}
+
+.dropdown__menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid var(--ios-gray4);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  min-width: 200px;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+}
+
+.dropdown__menu--open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown__item {
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown__item:hover {
+  background: var(--ios-gray6);
+}
+
+.dropdown__item:first-child {
+  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+}
+
+.dropdown__item:last-child {
+  border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+}
+
+.dropdown__divider {
+  height: 1px;
+  background: var(--ios-gray4);
+  margin: var(--spacing-xs) 0;
+}
+

@@ -1,0 +1,310 @@
+/* ===== MGForm 컴포넌트 스타일 ===== */
+
+.mg-form {
+  position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ===== 폼 변형 ===== */
+.mg-form--card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  backdrop-filter: blur(20px);
+}
+
+.mg-form--minimal {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  border: none;
+}
+
+/* ===== 폼 크기 ===== */
+.mg-form--small .mg-form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.mg-form--medium .mg-form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.mg-form--large .mg-form-group {
+  margin-bottom: var(--spacing-xl);
+}
+
+/* ===== 로딩 상태 ===== */
+.mg-form--loading {
+  pointer-events: none;
+}
+
+.mg-form__loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  backdrop-filter: blur(2px);
+}
+
+.mg-form__spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-color);
+  border-top: 2px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== 비활성화 상태 ===== */
+.mg-form--disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ===== 폼 그룹 ===== */
+.mg-form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.mg-form-group__label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: #4a5568;
+  margin-bottom: 8px;
+}
+
+.mg-form-group__required {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.mg-form-group__content {
+  position: relative;
+}
+
+.mg-form-group__help {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  margin-top: var(--spacing-xs);
+  line-height: 1.4;
+}
+
+.mg-form-group__error {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--error-color);
+  margin-top: var(--spacing-xs);
+}
+
+.mg-form-group__error-icon {
+  font-size: var(--font-size-xs);
+}
+
+/* ===== 폼 입력 ===== */
+.mg-form-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mg-form-input__icon {
+  position: absolute;
+  left: 16px;
+  color: #718096;
+  z-index: 2;
+  pointer-events: none;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+.mg-form-input__field {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #ffffff;
+  color: #1a202c;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mg-form-input__field:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.mg-form-input__field--with-icon {
+  padding-left: 48px;
+}
+
+.mg-form-input__field--with-right {
+  padding-right: calc(var(--spacing-md) + 20px + var(--spacing-sm));
+}
+
+.mg-form-input__field--error {
+  border-color: var(--error-color);
+}
+
+.mg-form-input__field--error:focus {
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.mg-form-input__field--disabled {
+  background: var(--bg-disabled);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.mg-form-input__right {
+  position: absolute;
+  right: var(--spacing-md);
+  color: var(--text-tertiary);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ===== 텍스트에어리어 ===== */
+.mg-form-textarea {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #ffffff;
+  color: #1a202c;
+  transition: all 0.2s ease;
+  resize: vertical;
+  min-height: 100px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mg-form-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.mg-form-textarea--error {
+  border-color: var(--error-color);
+}
+
+.mg-form-textarea--error:focus {
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.mg-form-textarea--disabled {
+  background: var(--bg-disabled);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+/* ===== 셀렉트 ===== */
+.mg-form-select {
+  position: relative;
+}
+
+.mg-form-select__field {
+  width: 100%;
+  padding: 16px;
+  padding-right: 48px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #ffffff;
+  color: #1a202c;
+  transition: all 0.2s ease;
+  appearance: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mg-form-select__field:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.mg-form-select__field--error {
+  border-color: var(--error-color);
+}
+
+.mg-form-select__field--error:focus {
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.mg-form-select__field--disabled {
+  background: var(--bg-disabled);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.mg-form-select__arrow {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #718096;
+  pointer-events: none;
+  font-size: 12px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 768px) {
+  .mg-form--card {
+    padding: var(--spacing-lg);
+  }
+  
+  .mg-form-group {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .mg-form-input__field,
+  .mg-form-textarea,
+  .mg-form-select__field {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* ===== 다크 모드 지원 ===== */
+@media (prefers-color-scheme: dark) {
+  .mg-form__loading-overlay {
+    background: rgba(26, 32, 44, 0.8);
+  }
+}

@@ -1,0 +1,528 @@
+/* ===== 모달 컴포넌트 ===== */
+/* BEM 네이밍 컨벤션 적용 */
+
+/* 모달 오버레이 */
+.mg-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: var(--ios-backdrop-blur-lg);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-lg);
+  z-index: var(--z-modal-backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.mg-modal-overlay--visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 모달 컨텐츠 - 강화된 글래스모피즘 */
+.mg-modal {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-radius: var(--border-radius-xxl);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  max-width: 90vw;
+  max-height: calc(100vh - 120px); /* 공통헤더(64px) + 여백(56px) 고려 */
+  overflow: auto;
+  z-index: var(--z-modal);
+  transform: scale(0.9) translateY(20px);
+  transition: transform 0.3s ease;
+  margin-top: 60px; /* 공통헤더 아래로 위치 조정 */
+}
+
+.mg-modal-overlay--visible .mg-modal {
+  transform: scale(1) translateY(0);
+}
+
+/* 모달 크기 */
+.mg-modal--small {
+  width: 400px;
+}
+
+.mg-modal--medium {
+  width: 600px;
+}
+
+.mg-modal--large {
+  width: 800px;
+  max-height: calc(100vh - 80px); /* 공통 헤더(64px) + 여백(16px) 고려 */
+}
+
+.mg-modal--fullscreen {
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  max-height: none;
+  border-radius: 0;
+  margin: 0;
+}
+
+/* 모달 헤더 - 글래스모피즘 */
+.mg-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--border-radius-xxl) var(--border-radius-xxl) 0 0;
+}
+
+.mg-modal__title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.mg-modal__close {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--border-radius-full);
+  border: none;
+  background: var(--glass-bg-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.mg-modal__close:hover {
+  background: var(--glass-bg-strong);
+  color: var(--color-text-primary);
+  transform: scale(1.1);
+}
+
+/* 모달 바디 */
+.mg-modal__body {
+  padding: var(--spacing-lg);
+  flex: 1;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* 모달 액션 */
+.mg-modal__actions {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 0 0 var(--border-radius-xxl) var(--border-radius-xxl);
+  justify-content: flex-end;
+}
+
+/* 모달 타입별 스타일 */
+.mg-modal--confirm {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--color-border);
+}
+
+.mg-modal--confirm .mg-modal__header {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.mg-modal--confirm .mg-modal__body {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.mg-modal--alert {
+  background: rgba(255, 255, 255, 0.98);
+  border: 2px solid var(--color-danger);
+}
+
+.mg-modal--alert .mg-modal__header {
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom-color: var(--color-danger);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .mg-modal {
+    width: 95vw !important;
+    max-height: calc(100vh - 140px); /* 공통 헤더(64px) + 여백(76px) 고려 */
+    margin: 20px;
+    margin-top: 80px; /* 모바일에서도 공통헤더 아래로 위치 조정 */
+    border-radius: var(--border-radius-lg);
+  }
+  
+  .mg-modal--fullscreen {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    border-radius: 0;
+  }
+  
+  .mg-modal--fullscreen .mg-modal__header {
+    border-radius: 0;
+    padding: var(--spacing-md);
+  }
+  
+  .mg-modal--fullscreen .mg-modal__body {
+    padding: var(--spacing-md);
+  }
+  
+  .mg-modal__header {
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+  }
+  
+  .mg-modal__body {
+    padding: var(--spacing-md);
+  }
+  
+  .mg-modal__actions {
+    padding: var(--spacing-md);
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .mg-modal {
+    width: 90vw;
+    max-width: 700px;
+    margin-top: 60px; /* 태블릿에서도 공통헤더 아래로 위치 조정 */
+  }
+}
+
+/* 모달 스택 관리 (여러 모달이 겹칠 때) */
+.mg-modal-overlay--stack-1 {
+  z-index: var(--z-modal);
+}
+
+.mg-modal-overlay--stack-2 {
+  z-index: calc(var(--z-modal) + 10);
+}
+
+.mg-modal-overlay--stack-3 {
+  z-index: calc(var(--z-modal) + 20);
+}
+
+/* 모달 내부 스크롤 최적화 */
+.mg-modal__body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mg-modal__body::-webkit-scrollbar-track {
+  background: var(--glass-bg-light);
+  border-radius: var(--border-radius-sm);
+}
+
+.mg-modal__body::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--border-radius-sm);
+}
+
+.mg-modal__body::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* ===== UnifiedModal 전용 스타일 ===== */
+
+/* 모달 헤더 콘텐츠 영역 */
+.mg-modal__header-content {
+  flex: 1;
+  min-width: 0; /* 텍스트 오버플로우 방지 */
+}
+
+/* 로딩 오버레이 */
+.mg-modal__loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: var(--ios-backdrop-blur-md);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: inherit;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.mg-modal__loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 모달 상태별 스타일 */
+.mg-modal--loading {
+  position: relative;
+}
+
+.mg-modal--loading .mg-modal__body {
+  opacity: 0.6;
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+.mg-modal--loading .mg-modal__actions {
+  opacity: 0.6;
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+.mg-modal--loading .mg-modal__header {
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* 로딩 스피너 개선 */
+.mg-modal__loading-spinner .mg-loading-spinner-icon {
+  border: 3px solid var(--color-border-light);
+  border-top: 3px solid var(--color-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 모달 바리언트별 스타일 */
+.mg-modal--confirm .mg-modal__title {
+  color: var(--color-warning);
+}
+
+.mg-modal--alert .mg-modal__title {
+  color: var(--color-danger);
+}
+
+.mg-modal--success .mg-modal__title {
+  color: var(--color-success);
+}
+
+.mg-modal--form .mg-modal__body {
+  padding-bottom: 0;
+}
+
+/* 스케줄 정보 스타일 */
+.schedule-info {
+  margin-bottom: var(--spacing-lg);
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row .label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-secondary);
+  min-width: 80px;
+  margin-right: var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.info-row .value {
+  flex: 1;
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.info-row .value.status-booked {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.info-row .value.status-confirmed {
+  color: var(--color-info);
+  font-weight: var(--font-weight-semibold);
+}
+
+.info-row .value.status-completed {
+  color: var(--color-success);
+  font-weight: var(--font-weight-semibold);
+}
+
+.info-row .value.status-cancelled {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 휴가 알림 스타일 */
+.schedule-detail-vacation-notice {
+  text-align: center;
+  padding: var(--spacing-lg);
+  background: rgba(255, 193, 7, 0.1);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.schedule-detail-vacation-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-warning);
+  margin-bottom: var(--spacing-sm);
+}
+
+.schedule-detail-vacation-description {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+  margin: 0;
+}
+
+/* 시간 선택 모달 스타일 */
+.time-selection-field {
+  margin-bottom: var(--spacing-lg);
+}
+
+.time-selection-label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.time-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+  max-height: 300px;
+  overflow-y: auto;
+  padding: var(--spacing-xs);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--border-radius-lg);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.time-slot-card {
+  padding: var(--spacing-md);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--border-radius-md);
+  background: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: var(--ios-backdrop-blur-lg);
+  -webkit-backdrop-filter: var(--ios-backdrop-blur-lg);
+}
+
+.time-slot-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-color: var(--color-primary);
+}
+
+.time-slot-card--selected {
+  border-color: var(--color-primary);
+  background: rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.time-slot-card--booked {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: rgba(248, 249, 250, 0.9);
+}
+
+.time-slot-card--booked:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.time-slot-card__header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.time-slot-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.time-slot-indicator--booked {
+  background: var(--color-neutral-light);
+}
+
+.time-slot-indicator__text {
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.time-slot-time {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+}
+
+.time-slot-card--booked .time-slot-time {
+  color: var(--ios-text-secondary);
+}
+
+.time-slot-duration {
+  font-size: var(--font-size-sm);
+  color: var(--ios-text-secondary);
+}
+
+.time-slot-card--booked .time-slot-duration {
+  color: var(--ios-text-tertiary);
+}
+
+/* 반응형 디자인 - 모바일 */
+@media (max-width: 767px) {
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+  
+  .info-row .label {
+    min-width: auto;
+    margin-right: 0;
+  }
+  
+  .time-slot-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xs);
+  }
+  
+  .time-slot-card {
+    padding: var(--spacing-sm);
+  }
+}

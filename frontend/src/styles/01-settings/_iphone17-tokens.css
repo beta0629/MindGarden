@@ -1,0 +1,143 @@
+/* ========================================
+   iPhone 17 디자인 토큰 시스템
+   MindGarden 프로젝트 전체에 적용될 iPhone 17 디자인 언어
+   ======================================== */
+
+:root {
+  /* ===== iPhone 17 시스템 컬러 ===== */
+  --current-theme: #007AFF;
+  
+  /* iPhone 17 배경 색상 */
+  --ios-bg-primary: #FFFFFF;
+  --ios-bg-secondary: #F2F2F7;
+  --ios-bg-tertiary: #FFFFFF;
+  
+  /* iPhone 17 텍스트 색상 */
+  --ios-text-primary: #000000;
+  --ios-text-secondary: #6D6D70;
+  --ios-text-tertiary: #8E8E93;
+  
+  /* iPhone 17 시스템 그레이 (6단계) */
+  --ios-system-gray: #8E8E93;
+  --ios-system-gray2: #AEAEB2;
+  --ios-system-gray3: #C7C7CC;
+  --ios-system-gray4: #D1D1D6;
+  --ios-system-gray5: #E5E5EA;
+  --ios-system-gray6: #F2F2F7;
+  
+  /* ===== iPhone 17 정교한 글래스모피즘 ===== */
+  --glass-bg-primary: rgba(255, 255, 255, 0.12);
+  --glass-bg-secondary: rgba(255, 255, 255, 0.08);
+  --glass-bg-tertiary: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-border-strong: rgba(255, 255, 255, 0.25);
+  
+  /* ===== iPhone 17 정교한 간격 시스템 ===== */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  
+  /* ===== iPhone 17 정교한 둥근 모서리 ===== */
+  --border-radius-xs: 4px;
+  --border-radius-sm: 6px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --border-radius-2xl: 20px;
+  
+  /* ===== iPhone 17 타이포그래피 ===== */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  
+  /* iPhone 17 폰트 웨이트 */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* iPhone 17 폰트 패밀리 */
+  --font-family-ios: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  
+  /* ===== iPhone 17 정교한 그림자 시스템 ===== */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.12);
+  --shadow-card-hover: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-floating: 0 16px 48px rgba(0, 0, 0, 0.16);
+  
+  /* ===== iPhone 17 애니메이션 ===== */
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== iPhone 17 다크모드 ===== */
+.dark-mode {
+  /* iPhone 17 다크모드 배경 */
+  --ios-bg-primary: #000000;
+  --ios-bg-secondary: #1C1C1E;
+  --ios-bg-tertiary: #2C2C2E;
+  
+  /* iPhone 17 다크모드 텍스트 */
+  --ios-text-primary: #FFFFFF;
+  --ios-text-secondary: #8E8E93;
+  --ios-text-tertiary: #6D6D70;
+  
+  /* iPhone 17 다크모드 글래스모피즘 */
+  --glass-bg-primary: rgba(255, 255, 255, 0.06);
+  --glass-bg-secondary: rgba(255, 255, 255, 0.04);
+  --glass-bg-tertiary: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-strong: rgba(255, 255, 255, 0.16);
+  
+  /* iPhone 17 다크모드 그림자 */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-floating: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== iPhone 17 테마 변수 (기존 호환성) ===== */
+:root {
+  /* 기존 시스템과의 호환성을 위한 별칭 */
+  --color-primary: var(--current-theme);
+  --color-secondary: var(--ios-system-gray2);
+  --color-success: #34c759;
+  --color-danger: #ff3b30;
+  --color-warning: #ff9500;
+  --color-info: var(--current-theme);
+  
+  /* 텍스트 색상 별칭 */
+  --text-primary: var(--ios-text-primary);
+  --text-secondary: var(--ios-text-secondary);
+  --text-tertiary: var(--ios-text-tertiary);
+  
+  /* 배경 색상 별칭 */
+  --bg-primary: var(--ios-bg-primary);
+  --bg-secondary: var(--ios-bg-secondary);
+  --bg-tertiary: var(--ios-bg-tertiary);
+  
+  /* 간격 별칭 */
+  --spacing-xs: var(--spacing-1);
+  --spacing-sm: var(--spacing-2);
+  --spacing-md: var(--spacing-4);
+  --spacing-lg: var(--spacing-6);
+  --spacing-xl: var(--spacing-8);
+  
+  /* 그림자 별칭 */
+  --shadow-sm: var(--shadow-card);
+  --shadow-md: var(--shadow-card-hover);
+  --shadow-lg: var(--shadow-glass);
+  --shadow-xl: var(--shadow-floating);
+}

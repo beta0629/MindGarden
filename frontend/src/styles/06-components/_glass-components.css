@@ -1,0 +1,321 @@
+/* ==========================================================================
+   글래스모피즘 컴포넌트 클래스
+   ========================================================================== */
+
+/* 기본 글래스 카드 */
+.glass-card {
+  background: var(--glass-bg-primary);
+  backdrop-filter: var(--glass-blur-md);
+  -webkit-backdrop-filter: var(--glass-blur-md);
+  border-radius: var(--glass-radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--glass-shadow-inset);
+  transition: var(--glass-transition);
+  overflow: visible;
+  position: relative;
+}
+
+.glass-card:hover {
+  background: var(--glass-bg-secondary);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--glass-shadow-hover), var(--glass-shadow-inset);
+  border-color: var(--glass-border-strong);
+}
+
+/* 글래스 통계 카드 */
+.glass-stat-card {
+  background: var(--glass-bg-primary);
+  backdrop-filter: var(--glass-blur-md);
+  -webkit-backdrop-filter: var(--glass-blur-md);
+  border-radius: var(--glass-radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--glass-shadow-inset);
+  padding: 24px;
+  text-align: center;
+  transition: var(--glass-transition);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.glass-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--ios-blue), var(--ios-purple));
+  border-radius: var(--glass-radius-lg) var(--glass-radius-lg) 0 0;
+}
+
+.glass-stat-card:hover {
+  background: var(--glass-bg-secondary);
+  backdrop-filter: var(--glass-blur-lg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--glass-shadow-hover), var(--glass-shadow-inset);
+}
+
+/* 글래스 통계 카드 아이콘 */
+.glass-stat-card__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--glass-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 32px;
+  color: white;
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: var(--glass-transition);
+}
+
+.glass-stat-card:hover .glass-stat-card__icon {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* 글래스 통계 카드 값 */
+.glass-stat-card__value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ios-text-primary);
+  line-height: 1.2;
+  margin: 0 0 8px 0;
+  font-family: var(--ios-font-family);
+}
+
+/* 글래스 통계 카드 라벨 */
+.glass-stat-card__label {
+  font-size: 14px;
+  color: var(--ios-text-secondary);
+  margin: 0;
+  font-weight: 500;
+  font-family: var(--ios-font-family);
+}
+
+/* 아이콘 색상 변형 */
+.glass-stat-card__icon--primary { background: var(--ios-blue); }
+.glass-stat-card__icon--success { background: var(--ios-green); }
+.glass-stat-card__icon--warning { background: var(--ios-orange); }
+.glass-stat-card__icon--danger { background: var(--ios-red); }
+.glass-stat-card__icon--info { background: var(--ios-purple); }
+
+/* 글래스 버튼 */
+.glass-btn {
+  font-size: 14px;
+  padding: 12px 24px;
+  border-radius: var(--glass-radius-sm);
+  border: none;
+  font-weight: 600;
+  transition: var(--glass-transition);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  font-family: var(--ios-font-family);
+  cursor: pointer;
+}
+
+.glass-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.glass-btn:hover::before {
+  left: 100%;
+}
+
+.glass-btn--primary {
+  background: rgba(0, 122, 255, 0.8);
+  color: white;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+}
+
+.glass-btn--primary:hover {
+  background: rgba(0, 122, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+}
+
+.glass-btn--secondary {
+  background: var(--glass-bg-tertiary);
+  color: var(--ios-text-primary);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.glass-btn--secondary:hover {
+  background: var(--glass-bg-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* 글래스 헤더 카드 */
+.glass-header-card {
+  background: var(--glass-bg-primary);
+  backdrop-filter: var(--glass-blur-md);
+  -webkit-backdrop-filter: var(--glass-blur-md);
+  border-radius: var(--glass-radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--glass-shadow-inset);
+  padding: 32px 40px;
+  transition: var(--glass-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-header-card__content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.glass-header-card__left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.glass-header-card__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--glass-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: white;
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: var(--glass-transition);
+}
+
+.glass-header-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.glass-header-card__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ios-text-primary);
+  margin: 0;
+  line-height: 1.3;
+  font-family: var(--ios-font-family);
+}
+
+.glass-header-card__subtitle {
+  font-size: 15px;
+  color: var(--ios-text-secondary);
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.4;
+  font-family: var(--ios-font-family);
+}
+
+.glass-header-card__actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* 헤더 카드 아이콘 색상 */
+.glass-header-card__icon--primary { background: var(--ios-blue); }
+.glass-header-card__icon--success { background: var(--ios-green); }
+.glass-header-card__icon--warning { background: var(--ios-orange); }
+.glass-header-card__icon--info { background: var(--ios-purple); }
+
+/* 반응형 조정 */
+@media (max-width: 768px) {
+  /* 모바일에서 호버 효과 제거 */
+  .glass-card:hover,
+  .glass-stat-card:hover {
+    transform: none;
+    background: var(--glass-bg-primary);
+  }
+  
+  /* 모바일 터치 피드백 */
+  .glass-card:active,
+  .glass-stat-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  .glass-stat-card {
+    padding: 20px 16px;
+  }
+  
+  .glass-stat-card__icon {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+  
+  .glass-stat-card__value {
+    font-size: 24px;
+  }
+  
+  .glass-stat-card__label {
+    font-size: 12px;
+  }
+  
+  .glass-btn {
+    font-size: 13px;
+    padding: 10px 20px;
+  }
+  
+  .glass-btn:hover {
+    transform: none;
+  }
+  
+  .glass-btn:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  .glass-header-card {
+    padding: 24px 20px;
+  }
+  
+  .glass-header-card__left {
+    gap: 16px;
+  }
+  
+  .glass-header-card__icon {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+  
+  .glass-header-card__title {
+    font-size: 18px;
+  }
+  
+  .glass-header-card__subtitle {
+    font-size: 13px;
+  }
+  
+  .glass-header-card__actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

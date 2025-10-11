@@ -1,0 +1,140 @@
+/* ==========================================================================
+   MOOD THEME VARIABLES - 분위기별 테마 시스템
+   ========================================================================== */
+
+/* 테마 기본 설정 */
+:root {
+  /* 현재 활성 분위기 */
+  --mood-current: 'default';
+  
+  /* 부드러운 전환 */
+  --mood-transition: 0.3s ease;
+}
+
+/* ===== 기본 분위기 (Default) ===== */
+[data-mood="default"] {
+  /* 기본 iOS 스타일 유지 */
+  --mood-accent: #007aff;
+  --mood-accent-light: rgba(0, 122, 255, 0.1);
+  --mood-accent-dark: #0056b3;
+  
+  --mood-card-bg: rgba(255, 255, 255, 0.95);
+  --mood-card-border: rgba(0, 0, 0, 0.04);
+  --mood-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  
+  --mood-text-primary: #1d1d1f;
+  --mood-text-secondary: #86868b;
+}
+
+/* ===== 따뜻한 분위기 (Warm) ===== */
+[data-mood="warm"] {
+  /* 따뜻한 오렌지/코랄 톤 */
+  --mood-accent: #ff6b35;
+  --mood-accent-light: rgba(255, 107, 53, 0.1);
+  --mood-accent-dark: #e55a2b;
+  
+  --mood-card-bg: rgba(255, 248, 245, 0.95);
+  --mood-card-border: rgba(255, 107, 53, 0.08);
+  --mood-shadow: 0 2px 8px rgba(255, 107, 53, 0.12);
+  
+  --mood-text-primary: #2d1810;
+  --mood-text-secondary: #8b4513;
+}
+
+/* ===== 차분한 분위기 (Cool) ===== */
+[data-mood="cool"] {
+  /* 차분한 블루/그린 톤 */
+  --mood-accent: #34c759;
+  --mood-accent-light: rgba(52, 199, 89, 0.1);
+  --mood-accent-dark: #28a745;
+  
+  --mood-card-bg: rgba(245, 255, 248, 0.95);
+  --mood-card-border: rgba(52, 199, 89, 0.08);
+  --mood-shadow: 0 2px 8px rgba(52, 199, 89, 0.12);
+  
+  --mood-text-primary: #1a3d1a;
+  --mood-text-secondary: #2d5a2d;
+}
+
+/* ===== 우아한 분위기 (Elegant) ===== */
+[data-mood="elegant"] {
+  /* 우아한 퍼플/그레이 톤 */
+  --mood-accent: #5856d6;
+  --mood-accent-light: rgba(88, 86, 214, 0.1);
+  --mood-accent-dark: #4a47a3;
+  
+  --mood-card-bg: rgba(248, 247, 255, 0.95);
+  --mood-card-border: rgba(88, 86, 214, 0.08);
+  --mood-shadow: 0 2px 8px rgba(88, 86, 214, 0.12);
+  
+  --mood-text-primary: #2d2d3a;
+  --mood-text-secondary: #6b6b7a;
+}
+
+/* ===== 에너지 분위기 (Energetic) ===== */
+[data-mood="energetic"] {
+  /* 에너지틱한 핑크/레드 톤 */
+  --mood-accent: #ff2d92;
+  --mood-accent-light: rgba(255, 45, 146, 0.1);
+  --mood-accent-dark: #e0267d;
+  
+  --mood-card-bg: rgba(255, 245, 252, 0.95);
+  --mood-card-border: rgba(255, 45, 146, 0.08);
+  --mood-shadow: 0 2px 8px rgba(255, 45, 146, 0.12);
+  
+  --mood-text-primary: #3a1a2d;
+  --mood-text-secondary: #7a3d5a;
+}
+
+/* ===== 분위기 전환 애니메이션 ===== */
+* {
+  transition: 
+    background-color var(--mood-transition),
+    border-color var(--mood-transition),
+    color var(--mood-transition),
+    box-shadow var(--mood-transition);
+}
+
+/* 애니메이션 비활성화 (접근성) */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+/* ===== 분위기별 컴포넌트 스타일 ===== */
+[data-mood] .data-card {
+  background: var(--mood-card-bg);
+  border: 1px solid var(--mood-card-border);
+  box-shadow: var(--mood-shadow);
+}
+
+[data-mood] .stat-card {
+  background: var(--mood-card-bg);
+  border: 1px solid var(--mood-card-border);
+  box-shadow: var(--mood-shadow);
+}
+
+[data-mood] .btn--primary {
+  background: var(--mood-accent);
+  color: white;
+}
+
+[data-mood] .btn--primary:hover {
+  background: var(--mood-accent-dark);
+}
+
+[data-mood] .stat-card__icon--primary {
+  background: var(--mood-accent);
+  color: white;
+}
+
+[data-mood] .notification-item--info .notification-item__icon {
+  background: var(--mood-accent-light);
+  color: var(--mood-accent);
+}
+
+[data-mood] .activity-item__status--active {
+  background: var(--mood-accent-light);
+  color: var(--mood-accent);
+}

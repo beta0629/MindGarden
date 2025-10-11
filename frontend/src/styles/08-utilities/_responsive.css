@@ -1,0 +1,321 @@
+/* ===== 전역 반응형 자동 변환 규칙 ===== */
+
+/* ===== 테이블 자동 변환 ===== */
+
+/* 기본 테이블 스타일 */
+.auto-responsive-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--mood-card-bg);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--mood-shadow);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.auto-responsive-table th,
+.auto-responsive-table td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.auto-responsive-table th {
+  background: rgba(248, 248, 248, 0.8);
+  font-weight: 600;
+  color: var(--mood-text-primary);
+  font-size: 14px;
+}
+
+.auto-responsive-table td {
+  color: var(--mood-text-secondary);
+  font-size: 14px;
+}
+
+.auto-responsive-table tr:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* 모바일에서 테이블 숨김 */
+@media (max-width: 767px) {
+  .auto-responsive-table {
+    display: none;
+  }
+}
+
+/* ===== 카드 자동 변환 ===== */
+
+/* 데스크톱/태블릿에서 카드 숨김 */
+@media (min-width: 768px) {
+  .auto-responsive-cards {
+    display: none;
+  }
+}
+
+/* 모바일 카드 스타일 */
+@media (max-width: 767px) {
+  .auto-responsive-cards {
+    display: block;
+  }
+  
+  .auto-responsive-card {
+    background: var(--mood-card-bg);
+    border-radius: 16px;
+    box-shadow: var(--mood-shadow);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .auto-responsive-card:active {
+    transform: scale(0.98);
+  }
+  
+  .auto-responsive-card-header {
+    padding: 16px;
+    background: rgba(248, 248, 248, 0.8);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .auto-responsive-card-body {
+    padding: 16px;
+  }
+  
+  .auto-responsive-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--mood-text-primary);
+    margin-bottom: 4px;
+  }
+  
+  .auto-responsive-card-subtitle {
+    font-size: 14px;
+    color: var(--mood-text-secondary);
+  }
+  
+  .auto-responsive-card-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  
+  .auto-responsive-card-meta-item {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .auto-responsive-card-meta-label {
+    font-size: 12px;
+    color: var(--mood-text-secondary);
+    margin-bottom: 2px;
+  }
+  
+  .auto-responsive-card-meta-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--mood-text-primary);
+  }
+}
+
+/* ===== 그리드 자동 변환 ===== */
+
+.auto-responsive-grid {
+  display: grid;
+  gap: 16px;
+}
+
+/* 데스크톱: 4열 */
+@media (min-width: 1025px) {
+  .auto-responsive-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* 태블릿: 2열 */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .auto-responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 모바일: 1열 */
+@media (max-width: 767px) {
+  .auto-responsive-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* ===== 버튼 그룹 자동 변환 ===== */
+
+.auto-responsive-button-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 모바일에서 버튼 그룹 세로 정렬 */
+@media (max-width: 767px) {
+  .auto-responsive-button-group {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .auto-responsive-button-group button {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+/* ===== 폼 자동 변환 ===== */
+
+.auto-responsive-form {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* 모바일에서 폼 세로 정렬 */
+@media (max-width: 767px) {
+  .auto-responsive-form {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .auto-responsive-form input,
+  .auto-responsive-form select,
+  .auto-responsive-form textarea {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+/* ===== 네비게이션 자동 변환 ===== */
+
+.auto-responsive-nav {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+/* 모바일에서 네비게이션 세로 정렬 */
+@media (max-width: 767px) {
+  .auto-responsive-nav {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  
+  .auto-responsive-nav-item {
+    padding: 12px 16px;
+    text-align: center;
+    border-radius: 8px;
+    background: var(--mood-card-bg);
+  }
+}
+
+/* ===== 페이지네이션 자동 변환 ===== */
+
+.auto-responsive-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 모바일에서 페이지네이션 단순화 */
+@media (max-width: 767px) {
+  .auto-responsive-pagination {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+  
+  .auto-responsive-pagination-buttons {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+  }
+  
+  .auto-responsive-pagination-buttons button {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: 40px;
+  }
+}
+
+/* ===== 상태 표시 자동 변환 ===== */
+
+.auto-responsive-status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* 모바일에서 상태 배지 크기 조정 */
+@media (max-width: 767px) {
+  .auto-responsive-status-badge {
+    padding: 2px 6px;
+    font-size: 10px;
+  }
+}
+
+/* ===== 터치 최적화 ===== */
+
+@media (hover: none) and (pointer: coarse) {
+  /* 호버 효과 제거 */
+  .auto-responsive-table tr:hover,
+  .auto-responsive-card:hover {
+    background: transparent;
+    transform: none;
+  }
+  
+  /* 터치 피드백 추가 */
+  .auto-responsive-card:active {
+    transform: scale(0.98);
+    background: rgba(0, 0, 0, 0.02);
+  }
+  
+  /* 버튼 터치 최적화 */
+  button:active {
+    transform: scale(0.95);
+  }
+}
+
+/* ===== 접근성 개선 ===== */
+
+/* 고대비 모드 */
+@media (prefers-contrast: high) {
+  .auto-responsive-table,
+  .auto-responsive-card {
+    border: 2px solid currentColor;
+  }
+  
+  .auto-responsive-status-badge {
+    border: 1px solid currentColor;
+  }
+}
+
+/* 모션 감소 설정 */
+@media (prefers-reduced-motion: reduce) {
+  .auto-responsive-card,
+  .auto-responsive-table tr,
+  button {
+    transition: none;
+  }
+  
+  .auto-responsive-card:active,
+  button:active {
+    transform: none;
+  }
+}
+

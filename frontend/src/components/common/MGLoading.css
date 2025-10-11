@@ -1,0 +1,322 @@
+/**
+ * MindGarden 로딩 컴포넌트 스타일
+ * 다양한 스타일의 로딩 인디케이터
+ */
+
+.mg-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mg-loading__text {
+  font-size: 14px;
+  color: #718096;
+  font-weight: 500;
+}
+
+/* ===== 스피너 ===== */
+.mg-loading-spinner {
+  position: relative;
+}
+
+.mg-loading-spinner__ring {
+  border: 3px solid rgba(102, 126, 234, 0.2);
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.mg-loading-spinner--small .mg-loading-spinner__ring {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.mg-loading-spinner--medium .mg-loading-spinner__ring {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+.mg-loading-spinner--large .mg-loading-spinner__ring {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+}
+
+.mg-loading-spinner--primary .mg-loading-spinner__ring {
+  border-top-color: #667eea;
+  border-color: rgba(102, 126, 234, 0.2);
+}
+
+.mg-loading-spinner--success .mg-loading-spinner__ring {
+  border-top-color: #48cae4;
+  border-color: rgba(72, 202, 228, 0.2);
+}
+
+.mg-loading-spinner--warning .mg-loading-spinner__ring {
+  border-top-color: #ff9ff3;
+  border-color: rgba(255, 159, 243, 0.2);
+}
+
+.mg-loading-spinner--danger .mg-loading-spinner__ring {
+  border-top-color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.2);
+}
+
+/* ===== 도츠 ===== */
+.mg-loading-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.mg-loading-dots__dot {
+  border-radius: 50%;
+  animation: bounce 1.4s ease-in-out infinite both;
+}
+
+.mg-loading-dots--small .mg-loading-dots__dot {
+  width: 6px;
+  height: 6px;
+}
+
+.mg-loading-dots--medium .mg-loading-dots__dot {
+  width: 8px;
+  height: 8px;
+}
+
+.mg-loading-dots--large .mg-loading-dots__dot {
+  width: 12px;
+  height: 12px;
+}
+
+.mg-loading-dots--primary .mg-loading-dots__dot {
+  background: #667eea;
+}
+
+.mg-loading-dots--success .mg-loading-dots__dot {
+  background: #48cae4;
+}
+
+.mg-loading-dots--warning .mg-loading-dots__dot {
+  background: #ff9ff3;
+}
+
+.mg-loading-dots--danger .mg-loading-dots__dot {
+  background: #ff6b6b;
+}
+
+.mg-loading-dots__dot:nth-child(1) { animation-delay: -0.32s; }
+.mg-loading-dots__dot:nth-child(2) { animation-delay: -0.16s; }
+
+/* ===== 펄스 ===== */
+.mg-loading-pulse {
+  position: relative;
+}
+
+.mg-loading-pulse__circle {
+  border-radius: 50%;
+  animation: pulse 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+}
+
+.mg-loading-pulse--small .mg-loading-pulse__circle {
+  width: 20px;
+  height: 20px;
+}
+
+.mg-loading-pulse--medium .mg-loading-pulse__circle {
+  width: 32px;
+  height: 32px;
+}
+
+.mg-loading-pulse--large .mg-loading-pulse__circle {
+  width: 48px;
+  height: 48px;
+}
+
+.mg-loading-pulse--primary .mg-loading-pulse__circle {
+  background: #667eea;
+}
+
+.mg-loading-pulse--success .mg-loading-pulse__circle {
+  background: #48cae4;
+}
+
+.mg-loading-pulse--warning .mg-loading-pulse__circle {
+  background: #ff9ff3;
+}
+
+.mg-loading-pulse--danger .mg-loading-pulse__circle {
+  background: #ff6b6b;
+}
+
+/* ===== 스켈레톤 ===== */
+.mg-loading-skeleton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mg-loading-skeleton__line {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton 1.5s infinite;
+  border-radius: 4px;
+}
+
+.mg-loading-skeleton--small .mg-loading-skeleton__line {
+  height: 12px;
+}
+
+.mg-loading-skeleton--medium .mg-loading-skeleton__line {
+  height: 16px;
+}
+
+.mg-loading-skeleton--large .mg-loading-skeleton__line {
+  height: 20px;
+}
+
+.mg-loading-skeleton__line--short {
+  width: 60%;
+}
+
+.mg-loading-skeleton__line--medium {
+  width: 80%;
+}
+
+/* ===== 프로그레스 바 ===== */
+.mg-loading-progress {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mg-loading-progress__track {
+  width: 100%;
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.mg-loading-progress--small .mg-loading-progress__track {
+  height: 6px;
+}
+
+.mg-loading-progress--large .mg-loading-progress__track {
+  height: 12px;
+}
+
+.mg-loading-progress__bar {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.mg-loading-progress__bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+.mg-loading-progress__text {
+  font-size: 14px;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.mg-loading-progress__percentage {
+  font-size: 12px;
+  color: #718096;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* ===== 페이지 로딩 ===== */
+.mg-page-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* ===== 애니메이션 ===== */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes skeleton {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 768px) {
+  .mg-loading__text {
+    font-size: 13px;
+  }
+  
+  .mg-loading-progress__text {
+    font-size: 13px;
+  }
+  
+  .mg-loading-progress__percentage {
+    font-size: 11px;
+  }
+}

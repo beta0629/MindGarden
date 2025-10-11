@@ -1,0 +1,35 @@
+/* iPhone 17 디자인 시스템 적용 */
+/* 이 파일은 자동으로 마이그레이션되었습니다 */
+
+/* iPhone17Button 컴포넌트 스타일은 _iphone17-buttons.css에서 관리됩니다 */
+/* 이 파일은 컴포넌트 import를 위한 placeholder입니다 */
+
+/* 추가 로딩 스타일 */
+.iphone17-btn-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+}
+
+.iphone17-btn-spinner {
+  width: var(--spacing-lg);
+  height: var(--spacing-lg);
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.iphone17-btn-text {
+  display: inline-block;
+}
+
+.iphone17-btn-icon {
+  margin-right: var(--spacing-2);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

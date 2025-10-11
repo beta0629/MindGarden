@@ -17,6 +17,222 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
     
+    
+    <!-- MindGarden Design System CSS -->
+    <style>
+      /* MindGarden Design System V2 - Custom Styles */
+      .mindgarden-design-system {
+        --mindgarden-bg: linear-gradient(135deg, #FEFEF7 0%, #F5F5DC 50%, #FDF5E6 100%);
+        --mindgarden-cream: #F5F5DC;
+        --mindgarden-warm-cream: #FDF5E6;
+        --mindgarden-mint: #98FB98;
+        --mindgarden-emerald: #50C878;
+        --mindgarden-sage: #9CAF88;
+        --mindgarden-soft-pink: #F8BBD9;
+        --mindgarden-rose-pink: #FFB6C1;
+        --mindgarden-coral-pink: #FF7F7F;
+        --mindgarden-dark-gray: #2F2F2F;
+        --mindgarden-medium-gray: #6B6B6B;
+        --mindgarden-light-cream: #FFFEF7;
+        
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      .mindgarden-design-system *,
+      .mindgarden-design-system *::before,
+      .mindgarden-design-system *::after {
+        box-sizing: border-box;
+      }
+
+      .mindgarden-design-system .mindgarden-bg {
+        background: var(--mindgarden-bg);
+        min-height: 100vh;
+        width: 100%;
+      }
+
+      .mindgarden-design-system .glass-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 1.5rem;
+        padding: 3rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        text-align: center;
+        margin: 2rem 0;
+      }
+
+      .mindgarden-design-system .welcome-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: 9999px;
+        background: rgba(152, 251, 152, 0.2);
+        border: 1px solid rgba(152, 251, 152, 0.3);
+        margin-bottom: 2rem;
+      }
+
+      .mindgarden-design-system .welcome-badge .icon {
+        width: 1rem;
+        height: 1rem;
+        color: var(--mindgarden-emerald);
+      }
+
+      .mindgarden-design-system .welcome-badge .text {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--mindgarden-dark-gray);
+      }
+
+      .mindgarden-design-system .main-heading {
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, var(--mindgarden-dark-gray) 0%, var(--mindgarden-emerald) 50%, var(--mindgarden-mint) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .mindgarden-design-system .description {
+        font-size: 1.25rem;
+        color: var(--mindgarden-medium-gray);
+        max-width: 32rem;
+        margin: 0 auto 2rem;
+        line-height: 1.6;
+      }
+
+      .mindgarden-design-system .button-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+        justify-content: center;
+        padding-top: 1rem;
+      }
+
+      .mindgarden-design-system .primary-button {
+        width: 100%;
+        max-width: 200px;
+        background: var(--mindgarden-emerald);
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        padding: 1.25rem 2rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 48px;
+      }
+
+      .mindgarden-design-system .primary-button:hover {
+        background: #3da860;
+        transform: scale(1.05);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      }
+
+      .mindgarden-design-system .primary-button:active {
+        transform: scale(0.95);
+      }
+
+      .mindgarden-design-system .secondary-button {
+        width: 100%;
+        max-width: 200px;
+        background: transparent;
+        color: var(--mindgarden-emerald);
+        border: 2px solid var(--mindgarden-emerald);
+        border-radius: 0.75rem;
+        padding: 1.25rem 2rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-height: 48px;
+      }
+
+      .mindgarden-design-system .secondary-button:hover {
+        background: rgba(80, 200, 120, 0.1);
+      }
+
+      .mindgarden-design-system .secondary-button:active {
+        background: rgba(80, 200, 120, 0.2);
+      }
+
+      .mindgarden-design-system .section-info {
+        text-align: center;
+        padding: 0 1rem;
+        margin-top: 2rem;
+      }
+
+      .mindgarden-design-system .section-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: var(--mindgarden-dark-gray);
+        margin-bottom: 0.5rem;
+      }
+
+      .mindgarden-design-system .section-description {
+        font-size: 0.875rem;
+        color: var(--mindgarden-medium-gray);
+      }
+
+      @media (min-width: 640px) {
+        .mindgarden-design-system .button-container {
+          flex-direction: row;
+        }
+        
+        .mindgarden-design-system .primary-button,
+        .mindgarden-design-system .secondary-button {
+          width: auto;
+        }
+        
+        .mindgarden-design-system .main-heading {
+          font-size: 4rem;
+        }
+        
+        .mindgarden-design-system .description {
+          font-size: 1.5rem;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .mindgarden-design-system .glass-card {
+          padding: 4rem;
+          border-radius: 2rem;
+        }
+        
+        .mindgarden-design-system .main-heading {
+          font-size: 5rem;
+        }
+        
+        .mindgarden-design-system .section-title {
+          font-size: 2.25rem;
+        }
+        
+        .mindgarden-design-system .section-description {
+          font-size: 1rem;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .mindgarden-design-system .main-heading {
+          font-size: 6rem;
+        }
+      }
+    </style>
+    
     <!-- 카카오 주소 API -->
     <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
     

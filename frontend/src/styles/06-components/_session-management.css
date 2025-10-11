@@ -1,0 +1,490 @@
+/* ==========================================================================
+   SessionManagement 컴포넌트 스타일
+   ITCSS 아키텍처 - 06-components 레이어
+   ========================================================================== */
+
+/* ===== 메인 컨테이너 ===== */
+.session-management-container {
+  min-height: 100vh;
+  background: var(--ios-bg-secondary);
+  padding: var(--spacing-6);
+  font-family: var(--font-family-ios);
+}
+
+/* ===== 페이지 헤더 섹션 (컴포넌트화됨) ===== */
+/* IPhone17PageHeader 컴포넌트 사용 */
+
+.session-management-header {
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+}
+
+.session-management-content {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ===== 레이아웃 시스템 ===== */
+.session-management-layout {
+  display: grid;
+  gap: var(--spacing-lg);
+  grid-template-columns: 1fr 2fr;
+  min-height: 500px;
+}
+
+.session-management-sidebar {
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-6);
+  box-shadow: var(--shadow-card);
+  border: 0.5px solid var(--ios-system-gray5);
+}
+
+.session-management-main-panel {
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-6);
+  box-shadow: var(--shadow-card);
+  border: 0.5px solid var(--ios-system-gray5);
+}
+
+/* ===== 리스트 시스템 ===== */
+.session-management-list-container {
+  margin-bottom: var(--spacing-xl);
+}
+
+.session-management-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--glass-bg-tertiary);
+}
+
+.session-management-list-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ios-text-primary);
+}
+
+.session-management-list-content {
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ios-gray) transparent;
+}
+
+.session-management-list-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.session-management-list-content::-webkit-scrollbar-track {
+  background: var(--ios-system-gray6);
+  border-radius: 3px;
+}
+
+.session-management-list-content::-webkit-scrollbar-thumb {
+  background: var(--ios-system-gray3);
+  border-radius: 3px;
+}
+
+.session-management-list-item {
+  padding: var(--spacing-4);
+  margin-bottom: var(--spacing-3);
+  background: var(--ios-bg-secondary);
+  border-radius: var(--border-radius-lg);
+  border: 0.5px solid var(--ios-system-gray5);
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.session-management-list-item:hover {
+  background: var(--ios-bg-tertiary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--current-theme);
+}
+
+.session-management-list-item.active {
+  background: var(--ios-bg-tertiary);
+  border-color: var(--current-theme);
+  box-shadow: var(--shadow-card);
+}
+
+/* ===== 매핑 카드 시스템 ===== */
+.session-management-mapping-card {
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-4);
+  border: 0.5px solid var(--ios-system-gray5);
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.session-management-mapping-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ios-blue), var(--ios-green));
+}
+
+.session-management-mapping-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--current-theme);
+}
+
+.session-management-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.session-management-card-content {
+  margin-bottom: var(--spacing-md);
+}
+
+.session-management-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--glass-bg-tertiary);
+}
+
+/* ===== 버튼 시스템 ===== */
+.session-management-action-button {
+  padding: var(--spacing-3) var(--spacing-4);
+  border: none;
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  white-space: nowrap;
+  background: var(--ios-bg-secondary);
+  color: var(--ios-text-primary);
+  border: 0.5px solid var(--ios-system-gray5);
+  box-shadow: var(--shadow-card);
+}
+
+.session-management-filter-button {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 0.5px solid var(--ios-system-gray5);
+  border-radius: var(--border-radius-md);
+  background: var(--ios-bg-secondary);
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-right: var(--spacing-2);
+}
+
+.session-management-filter-button:hover,
+.session-management-filter-button.active {
+  background: var(--current-theme);
+  color: white;
+  border-color: var(--current-theme);
+}
+
+.session-management-primary-button {
+  background: var(--current-theme);
+  color: white;
+}
+
+.session-management-primary-button:hover {
+  background: var(--current-theme);
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* ===== 상태 시스템 ===== */
+.session-management-active {
+  color: var(--ios-green);
+  background: rgba(52, 199, 89, 0.15);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border: 0.5px solid rgba(52, 199, 89, 0.3);
+}
+
+.session-management-inactive {
+  color: var(--ios-system-gray);
+  background: rgba(142, 142, 147, 0.15);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border: 0.5px solid rgba(142, 142, 147, 0.3);
+}
+
+.session-management-pending {
+  color: var(--ios-orange);
+  background: rgba(255, 149, 0, 0.15);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border: 0.5px solid rgba(255, 149, 0, 0.3);
+}
+
+/* ===== 반응형 시스템 ===== */
+@media (max-width: 768px) {
+  .session-management-container {
+    padding: var(--spacing-md);
+  }
+  
+  /* 페이지 헤더는 IPhone17PageHeader 컴포넌트에서 처리 */
+  
+  .session-management-layout {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .session-management-sidebar {
+    order: 2;
+  }
+  
+  .session-management-main-panel {
+    order: 1;
+  }
+  
+  .session-management-list-content {
+    max-height: 300px;
+  }
+  
+  .session-management-mapping-card {
+    padding: var(--spacing-md);
+  }
+  
+  .session-management-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .session-management-card-footer {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .session-management-container {
+    padding: var(--spacing-sm);
+  }
+  
+  .session-management-sidebar,
+  .session-management-main-panel {
+    padding: var(--spacing-md);
+  }
+  
+  .session-management-list-item {
+    padding: var(--spacing-sm);
+  }
+  
+  .session-management-mapping-card {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* ===== 애니메이션 ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.session-management-mapping-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.session-management-list-item {
+  animation: slideIn 0.2s ease-out;
+}
+
+.session-management-action-button:active {
+  animation: bounceIn 0.2s ease-out;
+}
+
+/* ===== 접근성 ===== */
+.session-management-action-button:focus {
+  outline: 2px solid var(--ios-blue);
+  outline-offset: 2px;
+}
+
+.session-management-list-item:focus {
+  outline: 2px solid var(--ios-blue);
+  outline-offset: 2px;
+}
+
+/* ===== 다크 모드 지원 (비활성화 - 다른 페이지와 일관성 유지) ===== */
+/* @media (prefers-color-scheme: dark) {
+  .session-management-container {
+    background: var(--bg-dark);
+  }
+  
+  .session-management-sidebar,
+  .session-management-main-panel {
+    background: rgba(45, 45, 50, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .session-management-list-item {
+    background: rgba(45, 45, 50, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .session-management-mapping-card {
+    background: rgba(45, 45, 50, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+} */
+
+/* ===== 고대비 모드 지원 ===== */
+@media (prefers-contrast: high) {
+  .session-management-mapping-card {
+    border: 2px solid var(--ios-text-primary);
+  }
+  
+  .session-management-list-item {
+    border: 2px solid var(--ios-text-primary);
+  }
+  
+  .session-management-action-button {
+    border: 2px solid currentColor;
+  }
+}
+
+/* ===== 인쇄 스타일 ===== */
+@media print {
+  .session-management-container {
+    background: white;
+    color: black;
+  }
+  
+  .session-management-action-button {
+    display: none;
+  }
+  
+  .session-management-mapping-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}
+
+/* ===== 데스크탑 반응형 ===== */
+@media (min-width: 1025px) {
+  .session-management-container {
+    padding: var(--spacing-12) var(--spacing-10) var(--spacing-8) var(--spacing-10);
+  }
+  
+  .session-management-header {
+    margin-bottom: var(--spacing-12);
+  }
+  
+  .session-management-layout {
+    gap: var(--spacing-8);
+  }
+}
+
+/* ===== iPhone 17 다크모드 ===== */
+.dark-mode .session-management-container {
+  background: var(--ios-bg-secondary);
+}
+
+/* 페이지 헤더 다크모드는 IPhone17PageHeader 컴포넌트에서 처리 */
+
+.dark-mode .session-management-sidebar,
+.dark-mode .session-management-main-panel {
+  background: var(--ios-bg-tertiary);
+  border-color: var(--ios-system-gray4);
+}
+
+.dark-mode .session-management-list-item {
+  background: var(--ios-bg-tertiary);
+  border-color: var(--ios-system-gray4);
+}
+
+.dark-mode .session-management-list-item:hover {
+  background: var(--ios-bg-primary);
+  border-color: var(--current-theme);
+}
+
+.dark-mode .session-management-mapping-card {
+  background: var(--ios-bg-tertiary);
+  border-color: var(--ios-system-gray4);
+}
+
+.dark-mode .session-management-mapping-card:hover {
+  border-color: var(--current-theme);
+}
+
+.dark-mode .session-management-action-button {
+  background: var(--ios-bg-tertiary);
+  color: var(--ios-text-primary);
+  border-color: var(--ios-system-gray4);
+}
+
+.dark-mode .session-management-filter-button {
+  background: var(--ios-bg-tertiary);
+  color: var(--ios-text-secondary);
+  border-color: var(--ios-system-gray4);
+}
+
+.dark-mode .session-management-filter-button:hover,
+.dark-mode .session-management-filter-button.active {
+  background: var(--current-theme);
+  color: white;
+  border-color: var(--current-theme);
+}

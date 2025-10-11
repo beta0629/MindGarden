@@ -1,0 +1,226 @@
+/* ==========================================================================
+   COMPONENTS - Stat Widget (통계 위젯)
+   ========================================================================== */
+
+/* 기본 통계 위젯 */
+.stat-widget {
+  @include ios-card(var(--spacing-md), var(--border-radius-md));
+  text-align: center;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* 통계 위젯 아이콘 */
+.stat-widget__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-sm);
+  font-size: 24px;
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.stat-widget__icon--primary {
+  background: var(--color-primary);
+}
+
+.stat-widget__icon--success {
+  background: var(--color-success);
+}
+
+.stat-widget__icon--danger {
+  background: var(--color-danger);
+}
+
+.stat-widget__icon--warning {
+  background: var(--color-warning);
+}
+
+.stat-widget__icon--info {
+  background: var(--color-info);
+}
+
+/* 통계 위젯 값 */
+.stat-widget__value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+  line-height: 1;
+}
+
+.stat-widget__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 통계 위젯 변화량 */
+.stat-widget__change {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.stat-widget__change--positive {
+  color: var(--color-success);
+}
+
+.stat-widget__change--negative {
+  color: var(--color-danger);
+}
+
+.stat-widget__change--neutral {
+  color: var(--color-text-secondary);
+}
+
+.stat-widget__change-icon {
+  font-size: 12px;
+}
+
+/* 통계 위젯 변형 */
+.stat-widget--compact {
+  padding: var(--spacing-sm);
+  
+  .stat-widget__icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .stat-widget__value {
+    font-size: var(--font-size-xl);
+  }
+  
+  .stat-widget__label {
+    font-size: var(--font-size-xs);
+  }
+}
+
+.stat-widget--large {
+  padding: var(--spacing-xl);
+  
+  .stat-widget__icon {
+    width: 64px;
+    height: 64px;
+    font-size: 32px;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .stat-widget__value {
+    font-size: var(--font-size-3xl);
+  }
+  
+  .stat-widget__label {
+    font-size: var(--font-size-base);
+  }
+}
+
+.stat-widget--horizontal {
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  
+  .stat-widget__icon {
+    margin: 0;
+    flex-shrink: 0;
+  }
+  
+  .stat-widget__content {
+    flex: 1;
+  }
+  
+  .stat-widget__value {
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .stat-widget__label {
+    margin-bottom: var(--spacing-xs);
+  }
+}
+
+/* 통계 위젯 그리드 */
+.stat-widgets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.stat-widgets-grid--compact {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.stat-widgets-grid--spacious {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+/* 반응형 대응 */
+@media (max-width: 768px) {
+  .stat-widget {
+    padding: var(--spacing-sm);
+  }
+  
+  .stat-widget__icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .stat-widget__value {
+    font-size: var(--font-size-xl);
+  }
+  
+  .stat-widget--horizontal {
+    flex-direction: column;
+    text-align: center;
+    
+    .stat-widget__icon {
+      margin-bottom: var(--spacing-xs);
+    }
+  }
+  
+  .stat-widgets-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+  }
+  
+  .stat-widgets-grid--compact {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stat-widgets-grid--spacious {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .stat-widgets-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .stat-widgets-grid--compact {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .stat-widgets-grid--spacious {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+

@@ -1,0 +1,605 @@
+/* ========================================
+   MindGarden - 공통 CSS 변수
+   디자인 가이드 기반 색상 및 타이포그래피 시스템
+   ======================================== */
+
+:root {
+  /* 파스텔 톤 메인 컬러 */
+  --color-primary: #B8E6B8;        /* 부드러운 민트 그린 */
+  --color-primary-light: #D4F0D4;  /* 밝은 민트 */
+  --color-primary-dark: #9CD69C;   /* 진한 민트 */
+  
+  /* 역할별 대시보드 색상 */
+  /* 상담사/관리자 대시보드 (기본 파란색) */
+  --dashboard-consultant-primary: #667eea;
+  --dashboard-consultant-primary-light: #7c8ef0;
+  --dashboard-consultant-primary-dark: #5a67d8;
+  
+  /* 내담자 대시보드 (연한 연두색) */
+  --dashboard-client-primary: #A8E6A8;        /* 연한 연두색 */
+  --dashboard-client-primary-light: #C4F0C4;  /* 밝은 연두색 */
+  --dashboard-client-primary-dark: #8CD68C;   /* 진한 연두색 */
+  
+  /* 파스텔 톤 보조 컬러 */
+  --color-secondary: #FFB3BA;      /* 부드러운 파스텔 핑크 */
+  --color-secondary-light: #FFD1D6; /* 밝은 파스텔 핑크 */
+  --color-secondary-dark: #FF9AA2;  /* 진한 파스텔 핑크 */
+  
+  /* 파스텔 톤 액센트 컬러 */
+  --color-accent: #B8D4FF;         /* 부드러운 파스텔 블루 */
+  --color-accent-light: #D4E6FF;   /* 밝은 파스텔 블루 */
+  --color-accent-dark: #9CC2FF;    /* 진한 파스텔 블루 */
+  
+  /* 파스텔 톤 보조 액센트 */
+  --color-tertiary: #FFE5B3;       /* 부드러운 파스텔 옐로우 */
+  --color-tertiary-light: #FFF0D4; /* 밝은 파스텔 옐로우 */
+  --color-tertiary-dark: #FFD699;  /* 진한 파스텔 옐로우 */
+  
+  /* 파스텔 톤 뉴트럴 */
+  --color-neutral: #F0F0F0;        /* 매우 연한 그레이 */
+  --color-neutral-light: #F8F8F8;  /* 거의 흰색 */
+  --color-neutral-dark: #E0E0E0;   /* 연한 그레이 */
+  
+  /* 파스텔 톤 배경 */
+  --color-background: #FAFAFA;     /* 매우 연한 크림 */
+  --color-surface: #FFFFFF;        /* 순백 */
+  --color-card: #FFFFFF;           /* 카드 배경 */
+  
+  /* 파스텔 톤 텍스트 */
+  --color-text-primary: #4A4A4A;   /* 진한 그레이 */
+  --color-text-secondary: #6B6B6B; /* 중간 그레이 */
+  --color-text-muted: #9B9B9B;     /* 연한 그레이 */
+  --color-text-light: #FFFFFF;     /* 흰색 텍스트 */
+  
+  /* 파스텔 톤 상태 */
+  --color-success: #C8E6C9;        /* 부드러운 그린 */
+  --color-warning: #FFE0B2;        /* 부드러운 오렌지 */
+  --color-error: #FFCDD2;          /* 부드러운 레드 */
+  --color-info: #BBDEFB;           /* 부드러운 블루 */
+  
+  /* 파스텔 톤 단색 */
+  --gradient-primary: var(--color-primary);
+  
+  /* Toast 알림 시스템 - 중복 제거됨, 아래 통일된 변수 사용 */
+  --toast-mobile-min-width: auto;
+  --toast-mobile-content-padding: 12px;
+  --toast-mobile-content-gap: 8px;
+  --toast-mobile-icon-size: 18px;
+  --toast-mobile-message-font-size: var(--font-size-sm);
+  --toast-mobile-close-font-size: var(--font-size-base);
+  --toast-mobile-close-size: 18px;
+  --toast-dark-bg: #2d3748;
+  --toast-dark-color: #e2e8f0;
+  --toast-dark-message-color: #e2e8f0;
+  --toast-dark-close-color: #a0aec0;
+  --toast-dark-close-hover-bg: #4a5568;
+  --toast-dark-close-hover-color: #e2e8f0;
+  --toast-dark-progress-bg: rgba(255, 255, 255, 0.1);
+  --gradient-secondary: var(--color-secondary);
+  --gradient-accent: var(--color-accent);
+  --gradient-warm: var(--color-secondary);
+  --gradient-cool: var(--color-primary);
+  
+  /* 파스텔 톤 그림자 */
+  --shadow-soft: 0 2px 8px rgba(184, 230, 184, 0.15);
+  --shadow-medium: 0 4px 16px rgba(184, 230, 184, 0.2);
+  --shadow-large: 0 8px 32px rgba(184, 230, 184, 0.25);
+  --shadow-hover: 0 6px 20px rgba(184, 230, 184, 0.3);
+  
+  /* 파스텔 톤 테두리 */
+  --border-radius-small: 8px;
+  --border-radius-medium: 12px;
+  --border-radius-large: 16px;
+  --border-radius-xl: 24px;
+  
+  /* 파스텔 톤 간격 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  
+  /* 파스텔 톤 폰트 */
+  --font-family-primary: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --font-family-secondary: 'Noto Sans KR', sans-serif;
+  
+  /* 파스텔 톤 전환 */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+  
+  /* 파스텔 톤 블러 */
+  --blur-light: blur(4px);
+  --blur-medium: blur(8px);
+  --blur-heavy: blur(16px);
+
+  /* ========================================
+     Toast 알림 시스템 변수
+     ======================================== */
+  
+  /* Toast 컨테이너 */
+  --toast-container-top: 20px;
+  --toast-container-right: 20px;
+  --toast-container-max-width: 400px;
+  --toast-z-index: 9999;
+  --toast-gap: 10px;
+  
+  /* Toast 기본 스타일 */
+  --toast-bg: #FFFFFF;
+  --toast-border-radius: 8px;
+  --toast-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --toast-animation-duration: 0.3s;
+  --toast-border-left-width: 4px;
+  --toast-min-width: 300px;
+  --toast-max-width: 400px;
+  
+  /* Toast 호버 효과 */
+  --toast-hover-scale: 1.02;
+  --toast-hover-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  
+  /* Toast 타입별 색상 (통일된 색상 체계) */
+  --toast-success-color: #10B981;  /* 녹색 - 성공/시스템 */
+  --toast-error-color: #EF4444;    /* 빨강 - 오류 */
+  --toast-warning-color: #F59E0B;  /* 주황 - 경고 */
+  --toast-info-color: #3B82F6;     /* 파랑 - 안내 */
+  
+  /* Toast 콘텐츠 */
+  --toast-content-padding: 16px;
+  --toast-content-gap: 12px;
+  --toast-icon-size: 20px;
+  --toast-message-font-size: var(--font-size-sm);
+  --toast-message-line-height: 1.4;
+  --toast-message-color: #6B7280;  /* 회색 글자색상으로 통일 */
+  --toast-message-font-weight: 500;
+  
+  /* Toast 닫기 버튼 */
+  --toast-close-bg: none;
+  --toast-close-border: none;
+  --toast-close-font-size: var(--font-size-lg);
+  --toast-close-color: #999999;
+  --toast-close-padding: 0;
+  --toast-close-size: 20px;
+  --toast-close-border-radius: 50%;
+  --toast-close-transition: all 0.2s ease;
+  --toast-close-hover-bg: #f5f5f5;
+  --toast-close-hover-color: #666666;
+  
+  /* Toast 진행바 */
+  --toast-progress-height: 3px;
+  --toast-progress-bg: rgba(0, 0, 0, 0.1);
+  --toast-progress-bar-bg: linear-gradient(90deg, #007bff, #0056b3);
+  --toast-success-progress-bg: linear-gradient(90deg, #28a745, #1e7e34);
+  --toast-error-progress-bg: linear-gradient(90deg, #dc3545, #c82333);
+  --toast-warning-progress-bg: linear-gradient(90deg, #ffc107, #e0a800);
+  --toast-info-progress-bg: linear-gradient(90deg, #17a2b8, #138496);
+  --toast-system-progress-bg: linear-gradient(90deg, #10B981, #059669);  /* 시스템은 녹색 사용 */
+  
+  /* Toast 모바일 반응형 */
+  --toast-mobile-top: 10px;
+  --toast-mobile-right: 10px;
+  --toast-mobile-left: 10px;
+  --toast-mobile-max-width: none;
+  --toast-mobile-min-width: auto;
+  --toast-mobile-content-padding: 12px;
+  --toast-mobile-content-gap: 8px;
+  --toast-mobile-icon-size: 18px;
+  --toast-mobile-message-font-size: var(--font-size-sm);
+  --toast-mobile-close-font-size: var(--font-size-base);
+  --toast-mobile-close-size: 18px;
+  
+  /* Toast 다크 모드 */
+  --toast-dark-bg: #2d3748;
+  --toast-dark-color: #e2e8f0;
+  --toast-dark-message-color: #e2e8f0;
+  --toast-dark-close-color: #a0aec0;
+  --toast-dark-close-hover-bg: #4a5568;
+  --toast-dark-close-hover-color: #e2e8f0;
+  --toast-dark-progress-bg: rgba(255, 255, 255, 0.1);
+
+  /* ========================================
+     상담사 변경 시스템 변수
+     ======================================== */
+  
+  /* 상담사 변경 모달 */
+  --transfer-modal-bg: var(--color-surface);
+  --transfer-modal-border-radius: var(--border-radius-large);
+  --transfer-modal-shadow: var(--shadow-large);
+  --transfer-modal-padding: var(--spacing-xl);
+  --transfer-modal-max-width: 600px;
+  --transfer-modal-min-width: 400px;
+  --transfer-modal-z-index: 1000;
+  
+  /* 상담사 변경 카드 */
+  --transfer-card-bg: var(--color-card);
+  --transfer-card-border: 1px solid var(--color-neutral-dark);
+  --transfer-card-border-radius: var(--border-radius-medium);
+  --transfer-card-padding: var(--spacing-lg);
+  --transfer-card-margin: var(--spacing-md);
+  --transfer-card-shadow: var(--shadow-soft);
+  --transfer-card-hover-shadow: var(--shadow-medium);
+  --transfer-card-transition: var(--transition-normal);
+  
+  /* 상담사 변경 버튼 */
+  --transfer-btn-primary-bg: var(--color-primary);
+  --transfer-btn-primary-color: var(--color-text-light);
+  --transfer-btn-primary-hover-bg: var(--color-primary-dark);
+  --transfer-btn-secondary-bg: var(--color-neutral);
+  --transfer-btn-secondary-color: var(--color-text-primary);
+  --transfer-btn-secondary-hover-bg: var(--color-neutral-dark);
+  --transfer-btn-danger-bg: var(--color-error);
+  --transfer-btn-danger-color: var(--color-text-light);
+  --transfer-btn-danger-hover-bg: #ff8a80;
+  --transfer-btn-padding: var(--spacing-sm) var(--spacing-lg);
+  --transfer-btn-border-radius: var(--border-radius-small);
+  --transfer-btn-font-size: var(--font-size-sm);
+  --transfer-btn-font-weight: 500;
+  --transfer-btn-transition: var(--transition-fast);
+  
+  /* 상담사 변경 폼 */
+  --transfer-form-gap: var(--spacing-lg);
+  --transfer-form-label-color: var(--color-text-primary);
+  --transfer-form-label-font-size: var(--font-size-sm);
+  --transfer-form-label-font-weight: 600;
+  --transfer-form-label-margin-bottom: var(--spacing-sm);
+  --transfer-form-input-bg: var(--color-surface);
+  --transfer-form-input-border: 1px solid var(--color-neutral-dark);
+  --transfer-form-input-border-radius: var(--border-radius-small);
+  --transfer-form-input-padding: var(--spacing-sm) var(--spacing-md);
+  --transfer-form-input-font-size: var(--font-size-sm);
+  --transfer-form-input-color: var(--color-text-primary);
+  --transfer-form-input-focus-border: var(--color-primary);
+  --transfer-form-input-focus-shadow: 0 0 0 2px rgba(184, 230, 184, 0.2);
+  --transfer-form-textarea-min-height: 80px;
+  --transfer-form-textarea-resize: vertical;
+  
+  /* 상담사 변경 선택 */
+  --transfer-select-bg: var(--color-surface);
+  --transfer-select-border: 1px solid var(--color-neutral-dark);
+  --transfer-select-border-radius: var(--border-radius-small);
+  --transfer-select-padding: var(--spacing-sm) var(--spacing-md);
+  --transfer-select-font-size: var(--font-size-sm);
+  --transfer-select-color: var(--color-text-primary);
+  --transfer-select-focus-border: var(--color-primary);
+  --transfer-select-focus-shadow: 0 0 0 2px rgba(184, 230, 184, 0.2);
+  --transfer-select-option-bg: var(--color-surface);
+  --transfer-select-option-color: var(--color-text-primary);
+  --transfer-select-option-hover-bg: var(--color-primary-light);
+  
+  /* 상담사 변경 상태 */
+  --transfer-status-active: var(--color-success);
+  --transfer-status-pending: var(--color-warning);
+  --transfer-status-terminated: var(--color-error);
+  --transfer-status-badge-padding: var(--spacing-xs) var(--spacing-sm);
+  --transfer-status-badge-border-radius: var(--border-radius-small);
+  --transfer-status-badge-font-size: var(--font-size-xs);
+  --transfer-status-badge-font-weight: 600;
+  
+  /* 상담사 변경 이력 */
+  --transfer-history-bg: var(--color-neutral-light);
+  --transfer-history-border-radius: var(--border-radius-medium);
+  --transfer-history-padding: var(--spacing-lg);
+  --transfer-history-margin-top: var(--spacing-lg);
+  --transfer-history-item-bg: var(--color-surface);
+  --transfer-history-item-border: 1px solid var(--color-neutral-dark);
+  --transfer-history-item-border-radius: var(--border-radius-small);
+  --transfer-history-item-padding: var(--spacing-md);
+  --transfer-history-item-margin: var(--spacing-sm) 0;
+  --transfer-history-item-shadow: var(--shadow-soft);
+  
+  /* 상담사 변경 반응형 */
+--transfer-mobile-modal-padding: var(--spacing-md);
+--transfer-mobile-modal-max-width: 95vw;
+--transfer-mobile-card-padding: var(--spacing-md);
+--transfer-mobile-form-gap: var(--spacing-md);
+--transfer-mobile-btn-padding: var(--spacing-sm) var(--spacing-md);
+--transfer-mobile-btn-font-size: var(--font-size-sm);
+
+/* ========================================
+   통계 및 스케줄 관리 변수
+   ======================================== */
+
+/* 통계 카드 */
+--stats-card-bg: var(--color-surface);
+--stats-card-border: 1px solid var(--color-neutral-dark);
+--stats-card-border-radius: var(--border-radius-medium);
+--stats-card-padding: var(--spacing-lg);
+--stats-card-margin: var(--spacing-md);
+--stats-card-shadow: var(--shadow-soft);
+--stats-card-hover-shadow: var(--shadow-medium);
+--stats-card-transition: var(--transition-normal);
+--stats-card-min-height: 120px;
+
+/* 통계 아이콘 */
+--stats-icon-size: 48px;
+--stats-icon-border-radius: var(--border-radius-large);
+--stats-icon-padding: var(--spacing-md);
+--stats-icon-margin-bottom: var(--spacing-md);
+
+/* 통계 숫자 */
+--stats-number-font-size: 2rem;
+--stats-number-font-weight: 700;
+--stats-number-color: var(--color-text-primary);
+--stats-number-margin-bottom: var(--spacing-xs);
+
+/* 통계 라벨 */
+--stats-label-font-size: var(--font-size-sm);
+--stats-label-font-weight: 500;
+--stats-label-color: var(--color-text-secondary);
+--stats-label-margin-bottom: var(--spacing-sm);
+
+/* 통계 그리드 */
+--stats-grid-gap: var(--spacing-lg);
+--stats-grid-columns: repeat(auto-fit, minmax(250px, 1fr));
+--stats-grid-mobile-columns: 1fr;
+
+/* 스케줄 리스트 */
+--schedule-list-bg: var(--color-surface);
+--schedule-list-border-radius: var(--border-radius-medium);
+--schedule-list-padding: var(--spacing-lg);
+--schedule-list-margin: var(--spacing-md);
+--schedule-list-shadow: var(--shadow-soft);
+
+/* 스케줄 카드 */
+--schedule-card-bg: var(--color-surface);
+--schedule-card-border: 1px solid var(--color-neutral-dark);
+--schedule-card-border-radius: var(--border-radius-small);
+--schedule-card-padding: var(--spacing-md);
+--schedule-card-margin: var(--spacing-sm) 0;
+--schedule-card-shadow: var(--shadow-soft);
+--schedule-card-hover-shadow: var(--shadow-medium);
+--schedule-card-transition: var(--transition-normal);
+
+/* 스케줄 상태 배지 */
+--schedule-status-badge-padding: var(--spacing-xs) var(--spacing-sm);
+--schedule-status-badge-border-radius: var(--border-radius-small);
+--schedule-status-badge-font-size: var(--font-size-xs);
+--schedule-status-badge-font-weight: 600;
+--schedule-status-badge-text-transform: uppercase;
+
+/* 스케줄 상태별 색상 */
+--schedule-status-booked-bg: var(--color-warning);
+--schedule-status-booked-color: var(--color-text-light);
+--schedule-status-confirmed-bg: var(--color-info);
+--schedule-status-confirmed-color: var(--color-text-light);
+--schedule-status-completed-bg: var(--color-success);
+--schedule-status-completed-color: var(--color-text-light);
+--schedule-status-cancelled-bg: var(--color-error);
+--schedule-status-cancelled-color: var(--color-text-light);
+--schedule-status-in-progress-bg: var(--color-primary);
+--schedule-status-in-progress-color: var(--color-text-light);
+
+/* 스케줄 필터 */
+--schedule-filter-bg: var(--color-neutral-light);
+--schedule-filter-padding: var(--spacing-md);
+--schedule-filter-border-radius: var(--border-radius-medium);
+--schedule-filter-margin-bottom: var(--spacing-lg);
+--schedule-filter-gap: var(--spacing-md);
+
+/* 스케줄 검색 */
+--schedule-search-input-bg: var(--color-surface);
+--schedule-search-input-border: 1px solid var(--color-neutral-dark);
+--schedule-search-input-border-radius: var(--border-radius-small);
+--schedule-search-input-padding: var(--spacing-sm) var(--spacing-md);
+--schedule-search-input-font-size: var(--font-size-sm);
+--schedule-search-input-color: var(--color-text-primary);
+--schedule-search-input-focus-border: var(--color-primary);
+--schedule-search-input-focus-shadow: 0 0 0 2px rgba(184, 230, 184, 0.2);
+
+/* 스케줄 정렬 */
+--schedule-sort-select-bg: var(--color-surface);
+--schedule-sort-select-border: 1px solid var(--color-neutral-dark);
+--schedule-sort-select-border-radius: var(--border-radius-small);
+--schedule-sort-select-padding: var(--spacing-sm) var(--spacing-md);
+--schedule-sort-select-font-size: var(--font-size-sm);
+--schedule-sort-select-color: var(--color-text-primary);
+
+/* 스케줄 페이지네이션 */
+--schedule-pagination-bg: var(--color-surface);
+--schedule-pagination-border: 1px solid var(--color-neutral-dark);
+--schedule-pagination-border-radius: var(--border-radius-small);
+--schedule-pagination-padding: var(--spacing-sm);
+--schedule-pagination-margin-top: var(--spacing-lg);
+--schedule-pagination-gap: var(--spacing-xs);
+
+/* 스케줄 페이지네이션 버튼 */
+--schedule-pagination-btn-bg: var(--color-surface);
+--schedule-pagination-btn-border: 1px solid var(--color-neutral-dark);
+--schedule-pagination-btn-border-radius: var(--border-radius-small);
+--schedule-pagination-btn-padding: var(--spacing-xs) var(--spacing-sm);
+--schedule-pagination-btn-font-size: var(--font-size-sm);
+--schedule-pagination-btn-color: var(--color-text-primary);
+--schedule-pagination-btn-hover-bg: var(--color-primary-light);
+--schedule-pagination-btn-hover-color: var(--color-text-light);
+--schedule-pagination-btn-active-bg: var(--color-primary);
+--schedule-pagination-btn-active-color: var(--color-text-light);
+--schedule-pagination-btn-disabled-bg: var(--color-neutral-light);
+--schedule-pagination-btn-disabled-color: var(--color-text-disabled);
+
+/* 통계 및 스케줄 반응형 */
+--stats-mobile-card-padding: var(--spacing-md);
+--stats-mobile-icon-size: 36px;
+--stats-mobile-number-font-size: 1.5rem;
+--schedule-mobile-card-padding: var(--spacing-sm);
+--schedule-mobile-filter-gap: var(--spacing-sm);
+--schedule-mobile-grid-columns: 1fr;
+
+/* ========================================
+   그래프 및 차트 변수
+   ======================================== */
+
+/* 차트 컨테이너 */
+--chart-container-bg: #ffffff;
+--chart-container-border: #e9ecef;
+--chart-container-radius: 0.5rem;
+--chart-container-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+--chart-container-padding: 1.5rem;
+--chart-container-margin: 1rem 0;
+
+/* 차트 제목 */
+--chart-title-size: 1.25rem;
+--chart-title-weight: 600;
+--chart-title-color: #2c3e50;
+--chart-title-margin: 0 0 1rem 0;
+
+/* 차트 높이 */
+--chart-height-small: 200px;
+--chart-height-medium: 300px;
+--chart-height-large: 400px;
+--chart-height-xl: 500px;
+
+/* 차트 색상 팔레트 */
+--chart-color-primary: #007bff;
+--chart-color-success: #28a745;
+--chart-color-warning: #ffc107;
+--chart-color-danger: #dc3545;
+--chart-color-info: #17a2b8;
+--chart-color-secondary: #6c757d;
+--chart-color-light: #f8f9fa;
+--chart-color-dark: #343a40;
+
+/* 대시보드 그리드 */
+--dashboard-grid-gap: 1.5rem;
+--dashboard-grid-padding: 1.5rem;
+--dashboard-grid-bg: #f8f9fa;
+
+/* 대시보드 카드 */
+--dashboard-card-bg: #ffffff;
+--dashboard-card-border: #e9ecef;
+--dashboard-card-radius: 0.5rem;
+--dashboard-card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+--dashboard-card-padding: 1.5rem;
+--dashboard-card-margin: 0 0 1.5rem 0;
+
+/* 대시보드 헤더 */
+--dashboard-header-bg: #ffffff;
+--dashboard-header-border: #e9ecef;
+--dashboard-header-padding: 1.5rem;
+--dashboard-header-margin: 0 0 1.5rem 0;
+--dashboard-header-radius: 0.5rem;
+
+/* 대시보드 제목 */
+--dashboard-title-size: 1.75rem;
+--dashboard-title-weight: 700;
+--dashboard-title-color: #2c3e50;
+--dashboard-title-margin: 0 0 0.5rem 0;
+
+/* 대시보드 부제목 */
+--dashboard-subtitle-size: 1rem;
+--dashboard-subtitle-weight: 400;
+--dashboard-subtitle-color: #6c757d;
+--dashboard-subtitle-margin: 0;
+
+/* 필터 섹션 */
+--filter-section-bg: #ffffff;
+--filter-section-border: #e9ecef;
+--filter-section-radius: 0.5rem;
+--filter-section-padding: 1rem;
+--filter-section-margin: 0 0 1.5rem 0;
+
+/* 필터 그룹 */
+--filter-group-margin: 0 0 1rem 0;
+--filter-group-gap: 1rem;
+
+/* 필터 라벨 */
+--filter-label-size: 0.875rem;
+--filter-label-weight: 600;
+--filter-label-color: #495057;
+--filter-label-margin: 0 0 0.5rem 0;
+
+/* 필터 입력 */
+--filter-input-bg: #ffffff;
+--filter-input-border: #ced4da;
+--filter-input-focus-border: #80bdff;
+--filter-input-radius: 0.375rem;
+--filter-input-padding: 0.5rem 0.75rem;
+--filter-input-margin: 0 0.5rem 0 0;
+
+/* 필터 버튼 */
+--filter-btn-bg: #007bff;
+--filter-btn-color: #ffffff;
+--filter-btn-border: #007bff;
+--filter-btn-hover-bg: #0056b3;
+--filter-btn-hover-border: #0056b3;
+--filter-btn-radius: 0.375rem;
+--filter-btn-padding: 0.5rem 1rem;
+--filter-btn-margin: 0 0.5rem 0 0;
+
+/* 테이블 */
+--table-bg: #ffffff;
+--table-border: #e9ecef;
+--table-radius: 0.5rem;
+--table-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+--table-margin: 1rem 0;
+
+/* 테이블 헤더 */
+--table-header-bg: #f8f9fa;
+--table-header-color: #495057;
+--table-header-weight: 600;
+--table-header-padding: 0.75rem;
+--table-header-border: #dee2e6;
+
+/* 테이블 셀 */
+--table-cell-padding: 0.75rem;
+--table-cell-border: #dee2e6;
+--table-cell-color: #495057;
+
+/* 테이블 행 */
+--table-row-hover-bg: #f8f9fa;
+--table-row-border: #dee2e6;
+
+/* 로딩 스피너 */
+--loading-spinner-size: 2rem;
+--loading-spinner-color: #007bff;
+--loading-spinner-margin: 2rem auto;
+
+/* 에러 메시지 */
+--error-message-bg: #f8d7da;
+--error-message-color: #721c24;
+--error-message-border: #f5c6cb;
+--error-message-radius: 0.375rem;
+--error-message-padding: 0.75rem 1rem;
+--error-message-margin: 1rem 0;
+
+/* ========================================
+   카드 컴포넌트 변수
+   ======================================== */
+
+/* 기본 카드 */
+--card-bg: var(--color-surface);
+--card-border: 1px solid var(--color-neutral-dark);
+--card-radius: var(--border-radius-medium);
+--card-shadow: var(--shadow-soft);
+--card-hover-shadow: var(--shadow-medium);
+--card-transition: var(--transition-normal);
+
+/* 카드 색상 - 기존 변수 재사용 */
+/* 카드 컴포넌트에서 사용할 추가 색상 변수들 */
+--card-color-success: #28a745;
+--card-color-warning: #ffc107;
+--card-color-danger: #dc3545;
+--card-color-info: #17a2b8;
+--card-color-secondary: #6c757d;
+--card-color-primary: #007bff;
+--card-color-primary-light: #e3f2fd;
+
+/* 모바일 반응형 변수 */
+@media (max-width: 768px) {
+  --chart-container-padding: 1rem;
+  --chart-height-small: 150px;
+  --chart-height-medium: 200px;
+  --chart-height-large: 250px;
+  --chart-height-xl: 300px;
+  --dashboard-grid-gap: 1rem;
+  --dashboard-grid-padding: 1rem;
+  --dashboard-card-padding: 1rem;
+  --dashboard-header-padding: 1rem;
+  --dashboard-title-size: 1.5rem;
+  --filter-section-padding: 0.75rem;
+  --filter-group-gap: 0.75rem;
+  --filter-input-margin: 0 0.25rem 0 0;
+  --filter-btn-margin: 0 0.25rem 0 0;
+  --table-header-padding: 0.5rem;
+  --table-cell-padding: 0.5rem;
+}
+}

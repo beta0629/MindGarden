@@ -1,0 +1,189 @@
+/* iPhone 17 디자인 시스템 적용 */
+/* 이 파일은 자동으로 마이그레이션되었습니다 */
+
+/* iPhone 17 디자인 시스템 공통화 샘플 스타일 */
+
+.iphone17-design-system-page {
+  font-family: var(--font-family-ios);
+  background: var(--ios-bg-secondary);
+  min-height: 100vh;
+}
+
+.iphone17-sample-container {
+  padding: var(--spacing-6);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 헤더 컨트롤 */
+.iphone17-header-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.iphone17-theme-selector {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+/* 페이지 헤더 */
+.iphone17-page-header {
+  text-align: center;
+  margin-bottom: var(--spacing-8);
+  padding: var(--spacing-8) 0;
+}
+
+.iphone17-page-title {
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-3);
+  line-height: 1.2;
+}
+
+.iphone17-page-subtitle {
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-6);
+  line-height: 1.4;
+}
+
+/* 섹션 */
+.iphone17-section {
+  margin-bottom: var(--spacing-8);
+}
+
+.iphone17-section-title {
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-6);
+  text-align: center;
+}
+
+/* 통계 그리드 */
+.iphone17-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-4);
+}
+
+/* 콘텐츠 그리드 */
+.iphone17-content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+}
+
+/* 기능 그리드 */
+.iphone17-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-4);
+}
+
+/* 글래스 그리드 */
+.iphone17-glass-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-6);
+}
+
+.iphone17-glass-grid .iphone17-glass-card h3 {
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-3);
+}
+
+.iphone17-glass-grid .iphone17-glass-card p {
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+/* 버튼 쇼케이스 */
+.iphone17-button-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.iphone17-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.iphone17-button-group h3 {
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-2);
+}
+
+/* 액션 버튼들 */
+.iphone17-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-4);
+  margin-top: var(--spacing-8);
+  padding: var(--spacing-8) 0;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 76var(--border-radius-md)) {
+  .iphone17-sample-container {
+    padding: var(--spacing-4);
+  }
+  
+  .iphone17-page-title {
+    font-size: var(--font-size-3xl);
+  }
+  
+  .iphone17-page-subtitle {
+    font-size: var(--font-size-base);
+  }
+  
+  .iphone17-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .iphone17-content-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .iphone17-features-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  .iphone17-glass-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .iphone17-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .iphone17-header-controls {
+    gap: var(--spacing-2);
+  }
+  
+  .iphone17-theme-selector {
+    gap: var(--spacing-1);
+  }
+}
+
+@media (max-width: 480px) {
+  .iphone17-features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .iphone17-btn-group {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

@@ -1,0 +1,74 @@
+/* ==========================================================================
+   OBJECTS - Container
+   ========================================================================== */
+
+/* 기본 컨테이너 */
+.o-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+/* 컨테이너 변형 */
+.o-container--fluid {
+  max-width: none;
+}
+
+.o-container--narrow {
+  max-width: 800px;
+}
+
+.o-container--wide {
+  max-width: 1400px;
+}
+
+.o-container--full {
+  max-width: none;
+  padding: 0;
+}
+
+/* 섹션 컨테이너 */
+.o-section {
+  padding: var(--spacing-xl) 0;
+}
+
+.o-section--compact {
+  padding: var(--spacing-lg) 0;
+}
+
+.o-section--spacious {
+  padding: var(--spacing-2xl) 0;
+}
+
+/* 반응형 컨테이너 */
+@media (max-width: 768px) {
+  .o-container {
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .o-section {
+    padding: var(--spacing-lg) 0;
+  }
+  
+  .o-section--compact {
+    padding: var(--spacing-md) 0;
+  }
+  
+  .o-section--spacious {
+    padding: var(--spacing-xl) 0;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .o-container {
+    padding: 0 var(--spacing-md);
+  }
+}
+
+@media (min-width: 1025px) {
+  .o-container {
+    padding: 0 var(--spacing-lg);
+  }
+}
+

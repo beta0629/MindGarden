@@ -3,12 +3,31 @@ import ReactDOM from 'react-dom/client';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import App from './App';
+import AppPublic from './AppPublic';
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
+// 공개 경로 정의
+const publicPaths = [
+  '/design-system-v9',
+  '/design-system',
+  '/landing',
+  '/test/notifications',
+  '/test/payment',
+  '/test/integration',
+  '/test/ios-cards',
+  '/test/design-sample',
+  '/test/premium-sample',
+  '/test/advanced-sample'
+];
+
+// 현재 경로가 공개 경로인지 확인
+const isPublicPath = publicPaths.includes(window.location.pathname);
+
 root.render(
   <React.StrictMode>
-    <App />
+    {isPublicPath ? <AppPublic /> : <App />}
   </React.StrictMode>
 );
 

@@ -1,0 +1,130 @@
+/* ===== MGChart 컴포넌트 스타일 ===== */
+
+.mg-chart {
+  position: relative;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  overflow: hidden;
+}
+
+.mg-chart__container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== 차트 변형 ===== */
+.mg-chart--minimal {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.mg-chart--gradient {
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.05) 0%, 
+    rgba(118, 75, 162, 0.05) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== 로딩 상태 ===== */
+.mg-chart--loading {
+  pointer-events: none;
+}
+
+.mg-chart__loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  z-index: 10;
+  backdrop-filter: blur(2px);
+}
+
+.mg-chart__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== 에러 상태 ===== */
+.mg-chart--error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.mg-chart__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.mg-chart__error-icon {
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.mg-chart__error-message {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.mg-chart__error-detail {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  opacity: 0.8;
+}
+
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 768px) {
+  .mg-chart {
+    padding: var(--spacing-md);
+  }
+  
+  .mg-chart__loading {
+    padding: var(--spacing-md);
+  }
+  
+  .mg-chart__error {
+    padding: var(--spacing-md);
+  }
+}
+
+/* ===== 다크 모드 지원 ===== */
+@media (prefers-color-scheme: dark) {
+  .mg-chart__loading {
+    background: rgba(26, 32, 44, 0.9);
+  }
+  
+  .mg-chart--gradient {
+    background: linear-gradient(135deg, 
+      rgba(102, 126, 234, 0.1) 0%, 
+      rgba(118, 75, 162, 0.1) 100%);
+    border-color: rgba(102, 126, 234, 0.2);
+  }
+}

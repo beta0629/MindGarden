@@ -1,0 +1,235 @@
+/* ========================================
+   iPhone 17 모달 컴포넌트
+   iPhone 17 디자인 언어를 적용한 모달 시스템
+   ======================================== */
+
+/* ===== 모달 오버레이 ===== */
+.iphone17-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  animation: iphone17-fadeIn 0.3s ease;
+}
+
+/* ===== 기본 모달 ===== */
+.iphone17-modal {
+  background: var(--ios-bg-primary);
+  border-radius: var(--border-radius-2xl);
+  box-shadow: var(--shadow-floating);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: iphone17-slideUp 0.3s ease;
+  position: relative;
+}
+
+/* ===== 모달 헤더 ===== */
+.iphone17-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-6);
+  border-bottom: 0.5px solid var(--ios-system-gray6);
+}
+
+.iphone17-modal-title {
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.iphone17-modal-close {
+  background: none;
+  border: none;
+  color: var(--ios-text-secondary);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  padding: var(--spacing-2);
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition-fast);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iphone17-modal-close:hover {
+  background: var(--ios-bg-secondary);
+  color: var(--ios-text-primary);
+}
+
+.iphone17-modal-close:active {
+  transform: scale(0.95);
+}
+
+/* ===== 모달 콘텐츠 ===== */
+.iphone17-modal-content {
+  padding: var(--spacing-6);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.iphone17-modal-body {
+  color: var(--ios-text-primary);
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+  margin-bottom: var(--spacing-6);
+}
+
+/* ===== 모달 푸터 ===== */
+.iphone17-modal-footer {
+  display: flex;
+  gap: var(--spacing-3);
+  justify-content: flex-end;
+  padding: var(--spacing-6);
+  border-top: 0.5px solid var(--ios-system-gray6);
+  background: var(--ios-bg-secondary);
+}
+
+/* ===== 모달 변형 ===== */
+
+/* 컨텐츠 모달 */
+.iphone17-modal.content {
+  max-width: 500px;
+  width: 90vw;
+}
+
+/* 전체화면 모달 */
+.iphone17-modal.fullscreen {
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+}
+
+.iphone17-modal.fullscreen .iphone17-modal-content {
+  max-height: calc(100vh - 120px);
+}
+
+/* 사이드 시트 모달 */
+.iphone17-modal.side-sheet {
+  max-width: 400px;
+  width: 90vw;
+  height: 100vh;
+  margin-left: auto;
+  border-radius: var(--border-radius-2xl) 0 0 var(--border-radius-2xl);
+  animation: iphone17-slideInRight 0.3s ease;
+}
+
+/* 알림 모달 */
+.iphone17-modal.alert {
+  max-width: 320px;
+  width: 90vw;
+  text-align: center;
+}
+
+.iphone17-modal.alert .iphone17-modal-header {
+  justify-content: center;
+}
+
+.iphone17-modal.alert .iphone17-modal-close {
+  display: none;
+}
+
+.iphone17-modal.alert .iphone17-modal-footer {
+  flex-direction: column;
+}
+
+/* ===== 다크모드 지원 ===== */
+.dark-mode .iphone17-modal {
+  background: var(--ios-bg-primary);
+}
+
+.dark-mode .iphone17-modal-header {
+  border-bottom-color: var(--ios-system-gray4);
+}
+
+.dark-mode .iphone17-modal-footer {
+  background: var(--ios-bg-secondary);
+  border-top-color: var(--ios-system-gray4);
+}
+
+/* ===== 애니메이션 ===== */
+@keyframes iphone17-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes iphone17-slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes iphone17-slideInRight {
+  from { 
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to { 
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===== 반응형 디자인 ===== */
+@media (max-width: 768px) {
+  .iphone17-modal {
+    max-width: 95vw;
+    margin: var(--spacing-4);
+  }
+  
+  .iphone17-modal-header {
+    padding: var(--spacing-4);
+  }
+  
+  .iphone17-modal-content {
+    padding: var(--spacing-4);
+  }
+  
+  .iphone17-modal-footer {
+    padding: var(--spacing-4);
+    flex-direction: column;
+  }
+  
+  .iphone17-modal.side-sheet {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+}
+
+/* ===== 접근성 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .iphone17-modal-overlay,
+  .iphone17-modal {
+    animation: none;
+  }
+}
+
+/* ===== 포커스 관리 ===== */
+.iphone17-modal:focus {
+  outline: none;
+}
+
+.iphone17-modal-close:focus-visible {
+  outline: 2px solid var(--current-theme);
+  outline-offset: 2px;
+}

@@ -422,6 +422,41 @@ const MappingManagement = () => {
         setEditMapping(null);
     };
 
+    // 매핑 삭제 핸들러
+    const handleDeleteMapping = async (mapping) => {
+        const confirmMessage = `${mapping.clientName}과의 매핑을 취소하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`;
+        if (!window.confirm(confirmMessage)) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            
+            // DELETE 요청으로 매핑 삭제 (백엔드의 @DeleteMapping("/mappings/{id}") 엔드포인트 사용)
+            const response = await fetch(`/api/admin/mappings/${mapping.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                notificationManager.success('매핑이 성공적으로 취소되었습니다.');
+                loadMappings(); // 데이터 새로고침
+            } else {
+                notificationManager.error(result.message || '매핑 취소에 실패했습니다.');
+            }
+
+        } catch (error) {
+            console.error('매핑 삭제 실패:', error);
+            notificationManager.error('매핑 취소에 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // 필터 핸들러들
     const handleStatusChange = (status) => {
         setFilterStatus(status);
@@ -572,6 +607,7 @@ const MappingManagement = () => {
                                 onTransfer={handleTransferConsultant}
                                 onViewTransferHistory={handleViewTransferHistory}
                                 onRefund={handleRefundMapping}
+                                onDelete={handleDeleteMapping}
                             />
                         ))}
                     </div>

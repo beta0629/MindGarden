@@ -432,12 +432,13 @@ const MappingManagement = () => {
         try {
             setLoading(true);
             
-            // DELETE 요청으로 매핑 삭제 (백엔드의 @DeleteMapping("/mappings/{id}") 엔드포인트 사용)
+            // DELETE 요청으로 매핑 삭제 (동적 권한 시스템 사용)
             const response = await fetch(`/api/admin/mappings/${mapping.id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
+                credentials: 'include'  // 세션 쿠키 포함
             });
 
             const result = await response.json();

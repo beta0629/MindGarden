@@ -1664,23 +1664,10 @@ public class AdminController {
         try {
             log.info("🔧 매핑 삭제: ID={}", id);
             
-            // 세션에서 현재 사용자 정보 가져오기
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
-            }
-            
-            // 관리자 권한 확인
-            if (!currentUser.getRole().equals(UserRole.HQ_MASTER) && 
-                !currentUser.getRole().equals(UserRole.BRANCH_MANAGER) &&
-                !currentUser.getRole().equals(UserRole.ADMIN)) {
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "매핑 삭제 권한이 없습니다."
-                ));
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_DELETE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
             }
             
             adminService.deleteMapping(id);

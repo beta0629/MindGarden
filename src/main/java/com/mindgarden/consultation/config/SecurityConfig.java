@@ -59,7 +59,10 @@ public class SecurityConfig {
                 // CSRF 활성화 (운영 환경에서는 보안 필수)
                 .csrf(csrf -> csrf
                     .csrfTokenRepository(csrfTokenRepository())
-                    .ignoringRequestMatchers("/api/auth/**") // 인증 관련 API는 CSRF 제외
+                    .ignoringRequestMatchers(
+                        "/api/auth/**",           // 인증 관련 API는 CSRF 제외
+                        "/api/admin/mappings/**"  // 매핑 관리 API는 CSRF 제외 (AJAX 요청)
+                    )
                 )
                 
                 // 세션 관리 활성화

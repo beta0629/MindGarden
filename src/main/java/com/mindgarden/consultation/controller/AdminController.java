@@ -1505,9 +1505,29 @@ public class AdminController {
      * 매핑 정보 수정
      */
     @PutMapping("/mappings/{id}")
-    public ResponseEntity<?> updateMapping(@PathVariable Long id, @RequestBody ConsultantClientMappingDto dto) {
+    public ResponseEntity<?> updateMapping(@PathVariable Long id, @RequestBody ConsultantClientMappingDto dto, HttpSession session) {
         try {
             log.info("🔧 매핑 정보 수정: ID={}", id);
+            
+            // 세션에서 현재 사용자 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 관리자 권한 확인
+            if (!currentUser.getRole().equals(UserRole.HQ_MASTER) && 
+                !currentUser.getRole().equals(UserRole.BRANCH_MANAGER) &&
+                !currentUser.getRole().equals(UserRole.ADMIN)) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "매핑 수정 권한이 없습니다."
+                ));
+            }
+            
             ConsultantClientMapping mapping = adminService.updateMapping(id, dto);
             return ResponseEntity.ok(Map.of(
                 "success", true,
@@ -1640,9 +1660,29 @@ public class AdminController {
      * 매핑 삭제 (비활성화)
      */
     @DeleteMapping("/mappings/{id}")
-    public ResponseEntity<?> deleteMapping(@PathVariable Long id) {
+    public ResponseEntity<?> deleteMapping(@PathVariable Long id, HttpSession session) {
         try {
             log.info("🔧 매핑 삭제: ID={}", id);
+            
+            // 세션에서 현재 사용자 정보 가져오기
+            User currentUser = SessionUtils.getCurrentUser(session);
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+            
+            // 관리자 권한 확인
+            if (!currentUser.getRole().equals(UserRole.HQ_MASTER) && 
+                !currentUser.getRole().equals(UserRole.BRANCH_MANAGER) &&
+                !currentUser.getRole().equals(UserRole.ADMIN)) {
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "매핑 삭제 권한이 없습니다."
+                ));
+            }
+            
             adminService.deleteMapping(id);
             return ResponseEntity.ok(Map.of(
                 "success", true,

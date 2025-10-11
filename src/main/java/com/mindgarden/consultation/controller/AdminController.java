@@ -1651,11 +1651,19 @@ public class AdminController {
         try {
             log.info("🔧 매핑 삭제: ID={}", id);
             
+            // 현재 사용자 정보 로깅
+            User currentUser = SessionUtils.getCurrentUser(session);
+            log.info("📋 현재 사용자: {}, Role: {}", 
+                currentUser != null ? currentUser.getEmail() : "null",
+                currentUser != null ? currentUser.getRole() : "null");
+            
             // 동적 권한 체크
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_DELETE", dynamicPermissionService);
             if (permissionResponse != null) {
+                log.error("❌ 권한 체크 실패: {}", permissionResponse.getBody());
                 return permissionResponse;
             }
+            log.info("✅ 권한 체크 통과");
             
             adminService.deleteMapping(id);
             return ResponseEntity.ok(Map.of(

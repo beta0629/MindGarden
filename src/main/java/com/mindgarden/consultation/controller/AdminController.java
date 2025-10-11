@@ -1657,16 +1657,13 @@ public class AdminController {
                 currentUser != null ? currentUser.getEmail() : "null",
                 currentUser != null ? currentUser.getRole() : "null");
             
-            // 임시: 권한 체크 우회 (디버깅용)
-            log.info("🔧 임시로 권한 체크를 우회합니다 (디버깅용)");
-            
-            // 동적 권한 체크 (주석 처리)
-            // ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_DELETE", dynamicPermissionService);
-            // if (permissionResponse != null) {
-            //     log.error("❌ 권한 체크 실패: {}", permissionResponse.getBody());
-            //     return permissionResponse;
-            // }
-            // log.info("✅ 권한 체크 통과");
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_DELETE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                log.error("❌ 권한 체크 실패: {}", permissionResponse.getBody());
+                return permissionResponse;
+            }
+            log.info("✅ 권한 체크 통과");
             
             adminService.deleteMapping(id);
             return ResponseEntity.ok(Map.of(

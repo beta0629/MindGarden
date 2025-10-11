@@ -141,7 +141,7 @@ function AppContent() {
     '/test/advanced-sample'
   ];
   
-  const isPublicPath = publicPaths.includes(location.pathname);
+  const isPublicPath = publicPaths.includes(window.location.pathname);
   
   // 공개 경로가 아닐 때만 세션 체크 실행
   useEffect(() => {
@@ -149,9 +149,9 @@ function AppContent() {
       console.log('🔍 세션 확인 시작...');
       checkSession();
     } else {
-      console.log('🔓 공개 경로 - 세션 체크 건너뛰기:', location.pathname);
+      console.log('🔓 공개 경로 - 세션 체크 건너뛰기:', window.location.pathname);
     }
-  }, [checkSession, isPublicPath, location.pathname]);
+  }, [checkSession, isPublicPath, window.location.pathname]);
   
   // 통계 모달 상태
   const [showStatisticsModal, setShowStatisticsModal] = React.useState(false);

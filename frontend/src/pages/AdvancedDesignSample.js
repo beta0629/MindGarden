@@ -930,7 +930,10 @@ const AdvancedDesignSample = () => {
 
           {/* 성능 최적화 탭 */}
           {selectedTab === 'performance' && (
-            <PerformanceOptimizationSample />
+            <div className="performance-optimization-sample">
+              <h3>성능 최적화 샘플</h3>
+              <p>성능 최적화 컴포넌트가 준비 중입니다.</p>
+            </div>
           )}
         </MGContainer>
       </MGSection>

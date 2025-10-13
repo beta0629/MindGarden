@@ -223,8 +223,6 @@ StatisticsModal.propTypes = {
   userRole: PropTypes.string
 };
 
-StatisticsModal.defaultProps = {
-  userRole: 'ADMIN'
-};
+// defaultProps 제거 - JavaScript 기본 매개변수 사용 (line 17: userRole = 'ADMIN')
 
 export default StatisticsModal;

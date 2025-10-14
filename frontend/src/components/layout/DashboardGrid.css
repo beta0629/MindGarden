@@ -1,0 +1,66 @@
+/**
+ * 대시보드 그리드 스타일
+ * Phase 3: 공통 레이아웃 컴포넌트
+ */
+
+.dashboard-grid {
+  display: grid;
+  width: 100%;
+}
+
+/* 열 개수 */
+.dashboard-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.dashboard-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.dashboard-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.dashboard-grid-auto {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* 간격 */
+.dashboard-grid-gap-sm {
+  gap: var(--spacing-sm);
+}
+
+.dashboard-grid-gap-md {
+  gap: var(--spacing-md);
+}
+
+.dashboard-grid-gap-lg {
+  gap: var(--spacing-lg);
+}
+
+.dashboard-grid-gap-xl {
+  gap: var(--spacing-xl);
+}
+
+/* 반응형 */
+@media (max-width: 1024px) {
+  .dashboard-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .dashboard-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid-4,
+  .dashboard-grid-3,
+  .dashboard-grid-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-grid-auto {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,106 @@
+/**
+ * 대시보드 섹션 스타일
+ * Phase 3: 공통 레이아웃 컴포넌트
+ * 
+ * 기존 CSS 변수만 사용
+ */
+
+.dashboard-section {
+  background: white;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+  border: var(--border-width-thin) solid #e9ecef;
+}
+
+.dashboard-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 2px solid #e9ecef;
+}
+
+.dashboard-section-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.dashboard-section-icon {
+  color: var(--role-admin);
+  font-size: var(--font-size-xl);
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-section-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: #2c3e50;
+  margin: 0;
+}
+
+.dashboard-section-collapse-btn {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  margin-left: var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-section-collapse-btn:hover {
+  background: #f8f9fa;
+  color: #2c3e50;
+}
+
+.dashboard-section-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.dashboard-section-content {
+  animation: fadeIn var(--transition-normal);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .dashboard-section {
+    padding: var(--spacing-md);
+  }
+  
+  .dashboard-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+  
+  .dashboard-section-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  .dashboard-section-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+

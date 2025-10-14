@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import '../../styles/main.css';
-import './PermissionManagement.css';
+import '../../styles/mindgarden-design-system.css';
 
 const PERMISSION_CATEGORIES = {
     '대시보드': [
@@ -249,10 +248,10 @@ const PermissionManagement = () => {
 
     if (loading) {
         return (
-            <div className="permission-management">
-                <div className="permission-loading">
-                    <h3>⏳ 권한 정보 로딩 중...</h3>
-                    <p>잠시만 기다려주세요.</p>
+            <div className="mg-permission-management">
+                <div className="mg-loading-container">
+                    <div className="mg-spinner"></div>
+                    <p>권한 정보 로딩 중...</p>
                 </div>
             </div>
         );
@@ -260,8 +259,8 @@ const PermissionManagement = () => {
 
     if (!canManagePermissions) {
         return (
-            <div className="permission-management">
-                <div className="permission-error">
+            <div className="mg-permission-management">
+                <div className="mg-error-state">
                     <h3>🚫 접근 권한 없음</h3>
                     <p>권한 관리를 위해서는 지점 수퍼 어드민 이상의 권한이 필요합니다.</p>
                     <p>현재 역할: {currentUserRole || '알 수 없음'}</p>
@@ -283,20 +282,15 @@ const PermissionManagement = () => {
     const manageableRoles = getManageableRoles();
 
     return (
-        <div className="permission-management">
-            <div className="permission-header">
-                <h2>🔐 권한 관리</h2>
-                <p>역할별 권한을 설정하고 관리할 수 있습니다.</p>
-            </div>
-
+        <div className="mg-permission-management">
             {message && (
-                <div className={`permission-message ${message.includes('성공') ? 'success' : 'error'}`}>
+                <div className={`mg-permission-message ${message.includes('성공') ? 'success' : 'error'}`}>
                     {message}
                 </div>
             )}
 
-            <div className="permission-controls">
-                <div className="role-selector">
+            <div className="mg-permission-controls">
+                <div className="mg-role-selector">
                     <label htmlFor="role-select">역할 선택:</label>
                     <select 
                         id="role-select"
@@ -311,14 +305,14 @@ const PermissionManagement = () => {
                         ))}
                     </select>
                     {!isHQMaster && (
-                        <small className="role-restriction">
+                        <small className="mg-role-restriction">
                             {ROLE_DISPLAY_NAMES[currentUserRole] || currentUserRole}는 자신의 역할만 관리할 수 있습니다.
                         </small>
                     )}
                 </div>
                 
                 <button 
-                    className="save-button"
+                    className="mg-button mg-button-primary"
                     onClick={handleSavePermissions}
                     disabled={loading}
                 >
@@ -326,22 +320,22 @@ const PermissionManagement = () => {
                 </button>
             </div>
 
-            <div className="permission-categories">
+            <div className="mg-permission-categories">
                 {Object.entries(PERMISSION_CATEGORIES).map(([categoryName, permissions]) => (
-                    <div key={categoryName} className="permission-category">
+                    <div key={categoryName} className="mg-permission-category">
                         <h3>{categoryName}</h3>
-                        <div className="permission-list">
+                        <div className="mg-permission-list">
                             {permissions.map(permission => (
-                                <div key={permission.code} className="permission-item">
-                                    <label className="permission-checkbox">
+                                <div key={permission.code} className="mg-permission-item">
+                                    <label className="mg-permission-checkbox">
                                         <input
                                             type="checkbox"
                                             checked={rolePermissions.includes(permission.code)}
                                             onChange={() => handlePermissionToggle(permission.code)}
                                         />
-                                        <span className="permission-name">{permission.name}</span>
+                                        <span className="mg-permission-name">{permission.name}</span>
                                     </label>
-                                    <p className="permission-description">{permission.description}</p>
+                                    <p className="mg-permission-description">{permission.description}</p>
                                 </div>
                             ))}
                         </div>
@@ -349,15 +343,15 @@ const PermissionManagement = () => {
                 ))}
             </div>
 
-            <div className="permission-summary">
+            <div className="mg-permission-summary">
                 <h3>현재 선택된 권한 ({rolePermissions.length}개)</h3>
-                <div className="selected-permissions">
+                <div className="mg-selected-permissions">
                     {rolePermissions.map(permissionCode => {
                         const permission = Object.values(PERMISSION_CATEGORIES)
                             .flat()
                             .find(p => p.code === permissionCode);
                         return (
-                            <span key={permissionCode} className="permission-tag">
+                            <span key={permissionCode} className="mg-permission-tag">
                                 {permission ? permission.name : permissionCode}
                             </span>
                         );

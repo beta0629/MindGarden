@@ -142,4 +142,70 @@
   --will-change-transform: transform;
   --will-change-opacity: opacity;
   --will-change-scroll: scroll-position;
+
+  /* ===== Phase 1: 테마 변수 확장 ===== */
+  
+  /* 상담 상태별 색상 */
+  --status-requested: #fbbf24;      /* 상담 요청 - 노란색 */
+  --status-assigned: #8b5cf6;       /* 배정됨 - 보라색 */
+  --status-confirmed: #3b82f6;      /* 확인됨 - 파란색 */
+  --status-in-progress: #10b981;    /* 진행중 - 초록색 */
+  --status-completed: #059669;      /* 완료 - 진한 초록 */
+  --status-cancelled: #ef4444;      /* 취소 - 빨간색 */
+  --status-no-show: #f97316;        /* 노쇼 - 주황색 */
+  
+  /* 결제 상태별 색상 */
+  --payment-pending: #fbbf24;       /* 대기 - 노란색 */
+  --payment-completed: #10b981;     /* 완료 - 초록색 */
+  --payment-failed: #ef4444;        /* 실패 - 빨간색 */
+  --payment-refunded: #6b7280;      /* 환불 - 회색 */
+  
+  /* 사용자 상태별 색상 */
+  --user-active: #10b981;           /* 활성 - 초록색 */
+  --user-inactive: #6b7280;         /* 비활성 - 회색 */
+  --user-suspended: #ef4444;        /* 정지 - 빨간색 */
+  --user-pending: #fbbf24;          /* 대기 - 노란색 */
+  
+  /* 상담사 등급별 색상 */
+  --grade-junior: #cd7f32;          /* 주니어 - 브론즈 */
+  --grade-senior: #c0c0c0;          /* 시니어 - 실버 */
+  --grade-expert: #ffd700;          /* 전문가 - 골드 */
+  --grade-master: #e5e4e2;          /* 마스터 - 플래티넘 */
+  
+  /* 역할별 색상 */
+  --role-client: #6b7280;           /* 내담자 - 회색 */
+  --role-consultant: #8b5cf6;       /* 상담사 - 보라색 */
+  --role-admin: #3b82f6;            /* 관리자 - 파란색 */
+  --role-branch-admin: #10b981;     /* 지점관리자 - 초록색 */
+  --role-hq-admin: #f59e0b;         /* 본사관리자 - 주황색 */
+  --role-hq-master: #ef4444;        /* 본사마스터 - 빨간색 */
+  
+  /* 휴가 유형별 색상 */
+  --vacation-annual: #3b82f6;       /* 연차 - 파란색 */
+  --vacation-sick: #ef4444;         /* 병가 - 빨간색 */
+  --vacation-personal: #8b5cf6;     /* 개인 - 보라색 */
+  --vacation-maternity: #ec4899;    /* 출산 - 핑크 */
+  --vacation-paternity: #06b6d4;    /* 육아 - 청록색 */
+  --vacation-other: #6b7280;        /* 기타 - 회색 */
+  
+  /* 배경 색상 (투명도 포함) */
+  --status-requested-bg: rgba(251, 191, 36, 0.1);
+  --status-assigned-bg: rgba(139, 92, 246, 0.1);
+  --status-confirmed-bg: rgba(59, 130, 246, 0.1);
+  --status-in-progress-bg: rgba(16, 185, 129, 0.1);
+  --status-completed-bg: rgba(5, 150, 105, 0.1);
+  --status-cancelled-bg: rgba(239, 68, 68, 0.1);
+  
+  --grade-junior-bg: rgba(205, 127, 50, 0.1);
+  --grade-senior-bg: rgba(192, 192, 192, 0.1);
+  --grade-expert-bg: rgba(255, 215, 0, 0.1);
+  --grade-master-bg: rgba(229, 228, 226, 0.1);
+  
+  --role-client-bg: rgba(107, 114, 128, 0.1);
+  --role-consultant-bg: rgba(139, 92, 246, 0.1);
+  --role-admin-bg: rgba(59, 130, 246, 0.1);
+  
+  --vacation-annual-bg: rgba(59, 130, 246, 0.1);
+  --vacation-sick-bg: rgba(239, 68, 68, 0.1);
+  --vacation-personal-bg: rgba(139, 92, 246, 0.1);
 }

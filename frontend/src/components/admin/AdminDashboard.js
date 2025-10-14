@@ -1,28 +1,23 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Alert } from 'react-bootstrap';
-import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCreditCard, FaReceipt, FaFileAlt, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaToggleOff, FaCompressAlt, FaClock, FaChartBar, FaUserGraduate, FaRedo, FaFileExport } from 'react-icons/fa';
+import { FaUsers, FaUserTie, FaLink, FaCalendarAlt, FaCalendarCheck, FaCog, FaDollarSign, FaChartLine, FaCogs, FaBox, FaShoppingCart, FaCheckCircle, FaWallet, FaTruck, FaSyncAlt, FaExclamationTriangle, FaBuilding, FaMapMarkerAlt, FaUserCog, FaToggleOn, FaCompressAlt, FaChartBar, FaUserGraduate, FaRedo, FaFileExport } from 'react-icons/fa';
+import { Calendar, CheckCircle, TrendingUp, AlertTriangle, BarChart, Settings, LayoutDashboard, Heart, Trophy, Users, CalendarDays, User, Clock, PieChart, Target, Shield, Activity, Link2, DollarSign, RotateCcw, Receipt } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
-import TodayStatistics from './TodayStatistics';
 import SystemStatus from './system/SystemStatus';
+import DashboardSection from '../layout/DashboardSection';
+import StatCard from '../ui/Card/StatCard';
+import { API_BASE_URL } from '../../constants/api';
 import SystemTools from './system/SystemTools';
-import StatisticsModal from '../common/StatisticsModal';
-import ConsultationCompletionStats from './ConsultationCompletionStats';
-import VacationStatistics from './VacationStatistics';
-import ConsultantRatingStatistics from './ConsultantRatingStatistics';
 import PermissionManagement from './PermissionManagement';
 // 새로 추가된 모달 컴포넌트들
-import ErpReportModal from '../erp/ErpReportModal';
-import PerformanceMetricsModal from '../statistics/PerformanceMetricsModal';
-import SpecialtyManagementModal from '../consultant/SpecialtyManagementModal';
-import RecurringExpenseModal from '../finance/RecurringExpenseModal';
 import { useSession } from '../../contexts/SessionContext';
-import { COMPONENT_CSS, ICONS } from '../../constants/css-variables';
+import { COMPONENT_CSS } from '../../constants/css-variables';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUtils';
 import '../../styles/main.css';
+import '../../styles/mindgarden-design-system.css';
 import './AdminDashboard.new.css';
 import './system/SystemStatus.css';
 import './system/SystemTools.css';
@@ -30,12 +25,62 @@ import './system/SystemTools.css';
 const AdminDashboard = ({ user: propUser }) => {
     const navigate = useNavigate();
     const { user: sessionUser, isLoggedIn, isLoading: sessionLoading, hasPermission } = useSession();
+
+    // 이름에서 아바타용 초성을 추출하는 함수
+    const getAvatarInitial = (name) => {
+        if (!name) return '?';
+        
+        // 한글인 경우 초성 추출
+        if (/[가-힣]/.test(name)) {
+            // 이름을 공백으로 분리하여 각 부분의 첫 글자를 가져옴
+            const parts = name.trim().split(/\s+/);
+            if (parts.length > 1) {
+                // 성과 이름이 분리된 경우 (예: "김 선희")
+                return parts[0].charAt(0) + parts[1].charAt(0);
+            } else {
+                // 성명이 붙어있는 경우 (예: "김선희", "김김선희")
+                const chars = name.split('');
+                // 첫 글자가 성인지 확인하고, 연속된 같은 글자가 있는지 확인
+                let result = chars[0];
+                for (let i = 1; i < chars.length; i++) {
+                    if (chars[i] === chars[0]) {
+                        result += chars[i];
+                    } else {
+                        break;
+                    }
+                }
+                return result;
+            }
+        }
+        
+        // 영문인 경우 첫 글자
+        return name.charAt(0).toUpperCase();
+    };
     const [userPermissions, setUserPermissions] = useState([]);
     const [stats, setStats] = useState({
         totalConsultants: 0,
         totalClients: 0,
         totalMappings: 0,
-        activeMappings: 0
+        activeMappings: 0,
+        consultantRatingStats: {
+            totalRatings: 0,
+            averageScore: 0,
+            topConsultants: []
+        },
+        vacationStats: {
+            summary: {
+                totalConsultants: 0,
+                totalVacationDays: 0,
+                averageVacationDays: 0
+            },
+            consultantStats: []
+        },
+        consultationStats: {
+            totalCompleted: 0,
+            completionRate: 0,
+            averageCompletionTime: 0,
+            monthlyData: []
+        }
     });
     
     const [refundStats, setRefundStats] = useState({
@@ -57,6 +102,13 @@ const AdminDashboard = ({ user: propUser }) => {
     const [showSpecialtyManagement, setShowSpecialtyManagement] = useState(false);
     const [showRecurringExpense, setShowRecurringExpense] = useState(false);
     
+    const [todayStats, setTodayStats] = useState({
+        totalToday: 0,
+        completedToday: 0,
+        inProgressToday: 0,
+        cancelledToday: 0
+    });
+    
     const [loading, setLoading] = useState(false);
     const [showToastState, setShowToastState] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
@@ -69,8 +121,32 @@ const AdminDashboard = ({ user: propUser }) => {
     const [showStatisticsModal, setShowStatisticsModal] = useState(false);
     const isInitialized = useRef(false);
 
+    const loadTodayStats = useCallback(async () => {
+        const user = propUser || sessionUser;
+        if (!user?.role) return;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/schedules/today/statistics?userRole=${user.role}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setTodayStats({
+                    totalToday: data.totalToday || 0,
+                    completedToday: data.completedToday || 0,
+                    inProgressToday: data.inProgressToday || 0,
+                    cancelledToday: data.cancelledToday || 0
+                });
+            }
+        } catch (error) {
+            console.error('오늘의 통계 로드 실패:', error);
+        }
+    }, [propUser, sessionUser]);
+
     // 세션 체크 및 권한 확인
-    // 단순한 초기화 메소드
     useEffect(() => {
         if (isInitialized.current) return;
         
@@ -79,6 +155,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 console.log('🔄 AdminDashboard 초기화 시작...');
                 const permissions = await fetchUserPermissions(setUserPermissions);
                 console.log('✅ AdminDashboard 초기화 완료:', permissions.length, '개 권한');
+                loadTodayStats();
                 isInitialized.current = true;
             } catch (error) {
                 console.error('❌ AdminDashboard 초기화 실패:', error);
@@ -88,7 +165,7 @@ const AdminDashboard = ({ user: propUser }) => {
         };
 
         initializeDashboard();
-    }, []);
+    }, [loadTodayStats]);
 
     const showToast = useCallback((message, type = 'success') => {
         setToastMessage(message);
@@ -102,16 +179,38 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadStats = useCallback(async () => {
         setLoading(true);
         try {
-            const [consultantsRes, clientsRes, mappingsRes] = await Promise.all([
+            const [consultantsRes, clientsRes, mappingsRes, ratingRes, vacationRes, consultationRes] = await Promise.all([
                 fetch('/api/admin/consultants/with-vacation?date=' + new Date().toISOString().split('T')[0]),
                 fetch('/api/admin/clients/with-mapping-info'),
-                fetch('/api/admin/mappings')
+                fetch('/api/admin/mappings'),
+                fetch('/api/admin/consultant-rating-stats'),
+                fetch('/api/admin/vacation-statistics?period=month'),
+                fetch('/api/admin/statistics/consultation-completion')
             ]);
 
             let totalConsultants = 0;
             let totalClients = 0;
             let totalMappings = 0;
             let activeMappings = 0;
+            let consultantRatingStats = {
+                totalRatings: 0,
+                averageScore: 0,
+                topConsultants: []
+            };
+            let vacationStats = {
+                summary: {
+                    totalConsultants: 0,
+                    totalVacationDays: 0,
+                    averageVacationDays: 0
+                },
+                consultantStats: []
+            };
+            let consultationStats = {
+                totalCompleted: 0,
+                completionRate: 0,
+                averageCompletionTime: 0,
+                monthlyData: []
+            };
 
             if (consultantsRes.ok) {
                 const consultantsData = await consultantsRes.json();
@@ -129,11 +228,51 @@ const AdminDashboard = ({ user: propUser }) => {
                 activeMappings = (mappingsData.data || []).filter(m => m.status === 'ACTIVE').length;
             }
 
+            if (ratingRes.ok) {
+                const ratingData = await ratingRes.json();
+                if (ratingData.success && ratingData.data) {
+                    consultantRatingStats = {
+                        totalRatings: ratingData.data.totalRatings || 0,
+                        averageScore: ratingData.data.averageScore || 0,
+                        topConsultants: ratingData.data.topConsultants || []
+                    };
+                }
+            }
+
+            if (vacationRes.ok) {
+                const vacationData = await vacationRes.json();
+                if (vacationData.success) {
+                    vacationStats = {
+                        summary: vacationData.summary || {
+                            totalConsultants: 0,
+                            totalVacationDays: 0,
+                            averageVacationDays: 0
+                        },
+                        consultantStats: vacationData.consultantStats || []
+                    };
+                }
+            }
+
+            if (consultationRes.ok) {
+                const consultationData = await consultationRes.json();
+                if (consultationData.success) {
+                    consultationStats = {
+                        totalCompleted: consultationData.data?.totalCompleted || 0,
+                        completionRate: consultationData.data?.completionRate || 0,
+                        averageCompletionTime: consultationData.data?.averageCompletionTime || 0,
+                        monthlyData: consultationData.data?.monthlyData || []
+                    };
+                }
+            }
+
             setStats({
                 totalConsultants,
                 totalClients,
                 totalMappings,
-                activeMappings
+                activeMappings,
+                consultantRatingStats,
+                vacationStats,
+                consultationStats
             });
         } catch (error) {
             console.error('통계 데이터 로드 실패:', error);
@@ -427,67 +566,80 @@ const AdminDashboard = ({ user: propUser }) => {
 
     return (
         <SimpleLayout>
-            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CONTAINER}>
-            {/* 오늘의 통계 */}
-            {(propUser || sessionUser) && (propUser || sessionUser)?.id && (propUser || sessionUser)?.role && (
-                <TodayStatistics 
-                    userId={(propUser || sessionUser)?.id} 
-                    userRole={(propUser || sessionUser)?.role}
-                    onShowStatistics={() => setShowStatisticsModal(true)}
-                />
-            )}
-
-            {/* 시스템 개요 */}
-            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                    <i className={ICONS.BI.SPEEDOMETER}></i>
-                    시스템 개요
-                </h2>
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARDS}>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
-                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} consultants`}>
-                            <FaUserTie />
-                        </div>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                            <h3>상담사</h3>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{stats.totalConsultants}명</div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>현재 활성화된 상담사</div>
+        <div className="mg-dashboard-layout">
+            {/* Dashboard Header */}
+            <div className="mg-dashboard-header">
+                <div className="mg-dashboard-header-content">
+                    <div className="mg-dashboard-header-left">
+                        <LayoutDashboard />
+                        <div>
+                            <h1 className="mg-dashboard-title">관리자 대시보드</h1>
+                            <p className="mg-dashboard-subtitle">시스템 전체 현황을 관리합니다</p>
                         </div>
                     </div>
-                    
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
-                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} clients`}>
-                            <FaUsers />
-                        </div>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                            <h3>내담자</h3>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{stats.totalClients}명</div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>현재 활성화된 내담자</div>
-                        </div>
-                    </div>
-                    
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
-                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} mappings`}>
-                            <FaLink />
-                        </div>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                            <h3>매핑</h3>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{stats.totalMappings}개</div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>생성된 매핑</div>
-                        </div>
-                    </div>
-                    
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
-                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} active`}>
-                            <FaLink />
-                        </div>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                            <h3>활성 매핑</h3>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{stats.activeMappings}개</div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>활성 상태</div>
-                        </div>
+                    <div className="mg-dashboard-header-right">
+                        <button className="mg-dashboard-icon-btn" onClick={() => setShowStatisticsModal(true)}>
+                            <BarChart />
+                        </button>
                     </div>
                 </div>
+            </div>
+
+            {/* Dashboard Stats Grid */}
+            <div className="mg-dashboard-stats">
+                <StatCard
+                    icon={<Users />}
+                    value={stats.totalConsultants + stats.totalClients}
+                    label="총 사용자"
+                    change="+12.5%"
+                    changeType="positive"
+                />
+                <StatCard
+                    icon={<Calendar />}
+                    value={todayStats.totalToday}
+                    label="예약된 상담"
+                    change="+8.2%"
+                    changeType="positive"
+                />
+                <StatCard
+                    icon={<CheckCircle />}
+                    value={todayStats.completedToday}
+                    label="완료된 상담"
+                    change="+15.3%"
+                    changeType="positive"
+                />
+            </div>
+
+            {/* 상세 통계 섹션들 */}
+                {/* 시스템 개요 */}
+            <DashboardSection
+                title="시스템 개요"
+                subtitle="전체 시스템 현황 요약"
+                icon={<Activity />}
+            >
+                <div className="mg-stats-grid">
+                    <StatCard
+                        icon={<User />}
+                        value={stats.totalConsultants}
+                        label="상담사"
+                    />
+                    <StatCard
+                        icon={<Users />}
+                        value={stats.totalClients}
+                        label="내담자"
+                    />
+                    <StatCard
+                        icon={<Link2 />}
+                        value={stats.totalMappings}
+                        label="매핑"
+                    />
+                    <StatCard
+                        icon={<CheckCircle />}
+                        value={stats.activeMappings}
+                        label="활성 매핑"
+                    />
+                </div>
+            </DashboardSection>
 
                 {/* 입금 확인 대기 알림 - 매핑 관리 권한이 있는 사용자만 표시 */}
                 {(() => {
@@ -499,281 +651,328 @@ const AdminDashboard = ({ user: propUser }) => {
                     });
                     return canViewPendingDeposits;
                 })() && pendingDepositStats.count > 0 && (
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                        <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE} style={{ color: 'white' }}>
-                            <i className="bi bi-exclamation-triangle-fill"></i>
-                            ⚠️ 입금 확인 대기 알림
-                        </h2>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARDS}>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD} style={{ backgroundColor: '#fff5f5' }}>
-                                <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} pending-deposit`} style={{ backgroundColor: '#dc3545' }}>
-                                    <FaExclamationTriangle />
-                                </div>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                                    <h3>입금 확인 대기</h3>
-                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE} style={{ color: '#dc3545' }}>
-                                        {pendingDepositStats.count}건
-                                    </div>
-                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>
-                                        결제 확인 완료, 입금 대기 중
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD} style={{ backgroundColor: '#fff8f0' }}>
-                                <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} pending-amount`} style={{ backgroundColor: '#fd7e14' }}>
-                                    <FaDollarSign />
-                                </div>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                                    <h3>대기 중인 금액</h3>
-                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE} style={{ color: '#fd7e14' }}>
-                                        {pendingDepositStats.totalAmount.toLocaleString()}원
-                                    </div>
-                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>
-                                        입금 확인 대기 중인 총 금액
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD} style={{ backgroundColor: '#f8f5ff' }}>
-                                <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} oldest-waiting`} style={{ backgroundColor: '#6f42c1' }}>
-                                    <FaClock />
-                                </div>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                                    <h3>최장 대기 시간</h3>
-                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE} style={{ color: '#6f42c1' }}>
-                                        {pendingDepositStats.oldestHours}시간
-                                    </div>
-                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>
-                                        가장 오래 대기 중인 건
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD} onClick={() => navigate('/admin/mapping-management')} style={{ cursor: 'pointer', backgroundColor: '#f0fdfa' }}>
-                                <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} manage-deposits`} style={{ backgroundColor: '#20c997' }}>
-                                    <FaCog />
-                                </div>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                                    <h3>입금 확인 처리</h3>
-                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE} style={{ color: '#20c997' }}>
-                                        처리하기
-                                    </div>
-                                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>
-                                        매핑 관리에서 입금 확인
-                                    </div>
-                                </div>
-                            </div>
+                    <DashboardSection
+                        title="입금 확인 대기 알림"
+                        subtitle="결제 확인 완료, 입금 대기 중인 매핑"
+                        icon={<AlertTriangle />}
+                    >
+                        <div className="mg-stats-grid">
+                            <StatCard
+                                icon={<AlertTriangle />}
+                                value={`${pendingDepositStats.count}건`}
+                                label="입금 확인 대기"
+                            />
+                            <StatCard
+                                icon={<DollarSign />}
+                                value={`${pendingDepositStats.totalAmount.toLocaleString()}원`}
+                                label="대기 중인 금액"
+                            />
+                            <StatCard
+                                icon={<Clock />}
+                                value={`${pendingDepositStats.oldestHours}시간`}
+                                label="최장 대기 시간"
+                            />
+                            <StatCard
+                                icon={<Settings />}
+                                value="처리하기"
+                                label="입금 확인 처리"
+                                onClick={() => navigate('/admin/mapping-management')}
+                            />
                         </div>
-                    </div>
+                    </DashboardSection>
                 )}
 
                 {/* 휴가 통계 섹션 */}
-                <VacationStatistics />
+                <DashboardSection
+                    title="휴가 현황"
+                    subtitle="상담사별 휴가 사용 현황 및 통계"
+                    icon={<CalendarDays />}
+                >
+                    <div className="mg-stats-grid">
+                        <StatCard
+                            icon={<User />}
+                            value={`${stats.vacationStats?.summary?.totalConsultants || 0}명`}
+                            label="전체 상담사"
+                        />
+                        <StatCard
+                            icon={<CalendarDays />}
+                            value={`${(stats.vacationStats?.summary?.totalVacationDays || 0).toFixed(1)}일`}
+                            label="총 휴가일수"
+                        />
+                        <StatCard
+                            icon={<BarChart />}
+                            value={`${(stats.vacationStats?.summary?.averageVacationDays || 0).toFixed(1)}일`}
+                            label="평균 휴가일수"
+                        />
+                    </div>
+                    
+                    {/* 상담사별 휴가 현황 테이블 */}
+                    {stats.vacationStats?.consultantStats && stats.vacationStats.consultantStats.length > 0 && (
+                        <div className="mg-table-container">
+                            <table className="mg-table">
+                                <thead>
+                                    <tr>
+                                        <th>상담사</th>
+                                        <th>이메일</th>
+                                        <th>휴가일수</th>
+                                        <th>최근 휴가</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {stats.vacationStats.consultantStats.slice(0, 10).map((consultant) => (
+                                        <tr key={consultant.consultantId}>
+                                            <td data-label="상담사">
+                                                <div className="mg-flex mg-items-center mg-gap-2">
+                                                    <div className="mg-avatar mg-avatar-sm mg-avatar-primary">
+                                                        {getAvatarInitial(consultant.consultantName)}
+                                                    </div>
+                                                    {consultant.consultantName}
+                                                </div>
+                                            </td>
+                                            <td data-label="이메일">{consultant.consultantEmail}</td>
+                                            <td data-label="휴가일수">
+                                                <span className="mg-badge mg-badge-primary">
+                                                    {(consultant.vacationDays || 0).toFixed(1)}일
+                                                </span>
+                                            </td>
+                                            <td data-label="최근 휴가">
+                                                <div className="mg-flex mg-items-center mg-gap-1">
+                                                    <Clock />
+                                                    {consultant.lastVacationDate ? 
+                                                        new Date(consultant.lastVacationDate).toLocaleDateString('ko-KR') : 
+                                                        '-'
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </DashboardSection>
 
                 {/* 상담사 평가 통계 섹션 */}
-                <ConsultantRatingStatistics />
+                <DashboardSection
+                    title="상담사 평가 통계"
+                    subtitle="전체 상담사 평가 현황 및 만족도 지표"
+                    icon={<Heart />}
+                >
+                    <div className="mg-stats-grid">
+                        <StatCard
+                            icon={<Heart />}
+                            value={`${stats.consultantRatingStats?.totalRatings || 0}개`}
+                            label="총 평가 수"
+                        />
+                        <StatCard
+                            icon={<Trophy />}
+                            value={(stats.consultantRatingStats?.averageScore || 0).toFixed(1)}
+                            label="전체 평균 점수"
+                        />
+                        <StatCard
+                            icon={<Users />}
+                            value={`${stats.consultantRatingStats?.topConsultants?.length || 0}명`}
+                            label="평가받은 상담사"
+                        />
+                    </div>
+                </DashboardSection>
 
                 {/* 환불 통계 섹션 */}
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                        <i className="bi bi-arrow-return-left"></i>
-                        환불 현황 (최근 1개월)
-                    </h2>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARDS}>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} refund-count`} style={{ backgroundColor: '#dc3545' }}>
-                                <FaReceipt />
-                            </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                                <h3>환불 건수</h3>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{refundStats.totalRefundCount}건</div>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>환불 처리 건수</div>
-                            </div>
-                        </div>
-                        
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} refund-sessions`} style={{ backgroundColor: '#fd7e14' }}>
-                                <FaCalendarAlt />
-                            </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                                <h3>환불 회기</h3>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>{refundStats.totalRefundedSessions}회</div>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>환불된 회기수</div>
-                            </div>
-                        </div>
-                        
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} refund-amount`} style={{ backgroundColor: '#6f42c1' }}>
-                                <FaDollarSign />
-                            </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                                <h3>환불 금액</h3>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>
-                                    {refundStats.totalRefundAmount.toLocaleString()}원
-                                </div>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>총 환불 금액</div>
-                            </div>
-                        </div>
-                        
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.OVERVIEW_CARD}>
-                            <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.CARD_ICON} refund-average`} style={{ backgroundColor: '#20c997' }}>
-                                <FaChartLine />
-                            </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_CONTENT}>
-                                <h3>평균 환불액</h3>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_VALUE}>
-                                    {refundStats.averageRefundPerCase.toLocaleString()}원
-                                </div>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.CARD_DESCRIPTION}>건당 평균</div>
-                            </div>
-                        </div>
+                <DashboardSection
+                    title="환불 현황"
+                    subtitle="최근 1개월 환불 통계"
+                    icon={<RotateCcw />}
+                >
+                    <div className="mg-stats-grid">
+                        <StatCard
+                            icon={<Receipt />}
+                            value={`${refundStats.totalRefundCount}건`}
+                            label="환불 건수"
+                        />
+                        <StatCard
+                            icon={<Calendar />}
+                            value={`${refundStats.totalRefundedSessions}회`}
+                            label="환불 회기"
+                        />
+                        <StatCard
+                            icon={<DollarSign />}
+                            value={`${refundStats.totalRefundAmount.toLocaleString()}원`}
+                            label="환불 금액"
+                        />
+                        <StatCard
+                            icon={<TrendingUp />}
+                            value={`${refundStats.averageRefundPerCase.toLocaleString()}원`}
+                            label="평균 환불액"
+                        />
                     </div>
-                </div>
-            </div>
+                </DashboardSection>
 
             {/* 상담 완료 건수 통계 (어드민/수퍼어드민/지점수퍼어드민) */}
             {((propUser || sessionUser)?.role === 'ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_BRANCH_SUPER_ADMIN') && (
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                        <i className="bi bi-graph-up"></i>
-                        상담 완료 건수 통계
-                    </h2>
-                    <ConsultationCompletionStats />
-                </div>
+                    <DashboardSection
+                        title="상담 완료 통계"
+                        subtitle="월별 상담 완료 현황 및 성과 지표"
+                        icon={<Target />}
+                    >
+                        <div className="mg-stats-grid">
+                            <StatCard
+                                icon={<CheckCircle />}
+                                value={`${stats.consultationStats?.totalCompleted || 0}건`}
+                                label="총 완료 상담"
+                            />
+                            <StatCard
+                                icon={<TrendingUp />}
+                                value={`${stats.consultationStats?.completionRate || 0}%`}
+                                label="완료율"
+                            />
+                            <StatCard
+                                icon={<PieChart />}
+                                value={`${stats.consultationStats?.averageCompletionTime || 0}분`}
+                                label="평균 완료 시간"
+                            />
+                        </div>
+                        
+                        {/* 월별 상담 완료 차트 */}
+                        {stats.consultationStats?.monthlyData && stats.consultationStats.monthlyData.length > 0 && (
+                            <div className="mg-chart-container">
+                                <h4 className="mg-chart-title">월별 상담 완료 현황</h4>
+                                <div className="mg-chart-grid">
+                                    {stats.consultationStats.monthlyData.slice(0, 6).map((data, index) => {
+                                        const maxCount = Math.max(...stats.consultationStats.monthlyData.map(d => d.completedCount));
+                                        const heightPercent = Math.max(20, (data.completedCount / maxCount) * 100);
+                                        return (
+                                            <div key={data.period} className="mg-chart-bar">
+                                                <div 
+                                                    className="mg-chart-bar-fill" 
+                                                    data-chart-height={heightPercent}
+                                                >
+                                                    <span className="mg-chart-value">{data.completedCount}</span>
+                                                </div>
+                                                <div className="mg-chart-label">{data.period}</div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </DashboardSection>
             )}
 
             {/* 관리 기능 */}
-            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                    <i className={ICONS.BI.GEAR}></i>
-                    관리 기능
-                </h2>
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_GRID}>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/schedules')}>
-                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} schedule`}>
+            <DashboardSection
+                title="관리 기능"
+                subtitle="시스템 관리 및 설정 기능"
+                icon={<Settings />}
+            >
+                <div className="mg-management-grid">
+                    <div className="mg-management-card" onClick={() => navigate('/admin/schedules')}>
+                        <div className="mg-management-icon">
                             <FaCalendarAlt />
                         </div>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                            <h3>스케줄 관리</h3>
-                            <p>상담 일정을 관리하고 조정합니다</p>
-                        </div>
+                        <h3>스케줄 관리</h3>
+                        <p className="mg-management-description">상담 일정을 관리하고 조정합니다</p>
                     </div>
                     
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/sessions')}>
-                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} sessions`}>
+                    <div className="mg-management-card" onClick={() => navigate('/admin/sessions')}>
+                        <div className="mg-management-icon">
                             <FaCalendarCheck />
                         </div>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                            <h3>회기 관리</h3>
-                            <p>상담 회기를 등록하고 관리합니다</p>
-                        </div>
+                        <h3>회기 관리</h3>
+                        <p className="mg-management-description">상담 회기를 등록하고 관리합니다</p>
                     </div>
                     
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={handleAutoCompleteSchedules}>
-                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} auto-complete`}>
+                    <div className="mg-management-card" onClick={handleAutoCompleteSchedules}>
+                        <div className="mg-management-icon">
                             <FaSyncAlt />
                         </div>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                            <h3>스케줄 자동 완료</h3>
-                            <p>지난 스케줄을 자동으로 완료 처리합니다</p>
-                        </div>
+                        <h3>스케줄 자동 완료</h3>
+                        <p className="mg-management-description">지난 스케줄을 자동으로 완료 처리합니다</p>
                     </div>
                     
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={handleAutoCompleteWithReminder}>
-                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} auto-complete-reminder`}>
+                    <div className="mg-management-card" onClick={handleAutoCompleteWithReminder}>
+                        <div className="mg-management-icon">
                             <FaExclamationTriangle />
                         </div>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                            <h3>스케줄 완료 + 알림</h3>
-                            <p>지난 스케줄 완료 처리 및 상담일지 미작성 알림</p>
-                        </div>
+                        <h3>스케줄 완료 + 알림</h3>
+                        <p className="mg-management-description">지난 스케줄 완료 처리 및 상담일지 미작성 알림</p>
                     </div>
                     
                     
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/consultant-comprehensive')}>
-                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} consultants`}>
+                    <div className="mg-management-card" onClick={() => navigate('/admin/consultant-comprehensive')}>
+                        <div className="mg-management-icon">
                             <FaUserTie />
                         </div>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                            <h3>상담사 관리</h3>
-                            <p>상담사 정보를 관리합니다</p>
-                        </div>
+                        <h3>상담사 관리</h3>
+                        <p className="mg-management-description">상담사 정보를 관리합니다</p>
                     </div>
                     
                     {PermissionChecks.canManageClients(userPermissions) && (
-                        <div className="management-card" onClick={() => navigate('/admin/client-comprehensive')}>
-                            <div className={`card__icon card__icon--large card__icon--clients`}>
+                        <div className="mg-management-card" onClick={() => navigate('/admin/client-comprehensive')}>
+                            <div className="mg-management-icon">
                                 <FaUsers />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>내담자 관리</h3>
-                                <p>내담자 정보를 관리합니다</p>
-                            </div>
+                            <h3>내담자 관리</h3>
+                            <p className="mg-management-description">내담자 정보를 관리합니다</p>
                         </div>
                     )}
                     
                     {PermissionChecks.canManageUsers(userPermissions) && (
-                        <div className="management-card" onClick={() => navigate('/admin/user-management')}>
-                            <div className={`card__icon card__icon--large card__icon--user-management`}>
+                        <div className="mg-management-card" onClick={() => navigate('/admin/user-management')}>
+                            <div className="mg-management-icon">
                                 <FaUserCog />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>사용자 관리</h3>
-                                <p>사용자 역할 변경 및 권한 관리</p>
-                            </div>
+                            <h3>사용자 관리</h3>
+                            <p className="mg-management-description">사용자 역할 변경 및 권한 관리</p>
                         </div>
                     )}
                     
                     {PermissionChecks.canViewMappings(userPermissions) && (
-                        <div className="management-card" onClick={() => navigate('/admin/mapping-management')}>
-                            <div className={`card__icon card__icon--large card__icon--mappings`}>
+                        <div className="mg-management-card" onClick={() => navigate('/admin/mapping-management')}>
+                            <div className="mg-management-icon">
                                 <FaLink />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>매핑 관리</h3>
-                                <p>상담사와 내담자 매핑을 관리합니다</p>
-                            </div>
+                            <h3>매핑 관리</h3>
+                            <p className="mg-management-description">상담사와 내담자 매핑을 관리합니다</p>
                         </div>
                     )}
                     
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={() => navigate('/admin/common-codes')}>
-                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} consultants`}>
+                    <div className="mg-management-card" onClick={() => navigate('/admin/common-codes')}>
+                        <div className="mg-management-icon">
                             <FaCog />
                         </div>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                            <h3>공통코드 관리</h3>
-                            <p>시스템 공통코드를 관리합니다</p>
-                        </div>
+                        <h3>공통코드 관리</h3>
+                        <p className="mg-management-description">시스템 공통코드를 관리합니다</p>
                     </div>
                     
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CARD} onClick={handleMergeDuplicateMappings}>
-                        <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_ICON} merge`}>
+                    <div className="mg-management-card" onClick={handleMergeDuplicateMappings}>
+                        <div className="mg-management-icon">
                             <FaCompressAlt />
                         </div>
-                        <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                            <h3>중복 매핑 통합</h3>
-                            <p>중복된 상담사-내담자 매핑을 통합합니다</p>
-                        </div>
+                        <h3>중복 매핑 통합</h3>
+                        <p className="mg-management-description">중복된 상담사-내담자 매핑을 통합합니다</p>
                     </div>
                 </div>
-            </div>
+            </DashboardSection>
 
-            {/* 시스템 도구 */}
-            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                    <i className={ICONS.BI.TOOLS}></i>
-                    시스템 도구
-                </h2>
-                
-                {/* 시스템 상태 컴포넌트 */}
+            {/* 시스템 상태 */}
+            <DashboardSection
+                title="시스템 상태"
+                subtitle="서버 및 데이터베이스 상태 모니터링"
+                icon={<Settings />}
+            >
                 <SystemStatus 
                     systemStatus={systemStatus}
                     onStatusCheck={checkSystemStatus}
                     loading={loading}
                 />
-                
-                {/* 시스템 도구 컴포넌트 */}
+            </DashboardSection>
+
+            {/* 시스템 도구 */}
+            <DashboardSection
+                title="시스템 도구"
+                subtitle="시스템 관리 및 유지보수 도구"
+                icon={<Settings />}
+            >
                 <SystemTools 
                     onRefresh={loadStats}
                     onViewLogs={viewLogs}
@@ -781,300 +980,256 @@ const AdminDashboard = ({ user: propUser }) => {
                     onCreateBackup={createBackup}
                     loading={loading}
                 />
-            </div>
-
-
+            </DashboardSection>
 
             {/* 컴플라이언스 관리 (관리자 전용) */}
             {((propUser || sessionUser)?.role === 'ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_SUPER_ADMIN' || (propUser || sessionUser)?.role === 'BRANCH_BRANCH_SUPER_ADMIN') && (
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                        <i className="bi bi-shield-check"></i>
-                        컴플라이언스 관리
-                    </h2>
-                    <div className="management-grid">
-                        <div className="management-card" onClick={() => navigate('/admin/compliance')}>
-                            <div className="card__icon card__icon--large card__icon--compliance">
+                <DashboardSection
+                    title="컴플라이언스 관리"
+                    subtitle="규정 준수 및 보안 관리"
+                    icon={<Shield />}
+                >
+                    <div className="mg-management-grid">
+                        <div className="mg-management-card" onClick={() => navigate('/admin/compliance')}>
+                            <div className="mg-management-icon">
                                 <i className="bi bi-shield-check"></i>
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>컴플라이언스 대시보드</h3>
-                                <p>개인정보보호법 준수 현황을 모니터링합니다</p>
-                            </div>
+                            <h3>컴플라이언스 대시보드</h3>
+                            <p className="mg-management-description">개인정보보호법 준수 현황을 모니터링합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/admin/compliance/dashboard')}>
-                            <div className="card__icon card__icon--large card__icon--info">
+                        <div className="mg-management-card" onClick={() => navigate('/admin/compliance/dashboard')}>
+                            <div className="mg-management-icon">
                                 <i className="bi bi-graph-up"></i>
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>개인정보 처리 현황</h3>
-                                <p>개인정보 처리 현황 및 통계를 관리합니다</p>
-                            </div>
+                            <h3>개인정보 처리 현황</h3>
+                            <p className="mg-management-description">개인정보 처리 현황 및 통계를 관리합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/admin/compliance/destruction')}>
-                            <div className="card__icon card__icon--large card__icon--danger">
+                        <div className="mg-management-card" onClick={() => navigate('/admin/compliance/destruction')}>
+                            <div className="mg-management-icon">
                                 <i className="bi bi-trash"></i>
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>개인정보 파기 관리</h3>
-                                <p>자동화된 개인정보 파기 시스템을 관리합니다</p>
-                            </div>
+                            <h3>개인정보 파기 관리</h3>
+                            <p className="mg-management-description">자동화된 개인정보 파기 시스템을 관리합니다</p>
                         </div>
                     </div>
-                </div>
+                </DashboardSection>
             )}
 
             {/* ERP 관리 */}
             {PermissionChecks.canAccessERP(userPermissions) && (
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                        <i className="bi bi-box-seam"></i>
-                        ERP 관리
-                    </h2>
-                    <div className="management-grid">
-                        <div className="management-card" onClick={() => navigate('/erp/dashboard')}>
-                            <div className="card__icon card__icon--large card__icon--primary">
+                <DashboardSection
+                    title="ERP 관리"
+                    subtitle="기업 자원 계획 시스템 관리"
+                    icon={<Settings />}
+                >
+                    <div className="mg-management-grid">
+                        <div className="mg-management-card" onClick={() => navigate('/erp/dashboard')}>
+                            <div className="mg-management-icon">
                                 <FaChartLine />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>ERP 대시보드</h3>
-                                <p>전체 ERP 현황을 한눈에 확인합니다</p>
-                            </div>
+                            <h3>ERP 대시보드</h3>
+                            <p className="mg-management-description">전체 ERP 현황을 한눈에 확인합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/erp/purchase-requests')}>
-                            <div className="card__icon card__icon--large card__icon--warning">
+                        <div className="mg-management-card" onClick={() => navigate('/erp/purchase-requests')}>
+                            <div className="mg-management-icon">
                                 <FaShoppingCart />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>구매 요청</h3>
-                                <p>상담사 구매 요청을 관리합니다</p>
-                            </div>
+                            <h3>구매 요청</h3>
+                            <p className="mg-management-description">상담사 구매 요청을 관리합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/erp/approvals')}>
-                            <div className="card__icon card__icon--large card__icon--success">
+                        <div className="mg-management-card" onClick={() => navigate('/erp/approvals')}>
+                            <div className="mg-management-icon">
                                 <FaCheckCircle />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>관리자 승인</h3>
-                                <p>구매 요청을 검토하고 승인합니다</p>
-                            </div>
+                            <h3>관리자 승인</h3>
+                            <p className="mg-management-description">구매 요청을 검토하고 승인합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/erp/super-approvals')}>
-                            <div className={`card__icon card__icon--large card__icon--super-approvals`}>
+                        <div className="mg-management-card" onClick={() => navigate('/erp/super-approvals')}>
+                            <div className="mg-management-icon">
                                 <FaCheckCircle />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>수퍼 관리자 승인</h3>
-                                <p>최종 승인을 처리합니다</p>
-                            </div>
+                            <h3>수퍼 관리자 승인</h3>
+                            <p className="mg-management-description">최종 승인을 처리합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/erp/items')}>
-                            <div className={`card__icon card__icon--large card__icon--items`}>
+                        <div className="mg-management-card" onClick={() => navigate('/erp/items')}>
+                            <div className="mg-management-icon">
                                 <FaBox />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>아이템 관리</h3>
-                                <p>구매 가능한 아이템을 관리합니다</p>
-                            </div>
+                            <h3>아이템 관리</h3>
+                            <p className="mg-management-description">구매 가능한 아이템을 관리합니다</p>
                         </div>
                         
                         {/* 새로 추가된 ERP 보고서 카드 */}
-                        <div className="management-card" onClick={() => setShowErpReport(true)}>
-                            <div className={`card__icon card__icon--large card__icon--erp-reports`}>
+                        <div className="mg-management-card" onClick={() => setShowErpReport(true)}>
+                            <div className="mg-management-icon">
                                 <FaFileExport />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>ERP 보고서</h3>
-                                <p>월별/분기별/연별 재무 보고서를 생성합니다</p>
-                            </div>
+                            <h3>ERP 보고서</h3>
+                            <p className="mg-management-description">월별/분기별/연별 재무 보고서를 생성합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/erp/budgets')}>
-                            <div className={`card__icon card__icon--large card__icon--budgets`}>
+                        <div className="mg-management-card" onClick={() => navigate('/erp/budgets')}>
+                            <div className="mg-management-icon">
                                 <FaWallet />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>예산 관리</h3>
-                                <p>부서별 예산을 관리합니다</p>
-                            </div>
+                            <h3>예산 관리</h3>
+                            <p className="mg-management-description">부서별 예산을 관리합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/erp/orders')}>
-                            <div className={`card__icon card__icon--large card__icon--orders`}>
+                        <div className="mg-management-card" onClick={() => navigate('/erp/orders')}>
+                            <div className="mg-management-icon">
                                 <FaTruck />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>주문 관리</h3>
-                                <p>발주 및 배송을 관리합니다</p>
-                            </div>
+                            <h3>주문 관리</h3>
+                            <p className="mg-management-description">발주 및 배송을 관리합니다</p>
                         </div>
                         
                         {PermissionChecks.canViewIntegratedFinance(userPermissions) && (
-                            <div className="management-card" onClick={() => navigate('/admin/erp/financial')}>
-                                <div className={`card__icon card__icon--large card__icon--finance-integrated`}>
+                            <div className="mg-management-card" onClick={() => navigate('/admin/erp/financial')}>
+                                <div className="mg-management-icon">
                                     <FaDollarSign />
                                 </div>
-                                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                    <h3>통합 재무 관리</h3>
-                                    <p>수입/지출 통합 관리 및 대차대조표</p>
-                                </div>
+                                <h3>통합 재무 관리</h3>
+                                <p className="mg-management-description">수입/지출 통합 관리 및 대차대조표</p>
                             </div>
                         )}
                     </div>
-                </div>
+                </DashboardSection>
             )}
 
             {/* 지점 관리 */}
             {PermissionChecks.canViewHQDashboard(userPermissions) && (
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                        <i className="bi bi-building"></i>
-                        지점 관리
-                    </h2>
-                    <div className="management-grid">
-                        <div className="management-card" onClick={() => navigate('/hq/dashboard')}>
-                            <div className={`card__icon card__icon--large card__icon--branch-list`}>
+                <DashboardSection
+                    title="지점 관리"
+                    subtitle="지점 정보 및 설정 관리"
+                    icon={<Settings />}
+                >
+                    <div className="mg-management-grid">
+                        <div className="mg-management-card" onClick={() => navigate('/hq/dashboard')}>
+                            <div className="mg-management-icon">
                                 <FaBuilding />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>지점 관리</h3>
-                                <p>지점 등록, 수정, 통계를 통합 관리합니다</p>
-                            </div>
+                            <h3>지점 관리</h3>
+                            <p className="mg-management-description">지점 등록, 수정, 통계를 통합 관리합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/admin/branch-create')}>
-                            <div className={`card__icon card__icon--large card__icon--branch-create`}>
+                        <div className="mg-management-card" onClick={() => navigate('/admin/branch-create')}>
+                            <div className="mg-management-icon">
                                 <FaMapMarkerAlt />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>지점 생성</h3>
-                                <p>새로운 지점을 등록합니다</p>
-                            </div>
+                            <h3>지점 생성</h3>
+                            <p className="mg-management-description">새로운 지점을 등록합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/admin/branch-hierarchy')}>
-                            <div className={`card__icon card__icon--large card__icon--branch-hierarchy`}>
+                        <div className="mg-management-card" onClick={() => navigate('/admin/branch-hierarchy')}>
+                            <div className="mg-management-icon">
                                 <FaCogs />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>지점 계층 구조</h3>
-                                <p>지점 간 계층 관계를 관리합니다</p>
-                            </div>
+                            <h3>지점 계층 구조</h3>
+                            <p className="mg-management-description">지점 간 계층 관계를 관리합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/admin/branch-managers')}>
-                            <div className={`card__icon card__icon--large card__icon--branch-managers`}>
+                        <div className="mg-management-card" onClick={() => navigate('/admin/branch-managers')}>
+                            <div className="mg-management-icon">
                                 <FaUserCog />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>지점장 관리</h3>
-                                <p>지점장을 지정하고 관리합니다</p>
-                            </div>
+                            <h3>지점장 관리</h3>
+                            <p className="mg-management-description">지점장을 지정하고 관리합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/admin/branch-status')}>
-                            <div className={`card__icon card__icon--large card__icon--branch-status`}>
+                        <div className="mg-management-card" onClick={() => navigate('/admin/branch-status')}>
+                            <div className="mg-management-icon">
                                 <FaToggleOn />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>지점 상태 관리</h3>
-                                <p>지점 활성화/비활성화를 관리합니다</p>
-                            </div>
+                            <h3>지점 상태 관리</h3>
+                            <p className="mg-management-description">지점 활성화/비활성화를 관리합니다</p>
                         </div>
                         
-                        <div className="management-card" onClick={() => navigate('/admin/branch-consultants')}>
-                            <div className={`card__icon card__icon--large card__icon--branch-consultants`}>
+                        <div className="mg-management-card" onClick={() => navigate('/admin/branch-consultants')}>
+                            <div className="mg-management-icon">
                                 <FaUserTie />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>지점 상담사 관리</h3>
-                                <p>지점별 상담사를 할당하고 관리합니다</p>
-                            </div>
+                            <h3>지점 상담사 관리</h3>
+                            <p className="mg-management-description">지점별 상담사를 할당하고 관리합니다</p>
                         </div>
                     </div>
-                </div>
+                </DashboardSection>
             )}
 
             {/* 통계 및 분석 */}
             {PermissionChecks.canViewStatistics(userPermissions) && (
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                        <i className="bi bi-graph-up"></i>
-                        통계 및 분석
-                    </h2>
-                    <div className="management-grid">
-                        <div className="management-card" onClick={() => setShowPerformanceMetrics(true)}>
-                            <div className={`card__icon card__icon--large card__icon--performance-metrics`}>
+                <DashboardSection
+                    title="통계 및 분석"
+                    subtitle="시스템 통계 및 성과 분석"
+                    icon={<BarChart />}
+                >
+                    <div className="mg-management-grid">
+                        <div className="mg-management-card" onClick={() => setShowPerformanceMetrics(true)}>
+                            <div className="mg-management-icon">
                                 <FaChartBar />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>성과 지표 대시보드</h3>
-                                <p>실시간 성과 지표를 확인하고 재계산합니다</p>
-                            </div>
+                            <h3>성과 지표 대시보드</h3>
+                            <p className="mg-management-description">실시간 성과 지표를 확인하고 재계산합니다</p>
                         </div>
                     </div>
-                </div>
+            </DashboardSection>
             )}
 
             {/* 상담사 관리 */}
             {PermissionChecks.canManageConsultants(userPermissions) && (
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                        <i className="bi bi-people"></i>
-                        상담사 관리
-                    </h2>
-                    <div className="management-grid">
-                        <div className="management-card" onClick={() => setShowSpecialtyManagement(true)}>
-                            <div className={`card__icon card__icon--large card__icon--specialty-management`}>
+                <DashboardSection
+                    title="상담사 관리"
+                    subtitle="상담사 정보 및 관리 기능"
+                    icon={<Users />}
+                >
+                    <div className="mg-management-grid">
+                        <div className="mg-management-card" onClick={() => setShowSpecialtyManagement(true)}>
+                            <div className="mg-management-icon">
                                 <FaUserGraduate />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>전문분야 관리</h3>
-                                <p>상담사별 전문분야를 설정하고 관리합니다</p>
-                            </div>
+                            <h3>전문분야 관리</h3>
+                            <p className="mg-management-description">상담사별 전문분야를 설정하고 관리합니다</p>
                         </div>
                     </div>
-                </div>
+            </DashboardSection>
             )}
 
             {/* 재무 관리 */}
             {PermissionChecks.canAccessFinance(userPermissions) && (
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                        <i className="bi bi-cash-stack"></i>
-                        재무 관리
-                    </h2>
-                    <div className="management-grid">
-                        <div className="management-card" onClick={() => {
+                <DashboardSection
+                    title="재무 관리"
+                    subtitle="수입, 지출 및 재무 분석"
+                    icon={<DollarSign />}
+                >
+                    <div className="mg-management-grid">
+                        <div className="mg-management-card" onClick={() => {
                             console.log('🔄 반복 지출 모달 열기 버튼 클릭');
                             setShowRecurringExpense(true);
                         }}>
-                            <div className={`card__icon card__icon--large card__icon--recurring-expense`}>
+                            <div className="mg-management-icon">
                                 <FaRedo />
                             </div>
-                            <div className={COMPONENT_CSS.ADMIN_DASHBOARD.MANAGEMENT_CONTENT}>
-                                <h3>반복 지출 관리</h3>
-                                <p>정기적인 지출을 설정하고 관리합니다</p>
-                            </div>
+                            <h3>반복 지출 관리</h3>
+                            <p className="mg-management-description">정기적인 지출을 설정하고 관리합니다</p>
                         </div>
                     </div>
-                </div>
+                </DashboardSection>
             )}
 
             {/* 토스트 알림 */}
             {showToastState && (
-                <div className={`${COMPONENT_CSS.ADMIN_DASHBOARD.TOAST} toast-${toastType}`} style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999 }}>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.TOAST_HEADER}>
+                <div className={`mg-toast mg-toast-${toastType}`}>
+                    <div className="mg-toast-header">
                         <strong className="me-auto">알림</strong>
-                        <button type="button" className="btn-close" onClick={() => setShowToastState(false)}></button>
+                        <button type="button" className="mg-toast-close" onClick={() => setShowToastState(false)}></button>
                     </div>
-                    <div className={COMPONENT_CSS.ADMIN_DASHBOARD.TOAST_BODY}>{toastMessage}</div>
+                    <div className="mg-toast-body">{toastMessage}</div>
                 </div>
             )}
 
@@ -1092,46 +1247,15 @@ const AdminDashboard = ({ user: propUser }) => {
                 });
                 return canManagePermissions;
             })() && (
-                <div className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION}>
-                    <h2 className={COMPONENT_CSS.ADMIN_DASHBOARD.SECTION_TITLE}>
-                        <i className="bi bi-shield-check"></i>
-                        권한 관리
-                    </h2>
-                    <div className="permission-management-section">
+                <DashboardSection
+                    title="권한 관리"
+                    subtitle="사용자 권한 설정 및 관리"
+                    icon={<Shield />}
+                    >
                         <PermissionManagement />
-                    </div>
-                </div>
+                    </DashboardSection>
             )}
-            
-            {/* 통계 모달 */}
-            <StatisticsModal
-                isOpen={showStatisticsModal}
-                onClose={() => setShowStatisticsModal(false)}
-                userRole={(propUser || sessionUser)?.role || 'ADMIN'}
-            />
-            
-            {/* 새로 추가된 모달들 */}
-            <ErpReportModal
-                isOpen={showErpReport}
-                onClose={() => setShowErpReport(false)}
-            />
-            
-            <PerformanceMetricsModal
-                isOpen={showPerformanceMetrics}
-                onClose={() => setShowPerformanceMetrics(false)}
-            />
-            
-            <SpecialtyManagementModal
-                isOpen={showSpecialtyManagement}
-                onClose={() => setShowSpecialtyManagement(false)}
-            />
-            
-            <RecurringExpenseModal
-                isOpen={showRecurringExpense}
-                onClose={() => setShowRecurringExpense(false)}
-            />
-            
-            </div>
+        </div>
         </SimpleLayout>
     );
 };

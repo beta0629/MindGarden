@@ -365,7 +365,7 @@ const BranchManagement = () => {
 
             {/* 지점 목록 테이블 */}
             <div className="branch-table-container">
-                <table className="branch-table">
+                <table className="branch-table mg-table">
                     <thead>
                         <tr>
                             <th onClick={() => handleSort('branchCode')} className="sortable">
@@ -390,8 +390,8 @@ const BranchManagement = () => {
                     <tbody>
                         {branches.map((branch) => (
                             <tr key={branch.id}>
-                                <td>{branch.branchCode}</td>
-                                <td>
+                                <td data-label="지점코드">{branch.branchCode}</td>
+                                <td data-label="지점명">
                                     <span 
                                         className="branch-name-link"
                                         onClick={() => handleDetailClick(branch)}
@@ -399,23 +399,23 @@ const BranchManagement = () => {
                                         {branch.branchName}
                                     </span>
                                 </td>
-                                <td>
+                                <td data-label="유형">
                                     <span className={`branch-type-badge ${branch.branchType.toLowerCase()}`}>
                                         {BRANCH_TYPE[branch.branchType]}
                                     </span>
                                 </td>
-                                <td>
+                                <td data-label="상태">
                                     <span className={`branch-status-badge ${branch.branchStatus.toLowerCase()}`}>
                                         {BRANCH_STATUS[branch.branchStatus]}
                                     </span>
                                 </td>
-                                <td>{branch.fullAddress || '-'}</td>
-                                <td>{branch.phoneNumber || '-'}</td>
-                                <td>{branch.managerName || '미지정'}</td>
-                                <td>
+                                <td data-label="주소">{branch.fullAddress || '-'}</td>
+                                <td data-label="연락처">{branch.phoneNumber || '-'}</td>
+                                <td data-label="지점장">{branch.managerName || '미지정'}</td>
+                                <td data-label="상담사/내담자">
                                     {branch.currentConsultants || 0} / {branch.currentClients || 0}
                                 </td>
-                                <td>
+                                <td data-label="액션">
                                     <div className="action-buttons">
                                         <button 
                                             onClick={() => handleEditClick(branch)}

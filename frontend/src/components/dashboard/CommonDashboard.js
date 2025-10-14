@@ -772,7 +772,7 @@ const CommonDashboard = ({ user: propUser }) => {
 
   return (
     <SimpleLayout>
-      <div className={`dashboard-container ${user?.role?.toLowerCase() || ''}`}>
+      <div className="mg-dashboard-layout">
         
         {/* 웰컴 섹션 */}
         <WelcomeSection 

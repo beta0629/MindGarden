@@ -27,7 +27,7 @@ const AccountTable = ({
 
   return (
     <div className={ACCOUNT_CSS_CLASSES.ACCOUNT_LIST}>
-      <table className={ACCOUNT_CSS_CLASSES.ACCOUNT_TABLE}>
+      <table className={ACCOUNT_CSS_CLASSES.ACCOUNT_TABLE + ' mg-table'}>
         <thead>
           <tr>
             <th>{ACCOUNT_TABLE_COLUMNS.BANK}</th>
@@ -43,20 +43,20 @@ const AccountTable = ({
         <tbody>
           {accounts.map(account => (
             <tr key={account.id}>
-              <td>{account.bankName}</td>
-              <td>{account.accountNumber}</td>
-              <td>{account.accountHolder}</td>
-              <td>{account.branchId || '-'}</td>
-              <td>
+              <td data-label={ACCOUNT_TABLE_COLUMNS.BANK}>{account.bankName}</td>
+              <td data-label={ACCOUNT_TABLE_COLUMNS.ACCOUNT_NUMBER}>{account.accountNumber}</td>
+              <td data-label={ACCOUNT_TABLE_COLUMNS.ACCOUNT_HOLDER}>{account.accountHolder}</td>
+              <td data-label={ACCOUNT_TABLE_COLUMNS.BRANCH_ID}>{account.branchId || '-'}</td>
+              <td data-label={ACCOUNT_TABLE_COLUMNS.STATUS}>
                 <span className={`status ${account.isActive ? 'active' : 'inactive'}`}>
                   {account.isActive ? ACCOUNT_STATUS_LABELS.ACTIVE : ACCOUNT_STATUS_LABELS.INACTIVE}
                 </span>
               </td>
-              <td>
+              <td data-label={ACCOUNT_TABLE_COLUMNS.PRIMARY}>
                 {account.isPrimary && <span className="primary-badge">{ACCOUNT_PRIMARY_LABELS.TRUE}</span>}
               </td>
-              <td>{new Date(account.createdAt).toLocaleDateString()}</td>
-              <td>
+              <td data-label={ACCOUNT_TABLE_COLUMNS.CREATED_AT}>{new Date(account.createdAt).toLocaleDateString()}</td>
+              <td data-label={ACCOUNT_TABLE_COLUMNS.ACTIONS}>
                 <div className="action-buttons">
                   <button 
                     className="btn btn-sm btn-secondary"

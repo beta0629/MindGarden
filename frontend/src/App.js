@@ -43,6 +43,7 @@ import MindGardenDesignSample from './pages/MindGardenDesignSample';
 import PremiumDesignSample from './pages/PremiumDesignSample';
 import AdvancedDesignSample from './pages/AdvancedDesignSample';
 import MindGardenDesignSystemShowcase from './pages/MindGardenDesignSystemShowcase';
+import ComponentTestPage from './pages/ComponentTestPage';
 import SimpleLayout from './components/layout/SimpleLayout';
 import UnifiedNotification from './components/common/UnifiedNotification';
 import NotificationTest from './components/test/NotificationTest';
@@ -80,6 +81,7 @@ import HelpPage from './components/common/HelpPage';
 import ClientSettings from './components/client/ClientSettings';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { sessionManager } from './utils/sessionManager';
 import duplicateLoginManager from './utils/duplicateLoginManager';
 import notificationManager from './utils/notification';
@@ -138,7 +140,8 @@ function AppContent() {
     '/test/ios-cards',
     '/test/design-sample',
     '/test/premium-sample',
-    '/test/advanced-sample'
+    '/test/advanced-sample',
+    '/test/components'
   ];
   
   const isPublicPath = publicPaths.includes(window.location.pathname);
@@ -528,6 +531,7 @@ function AppContent() {
             <Route path="/test/design-sample" element={<MindGardenDesignSample />} />
             <Route path="/test/premium-sample" element={<PremiumDesignSample />} />
             <Route path="/test/advanced-sample" element={<AdvancedDesignSample />} />
+            <Route path="/test/components" element={<ComponentTestPage />} />
             <Route path="/design-system" element={<MindGardenDesignSystemShowcase />} />
             
             {/* 추후 홈페이지 추가 시 사용할 경로들 */}
@@ -573,12 +577,14 @@ function AppContent() {
   );
 }
 
-// 최상위 App 컴포넌트 (SessionProvider 제공)
+// 최상위 App 컴포넌트 (ThemeProvider + SessionProvider 제공)
 function App() {
   return (
-    <SessionProvider>
-      <AppContent />
-    </SessionProvider>
+    <ThemeProvider>
+      <SessionProvider>
+        <AppContent />
+      </SessionProvider>
+    </ThemeProvider>
   );
 }
 

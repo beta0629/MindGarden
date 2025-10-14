@@ -8,11 +8,11 @@
 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { X, RefreshCw, BarChart, Calendar } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import { SCHEDULE_API, API_BASE_URL } from '../../constants/api';
 import { STATS_LOADING_STATES, STATS_ERROR_MESSAGES } from '../../constants/stats';
 import StatisticsGrid from './StatisticsGrid';
-import './StatisticsModal.css';
 
 const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
   const [statistics, setStatistics] = useState(null);
@@ -157,51 +157,40 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="statistics-modal-overlay" onClick={onClose}>
-      <div className="statistics-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="statistics-modal-header">
-          <div className="statistics-modal-title">
-            <i className="bi bi-graph-up"></i>
-            <h2>통계 보기</h2>
+    <div className="mg-modal-overlay" onClick={onClose}>
+      <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-modal-header">
+          <div className="mg-flex mg-gap-sm mg-align-center">
+            <BarChart size={24} />
+            <h3 className="mg-modal-title">통계 보기</h3>
           </div>
-          <div className="statistics-modal-actions">
-            <button 
-              className="btn btn-outline-primary btn-sm"
-              onClick={handleRefresh}
-              disabled={loading}
-            >
-              <i className="bi bi-arrow-clockwise"></i>
-              새로고침
-            </button>
-            <button 
-              className="btn btn-outline-secondary btn-sm"
-              onClick={onClose}
-            >
-              <i className="bi bi-x"></i>
-              닫기
-            </button>
-          </div>
+          <button 
+            className="mg-modal-close"
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
         </div>
         
-        <div className="statistics-modal-body">
-          <div className="statistics-tabs">
+        <div className="mg-modal-body">
+          <div className="mg-tabs">
             <button 
-              className={`statistics-tab ${activeTab === 'overall' ? 'active' : ''}`}
+              className={`mg-tab ${activeTab === 'overall' ? 'mg-tab-active' : ''}`}
               onClick={() => setActiveTab('overall')}
             >
-              <i className="bi bi-graph-up"></i>
+              <BarChart size={16} />
               전체 통계
             </button>
             <button 
-              className={`statistics-tab ${activeTab === 'today' ? 'active' : ''}`}
+              className={`mg-tab ${activeTab === 'today' ? 'mg-tab-active' : ''}`}
               onClick={() => setActiveTab('today')}
             >
-              <i className="bi bi-calendar-day"></i>
+              <Calendar size={16} />
               오늘 통계
             </button>
           </div>
           
-          <div className="statistics-content">
+          <div className="mg-modal-content">
             <StatisticsGrid
               statistics={activeTab === 'overall' ? statistics : todayStatistics}
               loading={loading}
@@ -211,6 +200,23 @@ const StatisticsModal = ({ isOpen, onClose, userRole = 'ADMIN' }) => {
               showToday={activeTab === 'today'}
             />
           </div>
+        </div>
+        
+        <div className="mg-modal-footer">
+          <button 
+            className="mg-button mg-button-outline"
+            onClick={handleRefresh}
+            disabled={loading}
+          >
+            <RefreshCw size={16} />
+            새로고침
+          </button>
+          <button 
+            className="mg-button mg-button-primary"
+            onClick={onClose}
+          >
+            닫기
+          </button>
         </div>
       </div>
     </div>

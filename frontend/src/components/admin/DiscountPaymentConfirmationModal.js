@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { PAYMENT_CONFIRMATION_MODAL_CSS } from '../../constants/css';
-import { PAYMENT_CONFIRMATION_MODAL_CONSTANTS } from '../../constants/css-variables';
+import ReactDOM from 'react-dom';
+import { CreditCard, X, Tag, CheckCircle, XCircle } from 'lucide-react';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 
@@ -23,7 +23,7 @@ const DiscountPaymentConfirmationModal = ({
   const [loading, setLoading] = useState(false);
   const [selectedMappings, setSelectedMappings] = useState([]);
   const [paymentData, setPaymentData] = useState({
-    method: PAYMENT_CONFIRMATION_MODAL_CONSTANTS.PAYMENT_METHODS.CARD,
+    method: 'CARD',
     amount: 0,
     note: '',
     discountCode: ''
@@ -42,24 +42,23 @@ const DiscountPaymentConfirmationModal = ({
   const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
 
-  const { 
-    API_ENDPOINTS, 
-    PAYMENT_METHODS, 
-    MESSAGES, 
-    FORMAT, 
-    VALIDATION 
-  } = PAYMENT_CONFIRMATION_MODAL_CONSTANTS;
+  // Constants
+  const PAYMENT_STATUS = {
+    PENDING: 'pending',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled'
+  };
 
   useEffect(() => {
     if (isOpen && mappings.length > 0) {
       // 초기 선택된 매핑 설정
       setSelectedMappings(mappings.filter(mapping => 
-        mapping.status === PAYMENT_CONFIRMATION_MODAL_CONSTANTS.PAYMENT_STATUS.PENDING
+        mapping.status === PAYMENT_STATUS.PENDING
       ));
       
       // 총 금액 계산
       const totalAmount = mappings
-        .filter(mapping => mapping.status === PAYMENT_CONFIRMATION_MODAL_CONSTANTS.PAYMENT_STATUS.PENDING)
+        .filter(mapping => mapping.status === PAYMENT_STATUS.PENDING)
         .reduce((sum, mapping) => sum + (mapping.amount || 0), 0);
       
       setPaymentData(prev => ({
@@ -76,6 +75,7 @@ const DiscountPaymentConfirmationModal = ({
       // 적용 가능한 할인 옵션 로드
       loadAvailableDiscounts();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, mappings]);
 
   // 적용 가능한 할인 옵션 로드
@@ -209,78 +209,83 @@ const DiscountPaymentConfirmationModal = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2>할인 적용 결제 확인</h2>
+  return ReactDOM.createPortal(
+    <div className="mg-modal-overlay" onClick={onClose}>
+      <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-modal-header">
+          <h2 className="mg-modal-title">
+            <Tag size={24} />
+            할인 적용 결제 확인
+          </h2>
           <button 
-            className="close-button" 
+            className="mg-modal-close"
             onClick={onClose}
-            style={PAYMENT_CONFIRMATION_MODAL_CSS.CLOSE_BUTTON}
+            aria-label="닫기"
           >
-            ×
+            <X size={24} />
           </button>
         </div>
         
-        <div className="modal-body" style={PAYMENT_CONFIRMATION_MODAL_CSS.BODY}>
+        <div className="mg-modal-body">
           {/* 선택된 매핑 정보 */}
-          <div className="mapping-info" style={{ marginBottom: '20px' }}>
-            <h3>선택된 매핑</h3>
-            {selectedMappings.map(mapping => (
-              <div key={mapping.id} className="mapping-item" style={{ 
-                padding: '10px', 
-                border: '1px solid #ddd', 
-                borderRadius: '4px',
-                marginBottom: '10px'
-              }}>
-                <div><strong>패키지:</strong> {mapping.packageName}</div>
-                <div><strong>원래 금액:</strong> {formatAmount(mapping.amount)}원</div>
-                <div><strong>상담사:</strong> {mapping.consultantName}</div>
-                <div><strong>내담자:</strong> {mapping.clientName}</div>
-              </div>
-            ))}
+          <div className="mg-form-section">
+            <h3 className="mg-section-title">선택된 매핑</h3>
+            <div className="mg-mapping-list">
+              {selectedMappings.map(mapping => (
+                <div key={mapping.id} className="mg-mapping-card">
+                  <div className="mg-mapping-row">
+                    <strong>패키지:</strong> <span>{mapping.packageName}</span>
+                  </div>
+                  <div className="mg-mapping-row">
+                    <strong>원래 금액:</strong> <span>{formatAmount(mapping.amount)}원</span>
+                  </div>
+                  <div className="mg-mapping-row">
+                    <strong>상담사:</strong> <span>{mapping.consultantName}</span>
+                  </div>
+                  <div className="mg-mapping-row">
+                    <strong>내담자:</strong> <span>{mapping.clientName}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
           
           {/* 할인 적용 섹션 */}
-          <div className="discount-section" style={{ marginBottom: '20px' }}>
-            <h3>할인 적용</h3>
+          <div className="mg-form-section">
+            <h3 className="mg-section-title">
+              <Tag size={20} />
+              할인 적용
+            </h3>
             
-            <div className="discount-input" style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+            <div className="mg-discount-input">
               <input
                 type="text"
+                className="mg-input"
                 placeholder="할인 코드 입력"
                 value={paymentData.discountCode}
                 onChange={(e) => setPaymentData(prev => ({ ...prev, discountCode: e.target.value }))}
-                style={{ flex: 1, padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
                 disabled={discountInfo.applied}
               />
               <button
+                className={`mg-button ${discountInfo.applied ? 'mg-button-success' : 'mg-button-primary'}`}
                 onClick={applyDiscount}
                 disabled={loading || discountInfo.applied}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: discountInfo.applied ? '#28a745' : '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: discountInfo.applied ? 'not-allowed' : 'pointer'
-                }}
               >
-                {discountInfo.applied ? '적용됨' : '할인 적용'}
+                {discountInfo.applied ? (
+                  <>
+                    <CheckCircle size={18} />
+                    적용됨
+                  </>
+                ) : (
+                  '할인 적용'
+                )}
               </button>
               {discountInfo.applied && (
                 <button
+                  className="mg-button mg-button-danger"
                   onClick={removeDiscount}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
                 >
+                  <XCircle size={18} />
                   제거
                 </button>
               )}
@@ -288,26 +293,20 @@ const DiscountPaymentConfirmationModal = ({
             
             {/* 할인 정보 표시 */}
             {discountInfo.applied && (
-              <div className="discount-info" style={{
-                padding: '15px',
-                backgroundColor: '#f8f9fa',
-                border: '1px solid #dee2e6',
-                borderRadius: '4px',
-                marginBottom: '10px'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+              <div className="mg-discount-info">
+                <div className="mg-discount-row">
                   <span>원래 금액:</span>
                   <span>{formatAmount(discountInfo.originalAmount)}원</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', color: '#dc3545' }}>
+                <div className="mg-discount-row mg-discount-amount">
                   <span>할인 금액:</span>
                   <span>-{formatAmount(discountInfo.discountAmount)}원 ({discountInfo.discountRate}%)</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: 'var(--font-size-base)', borderTop: '1px solid #dee2e6', paddingTop: '5px' }}>
+                <div className="mg-discount-row mg-discount-final">
                   <span>최종 금액:</span>
-                  <span style={{ color: '#007bff' }}>{formatAmount(discountInfo.finalAmount)}원</span>
+                  <span>{formatAmount(discountInfo.finalAmount)}원</span>
                 </div>
-                <div style={{ marginTop: '10px', fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>
+                <div className="mg-discount-name">
                   적용된 할인: {discountInfo.discountName}
                 </div>
               </div>
@@ -315,27 +314,22 @@ const DiscountPaymentConfirmationModal = ({
             
             {/* 적용 가능한 할인 옵션 */}
             {availableDiscounts.length > 0 && (
-              <div className="available-discounts" style={{ marginTop: '10px' }}>
-                <h4>적용 가능한 할인</h4>
-                <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+              <div className="mg-available-discounts">
+                <h4 className="mg-subsection-title">적용 가능한 할인</h4>
+                <div className="mg-discount-options">
                   {availableDiscounts.map((discount, index) => (
-                    <div key={index} className="discount-option" style={{
-                      padding: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      marginBottom: '5px',
-                      cursor: 'pointer',
-                      backgroundColor: discount.isApplicable ? '#f8f9fa' : '#f5f5f5'
-                    }}
-                    onClick={() => {
-                      if (discount.isApplicable) {
-                        setPaymentData(prev => ({ ...prev, discountCode: discount.code }));
-                      }
-                    }}
+                    <div 
+                      key={index} 
+                      className={`mg-discount-option ${discount.isApplicable ? 'applicable' : 'not-applicable'}`}
+                      onClick={() => {
+                        if (discount.isApplicable) {
+                          setPaymentData(prev => ({ ...prev, discountCode: discount.code }));
+                        }
+                      }}
                     >
-                      <div style={{ fontWeight: 'bold' }}>{discount.name}</div>
-                      <div style={{ fontSize: 'var(--font-size-sm)', color: '#6c757d' }}>{discount.description}</div>
-                      <div style={{ fontSize: 'var(--font-size-xs)', color: discount.isApplicable ? '#28a745' : '#dc3545' }}>
+                      <div className="mg-discount-option-name">{discount.name}</div>
+                      <div className="mg-discount-option-desc">{discount.description}</div>
+                      <div className={`mg-discount-option-status ${discount.isApplicable ? 'success' : 'error'}`}>
                         {discount.isApplicable ? '적용 가능' : discount.reason}
                       </div>
                     </div>
@@ -346,60 +340,68 @@ const DiscountPaymentConfirmationModal = ({
           </div>
           
           {/* 결제 방법 선택 */}
-          <div className="payment-method" style={{ marginBottom: '20px' }}>
-            <h3>결제 방법</h3>
-            <select
-              value={paymentData.method}
-              onChange={(e) => setPaymentData(prev => ({ ...prev, method: e.target.value }))}
-              style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }}
-            >
-              <option value="CARD">카드</option>
-              <option value="BANK_TRANSFER">계좌이체</option>
-              <option value="CASH">현금</option>
-              <option value="OTHER">기타</option>
-            </select>
+          <div className="mg-form-section">
+            <h3 className="mg-section-title">
+              <CreditCard size={20} />
+              결제 방법
+            </h3>
+            <div className="mg-form-group">
+              <select
+                value={paymentData.method}
+                onChange={(e) => setPaymentData(prev => ({ ...prev, method: e.target.value }))}
+                className="mg-select"
+              >
+                <option value="CARD">카드</option>
+                <option value="BANK_TRANSFER">계좌이체</option>
+                <option value="CASH">현금</option>
+                <option value="OTHER">기타</option>
+              </select>
+            </div>
           </div>
           
           {/* 메모 입력 */}
-          <div className="payment-note" style={{ marginBottom: '20px' }}>
-            <h3>메모</h3>
-            <textarea
-              placeholder="결제 관련 메모를 입력하세요"
-              value={paymentData.note}
-              onChange={(e) => setPaymentData(prev => ({ ...prev, note: e.target.value }))}
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                border: '1px solid #ddd', 
-                borderRadius: '4px',
-                minHeight: '60px',
-                resize: 'vertical'
-              }}
-            />
+          <div className="mg-form-section">
+            <h3 className="mg-section-title">메모</h3>
+            <div className="mg-form-group">
+              <textarea
+                className="mg-textarea"
+                placeholder="결제 관련 메모를 입력하세요"
+                value={paymentData.note}
+                onChange={(e) => setPaymentData(prev => ({ ...prev, note: e.target.value }))}
+                rows="3"
+              />
+            </div>
           </div>
         </div>
         
-        <div className="modal-footer" style={PAYMENT_CONFIRMATION_MODAL_CSS.FOOTER}>
+        <div className="mg-modal-footer">
           <button
+            className="mg-button mg-button-secondary"
             onClick={onClose}
-            style={PAYMENT_CONFIRMATION_MODAL_CSS.CANCEL_BUTTON}
           >
             취소
           </button>
           <button
+            className="mg-button mg-button-success"
             onClick={handleConfirmPayment}
             disabled={loading || selectedMappings.length === 0}
-            style={{
-              ...PAYMENT_CONFIRMATION_MODAL_CSS.CONFIRM_BUTTON,
-              opacity: loading || selectedMappings.length === 0 ? 0.6 : 1,
-              cursor: loading || selectedMappings.length === 0 ? 'not-allowed' : 'pointer'
-            }}
           >
-            {loading ? '처리 중...' : '결제 확인'}
+            {loading ? (
+              <>
+                <span className="mg-spinner"></span>
+                처리 중...
+              </>
+            ) : (
+              <>
+                <CheckCircle size={18} />
+                결제 확인
+              </>
+            )}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

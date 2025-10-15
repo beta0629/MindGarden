@@ -288,16 +288,18 @@ const ConsultantCard = ({
                     </div>
                 </div>
                 
-                {getSpecialtyText() && (
-                    <div className="mg-consultant-card__specialties-mobile">
-                        <div className="mg-consultant-card__specialties-title-mobile">전문 분야</div>
-                        <div className="mg-consultant-card__specialties-list-mobile">
-                            <div className="mg-consultant-card__specialty-tag-mobile">
-                                {getSpecialtyText()}
-                            </div>
-                        </div>
+                <div className="mg-consultant-card__specialties-mobile">
+                    <div className="mg-consultant-card__specialties-title-mobile">전문 분야</div>
+                    <div className="mg-consultant-card__specialties-list-mobile">
+                        <SpecialtyDisplay
+                            consultant={consultant}
+                            variant="tag"
+                            showTitle={false}
+                            maxItems={3}
+                            debug={false}
+                        />
                     </div>
-                )}
+                </div>
                 
                 <div className="mg-consultant-card__stats-mobile">
                     <div className="mg-consultant-card__stat">

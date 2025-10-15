@@ -218,11 +218,6 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         onClick={() => onStatCardClick && onStatCardClick(stat)}
                         title={`${stat.label} 클릭하여 ${stat.action === 'payment' ? '결제 확인' : '상세 조회'}`}
                         data-color={stat.color}
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = 'var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1))';
-                        }}
                     >
                         <div className="mg-mapping-stat-icon">
                             {stat.icon}

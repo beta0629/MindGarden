@@ -128,8 +128,25 @@ export const getCodeGroupColor = async (groupName) => {
 export const getStatusColor = async (codeValue, groupName) => {
     try {
         const response = await apiGet(`/api/common-codes/group/${groupName}`);
-        if (response.success && response.data && response.data.codes) {
-            const code = response.data.codes.find(c => c.codeValue === codeValue);
+        if (response && response.length > 0) {
+            // 정확한 매칭 먼저 시도
+            let code = response.find(c => c.codeValue === codeValue);
+            
+            // 정확한 매칭이 없으면 매핑 테이블 사용 (MAPPING_STATUS인 경우)
+            if (!code && groupName === 'MAPPING_STATUS') {
+                const statusMapping = {
+                    'ACTIVE': 'ACTIVE_MAPPING',
+                    'INACTIVE': 'INACTIVE_MAPPING',
+                    'TERMINATED': 'TERMINATED_MAPPING',
+                    'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
+                };
+                
+                const mappedStatus = statusMapping[codeValue];
+                if (mappedStatus) {
+                    code = response.find(c => c.codeValue === mappedStatus);
+                }
+            }
+            
             if (code && code.colorCode) {
                 return code.colorCode;
             }
@@ -183,8 +200,25 @@ export const getStatusColor = async (codeValue, groupName) => {
 export const getStatusIcon = async (codeValue, groupName) => {
     try {
         const response = await apiGet(`/api/common-codes/group/${groupName}`);
-        if (response.success && response.data && response.data.codes) {
-            const code = response.data.codes.find(c => c.codeValue === codeValue);
+        if (response && response.length > 0) {
+            // 정확한 매칭 먼저 시도
+            let code = response.find(c => c.codeValue === codeValue);
+            
+            // 정확한 매칭이 없으면 매핑 테이블 사용 (MAPPING_STATUS인 경우)
+            if (!code && groupName === 'MAPPING_STATUS') {
+                const statusMapping = {
+                    'ACTIVE': 'ACTIVE_MAPPING',
+                    'INACTIVE': 'INACTIVE_MAPPING',
+                    'TERMINATED': 'TERMINATED_MAPPING',
+                    'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
+                };
+                
+                const mappedStatus = statusMapping[codeValue];
+                if (mappedStatus) {
+                    code = response.find(c => c.codeValue === mappedStatus);
+                }
+            }
+            
             if (code && code.icon) {
                 return code.icon;
             }
@@ -395,7 +429,24 @@ export const getMappingStatusKoreanName = async (status) => {
     try {
         const response = await apiGet(`/api/common-codes/group/MAPPING_STATUS`);
         if (response && response.length > 0) {
-            const code = response.find(c => c.codeValue === status);
+            // 정확한 매칭 먼저 시도
+            let code = response.find(c => c.codeValue === status);
+            
+            // 정확한 매칭이 없으면 매핑 테이블 사용
+            if (!code) {
+                const statusMapping = {
+                    'ACTIVE': 'ACTIVE_MAPPING',
+                    'INACTIVE': 'INACTIVE_MAPPING',
+                    'TERMINATED': 'TERMINATED_MAPPING',
+                    'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
+                };
+                
+                const mappedStatus = statusMapping[status];
+                if (mappedStatus) {
+                    code = response.find(c => c.codeValue === mappedStatus);
+                }
+            }
+            
             if (code && code.codeLabel) {
                 return code.codeLabel;
             }

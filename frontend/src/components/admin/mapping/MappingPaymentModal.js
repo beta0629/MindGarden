@@ -100,6 +100,9 @@ const MappingPaymentModal = ({
     // 모달이 열릴 때마다 참조번호 강제 생성
     const currentReference = paymentData.paymentReference || generateReferenceNumber(paymentData.paymentMethod);
 
+    // document.body가 준비되지 않았을 때를 대비한 안전한 처리
+    const portalTarget = document.body || document.createElement('div');
+    
     return ReactDOM.createPortal(
         <div className="mg-modal-overlay" onClick={onClose}>
             <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
@@ -283,7 +286,7 @@ const MappingPaymentModal = ({
                 </div>
             </div>
         </div>,
-        document.body
+        portalTarget
     );
 };
 

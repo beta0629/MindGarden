@@ -551,14 +551,14 @@ const MappingManagement = () => {
             <div className="mapping-management">
             <div className="mapping-header">
                 <div className="header-content">
-                    <h1>🔗 매핑 관리</h1>
-                    <p>상담사와 내담자 간의 매핑을 관리합니다.</p>
+                    <h1>🔗 매칭 관리</h1>
+                    <p>상담사와 내담자 간의 매칭을 관리합니다.</p>
                 </div>
                 <button 
                     className="btn btn-primary"
                     onClick={() => setShowCreateModal(true)}
                 >
-                    <i className="bi bi-plus-circle"></i> 새 매핑 생성
+                    <i className="bi bi-plus-circle"></i> 새 매칭 생성
                 </button>
             </div>
 
@@ -570,10 +570,10 @@ const MappingManagement = () => {
                 onReset={handleResetFilters}
             />
 
-            <MappingStats 
+            {/* <MappingStats 
                 mappings={mappings} 
                 onStatCardClick={handleStatCardClick}
-            />
+            /> */}
 
             <div className="mapping-list">
                 {filteredMappings.length === 0 ? (

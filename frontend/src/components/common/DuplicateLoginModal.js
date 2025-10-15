@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import { getDashboardPath } from '../../utils/session';
@@ -80,7 +81,7 @@ const DuplicateLoginModal = () => {
     return null;
   }
 
-  return (
+  return ReactDOM.createPortal(
     <div className="duplicate-login-modal-overlay">
       <div className="duplicate-login-modal-content">
         {/* 아이콘 */}
@@ -115,7 +116,8 @@ const DuplicateLoginModal = () => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

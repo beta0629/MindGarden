@@ -4258,3 +4258,80 @@ body {
     width: 100%;
   }
 }
+
+/* ============================================
+   Badge Styles
+   ============================================ */
+.mg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Status Badges */
+.mg-badge.status-active {
+  background: rgba(182, 229, 216, 0.2);
+  color: var(--cocoa);
+  border: 1px solid var(--mint-green);
+}
+
+.mg-badge.status-pending {
+  background: rgba(255, 235, 205, 0.3);
+  color: var(--cocoa);
+  border: 1px solid rgba(139, 69, 19, 0.3);
+}
+
+.mg-badge.status-confirmed {
+  background: rgba(182, 229, 216, 0.3);
+  color: var(--cocoa);
+  border: 1px solid var(--soft-mint);
+}
+
+.mg-badge.status-terminated {
+  background: rgba(139, 69, 19, 0.1);
+  color: var(--cocoa);
+  border: 1px solid rgba(139, 69, 19, 0.3);
+}
+
+.mg-badge.status-exhausted {
+  background: rgba(107, 107, 107, 0.1);
+  color: var(--medium-gray);
+  border: 1px solid rgba(107, 107, 107, 0.3);
+}
+
+.mg-badge.status-default {
+  background: rgba(107, 107, 107, 0.1);
+  color: var(--medium-gray);
+  border: 1px solid rgba(107, 107, 107, 0.2);
+}
+
+/* Payment Badges */
+.mg-badge.payment-pending {
+  background: rgba(255, 235, 205, 0.3);
+  color: var(--cocoa);
+  border: 1px solid rgba(139, 69, 19, 0.3);
+}
+
+.mg-badge.payment-approved {
+  background: rgba(182, 229, 216, 0.2);
+  color: var(--cocoa);
+  border: 1px solid var(--mint-green);
+}
+
+.mg-badge.payment-rejected {
+  background: rgba(139, 69, 19, 0.1);
+  color: var(--cocoa);
+  border: 1px solid rgba(139, 69, 19, 0.4);
+}
+
+.mg-badge.payment-default {
+  background: rgba(107, 107, 107, 0.1);
+  color: var(--medium-gray);
+  border: 1px solid rgba(107, 107, 107, 0.2);
+}

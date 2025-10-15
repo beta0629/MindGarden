@@ -11,6 +11,7 @@
   --schedule-modal-card-padding: var(--spacing-sm);
   --schedule-modal-grid-gap: var(--spacing-sm);
   --schedule-modal-grid-min-column: 280px;
+  --schedule-modal-overlay-padding-top: var(--spacing-xl);
 }
 
 /* 태블릿/데스크탑 변수 */
@@ -35,6 +36,7 @@
     --schedule-modal-grid-min-column: 1fr;
     --schedule-modal-card-min-height: 80px;
     --schedule-modal-card-padding: var(--spacing-xs);
+    --schedule-modal-overlay-padding-top: var(--spacing-sm);
   }
 }
 
@@ -49,11 +51,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: var(--z-modal-schedule, 10020);
+  z-index: var(--z-index-modal-schedule, var(--z-index-modal, 10020));
   backdrop-filter: var(--ios-backdrop-blur-sm);
   -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
   animation: fadeIn 0.2s ease-out;
-  padding: var(--spacing-md, 1rem);
+  padding: var(--schedule-modal-overlay-padding-top, var(--spacing-lg)) var(--spacing-md) var(--spacing-md);
 }
 
 /* 메인 모달 컨테이너 */

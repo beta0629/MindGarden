@@ -112,6 +112,21 @@ const MappingManagement = () => {
                     };
                 });
                 
+                // 매핑 테이블 추가 (API 코드값과 실제 사용 코드값 간의 매핑)
+                const statusMapping = {
+                    'ACTIVE': 'ACTIVE_MAPPING',
+                    'INACTIVE': 'INACTIVE_MAPPING',
+                    'TERMINATED': 'TERMINATED_MAPPING',
+                    'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
+                };
+                
+                // 매핑 테이블을 통해 추가 매핑 생성
+                Object.entries(statusMapping).forEach(([actualStatus, apiStatus]) => {
+                    if (statusInfoMap[apiStatus]) {
+                        statusInfoMap[actualStatus] = statusInfoMap[apiStatus];
+                    }
+                });
+                
                 setMappingStatusInfo(statusInfoMap);
             } else {
                 // 기본값 설정

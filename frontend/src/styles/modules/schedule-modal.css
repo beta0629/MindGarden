@@ -322,7 +322,7 @@
 
 .selection-summary {
   font-size: var(--font-size-base, 1rem);
-  color: var(--cocoa, #8B4513);
+  color: #000000;
   font-weight: var(--font-weight-semibold, 600);
   margin: 0 0 var(--spacing-xs, 0.5rem) 0;
 }
@@ -330,7 +330,7 @@
 .consultant-specialty,
 .client-details {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--dark-gray, #2F2F2F);
+  color: #000000;
   margin: 0;
   font-weight: var(--font-weight-medium, 500);
 }

@@ -478,11 +478,20 @@ const ConsultantSelectionStepNew = ({
                 <div className="consultant-selection-selected">
                     <div className="consultant-selection-selected-text">
                         <strong>선택된 상담사:</strong> {selectedConsultant.name}
-                        {(selectedConsultant.specialties?.[0] || selectedConsultant.specialty) && (
-                            <span className="consultant-selection-selected-specialty">
-                                ({selectedConsultant.specialties?.[0] || selectedConsultant.specialty})
-                            </span>
-                        )}
+                        {(() => {
+                            const specialty = selectedConsultant.specialties?.[0] || selectedConsultant.specialty;
+                            console.log('🔍 상담사 전문분야 디버깅:', {
+                                name: selectedConsultant.name,
+                                specialties: selectedConsultant.specialties,
+                                specialty: selectedConsultant.specialty,
+                                finalSpecialty: specialty
+                            });
+                            return specialty && (
+                                <span className="consultant-selection-selected-specialty">
+                                    ({specialty})
+                                </span>
+                            );
+                        })()}
                     </div>
                 </div>
             )}

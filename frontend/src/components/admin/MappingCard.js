@@ -31,11 +31,20 @@ const MappingCard = ({
     useEffect(() => {
         const loadStatusInfo = async () => {
             try {
+                console.log('🔍 MappingCard 상태 로딩 시작:', mapping.status);
+                
                 const [statusColor, statusIcon, statusLabel] = await Promise.all([
                     getStatusColor(mapping.status, 'MAPPING_STATUS'),
                     getStatusIcon(mapping.status, 'MAPPING_STATUS'),
                     getMappingStatusKoreanName(mapping.status)
                 ]);
+                
+                console.log('✅ MappingCard 상태 로딩 완료:', {
+                    status: mapping.status,
+                    color: statusColor,
+                    icon: statusIcon,
+                    label: statusLabel
+                });
                 
                 setStatusInfo({
                     color: statusColor,
@@ -43,7 +52,7 @@ const MappingCard = ({
                     label: statusLabel
                 });
             } catch (error) {
-                console.error('상태 정보 로드 실패:', error);
+                console.error('❌ 상태 정보 로드 실패:', error);
                 // 폴백 값 설정
                 setStatusInfo({
                     color: 'var(--color-gray)',

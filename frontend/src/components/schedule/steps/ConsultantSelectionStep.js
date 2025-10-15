@@ -478,9 +478,11 @@ const ConsultantSelectionStepNew = ({
                 <div className="consultant-selection-selected">
                     <div className="consultant-selection-selected-text">
                         <strong>선택된 상담사:</strong> {selectedConsultant.name}
-                        <span className="consultant-selection-selected-specialty">
-                            ({selectedConsultant.specialties?.[0] || selectedConsultant.specialty})
-                        </span>
+                        {(selectedConsultant.specialties?.[0] || selectedConsultant.specialty) && (
+                            <span className="consultant-selection-selected-specialty">
+                                ({selectedConsultant.specialties?.[0] || selectedConsultant.specialty})
+                            </span>
+                        )}
                     </div>
                 </div>
             )}

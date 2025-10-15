@@ -230,9 +230,11 @@ const ClientSelectionStep = ({
             <div className="selected-consultant-info">
                 <div className="consultant-summary">
                     <strong>선택된 상담사:</strong> {selectedConsultant?.name}
-                    <span className="consultant-specialty">
-                        ({selectedConsultant?.specialties?.[0] || selectedConsultant?.specialty})
-                    </span>
+                    {(selectedConsultant?.specialties?.[0] || selectedConsultant?.specialty) && (
+                        <span className="consultant-specialty">
+                            ({selectedConsultant?.specialties?.[0] || selectedConsultant?.specialty})
+                        </span>
+                    )}
                 </div>
             </div>
 

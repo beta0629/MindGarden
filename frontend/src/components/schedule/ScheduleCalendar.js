@@ -51,6 +51,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const [mobileZoomDate, setMobileZoomDate] = useState(null);
     const [mobileZoomSchedules, setMobileZoomSchedules] = useState([]);
     const [isMobile, setIsMobile] = useState(false);
+    const [forceMobileMode, setForceMobileMode] = useState(false);
     
     // 상담사 필터링 상태
     const [consultants, setConsultants] = useState([]);
@@ -364,14 +365,19 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     // 모바일 감지
     useEffect(() => {
         const checkIsMobile = () => {
-            setIsMobile(window.innerWidth <= 768);
+            const isSmallScreen = window.innerWidth <= 768;
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isMobileUserAgent = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // 강제 모바일 모드가 활성화되어 있거나, 실제 모바일 환경인 경우
+            setIsMobile(forceMobileMode || (isSmallScreen && (isTouchDevice || isMobileUserAgent)));
         };
         
         checkIsMobile();
         window.addEventListener('resize', checkIsMobile);
         
         return () => window.removeEventListener('resize', checkIsMobile);
-    }, []);
+    }, [forceMobileMode]);
 
     // 스케줄 데이터 로드
     useEffect(() => {
@@ -949,6 +955,14 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             <div className="calendar-header">
                 <h2>📅 스케줄 관리</h2>
                 <div className="header-actions">
+                    {/* 개발/테스트용 강제 모바일 모드 토글 */}
+                    <button 
+                        onClick={() => setForceMobileMode(!forceMobileMode)}
+                        className={`mobile-test-toggle ${forceMobileMode ? 'mobile-test-toggle--active' : ''}`}
+                        title="모바일 달력 확대 모달 테스트용"
+                    >
+                        📱 모바일 모드 {forceMobileMode ? 'ON' : 'OFF'}
+                    </button>
                     {/* 상담사 선택 (어드민/수퍼어드민만) */}
                     {(currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN') && (
                         <CustomSelect

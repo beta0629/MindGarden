@@ -514,6 +514,35 @@
   background: var(--color-primary-hover, #0056CC);
 }
 
+/* 개발/테스트용 모바일 모드 토글 버튼 */
+.mobile-test-toggle {
+  padding: var(--spacing-xs, 0.5rem) var(--spacing-sm, 0.75rem);
+  font-size: var(--font-size-xs, 0.75rem);
+  background-color: var(--color-bg-secondary, #F5F5F7);
+  color: var(--color-text-primary, #1D1D1F);
+  border: 1px solid var(--color-border-primary, #D1D1D6);
+  border-radius: var(--border-radius-sm, 0.5rem);
+  cursor: pointer;
+  margin-right: var(--spacing-sm, 0.75rem);
+  transition: all 0.2s ease;
+}
+
+.mobile-test-toggle:hover {
+  background-color: var(--color-bg-accent, #E8E8ED);
+  border-color: var(--color-border-accent, #A1A1A6);
+}
+
+.mobile-test-toggle--active {
+  background-color: var(--color-primary, #007AFF);
+  color: var(--color-text-inverse, #FFFFFF);
+  border-color: var(--color-primary, #007AFF);
+}
+
+.mobile-test-toggle--active:hover {
+  background-color: var(--color-primary-hover, #0056CC);
+  border-color: var(--color-primary-hover, #0056CC);
+}
+
 /* 모바일에서 날짜 클릭 시 터치 영역 확대 */
 @media (max-width: 768px) {
   .fc-daygrid-day {

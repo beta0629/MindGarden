@@ -10,14 +10,7 @@
 }
 
 .step-indicator::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: rgba(139, 69, 19, 0.2);
-    z-index: 1;
+    display: none;
 }
 
 .step {

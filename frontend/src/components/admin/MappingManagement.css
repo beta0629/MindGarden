@@ -3,7 +3,7 @@
     padding: var(--spacing-xl);
     max-width: 1200px;
     margin: 0 auto;
-    background: #FFFFFF;
+    background: var(--color-bg-primary);
     min-height: 100vh;
 }
 

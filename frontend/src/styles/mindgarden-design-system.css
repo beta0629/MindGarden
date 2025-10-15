@@ -99,6 +99,10 @@
   --cocoa: #8B4513;
   --olive-green: #808000;
   
+  /* Background Colors - Level 1: 기본 배경색 */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #FAFAFA;
+  
   /* Text Colors - Level 1: 기본 색상 */
   --color-text-primary: #000000;
   --color-text-secondary: #666666;

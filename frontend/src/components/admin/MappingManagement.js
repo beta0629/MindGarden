@@ -594,6 +594,11 @@ const MappingManagement = () => {
                             <MappingCard
                                 key={mapping.id}
                                 mapping={mapping}
+                                statusInfo={mappingStatusInfo[mapping.status] || {
+                                    label: mapping.status,
+                                    color: '#6c757d',
+                                    icon: '📋'
+                                }}
                                 onClick={() => handleViewMapping(mapping)}
                                 actions={
                                     <div className="mapping-card-actions">

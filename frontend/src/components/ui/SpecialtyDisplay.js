@@ -14,7 +14,7 @@ const SpecialtyDisplay = ({
     consultant, 
     variant = 'tag', // 'tag', 'text', 'inline', 'list'
     showTitle = false,
-    maxItems = 1,
+    maxItems = 10, // 기본값을 10으로 변경
     className = '',
     debug = false
 }) => {

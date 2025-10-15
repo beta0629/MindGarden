@@ -40,6 +40,10 @@ const SpecialtyDisplay = ({
             
             if (consultant?.specializationDetails) {
                 console.log('📊 specializationDetails 원본 데이터:', consultant.specializationDetails);
+                console.log('📊 specializationDetails 배열 길이:', consultant.specializationDetails.length);
+                consultant.specializationDetails.forEach((detail, index) => {
+                    console.log(`📊 specializationDetails[${index}]:`, detail);
+                });
             }
         }
         
@@ -78,7 +82,14 @@ const SpecialtyDisplay = ({
             }
         }
         
-        return specialties.slice(0, maxItems);
+        const result = specialties.slice(0, maxItems);
+        
+        if (debug) {
+            console.log('📊 최종 specialties 배열:', result);
+            console.log('📊 최종 specialties 길이:', result.length);
+        }
+        
+        return result;
     };
 
     /**

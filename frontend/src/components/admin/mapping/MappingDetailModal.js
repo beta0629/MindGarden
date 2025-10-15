@@ -410,20 +410,22 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                 </div>
                             )}
                         </div>
-                    </div>
+                        </div>
+                    </>
                 )}
 
-                <div className="mapping-detail-footer">
+                <div className="mg-modal-footer">
                     <button 
-                        className="btn-secondary"
+                        className="mg-button mg-button-secondary"
                         onClick={onClose}
                     >
-                        <i className="bi bi-x-circle"></i>
+                        <X size={18} />
                         닫기
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

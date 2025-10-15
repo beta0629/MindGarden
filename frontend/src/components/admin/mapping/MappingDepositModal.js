@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { DollarSign, X, CheckCircle } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
@@ -21,6 +21,21 @@ const MappingDepositModal = ({
 }) => {
     const [depositReference, setDepositReference] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // 입금 참조번호 자동 생성 함수
+    const generateDepositReference = () => {
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+        return `DEPOSIT_${timestamp}`;
+    };
+
+    // 모달이 열릴 때 입금 참조번호 자동 생성
+    useEffect(() => {
+        if (isOpen && mapping) {
+            const referenceNumber = generateDepositReference();
+            setDepositReference(referenceNumber);
+        }
+    }, [isOpen, mapping]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -61,6 +76,9 @@ const MappingDepositModal = ({
     };
 
     if (!isOpen) return null;
+
+    // document.body가 준비되지 않았을 때를 대비한 안전한 처리
+    const portalTarget = document.body || document.createElement('div');
 
     return ReactDOM.createPortal(
         <div className="mg-modal-overlay" onClick={handleClose}>
@@ -108,10 +126,13 @@ const MappingDepositModal = ({
                                 type="text"
                                 value={depositReference}
                                 onChange={(e) => setDepositReference(e.target.value)}
-                                placeholder="입금 확인 번호를 입력하세요"
+                                placeholder="자동 생성됩니다 (수정 가능)"
                                 className="mg-input"
                                 required
                             />
+                            <small className="mg-form-help">
+                                자동으로 입금 참조번호가 생성됩니다. 필요시 수정할 수 있습니다.
+                            </small>
                         </div>
 
                         <div className="mg-modal-footer">
@@ -145,7 +166,7 @@ const MappingDepositModal = ({
                 </div>
             </div>
         </div>,
-        document.body
+        portalTarget
     );
 };
 

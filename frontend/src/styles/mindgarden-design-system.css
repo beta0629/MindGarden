@@ -3248,6 +3248,179 @@ body {
   font-size: var(--font-size-sm);
 }
 
+/* ============================================
+   Mapping Card Components (Design System v2.0)
+   ============================================ */
+
+/* Mapping Card Container */
+.mg-mapping-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-fast);
+    overflow: hidden;
+}
+
+.mg-mapping-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+/* Mapping Card Header */
+.mg-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.mg-mapping-status {
+    display: flex;
+    align-items: center;
+}
+
+.mg-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-full);
+    background-color: var(--status-color, var(--color-primary));
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mg-mapping-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+/* Mapping Card Body */
+.mg-card-body {
+    padding: var(--spacing-md);
+}
+
+.mg-mapping-info {
+    margin-bottom: var(--spacing-md);
+}
+
+.mg-info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.mg-info-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.mg-info-icon {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+
+.mg-info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mg-info-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+.mg-info-value {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+.mg-info-value--highlight {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Mapping Dates */
+.mg-mapping-dates {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-border-light);
+}
+
+.mg-date-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+}
+
+.mg-date-icon {
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+
+.mg-date-icon--success {
+    color: var(--color-success);
+}
+
+.mg-date-label {
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+    min-width: 60px;
+}
+
+.mg-date-value {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+/* Mapping Card Footer */
+.mg-card-footer {
+    padding: var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-border-light);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .mg-info-row {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .mg-card-header {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        align-items: flex-start;
+    }
+    
+    .mg-mapping-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .mg-mapping-dates {
+        gap: var(--spacing-xs);
+    }
+    
+    .mg-date-item {
+        font-size: 11px;
+    }
+}
+
 .mg-text-xs {
   font-size: var(--font-size-xs);
 }

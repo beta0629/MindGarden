@@ -45,9 +45,10 @@
     overflow: hidden;
 }
 
-.mapping-grid {
+/* 매핑 카드 그리드 - 디자인 시스템 적용 */
+.mg-cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: var(--spacing-lg);
     padding: var(--spacing-xl);
 }
@@ -202,7 +203,7 @@
         font-size: var(--font-size-sm);
     }
     
-    .mapping-grid {
+    .mg-cards-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
         padding: var(--spacing-md);
@@ -323,7 +324,7 @@
         font-size: var(--font-size-xl);
     }
     
-    .mapping-grid {
+    .mg-cards-grid {
         padding: var(--spacing-sm);
     }
     

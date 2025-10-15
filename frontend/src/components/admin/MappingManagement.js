@@ -620,7 +620,7 @@ const MappingManagement = () => {
                         </button>
                     </div>
                 ) : (
-                    <div className="mapping-grid">
+                    <div className="mg-cards-grid">
                         {filteredMappings.map(mapping => (
                             <MappingCard
                                 key={mapping.id}

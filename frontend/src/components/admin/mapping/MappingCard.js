@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
+import { User, Calendar, DollarSign, Clock, CheckCircle, XCircle } from 'lucide-react';
 import MappingPaymentModal from './MappingPaymentModal';
 import MappingDepositModal from './MappingDepositModal';
 
 /**
- * 매핑 카드 컴포넌트 (동적 처리 지원)
+ * 매핑 카드 컴포넌트 (디자인 시스템 v2.0 적용)
  * - 개별 매핑 정보를 카드 형태로 표시
  * - 매핑 상태, 참여자 정보, 세션 정보 등 표시
- * - 동적 색상/아이콘 조회
+ * - 디자인 시스템 클래스 사용
  * 
  * @author MindGarden
  * @version 2.0.0
  * @since 2024-12-19
- * @updated 2025-09-14 - 동적 처리로 변경
+ * @updated 2025-10-15 - 디자인 시스템 v2.0 적용
  */
 const MappingCard = ({ 
     mapping, 
@@ -34,11 +35,6 @@ const MappingCard = ({
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showDepositModal, setShowDepositModal] = useState(false);
     
-    // 모달 상태 초기화 (매핑이 변경될 때) - 제거
-    // React.useEffect(() => {
-    //     setShowPaymentModal(false);
-    //     setShowDepositModal(false);
-    // }, [mapping.id]);
     // 상태별 색상 (props에서 받은 데이터 사용)
     const getStatusColor = (status) => {
         return statusInfo.color;
@@ -54,678 +50,180 @@ const MappingCard = ({
         return statusInfo.icon;
     };
 
+    // 날짜 포맷팅 함수
+    const formatDate = (dateString) => {
+        try {
+            return new Date(dateString).toLocaleDateString('ko-KR');
+        } catch (error) {
+            return '날짜 오류';
+        }
+    };
+
+    // 금액 포맷팅 함수
+    const formatAmount = (amount) => {
+        if (!amount) return 'N/A';
+        return `${amount.toLocaleString()}원`;
+    };
+
     return (
-        <div className="mapping-card-mobile"
-        onMouseEnter={(e) => {
-            e.target.style.transform = 'translateY(-2px)';
-            e.target.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)';
-        }}
-        onMouseLeave={(e) => {
-            e.target.style.transform = 'translateY(0)';
-            e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-        }}>
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '16px 20px',
-                background: 'var(--color-bg-secondary, #F5F5F7)',
-                borderBottom: '1px solid var(--color-border-secondary, #E8E8ED)'
-            }}>
-                <div>
-                    <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '4px 12px',
-                        borderRadius: '20px',
-                        color: 'var(--color-text-inverse, #FFFFFF)',
-                        fontSize: 'var(--font-size-xs)',
-                        fontWeight: '600',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        backgroundColor: getStatusColor(mapping.status)
-                    }}>
+        <div className="mg-card mg-mapping-card">
+            {/* 카드 헤더 */}
+            <div className="mg-card-header">
+                <div className="mg-mapping-status">
+                    <span 
+                        className="mg-status-badge"
+                        style={{ '--status-color': getStatusColor(mapping.status) }}
+                    >
                         {getStatusIcon(mapping.status)}
                         {getStatusLabel(mapping.status)}
                     </span>
                 </div>
-                <div style={{
-                    fontSize: 'var(--font-size-xs)',
-                    color: 'var(--color-text-secondary, #424245)',
-                    fontWeight: '500',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '2px'
-                }}>
-                    {/* 시작일 */}
-                    {mapping.startDate ? (
-                        <div>
-                            <span style={{ fontWeight: '600', color: 'var(--color-text-primary, #1D1D1F)' }}>시작일:</span> {
-                                (() => {
-                                    try {
-                                        return new Date(mapping.startDate).toLocaleDateString('ko-KR');
-                                    } catch (error) {
-                                        return '날짜 오류';
-                                    }
-                                })()
-                            }
+                <div className="mg-mapping-actions">
+                    {onView && (
+                        <button 
+                            className="mg-btn mg-btn--sm mg-btn--primary"
+                            onClick={() => onView(mapping)}
+                        >
+                            상세보기
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* 카드 본문 */}
+            <div className="mg-card-body">
+                {/* 매핑 정보 */}
+                <div className="mg-mapping-info">
+                    <div className="mg-info-row">
+                        <div className="mg-info-item">
+                            <User size={16} className="mg-info-icon" />
+                            <div className="mg-info-content">
+                                <span className="mg-info-label">상담사</span>
+                                <span className="mg-info-value">
+                                    {mapping.consultantName || mapping.consultant?.name || 'N/A'}
+                                </span>
+                            </div>
                         </div>
-                    ) : null}
-                    
-                    {/* 생성일 (매핑 생성일) */}
-                    {mapping.createdAt ? (
-                        <div>
-                            <span style={{ fontWeight: '600', color: 'var(--color-text-primary, #1D1D1F)' }}>생성일:</span> {
-                                (() => {
-                                    try {
-                                        return new Date(mapping.createdAt).toLocaleDateString('ko-KR');
-                                    } catch (error) {
-                                        return '날짜 오류';
-                                    }
-                                })()
-                            }
+                        <div className="mg-info-item">
+                            <User size={16} className="mg-info-icon" />
+                            <div className="mg-info-content">
+                                <span className="mg-info-label">내담자</span>
+                                <span className="mg-info-value">
+                                    {mapping.clientName || mapping.client?.name || 'N/A'}
+                                </span>
+                            </div>
                         </div>
-                    ) : null}
-                    
-                    {/* 승인일 */}
-                    {mapping.adminApprovalDate ? (
-                        <div>
-                            <span style={{ fontWeight: '600', color: 'var(--color-success, #28A745)' }}>승인일:</span> {
-                                (() => {
-                                    try {
-                                        return new Date(mapping.adminApprovalDate).toLocaleDateString('ko-KR');
-                                    } catch (error) {
-                                        return '날짜 오류';
-                                    }
-                                })()
-                            }
+                    </div>
+
+                    <div className="mg-info-row">
+                        <div className="mg-info-item">
+                            <DollarSign size={16} className="mg-info-icon" />
+                            <div className="mg-info-content">
+                                <span className="mg-info-label">패키지</span>
+                                <span className="mg-info-value">
+                                    {mapping.packageName || 'N/A'}
+                                </span>
+                            </div>
                         </div>
-                    ) : null}
-                    
-                    {/* 결제일 */}
-                    {mapping.paymentDate ? (
-                        <div>
-                            <span style={{ fontWeight: '600', color: 'var(--color-primary, #007AFF)' }}>결제일:</span> {
-                                (() => {
-                                    try {
-                                        return new Date(mapping.paymentDate).toLocaleDateString('ko-KR');
-                                    } catch (error) {
-                                        return '날짜 오류';
-                                    }
-                                })()
-                            }
+                        <div className="mg-info-item">
+                            <DollarSign size={16} className="mg-info-icon" />
+                            <div className="mg-info-content">
+                                <span className="mg-info-label">금액</span>
+                                <span className="mg-info-value mg-info-value--highlight">
+                                    {formatAmount(mapping.packagePrice || mapping.paymentAmount)}
+                                </span>
+                            </div>
                         </div>
-                    ) : null}
+                    </div>
+                </div>
+
+                {/* 날짜 정보 */}
+                <div className="mg-mapping-dates">
+                    {mapping.startDate && (
+                        <div className="mg-date-item">
+                            <Calendar size={14} className="mg-date-icon" />
+                            <span className="mg-date-label">시작일:</span>
+                            <span className="mg-date-value">{formatDate(mapping.startDate)}</span>
+                        </div>
+                    )}
                     
-                    {/* 날짜 정보가 없는 경우 */}
-                    {!mapping.startDate && !mapping.createdAt && !mapping.adminApprovalDate && !mapping.paymentDate && (
-                        <div style={{ color: 'var(--color-danger, #DC3545)', fontStyle: 'italic' }}>
-                            날짜 정보 없음
+                    {mapping.createdAt && (
+                        <div className="mg-date-item">
+                            <Clock size={14} className="mg-date-icon" />
+                            <span className="mg-date-label">생성일:</span>
+                            <span className="mg-date-value">{formatDate(mapping.createdAt)}</span>
+                        </div>
+                    )}
+                    
+                    {mapping.adminApprovalDate && (
+                        <div className="mg-date-item">
+                            <CheckCircle size={14} className="mg-date-icon mg-date-icon--success" />
+                            <span className="mg-date-label">승인일:</span>
+                            <span className="mg-date-value">{formatDate(mapping.adminApprovalDate)}</span>
                         </div>
                     )}
                 </div>
             </div>
 
-            <div style={{ padding: '20px' }}>
-                <div className="participant-info" style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px',
-                    marginBottom: '20px',
-                    padding: '16px',
-                    background: 'var(--color-primary-light, rgba(0, 122, 255, 0.1))',
-                    borderRadius: '8px',
-                    border: '1px solid var(--color-border-secondary, #E8E8ED)'
-                }}>
-                    <div style={{ flex: 1, textAlign: 'center' }}>
-                        <div style={{
-                            fontSize: 'var(--font-size-xs)',
-                            color: 'var(--color-text-secondary, #424245)',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            marginBottom: '4px'
-                        }}>상담사</div>
-                        <div style={{
-                            fontSize: 'var(--font-size-base)',
-                            fontWeight: '600',
-                            color: 'var(--color-text-primary, #1D1D1F)',
-                            marginBottom: '2px'
-                        }}>
-                            {mapping.consultant?.name || mapping.consultantName || '상담사 정보 없음'}
-                        </div>
-                        <div style={{
-                            fontSize: 'var(--font-size-xs)',
-                            color: '#6c757d'
-                        }}>
-                            {mapping.consultant?.email || ''}
-                        </div>
-                    </div>
-                    <div style={{
-                        fontSize: 'var(--font-size-xl)',
-                        color: 'var(--color-primary, #007AFF)',
-                        fontWeight: 'bold'
-                    }}>→</div>
-                    <div style={{ flex: 1, textAlign: 'center' }}>
-                        <div style={{
-                            fontSize: 'var(--font-size-xs)',
-                            color: 'var(--color-text-secondary, #424245)',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.5px',
-                            marginBottom: '4px'
-                        }}>내담자</div>
-                        <div style={{
-                            fontSize: 'var(--font-size-base)',
-                            fontWeight: '600',
-                            color: 'var(--color-text-primary, #1D1D1F)',
-                            marginBottom: '2px'
-                        }}>
-                            {mapping.client?.name || mapping.clientName || '내담자 정보 없음'}
-                        </div>
-                        <div style={{
-                            fontSize: 'var(--font-size-xs)',
-                            color: '#6c757d'
-                        }}>
-                            {mapping.client?.email || ''}
-                        </div>
-                    </div>
+            {/* 카드 푸터 */}
+            <div className="mg-card-footer">
+                <div className="mg-mapping-actions">
+                    {mapping.status === 'PENDING_PAYMENT' && (
+                        <button 
+                            className="mg-btn mg-btn--sm mg-btn--success"
+                            onClick={() => setShowPaymentModal(true)}
+                        >
+                            결제 확인
+                        </button>
+                    )}
+                    
+                    {mapping.status === 'PAYMENT_CONFIRMED' && (
+                        <button 
+                            className="mg-btn mg-btn--sm mg-btn--info"
+                            onClick={() => setShowDepositModal(true)}
+                        >
+                            입금 확인
+                        </button>
+                    )}
+                    
+                    {onEdit && (
+                        <button 
+                            className="mg-btn mg-btn--sm mg-btn--warning"
+                            onClick={() => onEdit(mapping)}
+                        >
+                            수정
+                        </button>
+                    )}
+                    
+                    {onRefund && (
+                        <button 
+                            className="mg-btn mg-btn--sm mg-btn--danger"
+                            onClick={() => onRefund(mapping)}
+                        >
+                            환불
+                        </button>
+                    )}
                 </div>
-
-                <div className="session-info" style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '12px',
-                    marginBottom: '16px'
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px 12px',
-                        background: 'var(--color-bg-secondary, #F5F5F7)',
-                        borderRadius: '6px',
-                        border: '1px solid var(--color-border-secondary, #E8E8ED)'
-                    }}>
-                        <span style={{
-                            fontSize: 'var(--font-size-xs)',
-                            color: 'var(--color-text-secondary, #424245)',
-                            fontWeight: '500'
-                        }}>패키지:</span>
-                        <span style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: 'var(--color-text-primary, #1D1D1F)',
-                            fontWeight: '600'
-                        }}>{mapping.packageName || '기본 패키지'}</span>
-                    </div>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px 12px',
-                        background: 'var(--color-bg-secondary, #F5F5F7)',
-                        borderRadius: '6px',
-                        border: '1px solid var(--color-border-secondary, #E8E8ED)'
-                    }}>
-                        <span style={{
-                            fontSize: 'var(--font-size-xs)',
-                            color: 'var(--color-text-secondary, #424245)',
-                            fontWeight: '500'
-                        }}>총 세션:</span>
-                        <span style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: 'var(--color-text-primary, #1D1D1F)',
-                            fontWeight: '600'
-                        }}>{mapping.totalSessions}회</span>
-                    </div>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px 12px',
-                        background: 'var(--color-bg-secondary, #F5F5F7)',
-                        borderRadius: '6px',
-                        border: '1px solid var(--color-border-secondary, #E8E8ED)'
-                    }}>
-                        <span style={{
-                            fontSize: 'var(--font-size-xs)',
-                            color: 'var(--color-text-secondary, #424245)',
-                            fontWeight: '500'
-                        }}>남은 세션:</span>
-                        <span style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: 'var(--color-text-primary, #1D1D1F)',
-                            fontWeight: '600'
-                        }}>{mapping.remainingSessions}회</span>
-                    </div>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px 12px',
-                        background: 'var(--color-bg-secondary, #F5F5F7)',
-                        borderRadius: '6px',
-                        border: '1px solid var(--color-border-secondary, #E8E8ED)'
-                    }}>
-                        <span style={{
-                            fontSize: 'var(--font-size-xs)',
-                            color: 'var(--color-text-secondary, #424245)',
-                            fontWeight: '500'
-                        }}>가격:</span>
-                        <span style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: 'var(--color-text-primary, #1D1D1F)',
-                            fontWeight: '600'
-                        }}>
-                            {mapping.packagePrice?.toLocaleString() || 0}원
-                        </span>
-                    </div>
-                </div>
-
-                {mapping.notes && (
-                    <div style={{
-                        padding: '12px',
-                        background: 'var(--color-warning-light, #fff3cd)',
-                        borderRadius: '6px',
-                        border: '1px solid var(--color-warning-border, #ffeaa7)',
-                        marginBottom: '16px'
-                    }}>
-                        <span style={{
-                            fontSize: 'var(--font-size-xs)',
-                            color: 'var(--color-warning-dark, #856404)',
-                            fontWeight: '600',
-                            display: 'block',
-                            marginBottom: '4px'
-                        }}>메모:</span>
-                        <span style={{
-                            fontSize: 'var(--font-size-sm)',
-                            color: 'var(--color-warning-dark, #856404)',
-                            lineHeight: 1.4
-                        }}>{mapping.notes}</span>
-                    </div>
-                )}
             </div>
 
-            <div className="action-buttons" style={{
-                display: 'flex',
-                gap: '8px',
-                padding: '16px 20px',
-                background: 'var(--color-bg-secondary, #F5F5F7)',
-                borderTop: '1px solid var(--color-border-secondary, #E8E8ED)',
-                justifyContent: 'flex-end'
-            }}>
-                {/* 결제 확인 버튼 - PENDING 상태일 때만 표시 */}
-                {mapping.paymentStatus === 'PENDING' && (
-                    <button 
-                        style={{
-                            padding: '4px 8px',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: 'var(--font-size-xs)',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            backgroundColor: 'var(--color-success, #28A745)',
-                            color: 'var(--color-text-inverse, #FFFFFF)'
-                        }}
-                        onClick={() => {
-                            setShowPaymentModal(true);
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#1e7e34';
-                            e.target.style.transform = 'translateY(-1px)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = 'var(--color-success, #28A745)';
-                            e.target.style.transform = 'translateY(0)';
-                        }}
-                    >
-                        <i className="bi bi-check-circle"></i> 결제 확인
-                    </button>
-                )}
-                
-                {/* 입금 확인 버튼 - CONFIRMED 상태일 때만 표시 */}
-                {mapping.paymentStatus === 'CONFIRMED' && (
-                    <button 
-                        style={{
-                            padding: '4px 8px',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: 'var(--font-size-xs)',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            backgroundColor: 'var(--color-primary, #007AFF)',
-                            color: 'var(--color-text-inverse, #FFFFFF)'
-                        }}
-                        onClick={() => {
-                            setShowDepositModal(true);
-                        }}
-                        onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#0056b3';
-                            e.target.style.transform = 'translateY(-1px)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = 'var(--color-primary, #007AFF)';
-                            e.target.style.transform = 'translateY(0)';
-                        }}
-                    >
-                        <i className="bi bi-credit-card"></i> 입금 확인
-                    </button>
-                )}
-                
-                {/* ERP 연동 상태 표시 - APPROVED 상태일 때 */}
-                {mapping.paymentStatus === 'APPROVED' && (
-                    <div style={{
-                        padding: '4px 8px',
-                        borderRadius: '6px',
-                        fontSize: 'var(--font-size-xs)',
-                        fontWeight: '600',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        backgroundColor: 'var(--color-success, #28A745)',
-                        color: 'var(--color-text-inverse, #FFFFFF)'
-                    }}>
-                        <i className="bi bi-check-circle"></i>
-                        ERP 연동완료
-                    </div>
-                )}
-                
-                {/* 승인/거부 버튼 - APPROVED 상태일 때만 표시 (입금 확인 완료 후) */}
-                {mapping.paymentStatus === 'APPROVED' && mapping.status !== 'ACTIVE' && (
-                    <>
-                        <button 
-                            style={{
-                                padding: '4px 8px',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontSize: 'var(--font-size-xs)',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                backgroundColor: 'var(--color-success, #28A745)',
-                                color: 'var(--color-text-inverse, #FFFFFF)'
-                            }}
-                            onClick={() => onApprove?.(mapping.id)}
-                            onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = '#218838';
-                                e.target.style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = 'var(--color-success, #28A745)';
-                                e.target.style.transform = 'translateY(0)';
-                            }}
-                        >
-                            <i className="bi bi-check-circle"></i> 승인
-                        </button>
-                        <button 
-                            style={{
-                                padding: '4px 8px',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontSize: 'var(--font-size-xs)',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                backgroundColor: 'var(--color-danger, #DC3545)',
-                                color: 'var(--color-text-inverse, #FFFFFF)'
-                            }}
-                            onClick={() => onReject?.(mapping.id)}
-                            onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = '#c82333';
-                                e.target.style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = 'var(--color-danger, #DC3545)';
-                                e.target.style.transform = 'translateY(0)';
-                            }}
-                        >
-                            <i className="bi bi-x-circle"></i> 거부
-                        </button>
-                    </>
-                )}
-                
-                {/* 수정/취소 버튼 - PAYMENT_CONFIRMED 상태에서도 표시 (잘못 등록된 매핑 수정/취소 가능) */}
-                {mapping.paymentStatus === 'CONFIRMED' && (
-                    <>
-                        <button 
-                            style={{
-                                padding: '4px 8px',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontSize: 'var(--font-size-xs)',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                backgroundColor: 'var(--color-warning, #FFC107)',
-                                color: 'var(--color-text-primary, #1D1D1F)'
-                            }}
-                            onClick={() => onEdit?.(mapping)}
-                            onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = 'var(--color-warning-dark, #e0a800)';
-                                e.target.style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = 'var(--color-warning, #FFC107)';
-                                e.target.style.transform = 'translateY(0)';
-                            }}
-                        >
-                            <i className="bi bi-pencil"></i> 수정
-                        </button>
-                        <button 
-                            style={{
-                                padding: '4px 8px',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontSize: 'var(--font-size-xs)',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                backgroundColor: 'var(--color-danger, #DC3545)',
-                                color: 'var(--color-text-inverse, #FFFFFF)'
-                            }}
-                            onClick={() => onDelete?.(mapping)}
-                            onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = 'var(--color-danger-dark, #c82333)';
-                                e.target.style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = 'var(--color-danger, #DC3545)';
-                                e.target.style.transform = 'translateY(0)';
-                            }}
-                        >
-                            <i className="bi bi-trash"></i> 취소
-                        </button>
-                    </>
-                )}
-                {mapping.status === 'ACTIVE' && mapping.paymentStatus === 'APPROVED' && (
-                    <>
-                        <button 
-                            style={{
-                                padding: '4px 8px',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontSize: 'var(--font-size-xs)',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                backgroundColor: 'var(--color-warning, #FFC107)',
-                                color: 'var(--color-text-primary, #1D1D1F)'
-                            }}
-                            onClick={() => onEdit?.(mapping)}
-                            onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = 'var(--color-warning-dark, #e0a800)';
-                                e.target.style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = 'var(--color-warning, #FFC107)';
-                                e.target.style.transform = 'translateY(0)';
-                            }}
-                        >
-                            <i className="bi bi-pencil"></i> 수정
-                        </button>
-                        <button 
-                            style={{
-                                padding: '4px 8px',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontSize: 'var(--font-size-xs)',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                backgroundColor: 'var(--color-gray, #6c757d)',
-                                color: 'var(--color-text-inverse, #FFFFFF)'
-                            }}
-                            onClick={() => onTransfer?.(mapping)}
-                            onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = 'var(--color-gray-dark, #5a6268)';
-                                e.target.style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = 'var(--color-gray, #6c757d)';
-                                e.target.style.transform = 'translateY(0)';
-                            }}
-                        >
-                            <i className="bi bi-arrow-left-right"></i> 상담사 변경
-                        </button>
-                        {mapping.remainingSessions > 0 && (
-                            <button 
-                                style={{
-                                    padding: '4px 8px',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    fontSize: 'var(--font-size-xs)',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    backgroundColor: 'var(--color-danger, #DC3545)',
-                                    color: 'var(--color-text-inverse, #FFFFFF)'
-                                }}
-                                onClick={() => onRefund?.(mapping)}
-                                onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = 'var(--color-danger-dark, #c82333)';
-                                    e.target.style.transform = 'translateY(-1px)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = 'var(--color-danger, #DC3545)';
-                                    e.target.style.transform = 'translateY(0)';
-                                }}
-                            >
-                                <i className="bi bi-cash-coin"></i> 환불 처리
-                            </button>
-                        )}
-                    </>
-                )}
-                <button 
-                    style={{
-                        padding: '4px 8px',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: 'var(--font-size-xs)',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        backgroundColor: 'var(--color-info, #17A2B8)',
-                        color: 'var(--color-text-inverse, #FFFFFF)'
-                    }}
-                    onClick={() => onView?.(mapping)}
-                    onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = 'var(--color-info-dark, #138496)';
-                        e.target.style.transform = 'translateY(-1px)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = 'var(--color-info, #17A2B8)';
-                        e.target.style.transform = 'translateY(0)';
-                    }}
-                >
-                    <i className="bi bi-eye"></i> 상세보기
-                </button>
-                {mapping.clientId && (
-                    <button 
-                        style={{
-                            padding: '4px 8px',
-                            border: '1px solid var(--color-info, #17A2B8)',
-                            borderRadius: '6px',
-                            fontSize: 'var(--font-size-xs)',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            backgroundColor: 'transparent',
-                            color: 'var(--color-info, #17A2B8)'
-                        }}
-                        onClick={() => onViewTransferHistory?.(mapping.clientId)}
-                        onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = 'var(--color-info, #17A2B8)';
-                            e.target.style.color = 'var(--color-text-inverse, #FFFFFF)';
-                            e.target.style.transform = 'translateY(-1px)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = 'transparent';
-                            e.target.style.color = 'var(--color-info, #17A2B8)';
-                            e.target.style.transform = 'translateY(0)';
-                        }}
-                    >
-                        <i className="bi bi-clock-history"></i> 변경 이력
-                    </button>
-                )}
-            </div>
+            {/* 모달들 */}
+            {showPaymentModal && (
+                <MappingPaymentModal
+                    isOpen={showPaymentModal}
+                    onClose={() => setShowPaymentModal(false)}
+                    mapping={mapping}
+                    onPaymentConfirmed={onConfirmPayment}
+                />
+            )}
 
-            {/* 결제 확인 모달 */}
-            <MappingPaymentModal
-                isOpen={showPaymentModal}
-                onClose={() => setShowPaymentModal(false)}
-                mapping={mapping}
-                onPaymentConfirmed={(mappingId) => {
-                    setShowPaymentModal(false);
-                    onConfirmPayment?.(mappingId);
-                }}
-            />
-            
-            {/* 입금 확인 모달 */}
-            <MappingDepositModal
-                isOpen={showDepositModal}
-                onClose={() => setShowDepositModal(false)}
-                mapping={mapping}
-                onDepositConfirmed={(mappingId) => {
-                    setShowDepositModal(false);
-                    onConfirmDeposit?.(mappingId);
-                }}
-            />
+            {showDepositModal && (
+                <MappingDepositModal
+                    isOpen={showDepositModal}
+                    onClose={() => setShowDepositModal(false)}
+                    mapping={mapping}
+                    onDepositConfirmed={onConfirmDeposit}
+                />
+            )}
         </div>
     );
 };

@@ -20,8 +20,8 @@ export const defaultTheme = {
     
     // Background Colors
     background: {
-      primary: '#F5F5DC',   // Cream
-      secondary: '#FDF5E6', // Light Beige
+      primary: '#FFFFFF',   // White
+      secondary: '#FAFAFA', // Light Gray
       surface: '#FFFFFF',
       overlay: 'rgba(0, 0, 0, 0.5)',
     },

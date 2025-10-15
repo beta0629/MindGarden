@@ -33,7 +33,7 @@ const MappingDepositModal = ({
         setIsLoading(true);
         
         try {
-            const response = await csrfTokenManager.post(`/api/admin/mappings/${mapping.id}/confirm-payment`, {
+            const response = await csrfTokenManager.post(`/api/admin/mappings/${mapping.id}/confirm-deposit`, {
                 depositReference: depositReference.trim()
             });
 

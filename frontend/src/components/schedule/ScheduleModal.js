@@ -8,7 +8,7 @@ import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import csrfTokenManager from '../../utils/csrfTokenManager';
-import './ScheduleModalNew.css';
+import '../../styles/modules/schedule-modal.css';
 
 /**
  * 새로운 디자인의 스케줄 생성 모달 컴포넌트

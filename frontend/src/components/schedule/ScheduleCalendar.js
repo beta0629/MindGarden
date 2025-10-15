@@ -611,7 +611,9 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             }
             
             // 모바일에서는 달력 확대 모달 표시
+            console.log('📱 모바일 감지 상태:', { isMobile, windowWidth: window.innerWidth });
             if (isMobile) {
+                console.log('📱 모바일 달력 확대 모달 열기');
                 const dayEvents = events.filter(event => {
                     const eventDate = new Date(event.start);
                     eventDate.setHours(0, 0, 0, 0);
@@ -619,6 +621,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 });
                 openMobileZoom(clickedDate, dayEvents);
             } else {
+                console.log('🖥️ 데스크탑 - DateActionModal 열기');
                 setSelectedDate(info.date);
                 setSelectedInfo(info);
                 console.log('📅 DateActionModal 열기 시도 - isDateActionModalOpen을 true로 설정');

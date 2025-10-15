@@ -98,6 +98,11 @@
   --light-beige: #FDF5E6;
   --cocoa: #8B4513;
   --olive-green: #808000;
+  
+  /* Text Colors */
+  --color-text-primary: #000000;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
   --mint-green: #98FB98;
   --soft-mint: #B6E5D8;
   --dark-gray: #2F2F2F;

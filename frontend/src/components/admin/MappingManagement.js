@@ -570,10 +570,10 @@ const MappingManagement = () => {
                 onReset={handleResetFilters}
             />
 
-            {/* <MappingStats 
+            <MappingStats 
                 mappings={mappings} 
                 onStatCardClick={handleStatCardClick}
-            /> */}
+            />
 
             <div className="mapping-list">
                 {filteredMappings.length === 0 ? (
@@ -594,21 +594,49 @@ const MappingManagement = () => {
                             <MappingCard
                                 key={mapping.id}
                                 mapping={mapping}
-                                statusInfo={mappingStatusInfo[mapping.status] || {
-                                    label: mapping.status,
-                                    color: '#6c757d',
-                                    icon: '📋'
-                                }}
-                                onApprove={handleApproveMapping}
-                                onReject={handleRejectMapping}
-                                onConfirmPayment={handleConfirmPayment}
-                                onConfirmDeposit={handleConfirmDeposit}
-                                onEdit={handleEditMapping}
-                                onView={handleViewMapping}
-                                onTransfer={handleTransferConsultant}
-                                onViewTransferHistory={handleViewTransferHistory}
-                                onRefund={handleRefundMapping}
-                                onDelete={handleDeleteMapping}
+                                onClick={() => handleViewMapping(mapping)}
+                                actions={
+                                    <div className="mapping-card-actions">
+                                        <button 
+                                            className="btn btn-sm btn-primary"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleViewMapping(mapping);
+                                            }}
+                                        >
+                                            상세보기
+                                        </button>
+                                        <button 
+                                            className="btn btn-sm btn-warning"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEditMapping(mapping);
+                                            }}
+                                        >
+                                            수정
+                                        </button>
+                                        {mapping.status === 'PENDING_PAYMENT' && (
+                                            <button 
+                                                className="btn btn-sm btn-success"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleConfirmPayment(mapping);
+                                                }}
+                                            >
+                                                결제 확인
+                                            </button>
+                                        )}
+                                        <button 
+                                            className="btn btn-sm btn-danger"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRefundMapping(mapping);
+                                            }}
+                                        >
+                                            환불
+                                        </button>
+                                    </div>
+                                }
                             />
                         ))}
                     </div>

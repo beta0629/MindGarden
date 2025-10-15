@@ -630,49 +630,11 @@ const MappingManagement = () => {
                                     color: '#6c757d',
                                     icon: '📋'
                                 }}
-                                onClick={() => handleViewMapping(mapping)}
-                                actions={
-                                    <div className="mapping-card-actions">
-                                        <button 
-                                            className="btn btn-sm btn-primary"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleViewMapping(mapping);
-                                            }}
-                                        >
-                                            상세보기
-                                        </button>
-                                        <button 
-                                            className="btn btn-sm btn-warning"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleEditMapping(mapping);
-                                            }}
-                                        >
-                                            수정
-                                        </button>
-                                        {mapping.status === 'PENDING_PAYMENT' && (
-                                            <button 
-                                                className="btn btn-sm btn-success"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleConfirmPayment(mapping);
-                                                }}
-                                            >
-                                                결제 확인
-                                            </button>
-                                        )}
-                                        <button 
-                                            className="btn btn-sm btn-danger"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRefundMapping(mapping);
-                                            }}
-                                        >
-                                            환불
-                                        </button>
-                                    </div>
-                                }
+                                onView={() => handleViewMapping(mapping)}
+                                onEdit={() => handleEditMapping(mapping)}
+                                onRefund={() => handleRefundMapping(mapping)}
+                                onConfirmPayment={() => handleConfirmPayment(mapping)}
+                                onConfirmDeposit={() => handleConfirmDeposit(mapping)}
                             />
                         ))}
                     </div>

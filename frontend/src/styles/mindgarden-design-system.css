@@ -99,10 +99,24 @@
   --cocoa: #8B4513;
   --olive-green: #808000;
   
-  /* Text Colors */
+  /* Text Colors - Level 1: 기본 색상 */
   --color-text-primary: #000000;
   --color-text-secondary: #666666;
   --color-text-muted: #999999;
+  
+  /* Typography - Level 1: 기본 폰트 */
+  --font-weight-semibold: 600;
+  
+  /* Level 2: 의미론적 색상 (Semantic Colors) */
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-inverse: #FFFFFF;
+  
+  /* Level 3: 컴포넌트 토큰 (Component Tokens) */
+  --button-primary-bg: var(--mint-green);
+  --button-primary-text: var(--text-primary);
+  --button-primary-hover: var(--olive-green);
+  
   --mint-green: #98FB98;
   --soft-mint: #B6E5D8;
   --dark-gray: #2F2F2F;

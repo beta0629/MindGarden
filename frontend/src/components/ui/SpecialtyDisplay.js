@@ -27,15 +27,37 @@ const SpecialtyDisplay = ({
                 name: consultant?.name,
                 specialties: consultant?.specialties,
                 specialty: consultant?.specialty,
+                specialization: consultant?.specialization,
+                specializationDetails: consultant?.specializationDetails,
                 allProps: consultant
             });
         }
         
         const specialties = [];
         
+        // specializationDetails가 우선순위가 높음 (백엔드에서 처리된 데이터)
+        if (consultant?.specializationDetails && Array.isArray(consultant.specializationDetails)) {
+            const details = consultant.specializationDetails
+                .map(detail => detail.name || detail.code)
+                .filter(name => name && name.trim());
+            specialties.push(...details);
+        }
+        
+        // specialization 필드 (백엔드에서 보내는 필드)
+        if (consultant?.specialization && consultant.specialization.trim()) {
+            const specialization = consultant.specialization.trim();
+            if (!specialties.includes(specialization)) {
+                specialties.push(specialization);
+            }
+        }
+        
         // specialties 배열이 있는 경우
         if (consultant?.specialties && Array.isArray(consultant.specialties)) {
-            specialties.push(...consultant.specialties.filter(s => s && s.trim()));
+            consultant.specialties.forEach(s => {
+                if (s && s.trim() && !specialties.includes(s.trim())) {
+                    specialties.push(s.trim());
+                }
+            });
         }
         
         // specialty 단일 값이 있는 경우 (중복 방지)
@@ -62,7 +84,12 @@ const SpecialtyDisplay = ({
     // 전문분야가 없는 경우
     if (!hasSpecialties) {
         if (variant === 'inline') {
-            return null; // 인라인에서는 표시하지 않음
+            // 인라인에서도 기본값 표시
+            return (
+                <span className={`specialty-display specialty-display--inline ${className}`}>
+                    &nbsp;(일반 상담)
+                </span>
+            );
         }
         return (
             <div className={`specialty-display ${className}`}>

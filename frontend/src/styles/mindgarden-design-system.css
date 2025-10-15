@@ -2521,6 +2521,200 @@ body {
   gap: var(--spacing-sm);
 }
 
+/* Client Card States */
+.mg-client-card--selected {
+  border: 2px solid var(--mint-green);
+  background: rgba(152, 251, 152, 0.1);
+  box-shadow: 0 8px 25px rgba(152, 251, 152, 0.3);
+}
+
+.mg-client-card--unavailable {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.mg-client-card__warning {
+  position: absolute;
+  bottom: var(--spacing-sm);
+  left: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: rgba(255, 149, 0, 0.1);
+  color: #f59e0b;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  text-align: center;
+  border: 1px solid rgba(255, 149, 0, 0.3);
+}
+
+.mg-client-card__warning--error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.mg-client-card__history-info {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mg-client-card__history-label {
+  font-size: 0.75rem;
+  color: var(--medium-gray);
+  margin-bottom: var(--spacing-xs);
+  font-weight: 600;
+}
+
+.mg-client-card__previous-consultants {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.mg-client-card__consultant-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.mg-client-card__consultant-name {
+  color: var(--dark-gray);
+  font-weight: 500;
+}
+
+.mg-client-card__consultation-date {
+  color: var(--medium-gray);
+}
+
+.mg-client-card__more-history {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--medium-gray);
+  font-style: italic;
+}
+
+/* Progress Bar */
+.mg-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.mg-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--mint-green), var(--soft-mint));
+  border-radius: var(--radius-sm);
+  transition: width 0.3s ease;
+}
+
+/* Empty State */
+.mg-empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xxl);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.mg-empty-state__icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+  opacity: 0.6;
+}
+
+.mg-empty-state__text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin: 0 0 var(--spacing-sm);
+}
+
+.mg-empty-state__hint {
+  font-size: 0.875rem;
+  color: var(--medium-gray);
+  margin: 0;
+}
+
+/* Schedule Modal Specific */
+.mg-modal-date {
+  font-size: 1rem;
+  color: var(--medium-gray);
+  font-weight: 500;
+  text-align: center;
+  margin-top: var(--spacing-xs);
+}
+
+.mg-step-indicator-container {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Consultant Card States */
+.mg-consultant-card--selected {
+  border: 2px solid var(--mint-green);
+  background: rgba(152, 251, 152, 0.1);
+  box-shadow: 0 8px 25px rgba(152, 251, 152, 0.3);
+}
+
+.mg-consultant-card--unavailable {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.mg-consultant-card__availability {
+  margin-bottom: var(--spacing-lg);
+}
+
+.mg-consultant-card__availability-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin: 0 0 var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.mg-consultant-card__availability-times {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.mg-consultant-card__availability-time {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  color: var(--dark-gray);
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mg-consultant-card__availability-more {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--medium-gray);
+  font-style: italic;
+}
+
 /* ============================================
    Consultant Cards
    ============================================ */
@@ -4384,4 +4578,526 @@ body {
   font-size: var(--font-size-md);
   font-weight: 700;
   color: var(--cocoa);
+}
+
+/* ============================================
+   Consultant Cards - 쇼케이스 스타일 적용
+   ============================================ */
+.mg-consultant-cards-grid {
+  display: grid;
+  gap: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
+}
+
+.mg-consultant-cards-grid--detailed {
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}
+
+.mg-consultant-cards-grid--compact {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.mg-consultant-cards-grid--mobile {
+  grid-template-columns: 1fr;
+}
+
+.mg-consultant-card {
+  position: relative;
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border: 2px solid var(--light-beige);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.mg-consultant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--mint-green);
+}
+
+.mg-consultant-card--selected {
+  background: var(--mint-green-light);
+  border-color: var(--mint-green);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+}
+
+.mg-consultant-card--unavailable {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--light-gray);
+}
+
+.mg-consultant-card--unavailable:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.mg-consultant-card__status-badge {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  z-index: 1;
+}
+
+.mg-consultant-card__avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--mint-green-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  border: 3px solid white;
+}
+
+.mg-consultant-card__avatar--large {
+  width: 80px;
+  height: 80px;
+  font-size: var(--font-size-2xl);
+}
+
+.mg-consultant-card__avatar--mobile {
+  width: 50px;
+  height: 50px;
+  font-size: var(--font-size-lg);
+}
+
+.mg-consultant-card__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.mg-consultant-card__name {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--dark-gray);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.mg-consultant-card__name--large {
+  font-size: var(--font-size-xl);
+}
+
+.mg-consultant-card__name--mobile {
+  font-size: var(--font-size-md);
+}
+
+.mg-consultant-card__rating-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin: var(--spacing-xs) 0;
+}
+
+.mg-consultant-card__rating {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--dark-gray);
+}
+
+.mg-consultant-card__rating-value {
+  font-weight: 600;
+  color: var(--dark-gray);
+}
+
+.mg-consultant-card__rating-text {
+  font-size: var(--font-size-sm);
+  color: var(--medium-gray);
+}
+
+.mg-consultant-card__experience {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--medium-gray);
+  font-size: var(--font-size-sm);
+}
+
+.mg-consultant-card__details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin: var(--spacing-sm) 0;
+}
+
+.mg-consultant-card__detail-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--medium-gray);
+  font-size: var(--font-size-sm);
+}
+
+.mg-consultant-card__specialties {
+  margin: var(--spacing-sm) 0;
+}
+
+.mg-consultant-card__specialties-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.mg-consultant-card__specialties-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.mg-consultant-card__specialty-tag {
+  background: var(--mint-green-light);
+  color: var(--mint-green-dark);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.mg-consultant-card__availability {
+  margin: var(--spacing-sm) 0;
+}
+
+.mg-consultant-card__availability-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.mg-consultant-card__availability-times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.mg-consultant-card__availability-time {
+  background: var(--light-beige);
+  color: var(--dark-gray);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+}
+
+.mg-consultant-card__availability-more {
+  background: var(--mint-green-light);
+  color: var(--mint-green-dark);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.mg-consultant-card__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.mg-consultant-card__actions--mobile {
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+/* ============================================
+   Client Cards - 쇼케이스 스타일 적용
+   ============================================ */
+.mg-client-cards-grid {
+  display: grid;
+  gap: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
+}
+
+.mg-client-cards-grid--detailed {
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}
+
+.mg-client-cards-grid--compact {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.mg-client-cards-grid--mobile {
+  grid-template-columns: 1fr;
+}
+
+.mg-client-card {
+  position: relative;
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  border: 2px solid var(--light-beige);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.mg-client-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--mint-green);
+}
+
+.mg-client-card--selected {
+  background: var(--mint-green-light);
+  border-color: var(--mint-green);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+}
+
+.mg-client-card--unavailable {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--light-gray);
+}
+
+.mg-client-card--unavailable:hover {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.mg-client-card__status-badge {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  z-index: 1;
+}
+
+.mg-client-card__avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--mint-green-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  border: 3px solid white;
+}
+
+.mg-client-card__avatar--large {
+  width: 80px;
+  height: 80px;
+  font-size: var(--font-size-2xl);
+}
+
+.mg-client-card__avatar--mobile {
+  width: 50px;
+  height: 50px;
+  font-size: var(--font-size-lg);
+}
+
+.mg-client-card__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.mg-client-card__name {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--dark-gray);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.mg-client-card__name--large {
+  font-size: var(--font-size-xl);
+}
+
+.mg-client-card__name--mobile {
+  font-size: var(--font-size-md);
+}
+
+.mg-client-card__details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin: var(--spacing-sm) 0;
+}
+
+.mg-client-card__detail-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--medium-gray);
+  font-size: var(--font-size-sm);
+}
+
+.mg-client-card__progress-section {
+  margin: var(--spacing-sm) 0;
+  padding: var(--spacing-sm);
+  background: var(--light-cream);
+  border-radius: var(--radius-md);
+}
+
+.mg-client-card__progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--dark-gray);
+}
+
+.mg-client-card__progress-value {
+  color: var(--mint-green-dark);
+  font-weight: 700;
+}
+
+.mg-client-card__consultant-info {
+  margin: var(--spacing-sm) 0;
+  padding: var(--spacing-sm);
+  background: var(--light-beige);
+  border-radius: var(--radius-md);
+}
+
+.mg-client-card__consultant-label {
+  font-size: var(--font-size-xs);
+  color: var(--medium-gray);
+  margin-bottom: var(--spacing-xs);
+}
+
+.mg-client-card__consultant-name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--dark-gray);
+}
+
+.mg-client-card__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.mg-client-card__actions--mobile {
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+/* 모바일 카드 스타일 */
+.mg-client-card--mobile {
+  flex-direction: row;
+  padding: var(--spacing-md);
+  gap: var(--spacing-md);
+}
+
+.mg-client-card__header-mobile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.mg-client-card__content-mobile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.mg-client-card__info-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.mg-client-card__info-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--medium-gray);
+  font-size: var(--font-size-xs);
+}
+
+.mg-client-card__progress-mobile {
+  margin: var(--spacing-xs) 0;
+}
+
+.mg-client-card__progress-header-mobile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--dark-gray);
+}
+
+.mg-client-card__progress-value-mobile {
+  color: var(--mint-green-dark);
+  font-weight: 700;
+}
+
+.mg-client-card__consultant-mobile {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+}
+
+.mg-client-card__consultant-label-mobile {
+  color: var(--medium-gray);
+}
+
+.mg-client-card__consultant-name-mobile {
+  font-weight: 600;
+  color: var(--dark-gray);
+}
+
+/* 반응형 그리드 */
+@media (max-width: 768px) {
+  .mg-consultant-cards-grid--detailed,
+  .mg-client-cards-grid--detailed {
+    grid-template-columns: 1fr;
+  }
+  
+  .mg-consultant-cards-grid--compact,
+  .mg-client-cards-grid--compact {
+    grid-template-columns: 1fr;
+  }
 }

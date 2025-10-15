@@ -361,36 +361,32 @@ const ScheduleModalNew = ({
     if (!isOpen) return null;
 
     return (
-        <div className="schedule-modal-overlay" onClick={handleClose}>
-            <div className="schedule-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="mg-modal-overlay" onClick={handleClose}>
+            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
                 {/* 모달 헤더 */}
-                <div className="schedule-modal-header">
-                    <div className="schedule-modal-header-left">
-                        <h3 className="schedule-modal-title">📅 스케줄 생성</h3>
+                <div className="mg-modal-header">
+                    <div className="mg-modal-title">
+                        📅 스케줄 생성
                     </div>
-                    <div className="schedule-modal-header-center">
-                        <div className="selected-date">
-                            {selectedDate?.toLocaleDateString('ko-KR', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                weekday: 'long'
-                            })}
-                        </div>
+                    <div className="mg-modal-date">
+                        {selectedDate?.toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            weekday: 'long'
+                        })}
                     </div>
-                    <div className="schedule-modal-header-right">
-                        <button 
-                            className="schedule-modal-close-btn" 
-                            onClick={handleClose}
-                            aria-label="모달 닫기"
-                        >
-                            ✕
-                        </button>
-                    </div>
+                    <button 
+                        className="mg-modal-close" 
+                        onClick={handleClose}
+                        aria-label="모달 닫기"
+                    >
+                        ✕
+                    </button>
                 </div>
 
-                {/* 모달 콘텐츠 */}
-                <div className="schedule-modal-content">
+                {/* 진행 단계 표시기 */}
+                <div className="mg-step-indicator-container">
                     <StepIndicator 
                         currentStep={step} 
                         totalSteps={4}
@@ -401,7 +397,10 @@ const ScheduleModalNew = ({
                             { id: 4, title: '세부사항', icon: '📝' }
                         ]}
                     />
-                    
+                </div>
+
+                {/* 모달 바디 */}
+                <div className="mg-modal-body">
                     {/* 1단계: 상담사 선택 */}
                     {step === 1 && (
                         <div style={{
@@ -570,44 +569,18 @@ const ScheduleModalNew = ({
                     {step === 4 && (
                         <div className="schedule-details">
                             <h4>📝 스케줄 세부사항</h4>
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '12px',
-                                padding: '16px',
-                                backgroundColor: 'var(--color-bg-secondary, #F5F5F7)',
-                                borderRadius: '8px',
-                                marginBottom: '20px'
-                            }}>
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: '8px 0',
-                                    borderBottom: '1px solid #e9ecef'
-                                }}>
-                                    <strong style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>상담사:</strong>
-                                    <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>{selectedConsultant?.name}</span>
+                            <div className="mg-info-box">
+                                <div className="mg-info-row">
+                                    <div className="mg-info-label">상담사:</div>
+                                    <div className="mg-info-value">{selectedConsultant?.name}</div>
                                 </div>
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: '8px 0',
-                                    borderBottom: '1px solid #e9ecef'
-                                }}>
-                                    <strong style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>내담자:</strong>
-                                    <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>{selectedClient?.name}</span>
+                                <div className="mg-info-row">
+                                    <div className="mg-info-label">내담자:</div>
+                                    <div className="mg-info-value">{selectedClient?.name}</div>
                                 </div>
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: '8px 0',
-                                    borderBottom: '1px solid #e9ecef'
-                                }}>
-                                    <strong style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>시간:</strong>
-                                    <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>
+                                <div className="mg-info-row">
+                                    <div className="mg-info-label">시간:</div>
+                                    <div className="mg-info-value">
                                         {selectedTimeSlot?.time} - {selectedTimeSlot?.endTime} ({getDurationFromCode(selectedDuration)}분)
                                         {/* 디버깅용 로그 */}
                                         {console.log('🔍 스케줄 세부사항 시간 표시:', {
@@ -616,76 +589,33 @@ const ScheduleModalNew = ({
                                             durationFromCode: getDurationFromCode(selectedDuration),
                                             durationOptions
                                         })}
-                                    </span>
+                                    </div>
                                 </div>
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: '8px 0'
-                                }}>
-                                    <strong style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>유형:</strong>
-                                    <span style={{ color: '#495057', fontSize: 'var(--font-size-sm)' }}>{convertConsultationTypeToKorean(consultationType)}</span>
+                                <div className="mg-info-row mg-info-row-highlight">
+                                    <div className="mg-info-label">유형:</div>
+                                    <div className="mg-info-value">{convertConsultationTypeToKorean(consultationType)}</div>
                                 </div>
                             </div>
                             
-                            <div className="form-group">
-                                <label>제목:</label>
+                            <div className="mg-form-group">
+                                <label className="mg-label">제목:</label>
                                 <input
                                     type="text"
+                                    className="mg-input"
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="스케줄 제목 (선택사항)"
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px 16px',
-                                        border: '1px solid #e9ecef',
-                                        borderRadius: '8px',
-                                        fontSize: 'var(--font-size-sm)',
-                                        color: '#495057',
-                                        backgroundColor: '#ffffff',
-                                        outline: 'none',
-                                        transition: 'all 0.2s ease'
-                                    }}
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = '#667eea';
-                                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = '#e9ecef';
-                                        e.target.style.boxShadow = 'none';
-                                    }}
                                 />
                             </div>
                             
-                            <div className="form-group">
-                                <label>설명:</label>
+                            <div className="mg-form-group">
+                                <label className="mg-label">설명:</label>
                                 <textarea
+                                    className="mg-textarea"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="추가 설명 (선택사항)"
                                     rows="3"
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px 16px',
-                                        border: '1px solid #e9ecef',
-                                        borderRadius: '8px',
-                                        fontSize: 'var(--font-size-sm)',
-                                        color: '#495057',
-                                        backgroundColor: '#ffffff',
-                                        outline: 'none',
-                                        transition: 'all 0.2s ease',
-                                        resize: 'vertical',
-                                        fontFamily: 'inherit'
-                                    }}
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = '#667eea';
-                                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = '#e9ecef';
-                                        e.target.style.boxShadow = 'none';
-                                    }}
                                 />
                             </div>
                         </div>
@@ -693,10 +623,10 @@ const ScheduleModalNew = ({
                 </div>
 
                 {/* 모달 푸터 */}
-                <div className="modal-footer">
+                <div className="mg-modal-footer">
                     {step > 1 && (
                         <button 
-                            className="modal-footer-button modal-footer-button--secondary" 
+                            className="mg-button mg-button-secondary" 
                             onClick={handlePrevStep}
                             disabled={loading}
                         >
@@ -706,7 +636,7 @@ const ScheduleModalNew = ({
                     
                     {step < 4 ? (
                         <button 
-                            className="modal-footer-button modal-footer-button--primary" 
+                            className="mg-button mg-button-primary" 
                             onClick={() => {
                                 if (step === 1 && selectedConsultant) setStep(2);
                                 else if (step === 2 && selectedClient) setStep(3);
@@ -722,7 +652,7 @@ const ScheduleModalNew = ({
                         </button>
                     ) : (
                         <button 
-                            className="modal-footer-button modal-footer-button--primary" 
+                            className="mg-button mg-button-primary" 
                             onClick={handleCreateSchedule}
                             disabled={loading}
                         >

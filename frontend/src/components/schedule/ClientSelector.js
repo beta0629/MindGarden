@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import ClientCard from '../ui/Card/ClientCard';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import '../../styles/main.css';
-import './ClientSelector.css';
 
 /**
  * 내담자 선택 컴포넌트
@@ -356,7 +356,7 @@ const ClientSelector = ({
 
     return (
         <div className="client-selector">
-            <div className="client-grid">
+            <div className="mg-client-cards-grid mg-client-cards-grid--detailed">
                 {clients.map(client => {
                     const clientId = client.originalId || client.id;
                     const mappingInfo = clientMappings[clientId] || {
@@ -379,139 +379,24 @@ const ClientSelector = ({
                     const isAvailable = mappingInfo.hasMapping && mappingInfo.remainingSessions > 0;
                     
                     return (
-                        <div
+                        <ClientCard
                             key={client.id}
-                            className={`client-card ${isSelected ? 'selected' : ''} ${!isAvailable ? 'unavailable' : ''}`}
-                            onClick={() => handleClientClick(client)}
-                            draggable={isAvailable}
-                            onDragStart={(e) => handleDragStart(e, client)}
-                            role="button"
-                            tabIndex="0"
-                            onKeyPress={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    handleClientClick(client);
-                                }
+                            client={{
+                                ...client,
+                                status: isAvailable ? 'ACTIVE' : 'INACTIVE',
+                                totalSessions: mappingInfo.totalSessions || 0,
+                                completedSessions: (mappingInfo.totalSessions || 0) - (mappingInfo.remainingSessions || 0),
+                                lastConsultationDate: mappingInfo.lastSessionDate,
+                                consultantName: selectedConsultant?.name
                             }}
-                        >
-                            <div className="client-header">
-                                <div className="client-profile">
-                                    <img 
-                                        src={getClientProfileImage(client)}
-                                        alt={`${client.name} 프로필`}
-                                        className="client-image"
-                                    />
-                                    <div className="client-info">
-                                        <h4 className="client-name">
-                                            <i className="bi bi-person-circle"></i>
-                                            {client.name}
-                                        </h4>
-                                        <p className="client-details">
-                                            <i className="bi bi-envelope"></i>
-                                            {client.email}
-                                        </p>
-                                    </div>
-                                </div>
-                                
-                                {isSelected && (
-                                    <div className="selected-check">
-                                        <span className="check-icon">✓</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="client-body">
-                                {/* 매핑 정보 */}
-                                <div className="mapping-info">
-                                    <div className="mapping-count">
-                                        <i className="bi bi-diagram-3 mapping-count-icon"></i>
-                                        매핑 {mappingInfo.totalSessions || 0}개
-                                    </div>
-                                    {mappingInfo.hasMapping && mappingInfo.remainingSessions > 0 && (
-                                        <div className="active-mapping">
-                                            <i className="bi bi-check-circle-fill active-mapping-icon"></i>
-                                            활성 {mappingInfo.remainingSessions}개
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* 연락처 */}
-                                {client.phone && (
-                                    <div className="contact-info">
-                                        <span className="contact-label">연락처:</span>
-                                        <span className="contact-value">{client.phone}</span>
-                                    </div>
-                                )}
-
-                                {/* 최근 상담일 */}
-                                {client.lastConsultationDate && (
-                                    <div className="last-consultation">
-                                        <span className="last-label">최근 상담:</span>
-                                        <span className="last-date">
-                                            {new Date(client.lastConsultationDate).toLocaleDateString('ko-KR')}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {/* 이전 상담사 정보 */}
-                                <div className="consultation-history">
-                                    <button 
-                                        className="history-toggle-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            loadClientHistory(client);
-                                        }}
-                                        disabled={loadingHistory[client.id]}
-                                    >
-                                        {loadingHistory[client.id] ? '로딩...' : '📋 이전 상담사 확인'}
-                                    </button>
-                                    
-                                    {clientHistory[client.id] && clientHistory[client.id].length > 0 && (
-                                        <div className="history-info">
-                                            <div className="history-label">이전 상담사:</div>
-                                            <div className="previous-consultants">
-                                                {clientHistory[client.id].slice(0, 3).map((history, index) => (
-                                                    <div key={index} className="consultant-history-item">
-                                                        <span className="consultant-name">
-                                                            {history.consultant?.name || '알 수 없음'}
-                                                        </span>
-                                                        <span className="consultation-date">
-                                                            {new Date(history.consultationDate).toLocaleDateString('ko-KR')}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                                {clientHistory[client.id].length > 3 && (
-                                                    <div className="more-history">
-                                                        +{clientHistory[client.id].length - 3}명 더
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* 특이사항 */}
-                                {client.notes && (
-                                    <div className="client-notes">
-                                        <span className="notes-label">특이사항:</span>
-                                        <span className="notes-text">{client.notes}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* 세션 부족 경고 */}
-                            {mappingInfo.remainingSessions <= 1 && (
-                                <div className="session-warning">
-                                    ⚠️ 세션이 부족합니다
-                                </div>
-                            )}
-
-                            {/* 매핑 없음 경고 */}
-                            {!mappingInfo.hasMapping && (
-                                <div className="mapping-warning">
-                                    ❌ 매핑이 없습니다
-                                </div>
-                            )}
-                        </div>
+                            onClick={() => handleClientClick(client)}
+                            selected={isSelected}
+                            draggable={isAvailable}
+                            variant="detailed"
+                            showActions={true}
+                            showProgress={true}
+                            className={!isAvailable ? 'mg-client-card--unavailable' : ''}
+                        />
                     );
                 })}
             </div>

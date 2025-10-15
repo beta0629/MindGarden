@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import ConsultantCard from '../ConsultantCard';
+import ConsultantCard from '../../ui/Card/ConsultantCard';
 import ConsultantFilter from '../components/ConsultantFilter';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import notificationManager from '../../../utils/notification';
@@ -439,12 +439,12 @@ const ConsultantSelectionStepNew = ({
             </div>
 
             {/* 상담사 그리드 */}
-            <div className="consultant-selection-grid">
+            <div className="mg-consultant-cards-grid mg-consultant-cards-grid--detailed">
                 {filteredConsultants.length === 0 ? (
-                    <div className="consultant-selection-empty">
-                        <div className="consultant-selection-empty-icon">👨‍⚕️</div>
-                        <p className="consultant-selection-empty-text">조건에 맞는 상담사가 없습니다.</p>
-                        <small className="consultant-selection-empty-hint">필터를 조정해보세요.</small>
+                    <div className="mg-empty-state">
+                        <div className="mg-empty-state__icon">👨‍⚕️</div>
+                        <p className="mg-empty-state__text">조건에 맞는 상담사가 없습니다.</p>
+                        <small className="mg-empty-state__hint">필터를 조정해보세요.</small>
                     </div>
                 ) : (
                     filteredConsultants.map(consultant => (

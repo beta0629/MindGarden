@@ -93,6 +93,17 @@
   --color-warning: #FFC107;
   --color-danger: #dc3545;
   
+  /* MindGarden Design System Colors */
+  --cream: #F5F5DC;
+  --light-beige: #FDF5E6;
+  --cocoa: #8B4513;
+  --olive-green: #808000;
+  --mint-green: #98FB98;
+  --soft-mint: #B6E5D8;
+  --dark-gray: #2F2F2F;
+  --medium-gray: #6B6B6B;
+  --light-cream: #FFFEF7;
+  
   /* Z-Index Layers */
   --z-index-modal-overlay: 10000;
   --z-index-modal: 10001;

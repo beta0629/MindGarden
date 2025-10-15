@@ -31,6 +31,16 @@ const SpecialtyDisplay = ({
                 specializationDetails: consultant?.specializationDetails,
                 allProps: consultant
             });
+            
+            // 실제 데이터베이스 값 확인
+            if (consultant?.specialization) {
+                console.log('📊 specialization 원본 데이터:', consultant.specialization);
+                console.log('📊 specialization split 결과:', consultant.specialization.split(','));
+            }
+            
+            if (consultant?.specializationDetails) {
+                console.log('📊 specializationDetails 원본 데이터:', consultant.specializationDetails);
+            }
         }
         
         const specialties = [];

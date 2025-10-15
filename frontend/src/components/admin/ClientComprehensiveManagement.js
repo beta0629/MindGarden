@@ -2074,299 +2074,106 @@ const ClientComprehensiveManagement = () => {
 
             {/* CRUD 모달 */}
             {showModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 9999
-                }} onClick={handleCloseModal}>
-                    <div style={{
-                        background: 'white',
-                        borderRadius: '12px',
-                        width: '90%',
-                        maxWidth: '500px',
-                        maxHeight: '90vh',
-                        overflow: 'auto',
-                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-                        position: 'relative'
-                    }} onClick={(e) => e.stopPropagation()}>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            padding: '24px 24px 16px 24px',
-                            borderBottom: '1px solid #e9ecef'
-                        }}>
-                            <div style={{ flex: '1' }}>
-                                <h3 style={{
-                                    margin: '0 0 8px 0',
-                                    fontSize: 'var(--font-size-xl)',
-                                    fontWeight: '600',
-                                    color: '#2c3e50'
-                                }}>
+                <div className="mg-modal-overlay" onClick={handleCloseModal}>
+                    <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
+                        <div className="mg-modal-header">
+                            <div className="mg-modal-title-section">
+                                <h3 className="mg-modal-title">
                                     {modalType === 'create' && '➕ 새 내담자 등록'}
                                     {modalType === 'edit' && '✏️ 내담자 정보 수정'}
                                     {modalType === 'delete' && '🗑️ 내담자 삭제'}
                                 </h3>
                                 {modalType === 'create' && (
-                                    <p style={{
-                                        margin: '0',
-                                        fontSize: 'var(--font-size-sm)',
-                                        color: '#6c757d',
-                                        lineHeight: '1.5'
-                                    }}>
+                                    <p className="mg-modal-description">
                                         내담자가 직접 가입하지 않은 경우, 관리자가 내담자 계정을 생성하고 초기 로그인 정보를 설정합니다.
                                     </p>
                                 )}
                                 {modalType === 'edit' && (
-                                    <p style={{
-                                        margin: '0',
-                                        fontSize: 'var(--font-size-sm)',
-                                        color: '#6c757d',
-                                        lineHeight: '1.5'
-                                    }}>
+                                    <p className="mg-modal-description">
                                         내담자의 기본 정보를 수정합니다.
                                     </p>
                                 )}
                             </div>
-                            <button style={{
-                                background: 'none',
-                                border: 'none',
-                                fontSize: 'var(--font-size-xxl)',
-                                cursor: 'pointer',
-                                color: '#6c757d',
-                                padding: '0',
-                                width: '32px',
-                                height: '32px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderRadius: '50%',
-                                transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = '#f8f9fa';
-                                e.target.style.color = '#495057';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = 'transparent';
-                                e.target.style.color = '#6c757d';
-                            }}
-                            onClick={handleCloseModal}>
+                            <button className="mg-modal-close" onClick={handleCloseModal}>
                                 ✕
                             </button>
                         </div>
                         
-                        <div style={{ padding: '24px' }}>
+                        <div className="mg-modal-body">
                             {modalType === 'delete' ? (
-                                <div style={{
-                                    textAlign: 'center',
-                                    padding: '20px 0'
-                                }}>
-                                    <p style={{
-                                        fontSize: 'var(--font-size-base)',
-                                        color: '#2c3e50',
-                                        margin: '0 0 16px 0',
-                                        lineHeight: '1.5'
-                                    }}>
-                                        정말로 <strong style={{ color: '#dc3545' }}>{editingClient?.name}</strong> 내담자를 삭제하시겠습니까?
+                                <div className="mg-info-box mg-text-center">
+                                    <p className="mg-text-base mg-text-primary mg-mb-md">
+                                        정말로 <strong className="mg-text-danger">{editingClient?.name}</strong> 내담자를 삭제하시겠습니까?
                                     </p>
-                                    <p style={{
-                                        fontSize: 'var(--font-size-sm)',
-                                        color: '#dc3545',
-                                        margin: '0',
-                                        fontWeight: '500',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px'
-                                    }}>
+                                    <p className="mg-text-sm mg-text-danger mg-font-semibold mg-flex mg-align-center mg-justify-center mg-gap-sm">
                                         ⚠️ 이 작업은 되돌릴 수 없습니다.
                                     </p>
                                 </div>
                             ) : (
-                                <div style={{ padding: '20px 0' }}>
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <label htmlFor="name" style={{ 
-                                            display: 'block', 
-                                            marginBottom: '8px', 
-                                            fontWeight: '500', 
-                                            color: '#2c3e50' 
-                                        }}>이름 *</label>
+                                <div>
+                                    <div className="mg-form-group">
+                                        <label htmlFor="name" className="mg-label">이름 *</label>
                                         <input
                                             type="text"
                                             id="name"
                                             name="name"
+                                            className="mg-input"
                                             value={formData.name}
                                             onChange={handleFormChange}
                                             placeholder="내담자 이름을 입력하세요"
                                             required
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px 16px',
-                                                border: '2px solid #e1e8ed',
-                                                borderRadius: '8px',
-                                                fontSize: 'var(--font-size-sm)',
-                                                background: 'white',
-                                                color: '#495057',
-                                                transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
-                                            }}
-                                            onFocus={(e) => {
-                                                e.target.style.outline = 'none';
-                                                e.target.style.borderColor = '#a8e6a3';
-                                                e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
-                                            }}
-                                            onBlur={(e) => {
-                                                e.target.style.borderColor = '#e1e8ed';
-                                                e.target.style.boxShadow = 'none';
-                                            }}
-                                            onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
-                                            onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
                                         />
                                     </div>
                                     
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <label htmlFor="email" style={{ 
-                                            display: 'block', 
-                                            marginBottom: '8px', 
-                                            fontWeight: '500', 
-                                            color: '#2c3e50' 
-                                        }}>이메일 *</label>
+                                    <div className="mg-form-group">
+                                        <label htmlFor="email" className="mg-label">이메일 *</label>
                                         <input
                                             type="email"
                                             id="email"
                                             name="email"
+                                            className="mg-input"
                                             value={formData.email}
                                             onChange={handleFormChange}
                                             placeholder="이메일을 입력하세요"
                                             required
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px 16px',
-                                                border: '2px solid #e1e8ed',
-                                                borderRadius: '8px',
-                                                fontSize: 'var(--font-size-sm)',
-                                                background: 'white',
-                                                color: '#495057',
-                                                transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
-                                            }}
-                                            onFocus={(e) => {
-                                                e.target.style.outline = 'none';
-                                                e.target.style.borderColor = '#a8e6a3';
-                                                e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
-                                            }}
-                                            onBlur={(e) => {
-                                                e.target.style.borderColor = '#e1e8ed';
-                                                e.target.style.boxShadow = 'none';
-                                            }}
-                                            onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
-                                            onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
                                         />
                                     </div>
                                     
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <label htmlFor="phone" style={{ 
-                                            display: 'block', 
-                                            marginBottom: '8px', 
-                                            fontWeight: '500', 
-                                            color: '#2c3e50' 
-                                        }}>전화번호</label>
+                                    <div className="mg-form-group">
+                                        <label htmlFor="phone" className="mg-label">전화번호</label>
                                         <input
                                             type="tel"
                                             id="phone"
                                             name="phone"
+                                            className="mg-input"
                                             value={formData.phone}
                                             onChange={handleFormChange}
                                             placeholder="010-1234-5678"
                                             maxLength="13"
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px 16px',
-                                                border: '2px solid #e1e8ed',
-                                                borderRadius: '8px',
-                                                fontSize: 'var(--font-size-sm)',
-                                                background: 'white',
-                                                color: '#495057',
-                                                transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
-                                            }}
-                                            onFocus={(e) => {
-                                                e.target.style.outline = 'none';
-                                                e.target.style.borderColor = '#a8e6a3';
-                                                e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
-                                            }}
-                                            onBlur={(e) => {
-                                                e.target.style.borderColor = '#e1e8ed';
-                                                e.target.style.boxShadow = 'none';
-                                            }}
-                                            onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
-                                            onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
                                         />
                                     </div>
                                     
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <label htmlFor="password" style={{ 
-                                            display: 'block', 
-                                            marginBottom: '8px', 
-                                            fontWeight: '500', 
-                                            color: '#2c3e50' 
-                                        }}>
+                                    <div className="mg-form-group">
+                                        <label htmlFor="password" className="mg-label">
                                             {modalType === 'create' ? '초기 비밀번호 *' : '새 비밀번호 (선택사항)'}
                                         </label>
                                         <input
                                             type="password"
                                             id="password"
                                             name="password"
+                                            className="mg-input"
                                             value={formData.password}
                                             onChange={handleFormChange}
                                             placeholder={modalType === 'create' ? '내담자 로그인용 초기 비밀번호를 입력하세요' : '새 비밀번호를 입력하세요 (비워두면 기존 비밀번호 유지)'}
                                             required={modalType === 'create'}
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px 16px',
-                                                border: '2px solid #e1e8ed',
-                                                borderRadius: '8px',
-                                                fontSize: 'var(--font-size-sm)',
-                                                background: 'white',
-                                                color: '#495057',
-                                                transition: 'border-color 0.3s ease, box-shadow 0.3s ease'
-                                            }}
-                                            onFocus={(e) => {
-                                                e.target.style.outline = 'none';
-                                                e.target.style.borderColor = '#a8e6a3';
-                                                e.target.style.boxShadow = '0 0 0 3px rgba(168, 230, 163, 0.1)';
-                                            }}
-                                            onBlur={(e) => {
-                                                e.target.style.borderColor = '#e1e8ed';
-                                                e.target.style.boxShadow = 'none';
-                                            }}
-                                            onMouseEnter={(e) => e.target.style.borderColor = '#c1d9c1'}
-                                            onMouseLeave={(e) => e.target.style.borderColor = '#e1e8ed'}
                                         />
                                         {modalType === 'create' && (
-                                            <small style={{
-                                                display: 'block',
-                                                marginTop: '8px',
-                                                fontSize: 'var(--font-size-xs)',
-                                                color: '#6c757d',
-                                                lineHeight: '1.4'
-                                            }}>
+                                            <small className="mg-text-xs mg-text-muted mg-mt-sm">
                                                 💡 관리자가 생성한 계정이므로, 내담자에게 이 초기 비밀번호를 전달해주세요. 첫 로그인 후 비밀번호 변경이 가능합니다.
                                             </small>
                                         )}
                                         {modalType === 'edit' && (
-                                            <small style={{
-                                                display: 'block',
-                                                marginTop: '8px',
-                                                fontSize: 'var(--font-size-xs)',
-                                                color: '#6c757d',
-                                                lineHeight: '1.4'
-                                            }}>
+                                            <small className="mg-text-xs mg-text-muted mg-mt-sm">
                                                 💡 비밀번호를 변경하지 않으려면 비워두세요.
                                             </small>
                                         )}
@@ -2375,54 +2182,12 @@ const ClientComprehensiveManagement = () => {
                             )}
                         </div>
                         
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            gap: '12px',
-                            padding: '16px 24px 24px 24px',
-                            borderTop: '1px solid #e9ecef',
-                            background: '#f8f9fa'
-                        }}>
-                            <button style={{
-                                padding: '10px 20px',
-                                fontSize: 'var(--font-size-sm)',
-                                fontWeight: '500',
-                                borderRadius: '8px',
-                                border: '1px solid #dee2e6',
-                                background: 'white',
-                                color: '#6c757d',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = '#f8f9fa';
-                                e.target.style.borderColor = '#adb5bd';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.target.style.backgroundColor = 'white';
-                                e.target.style.borderColor = '#dee2e6';
-                            }}
-                            onClick={handleCloseModal}>
+                        <div className="mg-modal-footer">
+                            <button className="mg-button mg-button-secondary" onClick={handleCloseModal}>
                                 취소
                             </button>
                             <button 
-                                style={{
-                                    padding: '10px 20px',
-                                    fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '500',
-                                    borderRadius: '8px',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    background: modalType === 'delete' ? '#dc3545' : '#007bff',
-                                    color: 'white'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.target.style.background = modalType === 'delete' ? '#c82333' : '#0056b3';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.background = modalType === 'delete' ? '#dc3545' : '#007bff';
-                                }}
+                                className={`mg-button ${modalType === 'delete' ? 'mg-button-danger' : 'mg-button-primary'}`}
                                 onClick={handleModalSubmit}
                             >
                                 {modalType === 'create' && '등록'}
@@ -2436,81 +2201,21 @@ const ClientComprehensiveManagement = () => {
 
             {/* 환불 처리 모달 */}
             {showRefundModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        backgroundColor: 'white',
-                        borderRadius: '16px',
-                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.2)',
-                        width: '90%',
-                        maxWidth: '600px',
-                        maxHeight: '80vh',
-                        overflow: 'hidden',
-                        fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                    }}>
+                <div className="mg-modal-overlay">
+                    <div className="mg-modal mg-modal-large">
                         {/* 모달 헤더 */}
-                        <div style={{
-                            padding: '24px',
-                            backgroundColor: '#f8f9fa',
-                            borderBottom: '1px solid #e9ecef',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                        }}>
-                            <h3 style={{
-                                margin: 0,
-                                fontSize: 'var(--font-size-xl)',
-                                fontWeight: '600',
-                                color: '#343a40'
-                            }}>
+                        <div className="mg-modal-header">
+                            <h3 className="mg-modal-title">
                                 🔄 회기 환불 처리 - {refundClient?.name}
                             </h3>
-                            <button
-                                onClick={handleCloseRefundModal}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    fontSize: 'var(--font-size-xxl)',
-                                    cursor: 'pointer',
-                                    color: '#6c757d',
-                                    padding: '0',
-                                    width: '32px',
-                                    height: '32px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    borderRadius: '50%',
-                                    transition: 'background-color 0.2s'
-                                }}
-                                onMouseEnter={(e) => e.target.style.backgroundColor = '#e9ecef'}
-                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                            >
+                            <button className="mg-modal-close" onClick={handleCloseRefundModal}>
                                 ×
                             </button>
                         </div>
 
                         {/* 모달 내용 */}
-                        <div style={{
-                            padding: '24px',
-                            maxHeight: '50vh',
-                            overflowY: 'auto'
-                        }}>
-                            <p style={{
-                                margin: '0 0 20px 0',
-                                fontSize: 'var(--font-size-sm)',
-                                color: '#6c757d',
-                                lineHeight: '1.5'
-                            }}>
+                        <div className="mg-modal-body">
+                            <p className="mg-text-sm mg-text-muted mg-mb-lg">
                                 환불할 매핑을 선택하고 환불 사유를 입력해주세요. 선택된 매핑의 남은 회기가 모두 환불 처리됩니다.
                             </p>
 

@@ -5,18 +5,19 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--modal-backdrop, rgba(0, 0, 0, 0.5));
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
-    backdrop-filter: blur(2px);
+    z-index: var(--z-index-modal, 1000);
+    backdrop-filter: var(--ios-backdrop-blur-sm);
+    -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
 }
 
 .mapping-edit-modal {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    background: var(--modal-bg, white);
+    border-radius: var(--border-radius-lg, 12px);
+    box-shadow: var(--modal-shadow, 0 20px 40px rgba(0, 0, 0, 0.15));
     width: 90%;
     max-width: 600px;
     max-height: 90vh;
@@ -41,22 +42,22 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-xl) var(--spacing-xl) 0 var(--spacing-xl);
-    border-bottom: 1px solid #e9ecef;
-    margin-bottom: 24px;
+    border-bottom: 1px solid var(--color-border-secondary, #e9ecef);
+    margin-bottom: var(--spacing-lg);
 }
 
 .mapping-edit-modal-header h2 {
     margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #2c3e50;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary, #2c3e50);
 }
 
 .close-btn {
     background: none;
     border: none;
     font-size: var(--font-size-xxl);
-    color: #6c757d;
+    color: var(--color-text-muted, #6c757d);
     cursor: pointer;
     padding: 0;
     width: 32px;
@@ -69,8 +70,8 @@
 }
 
 .close-btn:hover {
-    background-color: #f8f9fa;
-    color: #495057;
+    background-color: var(--color-bg-accent, #f8f9fa);
+    color: var(--color-text-primary, #495057);
 }
 
 .close-btn:disabled {
@@ -80,18 +81,18 @@
 
 /* 모달 본문 */
 .mapping-edit-modal-body {
-    padding: 0 24px;
+    padding: 0 var(--spacing-lg);
     max-height: 60vh;
     overflow-y: auto;
 }
 
 /* 매핑 정보 표시 */
 .mapping-info-display {
-    background: #f8f9fa;
-    border-radius: 8px;
+    background: var(--color-bg-secondary, #f8f9fa);
+    border-radius: var(--border-radius-md);
     padding: var(--spacing-md);
-    margin-bottom: 24px;
-    border: 1px solid #e9ecef;
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--color-border-secondary, #e9ecef);
 }
 
 .info-row {

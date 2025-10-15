@@ -968,13 +968,13 @@
 }
 
 .btn-danger {
-    background: #a8e6a3;
+    background: var(--mint-green, #a8e6a3);
     color: white;
 }
 
 .btn-danger:hover {
-    background: #7bc87b;
-    transform: translateY(-1px);
+    background: var(--olive-green, #7bc87b);
+    transform: translateY(var(--transform-hover-up, -1px));
 }
 
 /* 데이터 없음 */
@@ -982,8 +982,8 @@
 .no-sessions,
 .no-data {
     text-align: center;
-    padding: 40px 20px;
-    color: #95a5a6;
+    padding: var(--spacing-xl) var(--spacing-lg);
+    color: var(--color-text-muted, #95a5a6);
 }
 
 /* 로딩 오버레이 */
@@ -993,20 +993,20 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--modal-backdrop, rgba(255, 255, 255, 0.8));
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
+    z-index: var(--z-index-modal, 2000);
 }
 
 .loading-spinner {
-    background: white;
-    padding: 20px 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    font-weight: 500;
-    color: #2c3e50;
+    background: var(--modal-bg, white);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--modal-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary, #2c3e50);
 }
 
 /* ==================== CRUD 모달 스타일 ==================== */
@@ -1017,17 +1017,17 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--modal-backdrop, rgba(0, 0, 0, 0.5));
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 3000;
+    z-index: var(--z-index-modal, 3000);
 }
 
 .client-modal {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    background: var(--modal-bg, white);
+    border-radius: var(--border-radius-lg, 12px);
+    box-shadow: var(--modal-shadow, 0 10px 30px rgba(0, 0, 0, 0.3));
     width: 90%;
     max-width: 500px;
     max-height: 90vh;
@@ -1038,42 +1038,42 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid #e9ecef;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-bottom: 1px solid var(--color-border-secondary, #e9ecef);
 }
 
 .client-modal-header h3 {
-    margin: 0 0 4px 0;
-    color: #2c3e50;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--color-text-primary, #2c3e50);
     font-size: var(--font-size-lg);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
 }
 
 .modal-description {
     margin: 0;
-    color: #6c757d;
+    color: var(--color-text-muted, #6c757d);
     font-size: var(--font-size-sm);
-    font-weight: 400;
+    font-weight: var(--font-weight-normal);
 }
 
 .client-modal-close {
     background: none;
     border: none;
     font-size: var(--font-size-xl);
-    color: #6c757d;
+    color: var(--color-text-muted, #6c757d);
     cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
     transition: all 0.2s ease;
 }
 
 .client-modal-close:hover {
-    background: #f8f9fa;
-    color: #495057;
+    background: var(--color-bg-accent, #f8f9fa);
+    color: var(--color-text-primary, #495057);
 }
 
 .client-modal-body {
-    padding: 24px;
+    padding: var(--spacing-xl);
 }
 
 .client-form {

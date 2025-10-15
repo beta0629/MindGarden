@@ -12,6 +12,8 @@
   --schedule-modal-grid-gap: var(--spacing-sm);
   --schedule-modal-grid-min-column: 280px;
   --schedule-modal-overlay-padding-top: var(--spacing-xl);
+  --schedule-modal-vertical-align: var(--flex-align-start, flex-start);
+  --schedule-modal-margin-top: var(--spacing-xl);
 }
 
 /* 태블릿/데스크탑 변수 */
@@ -22,6 +24,9 @@
     --schedule-modal-max-height: 98vh;
     --schedule-modal-grid-max-height: 65vh;
     --schedule-modal-grid-min-column: 260px;
+    --schedule-modal-overlay-padding-top: var(--spacing-lg);
+    --schedule-modal-vertical-align: var(--flex-align-start, flex-start);
+    --schedule-modal-margin-top: var(--spacing-lg);
   }
 }
 
@@ -37,6 +42,7 @@
     --schedule-modal-card-min-height: 80px;
     --schedule-modal-card-padding: var(--spacing-xs);
     --schedule-modal-overlay-padding-top: var(--spacing-sm);
+    --schedule-modal-vertical-align: var(--flex-align-start, flex-start);
   }
 }
 
@@ -49,7 +55,7 @@
   bottom: 0;
   background: var(--modal-backdrop, rgba(0, 0, 0, 0.3));
   display: flex;
-  align-items: center;
+  align-items: var(--schedule-modal-vertical-align, center);
   justify-content: center;
   z-index: var(--z-index-modal-schedule, var(--z-index-modal, 10020));
   backdrop-filter: var(--ios-backdrop-blur-sm);
@@ -74,6 +80,7 @@
   max-height: var(--schedule-modal-max-height);
   min-height: var(--schedule-modal-min-height);
   overflow: hidden;
+  margin-top: var(--schedule-modal-margin-top, var(--spacing-lg));
 }
 
 /* 모달 헤더 */

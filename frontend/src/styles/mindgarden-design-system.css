@@ -3192,6 +3192,90 @@ body {
   background-color: var(--status-warning) !important;
 }
 
+/* ===== Modal Title Section ===== */
+.mg-modal-title-section {
+  flex: 1;
+}
+
+.mg-modal-description {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-normal);
+  line-height: 1.5;
+}
+
+.mg-text-danger {
+  color: var(--color-danger) !important;
+}
+
+.mg-text-center {
+  text-align: center;
+}
+
+.mg-text-lg {
+  font-size: var(--font-size-lg);
+}
+
+.mg-text-base {
+  font-size: var(--font-size-base);
+}
+
+.mg-text-sm {
+  font-size: var(--font-size-sm);
+}
+
+.mg-text-xs {
+  font-size: var(--font-size-xs);
+}
+
+.mg-text-primary {
+  color: var(--color-text-primary);
+}
+
+.mg-text-muted {
+  color: var(--color-text-muted);
+}
+
+.mg-font-semibold {
+  font-weight: var(--font-weight-semibold);
+}
+
+.mg-mb-md {
+  margin-bottom: var(--spacing-md);
+}
+
+.mg-mb-lg {
+  margin-bottom: var(--spacing-lg);
+}
+
+.mg-mt-sm {
+  margin-top: var(--spacing-sm);
+}
+
+.mg-flex {
+  display: flex;
+}
+
+.mg-align-center {
+  align-items: center;
+}
+
+.mg-justify-center {
+  justify-content: center;
+}
+
+.mg-gap-sm {
+  gap: var(--spacing-sm);
+}
+
+/* ===== Flex Alignment Variables ===== */
+:root {
+  --flex-align-start: flex-start;
+  --flex-align-center: center;
+  --flex-align-end: flex-end;
+}
+
 /* Status Badge Classes */
 .mg-client-card__status-badge--active {
   background-color: var(--status-active) !important;

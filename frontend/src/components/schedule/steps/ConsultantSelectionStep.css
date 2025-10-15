@@ -187,14 +187,30 @@
 
 .selected-consultant-title {
   font-size: var(--font-size-base, 1rem);
-  color: var(--color-text-primary, #1D1D1F);
+  color: var(--color-text-primary, #000000);
   font-weight: var(--font-weight-semibold, 600);
   margin: 0 0 var(--spacing-xs, 0.5rem) 0;
 }
 
 .selected-consultant-details {
   font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary, #424245);
+  color: var(--color-text-primary, #000000);
+  margin: 0;
+}
+
+/* 선택된 상담사 텍스트 */
+.consultant-selection-selected {
+  background: var(--mint-green-light, rgba(152, 251, 152, 0.2));
+  border-radius: var(--border-radius-md, 12px);
+  padding: var(--spacing-md, 1rem);
+  margin-bottom: var(--spacing-lg, 1.5rem);
+  box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
+}
+
+.consultant-selection-selected-text {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text-primary, #000000);
+  font-weight: var(--font-weight-medium, 500);
   margin: 0;
 }
 

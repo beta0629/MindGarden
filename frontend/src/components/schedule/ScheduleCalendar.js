@@ -46,6 +46,12 @@ const ScheduleCalendar = ({ userRole, userId }) => {
     const [scheduleStatusOptions, setScheduleStatusOptions] = useState([]);
     const [loadingCodes, setLoadingCodes] = useState(false);
     
+    // 모바일 달력 확대 기능 상태
+    const [isMobileZoomOpen, setIsMobileZoomOpen] = useState(false);
+    const [mobileZoomDate, setMobileZoomDate] = useState(null);
+    const [mobileZoomSchedules, setMobileZoomSchedules] = useState([]);
+    const [isMobile, setIsMobile] = useState(false);
+    
     // 상담사 필터링 상태
     const [consultants, setConsultants] = useState([]);
     const [selectedConsultantId, setSelectedConsultantId] = useState('');
@@ -328,6 +334,45 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         }
     }, [currentUserId, currentUserRole, selectedConsultantId]);
 
+    // 모바일 달력 확대 기능
+    const openMobileZoom = useCallback((date, dayEvents = []) => {
+        setMobileZoomDate(date);
+        setMobileZoomSchedules(dayEvents);
+        setIsMobileZoomOpen(true);
+    }, []);
+
+    const closeMobileZoom = useCallback(() => {
+        setIsMobileZoomOpen(false);
+        setMobileZoomDate(null);
+        setMobileZoomSchedules([]);
+    }, []);
+
+    const handleMobileZoomScheduleClick = useCallback((schedule) => {
+        closeMobileZoom();
+        setSelectedSchedule(schedule);
+        setIsDetailModalOpen(true);
+    }, [closeMobileZoom]);
+
+    const handleMobileZoomAddSchedule = useCallback(() => {
+        if (mobileZoomDate) {
+            closeMobileZoom();
+            setSelectedDate(mobileZoomDate);
+            setIsModalOpen(true);
+        }
+    }, [mobileZoomDate, closeMobileZoom]);
+
+    // 모바일 감지
+    useEffect(() => {
+        const checkIsMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkIsMobile();
+        window.addEventListener('resize', checkIsMobile);
+        
+        return () => window.removeEventListener('resize', checkIsMobile);
+    }, []);
+
     // 스케줄 데이터 로드
     useEffect(() => {
         loadSchedules();
@@ -551,14 +596,34 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         if (currentUserRole === 'ADMIN' || currentUserRole === 'BRANCH_SUPER_ADMIN' || currentUserRole === 'CONSULTANT') {
             // 과거 날짜인 경우 새로운 스케줄 등록 불가 알림
             if (isPastDate) {
-                notificationManager.show('warning', '과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.');
+                // 모바일에서는 확대 모달로 과거 날짜의 스케줄을 보여줌
+                if (isMobile) {
+                    const dayEvents = events.filter(event => {
+                        const eventDate = new Date(event.start);
+                        eventDate.setHours(0, 0, 0, 0);
+                        return eventDate.getTime() === clickedDate.getTime();
+                    });
+                    openMobileZoom(clickedDate, dayEvents);
+                } else {
+                    notificationManager.show('warning', '과거 날짜에는 새로운 스케줄을 등록할 수 없습니다. 기존 스케줄을 클릭하여 조회하실 수 있습니다.');
+                }
                 return;
             }
             
-            setSelectedDate(info.date);
-            setSelectedInfo(info);
-            console.log('📅 DateActionModal 열기 시도 - isDateActionModalOpen을 true로 설정');
-            setIsDateActionModalOpen(true);
+            // 모바일에서는 달력 확대 모달 표시
+            if (isMobile) {
+                const dayEvents = events.filter(event => {
+                    const eventDate = new Date(event.start);
+                    eventDate.setHours(0, 0, 0, 0);
+                    return eventDate.getTime() === clickedDate.getTime();
+                });
+                openMobileZoom(clickedDate, dayEvents);
+            } else {
+                setSelectedDate(info.date);
+                setSelectedInfo(info);
+                console.log('📅 DateActionModal 열기 시도 - isDateActionModalOpen을 true로 설정');
+                setIsDateActionModalOpen(true);
+            }
         } else {
             notificationManager.show('error', '스케줄 생성 권한이 없습니다.');
         }
@@ -1159,6 +1224,78 @@ const ScheduleCalendar = ({ userRole, userId }) => {
         </div>
         
         </>
+        
+        {/* 모바일 달력 확대 모달 */}
+        {isMobileZoomOpen && (
+            <div className="mobile-calendar-zoom">
+                <div className="mobile-calendar-zoom-content">
+                    <div className="mobile-calendar-zoom-header">
+                        <h3 className="mobile-calendar-zoom-title">스케줄 상세</h3>
+                        <button 
+                            className="mobile-calendar-zoom-close"
+                            onClick={closeMobileZoom}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    
+                    <div className="mobile-calendar-zoom-date">
+                        {mobileZoomDate?.toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            weekday: 'long'
+                        })}
+                    </div>
+                    
+                    {mobileZoomSchedules.length > 0 ? (
+                        <div className="mobile-calendar-zoom-schedules">
+                            {mobileZoomSchedules.map((schedule, index) => (
+                                <div 
+                                    key={index}
+                                    className="mobile-calendar-zoom-schedule-item"
+                                    onClick={() => handleMobileZoomScheduleClick(schedule)}
+                                >
+                                    <div className="mobile-calendar-zoom-schedule-time">
+                                        {formatTime(schedule.start)} - {formatTime(schedule.end)}
+                                    </div>
+                                    <div className="mobile-calendar-zoom-schedule-client">
+                                        {schedule.title}
+                                    </div>
+                                    {schedule.extendedProps?.consultantName && (
+                                        <div className="mobile-calendar-zoom-schedule-consultant">
+                                            상담사: {schedule.extendedProps.consultantName}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="mobile-calendar-zoom-empty">
+                            이 날짜에는 등록된 스케줄이 없습니다.
+                        </div>
+                    )}
+                    
+                    {/* 과거 날짜가 아닌 경우에만 스케줄 추가 버튼 표시 */}
+                    {mobileZoomDate && mobileZoomDate >= new Date(new Date().setHours(0, 0, 0, 0)) && (
+                        <div className="mobile-calendar-zoom-actions">
+                            <button 
+                                className="mobile-calendar-zoom-action-button mobile-calendar-zoom-action-button--primary"
+                                onClick={handleMobileZoomAddSchedule}
+                            >
+                                스케줄 추가
+                            </button>
+                            <button 
+                                className="mobile-calendar-zoom-action-button"
+                                onClick={closeMobileZoom}
+                            >
+                                닫기
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )}
     );
 };
 

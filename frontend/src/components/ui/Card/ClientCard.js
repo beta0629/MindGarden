@@ -370,7 +370,7 @@ const ClientCard = ({
                 </div>
             </div>
             
-            <div className="mg-client-card__status mg-client-card__status--mobile-simple" style={{ backgroundColor: getStatusColor() }}>
+            <div className="mg-client-card__status mg-client-card__status--mobile-simple" style={{ backgroundColor: getStatusClass() === 'active' ? '#10b981' : getStatusClass() === 'scheduled' ? '#3b82f6' : getStatusClass() === 'completed' ? '#6b7280' : '#f59e0b' }}>
                 <span>{getStatusText()}</span>
             </div>
         </div>

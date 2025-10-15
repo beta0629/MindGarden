@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
+import { DollarSign, X, CheckCircle } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
-import './MappingDepositModal.css';
 
 /**
  * 매핑 입금 확인 모달 컴포넌트
@@ -61,40 +62,46 @@ const MappingDepositModal = ({
 
     if (!isOpen) return null;
 
-    return (
-        <div className="mapping-deposit-modal-overlay">
-            <div className="mapping-deposit-modal-content">
-                <div className="mapping-deposit-modal-header">
-                    <h3 className="mapping-deposit-modal-title">
-                        💰 입금 확인
+    return ReactDOM.createPortal(
+        <div className="mg-modal-overlay" onClick={handleClose}>
+            <div className="mg-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-modal-header">
+                    <h3 className="mg-modal-title">
+                        <DollarSign size={24} />
+                        입금 확인
                     </h3>
                     <button
                         onClick={handleClose}
-                        className="mapping-deposit-modal-close-btn"
+                        className="mg-modal-close"
+                        aria-label="닫기"
                     >
-                        ×
+                        <X size={24} />
                     </button>
                 </div>
 
-                <div className="mapping-deposit-modal-body">
-                    <div className="mapping-deposit-info-box">
-                        <div className="mapping-deposit-info-item">
-                            상담사: {mapping.consultant?.username || 'N/A'}
+                <div className="mg-modal-body">
+                    <div className="mg-info-box">
+                        <div className="mg-info-row">
+                            <span className="mg-info-label">상담사:</span>
+                            <span className="mg-info-value">{mapping.consultant?.username || 'N/A'}</span>
                         </div>
-                        <div className="mapping-deposit-info-item">
-                            내담자: {mapping.client?.username || 'N/A'}
+                        <div className="mg-info-row">
+                            <span className="mg-info-label">내담자:</span>
+                            <span className="mg-info-value">{mapping.client?.username || 'N/A'}</span>
                         </div>
-                        <div className="mapping-deposit-info-item">
-                            패키지: {mapping.packageName || 'N/A'}
+                        <div className="mg-info-row">
+                            <span className="mg-info-label">패키지:</span>
+                            <span className="mg-info-value">{mapping.packageName || 'N/A'}</span>
                         </div>
-                        <div className="mapping-deposit-info-item mapping-deposit-info-item--amount">
-                            금액: {mapping.paymentAmount ? `${mapping.paymentAmount.toLocaleString()}원` : 'N/A'}
+                        <div className="mg-info-row mg-info-row-highlight">
+                            <span className="mg-info-label">금액:</span>
+                            <span className="mg-info-value">{mapping.paymentAmount ? `${mapping.paymentAmount.toLocaleString()}원` : 'N/A'}</span>
                         </div>
                     </div>
 
                     <form onSubmit={handleSubmit}>
-                        <div className="mapping-deposit-form-group">
-                            <label className="mapping-deposit-label">
+                        <div className="mg-form-group">
+                            <label className="mg-label">
                                 입금 참조번호 *
                             </label>
                             <input
@@ -102,15 +109,16 @@ const MappingDepositModal = ({
                                 value={depositReference}
                                 onChange={(e) => setDepositReference(e.target.value)}
                                 placeholder="입금 확인 번호를 입력하세요"
-                                className="mapping-deposit-input"
+                                className="mg-input"
+                                required
                             />
                         </div>
 
-                        <div className="mapping-deposit-button-group">
+                        <div className="mg-modal-footer">
                             <button
                                 type="button"
                                 onClick={handleClose}
-                                className="mapping-deposit-button mapping-deposit-button--cancel"
+                                className="mg-button mg-button-secondary"
                                 disabled={isLoading}
                             >
                                 취소
@@ -118,15 +126,26 @@ const MappingDepositModal = ({
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="mapping-deposit-button mapping-deposit-button--submit"
+                                className="mg-button mg-button-success"
                             >
-                                {isLoading ? '처리 중...' : '입금 확인'}
+                                {isLoading ? (
+                                    <>
+                                        <span className="mg-spinner"></span>
+                                        처리 중...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle size={18} />
+                                        입금 확인
+                                    </>
+                                )}
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

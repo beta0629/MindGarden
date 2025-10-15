@@ -4335,3 +4335,53 @@ body {
   color: var(--medium-gray);
   border: 1px solid rgba(107, 107, 107, 0.2);
 }
+
+/* ============================================
+   Info Box Styles
+   ============================================ */
+.mg-info-box {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.mg-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+}
+
+.mg-info-row:last-child {
+  border-bottom: none;
+}
+
+.mg-info-row-highlight {
+  background: rgba(182, 229, 216, 0.1);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--mint-green);
+  margin-top: var(--spacing-sm);
+}
+
+.mg-info-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--medium-gray);
+}
+
+.mg-info-value {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--dark-gray);
+}
+
+.mg-info-row-highlight .mg-info-value {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--cocoa);
+}

@@ -35,8 +35,15 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
             try {
                 setLoading(true);
                 
-                // 동적으로 색상, 아이콘, 라벨 조회
-                const cardData = await Promise.all([
+                // 동적으로 색상, 아이콘, 라벨 조회 (async 함수들을 await로 처리)
+                const [
+                    pendingData,
+                    activeData,
+                    paymentConfirmedData,
+                    totalData,
+                    terminatedData,
+                    sessionsExhaustedData
+                ] = await Promise.all([
                     // PENDING_PAYMENT
                     Promise.all([
                         getMappingStatusKoreanName('PENDING_PAYMENT'),
@@ -48,8 +55,9 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         label: label,
                         value: stats.pending,
                         color: color,
-                        bgColor: color + '20', // 투명도 추가
-                        action: 'payment'
+                        bgColor: color + '20',
+                        action: 'payment',
+                        status: 'PENDING_PAYMENT'
                     })),
                     
                     // ACTIVE
@@ -64,7 +72,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         value: stats.active,
                         color: color,
                         bgColor: color + '20',
-                        action: 'view'
+                        action: 'view',
+                        status: 'ACTIVE'
                     })),
                     
                     // PAYMENT_CONFIRMED
@@ -79,7 +88,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         value: stats.paymentConfirmed,
                         color: color,
                         bgColor: color + '20',
-                        action: 'view'
+                        action: 'view',
+                        status: 'PAYMENT_CONFIRMED'
                     })),
                     
                     // TOTAL (특별 처리)
@@ -88,9 +98,10 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         icon: '📊',
                         label: '전체 매핑',
                         value: stats.total,
-                        color: 'var(--color-primary, #007AFF)',
-                        bgColor: 'var(--color-primary-light, rgba(0, 122, 255, 0.1))',
-                        action: 'view_all'
+                        color: 'var(--color-primary)',
+                        bgColor: 'var(--color-primary-light)',
+                        action: 'view_all',
+                        status: 'TOTAL'
                     }),
                     
                     // TERMINATED
@@ -105,7 +116,8 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         value: stats.terminated,
                         color: color,
                         bgColor: color + '20',
-                        action: 'view'
+                        action: 'view',
+                        status: 'TERMINATED'
                     })),
                     
                     // SESSIONS_EXHAUSTED
@@ -120,9 +132,19 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                         value: stats.sessionsExhausted,
                         color: color,
                         bgColor: color + '20',
-                        action: 'view'
+                        action: 'view',
+                        status: 'SESSIONS_EXHAUSTED'
                     }))
                 ]);
+                
+                const cardData = [
+                    pendingData,
+                    activeData,
+                    paymentConfirmedData,
+                    totalData,
+                    terminatedData,
+                    sessionsExhaustedData
+                ];
                 
                 setStatCards(cardData);
                 console.log('✅ 매핑 통계 카드 동적 로드 완료:', cardData);

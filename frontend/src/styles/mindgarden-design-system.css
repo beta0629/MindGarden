@@ -82,6 +82,12 @@
   --schedule-card-mobile-height: 120px;
   --schedule-card-mobile-padding: 0.75rem;
   
+  /* Status Colors */
+  --status-active: #10b981;
+  --status-scheduled: #3b82f6;
+  --status-completed: #6b7280;
+  --status-warning: #f59e0b;
+  
   /* Border Radius */
   --radius-sm: 0.5rem;
   --radius-md: 1rem;
@@ -3139,6 +3145,40 @@ body {
   font-size: 0.625rem;
   font-weight: 500;
   color: white;
+}
+
+/* Status Color Classes */
+.mg-client-card__status--active {
+  background-color: var(--status-active) !important;
+}
+
+.mg-client-card__status--scheduled {
+  background-color: var(--status-scheduled) !important;
+}
+
+.mg-client-card__status--completed {
+  background-color: var(--status-completed) !important;
+}
+
+.mg-client-card__status--warning {
+  background-color: var(--status-warning) !important;
+}
+
+/* Status Badge Classes */
+.mg-client-card__status-badge--active {
+  background-color: var(--status-active) !important;
+}
+
+.mg-client-card__status-badge--scheduled {
+  background-color: var(--status-scheduled) !important;
+}
+
+.mg-client-card__status-badge--completed {
+  background-color: var(--status-completed) !important;
+}
+
+.mg-client-card__status-badge--warning {
+  background-color: var(--status-warning) !important;
 }
 
 .mg-consultant-card--mobile .mg-consultant-card__header-mobile {

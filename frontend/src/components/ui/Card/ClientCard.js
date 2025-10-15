@@ -125,7 +125,7 @@ const ClientCard = ({
             <div className="mg-client-card__info">
                 <div className="mg-client-card__header">
                     <h4 className="mg-client-card__name">{client.name}</h4>
-                    <div className="mg-client-card__status" style={{ backgroundColor: getStatusClass() === 'active' ? '#10b981' : getStatusClass() === 'scheduled' ? '#3b82f6' : getStatusClass() === 'completed' ? '#6b7280' : '#f59e0b' }}>
+                    <div className={`mg-client-card__status mg-client-card__status--${getStatusClass()}`}>
                         {getStatusIcon()}
                         <span>{getStatusText()}</span>
                     </div>
@@ -161,7 +161,7 @@ const ClientCard = ({
             aria-label={`${client.name} 내담자 선택`}
         >
             {/* 상태 배지 */}
-            <div className="mg-client-card__status-badge" style={{ backgroundColor: getStatusClass() === 'active' ? '#10b981' : getStatusClass() === 'scheduled' ? '#3b82f6' : getStatusClass() === 'completed' ? '#6b7280' : '#f59e0b' }}>
+            <div className={`mg-client-card__status-badge mg-client-card__status-badge--${getStatusClass()}`}>
                 {getStatusIcon()}
                 <span>{getStatusText()}</span>
             </div>
@@ -273,7 +273,7 @@ const ClientCard = ({
                 <div className="mg-client-card__avatar mg-client-card__avatar--mobile">
                     {getInitial()}
                 </div>
-                <div className="mg-client-card__status" style={{ backgroundColor: getStatusClass() === 'active' ? '#10b981' : getStatusClass() === 'scheduled' ? '#3b82f6' : getStatusClass() === 'completed' ? '#6b7280' : '#f59e0b' }}>
+                <div className={`mg-client-card__status mg-client-card__status--${getStatusClass()}`}>
                     {getStatusIcon()}
                     <span>{getStatusText()}</span>
                 </div>
@@ -370,7 +370,7 @@ const ClientCard = ({
                 </div>
             </div>
             
-            <div className="mg-client-card__status mg-client-card__status--mobile-simple" style={{ backgroundColor: getStatusClass() === 'active' ? '#10b981' : getStatusClass() === 'scheduled' ? '#3b82f6' : getStatusClass() === 'completed' ? '#6b7280' : '#f59e0b' }}>
+            <div className={`mg-client-card__status mg-client-card__status--mobile-simple mg-client-card__status--${getStatusClass()}`}>
                 <span>{getStatusText()}</span>
             </div>
         </div>

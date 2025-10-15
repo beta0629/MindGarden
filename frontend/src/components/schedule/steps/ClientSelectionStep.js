@@ -234,6 +234,7 @@ const ClientSelectionStep = ({
                     <SpecialtyDisplay
                         consultant={selectedConsultant}
                         variant="inline"
+                        maxItems={10}
                         debug={true}
                     />
                 </div>

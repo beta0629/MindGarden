@@ -126,7 +126,7 @@ const SpecialtyDisplay = ({
         case 'inline':
             return (
                 <span className={`specialty-display specialty-display--inline ${className}`}>
-                    ({specialties[0]})
+                    &nbsp;({specialties.join(', ')})
                 </span>
             );
 

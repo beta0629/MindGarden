@@ -1,4 +1,5 @@
 import React from 'react';
+import { Search, Filter, RotateCcw, X } from 'lucide-react';
 import { MAPPING_FILTER_OPTIONS } from '../../../constants/mapping';
 import './MappingFilters.css';
 
@@ -29,14 +30,14 @@ const MappingFilters = ({
                     className="mg-btn mg-btn--sm mg-btn--secondary"
                     onClick={onReset}
                 >
-                    <i className="bi bi-arrow-clockwise"></i> 초기화
+                    <RotateCcw size={16} /> 초기화
                 </button>
             </div>
             
             <div className="mapping-filters-content">
                 <div className="mapping-filters-status">
                     <label className="mapping-filters-label">
-                        <i className="bi bi-funnel"></i>
+                        <Filter size={16} />
                         상태 필터
                     </label>
                     <select 
@@ -54,7 +55,7 @@ const MappingFilters = ({
                 
                 <div className="mapping-filters-search">
                     <label className="mapping-filters-label">
-                        <i className="bi bi-search"></i>
+                        <Search size={16} />
                         {' '}검색
                     </label>
                     <div className="mapping-filters-search-wrapper">
@@ -69,16 +70,8 @@ const MappingFilters = ({
                             <button 
                                 className="mapping-filters-clear-btn"
                                 onClick={() => onSearchChange('')}
-                                onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = 'var(--color-bg-secondary, #F5F5F7)';
-                                    e.target.style.color = 'var(--color-danger, #DC3545)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = 'transparent';
-                                    e.target.style.color = 'var(--color-text-secondary, #424245)';
-                                }}
                             >
-                                <i className="bi bi-x"></i>
+                                <X size={16} />
                             </button>
                         )}
                     </div>

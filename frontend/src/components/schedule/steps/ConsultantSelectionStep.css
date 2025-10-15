@@ -23,7 +23,8 @@
   gap: var(--spacing-sm, 0.75rem);
 }
 
-.consultant-selection-description {
+.consultant-selection-description,
+.consultant-selection-subtitle {
   font-size: var(--font-size-base, 1rem);
   color: var(--color-text-secondary, #424245);
   margin: 0;

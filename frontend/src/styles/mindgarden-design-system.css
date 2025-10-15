@@ -88,6 +88,11 @@
   --status-completed: #6b7280;
   --status-warning: #f59e0b;
   
+  /* System Colors */
+  --color-success: #28A745;
+  --color-warning: #FFC107;
+  --color-danger: #dc3545;
+  
   /* Border Radius */
   --radius-sm: 0.5rem;
   --radius-md: 1rem;

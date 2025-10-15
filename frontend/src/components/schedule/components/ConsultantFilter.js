@@ -35,7 +35,7 @@ const ConsultantFilterNew = ({
         { value: 'all', label: '전체', color: 'var(--color-text-secondary, #424245)' },
         { value: 'available', label: '여유', color: 'var(--color-success, #28A745)' },
         { value: 'busy', label: '바쁨', color: 'var(--color-warning, #FFC107)' },
-        { value: 'unavailable', label: '휴무', color: '#dc3545' }
+        { value: 'unavailable', label: '휴무', color: 'var(--color-danger, #dc3545)' }
     ];
     /**
      * 검색 입력 변경 핸들러

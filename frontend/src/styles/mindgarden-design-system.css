@@ -99,6 +99,12 @@
   --z-index-modal-schedule: 10020;
   --z-index-duplicate-login: 10050;
   
+  /* Transform Effects */
+  --transform-hover-up: -1px;
+  
+  /* Shadow Effects */
+  --shadow-hover-primary: 0 4px 12px rgba(0, 122, 255, 0.3);
+  
   /* Border Radius */
   --radius-sm: 0.5rem;
   --radius-md: 1rem;

@@ -1088,12 +1088,14 @@ public class AdminServiceImpl implements AdminService {
         specialtyMap.put("COUPLE", "부부상담");
         specialtyMap.put("CHILD", "아동상담");
         specialtyMap.put("TEEN", "청소년상담");
+        specialtyMap.put("ADOLESCENT", "청소년상담"); // ADOLESCENT 추가
         specialtyMap.put("ADDICTION", "중독");
         specialtyMap.put("EATING", "섭식장애");
         specialtyMap.put("SLEEP", "수면장애");
         specialtyMap.put("ANGER", "분노조절");
         specialtyMap.put("GRIEF", "상실");
         specialtyMap.put("SELF_ESTEEM", "자존감");
+        specialtyMap.put("CAREER", "진로상담"); // CAREER 추가
         specialtyMap.put("FAMIL", "가족상담"); // FAMILY의 축약형 처리
         
         return specialtyMap.getOrDefault(code, code);

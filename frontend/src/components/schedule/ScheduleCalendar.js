@@ -1223,8 +1223,6 @@ const ScheduleCalendar = ({ userRole, userId }) => {
             />
         </div>
         
-        </>
-        
         {/* 모바일 달력 확대 모달 */}
         {isMobileZoomOpen && (
             <div className="mobile-calendar-zoom">
@@ -1296,6 +1294,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                 </div>
             </div>
         )}
+        </>
     );
 };
 

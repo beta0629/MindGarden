@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { apiPost } from '../../../utils/ajax';
 import notificationManager from '../../../utils/notification';
 
@@ -99,17 +100,26 @@ const MappingPaymentModal = ({
     // 모달이 열릴 때마다 참조번호 강제 생성
     const currentReference = paymentData.paymentReference || generateReferenceNumber(paymentData.paymentMethod);
 
-    return (
-        <div className="mapping-payment-modal-overlay">
-            <div className="mapping-payment-modal-content">
-                <h3 style={{
-                    margin: '0 0 20px 0',
-                    color: '#2c5aa0',
-                    fontSize: 'var(--font-size-lg)',
-                    fontWeight: '600'
-                }}>
-                    💰 결제 확인
-                </h3>
+    return ReactDOM.createPortal(
+        <div className="mg-modal-overlay" onClick={onClose}>
+            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
+                {/* 헤더 */}
+                <div className="mg-modal-header">
+                    <h2 className="mg-modal-title">
+                        💰 결제 확인
+                    </h2>
+                    <button 
+                        className="mg-modal-close"
+                        onClick={onClose}
+                        disabled={loading}
+                        aria-label="닫기"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                {/* 본문 */}
+                <div className="mg-modal-body">
 
                 <div style={{ marginBottom: '16px' }}>
                     <div style={{
@@ -252,46 +262,28 @@ const MappingPaymentModal = ({
                     />
                 </div>
 
-                <div style={{
-                    display: 'flex',
-                    gap: '12px',
-                    justifyContent: 'flex-end'
-                }}>
+                </div>
+
+                {/* 푸터 */}
+                <div className="mg-modal-footer">
                     <button
+                        className="mg-btn mg-btn--secondary"
                         onClick={onClose}
                         disabled={loading}
-                        style={{
-                            padding: '10px 20px',
-                            border: '1px solid #ddd',
-                            borderRadius: '8px',
-                            backgroundColor: 'white',
-                            color: '#666',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            fontSize: 'var(--font-size-sm)',
-                            fontWeight: '500'
-                        }}
                     >
                         취소
                     </button>
                     <button
+                        className="mg-btn mg-btn--primary"
                         onClick={handleConfirmPayment}
                         disabled={loading}
-                        style={{
-                            padding: '10px 20px',
-                            border: 'none',
-                            borderRadius: '8px',
-                            backgroundColor: loading ? '#ccc' : '#007bff',
-                            color: 'white',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            fontSize: 'var(--font-size-sm)',
-                            fontWeight: '500'
-                        }}
                     >
                         {loading ? '처리 중...' : '확인'}
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

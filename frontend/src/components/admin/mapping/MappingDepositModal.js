@@ -34,6 +34,18 @@ const MappingDepositModal = ({
         if (isOpen && mapping) {
             const referenceNumber = generateDepositReference();
             setDepositReference(referenceNumber);
+            
+            // 디버깅: 매핑 데이터 구조 확인
+            console.log('🔍 MappingDepositModal 매핑 데이터:', {
+                mapping,
+                consultantName: mapping.consultantName,
+                clientName: mapping.clientName,
+                consultant: mapping.consultant,
+                client: mapping.client,
+                packageName: mapping.packageName,
+                packagePrice: mapping.packagePrice,
+                paymentAmount: mapping.paymentAmount
+            });
         }
     }, [isOpen, mapping]);
 
@@ -101,11 +113,15 @@ const MappingDepositModal = ({
                     <div className="mg-info-box">
                         <div className="mg-info-row">
                             <span className="mg-info-label">상담사:</span>
-                            <span className="mg-info-value">{mapping.consultant?.username || 'N/A'}</span>
+                            <span className="mg-info-value">
+                                {mapping.consultantName || mapping.consultant?.name || mapping.consultant?.username || 'N/A'}
+                            </span>
                         </div>
                         <div className="mg-info-row">
                             <span className="mg-info-label">내담자:</span>
-                            <span className="mg-info-value">{mapping.client?.username || 'N/A'}</span>
+                            <span className="mg-info-value">
+                                {mapping.clientName || mapping.client?.name || mapping.client?.username || 'N/A'}
+                            </span>
                         </div>
                         <div className="mg-info-row">
                             <span className="mg-info-label">패키지:</span>
@@ -113,7 +129,9 @@ const MappingDepositModal = ({
                         </div>
                         <div className="mg-info-row mg-info-row-highlight">
                             <span className="mg-info-label">금액:</span>
-                            <span className="mg-info-value">{mapping.paymentAmount ? `${mapping.paymentAmount.toLocaleString()}원` : 'N/A'}</span>
+                            <span className="mg-info-value">
+                                {(mapping.packagePrice || mapping.paymentAmount) ? `${(mapping.packagePrice || mapping.paymentAmount).toLocaleString()}원` : 'N/A'}
+                            </span>
                         </div>
                     </div>
 

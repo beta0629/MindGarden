@@ -1,4 +1,10 @@
 import React from 'react';
+import { CheckCircle, PauseCircle, Clock, XCircle, User, Package, QuestionCircle } from 'lucide-react';
+import { 
+    getMappingStatusKoreanName,
+    getStatusColor,
+    getStatusIcon
+} from '../../utils/codeHelper';
 import './MappingCard.css';
 
 /**
@@ -15,34 +21,17 @@ const MappingCard = ({
     onClick,
     actions = null 
 }) => {
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'ACTIVE': return 'success';
-            case 'INACTIVE': return 'secondary';
-            case 'PENDING': return 'warning';
-            case 'EXPIRED': return 'danger';
-            default: return 'secondary';
-        }
-    };
-
-    const getStatusIcon = (status) => {
-        switch (status) {
-            case 'ACTIVE': return 'bi-check-circle-fill';
-            case 'INACTIVE': return 'bi-pause-circle';
-            case 'PENDING': return 'bi-clock';
-            case 'EXPIRED': return 'bi-x-circle';
-            default: return 'bi-question-circle';
-        }
-    };
-
-    const getStatusLabel = (status) => {
-        switch (status) {
-            case 'ACTIVE': return '활성';
-            case 'INACTIVE': return '비활성';
-            case 'PENDING': return '대기';
-            case 'EXPIRED': return '만료';
-            default: return '알 수 없음';
-        }
+    // 상태별 동적 처리 함수들 (하드코딩 제거)
+    const getStatusInfo = (status) => {
+        const statusColor = getStatusColor(status, 'MAPPING_STATUS');
+        const statusIcon = getStatusIcon(status, 'MAPPING_STATUS');
+        const statusLabel = getMappingStatusKoreanName(status);
+        
+        return {
+            color: statusColor,
+            icon: statusIcon,
+            label: statusLabel
+        };
     };
 
     return (
@@ -61,9 +50,11 @@ const MappingCard = ({
                     </div>
                 </div>
                 
-                <div className={`status-badge ${getStatusColor(mapping.status)}`}>
-                    <i className={`bi ${getStatusIcon(mapping.status)}`}></i>
-                    {getStatusLabel(mapping.status)}
+                <div className={`status-badge status-${mapping.status.toLowerCase()}`}>
+                    <span className="status-icon">
+                        {getStatusInfo(mapping.status).icon}
+                    </span>
+                    {getStatusInfo(mapping.status).label}
                 </div>
             </div>
 
@@ -71,7 +62,7 @@ const MappingCard = ({
                 <div className="consultant-info">
                     <div className="info-row">
                         <span className="info-label">
-                            <i className="bi bi-person"></i>
+                            <User size={16} />
                             상담사
                         </span>
                         <span className="info-value">{mapping.consultantName}</span>
@@ -98,7 +89,7 @@ const MappingCard = ({
                 <div className="package-info">
                     <div className="info-row">
                         <span className="info-label">
-                            <i className="bi bi-box"></i>
+                            <Package size={16} />
                             패키지
                         </span>
                         <span className="info-value">{mapping.packageName}</span>

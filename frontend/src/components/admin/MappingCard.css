@@ -1,19 +1,19 @@
 /* ===== MappingCard 스타일 - 디자인 가이드 준수 아이폰 스타일 ===== */
 
 .mapping-card {
-    /* 아이폰 스타일 카드 - 가이드 준수 */
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    /* 디자인 시스템 변수 사용 */
+    background: var(--color-bg-glass, rgba(255, 255, 255, 0.95));
+    border-radius: var(--border-radius-lg, 12px);
+    border: 1px solid var(--color-border-glass, rgba(0, 0, 0, 0.04));
     cursor: pointer;
-    transition: all 0.1s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: var(--transition-fast, all 0.1s ease);
+    backdrop-filter: var(--ios-backdrop-blur-sm, blur(10px));
+    -webkit-backdrop-filter: var(--ios-backdrop-blur-sm, blur(10px));
+    box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    margin-bottom: 12px;
+    margin-bottom: var(--spacing-sm, 12px);
 }
 
 /* 모바일에서는 호버 효과 제거, 터치 피드백만 */
@@ -22,25 +22,25 @@
 }
 
 .mapping-card:active {
-    transform: scale(0.98);
-    transition: transform 0.1s ease;
+    transform: var(--scale-pressed, scale(0.98));
+    transition: var(--transition-fast, transform 0.1s ease);
 }
 
-/* 카드 헤더 - 아이폰 스타일 */
+/* 카드 헤더 - 디자인 시스템 변수 사용 */
 .mapping-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px 12px;
-    background: rgba(248, 248, 248, 0.8);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 12px 12px 0 0;
+    padding: var(--spacing-md, 16px) var(--spacing-lg, 20px) var(--spacing-sm, 12px);
+    background: var(--color-bg-glass-strong, rgba(248, 248, 248, 0.8));
+    border-bottom: 1px solid var(--color-border-glass-strong, rgba(0, 0, 0, 0.06));
+    border-radius: var(--border-radius-lg, 12px) var(--border-radius-lg, 12px) 0 0;
 }
 
 .client-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--spacing-sm, 12px);
     flex: 1;
 }
 
@@ -374,4 +374,73 @@
     .mapping-card-actions {
         padding: 20px 28px;
     }
+}
+
+/* 상태 배지 스타일 - 디자인 시스템 변수 사용 */
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs, 6px);
+    padding: var(--spacing-xs, 6px) var(--spacing-sm, 12px);
+    border-radius: var(--border-radius-full, 20px);
+    font-size: var(--font-size-xs, 12px);
+    font-weight: var(--font-weight-medium, 500);
+    border: 1px solid transparent;
+    transition: var(--transition-fast, all 0.2s ease);
+}
+
+.status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-sm, 14px);
+}
+
+/* 상태별 색상 - 디자인 시스템 변수 사용 */
+.status-active {
+    background: var(--color-success-light, rgba(40, 167, 69, 0.1));
+    color: var(--color-success, #28A745);
+    border-color: var(--color-success, #28A745);
+}
+
+.status-inactive {
+    background: var(--color-gray-light, rgba(108, 117, 125, 0.1));
+    color: var(--color-gray, #6C757D);
+    border-color: var(--color-gray, #6C757D);
+}
+
+.status-pending {
+    background: var(--color-warning-light, rgba(255, 193, 7, 0.1));
+    color: var(--color-warning, #FFC107);
+    border-color: var(--color-warning, #FFC107);
+}
+
+.status-expired {
+    background: var(--color-danger-light, rgba(220, 53, 69, 0.1));
+    color: var(--color-danger, #DC3545);
+    border-color: var(--color-danger, #DC3545);
+}
+
+.status-pending_payment {
+    background: var(--color-warning-light, rgba(255, 193, 7, 0.1));
+    color: var(--color-warning, #FFC107);
+    border-color: var(--color-warning, #FFC107);
+}
+
+.status-payment_confirmed {
+    background: var(--color-info-light, rgba(23, 162, 184, 0.1));
+    color: var(--color-info, #17A2B8);
+    border-color: var(--color-info, #17A2B8);
+}
+
+.status-terminated {
+    background: var(--color-danger-light, rgba(220, 53, 69, 0.1));
+    color: var(--color-danger, #DC3545);
+    border-color: var(--color-danger, #DC3545);
+}
+
+.status-sessions_exhausted {
+    background: var(--color-warning-light, rgba(255, 193, 7, 0.1));
+    color: var(--color-warning, #FFC107);
+    border-color: var(--color-warning, #FFC107);
 }

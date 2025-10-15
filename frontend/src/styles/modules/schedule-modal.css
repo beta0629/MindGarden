@@ -330,18 +330,26 @@
 }
 
 .selection-summary {
-  font-size: var(--font-size-base, 1rem);
-  color: #000000;
-  font-weight: var(--font-weight-semibold, 600);
-  margin: 0 0 var(--spacing-xs, 0.5rem) 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--spacing-xs) 0;
 }
 
 .consultant-specialty,
 .client-details {
-  font-size: var(--font-size-sm, 0.875rem);
-  color: #000000;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
   margin: 0;
-  font-weight: var(--font-weight-medium, 500);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 선택된 상담사 정보 - 더 구체적인 선택자로 우선순위 높임 */
+.schedule-modal .selected-consultant-info .selection-summary,
+.schedule-modal .selected-client-info .selection-summary,
+.schedule-modal .consultant-selection-selected .consultant-selection-selected-text {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* 빈 상태 */

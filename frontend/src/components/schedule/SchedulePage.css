@@ -288,39 +288,7 @@
     min-height: 400px;
 }
 
-.loading-spinner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    font-size: var(--font-size-base);
-    color: #495057;
-    text-align: center;
-    min-width: 200px;
-}
-
-.loading-spinner-icon {
-    width: 60px;
-    height: 40px;
-    border: 4px solid #f3f4f6;
-    border-top: 4px solid #3b82f6;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 16px;
-}
-
-.loading-spinner-text {
-    font-size: var(--font-size-base);
-    color: #6b7280;
-    font-weight: 500;
-    margin: 0;
-    position: relative;
-    z-index: 1;
-}
+/* 하드코딩된 로딩 스타일 제거됨 - UnifiedLoading 컴포넌트 사용 */
 
 @keyframes spin {
     0% { transform: rotate(0deg); }

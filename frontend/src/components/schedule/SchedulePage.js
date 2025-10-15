@@ -4,6 +4,7 @@ import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedScheduleComponent from './UnifiedScheduleComponent';
 import ConsultantStatus from './ConsultantStatus';
 import TodayStats from './TodayStats';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
 import './SchedulePage.css';
@@ -65,12 +66,13 @@ const SchedulePage = ({ user: propUser }) => {
         return (
             <SimpleLayout>
                 <div className="schedule-page">
-                    <div className="loading-container">
-                        <div className="loading-spinner">
-                            <div className="loading-spinner-icon"></div>
-                            <p className="loading-spinner-text">스케줄 정보를 불러오는 중...</p>
-                        </div>
-                    </div>
+                    <UnifiedLoading 
+                        text="스케줄 정보를 불러오는 중..." 
+                        size="large" 
+                        variant="spinner"
+                        type="inline"
+                        className="loading-spinner-inline"
+                    />
                 </div>
             </SimpleLayout>
         );

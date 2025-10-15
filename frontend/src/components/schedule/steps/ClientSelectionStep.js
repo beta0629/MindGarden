@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ClientSelector from '../ClientSelector';
 import MappingCreationModal from '../../admin/MappingCreationModal';
+import UnifiedLoading from '../../common/UnifiedLoading';
 import { API_BASE_URL } from '../../../constants/api';
 import './ClientSelectionStep.css';
 
@@ -206,9 +207,13 @@ const ClientSelectionStep = ({
     if (loading) {
         return (
             <div className="client-selection-step">
-                <div className="loading-container">
-                    <div className="loading-spinner">내담자 목록을 불러오는 중...</div>
-                </div>
+                <UnifiedLoading 
+                    text="내담자 목록을 불러오는 중..." 
+                    size="large" 
+                    variant="dots"
+                    type="inline"
+                    className="loading-spinner-inline"
+                />
             </div>
         );
     }

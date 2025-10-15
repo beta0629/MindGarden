@@ -23,6 +23,7 @@ const ConsultantSelectionStepNew = ({
     const [consultants, setConsultants] = useState([]);
     const [filteredConsultants, setFilteredConsultants] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const [filters, setFilters] = useState({
         specialty: '',
         availability: 'all',
@@ -352,6 +353,18 @@ const ConsultantSelectionStepNew = ({
         setFilteredConsultants(filtered);
     }, [consultants, filters]);
 
+    // 모바일 감지
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     useEffect(() => {
         loadConsultants();
     }, [loadConsultants]);
@@ -454,6 +467,7 @@ const ConsultantSelectionStepNew = ({
                             onClick={() => handleConsultantSelect(consultant)}
                             selected={selectedConsultant?.id === consultant.id}
                             draggable={false}
+                            variant={isMobile ? 'mobile-simple' : 'detailed'}
                         />
                     ))
                 )}

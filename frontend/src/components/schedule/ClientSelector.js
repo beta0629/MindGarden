@@ -25,6 +25,19 @@ const ClientSelector = ({
     const [loadingHistory, setLoadingHistory] = useState({});
     const [clientMappings, setClientMappings] = useState({});
     const [loadingMappings, setLoadingMappings] = useState({});
+    const [isMobile, setIsMobile] = useState(false);
+
+    // 모바일 감지
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     /**
      * 컴포넌트 마운트 시 모든 내담자의 매핑 정보 일괄 로드
@@ -362,7 +375,7 @@ const ClientSelector = ({
                     const mappingInfo = clientMappings[clientId] || {
                         hasMapping: false,
                         remainingSessions: 0,
-                        packageName: loadingMappings[clientId] ? '로딩 중...' : '확인 중...',
+                        packageName: loadingMappings[clientId] ? '로딩 중' : '확인 중',
                         mappingStatus: 'INACTIVE',
                         lastSessionDate: null,
                         totalSessions: 0
@@ -392,7 +405,7 @@ const ClientSelector = ({
                             onClick={() => handleClientClick(client)}
                             selected={isSelected}
                             draggable={isAvailable}
-                            variant="detailed"
+                            variant={isMobile ? 'mobile-simple' : 'detailed'}
                             showActions={true}
                             showProgress={true}
                             className={!isAvailable ? 'mg-client-card--unavailable' : ''}

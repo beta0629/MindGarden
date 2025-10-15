@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, MessageCircle, Calendar, TrendingUp, Phone, Mail, Clock, CheckCircle } from 'lucide-react';
 
 const ClientCardShowcase = () => {
-  const [viewMode, setViewMode] = useState('detailed'); // 'compact', 'detailed', 'mobile'
+  const [viewMode, setViewMode] = useState('detailed'); // 'compact', 'detailed', 'mobile', 'mobile-simple'
 
   const clients = [
     {
@@ -193,6 +193,30 @@ const ClientCardShowcase = () => {
     </div>
   );
 
+  // 모바일 간단 카드 (스케줄 모달용)
+  const renderMobileSimpleCard = (client) => (
+    <div key={client.id} className="mg-client-card mg-client-card--mobile-simple">
+      <div className="mg-client-card__avatar mg-client-card__avatar--mobile-simple">
+        {client.name.charAt(0)}
+      </div>
+      
+      <div className="mg-client-card__info mg-client-card__info--mobile-simple">
+        <h4 className="mg-client-card__name mg-client-card__name--mobile-simple">{client.name}</h4>
+        
+        <div className="mg-client-card__meta mg-client-card__meta--mobile-simple">
+          <div className="mg-client-card__progress mg-client-card__progress--mobile-simple">
+            <span>{client.progress}% 진행</span>
+          </div>
+          <span>{client.sessions}회 상담</span>
+        </div>
+      </div>
+      
+      <div className="mg-client-card__status mg-client-card__status--mobile-simple" style={{ backgroundColor: getStatusColor(client.status) }}>
+        <span>{client.status}</span>
+      </div>
+    </div>
+  );
+
   return (
     <section className="mg-section">
       <h2 className="mg-h2 mg-text-center mg-mb-lg">클라이언트 카드 변형</h2>
@@ -219,6 +243,12 @@ const ClientCardShowcase = () => {
           >
             모바일
           </button>
+          <button 
+            className={`mg-button ${viewMode === 'mobile-simple' ? 'mg-button-primary' : 'mg-button-outline'}`}
+            onClick={() => setViewMode('mobile-simple')}
+          >
+            모바일 간단
+          </button>
         </div>
       </div>
       
@@ -227,6 +257,7 @@ const ClientCardShowcase = () => {
         {viewMode === 'compact' && clients.map(renderCompactCard)}
         {viewMode === 'detailed' && clients.map(renderDetailedCard)}
         {viewMode === 'mobile' && clients.map(renderMobileCard)}
+        {viewMode === 'mobile-simple' && clients.map(renderMobileSimpleCard)}
       </div>
     </section>
   );

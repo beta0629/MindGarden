@@ -755,7 +755,7 @@ const ScheduleCalendar = ({ userRole, userId }) => {
                             ) : (
                                 <div key="loading-status" className="legend-item">
                                     <span className="legend-color" style={{ backgroundColor: '#e5e7eb' }}></span>
-                                    <span>로딩 중...</span>
+                                    <span>로딩 중</span>
                                 </div>
                             )}
                         </div>
@@ -1103,14 +1103,7 @@ const styles = `
     z-index: 1000;
 }
 
-.loading-spinner {
-    background: white;
-    padding: 20px 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    font-size: 16px;
-    color: #374151;
-}
+/* 하드코딩된 로딩 스타일 제거됨 - UnifiedLoading 컴포넌트 사용 */
 
 /* FullCalendar 커스터마이징 */
 .fc {

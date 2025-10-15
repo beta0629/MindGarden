@@ -59,6 +59,29 @@
   --checkbox-size: 18px;
   --chart-height: 20;
   
+  /* 스케줄 모달 변수 */
+  --schedule-modal-max-width: 1400px;
+  --schedule-modal-width: 95%;
+  --schedule-modal-max-height: 95vh;
+  --schedule-modal-min-height: 700px;
+  --schedule-card-min-width: 280px;
+  --schedule-grid-max-height: 60vh;
+  --schedule-card-min-height: 100px;
+  
+  /* 반응형 스케줄 모달 변수 */
+  --schedule-modal-max-width-tablet: 98vw;
+  --schedule-modal-max-height-tablet: 98vh;
+  --schedule-modal-width-tablet: 98%;
+  --schedule-card-min-width-tablet: 260px;
+  --schedule-grid-max-height-tablet: 65vh;
+  --schedule-modal-max-width-mobile: 100vw;
+  --schedule-modal-max-height-mobile: 100vh;
+  --schedule-grid-max-height-mobile: 70vh;
+  --schedule-card-min-height-mobile: 100px;
+  --schedule-card-max-height: 400px;
+  --schedule-card-mobile-height: 120px;
+  --schedule-card-mobile-padding: 0.75rem;
+  
   /* Border Radius */
   --radius-sm: 0.5rem;
   --radius-md: 1rem;
@@ -2727,6 +2750,7 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
+  max-height: var(--schedule-card-max-height, 400px);
 }
 
 .mg-consultant-card:hover {
@@ -2747,7 +2771,12 @@ body {
 }
 
 .mg-consultant-cards-grid--detailed {
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--schedule-card-min-width, 280px), 1fr));
+  max-height: var(--schedule-grid-max-height, 60vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
 }
 
 .mg-consultant-cards-grid--mobile {
@@ -2951,6 +2980,165 @@ body {
 /* Mobile Card */
 .mg-consultant-card--mobile {
   padding: var(--spacing-lg);
+}
+
+/* Mobile Simple Card */
+.mg-consultant-card--mobile-simple {
+  padding: var(--schedule-card-mobile-padding);
+  height: var(--schedule-card-mobile-height);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.mg-consultant-card--mobile-simple:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.mg-consultant-card--mobile-simple .mg-consultant-card__avatar--mobile-simple {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--mint-green), var(--soft-mint));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.mg-consultant-card--mobile-simple .mg-consultant-card__info--mobile-simple {
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-consultant-card--mobile-simple .mg-consultant-card__name--mobile-simple {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-consultant-card--mobile-simple .mg-consultant-card__meta--mobile-simple {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.75rem;
+  color: var(--medium-gray);
+  white-space: nowrap;
+}
+
+.mg-consultant-card--mobile-simple .mg-consultant-card__rating--mobile-simple {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  color: #fbbf24;
+}
+
+.mg-consultant-card--mobile-simple .mg-consultant-card__status--mobile-simple {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.625rem;
+  font-weight: 500;
+  background: var(--mint-green);
+  color: white;
+}
+
+/* ============================================
+   Client Card Mobile Simple
+   ============================================ */
+.mg-client-card--mobile-simple {
+  padding: var(--schedule-card-mobile-padding);
+  height: var(--schedule-card-mobile-height);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.mg-client-card--mobile-simple:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.mg-client-card--mobile-simple .mg-client-card__avatar--mobile-simple {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--soft-blue), var(--light-blue));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.mg-client-card--mobile-simple .mg-client-card__info--mobile-simple {
+  flex: 1;
+  min-width: 0;
+}
+
+.mg-client-card--mobile-simple .mg-client-card__name--mobile-simple {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mg-client-card--mobile-simple .mg-client-card__meta--mobile-simple {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 0.75rem;
+  color: var(--medium-gray);
+  white-space: nowrap;
+}
+
+.mg-client-card--mobile-simple .mg-client-card__progress--mobile-simple {
+  color: var(--soft-blue);
+  font-weight: 500;
+}
+
+.mg-client-card--mobile-simple .mg-client-card__status--mobile-simple {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: white;
 }
 
 .mg-consultant-card--mobile .mg-consultant-card__header-mobile {
@@ -4590,7 +4778,12 @@ body {
 }
 
 .mg-consultant-cards-grid--detailed {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--schedule-card-min-width, 280px), 1fr));
+  max-height: var(--schedule-grid-max-height, 60vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
 }
 
 .mg-consultant-cards-grid--compact {
@@ -5096,10 +5289,23 @@ body {
   .mg-consultant-cards-grid--detailed,
   .mg-client-cards-grid--detailed {
     grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
   }
   
   .mg-consultant-cards-grid--compact,
   .mg-client-cards-grid--compact {
     grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  /* Mobile Simple Cards */
+  .mg-consultant-card--detailed,
+  .mg-client-card--detailed {
+    display: none;
+  }
+  
+  .mg-consultant-card--mobile-simple,
+  .mg-client-card--mobile-simple {
+    display: flex !important;
   }
 }

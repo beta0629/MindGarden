@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, Star, Clock, Phone, Mail, MessageCircle, Calendar, Award, TrendingUp } from 'lucide-react';
 
 const ConsultantCardShowcase = () => {
-  const [viewMode, setViewMode] = useState('detailed'); // 'compact', 'detailed', 'mobile'
+  const [viewMode, setViewMode] = useState('detailed'); // 'compact', 'detailed', 'mobile', 'mobile-simple'
 
   const consultants = [
     {
@@ -245,6 +245,32 @@ const ConsultantCardShowcase = () => {
     </div>
   );
 
+  // 모바일 간단 카드 (스케줄 모달용)
+  const renderMobileSimpleCard = (consultant) => (
+    <div key={consultant.id} className="mg-consultant-card mg-consultant-card--mobile-simple">
+      <div className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile-simple">
+        {consultant.name.charAt(0)}
+      </div>
+      
+      <div className="mg-consultant-card__info mg-consultant-card__info--mobile-simple">
+        <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile-simple">{consultant.name}</h4>
+        
+        <div className="mg-consultant-card__meta mg-consultant-card__meta--mobile-simple">
+          <div className="mg-consultant-card__rating mg-consultant-card__rating--mobile-simple">
+            <Star size={12} />
+            <span>{consultant.rating}</span>
+          </div>
+          <span>{consultant.experience}</span>
+          <span>{consultant.availableSlots}개 가능</span>
+        </div>
+      </div>
+      
+      <div className="mg-consultant-card__status mg-consultant-card__status--mobile-simple" style={{ backgroundColor: getStatusColor(consultant.status) }}>
+        {getStatusIcon(consultant.status)}
+      </div>
+    </div>
+  );
+
   return (
     <section className="mg-section">
       <h2 className="mg-h2 mg-text-center mg-mb-lg">상담사 카드 변형</h2>
@@ -271,6 +297,12 @@ const ConsultantCardShowcase = () => {
           >
             모바일
           </button>
+          <button 
+            className={`mg-button ${viewMode === 'mobile-simple' ? 'mg-button-primary' : 'mg-button-outline'}`}
+            onClick={() => setViewMode('mobile-simple')}
+          >
+            모바일 간단
+          </button>
         </div>
       </div>
       
@@ -279,6 +311,7 @@ const ConsultantCardShowcase = () => {
         {viewMode === 'compact' && consultants.map(renderCompactCard)}
         {viewMode === 'detailed' && consultants.map(renderDetailedCard)}
         {viewMode === 'mobile' && consultants.map(renderMobileCard)}
+        {viewMode === 'mobile-simple' && consultants.map(renderMobileSimpleCard)}
       </div>
     </section>
   );

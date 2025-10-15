@@ -361,28 +361,34 @@ const ScheduleModalNew = ({
     if (!isOpen) return null;
 
     return (
-        <div className="mg-modal-overlay" onClick={handleClose}>
-            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
+        <div className="schedule-modal-overlay" onClick={handleClose}>
+            <div className="schedule-modal" onClick={(e) => e.stopPropagation()}>
                 {/* 모달 헤더 */}
-                <div className="mg-modal-header">
-                    <div className="mg-modal-title">
-                        📅 스케줄 생성
+                <div className="schedule-modal-header">
+                    <div className="schedule-modal-header-left">
+                        <div className="schedule-modal-title">
+                            📅 스케줄 생성
+                        </div>
                     </div>
-                    <div className="mg-modal-date">
-                        {selectedDate?.toLocaleDateString('ko-KR', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            weekday: 'long'
-                        })}
+                    <div className="schedule-modal-header-center">
+                        <div className="selected-date">
+                            {selectedDate?.toLocaleDateString('ko-KR', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                weekday: 'long'
+                            })}
+                        </div>
                     </div>
-                    <button 
-                        className="mg-modal-close" 
-                        onClick={handleClose}
-                        aria-label="모달 닫기"
-                    >
-                        ✕
-                    </button>
+                    <div className="schedule-modal-header-right">
+                        <button 
+                            className="schedule-modal-close-btn" 
+                            onClick={handleClose}
+                            aria-label="모달 닫기"
+                        >
+                            ✕
+                        </button>
+                    </div>
                 </div>
 
                 {/* 진행 단계 표시기 */}
@@ -400,7 +406,7 @@ const ScheduleModalNew = ({
                 </div>
 
                 {/* 모달 바디 */}
-                <div className="mg-modal-body">
+                <div className="schedule-modal-content">
                     {/* 1단계: 상담사 선택 */}
                     {step === 1 && (
                         <div style={{
@@ -623,7 +629,7 @@ const ScheduleModalNew = ({
                 </div>
 
                 {/* 모달 푸터 */}
-                <div className="mg-modal-footer">
+                <div className="modal-footer">
                     {step > 1 && (
                         <button 
                             className="mg-button mg-button-secondary" 

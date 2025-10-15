@@ -18,7 +18,7 @@ const ClientCard = ({
     onClick, 
     selected = false,
     draggable = false,
-    variant = 'detailed', // 'compact', 'detailed', 'mobile'
+    variant = 'detailed', // 'compact', 'detailed', 'mobile', 'mobile-simple'
     showActions = true,
     showProgress = true,
     className = ''
@@ -339,12 +339,51 @@ const ClientCard = ({
         </div>
     );
 
+    // 모바일 간단 카드 렌더링 (스케줄 모달용)
+    const renderMobileSimpleCard = () => (
+        <div
+            className={`mg-client-card mg-client-card--mobile-simple ${selected ? 'mg-client-card--selected' : ''} ${getStatusClass() === 'unavailable' ? 'mg-client-card--unavailable' : ''} ${className}`}
+            onClick={handleClick}
+            draggable={draggable}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClick();
+                }
+            }}
+            aria-label={`${client.name} 내담자 선택`}
+        >
+            <div className="mg-client-card__avatar mg-client-card__avatar--mobile-simple">
+                {getInitial()}
+            </div>
+            
+            <div className="mg-client-card__info mg-client-card__info--mobile-simple">
+                <h4 className="mg-client-card__name mg-client-card__name--mobile-simple">{client.name}</h4>
+                
+                <div className="mg-client-card__meta mg-client-card__meta--mobile-simple">
+                    <div className="mg-client-card__progress mg-client-card__progress--mobile-simple">
+                        <span>{getProgressPercentage()}% 진행</span>
+                    </div>
+                    <span>{getSessionInfo().total}회 상담</span>
+                </div>
+            </div>
+            
+            <div className="mg-client-card__status mg-client-card__status--mobile-simple" style={{ backgroundColor: getStatusColor() }}>
+                <span>{getStatusText()}</span>
+            </div>
+        </div>
+    );
+
     // 변형에 따른 렌더링
     switch (variant) {
         case 'compact':
             return renderCompactCard();
         case 'mobile':
             return renderMobileCard();
+        case 'mobile-simple':
+            return renderMobileSimpleCard();
         case 'detailed':
         default:
             return renderDetailedCard();

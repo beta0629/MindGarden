@@ -17,7 +17,7 @@ const ConsultantCard = ({
     onClick, 
     selected = false,
     draggable = false,
-    variant = 'detailed', // 'compact', 'detailed', 'mobile'
+    variant = 'detailed', // 'compact', 'detailed', 'mobile', 'mobile-simple'
     showActions = true,
     className = ''
 }) => {
@@ -352,12 +352,53 @@ const ConsultantCard = ({
         </div>
     );
 
+    // 모바일 간단 카드 렌더링 (스케줄 모달용)
+    const renderMobileSimpleCard = () => (
+        <div
+            className={`mg-consultant-card mg-consultant-card--mobile-simple ${selected ? 'mg-consultant-card--selected' : ''} ${!consultant.available || (consultant.isOnVacation && (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY')) ? 'mg-consultant-card--unavailable' : ''} ${className}`}
+            onClick={handleClick}
+            draggable={draggable}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClick();
+                }
+            }}
+            aria-label={`${consultant.name} 상담사 선택`}
+        >
+            <div className="mg-consultant-card__avatar mg-consultant-card__avatar--mobile-simple">
+                {getInitial()}
+            </div>
+            
+            <div className="mg-consultant-card__info mg-consultant-card__info--mobile-simple">
+                <h4 className="mg-consultant-card__name mg-consultant-card__name--mobile-simple">{consultant.name}</h4>
+                
+                <div className="mg-consultant-card__meta mg-consultant-card__meta--mobile-simple">
+                    <div className="mg-consultant-card__rating mg-consultant-card__rating--mobile-simple">
+                        <Star size={12} />
+                        <span>4.8</span>
+                    </div>
+                    <span>{consultant.experience || '3년'}</span>
+                    <span>{consultant.availableSlots || 0}개 가능</span>
+                </div>
+            </div>
+            
+            <div className="mg-consultant-card__status mg-consultant-card__status--mobile-simple" style={{ backgroundColor: getAvailabilityClass() === 'available' ? '#10b981' : getAvailabilityClass() === 'busy' ? '#f59e0b' : '#ef4444' }}>
+                <TrendingUp size={12} />
+            </div>
+        </div>
+    );
+
     // 변형에 따른 렌더링
     switch (variant) {
         case 'compact':
             return renderCompactCard();
         case 'mobile':
             return renderMobileCard();
+        case 'mobile-simple':
+            return renderMobileSimpleCard();
         case 'detailed':
         default:
             return renderDetailedCard();

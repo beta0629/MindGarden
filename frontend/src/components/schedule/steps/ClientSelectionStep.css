@@ -92,18 +92,7 @@
     min-height: 200px;
 }
 
-.loading-spinner {
-    padding: var(--spacing-lg, 1.5rem) var(--spacing-xl, 2rem);
-    background: var(--color-bg-primary, #FAFAFA);
-    border-radius: var(--border-radius-md, 12px);
-    box-shadow: var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.08));
-    backdrop-filter: var(--ios-backdrop-blur-sm);
-    -webkit-backdrop-filter: var(--ios-backdrop-blur-sm);
-    font-size: var(--font-size-base, 1rem);
-    color: var(--color-text-primary, #1D1D1F);
-    text-align: center;
-    border: 1px solid var(--color-border-secondary, #E8E8ED);
-}
+/* 하드코딩된 로딩 스타일 제거됨 - UnifiedLoading 컴포넌트 사용 */
 
 /* 애니메이션 */
 @keyframes slideInUp {

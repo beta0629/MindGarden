@@ -5568,3 +5568,188 @@ body {
     display: flex !important;
   }
 }
+
+/* ============================================
+   매핑 통계 컴포넌트 스타일
+   ============================================ */
+
+/* 매핑 통계 컨테이너 */
+.mg-mapping-stats-container {
+    background: var(--color-bg-primary);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-glass);
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--color-border-secondary);
+    overflow: hidden;
+}
+
+/* 매핑 통계 헤더 */
+.mg-mapping-stats-header {
+    padding: var(--spacing-lg);
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    text-align: center;
+    border-bottom: 1px solid var(--color-border-secondary);
+}
+
+.mg-mapping-stats-title {
+    margin: 0 0 var(--spacing-xs) 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+}
+
+.mg-mapping-stats-subtitle {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    opacity: 0.9;
+}
+
+/* 매핑 통계 그리드 */
+.mg-mapping-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--color-bg-primary);
+}
+
+/* 매핑 통계 카드 */
+.mg-mapping-stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border-secondary);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+    background: var(--color-bg-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.mg-mapping-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* 매핑 통계 아이콘 */
+.mg-mapping-stat-icon {
+    font-size: var(--font-size-xxl);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--color-bg-glass);
+}
+
+.mg-mapping-stat-card[data-color] .mg-mapping-stat-icon {
+    color: var(--data-color);
+}
+
+/* 매핑 통계 콘텐츠 */
+.mg-mapping-stat-content {
+    flex: 1;
+}
+
+.mg-mapping-stat-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.mg-mapping-stat-count {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+    color: var(--color-text-primary);
+}
+
+.mg-mapping-stat-card[data-color] .mg-mapping-stat-count {
+    color: var(--data-color);
+}
+
+/* 매핑 통계 퍼센트 */
+.mg-mapping-stat-percentage {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    background: var(--color-bg-glass);
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+}
+
+/* 매핑 통계 결제 배지 */
+.mg-mapping-stat-payment-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--color-bg-glass-strong);
+    color: var(--color-success);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--color-success);
+    animation: pulse 2s infinite;
+}
+
+/* 매핑 통계 요약 */
+.mg-mapping-stats-summary {
+    display: flex;
+    justify-content: space-around;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-border-secondary);
+}
+
+.mg-mapping-summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.mg-mapping-summary-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+.mg-mapping-summary-value {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+}
+
+/* 매핑 통계 반응형 */
+@media (max-width: 768px) {
+    .mg-mapping-stats-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+    }
+    
+    .mg-mapping-stats-summary {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+    }
+    
+    .mg-mapping-stat-card {
+        padding: var(--spacing-sm);
+    }
+    
+    .mg-mapping-stat-icon {
+        width: 32px;
+        height: 32px;
+        font-size: var(--font-size-lg);
+    }
+}

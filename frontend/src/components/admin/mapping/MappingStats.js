@@ -204,124 +204,40 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
     }
 
     return (
-        <div style={{
-            background: 'var(--color-bg-primary, #FAFAFA)',
-            borderRadius: 'var(--border-radius-lg, 16px)',
-            boxShadow: 'var(--shadow-glass, 0 2px 8px rgba(0, 0, 0, 0.1))',
-            marginBottom: 'var(--spacing-lg, 1.5rem)',
-            border: '1px solid var(--color-border-secondary, #E8E8ED)',
-            overflow: 'hidden'
-        }}>
-            <div style={{
-                padding: 'var(--spacing-lg, 1.5rem)',
-                background: 'var(--color-bg-secondary, #F5F5F7)',
-                color: 'var(--color-text-primary, #1D1D1F)',
-                textAlign: 'center',
-                borderBottom: '1px solid var(--color-border-secondary, #E8E8ED)'
-            }}>
-                <h3 style={{
-                    margin: '0 0 8px 0',
-                    fontSize: 'var(--font-size-lg)',
-                    fontWeight: '600'
-                }}>📊 매핑 통계</h3>
-                <p style={{
-                    margin: '0',
-                    fontSize: 'var(--font-size-sm)',
-                    opacity: 0.9
-                }}>현재 매핑 상태별 통계입니다.</p>
+        <div className="mg-mapping-stats-container">
+            <div className="mg-mapping-stats-header">
+                <h3 className="mg-mapping-stats-title">📊 매칭 통계</h3>
+                <p className="mg-mapping-stats-subtitle">현재 매칭 상태별 통계입니다.</p>
             </div>
             
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: 'var(--spacing-md, 1rem)',
-                padding: 'var(--spacing-lg, 1.5rem)',
-                background: 'var(--color-bg-primary, #FAFAFA)'
-            }}>
+            <div className="mg-mapping-stats-grid">
                 {statCards.map((stat, index) => (
                     <div 
                         key={index} 
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 'var(--spacing-sm, 0.75rem)',
-                            padding: 'var(--spacing-md, 1rem)',
-                            borderRadius: 'var(--border-radius-md, 12px)',
-                            border: '1px solid var(--color-border-secondary, #E8E8ED)',
-                            transition: 'all 0.3s ease',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            cursor: 'pointer',
-                            userSelect: 'none',
-                            background: 'var(--color-bg-primary, #FAFAFA)',
-                            boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1))'
-                        }}
+                        className={`mg-mapping-stat-card ${stat.status.toLowerCase()}-stat`}
                         onClick={() => onStatCardClick && onStatCardClick(stat)}
                         title={`${stat.label} 클릭하여 ${stat.action === 'payment' ? '결제 확인' : '상세 조회'}`}
-                        onMouseEnter={(e) => {
-                            e.target.style.transform = 'translateY(-2px)';
-                            e.target.style.boxShadow = 'var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15))';
+                        data-color={stat.color}
                         }}
                         onMouseLeave={(e) => {
                             e.target.style.transform = 'translateY(0)';
                             e.target.style.boxShadow = 'var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1))';
                         }}
                     >
-                        <div style={{
-                            fontSize: 'var(--font-size-xxl)',
-                            width: '40px',
-                            height: '40px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '50%',
-                            background: 'var(--color-bg-glass, rgba(255, 255, 255, 0.2))',
-                            color: stat.color
-                        }}>
+                        <div className="mg-mapping-stat-icon">
                             {stat.icon}
                         </div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{
-                                fontSize: 'var(--font-size-xs)',
-                                fontWeight: '600',
-                                color: 'var(--color-text-secondary, #424245)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px',
-                                marginBottom: '2px'
-                            }}>{stat.label}</div>
-                            <div style={{
-                                fontSize: 'var(--font-size-xl)',
-                                fontWeight: '700',
-                                lineHeight: 1,
-                                color: stat.color
-                            }}>
+                        <div className="mg-mapping-stat-content">
+                            <div className="mg-mapping-stat-label">{stat.label}</div>
+                            <div className="mg-mapping-stat-count">
                                 {stat.value}건
                             </div>
                         </div>
-                        <div style={{
-                            fontSize: 'var(--font-size-xs)',
-                            fontWeight: '600',
-                            color: 'var(--color-text-secondary, #424245)',
-                            background: 'var(--color-bg-glass, rgba(255, 255, 255, 0.2))',
-                            padding: '4px 8px',
-                            borderRadius: '12px'
-                        }}>
+                        <div className="mg-mapping-stat-percentage">
                             {stats.total > 0 ? Math.round((stat.value / stats.total) * 100) : 0}%
                         </div>
                         {stat.action === 'payment' && stat.value > 0 && (
-                            <div style={{
-                                position: 'absolute',
-                                top: '8px',
-                                right: '8px',
-                                background: 'var(--color-bg-glass-strong, rgba(255, 255, 255, 0.9))',
-                                color: 'var(--color-success, #28A745)',
-                                fontSize: 'var(--font-size-xs)',
-                                fontWeight: '600',
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                border: '1px solid var(--color-success, #28A745)',
-                                animation: 'pulse 2s infinite'
-                            }}>
+                            <div className="mg-mapping-stat-payment-badge">
                                 💳 결제 확인
                             </div>
                         )}
@@ -329,65 +245,20 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 ))}
             </div>
             
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-around',
-                padding: 'var(--spacing-md, 1rem) var(--spacing-lg, 1.5rem)',
-                background: 'var(--color-bg-secondary, #F5F5F7)',
-                borderTop: '1px solid var(--color-border-secondary, #E8E8ED)'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '4px'
-                }}>
-                    <span style={{
-                        fontSize: 'var(--font-size-xs)',
-                        color: 'var(--color-text-secondary, #424245)',
-                        fontWeight: '500'
-                    }}>총 매핑 수:</span>
-                    <span style={{
-                        fontSize: 'var(--font-size-base)',
-                        fontWeight: '700',
-                        color: 'var(--color-text-primary, #1D1D1F)'
-                    }}>{stats.total}건</span>
+            <div className="mg-mapping-stats-summary">
+                <div className="mg-mapping-summary-item">
+                    <span className="mg-mapping-summary-label">총 매핑 수:</span>
+                    <span className="mg-mapping-summary-value">{stats.total}건</span>
                 </div>
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '4px'
-                }}>
-                    <span style={{
-                        fontSize: 'var(--font-size-xs)',
-                        color: 'var(--color-text-secondary, #424245)',
-                        fontWeight: '500'
-                    }}>활성 비율:</span>
-                    <span style={{
-                        fontSize: 'var(--font-size-base)',
-                        fontWeight: '700',
-                        color: 'var(--color-text-primary, #1D1D1F)'
-                    }}>
+                <div className="mg-mapping-summary-item">
+                    <span className="mg-mapping-summary-label">활성 비율:</span>
+                    <span className="mg-mapping-summary-value">
                         {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
                     </span>
                 </div>
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '4px'
-                }}>
-                    <span style={{
-                        fontSize: 'var(--font-size-xs)',
-                        color: 'var(--color-text-secondary, #424245)',
-                        fontWeight: '500'
-                    }}>승인 대기 비율:</span>
-                    <span style={{
-                        fontSize: 'var(--font-size-base)',
-                        fontWeight: '700',
-                        color: 'var(--color-text-primary, #1D1D1F)'
-                    }}>
+                <div className="mg-mapping-summary-item">
+                    <span className="mg-mapping-summary-label">승인 대기 비율:</span>
+                    <span className="mg-mapping-summary-value">
                         {stats.total > 0 ? Math.round((stats.pending / stats.total) * 100) : 0}%
                     </span>
                 </div>

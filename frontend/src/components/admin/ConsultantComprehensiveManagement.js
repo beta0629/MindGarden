@@ -9,6 +9,7 @@ import {
 import notificationManager from '../../utils/notification';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import SimpleLayout from '../layout/SimpleLayout';
+import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 import { FaUser } from 'react-icons/fa';
 import './ConsultantComprehensiveManagement.css';
 
@@ -678,20 +679,6 @@ const ConsultantComprehensiveManagement = () => {
         }
     };
 
-    /**
-     * 전문분야 표시 텍스트 생성 (백엔드에서 제공하는 specializationDetails 사용)
-     */
-    const getSpecialtyDisplayText = (consultant) => {
-        if (consultant.specializationDetails && consultant.specializationDetails.length > 0) {
-            return consultant.specializationDetails.map(detail => detail.name).join(', ');
-        }
-        
-        if (consultant.specialization && consultant.specialization.trim() !== '') {
-            return consultant.specialization;
-        }
-        
-        return '전문분야 미설정';
-    };
     
     /**
      * 전문분야 코드 확인 (분기 처리용)
@@ -846,12 +833,14 @@ const ConsultantComprehensiveManagement = () => {
                                             <div className="consultant-comp-consultant-name">{consultant.name || '이름 없음'}</div>
                                             <div className="consultant-comp-consultant-email">{consultant.email}</div>
                                             <div className="consultant-comp-consultant-phone">{consultant.phone || '전화번호 없음'}</div>
-                                            <div 
-                                                className={`consultant-comp-consultant-specialty ${!consultant.specialty || consultant.specialty.trim() === '' ? 'no-specialty' : ''}`}
-                                                title={consultant.specialty || '전문분야 미설정'}
-                                            >
-                                                {getSpecialtyDisplayText(consultant)}
-                                            </div>
+                                        <div className="consultant-comp-consultant-specialty">
+                                            <SpecialtyDisplay 
+                                                consultant={consultant} 
+                                                variant="text" 
+                                                showTitle={false}
+                                                debug={true}
+                                            />
+                                        </div>
                                             <div className="consultant-comp-consultant-date">
                                                 가입일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}
                                             </div>
@@ -911,7 +900,14 @@ const ConsultantComprehensiveManagement = () => {
                                                         </div>
                                                         <div className="info-item">
                                                             <span className="label">전문분야:</span>
-                                                            <span className="value">{getSpecialtyDisplayText(selectedConsultant)}</span>
+                                                            <span className="value">
+                                                                <SpecialtyDisplay 
+                                                                    consultant={selectedConsultant} 
+                                                                    variant="text" 
+                                                                    showTitle={false}
+                                                                    debug={true}
+                                                                />
+                                                            </span>
                                                         </div>
                                                         <div className="info-item">
                                                             <span className="label">가입일:</span>
@@ -1110,11 +1106,13 @@ const ConsultantComprehensiveManagement = () => {
                                         <div className="consultant-comp-consultant-name">{consultant.name || '이름 없음'}</div>
                                         <div className="consultant-comp-consultant-email">{consultant.email}</div>
                                         <div className="consultant-comp-consultant-phone">{consultant.phone || '전화번호 없음'}</div>
-                                        <div 
-                                            className={`consultant-comp-consultant-specialty ${!consultant.specialty || consultant.specialty.trim() === '' ? 'no-specialty' : ''}`}
-                                            title={consultant.specialty || '전문분야 미설정'}
-                                        >
-                                            {getSpecialtyDisplayText(consultant)}
+                                        <div className="consultant-comp-consultant-specialty">
+                                            <SpecialtyDisplay 
+                                                consultant={consultant} 
+                                                variant="text" 
+                                                showTitle={false}
+                                                debug={true}
+                                            />
                                         </div>
                                         <div className="consultant-comp-consultant-date">
                                             가입일: {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '-'}
@@ -1153,104 +1151,27 @@ const ConsultantComprehensiveManagement = () => {
 
             {/* 모달 */}
             {showModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000,
-                    fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                }}>
-                    <div style={{
-                        background: 'white',
-                        borderRadius: '16px',
-                        padding: '0',
-                        maxWidth: '500px',
-                        width: '90%',
-                        maxHeight: '80vh',
-                        overflow: 'hidden',
-                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '20px 24px',
-                            borderBottom: '1px solid #e9ecef',
-                            backgroundColor: '#f8f9fa'
-                        }}>
-                            <h3 style={{
-                                margin: 0,
-                                fontSize: 'var(--font-size-lg)',
-                                fontWeight: '600',
-                                color: '#2c3e50'
-                            }}>
+                <div className="mg-modal-overlay">
+                    <div className="mg-modal mg-modal-large">
+                        <div className="mg-modal-header">
+                            <h3 className="mg-modal-title">
                                 {modalType === 'create' && '새 상담사 등록'}
                                 {modalType === 'edit' && '상담사 정보 수정'}
                                 {modalType === 'delete' && '상담사 삭제'}
                             </h3>
-                            <button 
-                                onClick={handleCloseModal}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    fontSize: 'var(--font-size-xxl)',
-                                    cursor: 'pointer',
-                                    color: '#6c757d',
-                                    padding: '4px',
-                                    borderRadius: '4px',
-                                    transition: 'all 0.2s ease',
-                                    width: '32px',
-                                    height: '32px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = '#e9ecef';
-                                    e.target.style.color = '#495057';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = 'transparent';
-                                    e.target.style.color = '#6c757d';
-                                }}
-                            >
+                            <button className="mg-modal-close" onClick={handleCloseModal}>
                                 ×
                             </button>
                         </div>
                         
-                        <div style={{
-                            padding: '24px',
-                            flex: 1,
-                            overflow: 'auto'
-                        }}>
+                        <div className="mg-modal-body">
                             {modalType === 'delete' ? (
-                                <div style={{ padding: '20px 0' }}>
-                                    <div style={{
-                                        textAlign: 'center',
-                                        marginBottom: '24px'
-                                    }}>
-                                        <p style={{
-                                            fontSize: 'var(--font-size-base)',
-                                            color: '#495057',
-                                            margin: '0 0 16px 0',
-                                            lineHeight: '1.5'
-                                        }}>
-                                            정말로 <strong style={{ color: '#dc3545' }}>{editingConsultant?.name}</strong> 상담사를 삭제하시겠습니까?
+                                <div>
+                                    <div className="mg-info-box mg-text-center mg-mb-lg">
+                                        <p className="mg-text-base mg-text-primary mg-mb-md">
+                                            정말로 <strong className="mg-text-danger">{editingConsultant?.name}</strong> 상담사를 삭제하시겠습니까?
                                         </p>
-                                        <p style={{
-                                            fontSize: 'var(--font-size-sm)',
-                                            color: '#dc3545',
-                                            margin: '0 0 24px 0',
-                                            fontWeight: '500'
-                                        }}>
+                                        <p className="mg-text-sm mg-text-danger mg-font-semibold">
                                             이 작업은 되돌릴 수 없습니다.
                                         </p>
                                     </div>
@@ -1561,61 +1482,13 @@ const ConsultantComprehensiveManagement = () => {
                             )}
                         </div>
                         
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            gap: '12px',
-                            padding: '20px 24px',
-                            borderTop: '1px solid #e9ecef',
-                            backgroundColor: '#f8f9fa'
-                        }}>
-                            <button 
-                                onClick={handleCloseModal}
-                                style={{
-                                    padding: '10px 20px',
-                                    border: '1px solid #6c757d',
-                                    borderRadius: '8px',
-                                    backgroundColor: '#ffffff',
-                                    color: '#6c757d',
-                                                        fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '500',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    fontFamily: 'inherit'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = '#6c757d';
-                                    e.target.style.color = '#ffffff';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = '#ffffff';
-                                    e.target.style.color = '#6c757d';
-                                }}
-                            >
+                        <div className="mg-modal-footer">
+                            <button className="mg-button mg-button-secondary" onClick={handleCloseModal}>
                                 취소
                             </button>
                             <button 
+                                className={`mg-button ${modalType === 'delete' ? 'mg-button-danger' : 'mg-button-primary'}`}
                                 onClick={handleModalSubmit}
-                                style={{
-                                    padding: '10px 20px',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    backgroundColor: modalType === 'delete' ? '#dc3545' : '#007bff',
-                                    color: '#ffffff',
-                                                        fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '500',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    fontFamily: 'inherit'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.target.style.backgroundColor = modalType === 'delete' ? '#c82333' : '#0056b3';
-                                    e.target.style.transform = 'translateY(-1px)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.target.style.backgroundColor = modalType === 'delete' ? '#dc3545' : '#007bff';
-                                    e.target.style.transform = 'translateY(0)';
-                                }}
                             >
                                 {modalType === 'create' && '등록'}
                                 {modalType === 'edit' && '수정'}

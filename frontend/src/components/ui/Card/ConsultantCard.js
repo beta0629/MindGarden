@@ -1,5 +1,6 @@
 import React from 'react';
 import { User, Star, Clock, Phone, Mail, MessageCircle, Calendar, Award, TrendingUp } from 'lucide-react';
+import SpecialtyDisplay from '../SpecialtyDisplay';
 
 /**
  * 공통 상담사 카드 컴포넌트
@@ -48,18 +49,6 @@ const ConsultantCard = ({
         }
     };
 
-    /**
-     * 전문 분야 텍스트 반환
-     */
-    const getSpecialtyText = () => {
-        if (consultant.specialties && consultant.specialties.length > 0) {
-            return consultant.specialties[0];
-        }
-        if (consultant.specialty) {
-            return consultant.specialty;
-        }
-        return '일반 상담';
-    };
 
     /**
      * 이니셜 반환
@@ -190,16 +179,13 @@ const ConsultantCard = ({
                 </div>
                 
                 {/* 전문 분야 */}
-                {getSpecialtyText() && (
-                    <div className="mg-consultant-card__specialties">
-                        <div className="mg-consultant-card__specialties-title">전문 분야</div>
-                        <div className="mg-consultant-card__specialties-list">
-                            <div className="mg-consultant-card__specialty-tag">
-                                {getSpecialtyText()}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <SpecialtyDisplay 
+                    consultant={consultant} 
+                    variant="tag" 
+                    showTitle={true}
+                    maxItems={1}
+                    debug={true}
+                />
                 
                 {/* 상담 가능 시간 정보 */}
                 {getAvailabilityInfo().length > 0 && (

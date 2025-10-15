@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle, PauseCircle, Clock, XCircle, User, Package, QuestionCircle } from 'lucide-react';
 import { 
     getMappingStatusKoreanName,
@@ -21,18 +21,40 @@ const MappingCard = ({
     onClick,
     actions = null 
 }) => {
-    // 상태별 동적 처리 함수들 (하드코딩 제거)
-    const getStatusInfo = (status) => {
-        const statusColor = getStatusColor(status, 'MAPPING_STATUS');
-        const statusIcon = getStatusIcon(status, 'MAPPING_STATUS');
-        const statusLabel = getMappingStatusKoreanName(status);
-        
-        return {
-            color: statusColor,
-            icon: statusIcon,
-            label: statusLabel
+    const [statusInfo, setStatusInfo] = useState({
+        color: 'var(--color-gray)',
+        icon: '❓',
+        label: '로딩 중...'
+    });
+
+    // 상태별 동적 처리 함수들 (비동기 처리)
+    useEffect(() => {
+        const loadStatusInfo = async () => {
+            try {
+                const [statusColor, statusIcon, statusLabel] = await Promise.all([
+                    getStatusColor(mapping.status, 'MAPPING_STATUS'),
+                    getStatusIcon(mapping.status, 'MAPPING_STATUS'),
+                    getMappingStatusKoreanName(mapping.status)
+                ]);
+                
+                setStatusInfo({
+                    color: statusColor,
+                    icon: statusIcon,
+                    label: statusLabel
+                });
+            } catch (error) {
+                console.error('상태 정보 로드 실패:', error);
+                // 폴백 값 설정
+                setStatusInfo({
+                    color: 'var(--color-gray)',
+                    icon: '❓',
+                    label: mapping.status || '알 수 없음'
+                });
+            }
         };
-    };
+
+        loadStatusInfo();
+    }, [mapping.status]);
 
     return (
         <div 
@@ -52,9 +74,9 @@ const MappingCard = ({
                 
                 <div className={`status-badge status-${mapping.status.toLowerCase()}`}>
                     <span className="status-icon">
-                        {getStatusInfo(mapping.status).icon}
+                        {statusInfo.icon}
                     </span>
-                    {getStatusInfo(mapping.status).label}
+                    {statusInfo.label}
                 </div>
             </div>
 

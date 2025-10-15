@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { Info, X, User, CreditCard, Calendar, TrendingUp, Clock } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import './MappingDetailModal.css';
@@ -52,16 +54,16 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
     const getStatusBadge = (status) => {
         const statusConfig = {
-            'ACTIVE': { label: '활성', color: '#28a745' },
-            'PENDING_PAYMENT': { label: '입금대기', color: '#ffc107' },
-            'PAYMENT_CONFIRMED': { label: '입금확인', color: '#17a2b8' },
-            'TERMINATED': { label: '종료', color: '#dc3545' },
-            'SESSIONS_EXHAUSTED': { label: '회기소진', color: '#6c757d' }
+            'ACTIVE': { label: '활성', className: 'status-active' },
+            'PENDING_PAYMENT': { label: '입금대기', className: 'status-pending' },
+            'PAYMENT_CONFIRMED': { label: '입금확인', className: 'status-confirmed' },
+            'TERMINATED': { label: '종료', className: 'status-terminated' },
+            'SESSIONS_EXHAUSTED': { label: '회기소진', className: 'status-exhausted' }
         };
         
-        const config = statusConfig[status] || { label: status || '알 수 없음', color: '#6c757d' };
+        const config = statusConfig[status] || { label: status || '알 수 없음', className: 'status-default' };
         return (
-            <span className="mapping-detail-status-badge" data-badge-bg={config.color}>
+            <span className={`mg-badge ${config.className}`}>
                 {config.label}
             </span>
         );
@@ -69,14 +71,14 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
     const getPaymentStatusBadge = (paymentStatus) => {
         const statusConfig = {
-            'PENDING': { label: '결제대기', color: '#ffc107' },
-            'APPROVED': { label: '결제완료', color: '#28a745' },
-            'REJECTED': { label: '결제거부', color: '#dc3545' }
+            'PENDING': { label: '결제대기', className: 'payment-pending' },
+            'APPROVED': { label: '결제완료', className: 'payment-approved' },
+            'REJECTED': { label: '결제거부', className: 'payment-rejected' }
         };
         
-        const config = statusConfig[paymentStatus] || { label: paymentStatus || '알 수 없음', color: '#6c757d' };
+        const config = statusConfig[paymentStatus] || { label: paymentStatus || '알 수 없음', className: 'payment-default' };
         return (
-            <span className="mapping-detail-payment-badge" data-badge-bg={config.color}>
+            <span className={`mg-badge ${config.className}`}>
                 {config.label}
             </span>
         );
@@ -84,70 +86,75 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    return (
-        <div className="mapping-detail-modal-overlay">
-            <div className="mapping-detail-modal">
-                <div className="mapping-detail-header">
-                    <h2>
-                        <i className="bi bi-info-circle"></i>
+    return ReactDOM.createPortal(
+        <div className="mg-modal-overlay" onClick={onClose}>
+            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-modal-header">
+                    <h2 className="mg-modal-title">
+                        <Info size={24} />
                         매핑 상세 정보
                     </h2>
                     <button 
-                        className="mapping-detail-close-btn"
+                        className="mg-modal-close"
                         onClick={onClose}
+                        aria-label="닫기"
                     >
-                        <i className="bi bi-x-lg"></i>
+                        <X size={24} />
                     </button>
                 </div>
 
                 {loading ? (
-                    <div className="mapping-detail-loading">
-                        <UnifiedLoading 
-                            text="상세 정보를 불러오는 중..." 
-                            size="medium" 
-                            type="inline"
-                        />
+                    <div className="mg-modal-body">
+                        <div className="mg-loading-container">
+                            <UnifiedLoading 
+                                text="상세 정보를 불러오는 중..." 
+                                size="medium" 
+                                type="inline"
+                            />
+                        </div>
                     </div>
                 ) : (
-                    <div className="mapping-detail-content">
+                    <>
                         {/* 탭 네비게이션 */}
-                        <div className="mapping-detail-tabs">
+                        <div className="mg-tabs">
                             <button 
-                                className={`tab-btn ${activeTab === 'basic' ? 'active' : ''}`}
+                                className={`mg-tab ${activeTab === 'basic' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('basic')}
                             >
-                                <i className="bi bi-person-lines-fill"></i>
+                                <User size={18} />
                                 기본 정보
                             </button>
                             <button 
-                                className={`tab-btn ${activeTab === 'payment' ? 'active' : ''}`}
+                                className={`mg-tab ${activeTab === 'payment' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('payment')}
                             >
-                                <i className="bi bi-credit-card"></i>
+                                <CreditCard size={18} />
                                 결제 정보
                             </button>
                             <button 
-                                className={`tab-btn ${activeTab === 'sessions' ? 'active' : ''}`}
+                                className={`mg-tab ${activeTab === 'sessions' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('sessions')}
                             >
-                                <i className="bi bi-calendar-check"></i>
+                                <Calendar size={18} />
                                 회기 정보
                             </button>
                             <button 
-                                className={`tab-btn ${activeTab === 'erp' ? 'active' : ''}`}
+                                className={`mg-tab ${activeTab === 'erp' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('erp')}
                             >
-                                <i className="bi bi-graph-up"></i>
+                                <TrendingUp size={18} />
                                 ERP 연동
                             </button>
                             <button 
-                                className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+                                className={`mg-tab ${activeTab === 'history' ? 'mg-tab-active' : ''}`}
                                 onClick={() => setActiveTab('history')}
                             >
-                                <i className="bi bi-clock-history"></i>
+                                <Clock size={18} />
                                 변경 이력
                             </button>
                         </div>
+                        
+                        <div className="mg-modal-body">
 
                         {/* 탭 컨텐츠 */}
                         <div className="mapping-detail-tab-content">

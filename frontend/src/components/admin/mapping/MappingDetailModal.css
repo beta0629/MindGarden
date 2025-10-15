@@ -1,91 +1,14 @@
-/* 매핑 상세보기 모달 스타일 */
-.mapping-detail-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1050;
-    backdrop-filter: blur(2px);
-}
+/* 매핑 상세보기 모달 스타일 - MindGarden Design System v2.0 */
 
-.mapping-detail-modal {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-    width: 90%;
-    max-width: 900px;
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    animation: modalSlideIn 0.3s ease-out;
-}
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-/* 헤더 */
-.mapping-detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-xl) var(--spacing-xxl);
-    border-bottom: 1px solid #e9ecef;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.mapping-detail-header h2 {
-    margin: 0;
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.mapping-detail-close-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    border-radius: 8px;
-    padding: var(--spacing-sm);
-    color: white;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.mapping-detail-close-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-}
-
-/* 로딩 */
-.mapping-detail-loading {
+/* 로딩 컨테이너 */
+.mg-loading-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: var(--spacing-xxxl);
+    padding: var(--spacing-xl);
     text-align: center;
-}
-
-.mapping-detail-loading p {
-    margin-top: 16px;
-    color: #6c757d;
-    font-size: var(--font-size-sm);
+    min-height: 200px;
 }
 
 /* 컨텐츠 */

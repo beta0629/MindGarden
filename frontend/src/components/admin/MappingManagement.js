@@ -96,6 +96,20 @@ const MappingManagement = () => {
         }
     };
 
+    // 상태값 한글명 변환 함수
+    const getStatusKoreanName = (status) => {
+        const statusMap = {
+            'ACTIVE': '활성',
+            'INACTIVE': '비활성',
+            'PENDING_PAYMENT': '결제 대기',
+            'PAYMENT_CONFIRMED': '결제 확인',
+            'TERMINATED': '종료됨',
+            'SESSIONS_EXHAUSTED': '회기 소진',
+            'SUSPENDED': '일시정지'
+        };
+        return statusMap[status] || status;
+    };
+
     // 매핑 상태 정보 일괄 로드
     const loadMappingStatusInfo = async () => {
         try {
@@ -128,6 +142,8 @@ const MappingManagement = () => {
                 });
                 
                 setMappingStatusInfo(statusInfoMap);
+                console.log('✅ 매핑 상태 정보 로드 완료:', statusInfoMap);
+                console.log('✅ 매핑 상태 정보 키들:', Object.keys(statusInfoMap));
             } else {
                 // 기본값 설정
                 setMappingStatusInfo({
@@ -610,7 +626,7 @@ const MappingManagement = () => {
                                 key={mapping.id}
                                 mapping={mapping}
                                 statusInfo={mappingStatusInfo[mapping.status] || {
-                                    label: mapping.status,
+                                    label: getStatusKoreanName(mapping.status),
                                     color: '#6c757d',
                                     icon: '📋'
                                 }}

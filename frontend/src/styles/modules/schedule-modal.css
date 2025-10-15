@@ -347,7 +347,9 @@
 /* 선택된 상담사 정보 - 더 구체적인 선택자로 우선순위 높임 */
 .schedule-modal .selected-consultant-info .selection-summary,
 .schedule-modal .selected-client-info .selection-summary,
-.schedule-modal .consultant-selection-selected .consultant-selection-selected-text {
+.schedule-modal .consultant-selection-selected .consultant-selection-selected-text,
+.schedule-modal .selected-consultant-info .consultant-summary,
+.schedule-modal .selected-consultant-info .consultant-summary strong {
   color: var(--color-text-primary);
   font-weight: var(--font-weight-semibold);
 }
@@ -479,6 +481,20 @@
   .modal-footer-button {
     flex: 1;
     justify-content: center;
+  }
+
+  /* 선택된 상담사 정보 모바일 스타일 */
+  .selected-consultant-info,
+  .selected-client-info {
+    padding: var(--spacing-sm, 0.75rem);
+    margin-bottom: var(--spacing-md, 1rem);
+  }
+
+  .selected-consultant-info .consultant-summary,
+  .selected-consultant-info .consultant-summary strong {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
   }
 }
 

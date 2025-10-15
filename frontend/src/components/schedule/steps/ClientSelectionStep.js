@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ClientSelector from '../ClientSelector';
 import MappingCreationModal from '../../admin/MappingCreationModal';
 import UnifiedLoading from '../../common/UnifiedLoading';
+import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
 import { API_BASE_URL } from '../../../constants/api';
 import './ClientSelectionStep.css';
 
@@ -230,11 +231,11 @@ const ClientSelectionStep = ({
             <div className="selected-consultant-info">
                 <div className="consultant-summary">
                     <strong>선택된 상담사:</strong> {selectedConsultant?.name}
-                    {(selectedConsultant?.specialties?.[0] || selectedConsultant?.specialty) && (
-                        <span className="consultant-specialty">
-                            ({selectedConsultant?.specialties?.[0] || selectedConsultant?.specialty})
-                        </span>
-                    )}
+                    <SpecialtyDisplay
+                        consultant={selectedConsultant}
+                        variant="inline"
+                        debug={true}
+                    />
                 </div>
             </div>
 

@@ -176,7 +176,17 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
             log.error("❌ 매핑 상태 활성화 실패: {}", e.getMessage(), e);
         }
         
-        // 6. 이메일 알림 발송
+        // 6. ERP 시스템에 결제 정보 전송
+        try {
+            sendSessionExtensionToErp(savedRequest, paymentMethod, finalPaymentReference);
+            log.info("✅ ERP 시스템 연동 완료: requestId={}", savedRequest.getId());
+        } catch (Exception e) {
+            log.error("❌ ERP 시스템 연동 실패: requestId={}, error={}", 
+                     savedRequest.getId(), e.getMessage(), e);
+            // ERP 연동 실패해도 회기 추가는 완료된 상태로 유지
+        }
+
+        // 7. 이메일 알림 발송
         try {
             sendPaymentConfirmationEmail(savedRequest);
             log.info("✅ 입금 확인 이메일 발송 완료: requestId={}", savedRequest.getId());
@@ -382,6 +392,108 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         return statistics;
     }
     
+    /**
+     * ERP 시스템에 회기 추가 결제 정보 전송 (매칭 시스템과 동일한 방식)
+     */
+    private void sendSessionExtensionToErp(SessionExtensionRequest request, String paymentMethod, String paymentReference) {
+        try {
+            log.info("🔄 ERP 회기 추가 결제 데이터 전송 시작: RequestID={}", request.getId());
+            
+            ConsultantClientMapping mapping = request.getMapping();
+            
+            // ERP 전송 데이터 구성 (매칭 시스템과 동일한 구조)
+            Map<String, Object> erpData = new HashMap<>();
+            erpData.put("transactionType", "SESSION_EXTENSION_PAYMENT");
+            erpData.put("requestId", request.getId());
+            erpData.put("mappingId", mapping.getId());
+            erpData.put("clientId", mapping.getClient().getId());
+            erpData.put("clientName", mapping.getClient().getName());
+            erpData.put("consultantId", mapping.getConsultant().getId());
+            erpData.put("consultantName", mapping.getConsultant().getName());
+            erpData.put("packageName", request.getPackageName());
+            erpData.put("additionalSessions", request.getAdditionalSessions());
+            erpData.put("packagePrice", request.getPackagePrice().longValue());
+            erpData.put("paymentMethod", paymentMethod);
+            erpData.put("paymentReference", paymentReference);
+            erpData.put("paymentDate", request.getPaymentDate() != null ? 
+                request.getPaymentDate().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) : 
+                java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            erpData.put("branchCode", mapping.getBranchCode());
+            erpData.put("reason", request.getReason());
+            erpData.put("erpTransactionId", "EXT_" + request.getId() + "_" + System.currentTimeMillis());
+            
+            // ERP API 호출 (매칭 시스템과 동일한 방식)
+            String erpUrl = getErpSessionExtensionApiUrl();
+            Map<String, String> headers = getErpHeaders();
+            
+            // HTTP 요청 전송
+            boolean success = sendToErpSystem(erpUrl, erpData, headers);
+            
+            if (success) {
+                log.info("✅ ERP 회기 추가 결제 데이터 전송 완료: RequestID={}, ERPTransactionID={}", 
+                        request.getId(), erpData.get("erpTransactionId"));
+            } else {
+                log.warn("⚠️ ERP 회기 추가 결제 데이터 전송 실패: RequestID={}", request.getId());
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ ERP 회기 추가 결제 데이터 전송 중 오류: RequestID={}, Error={}", 
+                     request.getId(), e.getMessage(), e);
+            throw e;
+        }
+    }
+    
+    /**
+     * ERP 시스템으로 실제 데이터 전송 (매칭 시스템과 동일한 방식)
+     */
+    private boolean sendToErpSystem(String url, Map<String, Object> data, Map<String, String> headers) {
+        try {
+            // 실제 ERP 시스템의 API 스펙에 맞게 구현
+            // 예시: REST API 호출
+            
+            org.springframework.http.HttpHeaders httpHeaders = new org.springframework.http.HttpHeaders();
+            httpHeaders.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+            
+            // ERP 인증 헤더 추가
+            if (headers != null) {
+                headers.forEach(httpHeaders::set);
+            }
+            
+            org.springframework.http.HttpEntity<Map<String, Object>> request = new org.springframework.http.HttpEntity<>(data, httpHeaders);
+            
+            // RestTemplate을 사용한 HTTP 요청 (실제 구현 시 주입받아 사용)
+            // ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+            
+            // 현재는 모의 처리 (실제 ERP 연동 시 주석 해제하고 위 코드 사용)
+            log.info("🎭 모의 ERP 전송: URL={}, Data={}, Request={}", url, data.get("erpTransactionId"), request != null ? "준비됨" : "null");
+            return true;
+            
+        } catch (Exception e) {
+            log.error("❌ ERP 시스템 통신 오류", e);
+            return false;
+        }
+    }
+    
+    /**
+     * ERP 회기 추가 API URL 가져오기 (매칭 시스템과 동일한 방식)
+     */
+    private String getErpSessionExtensionApiUrl() {
+        // 실제 ERP 시스템의 회기 추가 API URL
+        return System.getProperty("erp.session.extension.api.url", "http://erp.company.com/api/session-extension");
+    }
+    
+    /**
+     * ERP 인증 헤더 생성 (매칭 시스템과 동일한 방식)
+     */
+    private Map<String, String> getErpHeaders() {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", "Bearer " + System.getProperty("erp.api.token", "default-token"));
+        headers.put("X-System", "CONSULTATION_SYSTEM");
+        headers.put("X-Version", "1.0");
+        headers.put("X-Transaction-Type", "SESSION_EXTENSION");
+        return headers;
+    }
+
     /**
      * 입금 확인 이메일 발송
      */

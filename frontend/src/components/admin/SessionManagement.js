@@ -44,6 +44,12 @@ const SessionManagement = () => {
     
     // 회기 추가 요청 상태
     const [sessionExtensionRequests, setSessionExtensionRequests] = useState([]);
+    
+    // 결제 확인 모달 상태
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState('CASH');
+    const [paymentReference, setPaymentReference] = useState('');
 
     // 데이터 로드
     const loadData = useCallback(async () => {

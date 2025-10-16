@@ -30,7 +30,7 @@ public interface ConsultantRepository extends JpaRepository<Consultant, Long> {
     List<Consultant> findByIsAvailableTrueAndIsDeletedFalse();
     
     // === 삭제되지 않은 상담사 조회 ===
-    @Query("SELECT c FROM Consultant c WHERE c.isDeleted = false AND c.isActive = true")
+    @Query("SELECT c FROM Consultant c WHERE c.isDeleted = false")
     List<Consultant> findByIsDeletedFalse();
     
     // === 활성 상담사만 조회 ===

@@ -892,7 +892,10 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<User> getAllConsultants() {
-        List<User> consultants = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
+        List<Consultant> consultantEntities = consultantRepository.findByIsDeletedFalse();
+        List<User> consultants = consultantEntities.stream()
+                .map(consultant -> (User) consultant)
+                .collect(Collectors.toList());
         
         // 각 상담사의 전화번호 복호화
         consultants.forEach(consultant -> {
@@ -3638,7 +3641,10 @@ public class AdminServiceImpl implements AdminService {
             log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
             
             // 활성 상담사만 조회
-            List<User> consultants = userRepository.findByRoleAndIsActiveTrue(UserRole.CONSULTANT);
+            List<Consultant> consultantEntities = consultantRepository.findByIsDeletedFalse();
+            List<User> consultants = consultantEntities.stream()
+                    .map(consultant -> (User) consultant)
+                    .collect(Collectors.toList());
             
             List<Map<String, Object>> statistics = new ArrayList<>();
             

@@ -64,6 +64,12 @@ const ConsultantDetailModal = ({
         if (consultant?.experience) {
             return consultant.experience;
         }
+        if (consultant?.careerYears) {
+            return `${consultant.careerYears}년`;
+        }
+        if (consultant?.workExperience) {
+            return `${consultant.workExperience}년`;
+        }
         return '경력 정보 없음';
     };
 
@@ -72,8 +78,8 @@ const ConsultantDetailModal = ({
      */
     const getRatingInfo = () => {
         return {
-            rating: consultant?.averageRating || consultant?.rating || 4.8,
-            reviewCount: consultant?.reviewCount || consultant?.totalReviews || 45
+            rating: consultant?.averageRating || consultant?.rating || consultant?.score || 0,
+            reviewCount: consultant?.reviewCount || consultant?.totalReviews || consultant?.evaluationCount || 0
         };
     };
 
@@ -166,7 +172,7 @@ const ConsultantDetailModal = ({
                                     <div className="mg-consultant-detail-contact-info">
                                         <span className="mg-consultant-detail-contact-label">이메일</span>
                                         <span className="mg-consultant-detail-contact-value">
-                                            {consultant.email || '이메일 정보 없음'}
+                                            {consultant.email || consultant.emailAddress || '이메일 정보 없음'}
                                         </span>
                                     </div>
                                 </div>
@@ -176,7 +182,7 @@ const ConsultantDetailModal = ({
                                     <div className="mg-consultant-detail-contact-info">
                                         <span className="mg-consultant-detail-contact-label">전화번호</span>
                                         <span className="mg-consultant-detail-contact-value">
-                                            {consultant.phone || '전화번호 정보 없음'}
+                                            {consultant.phone || consultant.phoneNumber || consultant.mobile || '전화번호 정보 없음'}
                                         </span>
                                     </div>
                                 </div>
@@ -230,14 +236,17 @@ const ConsultantDetailModal = ({
                                 <div className="mg-consultant-detail-additional-item">
                                     <span className="mg-consultant-detail-additional-label">총 상담 횟수</span>
                                     <span className="mg-consultant-detail-additional-value">
-                                        {consultant.totalConsultations || 0}회
+                                        {consultant.totalConsultations || consultant.consultationCount || consultant.totalSessions || consultant.sessionCount || 0}회
                                     </span>
                                 </div>
                                 
                                 <div className="mg-consultant-detail-additional-item">
                                     <span className="mg-consultant-detail-additional-label">등록일</span>
                                     <span className="mg-consultant-detail-additional-value">
-                                        {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : '정보 없음'}
+                                        {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : 
+                                         consultant.registrationDate ? new Date(consultant.registrationDate).toLocaleDateString('ko-KR') :
+                                         consultant.joinDate ? new Date(consultant.joinDate).toLocaleDateString('ko-KR') :
+                                         '정보 없음'}
                                     </span>
                                 </div>
                                 

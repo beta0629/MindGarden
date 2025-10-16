@@ -6100,7 +6100,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xl);
-    max-height: 70vh;
+    max-height: 60vh;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: var(--spacing-sm);
@@ -6346,7 +6346,7 @@ body {
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .mg-consultant-detail-container {
-        max-height: 80vh;
+        max-height: 55vh;
         padding-right: var(--spacing-xs);
     }
     
@@ -6377,5 +6377,17 @@ body {
     
     .mg-consultant-detail-availability-grid {
         grid-template-columns: 1fr;
+    }
+    
+    /* 모바일에서 모달 푸터 버튼 레이아웃 개선 */
+    .mg-modal-footer {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+    }
+    
+    .mg-modal-footer .mg-button {
+        width: 100%;
+        justify-content: center;
     }
 }

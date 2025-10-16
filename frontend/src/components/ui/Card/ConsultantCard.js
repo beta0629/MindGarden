@@ -110,7 +110,7 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__meta">
                     <div className="mg-consultant-card__rating">
                         <Star size={12} />
-                        <span>4.8</span>
+                        <span>{consultant.averageRating || consultant.rating || 4.8}</span>
                     </div>
                     <div className="mg-consultant-card__slots">
                         {consultant.availableSlots || 0}개 슬롯
@@ -278,7 +278,7 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__rating-mobile">
                     <div className="mg-consultant-card__rating-item">
                         <Star size={14} />
-                        <span>4.8</span>
+                        <span>{consultant.averageRating || consultant.rating || 4.8}</span>
                     </div>
                     <div className="mg-consultant-card__rating-item">
                         <TrendingUp size={14} />

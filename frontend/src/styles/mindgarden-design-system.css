@@ -6100,6 +6100,29 @@ body {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xl);
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: var(--spacing-sm);
+}
+
+/* 모달 스크롤바 스타일링 */
+.mg-consultant-detail-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mg-consultant-detail-container::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
+    border-radius: var(--border-radius-sm);
+}
+
+.mg-consultant-detail-container::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: var(--border-radius-sm);
+}
+
+.mg-consultant-detail-container::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-dark);
 }
 
 /* 상담사 상세 헤더 */
@@ -6322,6 +6345,11 @@ body {
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
+    .mg-consultant-detail-container {
+        max-height: 80vh;
+        padding-right: var(--spacing-xs);
+    }
+    
     .mg-consultant-detail-header {
         flex-direction: column;
         text-align: center;

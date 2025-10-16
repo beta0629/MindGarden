@@ -75,7 +75,23 @@
 
 /* 검색 컨테이너 */
 .search-container {
-    margin-bottom: var(--spacing-md);
+    margin: 0 auto var(--spacing-md) auto;
+    max-width: 600px;
+    display: flex;
+    justify-content: center;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--color-bg-primary);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-border-light);
+    transition: var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    min-height: 60px;
+    padding: 0 var(--spacing-md);
 }
 
 /* 필터 컨트롤 */
@@ -127,10 +143,12 @@
     display: flex;
     align-items: center;
     background: var(--color-bg-primary);
-    border-radius: var(--border-radius-md);
+    border-radius: var(--border-radius-lg);
     border: 1px solid var(--color-border-light);
     transition: var(--transition-fast);
     box-shadow: var(--shadow-sm);
+    max-width: 100%;
+    width: 100%;
 }
 
 .search-input-wrapper:focus-within {

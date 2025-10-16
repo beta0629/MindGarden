@@ -3042,9 +3042,10 @@ body {
 /* Mobile Simple Card */
 .mg-consultant-card--mobile-simple {
   padding: var(--schedule-card-mobile-padding);
-  height: var(--schedule-card-mobile-height);
+  min-height: var(--schedule-card-mobile-height);
+  height: auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--spacing-sm);
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
@@ -3053,7 +3054,7 @@ body {
   transition: all 0.2s ease;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .mg-consultant-card--mobile-simple:hover {
@@ -3079,6 +3080,9 @@ body {
 .mg-consultant-card--mobile-simple .mg-consultant-card__info--mobile-simple {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
 }
 
 .mg-consultant-card--mobile-simple .mg-consultant-card__name--mobile-simple {
@@ -3098,6 +3102,33 @@ body {
   font-size: 0.75rem;
   color: var(--medium-gray);
   white-space: nowrap;
+}
+
+.mg-consultant-card--mobile-simple .mg-consultant-card__specialties-mobile {
+  margin-top: var(--spacing-xs);
+}
+
+.mg-consultant-card--mobile-simple .mg-consultant-card__specialties-title-mobile {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin: 0 0 var(--spacing-xs);
+}
+
+.mg-consultant-card--mobile-simple .mg-consultant-card__specialties-list-mobile {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+.mg-consultant-card--mobile-simple .mg-consultant-card__specialty-tag-mobile {
+  padding: 0.125rem 0.5rem;
+  background: rgba(152, 251, 152, 0.2);
+  border: 1px solid var(--mint-green);
+  border-radius: var(--radius-sm);
+  font-size: 0.625rem;
+  color: var(--color-text-primary);
+  font-weight: 500;
 }
 
 .mg-consultant-card--mobile-simple .mg-consultant-card__rating--mobile-simple {

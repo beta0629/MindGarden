@@ -189,127 +189,13 @@ const ConsultantSelectionStepNew = ({
                 }
             } else {
                 console.error('상담사 목록 로드 실패:', response.status);
-                // API 실패 시 더미 데이터 사용
-                const dummyConsultants = [
-                    {
-                        id: 'consultant-1',
-                        originalId: 1,
-                        name: '김상담',
-                        title: '수석 상담사',
-                        specialties: ['우울증', '불안장애'],
-                        specialty: '우울증',
-                        type: 'consultant',
-                        available: true,
-                        busy: false,
-                        todayScheduleCount: 2
-                    },
-                    {
-                        id: 'consultant-2',
-                        originalId: 2,
-                        name: '이심리',
-                        title: '전문 상담사',
-                        specialties: ['가족상담', '부부상담'],
-                        specialty: '가족상담',
-                        type: 'consultant',
-                        available: true,
-                        busy: false,
-                        todayScheduleCount: 1
-                    },
-                    {
-                        id: 'consultant-3',
-                        originalId: 3,
-                        name: '박치료',
-                        title: '임상 심리사',
-                        specialties: ['트라우마', 'PTSD'],
-                        specialty: '트라우마',
-                        type: 'consultant',
-                        available: true,
-                        busy: true,
-                        todayScheduleCount: 6
-                    },
-                    {
-                        id: 'consultant-4',
-                        originalId: 4,
-                        name: '최상담',
-                        title: '상담사',
-                        specialties: ['ADHD', '자폐스펙트럼'],
-                        specialty: 'ADHD',
-                        type: 'consultant',
-                        available: true,
-                        busy: false,
-                        todayScheduleCount: 3
-                    },
-                    {
-                        id: 'consultant-5',
-                        originalId: 5,
-                        name: '정치료',
-                        title: '전문 상담사',
-                        specialties: ['우울증', '불안장애'],
-                        specialty: '우울증',
-                        type: 'consultant',
-                        available: false,
-                        busy: false,
-                        todayScheduleCount: 0
-                    },
-                    {
-                        id: 'consultant-6',
-                        originalId: 6,
-                        name: '한상담',
-                        title: '수석 상담사',
-                        specialties: ['가족상담', '부부상담'],
-                        specialty: '가족상담',
-                        type: 'consultant',
-                        available: true,
-                        busy: true,
-                        todayScheduleCount: 7
-                    }
-                ];
-                setConsultants(dummyConsultants);
-                console.log('👨‍⚕️ 더미 상담사 데이터 사용');
+                notificationManager.error('상담사 목록을 불러올 수 없습니다.');
+                setConsultants([]);
             }
         } catch (error) {
             console.error('상담사 목록 로드 실패:', error);
-            // 네트워크 오류 시 더미 데이터 사용
-            const dummyConsultants = [
-                {
-                    id: 'consultant-1',
-                    originalId: 1,
-                    name: '김상담',
-                    title: '수석 상담사',
-                    specialties: ['우울증', '불안장애'],
-                    specialty: '우울증',
-                    type: 'consultant',
-                    available: true,
-                    busy: false,
-                    todayScheduleCount: 2
-                },
-                {
-                    id: 'consultant-2',
-                    originalId: 2,
-                    name: '이심리',
-                    title: '전문 상담사',
-                    specialties: ['가족상담', '부부상담'],
-                    specialty: '가족상담',
-                    type: 'consultant',
-                    available: true,
-                    busy: false,
-                    todayScheduleCount: 1
-                },
-                {
-                    id: 'consultant-3',
-                    originalId: 3,
-                    name: '박치료',
-                    title: '임상 심리사',
-                    specialties: ['트라우마', 'PTSD'],
-                    specialty: '트라우마',
-                    type: 'consultant',
-                    available: true,
-                    busy: true,
-                    todayScheduleCount: 6
-                }
-            ];
-            setConsultants(dummyConsultants);
-            console.log('👨‍⚕️ 네트워크 오류로 인한 더미 상담사 데이터 사용');
+            notificationManager.error('상담사 목록을 불러오는 중 오류가 발생했습니다.');
+            setConsultants([]);
         } finally {
             setLoading(false);
         }

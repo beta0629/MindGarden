@@ -866,13 +866,13 @@ body {
 }
 
 .mg-stat-card {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   transition: all 0.3s ease;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 .mg-stat-card:hover {
@@ -6010,6 +6010,7 @@ body {
   transition: all var(--transition-duration) ease;
   cursor: pointer;
   position: relative;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
 }
 
 .mg-quick-mapping-card:hover {
@@ -6128,6 +6129,7 @@ body {
   border-radius: var(--radius-md);
   padding: var(--spacing-lg);
   transition: all var(--transition-duration) ease;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
 }
 
 .mg-request-card:hover {

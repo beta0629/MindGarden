@@ -134,7 +134,6 @@ const SessionManagement = () => {
         }
     }, []);
 
-
     // 필터링된 매핑 목록
     const getFilteredMappings = useCallback(() => {
         let filtered = mappings;
@@ -287,20 +286,6 @@ const SessionManagement = () => {
     return (
         <SimpleLayout>
             <div className="mg-session-management-redesign">
-                
-                {/* 헤더 섹션 */}
-                <div className="mg-session-header">
-                    <div className="mg-session-header-content">
-                        <div className="mg-session-header-left">
-                            <Calendar className="mg-session-header-icon" />
-                            <div>
-                                <h1 className="mg-session-title">회기 관리</h1>
-                                <p className="mg-session-subtitle">빠르고 간편한 회기 추가 및 관리</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 {/* 통계 카드 그리드 */}
                 <div className="mg-session-stats-grid">
                     <div className="mg-stat-card">
@@ -345,7 +330,6 @@ const SessionManagement = () => {
 
                 {/* 메인 콘텐츠 */}
                 <div className="mg-session-main-content">
-                    
                     {/* 회기 추가 방법 선택 탭 */}
                     <div className="mg-session-tabs">
                         <button 
@@ -418,51 +402,52 @@ const SessionManagement = () => {
                         {activeTab === 'quick' && (
                             <div className="mg-quick-mappings-grid">
                                 {getRecentActiveMappings().map(mapping => {
-                                const clientName = mapping.client?.name || mapping.clientName || '알 수 없음';
-                                const consultantName = mapping.consultant?.name || mapping.consultantName || '알 수 없음';
-                                const totalSessions = mapping.totalSessions || mapping.package?.sessions || 0;
-                                const usedSessions = mapping.usedSessions || 0;
-                                
-                                return (
-                                    <div 
-                                        key={mapping.id} 
-                                        className="mg-quick-mapping-card"
-                                        onClick={() => handleQuickAdd(mapping)}
-                                    >
-                                        <div className="mg-quick-mapping-info">
-                                            <div className="mg-quick-mapping-avatar">
-                                                {clientName.charAt(0)}
-                                            </div>
-                                            <div className="mg-quick-mapping-details">
-                                                <div className="mg-quick-mapping-client">{clientName}</div>
-                                                <div className="mg-quick-mapping-consultant">{consultantName}</div>
-                                                <div className="mg-quick-mapping-sessions">
-                                                    <span className="mg-sessions-current" style={{color: 'var(--danger-600)', fontWeight: '600'}}>{usedSessions}</span>
-                                                    <span className="mg-sessions-separator" style={{margin: '0 4px', color: 'var(--gray-500)'}}>/</span>
-                                                    <span className="mg-sessions-total" style={{color: 'var(--primary-600)', fontWeight: '600'}}>{totalSessions}</span>
-                                                    <span className="mg-sessions-unit" style={{marginLeft: '2px', color: 'var(--gray-600)', fontSize: 'var(--font-size-xs)'}}>회기</span>
+                                    const clientName = mapping.client?.name || mapping.clientName || '알 수 없음';
+                                    const consultantName = mapping.consultant?.name || mapping.consultantName || '알 수 없음';
+                                    const totalSessions = mapping.totalSessions || mapping.package?.sessions || 0;
+                                    const usedSessions = mapping.usedSessions || 0;
+                                    
+                                    return (
+                                        <div 
+                                            key={mapping.id} 
+                                            className="mg-quick-mapping-card"
+                                            onClick={() => handleQuickAdd(mapping)}
+                                        >
+                                            <div className="mg-quick-mapping-info">
+                                                <div className="mg-quick-mapping-avatar">
+                                                    {clientName.charAt(0)}
+                                                </div>
+                                                <div className="mg-quick-mapping-details">
+                                                    <div className="mg-quick-mapping-client">{clientName}</div>
+                                                    <div className="mg-quick-mapping-consultant">{consultantName}</div>
+                                                    <div className="mg-quick-mapping-sessions">
+                                                        <span className="mg-sessions-current" style={{color: 'var(--danger-600)', fontWeight: '600'}}>{usedSessions}</span>
+                                                        <span className="mg-sessions-separator" style={{margin: '0 4px', color: 'var(--gray-500)'}}>/</span>
+                                                        <span className="mg-sessions-total" style={{color: 'var(--primary-600)', fontWeight: '600'}}>{totalSessions}</span>
+                                                        <span className="mg-sessions-unit" style={{marginLeft: '2px', color: 'var(--gray-600)', fontSize: 'var(--font-size-xs)'}}>회기</span>
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <button 
+                                                className="mg-quick-add-button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleQuickAdd(mapping);
+                                                }}
+                                            >
+                                                <Plus size={16} />
+                                                회기 추가
+                                            </button>
                                         </div>
-                                        <button 
-                                            className="mg-quick-add-button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleQuickAdd(mapping);
-                                            }}
-                                        >
-                                            <Plus size={16} />
-                                            회기 추가
-                                        </button>
+                                    );
+                                })}
+                                
+                                {getRecentActiveMappings().length === 0 && (
+                                    <div className="mg-empty-state">
+                                        <p>활성 매핑이 없습니다.</p>
                                     </div>
-                                );
-                            })}
-                            
-                            {getRecentActiveMappings().length === 0 && (
-                                <div className="mg-empty-state">
-                                    <p>활성 매핑이 없습니다.</p>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         )}
                         
                         {activeTab === 'search' && (

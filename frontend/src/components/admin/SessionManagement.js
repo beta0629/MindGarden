@@ -12,6 +12,7 @@ import LoadingSpinner from '../common/LoadingSpinner';
 import SessionExtensionModal from './mapping/SessionExtensionModal';
 import { getFormattedContact, getFormattedConsultationCount, getFormattedRegistrationDate } from '../../utils/codeHelper';
 import '../../styles/mindgarden-design-system.css';
+import './mapping/SessionExtensionModal.css';
 
 /**
  * 회기 관리 컴포넌트 - 완전 재설계
@@ -41,6 +42,9 @@ const SessionManagement = () => {
     // 모달 상태
     const [showSessionExtensionModal, setShowSessionExtensionModal] = useState(false);
     const [selectedMapping, setSelectedMapping] = useState(null);
+    
+    // 추가 회기 추가 방법들
+    const [activeTab, setActiveTab] = useState('quick'); // 'quick', 'search', 'mapping'
     
     // 회기 추가 요청 상태
     const [sessionExtensionRequests, setSessionExtensionRequests] = useState([]);
@@ -342,22 +346,78 @@ const SessionManagement = () => {
                 {/* 메인 콘텐츠 */}
                 <div className="mg-session-main-content">
                     
-                    {/* 빠른 회기 추가 섹션 */}
+                    {/* 회기 추가 방법 선택 탭 */}
+                    <div className="mg-session-tabs">
+                        <button 
+                            className={`mg-tab ${activeTab === 'quick' ? 'mg-tab-active' : ''}`}
+                            onClick={() => setActiveTab('quick')}
+                        >
+                            <Zap size={18} />
+                            빠른 추가
+                        </button>
+                        <button 
+                            className={`mg-tab ${activeTab === 'search' ? 'mg-tab-active' : ''}`}
+                            onClick={() => setActiveTab('search')}
+                        >
+                            <Users size={18} />
+                            내담자 검색
+                        </button>
+                        <button 
+                            className={`mg-tab ${activeTab === 'mapping' ? 'mg-tab-active' : ''}`}
+                            onClick={() => setActiveTab('mapping')}
+                        >
+                            <Calendar size={18} />
+                            전체 매핑
+                        </button>
+                    </div>
+
+                    {/* 회기 추가 섹션 */}
                     <div className="mg-session-section">
-                        <div className="mg-section-header">
-                            <div className="mg-section-header-content">
-                                <div className="mg-section-header-left">
-                                    <Zap className="mg-section-icon" />
-                                    <div>
-                                        <h2 className="mg-section-title">빠른 회기 추가</h2>
-                                        <p className="mg-section-subtitle">최근 활성 매핑에서 바로 회기를 추가할 수 있습니다</p>
+                        {activeTab === 'quick' && (
+                            <div className="mg-section-header">
+                                <div className="mg-section-header-content">
+                                    <div className="mg-section-header-left">
+                                        <Zap className="mg-section-icon" />
+                                        <div>
+                                            <h2 className="mg-section-title">빠른 회기 추가</h2>
+                                            <p className="mg-section-subtitle">최근 활성 매핑에서 바로 회기를 추가할 수 있습니다</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                         
-                        <div className="mg-quick-mappings-grid">
-                            {getRecentActiveMappings().map(mapping => {
+                        {activeTab === 'search' && (
+                            <div className="mg-section-header">
+                                <div className="mg-section-header-content">
+                                    <div className="mg-section-header-left">
+                                        <Users className="mg-section-icon" />
+                                        <div>
+                                            <h2 className="mg-section-title">내담자 검색 후 회기 추가</h2>
+                                            <p className="mg-section-subtitle">특정 내담자를 검색해서 회기를 추가할 수 있습니다</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {activeTab === 'mapping' && (
+                            <div className="mg-section-header">
+                                <div className="mg-section-header-content">
+                                    <div className="mg-section-header-left">
+                                        <Calendar className="mg-section-icon" />
+                                        <div>
+                                            <h2 className="mg-section-title">전체 매핑에서 회기 추가</h2>
+                                            <p className="mg-section-subtitle">모든 매핑을 확인하고 회기를 추가할 수 있습니다</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {activeTab === 'quick' && (
+                            <div className="mg-quick-mappings-grid">
+                                {getRecentActiveMappings().map(mapping => {
                                 const clientName = mapping.client?.name || mapping.clientName || '알 수 없음';
                                 const consultantName = mapping.consultant?.name || mapping.consultantName || '알 수 없음';
                                 const totalSessions = mapping.totalSessions || mapping.package?.sessions || 0;
@@ -396,12 +456,124 @@ const SessionManagement = () => {
                                         </button>
                                     </div>
                                 );
-                            })}
-                        </div>
+                                })}
+                            </div>
+                            
+                            {getRecentActiveMappings().length === 0 && (
+                                <div className="mg-empty-state">
+                                    <p>활성 매핑이 없습니다.</p>
+                                </div>
+                            )}
+                        )}
                         
-                        {getRecentActiveMappings().length === 0 && (
-                            <div className="mg-empty-state">
-                                <p>활성 매핑이 없습니다.</p>
+                        {activeTab === 'search' && (
+                            <div className="mg-search-section">
+                                <div className="mg-search-form">
+                                    <input
+                                        type="text"
+                                        placeholder="내담자 이름으로 검색..."
+                                        className="mg-input"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                    <button className="mg-button mg-button-primary">
+                                        <Users size={16} />
+                                        검색
+                                    </button>
+                                </div>
+                                
+                                <div className="mg-search-results">
+                                    {clients.filter(client => 
+                                        client.name && client.name.toLowerCase().includes(searchTerm.toLowerCase())
+                                    ).slice(0, 10).map(client => {
+                                        const clientMappings = mappings.filter(m => 
+                                            m.clientId === client.id && m.status === 'ACTIVE'
+                                        );
+                                        
+                                        return (
+                                            <div key={client.id} className="mg-client-mapping-card">
+                                                <div className="mg-client-info">
+                                                    <div className="mg-client-avatar">
+                                                        {client.name.charAt(0)}
+                                                    </div>
+                                                    <div className="mg-client-details">
+                                                        <div className="mg-client-name">{client.name}</div>
+                                                        <div className="mg-client-mappings">
+                                                            {clientMappings.length}개 활성 매핑
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button 
+                                                    className="mg-button mg-button-success mg-button-sm"
+                                                    onClick={() => {
+                                                        if (clientMappings.length > 0) {
+                                                            handleQuickAdd(clientMappings[0]);
+                                                        }
+                                                    }}
+                                                >
+                                                    <Plus size={14} />
+                                                    회기 추가
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                
+                                {searchTerm && clients.filter(client => 
+                                    client.name && client.name.toLowerCase().includes(searchTerm.toLowerCase())
+                                ).length === 0 && (
+                                    <div className="mg-empty-state">
+                                        <p>검색 결과가 없습니다.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
+                        {activeTab === 'mapping' && (
+                            <div className="mg-mapping-section">
+                                <div className="mg-mapping-filters">
+                                    <select 
+                                        className="mg-input"
+                                        value={filterStatus}
+                                        onChange={(e) => setFilterStatus(e.target.value)}
+                                    >
+                                        <option value="ALL">모든 상태</option>
+                                        <option value="ACTIVE">활성</option>
+                                        <option value="PAYMENT_CONFIRMED">결제확인</option>
+                                        <option value="COMPLETED">완료</option>
+                                    </select>
+                                </div>
+                                
+                                <div className="mg-mapping-grid">
+                                    {getFilteredMappings().slice(0, 20).map(mapping => (
+                                        <div key={mapping.id} className="mg-mapping-card">
+                                            <div className="mg-mapping-info">
+                                                <div className="mg-mapping-client">{mapping.clientName}</div>
+                                                <div className="mg-mapping-consultant">{mapping.consultantName}</div>
+                                                <div className="mg-mapping-sessions">
+                                                    {mapping.usedSessions}/{mapping.totalSessions}회기
+                                                </div>
+                                                <div className={`mg-mapping-status mg-status-${mapping.status.toLowerCase()}`}>
+                                                    {mapping.status}
+                                                </div>
+                                            </div>
+                                            <button 
+                                                className="mg-button mg-button-primary mg-button-sm"
+                                                onClick={() => handleQuickAdd(mapping)}
+                                                disabled={mapping.status !== 'ACTIVE'}
+                                            >
+                                                <Plus size={14} />
+                                                회기 추가
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {getFilteredMappings().length === 0 && (
+                                    <div className="mg-empty-state">
+                                        <p>매핑이 없습니다.</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

@@ -3,6 +3,14 @@ import ReactDOM from 'react-dom';
 import { X, User, Star, Award, Mail, Phone, Calendar, Clock, MessageCircle, TrendingUp } from 'lucide-react';
 import SpecialtyDisplay from './SpecialtyDisplay';
 import { getConsultantRatingInfo } from '../../utils/ratingHelper';
+import { 
+    getFormattedExperience, 
+    getFormattedContact, 
+    getFormattedConsultationCount, 
+    getFormattedRegistrationDate, 
+    getFormattedCurrentClients, 
+    getFormattedAvailability 
+} from '../../utils/codeHelper';
 
 /**
  * 상담사 상세 정보 모달
@@ -29,50 +37,9 @@ const ConsultantDetailModal = ({
         return '?';
     };
 
-    /**
-     * 가용성 상태에 따른 텍스트 반환
-     */
-    const getAvailabilityText = () => {
-        if (consultant?.isOnVacation && 
-            (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY')) {
-            return '휴무';
-        }
-        if (!consultant?.available) return '상담 불가';
-        if (consultant?.busy) return '상담 중';
-        return '상담 가능';
-    };
-
-    /**
-     * 가용성 상태에 따른 색상 반환
-     */
-    const getAvailabilityColor = () => {
-        if (consultant?.isOnVacation && 
-            (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY')) {
-            return '#ef4444';
-        }
-        if (!consultant?.available) return '#6b7280';
-        if (consultant?.busy) return '#f59e0b';
-        return '#10b981';
-    };
-
-    /**
-     * 경력 텍스트 반환
-     */
-    const getExperienceText = () => {
-        if (consultant?.yearsOfExperience) {
-            return `${consultant.yearsOfExperience}년`;
-        }
-        if (consultant?.experience) {
-            return consultant.experience;
-        }
-        if (consultant?.careerYears) {
-            return `${consultant.careerYears}년`;
-        }
-        if (consultant?.workExperience) {
-            return `${consultant.workExperience}년`;
-        }
-        return '경력 정보 없음';
-    };
+    // 공통 함수로 데이터 포맷팅
+    const availability = getFormattedAvailability(consultant);
+    const contact = getFormattedContact(consultant);
 
     // 평점 정보 계산
     const ratingInfo = getConsultantRatingInfo(consultant);
@@ -115,9 +82,9 @@ const ConsultantDetailModal = ({
                                 </div>
                                 <div 
                                     className="mg-consultant-detail-status-badge"
-                                    style={{ backgroundColor: getAvailabilityColor() }}
+                                    style={{ backgroundColor: availability.color }}
                                 >
-                                    {getAvailabilityText()}
+                                    {availability.text}
                                 </div>
                             </div>
                             
@@ -137,7 +104,7 @@ const ConsultantDetailModal = ({
                                     <div className="mg-consultant-detail-stat">
                                         <Award size={20} />
                                         <div className="mg-consultant-detail-stat-content">
-                                            <span className="mg-consultant-detail-stat-value">{getExperienceText()}</span>
+                                            <span className="mg-consultant-detail-stat-value">{getFormattedExperience(consultant)}</span>
                                             <span className="mg-consultant-detail-stat-label">경력</span>
                                         </div>
                                     </div>
@@ -145,7 +112,7 @@ const ConsultantDetailModal = ({
                                     <div className="mg-consultant-detail-stat">
                                         <TrendingUp size={20} />
                                         <div className="mg-consultant-detail-stat-content">
-                                            <span className="mg-consultant-detail-stat-value">{consultant.currentClients || 0}명</span>
+                                            <span className="mg-consultant-detail-stat-value">{getFormattedCurrentClients(consultant)}</span>
                                             <span className="mg-consultant-detail-stat-label">현재 상담 중</span>
                                         </div>
                                     </div>
@@ -165,7 +132,7 @@ const ConsultantDetailModal = ({
                                     <div className="mg-consultant-detail-contact-info">
                                         <span className="mg-consultant-detail-contact-label">이메일</span>
                                         <span className="mg-consultant-detail-contact-value">
-                                            {consultant.email || consultant.emailAddress || '이메일 정보 없음'}
+                                            {contact.email}
                                         </span>
                                     </div>
                                 </div>
@@ -175,7 +142,7 @@ const ConsultantDetailModal = ({
                                     <div className="mg-consultant-detail-contact-info">
                                         <span className="mg-consultant-detail-contact-label">전화번호</span>
                                         <span className="mg-consultant-detail-contact-value">
-                                            {consultant.phone || consultant.phoneNumber || consultant.mobile || '전화번호 정보 없음'}
+                                            {contact.phone}
                                         </span>
                                     </div>
                                 </div>
@@ -229,17 +196,14 @@ const ConsultantDetailModal = ({
                                 <div className="mg-consultant-detail-additional-item">
                                     <span className="mg-consultant-detail-additional-label">총 상담 횟수</span>
                                     <span className="mg-consultant-detail-additional-value">
-                                        {consultant.totalConsultations || consultant.consultationCount || consultant.totalSessions || consultant.sessionCount || 0}회
+                                        {getFormattedConsultationCount(consultant)}
                                     </span>
                                 </div>
                                 
                                 <div className="mg-consultant-detail-additional-item">
                                     <span className="mg-consultant-detail-additional-label">등록일</span>
                                     <span className="mg-consultant-detail-additional-value">
-                                        {consultant.createdAt ? new Date(consultant.createdAt).toLocaleDateString('ko-KR') : 
-                                         consultant.registrationDate ? new Date(consultant.registrationDate).toLocaleDateString('ko-KR') :
-                                         consultant.joinDate ? new Date(consultant.joinDate).toLocaleDateString('ko-KR') :
-                                         '정보 없음'}
+                                        {getFormattedRegistrationDate(consultant)}
                                     </span>
                                 </div>
                                 

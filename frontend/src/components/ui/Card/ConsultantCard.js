@@ -3,6 +3,7 @@ import { User, Star, Clock, Phone, Mail, MessageCircle, Calendar, Award, Trendin
 import SpecialtyDisplay from '../SpecialtyDisplay';
 import ConsultantDetailModal from '../ConsultantDetailModal';
 import { getConsultantRatingInfo } from '../../../utils/ratingHelper';
+import { getFormattedCurrentClients, getFormattedExperience } from '../../../utils/codeHelper';
 
 /**
  * 공통 상담사 카드 컴포넌트
@@ -167,12 +168,7 @@ const ConsultantCard = ({
                     </div>
                     <div className="mg-consultant-card__experience">
                         <Award size={16} />
-                        <span>
-                            {consultant.yearsOfExperience ? `${consultant.yearsOfExperience}년` : 
-                             consultant.experience ? consultant.experience : 
-                             consultant.careerYears ? `${consultant.careerYears}년` :
-                             consultant.workExperience ? `${consultant.workExperience}년` : '경력 정보 없음'} 경력
-                        </span>
+                    <span>{getFormattedExperience(consultant)} 경력</span>
                     </div>
                 </div>
                 
@@ -189,7 +185,7 @@ const ConsultantCard = ({
                     
                     <div className="mg-consultant-card__detail-item">
                         <User size={16} />
-                        <span>{consultant.currentClients || 0}명 상담 중</span>
+                        <span>{getFormattedCurrentClients(consultant)} 상담 중</span>
                     </div>
                 </div>
                 
@@ -323,7 +319,7 @@ const ConsultantCard = ({
                     </div>
                     <div className="mg-consultant-card__stat">
                         <span className="mg-consultant-card__stat-label">현재 상담</span>
-                        <span className="mg-consultant-card__stat-value">{consultant.currentClients || 0}명</span>
+                        <span className="mg-consultant-card__stat-value">{getFormattedCurrentClients(consultant)}</span>
                     </div>
                 </div>
                 
@@ -383,12 +379,7 @@ const ConsultantCard = ({
                         <Star size={12} />
                         <span>{ratingInfo.formattedRating}</span>
                     </div>
-                    <span>
-                        {consultant.yearsOfExperience ? `${consultant.yearsOfExperience}년` : 
-                         consultant.experience ? consultant.experience : 
-                         consultant.careerYears ? `${consultant.careerYears}년` :
-                         consultant.workExperience ? `${consultant.workExperience}년` : '경력 정보 없음'}
-                    </span>
+                <span>{getFormattedExperience(consultant)}</span>
                     <span>{consultant.availableSlots || 0}개 가능</span>
                 </div>
                 

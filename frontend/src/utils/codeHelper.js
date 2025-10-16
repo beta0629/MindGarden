@@ -581,3 +581,109 @@ export const truncateSpecialtyText = (specialties, maxLength = 50) => {
     const text = specialties.join(', ');
     return truncateText(text, maxLength);
 };
+
+/**
+ * 모달 추가 정보 표시용 공통 함수들
+ */
+
+/**
+ * 상담사 경력 정보 포맷팅
+ * @param {Object} consultant - 상담사 객체
+ * @returns {string} 포맷된 경력 텍스트
+ */
+export const getFormattedExperience = (consultant) => {
+    if (consultant?.yearsOfExperience) {
+        return `${consultant.yearsOfExperience}년`;
+    }
+    if (consultant?.experience) {
+        return consultant.experience;
+    }
+    if (consultant?.careerYears) {
+        return `${consultant.careerYears}년`;
+    }
+    if (consultant?.workExperience) {
+        return `${consultant.workExperience}년`;
+    }
+    return '경력 정보 없음';
+};
+
+/**
+ * 상담사 연락처 정보 포맷팅
+ * @param {Object} consultant - 상담사 객체
+ * @returns {Object} 포맷된 연락처 정보
+ */
+export const getFormattedContact = (consultant) => {
+    return {
+        email: consultant?.email || consultant?.emailAddress || '이메일 정보 없음',
+        phone: consultant?.phone || consultant?.phoneNumber || consultant?.mobile || '전화번호 정보 없음'
+    };
+};
+
+/**
+ * 상담사 상담 횟수 포맷팅
+ * @param {Object} consultant - 상담사 객체
+ * @returns {string} 포맷된 상담 횟수
+ */
+export const getFormattedConsultationCount = (consultant) => {
+    const count = consultant?.totalConsultations || 
+                  consultant?.consultationCount || 
+                  consultant?.totalSessions || 
+                  consultant?.sessionCount || 0;
+    return `${count}회`;
+};
+
+/**
+ * 상담사 등록일 포맷팅
+ * @param {Object} consultant - 상담사 객체
+ * @returns {string} 포맷된 등록일
+ */
+export const getFormattedRegistrationDate = (consultant) => {
+    if (consultant?.createdAt) {
+        return new Date(consultant.createdAt).toLocaleDateString('ko-KR');
+    }
+    if (consultant?.registrationDate) {
+        return new Date(consultant.registrationDate).toLocaleDateString('ko-KR');
+    }
+    if (consultant?.joinDate) {
+        return new Date(consultant.joinDate).toLocaleDateString('ko-KR');
+    }
+    return '정보 없음';
+};
+
+/**
+ * 상담사 현재 상담 중 인원 포맷팅
+ * @param {Object} consultant - 상담사 객체
+ * @returns {string} 포맷된 현재 상담 중 인원
+ */
+export const getFormattedCurrentClients = (consultant) => {
+    const count = consultant?.currentClients || 0;
+    return `${count}명`;
+};
+
+/**
+ * 상담사 가용성 상태 포맷팅
+ * @param {Object} consultant - 상담사 객체
+ * @returns {Object} 가용성 상태 정보
+ */
+export const getFormattedAvailability = (consultant) => {
+    const isOnVacation = consultant?.isOnVacation && 
+                        (consultant.vacationType === 'FULL_DAY' || consultant.vacationType === 'ALL_DAY');
+    
+    let text, color;
+    
+    if (isOnVacation) {
+        text = '휴무';
+        color = '#ef4444';
+    } else if (!consultant?.available) {
+        text = '상담 불가';
+        color = '#6b7280';
+    } else if (consultant?.busy) {
+        text = '상담 중';
+        color = '#f59e0b';
+    } else {
+        text = '상담 가능';
+        color = '#10b981';
+    }
+    
+    return { text, color };
+};

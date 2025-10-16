@@ -468,3 +468,82 @@ export const getMappingStatusKoreanName = async (status) => {
     
     return defaultMappingStatusMap[status] || status;
 };
+
+/**
+ * 전문분야 코드를 한글명으로 변환 (백엔드 로직과 동일)
+ */
+export const getSpecialtyKoreanName = (code) => {
+    if (!code || code.trim() === '') {
+        return '미설정';
+    }
+    
+    // 이미 한글로 된 경우 그대로 반환
+    if (code.match(/[가-힣]/)) {
+        return code;
+    }
+    
+    // 백엔드와 동일한 매핑 테이블
+    const specialtyMap = {
+        'DEPRESSION': '우울증',
+        'ANXIETY': '불안장애',
+        'TRAUMA': '트라우마',
+        'STRESS': '스트레스',
+        'RELATIONSHIP': '관계상담',
+        'FAMILY': '가족상담',
+        'COUPLE': '부부상담',
+        'CHILD': '아동상담',
+        'TEEN': '청소년상담',
+        'ADOLESCENT': '청소년상담',
+        'ADDICTION': '중독',
+        'EATING': '섭식장애',
+        'SLEEP': '수면장애',
+        'ANGER': '분노조절',
+        'GRIEF': '상실',
+        'SELF_ESTEEM': '자존감',
+        'CAREER': '진로상담',
+        'FAMIL': '가족상담' // FAMILY의 축약형 처리
+    };
+    
+    return specialtyMap[code] || code;
+};
+
+/**
+ * 전문분야 배열을 한글명으로 변환
+ */
+export const getSpecialtyKoreanNames = (codes) => {
+    if (!codes || !Array.isArray(codes)) {
+        return [];
+    }
+    
+    return codes.map(code => getSpecialtyKoreanName(code.trim()));
+};
+
+/**
+ * 공통코드에서 전문분야 정보 조회 (동적)
+ */
+export const getSpecialtyFromCommonCode = async (codeValue) => {
+    try {
+        const response = await apiGet(`/api/common-codes/group/SPECIALTY`);
+        if (response && response.length > 0) {
+            const code = response.find(c => c.codeValue === codeValue);
+            if (code) {
+                return {
+                    codeValue: code.codeValue,
+                    koreanName: code.koreanName || code.codeLabel,
+                    description: code.description,
+                    icon: code.icon
+                };
+            }
+        }
+    } catch (error) {
+        console.error('공통코드 전문분야 조회 실패:', error);
+    }
+    
+    // fallback: 직접 매핑
+    return {
+        codeValue: codeValue,
+        koreanName: getSpecialtyKoreanName(codeValue),
+        description: '',
+        icon: '🎯'
+    };
+};

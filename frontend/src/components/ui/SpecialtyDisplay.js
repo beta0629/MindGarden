@@ -1,9 +1,11 @@
 import React from 'react';
+import { getSpecialtyKoreanName, getSpecialtyKoreanNames } from '../../utils/codeHelper';
 
 /**
  * 전문분야 표시 공통 컴포넌트
  * - 다양한 형태로 전문분야 표시
  * - 일관된 스타일과 로직 적용
+ * - 공통 함수 사용으로 백엔드와 동일한 로직 적용
  * - 디버깅 지원
  * 
  * @author MindGarden
@@ -19,7 +21,7 @@ const SpecialtyDisplay = ({
     debug = false
 }) => {
     /**
-     * 전문분야 텍스트 추출
+     * 전문분야 텍스트 추출 (공통 함수 사용)
      */
     const getSpecialties = () => {
         if (debug) {
@@ -47,29 +49,29 @@ const SpecialtyDisplay = ({
             }
         }
         
-        const specialties = [];
+        const rawSpecialties = [];
         
         // specializationDetails가 우선순위가 높음 (백엔드에서 처리된 데이터)
         if (consultant?.specializationDetails && Array.isArray(consultant.specializationDetails)) {
             const details = consultant.specializationDetails
                 .map(detail => detail.name || detail.code)
                 .filter(name => name && name.trim());
-            specialties.push(...details);
+            rawSpecialties.push(...details);
         }
         
-        // specialization 필드 (백엔드에서 보내는 필드)
+        // specialization 필드 (백엔드에서 보내는 필드) - 쉼표로 구분된 문자열
         if (consultant?.specialization && consultant.specialization.trim()) {
-            const specialization = consultant.specialization.trim();
-            if (!specialties.includes(specialization)) {
-                specialties.push(specialization);
-            }
+            const specializations = consultant.specialization.split(',')
+                .map(s => s.trim())
+                .filter(s => s && !rawSpecialties.includes(s));
+            rawSpecialties.push(...specializations);
         }
         
         // specialties 배열이 있는 경우
         if (consultant?.specialties && Array.isArray(consultant.specialties)) {
             consultant.specialties.forEach(s => {
-                if (s && s.trim() && !specialties.includes(s.trim())) {
-                    specialties.push(s.trim());
+                if (s && s.trim() && !rawSpecialties.includes(s.trim())) {
+                    rawSpecialties.push(s.trim());
                 }
             });
         }
@@ -77,15 +79,19 @@ const SpecialtyDisplay = ({
         // specialty 단일 값이 있는 경우 (중복 방지)
         if (consultant?.specialty && consultant.specialty.trim()) {
             const specialty = consultant.specialty.trim();
-            if (!specialties.includes(specialty)) {
-                specialties.push(specialty);
+            if (!rawSpecialties.includes(specialty)) {
+                rawSpecialties.push(specialty);
             }
         }
         
-        const result = specialties.slice(0, maxItems);
+        // 공통 함수를 사용하여 한글명으로 변환
+        const koreanSpecialties = getSpecialtyKoreanNames(rawSpecialties);
+        const result = koreanSpecialties.slice(0, maxItems);
         
         if (debug) {
-            console.log('📊 최종 specialties 배열:', result);
+            console.log('📊 원본 specialties 배열:', rawSpecialties);
+            console.log('📊 한글 변환된 specialties 배열:', koreanSpecialties);
+            console.log('📊 최종 specialties 배열 (maxItems 적용):', result);
             console.log('📊 최종 specialties 길이:', result.length);
         }
         

@@ -6072,3 +6072,20 @@ body {
         font-size: var(--font-size-lg);
     }
 }
+
+/* ============================================
+   모바일 심플 카드 전문분야 스타일 추가
+   ============================================ */
+
+/* 모바일 심플 카드의 전문분야 인라인 스타일 */
+.mg-consultant-card--mobile-simple .mg-consultant-card__specialties-mobile-simple {
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+}
+
+.mg-consultant-card--mobile-simple .mg-consultant-card__specialties-mobile-simple .specialty-display--inline {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+}

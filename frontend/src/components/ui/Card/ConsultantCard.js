@@ -183,7 +183,7 @@ const ConsultantCard = ({
                     consultant={consultant} 
                     variant="tag" 
                     showTitle={true}
-                    maxItems={1}
+                    maxItems={3}
                     debug={true}
                 />
                 
@@ -370,6 +370,17 @@ const ConsultantCard = ({
                     </div>
                     <span>{consultant.experience || '3년'}</span>
                     <span>{consultant.availableSlots || 0}개 가능</span>
+                </div>
+                
+                {/* 전문 분야 - 모바일 심플 버전 */}
+                <div className="mg-consultant-card__specialties-mobile-simple">
+                    <SpecialtyDisplay
+                        consultant={consultant}
+                        variant="inline"
+                        showTitle={false}
+                        maxItems={2}
+                        debug={false}
+                    />
                 </div>
             </div>
             

@@ -35,10 +35,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     const [selectedClient, setSelectedClient] = useState(null);
     const [consultants, setConsultants] = useState([]);
     const [clients, setClients] = useState([]);
+    const [mappings, setMappings] = useState([]);
     const [consultantSearchTerm, setConsultantSearchTerm] = useState('');
     const [filteredConsultants, setFilteredConsultants] = useState([]);
     const [clientSearchTerm, setClientSearchTerm] = useState('');
     const [filteredClients, setFilteredClients] = useState([]);
+    const [clientFilterStatus, setClientFilterStatus] = useState('ALL');
+    const [clientSortBy, setClientSortBy] = useState('name');
     const [loading, setLoading] = useState(false);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     
@@ -197,6 +200,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         if (isOpen) {
             loadConsultants();
             loadClients();
+            loadMappings();
             loadCodeOptions();
             loadPackageCodes();
         }
@@ -215,18 +219,50 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         }
     }, [consultants, consultantSearchTerm]);
 
-    // 내담자 검색 필터링
+    // 내담자 필터링 및 정렬
     useEffect(() => {
-        if (clientSearchTerm.trim() === '') {
-            setFilteredClients(clients);
-        } else {
-            const filtered = clients.filter(client => 
+        let filtered = clients;
+
+        // 검색어 필터링
+        if (clientSearchTerm.trim()) {
+            filtered = filtered.filter(client => 
                 client.name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
                 client.email?.toLowerCase().includes(clientSearchTerm.toLowerCase())
             );
-            setFilteredClients(filtered);
         }
-    }, [clients, clientSearchTerm]);
+
+        // 상태 필터링
+        if (clientFilterStatus !== 'ALL') {
+            filtered = filtered.filter(client => {
+                // 내담자의 매핑 상태 확인
+                const hasMapping = mappings.some(mapping => 
+                    mapping.clientId === client.id && mapping.status === clientFilterStatus
+                );
+                
+                if (clientFilterStatus === 'NO_MAPPING') {
+                    return !hasMapping;
+                } else {
+                    return hasMapping;
+                }
+            });
+        }
+
+        // 정렬
+        filtered = filtered.sort((a, b) => {
+            switch (clientSortBy) {
+                case 'name':
+                    return (a.name || '').localeCompare(b.name || '');
+                case 'email':
+                    return (a.email || '').localeCompare(b.email || '');
+                case 'createdAt':
+                    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+                default:
+                    return 0;
+            }
+        });
+
+        setFilteredClients(filtered);
+    }, [clientSearchTerm, clientFilterStatus, clientSortBy, clients, mappings]);
 
     const loadConsultants = async () => {
         try {
@@ -262,6 +298,17 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             // 오류 시 테스트 데이터 사용
             console.log('내담자 로드 오류, 테스트 데이터 사용');
             setClients(getTestClients());
+        }
+    };
+
+    const loadMappings = async () => {
+        try {
+            const response = await apiGet('/api/admin/mappings');
+            if (response.success) {
+                setMappings(response.data || []);
+            }
+        } catch (error) {
+            console.error('매핑 로드 실패:', error);
         }
     };
 
@@ -590,29 +637,65 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                         <div className="step-content">
                             <h3>내담자를 선택하세요</h3>
                             
-                            {/* 검색 입력 필드 */}
-                            <div className="search-container">
-                                <div className="search-input-wrapper">
-                                    <i className="bi bi-search search-icon"></i>
-                                    <input
-                                        type="text"
-                                        placeholder="내담자 이름 또는 이메일로 검색..."
-                                        value={clientSearchTerm}
-                                        onChange={(e) => setClientSearchTerm(e.target.value)}
-                                        className="search-input"
-                                    />
-                                    {clientSearchTerm && (
-                                        <button 
-                                            className="clear-search-btn"
-                                            onClick={() => setClientSearchTerm('')}
-                                            title="검색어 지우기"
-                                        >
-                                            ✕
-                                        </button>
-                                    )}
+                            {/* 필터 섹션 */}
+                            <div className="filter-section">
+                                {/* 검색 입력 필드 */}
+                                <div className="search-container">
+                                    <div className="search-input-wrapper">
+                                        <i className="bi bi-search search-icon"></i>
+                                        <input
+                                            type="text"
+                                            placeholder="내담자 이름 또는 이메일로 검색..."
+                                            value={clientSearchTerm}
+                                            onChange={(e) => setClientSearchTerm(e.target.value)}
+                                            className="search-input"
+                                        />
+                                        {clientSearchTerm && (
+                                            <button 
+                                                className="clear-search-btn"
+                                                onClick={() => setClientSearchTerm('')}
+                                                title="검색어 지우기"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
+
+                                {/* 상태 필터 */}
+                                <div className="filter-controls">
+                                    <div className="filter-group">
+                                        <label className="filter-label">상태:</label>
+                                        <select 
+                                            value={clientFilterStatus}
+                                            onChange={(e) => setClientFilterStatus(e.target.value)}
+                                            className="filter-select"
+                                        >
+                                            <option value="ALL">전체</option>
+                                            <option value="NO_MAPPING">매핑 없음</option>
+                                            <option value="ACTIVE">활성</option>
+                                            <option value="INACTIVE">비활성</option>
+                                            <option value="TERMINATED">종료됨</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="filter-group">
+                                        <label className="filter-label">정렬:</label>
+                                        <select 
+                                            value={clientSortBy}
+                                            onChange={(e) => setClientSortBy(e.target.value)}
+                                            className="filter-select"
+                                        >
+                                            <option value="name">이름순</option>
+                                            <option value="email">이메일순</option>
+                                            <option value="createdAt">등록일순</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* 검색 결과 정보 */}
                                 <div className="search-results-info">
-                                    {clientSearchTerm ? (
+                                    {clientSearchTerm || clientFilterStatus !== 'ALL' ? (
                                         <span className="search-count">
                                             {filteredClients.length}명의 내담자를 찾았습니다
                                         </span>

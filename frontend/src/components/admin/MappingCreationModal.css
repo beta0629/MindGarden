@@ -68,39 +68,82 @@
     text-align: center;
 }
 
+/* 필터 섹션 */
+.filter-section {
+    margin-bottom: var(--spacing-lg);
+}
+
 /* 검색 컨테이너 */
 .search-container {
     margin-bottom: var(--spacing-md);
+}
+
+/* 필터 컨트롤 */
+.filter-controls {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.filter-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+}
+
+.filter-select {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--border-radius-sm);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.filter-select:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
 }
 
 .search-input-wrapper {
     position: relative;
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: var(--border-radius-lg);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: all 0.2s ease;
-    box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    background: var(--color-bg-primary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border-light);
+    transition: var(--transition-fast);
+    box-shadow: var(--shadow-sm);
 }
 
 .search-input-wrapper:focus-within {
-    border-color: var(--mint-green);
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 
-        0 8px 24px rgba(182, 229, 216, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        0 0 0 3px rgba(182, 229, 216, 0.2);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+    outline: 2px solid var(--color-primary-light);
+    outline-offset: 2px;
 }
 
 .search-icon {
     position: absolute;
     left: var(--spacing-md);
-    color: var(--medium-gray);
+    color: var(--color-text-secondary);
     font-size: var(--font-size-base);
     z-index: 2;
 }
@@ -111,12 +154,12 @@
     border: none;
     background: transparent;
     font-size: var(--font-size-base);
-    color: var(--dark-gray);
+    color: var(--color-text-primary);
     outline: none;
 }
 
 .search-input::placeholder {
-    color: var(--medium-gray);
+    color: var(--color-text-secondary);
 }
 
 .clear-search-btn {
@@ -143,13 +186,13 @@
 }
 
 .search-count {
-    color: var(--mint-green);
+    color: var(--color-primary);
     font-size: var(--font-size-sm);
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
 }
 
 .total-count {
-    color: var(--medium-gray);
+    color: var(--color-text-secondary);
     font-size: var(--font-size-sm);
 }
 
@@ -161,43 +204,32 @@
     margin-top: var(--spacing-md);
 }
 
-/* 선택 카드 - 글래스모피즘 */
+/* 선택 카드 - 디자인 시스템 */
 .selection-card {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-light);
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-lg);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: var(--transition-fast);
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
     position: relative;
     overflow: hidden;
-    box-shadow: 
-        0 4px 16px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-sm);
 }
 
 .selection-card:hover {
-    border-color: var(--mint-green);
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 
-        0 8px 24px rgba(182, 229, 216, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
     transform: translateY(-2px);
 }
 
 .selection-card.selected {
-    border-color: var(--mint-green);
-    background: rgba(182, 229, 216, 0.2);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    box-shadow: 
-        0 8px 24px rgba(182, 229, 216, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    box-shadow: var(--shadow-md);
 }
 
 /* 카드 아바타 */
@@ -205,16 +237,15 @@
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--mint-green) 0%, var(--soft-mint) 100%);
+    background: var(--color-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--dark-gray);
-    font-weight: 600;
+    color: var(--color-text-inverse);
+    font-weight: var(--font-weight-semibold);
     font-size: var(--font-size-lg);
     flex-shrink: 0;
-    border: 2px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
 }
 
 /* 카드 정보 */
@@ -226,8 +257,8 @@
 .card-info h4 {
     margin: 0 0 var(--spacing-xs) 0;
     font-size: var(--font-size-base);
-    font-weight: 600;
-    color: var(--dark-gray);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -236,7 +267,7 @@
 .card-info p {
     margin: 0 0 var(--spacing-xs) 0;
     font-size: var(--font-size-sm);
-    color: var(--medium-gray);
+    color: var(--color-text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -245,11 +276,11 @@
 .role-badge {
     display: inline-block;
     padding: var(--spacing-xs) var(--spacing-sm);
-    background: rgba(139, 69, 19, 0.1);
-    color: var(--cocoa);
-    border-radius: var(--radius-sm);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    border-radius: var(--border-radius-sm);
     font-size: var(--font-size-xs);
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }

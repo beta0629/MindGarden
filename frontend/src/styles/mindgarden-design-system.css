@@ -2806,8 +2806,8 @@ body {
   transition: all 0.3s ease;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   position: relative;
-  overflow: hidden;
-  max-height: var(--schedule-card-max-height, 400px);
+  overflow: visible;
+  min-height: var(--schedule-card-min-height, 300px);
 }
 
 .mg-consultant-card:hover {
@@ -2829,8 +2829,7 @@ body {
 
 .mg-consultant-cards-grid--detailed {
   grid-template-columns: repeat(auto-fill, minmax(var(--schedule-card-min-width, 280px), 1fr));
-  max-height: var(--schedule-grid-max-height, 60vh);
-  overflow-y: auto;
+  overflow-y: visible;
   overflow-x: hidden;
   flex: 1;
   min-height: 0;
@@ -2917,6 +2916,8 @@ body {
 .mg-consultant-card--detailed {
   padding: var(--spacing-xl);
   text-align: center;
+  min-height: auto;
+  height: auto;
 }
 
 .mg-consultant-card--detailed .mg-consultant-card__status-badge {
@@ -3002,6 +3003,7 @@ body {
 
 .mg-consultant-card--detailed .mg-consultant-card__specialties {
   margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
 }
 
 .mg-consultant-card--detailed .mg-consultant-card__specialties-title {
@@ -5357,8 +5359,7 @@ body {
 
 .mg-consultant-cards-grid--detailed {
   grid-template-columns: repeat(auto-fill, minmax(var(--schedule-card-min-width, 280px), 1fr));
-  max-height: var(--schedule-grid-max-height, 60vh);
-  overflow-y: auto;
+  overflow-y: visible;
   overflow-x: hidden;
   flex: 1;
   min-height: 0;

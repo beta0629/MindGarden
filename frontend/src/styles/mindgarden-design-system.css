@@ -6090,3 +6090,264 @@ body {
     color: var(--color-text-secondary);
     font-size: var(--font-size-xs);
 }
+
+/* ============================================
+   상담사 상세 모달 스타일
+   ============================================ */
+
+/* 상담사 상세 모달 컨테이너 */
+.mg-consultant-detail-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+/* 상담사 상세 헤더 */
+.mg-consultant-detail-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xl);
+    padding: var(--spacing-xl);
+    background: var(--color-bg-secondary);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-border-light);
+}
+
+.mg-consultant-detail-avatar {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.mg-consultant-detail-avatar-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: 700;
+    color: white;
+    box-shadow: var(--shadow-lg);
+    border: 4px solid white;
+}
+
+.mg-consultant-detail-status-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-full);
+    color: white;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    box-shadow: var(--shadow-sm);
+    border: 2px solid white;
+}
+
+.mg-consultant-detail-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.mg-consultant-detail-name {
+    font-size: 2rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.mg-consultant-detail-role {
+    font-size: var(--font-size-lg);
+    color: var(--color-text-secondary);
+    margin: 0;
+    font-weight: var(--font-weight-medium);
+}
+
+.mg-consultant-detail-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.mg-consultant-detail-stat {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-bg-primary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border-light);
+}
+
+.mg-consultant-detail-stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mg-consultant-detail-stat-value {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+
+.mg-consultant-detail-stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+/* 상담사 상세 섹션 */
+.mg-consultant-detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.mg-consultant-detail-section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0;
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--color-border-light);
+}
+
+/* 연락처 정보 */
+.mg-consultant-detail-contact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.mg-consultant-detail-contact-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border-light);
+}
+
+.mg-consultant-detail-contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mg-consultant-detail-contact-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+.mg-consultant-detail-contact-value {
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+/* 전문분야 */
+.mg-consultant-detail-specialties {
+    padding: var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border-light);
+}
+
+/* 상담 가능 시간 */
+.mg-consultant-detail-availability {
+    padding: var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border-light);
+}
+
+.mg-consultant-detail-availability-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--spacing-sm);
+}
+
+.mg-consultant-detail-availability-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--color-bg-primary);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--color-border-light);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+}
+
+/* 추가 정보 */
+.mg-consultant-detail-additional {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.mg-consultant-detail-additional-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border-light);
+}
+
+.mg-consultant-detail-additional-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+.mg-consultant-detail-additional-value {
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .mg-consultant-detail-header {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--spacing-lg);
+    }
+    
+    .mg-consultant-detail-avatar-circle {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5rem;
+    }
+    
+    .mg-consultant-detail-name {
+        font-size: 1.5rem;
+    }
+    
+    .mg-consultant-detail-stats {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+    
+    .mg-consultant-detail-additional {
+        grid-template-columns: 1fr;
+    }
+    
+    .mg-consultant-detail-availability-grid {
+        grid-template-columns: 1fr;
+    }
+}

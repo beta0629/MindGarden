@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { User, Star, Clock, Phone, Mail, MessageCircle, Calendar, Award, TrendingUp } from 'lucide-react';
 import SpecialtyDisplay from '../SpecialtyDisplay';
+import ConsultantDetailModal from '../ConsultantDetailModal';
 
 /**
  * 공통 상담사 카드 컴포넌트
@@ -22,6 +23,7 @@ const ConsultantCard = ({
     showActions = true,
     className = ''
 }) => {
+    const [showDetailModal, setShowDetailModal] = useState(false);
     /**
      * 가용성 상태에 따른 클래스명 반환
      */
@@ -152,12 +154,19 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__rating-section">
                     <div className="mg-consultant-card__rating">
                         <Star size={16} />
-                        <span className="mg-consultant-card__rating-value">4.8</span>
-                        <span className="mg-consultant-card__rating-text">(45명)</span>
+                        <span className="mg-consultant-card__rating-value">
+                            {consultant.averageRating || consultant.rating || 4.8}
+                        </span>
+                        <span className="mg-consultant-card__rating-text">
+                            ({consultant.reviewCount || consultant.totalReviews || 45}명)
+                        </span>
                     </div>
                     <div className="mg-consultant-card__experience">
                         <Award size={16} />
-                        <span>{consultant.experience || '3년'} 경력</span>
+                        <span>
+                            {consultant.yearsOfExperience ? `${consultant.yearsOfExperience}년` : 
+                             consultant.experience ? consultant.experience : '3년'} 경력
+                        </span>
                     </div>
                 </div>
                 
@@ -227,7 +236,7 @@ const ConsultantCard = ({
                             className="mg-button mg-button-outline mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                // 상담사 상세 정보 모달 열기
+                                setShowDetailModal(true);
                             }}
                         >
                             상세보기
@@ -329,7 +338,7 @@ const ConsultantCard = ({
                             className="mg-button mg-button-outline mg-button-sm"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                // 상담사 상세 정보 모달 열기
+                                setShowDetailModal(true);
                             }}
                         >
                             <MessageCircle size={16} />
@@ -366,9 +375,12 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__meta mg-consultant-card__meta--mobile-simple">
                     <div className="mg-consultant-card__rating mg-consultant-card__rating--mobile-simple">
                         <Star size={12} />
-                        <span>4.8</span>
+                        <span>{consultant.averageRating || consultant.rating || 4.8}</span>
                     </div>
-                    <span>{consultant.experience || '3년'}</span>
+                    <span>
+                        {consultant.yearsOfExperience ? `${consultant.yearsOfExperience}년` : 
+                         consultant.experience ? consultant.experience : '3년'}
+                    </span>
                     <span>{consultant.availableSlots || 0}개 가능</span>
                 </div>
                 
@@ -391,17 +403,32 @@ const ConsultantCard = ({
     );
 
     // 변형에 따른 렌더링
-    switch (variant) {
-        case 'compact':
-            return renderCompactCard();
-        case 'mobile':
-            return renderMobileCard();
-        case 'mobile-simple':
-            return renderMobileSimpleCard();
-        case 'detailed':
-        default:
-            return renderDetailedCard();
-    }
+    const renderCard = () => {
+        switch (variant) {
+            case 'compact':
+                return renderCompactCard();
+            case 'mobile':
+                return renderMobileCard();
+            case 'mobile-simple':
+                return renderMobileSimpleCard();
+            case 'detailed':
+            default:
+                return renderDetailedCard();
+        }
+    };
+
+    return (
+        <>
+            {renderCard()}
+            
+            {/* 상담사 상세 모달 */}
+            <ConsultantDetailModal
+                isOpen={showDetailModal}
+                onClose={() => setShowDetailModal(false)}
+                consultant={consultant}
+            />
+        </>
+    );
 };
 
 export default ConsultantCard;

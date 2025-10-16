@@ -14,6 +14,7 @@ import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
 import com.mindgarden.consultation.repository.SessionExtensionRequestRepository;
 import com.mindgarden.consultation.service.EmailService;
+import com.mindgarden.consultation.service.PlSqlMappingSyncService;
 import com.mindgarden.consultation.service.RealTimeStatisticsService;
 import com.mindgarden.consultation.service.SessionExtensionService;
 import com.mindgarden.consultation.service.SessionSyncService;
@@ -42,6 +43,7 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     private final SessionSyncService sessionSyncService;
     private final EmailService emailService;
     private final RealTimeStatisticsService realTimeStatisticsService;
+    private final PlSqlMappingSyncService plSqlMappingSyncService;
     
     @Override
     public SessionExtensionRequest createRequest(Long mappingId, Long requesterId, 
@@ -101,8 +103,28 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         
         SessionExtensionRequest savedRequest = requestRepository.save(request);
         
-        // 4. 매핑에 회기 추가 및 동기화
+        // 4. 매핑에 회기 추가 및 동기화 (PL/SQL 서비스 사용)
         try {
+            // PL/SQL 서비스를 통한 회기 추가 처리
+            Map<String, Object> plSqlResult = plSqlMappingSyncService.addSessionsToMapping(
+                request.getMapping().getId(),
+                request.getAdditionalSessions(),
+                request.getPackageName(),
+                request.getPackagePrice().longValue(),
+                request.getReason()
+            );
+            
+            if ((Boolean) plSqlResult.get("success")) {
+                log.info("✅ PL/SQL 회기 추가 처리 완료: requestId={}, message={}", 
+                        savedRequest.getId(), plSqlResult.get("message"));
+            } else {
+                log.warn("⚠️ PL/SQL 회기 추가 처리 실패: requestId={}, message={}", 
+                        savedRequest.getId(), plSqlResult.get("message"));
+                // PL/SQL 실패 시 기본 동기화 서비스 사용
+                sessionSyncService.syncAfterSessionExtension(savedRequest);
+            }
+            
+            // 기본 동기화 서비스도 호출 (이중 보장)
             sessionSyncService.syncAfterSessionExtension(savedRequest);
             log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
         } catch (Exception e) {
@@ -217,8 +239,26 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
         
         SessionExtensionRequest savedRequest = requestRepository.save(request);
         
-        // 🔄 회기 추가 후 전체 시스템 동기화
+        // 🔄 회기 추가 후 전체 시스템 동기화 (PL/SQL 서비스 사용)
         try {
+            // PL/SQL 서비스를 통한 회기 추가 처리
+            Map<String, Object> plSqlResult = plSqlMappingSyncService.addSessionsToMapping(
+                request.getMapping().getId(),
+                request.getAdditionalSessions(),
+                request.getPackageName(),
+                request.getPackagePrice().longValue(),
+                request.getReason()
+            );
+            
+            if ((Boolean) plSqlResult.get("success")) {
+                log.info("✅ PL/SQL 회기 추가 처리 완료: requestId={}, message={}", 
+                        savedRequest.getId(), plSqlResult.get("message"));
+            } else {
+                log.warn("⚠️ PL/SQL 회기 추가 처리 실패: requestId={}, message={}", 
+                        savedRequest.getId(), plSqlResult.get("message"));
+            }
+            
+            // 기본 동기화 서비스도 호출 (이중 보장)
             sessionSyncService.syncAfterSessionExtension(savedRequest);
             log.info("✅ 회기 추가 후 동기화 완료: requestId={}", savedRequest.getId());
         } catch (Exception e) {
@@ -243,8 +283,8 @@ public class SessionExtensionServiceImpl implements SessionExtensionService {
     @Override
     @Transactional(readOnly = true)
     public List<SessionExtensionRequest> getAllRequests() {
-        log.info("전체 요청 목록 조회");
-        return requestRepository.findAllByOrderByCreatedAtDesc();
+        log.info("전체 요청 목록 조회 (매핑 정보 포함)");
+        return requestRepository.findAllWithMappingOrderByCreatedAtDesc();
     }
     
     @Override

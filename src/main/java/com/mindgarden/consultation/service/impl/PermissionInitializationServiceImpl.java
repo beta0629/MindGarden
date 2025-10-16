@@ -62,6 +62,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             
             // 통계 관련 권한
             Permission.of("STATISTICS_VIEW", "통계 조회", "STATISTICS"),
+            Permission.of("REPORT_VIEW", "보고서 조회", "STATISTICS"),
             Permission.of("FINANCIAL_VIEW", "재무 통계 조회", "STATISTICS"),
             Permission.of("CONSULTATION_STATISTICS_VIEW", "상담 통계 조회", "STATISTICS"),
             
@@ -105,7 +106,7 @@ public class PermissionInitializationServiceImpl implements PermissionInitializa
             "ADMIN_DASHBOARD_VIEW", "USER_MANAGE", "CONSULTANT_MANAGE", "CLIENT_MANAGE",
             "MAPPING_VIEW", "MAPPING_MANAGE", "BRANCH_DETAILS_VIEW", 
             "ACCESS_SCHEDULE_MANAGEMENT", "SCHEDULE_MANAGE", "SCHEDULE_CREATE", "SCHEDULE_MODIFY", "SCHEDULE_DELETE",
-            "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "FINANCIAL_VIEW",
+            "CONSULTATION_RECORD_VIEW", "STATISTICS_VIEW", "REPORT_VIEW", "FINANCIAL_VIEW",
             "CONSULTATION_STATISTICS_VIEW", "ALL_BRANCHES_VIEW", "BRANCH_MANAGE",
             "PERMISSION_MANAGEMENT", "USER_ROLE_MANAGEMENT", "SYSTEM_CONFIGURATION",
             "CREATE_CONSULTATION_RECORDS", "MODIFY_CONSULTATION_RECORDS", "DELETE_CONSULTATION_RECORDS",

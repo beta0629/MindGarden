@@ -18,32 +18,36 @@ const SectionHeader = ({
     actions = null 
 }) => {
     return (
-        <div className="section-header">
-            <div className="section-title-area">
-                <div className="title-with-icon">
-                    {icon && <i className={`bi ${icon} section-icon`}></i>}
-                    <h2 className="section-title">{title}</h2>
+        <div className="mg-section-header">
+            <div className="mg-section-content">
+                <div className="mg-section-title-area">
+                    <div className="mg-flex mg-items-center mg-gap-sm">
+                        {icon && <div className="mg-section-icon">{icon}</div>}
+                        <h2 className="mg-section-title">{title}</h2>
+                    </div>
+                    {subtitle && (
+                        <div className="mg-section-subtitle">
+                            <span className="mg-badge mg-badge-info">{subtitle}</span>
+                        </div>
+                    )}
+                    {stats && (
+                        <div className="mg-section-stats">
+                            {stats.map((stat, index) => (
+                                <div key={`stat-${index}`} className="mg-stat-item">
+                                    <span className="mg-stat-label">{stat.label}</span>
+                                    <span className="mg-stat-value">{stat.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                {subtitle && (
-                    <div className="section-subtitle">{subtitle}</div>
-                )}
-                {stats && (
-                    <div className="section-stats">
-                        {stats.map((stat, index) => (
-                            <div key={`stat-${index}`} className="stat-item">
-                                <span className="stat-label">{stat.label}</span>
-                                <span className="stat-value">{stat.value}</span>
-                            </div>
-                        ))}
+                
+                {actions && (
+                    <div className="mg-section-actions">
+                        {actions}
                     </div>
                 )}
             </div>
-            
-            {actions && (
-                <div className="section-actions">
-                    {actions}
-                </div>
-            )}
         </div>
     );
 };

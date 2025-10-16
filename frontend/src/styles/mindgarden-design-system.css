@@ -5890,6 +5890,458 @@ body {
 }
 
 /* ============================================
+   Session Management Redesign 스타일
+   ============================================ */
+
+/* 세션 관리 헤더 */
+.mg-session-header {
+  background: var(--background-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.mg-session-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mg-session-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.mg-session-header-icon {
+  width: var(--icon-size-lg);
+  height: var(--icon-size-lg);
+  color: var(--primary-600);
+}
+
+.mg-session-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.mg-session-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* 세션 통계 그리드 */
+.mg-session-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--stat-card-min-width, 250px), 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* 메인 콘텐츠 */
+.mg-session-main-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+/* 섹션 */
+.mg-session-section {
+  background: var(--background-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+}
+
+/* 섹션 헤더 */
+.mg-section-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.mg-section-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mg-section-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.mg-section-icon {
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
+  color: var(--primary-600);
+}
+
+.mg-section-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.mg-section-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* 빠른 매핑 그리드 */
+.mg-quick-mappings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--management-card-min-width, 280px), 1fr));
+  gap: var(--spacing-lg);
+}
+
+.mg-quick-mapping-card {
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all var(--transition-duration) ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.mg-quick-mapping-card:hover {
+  transform: translateY(var(--transform-hover-up, -2px));
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-600);
+  background: var(--background-primary);
+}
+
+.mg-quick-mapping-card:hover .mg-quick-add-button {
+  background: var(--primary-700);
+  transform: scale(1.05);
+}
+
+.mg-quick-mapping-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.mg-quick-mapping-avatar {
+  width: var(--avatar-size-md);
+  height: var(--avatar-size-md);
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--mint-green), var(--soft-mint));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--dark-gray);
+}
+
+.mg-quick-mapping-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.mg-quick-mapping-client {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.mg-quick-mapping-consultant {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.mg-quick-mapping-sessions {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  background: var(--background-primary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+/* 빠른 추가 버튼 */
+.mg-quick-add-button {
+  background: var(--primary-600);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+  transition: all var(--transition-duration) ease;
+  white-space: nowrap;
+}
+
+.mg-quick-add-button:hover {
+  background: var(--primary-700);
+  transform: translateY(var(--transform-hover-up, -1px));
+}
+
+.mg-quick-add-button-full {
+  width: 100%;
+  justify-content: center;
+  padding: var(--spacing-md);
+}
+
+/* 검색 필터 섹션 */
+.mg-search-filter-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* 매핑 그리드 */
+.mg-mappings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--management-card-min-width, 280px), 1fr));
+  gap: var(--spacing-lg);
+}
+
+/* 큰 모달 */
+.mg-modal-lg {
+  max-width: 600px;
+  width: 90vw;
+}
+
+/* 최근 회기 추가 요청 섹션 */
+.mg-recent-requests {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.mg-request-card {
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  transition: all var(--transition-duration) ease;
+}
+
+.mg-request-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-600);
+}
+
+.mg-request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.mg-request-info {
+  flex: 1;
+}
+
+.mg-request-client {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.mg-request-consultant {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.mg-request-status {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+  min-width: 80px;
+}
+
+.mg-request-status--pending {
+  background: var(--warning-100);
+  color: var(--warning-700);
+  border: 1px solid var(--warning-200);
+}
+
+.mg-request-status--payment_confirmed {
+  background: var(--info-100);
+  color: var(--info-700);
+  border: 1px solid var(--info-200);
+}
+
+.mg-request-status--admin_approved {
+  background: var(--success-100);
+  color: var(--success-700);
+  border: 1px solid var(--success-200);
+}
+
+.mg-request-status--completed {
+  background: var(--success-100);
+  color: var(--success-700);
+  border: 1px solid var(--success-200);
+}
+
+.mg-request-status--rejected {
+  background: var(--danger-100);
+  color: var(--danger-700);
+  border: 1px solid var(--danger-200);
+}
+
+.mg-request-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.mg-request-sessions {
+  background: var(--primary-100);
+  color: var(--primary-700);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mg-request-package {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.mg-request-date {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.mg-request-reason {
+  background: var(--background-primary);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.mg-request-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .mg-request-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+  
+  .mg-request-details {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .mg-request-actions {
+    flex-direction: column;
+  }
+}
+
+/* 모달 매핑 정보 */
+.mg-modal-mapping-info {
+  background: var(--background-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.mg-modal-mapping-client {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.mg-modal-mapping-consultant {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.mg-modal-mapping-sessions {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .mg-session-header {
+    padding: var(--spacing-lg);
+  }
+  
+  .mg-session-header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+  
+  .mg-session-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .mg-session-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+  }
+  
+  .mg-session-section {
+    padding: var(--spacing-lg);
+  }
+  
+  .mg-quick-mappings-grid,
+  .mg-mappings-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .mg-quick-mapping-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+  
+  .mg-quick-add-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .mg-session-header {
+    padding: var(--spacing-md);
+  }
+  
+  .mg-session-section {
+    padding: var(--spacing-md);
+  }
+  
+  .mg-quick-mapping-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+}
+
+/* ============================================
    매핑 통계 컴포넌트 스타일
    ============================================ */
 

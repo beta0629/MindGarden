@@ -1,153 +1,111 @@
-/* ===== SectionHeader 스타일 - 아이폰 스타일과 글래스모피즘 적용 ===== */
+/* ===== SectionHeader 스타일 - MindGarden 디자인 시스템 ===== */
 
-.section-header {
+.mg-section-header {
+    margin-bottom: var(--spacing-xl);
+}
+
+.mg-section-content {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 32px;
-    gap: 24px;
+    gap: var(--spacing-lg);
     flex-wrap: wrap;
 }
 
-.section-title-area {
+.mg-section-title-area {
     flex: 1;
 }
 
-.title-with-icon {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-}
-
-.section-icon {
-    font-size: 24px;
-    color: var(--color-primary, #007AFF);
-}
-
-.section-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--text-primary, #1a1a1a);
-    margin: 0;
+.mg-section-title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-sm) 0;
     line-height: 1.2;
 }
 
-html body #root .section-header .section-subtitle,
-html body .section-header .section-subtitle,
-body #root .section-header .section-subtitle,
-body .section-header .section-subtitle,
-#root .section-header .section-subtitle,
-.section-header .section-subtitle,
-.section-subtitle {
-    font-size: 16px !important;
-    color: #666666 !important;
-    margin: 0 0 16px 0 !important;
-    line-height: 1.4 !important;
-    font-weight: 600 !important;
-    background: rgba(255, 255, 255, 0.8) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    padding: 10px 18px !important;
-    border-radius: 20px !important;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-    display: inline-block !important;
-    position: relative !important;
-    transition: all 0.3s ease !important;
-}
-
-html body #root .section-header .section-subtitle:hover,
-html body .section-header .section-subtitle:hover,
-body #root .section-header .section-subtitle:hover,
-body .section-header .section-subtitle:hover,
-#root .section-header .section-subtitle:hover,
-.section-header .section-subtitle:hover,
-.section-subtitle:hover {
-    background: rgba(255, 255, 255, 0.9) !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15) !important;
-    transform: translateY(-2px) !important;
-    border-color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.section-stats {
+.mg-section-icon {
     display: flex;
-    gap: 24px;
+    align-items: center;
+    justify-content: center;
+    width: var(--spacing-xl);
+    height: var(--spacing-xl);
+    color: var(--primary-600);
+    font-size: var(--font-size-lg);
+}
+
+.mg-section-subtitle {
+    margin-bottom: var(--spacing-md);
+}
+
+.mg-section-stats {
+    display: flex;
+    gap: var(--spacing-lg);
     flex-wrap: wrap;
 }
 
-.stat-item {
+.mg-stat-item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--spacing-xs);
 }
 
-.stat-label {
-    font-size: 14px;
-    color: var(--text-secondary, #666666);
-    font-weight: 500;
+.mg-stat-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
 }
 
-.stat-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--color-primary, #007AFF);
+.mg-stat-value {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-600);
 }
 
-.section-actions {
+.mg-section-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: var(--spacing-md);
     flex-shrink: 0;
 }
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
-    .section-header {
+    .mg-section-content {
         flex-direction: column;
         align-items: stretch;
-        gap: 20px;
-        margin-bottom: 24px;
+        gap: var(--spacing-md);
     }
     
-    .section-title {
-        font-size: 20px;
+    .mg-section-title {
+        font-size: var(--font-size-xl);
     }
     
-    .section-icon {
-        font-size: 20px;
+    .mg-section-icon {
+        width: var(--spacing-lg);
+        height: var(--spacing-lg);
+        font-size: var(--font-size-base);
     }
     
-    .section-subtitle {
-        font-size: 14px !important;
-        margin-bottom: 12px !important;
-        padding: 8px 14px !important;
-        border-radius: 16px !important;
+    .mg-section-stats {
+        gap: var(--spacing-md);
     }
     
-    .section-stats {
-        gap: 16px;
+    .mg-stat-label {
+        font-size: var(--font-size-xs);
     }
     
-    .stat-label {
-        font-size: 13px;
+    .mg-stat-value {
+        font-size: var(--font-size-base);
     }
     
-    .stat-value {
-        font-size: 16px;
-    }
-    
-    .section-actions {
+    .mg-section-actions {
         justify-content: flex-start;
     }
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {
-    .section-title {
-        font-size: 22px;
-    }
-    
-    .section-subtitle {
-        font-size: 15px;
+    .mg-section-title {
+        font-size: var(--font-size-xl);
     }
 }

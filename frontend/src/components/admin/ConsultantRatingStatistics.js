@@ -169,7 +169,191 @@ const ConsultantRatingStatistics = () => {
                 </div>
             </div>
 
-            {/* 상담사 랭킹 */}
+            {/* 상담사별 평가 상세 정보 */}
+            <div style={{ marginBottom: '24px' }}>
+                <h4 style={{
+                    fontSize: 'var(--font-size-base)',
+                    fontWeight: '600',
+                    color: '#333',
+                    marginBottom: '16px'
+                }}>
+                    👥 상담사별 평가 현황
+                </h4>
+                
+                {statistics.topConsultants.length > 0 ? (
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                        gap: '16px'
+                    }}>
+                        {statistics.topConsultants.map((consultant, index) => {
+                            const avgScore = consultant.averageScore || consultant.averageHeartScore || 0;
+                            const ratingCount = consultant.ratingCount || consultant.totalRatingCount || 0;
+                            
+                            return (
+                                <div key={consultant.consultantId || consultant.id} style={{
+                                    backgroundColor: index === 0 ? '#fff3e0' : '#f8f9fa',
+                                    borderRadius: '12px',
+                                    padding: '20px',
+                                    position: 'relative',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}>
+                                    {/* 랭킹 배지 */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '-10px',
+                                        left: '16px',
+                                        width: '28px',
+                                        height: '28px',
+                                        borderRadius: '50%',
+                                        backgroundColor: index === 0 ? '#ff9800' : index === 1 ? '#9e9e9e' : index === 2 ? '#795548' : '#2196f3',
+                                        color: 'white',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '14px',
+                                        fontWeight: '700',
+                                        border: '3px solid white',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                    }}>
+                                        {index + 1}
+                                    </div>
+
+                                    {/* 상담사 정보 */}
+                                    <div style={{ marginBottom: '16px', marginTop: '8px' }}>
+                                        <div style={{
+                                            fontSize: '18px',
+                                            fontWeight: '700',
+                                            color: '#333',
+                                            marginBottom: '6px'
+                                        }}>
+                                            {consultant.consultantName || consultant.name || '상담사'}
+                                        </div>
+                                        <div style={{
+                                            fontSize: '12px',
+                                            color: '#666',
+                                            backgroundColor: '#e9ecef',
+                                            padding: '4px 8px',
+                                            borderRadius: '12px',
+                                            display: 'inline-block'
+                                        }}>
+                                            {consultant.branchCode || '본점'} 지점
+                                        </div>
+                                    </div>
+
+                                    {/* 평가 통계 */}
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: '1fr 1fr',
+                                        gap: '12px',
+                                        marginBottom: '16px'
+                                    }}>
+                                        <div style={{
+                                            textAlign: 'center',
+                                            padding: '12px',
+                                            backgroundColor: 'white',
+                                            borderRadius: '8px',
+                                            border: '1px solid #e9ecef'
+                                        }}>
+                                            <div style={{
+                                                fontSize: '20px',
+                                                fontWeight: '700',
+                                                color: '#e91e63',
+                                                marginBottom: '4px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '4px'
+                                            }}>
+                                                💖 {avgScore.toFixed(1)}
+                                            </div>
+                                            <div style={{
+                                                fontSize: '11px',
+                                                color: '#666',
+                                                fontWeight: '500'
+                                            }}>
+                                                평균 점수
+                                            </div>
+                                        </div>
+                                        <div style={{
+                                            textAlign: 'center',
+                                            padding: '12px',
+                                            backgroundColor: 'white',
+                                            borderRadius: '8px',
+                                            border: '1px solid #e9ecef'
+                                        }}>
+                                            <div style={{
+                                                fontSize: '20px',
+                                                fontWeight: '700',
+                                                color: '#4caf50',
+                                                marginBottom: '4px'
+                                            }}>
+                                                {ratingCount}
+                                            </div>
+                                            <div style={{
+                                                fontSize: '11px',
+                                                color: '#666',
+                                                fontWeight: '500'
+                                            }}>
+                                                총 평가 수
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 하트 점수 시각화 */}
+                                    <div style={{
+                                        textAlign: 'center',
+                                        backgroundColor: 'white',
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #e9ecef'
+                                    }}>
+                                        <div style={{
+                                            fontSize: '12px',
+                                            color: '#666',
+                                            marginBottom: '8px',
+                                            fontWeight: '500'
+                                        }}>
+                                            하트 점수 분포
+                                        </div>
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            gap: '3px'
+                                        }}>
+                                            {Array.from({ length: 5 }, (_, i) => (
+                                                <span key={i} style={{
+                                                    fontSize: '16px',
+                                                    opacity: i < Math.round(avgScore) ? 1 : 0.3,
+                                                    transform: i < Math.round(avgScore) ? 'scale(1.1)' : 'scale(1)',
+                                                    transition: 'all 0.2s ease'
+                                                }}>
+                                                    💖
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div style={{
+                        textAlign: 'center',
+                        padding: '40px',
+                        color: '#666',
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: '12px',
+                        border: '2px dashed #dee2e6'
+                    }}>
+                        <div style={{ fontSize: '48px', marginBottom: '16px' }}>💔</div>
+                        <div style={{ fontSize: '16px', fontWeight: '500' }}>아직 평가받은 상담사가 없습니다</div>
+                        <div style={{ fontSize: '12px', marginTop: '8px', color: '#999' }}>클라이언트가 평가를 남기면 여기에 표시됩니다</div>
+                    </div>
+                )}
+            </div>
+
+            {/* 상담사별 평가 요약 테이블 */}
             <div style={{ marginBottom: '24px' }}>
                 <h4 style={{
                     fontSize: 'var(--font-size-base)',
@@ -177,30 +361,52 @@ const ConsultantRatingStatistics = () => {
                     color: '#333',
                     marginBottom: '12px'
                 }}>
-                    🏆 상담사 평가 랭킹 (TOP 5)
+                    📊 상담사별 평가 요약
                 </h4>
                 
                 {statistics.topConsultants.length > 0 ? (
                     <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px'
+                        backgroundColor: 'white',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '8px',
+                        overflow: 'hidden'
                     }}>
-                        {statistics.topConsultants.slice(0, 5).map((consultant, index) => (
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '60px 1fr 80px 80px 100px',
+                            gap: '12px',
+                            padding: '12px 16px',
+                            backgroundColor: '#f8f9fa',
+                            borderBottom: '1px solid #e0e0e0',
+                            fontSize: 'var(--font-size-xs)',
+                            fontWeight: '600',
+                            color: '#666'
+                        }}>
+                            <div>순위</div>
+                            <div>상담사명</div>
+                            <div style={{ textAlign: 'center' }}>평균점수</div>
+                            <div style={{ textAlign: 'center' }}>평가수</div>
+                            <div style={{ textAlign: 'center' }}>하트점수</div>
+                        </div>
+                        {statistics.topConsultants.map((consultant, index) => (
                             <div key={consultant.consultantId} style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
+                                display: 'grid',
+                                gridTemplateColumns: '60px 1fr 80px 80px 100px',
+                                gap: '12px',
                                 padding: '12px 16px',
-                                backgroundColor: index === 0 ? '#fff3e0' : '#f8f9fa',
-                                borderRadius: '8px'
+                                borderBottom: index < statistics.topConsultants.length - 1 ? '1px solid #f0f0f0' : 'none',
+                                alignItems: 'center'
                             }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
                                     <div style={{
-                                        width: '24px',
-                                        height: '24px',
+                                        width: '20px',
+                                        height: '20px',
                                         borderRadius: '50%',
-                                        backgroundColor: index === 0 ? '#ff9800' : index === 1 ? '#9e9e9e' : index === 2 ? '#795548' : '#e0e0e0',
+                                        backgroundColor: index === 0 ? '#ff9800' : index === 1 ? '#9e9e9e' : index === 2 ? '#795548' : '#2196f3',
                                         color: 'white',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -210,34 +416,56 @@ const ConsultantRatingStatistics = () => {
                                     }}>
                                         {index + 1}
                                     </div>
-                                    <div>
-                                        <div style={{
-                                            fontSize: 'var(--font-size-sm)',
-                                            fontWeight: '600',
-                                            color: '#333'
-                                        }}>
-                                            {consultant.consultantName}
-                                        </div>
-                                        <div style={{
-                                            fontSize: 'var(--font-size-xs)',
-                                            color: '#666'
-                                        }}>
-                                            총 {consultant.totalRatingCount}개 평가
-                                        </div>
+                                </div>
+                                <div>
+                                    <div style={{
+                                        fontSize: 'var(--font-size-sm)',
+                                        fontWeight: '600',
+                                        color: '#333',
+                                        marginBottom: '2px'
+                                    }}>
+                                        {consultant.consultantName}
+                                    </div>
+                                    <div style={{
+                                        fontSize: 'var(--font-size-xs)',
+                                        color: '#666'
+                                    }}>
+                                        {consultant.branchCode || '본점'}
                                     </div>
                                 </div>
                                 <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px'
+                                    textAlign: 'center',
+                                    fontSize: 'var(--font-size-sm)',
+                                    fontWeight: '600',
+                                    color: '#e91e63'
                                 }}>
-                                    <span style={{
-                                        fontSize: 'var(--font-size-base)',
-                                        fontWeight: '700',
-                                        color: '#e91e63'
+                                    {(consultant.averageScore || consultant.averageHeartScore || 0).toFixed(1)}
+                                </div>
+                                <div style={{
+                                    textAlign: 'center',
+                                    fontSize: 'var(--font-size-sm)',
+                                    fontWeight: '600',
+                                    color: '#4caf50'
+                                }}>
+                                    {consultant.ratingCount || consultant.totalRatingCount || 0}개
+                                </div>
+                                <div style={{
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        gap: '1px'
                                     }}>
-                                        💖 {consultant.averageHeartScore}
-                                    </span>
+                                        {Array.from({ length: 5 }, (_, i) => (
+                                            <span key={i} style={{
+                                                fontSize: 'var(--font-size-xs)',
+                                                opacity: i < Math.round(consultant.averageScore || consultant.averageHeartScore) ? 1 : 0.3
+                                            }}>
+                                                💖
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         ))}

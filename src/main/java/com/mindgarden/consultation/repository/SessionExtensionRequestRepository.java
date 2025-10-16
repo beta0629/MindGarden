@@ -1,12 +1,11 @@
 package com.mindgarden.consultation.repository;
 
+import java.util.List;
 import com.mindgarden.consultation.entity.SessionExtensionRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 /**
  * 회기 추가 요청 리포지토리
@@ -24,6 +23,16 @@ public interface SessionExtensionRequestRepository extends JpaRepository<Session
     List<SessionExtensionRequest> findAllByOrderByCreatedAtDesc();
     
     /**
+     * 전체 회기 추가 요청 목록 조회 (매핑 정보 포함, 생성일 내림차순)
+     */
+    @Query("SELECT ser FROM SessionExtensionRequest ser " +
+           "LEFT JOIN FETCH ser.mapping m " +
+           "LEFT JOIN FETCH m.client c " +
+           "LEFT JOIN FETCH m.consultant co " +
+           "ORDER BY ser.createdAt DESC")
+    List<SessionExtensionRequest> findAllWithMappingOrderByCreatedAtDesc();
+    
+    /**
      * 상태별 회기 추가 요청 목록 조회
      */
     List<SessionExtensionRequest> findByStatusOrderByCreatedAtDesc(SessionExtensionRequest.ExtensionStatus status);
@@ -39,17 +48,23 @@ public interface SessionExtensionRequestRepository extends JpaRepository<Session
     List<SessionExtensionRequest> findByMappingIdOrderByCreatedAtDesc(Long mappingId);
     
     /**
-     * 입금 확인 대기 중인 요청 목록 조회
+     * 입금 확인 대기 중인 요청 목록 조회 (매핑 정보 포함)
      */
     @Query("SELECT ser FROM SessionExtensionRequest ser " +
+           "LEFT JOIN FETCH ser.mapping m " +
+           "LEFT JOIN FETCH m.client c " +
+           "LEFT JOIN FETCH m.consultant co " +
            "WHERE ser.status = 'PENDING' " +
            "ORDER BY ser.createdAt ASC")
     List<SessionExtensionRequest> findPendingPaymentRequests();
     
     /**
-     * 관리자 승인 대기 중인 요청 목록 조회
+     * 관리자 승인 대기 중인 요청 목록 조회 (매핑 정보 포함)
      */
     @Query("SELECT ser FROM SessionExtensionRequest ser " +
+           "LEFT JOIN FETCH ser.mapping m " +
+           "LEFT JOIN FETCH m.client c " +
+           "LEFT JOIN FETCH m.consultant co " +
            "WHERE ser.status = 'PAYMENT_CONFIRMED' " +
            "ORDER BY ser.createdAt ASC")
     List<SessionExtensionRequest> findPendingAdminApprovalRequests();

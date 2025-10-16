@@ -10,6 +10,7 @@ import StatCard from '../ui/Card/StatCard';
 import { API_BASE_URL } from '../../constants/api';
 import SystemTools from './system/SystemTools';
 import PermissionManagement from './PermissionManagement';
+import ConsultantRatingStatistics from './ConsultantRatingStatistics';
 // 새로 추가된 모달 컴포넌트들
 import { useSession } from '../../contexts/SessionContext';
 import { COMPONENT_CSS } from '../../constants/css-variables';
@@ -113,6 +114,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const [showToastState, setShowToastState] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
+    const [isPermissionSectionExpanded, setIsPermissionSectionExpanded] = useState(false);
     const [systemStatus, setSystemStatus] = useState({
         server: 'unknown',
         database: 'unknown',
@@ -775,6 +777,9 @@ const AdminDashboard = ({ user: propUser }) => {
                             label="평가받은 상담사"
                         />
                     </div>
+                    
+                    {/* 상세 상담사 평가 통계 */}
+                    <ConsultantRatingStatistics />
                 </DashboardSection>
 
                 {/* 환불 통계 섹션 */}
@@ -1247,14 +1252,63 @@ const AdminDashboard = ({ user: propUser }) => {
                 });
                 return canManagePermissions;
             })() && (
-                <DashboardSection
-                    title="권한 관리"
-                    subtitle="사용자 권한 설정 및 관리"
-                    icon={<Shield />}
+                <div style={{ marginBottom: '24px' }}>
+                    <div 
+                        onClick={() => setIsPermissionSectionExpanded(!isPermissionSectionExpanded)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '16px 20px',
+                            backgroundColor: '#f8f9fa',
+                            border: '1px solid #e9ecef',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            marginBottom: isPermissionSectionExpanded ? '0' : '16px'
+                        }}
                     >
-                        <PermissionManagement />
-                    </DashboardSection>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <Shield />
+                            <div>
+                                <h3 style={{ 
+                                    margin: 0, 
+                                    fontSize: '18px',
+                                    fontWeight: '600',
+                                    color: '#333'
+                                }}>
+                                    권한 관리
+                                </h3>
+                                <p style={{ 
+                                    margin: 0, 
+                                    fontSize: '14px',
+                                    color: '#666'
+                                }}>
+                                    사용자 권한 설정 및 관리 (클릭하여 펼치기/접기)
+                                </p>
+                            </div>
+                        </div>
+                        <div style={{
+                            fontSize: '20px',
+                            color: '#666'
+                        }}>
+                            {isPermissionSectionExpanded ? '▲' : '▼'}
+                        </div>
+                    </div>
+                    
+                    {isPermissionSectionExpanded && (
+                        <div style={{
+                            padding: '20px',
+                            backgroundColor: 'white',
+                            border: '1px solid #e9ecef',
+                            borderTop: 'none',
+                            borderRadius: '0 0 8px 8px'
+                        }}>
+                            <PermissionManagement />
+                        </div>
+                    )}
+                </div>
             )}
+
         </div>
         </SimpleLayout>
     );

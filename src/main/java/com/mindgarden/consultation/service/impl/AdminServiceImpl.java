@@ -30,6 +30,7 @@ import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.CommonCodeRepository;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
+import com.mindgarden.consultation.repository.ConsultantRatingRepository;
 import com.mindgarden.consultation.repository.ConsultantRepository;
 import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
@@ -38,6 +39,7 @@ import com.mindgarden.consultation.service.AdminService;
 import com.mindgarden.consultation.service.AmountManagementService;
 import com.mindgarden.consultation.service.BranchService;
 import com.mindgarden.consultation.service.ConsultantAvailabilityService;
+import com.mindgarden.consultation.service.ConsultantRatingService;
 import com.mindgarden.consultation.service.ConsultationMessageService;
 import com.mindgarden.consultation.service.FinancialTransactionService;
 import com.mindgarden.consultation.service.NotificationService;
@@ -61,6 +63,8 @@ public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
     private final ConsultantClientMappingRepository mappingRepository;
+    private final ConsultantRatingRepository consultantRatingRepository;
+    private final ConsultantRatingService consultantRatingService;
     private final ScheduleRepository scheduleRepository;
     private final CommonCodeRepository commonCodeRepository;
     private final PasswordEncoder passwordEncoder;
@@ -916,7 +920,7 @@ public class AdminServiceImpl implements AdminService {
     
     @Override
     public List<Map<String, Object>> getAllConsultantsWithSpecialty() {
-        List<Consultant> consultants = consultantRepository.findByIsDeletedFalse();
+        List<Consultant> consultants = consultantRepository.findActiveConsultants();
         
         return consultants.stream()
             .map(consultant -> {
@@ -948,14 +952,27 @@ public class AdminServiceImpl implements AdminService {
                 // 실제 활성 매핑 수를 계산
                 long actualCurrentClients = mappingRepository.countByConsultantIdAndStatusIn(
                     consultant.getId(), 
-                    List.of(MappingStatusConstants.ACTIVE, MappingStatusConstants.CONFIRMED)
+                    List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
                 );
                 consultantData.put("currentClients", (int) actualCurrentClients);
                 consultantData.put("maxClients", consultant.getMaxClients());
                 consultantData.put("totalClients", consultant.getTotalClients());
                 consultantData.put("totalConsultations", consultant.getTotalConsultations());
-                consultantData.put("averageRating", consultant.getAverageRating());
-                consultantData.put("totalRatings", consultant.getTotalRatings());
+                // ConsultantRatingService를 사용해서 실제 평가 데이터 조회
+                try {
+                    Map<String, Object> ratingStats = consultantRatingService.getConsultantRatingStats(consultant.getId());
+                    if (ratingStats != null && !ratingStats.isEmpty()) {
+                        consultantData.put("averageRating", ratingStats.getOrDefault("averageHeartScore", 0.0));
+                        consultantData.put("totalRatings", ratingStats.getOrDefault("totalRatingCount", 0));
+                    } else {
+                        consultantData.put("averageRating", 0.0);
+                        consultantData.put("totalRatings", 0);
+                    }
+                } catch (Exception e) {
+                    log.warn("평점 데이터 조회 실패, 기본값 사용: consultantId={}, error={}", consultant.getId(), e.getMessage());
+                    consultantData.put("averageRating", 0.0);
+                    consultantData.put("totalRatings", 0);
+                }
                 consultantData.put("yearsOfExperience", consultant.getYearsOfExperience());
                 consultantData.put("isAvailable", consultant.getIsAvailable());
                 
@@ -981,7 +998,7 @@ public class AdminServiceImpl implements AdminService {
     public List<Map<String, Object>> getAllConsultantsWithVacationInfo(String date) {
         log.info("휴무 정보를 포함한 상담사 목록 조회: date={}", date);
         
-        List<Consultant> consultants = consultantRepository.findByIsDeletedFalse();
+        List<Consultant> consultants = consultantRepository.findActiveConsultants();
         
         // 모든 상담사의 휴무 정보 조회
         Map<String, Object> allVacations = consultantAvailabilityService.getAllConsultantsVacations(date);
@@ -1012,27 +1029,32 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
                 
                 // Consultant 엔티티의 추가 정보 가져오기
-                if (consultant instanceof Consultant) {
-                    Consultant consultantEntity = (Consultant) consultant;
-                    consultantData.put("currentClients", consultantEntity.getCurrentClients());
-                    consultantData.put("maxClients", consultantEntity.getMaxClients());
-                    consultantData.put("totalClients", consultantEntity.getTotalClients());
-                    consultantData.put("totalConsultations", consultantEntity.getTotalConsultations());
-                    consultantData.put("averageRating", consultantEntity.getAverageRating());
-                    consultantData.put("totalRatings", consultantEntity.getTotalRatings());
-                    consultantData.put("yearsOfExperience", consultantEntity.getYearsOfExperience());
-                    consultantData.put("isAvailable", consultantEntity.getIsAvailable());
-                } else {
-                    // User 엔티티인 경우 기본값 설정
-                    consultantData.put("currentClients", 0);
-                    consultantData.put("maxClients", 20);
-                    consultantData.put("totalClients", 0);
-                    consultantData.put("totalConsultations", 0);
+                // 실제 활성 매핑 수를 계산
+                long actualCurrentClients = mappingRepository.countByConsultantIdAndStatusIn(
+                    consultant.getId(), 
+                    List.of(ConsultantClientMapping.MappingStatus.ACTIVE, ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED)
+                );
+                consultantData.put("currentClients", (int) actualCurrentClients);
+                consultantData.put("maxClients", consultant.getMaxClients());
+                consultantData.put("totalClients", consultant.getTotalClients());
+                consultantData.put("totalConsultations", consultant.getTotalConsultations());
+                // ConsultantRatingService를 사용해서 실제 평가 데이터 조회
+                try {
+                    Map<String, Object> ratingStats = consultantRatingService.getConsultantRatingStats(consultant.getId());
+                    if (ratingStats != null && !ratingStats.isEmpty()) {
+                        consultantData.put("averageRating", ratingStats.getOrDefault("averageHeartScore", 0.0));
+                        consultantData.put("totalRatings", ratingStats.getOrDefault("totalRatingCount", 0));
+                    } else {
+                        consultantData.put("averageRating", 0.0);
+                        consultantData.put("totalRatings", 0);
+                    }
+                } catch (Exception e) {
+                    log.warn("평점 데이터 조회 실패, 기본값 사용: consultantId={}, error={}", consultant.getId(), e.getMessage());
                     consultantData.put("averageRating", 0.0);
                     consultantData.put("totalRatings", 0);
-                    consultantData.put("yearsOfExperience", 0);
-                    consultantData.put("isAvailable", true);
                 }
+                consultantData.put("yearsOfExperience", consultant.getYearsOfExperience());
+                consultantData.put("isAvailable", consultant.getIsAvailable());
                 
                 // 전문분야 정보 처리
                 String specialization = consultant.getSpecialization();

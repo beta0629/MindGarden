@@ -1,21 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, PauseCircle, Clock, XCircle, User, Package, QuestionCircle } from 'lucide-react';
-import { 
-    getMappingStatusKoreanName,
-    getStatusColor,
-    getStatusIcon
-} from '../../utils/codeHelper';
-import './MappingCard.css';
+import { User, Package, Plus, PauseCircle, CheckCircle } from 'lucide-react';
+import { getStatusColor, getStatusIcon, getMappingStatusKoreanName } from '../../utils/codeHelper';
 
-/**
- * 매핑 카드 컴포넌트
- * - 매핑 정보를 표시하는 카드
- * - 아이폰 스타일과 글래스모피즘 효과 적용
- * 
- * @author MindGarden
- * @version 1.0.0
- * @since 2024-12-19
- */
 const MappingCard = ({ 
     mapping, 
     onClick,
@@ -27,24 +13,14 @@ const MappingCard = ({
         label: '로딩 중...'
     });
 
-    // 상태별 동적 처리 함수들 (비동기 처리)
     useEffect(() => {
         const loadStatusInfo = async () => {
             try {
-                console.log('🔍 MappingCard 상태 로딩 시작:', mapping.status);
-                
                 const [statusColor, statusIcon, statusLabel] = await Promise.all([
                     getStatusColor(mapping.status, 'MAPPING_STATUS'),
                     getStatusIcon(mapping.status, 'MAPPING_STATUS'),
                     getMappingStatusKoreanName(mapping.status)
                 ]);
-                
-                console.log('✅ MappingCard 상태 로딩 완료:', {
-                    status: mapping.status,
-                    color: statusColor,
-                    icon: statusIcon,
-                    label: statusLabel
-                });
                 
                 setStatusInfo({
                     color: statusColor,
@@ -53,7 +29,6 @@ const MappingCard = ({
                 });
             } catch (error) {
                 console.error('❌ 상태 정보 로드 실패:', error);
-                // 폴백 값 설정
                 setStatusInfo({
                     color: 'var(--color-gray)',
                     icon: '❓',
@@ -69,67 +44,99 @@ const MappingCard = ({
         <div 
             className="mapping-card"
             onClick={onClick}
+            style={{
+                background: 'white',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                padding: '16px',
+                cursor: 'pointer',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                transition: 'all 0.2s ease',
+                marginBottom: '12px'
+            }}
         >
-            <div className="mapping-card-header">
-                <div className="client-info">
-                    <div className="client-avatar">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #98FB98, #B6E5D8)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#2F2F2F'
+                    }}>
                         {mapping.clientName?.charAt(0) || '?'}
                     </div>
-                    <div className="client-details">
-                        <h3 className="client-name">{mapping.clientName}</h3>
-                        <p className="client-role">내담자</p>
+                    <div>
+                        <h5 style={{ 
+                            margin: '0 0 4px 0', 
+                            fontSize: '16px', 
+                            fontWeight: '600',
+                            color: '#2F2F2F'
+                        }}>
+                            {mapping.clientName || '알 수 없음'}
+                        </h5>
+                        <span style={{
+                            background: '#f3f4f6',
+                            color: '#6B6B6B',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '12px'
+                        }}>
+                            내담자
+                        </span>
                     </div>
                 </div>
                 
-                <div className={`status-badge status-${mapping.status.toLowerCase()}`}>
-                    <span className="status-icon">
-                        {statusInfo.icon}
-                    </span>
-                    {statusInfo.label}
+                <div style={{
+                    background: statusInfo.color,
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                }}>
+                    {statusInfo.icon} {statusInfo.label}
                 </div>
             </div>
 
-            <div className="mapping-card-body">
-                <div className="consultant-info">
-                    <div className="info-row">
-                        <span className="info-label">
-                            <User size={16} />
-                            상담사
-                        </span>
-                        <span className="info-value">{mapping.consultantName}</span>
-                    </div>
+            <div style={{ marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', fontSize: '14px', color: '#6B6B6B' }}>
+                    <User size={14} />
+                    {mapping.consultantName}
                 </div>
-
-                <div className="session-info">
-                    <div className="session-stats">
-                        <div className="stat-item">
-                            <span className="stat-label">총 회기</span>
-                            <span className="stat-value total">{mapping.totalSessions}회</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">사용</span>
-                            <span className="stat-value used">{mapping.usedSessions}회</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">남은</span>
-                            <span className="stat-value remaining">{mapping.remainingSessions}회</span>
-                        </div>
-                    </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#6B6B6B' }}>
+                    <Package size={14} />
+                    {mapping.packageName}
                 </div>
+            </div>
 
-                <div className="package-info">
-                    <div className="info-row">
-                        <span className="info-label">
-                            <Package size={16} />
-                            패키지
-                        </span>
-                        <span className="info-value">{mapping.packageName}</span>
-                    </div>
+            <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr 1fr', 
+                gap: '8px',
+                marginBottom: '12px'
+            }}>
+                <div style={{ textAlign: 'center', padding: '8px', background: '#f9fafb', borderRadius: '6px' }}>
+                    <div style={{ fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>총</div>
+                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#2F2F2F' }}>{mapping.totalSessions}</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '8px', background: '#fef2f2', borderRadius: '6px' }}>
+                    <div style={{ fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>사용</div>
+                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#dc2626' }}>{mapping.usedSessions}</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '8px', background: '#f0fdf4', borderRadius: '6px' }}>
+                    <div style={{ fontSize: '12px', color: '#6B6B6B', marginBottom: '2px' }}>남은</div>
+                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#16a34a' }}>{mapping.remainingSessions}</div>
                 </div>
             </div>
 
             {actions && (
-                <div className="mapping-card-actions">
+                <div style={{ display: 'flex', gap: '8px' }}>
                     {actions}
                 </div>
             )}

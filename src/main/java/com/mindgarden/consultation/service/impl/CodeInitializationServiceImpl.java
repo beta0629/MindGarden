@@ -32,6 +32,7 @@ public class CodeInitializationServiceImpl implements CodeInitializationService,
     public void run(String... args) throws Exception {
         log.info("🚀 급여 시스템 코드 초기화 시작");
         initializeSalarySystemCodes();
+        initializePackageCodes();
     }
     
     @Override
@@ -237,11 +238,85 @@ public class CodeInitializationServiceImpl implements CodeInitializationService,
     }
     
     /**
+     * 패키지 코드 초기화
+     */
+    private void initializePackageCodes() {
+        try {
+            log.info("📦 패키지 코드 초기화 시작");
+            
+            // Multi-Session 패키지들 초기화
+            initializeMultiSessionPackages();
+            
+            // Single-Session 패키지들 초기화
+            initializeSingleSessionPackages();
+            
+            log.info("✅ 패키지 코드 초기화 완료");
+        } catch (Exception e) {
+            log.error("❌ 패키지 코드 초기화 실패", e);
+        }
+    }
+    
+    /**
+     * Multi-Session 패키지들 초기화
+     */
+    private void initializeMultiSessionPackages() {
+        String groupCode = "PACKAGE";
+        
+        if (isCodeGroupExists(groupCode)) {
+            log.info("📋 패키지 코드가 이미 존재합니다: {}", groupCode);
+            return;
+        }
+        
+        log.info("🔧 Multi-Session 패키지 초기화 시작");
+        
+        // 기본 패키지 (20회기, 200,000원)
+        createCommonCode(groupCode, "BASIC_20", "기본 패키지", "기본 상담 패키지 (20회기)", 1, "20회기");
+        
+        // 표준 패키지 (20회기, 400,000원)
+        createCommonCode(groupCode, "STANDARD_20", "표준 패키지", "표준 상담 패키지 (20회기)", 2, "20회기");
+        
+        // 프리미엄 패키지 (20회기, 600,000원)
+        createCommonCode(groupCode, "PREMIUM_20", "프리미엄 패키지", "프리미엄 상담 패키지 (20회기)", 3, "20회기");
+        
+        // VIP 패키지 (20회기, 1,000,000원)
+        createCommonCode(groupCode, "VIP_20", "VIP 패키지", "VIP 상담 패키지 (20회기)", 4, "20회기");
+        
+        log.info("✅ Multi-Session 패키지 초기화 완료");
+    }
+    
+    /**
+     * Single-Session 패키지들 초기화 (30,000원부터 100,000원까지)
+     */
+    private void initializeSingleSessionPackages() {
+        String groupCode = "PACKAGE";
+        int sortOrder = 5; // Multi-Session 패키지 다음부터 시작
+        
+        log.info("🔧 Single-Session 패키지 초기화 시작");
+        
+        // 30,000원부터 100,000원까지 5,000원 단위로 생성
+        for (int price = 30000; price <= 100000; price += 5000) {
+            String codeValue = "SINGLE_" + price;
+            String codeLabel = "SINGLE_" + price;
+            String description = "단일 회기 상담 패키지 (" + price + "원)";
+            
+            createCommonCode(groupCode, codeValue, codeLabel, description, sortOrder++, "1회기");
+        }
+        
+        log.info("✅ Single-Session 패키지 초기화 완료");
+    }
+
+    /**
      * 공통코드 생성 헬퍼 메서드
      */
     private void createCommonCode(String groupCode, String codeValue, String codeLabel, 
                                 String description, Integer sortOrder, String extraData) {
         try {
+            // 이미 존재하는지 확인
+            if (commonCodeRepository.findByCodeGroupAndCodeValue(groupCode, codeValue).isPresent()) {
+                log.debug("⏭️ 공통코드 이미 존재: {}:{}", groupCode, codeValue);
+                return;
+            }
+            
             CommonCode commonCode = CommonCode.builder()
                 .codeGroup(groupCode)
                 .codeValue(codeValue)

@@ -58,15 +58,27 @@ const PackageSelector = ({
             }
         } catch (error) {
             console.error('패키지 옵션 로드 실패:', error);
-            // 기본 옵션 설정
-            setPackageOptions([
+            // 스샷과 동일한 기본 옵션 설정
+            const multiSessionPackages = [
                 { value: 'BASIC_20', label: '기본 패키지', sessions: 20, price: 200000, displayText: '기본 패키지 (20회기, 200,000원)' },
-                { value: 'SINGLE_30000', label: 'SINGLE_30000', sessions: 1, price: 30000, displayText: 'SINGLE_30000 (1회기, 30,000원)' },
-                { value: 'SINGLE_35000', label: 'SINGLE_35000', sessions: 1, price: 35000, displayText: 'SINGLE_35000 (1회기, 35,000원)' },
-                { value: 'SINGLE_40000', label: 'SINGLE_40000', sessions: 1, price: 40000, displayText: 'SINGLE_40000 (1회기, 40,000원)' },
-                { value: 'SINGLE_45000', label: 'SINGLE_45000', sessions: 1, price: 45000, displayText: 'SINGLE_45000 (1회기, 45,000원)' },
-                { value: 'SINGLE_50000', label: 'SINGLE_50000', sessions: 1, price: 50000, displayText: 'SINGLE_50000 (1회기, 50,000원)' }
-            ]);
+                { value: 'STANDARD_20', label: '표준 패키지', sessions: 20, price: 400000, displayText: '표준 패키지 (20회기, 400,000원)' },
+                { value: 'PREMIUM_20', label: '프리미엄 패키지', sessions: 20, price: 600000, displayText: '프리미엄 패키지 (20회기, 600,000원)' },
+                { value: 'VIP_20', label: 'VIP 패키지', sessions: 20, price: 1000000, displayText: 'VIP 패키지 (20회기, 1,000,000원)' }
+            ];
+            
+            // SINGLE 패키지들 (30,000원부터 100,000원까지)
+            const singleSessionPackages = [];
+            for (let price = 30000; price <= 100000; price += 5000) {
+                singleSessionPackages.push({
+                    value: `SINGLE_${price}`,
+                    label: `SINGLE_${price}`,
+                    sessions: 1,
+                    price: price,
+                    displayText: `SINGLE_${price} (1회기, ${price.toLocaleString()}원)`
+                });
+            }
+            
+            setPackageOptions([...multiSessionPackages, ...singleSessionPackages]);
         } finally {
             setLoading(false);
         }

@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { X, User, Star, Award, Mail, Phone, Calendar, Clock, MessageCircle, TrendingUp } from 'lucide-react';
 import SpecialtyDisplay from './SpecialtyDisplay';
-import { getConsultantRatingInfo } from '../utils/ratingHelper';
+import { getConsultantRatingInfo } from '../../utils/ratingHelper';
 
 /**
  * 상담사 상세 정보 모달

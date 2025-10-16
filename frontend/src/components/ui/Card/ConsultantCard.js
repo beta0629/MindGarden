@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, Star, Clock, Phone, Mail, MessageCircle, Calendar, Award, TrendingUp } from 'lucide-react';
 import SpecialtyDisplay from '../SpecialtyDisplay';
 import ConsultantDetailModal from '../ConsultantDetailModal';
-import { getConsultantRatingInfo } from '../../utils/ratingHelper';
+import { getConsultantRatingInfo } from '../../../utils/ratingHelper';
 
 /**
  * 공통 상담사 카드 컴포넌트

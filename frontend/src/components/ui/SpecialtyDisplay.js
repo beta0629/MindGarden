@@ -155,9 +155,11 @@ const SpecialtyDisplay = ({
             );
 
         case 'inline':
+            const inlineText = specialties.join(', ');
+            const displayText = inlineText.length > 50 ? inlineText.substring(0, 47) + '...' : inlineText;
             return (
                 <span className={`specialty-display specialty-display--inline ${className}`}>
-                    &nbsp;({specialties.join(', ')})
+                    &nbsp;({displayText})
                 </span>
             );
 

@@ -456,8 +456,7 @@ const SessionManagement = () => {
                                         </button>
                                     </div>
                                 );
-                                })}
-                            </div>
+                            })}
                             
                             {getRecentActiveMappings().length === 0 && (
                                 <div className="mg-empty-state">

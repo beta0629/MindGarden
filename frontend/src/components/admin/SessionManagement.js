@@ -203,8 +203,15 @@ const SessionManagement = () => {
                 paymentMethod: 'CASH',
                 paymentReference: null
             });
-            notificationManager.success('입금이 확인되었습니다.');
-            loadData();
+            notificationManager.success('입금이 확인되었습니다. 회기수가 업데이트되었습니다.');
+            
+            // 즉시 데이터 새로고침 (회기수 업데이트 확인)
+            setTimeout(async () => {
+                console.log('🔄 입금 확인 후 데이터 새로고침 시작...');
+                await loadData();
+                console.log('✅ 입금 확인 후 데이터 새로고침 완료 - 회기수 업데이트됨');
+            }, 1500); // 1.5초 후 새로고침 (PL/SQL 처리 시간 고려)
+            
         } catch (error) {
             console.error('입금 확인 실패:', error);
             notificationManager.error('입금 확인에 실패했습니다.');
@@ -250,12 +257,17 @@ const SessionManagement = () => {
     };
 
     // 회기 추가 요청 완료 처리
-    const handleSessionExtensionRequested = (mappingId) => {
+    const handleSessionExtensionRequested = async (mappingId) => {
         console.log('✅ 회기 추가 요청 완료:', mappingId);
         setShowSessionExtensionModal(false);
         setSelectedMapping(null);
-        // 데이터 새로고침
-        loadData();
+        
+        // 즉시 데이터 새로고침 (약간의 지연 후)
+        setTimeout(async () => {
+            console.log('🔄 회기 추가 후 데이터 새로고침 시작...');
+            await loadData();
+            console.log('✅ 회기 추가 후 데이터 새로고침 완료');
+        }, 1000); // 1초 후 새로고침
     };
 
     // 컴포넌트 마운트 시 데이터 로드
@@ -365,7 +377,10 @@ const SessionManagement = () => {
                                                 <div className="mg-quick-mapping-client">{clientName}</div>
                                                 <div className="mg-quick-mapping-consultant">{consultantName}</div>
                                                 <div className="mg-quick-mapping-sessions">
-                                                    {usedSessions}/{totalSessions}회기
+                                                    <span className="mg-sessions-current" style={{color: 'var(--danger-600)', fontWeight: '600'}}>{usedSessions}</span>
+                                                    <span className="mg-sessions-separator" style={{margin: '0 4px', color: 'var(--gray-500)'}}>/</span>
+                                                    <span className="mg-sessions-total" style={{color: 'var(--primary-600)', fontWeight: '600'}}>{totalSessions}</span>
+                                                    <span className="mg-sessions-unit" style={{marginLeft: '2px', color: 'var(--gray-600)', fontSize: 'var(--font-size-xs)'}}>회기</span>
                                                 </div>
                                             </div>
                                         </div>

@@ -110,7 +110,7 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__meta">
                     <div className="mg-consultant-card__rating">
                         <Star size={12} />
-                        <span>{consultant.averageRating || consultant.rating || 4.8}</span>
+                        <span>{consultant.averageRating || consultant.rating || consultant.score || 0}</span>
                     </div>
                     <div className="mg-consultant-card__slots">
                         {consultant.availableSlots || 0}개 슬롯
@@ -155,17 +155,19 @@ const ConsultantCard = ({
                     <div className="mg-consultant-card__rating">
                         <Star size={16} />
                         <span className="mg-consultant-card__rating-value">
-                            {consultant.averageRating || consultant.rating || 4.8}
+                            {consultant.averageRating || consultant.rating || consultant.score || 0}
                         </span>
                         <span className="mg-consultant-card__rating-text">
-                            ({consultant.reviewCount || consultant.totalReviews || 45}명)
+                            ({consultant.reviewCount || consultant.totalReviews || consultant.evaluationCount || 0}명)
                         </span>
                     </div>
                     <div className="mg-consultant-card__experience">
                         <Award size={16} />
                         <span>
                             {consultant.yearsOfExperience ? `${consultant.yearsOfExperience}년` : 
-                             consultant.experience ? consultant.experience : '3년'} 경력
+                             consultant.experience ? consultant.experience : 
+                             consultant.careerYears ? `${consultant.careerYears}년` :
+                             consultant.workExperience ? `${consultant.workExperience}년` : '경력 정보 없음'} 경력
                         </span>
                     </div>
                 </div>
@@ -278,7 +280,7 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__rating-mobile">
                     <div className="mg-consultant-card__rating-item">
                         <Star size={14} />
-                        <span>{consultant.averageRating || consultant.rating || 4.8}</span>
+                        <span>{consultant.averageRating || consultant.rating || consultant.score || 0}</span>
                     </div>
                     <div className="mg-consultant-card__rating-item">
                         <TrendingUp size={14} />
@@ -375,11 +377,13 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__meta mg-consultant-card__meta--mobile-simple">
                     <div className="mg-consultant-card__rating mg-consultant-card__rating--mobile-simple">
                         <Star size={12} />
-                        <span>{consultant.averageRating || consultant.rating || 4.8}</span>
+                        <span>{consultant.averageRating || consultant.rating || consultant.score || 0}</span>
                     </div>
                     <span>
                         {consultant.yearsOfExperience ? `${consultant.yearsOfExperience}년` : 
-                         consultant.experience ? consultant.experience : '3년'}
+                         consultant.experience ? consultant.experience : 
+                         consultant.careerYears ? `${consultant.careerYears}년` :
+                         consultant.workExperience ? `${consultant.workExperience}년` : '경력 정보 없음'}
                     </span>
                     <span>{consultant.availableSlots || 0}개 가능</span>
                 </div>

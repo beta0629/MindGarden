@@ -33,9 +33,36 @@ const PackageSelector = ({
             
             if (Array.isArray(data)) {
                 const options = data.map(pkg => {
-                    // SINGLE_30000 형태에서 가격 추출
-                    const price = parseInt(pkg.codeValue.replace('SINGLE_', '')) || 30000;
-                    const sessions = 1; // SINGLE 패키지는 모두 1회기
+                    let price, sessions;
+                    
+                    if (pkg.codeValue.startsWith('SINGLE_')) {
+                        // SINGLE_30000 형태에서 가격 추출
+                        price = parseInt(pkg.codeValue.replace('SINGLE_', '')) || 30000;
+                        sessions = 1;
+                    } else {
+                        // Multi-Session 패키지들의 가격 매핑
+                        switch (pkg.codeValue) {
+                            case 'BASIC_20':
+                                price = 200000;
+                                sessions = 20;
+                                break;
+                            case 'STANDARD_20':
+                                price = 400000;
+                                sessions = 20;
+                                break;
+                            case 'PREMIUM_20':
+                                price = 600000;
+                                sessions = 20;
+                                break;
+                            case 'VIP_20':
+                                price = 1000000;
+                                sessions = 20;
+                                break;
+                            default:
+                                price = 30000;
+                                sessions = 1;
+                        }
+                    }
                     
                     return {
                         value: pkg.codeValue,
@@ -46,15 +73,7 @@ const PackageSelector = ({
                     };
                 });
                 
-                // Multi-Session 패키지들 추가
-                const multiSessionPackages = [
-                    { value: 'BASIC_20', label: '기본 패키지', sessions: 20, price: 200000, displayText: '기본 패키지 (20회기, 200,000원)' },
-                    { value: 'STANDARD_20', label: '표준 패키지', sessions: 20, price: 400000, displayText: '표준 패키지 (20회기, 400,000원)' },
-                    { value: 'PREMIUM_20', label: '프리미엄 패키지', sessions: 20, price: 600000, displayText: '프리미엄 패키지 (20회기, 600,000원)' },
-                    { value: 'VIP_20', label: 'VIP 패키지', sessions: 20, price: 1000000, displayText: 'VIP 패키지 (20회기, 1,000,000원)' }
-                ];
-                
-                setPackageOptions([...multiSessionPackages, ...options]);
+                setPackageOptions(options);
             }
         } catch (error) {
             console.error('패키지 옵션 로드 실패:', error);
@@ -88,7 +107,20 @@ const PackageSelector = ({
         const selectedValue = e.target.value;
         const selectedPackage = packageOptions.find(pkg => pkg.value === selectedValue);
         
+        console.log('🔍 PackageSelector 선택:', {
+            selectedValue,
+            selectedPackage,
+            allOptions: packageOptions.slice(0, 5) // 처음 5개만 로그
+        });
+        
         if (selectedPackage && onChange) {
+            console.log('✅ PackageSelector 변경 이벤트 전송:', {
+                value: selectedPackage.value,
+                label: selectedPackage.label,
+                sessions: selectedPackage.sessions,
+                price: selectedPackage.price
+            });
+            
             onChange({
                 value: selectedPackage.value,
                 label: selectedPackage.label,

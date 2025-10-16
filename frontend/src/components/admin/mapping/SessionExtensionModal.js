@@ -204,9 +204,9 @@ const SessionExtensionModal = ({
                         <div className="mg-form-group">
                             <label className="mg-label">패키지 가격(원)</label>
                             <input
-                                type="number"
+                                type="text"
                                 className="mg-input"
-                                value={packagePrice.toLocaleString()}
+                                value={packagePrice > 0 ? packagePrice.toLocaleString() : ''}
                                 readOnly
                             />
                             <div className="mg-text-secondary">자동 설정</div>

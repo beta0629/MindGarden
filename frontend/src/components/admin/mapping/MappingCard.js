@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Calendar, DollarSign, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { User, Calendar, DollarSign, Clock, CheckCircle, XCircle, Database, Link } from 'lucide-react';
 import MappingPaymentModal from './MappingPaymentModal';
 import MappingDepositModal from './MappingDepositModal';
 
@@ -65,6 +65,23 @@ const MappingCard = ({
         return `${amount.toLocaleString()}원`;
     };
 
+    // ERP 연동 상태 확인 함수
+    const isErpIntegrated = () => {
+        return mapping.erpIntegrated || 
+               mapping.erpSyncStatus === 'SYNCED' || 
+               mapping.erpTransactionId || 
+               mapping.erpStatus === 'ACTIVE' ||
+               mapping.paymentConfirmed; // 결제 확인된 경우 ERP 연동으로 간주
+    };
+
+    // ERP 연동 상태 텍스트
+    const getErpStatusText = () => {
+        if (mapping.erpSyncStatus === 'SYNCED') return 'ERP 동기화 완료';
+        if (mapping.erpTransactionId) return 'ERP 거래 등록됨';
+        if (mapping.paymentConfirmed) return 'ERP 자동 연동';
+        return 'ERP 연동됨';
+    };
+
     return (
         <div className="mg-card mg-mapping-card">
             {/* 카드 헤더 */}
@@ -77,6 +94,14 @@ const MappingCard = ({
                         {getStatusIcon(mapping.status)}
                         {getStatusLabel(mapping.status)}
                     </span>
+                    
+                    {/* ERP 연동 상태 표시 */}
+                    {isErpIntegrated() && (
+                        <span className="mg-erp-badge">
+                            <Database size={12} />
+                            {getErpStatusText()}
+                        </span>
+                    )}
                 </div>
                 <div className="mg-mapping-actions">
                     {onView && (
@@ -136,6 +161,24 @@ const MappingCard = ({
                         </div>
                     </div>
                 </div>
+
+                {/* ERP 연동 정보 */}
+                {isErpIntegrated() && (
+                    <div className="mg-mapping-erp">
+                        <div className="mg-erp-info">
+                            <Database size={16} className="mg-erp-icon" />
+                            <div className="mg-erp-content">
+                                <span className="mg-erp-label">ERP 연동</span>
+                                <span className="mg-erp-value">{getErpStatusText()}</span>
+                                {mapping.erpTransactionId && (
+                                    <span className="mg-erp-transaction">
+                                        거래번호: {mapping.erpTransactionId}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* 날짜 정보 */}
                 <div className="mg-mapping-dates">

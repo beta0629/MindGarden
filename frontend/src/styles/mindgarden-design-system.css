@@ -3215,6 +3215,22 @@ body {
   background-color: var(--status-warning) !important;
 }
 
+/* Mapping Status Colors - Design System v2.0 */
+:root {
+  /* Status Colors */
+  --color-success: #10b981;      /* 녹색 - 활성 */
+  --color-warning: #f59e0b;      /* 주황색 - 대기/경고 */
+  --color-info: #3b82f6;         /* 파란색 - 정보/확인 */
+  --color-danger: #ef4444;       /* 빨간색 - 위험/종료 */
+  --color-text-secondary: #6b7280; /* 회색 - 비활성 */
+  
+  /* Status Light Colors */
+  --color-success-light: rgba(16, 185, 129, 0.1);
+  --color-warning-light: rgba(245, 158, 11, 0.1);
+  --color-info-light: rgba(59, 130, 246, 0.1);
+  --color-danger-light: rgba(239, 68, 68, 0.1);
+}
+
 /* ===== Modal Title Section ===== */
 .mg-modal-title-section {
   flex: 1;
@@ -3286,14 +3302,18 @@ body {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--border-radius-full);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-md);
     background-color: var(--status-color, var(--color-primary));
     color: var(--color-text-inverse);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    text-transform: none;
+    letter-spacing: 0.3px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 80px;
+    justify-content: center;
 }
 
 .mg-mapping-actions {
@@ -3387,6 +3407,67 @@ body {
     font-weight: var(--font-weight-medium);
 }
 
+/* ERP Integration Styles */
+.mg-erp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--color-success);
+    color: var(--color-text-inverse);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    margin-left: var(--spacing-sm);
+}
+
+.mg-mapping-erp {
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background: var(--color-success-light);
+    border: 1px solid var(--color-success);
+    border-radius: var(--border-radius-sm);
+}
+
+.mg-erp-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.mg-erp-icon {
+    color: var(--color-success);
+    flex-shrink: 0;
+}
+
+.mg-erp-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mg-erp-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-success);
+    font-weight: var(--font-weight-semibold);
+}
+
+.mg-erp-value {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.mg-erp-transaction {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    font-family: monospace;
+    background: var(--color-bg-primary);
+    padding: 2px var(--spacing-xs);
+    border-radius: var(--border-radius-xs);
+    border: 1px solid var(--color-border-light);
+}
+
 /* Mapping Card Footer */
 .mg-card-footer {
     padding: var(--spacing-md);
@@ -3405,6 +3486,24 @@ body {
         flex-direction: column;
         gap: var(--spacing-sm);
         align-items: flex-start;
+    }
+    
+    .mg-mapping-status {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        align-items: flex-start;
+    }
+    
+    .mg-status-badge {
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        min-width: 70px;
+    }
+    
+    .mg-erp-badge {
+        font-size: 10px;
+        padding: 2px var(--spacing-xs);
+        margin-left: 0;
     }
     
     .mg-mapping-actions {

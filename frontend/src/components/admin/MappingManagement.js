@@ -110,6 +110,34 @@ const MappingManagement = () => {
         return statusMap[status] || status;
     };
 
+    // 상태별 색상 매핑 함수
+    const getStatusColor = (status) => {
+        const colorMap = {
+            'ACTIVE': 'var(--color-success)',           // 녹색 - 활성
+            'INACTIVE': 'var(--color-text-secondary)',  // 회색 - 비활성
+            'PENDING_PAYMENT': 'var(--color-warning)',  // 주황색 - 결제 대기
+            'PAYMENT_CONFIRMED': 'var(--color-info)',   // 파란색 - 결제 확인
+            'TERMINATED': 'var(--color-danger)',        // 빨간색 - 종료됨
+            'SESSIONS_EXHAUSTED': 'var(--color-warning)', // 주황색 - 회기 소진
+            'SUSPENDED': 'var(--color-text-secondary)'  // 회색 - 일시정지
+        };
+        return colorMap[status] || 'var(--color-primary)';
+    };
+
+    // 상태별 아이콘 매핑 함수
+    const getStatusIcon = (status) => {
+        const iconMap = {
+            'ACTIVE': '✅',
+            'INACTIVE': '⏸️',
+            'PENDING_PAYMENT': '⏳',
+            'PAYMENT_CONFIRMED': '💰',
+            'TERMINATED': '❌',
+            'SESSIONS_EXHAUSTED': '⚠️',
+            'SUSPENDED': '⏸️'
+        };
+        return iconMap[status] || '📋';
+    };
+
     // 매핑 상태 정보 일괄 로드
     const loadMappingStatusInfo = async () => {
         try {
@@ -627,8 +655,8 @@ const MappingManagement = () => {
                                 mapping={mapping}
                                 statusInfo={mappingStatusInfo[mapping.status] || {
                                     label: getStatusKoreanName(mapping.status),
-                                    color: '#6c757d',
-                                    icon: '📋'
+                                    color: getStatusColor(mapping.status),
+                                    icon: getStatusIcon(mapping.status)
                                 }}
                                 onView={() => handleViewMapping(mapping)}
                                 onEdit={() => handleEditMapping(mapping)}

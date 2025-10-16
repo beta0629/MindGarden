@@ -198,7 +198,7 @@ const ConsultantCard = ({
                     consultant={consultant} 
                     variant="tag" 
                     showTitle={true}
-                    maxItems={3}
+                    maxItems={10}
                     debug={true}
                 />
                 
@@ -310,7 +310,7 @@ const ConsultantCard = ({
                             consultant={consultant}
                             variant="tag"
                             showTitle={false}
-                            maxItems={3}
+                            maxItems={10}
                             debug={false}
                         />
                     </div>
@@ -398,7 +398,7 @@ const ConsultantCard = ({
                         consultant={consultant}
                         variant="inline"
                         showTitle={false}
-                        maxItems={2}
+                        maxItems={5}
                         debug={false}
                     />
                 </div>

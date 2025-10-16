@@ -75,6 +75,7 @@
 
 /* 검색 컨테이너 */
 .search-container {
+    margin-top: var(--spacing-lg);
     margin-bottom: var(--spacing-md);
     max-width: 100%;
     width: 100%;

@@ -88,7 +88,7 @@ const MappingCard = ({
             <div className="mg-card-header">
                 <div className="mg-mapping-status">
                     <span 
-                        className="mg-status-badge"
+                        className={`mg-status-badge ${mapping.status.toLowerCase()}`}
                         style={{ '--status-color': getStatusColor(mapping.status) }}
                     >
                         {getStatusIcon(mapping.status)}

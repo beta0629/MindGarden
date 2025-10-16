@@ -3316,6 +3316,18 @@ body {
     justify-content: center;
 }
 
+/* 종료됨 상태에서 아이콘을 흰색으로 표시 */
+.mg-status-badge.terminated {
+    background-color: var(--color-danger);
+    color: var(--color-text-inverse);
+}
+
+.mg-status-badge.terminated::before {
+    content: "❌";
+    color: var(--color-text-inverse);
+    filter: brightness(0) invert(1);
+}
+
 .mg-mapping-actions {
     display: flex;
     gap: var(--spacing-xs);

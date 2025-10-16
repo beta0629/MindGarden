@@ -131,7 +131,7 @@ const MappingManagement = () => {
             'INACTIVE': '⏸️',
             'PENDING_PAYMENT': '⏳',
             'PAYMENT_CONFIRMED': '💰',
-            'TERMINATED': '❌',
+            'TERMINATED': '🚫',  // X 대신 금지 표시 사용
             'SESSIONS_EXHAUSTED': '⚠️',
             'SUSPENDED': '⏸️'
         };

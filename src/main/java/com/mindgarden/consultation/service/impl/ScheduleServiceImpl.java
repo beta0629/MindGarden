@@ -171,9 +171,9 @@ public class ScheduleServiceImpl implements ScheduleService {
                                           LocalTime startTime, LocalTime endTime, String title, String description) {
         log.info("📅 상담사 스케줄 생성: 상담사 {}, 내담자 {}, 날짜 {}", consultantId, clientId, date);
         
-        // 1. 매핑 상태 검증 (임시로 우회)
+        // 1. 매칭 상태 검증 (임시로 우회)
         // if (!validateMappingForSchedule(consultantId, clientId)) {
-        //     throw new RuntimeException("상담사와 내담자 간의 유효한 매핑이 없거나 승인되지 않았습니다.");
+        //     throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
         // }
         
         // 2. 회기 수 검증 (임시로 우회)
@@ -212,9 +212,9 @@ public class ScheduleServiceImpl implements ScheduleService {
                                           LocalTime startTime, LocalTime endTime, String title, String description, String consultationType, String branchCode) {
         log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}", consultantId, clientId, date, consultationType);
         
-        // 1. 매핑 상태 검증 (임시로 우회)
+        // 1. 매칭 상태 검증 (임시로 우회)
         // if (!validateMappingForSchedule(consultantId, clientId)) {
-        //     throw new RuntimeException("상담사와 내담자 간의 유효한 매핑이 없거나 승인되지 않았습니다.");
+        //     throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
         // }
         
         // 2. 회기 수 검증 (임시로 우회)
@@ -257,9 +257,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         log.info("📅 상담사 스케줄 생성 (유형 기반): 상담사 {}, 내담자 {}, 날짜 {}, 유형 {}", 
                 consultantId, clientId, date, consultationType.getDisplayName());
         
-        // 1. 매핑 상태 검증
+        // 1. 매칭 상태 검증
         if (!validateMappingForSchedule(consultantId, clientId)) {
-            throw new RuntimeException("상담사와 내담자 간의 유효한 매핑이 없거나 승인되지 않았습니다.");
+            throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
         }
         
         // 2. 회기 수 검증
@@ -517,21 +517,21 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     public boolean validateMappingForSchedule(Long consultantId, Long clientId) {
-        log.debug("🔗 매핑 상태 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
+        log.debug("🔗 매칭 상태 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
         
-        // 활성 상태의 매핑이 있는지 확인
+        // 활성 상태의 매칭이 있는지 확인
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByStatus(
             ConsultantClientMapping.MappingStatus.ACTIVE);
         
         for (ConsultantClientMapping mapping : activeMappings) {
             if (mapping.getConsultant().getId().equals(consultantId) && 
                 mapping.getClient().getId().equals(clientId)) {
-                log.debug("유효한 매핑 발견: ID {}", mapping.getId());
+                log.debug("유효한 매칭 발견: ID {}", mapping.getId());
                 return true;
             }
         }
         
-        log.warn("유효한 매핑을 찾을 수 없음: 상담사 {}, 내담자 {}", consultantId, clientId);
+        log.warn("유효한 매칭을 찾을 수 없음: 상담사 {}, 내담자 {}", consultantId, clientId);
         return false;
     }
 
@@ -539,7 +539,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     public boolean validateRemainingSessions(Long consultantId, Long clientId) {
         log.debug("📊 회기 수 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
         
-        // 활성 상태의 매핑에서 남은 회기 수 확인
+        // 활성 상태의 매칭에서 남은 회기 수 확인
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByStatus(
             ConsultantClientMapping.MappingStatus.ACTIVE);
         
@@ -554,7 +554,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             }
         }
         
-        log.warn("활성 매핑을 찾을 수 없음: 상담사 {}, 내담자 {}", consultantId, clientId);
+        log.warn("활성 매칭을 찾을 수 없음: 상담사 {}, 내담자 {}", consultantId, clientId);
         return false;
     }
 
@@ -959,10 +959,10 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     /**
-     * 매핑의 회기 사용 처리
+     * 매칭의 회기 사용 처리
      */
     private void useSessionForMapping(Long consultantId, Long clientId) {
-        log.debug("📅 매핑 회기 사용 처리: 상담사 {}, 내담자 {}", consultantId, clientId);
+        log.debug("📅 매칭 회기 사용 처리: 상담사 {}, 내담자 {}", consultantId, clientId);
         
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByStatus(
             ConsultantClientMapping.MappingStatus.ACTIVE);
@@ -972,11 +972,11 @@ public class ScheduleServiceImpl implements ScheduleService {
                 mapping.getClient().getId().equals(clientId)) {
                 
                 try {
-                    // 매핑을 다시 조회하여 최신 상태 확인
+                    // 매칭을 다시 조회하여 최신 상태 확인
                     ConsultantClientMapping freshMapping = mappingRepository.findById(mapping.getId())
-                            .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mapping.getId()));
+                            .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다: " + mapping.getId()));
                     
-                    log.info("🔍 매핑 상태 확인: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}", 
+                    log.info("🔍 매칭 상태 확인: mappingId={}, totalSessions={}, usedSessions={}, remainingSessions={}", 
                             freshMapping.getId(), freshMapping.getTotalSessions(), 
                             freshMapping.getUsedSessions(), freshMapping.getRemainingSessions());
                     

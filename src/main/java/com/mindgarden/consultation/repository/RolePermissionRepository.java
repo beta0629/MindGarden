@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
- * 역할-권한 매핑 Repository
+ * 역할-권한 매칭 Repository
  */
 @Repository
 public interface RolePermissionRepository extends JpaRepository<RolePermission, Long> {
@@ -35,7 +35,7 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
                                                            @Param("permissionCode") String permissionCode);
     
     /**
-     * 역할명과 권한 코드로 매핑 조회
+     * 역할명과 권한 코드로 매칭 조회
      */
     @Query("SELECT rp FROM RolePermission rp WHERE rp.roleName = :roleName AND rp.permissionCode = :permissionCode AND rp.isActive = true")
     Optional<RolePermission> findByRoleNameAndPermissionCodeAndIsActiveTrue(@Param("roleName") String roleName, @Param("permissionCode") String permissionCode);
@@ -59,13 +59,13 @@ public interface RolePermissionRepository extends JpaRepository<RolePermission, 
     long countByPermissionCodeAndIsActiveTrue(@Param("permissionCode") String permissionCode);
     
     /**
-     * 비활성화된 매핑들 조회 (관리용)
+     * 비활성화된 매칭들 조회 (관리용)
      */
     @Query("SELECT rp FROM RolePermission rp WHERE rp.isActive = false")
     List<RolePermission> findByIsActiveFalse();
     
     /**
-     * 특정 역할의 모든 권한 매핑 삭제
+     * 특정 역할의 모든 권한 매칭 삭제
      */
     void deleteByRoleName(String roleName);
 }

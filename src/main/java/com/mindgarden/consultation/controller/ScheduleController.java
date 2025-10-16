@@ -849,26 +849,26 @@ public class ScheduleController {
     }
     
     /**
-     * 내담자-상담사 매핑 확인
+     * 내담자-상담사 매칭 확인
      */
     @PostMapping("/client/mapping/check")
     public ResponseEntity<?> checkClientMapping(@RequestBody Map<String, Object> request) {
         try {
-            log.info("매핑 확인 요청 받음: request={}", request);
+            log.info("매칭 확인 요청 받음: request={}", request);
             
             Long clientId = Long.valueOf(request.get("clientId").toString());
             Long consultantId = Long.valueOf(request.get("consultantId").toString());
             
-            log.info("매핑 확인 요청 파싱 완료: clientId={}, consultantId={}", clientId, consultantId);
+            log.info("매칭 확인 요청 파싱 완료: clientId={}, consultantId={}", clientId, consultantId);
             
-            // 실제 매핑 확인 로직 구현
+            // 실제 매칭 확인 로직 구현
             Map<String, Object> mappingData = new HashMap<>();
             
             try {
-                // AdminService를 통해 실제 매핑 조회
+                // AdminService를 통해 실제 매칭 조회
                 List<ConsultantClientMapping> mappings = adminService.getMappingsByClient(clientId);
                 
-                // 해당 상담사와의 활성 매핑 찾기
+                // 해당 상담사와의 활성 매칭 찾기
                 Optional<ConsultantClientMapping> activeMapping = mappings.stream()
                     .filter(mapping -> mapping.getConsultant() != null && 
                             mapping.getConsultant().getId().equals(consultantId) &&
@@ -897,11 +897,11 @@ public class ScheduleController {
                     mappingData.put("paymentStatus", "NO_MAPPING");
                 }
                 
-                log.info("매핑 확인 완료: clientId={}, consultantId={}, hasMapping={}", 
+                log.info("매칭 확인 완료: clientId={}, consultantId={}, hasMapping={}", 
                     clientId, consultantId, mappingData.get("hasMapping"));
                 
             } catch (Exception e) {
-                log.error("매핑 확인 중 오류: clientId={}, consultantId={}, error={}", 
+                log.error("매칭 확인 중 오류: clientId={}, consultantId={}, error={}", 
                     clientId, consultantId, e.getMessage());
                 
                 // 오류 시 기본값 반환
@@ -917,15 +917,15 @@ public class ScheduleController {
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("message", "매핑 정보를 성공적으로 확인했습니다.");
+            response.put("message", "매칭 정보를 성공적으로 확인했습니다.");
             response.put("data", mappingData);
             
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("매핑 확인 실패", e);
+            log.error("매칭 확인 실패", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("success", false, "message", "매핑 확인 중 오류가 발생했습니다."));
+                .body(Map.of("success", false, "message", "매칭 확인 중 오류가 발생했습니다."));
         }
     }
     

@@ -286,20 +286,20 @@ public class ConsultantServiceImpl implements ConsultantService {
         // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 매핑을 통해 내담자 조회
+        // 매칭을 통해 내담자 조회
         List<ConsultantClientMapping> mappings;
         if (status != null && !status.trim().isEmpty()) {
-            // 특정 상태의 매핑만 조회
+            // 특정 상태의 매칭만 조회
             ConsultantClientMapping.MappingStatus mappingStatus = ConsultantClientMapping.MappingStatus.valueOf(status);
             mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, 
                 mappingStatus == ConsultantClientMapping.MappingStatus.ACTIVE ? 
                 ConsultantClientMapping.MappingStatus.INACTIVE : ConsultantClientMapping.MappingStatus.ACTIVE);
         } else {
-            // 모든 활성 매핑 조회
+            // 모든 활성 매칭 조회
             mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
         }
         
-        // 매핑에서 클라이언트 정보 추출 (User를 Client로 변환)
+        // 매칭에서 클라이언트 정보 추출 (User를 Client로 변환)
         List<Client> clients = mappings.stream()
                 .map(mapping -> {
                     User user = mapping.getClient();
@@ -335,7 +335,7 @@ public class ConsultantServiceImpl implements ConsultantService {
         // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 매핑을 통해 특정 내담자 조회
+        // 매칭을 통해 특정 내담자 조회
         List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.INACTIVE);
         
         return mappings.stream()
@@ -366,7 +366,7 @@ public class ConsultantServiceImpl implements ConsultantService {
         // 상담사 정보 로깅
         log.debug("상담사 정보 확인: consultantId={}, name={}", consultant.getId(), consultant.getName());
         
-        // 내담자 존재 확인 및 업데이트 (실제 구현에서는 매핑 테이블을 통해 조회)
+        // 내담자 존재 확인 및 업데이트 (실제 구현에서는 매칭 테이블을 통해 조회)
         return updateData;
     }
     

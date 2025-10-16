@@ -207,43 +207,43 @@ public class AdminServiceImpl implements AdminService {
             branchCode = AdminConstants.DEFAULT_BRANCH_CODE; // 기본값
         }
         
-        // 기존 매핑이 있는지 확인 (중복 결과 처리)
+        // 기존 매칭이 있는지 확인 (중복 결과 처리)
         List<ConsultantClientMapping> existingMappings = mappingRepository
             .findByConsultantAndClient(consultant, clientUser);
         
         if (!existingMappings.isEmpty()) {
-            // 기존 매핑이 있는 경우 모든 기존 매핑을 자동 종료 처리
-            log.info("🔍 기존 매핑 발견, 자동 종료 처리: 상담사={}, 내담자={}, 기존 매핑 수={}", 
+            // 기존 매칭이 있는 경우 모든 기존 매칭을 자동 종료 처리
+            log.info("🔍 기존 매칭 발견, 자동 종료 처리: 상담사={}, 내담자={}, 기존 매칭 수={}", 
                 consultant.getName(), clientUser.getName(), existingMappings.size());
             
             String terminatedStatus = getMappingStatusCode("TERMINATED");
             
             for (ConsultantClientMapping existingMapping : existingMappings) {
-                // 기존 매핑을 자동 종료 처리
+                // 기존 매칭을 자동 종료 처리
                 existingMapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
                 existingMapping.setTerminatedAt(LocalDateTime.now());
                 existingMapping.setNotes((existingMapping.getNotes() != null ? existingMapping.getNotes() + "\n" : "") + 
-                    "새로운 매핑 생성으로 인한 자동 종료 - 회기 자동 소진");
+                    "새로운 매칭 생성으로 인한 자동 종료 - 회기 자동 소진");
                 
                 // 남은 회기를 사용된 회기로 이동 (자동 소진)
                 int remainingSessions = existingMapping.getRemainingSessions();
                 if (remainingSessions > 0) {
                     existingMapping.setUsedSessions(existingMapping.getUsedSessions() + remainingSessions);
                     existingMapping.setRemainingSessions(0);
-                    log.info("🔄 기존 매핑 회기 자동 소진: 매핑ID={}, 소진 회기={}", 
+                    log.info("🔄 기존 매칭 회기 자동 소진: 매칭ID={}, 소진 회기={}", 
                         existingMapping.getId(), remainingSessions);
                 }
                 
                 existingMapping.setUpdatedAt(LocalDateTime.now());
                 mappingRepository.save(existingMapping);
                 
-                log.info("✅ 기존 매핑 자동 종료 완료: 매핑ID={}, 상태={}", 
+                log.info("✅ 기존 매칭 자동 종료 완료: 매칭ID={}, 상태={}", 
                     existingMapping.getId(), existingMapping.getStatus());
             }
         }
         
-        // 새로운 매핑 생성 (기존 매핑이 없거나 다른 지점인 경우)
-        log.info("🆕 새로운 매핑 생성: 상담사={}, 내담자={}, 지점={}", 
+        // 새로운 매칭 생성 (기존 매칭이 없거나 다른 지점인 경우)
+        log.info("🆕 새로운 매칭 생성: 상담사={}, 내담자={}, 지점={}", 
             consultant.getName(), clientUser.getName(), branchCode);
             
         ConsultantClientMapping mapping = new ConsultantClientMapping();
@@ -252,7 +252,7 @@ public class AdminServiceImpl implements AdminService {
         mapping.setStartDate(dto.getStartDate() != null ? 
             dto.getStartDate().atStartOfDay() : 
             LocalDateTime.now());
-        // 새 매핑은 입금 확인 후 활성화되도록 설정
+        // 새 매칭은 입금 확인 후 활성화되도록 설정
         String defaultMappingStatus = getMappingStatusCode("PENDING_PAYMENT");
         String defaultPaymentStatus = getPaymentStatusCode("PENDING");
         
@@ -276,7 +276,7 @@ public class AdminServiceImpl implements AdminService {
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
         mapping.setBranchCode(branchCode);
         
-        log.info("🔧 매핑 지점코드 설정: {}", branchCode);
+        log.info("🔧 매칭 지점코드 설정: {}", branchCode);
 
         return mappingRepository.save(mapping);
     }
@@ -305,19 +305,19 @@ public class AdminServiceImpl implements AdminService {
         
         // 입금 확인 시 자동으로 ERP 수입 거래 생성
         try {
-            // 추가 매핑인지 확인
+            // 추가 매칭인지 확인
             boolean isAdditionalMapping = savedMapping.getNotes() != null && 
-                                        savedMapping.getNotes().contains("[추가 매핑]");
+                                        savedMapping.getNotes().contains("[추가 매칭]");
             
             if (isAdditionalMapping) {
-                log.info("🔄 추가 매핑 입금 확인 - 추가 회기에 대한 ERP 거래 생성");
+                log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성");
                 createAdditionalSessionIncomeTransaction(savedMapping, paymentAmount);
             } else {
-                log.info("🆕 신규 매핑 입금 확인 - 전체 패키지에 대한 ERP 거래 생성");
+                log.info("🆕 신규 매칭 입금 확인 - 전체 패키지에 대한 ERP 거래 생성");
                 createConsultationIncomeTransaction(savedMapping);
             }
             
-            log.info("💚 매핑 입금 확인으로 인한 상담료 수입 거래 자동 생성 완료: MappingID={}, PaymentAmount={}, 추가매핑={}", 
+            log.info("💚 매칭 입금 확인으로 인한 상담료 수입 거래 자동 생성 완료: MappingID={}, PaymentAmount={}, 추가매칭={}", 
                 mappingId, paymentAmount, isAdditionalMapping);
         } catch (Exception e) {
             log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
@@ -370,7 +370,7 @@ public class AdminServiceImpl implements AdminService {
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
-                .branchCode(mapping.getBranchCode()) // 매핑의 지점코드 사용
+                .branchCode(mapping.getBranchCode()) // 매칭의 지점코드 사용
                 .taxIncluded(false) // 상담료는 부가세 면세
                 .build();
         
@@ -386,7 +386,7 @@ public class AdminServiceImpl implements AdminService {
                 transaction.complete(); // 완료 상태로 변경
                 transaction.setApprovedAt(java.time.LocalDateTime.now());
                 financialTransactionRepository.save(transaction);
-                log.info("💚 매핑 연동 거래 즉시 완료 처리: TransactionID={}", response.getId());
+                log.info("💚 매칭 연동 거래 즉시 완료 처리: TransactionID={}", response.getId());
             }
         } catch (Exception e) {
             log.error("거래 완료 처리 실패: {}", e.getMessage(), e);
@@ -404,7 +404,7 @@ public class AdminServiceImpl implements AdminService {
     }
     
     /**
-     * 추가 회기 수입 거래 자동 생성 (추가 매핑용)
+     * 추가 회기 수입 거래 자동 생성 (추가 매칭용)
      */
     private void createAdditionalSessionIncomeTransaction(ConsultantClientMapping mapping, Long additionalPaymentAmount) {
         log.info("💰 [중앙화] 추가 회기 수입 거래 생성 시작: MappingID={}, AdditionalAmount={}", 
@@ -469,10 +469,10 @@ public class AdminServiceImpl implements AdminService {
         }
         
         try {
-            // "[추가 매핑]" 다음에 있는 숫자 추출 시도
+            // "[추가 매칭]" 다음에 있는 숫자 추출 시도
             String[] lines = notes.split("\n");
             for (String line : lines) {
-                if (line.contains("[추가 매핑]")) {
+                if (line.contains("[추가 매칭]")) {
                     // "10회", "20회" 같은 패턴에서 숫자 추출
                     if (line.matches(".*\\d+회.*")) {
                         String sessionStr = line.replaceAll(".*?(\\d+)회.*", "$1");
@@ -561,7 +561,7 @@ public class AdminServiceImpl implements AdminService {
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND")
-                .branchCode(mapping.getBranchCode()) // 매핑의 지점코드 사용
+                .branchCode(mapping.getBranchCode()) // 매칭의 지점코드 사용
                 .taxIncluded(false) // 환불은 부가세 면세
                 .build();
         
@@ -630,7 +630,7 @@ public class AdminServiceImpl implements AdminService {
         // 결제 확인 시 자동으로 ERP 미수금(매출채권) 거래 생성
         try {
             createReceivablesTransaction(savedMapping);
-            log.info("💚 매핑 결제 확인으로 인한 미수금 거래 자동 생성: MappingID={}", mappingId);
+            log.info("💚 매칭 결제 확인으로 인한 미수금 거래 자동 생성: MappingID={}", mappingId);
         } catch (Exception e) {
             log.error("미수금 거래 자동 생성 실패: {}", e.getMessage(), e);
             // 거래 생성 실패해도 결제 확인은 완료
@@ -673,7 +673,7 @@ public class AdminServiceImpl implements AdminService {
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
                 .relatedEntityType("CONSULTANT_CLIENT_MAPPING")
-                .branchCode(mapping.getBranchCode()) // 매핑의 지점코드 사용
+                .branchCode(mapping.getBranchCode()) // 매칭의 지점코드 사용
                 .taxIncluded(false) // 상담료는 부가세 면세
                 .build();
         
@@ -726,7 +726,7 @@ public class AdminServiceImpl implements AdminService {
         // 입금 확인 시 자동으로 ERP 현금 수입 거래 생성
         try {
             createConsultationIncomeTransaction(savedMapping);
-            log.info("💚 매핑 입금 확인으로 인한 상담료 수입 거래 자동 생성: MappingID={}", mappingId);
+            log.info("💚 매칭 입금 확인으로 인한 상담료 수입 거래 자동 생성: MappingID={}", mappingId);
         } catch (Exception e) {
             log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
             // 거래 생성 실패해도 입금 확인은 완료
@@ -818,9 +818,9 @@ public class AdminServiceImpl implements AdminService {
         log.info("🔄 회기 추가 요청 생성: mappingId={}, requesterId={}, sessions={}", 
                 mappingId, requesterId, additionalSessions);
         
-        // 매핑 정보 조회
+        // 매칭 정보 조회
         ConsultantClientMapping mapping = mappingRepository.findById(mappingId)
-                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
+                .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다: " + mappingId));
         
         // 요청자 정보 검증
         if (!userRepository.existsById(requesterId)) {
@@ -835,7 +835,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
-     * 입금 대기 중인 매핑 목록 조회
+     * 입금 대기 중인 매칭 목록 조회
      */
     @Override
     public List<ConsultantClientMapping> getPendingPaymentMappings() {
@@ -846,7 +846,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
-     * 입금 확인된 매핑 목록 조회
+     * 입금 확인된 매칭 목록 조회
      */
     @Override
     public List<ConsultantClientMapping> getPaymentConfirmedMappings() {
@@ -857,7 +857,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
-     * 입금 확인 대기 중인 매핑 목록 조회 (결제 확인 완료, 입금 확인 대기)
+     * 입금 확인 대기 중인 매칭 목록 조회 (결제 확인 완료, 입금 확인 대기)
      */
     @Override
     public List<ConsultantClientMapping> getPendingDepositMappings() {
@@ -870,7 +870,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
-     * 활성 매핑 목록 조회 (승인 완료)
+     * 활성 매칭 목록 조회 (승인 완료)
      */
     @Override
     public List<ConsultantClientMapping> getActiveMappings() {
@@ -878,7 +878,7 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
-     * 회기 소진된 매핑 목록 조회
+     * 회기 소진된 매칭 목록 조회
      */
     @Override
     public List<ConsultantClientMapping> getSessionsExhaustedMappings() {
@@ -1054,7 +1054,7 @@ public class AdminServiceImpl implements AdminService {
             code = code.trim();
             if (!code.isEmpty()) {
                 // 실제로는 CodeValueRepository를 사용해서 조회해야 함
-                // 여기서는 임시로 하드코딩된 매핑 사용
+                // 여기서는 임시로 하드코딩된 매칭 사용
                 Map<String, String> detail = new HashMap<>();
                 detail.put("code", code);
                 detail.put("name", getSpecialtyNameByCode(code));
@@ -1239,7 +1239,7 @@ public class AdminServiceImpl implements AdminService {
         
         return clientUsers.stream()
             .map(user -> {
-                // User 정보를 Client로 매핑 (이미 복호화된 데이터 사용)
+                // User 정보를 Client로 매칭 (이미 복호화된 데이터 사용)
                 Client client = new Client();
                 client.setId(user.getId());
                 client.setName(user.getName());
@@ -1280,9 +1280,9 @@ public class AdminServiceImpl implements AdminService {
             List<User> clientUsers = userRepository.findByRoleAndIsActiveTrue(UserRole.CLIENT);
             log.info("🔍 내담자 수: {}", clientUsers.size());
             
-            // 모든 매핑 조회
+            // 모든 매칭 조회
             List<ConsultantClientMapping> allMappings = mappingRepository.findAllWithDetails();
-            log.info("🔍 매핑 수: {}", allMappings.size());
+            log.info("🔍 매칭 수: {}", allMappings.size());
             
             List<Map<String, Object>> result = new ArrayList<>();
             
@@ -1319,7 +1319,7 @@ public class AdminServiceImpl implements AdminService {
                 log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'", 
                     decryptedUser.getId(), decryptedUser.getName(), phone);
                 
-                // 해당 내담자의 매핑 정보들
+                // 해당 내담자의 매칭 정보들
                 List<Map<String, Object>> mappings = allMappings.stream()
                     .filter(mapping -> mapping.getClient() != null && mapping.getClient().getId().equals(decryptedUser.getId()))
                     .map(mapping -> {
@@ -1345,7 +1345,7 @@ public class AdminServiceImpl implements AdminService {
                 clientData.put("mappings", mappings);
                 clientData.put("mappingCount", mappings.size());
                 
-                // 활성 매핑 수 (승인된 매핑)
+                // 활성 매칭 수 (승인된 매칭)
                 long activeMappingCount = mappings.stream()
                     .filter(mapping -> "APPROVED".equals(mapping.get("status")))
                     .count();
@@ -1358,7 +1358,7 @@ public class AdminServiceImpl implements AdminService {
                     .sum();
                 clientData.put("totalRemainingSessions", totalRemainingSessions);
                 
-                // 결제 상태별 매핑 수
+                // 결제 상태별 매칭 수
                 Map<String, Long> paymentStatusCount = mappings.stream()
                     .collect(Collectors.groupingBy(
                         mapping -> (String) mapping.get("paymentStatus"),
@@ -1384,7 +1384,7 @@ public class AdminServiceImpl implements AdminService {
             return mappingRepository.findAllWithDetails();
         } catch (Exception e) {
             // enum 변환 오류 등으로 인해 조회 실패시 빈 목록 반환
-            System.err.println("매핑 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
+            System.err.println("매칭 목록 조회 실패 (빈 목록 반환): " + e.getMessage());
             return new java.util.ArrayList<>();
         }
     }
@@ -1489,14 +1489,14 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("상담사가 아닌 사용자는 삭제할 수 없습니다.");
         }
         
-        // 1. 해당 상담사의 활성 매핑 조회
+        // 1. 해당 상담사의 활성 매칭 조회
         List<ConsultantClientMapping> activeMappings = mappingRepository
                 .findByConsultantIdAndStatusNot(id, ConsultantClientMapping.MappingStatus.TERMINATED);
         
         if (!activeMappings.isEmpty()) {
-            log.warn("⚠️ 상담사에게 {} 개의 활성 매핑이 있습니다. 다른 상담사로 이전이 필요합니다.", activeMappings.size());
+            log.warn("⚠️ 상담사에게 {} 개의 활성 매칭이 있습니다. 다른 상담사로 이전이 필요합니다.", activeMappings.size());
             throw new RuntimeException(String.format(
-                "상담사에게 %d 개의 활성 매핑이 있습니다. 먼저 다른 상담사로 이전 처리해주세요.", 
+                "상담사에게 %d 개의 활성 매칭이 있습니다. 먼저 다른 상담사로 이전 처리해주세요.", 
                 activeMappings.size()));
         }
         
@@ -1542,7 +1542,7 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("이전 대상 상담사가 비활성 상태입니다.");
         }
         
-        // 2. 활성 매핑들을 새로운 상담사로 이전
+        // 2. 활성 매칭들을 새로운 상담사로 이전
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
                 .filter(mapping -> mapping.getConsultant().getId().equals(consultantId))
@@ -1553,20 +1553,20 @@ public class AdminServiceImpl implements AdminService {
             String transferReason = String.format("상담사 삭제로 인한 이전: %s -> %s. 사유: %s", 
                     consultantToDelete.getName(), transferToConsultant.getName(), reason);
             
-            // 이전 대상 상담사와 내담자 조합으로 기존 매핑이 있는지 확인 (중복 방지)
+            // 이전 대상 상담사와 내담자 조합으로 기존 매칭이 있는지 확인 (중복 방지)
             List<ConsultantClientMapping> existingTransferMappings = 
                 mappingRepository.findByConsultantAndClient(transferToConsultant, mapping.getClient());
             
-            // 활성 매핑이 있는지 확인
+            // 활성 매칭이 있는지 확인
             String activeStatus = getMappingStatusCode("ACTIVE");
             Optional<ConsultantClientMapping> existingActiveMapping = existingTransferMappings.stream()
                 .filter(m -> m.getStatus().name().equals(activeStatus))
                 .findFirst();
             
             if (existingActiveMapping.isPresent()) {
-                // 기존 활성 매핑에 회기수 합산
+                // 기존 활성 매칭에 회기수 합산
                 ConsultantClientMapping existing = existingActiveMapping.get();
-                log.info("🔍 이전 대상 상담사와 내담자 간 기존 활성 매핑 발견, 회기수 합산: 내담자={}, 상담사={}", 
+                log.info("🔍 이전 대상 상담사와 내담자 간 기존 활성 매칭 발견, 회기수 합산: 내담자={}, 상담사={}", 
                     mapping.getClient().getName(), transferToConsultant.getName());
                 
                 // 회기수 합산
@@ -1604,10 +1604,10 @@ public class AdminServiceImpl implements AdminService {
                 
                 mappingRepository.save(existing);
                 
-                log.info("✅ 기존 매핑에 회기수 합산 완료: 총 회기수={}, 남은 회기수={}", totalSessions, remainingSessions);
+                log.info("✅ 기존 매칭에 회기수 합산 완료: 총 회기수={}, 남은 회기수={}", totalSessions, remainingSessions);
             } else {
-                // 새로운 매핑 생성
-                log.info("🆕 새로운 매핑 생성: 내담자={}, 상담사={}", 
+                // 새로운 매칭 생성
+                log.info("🆕 새로운 매칭 생성: 내담자={}, 상담사={}", 
                     mapping.getClient().getName(), transferToConsultant.getName());
                 
                 ConsultantClientMapping newMapping = new ConsultantClientMapping();
@@ -1632,14 +1632,14 @@ public class AdminServiceImpl implements AdminService {
                 
                 mappingRepository.save(newMapping);
                 
-                log.info("✅ 새로운 매핑 생성 완료: 회기수={}", mapping.getTotalSessions());
+                log.info("✅ 새로운 매칭 생성 완료: 회기수={}", mapping.getTotalSessions());
             }
             
-            // 기존 매핑 종료 (TERMINATED로 변경)
+            // 기존 매칭 종료 (TERMINATED로 변경)
             mapping.transferToNewConsultant(transferReason, "SYSTEM_AUTO_TRANSFER");
             mappingRepository.save(mapping);
             
-            log.info("📋 매핑 이전 완료: 내담자 {} -> 새 상담사 {}", 
+            log.info("📋 매칭 이전 완료: 내담자 {} -> 새 상담사 {}", 
                     mapping.getClient().getName(), transferToConsultant.getName());
         }
         
@@ -1660,7 +1660,7 @@ public class AdminServiceImpl implements AdminService {
         consultantToDelete.setIsActive(false);
         userRepository.save(consultantToDelete);
         
-        log.info("✅ 상담사 삭제 및 이전 완료: 삭제된 상담사={}, 이전 대상 상담사={}, 이전된 매핑 수={}, 이전된 스케줄 수={}", 
+        log.info("✅ 상담사 삭제 및 이전 완료: 삭제된 상담사={}, 이전 대상 상담사={}, 이전된 매칭 수={}, 이전된 스케줄 수={}", 
                 consultantToDelete.getName(), transferToConsultant.getName(), 
                 activeMappings.size(), futureSchedules.size());
     }
@@ -1676,7 +1676,7 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("상담사가 아닌 사용자입니다.");
         }
         
-        // 1. 활성 매핑 조회
+        // 1. 활성 매칭 조회
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
                 .filter(mapping -> mapping.getConsultant().getId().equals(consultantId))
@@ -1709,7 +1709,7 @@ public class AdminServiceImpl implements AdminService {
                 .count();
         details.put("todayScheduleCount", (int) todayScheduleCount);
         
-        // 활성 매핑된 내담자 목록
+        // 활성 매칭된 내담자 목록
         List<Map<String, Object>> mappedClients = activeMappings.stream()
                 .map(mapping -> {
                     Map<String, Object> clientInfo = new HashMap<>();
@@ -1747,7 +1747,7 @@ public class AdminServiceImpl implements AdminService {
         } else {
             message.append("다음 사유로 인해 다른 상담사로 이전이 필요합니다:\n");
             if (!activeMappings.isEmpty()) {
-                message.append("• 활성 매핑: ").append(activeMappings.size()).append("개\n");
+                message.append("• 활성 매칭: ").append(activeMappings.size()).append("개\n");
             }
             if (todayScheduleCount > 0) {
                 message.append("• 오늘 스케줄: ").append(todayScheduleCount).append("개\n");
@@ -1779,14 +1779,14 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("내담자가 아닌 사용자는 삭제할 수 없습니다.");
         }
         
-        // 1. 해당 내담자의 활성 매핑 조회
+        // 1. 해당 내담자의 활성 매칭 조회
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
                 .filter(mapping -> mapping.getClient().getId().equals(id))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
         
-        // 2. 남은 회기가 있는 매핑 확인
+        // 2. 남은 회기가 있는 매칭 확인
         List<ConsultantClientMapping> mappingsWithRemainingSessions = activeMappings.stream()
                 .filter(mapping -> mapping.getRemainingSessions() > 0)
                 .collect(Collectors.toList());
@@ -1796,24 +1796,24 @@ public class AdminServiceImpl implements AdminService {
                     .mapToInt(ConsultantClientMapping::getRemainingSessions)
                     .sum();
             
-            log.warn("⚠️ 내담자에게 {} 개의 활성 매핑에서 총 {} 회기가 남아있습니다.", 
+            log.warn("⚠️ 내담자에게 {} 개의 활성 매칭에서 총 {} 회기가 남아있습니다.", 
                     mappingsWithRemainingSessions.size(), totalRemainingSessions);
             
             throw new RuntimeException(String.format(
-                "내담자에게 %d 개의 활성 매핑에서 총 %d 회기가 남아있습니다. 회기 소진 또는 환불 처리 후 삭제해주세요.", 
+                "내담자에게 %d 개의 활성 매칭에서 총 %d 회기가 남아있습니다. 회기 소진 또는 환불 처리 후 삭제해주세요.", 
                 mappingsWithRemainingSessions.size(), totalRemainingSessions));
         }
         
-        // 3. 결제 대기 중인 매핑 확인
+        // 3. 결제 대기 중인 매칭 확인
         String pendingPaymentStatus = getPaymentStatusCode("PENDING");
         List<ConsultantClientMapping> pendingPaymentMappings = activeMappings.stream()
                 .filter(mapping -> mapping.getPaymentStatus().name().equals(pendingPaymentStatus))
                 .collect(Collectors.toList());
         
         if (!pendingPaymentMappings.isEmpty()) {
-            log.warn("⚠️ 내담자에게 {} 개의 결제 대기 중인 매핑이 있습니다.", pendingPaymentMappings.size());
+            log.warn("⚠️ 내담자에게 {} 개의 결제 대기 중인 매칭이 있습니다.", pendingPaymentMappings.size());
             throw new RuntimeException(String.format(
-                "내담자에게 %d 개의 결제 대기 중인 매핑이 있습니다. 결제 처리 완료 후 삭제해주세요.", 
+                "내담자에게 %d 개의 결제 대기 중인 매칭이 있습니다. 결제 처리 완료 후 삭제해주세요.", 
                 pendingPaymentMappings.size()));
         }
         
@@ -1888,19 +1888,19 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("내담자가 아닌 사용자입니다.");
         }
         
-        // 1. 활성 매핑 조회
+        // 1. 활성 매칭 조회
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> activeMappings = mappingRepository.findAll().stream()
                 .filter(mapping -> mapping.getClient().getId().equals(clientId))
                 .filter(mapping -> !mapping.getStatus().name().equals(terminatedStatus))
                 .collect(Collectors.toList());
         
-        // 2. 남은 회기가 있는 매핑 확인
+        // 2. 남은 회기가 있는 매칭 확인
         List<ConsultantClientMapping> mappingsWithRemainingSessions = activeMappings.stream()
                 .filter(mapping -> mapping.getRemainingSessions() > 0)
                 .collect(Collectors.toList());
         
-        // 3. 결제 대기 중인 매핑 확인
+        // 3. 결제 대기 중인 매칭 확인
         String pendingPaymentStatus = getPaymentStatusCode("PENDING");
         List<ConsultantClientMapping> pendingPaymentMappings = activeMappings.stream()
                 .filter(mapping -> mapping.getPaymentStatus().name().equals(pendingPaymentStatus))
@@ -1934,7 +1934,7 @@ public class AdminServiceImpl implements AdminService {
         details.put("pendingPaymentCount", pendingPaymentMappings.size());
         details.put("futureScheduleCount", futureSchedules.size());
         
-        // 남은 회기가 있는 매핑 정보
+        // 남은 회기가 있는 매칭 정보
         List<Map<String, Object>> sessionMappings = mappingsWithRemainingSessions.stream()
                 .map(mapping -> {
                     Map<String, Object> mappingInfo = new HashMap<>();
@@ -1948,7 +1948,7 @@ public class AdminServiceImpl implements AdminService {
                 .collect(Collectors.toList());
         details.put("sessionMappings", sessionMappings);
         
-        // 결제 대기 매핑 정보
+        // 결제 대기 매칭 정보
         List<Map<String, Object>> paymentMappings = pendingPaymentMappings.stream()
                 .map(mapping -> {
                     Map<String, Object> mappingInfo = new HashMap<>();
@@ -2002,14 +2002,14 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void terminateMapping(Long id, String reason) {
-        log.info("🔧 매핑 강제 종료 처리 시작: ID={}, 사유={}", id, reason);
+        log.info("🔧 매칭 강제 종료 처리 시작: ID={}, 사유={}", id, reason);
         
         ConsultantClientMapping mapping = mappingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다."));
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         if (mapping.getStatus().name().equals(terminatedStatus)) {
-            throw new RuntimeException("이미 종료된 매핑입니다.");
+            throw new RuntimeException("이미 종료된 매칭입니다.");
         }
         
         // 환불 금액 계산
@@ -2027,7 +2027,7 @@ public class AdminServiceImpl implements AdminService {
             // ERP 전송 실패해도 내부 처리는 계속 진행 (나중에 재시도 가능)
         }
         
-        // 매핑 종료 처리
+        // 매칭 종료 처리
         mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
         mapping.setTerminatedAt(LocalDateTime.now());
         
@@ -2091,7 +2091,7 @@ public class AdminServiceImpl implements AdminService {
             
         } catch (Exception e) {
             log.error("❌ 관련 스케줄 취소 처리 실패: MappingID={}", id, e);
-            // 스케줄 취소 실패해도 매핑 종료는 완료된 상태로 유지
+            // 스케줄 취소 실패해도 매칭 종료는 완료된 상태로 유지
         }
         
         // 내담자에게 환불 완료 알림 발송
@@ -2113,7 +2113,7 @@ public class AdminServiceImpl implements AdminService {
             // 알림 발송 실패해도 환불 처리는 완료된 상태로 유지
         }
         
-        log.info("✅ 매핑 강제 종료 완료: ID={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
+        log.info("✅ 매칭 강제 종료 완료: ID={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
                 id, refundedSessions, refundAmount, mapping.getConsultant().getName(), mapping.getClient().getName());
     }
 
@@ -2123,11 +2123,11 @@ public class AdminServiceImpl implements AdminService {
         log.info("🔧 부분 환불 처리 시작: ID={}, 환불회기={}, 사유={}", id, refundSessions, reason);
         
         ConsultantClientMapping mapping = mappingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("매칭을 찾을 수 없습니다."));
         
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         if (mapping.getStatus().name().equals(terminatedStatus)) {
-            throw new RuntimeException("이미 종료된 매핑입니다.");
+            throw new RuntimeException("이미 종료된 매칭입니다.");
         }
         
         // 가장 최근 추가된 패키지 정보 추출
@@ -2220,7 +2220,7 @@ public class AdminServiceImpl implements AdminService {
             // 거래 생성 실패해도 부분 환불 처리는 완료
         }
         
-        // 회기수 조정 (부분 환불이므로 매핑은 유지)
+        // 회기수 조정 (부분 환불이므로 매칭은 유지)
         mapping.setRemainingSessions(mapping.getRemainingSessions() - refundSessions);
         mapping.setTotalSessions(mapping.getTotalSessions() - refundSessions);
         
@@ -2236,7 +2236,7 @@ public class AdminServiceImpl implements AdminService {
         String updatedNotes = currentNotes.isEmpty() ? refundNote : currentNotes + "\n" + refundNote;
         mapping.setNotes(updatedNotes);
         
-        // 매핑 상태는 유지 (전체 환불이 아니므로)
+        // 매칭 상태는 유지 (전체 환불이 아니므로)
         // 단, 남은 회기가 0이 되면 자동으로 회기 소진 처리
         if (mapping.getRemainingSessions() <= 0) {
             String sessionsExhaustedStatus = getMappingStatusCode("SESSIONS_EXHAUSTED");
@@ -2290,7 +2290,7 @@ public class AdminServiceImpl implements AdminService {
         // 공통 코드에서 기간 설정 정보 조회
         startDate = getRefundPeriodStartDate(period);
         
-        // 1. 전체 환불된 매핑 조회 (강제 종료된 매핑)
+        // 1. 전체 환불된 매칭 조회 (강제 종료된 매칭)
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findAll().stream()
                 .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
@@ -2303,7 +2303,7 @@ public class AdminServiceImpl implements AdminService {
         List<ConsultantClientMapping> terminatedMappings = allTerminatedMappings.stream()
                 .filter(mapping -> {
                     if (branchCode == null || branchCode.trim().isEmpty()) {
-                        return true; // 지점코드가 없으면 모든 매핑 조회
+                        return true; // 지점코드가 없으면 모든 매칭 조회
                     }
                     return branchCode.equals(mapping.getBranchCode());
                 })
@@ -2534,7 +2534,7 @@ public class AdminServiceImpl implements AdminService {
                 .map(transaction -> {
                     Map<String, Object> refund = new HashMap<>();
                     
-                    // 관련 매핑 정보 조회
+                    // 관련 매칭 정보 조회
                     ConsultantClientMapping mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
                     
                     if (mapping != null) {
@@ -2557,7 +2557,7 @@ public class AdminServiceImpl implements AdminService {
                         refund.put("refundedSessions", 0);
                         refund.put("refundAmount", transaction.getAmount().longValue());
                         refund.put("terminatedAt", transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-                        refund.put("reason", "매핑 정보 없음");
+                        refund.put("reason", "매칭 정보 없음");
                     }
                     
                     return refund;
@@ -2608,7 +2608,7 @@ public class AdminServiceImpl implements AdminService {
         LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
         LocalDateTime endDate = LocalDateTime.now();
         
-        // 1. 전체 환불된 매핑 조회 (강제 종료된 매핑)
+        // 1. 전체 환불된 매칭 조회 (강제 종료된 매칭)
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> terminatedMappings = mappingRepository.findAll().stream()
                 .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
@@ -2627,7 +2627,7 @@ public class AdminServiceImpl implements AdminService {
                 .map(transaction -> {
                     Map<String, Object> refund = new HashMap<>();
                     
-                    // 관련 매핑 정보 조회
+                    // 관련 매칭 정보 조회
                     ConsultantClientMapping mapping = null;
                     if (transaction.getRelatedEntityId() != null) {
                         mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
@@ -2655,7 +2655,7 @@ public class AdminServiceImpl implements AdminService {
                         refund.put("refundReason", reason);
                         refund.put("standardizedReason", standardizeRefundReason(reason));
                     } else {
-                        // 매핑 정보를 찾을 수 없는 경우
+                        // 매칭 정보를 찾을 수 없는 경우
                         refund.put("mappingId", transaction.getRelatedEntityId());
                         refund.put("clientName", "알 수 없음");
                         refund.put("consultantName", "알 수 없음");
@@ -2669,7 +2669,7 @@ public class AdminServiceImpl implements AdminService {
                         refund.put("branchCode", transaction.getBranchCode());
                         refund.put("erpStatus", "SENT");
                         refund.put("erpReference", "ERP_UNKNOWN_" + transaction.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyyMMdd")));
-                        refund.put("refundReason", "매핑 정보 없음");
+                        refund.put("refundReason", "매칭 정보 없음");
                         refund.put("standardizedReason", "기타");
                     }
                     
@@ -2677,7 +2677,7 @@ public class AdminServiceImpl implements AdminService {
                 })
                 .collect(Collectors.toList());
         
-        // 4. 전체 환불된 매핑 데이터 구성
+        // 4. 전체 환불된 매칭 데이터 구성
         List<Map<String, Object>> terminatedRefundHistory = terminatedMappings.stream()
                 .map(mapping -> {
                     Map<String, Object> refund = new HashMap<>();
@@ -2773,7 +2773,7 @@ public class AdminServiceImpl implements AdminService {
         LocalDateTime startDate = getRefundPeriodStartDate(period != null ? period : "month");
         LocalDateTime endDate = LocalDateTime.now();
         
-        // 1. 전체 환불된 매핑 조회 (강제 종료된 매핑)
+        // 1. 전체 환불된 매칭 조회 (강제 종료된 매칭)
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         List<ConsultantClientMapping> allTerminatedMappings = mappingRepository.findAll().stream()
                 .filter(mapping -> mapping.getStatus().name().equals(terminatedStatus))
@@ -2786,7 +2786,7 @@ public class AdminServiceImpl implements AdminService {
         List<ConsultantClientMapping> terminatedMappings = allTerminatedMappings.stream()
                 .filter(mapping -> {
                     if (branchCode == null || branchCode.trim().isEmpty()) {
-                        return true; // 지점코드가 없으면 모든 매핑 조회
+                        return true; // 지점코드가 없으면 모든 매칭 조회
                     }
                     return branchCode.equals(mapping.getBranchCode());
                 })
@@ -2812,7 +2812,7 @@ public class AdminServiceImpl implements AdminService {
                 .map(transaction -> {
                     Map<String, Object> refund = new HashMap<>();
                     
-                    // 관련 매핑 정보 조회
+                    // 관련 매칭 정보 조회
                     ConsultantClientMapping mapping = null;
                     if (transaction.getRelatedEntityId() != null) {
                         mapping = mappingRepository.findById(transaction.getRelatedEntityId()).orElse(null);
@@ -3248,7 +3248,7 @@ public class AdminServiceImpl implements AdminService {
      * 환불 관련 공통 코드 초기화 (없으면 자동 생성)
      */
     /**
-     * 공통코드에서 매핑 상태 조회
+     * 공통코드에서 매칭 상태 조회
      */
     private String getMappingStatusCode(String statusName) {
         try {
@@ -3259,7 +3259,7 @@ public class AdminServiceImpl implements AdminService {
                 }
             }
         } catch (Exception e) {
-            log.error("매핑 상태 코드 조회 실패: {}", statusName, e);
+            log.error("매칭 상태 코드 조회 실패: {}", statusName, e);
         }
         return statusName; // 기본값으로 원본 반환
     }
@@ -3381,7 +3381,7 @@ public class AdminServiceImpl implements AdminService {
     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId) {
         List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndStatusNot(consultantId, ConsultantClientMapping.MappingStatus.TERMINATED);
         
-        // 매핑된 사용자 정보 복호화
+        // 매칭된 사용자 정보 복호화
         for (ConsultantClientMapping mapping : mappings) {
             if (mapping.getConsultant() != null) {
                 decryptUserPersonalData(mapping.getConsultant());
@@ -3396,15 +3396,15 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId, String branchCode) {
-        log.info("🔍 상담사별 매핑 조회 - 상담사 ID: {}, 브랜치 코드: {}", consultantId, branchCode);
+        log.info("🔍 상담사별 매칭 조회 - 상담사 ID: {}, 브랜치 코드: {}", consultantId, branchCode);
         
-        // 브랜치 코드로 필터링된 매핑 조회
+        // 브랜치 코드로 필터링된 매칭 조회
         List<ConsultantClientMapping> mappings = mappingRepository.findByConsultantIdAndBranchCodeAndStatusNot(
             consultantId, branchCode, ConsultantClientMapping.MappingStatus.TERMINATED);
         
-        log.info("🔍 브랜치 코드 필터링된 매핑 수: {}", mappings.size());
+        log.info("🔍 브랜치 코드 필터링된 매칭 수: {}", mappings.size());
         
-        // 매핑된 사용자 정보 복호화
+        // 매칭된 사용자 정보 복호화
         for (ConsultantClientMapping mapping : mappings) {
             if (mapping.getConsultant() != null) {
                 decryptUserPersonalData(mapping.getConsultant());
@@ -3420,15 +3420,15 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public List<ConsultantClientMapping> getMappingsByClient(Long clientId) {
         try {
-            log.info("🔍 내담자별 매핑 조회 시작: clientId={}", clientId);
+            log.info("🔍 내담자별 매칭 조회 시작: clientId={}", clientId);
             
-            // 안전한 매핑 조회
+            // 안전한 매칭 조회
             List<ConsultantClientMapping> mappings = new ArrayList<>();
             try {
                 mappings = mappingRepository.findByClientIdAndStatusNot(clientId, ConsultantClientMapping.MappingStatus.TERMINATED);
-                log.info("🔍 내담자별 매핑 조회 완료: clientId={}, 매핑 수={}", clientId, mappings.size());
+                log.info("🔍 내담자별 매칭 조회 완료: clientId={}, 매칭 수={}", clientId, mappings.size());
                 
-                // 매핑된 사용자 정보 복호화
+                // 매칭된 사용자 정보 복호화
                 for (ConsultantClientMapping mapping : mappings) {
                     if (mapping.getConsultant() != null) {
                         decryptUserPersonalData(mapping.getConsultant());
@@ -3443,14 +3443,14 @@ public class AdminServiceImpl implements AdminService {
                 }
                 
             } catch (Exception e) {
-                log.error("❌ 매핑 조회 중 오류: clientId={}, error={}", clientId, e.getMessage(), e);
+                log.error("❌ 매칭 조회 중 오류: clientId={}, error={}", clientId, e.getMessage(), e);
                 // 오류 시 빈 목록 반환
                 mappings = new ArrayList<>();
             }
             
             return mappings;
         } catch (Exception e) {
-            log.error("❌ 내담자별 매핑 조회 실패: clientId={}, error={}", clientId, e.getMessage(), e);
+            log.error("❌ 내담자별 매칭 조회 실패: clientId={}, error={}", clientId, e.getMessage(), e);
             // 오류 시 빈 목록 반환
             return new ArrayList<>();
         }
@@ -3466,15 +3466,15 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ConsultantClientMapping transferConsultant(ConsultantTransferRequest request) {
-        log.info("상담사 변경 처리 시작: 기존 매핑 ID={}, 새 상담사 ID={}", 
+        log.info("상담사 변경 처리 시작: 기존 매칭 ID={}, 새 상담사 ID={}", 
                 request.getCurrentMappingId(), request.getNewConsultantId());
         
-        // 1. 기존 매핑 조회 및 검증
+        // 1. 기존 매칭 조회 및 검증
         ConsultantClientMapping currentMapping = mappingRepository.findById(request.getCurrentMappingId())
-                .orElseThrow(() -> new RuntimeException("기존 매핑을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("기존 매칭을 찾을 수 없습니다."));
         
         if (currentMapping.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
-            throw new RuntimeException("활성 상태의 매핑만 상담사를 변경할 수 있습니다.");
+            throw new RuntimeException("활성 상태의 매칭만 상담사를 변경할 수 있습니다.");
         }
         
         // 2. 새 상담사 조회 및 검증
@@ -3485,7 +3485,7 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("상담사가 아닌 사용자입니다.");
         }
         
-        // 3. 기존 매핑 종료 처리
+        // 3. 기존 매칭 종료 처리
         String transferReason = String.format("상담사 변경: %s -> %s. 사유: %s", 
                 currentMapping.getConsultant().getName(), 
                 newConsultant.getName(), 
@@ -3494,18 +3494,18 @@ public class AdminServiceImpl implements AdminService {
         currentMapping.transferToNewConsultant(transferReason, request.getTransferredBy());
         mappingRepository.save(currentMapping);
         
-        // 4. 새 매핑 생성
+        // 4. 새 매칭 생성
         ConsultantClientMapping newMapping = new ConsultantClientMapping();
         newMapping.setConsultant(newConsultant);
         newMapping.setClient(currentMapping.getClient());
         newMapping.setStartDate(LocalDateTime.now());
         newMapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
-        newMapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED); // 이전 매핑에서 승인된 상태 유지
+        newMapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED); // 이전 매칭에서 승인된 상태 유지
         newMapping.setTotalSessions(request.getTotalSessions() != null ? 
                 request.getTotalSessions() : currentMapping.getRemainingSessions());
         newMapping.setRemainingSessions(request.getRemainingSessions() != null ? 
                 request.getRemainingSessions() : currentMapping.getRemainingSessions());
-        newMapping.setUsedSessions(0); // 새 매핑이므로 사용된 회기수는 0
+        newMapping.setUsedSessions(0); // 새 매칭이므로 사용된 회기수는 0
         newMapping.setPackageName(request.getPackageName() != null ? 
                 request.getPackageName() : currentMapping.getPackageName());
         newMapping.setPackagePrice(request.getPackagePrice() != null ? 
@@ -3514,12 +3514,12 @@ public class AdminServiceImpl implements AdminService {
         newMapping.setPaymentMethod(currentMapping.getPaymentMethod());
         newMapping.setPaymentReference(currentMapping.getPaymentReference());
         newMapping.setAssignedAt(LocalDateTime.now());
-        newMapping.setNotes(String.format("상담사 변경으로 생성된 매핑. 기존 매핑 ID: %d", currentMapping.getId()));
+        newMapping.setNotes(String.format("상담사 변경으로 생성된 매칭. 기존 매칭 ID: %d", currentMapping.getId()));
         newMapping.setSpecialConsiderations(request.getSpecialConsiderations());
         
         ConsultantClientMapping savedMapping = mappingRepository.save(newMapping);
         
-        log.info("상담사 변경 완료: 새 매핑 ID={}, 내담자={}, 새 상담사={}", 
+        log.info("상담사 변경 완료: 새 매칭 ID={}, 내담자={}, 새 상담사={}", 
                 savedMapping.getId(), 
                 currentMapping.getClient().getName(), 
                 newConsultant.getName());
@@ -3630,7 +3630,7 @@ public class AdminServiceImpl implements AdminService {
                     // 총 상담 건수 조회 (스케줄 기준)
                     long totalCount = getTotalScheduleCount(consultant.getId());
                     
-                    // 상담사 정보와 통계 데이터 매핑
+                    // 상담사 정보와 통계 데이터 매칭
                     Map<String, Object> consultantStats = new HashMap<>();
                     consultantStats.put("consultantId", consultant.getId());
                     consultantStats.put("consultantName", consultant.getName());
@@ -3703,7 +3703,7 @@ public class AdminServiceImpl implements AdminService {
                     // 총 상담 건수 조회 (스케줄 기준)
                     long totalCount = getTotalScheduleCount(consultant.getId());
                     
-                    // 상담사 정보와 통계 데이터 매핑
+                    // 상담사 정보와 통계 데이터 매칭
                     Map<String, Object> consultantStats = new HashMap<>();
                     consultantStats.put("consultantId", consultant.getId());
                     consultantStats.put("consultantName", consultant.getName());
@@ -4202,9 +4202,9 @@ public class AdminServiceImpl implements AdminService {
         int deletedCount = 0;
         
         try {
-            log.info("🔄 중복 매핑 통합 시작");
+            log.info("🔄 중복 매칭 통합 시작");
             
-            // 모든 활성 매핑 조회
+            // 모든 활성 매칭 조회
             List<ConsultantClientMapping> allMappings = mappingRepository
                 .findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
             
@@ -4217,17 +4217,17 @@ public class AdminServiceImpl implements AdminService {
                 List<ConsultantClientMapping> mappings = entry.getValue();
                 
                 if (mappings.size() > 1) {
-                    log.info("🔍 중복 매핑 발견: 상담사={}, 내담자={}, 개수={}", 
+                    log.info("🔍 중복 매칭 발견: 상담사={}, 내담자={}, 개수={}", 
                         mappings.get(0).getConsultant().getName(),
                         mappings.get(0).getClient().getName(),
                         mappings.size());
                     
-                    // 가장 최근 매핑을 기준으로 통합
+                    // 가장 최근 매칭을 기준으로 통합
                     ConsultantClientMapping primaryMapping = mappings.stream()
                         .max(Comparator.comparing(ConsultantClientMapping::getCreatedAt))
                         .orElse(mappings.get(0));
                     
-                    // 나머지 매핑들의 정보를 통합
+                    // 나머지 매칭들의 정보를 통합
                     int totalSessions = mappings.stream()
                         .mapToInt(ConsultantClientMapping::getTotalSessions)
                         .sum();
@@ -4240,24 +4240,24 @@ public class AdminServiceImpl implements AdminService {
                     primaryMapping.setTotalSessions(totalSessions);
                     primaryMapping.setUsedSessions(usedSessions);
                     primaryMapping.setRemainingSessions(remainingSessions);
-                    primaryMapping.setNotes("중복 매핑 통합으로 생성됨");
+                    primaryMapping.setNotes("중복 매칭 통합으로 생성됨");
                     
                     mappingRepository.save(primaryMapping);
                     mergedCount++;
                     
-                    // 나머지 매핑들 삭제
+                    // 나머지 매칭들 삭제
                     List<ConsultantClientMapping> toDelete = mappings.stream()
                         .filter(m -> !m.getId().equals(primaryMapping.getId()))
                         .collect(Collectors.toList());
                     
                     for (ConsultantClientMapping mapping : toDelete) {
                         mapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
-                        mapping.setNotes("중복 매핑 통합으로 종료됨");
+                        mapping.setNotes("중복 매칭 통합으로 종료됨");
                         mappingRepository.save(mapping);
                         deletedCount++;
                     }
                     
-                    log.info("✅ 중복 매핑 통합 완료: 상담사={}, 내담자={}, 통합된 회기수={}", 
+                    log.info("✅ 중복 매칭 통합 완료: 상담사={}, 내담자={}, 통합된 회기수={}", 
                         primaryMapping.getConsultant().getName(),
                         primaryMapping.getClient().getName(),
                         totalSessions);
@@ -4267,13 +4267,13 @@ public class AdminServiceImpl implements AdminService {
             result.put("success", true);
             result.put("mergedCount", mergedCount);
             result.put("deletedCount", deletedCount);
-            result.put("message", String.format("중복 매핑 통합 완료: %d개 그룹 통합, %d개 매핑 종료", 
+            result.put("message", String.format("중복 매칭 통합 완료: %d개 그룹 통합, %d개 매칭 종료", 
                 mergedCount, deletedCount));
             
-            log.info("✅ 중복 매핑 통합 완료: {}개 그룹 통합, {}개 매핑 종료", mergedCount, deletedCount);
+            log.info("✅ 중복 매칭 통합 완료: {}개 그룹 통합, {}개 매칭 종료", mergedCount, deletedCount);
             
         } catch (Exception e) {
-            log.error("❌ 중복 매핑 통합 실패", e);
+            log.error("❌ 중복 매칭 통합 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -4286,9 +4286,9 @@ public class AdminServiceImpl implements AdminService {
         List<Map<String, Object>> duplicates = new ArrayList<>();
         
         try {
-            log.info("🔍 중복 매핑 조회 시작");
+            log.info("🔍 중복 매칭 조회 시작");
             
-            // 모든 활성 매핑 조회
+            // 모든 활성 매칭 조회
             List<ConsultantClientMapping> allMappings = mappingRepository
                 .findByStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
             
@@ -4322,10 +4322,10 @@ public class AdminServiceImpl implements AdminService {
                 }
             }
             
-            log.info("🔍 중복 매핑 조회 완료: {}개 그룹", duplicates.size());
+            log.info("🔍 중복 매칭 조회 완료: {}개 그룹", duplicates.size());
             
         } catch (Exception e) {
-            log.error("❌ 중복 매핑 조회 실패", e);
+            log.error("❌ 중복 매칭 조회 실패", e);
         }
         
         return duplicates;
@@ -4722,7 +4722,7 @@ public class AdminServiceImpl implements AdminService {
     }
     
     /**
-     * 휴가 유형을 카테고리로 매핑 (한글명도 처리)
+     * 휴가 유형을 카테고리로 매칭 (한글명도 처리)
      */
     private String mapVacationTypeToCategory(String vacationType) {
         if (vacationType == null) {
@@ -4731,7 +4731,7 @@ public class AdminServiceImpl implements AdminService {
         
         String type = vacationType.toUpperCase();
         
-        // 영문 코드 매핑
+        // 영문 코드 매칭
         switch (type) {
             // 반반차
             case "MORNING_HALF_1":
@@ -4757,7 +4757,7 @@ public class AdminServiceImpl implements AdminService {
                 return "연차";
         }
         
-        // 한글명 매핑 (ConsultantAvailabilityServiceImpl에서 반환하는 한글명 처리)
+        // 한글명 매칭 (ConsultantAvailabilityServiceImpl에서 반환하는 한글명 처리)
         if (vacationType.contains("반반차") || vacationType.contains("HALF_1") || vacationType.contains("HALF_2")) {
             return "반반차";
         } else if (vacationType.contains("반차") || vacationType.contains("오전") || vacationType.contains("오후")) {
@@ -4773,7 +4773,7 @@ public class AdminServiceImpl implements AdminService {
     }
     
     /**
-     * 매핑의 notes에서 가장 최근 추가된 패키지 정보 추출
+     * 매칭의 notes에서 가장 최근 추가된 패키지 정보 추출
      */
     private Map<String, Object> getLastAddedPackageInfo(ConsultantClientMapping mapping) {
         Map<String, Object> result = new HashMap<>();
@@ -4783,25 +4783,25 @@ public class AdminServiceImpl implements AdminService {
         
         String notes = mapping.getNotes();
         if (notes == null || notes.trim().isEmpty()) {
-            log.info("📋 매핑 notes가 없어서 최근 추가 패키지 정보를 찾을 수 없습니다.");
+            log.info("📋 매칭 notes가 없어서 최근 추가 패키지 정보를 찾을 수 없습니다.");
             return result;
         }
         
         try {
-            // notes에서 추가 매핑이나 회기 추가 관련 정보 추출
+            // notes에서 추가 매칭이나 회기 추가 관련 정보 추출
             String[] noteLines = notes.split("\n");
             
             // 가장 최근 추가 정보를 찾기 위해 역순으로 검색
             for (int i = noteLines.length - 1; i >= 0; i--) {
                 String line = noteLines[i].trim();
                 
-                // "[추가 매핑]" 패턴 검색
-                if (line.contains("[추가 매핑]")) {
-                    // 추가 매핑 시 기본 패키지 정보 사용
+                // "[추가 매칭]" 패턴 검색
+                if (line.contains("[추가 매칭]")) {
+                    // 추가 매칭 시 기본 패키지 정보 사용
                     result.put("sessions", 10); // 기본 패키지 회기수
                     result.put("price", mapping.getPackagePrice() != null ? mapping.getPackagePrice() : 0L);
                     result.put("packageName", mapping.getPackageName() != null ? mapping.getPackageName() : "추가 패키지");
-                    log.info("📦 추가 매핑 정보 발견: {}", line);
+                    log.info("📦 추가 매칭 정보 발견: {}", line);
                     break;
                 }
                 
@@ -4863,7 +4863,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<ConsultantClientMapping> getMappingsByConsultantEmail(String consultantEmail) {
-        log.info("🔍 상담사 이메일로 매핑 조회 - 이메일: {}", consultantEmail);
+        log.info("🔍 상담사 이메일로 매칭 조회 - 이메일: {}", consultantEmail);
         
         // 이메일로 상담사 찾기
         Optional<User> consultantOpt = userRepository.findByEmail(consultantEmail);
@@ -4876,24 +4876,24 @@ public class AdminServiceImpl implements AdminService {
         log.info("🔍 찾은 상담사 정보 - ID: {}, 이름: {}, 역할: {}, 브랜치코드: {}", 
                 consultant.getId(), consultant.getName(), consultant.getRole(), consultant.getBranchCode());
         
-        // TERMINATED가 아닌 모든 매핑 조회 (ACTIVE, PAYMENT_CONFIRMED 등)
+        // TERMINATED가 아닌 모든 매칭 조회 (ACTIVE, PAYMENT_CONFIRMED 등)
         List<ConsultantClientMapping> allMappings = mappingRepository.findByConsultantId(consultant.getId());
         List<ConsultantClientMapping> mappings = allMappings.stream()
             .filter(mapping -> mapping.getStatus() != ConsultantClientMapping.MappingStatus.TERMINATED)
             .collect(java.util.stream.Collectors.toList());
         
-        log.info("🔍 상담사별 매핑 수: {}", mappings.size());
+        log.info("🔍 상담사별 매칭 수: {}", mappings.size());
         
-        // 각 매핑의 상세 정보 로깅
+        // 각 매칭의 상세 정보 로깅
         for (ConsultantClientMapping mapping : mappings) {
-            log.info("🔍 매핑 정보 - ID: {}, 상담사ID: {}, 내담자ID: {}, 결제상태: {}, 상태: {}", 
+            log.info("🔍 매칭 정보 - ID: {}, 상담사ID: {}, 내담자ID: {}, 결제상태: {}, 상태: {}", 
                     mapping.getId(), 
                     mapping.getConsultant() != null ? mapping.getConsultant().getId() : "null",
                     mapping.getClient() != null ? mapping.getClient().getId() : "null",
                     mapping.getPaymentStatus(), mapping.getStatus());
         }
         
-        // 매핑된 사용자 정보 복호화
+        // 매칭된 사용자 정보 복호화
         for (ConsultantClientMapping mapping : mappings) {
             if (mapping.getConsultant() != null) {
                 decryptUserPersonalData(mapping.getConsultant());

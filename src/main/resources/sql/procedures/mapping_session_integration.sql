@@ -1,5 +1,5 @@
 -- =====================================================
--- 매핑-회기 통합 관리 PL/SQL 프로시저
+-- 매칭-회기 통합 관리 PL/SQL 프로시저
 -- =====================================================
 
 DELIMITER //
@@ -37,7 +37,7 @@ BEGIN
     
     START TRANSACTION;
     
-    -- 1. 활성 매핑 조회
+    -- 1. 활성 매칭 조회
     SELECT 
         id, 
         remaining_sessions, 
@@ -58,18 +58,18 @@ BEGIN
       AND status = 'ACTIVE'
     LIMIT 1;
     
-    -- 2. 매핑 존재 및 상태 검증
+    -- 2. 매칭 존재 및 상태 검증
     IF v_mapping_id IS NULL THEN
         SET p_result_code = 1;
-        SET p_result_message = '활성 매핑을 찾을 수 없습니다';
+        SET p_result_message = '활성 매칭을 찾을 수 없습니다';
         ROLLBACK;
     ELSEIF v_mapping_status != 'ACTIVE' THEN
         SET p_result_code = 2;
-        SET p_result_message = '매핑이 활성 상태가 아닙니다';
+        SET p_result_message = '매칭이 활성 상태가 아닙니다';
         ROLLBACK;
     ELSEIF v_payment_status != 'CONFIRMED' THEN
         SET p_result_code = 3;
-        SET p_result_message = '결제가 확인되지 않은 매핑입니다';
+        SET p_result_message = '결제가 확인되지 않은 매칭입니다';
         ROLLBACK;
     ELSEIF v_remaining_sessions <= 0 THEN
         SET p_result_code = 4;
@@ -103,7 +103,7 @@ BEGIN
             NOW()
         );
         
-        -- 5. 매핑 상태 업데이트 (회기 소진 시)
+        -- 5. 매칭 상태 업데이트 (회기 소진 시)
         IF (v_remaining_sessions - 1) = 0 THEN
             UPDATE consultant_client_mappings 
             SET 
@@ -150,7 +150,7 @@ BEGIN
     
     START TRANSACTION;
     
-    -- 1. 현재 매핑 정보 조회
+    -- 1. 현재 매칭 정보 조회
     SELECT 
         total_sessions, 
         remaining_sessions, 
@@ -164,10 +164,10 @@ BEGIN
     FROM consultant_client_mappings 
     WHERE id = p_mapping_id;
     
-    -- 2. 매핑 존재 및 상태 검증
+    -- 2. 매칭 존재 및 상태 검증
     IF v_current_total IS NULL THEN
         SET p_result_code = 1;
-        SET p_result_message = '매핑을 찾을 수 없습니다';
+        SET p_result_message = '매칭을 찾을 수 없습니다';
         ROLLBACK;
     ELSEIF v_mapping_status NOT IN ('ACTIVE', 'COMPLETED') THEN
         SET p_result_code = 2;
@@ -217,7 +217,7 @@ BEGIN
 END //
 
 -- =====================================================
--- 3. 매핑 데이터 무결성 검증
+-- 3. 매칭 데이터 무결성 검증
 -- =====================================================
 CREATE PROCEDURE ValidateMappingIntegrity(
     IN p_mapping_id BIGINT,
@@ -242,17 +242,17 @@ BEGIN
         SET p_validation_results = JSON_OBJECT('error', @text);
     END;
     
-    -- 1. 매핑 존재 여부 확인
+    -- 1. 매칭 존재 여부 확인
     SELECT COUNT(*) > 0 INTO v_mapping_exists
     FROM consultant_client_mappings 
     WHERE id = p_mapping_id;
     
     IF NOT v_mapping_exists THEN
         SET p_result_code = 1;
-        SET p_result_message = '매핑을 찾을 수 없습니다';
+        SET p_result_message = '매칭을 찾을 수 없습니다';
         SET p_validation_results = JSON_OBJECT('exists', FALSE);
     ELSE
-        -- 2. 매핑 정보 조회
+        -- 2. 매칭 정보 조회
         SELECT 
             total_sessions, 
             used_sessions, 
@@ -285,17 +285,17 @@ BEGIN
         
         IF v_used_sessions = v_schedule_count AND v_total_sessions = v_used_sessions + v_remaining_sessions THEN
             SET p_result_code = 0;
-            SET p_result_message = '매핑 데이터 무결성이 유지되고 있습니다';
+            SET p_result_message = '매칭 데이터 무결성이 유지되고 있습니다';
         ELSE
             SET p_result_code = 2;
-            SET p_result_message = '매핑 데이터에 불일치가 발견되었습니다';
+            SET p_result_message = '매칭 데이터에 불일치가 발견되었습니다';
         END IF;
     END IF;
     
 END //
 
 -- =====================================================
--- 4. 전체 시스템 매핑 동기화
+-- 4. 전체 시스템 매칭 동기화
 -- =====================================================
 CREATE PROCEDURE SyncAllMappings(
     OUT p_result_code INT,
@@ -327,12 +327,12 @@ BEGIN
     
     START TRANSACTION;
     
-    -- 1. 전체 매핑 수 조회
+    -- 1. 전체 매칭 수 조회
     SELECT COUNT(*) INTO v_total_mappings
     FROM consultant_client_mappings 
     WHERE status IN ('ACTIVE', 'COMPLETED');
     
-    -- 2. 각 매핑별 무결성 검증 및 수정
+    -- 2. 각 매칭별 무결성 검증 및 수정
     OPEN mapping_cursor;
     
     read_loop: LOOP
@@ -379,7 +379,7 @@ BEGIN
     );
     
     SET p_result_code = 0;
-    SET p_result_message = CONCAT('전체 동기화 완료. 총 ', v_total_mappings, '개 매핑 중 ', v_valid_mappings, '개 유효, ', v_fixed_mappings, '개 수정');
+    SET p_result_message = CONCAT('전체 동기화 완료. 총 ', v_total_mappings, '개 매칭 중 ', v_valid_mappings, '개 유효, ', v_fixed_mappings, '개 수정');
     
     COMMIT;
     

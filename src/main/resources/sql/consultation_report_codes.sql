@@ -61,13 +61,13 @@ INSERT INTO common_codes (code_group, code_value, code_label, code_description, 
 ON DUPLICATE KEY UPDATE 
     updated_at = NOW();
 
--- 5. 매핑 상태 코드 그룹
+-- 5. 매칭 상태 코드 그룹
 INSERT INTO common_codes (code_group, code_value, code_label, code_description, sort_order, is_active, created_at, updated_at, is_deleted, version) VALUES
-('MAPPING_STATUS', 'HAS_MAPPING', '매핑 있음', '매핑이 존재하는 상태', 1, true, NOW(), NOW(), false, 0),
-('MAPPING_STATUS', 'ACTIVE_MAPPING', '활성 매핑', '활성화된 매핑 상태', 2, true, NOW(), NOW(), false, 0),
-('MAPPING_STATUS', 'NO_MAPPING', '매핑 없음', '매핑이 없는 상태', 3, true, NOW(), NOW(), false, 0),
-('MAPPING_STATUS', 'PENDING_MAPPING', '매핑 대기', '매핑 대기 중인 상태', 4, true, NOW(), NOW(), false, 0),
-('MAPPING_STATUS', 'INACTIVE_MAPPING', '비활성 매핑', '비활성화된 매핑 상태', 5, true, NOW(), NOW(), false, 0)
+('MAPPING_STATUS', 'HAS_MAPPING', '매칭 있음', '매칭이 존재하는 상태', 1, true, NOW(), NOW(), false, 0),
+('MAPPING_STATUS', 'ACTIVE_MAPPING', '활성 매칭', '활성화된 매칭 상태', 2, true, NOW(), NOW(), false, 0),
+('MAPPING_STATUS', 'NO_MAPPING', '매칭 없음', '매칭이 없는 상태', 3, true, NOW(), NOW(), false, 0),
+('MAPPING_STATUS', 'PENDING_MAPPING', '매칭 대기', '매칭 대기 중인 상태', 4, true, NOW(), NOW(), false, 0),
+('MAPPING_STATUS', 'INACTIVE_MAPPING', '비활성 매칭', '비활성화된 매칭 상태', 5, true, NOW(), NOW(), false, 0)
 ON DUPLICATE KEY UPDATE 
     updated_at = NOW();
 

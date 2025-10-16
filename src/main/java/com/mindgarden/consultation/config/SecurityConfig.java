@@ -61,7 +61,7 @@ public class SecurityConfig {
                     .csrfTokenRepository(csrfTokenRepository())
                     .ignoringRequestMatchers(
                         "/api/auth/**",           // 인증 관련 API는 CSRF 제외
-                        "/api/admin/mappings/**"  // 매핑 관리 API는 CSRF 제외 (AJAX 요청)
+                        "/api/admin/mappings/**"  // 매칭 관리 API는 CSRF 제외 (AJAX 요청)
                     )
                 )
                 
@@ -91,7 +91,7 @@ public class SecurityConfig {
                 // CSRF 비활성화 (개발 편의성)
                 .csrf(csrf -> csrf.disable())
                 
-                // 세션 관리 활성화 (매핑 생성 등을 위해)
+                // 세션 관리 활성화 (매칭 생성 등을 위해)
                 .sessionManagement(session -> session
                     .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
                 )

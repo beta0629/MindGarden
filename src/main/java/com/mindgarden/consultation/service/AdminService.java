@@ -30,7 +30,7 @@ public interface AdminService {
     Client registerClient(ClientRegistrationDto request);
 
     /**
-     * 상담사-내담자 매핑 생성
+     * 상담사-내담자 매칭 생성
      */
     ConsultantClientMapping createMapping(ConsultantClientMappingDto request);
 
@@ -55,12 +55,12 @@ public interface AdminService {
     List<Client> getAllClients();
 
     /**
-     * 통합 내담자 데이터 조회 (매핑 정보, 결제 상태, 남은 세션 등 포함)
+     * 통합 내담자 데이터 조회 (매칭 정보, 결제 상태, 남은 세션 등 포함)
      */
     List<Map<String, Object>> getAllClientsWithMappingInfo();
 
     /**
-     * 모든 매핑 조회
+     * 모든 매칭 조회
      */
     List<ConsultantClientMapping> getAllMappings();
 
@@ -80,7 +80,7 @@ public interface AdminService {
     Client updateClient(Long id, ClientRegistrationDto request);
 
     /**
-     * 매핑 정보 수정
+     * 매칭 정보 수정
      */
     ConsultantClientMapping updateMapping(Long id, ConsultantClientMappingDto request);
 
@@ -110,12 +110,12 @@ public interface AdminService {
     Map<String, Object> checkClientDeletionStatus(Long clientId);
 
     /**
-     * 매핑 삭제
+     * 매칭 삭제
      */
     void deleteMapping(Long id);
     
     /**
-     * 매핑 강제 종료 (환불 처리)
+     * 매칭 강제 종료 (환불 처리)
      */
     void terminateMapping(Long id, String reason);
     
@@ -203,51 +203,51 @@ public interface AdminService {
      */
     ConsultantClientMapping extendSessions(Long mappingId, Integer additionalSessions, String packageName, Long packagePrice);
 
-    // ==================== 매핑 상태별 조회 ====================
+    // ==================== 매칭 상태별 조회 ====================
 
     /**
-     * 입금 대기 중인 매핑 목록 조회
+     * 입금 대기 중인 매칭 목록 조회
      */
     List<ConsultantClientMapping> getPendingPaymentMappings();
 
     /**
-     * 입금 확인된 매핑 목록 조회
+     * 입금 확인된 매칭 목록 조회
      */
     List<ConsultantClientMapping> getPaymentConfirmedMappings();
 
     /**
-     * 입금 확인 대기 중인 매핑 목록 조회 (결제 확인 완료, 입금 확인 대기)
+     * 입금 확인 대기 중인 매칭 목록 조회 (결제 확인 완료, 입금 확인 대기)
      */
     List<ConsultantClientMapping> getPendingDepositMappings();
 
     /**
-     * 활성 매핑 목록 조회 (승인 완료)
+     * 활성 매칭 목록 조회 (승인 완료)
      */
     List<ConsultantClientMapping> getActiveMappings();
 
     /**
-     * 회기 소진된 매핑 목록 조회
+     * 회기 소진된 매칭 목록 조회
      */
     List<ConsultantClientMapping> getSessionsExhaustedMappings();
 
     /**
-     * 상담사별 매핑 목록 조회
+     * 상담사별 매칭 목록 조회
      */
     List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId);
     List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId, String branchCode);
     
     /**
-     * 상담사 이메일로 매핑 목록 조회
+     * 상담사 이메일로 매칭 목록 조회
      */
     List<ConsultantClientMapping> getMappingsByConsultantEmail(String consultantEmail);
 
     /**
-     * 내담자별 매핑 목록 조회
+     * 내담자별 매칭 목록 조회
      */
     List<ConsultantClientMapping> getMappingsByClient(Long clientId);
 
     /**
-     * 개별 매핑 조회
+     * 개별 매칭 조회
      */
     ConsultantClientMapping getMappingById(Long mappingId);
 
@@ -309,12 +309,12 @@ public interface AdminService {
     User changeUserRole(Long userId, String newRole);
     
     /**
-     * 중복 매핑 통합
+     * 중복 매칭 통합
      */
     Map<String, Object> mergeDuplicateMappings();
     
     /**
-     * 중복 매핑 조회
+     * 중복 매칭 조회
      */
     List<Map<String, Object>> findDuplicateMappings();
 }

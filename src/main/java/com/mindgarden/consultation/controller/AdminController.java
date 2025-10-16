@@ -334,7 +334,7 @@ public class AdminController {
     }
 
     /**
-     * 통합 내담자 데이터 조회 (매핑 정보, 결제 상태, 남은 세션 등 포함)
+     * 통합 내담자 데이터 조회 (매칭 정보, 결제 상태, 남은 세션 등 포함)
      */
     @GetMapping("/clients/with-mapping-info")
     public ResponseEntity<?> getAllClientsWithMappingInfo(HttpSession session) {
@@ -376,7 +376,7 @@ public class AdminController {
     }
 
     /**
-     * 상담사별 매핑된 내담자 목록 조회 (스케줄 등록용)
+     * 상담사별 매칭된 내담자 목록 조회 (스케줄 등록용)
      */
     @GetMapping("/mappings/consultant/{consultantId}/clients")
     public ResponseEntity<?> getClientsByConsultantMapping(@PathVariable Long consultantId, HttpSession session) {
@@ -412,21 +412,21 @@ public class AdminController {
                 log.info("🔧 세션에 브랜치 코드가 없어 사용자 정보에서 가져옴: {}", currentBranchCode);
             }
             
-            // 상담사는 브랜치 코드가 없어도 자신의 매핑을 조회할 수 있음
+            // 상담사는 브랜치 코드가 없어도 자신의 매칭을 조회할 수 있음
             // 상담사 대시보드에서 호출되는 API이므로 브랜치 코드 체크 제거
             if (currentBranchCode == null) {
-                log.info("🔧 브랜치 코드가 없지만 상담사 매핑 조회는 계속 진행");
+                log.info("🔧 브랜치 코드가 없지만 상담사 매칭 조회는 계속 진행");
             }
             
-            log.info("🔍 상담사별 매핑된 내담자 목록 조회 - 상담사 ID: {}", consultantId);
+            log.info("🔍 상담사별 매칭된 내담자 목록 조회 - 상담사 ID: {}", consultantId);
             
-            // URL의 consultantId로 상담사 정보를 찾아서 매핑 조회
+            // URL의 consultantId로 상담사 정보를 찾아서 매칭 조회
             User targetConsultant = userService.findById(consultantId)
                 .orElseThrow(() -> new RuntimeException("상담사를 찾을 수 없습니다: " + consultantId));
             
             List<ConsultantClientMapping> mappings = adminService.getMappingsByConsultantEmail(targetConsultant.getEmail());
             
-            // 결제 승인된 매핑만 필터링 (세션 소진 여부와 관계없이 모든 매핑 표시)
+            // 결제 승인된 매칭만 필터링 (세션 소진 여부와 관계없이 모든 매칭 표시)
             List<Map<String, Object>> activeMappings = mappings.stream()
                 .filter(mapping -> 
                     mapping.getPaymentStatus() != null && 
@@ -466,7 +466,7 @@ public class AdminController {
                         data.put("createdAt", mapping.getCreatedAt());
                         data.put("assignedAt", mapping.getAssignedAt());
                     } catch (Exception e) {
-                        log.warn("매핑 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());
+                        log.warn("매칭 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());
                     }
                     return data;
                 })
@@ -478,7 +478,7 @@ public class AdminController {
                 "count", activeMappings.size()
             ));
         } catch (Exception e) {
-            log.error("❌ 상담사별 매핑된 내담자 목록 조회 실패", e);
+            log.error("❌ 상담사별 매칭된 내담자 목록 조회 실패", e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
                 "message", "상담사별 내담자 목록 조회에 실패했습니다: " + e.getMessage()
@@ -487,23 +487,23 @@ public class AdminController {
     }
 
     /**
-     * 내담자별 매핑 조회
+     * 내담자별 매칭 조회
      */
     @GetMapping("/mappings/client")
     public ResponseEntity<?> getMappingsByClient(@RequestParam Long clientId) {
         try {
-            log.info("🔍 내담자별 매핑 조회: 내담자 ID={}", clientId);
+            log.info("🔍 내담자별 매칭 조회: 내담자 ID={}", clientId);
             List<ConsultantClientMapping> mappings = adminService.getMappingsByClient(clientId);
             
             if (mappings.isEmpty()) {
                 return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "message", "매핑 정보가 없습니다",
+                    "message", "매칭 정보가 없습니다",
                     "data", new ArrayList<>()
                 ));
             }
             
-            // 매핑 정보를 상세하게 변환
+            // 매칭 정보를 상세하게 변환
             List<Map<String, Object>> mappingData = mappings.stream()
                 .map(mapping -> {
                     Map<String, Object> mappingInfo = new HashMap<>();
@@ -538,25 +538,25 @@ public class AdminController {
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "내담자별 매핑 조회 성공",
+                "message", "내담자별 매칭 조회 성공",
                 "data", mappingData
             ));
         } catch (Exception e) {
-            log.error("❌ 내담자별 매핑 조회 실패", e);
+            log.error("❌ 내담자별 매칭 조회 실패", e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "message", "내담자별 매핑 조회에 실패했습니다: " + e.getMessage()
+                "message", "내담자별 매칭 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }
 
     /**
-     * 매핑 목록 조회 (중앙화 - 모든 매핑 조회)
+     * 매칭 목록 조회 (중앙화 - 모든 매칭 조회)
      */
     @GetMapping("/mappings")
     public ResponseEntity<?> getAllMappings(HttpSession session) {
         try {
-            log.info("🔍 매핑 목록 조회 (중앙화)");
+            log.info("🔍 매칭 목록 조회 (중앙화)");
             
             // 권한 체크 (운영 환경과 동일)
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_VIEW", dynamicPermissionService);
@@ -564,10 +564,10 @@ public class AdminController {
                 return permissionResponse;
             }
             
-            // 모든 매핑 조회 (지점 필터링 제거)
+            // 모든 매칭 조회 (지점 필터링 제거)
             List<ConsultantClientMapping> mappings = adminService.getAllMappings();
             
-            log.info("🔍 매핑 목록 조회 완료 - 총 {}개", mappings.size());
+            log.info("🔍 매칭 목록 조회 완료 - 총 {}개", mappings.size());
 
             // 직렬화 문제를 피하기 위해 필요한 정보만 추출 (안전한 방식)
             List<Map<String, Object>> mappingData = mappings.stream()
@@ -612,7 +612,7 @@ public class AdminController {
                         data.put("startDate", mapping.getStartDate());
                         data.put("endDate", mapping.getEndDate());
                     } catch (Exception e) {
-                        log.warn("매핑 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());
+                        log.warn("매칭 ID {} 정보 추출 실패: {}", mapping.getId(), e.getMessage());
                         data.put("id", mapping.getId());
                         data.put("consultantId", null);
                         data.put("consultantName", "오류");
@@ -633,18 +633,18 @@ public class AdminController {
                 "count", mappings.size()
             ));
         } catch (Exception e) {
-            log.error("❌ 매핑 목록 조회 실패", e);
+            log.error("❌ 매칭 목록 조회 실패", e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "매핑 목록 조회에 실패했습니다: " + e.getMessage()
+                "message", "매칭 목록 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }
 
-    // ==================== 매핑 수정 시스템 ====================
+    // ==================== 매칭 수정 시스템 ====================
     
     /**
-     * 매핑 정보 수정 (ERP 연동)
+     * 매칭 정보 수정 (ERP 연동)
      */
     @PostMapping("/mappings/{mappingId}/update")
     public ResponseEntity<?> updateMappingInfo(
@@ -652,7 +652,7 @@ public class AdminController {
             @RequestBody Map<String, Object> updateRequest,
             HttpSession session) {
         try {
-            log.info("🔄 매핑 정보 수정 요청: mappingId={}, request={}", mappingId, updateRequest);
+            log.info("🔄 매칭 정보 수정 요청: mappingId={}, request={}", mappingId, updateRequest);
             
             // 동적 권한 체크
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
@@ -685,19 +685,19 @@ public class AdminController {
             Double newPackagePrice = ((Number) updateRequest.get("packagePrice")).doubleValue();
             Integer newTotalSessions = ((Number) updateRequest.get("totalSessions")).intValue();
             
-            // 매핑 정보 수정 (PL/SQL 프로시저 호출)
+            // 매칭 정보 수정 (PL/SQL 프로시저 호출)
             Map<String, Object> updateResult = storedProcedureService.updateMappingInfo(
                 mappingId, newPackageName, newPackagePrice, newTotalSessions, currentUser.getName());
             
             if ((Boolean) updateResult.get("success")) {
-                log.info("✅ 매핑 정보 수정 완료: mappingId={}", mappingId);
+                log.info("✅ 매칭 정보 수정 완료: mappingId={}", mappingId);
                 return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", updateResult.get("message"),
                     "data", updateResult
                 ));
             } else {
-                log.error("❌ 매핑 정보 수정 실패: mappingId={}, message={}", 
+                log.error("❌ 매칭 정보 수정 실패: mappingId={}, message={}", 
                          mappingId, updateResult.get("message"));
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
@@ -706,10 +706,10 @@ public class AdminController {
             }
             
         } catch (Exception e) {
-            log.error("❌ 매핑 정보 수정 실패: mappingId={}", mappingId, e);
+            log.error("❌ 매칭 정보 수정 실패: mappingId={}", mappingId, e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "매핑 정보 수정에 실패했습니다: " + e.getMessage()
+                "message", "매칭 정보 수정에 실패했습니다: " + e.getMessage()
             ));
         }
     }
@@ -717,12 +717,12 @@ public class AdminController {
     // ==================== 입금 승인 시스템 ====================
 
     /**
-     * 입금 대기 중인 매핑 목록 조회
+     * 입금 대기 중인 매칭 목록 조회
      */
     @GetMapping("/mappings/pending-payment")
     public ResponseEntity<?> getPendingPaymentMappings() {
         try {
-            log.info("🔍 입금 대기 중인 매핑 목록 조회");
+            log.info("🔍 입금 대기 중인 매칭 목록 조회");
             List<ConsultantClientMapping> mappings = adminService.getPendingPaymentMappings();
             
             return ResponseEntity.ok(Map.of(
@@ -731,21 +731,21 @@ public class AdminController {
                 "count", mappings.size()
             ));
         } catch (Exception e) {
-            log.error("❌ 입금 대기 매핑 목록 조회 실패", e);
+            log.error("❌ 입금 대기 매칭 목록 조회 실패", e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "입금 대기 매핑 목록 조회에 실패했습니다: " + e.getMessage()
+                "message", "입금 대기 매칭 목록 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }
 
     /**
-     * 입금 확인된 매핑 목록 조회
+     * 입금 확인된 매칭 목록 조회
      */
     @GetMapping("/mappings/payment-confirmed")
     public ResponseEntity<?> getPaymentConfirmedMappings() {
         try {
-            log.info("🔍 입금 확인된 매핑 목록 조회");
+            log.info("🔍 입금 확인된 매칭 목록 조회");
             List<ConsultantClientMapping> mappings = adminService.getPaymentConfirmedMappings();
             
             return ResponseEntity.ok(Map.of(
@@ -754,20 +754,20 @@ public class AdminController {
                 "count", mappings.size()
             ));
         } catch (Exception e) {
-            log.error("❌ 입금 확인 매핑 목록 조회 실패", e);
+            log.error("❌ 입금 확인 매칭 목록 조회 실패", e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "입금 확인 매핑 목록 조회에 실패했습니다: " + e.getMessage()
+                "message", "입금 확인 매칭 목록 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }
 
     /**
-     * 입금 확인 대기 중인 매핑 목록 조회
+     * 입금 확인 대기 중인 매칭 목록 조회
      */
     @GetMapping("/mappings/pending-deposit")
     public ResponseEntity<?> getPendingDepositMappings(HttpSession session) {
-        log.info("🔔 입금 확인 대기 매핑 조회 요청");
+        log.info("🔔 입금 확인 대기 매칭 조회 요청");
         
         try {
             // 권한 확인
@@ -821,28 +821,28 @@ public class AdminController {
                 "success", true,
                 "data", responseData,
                 "count", responseData.size(),
-                "message", "입금 확인 대기 매핑 조회 완료"
+                "message", "입금 확인 대기 매칭 조회 완료"
             );
             
-            log.info("✅ 입금 확인 대기 매핑 조회 완료: {}개", responseData.size());
+            log.info("✅ 입금 확인 대기 매칭 조회 완료: {}개", responseData.size());
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("❌ 입금 확인 대기 매핑 조회 실패: {}", e.getMessage(), e);
+            log.error("❌ 입금 확인 대기 매칭 조회 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "success", false,
-                "message", "입금 확인 대기 매핑 조회에 실패했습니다: " + e.getMessage()
+                "message", "입금 확인 대기 매칭 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }
 
     /**
-     * 활성 매핑 목록 조회 (승인 완료)
+     * 활성 매칭 목록 조회 (승인 완료)
      */
     @GetMapping("/mappings/active")
     public ResponseEntity<?> getActiveMappings() {
         try {
-            log.info("🔍 활성 매핑 목록 조회");
+            log.info("🔍 활성 매칭 목록 조회");
             List<ConsultantClientMapping> mappings = adminService.getActiveMappings();
             
             // 직렬화 문제를 피하기 위해 필요한 정보만 추출 (안전한 방식)
@@ -907,7 +907,7 @@ public class AdminController {
                         
                         return data;
                     } catch (Exception e) {
-                        log.warn("매핑 데이터 추출 중 오류 (ID: {}): {}", mapping.getId(), e.getMessage());
+                        log.warn("매칭 데이터 추출 중 오류 (ID: {}): {}", mapping.getId(), e.getMessage());
                         Map<String, Object> errorData = new java.util.HashMap<>();
                         errorData.put("id", mapping.getId());
                         errorData.put("error", "데이터 추출 실패: " + e.getMessage());
@@ -922,21 +922,21 @@ public class AdminController {
                 "count", mappingData.size()
             ));
         } catch (Exception e) {
-            log.error("❌ 활성 매핑 목록 조회 실패", e);
+            log.error("❌ 활성 매칭 목록 조회 실패", e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "활성 매핑 목록 조회에 실패했습니다: " + e.getMessage()
+                "message", "활성 매칭 목록 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }
 
     /**
-     * 회기 소진된 매핑 목록 조회
+     * 회기 소진된 매칭 목록 조회
      */
     @GetMapping("/mappings/sessions-exhausted")
     public ResponseEntity<?> getSessionsExhaustedMappings() {
         try {
-            log.info("🔍 회기 소진된 매핑 목록 조회");
+            log.info("🔍 회기 소진된 매칭 목록 조회");
             List<ConsultantClientMapping> mappings = adminService.getSessionsExhaustedMappings();
             
             return ResponseEntity.ok(Map.of(
@@ -945,21 +945,21 @@ public class AdminController {
                 "count", mappings.size()
             ));
         } catch (Exception e) {
-            log.error("❌ 회기 소진 매핑 목록 조회 실패", e);
+            log.error("❌ 회기 소진 매칭 목록 조회 실패", e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "회기 소진 매핑 목록 조회에 실패했습니다: " + e.getMessage()
+                "message", "회기 소진 매칭 목록 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }
 
     /**
-     * 개별 매핑 조회
+     * 개별 매칭 조회
      */
     @GetMapping("/mappings/{mappingId}")
     public ResponseEntity<?> getMappingById(@PathVariable Long mappingId) {
         try {
-            log.info("🔍 매핑 ID {} 조회", mappingId);
+            log.info("🔍 매칭 ID {} 조회", mappingId);
             ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
             
             if (mapping == null) {
@@ -1005,10 +1005,10 @@ public class AdminController {
                 "data", mappingData
             ));
         } catch (Exception e) {
-            log.error("❌ 매핑 조회 실패: {}", e.getMessage(), e);
+            log.error("❌ 매칭 조회 실패: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "매핑 조회에 실패했습니다: " + e.getMessage()
+                "message", "매칭 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }
@@ -1021,7 +1021,7 @@ public class AdminController {
             @PathVariable Long mappingId,
             @RequestBody Map<String, Object> request) {
         try {
-            log.info("💰 매핑 ID {} 결제 확인 시작", mappingId);
+            log.info("💰 매칭 ID {} 결제 확인 시작", mappingId);
             
             String paymentMethod = (String) request.get("paymentMethod");
             String paymentReference = (String) request.get("paymentReference");
@@ -1033,7 +1033,7 @@ public class AdminController {
             
             ConsultantClientMapping mapping = adminService.confirmPayment(mappingId, paymentMethod, paymentReference, paymentAmount);
             
-            log.info("💰 매핑 ID {} 결제 확인 완료 (미수금 상태)", mappingId);
+            log.info("💰 매칭 ID {} 결제 확인 완료 (미수금 상태)", mappingId);
             
             // 안전한 데이터 추출 (프록시 객체 직렬화 문제 방지)
             Map<String, Object> mappingData = new HashMap<>();
@@ -1089,7 +1089,7 @@ public class AdminController {
             @PathVariable Long mappingId,
             @RequestBody Map<String, Object> request) {
         try {
-            log.info("✅ 매핑 ID {} 관리자 승인", mappingId);
+            log.info("✅ 매칭 ID {} 관리자 승인", mappingId);
             
             String adminName = (String) request.get("adminName");
             
@@ -1132,14 +1132,14 @@ public class AdminController {
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "매핑이 승인되었습니다. 이제 스케줄을 작성할 수 있습니다.",
+                "message", "매칭이 승인되었습니다. 이제 스케줄을 작성할 수 있습니다.",
                 "data", mappingData
             ));
         } catch (Exception e) {
-            log.error("❌ 매핑 승인 실패: {}", e.getMessage(), e);
+            log.error("❌ 매칭 승인 실패: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "매핑 승인에 실패했습니다: " + e.getMessage()
+                "message", "매칭 승인에 실패했습니다: " + e.getMessage()
             ));
         }
     }
@@ -1152,7 +1152,7 @@ public class AdminController {
             @PathVariable Long mappingId,
             @RequestBody Map<String, Object> request) {
         try {
-            log.info("❌ 매핑 ID {} 관리자 거부", mappingId);
+            log.info("❌ 매칭 ID {} 관리자 거부", mappingId);
             
             String reason = (String) request.get("reason");
             
@@ -1160,14 +1160,14 @@ public class AdminController {
             
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "매핑이 거부되었습니다.",
+                "message", "매칭이 거부되었습니다.",
                 "data", mapping
             ));
         } catch (Exception e) {
-            log.error("❌ 매핑 거부 실패: {}", e.getMessage(), e);
+            log.error("❌ 매칭 거부 실패: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "매핑 거부에 실패했습니다: " + e.getMessage()
+                "message", "매칭 거부에 실패했습니다: " + e.getMessage()
             ));
         }
     }
@@ -1178,7 +1178,7 @@ public class AdminController {
     @PostMapping("/mappings/{mappingId}/use-session")
     public ResponseEntity<?> useSession(@PathVariable Long mappingId) {
         try {
-            log.info("📅 매핑 ID {} 회기 사용 처리", mappingId);
+            log.info("📅 매칭 ID {} 회기 사용 처리", mappingId);
             
             ConsultantClientMapping mapping = adminService.useSession(mappingId);
             
@@ -1204,7 +1204,7 @@ public class AdminController {
             @PathVariable Long mappingId,
             @RequestBody Map<String, Object> request) {
         try {
-            log.info("🔄 매핑 ID {} 회기 추가 (연장)", mappingId);
+            log.info("🔄 매칭 ID {} 회기 추가 (연장)", mappingId);
             
             Integer additionalSessions = (Integer) request.get("additionalSessions");
             String packageName = (String) request.get("packageName");
@@ -1337,12 +1337,12 @@ public class AdminController {
 
 
     /**
-     * 매핑 생성
+     * 매칭 생성
      */
     @PostMapping("/mappings")
     public ResponseEntity<?> createMapping(@RequestBody ConsultantClientMappingDto dto, HttpSession session) {
         try {
-            log.info("🔧 매핑 생성 시작: 상담사={}, 내담자={}", dto.getConsultantId(), dto.getClientId());
+            log.info("🔧 매칭 생성 시작: 상담사={}, 내담자={}", dto.getConsultantId(), dto.getClientId());
             
             // 세션 상세 정보 로깅
             log.info("🔧 세션 정보 - ID: {}, 생성시간: {}, 최종접근시간: {}, 유효: {}", 
@@ -1385,18 +1385,18 @@ public class AdminController {
             
             ConsultantClientMapping mapping = adminService.createMapping(dto);
             
-            // 생성된 매핑의 지점코드 확인
-            log.info("🔧 생성된 매핑 지점코드: {}", mapping.getBranchCode());
+            // 생성된 매칭의 지점코드 확인
+            log.info("🔧 생성된 매칭 지점코드: {}", mapping.getBranchCode());
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "매핑이 성공적으로 생성되었습니다",
+                "message", "매칭이 성공적으로 생성되었습니다",
                 "data", mapping
             ));
         } catch (Exception e) {
-            log.error("❌ 매핑 생성 실패", e);
+            log.error("❌ 매칭 생성 실패", e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "message", "매핑 생성에 실패했습니다: " + e.getMessage()
+                "message", "매칭 생성에 실패했습니다: " + e.getMessage()
             ));
         }
     }
@@ -1502,12 +1502,12 @@ public class AdminController {
     }
 
     /**
-     * 매핑 정보 수정
+     * 매칭 정보 수정
      */
     @PutMapping("/mappings/{id}")
     public ResponseEntity<?> updateMapping(@PathVariable Long id, @RequestBody ConsultantClientMappingDto dto, HttpSession session) {
         try {
-            log.info("🔧 매핑 정보 수정: ID={}", id);
+            log.info("🔧 매칭 정보 수정: ID={}", id);
             
             // 동적 권한 체크
             ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_UPDATE", dynamicPermissionService);
@@ -1518,14 +1518,14 @@ public class AdminController {
             ConsultantClientMapping mapping = adminService.updateMapping(id, dto);
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "매핑 정보가 성공적으로 수정되었습니다",
+                "message", "매칭 정보가 성공적으로 수정되었습니다",
                 "data", mapping
             ));
         } catch (Exception e) {
-            log.error("❌ 매핑 정보 수정 실패", e);
+            log.error("❌ 매칭 정보 수정 실패", e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "message", "매핑 정보 수정에 실패했습니다: " + e.getMessage()
+                "message", "매칭 정보 수정에 실패했습니다: " + e.getMessage()
             ));
         }
     }
@@ -1644,12 +1644,12 @@ public class AdminController {
     }
 
     /**
-     * 매핑 삭제 (비활성화)
+     * 매칭 삭제 (비활성화)
      */
     @DeleteMapping("/mappings/{id}")
     public ResponseEntity<?> deleteMapping(@PathVariable Long id, HttpSession session) {
         try {
-            log.info("🔧 매핑 삭제: ID={}", id);
+            log.info("🔧 매칭 삭제: ID={}", id);
             
             // 현재 사용자 정보 로깅
             User currentUser = SessionUtils.getCurrentUser(session);
@@ -1668,46 +1668,46 @@ public class AdminController {
             adminService.deleteMapping(id);
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "매핑이 성공적으로 삭제되었습니다"
+                "message", "매칭이 성공적으로 삭제되었습니다"
             ));
         } catch (Exception e) {
-            log.error("❌ 매핑 삭제 실패", e);
+            log.error("❌ 매칭 삭제 실패", e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "message", "매핑 삭제에 실패했습니다: " + e.getMessage()
+                "message", "매칭 삭제에 실패했습니다: " + e.getMessage()
             ));
         }
     }
 
     /**
-     * 매핑 강제 종료 (전체 환불 처리)
+     * 매칭 강제 종료 (전체 환불 처리)
      */
     @PostMapping("/mappings/{id}/terminate")
     public ResponseEntity<?> terminateMapping(@PathVariable Long id, @RequestBody Map<String, Object> requestBody) {
         try {
-            log.info("🔧 매핑 강제 종료: ID={}", id);
+            log.info("🔧 매칭 강제 종료: ID={}", id);
             String reason = (String) requestBody.get("reason");
             adminService.terminateMapping(id, reason);
             return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "매핑이 성공적으로 종료되었습니다"
+                "message", "매칭이 성공적으로 종료되었습니다"
             ));
         } catch (Exception e) {
-            log.error("❌ 매핑 강제 종료 실패", e);
+            log.error("❌ 매칭 강제 종료 실패", e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "message", "매핑 강제 종료에 실패했습니다: " + e.getMessage()
+                "message", "매칭 강제 종료에 실패했습니다: " + e.getMessage()
             ));
         }
     }
 
     /**
-     * 매핑 부분 환불 처리 (지정된 회기수만 환불)
+     * 매칭 부분 환불 처리 (지정된 회기수만 환불)
      */
     @PostMapping("/mappings/{id}/partial-refund")
     public ResponseEntity<?> partialRefundMapping(@PathVariable Long id, @RequestBody Map<String, Object> requestBody, HttpSession session) {
         try {
-            log.info("🔧 매핑 부분 환불: ID={}", id);
+            log.info("🔧 매칭 부분 환불: ID={}", id);
             
             String reason = (String) requestBody.get("reason");
             Object refundSessionsObj = requestBody.get("refundSessions");
@@ -1735,7 +1735,7 @@ public class AdminController {
                 "message", String.format("%d회기 부분 환불이 성공적으로 처리되었습니다", refundSessions)
             ));
         } catch (Exception e) {
-            log.error("❌ 매핑 부분 환불 실패", e);
+            log.error("❌ 매칭 부분 환불 실패", e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", "부분 환불 처리에 실패했습니다: " + e.getMessage()
@@ -1834,7 +1834,7 @@ public class AdminController {
     @PostMapping("/mappings/transfer")
     public ResponseEntity<?> transferConsultant(@RequestBody ConsultantTransferRequest request) {
         try {
-            log.info("🔄 상담사 변경 요청: 기존 매핑 ID={}, 새 상담사 ID={}", 
+            log.info("🔄 상담사 변경 요청: 기존 매칭 ID={}, 새 상담사 ID={}", 
                     request.getCurrentMappingId(), request.getNewConsultantId());
             
             ConsultantClientMapping newMapping = adminService.transferConsultant(request);
@@ -1946,7 +1946,7 @@ public class AdminController {
                 return permissionResponse;
             }
             
-            log.info("💰 매핑 ID {} 입금 확인 시작", mappingId);
+            log.info("💰 매칭 ID {} 입금 확인 시작", mappingId);
             
             String depositReference = (String) request.get("depositReference");
             
@@ -1954,7 +1954,7 @@ public class AdminController {
             
             ConsultantClientMapping mapping = adminService.confirmDeposit(mappingId, depositReference);
             
-            log.info("💰 매핑 ID {} 입금 확인 완료 (현금 수입)", mappingId);
+            log.info("💰 매칭 ID {} 입금 확인 완료 (현금 수입)", mappingId);
             
             // 안전한 데이터 추출 (프록시 객체 직렬화 문제 방지)
             Map<String, Object> mappingData = new HashMap<>();
@@ -1995,7 +1995,7 @@ public class AdminController {
             ));
             
         } catch (Exception e) {
-            log.error("❌ 매핑 ID {} 입금 확인 실패: {}", mappingId, e.getMessage(), e);
+            log.error("❌ 매칭 ID {} 입금 확인 실패: {}", mappingId, e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
                 "message", "입금 확인에 실패했습니다: " + e.getMessage()
@@ -2004,7 +2004,7 @@ public class AdminController {
     }
 
     /**
-     * 매핑 결제 확인
+     * 매칭 결제 확인
      */
     @PostMapping("/mapping/payment/confirm")
     public ResponseEntity<?> confirmMappingPayment(@RequestBody Map<String, Object> request) {
@@ -2020,7 +2020,7 @@ public class AdminController {
             if (mappingIds == null || mappingIds.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", "매핑 ID가 필요합니다."
+                    "message", "매칭 ID가 필요합니다."
                 ));
             }
             
@@ -2028,16 +2028,16 @@ public class AdminController {
             log.info("결제 확인 처리: mappingIds={}, method={}, amount={}, note={}", 
                 mappingIds, paymentMethod, amount, note);
             
-            // 매핑 상태 업데이트 및 ERP 연동
+            // 매칭 상태 업데이트 및 ERP 연동
             for (Long mappingId : mappingIds) {
                 try {
                     // AdminService의 confirmPayment 메서드 사용 (ERP 연동 포함)
                     adminService.confirmPayment(mappingId, paymentMethod, 
                         "ADMIN_CONFIRMED_" + System.currentTimeMillis(), 
                         amount != null ? amount.longValue() : 0L);
-                    log.info("매핑 ID {} 결제 확인 및 ERP 연동 완료", mappingId);
+                    log.info("매칭 ID {} 결제 확인 및 ERP 연동 완료", mappingId);
                 } catch (Exception e) {
-                    log.error("매핑 ID {} 결제 확인 실패: {}", mappingId, e.getMessage());
+                    log.error("매칭 ID {} 결제 확인 실패: {}", mappingId, e.getMessage());
                 }
             }
             
@@ -2064,7 +2064,7 @@ public class AdminController {
     }
     
     /**
-     * 매핑 결제 취소
+     * 매칭 결제 취소
      */
     @PostMapping("/mapping/payment/cancel")
     public ResponseEntity<?> cancelMappingPayment(@RequestBody Map<String, Object> request) {
@@ -2077,14 +2077,14 @@ public class AdminController {
             if (mappingIds == null || mappingIds.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", "매핑 ID가 필요합니다."
+                    "message", "매칭 ID가 필요합니다."
                 ));
             }
             
             // 실제 결제 취소 로직 구현
             log.info("결제 취소 처리: mappingIds={}", mappingIds);
             
-            // 매핑 상태 업데이트
+            // 매칭 상태 업데이트
             for (Long mappingId : mappingIds) {
                 try {
                     ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
@@ -2093,12 +2093,12 @@ public class AdminController {
                         mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
                         mapping.setUpdatedAt(java.time.LocalDateTime.now());
                         
-                        // 매핑 저장 (AdminService의 updateMapping은 DTO를 받으므로 직접 저장)
+                        // 매칭 저장 (AdminService의 updateMapping은 DTO를 받으므로 직접 저장)
                         // adminService.updateMapping(mappingId, mapping);
-                        log.info("매핑 ID {} 결제 취소 완료", mappingId);
+                        log.info("매칭 ID {} 결제 취소 완료", mappingId);
                     }
                 } catch (Exception e) {
-                    log.error("매핑 ID {} 결제 취소 실패: {}", mappingId, e.getMessage());
+                    log.error("매칭 ID {} 결제 취소 실패: {}", mappingId, e.getMessage());
                 }
             }
             
@@ -2565,7 +2565,7 @@ public class AdminController {
     }
     
     /**
-     * 역할별 영문 표시명 매핑
+     * 역할별 영문 표시명 매칭
      */
     private String getEnglishDisplayName(UserRole role) {
         switch (role) {
@@ -3076,12 +3076,12 @@ public class AdminController {
     }
     
     /**
-     * 중복 매핑 조회
+     * 중복 매칭 조회
      */
     @GetMapping("/duplicate-mappings")
     public ResponseEntity<?> findDuplicateMappings(HttpSession session) {
         try {
-            log.info("🔍 중복 매핑 조회");
+            log.info("🔍 중복 매칭 조회");
             
             // 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
@@ -3109,21 +3109,21 @@ public class AdminController {
             ));
             
         } catch (Exception e) {
-            log.error("❌ 중복 매핑 조회 실패", e);
+            log.error("❌ 중복 매칭 조회 실패", e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "중복 매핑 조회에 실패했습니다: " + e.getMessage()
+                "message", "중복 매칭 조회에 실패했습니다: " + e.getMessage()
             ));
         }
     }
     
     /**
-     * 중복 매핑 통합
+     * 중복 매칭 통합
      */
     @PostMapping("/merge-duplicate-mappings")
     public ResponseEntity<?> mergeDuplicateMappings(HttpSession session) {
         try {
-            log.info("🔄 중복 매핑 통합 시작");
+            log.info("🔄 중복 매칭 통합 시작");
             
             // 권한 확인
             User currentUser = SessionUtils.getCurrentUser(session);
@@ -3147,10 +3147,10 @@ public class AdminController {
             return ResponseEntity.ok(result);
             
         } catch (Exception e) {
-            log.error("❌ 중복 매핑 통합 실패", e);
+            log.error("❌ 중복 매칭 통합 실패", e);
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "중복 매핑 통합에 실패했습니다: " + e.getMessage()
+                "message", "중복 매칭 통합에 실패했습니다: " + e.getMessage()
             ));
         }
     }

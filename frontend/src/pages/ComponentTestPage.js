@@ -54,7 +54,7 @@ const ComponentTestPage = () => {
             
             <StatCard
               icon={<FaCalendarAlt />}
-              title="활성 매핑"
+              title="활성 매칭"
               value="67개"
               description="활성 상태"
               variant="active"

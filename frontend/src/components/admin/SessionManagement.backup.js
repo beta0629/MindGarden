@@ -111,7 +111,7 @@ const SessionManagement = () => {
                         <p 
                             
                         >
-                            내담자와 상담사의 회기 매핑을 관리합니다.
+                            내담자와 상담사의 회기 매칭을 관리합니다.
                         </p>
                     </div>
                     <div >
@@ -145,7 +145,7 @@ const SessionManagement = () => {
                 >
                     {[
                         { icon: '👥', value: clients.length, label: '전체 내담자', color: '#007aff' },
-                        { icon: '🤝', value: mappings.length, label: '활성 매핑', color: '#34c759' },
+                        { icon: '🤝', value: mappings.length, label: '활성 매칭', color: '#34c759' },
                         { icon: '⏳', value: mappings.filter(m => m.status === 'PENDING').length, label: '대기 중', color: '#ff9500' },
                         { icon: '✅', value: mappings.filter(m => m.status === 'COMPLETED').length, label: '완료됨', color: '#5856d6' }
                     ].map((stat, index) => (
@@ -241,7 +241,7 @@ const SessionManagement = () => {
                                         <div
                                             
                                         >
-                                            매핑 {clientMappings.length}개
+                                            매칭 {clientMappings.length}개
                                 </div>
                             </div>
                             
@@ -309,7 +309,7 @@ const SessionManagement = () => {
                                 ) : (
                                     <div >
                                         <p >
-                                            이 내담자에 대한 상담사 매핑이 없습니다.
+                                            이 내담자에 대한 상담사 매칭이 없습니다.
                                         </p>
                                 <button 
                                             
@@ -357,7 +357,7 @@ const SessionManagement = () => {
                                                         {client.name}
                     </div>
                                                     <div >
-                                                        매핑 {clientMappings.length}개 (활성 {activeMappings.length}개)
+                                                        매칭 {clientMappings.length}개 (활성 {activeMappings.length}개)
                 </div>
                     </div>
                                         </div>
@@ -376,7 +376,7 @@ const SessionManagement = () => {
                                     <h3 
                                         
                                     >
-                                        {selectedClient.name} - 상담 매핑 정보
+                                        {selectedClient.name} - 상담 매칭 정보
                                     </h3>
                                     
                                     {selectedMapping ? (
@@ -412,7 +412,7 @@ const SessionManagement = () => {
                                     ) : (
                                         <div >
                                             <p >
-                                                이 내담자에 대한 상담사 매핑이 없습니다.
+                                                이 내담자에 대한 상담사 매칭이 없습니다.
                                             </p>
                             <button 
                                                 

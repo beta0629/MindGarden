@@ -85,9 +85,9 @@ export const CONSULTATION_MESSAGES = {
   
   // 내담자
   CLIENT_SELECTED: '내담자가 선택되었습니다.',
-  CLIENT_MAPPING_CREATED: '내담자 매핑이 생성되었습니다.',
-  CLIENT_MAPPING_UPDATED: '내담자 매핑이 수정되었습니다.',
-  CLIENT_MAPPING_DELETED: '내담자 매핑이 삭제되었습니다.',
+  CLIENT_MAPPING_CREATED: '내담자 매칭이 생성되었습니다.',
+  CLIENT_MAPPING_UPDATED: '내담자 매칭이 수정되었습니다.',
+  CLIENT_MAPPING_DELETED: '내담자 매칭이 삭제되었습니다.',
   
   // 세션
   SESSION_STARTED: '상담 세션이 시작되었습니다.',
@@ -111,12 +111,12 @@ export const ADMIN_MESSAGES = {
   CONSULTANT_REGISTERED: '상담사가 등록되었습니다.',
   CONSULTANT_UPDATED: '상담사 정보가 수정되었습니다.',
   
-  // 매핑 관리
-  MAPPING_CREATED: '매핑이 생성되었습니다.',
-  MAPPING_UPDATED: '매핑이 수정되었습니다.',
-  MAPPING_DELETED: '매핑이 삭제되었습니다.',
-  MAPPING_APPROVED: '매핑이 승인되었습니다.',
-  MAPPING_REJECTED: '매핑이 거부되었습니다.',
+  // 매칭 관리
+  MAPPING_CREATED: '매칭이 생성되었습니다.',
+  MAPPING_UPDATED: '매칭이 수정되었습니다.',
+  MAPPING_DELETED: '매칭이 삭제되었습니다.',
+  MAPPING_APPROVED: '매칭이 승인되었습니다.',
+  MAPPING_REJECTED: '매칭이 거부되었습니다.',
   
   // 결제 관리
   PAYMENT_CONFIRMED: '결제가 확인되었습니다.',
@@ -213,11 +213,11 @@ export const STATUS_MESSAGES = {
   PAYMENT_FAILED: '결제 실패',
   PAYMENT_REFUNDED: '환불 완료',
   
-  // 매핑 상태
-  MAPPING_ACTIVE: '활성 매핑',
-  MAPPING_INACTIVE: '비활성 매핑',
-  MAPPING_EXPIRED: '만료된 매핑',
-  MAPPING_PENDING: '대기 중인 매핑'
+  // 매칭 상태
+  MAPPING_ACTIVE: '활성 매칭',
+  MAPPING_INACTIVE: '비활성 매칭',
+  MAPPING_EXPIRED: '만료된 매칭',
+  MAPPING_PENDING: '대기 중인 매칭'
 };
 
 // 전체 메시지 객체

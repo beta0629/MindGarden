@@ -58,7 +58,7 @@ const SessionManagement = () => {
         comment: ''
     });
 
-    // 매핑 상태 코드 로드
+    // 매칭 상태 코드 로드
     const loadMappingStatusCodes = useCallback(async () => {
         try {
             setLoadingCodes(true);
@@ -84,14 +84,14 @@ const SessionManagement = () => {
                 setMappingStatusOptions(uniqueOptions);
             }
         } catch (error) {
-            console.error('매핑 상태 코드 로드 실패:', error);
+            console.error('매칭 상태 코드 로드 실패:', error);
             // 실패 시 기본값 설정
             setMappingStatusOptions([
-                { value: 'HAS_MAPPING', label: '매핑 있음', icon: '✅', color: '#10b981', description: '매핑이 있는 상태' },
-                { value: 'ACTIVE_MAPPING', label: '활성 매핑', icon: '🟢', color: '#3b82f6', description: '활성화된 매핑 상태' },
-                { value: 'NO_MAPPING', label: '매핑 없음', icon: '❌', color: '#ef4444', description: '매핑이 없는 상태' },
-                { value: 'PENDING_MAPPING', label: '매핑 대기', icon: '⏳', color: '#f59e0b', description: '매핑 대기 중인 상태' },
-                { value: 'INACTIVE_MAPPING', label: '비활성 매핑', icon: '🔴', color: '#6b7280', description: '비활성화된 매핑 상태' }
+                { value: 'HAS_MAPPING', label: '매칭 있음', icon: '✅', color: '#10b981', description: '매칭이 있는 상태' },
+                { value: 'ACTIVE_MAPPING', label: '활성 매칭', icon: '🟢', color: '#3b82f6', description: '활성화된 매칭 상태' },
+                { value: 'NO_MAPPING', label: '매칭 없음', icon: '❌', color: '#ef4444', description: '매칭이 없는 상태' },
+                { value: 'PENDING_MAPPING', label: '매칭 대기', icon: '⏳', color: '#f59e0b', description: '매칭 대기 중인 상태' },
+                { value: 'INACTIVE_MAPPING', label: '비활성 매칭', icon: '🔴', color: '#6b7280', description: '비활성화된 매칭 상태' }
             ]);
         } finally {
             setLoadingCodes(false);
@@ -129,7 +129,7 @@ const SessionManagement = () => {
         }
     }, []);
 
-    // 패키지 코드 로드 (매핑 시스템과 동일한 CONSULTATION_PACKAGE 사용)
+    // 패키지 코드 로드 (매칭 시스템과 동일한 CONSULTATION_PACKAGE 사용)
     const loadPackageCodes = useCallback(async () => {
         try {
             setLoadingPackageCodes(true);
@@ -311,7 +311,7 @@ const SessionManagement = () => {
     };
 
     /**
-     * 매핑 목록 로드
+     * 매칭 목록 로드
      */
     const loadMappings = async () => {
         try {
@@ -320,7 +320,7 @@ const SessionManagement = () => {
                 setMappings(response.data || []);
             }
         } catch (error) {
-            console.error('매핑 목록 로드 실패:', error);
+            console.error('매칭 목록 로드 실패:', error);
         }
     };
 
@@ -351,14 +351,14 @@ const SessionManagement = () => {
      */
     const handleClientSelect = (client) => {
         setSelectedClient(client);
-        // 해당 내담자의 매핑 정보 찾기 (ACTIVE 상태 중 가장 최근 것)
+        // 해당 내담자의 매칭 정보 찾기 (ACTIVE 상태 중 가장 최근 것)
         const clientMappings = mappings.filter(mapping => 
             mapping.clientId === client.id &&
             mapping.status === 'ACTIVE'
         );
         
         if (clientMappings.length > 0) {
-            // 가장 최근 매핑 선택
+            // 가장 최근 매칭 선택
             const latestMapping = clientMappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
             setSelectedMapping(latestMapping);
         } else {
@@ -367,11 +367,11 @@ const SessionManagement = () => {
     };
 
     /**
-     * 매핑 선택 처리
+     * 매칭 선택 처리
      */
     const handleMappingSelect = (mapping) => {
         setSelectedMapping(mapping);
-        // 해당 매핑의 내담자 정보 찾기
+        // 해당 매칭의 내담자 정보 찾기
         const client = clients.find(client => client.id === mapping.clientId);
         if (client) {
             setSelectedClient(client);
@@ -379,7 +379,7 @@ const SessionManagement = () => {
     };
 
     /**
-     * 필터링된 매핑 목록 반환
+     * 필터링된 매칭 목록 반환
      */
     const getFilteredMappings = () => {
         let filtered = mappings;
@@ -421,7 +421,7 @@ const SessionManagement = () => {
             // 필터가 적용되지 않은 경우 최근 10개만 표시
             const hasActiveFilters = mappingSearchTerm || mappingFilterStatus !== 'ALL';
             if (!hasActiveFilters) {
-                // 최근 생성된 매핑 10개만 반환 (createdAt 기준으로 정렬)
+                // 최근 생성된 매칭 10개만 반환 (createdAt 기준으로 정렬)
                 return filtered
                     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
                     .slice(0, 10);
@@ -485,7 +485,7 @@ const SessionManagement = () => {
             return;
         }
         
-        // 기존 매핑이 있으면 해당 상담사를 기본으로 선택 (ACTIVE 상태 중 가장 최근 것)
+        // 기존 매칭이 있으면 해당 상담사를 기본으로 선택 (ACTIVE 상태 중 가장 최근 것)
         const clientMappings = mappings.filter(m => 
             m.clientId === selectedClient.id && 
             m.status === 'ACTIVE'
@@ -536,20 +536,20 @@ const SessionManagement = () => {
 
         setLoading(true);
         try {
-            // 먼저 해당 내담자와 상담사의 매핑을 찾습니다 (ACTIVE 상태 중 가장 최근 것)
+            // 먼저 해당 내담자와 상담사의 매칭을 찾습니다 (ACTIVE 상태 중 가장 최근 것)
             const existingMappings = mappings.filter(mapping => 
                 mapping.consultantId === newSessionData.consultantId && 
                 mapping.clientId === newSessionData.clientId &&
                 mapping.status === 'ACTIVE'
             );
             
-            // 가장 최근 매핑 선택 (createdAt 기준으로 정렬)
+            // 가장 최근 매칭 선택 (createdAt 기준으로 정렬)
             const existingMapping = existingMappings.length > 0 
                 ? existingMappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
                 : null;
 
             if (!existingMapping) {
-                notificationManager.error('해당 내담자와 상담사의 매핑을 찾을 수 없습니다. 먼저 매핑을 생성해주세요.');
+                notificationManager.error('해당 내담자와 상담사의 매칭을 찾을 수 없습니다. 먼저 매칭을 생성해주세요.');
                 return;
             }
 
@@ -587,7 +587,7 @@ const SessionManagement = () => {
     };
 
     /**
-     * 매핑 상태 변경
+     * 매칭 상태 변경
      */
     const handleStatusChange = async (mappingId, newStatus) => {
         setLoading(true);
@@ -687,7 +687,7 @@ const SessionManagement = () => {
             if (response.success) {
                 notificationManager.success('요청이 완료되었습니다. 회기가 추가되었습니다.');
                 loadExtensionRequests();
-                loadMappings(); // 매핑 목록도 새로고침
+                loadMappings(); // 매칭 목록도 새로고침
             } else {
                 throw new Error(response.message || '완료에 실패했습니다.');
             }
@@ -790,7 +790,7 @@ const SessionManagement = () => {
                 notificationManager.success('회기 추가 요청이 승인되었습니다.');
                 setShowApprovalModal(false);
                 loadExtensionRequests();
-                loadMappings(); // 매핑 목록도 새로고침
+                loadMappings(); // 매칭 목록도 새로고침
             } else {
                 throw new Error(response.message || '승인에 실패했습니다.');
             }
@@ -989,7 +989,7 @@ const SessionManagement = () => {
                         </div>
                     ) : (
                         <div className="session-mgmt-no-mapping">
-                            <p>이 내담자에 대한 상담사 매핑이 없습니다.</p>
+                            <p>이 내담자에 대한 상담사 매칭이 없습니다.</p>
                             <button 
                                 className="mg-btn mg-btn--primary"
                                 onClick={handleAddSession}
@@ -1001,7 +1001,7 @@ const SessionManagement = () => {
                 </div>
             )}
 
-            {/* 매핑 목록 */}
+            {/* 매칭 목록 */}
             <div className="session-mgmt-all-mappings-section">
                 <SectionHeader
                     title={selectedClient ? `${selectedClient.name} 회기 관리 현황` : '전체 회기 관리 현황'}
@@ -1013,7 +1013,7 @@ const SessionManagement = () => {
                         if (hasActiveFilters) {
                             return `검색 결과: ${filteredCount}개 (전체 ${totalCount}개 중)`;
                         } else {
-                            return `최근 매핑 ${filteredCount}개 표시 (전체 ${totalCount}개 중)`;
+                            return `최근 매칭 ${filteredCount}개 표시 (전체 ${totalCount}개 중)`;
                         }
                     })() : null}
                     icon="bi-diagram-3"
@@ -1087,7 +1087,7 @@ const SessionManagement = () => {
                                     value={newSessionData.consultantId}
                                     onChange={(e) => {
                                         const consultantId = e.target.value;
-                                        // 해당 상담사와 내담자의 매핑 찾기 (ACTIVE 상태 중 가장 최근 것)
+                                        // 해당 상담사와 내담자의 매칭 찾기 (ACTIVE 상태 중 가장 최근 것)
                                         const consultantMappings = mappings.filter(mapping => 
                                             mapping.consultantId === consultantId && 
                                             mapping.clientId === newSessionData.clientId &&

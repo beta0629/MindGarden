@@ -17,7 +17,7 @@ const StatisticsDashboard = ({
         {
             icon: "bi-diagram-3",
             value: activeMappings,
-            label: "활성 매핑",
+            label: "활성 매칭",
             color: "success"
         },
         {

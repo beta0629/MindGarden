@@ -86,11 +86,15 @@ const SpecialtyDisplay = ({
         
         // 공통 함수를 사용하여 한글명으로 변환
         const koreanSpecialties = getSpecialtyKoreanNames(rawSpecialties);
-        const result = koreanSpecialties.slice(0, maxItems);
+        
+        // 중복 제거 (Set 사용)
+        const uniqueSpecialties = [...new Set(koreanSpecialties)];
+        const result = uniqueSpecialties.slice(0, maxItems);
         
         if (debug) {
             console.log('📊 원본 specialties 배열:', rawSpecialties);
             console.log('📊 한글 변환된 specialties 배열:', koreanSpecialties);
+            console.log('📊 중복 제거된 specialties 배열:', uniqueSpecialties);
             console.log('📊 최종 specialties 배열 (maxItems 적용):', result);
             console.log('📊 최종 specialties 길이:', result.length);
         }

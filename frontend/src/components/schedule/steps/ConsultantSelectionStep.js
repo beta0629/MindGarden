@@ -368,7 +368,7 @@ const ConsultantSelectionStepNew = ({
                         <SpecialtyDisplay 
                             consultant={selectedConsultant} 
                             variant="inline" 
-                            maxItems={10}
+                            maxItems={20}
                             debug={true}
                         />
                     </div>

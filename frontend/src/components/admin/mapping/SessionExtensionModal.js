@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { Plus, X, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
+import PackageSelector from '../../common/PackageSelector';
 
 /**
  * 회기 추가 요청 모달 컴포넌트
@@ -20,15 +21,30 @@ const SessionExtensionModal = ({
     onSessionExtensionRequested 
 }) => {
     const [additionalSessions, setAdditionalSessions] = useState(1);
+    const [packagePrice, setPackagePrice] = useState(0);
+    const [selectedPackage, setSelectedPackage] = useState('');
     const [reason, setReason] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // 패키지 선택 핸들러
+    const handlePackageChange = (packageInfo) => {
+        if (packageInfo) {
+            setSelectedPackage(packageInfo.value);
+            setAdditionalSessions(packageInfo.sessions);
+            setPackagePrice(packageInfo.price);
+        }
+    };
 
     // 모달이 열릴 때 기존 매칭 정보로 초기화
     useEffect(() => {
         if (isOpen && mapping) {
-            // 기존 매칭의 패키지 정보를 그대로 사용
+            // 기존 매칭의 패키지 정보를 기본값으로 설정
             const defaultSessions = mapping.package?.sessions || mapping.totalSessions || 5;
+            const defaultPrice = mapping.packagePrice || mapping.package?.price || 0;
+            
             setAdditionalSessions(defaultSessions);
+            setPackagePrice(defaultPrice);
+            setSelectedPackage(mapping.packageName || '');
             setReason('');
             
             console.log('🔍 SessionExtensionModal 매칭 데이터:', {
@@ -37,7 +53,8 @@ const SessionExtensionModal = ({
                 clientName: mapping.clientName,
                 packageName: mapping.packageName,
                 packagePrice: mapping.packagePrice,
-                defaultSessions
+                defaultSessions,
+                defaultPrice
             });
         }
     }, [isOpen, mapping]);
@@ -57,8 +74,8 @@ const SessionExtensionModal = ({
                 mappingId: mapping.id,
                 requesterId: 1, // TODO: 실제 사용자 ID
                 additionalSessions: additionalSessions,
-                packageName: mapping.packageName || mapping.package?.name || '기본 패키지',
-                packagePrice: mapping.packagePrice || mapping.package?.price || 0,
+                packageName: selectedPackage || mapping.packageName || mapping.package?.name || '기본 패키지',
+                packagePrice: packagePrice || mapping.packagePrice || mapping.package?.price || 0,
                 reason: reason || '회기 추가 요청'
             };
 
@@ -127,34 +144,35 @@ const SessionExtensionModal = ({
                     </div>
                     
                     <form onSubmit={handleSubmit}>
-                        {/* 패키지 정보 표시 (읽기 전용) */}
-                        <div className="mg-form-group">
-                            <label className="mg-label">기존 패키지 정보</label>
-                            <div className="mg-package-info">
-                                <div className="mg-package-name">
-                                    {mapping.packageName || mapping.package?.name || '기본 패키지'}
-                                </div>
-                                <div className="mg-package-details">
-                                    {mapping.package?.sessions || mapping.totalSessions || 5}회기 • 
-                                    {parseInt(mapping.packagePrice || mapping.package?.price || 0).toLocaleString()}원
-                                </div>
-                            </div>
-                        </div>
+                        {/* 패키지 선택 */}
+                        <PackageSelector
+                            value={selectedPackage}
+                            onChange={handlePackageChange}
+                            disabled={isLoading}
+                        />
                         
-                        {/* 추가 회기 수 입력 */}
+                        {/* 총 세션 수 (자동 설정) */}
                         <div className="mg-form-group">
-                            <label className="mg-label">추가할 회기 수 *</label>
+                            <label className="mg-label">총 세션 수</label>
                             <input
                                 type="number"
                                 className="mg-input"
-                                min="1"
-                                max="20"
                                 value={additionalSessions}
-                                onChange={(e) => setAdditionalSessions(parseInt(e.target.value) || 1)}
-                                required
-                                disabled={isLoading}
+                                readOnly
                             />
-                            <div className="mg-text-secondary">추가할 회기 수를 입력하세요</div>
+                            <div className="mg-text-secondary">자동 설정</div>
+                        </div>
+                        
+                        {/* 패키지 가격 (자동 설정) */}
+                        <div className="mg-form-group">
+                            <label className="mg-label">패키지 가격(원)</label>
+                            <input
+                                type="number"
+                                className="mg-input"
+                                value={packagePrice.toLocaleString()}
+                                readOnly
+                            />
+                            <div className="mg-text-secondary">자동 설정</div>
                         </div>
                         
                         {/* 추가 사유 입력 */}

@@ -23,6 +23,8 @@ const SessionExtensionModal = ({
     const [additionalSessions, setAdditionalSessions] = useState(1);
     const [packagePrice, setPackagePrice] = useState(0);
     const [selectedPackage, setSelectedPackage] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('신용카드');
+    const [paymentReference, setPaymentReference] = useState('');
     const [reason, setReason] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -32,7 +34,33 @@ const SessionExtensionModal = ({
             setSelectedPackage(packageInfo.value);
             setAdditionalSessions(packageInfo.sessions);
             setPackagePrice(packageInfo.price);
+            
+            // 결제 참조번호 자동 생성
+            generatePaymentReference();
         }
+    };
+
+    // 결제 참조번호 자동 생성
+    const generatePaymentReference = () => {
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+        const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
+        
+        const methodMap = {
+            '신용카드': '신용카드',
+            '계좌이체': '계좌이체',
+            '현금': '현금'
+        };
+        
+        const method = methodMap[paymentMethod] || '신용카드';
+        const reference = `${method} ${dateStr} ${timeStr}`;
+        setPaymentReference(reference);
+    };
+
+    // 결제 방법 변경 시 참조번호 재생성
+    const handlePaymentMethodChange = (method) => {
+        setPaymentMethod(method);
+        generatePaymentReference();
     };
 
     // 모달이 열릴 때 기존 매칭 정보로 초기화
@@ -46,6 +74,9 @@ const SessionExtensionModal = ({
             setPackagePrice(defaultPrice);
             setSelectedPackage(mapping.packageName || '');
             setReason('');
+            
+            // 결제 참조번호 자동 생성
+            generatePaymentReference();
             
             console.log('🔍 SessionExtensionModal 매칭 데이터:', {
                 mapping,
@@ -76,6 +107,8 @@ const SessionExtensionModal = ({
                 additionalSessions: additionalSessions,
                 packageName: selectedPackage || mapping.packageName || mapping.package?.name || '기본 패키지',
                 packagePrice: packagePrice || mapping.packagePrice || mapping.package?.price || 0,
+                paymentMethod: paymentMethod,
+                paymentReference: paymentReference,
                 reason: reason || '회기 추가 요청'
             };
 
@@ -101,6 +134,10 @@ const SessionExtensionModal = ({
 
     const handleClose = () => {
         setAdditionalSessions(1);
+        setPackagePrice(0);
+        setSelectedPackage('');
+        setPaymentMethod('신용카드');
+        setPaymentReference('');
         setReason('');
         setIsLoading(false);
         onClose();
@@ -173,6 +210,42 @@ const SessionExtensionModal = ({
                                 readOnly
                             />
                             <div className="mg-text-secondary">자동 설정</div>
+                        </div>
+                        
+                        {/* 결제 방법 선택 */}
+                        <div className="mg-form-group">
+                            <label className="mg-label">결제 방법</label>
+                            <select
+                                className="mg-input"
+                                value={paymentMethod}
+                                onChange={(e) => handlePaymentMethodChange(e.target.value)}
+                                disabled={isLoading}
+                                style={{
+                                    appearance: 'none',
+                                    backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3e%3c/svg%3e")',
+                                    backgroundPosition: 'right 8px center',
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundSize: '16px',
+                                    paddingRight: '40px'
+                                }}
+                            >
+                                <option value="신용카드">신용카드</option>
+                                <option value="계좌이체">계좌이체</option>
+                                <option value="현금">현금</option>
+                            </select>
+                        </div>
+                        
+                        {/* 결제 참조번호 */}
+                        <div className="mg-form-group">
+                            <label className="mg-label">결제 참조번호</label>
+                            <input
+                                type="text"
+                                className="mg-input"
+                                value={paymentReference}
+                                onChange={(e) => setPaymentReference(e.target.value)}
+                                disabled={isLoading}
+                                placeholder="결제 참조번호를 입력하세요"
+                            />
                         </div>
                         
                         {/* 추가 사유 입력 */}

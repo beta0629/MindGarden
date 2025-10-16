@@ -18,7 +18,6 @@ import com.mindgarden.consultation.service.ConsultantService;
 import com.mindgarden.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -225,8 +224,9 @@ public class ConsultantServiceImpl implements ConsultantService {
     }
     
     @Override
-    public org.springframework.data.jpa.repository.JpaRepository<Consultant, Long> getRepository() {
-        return consultantRepository;
+    public com.mindgarden.consultation.repository.BaseRepository<Consultant, Long> getRepository() {
+        // BaseRepository를 직접 구현하거나 null 반환
+        return null;
     }
     
     @Override

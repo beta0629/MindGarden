@@ -5,7 +5,7 @@ import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
 
 /**
- * 매핑 입금 확인 모달 컴포넌트
+ * 매칭 입금 확인 모달 컴포넌트
  * - 입금 확인 처리
  * - 입금 참조번호 입력
  * 
@@ -35,8 +35,8 @@ const MappingDepositModal = ({
             const referenceNumber = generateDepositReference();
             setDepositReference(referenceNumber);
             
-            // 디버깅: 매핑 데이터 구조 확인
-            console.log('🔍 MappingDepositModal 매핑 데이터:', {
+            // 디버깅: 매칭 데이터 구조 확인
+            console.log('🔍 MappingDepositModal 매칭 데이터:', {
                 mapping,
                 consultantName: mapping.consultantName,
                 clientName: mapping.clientName,

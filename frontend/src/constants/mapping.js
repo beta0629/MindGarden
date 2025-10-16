@@ -1,13 +1,13 @@
 /**
- * 매핑 관련 상수 정의 (동적 처리 지원)
+ * 매칭 관련 상수 정의 (동적 처리 지원)
  * 
  * @author MindGarden
  * @version 2.0.0
  * @since 2024-12-19
- * @updated 2025-09-14 - 하드코딩된 색상/아이콘 매핑을 동적 처리로 변경
+ * @updated 2025-09-14 - 하드코딩된 색상/아이콘 매칭을 동적 처리로 변경
  */
 
-// 매핑 상태 상수
+// 매칭 상태 상수
 export const MAPPING_STATUS = {
     PENDING_PAYMENT: 'PENDING_PAYMENT',
     PAYMENT_CONFIRMED: 'PAYMENT_CONFIRMED',
@@ -18,7 +18,7 @@ export const MAPPING_STATUS = {
     SESSIONS_EXHAUSTED: 'SESSIONS_EXHAUSTED'
 };
 
-// 매핑 상태 한글명 (동적 처리로 변경 - getMappingStatusKoreanName 함수 사용)
+// 매칭 상태 한글명 (동적 처리로 변경 - getMappingStatusKoreanName 함수 사용)
 // @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STATUS_LABELS = {
     [MAPPING_STATUS.PENDING_PAYMENT]: '결제 대기',
@@ -30,7 +30,7 @@ export const MAPPING_STATUS_LABELS = {
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '회기 소진'
 };
 
-// 매핑 상태 색상 (동적 처리로 변경 - getStatusColor 함수 사용)
+// 매칭 상태 색상 (동적 처리로 변경 - getStatusColor 함수 사용)
 // @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STATUS_COLORS = {
     [MAPPING_STATUS.PENDING_PAYMENT]: '#ffc107',
@@ -42,7 +42,7 @@ export const MAPPING_STATUS_COLORS = {
     [MAPPING_STATUS.SESSIONS_EXHAUSTED]: '#6f42c1'
 };
 
-// 매핑 상태 배경색 (동적 처리로 변경 - 색상 기반 자동 생성)
+// 매칭 상태 배경색 (동적 처리로 변경 - 색상 기반 자동 생성)
 // @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STATUS_BG_COLORS = {
     [MAPPING_STATUS.PENDING_PAYMENT]: '#fff3cd',
@@ -72,7 +72,7 @@ export const PAYMENT_STATUS_LABELS = {
     [PAYMENT_STATUS.REFUNDED]: '환불됨'
 };
 
-// 매핑 액션 상수
+// 매칭 액션 상수
 export const MAPPING_ACTIONS = {
     APPROVE: 'approve',
     REJECT: 'reject',
@@ -84,7 +84,7 @@ export const MAPPING_ACTIONS = {
     ACTIVATE: 'activate'
 };
 
-// 매핑 액션 버튼 설정
+// 매칭 액션 버튼 설정
 export const MAPPING_ACTION_BUTTONS = {
     [MAPPING_ACTIONS.APPROVE]: {
         label: '승인',
@@ -128,7 +128,7 @@ export const MAPPING_ACTION_BUTTONS = {
     }
 };
 
-// 매핑 통계 아이콘 (동적 처리로 변경 - getStatusIcon 함수 사용)
+// 매칭 통계 아이콘 (동적 처리로 변경 - getStatusIcon 함수 사용)
 // @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_ICONS = {
     PENDING: '⏳',
@@ -139,18 +139,18 @@ export const MAPPING_STAT_ICONS = {
     SESSIONS_EXHAUSTED: '🔚'
 };
 
-// 매핑 통계 라벨 (동적 처리로 변경 - getMappingStatusKoreanName 함수 사용)
+// 매칭 통계 라벨 (동적 처리로 변경 - getMappingStatusKoreanName 함수 사용)
 // @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_LABELS = {
     PENDING: '결제 대기',
-    ACTIVE: '활성 매핑',
+    ACTIVE: '활성 매칭',
     PAYMENT_CONFIRMED: '결제 확인',
-    TOTAL: '전체 매핑',
+    TOTAL: '전체 매칭',
     TERMINATED: '종료',
     SESSIONS_EXHAUSTED: '회기 소진'
 };
 
-// 매핑 통계 색상 (동적 처리로 변경 - getStatusColor 함수 사용)
+// 매칭 통계 색상 (동적 처리로 변경 - getStatusColor 함수 사용)
 // @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_COLORS = {
     PENDING: '#ffc107',
@@ -161,7 +161,7 @@ export const MAPPING_STAT_COLORS = {
     SESSIONS_EXHAUSTED: '#fd7e14'
 };
 
-// 매핑 통계 배경색 (동적 처리로 변경 - 색상 기반 자동 생성)
+// 매칭 통계 배경색 (동적 처리로 변경 - 색상 기반 자동 생성)
 // @deprecated - 동적 처리 함수 사용 권장
 export const MAPPING_STAT_BG_COLORS = {
     PENDING: '#fff3cd',
@@ -172,7 +172,7 @@ export const MAPPING_STAT_BG_COLORS = {
     SESSIONS_EXHAUSTED: '#ffeaa7'
 };
 
-// 매핑 필터 옵션
+// 매칭 필터 옵션
 export const MAPPING_FILTER_OPTIONS = [
     { value: 'ALL', label: '전체' },
     { value: MAPPING_STATUS.PENDING_PAYMENT, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.PENDING_PAYMENT] },
@@ -184,7 +184,7 @@ export const MAPPING_FILTER_OPTIONS = [
     { value: MAPPING_STATUS.SESSIONS_EXHAUSTED, label: MAPPING_STATUS_LABELS[MAPPING_STATUS.SESSIONS_EXHAUSTED] }
 ];
 
-// 매핑 생성 단계
+// 매칭 생성 단계
 export const MAPPING_CREATION_STEPS = {
     CONSULTANT_SELECTION: 1,
     CLIENT_SELECTION: 2,
@@ -192,7 +192,7 @@ export const MAPPING_CREATION_STEPS = {
     COMPLETION: 4
 };
 
-// 매핑 생성 단계 라벨
+// 매칭 생성 단계 라벨
 export const MAPPING_CREATION_STEP_LABELS = {
     [MAPPING_CREATION_STEPS.CONSULTANT_SELECTION]: '상담사 선택',
     [MAPPING_CREATION_STEPS.CLIENT_SELECTION]: '내담자 선택',
@@ -209,7 +209,7 @@ export const PAYMENT_METHOD_OPTIONS = [];
 // 담당 업무 옵션 (공통 코드에서 동적으로 로드됨)
 export const RESPONSIBILITY_OPTIONS = [];
 
-// 기본 매핑 설정
+// 기본 매칭 설정
 export const DEFAULT_MAPPING_CONFIG = {
     TOTAL_SESSIONS: 10,
     PACKAGE_NAME: '기본 10회기 패키지',
@@ -218,7 +218,7 @@ export const DEFAULT_MAPPING_CONFIG = {
     RESPONSIBILITY: '정신건강 상담'
 };
 
-// 매핑 API 엔드포인트
+// 매칭 API 엔드포인트
 export const MAPPING_API_ENDPOINTS = {
     LIST: '/api/admin/mappings',
     CREATE: '/api/admin/mappings',
@@ -230,18 +230,18 @@ export const MAPPING_API_ENDPOINTS = {
     TEST_MAPPING: '/api/test/mapping'
 };
 
-// 매핑 메시지
+// 매칭 메시지
 export const MAPPING_MESSAGES = {
-    LOADING: '매핑 목록을 불러오는 중...',
-    LOAD_FAILED: '매핑 목록을 불러오는데 실패했습니다.',
-    CREATE_SUCCESS: '매핑이 성공적으로 생성되었습니다!',
-    CREATE_FAILED: '매핑 생성에 실패했습니다.',
-    APPROVE_SUCCESS: '매핑이 승인되었습니다.',
-    APPROVE_FAILED: '매핑 승인에 실패했습니다.',
-    REJECT_SUCCESS: '매핑이 거부되었습니다.',
-    REJECT_FAILED: '매핑 거부에 실패했습니다.',
-    NO_MAPPINGS: '매핑이 없습니다',
-    NO_MAPPINGS_DESC: '새로운 매핑을 생성해보세요.',
-    MAPPING_REQUIRED: '매핑된 내담자가 없습니다',
-    MAPPING_REQUIRED_DESC: '스케줄을 생성하려면 먼저 상담사와 내담자 간의 매핑을 생성해야 합니다. 매핑 생성 후 결제 승인을 받으면 스케줄을 등록할 수 있습니다.'
+    LOADING: '매칭 목록을 불러오는 중...',
+    LOAD_FAILED: '매칭 목록을 불러오는데 실패했습니다.',
+    CREATE_SUCCESS: '매칭이 성공적으로 생성되었습니다!',
+    CREATE_FAILED: '매칭 생성에 실패했습니다.',
+    APPROVE_SUCCESS: '매칭이 승인되었습니다.',
+    APPROVE_FAILED: '매칭 승인에 실패했습니다.',
+    REJECT_SUCCESS: '매칭이 거부되었습니다.',
+    REJECT_FAILED: '매칭 거부에 실패했습니다.',
+    NO_MAPPINGS: '매칭이 없습니다',
+    NO_MAPPINGS_DESC: '새로운 매칭을 생성해보세요.',
+    MAPPING_REQUIRED: '매칭된 내담자가 없습니다',
+    MAPPING_REQUIRED_DESC: '스케줄을 생성하려면 먼저 상담사와 내담자 간의 매칭을 생성해야 합니다. 매칭 생성 후 결제 승인을 받으면 스케줄을 등록할 수 있습니다.'
 };

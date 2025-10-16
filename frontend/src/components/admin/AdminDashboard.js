@@ -387,43 +387,43 @@ const AdminDashboard = ({ user: propUser }) => {
         }
     };
 
-    // 중복 매핑 통합 처리
+    // 중복 매칭 통합 처리
     const handleMergeDuplicateMappings = async () => {
         try {
-            // 먼저 중복 매핑 조회
+            // 먼저 중복 매칭 조회
             const checkResponse = await fetch('/api/admin/duplicate-mappings');
             if (!checkResponse.ok) {
-                showToast('중복 매핑 조회에 실패했습니다.', 'danger');
+                showToast('중복 매칭 조회에 실패했습니다.', 'danger');
                 return;
             }
             
             const checkResult = await checkResponse.json();
             if (checkResult.count === 0) {
-                showToast('중복된 매핑이 없습니다.');
+                showToast('중복된 매칭이 없습니다.');
                 return;
             }
             
             // 사용자 확인
-            const confirmMessage = `중복된 매핑이 ${checkResult.count}개 발견되었습니다. 통합하시겠습니까?`;
+            const confirmMessage = `중복된 매칭이 ${checkResult.count}개 발견되었습니다. 통합하시겠습니까?`;
             if (!window.confirm(confirmMessage)) {
                 return;
             }
             
-            // 중복 매핑 통합 실행
+            // 중복 매칭 통합 실행
             const response = await csrfTokenManager.post('/api/admin/merge-duplicate-mappings');
 
             if (response.ok) {
                 const result = await response.json();
-                showToast(result.message || '중복 매핑 통합이 완료되었습니다.');
+                showToast(result.message || '중복 매칭 통합이 완료되었습니다.');
                 loadStats(); // 통계 새로고침
                 loadRefundStats(); // 환불 통계 새로고침
             } else {
                 const error = await response.json();
-                showToast(error.message || '중복 매핑 통합에 실패했습니다.', 'danger');
+                showToast(error.message || '중복 매칭 통합에 실패했습니다.', 'danger');
             }
         } catch (error) {
-            console.error('중복 매핑 통합 실패:', error);
-            showToast('중복 매핑 통합에 실패했습니다.', 'danger');
+            console.error('중복 매칭 통합 실패:', error);
+            showToast('중복 매칭 통합에 실패했습니다.', 'danger');
         }
     };
 
@@ -631,17 +631,17 @@ const AdminDashboard = ({ user: propUser }) => {
                     <StatCard
                         icon={<Link2 />}
                         value={stats.totalMappings}
-                        label="매핑"
+                        label="매칭"
                     />
                     <StatCard
                         icon={<CheckCircle />}
                         value={stats.activeMappings}
-                        label="활성 매핑"
+                        label="활성 매칭"
                     />
                 </div>
             </DashboardSection>
 
-                {/* 입금 확인 대기 알림 - 매핑 관리 권한이 있는 사용자만 표시 */}
+                {/* 입금 확인 대기 알림 - 매칭 관리 권한이 있는 사용자만 표시 */}
                 {(() => {
                     const canViewPendingDeposits = PermissionChecks.canViewMappings(userPermissions);
                     console.log('🔍 입금 확인 대기 알림 권한 체크:', {
@@ -653,7 +653,7 @@ const AdminDashboard = ({ user: propUser }) => {
                 })() && pendingDepositStats.count > 0 && (
                     <DashboardSection
                         title="입금 확인 대기 알림"
-                        subtitle="결제 확인 완료, 입금 대기 중인 매핑"
+                        subtitle="결제 확인 완료, 입금 대기 중인 매칭"
                         icon={<AlertTriangle />}
                     >
                         <div className="mg-stats-grid">
@@ -931,8 +931,8 @@ const AdminDashboard = ({ user: propUser }) => {
                             <div className="mg-management-icon">
                                 <FaLink />
                             </div>
-                            <h3>매핑 관리</h3>
-                            <p className="mg-management-description">상담사와 내담자 매핑을 관리합니다</p>
+                            <h3>매칭 관리</h3>
+                            <p className="mg-management-description">상담사와 내담자 매칭을 관리합니다</p>
                         </div>
                     )}
                     
@@ -948,8 +948,8 @@ const AdminDashboard = ({ user: propUser }) => {
                         <div className="mg-management-icon">
                             <FaCompressAlt />
                         </div>
-                        <h3>중복 매핑 통합</h3>
-                        <p className="mg-management-description">중복된 상담사-내담자 매핑을 통합합니다</p>
+                        <h3>중복 매칭 통합</h3>
+                        <p className="mg-management-description">중복된 상담사-내담자 매칭을 통합합니다</p>
                     </div>
                 </div>
             </DashboardSection>

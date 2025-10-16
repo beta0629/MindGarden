@@ -5,8 +5,8 @@ import { getCommonCodes } from '../../utils/commonCodeUtils';
 import './MappingEditModal.css';
 
 /**
- * 매핑 수정 모달 컴포넌트
- * - 매핑의 패키지명, 가격, 총 회기 수를 수정할 수 있음
+ * 매칭 수정 모달 컴포넌트
+ * - 매칭의 패키지명, 가격, 총 회기 수를 수정할 수 있음
  * - ERP 연동을 통한 자동 업데이트
  * 
  * @author MindGarden
@@ -23,7 +23,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
-    // 매핑 데이터가 변경될 때 폼 초기화
+    // 매칭 데이터가 변경될 때 폼 초기화
     useEffect(() => {
         if (mapping && isOpen) {
             setFormData({
@@ -152,7 +152,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
     };
 
     /**
-     * 매핑 수정 처리
+     * 매칭 수정 처리
      */
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -164,12 +164,12 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         setLoading(true);
 
         try {
-            console.log('🔄 매핑 수정 요청:', {
+            console.log('🔄 매칭 수정 요청:', {
                 mappingId: mapping.id,
                 formData
             });
 
-            // PUT 요청으로 매핑 수정 (백엔드의 @PutMapping("/mappings/{id}") 엔드포인트 사용)
+            // PUT 요청으로 매칭 수정 (백엔드의 @PutMapping("/mappings/{id}") 엔드포인트 사용)
             const response = await fetch(`/api/admin/mappings/${mapping.id}`, {
                 method: 'PUT',
                 headers: {
@@ -185,16 +185,16 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
             const result = await response.json();
 
             if (result.success) {
-                notificationManager.show(result.message || '매핑 정보가 성공적으로 수정되었습니다.', 'success');
+                notificationManager.show(result.message || '매칭 정보가 성공적으로 수정되었습니다.', 'success');
                 onSuccess && onSuccess(result.data);
                 onClose();
             } else {
-                notificationManager.show(result.message || '매핑 수정에 실패했습니다.', 'error');
+                notificationManager.show(result.message || '매칭 수정에 실패했습니다.', 'error');
             }
 
         } catch (error) {
-            console.error('❌ 매핑 수정 실패:', error);
-            notificationManager.show('매핑 수정 중 오류가 발생했습니다.', 'error');
+            console.error('❌ 매칭 수정 실패:', error);
+            notificationManager.show('매칭 수정 중 오류가 발생했습니다.', 'error');
         } finally {
             setLoading(false);
         }
@@ -223,7 +223,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
         <div className="mapping-edit-modal-overlay">
             <div className="mapping-edit-modal">
                 <div className="mapping-edit-modal-header">
-                    <h2>매핑 정보 수정</h2>
+                    <h2>매칭 정보 수정</h2>
                     <button 
                         className="close-btn" 
                         onClick={handleClose}
@@ -234,7 +234,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                 </div>
 
                 <div className="mapping-edit-modal-body">
-                    {/* 매핑 정보 표시 */}
+                    {/* 매칭 정보 표시 */}
                     <div className="mapping-info-display">
                         <div className="info-row">
                             <span className="label">상담사:</span>
@@ -320,7 +320,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                             <div className="warning-content">
                                 <strong>주의사항:</strong>
                                 <ul>
-                                    <li>매핑 정보 수정 시 ERP 시스템의 모든 관련 데이터가 자동으로 업데이트됩니다.</li>
+                                    <li>매칭 정보 수정 시 ERP 시스템의 모든 관련 데이터가 자동으로 업데이트됩니다.</li>
                                     <li>회기 수 변경 시 남은 회기 수와 사용된 회기 수가 재계산됩니다.</li>
                                     <li>가격 변경 시 회계 데이터가 자동으로 반영됩니다.</li>
                                 </ul>

@@ -4,9 +4,9 @@ import MappingPaymentModal from './MappingPaymentModal';
 import MappingDepositModal from './MappingDepositModal';
 
 /**
- * 매핑 카드 컴포넌트 (디자인 시스템 v2.0 적용)
- * - 개별 매핑 정보를 카드 형태로 표시
- * - 매핑 상태, 참여자 정보, 세션 정보 등 표시
+ * 매칭 카드 컴포넌트 (디자인 시스템 v2.0 적용)
+ * - 개별 매칭 정보를 카드 형태로 표시
+ * - 매칭 상태, 참여자 정보, 세션 정보 등 표시
  * - 디자인 시스템 클래스 사용
  * 
  * @author MindGarden
@@ -117,7 +117,7 @@ const MappingCard = ({
 
             {/* 카드 본문 */}
             <div className="mg-card-body">
-                {/* 매핑 정보 */}
+                {/* 매칭 정보 */}
                 <div className="mg-mapping-info">
                     <div className="mg-info-row">
                         <div className="mg-info-item">

@@ -1,4 +1,4 @@
-/* 매핑 수정 모달 스타일 */
+/* 매칭 수정 모달 스타일 */
 .mapping-edit-modal-overlay {
     position: fixed;
     top: 0;
@@ -86,7 +86,7 @@
     overflow-y: auto;
 }
 
-/* 매핑 정보 표시 */
+/* 매칭 정보 표시 */
 .mapping-info-display {
     background: var(--color-bg-secondary, #f8f9fa);
     border-radius: var(--border-radius-md);

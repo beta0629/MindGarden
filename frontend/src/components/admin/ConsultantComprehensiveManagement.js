@@ -18,7 +18,7 @@ import './ConsultantComprehensiveManagement.css';
  * - 상담사 정보 종합 조회
  * - 상담 이력 관리
  * - 스케줄 현황 관리
- * - 내담자 매핑 관리
+ * - 내담자 매칭 관리
  * - 통계 및 분석
  * 
  * @author MindGarden
@@ -175,7 +175,7 @@ const ConsultantComprehensiveManagement = () => {
     };
 
     /**
-     * 매핑 목록 로드
+     * 매칭 목록 로드
      */
     const loadMappings = async () => {
         try {
@@ -184,7 +184,7 @@ const ConsultantComprehensiveManagement = () => {
                 setMappings(response.data || []);
             }
         } catch (error) {
-            console.error('매핑 목록 로드 실패:', error);
+            console.error('매칭 목록 로드 실패:', error);
         }
     };
 
@@ -487,9 +487,9 @@ const ConsultantComprehensiveManagement = () => {
                 let warningMessage = `⚠️ 다음 사유로 인해 다른 상담사로 이전이 필요합니다:\n\n`;
                 
                 if (details.activeMappingCount > 0) {
-                    warningMessage += `• 활성 매핑: ${details.activeMappingCount}개\n`;
+                    warningMessage += `• 활성 매칭: ${details.activeMappingCount}개\n`;
                     if (details.mappedClients && details.mappedClients.length > 0) {
-                        warningMessage += `  - 매핑된 내담자: ${details.mappedClients.map(c => c.clientName).join(', ')}\n`;
+                        warningMessage += `  - 매칭된 내담자: ${details.mappedClients.map(c => c.clientName).join(', ')}\n`;
                     }
                 }
                 
@@ -645,7 +645,7 @@ const ConsultantComprehensiveManagement = () => {
     };
 
     /**
-     * 선택된 상담사의 매핑 정보
+     * 선택된 상담사의 매칭 정보
      */
     const getConsultantMappings = () => {
         if (!selectedConsultant) return [];
@@ -668,7 +668,7 @@ const ConsultantComprehensiveManagement = () => {
             return await getUserStatusKoreanName(status);
         } catch (error) {
             console.error(`상태 한글명 조회 실패: ${status}`, error);
-            // fallback 매핑
+            // fallback 매칭
             const statusMap = {
                 'ACTIVE': '활성',
                 'INACTIVE': '비활성',
@@ -698,7 +698,7 @@ const ConsultantComprehensiveManagement = () => {
             return await getStatusColor(status, 'STATUS');
         } catch (error) {
             console.error(`상태 색상 조회 실패: ${status}`, error);
-            // fallback 매핑
+            // fallback 매칭
             const colorMap = {
                 'ACTIVE': '#10b981',
                 'INACTIVE': '#6b7280',
@@ -784,7 +784,7 @@ const ConsultantComprehensiveManagement = () => {
                             <div className="consultant-comp-stat-icon">🔗</div>
                             <div className="consultant-comp-stat-content">
                                 <div className="consultant-comp-stat-number">{stats.activeMappings}</div>
-                                <div className="consultant-comp-stat-label">활성 매핑</div>
+                                <div className="consultant-comp-stat-label">활성 매칭</div>
                             </div>
                         </div>
                         <div className="consultant-comp-stat-card">
@@ -866,7 +866,7 @@ const ConsultantComprehensiveManagement = () => {
                                             className={`tab-btn ${activeTab === 'mappings' ? 'active' : ''}`}
                                             onClick={() => setActiveTab('mappings')}
                                         >
-                                            매핑 정보
+                                            매칭 정보
                                         </button>
                                         <button
                                             className={`tab-btn ${activeTab === 'schedules' ? 'active' : ''}`}
@@ -1190,7 +1190,7 @@ const ConsultantComprehensiveManagement = () => {
                                                 color: deletionStatus?.requiresTransfer ? '#856404' : '#495057',
                                                 margin: '0 0 16px 0'
                                             }}>
-                                                {deletionStatus?.requiresTransfer ? '⚠️ 매핑 및 스케줄 이전 (필수)' : '📋 매핑 및 스케줄 이전 (선택사항)'}
+                                                {deletionStatus?.requiresTransfer ? '⚠️ 매칭 및 스케줄 이전 (필수)' : '📋 매칭 및 스케줄 이전 (선택사항)'}
                                             </h4>
                                             
                                             {deletionStatus?.requiresTransfer && (
@@ -1204,7 +1204,7 @@ const ConsultantComprehensiveManagement = () => {
                                                 }}>
                                                     <strong>이전이 필요한 데이터:</strong><br/>
                                                     {deletionStatus.details.activeMappingCount > 0 && (
-                                                        <>• 활성 매핑: {deletionStatus.details.activeMappingCount}개<br/></>
+                                                        <>• 활성 매칭: {deletionStatus.details.activeMappingCount}개<br/></>
                                                     )}
                                                     {deletionStatus.details.todayScheduleCount > 0 && (
                                                         <>• 오늘 스케줄: {deletionStatus.details.todayScheduleCount}개<br/></>
@@ -1288,7 +1288,7 @@ const ConsultantComprehensiveManagement = () => {
                                                     fontSize: 'var(--font-size-sm)',
                                                     color: '#1565c0'
                                                 }}>
-                                                    💡 선택된 상담사로 모든 활성 매핑과 예정된 스케줄이 자동으로 이전됩니다.
+                                                    💡 선택된 상담사로 모든 활성 매칭과 예정된 스케줄이 자동으로 이전됩니다.
                                                 </div>
                                             )}
                                         </div>

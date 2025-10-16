@@ -4,7 +4,7 @@ import { MAPPING_FILTER_OPTIONS } from '../../../constants/mapping';
 import './MappingFilters.css';
 
 /**
- * 매핑 필터 컴포넌트
+ * 매칭 필터 컴포넌트
  * - 상태별 필터링
  * - 검색 기능
  * - 필터 초기화

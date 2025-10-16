@@ -16,7 +16,7 @@ import SimpleLayout from '../layout/SimpleLayout';
  * - 내담자 정보 종합 조회
  * - 상담 이력 관리
  * - 회기 현황 관리
- * - 상담사 매핑 관리
+ * - 상담사 매칭 관리
  * - 통계 및 분석
  * 
  * @author MindGarden
@@ -130,7 +130,7 @@ const ClientComprehensiveManagement = () => {
         try {
             console.log('🔍 통합 내담자 데이터 로드 시작');
             
-            // 통합 내담자 데이터 API 사용 (매핑 정보 포함)
+            // 통합 내담자 데이터 API 사용 (매칭 정보 포함)
             const response = await apiGet('/api/admin/clients/with-mapping-info');
             console.log('📊 통합 내담자 데이터 응답:', response);
             
@@ -196,7 +196,7 @@ const ClientComprehensiveManagement = () => {
     };
 
     /**
-     * 매핑 목록 로드
+     * 매칭 목록 로드
      */
     const loadMappings = async () => {
         try {
@@ -205,7 +205,7 @@ const ClientComprehensiveManagement = () => {
                 setMappings(response.data || []);
             }
         } catch (error) {
-            console.error('매핑 목록 로드 실패:', error);
+            console.error('매칭 목록 로드 실패:', error);
         }
     };
 
@@ -293,7 +293,7 @@ const ClientComprehensiveManagement = () => {
     };
 
     /**
-     * 선택된 내담자의 매핑 정보
+     * 선택된 내담자의 매칭 정보
      */
     const getClientMapping = () => {
         if (!selectedClient) return null;
@@ -316,7 +316,7 @@ const ClientComprehensiveManagement = () => {
             return '알 수 없음';
         }
         
-        // fallback 매핑
+        // fallback 매칭
         const statusMap = {
             'ACTIVE': '활성',
             'INACTIVE': '비활성',
@@ -341,11 +341,11 @@ const ClientComprehensiveManagement = () => {
             'HQ_ADMIN': '본사 관리자',
             'SUPER_HQ_ADMIN': '본사 슈퍼 관리자',
             'HQ_MASTER': '본사 마스터',
-            'HAS_MAPPING': '매핑 있음',
-            'ACTIVE_MAPPING': '활성 매핑',
-            'NO_MAPPING': '매핑 없음',
-            'PENDING_MAPPING': '매핑 대기',
-            'INACTIVE_MAPPING': '비활성 매핑'
+            'HAS_MAPPING': '매칭 있음',
+            'ACTIVE_MAPPING': '활성 매칭',
+            'NO_MAPPING': '매칭 없음',
+            'PENDING_MAPPING': '매칭 대기',
+            'INACTIVE_MAPPING': '비활성 매칭'
         };
         return statusMap[status] || status || '알 수 없음';
     }, []);
@@ -381,7 +381,7 @@ const ClientComprehensiveManagement = () => {
             return '브론즈';
         }
         
-        // fallback 매핑
+        // fallback 매칭
         const gradeMap = {
             'CLIENT_BRONZE': '브론즈',
             'CLIENT_SILVER': '실버',
@@ -418,7 +418,7 @@ const ClientComprehensiveManagement = () => {
             return '🥉';
         }
         
-        // fallback 매핑
+        // fallback 매칭
         const iconMap = {
             'CLIENT_BRONZE': '🥉',
             'CLIENT_SILVER': '🥈',
@@ -467,7 +467,7 @@ const ClientComprehensiveManagement = () => {
             }
         } catch (error) {
             console.error(`상태 색상 조회 실패: ${status}`, error);
-            // fallback 매핑
+            // fallback 매칭
             const colorMap = {
                 'ACTIVE': '#7bc87b',
                 'INACTIVE': '#a8e6a3',
@@ -628,7 +628,7 @@ const ClientComprehensiveManagement = () => {
                 if (details.remainingSessionCount > 0) {
                     warningMessage += `• 남은 회기: ${details.remainingSessionCount}회\n`;
                     details.sessionMappings?.forEach(mapping => {
-                        warningMessage += `  - ${mapping.consultantName}와의 매핑: ${mapping.remainingSessions}회 남음\n`;
+                        warningMessage += `  - ${mapping.consultantName}와의 매칭: ${mapping.remainingSessions}회 남음\n`;
                     });
                     warningMessage += '\n';
                 }
@@ -711,7 +711,7 @@ const ClientComprehensiveManagement = () => {
     };
 
     /**
-     * 매핑 선택/해제
+     * 매칭 선택/해제
      */
     const handleMappingSelection = (mappingId) => {
         setSelectedMappings(prev => {
@@ -729,7 +729,7 @@ const ClientComprehensiveManagement = () => {
     const handleRefundProcess = async () => {
         // 상세한 유효성 검사와 피드백
         if (selectedMappings.length === 0) {
-            notificationManager.warning('⚠️ 환불할 매핑을 최소 1개 이상 선택해주세요.');
+            notificationManager.warning('⚠️ 환불할 매칭을 최소 1개 이상 선택해주세요.');
             return;
         }
 
@@ -744,7 +744,7 @@ const ClientComprehensiveManagement = () => {
         }
 
         // 최종 확인
-        const confirmMessage = `다음 ${selectedMappings.length}개의 매핑을 환불 처리하시겠습니까?\n\n환불 사유: ${refundReason.trim()}\n\n이 작업은 되돌릴 수 없습니다.`;
+        const confirmMessage = `다음 ${selectedMappings.length}개의 매칭을 환불 처리하시겠습니까?\n\n환불 사유: ${refundReason.trim()}\n\n이 작업은 되돌릴 수 없습니다.`;
         if (!window.confirm(confirmMessage)) {
             return;
         }
@@ -752,14 +752,14 @@ const ClientComprehensiveManagement = () => {
         try {
             setLoading(true);
 
-            // 선택된 매핑들을 순차적으로 강제 종료
+            // 선택된 매칭들을 순차적으로 강제 종료
             for (const mappingId of selectedMappings) {
                 await apiPost(`/api/admin/mappings/${mappingId}/terminate`, {
                     reason: refundReason
                 });
             }
 
-            notificationManager.success(`${selectedMappings.length}개의 매핑이 환불 처리되었습니다. 관련 스케줄도 자동으로 취소됩니다.`);
+            notificationManager.success(`${selectedMappings.length}개의 매칭이 환불 처리되었습니다. 관련 스케줄도 자동으로 취소됩니다.`);
             handleCloseRefundModal();
             
             // 데이터 새로고침 및 스케줄 컴포넌트 알림
@@ -1050,7 +1050,7 @@ const ClientComprehensiveManagement = () => {
                         <div style={{
                             fontSize: 'var(--font-size-sm)',
                             color: '#6c757d'
-                        }}>활성 매핑</div>
+                        }}>활성 매칭</div>
                     </div>
                 </div>
                 <div style={{
@@ -1345,7 +1345,7 @@ const ClientComprehensiveManagement = () => {
                                                         fontWeight: '500',
                                                         color: '#6c757d',
                                                         backgroundColor: '#f8f9fa'
-                                                    }}>매핑 없음</span>
+                                                    }}>매칭 없음</span>
                                                 )}
                                             </div>
                                         </div>
@@ -1454,7 +1454,7 @@ const ClientComprehensiveManagement = () => {
                                     }}
                                     onClick={() => setActiveTab('mapping')}
                                 >
-                                    매핑 정보
+                                    매칭 정보
                                 </button>
                                 <button
                                     style={{
@@ -1553,7 +1553,7 @@ const ClientComprehensiveManagement = () => {
                                                     <span className="value">{getClientMapping().consultantName || '알 수 없음'}</span>
                                                 </div>
                                                 <div className="info-item">
-                                                    <span className="label">매핑 상태:</span>
+                                                    <span className="label">매칭 상태:</span>
                                                     <span
                                                         className="value status-badge"
                                                         style={{ backgroundColor: getStatusColorSync(getClientMapping().status) }}
@@ -1562,7 +1562,7 @@ const ClientComprehensiveManagement = () => {
                                                     </span>
                                                 </div>
                                                 <div className="info-item">
-                                                    <span className="label">매핑일:</span>
+                                                    <span className="label">매칭일:</span>
                                                     <span className="value">
                                                         {getClientMapping().createdAt ? 
                                                             new Date(getClientMapping().createdAt).toLocaleDateString('ko-KR') : 
@@ -1574,7 +1574,7 @@ const ClientComprehensiveManagement = () => {
                                         </div>
                                     ) : (
                                         <div className="no-mapping">
-                                            <p>이 내담자에 대한 상담사 매핑이 없습니다.</p>
+                                            <p>이 내담자에 대한 상담사 매칭이 없습니다.</p>
                                         </div>
                                     )}
                                 </div>
@@ -1949,7 +1949,7 @@ const ClientComprehensiveManagement = () => {
                                                                 color: 'white',
                                                                 backgroundColor: '#6c757d'
                                                             }}>
-                                                                매핑 없음
+                                                                매칭 없음
                                                             </span>
                                                         )}
                                                     </div>
@@ -2216,10 +2216,10 @@ const ClientComprehensiveManagement = () => {
                         {/* 모달 내용 */}
                         <div className="mg-modal-body">
                             <p className="mg-text-sm mg-text-muted mg-mb-lg">
-                                환불할 매핑을 선택하고 환불 사유를 입력해주세요. 선택된 매핑의 남은 회기가 모두 환불 처리됩니다.
+                                환불할 매칭을 선택하고 환불 사유를 입력해주세요. 선택된 매칭의 남은 회기가 모두 환불 처리됩니다.
                             </p>
 
-                            {/* 매핑 목록 */}
+                            {/* 매칭 목록 */}
                             <div style={{ marginBottom: '20px' }}>
                                 <h4 style={{
                                     margin: '0 0 12px 0',
@@ -2227,7 +2227,7 @@ const ClientComprehensiveManagement = () => {
                                     fontWeight: '600',
                                     color: '#343a40'
                                 }}>
-                                    환불 대상 매핑 선택
+                                    환불 대상 매칭 선택
                                 </h4>
                                 {refundMappings.map(mapping => (
                                     <div key={mapping.mappingId} style={{
@@ -2254,7 +2254,7 @@ const ClientComprehensiveManagement = () => {
                                                     color: '#343a40',
                                                     marginBottom: '4px'
                                                 }}>
-                                                    {mapping.consultantName}와의 매핑
+                                                    {mapping.consultantName}와의 매칭
                                                 </div>
                                                 <div style={{
                                                     fontSize: 'var(--font-size-xs)',
@@ -2292,7 +2292,7 @@ const ClientComprehensiveManagement = () => {
                                         marginTop: '8px',
                                         fontWeight: '500'
                                     }}>
-                                        ⚠️ 환불할 매핑을 최소 1개 이상 선택해주세요.
+                                        ⚠️ 환불할 매칭을 최소 1개 이상 선택해주세요.
                                     </div>
                                 )}
                             </div>
@@ -2369,7 +2369,7 @@ const ClientComprehensiveManagement = () => {
                                 onClick={(e) => {
                                     // 비활성화된 상태에서 클릭 시 안내 메시지
                                     if (selectedMappings.length === 0) {
-                                        notificationManager.warning('⚠️ 환불할 매핑을 먼저 선택해주세요.');
+                                        notificationManager.warning('⚠️ 환불할 매칭을 먼저 선택해주세요.');
                                         return;
                                     }
                                     if (!refundReason.trim()) {

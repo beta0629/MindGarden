@@ -132,7 +132,7 @@ export const getStatusColor = async (codeValue, groupName) => {
             // 정확한 매칭 먼저 시도
             let code = response.find(c => c.codeValue === codeValue);
             
-            // 정확한 매칭이 없으면 매핑 테이블 사용 (MAPPING_STATUS인 경우)
+            // 정확한 매칭이 없으면 매칭 테이블 사용 (MAPPING_STATUS인 경우)
             if (!code && groupName === 'MAPPING_STATUS') {
                 const statusMapping = {
                     'ACTIVE': 'ACTIVE_MAPPING',
@@ -155,7 +155,7 @@ export const getStatusColor = async (codeValue, groupName) => {
         console.error('상태별 색상 조회 실패:', error);
     }
     
-    // 기본 색상 매핑 (fallback) - 확장된 매핑
+    // 기본 색상 매칭 (fallback) - 확장된 매칭
     const defaultColorMap = {
         // 스케줄 상태
         'AVAILABLE': '#e5e7eb',
@@ -170,7 +170,7 @@ export const getStatusColor = async (codeValue, groupName) => {
         'NO_SHOW': '#dc2626',
         'MAINTENANCE': '#6b7280',
         
-        // 매핑 상태
+        // 매칭 상태
         'PENDING_PAYMENT': '#ffc107',
         'PAYMENT_CONFIRMED': '#17a2b8',
         'ACTIVE': '#28a745',
@@ -204,7 +204,7 @@ export const getStatusIcon = async (codeValue, groupName) => {
             // 정확한 매칭 먼저 시도
             let code = response.find(c => c.codeValue === codeValue);
             
-            // 정확한 매칭이 없으면 매핑 테이블 사용 (MAPPING_STATUS인 경우)
+            // 정확한 매칭이 없으면 매칭 테이블 사용 (MAPPING_STATUS인 경우)
             if (!code && groupName === 'MAPPING_STATUS') {
                 const statusMapping = {
                     'ACTIVE': 'ACTIVE_MAPPING',
@@ -227,7 +227,7 @@ export const getStatusIcon = async (codeValue, groupName) => {
         console.error('상태별 아이콘 조회 실패:', error);
     }
     
-    // 기본 아이콘 매핑 (fallback) - 확장된 매핑
+    // 기본 아이콘 매칭 (fallback) - 확장된 매칭
     const defaultIconMap = {
         // 스케줄 상태
         'AVAILABLE': '⚪',
@@ -242,7 +242,7 @@ export const getStatusIcon = async (codeValue, groupName) => {
         'NO_SHOW': '👻',
         'MAINTENANCE': '🔧',
         
-        // 매핑 상태
+        // 매칭 상태
         'PENDING_PAYMENT': '⏳',
         'PAYMENT_CONFIRMED': '💰',
         'ACTIVE': '✅',
@@ -332,7 +332,7 @@ export const getUserStatusKoreanName = async (status) => {
         console.error('사용자 상태 한글명 조회 실패:', error);
     }
     
-    // 기본 매핑 (fallback)
+    // 기본 매칭 (fallback)
     const defaultStatusMap = {
         'ACTIVE': '활성',
         'INACTIVE': '비활성',
@@ -366,7 +366,7 @@ export const getUserGradeKoreanName = async (grade) => {
         console.error('사용자 등급 한글명 조회 실패:', error);
     }
     
-    // 기본 매핑 (fallback)
+    // 기본 매칭 (fallback)
     const defaultGradeMap = {
         'CLIENT_BRONZE': '브론즈',
         'CLIENT_SILVER': '실버',
@@ -402,7 +402,7 @@ export const getUserGradeIcon = async (grade) => {
         console.error('사용자 등급 아이콘 조회 실패:', error);
     }
     
-    // 기본 매핑 (fallback)
+    // 기본 매칭 (fallback)
     const defaultGradeIconMap = {
         'CLIENT_BRONZE': '🥉',
         'CLIENT_SILVER': '🥈',
@@ -423,7 +423,7 @@ export const getUserGradeIcon = async (grade) => {
 };
 
 /**
- * 매핑 상태 한글명 조회 (동적)
+ * 매칭 상태 한글명 조회 (동적)
  */
 export const getMappingStatusKoreanName = async (status) => {
     try {
@@ -432,7 +432,7 @@ export const getMappingStatusKoreanName = async (status) => {
             // 정확한 매칭 먼저 시도
             let code = response.find(c => c.codeValue === status);
             
-            // 정확한 매칭이 없으면 매핑 테이블 사용
+            // 정확한 매칭이 없으면 매칭 테이블 사용
             if (!code) {
                 const statusMapping = {
                     'ACTIVE': 'ACTIVE_MAPPING',
@@ -452,10 +452,10 @@ export const getMappingStatusKoreanName = async (status) => {
             }
         }
     } catch (error) {
-        console.error('매핑 상태 한글명 조회 실패:', error);
+        console.error('매칭 상태 한글명 조회 실패:', error);
     }
     
-    // 기본 매핑 (fallback)
+    // 기본 매칭 (fallback)
     const defaultMappingStatusMap = {
         'PENDING_PAYMENT': '결제 대기',
         'PAYMENT_CONFIRMED': '결제 확인',

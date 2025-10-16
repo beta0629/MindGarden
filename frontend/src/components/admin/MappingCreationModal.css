@@ -1,4 +1,4 @@
-/* 매핑 생성 모달 내부 스타일 (UnifiedModal과 호환) */
+/* 매칭 생성 모달 내부 스타일 (UnifiedModal과 호환) */
 /* MindGarden Design System v2.0 */
 
 /* 단계 표시기 */
@@ -415,7 +415,7 @@ textarea:focus {
     color: var(--medium-gray);
 }
 
-/* 매핑 요약 */
+/* 매칭 요약 */
 .mapping-summary {
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
@@ -610,7 +610,7 @@ textarea:focus {
         margin-bottom: var(--spacing-md);
     }
     
-    /* 매핑 요약 모바일 최적화 */
+    /* 매칭 요약 모바일 최적화 */
     .mapping-summary {
         padding: var(--spacing-md);
         margin-bottom: var(--spacing-md);

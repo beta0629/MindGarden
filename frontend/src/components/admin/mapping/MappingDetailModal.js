@@ -6,8 +6,8 @@ import UnifiedLoading from '../../common/UnifiedLoading';
 import './MappingDetailModal.css';
 
 /**
- * 매핑 상세보기 모달 컴포넌트
- * - 매핑의 모든 정보를 상세히 표시
+ * 매칭 상세보기 모달 컴포넌트
+ * - 매칭의 모든 정보를 상세히 표시
  * - ERP 연동 상태, 금액 일관성 등 확인
  * - 거래 내역, 변경 이력 등 표시
  */
@@ -32,7 +32,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                 setDetailInfo(response.data);
             }
         } catch (error) {
-            console.error('매핑 상세 정보 로드 실패:', error);
+            console.error('매칭 상세 정보 로드 실패:', error);
         } finally {
             setLoading(false);
         }
@@ -92,7 +92,7 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                 <div className="mg-modal-header">
                     <h2 className="mg-modal-title">
                         <Info size={24} />
-                        매핑 상세 정보
+                        매칭 상세 정보
                     </h2>
                     <button 
                         className="mg-modal-close"
@@ -161,10 +161,10 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                             {activeTab === 'basic' && (
                                 <div className="basic-info-tab">
                                     <div className="info-section">
-                                        <h4><i className="bi bi-person"></i> 매핑 기본 정보</h4>
+                                        <h4><i className="bi bi-person"></i> 매칭 기본 정보</h4>
                                         <div className="info-grid">
                                             <div className="info-item">
-                                                <label>매핑 ID</label>
+                                                <label>매칭 ID</label>
                                                 <span>#{mapping?.id}</span>
                                             </div>
                                             <div className="info-item">

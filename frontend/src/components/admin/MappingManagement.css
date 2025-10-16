@@ -1,4 +1,4 @@
-/* 매핑 관리 페이지 스타일 */
+/* 매칭 관리 페이지 스타일 */
 .mapping-management {
     padding: var(--spacing-xl);
     max-width: 1200px;
@@ -45,7 +45,7 @@
     overflow: hidden;
 }
 
-/* 매핑 카드 그리드 - 디자인 시스템 적용 */
+/* 매칭 카드 그리드 - 디자인 시스템 적용 */
 .mg-cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
@@ -209,7 +209,7 @@
         padding: var(--spacing-md);
     }
     
-    /* 매핑 카드 모바일 최적화 */
+    /* 매칭 카드 모바일 최적화 */
     .mapping-card-mobile {
         margin: 0;
         border-radius: var(--border-radius-md);
@@ -247,7 +247,7 @@
         font-size: var(--font-size-sm);
     }
     
-    /* 매핑 카드 액션 버튼 모바일 최적화 */
+    /* 매칭 카드 액션 버튼 모바일 최적화 */
     .mapping-card-mobile .action-buttons {
         display: flex;
         flex-direction: column;
@@ -266,7 +266,7 @@
         gap: 6px;
     }
     
-    /* 매핑 카드 정보 섹션 모바일 최적화 */
+    /* 매칭 카드 정보 섹션 모바일 최적화 */
     .mapping-card-mobile .participant-info {
         flex-direction: column;
         gap: var(--spacing-sm);

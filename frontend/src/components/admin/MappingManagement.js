@@ -22,10 +22,10 @@ import MappingEditModal from './MappingEditModal';
 import './MappingManagement.css';
 
 /**
- * 매핑 관리 페이지 컴포넌트
- * - 매핑 목록 조회 및 관리
- * - 매핑 상태 변경 (승인, 거부 등)
- * - 매핑 생성, 수정, 삭제
+ * 매칭 관리 페이지 컴포넌트
+ * - 매칭 목록 조회 및 관리
+ * - 매칭 상태 변경 (승인, 거부 등)
+ * - 매칭 생성, 수정, 삭제
  * 
  * @author MindGarden
  * @version 1.0.0
@@ -59,7 +59,7 @@ const MappingManagement = () => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [detailMapping, setDetailMapping] = useState(null);
     
-    // 매핑 수정 관련 상태
+    // 매칭 수정 관련 상태
     const [showEditModal, setShowEditModal] = useState(false);
     const [editMapping, setEditMapping] = useState(null);
 
@@ -87,7 +87,7 @@ const MappingManagement = () => {
                 setMappings(testData);
             }
         } catch (error) {
-            console.error('매핑 목록 로드 실패:', error);
+            console.error('매칭 목록 로드 실패:', error);
             // 오류 시 테스트 데이터 사용
             const testData = getTestMappings();
             setMappings(testData);
@@ -110,7 +110,7 @@ const MappingManagement = () => {
         return statusMap[status] || status;
     };
 
-    // 상태별 색상 매핑 함수
+    // 상태별 색상 매칭 함수
     const getStatusColor = (status) => {
         const colorMap = {
             'ACTIVE': 'var(--color-success)',           // 녹색 - 활성
@@ -124,7 +124,7 @@ const MappingManagement = () => {
         return colorMap[status] || 'var(--color-primary)';
     };
 
-    // 상태별 아이콘 매핑 함수
+    // 상태별 아이콘 매칭 함수
     const getStatusIcon = (status) => {
         const iconMap = {
             'ACTIVE': '✅',
@@ -138,7 +138,7 @@ const MappingManagement = () => {
         return iconMap[status] || '📋';
     };
 
-    // 매핑 상태 정보 일괄 로드
+    // 매칭 상태 정보 일괄 로드
     const loadMappingStatusInfo = async () => {
         try {
             const response = await apiGet('/api/common-codes/group/MAPPING_STATUS');
@@ -154,7 +154,7 @@ const MappingManagement = () => {
                     };
                 });
                 
-                // 매핑 테이블 추가 (API 코드값과 실제 사용 코드값 간의 매핑)
+                // 매칭 테이블 추가 (API 코드값과 실제 사용 코드값 간의 매칭)
                 const statusMapping = {
                     'ACTIVE': 'ACTIVE_MAPPING',
                     'INACTIVE': 'INACTIVE_MAPPING',
@@ -162,7 +162,7 @@ const MappingManagement = () => {
                     'SESSIONS_EXHAUSTED': 'SESSIONS_EXHAUSTED_MAPPING'
                 };
                 
-                // 매핑 테이블을 통해 추가 매핑 생성
+                // 매칭 테이블을 통해 추가 매칭 생성
                 Object.entries(statusMapping).forEach(([actualStatus, apiStatus]) => {
                     if (statusInfoMap[apiStatus]) {
                         statusInfoMap[actualStatus] = statusInfoMap[apiStatus];
@@ -170,8 +170,8 @@ const MappingManagement = () => {
                 });
                 
                 setMappingStatusInfo(statusInfoMap);
-                console.log('✅ 매핑 상태 정보 로드 완료:', statusInfoMap);
-                console.log('✅ 매핑 상태 정보 키들:', Object.keys(statusInfoMap));
+                console.log('✅ 매칭 상태 정보 로드 완료:', statusInfoMap);
+                console.log('✅ 매칭 상태 정보 키들:', Object.keys(statusInfoMap));
             } else {
                 // 기본값 설정
                 setMappingStatusInfo({
@@ -186,7 +186,7 @@ const MappingManagement = () => {
                 });
             }
         } catch (error) {
-            console.error('매핑 상태 정보 로드 오류:', error);
+            console.error('매칭 상태 정보 로드 오류:', error);
             // 오류 시 기본값 설정
             setMappingStatusInfo({
                 'PENDING_PAYMENT': { label: '입금대기', color: '#ffc107', icon: '⏳' },
@@ -201,7 +201,7 @@ const MappingManagement = () => {
         }
     };
 
-    // 테스트용 매핑 데이터
+    // 테스트용 매칭 데이터
     const getTestMappings = () => {
         return [
             {
@@ -238,7 +238,7 @@ const MappingManagement = () => {
                 packageName: '단기 상담 패키지',
                 packagePrice: 250000,
                 startDate: '2024-12-15T00:00:00',
-                notes: '신규 매핑, 결제 대기 중'
+                notes: '신규 매칭, 결제 대기 중'
             },
             {
                 id: 3,
@@ -274,7 +274,7 @@ const MappingManagement = () => {
                 packageName: '테스트 패키지',
                 packagePrice: 500000,
                 startDate: '2024-12-01T00:00:00',
-                notes: '테스트용 매핑'
+                notes: '테스트용 매칭'
             },
             {
                 id: 5,
@@ -297,7 +297,7 @@ const MappingManagement = () => {
         ];
     };
 
-    // 매핑 승인
+    // 매칭 승인
     const handleApproveMapping = async (mappingId) => {
         try {
             const response = await apiPost(`/api/admin/mappings/${mappingId}/approve`, {
@@ -305,14 +305,14 @@ const MappingManagement = () => {
             });
             
             if (response.success) {
-                notificationManager.success('매핑이 승인되었습니다.');
+                notificationManager.success('매칭이 승인되었습니다.');
                 loadMappings();
             } else {
-                notificationManager.error('매핑 승인에 실패했습니다.');
+                notificationManager.error('매칭 승인에 실패했습니다.');
             }
         } catch (error) {
-            console.error('매핑 승인 실패:', error);
-            notificationManager.error('매핑 승인에 실패했습니다.');
+            console.error('매칭 승인 실패:', error);
+            notificationManager.error('매칭 승인에 실패했습니다.');
         }
     };
 
@@ -328,7 +328,7 @@ const MappingManagement = () => {
         loadMappings();
     };
 
-    // 매핑 거부
+    // 매칭 거부
     const handleRejectMapping = async (mappingId) => {
         try {
             const response = await apiPost(`/api/admin/mappings/${mappingId}/reject`, {
@@ -336,18 +336,18 @@ const MappingManagement = () => {
             });
             
             if (response.success) {
-                notificationManager.success('매핑이 거부되었습니다.');
+                notificationManager.success('매칭이 거부되었습니다.');
                 loadMappings();
             } else {
-                notificationManager.error('매핑 거부에 실패했습니다.');
+                notificationManager.error('매칭 거부에 실패했습니다.');
             }
         } catch (error) {
-            console.error('매핑 거부 실패:', error);
-            notificationManager.error('매핑 거부에 실패했습니다.');
+            console.error('매칭 거부 실패:', error);
+            notificationManager.error('매칭 거부에 실패했습니다.');
         }
     };
 
-    // 매핑 생성 완료 핸들러
+    // 매칭 생성 완료 핸들러
     const handleMappingCreated = () => {
         setShowCreateModal(false);
         loadMappings();
@@ -381,14 +381,14 @@ const MappingManagement = () => {
 
     // 환불 처리 핸들러 (부분 환불)
     const handleRefundMapping = (mapping) => {
-        // ACTIVE 상태이고 남은 회기가 있는 매핑만 환불 가능
+        // ACTIVE 상태이고 남은 회기가 있는 매칭만 환불 가능
         if (mapping.status !== 'ACTIVE') {
-            notificationManager.warning('활성 상태의 매핑만 환불 처리할 수 있습니다.');
+            notificationManager.warning('활성 상태의 매칭만 환불 처리할 수 있습니다.');
             return;
         }
         
         if (mapping.remainingSessions <= 0) {
-            notificationManager.warning('남은 회기가 없는 매핑은 환불 처리할 수 없습니다.');
+            notificationManager.warning('남은 회기가 없는 매칭은 환불 처리할 수 없습니다.');
             return;
         }
 
@@ -429,7 +429,7 @@ const MappingManagement = () => {
             return;
         }
 
-        const confirmMessage = `${refundMapping.clientName}과의 매핑을 환불 처리하시겠습니까?\n\n환불 회기: ${refundMapping.remainingSessions}회\n환불 사유: ${refundReason.trim()}\n\n이 작업은 되돌릴 수 없습니다.`;
+        const confirmMessage = `${refundMapping.clientName}과의 매칭을 환불 처리하시겠습니까?\n\n환불 회기: ${refundMapping.remainingSessions}회\n환불 사유: ${refundReason.trim()}\n\n이 작업은 되돌릴 수 없습니다.`;
         if (!window.confirm(confirmMessage)) {
             return;
         }
@@ -442,7 +442,7 @@ const MappingManagement = () => {
             });
 
             if (response.success) {
-                notificationManager.success('매핑이 환불 처리되었습니다. 관련 스케줄도 자동으로 취소됩니다.');
+                notificationManager.success('매칭이 환불 처리되었습니다. 관련 스케줄도 자동으로 취소됩니다.');
                 handleCloseRefundModal();
                 loadMappings(); // 데이터 새로고침
                 
@@ -467,23 +467,23 @@ const MappingManagement = () => {
         }
     };
 
-    // 매핑 수정 핸들러들
+    // 매칭 수정 핸들러들
     const handleEditMapping = (mapping) => {
         setEditMapping(mapping);
         setShowEditModal(true);
     };
 
     const handleEditSuccess = (updatedData) => {
-        // 매핑 목록 새로고침
+        // 매칭 목록 새로고침
         loadMappings();
         // 수정 모달 닫기
         setShowEditModal(false);
         setEditMapping(null);
     };
 
-    // 매핑 삭제 핸들러
+    // 매칭 삭제 핸들러
     const handleDeleteMapping = async (mapping) => {
-        const confirmMessage = `${mapping.clientName}과의 매핑을 취소하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`;
+        const confirmMessage = `${mapping.clientName}과의 매칭을 취소하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`;
         if (!window.confirm(confirmMessage)) {
             return;
         }
@@ -491,7 +491,7 @@ const MappingManagement = () => {
         try {
             setLoading(true);
             
-            // DELETE 요청으로 매핑 삭제 (동적 권한 시스템 사용)
+            // DELETE 요청으로 매칭 삭제 (동적 권한 시스템 사용)
             const response = await fetch(`/api/admin/mappings/${mapping.id}`, {
                 method: 'DELETE',
                 headers: {
@@ -503,15 +503,15 @@ const MappingManagement = () => {
             const result = await response.json();
 
             if (result.success) {
-                notificationManager.success('매핑이 성공적으로 취소되었습니다.');
+                notificationManager.success('매칭이 성공적으로 취소되었습니다.');
                 loadMappings(); // 데이터 새로고침
             } else {
-                notificationManager.error(result.message || '매핑 취소에 실패했습니다.');
+                notificationManager.error(result.message || '매칭 취소에 실패했습니다.');
             }
 
         } catch (error) {
-            console.error('매핑 삭제 실패:', error);
-            notificationManager.error('매핑 취소에 실패했습니다.');
+            console.error('매칭 삭제 실패:', error);
+            notificationManager.error('매칭 취소에 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -542,27 +542,27 @@ const MappingManagement = () => {
                     );
                     setPendingMappings(pendingMappings);
                     setShowPaymentModal(true);
-                    notificationManager.info(`${stat.label} 매핑의 결제 확인을 진행합니다.`);
+                    notificationManager.info(`${stat.label} 매칭의 결제 확인을 진행합니다.`);
                 } else {
-                    notificationManager.info('결제 대기 중인 매핑이 없습니다.');
+                    notificationManager.info('결제 대기 중인 매칭이 없습니다.');
                 }
                 break;
             case 'view':
-                // 해당 상태의 매핑만 필터링
+                // 해당 상태의 매칭만 필터링
                 setFilterStatus(stat.id);
-                notificationManager.info(`${stat.label} 매핑을 필터링합니다.`);
+                notificationManager.info(`${stat.label} 매칭을 필터링합니다.`);
                 break;
             case 'view_all':
-                // 전체 매핑 표시
+                // 전체 매칭 표시
                 setFilterStatus('ALL');
-                notificationManager.info('전체 매핑을 표시합니다.');
+                notificationManager.info('전체 매칭을 표시합니다.');
                 break;
         }
     };
 
     // 결제 확인 모달 핸들러
     const handlePaymentConfirmed = (updatedMappings) => {
-        // 매핑 목록 새로고침
+        // 매칭 목록 새로고침
         loadMappings();
         setShowPaymentModal(false);
         setPendingMappings([]);
@@ -573,7 +573,7 @@ const MappingManagement = () => {
         setPendingMappings([]);
     };
 
-    // 필터링된 매핑 목록 (최신 순으로 정렬)
+    // 필터링된 매칭 목록 (최신 순으로 정렬)
     const filteredMappings = mappings
         .filter(mapping => {
             const matchesStatus = filterStatus === 'ALL' || mapping.status === filterStatus;
@@ -595,7 +595,7 @@ const MappingManagement = () => {
                 <div className="mapping-management">
                     <div className="loading-container">
                         <UnifiedLoading 
-                            text="매핑 목록을 불러오는 중..." 
+                            text="매칭 목록을 불러오는 중..." 
                             size="large" 
                             type="inline"
                         />
@@ -644,7 +644,7 @@ const MappingManagement = () => {
                             className="btn btn-primary"
                             onClick={() => setShowCreateModal(true)}
                         >
-                            매핑 생성하기
+                            매칭 생성하기
                         </button>
                     </div>
                 ) : (
@@ -669,7 +669,7 @@ const MappingManagement = () => {
                 )}
             </div>
 
-            {/* 매핑 생성 모달 */}
+            {/* 매칭 생성 모달 */}
             <MappingCreationModal
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
@@ -730,7 +730,7 @@ const MappingManagement = () => {
                         <div className="mapping-refund-modal-header">
                             <div className="mapping-refund-modal-header-content">
                                 <h3 className="mapping-refund-modal-title">
-                                    🔄 매핑 환불 처리
+                                    🔄 매칭 환불 처리
                                 </h3>
                                 <button
                                     onClick={handleCloseRefundModal}
@@ -743,10 +743,10 @@ const MappingManagement = () => {
 
                         {/* 모달 내용 */}
                         <div className="mapping-refund-modal-body">
-                            {/* 매핑 정보 */}
+                            {/* 매칭 정보 */}
                             <div className="mapping-refund-info">
                                 <h4 className="mapping-refund-info-title">
-                                    환불 대상 매핑 정보
+                                    환불 대상 매칭 정보
                                 </h4>
                                 <div className="mapping-refund-info-content">
                                     <p><strong>상담사:</strong> {refundMapping.consultantName}</p>
@@ -801,7 +801,7 @@ const MappingManagement = () => {
                 </div>
             )}
 
-            {/* 매핑 수정 모달 */}
+            {/* 매칭 수정 모달 */}
             <MappingEditModal
                 isOpen={showEditModal}
                 onClose={() => {

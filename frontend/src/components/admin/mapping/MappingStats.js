@@ -6,8 +6,8 @@ import {
 } from '../../../utils/codeHelper';
 
 /**
- * 매핑 통계 컴포넌트 (동적 처리 지원)
- * - 매핑 상태별 통계 표시
+ * 매칭 통계 컴포넌트 (동적 처리 지원)
+ * - 매칭 상태별 통계 표시
  * - 시각적 통계 카드
  * - 동적 색상/아이콘 조회
  * 
@@ -96,7 +96,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     Promise.resolve({
                         id: 'TOTAL',
                         icon: '📊',
-                        label: '전체 매핑',
+                        label: '전체 매칭',
                         value: stats.total,
                         color: 'var(--color-primary)',
                         bgColor: 'var(--color-primary-light)',
@@ -147,9 +147,9 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                 ];
                 
                 setStatCards(cardData);
-                console.log('✅ 매핑 통계 카드 동적 로드 완료:', cardData);
+                console.log('✅ 매칭 통계 카드 동적 로드 완료:', cardData);
             } catch (error) {
-                console.error('매핑 통계 카드 로드 실패:', error);
+                console.error('매칭 통계 카드 로드 실패:', error);
                 // 오류 시 기본값 설정
                 setStatCards([
                     {
@@ -164,7 +164,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     {
                         id: 'ACTIVE',
                         icon: '✅',
-                        label: '활성 매핑',
+                        label: '활성 매칭',
                         value: stats.active,
                         color: 'var(--color-success, #28A745)',
                         bgColor: 'var(--color-success-light, rgba(40, 167, 69, 0.1))',
@@ -182,7 +182,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
                     {
                         id: 'TOTAL',
                         icon: '📊',
-                        label: '전체 매핑',
+                        label: '전체 매칭',
                         value: stats.total,
                         color: 'var(--color-primary, #007AFF)',
                         bgColor: 'var(--color-primary-light, rgba(0, 122, 255, 0.1))',
@@ -219,7 +219,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
         return (
             <div className="mapping-stats-container">
                 <div style={{ color: 'var(--color-primary, #007AFF)', fontSize: 'var(--font-size-base)' }}>
-                    매핑 통계를 불러오는 중...
+                    매칭 통계를 불러오는 중...
                 </div>
             </div>
         );
@@ -264,7 +264,7 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
             
             <div className="mg-mapping-stats-summary">
                 <div className="mg-mapping-summary-item">
-                    <span className="mg-mapping-summary-label">총 매핑 수:</span>
+                    <span className="mg-mapping-summary-label">총 매칭 수:</span>
                     <span className="mg-mapping-summary-value">{stats.total}건</span>
                 </div>
                 <div className="mg-mapping-summary-item">

@@ -19,8 +19,8 @@ import {
 import './MappingCreationModal.css';
 
 /**
- * 매핑 생성 모달 컴포넌트
- * - 상담사와 내담자 간의 매핑 생성
+ * 매칭 생성 모달 컴포넌트
+ * - 상담사와 내담자 간의 매칭 생성
  * - 결제 정보 입력
  * - 관리자 승인 대기
  * 
@@ -101,7 +101,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     useEffect(() => {
         if (isOpen && !paymentInfo.paymentReference) {
             const initialReference = generateReferenceNumber(paymentInfo.paymentMethod);
-            console.log('🔧 매핑 생성 모달 - 초기 참조번호 생성:', {
+            console.log('🔧 매칭 생성 모달 - 초기 참조번호 생성:', {
                 method: paymentInfo.paymentMethod,
                 generatedReference: initialReference
             });
@@ -234,7 +234,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         // 상태 필터링
         if (clientFilterStatus !== 'ALL') {
             filtered = filtered.filter(client => {
-                // 내담자의 매핑 상태 확인
+                // 내담자의 매칭 상태 확인
                 const hasMapping = mappings.some(mapping => 
                     mapping.clientId === client.id && mapping.status === clientFilterStatus
                 );
@@ -308,7 +308,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 setMappings(response.data || []);
             }
         } catch (error) {
-            console.error('매핑 로드 실패:', error);
+            console.error('매칭 로드 실패:', error);
         }
     };
 
@@ -391,9 +391,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 mappingType: 'NEW'
             };
 
-            console.log('매핑 생성 데이터:', mappingData);
+            console.log('매칭 생성 데이터:', mappingData);
 
-            // 실제 매핑 생성 API 사용
+            // 실제 매칭 생성 API 사용
             try {
                 // 환경별 API 호출 방식 결정
                 const isProduction = process.env.NODE_ENV === 'production' || 
@@ -417,7 +417,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
 
                 if (response.ok) {
                     const result = await response.json();
-                    console.log('✅ 매핑 생성 성공:', result);
+                    console.log('✅ 매칭 생성 성공:', result);
                     
                     // 상세한 완료 메시지 생성
                     const consultantName = selectedConsultant?.name || '상담사';
@@ -425,7 +425,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     const packageName = paymentInfo.packageName || '패키지';
                     
                     notificationManager.success(
-                        `🎉 매핑이 완료되었습니다!\n` +
+                        `🎉 매칭이 완료되었습니다!\n` +
                         `📋 상담사: ${consultantName}\n` +
                         `👤 내담자: ${clientName}\n` +
                         `📦 패키지: ${packageName}\n` +
@@ -435,11 +435,11 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     setStep(4);
                     if (onMappingCreated) onMappingCreated();
                 } else {
-                    let errorMessage = '매핑 생성에 실패했습니다.';
+                    let errorMessage = '매칭 생성에 실패했습니다.';
                     try {
                         const error = await response.json();
                         errorMessage = error.message || errorMessage;
-                        console.error('❌ 매핑 생성 실패:', error);
+                        console.error('❌ 매칭 생성 실패:', error);
                     } catch (parseError) {
                         console.error('❌ 에러 응답 파싱 실패:', parseError);
                         errorMessage = `서버 오류 (${response.status}): ${response.statusText}`;
@@ -450,13 +450,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 console.error('API 호출 실패:', apiError);
                 // API 실패 시 시뮬레이션으로 성공 처리
                 console.log('API 실패, 시뮬레이션으로 성공 처리');
-                notificationManager.success('매핑이 성공적으로 생성되었습니다! (시뮬레이션)');
+                notificationManager.success('매칭이 성공적으로 생성되었습니다! (시뮬레이션)');
                 setStep(4);
                 if (onMappingCreated) onMappingCreated();
             }
         } catch (error) {
-            console.error('매핑 생성 오류:', error);
-            notificationManager.error('매핑 생성 중 오류가 발생했습니다.');
+            console.error('매칭 생성 오류:', error);
+            notificationManager.error('매칭 생성 중 오류가 발생했습니다.');
         } finally {
             setLoading(false);
         }
@@ -518,7 +518,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     onClick={handleCreateMapping}
                     disabled={loading}
                 >
-                    {loading ? '생성 중...' : '매핑 생성'}
+                    {loading ? '생성 중...' : '매칭 생성'}
                 </button>
             )}
 
@@ -537,7 +537,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         <UnifiedModal
             isOpen={isOpen}
             onClose={handleClose}
-            title="🔗 상담사-내담자 매핑 생성"
+            title="🔗 상담사-내담자 매칭 생성"
             size={getModalSize()}
             variant="form"
             backdropClick={false}
@@ -672,7 +672,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                             className="filter-select"
                                         >
                                             <option value="ALL">전체</option>
-                                            <option value="NO_MAPPING">매핑 없음</option>
+                                            <option value="NO_MAPPING">매칭 없음</option>
                                             <option value="ACTIVE">활성</option>
                                             <option value="INACTIVE">비활성</option>
                                             <option value="TERMINATED">종료됨</option>
@@ -782,7 +782,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                                     packagePrice: selectedPackage.price
                                                 });
                                                 
-                                                // 자동 매핑 성공 알림
+                                                // 자동 매칭 성공 알림
                                                 notificationManager.success(
                                                     `패키지가 선택되었습니다! 세션 수: ${selectedPackage.sessions}회기, 가격: ${selectedPackage.price.toLocaleString()}원`
                                                 );
@@ -817,7 +817,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                         onChange={(e) => {
                                             const selectedMethod = e.target.value;
                                             const referenceNumber = generateReferenceNumber(selectedMethod);
-                                            console.log('🔧 매핑 생성 - 결제 방법 변경:', {
+                                            console.log('🔧 매칭 생성 - 결제 방법 변경:', {
                                                 method: selectedMethod,
                                                 generatedReference: referenceNumber
                                             });
@@ -842,7 +842,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                         type="text"
                                         value={paymentInfo.paymentReference || generateReferenceNumber(paymentInfo.paymentMethod)}
                                         onChange={(e) => {
-                                            console.log('🔧 매핑 생성 - 참조번호 수동 변경:', e.target.value);
+                                            console.log('🔧 매칭 생성 - 참조번호 수동 변경:', e.target.value);
                                             setPaymentInfo({...paymentInfo, paymentReference: e.target.value});
                                         }}
                                         placeholder="자동 생성됩니다 (수정 가능)"
@@ -894,8 +894,8 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                         <div className="step-content">
                             <div className="completion-message">
                                 <div className="success-icon">🎉</div>
-                                <h3>매핑이 완료되었습니다!</h3>
-                                <p>상담사와 내담자 간의 매핑이 성공적으로 생성되었습니다.</p>
+                                <h3>매칭이 완료되었습니다!</h3>
+                                <p>상담사와 내담자 간의 매칭이 성공적으로 생성되었습니다.</p>
                                 <div className="mapping-summary">
                                     <div className="summary-item">
                                         <strong>📋 상담사:</strong> {selectedConsultant?.name}
@@ -920,7 +920,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                                     </div>
                                 </div>
                                 <p className="next-steps">
-                                    ✅ 매핑이 활성화되어 상담 일정을 등록할 수 있습니다.
+                                    ✅ 매칭이 활성화되어 상담 일정을 등록할 수 있습니다.
                                 </p>
                             </div>
                         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { getSpecialtyKoreanName, getSpecialtyKoreanNames } from '../../utils/codeHelper';
+import { getSpecialtyKoreanName, getSpecialtyKoreanNames, truncateSpecialtyText } from '../../utils/codeHelper';
 
 /**
  * 전문분야 표시 공통 컴포넌트
@@ -155,8 +155,7 @@ const SpecialtyDisplay = ({
             );
 
         case 'inline':
-            const inlineText = specialties.join(', ');
-            const displayText = inlineText.length > 50 ? inlineText.substring(0, 47) + '...' : inlineText;
+            const displayText = truncateSpecialtyText(specialties, 50);
             return (
                 <span className={`specialty-display specialty-display--inline ${className}`}>
                     &nbsp;({displayText})

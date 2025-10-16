@@ -547,3 +547,37 @@ export const getSpecialtyFromCommonCode = async (codeValue) => {
         icon: '🎯'
     };
 };
+
+/**
+ * 텍스트 말줄임표 처리 함수
+ * @param {string} text - 원본 텍스트
+ * @param {number} maxLength - 최대 길이 (기본값: 50)
+ * @param {string} suffix - 말줄임표 문자 (기본값: '...')
+ * @returns {string} 처리된 텍스트
+ */
+export const truncateText = (text, maxLength = 50, suffix = '...') => {
+    if (!text || typeof text !== 'string') {
+        return '';
+    }
+    
+    if (text.length <= maxLength) {
+        return text;
+    }
+    
+    return text.substring(0, maxLength - suffix.length) + suffix;
+};
+
+/**
+ * 전문분야 텍스트 말줄임표 처리 (특화된 함수)
+ * @param {Array} specialties - 전문분야 배열
+ * @param {number} maxLength - 최대 길이 (기본값: 50)
+ * @returns {string} 처리된 전문분야 텍스트
+ */
+export const truncateSpecialtyText = (specialties, maxLength = 50) => {
+    if (!specialties || !Array.isArray(specialties) || specialties.length === 0) {
+        return '';
+    }
+    
+    const text = specialties.join(', ');
+    return truncateText(text, maxLength);
+};

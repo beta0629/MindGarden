@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { X, User, Star, Award, Mail, Phone, Calendar, Clock, MessageCircle, TrendingUp } from 'lucide-react';
 import SpecialtyDisplay from './SpecialtyDisplay';
+import { getConsultantRatingInfo } from '../utils/ratingHelper';
 
 /**
  * 상담사 상세 정보 모달
@@ -73,20 +74,12 @@ const ConsultantDetailModal = ({
         return '경력 정보 없음';
     };
 
-    /**
-     * 평점 정보 반환
-     */
-    const getRatingInfo = () => {
-        return {
-            rating: consultant?.averageRating || consultant?.rating || consultant?.score || 0,
-            reviewCount: consultant?.reviewCount || consultant?.totalReviews || consultant?.evaluationCount || 0
-        };
-    };
+    // 평점 정보 계산
+    const ratingInfo = getConsultantRatingInfo(consultant);
 
     if (!isOpen || !consultant) return null;
 
     const portalTarget = document.body || document.createElement('div');
-    const ratingInfo = getRatingInfo();
 
     return ReactDOM.createPortal(
         <div className="mg-modal-overlay" onClick={onClose}>
@@ -136,8 +129,8 @@ const ConsultantDetailModal = ({
                                     <div className="mg-consultant-detail-stat">
                                         <Star size={20} />
                                         <div className="mg-consultant-detail-stat-content">
-                                            <span className="mg-consultant-detail-stat-value">{ratingInfo.rating}</span>
-                                            <span className="mg-consultant-detail-stat-label">평점 ({ratingInfo.reviewCount}명)</span>
+                                            <span className="mg-consultant-detail-stat-value">{ratingInfo.formattedRating}</span>
+                                            <span className="mg-consultant-detail-stat-label">평점 ({ratingInfo.formattedReviewCount})</span>
                                         </div>
                                     </div>
                                     

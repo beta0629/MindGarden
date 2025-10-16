@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, Star, Clock, Phone, Mail, MessageCircle, Calendar, Award, TrendingUp } from 'lucide-react';
 import SpecialtyDisplay from '../SpecialtyDisplay';
 import ConsultantDetailModal from '../ConsultantDetailModal';
+import { getConsultantRatingInfo } from '../../utils/ratingHelper';
 
 /**
  * 공통 상담사 카드 컴포넌트
@@ -24,6 +25,9 @@ const ConsultantCard = ({
     className = ''
 }) => {
     const [showDetailModal, setShowDetailModal] = useState(false);
+    
+    // 평점 정보 계산
+    const ratingInfo = getConsultantRatingInfo(consultant);
     /**
      * 가용성 상태에 따른 클래스명 반환
      */
@@ -110,7 +114,7 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__meta">
                     <div className="mg-consultant-card__rating">
                         <Star size={12} />
-                        <span>{consultant.averageRating || consultant.rating || consultant.score || 0}</span>
+                        <span>{ratingInfo.formattedRating}</span>
                     </div>
                     <div className="mg-consultant-card__slots">
                         {consultant.availableSlots || 0}개 슬롯
@@ -155,10 +159,10 @@ const ConsultantCard = ({
                     <div className="mg-consultant-card__rating">
                         <Star size={16} />
                         <span className="mg-consultant-card__rating-value">
-                            {consultant.averageRating || consultant.rating || consultant.score || 0}
+                            {ratingInfo.formattedRating}
                         </span>
                         <span className="mg-consultant-card__rating-text">
-                            ({consultant.reviewCount || consultant.totalReviews || consultant.evaluationCount || 0}명)
+                            ({ratingInfo.formattedReviewCount})
                         </span>
                     </div>
                     <div className="mg-consultant-card__experience">
@@ -280,7 +284,7 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__rating-mobile">
                     <div className="mg-consultant-card__rating-item">
                         <Star size={14} />
-                        <span>{consultant.averageRating || consultant.rating || consultant.score || 0}</span>
+                        <span>{ratingInfo.formattedRating}</span>
                     </div>
                     <div className="mg-consultant-card__rating-item">
                         <TrendingUp size={14} />
@@ -377,7 +381,7 @@ const ConsultantCard = ({
                 <div className="mg-consultant-card__meta mg-consultant-card__meta--mobile-simple">
                     <div className="mg-consultant-card__rating mg-consultant-card__rating--mobile-simple">
                         <Star size={12} />
-                        <span>{consultant.averageRating || consultant.rating || consultant.score || 0}</span>
+                        <span>{ratingInfo.formattedRating}</span>
                     </div>
                     <span>
                         {consultant.yearsOfExperience ? `${consultant.yearsOfExperience}년` : 

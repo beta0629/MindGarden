@@ -30,6 +30,7 @@ import com.mindgarden.consultation.entity.Schedule;
 import com.mindgarden.consultation.entity.User;
 import com.mindgarden.consultation.repository.CommonCodeRepository;
 import com.mindgarden.consultation.repository.ConsultantClientMappingRepository;
+import com.mindgarden.consultation.repository.ConsultantRepository;
 import com.mindgarden.consultation.repository.FinancialTransactionRepository;
 import com.mindgarden.consultation.repository.ScheduleRepository;
 import com.mindgarden.consultation.repository.UserRepository;
@@ -58,6 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminServiceImpl implements AdminService {
 
     private final UserRepository userRepository;
+    private final ConsultantRepository consultantRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final ScheduleRepository scheduleRepository;
     private final CommonCodeRepository commonCodeRepository;
@@ -939,19 +941,32 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("createdAt", consultant.getCreatedAt());
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
                 
-                // Consultant 엔티티로 캐스팅하여 추가 정보 가져오기
-                if (consultant instanceof Consultant) {
-                    Consultant consultantEntity = (Consultant) consultant;
-                    consultantData.put("currentClients", consultantEntity.getCurrentClients());
-                    consultantData.put("maxClients", consultantEntity.getMaxClients());
-                    consultantData.put("totalClients", consultantEntity.getTotalClients());
-                    consultantData.put("totalConsultations", consultantEntity.getTotalConsultations());
-                    consultantData.put("averageRating", consultantEntity.getAverageRating());
-                    consultantData.put("totalRatings", consultantEntity.getTotalRatings());
-                    consultantData.put("yearsOfExperience", consultantEntity.getYearsOfExperience());
-                    consultantData.put("isAvailable", consultantEntity.getIsAvailable());
-                } else {
-                    // User 엔티티인 경우 기본값 설정
+                // Consultant 엔티티의 추가 정보 가져오기 (안전한 방식)
+                try {
+                    if (consultant instanceof Consultant) {
+                        Consultant consultantEntity = (Consultant) consultant;
+                        consultantData.put("currentClients", consultantEntity.getCurrentClients());
+                        consultantData.put("maxClients", consultantEntity.getMaxClients());
+                        consultantData.put("totalClients", consultantEntity.getTotalClients());
+                        consultantData.put("totalConsultations", consultantEntity.getTotalConsultations());
+                        consultantData.put("averageRating", consultantEntity.getAverageRating());
+                        consultantData.put("totalRatings", consultantEntity.getTotalRatings());
+                        consultantData.put("yearsOfExperience", consultantEntity.getYearsOfExperience());
+                        consultantData.put("isAvailable", consultantEntity.getIsAvailable());
+                    } else {
+                        // User 엔티티인 경우 기본값 설정
+                        consultantData.put("currentClients", 0);
+                        consultantData.put("maxClients", 20);
+                        consultantData.put("totalClients", 0);
+                        consultantData.put("totalConsultations", 0);
+                        consultantData.put("averageRating", 0.0);
+                        consultantData.put("totalRatings", 0);
+                        consultantData.put("yearsOfExperience", 0);
+                        consultantData.put("isAvailable", true);
+                    }
+                } catch (Exception e) {
+                    log.warn("상담사 추가 정보 가져오기 실패: {}", e.getMessage());
+                    // 기본값 설정
                     consultantData.put("currentClients", 0);
                     consultantData.put("maxClients", 20);
                     consultantData.put("totalClients", 0);
@@ -1014,19 +1029,32 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("createdAt", consultant.getCreatedAt());
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
                 
-                // Consultant 엔티티로 캐스팅하여 추가 정보 가져오기
-                if (consultant instanceof Consultant) {
-                    Consultant consultantEntity = (Consultant) consultant;
-                    consultantData.put("currentClients", consultantEntity.getCurrentClients());
-                    consultantData.put("maxClients", consultantEntity.getMaxClients());
-                    consultantData.put("totalClients", consultantEntity.getTotalClients());
-                    consultantData.put("totalConsultations", consultantEntity.getTotalConsultations());
-                    consultantData.put("averageRating", consultantEntity.getAverageRating());
-                    consultantData.put("totalRatings", consultantEntity.getTotalRatings());
-                    consultantData.put("yearsOfExperience", consultantEntity.getYearsOfExperience());
-                    consultantData.put("isAvailable", consultantEntity.getIsAvailable());
-                } else {
-                    // User 엔티티인 경우 기본값 설정
+                // Consultant 엔티티의 추가 정보 가져오기 (안전한 방식)
+                try {
+                    if (consultant instanceof Consultant) {
+                        Consultant consultantEntity = (Consultant) consultant;
+                        consultantData.put("currentClients", consultantEntity.getCurrentClients());
+                        consultantData.put("maxClients", consultantEntity.getMaxClients());
+                        consultantData.put("totalClients", consultantEntity.getTotalClients());
+                        consultantData.put("totalConsultations", consultantEntity.getTotalConsultations());
+                        consultantData.put("averageRating", consultantEntity.getAverageRating());
+                        consultantData.put("totalRatings", consultantEntity.getTotalRatings());
+                        consultantData.put("yearsOfExperience", consultantEntity.getYearsOfExperience());
+                        consultantData.put("isAvailable", consultantEntity.getIsAvailable());
+                    } else {
+                        // User 엔티티인 경우 기본값 설정
+                        consultantData.put("currentClients", 0);
+                        consultantData.put("maxClients", 20);
+                        consultantData.put("totalClients", 0);
+                        consultantData.put("totalConsultations", 0);
+                        consultantData.put("averageRating", 0.0);
+                        consultantData.put("totalRatings", 0);
+                        consultantData.put("yearsOfExperience", 0);
+                        consultantData.put("isAvailable", true);
+                    }
+                } catch (Exception e) {
+                    log.warn("상담사 추가 정보 가져오기 실패: {}", e.getMessage());
+                    // 기본값 설정
                     consultantData.put("currentClients", 0);
                     consultantData.put("maxClients", 20);
                     consultantData.put("totalClients", 0);

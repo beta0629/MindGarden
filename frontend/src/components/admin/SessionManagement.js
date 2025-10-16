@@ -575,7 +575,7 @@ const SessionManagement = () => {
                                 )}
                             </div>
                         )}
-                    </div>
+                    </div>,
 
                     {/* 최근 회기 추가 요청 섹션 */}
                     <div className="mg-session-section">

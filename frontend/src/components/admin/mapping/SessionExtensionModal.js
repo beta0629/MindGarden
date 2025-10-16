@@ -4,6 +4,7 @@ import { Plus, X, Calendar } from 'lucide-react';
 import notificationManager from '../../../utils/notification';
 import csrfTokenManager from '../../../utils/csrfTokenManager';
 import PackageSelector from '../../common/PackageSelector';
+import './SessionExtensionModal.css';
 
 /**
  * 회기 추가 요청 모달 컴포넌트
@@ -150,15 +151,24 @@ const SessionExtensionModal = ({
 
     return ReactDOM.createPortal(
         <div className="mg-modal-overlay" onClick={handleClose}>
-            <div className="mg-modal mg-modal-lg" onClick={(e) => e.stopPropagation()}>
-                <div className="mg-modal-header">
-                    <h3 className="mg-modal-title">
-                        <Plus size={24} />
-                        회기 추가 요청
-                    </h3>
+            <div className="mg-modal mg-modal-lg session-extension-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="mg-modal-header session-extension-header">
+                    <div className="session-extension-header-content">
+                        <div className="session-extension-icon">
+                            <Plus size={28} />
+                        </div>
+                        <div className="session-extension-title-area">
+                            <h3 className="mg-modal-title session-extension-title">
+                                회기 추가 요청
+                            </h3>
+                            <p className="session-extension-subtitle">
+                                새로운 패키지를 선택하고 회기를 추가하세요
+                            </p>
+                        </div>
+                    </div>
                     <button 
                         type="button"
-                        className="mg-modal-close"
+                        className="mg-modal-close session-extension-close"
                         onClick={handleClose}
                         disabled={isLoading}
                     >
@@ -166,27 +176,51 @@ const SessionExtensionModal = ({
                     </button>
                 </div>
                 
-                <div className="mg-modal-content">
+                <div className="mg-modal-content session-extension-content">
                     {/* 매칭 정보 표시 */}
-                    <div className="mg-modal-mapping-info">
-                        <div className="mg-modal-mapping-client">
-                            {mapping.client?.name || mapping.clientName || '알 수 없음'}
+                    <div className="session-extension-mapping-info">
+                        <div className="mapping-info-header">
+                            <Calendar size={20} />
+                            <h4>현재 매칭 정보</h4>
                         </div>
-                        <div className="mg-modal-mapping-consultant">
-                            {mapping.consultant?.name || mapping.consultantName || '알 수 없음'}
-                        </div>
-                        <div className="mg-modal-mapping-sessions">
-                            현재: {mapping.usedSessions || 0}/{mapping.totalSessions || mapping.package?.sessions || 0}회기
+                        <div className="mapping-info-grid">
+                            <div className="mapping-info-item">
+                                <div className="mapping-info-label">내담자</div>
+                                <div className="mapping-info-value">
+                                    {mapping.client?.name || mapping.clientName || '알 수 없음'}
+                                </div>
+                            </div>
+                            <div className="mapping-info-item">
+                                <div className="mapping-info-label">상담사</div>
+                                <div className="mapping-info-value">
+                                    {mapping.consultant?.name || mapping.consultantName || '알 수 없음'}
+                                </div>
+                            </div>
+                            <div className="mapping-info-item">
+                                <div className="mapping-info-label">현재 회기</div>
+                                <div className="mapping-info-value">
+                                    <span className="session-current">{mapping.usedSessions || 0}</span>
+                                    <span className="session-separator">/</span>
+                                    <span className="session-total">{mapping.totalSessions || mapping.package?.sessions || 0}</span>
+                                    <span className="session-unit">회기</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <form onSubmit={handleSubmit}>
-                        {/* 패키지 선택 */}
-                        <PackageSelector
-                            value={selectedPackage}
-                            onChange={handlePackageChange}
-                            disabled={isLoading}
-                        />
+                    <div className="session-extension-form-section">
+                        <div className="form-section-header">
+                            <h4>회기 추가 정보</h4>
+                            <p>새로운 패키지를 선택하고 결제 정보를 입력하세요</p>
+                        </div>
+                        
+                        <form onSubmit={handleSubmit} className="session-extension-form">
+                            {/* 패키지 선택 */}
+                            <PackageSelector
+                                value={selectedPackage}
+                                onChange={handlePackageChange}
+                                disabled={isLoading}
+                            />
                         
                         {/* 총 세션 수 (자동 설정) */}
                         <div className="mg-form-group">
@@ -260,26 +294,38 @@ const SessionExtensionModal = ({
                                 disabled={isLoading}
                             />
                         </div>
-                        
-                        {/* 모달 액션 버튼 */}
-                        <div className="mg-modal-footer">
-                            <button 
-                                type="button"
-                                className="mg-button mg-button-secondary"
-                                onClick={handleClose}
-                                disabled={isLoading}
-                            >
-                                취소
-                            </button>
-                            <button 
-                                type="submit"
-                                className="mg-button mg-button-primary"
-                                disabled={isLoading}
-                            >
-                                {isLoading ? '요청 중...' : `${additionalSessions}회기 추가 요청`}
-                            </button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
+                </div>
+                
+                {/* 모달 액션 버튼 */}
+                <div className="mg-modal-footer session-extension-footer">
+                    <button 
+                        type="button"
+                        className="mg-button mg-button-secondary session-extension-cancel"
+                        onClick={handleClose}
+                        disabled={isLoading}
+                    >
+                        취소
+                    </button>
+                    <button 
+                        type="submit"
+                        className="mg-button mg-button-primary session-extension-submit"
+                        onClick={handleSubmit}
+                        disabled={isLoading || additionalSessions <= 0}
+                    >
+                        {isLoading ? (
+                            <>
+                                <div className="loading-spinner"></div>
+                                요청 중...
+                            </>
+                        ) : (
+                            <>
+                                <Plus size={16} />
+                                {additionalSessions}회기 추가 요청
+                            </>
+                        )}
+                    </button>
                 </div>
             </div>
         </div>,

@@ -1,0 +1,332 @@
+/* ============================================
+   Session Extension Modal 디자인 개선
+   ============================================ */
+
+/* 모달 전체 스타일 */
+.session-extension-modal {
+  max-width: 600px;
+  width: 90vw;
+  border-radius: var(--radius-xl, 16px);
+  box-shadow: var(--shadow-2xl, 0 25px 50px -12px rgba(0, 0, 0, 0.25));
+  overflow: hidden;
+}
+
+/* 헤더 스타일 */
+.session-extension-header {
+  background: linear-gradient(135deg, var(--primary-600, #4f46e5) 0%, var(--primary-700, #4338ca) 100%);
+  color: white;
+  padding: var(--spacing-xl, 24px);
+  border-bottom: none;
+}
+
+.session-extension-header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 16px);
+}
+
+.session-extension-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full, 50%);
+  backdrop-filter: blur(10px);
+}
+
+.session-extension-title-area {
+  flex: 1;
+}
+
+.session-extension-title {
+  margin: 0;
+  font-size: var(--font-size-2xl, 24px);
+  font-weight: var(--font-weight-bold, 700);
+  color: white;
+}
+
+.session-extension-subtitle {
+  margin: var(--spacing-xs, 4px) 0 0 0;
+  font-size: var(--font-size-sm, 14px);
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+}
+
+.session-extension-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: var(--radius-full, 50%);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-duration, 0.2s) ease;
+}
+
+.session-extension-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+/* 컨텐츠 스타일 */
+.session-extension-content {
+  padding: var(--spacing-xl, 24px);
+  background: var(--background-primary, #ffffff);
+}
+
+/* 매칭 정보 섹션 */
+.session-extension-mapping-info {
+  background: var(--background-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--spacing-lg, 20px);
+  margin-bottom: var(--spacing-xl, 24px);
+}
+
+.mapping-info-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 12px);
+  margin-bottom: var(--spacing-md, 16px);
+}
+
+.mapping-info-header h4 {
+  margin: 0;
+  font-size: var(--font-size-lg, 18px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--text-primary, #1e293b);
+}
+
+.mapping-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md, 16px);
+}
+
+.mapping-info-item {
+  text-align: center;
+  padding: var(--spacing-sm, 12px);
+  background: white;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.mapping-info-label {
+  font-size: var(--font-size-xs, 12px);
+  color: var(--text-secondary, #64748b);
+  margin-bottom: var(--spacing-xs, 4px);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.mapping-info-value {
+  font-size: var(--font-size-sm, 14px);
+  color: var(--text-primary, #1e293b);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.session-current {
+  color: var(--danger-600, #dc2626);
+  font-weight: var(--font-weight-bold, 700);
+}
+
+.session-separator {
+  margin: 0 var(--spacing-xs, 4px);
+  color: var(--gray-500, #6b7280);
+}
+
+.session-total {
+  color: var(--primary-600, #4f46e5);
+  font-weight: var(--font-weight-bold, 700);
+}
+
+.session-unit {
+  margin-left: var(--spacing-xs, 4px);
+  color: var(--gray-600, #4b5563);
+  font-size: var(--font-size-xs, 12px);
+}
+
+/* 폼 섹션 */
+.session-extension-form-section {
+  margin-top: var(--spacing-lg, 20px);
+}
+
+.form-section-header {
+  margin-bottom: var(--spacing-lg, 20px);
+  text-align: center;
+}
+
+.form-section-header h4 {
+  margin: 0 0 var(--spacing-xs, 4px) 0;
+  font-size: var(--font-size-lg, 18px);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--text-primary, #1e293b);
+}
+
+.form-section-header p {
+  margin: 0;
+  font-size: var(--font-size-sm, 14px);
+  color: var(--text-secondary, #64748b);
+}
+
+.session-extension-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg, 20px);
+}
+
+/* 폼 그룹 개선 */
+.session-extension-form .mg-form-group {
+  position: relative;
+}
+
+.session-extension-form .mg-form-group .mg-label {
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--text-primary, #1e293b);
+  margin-bottom: var(--spacing-sm, 12px);
+  display: block;
+}
+
+.session-extension-form .mg-input {
+  border: 2px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--spacing-md, 16px);
+  font-size: var(--font-size-base, 16px);
+  transition: all var(--transition-duration, 0.2s) ease;
+  background: white;
+}
+
+.session-extension-form .mg-input:focus {
+  border-color: var(--primary-500, #6366f1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  outline: none;
+}
+
+.session-extension-form .mg-input:read-only {
+  background: var(--background-secondary, #f8fafc);
+  color: var(--text-primary, #1e293b);
+  border-color: var(--border-color, #e2e8f0);
+}
+
+.session-extension-form .mg-text-secondary {
+  margin-top: var(--spacing-xs, 4px);
+  font-size: var(--font-size-xs, 12px);
+  color: var(--text-secondary, #64748b);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs, 4px);
+}
+
+.session-extension-form .mg-text-secondary::before {
+  content: "ℹ️";
+  font-size: var(--font-size-xs, 12px);
+}
+
+/* 패키지 선택 완료 메시지 */
+.session-extension-form .mg-form-success {
+  background: var(--success-50, #f0fdf4);
+  border: 1px solid var(--success-200, #bbf7d0);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--spacing-sm, 12px);
+  margin-top: var(--spacing-sm, 12px);
+}
+
+/* 푸터 스타일 */
+.session-extension-footer {
+  background: var(--background-secondary, #f8fafc);
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  padding: var(--spacing-lg, 20px) var(--spacing-xl, 24px);
+  display: flex;
+  gap: var(--spacing-md, 16px);
+  justify-content: flex-end;
+}
+
+.session-extension-cancel {
+  background: white;
+  border: 2px solid var(--border-color, #e2e8f0);
+  color: var(--text-secondary, #64748b);
+  font-weight: var(--font-weight-semibold, 600);
+  padding: var(--spacing-md, 16px) var(--spacing-lg, 24px);
+  border-radius: var(--radius-md, 8px);
+  transition: all var(--transition-duration, 0.2s) ease;
+}
+
+.session-extension-cancel:hover {
+  border-color: var(--gray-300, #d1d5db);
+  background: var(--background-hover, #f9fafb);
+  transform: translateY(-1px);
+}
+
+.session-extension-submit {
+  background: linear-gradient(135deg, var(--primary-600, #4f46e5) 0%, var(--primary-700, #4338ca) 100%);
+  border: none;
+  color: white;
+  font-weight: var(--font-weight-semibold, 600);
+  padding: var(--spacing-md, 16px) var(--spacing-lg, 24px);
+  border-radius: var(--radius-md, 8px);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 12px);
+  transition: all var(--transition-duration, 0.2s) ease;
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+}
+
+.session-extension-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+}
+
+.session-extension-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 로딩 스피너 */
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 640px) {
+  .session-extension-modal {
+    width: 95vw;
+    margin: var(--spacing-md, 16px);
+  }
+  
+  .session-extension-header {
+    padding: var(--spacing-lg, 20px);
+  }
+  
+  .session-extension-content {
+    padding: var(--spacing-lg, 20px);
+  }
+  
+  .mapping-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .session-extension-footer {
+    flex-direction: column;
+    padding: var(--spacing-md, 16px);
+  }
+  
+  .session-extension-cancel,
+  .session-extension-submit {
+    width: 100%;
+    justify-content: center;
+  }
+}

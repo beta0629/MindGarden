@@ -78,4 +78,8 @@ public interface ConsultantClientMappingRepository extends JpaRepository<Consult
     // 결제 상태별 매칭 조회
     @Query("SELECT m FROM ConsultantClientMapping m WHERE m.paymentStatus = :paymentStatus")
     List<ConsultantClientMapping> findByPaymentStatus(@Param("paymentStatus") ConsultantClientMapping.PaymentStatus paymentStatus);
+    
+    // 상담사 ID와 상태 목록으로 매칭 수 조회
+    @Query("SELECT COUNT(m) FROM ConsultantClientMapping m WHERE m.consultant.id = :consultantId AND m.status IN :statuses")
+    long countByConsultantIdAndStatusIn(@Param("consultantId") Long consultantId, @Param("statuses") List<ConsultantClientMapping.MappingStatus> statuses);
 }

@@ -945,7 +945,12 @@ public class AdminServiceImpl implements AdminService {
                 consultantData.put("updatedAt", consultant.getUpdatedAt());
                 
                 // Consultant 엔티티의 추가 정보 가져오기
-                consultantData.put("currentClients", consultant.getCurrentClients());
+                // 실제 활성 매핑 수를 계산
+                long actualCurrentClients = mappingRepository.countByConsultantIdAndStatusIn(
+                    consultant.getId(), 
+                    List.of(MappingStatusConstants.ACTIVE, MappingStatusConstants.CONFIRMED)
+                );
+                consultantData.put("currentClients", (int) actualCurrentClients);
                 consultantData.put("maxClients", consultant.getMaxClients());
                 consultantData.put("totalClients", consultant.getTotalClients());
                 consultantData.put("totalConsultations", consultant.getTotalConsultations());

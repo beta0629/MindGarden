@@ -376,7 +376,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 consultantId: selectedConsultant.id,
                 clientId: selectedClient.id,
                 startDate: new Date().toISOString().split('T')[0], // 오늘 날짜
-                status: 'ACTIVE',
+                status: 'PENDING_PAYMENT',
                 notes: paymentInfo.notes,
                 responsibility: paymentInfo.responsibility,
                 specialConsiderations: paymentInfo.specialConsiderations,

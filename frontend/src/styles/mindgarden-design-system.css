@@ -3301,50 +3301,77 @@ body {
    Mapping Card Components (Design System v2.0)
    ============================================ */
 
-/* Mapping Card Container */
+/* 매핑 카드 컨테이너 */
 .mg-mapping-card {
-    background: var(--color-bg-primary);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-sm);
-    transition: var(--transition-fast);
+    background: var(--card-bg, rgba(255, 255, 255, 0.6));
+    border: 1px solid var(--card-border, rgba(255, 255, 255, 0.5));
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    backdrop-filter: blur(10px);
+    transition: all var(--transition-normal, 0.3s ease);
     overflow: hidden;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--spacing-md);
 }
 
 .mg-mapping-card:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     transform: translateY(-2px);
 }
 
-/* Mapping Card Header */
+/* 매핑 카드 헤더 */
 .mg-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-md);
-    background: var(--color-bg-secondary);
-    border-bottom: 1px solid var(--color-border-light);
+    background: var(--light-beige, #FDF5E6);
+    border-bottom: 1px solid var(--border-color, rgba(139, 69, 19, 0.1));
+    flex-shrink: 0;
 }
 
 .mg-mapping-status {
     display: flex;
     align-items: center;
+    gap: var(--spacing-sm);
+    flex: 1;
 }
 
+.mg-mapping-status-title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--dark-gray, #2F2F2F);
+    margin: 0;
+}
+
+.mg-mapping-status-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--medium-gray, #6B6B6B);
+    margin: 0;
+}
+
+.mg-status-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+/* 상태 배지 */
 .mg-status-badge {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-xs);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--border-radius-md);
-    background-color: var(--status-color, var(--color-primary));
-    color: var(--color-text-inverse);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-    text-transform: none;
-    letter-spacing: 0.3px;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-full, 50%);
+    background: var(--mint-green, #98FB98);
+    color: var(--dark-gray, #2F2F2F);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold, 600);
     box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(139, 69, 19, 0.1);
     min-width: 80px;
     justify-content: center;
 }
@@ -3364,11 +3391,208 @@ body {
 .mg-mapping-actions {
     display: flex;
     gap: var(--spacing-xs);
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
 }
 
-/* Mapping Card Body */
+/* 정보 항목 */
+.mg-info-row {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.mg-info-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex: 1;
+    min-width: 0;
+}
+
+.mg-info-icon {
+    color: var(--olive-green, #808000);
+    flex-shrink: 0;
+}
+
+.mg-info-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    min-width: 0;
+}
+
+.mg-info-label {
+    font-size: var(--font-size-xs);
+    color: var(--medium-gray, #6B6B6B);
+    font-weight: var(--font-weight-medium, 500);
+}
+
+.mg-info-value {
+    font-size: var(--font-size-sm);
+    color: var(--dark-gray, #2F2F2F);
+    font-weight: var(--font-weight-semibold, 600);
+    word-break: break-word;
+}
+
+.mg-info-value--highlight {
+    color: var(--olive-green, #808000);
+    font-weight: var(--font-weight-bold, 700);
+}
+
+/* 매핑 카드 버튼 스타일 */
+.mg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.mg-btn--sm {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+}
+
+.mg-btn--success {
+    background-color: var(--success-600);
+    color: var(--white);
+}
+
+.mg-btn--success:hover {
+    background-color: var(--success-700);
+}
+
+.mg-btn--info {
+    background-color: var(--primary-600);
+    color: var(--white);
+}
+
+.mg-btn--info:hover {
+    background-color: var(--primary-700);
+}
+
+.mg-btn--warning {
+    background-color: var(--warning-600);
+    color: var(--white);
+}
+
+.mg-btn--warning:hover {
+    background-color: var(--warning-700);
+}
+
+.mg-btn--danger {
+    background-color: var(--danger-600);
+    color: var(--white);
+}
+
+.mg-btn--danger:hover {
+    background-color: var(--danger-700);
+}
+
+/* 매핑 카드 본문 */
 .mg-card-body {
     padding: var(--spacing-md);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* 매핑 정보 */
+.mg-mapping-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* 매핑 날짜 정보 반응형 */
+.mg-mapping-dates {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-border-light);
+}
+
+.mg-date-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+.mg-date-icon {
+    flex-shrink: 0;
+    color: var(--color-text-secondary);
+}
+
+.mg-date-icon--success {
+    color: var(--success-600);
+}
+
+.mg-date-label {
+    font-weight: var(--font-weight-medium);
+    min-width: 60px;
+}
+
+.mg-date-value {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+/* ERP 정보 반응형 */
+.mg-mapping-erp {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-border-light);
+}
+
+.mg-erp-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.mg-erp-icon {
+    color: var(--primary-600);
+    flex-shrink: 0;
+}
+
+.mg-erp-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.mg-erp-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+.mg-erp-value {
+    font-size: var(--font-size-sm);
+    color: var(--primary-600);
+    font-weight: var(--font-weight-semibold);
+}
+
+.mg-erp-transaction {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    font-family: monospace;
 }
 
 .mg-mapping-info {
@@ -3513,55 +3737,109 @@ body {
     border: 1px solid var(--color-border-light);
 }
 
-/* Mapping Card Footer */
+/* 매핑 카드 푸터 */
 .mg-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: var(--spacing-md);
-    background: var(--color-bg-secondary);
-    border-top: 1px solid var(--color-border-light);
+    background: var(--light-beige, #FDF5E6);
+    border-top: 1px solid var(--border-color, rgba(139, 69, 19, 0.1));
+    flex-shrink: 0;
+    gap: var(--spacing-sm);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .mg-info-row {
-        grid-template-columns: 1fr;
+/* ============================================
+   매핑 카드 반응형 디자인
+   ============================================ */
+
+/* 태블릿 반응형 */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .mg-card-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    .mg-card-body {
+        padding: var(--spacing-sm) var(--spacing-md);
         gap: var(--spacing-sm);
+    }
+    
+    .mg-card-footer {
+        padding: var(--spacing-sm) var(--spacing-md);
+        flex-wrap: wrap;
+    }
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .mg-mapping-card {
+        margin-bottom: var(--spacing-md);
     }
     
     .mg-card-header {
         flex-direction: column;
         gap: var(--spacing-sm);
         align-items: flex-start;
+        padding: var(--spacing-sm);
     }
     
     .mg-mapping-status {
+        width: 100%;
         flex-direction: column;
-        gap: var(--spacing-xs);
         align-items: flex-start;
+        gap: var(--spacing-xs);
     }
     
-    .mg-status-badge {
-        font-size: var(--font-size-xs);
-        padding: var(--spacing-xs) var(--spacing-sm);
-        min-width: 70px;
+    .mg-status-actions {
+        width: 100%;
+        justify-content: flex-start;
     }
     
-    .mg-erp-badge {
-        font-size: 10px;
-        padding: 2px var(--spacing-xs);
-        margin-left: 0;
+    .mg-card-body {
+        padding: var(--spacing-sm);
+        gap: var(--spacing-sm);
+    }
+    
+    .mg-info-row {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .mg-info-item {
+        width: 100%;
+    }
+    
+    .mg-card-footer {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        align-items: stretch;
     }
     
     .mg-mapping-actions {
         width: 100%;
-        justify-content: flex-end;
-    }
-    
-    .mg-mapping-dates {
+        flex-wrap: wrap;
         gap: var(--spacing-xs);
     }
     
-    .mg-date-item {
-        font-size: 11px;
+    .mg-btn {
+        flex: 1;
+        min-width: 100px;
+        justify-content: center;
+    }
+}
+
+/* 작은 모바일 */
+@media (max-width: 480px) {
+    .mg-card-header,
+    .mg-card-body,
+    .mg-card-footer {
+        padding: var(--spacing-xs);
+    }
+    
+    .mg-btn {
+        width: 100%;
+        font-size: var(--font-size-xs);
     }
 }
 
@@ -5071,15 +5349,7 @@ body {
    Discount Styles
    ============================================ */
 
-/* Mapping Card */
-.mg-mapping-card {
-  padding: var(--spacing-md);
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(139, 69, 19, 0.1);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--spacing-sm);
-}
+/* Mapping Card - 중복 제거됨 (위에 정의됨) */
 
 .mg-mapping-row {
   display: flex;

@@ -51,6 +51,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -336,6 +337,16 @@ public class AdminServiceImpl implements AdminService {
     /**
      * 상담료 수입 거래 자동 생성 (중앙화된 금액 관리 사용)
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createConsultationIncomeTransactionAsync(ConsultantClientMapping mapping) {
+        try {
+            createConsultationIncomeTransaction(mapping);
+        } catch (Exception e) {
+            log.error("💰 [비동기] 상담료 수입 거래 생성 실패: MappingID={}, Error: {}", mapping.getId(), e.getMessage());
+            // 비동기로 처리하므로 예외를 던지지 않음
+        }
+    }
+
     private void createConsultationIncomeTransaction(ConsultantClientMapping mapping) {
         log.info("💰 [중앙화] 상담료 수입 거래 생성 시작: MappingID={}", mapping.getId());
         
@@ -729,9 +740,9 @@ public class AdminServiceImpl implements AdminService {
             log.error("❌ 입금 확인시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
         }
         
-        // 입금 확인 시 자동으로 ERP 현금 수입 거래 생성
+        // 입금 확인 시 자동으로 ERP 현금 수입 거래 생성 (별도 트랜잭션으로 처리)
         try {
-            createConsultationIncomeTransaction(savedMapping);
+            createConsultationIncomeTransactionAsync(savedMapping);
             log.info("💚 매칭 입금 확인으로 인한 상담료 수입 거래 자동 생성: MappingID={}", mappingId);
         } catch (Exception e) {
             log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);

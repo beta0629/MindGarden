@@ -1,0 +1,225 @@
+/* 다중 선택 체크박스 컴포넌트 스타일 */
+.mg-multi-select {
+  position: relative;
+  width: 100%;
+  font-family: inherit;
+}
+
+/* 트리거 버튼 */
+.mg-multi-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 48px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--medium-gray);
+  border-radius: var(--radius-md);
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.mg-multi-select-trigger:hover:not(.disabled) {
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.mg-multi-select-trigger.open {
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.mg-multi-select-trigger.disabled {
+  background-color: var(--light-gray);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+/* 선택된 값 표시 */
+.mg-multi-select-value {
+  flex: 1;
+  text-align: left;
+}
+
+.mg-multi-select-selected {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.mg-multi-select-placeholder {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* 화살표 */
+.mg-multi-select-arrow {
+  margin-left: var(--spacing-sm);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  transition: transform 0.3s ease;
+}
+
+.mg-multi-select-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* 드롭다운 메뉴 */
+.mg-multi-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  margin-top: 4px;
+  background: white;
+  border: 2px solid var(--primary-600);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 검색 입력 */
+.mg-multi-select-search {
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid var(--light-gray);
+  background: var(--primary-50);
+}
+
+.mg-multi-select-search-input {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--medium-gray);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  background: white;
+  color: var(--text-primary);
+}
+
+.mg-multi-select-search-input:focus {
+  outline: none;
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
+/* 전체 선택/해제 */
+.mg-multi-select-option.select-all {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--primary-100);
+  border-bottom: 1px solid var(--light-gray);
+}
+
+/* 옵션 리스트 */
+.mg-multi-select-options {
+  max-height: 250px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.mg-multi-select-option {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  transition: background-color 0.2s ease;
+}
+
+.mg-multi-select-option:hover {
+  background-color: var(--primary-50);
+}
+
+/* 체크박스 라벨 */
+.mg-multi-select-checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  margin: 0;
+}
+
+.mg-multi-select-checkbox {
+  margin-right: var(--spacing-sm);
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-600);
+  cursor: pointer;
+}
+
+.mg-multi-select-checkbox-text {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+/* 검색 결과 없음 */
+.mg-multi-select-no-options {
+  padding: var(--spacing-md);
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* 스크롤바 스타일링 */
+.mg-multi-select-options::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mg-multi-select-options::-webkit-scrollbar-track {
+  background: var(--light-gray);
+  border-radius: 4px;
+}
+
+.mg-multi-select-options::-webkit-scrollbar-thumb {
+  background: var(--medium-gray);
+  border-radius: 4px;
+  border: 1px solid var(--light-gray);
+}
+
+.mg-multi-select-options::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-gray);
+}
+
+.mg-multi-select-options::-webkit-scrollbar-thumb:active {
+  background: var(--text-secondary);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .mg-multi-select-trigger {
+    min-height: 44px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 0.95rem;
+  }
+  
+  .mg-multi-select-dropdown {
+    max-height: 250px;
+  }
+  
+  .mg-multi-select-options {
+    max-height: 180px;
+  }
+  
+  .mg-multi-select-option {
+    padding: var(--spacing-xs);
+  }
+  
+  .mg-multi-select-checkbox-text {
+    font-size: 0.9rem;
+  }
+}
+
+/* 포커스 접근성 */
+.mg-multi-select-trigger:focus {
+  outline: none;
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.mg-multi-select-checkbox:focus {
+  outline: 2px solid var(--primary-600);
+  outline-offset: 2px;
+}

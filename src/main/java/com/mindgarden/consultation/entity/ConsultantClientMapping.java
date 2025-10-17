@@ -90,6 +90,9 @@ public class ConsultantClientMapping extends BaseEntity {
     @Column(name = "payment_reference", length = 200)
     private String paymentReference; // 결제 참조번호
 
+    @Column(name = "deposit_confirmed")
+    private Boolean depositConfirmed = false; // 입금 확인 여부
+
     @Column(name = "admin_approval_date")
     private LocalDateTime adminApprovalDate; // 관리자 승인일
 
@@ -182,23 +185,26 @@ public class ConsultantClientMapping extends BaseEntity {
      * 입금 확인 처리 (현금 수입)
      */
     public void confirmDeposit(String depositReference) {
-        if (this.paymentStatus != PaymentStatus.CONFIRMED) {
-            throw new IllegalStateException("결제 확인이 완료되지 않았습니다.");
+        if (this.paymentStatus != PaymentStatus.CONFIRMED && this.paymentStatus != PaymentStatus.PAY) {
+            throw new IllegalStateException("결제 확인이 완료되지 않았습니다. 현재 상태: " + this.paymentStatus);
         }
         this.paymentStatus = PaymentStatus.APPROVED;  // APPROVED 상태로 변경 (입금 확인됨)
         this.paymentReference = this.paymentReference + " (입금: " + depositReference + ")";
-        this.status = MappingStatus.ACTIVE;  // ACTIVE 상태로 변경 (입금 확인 완료)
+        this.depositConfirmed = true;  // 입금 확인 플래그 설정
+        this.status = MappingStatus.DEPOSIT_CONFIRMED;  // DEPOSIT_CONFIRMED 상태로 변경 (관리자 승인 대기)
     }
 
     /**
      * 관리자 승인 (입금 확인 후 활성화)
      */
     public void approveByAdmin(String adminName) {
-        if (this.paymentStatus != PaymentStatus.APPROVED) {
-            throw new IllegalStateException("입금 확인이 완료되지 않았습니다.");
+        if (this.status != MappingStatus.DEPOSIT_CONFIRMED) {
+            throw new IllegalStateException("입금 확인이 완료되지 않았습니다. 현재 상태: " + this.status);
         }
-        this.paymentStatus = PaymentStatus.APPROVED;
-        this.status = MappingStatus.ACTIVE;
+        if (this.paymentStatus != PaymentStatus.APPROVED) {
+            throw new IllegalStateException("결제 승인이 완료되지 않았습니다.");
+        }
+        this.status = MappingStatus.ACTIVE;  // 최종 승인 후 활성화
         this.adminApprovalDate = LocalDateTime.now();
         this.approvedBy = adminName;
         this.startDate = LocalDateTime.now();

@@ -1,8 +1,7 @@
 /* 매칭 관리 페이지 스타일 */
 .mapping-management {
-    padding: var(--spacing-xl);
-    max-width: 1200px;
-    margin: 0 auto;
+    padding: var(--spacing-md);
+    width: 100%;
     background: var(--color-bg-primary);
     min-height: 100vh;
 }
@@ -49,8 +48,9 @@
 .mg-cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: var(--spacing-lg);
-    padding: var(--spacing-xl);
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    width: 100%;
 }
 
 .no-mappings {

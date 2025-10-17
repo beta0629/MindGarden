@@ -1950,10 +1950,21 @@ public class AdminController {
             }
             
             log.info("💰 매칭 ID {} 입금 확인 시작", mappingId);
+            log.info("💰 요청 전체 데이터: {}", request);
             
             String depositReference = (String) request.get("depositReference");
             
             log.info("💰 요청 데이터 - depositReference: {}", depositReference);
+            
+            // 매핑 상태 사전 확인
+            ConsultantClientMapping existingMapping = adminService.getMappingById(mappingId);
+            if (existingMapping == null) {
+                log.error("❌ 매핑 ID {}를 찾을 수 없습니다", mappingId);
+                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "매핑을 찾을 수 없습니다."));
+            }
+            
+            log.info("💰 현재 매핑 상태 - status: {}, paymentStatus: {}", 
+                existingMapping.getStatus(), existingMapping.getPaymentStatus());
             
             ConsultantClientMapping mapping = adminService.confirmDeposit(mappingId, depositReference);
             

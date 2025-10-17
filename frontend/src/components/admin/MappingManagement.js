@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Link2, Plus } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -19,6 +20,7 @@ import PartialRefundModal from './mapping/PartialRefundModal';
 import PaymentConfirmationModal from './PaymentConfirmationModal';
 import MappingDetailModal from './mapping/MappingDetailModal';
 import MappingEditModal from './MappingEditModal';
+import '../../styles/mindgarden-design-system.css';
 import './MappingManagement.css';
 
 /**
@@ -62,39 +64,79 @@ const MappingManagement = () => {
     // 매칭 수정 관련 상태
     const [showEditModal, setShowEditModal] = useState(false);
     const [editMapping, setEditMapping] = useState(null);
+    const [isLoadingMappings, setIsLoadingMappings] = useState(false);
+
+    const loadMappings = async () => {
+        if (isLoadingMappings) {
+            console.log('⏸️ loadMappings 이미 실행 중, 스킵');
+            return;
+        }
+        
+        setIsLoadingMappings(true);
+        console.log('🔄 loadMappings 함수 호출됨');
+        setLoading(true);
+        try {
+            console.log('🌐 API 호출 시작:', MAPPING_API_ENDPOINTS.LIST);
+            
+            // 직접 fetch 사용
+            const response = await fetch('http://localhost:8080/api/admin/mappings', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include'
+            });
+            
+            console.log('📡 Fetch 응답 상태:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            console.log('🔄 JSON 파싱 시작...');
+            const data = await response.json();
+            console.log('📥 API 응답 데이터:', data);
+            
+            if (data.success) {
+                console.log('✅ 매칭 데이터 로드 성공:', data.data);
+                setMappings(data.data || []);
+            } else {
+                console.log('⚠️ API 실패, 테스트 데이터 사용');
+                // API 실패 시 테스트 데이터 사용
+                const testData = getTestMappings();
+                setMappings(testData);
+            }
+        } catch (error) {
+            console.error('❌ 매칭 목록 로드 실패:', error);
+            // 오류 시 테스트 데이터 사용
+            const testData = getTestMappings();
+            setMappings(testData);
+        } finally {
+            console.log('🏁 loadMappings 완료, setLoading(false) 호출');
+            setLoading(false);
+            setIsLoadingMappings(false);
+            console.log('✅ setLoading(false) 호출 완료');
+        }
+    };
 
     // 데이터 로드
     useEffect(() => {
         loadMappings();
         loadMappingStatusInfo();
+        
+        // 3초 후 강제로 로딩 상태 해제 (임시 해결책)
+        const timeout = setTimeout(() => {
+            console.log('⏰ 3초 타임아웃 - 강제로 로딩 상태 해제');
+            setLoading(false);
+        }, 3000);
+        
+        return () => clearTimeout(timeout);
     }, []);
 
     // 페이지 로드 시 스크롤을 맨 위로 이동
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
-
-    const loadMappings = async () => {
-        setLoading(true);
-        try {
-            // 실제 API 호출 시도
-            const response = await apiGet(MAPPING_API_ENDPOINTS.LIST);
-            if (response.success) {
-                setMappings(response.data || []);
-            } else {
-                // API 실패 시 테스트 데이터 사용
-                const testData = getTestMappings();
-                setMappings(testData);
-            }
-        } catch (error) {
-            console.error('매칭 목록 로드 실패:', error);
-            // 오류 시 테스트 데이터 사용
-            const testData = getTestMappings();
-            setMappings(testData);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     // 상태값 한글명 변환 함수
     const getStatusKoreanName = (status) => {
@@ -589,7 +631,10 @@ const MappingManagement = () => {
             return b.id - a.id;
         });
 
-            if (loading) {
+    console.log('🔍 렌더링 체크 - loading:', loading, 'mappings:', mappings.length);
+    
+    if (loading) {
+        console.log('⏳ 로딩 상태 - UnifiedLoading 표시');
         return (
             <SimpleLayout>
                 <div className="mapping-management">
@@ -608,42 +653,44 @@ const MappingManagement = () => {
     return (
         <SimpleLayout>
             <div className="mapping-management">
-            <div className="mapping-header">
-                <div className="header-content">
-                    <h1>🔗 매칭 관리</h1>
-                    <p>상담사와 내담자 간의 매칭을 관리합니다.</p>
+                <div className="mapping-header">
+                    <div className="header-content">
+                        <h1>🔗 매칭 관리</h1>
+                        <p>상담사와 내담자 간의 매칭을 관리합니다.</p>
+                    </div>
+                    <button 
+                        className="mg-button mg-button-primary"
+                        onClick={() => setShowCreateModal(true)}
+                    >
+                        <Plus size={20} />
+                        새 매칭 생성
+                    </button>
                 </div>
-                <button 
-                    className="btn btn-primary"
-                    onClick={() => setShowCreateModal(true)}
-                >
-                    <i className="bi bi-plus-circle"></i> 새 매칭 생성
-                </button>
-            </div>
 
-            <MappingFilters
-                filterStatus={filterStatus}
-                searchTerm={searchTerm}
-                onStatusChange={handleStatusChange}
-                onSearchChange={handleSearchChange}
-                onReset={handleResetFilters}
-            />
+                <MappingFilters
+                    filterStatus={filterStatus}
+                    searchTerm={searchTerm}
+                    onStatusChange={handleStatusChange}
+                    onSearchChange={handleSearchChange}
+                    onReset={handleResetFilters}
+                />
 
-            <MappingStats 
-                mappings={mappings} 
-                onStatCardClick={handleStatCardClick}
-            />
+                <MappingStats 
+                    mappings={mappings} 
+                    onStatCardClick={handleStatCardClick}
+                />
 
-            <div className="mapping-list">
+                <div className="mapping-list">
                 {filteredMappings.length === 0 ? (
                     <div className="no-mappings">
                         <div className="no-mappings-icon">🔗</div>
                         <h3>{MAPPING_MESSAGES.NO_MAPPINGS}</h3>
                         <p>{MAPPING_MESSAGES.NO_MAPPINGS_DESC}</p>
                         <button 
-                            className="btn btn-primary"
+                            className="mg-button mg-button-primary"
                             onClick={() => setShowCreateModal(true)}
                         >
+                            <Plus size={20} />
                             매칭 생성하기
                         </button>
                     </div>
@@ -663,6 +710,7 @@ const MappingManagement = () => {
                                 onRefund={() => handleRefundMapping(mapping)}
                                 onConfirmPayment={() => handleConfirmPayment(mapping)}
                                 onConfirmDeposit={() => handleConfirmDeposit(mapping)}
+                                onApprove={() => handleApproveMapping(mapping.id)}
                             />
                         ))}
                     </div>

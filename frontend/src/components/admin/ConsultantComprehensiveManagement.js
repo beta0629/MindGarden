@@ -4,6 +4,8 @@ import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { getUserStatusColor, getStatusLabel } from '../../utils/colorUtils';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import { getCurrentUser } from '../../utils/session';
+import { getBranchNameByCode } from '../../utils/branchUtils';
 import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 
 const ConsultantComprehensiveManagement = () => {
@@ -16,6 +18,7 @@ const ConsultantComprehensiveManagement = () => {
     const [mainTab, setMainTab] = useState('comprehensive');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [filterBranch, setFilterBranch] = useState('all');
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState('view');
     const [formData, setFormData] = useState({
@@ -133,7 +136,7 @@ const ConsultantComprehensiveManagement = () => {
 
     // 필터링된 상담사 목록
     const getFilteredConsultants = useMemo(() => {
-        console.log('🔍 상담사 필터링 시작:', { searchTerm, filterStatus, consultants: consultants.length });
+        console.log('🔍 상담사 필터링 시작:', { searchTerm, filterStatus, filterBranch, consultants: consultants.length });
         
         let filtered = consultants;
 
@@ -152,9 +155,14 @@ const ConsultantComprehensiveManagement = () => {
             filtered = filtered.filter(consultant => consultant.status === filterStatus);
         }
 
+        // 지점 필터링
+        if (filterBranch && filterBranch !== 'all') {
+            filtered = filtered.filter(consultant => consultant.branchCode === filterBranch);
+        }
+
         console.log('✅ 필터링 결과:', filtered.length, '명');
         return filtered;
-    }, [consultants, searchTerm, filterStatus]);
+    }, [consultants, searchTerm, filterStatus, filterBranch]);
 
     // 통계 계산
     const getOverallStats = useCallback(() => {
@@ -409,6 +417,20 @@ const ConsultantComprehensiveManagement = () => {
                                     <option value="INACTIVE">비활성</option>
                                     <option value="SUSPENDED">일시정지</option>
                                 </select>
+                                <select
+                                    value={filterBranch}
+                                    onChange={(e) => setFilterBranch(e.target.value)}
+                                    className="mg-form-select"
+                                >
+                                    <option value="all">전체 지점</option>
+                                    <option value="MAIN001">본점</option>
+                                    <option value="GANGNAM">강남점</option>
+                                    <option value="HONGDAE">홍대점</option>
+                                    <option value="JAMSIL">잠실점</option>
+                                    <option value="SINCHON">신촌점</option>
+                                    <option value="SONGDO">인천송도점</option>
+                                    <option value="UIJUNGBU">의정부점</option>
+                                </select>
                             </div>
 
                             <div className="mg-card-grid">
@@ -501,6 +523,20 @@ const ConsultantComprehensiveManagement = () => {
                                     <option value="ACTIVE">활성</option>
                                     <option value="INACTIVE">비활성</option>
                                     <option value="SUSPENDED">일시정지</option>
+                                </select>
+                                <select
+                                    value={filterBranch}
+                                    onChange={(e) => setFilterBranch(e.target.value)}
+                                    className="mg-form-select"
+                                >
+                                    <option value="all">전체 지점</option>
+                                    <option value="MAIN001">본점</option>
+                                    <option value="GANGNAM">강남점</option>
+                                    <option value="HONGDAE">홍대점</option>
+                                    <option value="JAMSIL">잠실점</option>
+                                    <option value="SINCHON">신촌점</option>
+                                    <option value="SONGDO">인천송도점</option>
+                                    <option value="UIJUNGBU">의정부점</option>
                                 </select>
                             </div>
 

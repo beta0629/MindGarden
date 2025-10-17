@@ -2,9 +2,9 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FaUser, FaEdit, FaTrash, FaPlus, FaEye } from 'react-icons/fa';
 import SimpleLayout from '../layout/SimpleLayout';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { getUserStatusKoreanName, getStatusColor } from '../../utils/consultantUtils';
+import { getUserStatusColor, getStatusLabel } from '../../utils/colorUtils';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
-import SpecialtyDisplay from '../common/SpecialtyDisplay';
+import SpecialtyDisplay from '../ui/SpecialtyDisplay';
 
 const ConsultantComprehensiveManagement = () => {
     // 상태 관리
@@ -597,7 +597,7 @@ const ConsultantComprehensiveManagement = () => {
                                                 <h4 className="mg-consultant-detail-name">{selectedConsultant.name || '이름 없음'}</h4>
                                                 <p className="mg-consultant-detail-email">{selectedConsultant.email}</p>
                                                 <span className={`mg-status-badge`}>
-                                                    {getUserStatusKoreanName(selectedConsultant.status)}
+                                                    {getStatusLabel(selectedConsultant.status)}
                                                 </span>
                                             </div>
                                         </div>

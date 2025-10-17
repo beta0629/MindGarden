@@ -42,13 +42,7 @@ const ConsultantComprehensiveManagement = () => {
             
             console.log('👤 현재 사용자 지점코드:', userBranchCode);
             
-            // 지점코드가 있으면 해당 지점의 상담사만 조회
-            let apiUrl = '/api/admin/consultants';
-            if (userBranchCode) {
-                apiUrl += `?branchCode=${userBranchCode}`;
-            }
-            
-            const response = await apiGet(apiUrl);
+            const response = await apiGet('/api/admin/consultants');
             console.log('📊 상담사 목록 응답:', response);
             
             if (response.success) {
@@ -168,10 +162,10 @@ const ConsultantComprehensiveManagement = () => {
             filtered = filtered.filter(consultant => consultant.status === filterStatus);
         }
 
-        // 지점 필터링 (이미 API에서 지점별로 필터링되어 오므로 추가 필터링 불필요)
-        // if (filterBranch && filterBranch !== 'all') {
-        //     filtered = filtered.filter(consultant => consultant.branchCode === filterBranch);
-        // }
+        // 지점 필터링
+        if (filterBranch && filterBranch !== 'all') {
+            filtered = filtered.filter(consultant => consultant.branchCode === filterBranch);
+        }
 
         console.log('✅ 필터링 결과:', filtered.length, '명');
         return filtered;
@@ -431,12 +425,18 @@ const ConsultantComprehensiveManagement = () => {
                                     <option value="SUSPENDED">일시정지</option>
                                 </select>
                                 <select
-                                    value="current"
-                                    onChange={() => {}}
+                                    value={filterBranch}
+                                    onChange={(e) => setFilterBranch(e.target.value)}
                                     className="mg-form-select"
-                                    disabled
                                 >
-                                    <option value="current">현재 지점</option>
+                                    <option value="all">전체 지점</option>
+                                    <option value="MAIN001">본점</option>
+                                    <option value="GANGNAM">강남점</option>
+                                    <option value="HONGDAE">홍대점</option>
+                                    <option value="JAMSIL">잠실점</option>
+                                    <option value="SINCHON">신촌점</option>
+                                    <option value="SONGDO">인천송도점</option>
+                                    <option value="UIJUNGBU">의정부점</option>
                                 </select>
                             </div>
 
@@ -532,12 +532,18 @@ const ConsultantComprehensiveManagement = () => {
                                     <option value="SUSPENDED">일시정지</option>
                                 </select>
                                 <select
-                                    value="current"
-                                    onChange={() => {}}
+                                    value={filterBranch}
+                                    onChange={(e) => setFilterBranch(e.target.value)}
                                     className="mg-form-select"
-                                    disabled
                                 >
-                                    <option value="current">현재 지점</option>
+                                    <option value="all">전체 지점</option>
+                                    <option value="MAIN001">본점</option>
+                                    <option value="GANGNAM">강남점</option>
+                                    <option value="HONGDAE">홍대점</option>
+                                    <option value="JAMSIL">잠실점</option>
+                                    <option value="SINCHON">신촌점</option>
+                                    <option value="SONGDO">인천송도점</option>
+                                    <option value="UIJUNGBU">의정부점</option>
                                 </select>
                             </div>
 

@@ -90,16 +90,19 @@ public class AdminController {
             // 권한에 따른 데이터 필터링
             List<Map<String, Object>> consultantsWithSpecialty;
             
-            if (dynamicPermissionService.hasPermission(currentUser, "ALL_BRANCHES_VIEW")) {
-                // 모든 지점 내역 조회 가능
+            // HQ_ADMIN, SUPER_HQ_ADMIN, HQ_MASTER만 모든 지점 조회 가능
+            if ("HQ_ADMIN".equals(currentUser.getRole()) || 
+                "SUPER_HQ_ADMIN".equals(currentUser.getRole()) || 
+                "HQ_MASTER".equals(currentUser.getRole())) {
+                // 본사 관리자는 모든 지점 내역 조회 가능
                 consultantsWithSpecialty = allConsultants;
-                log.info("🔍 모든 지점 상담사 조회 권한");
+                log.info("🔍 본사 관리자 - 모든 지점 상담사 조회 권한");
             } else {
-                // 지점별 필터링
+                // 지점별 필터링 (BRANCH_SUPER_ADMIN 포함 모든 지점 관리자는 자신의 지점만)
                 consultantsWithSpecialty = allConsultants.stream()
                     .filter(consultant -> currentBranchCode.equals(consultant.get("branchCode")))
                     .collect(java.util.stream.Collectors.toList());
-                log.info("🔍 지점별 상담사 조회: 지점코드={}", currentBranchCode);
+                log.info("🔍 지점별 상담사 조회: 지점코드={}, 역할={}", currentBranchCode, currentUser.getRole());
             }
             
             log.info("🔍 상담사 목록 조회 완료 - 전체: {}, 필터링 후: {}", allConsultants.size(), consultantsWithSpecialty.size());

@@ -1,6 +1,174 @@
 /* QuickExpenseForm 스타일 - FinancialTransactionForm 패턴 재사용 */
 @import './FinancialTransactionForm.css';
 
+/* 모달 오버레이 */
+.quick-expense-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: var(--spacing-md);
+}
+
+/* 모달 컨테이너 */
+.quick-expense-modal {
+  background: white;
+  border-radius: var(--radius-lg);
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  z-index: 10000;
+}
+
+/* 모달 헤더 */
+.quick-expense-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--light-beige);
+}
+
+.quick-expense-modal-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--dark-gray);
+  margin: 0;
+}
+
+.quick-expense-modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--medium-gray);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.quick-expense-modal-close:hover {
+  background: var(--light-beige);
+  color: var(--dark-gray);
+}
+
+/* 에러 메시지 */
+.quick-expense-error {
+  background-color: #fee;
+  color: #c33;
+  padding: var(--spacing-md);
+  margin: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  border-left: 4px solid #c33;
+}
+
+/* 로딩 */
+.quick-expense-loading {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--medium-gray);
+}
+
+/* 카테고리 그리드 */
+.quick-expense-categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+}
+
+/* 카테고리 버튼 */
+.quick-expense-category-btn {
+  background: white;
+  border: 2px solid var(--light-beige);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  min-height: 120px;
+}
+
+.quick-expense-category-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  border-color: var(--mint-green);
+}
+
+.quick-expense-category-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quick-expense-category-icon {
+  font-size: 2rem;
+}
+
+.quick-expense-category-name {
+  font-weight: var(--font-weight-semibold);
+  color: var(--dark-gray);
+  text-align: center;
+  font-size: var(--font-size-sm);
+}
+
+.quick-expense-category-subname {
+  color: var(--medium-gray);
+  text-align: center;
+  font-size: var(--font-size-xs);
+}
+
+/* 정보 박스 */
+.quick-expense-info-box {
+  background: var(--light-beige);
+  padding: var(--spacing-md);
+  margin: 0 var(--spacing-lg);
+  border-radius: var(--radius-sm);
+}
+
+.quick-expense-info-text {
+  margin: 0;
+  color: var(--medium-gray);
+  font-size: var(--font-size-sm);
+}
+
+/* 닫기 버튼 컨테이너 */
+.quick-expense-close-container {
+  padding: var(--spacing-lg);
+  display: flex;
+  justify-content: center;
+}
+
+.quick-expense-close-btn {
+  padding: var(--spacing-sm) var(--spacing-xl);
+  background: var(--medium-gray);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  transition: all 0.2s ease;
+}
+
+.quick-expense-close-btn:hover {
+  background: var(--dark-gray);
+}
+
 /* QuickExpenseForm 전용 추가 스타일 (필요시) */
 
 .quick-expense-form-notice {
@@ -15,6 +183,23 @@
 
 /* 모바일 반응형 디자인 */
 @media (max-width: 767px) {
+  .quick-expense-modal {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .quick-expense-categories {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+  }
+  
+  .quick-expense-category-btn {
+    min-height: 100px;
+    padding: var(--spacing-sm);
+  }
+  
   .quick-expense-form-notice {
     font-size: var(--font-size-2xs);
     padding: var(--spacing-xs);

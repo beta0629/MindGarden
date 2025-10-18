@@ -1,0 +1,67 @@
+name: Fix Production Database - DEPOSIT_CONFIRMED
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "CONFIRM" to proceed with database changes'
+        required: true
+        default: ''
+
+jobs:
+  fix-database:
+    if: github.event.inputs.confirm == 'CONFIRM'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup MySQL client
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mysql-client
+        
+    - name: Apply database migration
+      run: |
+        echo "🔧 Applying DEPOSIT_CONFIRMED migration to production database..."
+        
+        # MySQL 접속 정보 (GitHub Secrets에서 가져옴)
+        DB_HOST="${{ secrets.PRODUCTION_DB_HOST }}"
+        DB_USER="${{ secrets.PRODUCTION_DB_USER }}"
+        DB_PASSWORD="${{ secrets.PRODUCTION_DB_PASSWORD }}"
+        DB_NAME="${{ secrets.PRODUCTION_DB_NAME }}"
+        
+        # SQL 파일 실행
+        mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < database/migrations/2025-01-17_fix_deposit_confirmed_production.sql
+        
+        echo "✅ Database migration completed successfully!"
+        
+    - name: Verify changes
+      run: |
+        echo "🔍 Verifying database changes..."
+        
+        DB_HOST="${{ secrets.PRODUCTION_DB_HOST }}"
+        DB_USER="${{ secrets.PRODUCTION_DB_USER }}"
+        DB_PASSWORD="${{ secrets.PRODUCTION_DB_PASSWORD }}"
+        DB_NAME="${{ secrets.PRODUCTION_DB_NAME }}"
+        
+        # 상태 컬럼 확인
+        mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" -e "
+          SELECT COLUMN_TYPE 
+          FROM INFORMATION_SCHEMA.COLUMNS 
+          WHERE TABLE_SCHEMA = '$DB_NAME' 
+            AND TABLE_NAME = 'consultant_client_mappings' 
+            AND COLUMN_NAME = 'status';
+        "
+        
+        # deposit_confirmed 컬럼 확인
+        mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" -e "
+          SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+          FROM INFORMATION_SCHEMA.COLUMNS 
+          WHERE TABLE_SCHEMA = '$DB_NAME' 
+            AND TABLE_NAME = 'consultant_client_mappings' 
+            AND COLUMN_NAME = 'deposit_confirmed';
+        "
+        
+        echo "✅ Database verification completed!"

@@ -191,14 +191,14 @@ public class ConsultantClientMapping extends BaseEntity {
         this.paymentStatus = PaymentStatus.APPROVED;  // APPROVED 상태로 변경 (입금 확인됨)
         this.paymentReference = this.paymentReference + " (입금: " + depositReference + ")";
         this.depositConfirmed = true;  // 입금 확인 플래그 설정
-        this.status = MappingStatus.DEPOSIT_CONFIRMED;  // DEPOSIT_CONFIRMED 상태로 변경 (관리자 승인 대기)
+        this.status = MappingStatus.DEPOSIT_PENDING;  // DEPOSIT_PENDING 상태로 변경 (관리자 승인 대기)
     }
 
     /**
      * 관리자 승인 (입금 확인 후 활성화)
      */
     public void approveByAdmin(String adminName) {
-        if (this.status != MappingStatus.DEPOSIT_CONFIRMED) {
+        if (this.status != MappingStatus.DEPOSIT_PENDING) {
             throw new IllegalStateException("입금 확인이 완료되지 않았습니다. 현재 상태: " + this.status);
         }
         if (this.paymentStatus != PaymentStatus.APPROVED) {

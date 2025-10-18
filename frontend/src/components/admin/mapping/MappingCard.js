@@ -45,7 +45,7 @@ const MappingCard = ({
     const isErpIntegrated = () => {
         // 입금 확인 완료되거나 ACTIVE 상태일 때 ERP 연동됨으로 간주
         return mapping.status === 'ACTIVE' || 
-               mapping.status === 'DEPOSIT_CONFIRMED' ||
+               mapping.status === 'DEPOSIT_PENDING' ||
                mapping.depositConfirmed === true ||
                mapping.erpIntegrated === true || 
                mapping.erpSyncStatus === 'SYNCED' || 
@@ -241,7 +241,7 @@ const MappingCard = ({
                         </button>
                     )}
                     
-                    {mapping.status === 'DEPOSIT_CONFIRMED' && onApprove && (
+                    {mapping.status === 'DEPOSIT_PENDING' && onApprove && (
                         <button 
                             className="mg-button mg-button-sm mg-button-success"
                             onClick={() => onApprove(mapping)}

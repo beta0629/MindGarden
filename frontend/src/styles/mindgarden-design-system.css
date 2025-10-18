@@ -13,9 +13,6 @@
   --olive-green: #808000;
   --mint-green: #98FB98;
   --soft-mint: #B6E5D8;
-  --light-mint: #c7f0db;
-  --soft-pink: #ffcccb;
-  --light-pink: #ffd9d8;
   
   /* Text Colors */
   --dark-gray: #2F2F2F;
@@ -1020,11 +1017,6 @@ body {
 
 /* Mobile (< 768px) */
 @media (max-width: 768px) {
-  /* Mobile Layout Variables */
-  --mobile-grid-columns: 1fr;
-  --mobile-card-width: 100%;
-  --mobile-card-max-width: 560px;
-  
   /* Container */
   .mg-container {
     padding: 0 var(--spacing-md);

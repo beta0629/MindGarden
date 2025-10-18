@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import axios from 'axios';
-import ErpModal from './common/ErpModal';
 import './QuickExpenseForm.css';
 
 /**
@@ -129,7 +129,8 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
     }
   };
 
-  return (
+  // ReactDOM.createPortal을 사용하여 document.body에 렌더링
+  return ReactDOM.createPortal(
     <div className="quick-expense-modal-overlay">
       <div className="quick-expense-modal">
         <div className="quick-expense-modal-header">
@@ -207,7 +208,8 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

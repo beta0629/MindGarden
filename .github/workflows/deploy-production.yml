@@ -244,6 +244,13 @@ jobs:
           # PL/SQL 프로시저 등록
           echo "🔧 PL/SQL 프로시저 등록 시작..."
           if [ -f /tmp/production_all_missing_procedures.sql ]; then
+            # 파일 권한 설정
+            chmod 644 /tmp/production_all_missing_procedures.sql
+            echo "✅ 파일 권한 설정 완료"
+            
+            # 파일 내용 확인
+            echo "📋 파일 내용 확인:"
+            head -5 /tmp/production_all_missing_procedures.sql
             # 환경변수 명시적 설정
             export DB_HOST="localhost"
             export DB_USERNAME="mindgarden"

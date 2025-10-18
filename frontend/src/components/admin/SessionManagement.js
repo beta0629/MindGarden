@@ -321,7 +321,7 @@ const SessionManagement = () => {
                         </div>
                         <div className="mg-stat-card-content">
                             <div className="mg-stat-card-value">
-                                {mappings.length > 0 ? Math.round((mappings.filter(m => m.status === 'COMPLETED').length / mappings.length) * 100) : 0}%
+                                {mappings.length > 0 ? Math.round((mappings.filter(m => m.status === 'SESSIONS_EXHAUSTED' || m.status === 'TERMINATED').length / mappings.length) * 100) : 0}%
                             </div>
                             <div className="mg-stat-card-label">완료율</div>
                         </div>

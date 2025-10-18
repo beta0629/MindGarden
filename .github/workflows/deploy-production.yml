@@ -204,28 +204,41 @@ jobs:
             sleep 10
           fi
           
-          # 데이터베이스 스키마 업데이트
-          echo "🔧 데이터베이스 스키마 업데이트 시작..."
+          # 데이터베이스 스키마 업데이트 (필요할 때만)
+          echo "🔧 데이터베이스 스키마 업데이트 확인 중..."
           
-          # DEPOSIT_PENDING 상태 추가
-          mysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME -e "
-          ALTER TABLE consultant_client_mappings 
-          MODIFY COLUMN status ENUM(
-              'PENDING_PAYMENT',
-              'PAYMENT_CONFIRMED', 
-              'DEPOSIT_PENDING',
-              'DEPOSIT_CONFIRMED',
-              'ACTIVE',
-              'INACTIVE',
-              'SUSPENDED',
-              'TERMINATED',
-              'SESSIONS_EXHAUSTED'
-          ) NOT NULL;"
+          # DEPOSIT_PENDING 상태가 있는지 확인
+          DEPOSIT_PENDING_EXISTS=$(mysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME -e "
+          SELECT COUNT(*) 
+          FROM INFORMATION_SCHEMA.COLUMNS 
+          WHERE TABLE_SCHEMA = '$DB_NAME' 
+            AND TABLE_NAME = 'consultant_client_mappings' 
+            AND COLUMN_NAME = 'status' 
+            AND COLUMN_TYPE LIKE '%DEPOSIT_PENDING%';" -s -N)
           
-          if [ $? -eq 0 ]; then
-            echo "✅ DEPOSIT_PENDING 상태 추가 완료"
+          if [ "$DEPOSIT_PENDING_EXISTS" = "0" ]; then
+            echo "🔧 DEPOSIT_PENDING 상태 추가 필요 - 실행 중..."
+            mysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME -e "
+            ALTER TABLE consultant_client_mappings 
+            MODIFY COLUMN status ENUM(
+                'PENDING_PAYMENT',
+                'PAYMENT_CONFIRMED', 
+                'DEPOSIT_PENDING',
+                'DEPOSIT_CONFIRMED',
+                'ACTIVE',
+                'INACTIVE',
+                'SUSPENDED',
+                'TERMINATED',
+                'SESSIONS_EXHAUSTED'
+            ) NOT NULL;"
+            
+            if [ $? -eq 0 ]; then
+              echo "✅ DEPOSIT_PENDING 상태 추가 완료"
+            else
+              echo "❌ DEPOSIT_PENDING 상태 추가 실패"
+            fi
           else
-            echo "❌ DEPOSIT_PENDING 상태 추가 실패"
+            echo "✅ DEPOSIT_PENDING 상태 이미 존재 - 스킵"
           fi
           
           # PL/SQL 프로시저 등록

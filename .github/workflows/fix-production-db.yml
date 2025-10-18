@@ -33,7 +33,7 @@ jobs:
         DB_NAME="${{ secrets.PRODUCTION_DB_NAME }}"
         
         # SQL 파일 실행
-        mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < database/migrations/2025-01-17_fix_deposit_confirmed_production.sql
+        mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < database/migrations/2025-01-17_add_deposit_pending_to_production.sql
         
         echo "✅ Database migration completed successfully!"
         

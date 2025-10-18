@@ -3,7 +3,7 @@
  * 
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
  * @reference /docs/design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md (Modal 섹션)
- * @reference http://localhost:3000/design-system (ModalShowcase)
+ * @reference /design-system (ModalShowcase)
  * 
  * ⚠️ 중요: ReactDOM.createPortal 사용 필수 (z-index 문제 방지)
  */

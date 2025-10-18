@@ -3,7 +3,7 @@
  * 
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
  * @reference /docs/design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md (Table 섹션)
- * @reference http://localhost:3000/design-system (TableShowcase)
+ * @reference /design-system (TableShowcase)
  * 
  * ⚠️ 중요: 모든 <td>에 data-label 속성 필수 (모바일 반응형)
  */

@@ -3,7 +3,7 @@
  * 
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
  * @reference /docs/design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md (Card 섹션)
- * @reference http://localhost:3000/design-system (CardShowcase)
+ * @reference /design-system (CardShowcase)
  * @reference /frontend/src/components/mindgarden/CardShowcase.js
  */
 

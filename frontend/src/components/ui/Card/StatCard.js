@@ -3,7 +3,7 @@
  * 
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
  * @reference /docs/design-system-v2/MINDGARDEN_DESIGN_SYSTEM_GUIDE.md (Stat Cards 섹션)
- * @reference http://localhost:3000/design-system (StatsDashboard)
+ * @reference /design-system (StatsDashboard)
  */
 
 import React from 'react';

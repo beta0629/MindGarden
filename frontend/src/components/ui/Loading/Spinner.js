@@ -2,7 +2,7 @@
  * MindGarden 디자인 시스템 v2.0 - Spinner Component
  * 
  * @reference /docs/design-system-v2/IMPLEMENTATION_PLAN.md (Phase 1.2)
- * @reference http://localhost:3000/design-system (LoadingShowcase)
+ * @reference /design-system (LoadingShowcase)
  */
 
 import React from 'react';

@@ -50,8 +50,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -903,6 +903,83 @@ public class AdminServiceImpl implements AdminService {
         return mappingRepository.findAll().stream()
                 .filter(mapping -> mapping.getStatus().name().equals(sessionsExhaustedStatus))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Object> getSessionStatistics() {
+        try {
+            Map<String, Object> statistics = new HashMap<>();
+            
+            // 전체 매칭 수
+            long totalMappings = mappingRepository.count();
+            statistics.put("totalMappings", totalMappings);
+            
+            // 활성 매칭 수
+            long activeMappings = mappingRepository.findAll().stream()
+                    .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE)
+                    .count();
+            statistics.put("activeMappings", activeMappings);
+            
+            // 회기 소진된 매칭 수
+            long sessionsExhaustedMappings = mappingRepository.findAll().stream()
+                    .filter(mapping -> mapping.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED)
+                    .count();
+            statistics.put("sessionsExhaustedMappings", sessionsExhaustedMappings);
+            
+            // 총 회기 수
+            int totalSessions = mappingRepository.findAll().stream()
+                    .mapToInt(mapping -> mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0)
+                    .sum();
+            statistics.put("totalSessions", totalSessions);
+            
+            // 사용된 회기 수
+            int usedSessions = mappingRepository.findAll().stream()
+                    .mapToInt(mapping -> {
+                        if (mapping.getTotalSessions() != null && mapping.getRemainingSessions() != null) {
+                            return mapping.getTotalSessions() - mapping.getRemainingSessions();
+                        }
+                        return 0;
+                    })
+                    .sum();
+            statistics.put("usedSessions", usedSessions);
+            
+            // 남은 회기 수
+            int remainingSessions = mappingRepository.findAll().stream()
+                    .mapToInt(mapping -> mapping.getRemainingSessions() != null ? mapping.getRemainingSessions() : 0)
+                    .sum();
+            statistics.put("remainingSessions", remainingSessions);
+            
+            return statistics;
+        } catch (Exception e) {
+            log.error("❌ 회기관리 통계 조회 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("회기관리 통계 조회에 실패했습니다.", e);
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getSessions() {
+        try {
+            List<ConsultantClientMapping> mappings = mappingRepository.findAll();
+            
+            return mappings.stream()
+                    .map(mapping -> {
+                        Map<String, Object> sessionData = new HashMap<>();
+                        sessionData.put("id", mapping.getId());
+                        sessionData.put("consultantName", mapping.getConsultant() != null ? mapping.getConsultant().getName() : "N/A");
+                        sessionData.put("clientName", mapping.getClient() != null ? mapping.getClient().getName() : "N/A");
+                        sessionData.put("status", mapping.getStatus() != null ? mapping.getStatus().toString() : "UNKNOWN");
+                        sessionData.put("totalSessions", mapping.getTotalSessions());
+                        sessionData.put("remainingSessions", mapping.getRemainingSessions());
+                        sessionData.put("startDate", mapping.getStartDate());
+                        sessionData.put("endDate", mapping.getEndDate());
+                        sessionData.put("createdAt", mapping.getCreatedAt());
+                        return sessionData;
+                    })
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("❌ 회기관리 목록 조회 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("회기관리 목록 조회에 실패했습니다.", e);
+        }
     }
 
     @Override

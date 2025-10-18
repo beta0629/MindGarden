@@ -64,6 +64,67 @@ public class AdminController {
     private final StoredProcedureService storedProcedureService;
 
     /**
+     * 회기관리 통계 조회
+     */
+    @GetMapping("/sessions/statistics")
+    public ResponseEntity<?> getSessionStatistics(HttpSession session) {
+        try {
+            log.info("🔍 회기관리 통계 조회");
+            
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
+            }
+            
+            // 회기관리 통계 데이터 조회
+            Map<String, Object> statistics = adminService.getSessionStatistics();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", statistics
+            ));
+        } catch (Exception e) {
+            log.error("❌ 회기관리 통계 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "회기관리 통계 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 회기관리 목록 조회
+     */
+    @GetMapping("/sessions")
+    public ResponseEntity<?> getSessions(HttpSession session) {
+        try {
+            log.info("🔍 회기관리 목록 조회");
+            
+            // 동적 권한 체크
+            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session, "MAPPING_MANAGE", dynamicPermissionService);
+            if (permissionResponse != null) {
+                return permissionResponse;
+            }
+            
+            // 회기관리 목록 데이터 조회
+            List<Map<String, Object>> sessions = adminService.getSessions();
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", sessions,
+                "count", sessions.size()
+            ));
+        } catch (Exception e) {
+            log.error("❌ 회기관리 목록 조회 실패", e);
+            return ResponseEntity.internalServerError().body(Map.of(
+                "success", false,
+                "message", "회기관리 목록 조회에 실패했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
      * 상담사 목록 조회 (전문분야 상세 정보 포함)
      */
     @GetMapping("/consultants")

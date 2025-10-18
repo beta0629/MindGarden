@@ -231,6 +231,16 @@ public interface AdminService {
     List<ConsultantClientMapping> getSessionsExhaustedMappings();
 
     /**
+     * 회기관리 통계 조회
+     */
+    Map<String, Object> getSessionStatistics();
+
+    /**
+     * 회기관리 목록 조회
+     */
+    List<Map<String, Object>> getSessions();
+
+    /**
      * 상담사별 매칭 목록 조회
      */
     List<ConsultantClientMapping> getMappingsByConsultantId(Long consultantId);

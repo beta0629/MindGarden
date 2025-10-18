@@ -1,81 +1,284 @@
-/* ErpDashboard 스타일 - 새로운 디자인 시스템 적용 */
+/* ErpDashboard 전용 스타일 - 완전히 새로운 클래스 사용 */
 
-.erp-dashboard {
-    padding: var(--spacing-lg);
-    max-width: 1400px;
-    margin: 0 auto;
-    background: var(--ios-bg-primary);
-    min-height: 100vh;
-    font-family: var(--font-family-ios);
+/* 컨테이너 */
+.erp-dashboard-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
 }
 
-.erp-dashboard__header {
-    margin-bottom: var(--spacing-xxl);
+/* 통계 카드 그리드 */
+.erp-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.erp-stat-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.erp-stat-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.erp-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--mint-green), var(--soft-mint));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dark-gray);
+  flex-shrink: 0;
+}
+
+.erp-stat-icon-success {
+  background: linear-gradient(135deg, var(--status-active), var(--mint-green));
+}
+
+.erp-stat-icon-warning {
+  background: linear-gradient(135deg, var(--status-warning), #fbbf24);
+}
+
+.erp-stat-icon-danger {
+  background: linear-gradient(135deg, var(--color-danger), #f87171);
+}
+
+.erp-stat-content {
+  flex: 1;
+}
+
+.erp-stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--dark-gray);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.erp-stat-label {
+  font-size: 0.875rem;
+  color: var(--medium-gray);
+  margin-bottom: 0.25rem;
+}
+
+.erp-stat-description {
+  font-size: 0.75rem;
+  color: var(--medium-gray);
+  line-height: 1.4;
+}
+
+/* 콘텐츠 래퍼 - 세로 스택 */
+.erp-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* 섹션 */
+.erp-section {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.erp-section-header {
+  padding: var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.erp-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin: 0;
+}
+
+.erp-section-content {
+  padding: var(--spacing-lg);
+}
+
+/* 액션 버튼 그리드 */
+.erp-action-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-md);
+}
+
+/* 빈 상태 */
+.erp-empty-state {
+  color: var(--medium-gray);
+  font-style: italic;
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+/* 데스크탑 (1025px - 1200px) */
+@media (min-width: 1025px) and (max-width: 1200px) {
+  .erp-action-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 태블릿 (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .erp-dashboard-container {
+    padding: var(--spacing-md);
+  }
+  
+  .erp-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+  }
+  
+  .erp-action-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-sm);
+  }
+}
+
+/* 모바일 (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .erp-dashboard-container {
+    padding: var(--spacing-md);
+  }
+  
+  .erp-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .erp-stat-card {
+    flex-direction: row;
+    padding: var(--spacing-md);
+  }
+  
+  .erp-stat-icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .erp-action-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+  }
+  
+  .erp-section-header {
+    padding: var(--spacing-md);
+  }
+  
+  .erp-section-content {
+    padding: var(--spacing-md);
+  }
+}
+
+/* 작은 모바일 (< 480px) */
+@media (max-width: 480px) {
+  .erp-dashboard-container {
+    padding: var(--spacing-sm);
+  }
+  
+  .erp-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .erp-stat-card {
+    flex-direction: column;
     text-align: center;
+    padding: var(--spacing-md);
+  }
+  
+  .erp-stat-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .erp-stat-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .erp-stat-value {
+    font-size: 1.5rem;
+  }
+  
+  .erp-stat-label {
+    font-size: 0.75rem;
+  }
+  
+  .erp-stat-description {
+    font-size: 0.625rem;
+  }
+  
+  .erp-content-wrapper {
+    gap: var(--spacing-sm);
+  }
+  
+  .erp-section-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .erp-section-title {
+    font-size: 0.9rem;
+  }
+  
+  .erp-section-content {
+    padding: var(--spacing-sm);
+  }
+  
+  /* 액션 버튼 - 완전히 세로 스택 */
+  .erp-action-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .erp-empty-state {
+    padding: var(--spacing-md);
+    font-size: 0.8rem;
+  }
 }
 
-.erp-dashboard__title {
-    font-size: var(--font-size-xxxl);
-    font-weight: var(--font-weight-bold);
-    color: var(--ios-text-primary);
-    margin: 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.erp-dashboard__stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xxl);
-}
-
-.erp-dashboard__management {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xxl);
-}
-
-.erp-dashboard__section {
-    margin-bottom: var(--spacing-xxl);
-}
-
-.erp-dashboard__section-title {
-    font-size: var(--font-size-xxl);
-    font-weight: var(--font-weight-semibold);
-    color: var(--ios-text-primary);
-    margin: 0 0 var(--spacing-lg) 0;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-/* 반응형 디자인 */
-@media (max-width: 767px) {
-    .erp-dashboard {
-        padding: var(--spacing-md);
-    }
-
-    .erp-dashboard__title {
-        font-size: var(--font-size-xxl);
-    }
-
-    .erp-dashboard__stats {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
-    }
-
-    .erp-dashboard__management {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
-    }
-}
-
-/* 아이패드 스타일 최적화 */
-@media (min-width: 768px) and (max-width: 1024px) {
-    .erp-dashboard {
-        padding: var(--spacing-lg) var(--spacing-xl);
-    }
-
-    .erp-dashboard__stats {
-        grid-template-columns: repeat(2, 1fr);
-    }
+/* 아주 작은 모바일 (< 360px) */
+@media (max-width: 359px) {
+  .erp-dashboard-container {
+    padding: var(--spacing-xs);
+  }
+  
+  .erp-section-header {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .erp-section-title {
+    font-size: 0.85rem;
+  }
+  
+  .erp-section-content {
+    padding: var(--spacing-xs);
+  }
+  
+  .erp-empty-state {
+    padding: var(--spacing-sm);
+    font-size: 0.75rem;
+  }
 }

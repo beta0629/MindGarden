@@ -6,14 +6,13 @@ import { fetchUserPermissions, PermissionChecks } from '../../utils/permissionUt
 import SimpleLayout from '../layout/SimpleLayout';
 import ErpCard from './common/ErpCard';
 import ErpButton from './common/ErpButton';
+import ErpHeader from './common/ErpHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
-import UnifiedHeader from '../common/UnifiedHeader';
-import axios from 'axios';
-import '../../styles/main.css';
+import { LayoutDashboard, Package, Clock, ShoppingCart, TrendingUp } from 'lucide-react';
 import './ErpDashboard.css';
 
 /**
- * ERP 메인 대시보드 컴포넌트
+ * ERP 메인 대시보드 컴포넌트 - MindGarden 디자인 시스템 적용
  */
 const ErpDashboard = ({ user: propUser }) => {
   const navigate = useNavigate();
@@ -36,12 +35,9 @@ const ErpDashboard = ({ user: propUser }) => {
       return;
     }
 
-    // OAuth2 콜백 후 세션 확인을 위한 지연 처리
     const checkSessionWithDelay = async () => {
-      // 로그인 상태 확인 (propUser 또는 sessionUser 우선, sessionManager는 백업)
       let currentUser = propUser || sessionUser;
       
-      // OAuth2 콜백 후 세션이 아직 설정되지 않았을 수 있으므로 API 직접 호출
       if (!currentUser || !currentUser.role) {
         try {
           console.log('🔄 세션 API 직접 호출 시도...');
@@ -54,21 +50,17 @@ const ErpDashboard = ({ user: propUser }) => {
             const userData = await response.json();
             if (userData && userData.role) {
               console.log('✅ API에서 사용자 정보 확인됨:', userData.role);
-              currentUser = userData; // currentUser 업데이트
+              currentUser = userData;
             }
           }
         } catch (error) {
           console.log('❌ 세션 API 호출 실패:', error);
         }
         
-        // 백업으로 sessionManager 확인
         if (!currentUser || !currentUser.role) {
           currentUser = sessionManager.getUser();
           if (!currentUser || !currentUser.role) {
             console.log('❌ 사용자 정보 없음, 로그인 페이지로 이동');
-            console.log('👤 propUser:', propUser);
-            console.log('👤 sessionUser:', sessionUser);
-            console.log('👤 sessionManager 사용자:', currentUser);
             navigate('/login', { replace: true });
             return;
           }
@@ -76,12 +68,9 @@ const ErpDashboard = ({ user: propUser }) => {
       }
 
       console.log('✅ ERP Dashboard 접근 허용:', currentUser?.role);
-      
-      // 동적 권한 목록 가져오기
       await fetchUserPermissions(setUserPermissions);
     };
 
-    // OAuth2 콜백 후 세션 설정을 위한 지연
     setTimeout(checkSessionWithDelay, 100);
   }, [sessionLoading, propUser, sessionUser, isLoggedIn, navigate]);
 
@@ -101,22 +90,20 @@ const ErpDashboard = ({ user: propUser }) => {
     try {
       setLoading(true);
       
-      // 병렬로 여러 API 호출 (axios 사용)
       const [itemsResponse, pendingResponse, ordersResponse, budgetsResponse] = await Promise.all([
-        axios.get('/api/erp/items', { withCredentials: true }),
-        axios.get('/api/erp/purchase-requests/pending-admin', { withCredentials: true }),
-        axios.get('/api/erp/purchase-orders', { withCredentials: true }),
-        axios.get('/api/erp/budgets', { withCredentials: true })
+        fetch('/api/erp/items', { credentials: 'include' }),
+        fetch('/api/erp/purchase-requests/pending-admin', { credentials: 'include' }),
+        fetch('/api/erp/purchase-orders', { credentials: 'include' }),
+        fetch('/api/erp/budgets', { credentials: 'include' })
       ]);
 
-      const [itemsData, pendingData, ordersData, budgetsData] = [
-        itemsResponse.data,
-        pendingResponse.data,
-        ordersResponse.data,
-        budgetsResponse.data
-      ];
+      const [itemsData, pendingData, ordersData, budgetsData] = await Promise.all([
+        itemsResponse.json(),
+        pendingResponse.json(),
+        ordersResponse.json(),
+        budgetsResponse.json()
+      ]);
 
-      // 예산 통계 계산
       const totalBudget = budgetsData.data?.reduce((sum, budget) => 
         sum + parseFloat(budget.totalBudget || 0), 0) || 0;
       const usedBudget = budgetsData.data?.reduce((sum, budget) => 
@@ -125,7 +112,7 @@ const ErpDashboard = ({ user: propUser }) => {
       setStats({
         totalItems: itemsData.data?.length || 0,
         pendingRequests: pendingData.data?.length || 0,
-        approvedRequests: 0, // 승인된 요청 수는 별도 API 없음
+        approvedRequests: 0,
         totalOrders: ordersData.data?.length || 0,
         totalBudget: totalBudget,
         usedBudget: usedBudget
@@ -154,175 +141,167 @@ const ErpDashboard = ({ user: propUser }) => {
   }
 
   return (
-    <div className="glass-background">
-      <SimpleLayout 
-        title="ERP 관리 시스템"
-        extraActions={
-          <ErpButton
-            variant="primary"
-            onClick={loadDashboardData}
-          >
-            새로고침
-          </ErpButton>
-        }
-      >
-        <div className="erp-dashboard-container">
+    <SimpleLayout>
+      <div className="erp-dashboard-container">
+        {/* 대시보드 헤더 */}
+        <ErpHeader
+          title="ERP 관리 시스템"
+          subtitle="통합 자원 관리 및 회계 시스템"
+          icon={<LayoutDashboard size={28} />}
+          actions={
+            <ErpButton variant="primary" size="sm" onClick={loadDashboardData}>
+              새로고침
+            </ErpButton>
+          }
+        />
 
-      {/* 통계 카드들 */}
-      <div className="erp-dashboard-stats-grid">
-        <ErpCard title="총 아이템 수">
-          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', color: '#007bff' }}>
-            {stats.totalItems.toLocaleString()}
+        {/* 통계 카드 그리드 */}
+        <div className="erp-stats-grid">
+          <div className="erp-stat-card">
+            <div className="erp-stat-icon">
+              <Package size={20} />
+            </div>
+            <div className="erp-stat-content">
+              <div className="erp-stat-value">{stats.totalItems.toLocaleString()}</div>
+              <div className="erp-stat-label">총 아이템 수</div>
+              <div className="erp-stat-description">등록된 비품 수</div>
+            </div>
           </div>
-          <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginTop: '4px' }}>
-            등록된 비품 수
-          </div>
-        </ErpCard>
 
-        <ErpCard title="승인 대기 요청">
-          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', color: '#ffc107' }}>
-            {stats.pendingRequests.toLocaleString()}
+          <div className="erp-stat-card">
+            <div className="erp-stat-icon erp-stat-icon-warning">
+              <Clock size={20} />
+            </div>
+            <div className="erp-stat-content">
+              <div className="erp-stat-value">{stats.pendingRequests.toLocaleString()}</div>
+              <div className="erp-stat-label">승인 대기 요청</div>
+              <div className="erp-stat-description">관리자 승인 대기</div>
+            </div>
           </div>
-          <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginTop: '4px' }}>
-            관리자 승인 대기
-          </div>
-        </ErpCard>
 
-        <ErpCard title="총 주문 수">
-          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', color: '#28a745' }}>
-            {stats.totalOrders.toLocaleString()}
+          <div className="erp-stat-card">
+            <div className="erp-stat-icon erp-stat-icon-success">
+              <ShoppingCart size={20} />
+            </div>
+            <div className="erp-stat-content">
+              <div className="erp-stat-value">{stats.totalOrders.toLocaleString()}</div>
+              <div className="erp-stat-label">총 주문 수</div>
+              <div className="erp-stat-description">완료된 구매 주문</div>
+            </div>
           </div>
-          <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginTop: '4px' }}>
-            완료된 구매 주문
-          </div>
-        </ErpCard>
 
-        <ErpCard title="예산 사용률">
-          <div style={{ fontSize: 'var(--font-size-xxxl)', fontWeight: 'bold', color: '#dc3545' }}>
-            {getBudgetUsagePercentage()}%
+          <div className="erp-stat-card">
+            <div className="erp-stat-icon erp-stat-icon-danger">
+              <TrendingUp size={20} />
+            </div>
+            <div className="erp-stat-content">
+              <div className="erp-stat-value">{getBudgetUsagePercentage()}%</div>
+              <div className="erp-stat-label">예산 사용률</div>
+              <div className="erp-stat-description">
+                {formatCurrency(stats.usedBudget)} / {formatCurrency(stats.totalBudget)}
+              </div>
+            </div>
           </div>
-          <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginTop: '4px' }}>
-            {formatCurrency(stats.usedBudget)} / {formatCurrency(stats.totalBudget)}
+        </div>
+
+        {/* 콘텐츠 영역 - 완전히 새로운 클래스 */}
+        <div className="erp-content-wrapper">
+          {/* 빠른 액션 섹션 */}
+          <div className="erp-section">
+            <div className="erp-section-header">
+              <h3 className="erp-section-title">빠른 액션</h3>
+            </div>
+            <div className="erp-section-content">
+              <div className="erp-action-grid">
+                {PermissionChecks.canViewPurchaseRequests(userPermissions) && (
+                  <ErpButton
+                    variant="primary"
+                    onClick={() => window.location.href = '/erp/purchase-requests'}
+                  >
+                    구매 요청하기
+                  </ErpButton>
+                )}
+                
+                {PermissionChecks.canManageApprovals(userPermissions) && (
+                  <ErpButton
+                    variant="info"
+                    onClick={() => window.location.href = '/erp/approvals'}
+                  >
+                    승인 관리
+                  </ErpButton>
+                )}
+                
+                {PermissionChecks.canManageItems(userPermissions) && (
+                  <ErpButton
+                    variant="success"
+                    onClick={() => window.location.href = '/erp/items'}
+                  >
+                    아이템 관리
+                  </ErpButton>
+                )}
+                
+                {PermissionChecks.canManageBudget(userPermissions) && (
+                  <ErpButton
+                    variant="warning"
+                    onClick={() => window.location.href = '/erp/budget'}
+                  >
+                    예산 관리
+                  </ErpButton>
+                )}
+                
+                {PermissionChecks.canManageSalary(userPermissions) && (
+                  <ErpButton
+                    variant="danger"
+                    onClick={() => window.location.href = '/erp/salary'}
+                  >
+                    급여 관리
+                  </ErpButton>
+                )}
+                
+                {PermissionChecks.canManageTax(userPermissions) && (
+                  <ErpButton
+                    variant="secondary"
+                    onClick={() => window.location.href = '/erp/tax'}
+                  >
+                    세금 관리
+                  </ErpButton>
+                )}
+                
+                {PermissionChecks.canViewIntegratedFinance(userPermissions) && (
+                  <ErpButton
+                    variant="primary"
+                    onClick={() => navigate('/admin/erp/financial')}
+                  >
+                    📊 통합 회계 시스템
+                  </ErpButton>
+                )}
+                
+                {PermissionChecks.canManageRefund(userPermissions) && (
+                  <ErpButton
+                    variant="danger"
+                    onClick={() => navigate('/erp/refund-management')}
+                  >
+                    💸 환불 관리 시스템
+                  </ErpButton>
+                )}
+              </div>
+            </div>
           </div>
-        </ErpCard>
+
+          {/* 최근 활동 섹션 */}
+          <div className="erp-section">
+            <div className="erp-section-header">
+              <h3 className="erp-section-title">최근 활동</h3>
+            </div>
+            <div className="erp-section-content">
+              <div className="erp-empty-state">
+                최근 활동 내역이 없습니다.
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
-      {/* 빠른 액션 버튼들 */}
-      <ErpCard title="빠른 액션">
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '16px'
-        }}>
-          {PermissionChecks.canViewPurchaseRequests(userPermissions) && (
-            <ErpButton
-              variant="primary"
-              size="large"
-              onClick={() => window.location.href = '/erp/purchase-requests'}
-              style={{ width: '100%' }}
-            >
-              구매 요청하기
-            </ErpButton>
-          )}
-          
-          {PermissionChecks.canManageApprovals(userPermissions) && (
-            <ErpButton
-              variant="info"
-              size="large"
-              onClick={() => window.location.href = '/erp/approvals'}
-              style={{ width: '100%' }}
-            >
-              승인 관리
-            </ErpButton>
-          )}
-          
-          {PermissionChecks.canManageItems(userPermissions) && (
-            <ErpButton
-              variant="success"
-              size="large"
-              onClick={() => window.location.href = '/erp/items'}
-              style={{ width: '100%' }}
-            >
-              아이템 관리
-            </ErpButton>
-          )}
-          
-          {PermissionChecks.canManageBudget(userPermissions) && (
-            <ErpButton
-              variant="warning"
-              size="large"
-              onClick={() => window.location.href = '/erp/budget'}
-              style={{ width: '100%' }}
-            >
-              예산 관리
-            </ErpButton>
-          )}
-          
-          {PermissionChecks.canManageSalary(userPermissions) && (
-            <ErpButton
-              variant="danger"
-              size="large"
-              onClick={() => window.location.href = '/erp/salary'}
-              style={{ width: '100%' }}
-            >
-              급여 관리
-            </ErpButton>
-          )}
-          
-          {PermissionChecks.canManageTax(userPermissions) && (
-            <ErpButton
-              variant="secondary"
-              size="large"
-              onClick={() => window.location.href = '/erp/tax'}
-              style={{ width: '100%' }}
-            >
-              세금 관리
-            </ErpButton>
-          )}
-          
-          {PermissionChecks.canViewIntegratedFinance(userPermissions) && (
-            <ErpButton
-              variant="primary"
-              size="large"
-              onClick={() => navigate('/admin/erp/financial')}
-              style={{ 
-                width: '100%', 
-                backgroundColor: '#8e44ad', 
-                borderColor: '#8e44ad',
-                color: 'white'
-              }}
-            >
-              📊 통합 회계 시스템
-            </ErpButton>
-          )}
-          
-          {PermissionChecks.canManageRefund(userPermissions) && (
-            <ErpButton
-              variant="danger"
-              size="large"
-              onClick={() => navigate('/erp/refund-management')}
-              style={{ 
-                width: '100%', 
-                backgroundColor: '#dc3545', 
-                borderColor: '#dc3545',
-                color: 'white'
-              }}
-            >
-              💸 환불 관리 시스템
-            </ErpButton>
-          )}
-        </div>
-      </ErpCard>
-
-      {/* 최근 활동 */}
-      <ErpCard title="최근 활동">
-        <div style={{ color: '#666', fontStyle: 'italic' }}>
-          최근 활동 내역이 없습니다.
-        </div>
-      </ErpCard>
-        </div>
-      </SimpleLayout>
-    </div>
+    </SimpleLayout>
   );
 };
 

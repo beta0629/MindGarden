@@ -1,412 +1,738 @@
-/* IntegratedFinanceDashboard 스타일 - 새로운 디자인 시스템 적용 */
+/* IntegratedFinanceDashboard 스타일 - 완전히 새로운 클래스, CSS Variables 사용 */
 
-/* 메인 컨테이너 */
-.integrated-finance-container {
-  padding: var(--spacing-xl);
-  background: var(--ios-bg-primary);
-  min-height: 100vh;
-  font-family: var(--font-family-primary);
+/* 컨테이너 */
+.finance-dashboard-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
 }
 
 /* 에러 상태 */
-.error-container {
+.finance-error-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 400px;
+  min-height: 400px;
   font-size: var(--font-size-lg);
-  color: var(--ios-red);
-}
-
-/* 헤더 */
-.integrated-finance-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-xxl);
-  padding: var(--spacing-xxl);
-  background: linear-gradient(135deg, var(--ios-blue-light) 0%, var(--ios-purple-light) 100%);
-  border-radius: var(--border-radius-xl);
-  box-shadow: var(--shadow-lg);
-  color: white;
-}
-
-.header-content {
-  flex: 1;
-}
-
-.header-title {
-  margin: 0;
-  font-size: var(--font-size-xxxl);
-  font-weight: var(--font-weight-bold);
-  color: white;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  margin-bottom: var(--spacing-sm);
-}
-
-.header-subtitle {
-  margin: 0;
-  font-size: var(--font-size-base);
-  color: rgba(255, 255, 255, 0.9);
-  opacity: 0.9;
-}
-
-.header-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-/* 탭 네비게이션 */
-.tab-navigation {
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-xs);
-  background: var(--ios-bg-secondary);
-  border-radius: var(--border-radius-lg);
-  border: 1px solid var(--ios-border-light);
-}
-
-.tab-button {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: none;
-  background: transparent;
-  color: var(--ios-text-secondary);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  flex: 1;
+  color: var(--color-danger);
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
   text-align: center;
 }
 
-.tab-button:hover {
-  background: var(--ios-bg-tertiary);
-  color: var(--ios-text-primary);
-}
-
-.tab-button.active {
-  background: var(--ios-blue);
-  color: white;
-  box-shadow: var(--shadow-sm);
-}
-
-/* 기간 선택 */
-.period-selector {
-  display: flex;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-md);
-  background: var(--ios-bg-secondary);
-  border-radius: var(--border-radius-md);
-  border: 1px solid var(--ios-border-light);
-}
-
-.period-button {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: 1px solid var(--ios-border-light);
-  background: var(--ios-bg-primary);
-  color: var(--ios-text-primary);
-  font-size: var(--font-size-sm);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-}
-
-.period-button:hover {
-  background: var(--ios-bg-tertiary);
-  border-color: var(--ios-blue);
-}
-
-.period-button.active {
-  background: var(--ios-blue);
-  color: white;
-  border-color: var(--ios-blue);
-}
-
-/* 지점 선택 (본사용) */
-.branch-selector {
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-md);
-  background: var(--ios-bg-secondary);
-  border-radius: var(--border-radius-md);
-  border: 1px solid var(--ios-border-light);
-}
-
-.branch-select {
-  width: 100%;
-  max-width: 300px;
-  padding: var(--spacing-sm);
-  border: 1px solid var(--ios-border-light);
-  border-radius: var(--border-radius-sm);
-  background: var(--ios-bg-primary);
-  color: var(--ios-text-primary);
-  font-size: var(--font-size-sm);
-}
-
-/* 대시보드 그리드 */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-xl);
-  margin-bottom: var(--spacing-xxl);
-}
-
-/* 요약 카드 */
-.summary-card {
-  background: var(--ios-bg-primary);
-  border-radius: var(--border-radius-lg);
+/* 헤더 */
+.finance-header {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--ios-border-light);
-  transition: all var(--transition-normal);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.summary-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.summary-card--income {
-  border-left: 4px solid var(--ios-green);
-}
-
-.summary-card--expense {
-  border-left: 4px solid var(--ios-red);
-}
-
-.summary-card--balance {
-  border-left: 4px solid var(--ios-blue);
-}
-
-.summary-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.finance-header-content {
   margin-bottom: var(--spacing-md);
 }
 
-.summary-title {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--ios-text-primary);
-  margin: 0;
+.finance-header-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--dark-gray);
+  margin: 0 0 var(--spacing-xs) 0;
 }
 
-.summary-icon {
-  font-size: var(--font-size-xl);
-}
-
-.summary-value {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
-  margin-bottom: var(--spacing-sm);
-}
-
-.summary-value--income {
-  color: var(--ios-green-dark);
-}
-
-.summary-value--expense {
-  color: var(--ios-red-dark);
-}
-
-.summary-value--balance {
-  color: var(--ios-blue-dark);
-}
-
-.summary-description {
+.finance-header-subtitle {
   font-size: var(--font-size-sm);
-  color: var(--ios-text-secondary);
+  color: var(--medium-gray);
   margin: 0;
 }
 
-/* 차트 컨테이너 */
-.chart-container {
-  background: var(--ios-bg-primary);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--ios-border-light);
+.finance-dropdown-container {
+  margin-top: var(--spacing-md);
+}
+
+.finance-select {
+  width: 100%;
+  max-width: 300px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--dark-gray);
+  font-size: var(--font-size-sm);
+}
+
+/* 탭 네비게이션 */
+.finance-tab-navigation,
+.integrated-finance-tabs {
+  display: flex;
+  gap: var(--spacing-xs);
   margin-bottom: var(--spacing-xl);
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xs);
+  flex-wrap: wrap;
 }
 
-.chart-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--ios-text-primary);
-  margin-bottom: var(--spacing-lg);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
+.finance-tab-button,
+.integrated-finance-tab-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  background: transparent;
+  color: var(--medium-gray);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
 }
 
-.chart-content {
-  min-height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ios-text-secondary);
+.finance-tab-button:hover,
+.integrated-finance-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--dark-gray);
 }
 
-/* 통계 그리드 */
-.stats-grid {
+.finance-tab-button.active,
+.integrated-finance-tab-btn.active {
+  background: var(--mint-green);
+  color: var(--dark-gray);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 콘텐츠 영역 */
+.integrated-finance-content {
+  margin-top: var(--spacing-lg);
+}
+
+/* 섹션 제목 */
+.finance-section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+/* KPI 그리드 */
+.finance-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
 }
 
-.stat-card {
-  background: var(--ios-bg-primary);
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-lg);
-  text-align: center;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--ios-border-light);
-  transition: all var(--transition-normal);
+/* KPI 카드 */
+.finance-kpi-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.stat-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+.finance-kpi-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
-.stat-value {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
+/* 대차대조표 그리드 */
+.balance-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* 대차대조표 카드 */
+.balance-sheet-card {
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  color: white;
+}
+
+.balance-sheet-card--assets {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: var(--dark-gray);
+}
+
+.balance-sheet-card--liabilities {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: var(--dark-gray);
+}
+
+.balance-sheet-card--equity {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: var(--dark-gray);
+}
+
+.balance-sheet-card-title {
+  color: var(--dark-gray);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.balance-sheet-card-icon {
+  color: var(--olive-green);
+}
+
+.balance-sheet-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.balance-sheet-section-title {
+  font-size: var(--font-size-md);
+  color: var(--medium-gray);
+  margin: 0 0 var(--spacing-sm) 0;
+  font-weight: 500;
+}
+
+.balance-sheet-items {
+  font-size: var(--font-size-sm);
+  margin-left: var(--spacing-md);
+  line-height: 1.6;
+}
+
+.balance-sheet-item {
+  margin-bottom: var(--spacing-xs);
+}
+
+.balance-sheet-total {
+  font-weight: bold;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
+
+.balance-sheet-grand-total {
+  font-weight: bold;
+  font-size: var(--font-size-lg);
+  border-top: 2px solid rgba(0, 0, 0, 0.15);
+  padding-top: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+/* 손익계산서 그리드 */
+.income-statement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* 손익계산서 카드 */
+.income-statement-card {
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: var(--dark-gray);
+}
+
+.income-statement-card--revenue {
+  /* 아이콘으로 구분 */
+}
+
+.income-statement-card--expenses {
+  /* 아이콘으로 구분 */
+}
+
+.income-statement-card-title {
+  color: var(--dark-gray);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.income-statement-card-icon {
+  color: var(--olive-green);
+}
+
+.income-statement-items {
+  font-size: var(--font-size-md);
+  margin-bottom: var(--spacing-md);
+  line-height: 1.6;
+}
+
+.income-statement-item {
+  display: flex;
+  justify-content: space-between;
   margin-bottom: var(--spacing-sm);
 }
 
-.stat-value--income {
-  color: var(--ios-green-dark);
+.income-statement-item-value {
+  font-weight: 600;
 }
 
-.stat-value--expense {
-  color: var(--ios-red-dark);
+.income-statement-total {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: var(--spacing-md);
+  margin-top: var(--spacing-md);
 }
 
-.stat-label {
-  font-size: var(--font-size-sm);
-  color: var(--ios-text-secondary);
-  margin: 0;
+.income-statement-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: var(--font-size-base);
 }
 
 /* 액션 버튼 */
-.action-buttons {
+.finance-action-buttons {
   display: flex;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
   flex-wrap: wrap;
 }
 
-/* 테이블 */
-.data-table {
-  background: var(--ios-bg-primary);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--ios-border-light);
+/* 데스크탑 (1025px - 1200px) */
+@media (min-width: 1025px) and (max-width: 1200px) {
+  .finance-kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .balance-sheet-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 태블릿 (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .finance-dashboard-container {
+    padding: var(--spacing-md);
+  }
+  
+  .finance-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+  }
+  
+  .balance-sheet-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .income-statement-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .finance-header {
+    padding: var(--spacing-lg);
+  }
+}
+
+/* 모바일 (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .finance-dashboard-container {
+    padding: var(--spacing-md);
+  }
+  
+  .finance-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .balance-sheet-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .income-statement-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .finance-header {
+    padding: var(--spacing-md);
+  }
+  
+  .finance-header-title {
+    font-size: 1.25rem;
+  }
+  
+  .finance-tab-navigation {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .finance-action-buttons {
+    flex-direction: column;
+  }
+}
+
+/* 작은 모바일 (< 480px) */
+@media (max-width: 480px) {
+  .finance-dashboard-container {
+    padding: var(--spacing-sm);
+  }
+  
+  .finance-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .balance-sheet-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .income-statement-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .finance-header {
+    padding: var(--spacing-md);
+  }
+  
+  .finance-header-title {
+    font-size: 1.125rem;
+  }
+  
+  .finance-header-subtitle {
+    font-size: 0.75rem;
+  }
+  
+  .finance-tab-navigation {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .finance-tab-button {
+    padding: var(--spacing-sm);
+    font-size: 0.875rem;
+  }
+  
+  .finance-section-title {
+    font-size: 1rem;
+  }
+  
+  .finance-action-buttons {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .finance-select {
+    max-width: 100%;
+  }
+  
+  .balance-sheet-card,
+  .income-statement-card {
+    padding: var(--spacing-md);
+  }
+  
+  .balance-sheet-card-title,
+  .income-statement-card-title {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--spacing-md);
+  }
+}
+
+/* 순이익 카드 */
+.net-income-card {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-xxl);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  color: var(--dark-gray);
+  position: relative;
   overflow: hidden;
 }
 
-.table-header {
-  padding: var(--spacing-lg);
-  background: var(--ios-bg-secondary);
-  border-bottom: 1px solid var(--ios-border-light);
+.net-income-decoration-1 {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
 }
 
-.table-title {
+.net-income-decoration-2 {
+  position: absolute;
+  bottom: -20px;
+  left: -20px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+}
+
+.net-income-title {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.net-income-icon {
+  color: var(--olive-green);
+}
+
+.net-income-value {
+  font-size: var(--font-size-xxxl);
+  font-weight: bold;
+  margin-bottom: var(--spacing-sm);
+  position: relative;
+  z-index: 1;
+}
+
+.net-income-subtitle {
+  font-size: var(--font-size-base);
+  opacity: 0.9;
+  position: relative;
+  z-index: 1;
+}
+
+/* 대차대조표 검증 카드 - 추가 스타일 */
+.balance-verification-card {
+  margin-top: var(--spacing-xl);
+  text-align: center;
+}
+
+.balance-verification-content {
+  opacity: 0.9;
+}
+
+/* 매핑 섹션 */
+.finance-mapping-section {
+  margin-top: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+.finance-mapping-title {
   font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--ios-text-primary);
-  margin: 0;
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
-.table-content {
-  overflow-x: auto;
+.finance-mapping-icon {
+  font-size: var(--font-size-xl);
 }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table th,
-.table td {
+/* 매핑 상태 카드 */
+.finance-mapping-card {
   padding: var(--spacing-md);
-  text-align: left;
-  border-bottom: 1px solid var(--ios-border-light);
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.table th {
-  background: var(--ios-bg-secondary);
-  font-weight: var(--font-weight-semibold);
-  color: var(--ios-text-primary);
+.finance-mapping-card-title {
   font-size: var(--font-size-sm);
+  color: var(--medium-gray);
+  margin-bottom: var(--spacing-xs);
 }
 
-.table td {
-  color: var(--ios-text-secondary);
+.finance-mapping-card-value {
+  font-size: var(--font-size-xxl);
+  font-weight: bold;
+  color: var(--dark-gray);
+  margin-bottom: var(--spacing-xs);
+}
+
+.finance-mapping-card-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--medium-gray);
+}
+
+.finance-mapping-badge {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.finance-mapping-badge--info {
+  border: 1px solid var(--olive-green);
+  color: var(--olive-green);
+  background: rgba(128, 128, 0, 0.1);
+}
+
+/* 에러 컨테이너 */
+.finance-error-message {
+  text-align: center;
+  padding: var(--spacing-xxl);
+  color: var(--color-danger);
+}
+
+/* Overview 제목 */
+.finance-overview-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--dark-gray);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+/* 재무 개요 카드 - 수입/지출/순이익 */
+.finance-summary-card {
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: var(--dark-gray);
+}
+
+.finance-summary-card--income {
+  /* 아이콘으로 구분 */
+}
+
+.finance-summary-card--expense {
+  /* 아이콘으로 구분 */
+}
+
+.finance-summary-card--profit {
+  /* 아이콘으로 구분 */
+}
+
+.finance-summary-card-title {
+  color: var(--dark-gray);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+}
+
+.finance-summary-card-items {
+  font-size: var(--font-size-md);
+  margin-bottom: var(--spacing-md);
+  line-height: 1.6;
+}
+
+.finance-summary-card-item {
+  margin-bottom: var(--spacing-sm);
+}
+
+.finance-summary-card-total {
+  font-weight: bold;
+  font-size: var(--font-size-lg);
+  border-top: 2px solid rgba(0, 0, 0, 0.15);
+  padding-top: var(--spacing-md);
+}
+
+/* 거래 건수 섹션 */
+.finance-transactions-section {
+  padding: var(--spacing-xl);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.finance-transactions-title {
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--dark-gray);
+}
+
+.finance-transactions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.finance-transaction-card {
+  text-align: center;
+  padding: var(--spacing-md);
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.finance-transaction-value {
+  font-size: var(--font-size-xxl);
+  font-weight: bold;
+  margin-bottom: var(--spacing-sm);
+}
+
+.finance-transaction-value--primary {
+  color: var(--dark-gray);
+}
+
+.finance-transaction-value--success {
+  color: var(--dark-gray);
+}
+
+.finance-transaction-value--warning {
+  color: var(--dark-gray);
+}
+
+.finance-transaction-label {
   font-size: var(--font-size-sm);
+  color: var(--medium-gray);
 }
 
-.table tbody tr:hover {
-  background: var(--ios-bg-secondary);
-}
-
-/* 모바일 반응형 디자인 */
-@media (max-width: 767px) {
-  .integrated-finance-container {
+/* 아주 작은 모바일 (< 360px) */
+@media (max-width: 359px) {
+  .finance-dashboard-container {
+    padding: var(--spacing-xs);
+  }
+  
+  .finance-header {
+    padding: var(--spacing-sm);
+  }
+  
+  .finance-header-title {
+    font-size: 1rem;
+  }
+  
+  .balance-sheet-card,
+  .income-statement-card {
+    padding: var(--spacing-sm);
+  }
+  
+  .net-income-card {
     padding: var(--spacing-lg);
   }
   
-  .integrated-finance-header {
-    padding: var(--spacing-lg);
-    flex-direction: column;
-    gap: var(--spacing-md);
-    text-align: center;
-  }
-  
-  .header-title {
+  .net-income-title {
     font-size: var(--font-size-xl);
   }
   
-  .header-actions {
-    justify-content: center;
-  }
-  
-  .tab-navigation {
-    flex-direction: column;
-  }
-  
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-lg);
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--spacing-md);
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-  
-  .period-selector {
-    flex-wrap: wrap;
-  }
-}
-
-/* 태블릿 반응형 디자인 */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .dashboard-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .stats-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .net-income-value {
+    font-size: var(--font-size-xxl);
   }
 }

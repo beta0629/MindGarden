@@ -79,7 +79,7 @@ const MappingManagement = () => {
             console.log('🌐 API 호출 시작:', MAPPING_API_ENDPOINTS.LIST);
             
             // 직접 fetch 사용
-            const response = await fetch('http://localhost:8080/api/admin/mappings', {
+            const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || window.location.origin}/api/admin/mappings`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',

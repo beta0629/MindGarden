@@ -2010,9 +2010,15 @@ public class AdminController {
             
         } catch (Exception e) {
             log.error("❌ 매칭 ID {} 입금 확인 실패: {}", mappingId, e.getMessage(), e);
+            log.error("❌ 예외 상세 정보: {}", e.getClass().getSimpleName());
+            if (e.getCause() != null) {
+                log.error("❌ 원인: {}", e.getCause().getMessage());
+            }
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "message", "입금 확인에 실패했습니다: " + e.getMessage()
+                "message", "입금 확인에 실패했습니다: " + e.getMessage(),
+                "errorType", e.getClass().getSimpleName(),
+                "errorDetails", e.getCause() != null ? e.getCause().getMessage() : "N/A"
             ));
         }
     }

@@ -489,6 +489,8 @@ const SessionManagement = () => {
                                                 </div>
                                                 <button 
                                                     className="mg-button mg-button-success mg-button-sm"
+                                                    disabled={clientMappings.length === 0}
+                                                    title={clientMappings.length === 0 ? '활성 매핑이 없습니다' : ''}
                                                     onClick={() => {
                                                         if (clientMappings.length > 0) {
                                                             handleQuickAdd(clientMappings[0]);
@@ -545,6 +547,7 @@ const SessionManagement = () => {
                                                 className="mg-button mg-button-primary mg-button-sm"
                                                 onClick={() => handleQuickAdd(mapping)}
                                                 disabled={mapping.status !== 'ACTIVE'}
+                                                title={mapping.status !== 'ACTIVE' ? '활성 상태가 아닙니다' : ''}
                                             >
                                                 <Plus size={14} />
                                                 회기 추가

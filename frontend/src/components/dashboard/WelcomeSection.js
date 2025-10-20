@@ -13,19 +13,14 @@ const WelcomeSection = ({ user, currentTime, consultationData }) => {
 
   // 프로필 이미지 URL 가져오기
   const getProfileImageUrl = () => {
-    if (!imageLoadError) {
-      if (user?.profileImageUrl) {
-        console.log('🖼️ 프로필 이미지 URL:', user.profileImageUrl);
-        return user.profileImageUrl;
-      }
-      if (user?.socialProfileImage) {
-        console.log('🖼️ 소셜 프로필 이미지 URL:', user.socialProfileImage);
-        return user.socialProfileImage;
-      }
+    if (user?.profileImageUrl && !imageLoadError) {
+      return user.profileImageUrl;
+    }
+    if (user?.socialProfileImage && !imageLoadError) {
+      return user.socialProfileImage;
     }
     // 기본 아바타 사용
-    console.log('🖼️ 기본 아바타 사용');
-    return null; // 이미지 없으면 null 반환
+    return '/default-avatar.svg';
   };
 
   // 사용자 이름 가져오기

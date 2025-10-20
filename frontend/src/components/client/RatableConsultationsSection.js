@@ -135,8 +135,8 @@ const RatableConsultationsSection = () => {
                     ) : (
                         <div className="mg-space-y-sm">
                             {ratableSchedules.map(schedule => (
-                                <div key={schedule.scheduleId} className="mg-card mg-card-hover">
-                                    <div className="mg-flex mg-justify-between mg-align-center">
+                                <div key={schedule.scheduleId} className="rating-schedule-item">
+                                    <div className="mg-flex mg-justify-between mg-align-center rating-schedule-content">
                                         <div className="mg-flex-1">
                                             <div className="mg-text-base mg-font-semibold mg-color-text-primary mg-mb-xs">
                                                 {schedule.consultantName}님과의 상담

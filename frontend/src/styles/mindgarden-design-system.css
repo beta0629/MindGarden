@@ -4937,15 +4937,33 @@ body {
   }
 }
 
-/* Record Card Responsive */
+/* Record Card & Rating Schedule Item */
+.rating-schedule-item {
+  padding: var(--spacing-md);
+  background: var(--light-cream);
+  border: 1px solid var(--light-beige);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+}
+
+.rating-schedule-item:hover {
+  background: var(--cream);
+  border-color: var(--olive-green);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Record & Rating Card Responsive */
 @media (max-width: 768px) {
-  .record-card-content {
+  .record-card-content,
+  .rating-schedule-content {
     flex-direction: column;
     align-items: flex-start !important;
     gap: var(--spacing-sm);
   }
   
-  .record-view-btn {
+  .record-view-btn,
+  .rating-schedule-content .mg-button {
     width: 100%;
   }
   

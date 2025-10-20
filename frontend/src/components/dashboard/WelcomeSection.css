@@ -1,17 +1,16 @@
-/* WelcomeSection 스타일 - 새로운 디자인 시스템 적용 */
+/* WelcomeSection 스타일 - MindGarden 디자인 시스템 */
 
 .welcome-section {
   margin-bottom: var(--spacing-xxl);
-  font-family: var(--font-family-ios);
 }
 
-.welcome-section__card {
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%);
-  border-radius: var(--border-radius-lg);
+/* 웰컴 카드 - MindGarden 색상 사용 */
+.welcome-card {
+  background: linear-gradient(135deg, var(--light-beige) 0%, var(--cream) 100%);
+  border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
-  border: 1px solid rgba(0, 122, 255, 0.2);
+  border: 1px solid var(--light-beige);
   box-shadow: var(--shadow-md);
-  backdrop-filter: blur(var(--blur-md));
 }
 
 .welcome-section__header {
@@ -35,28 +34,57 @@
   flex: 1;
 }
 
-.welcome-section__title {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
-  color: var(--ios-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.welcome-section__subtitle {
-  font-size: var(--font-size-base);
-  color: var(--ios-text-secondary);
-  margin: 0;
-}
-
-.welcome-section__time {
+/* 웰컴 프로필 영역 */
+.welcome-profile {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-md);
+}
+
+.profile-avatar {
+  width: calc(var(--spacing-xl) * 3.75); /* 60px */
+  height: calc(var(--spacing-xl) * 3.75);
+  border-radius: 50%;
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid var(--olive-green);
+  flex-shrink: 0;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.welcome-content {
+  flex: 1;
+}
+
+.welcome-title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--cocoa);
+  margin: 0 0 var(--spacing-sm) 0;
+  text-shadow: none;
+}
+
+.welcome-message {
+  font-size: var(--font-size-base);
+  color: var(--dark-gray);
+  margin: 0 0 var(--spacing-sm) 0;
+  line-height: 1.4;
+}
+
+.welcome-time {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
   font-size: var(--font-size-sm);
-  color: var(--ios-text-tertiary);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: var(--border-radius-full);
+  color: var(--medium-gray);
 }
 
 .welcome-section__stats {
@@ -166,17 +194,18 @@
 }
 
 .welcome-info-card {
-  background: var(--ios-bg-primary);
-  border-radius: var(--border-radius-lg);
+  background: white;
+  border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   box-shadow: var(--shadow-md);
-  border: 1px solid var(--ios-border-light);
+  border: 1px solid var(--light-beige);
   transition: all var(--transition-normal);
 }
 
 .welcome-info-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
+  border-color: var(--olive-green);
 }
 
 /* 오늘의 상담 카드 - 큰 카드 */
@@ -192,7 +221,7 @@
 .info-icon {
   width: 48px;
   height: 48px;
-  border-radius: var(--border-radius-md);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -206,13 +235,13 @@
 }
 
 .info-icon--consultation {
-  background: var(--ios-blue);
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+  background: var(--olive-green);
+  box-shadow: 0 2px 8px rgba(128, 128, 0, 0.2);
 }
 
 .info-icon--tip {
-  background: var(--ios-gray);
-  box-shadow: 0 2px 8px rgba(96, 125, 139, 0.2);
+  background: var(--cocoa);
+  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.2);
 }
 
 /* 정보 콘텐츠 */
@@ -222,14 +251,14 @@
 
 .info-title {
   font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  font-weight: 600;
   margin: 0 0 var(--spacing-sm) 0;
-  color: var(--ios-text-primary);
+  color: var(--cocoa);
 }
 
 .info-value {
   font-size: var(--font-size-sm);
-  color: var(--ios-text-secondary);
+  color: var(--dark-gray);
   margin: 0 0 var(--spacing-md) 0;
   line-height: 1.5;
 }
@@ -248,10 +277,10 @@
 
 /* 개별 상담 카드 */
 .consultation-card {
-  background: var(--ios-bg-tertiary);
-  border-radius: var(--border-radius-lg);
+  background: var(--light-cream);
+  border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
-  border: 1px solid var(--ios-border-light);
+  border: 1px solid var(--light-beige);
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-normal);
   cursor: pointer;
@@ -264,8 +293,8 @@
 }
 
 .consultation-card:hover {
-  background: var(--ios-blue-light);
-  border-color: var(--ios-blue);
+  background: var(--cream);
+  border-color: var(--olive-green);
   transform: translateY(-2px);
 }
 
@@ -275,7 +304,28 @@
 }
 
 /* 모바일 반응형 디자인 */
-@media (max-width: 767px) {
+@media (max-width: 768px) {
+  .welcome-card {
+    padding: var(--spacing-lg);
+  }
+  
+  .profile-avatar {
+    width: calc(var(--spacing-xl) * 2.5); /* 40px */
+    height: calc(var(--spacing-xl) * 2.5);
+  }
+  
+  .welcome-title {
+    font-size: var(--font-size-lg);
+  }
+  
+  .welcome-message {
+    font-size: var(--font-size-sm);
+  }
+  
+  .welcome-time {
+    font-size: var(--font-size-xs);
+  }
+  
   .welcome-info-cards {
     grid-template-columns: 1fr;
     gap: var(--spacing-md);
@@ -339,42 +389,42 @@
 /* 상담 카드 세부 스타일 */
 .consultation-date-time {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--ios-text-primary);
+  font-weight: 600;
+  color: var(--cocoa);
   margin-bottom: var(--spacing-sm);
   line-height: 1.4;
 }
 
 .consultation-consultant-name {
   font-size: var(--font-size-sm);
-  color: var(--ios-text-secondary);
+  color: var(--dark-gray);
   margin-bottom: var(--spacing-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: 500;
 }
 
 .consultation-status-badge {
   font-size: var(--font-size-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--border-radius-full);
+  border-radius: var(--radius-full);
   display: inline-block;
-  font-weight: var(--font-weight-semibold);
+  font-weight: 600;
   border: 1px solid;
 }
 
 .consultation-status-badge--confirmed {
-  background-color: var(--ios-green-light);
-  color: var(--ios-green-dark);
-  border-color: var(--ios-green);
+  background-color: var(--mint-green);
+  color: var(--cocoa);
+  border-color: var(--olive-green);
 }
 
 .consultation-status-badge--booked {
-  background-color: var(--ios-yellow-light);
-  color: var(--ios-yellow-dark);
-  border-color: var(--ios-yellow);
+  background-color: var(--soft-mint);
+  color: var(--cocoa);
+  border-color: var(--olive-green);
 }
 
 .consultation-status-badge--pending {
-  background-color: var(--ios-gray-light);
-  color: var(--ios-gray-dark);
-  border-color: var(--ios-gray);
+  background-color: var(--light-beige);
+  color: var(--cocoa);
+  border-color: var(--cocoa);
 }

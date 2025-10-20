@@ -252,30 +252,30 @@
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border);
     width: 100%;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: var(--spacing-sm) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
-    min-height: calc(var(--spacing-md) * 2);
-    flex-direction: row !important;
+    min-height: calc(var(--spacing-md) * 2.5);
+    flex-direction: row;
 }
 
 .consultant-card .last-vacation .clock-icon {
-    flex-shrink: 0 !important;
-    width: var(--icon-size-sm) !important;
-    height: var(--icon-size-sm) !important;
-    margin-right: var(--spacing-xs) !important;
+    flex-shrink: 0;
+    width: var(--icon-size-md);
+    height: var(--icon-size-md);
+    margin-right: var(--spacing-sm);
 }
 
 .consultant-card .last-vacation span {
-    flex: 1 !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    margin-left: var(--spacing-xs) !important;
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: var(--spacing-sm);
 }
 
 /* ==================== 차트 영역 ==================== */
@@ -412,29 +412,29 @@
         border-radius: var(--radius-sm);
         border: 1px solid var(--color-border);
         width: 100%;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: var(--spacing-sm) !important;
-        min-height: calc(var(--spacing-md) * 2);
-        flex-direction: row !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-md);
+        min-height: calc(var(--spacing-md) * 2.5);
+        flex-direction: row;
     }
     
     .consultant-card .last-vacation .clock-icon {
-        flex-shrink: 0 !important;
-        width: var(--icon-size-sm) !important;
-        height: var(--icon-size-sm) !important;
-        margin-right: var(--spacing-xs) !important;
+        flex-shrink: 0;
+        width: var(--icon-size-md);
+        height: var(--icon-size-md);
+        margin-right: var(--spacing-sm);
     }
     
     .consultant-card .last-vacation span {
-        flex: 1 !important;
-        text-align: center !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         font-size: var(--font-size-xs);
-        margin-left: var(--spacing-xs) !important;
+        margin-left: var(--spacing-sm);
     }
 }
 
@@ -506,29 +506,29 @@
         margin-top: var(--spacing-sm);
         padding: var(--spacing-xs);
         font-size: var(--font-size-xs);
-        min-height: calc(var(--spacing-md) * 1.5);
-        gap: var(--spacing-xs) !important;
-        flex-direction: row !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        min-height: calc(var(--spacing-md) * 2);
+        gap: var(--spacing-md);
+        flex-direction: row;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .consultant-card .last-vacation .clock-icon {
-        width: var(--icon-size-xs) !important;
-        height: var(--icon-size-xs) !important;
-        margin-right: var(--spacing-xs) !important;
-        flex-shrink: 0 !important;
+        width: var(--icon-size-sm);
+        height: var(--icon-size-sm);
+        margin-right: var(--spacing-sm);
+        flex-shrink: 0;
     }
     
     .consultant-card .last-vacation span {
-        flex: 1 !important;
-        text-align: center !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         font-size: var(--font-size-xs);
-        margin-left: var(--spacing-xs) !important;
+        margin-left: var(--spacing-sm);
     }
     
     .consultant-avatar {

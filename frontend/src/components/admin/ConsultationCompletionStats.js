@@ -176,110 +176,33 @@ const ConsultationCompletionStats = () => {
                 </div>
                 
             {/* 요약 정보 카드 */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '20px',
-                marginTop: '20px'
-            }}>
-                <div style={{
-                    backgroundColor: '#f8f9fa',
-                    border: '1px solid #dee2e6',
-                    borderRadius: '12px',
-                    padding: '24px',
-                    textAlign: 'center',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}>
-                    <div style={{
-                        width: '60px',
-                        height: '60px',
-                        backgroundColor: '#007bff',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 16px',
-                        fontSize: 'var(--font-size-xxl)',
-                        color: 'white'
-                    }}>
+            <div className="mg-stats-grid mg-mt-lg">
+                <div className="mg-stat-card mg-text-center">
+                    <div className="mg-stat-icon primary">
                         👥
                     </div>
-                    <div style={{ 
-                        fontSize: 'var(--font-size-xxxl)',
-                        fontWeight: 'bold',
-                        color: '#007bff',
-                        marginBottom: '8px'
-                    }}>
+                    <div className="mg-stat-value mg-color-primary mg-mb-sm">
                         {statistics.length}
                     </div>
-                    <div style={{ 
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#6c757d',
-                        fontWeight: '500'
-                    }}>
+                    <div className="mg-stat-label">
                         총 상담사
                     </div>
                 </div>
                 
-                <div style={{
-                    backgroundColor: '#f8f9fa',
-                    border: '1px solid #dee2e6',
-                    borderRadius: '12px',
-                    padding: '24px',
-                    textAlign: 'center',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}>
-                    <div style={{
-                        width: '60px',
-                        height: '60px',
-                        backgroundColor: '#28a745',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 16px',
-                        fontSize: 'var(--font-size-xxl)',
-                        color: 'white'
-                    }}>
+                <div className="mg-stat-card mg-text-center">
+                    <div className="mg-stat-icon success">
                         ✅
                     </div>
-                    <div style={{ 
-                        fontSize: 'var(--font-size-xxxl)',
-                        fontWeight: 'bold',
-                        color: '#28a745',
-                        marginBottom: '8px'
-                    }}>
+                    <div className="mg-stat-value mg-color-success mg-mb-sm">
                         {statistics.reduce((sum, stat) => sum + stat.completedCount, 0)}
                     </div>
-                    <div style={{ 
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#6c757d',
-                        fontWeight: '500'
-                    }}>
+                    <div className="mg-stat-label">
                         완료 건수
                     </div>
                 </div>
                 
-                <div style={{
-                    backgroundColor: '#f8f9fa',
-                    border: '1px solid #dee2e6',
-                    borderRadius: '12px',
-                    padding: '24px',
-                    textAlign: 'center',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}>
-                    <div style={{
-                        width: '60px',
-                        height: '60px',
-                        backgroundColor: '#ffc107',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 16px',
-                        fontSize: 'var(--font-size-xxl)',
-                        color: 'white'
-                    }}>
+                <div className="mg-stat-card mg-text-center">
+                    <div className="mg-stat-icon warning">
                         📊
                     </div>
                     <div style={{ 
@@ -293,11 +216,7 @@ const ConsultationCompletionStats = () => {
                             : 0
                         }
                     </div>
-                    <div style={{ 
-                        fontSize: 'var(--font-size-sm)',
-                        color: '#6c757d',
-                        fontWeight: '500'
-                    }}>
+                    <div className="mg-stat-label">
                         평균 건수
                     </div>
                 </div>
@@ -305,37 +224,12 @@ const ConsultationCompletionStats = () => {
             </div>
 
             {/* 상담사별 통계 카드 그리드 */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                gap: '20px',
-                marginTop: '20px'
-            }}>
+            <div className="mg-management-grid mg-mt-lg">
                 {statistics.map((stat, index) => (
-                    <div key={stat.consultantId} style={{
-                        backgroundColor: '#fff',
-                        border: '1px solid #dee2e6',
-                        borderRadius: '12px',
-                        padding: '20px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                        cursor: 'pointer'
-                    }}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                    }}>
+                    <div key={stat.consultantId} className="mg-card" style={{ cursor: 'pointer' }}
+>
                         {/* 상담사 헤더 */}
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: '16px'
-                        }}>
+                        <div className="mg-flex mg-align-center mg-justify-between mg-mb-md">
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',

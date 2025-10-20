@@ -71,3 +71,79 @@
         padding: var(--spacing-lg) var(--spacing-xl);
     }
 }
+
+/* 알림 버튼 스타일 */
+.notification-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.notification-button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--spacing-xl) * 2.5);
+    height: calc(var(--spacing-xl) * 2.5);
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--light-cream);
+    color: var(--cocoa);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border: 1px solid var(--light-beige);
+}
+
+.notification-button:hover {
+    background: var(--cream);
+    border-color: var(--olive-green);
+    transform: scale(1.05);
+    box-shadow: var(--shadow-sm);
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: var(--color-danger);
+    color: white;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* 반응형: 모바일에서 알림 버튼 크기 조정 */
+@media (max-width: 767px) {
+    .notification-button {
+        width: calc(var(--spacing-xl) * 2);
+        height: calc(var(--spacing-xl) * 2);
+    }
+    
+    .notification-badge {
+        min-width: 16px;
+        height: 16px;
+        font-size: 10px;
+        top: -3px;
+        right: -3px;
+    }
+}

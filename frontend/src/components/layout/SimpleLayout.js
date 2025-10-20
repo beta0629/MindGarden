@@ -1,13 +1,17 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bell } from 'lucide-react';
 import UnifiedHeader from '../common/UnifiedHeader';
 import UnifiedLoading from '../common/UnifiedLoading';
+import { useNotification } from '../../contexts/NotificationContext';
+import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
 import './SimpleLayout.css';
 
 /**
  * 간단한 레이아웃 컴포넌트
  * 복잡한 로직 없이 기본적인 레이아웃만 제공
- * 공통 로딩 상태 지원
+ * 공통 로딩 상태 지원 + 알림 기능
  */
 const SimpleLayout = ({ 
   children, 
@@ -17,6 +21,44 @@ const SimpleLayout = ({
   loadingVariant = "default",
   extraActions = null
 }) => {
+  const navigate = useNavigate();
+  const { user } = useSession();
+  const { unreadCount } = useNotification();
+
+  // 알림 아이콘 클릭 핸들러
+  const handleNotificationClick = () => {
+    if (user?.role === 'CONSULTANT') {
+      navigate('/consultant/messages');
+    } else if (user?.role === 'CLIENT') {
+      navigate('/client/dashboard');
+    }
+  };
+
+  // 알림 아이콘을 extraActions에 추가
+  const notificationAction = user && (
+    <div className="notification-wrapper">
+      <button 
+        className="notification-button"
+        onClick={handleNotificationClick}
+        aria-label="알림"
+      >
+        <Bell size={20} />
+        {unreadCount > 0 && (
+          <span className="notification-badge">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+
+  const combinedActions = (
+    <>
+      {notificationAction}
+      {extraActions}
+    </>
+  );
+
   return (
     <div className="simple-layout">
       <UnifiedHeader 
@@ -26,7 +68,7 @@ const SimpleLayout = ({
         showHamburger={true}
         variant="default"
         sticky={true}
-        extraActions={extraActions}
+        extraActions={combinedActions}
       />
       
       <main className="simple-main">

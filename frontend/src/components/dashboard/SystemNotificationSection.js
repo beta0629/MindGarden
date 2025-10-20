@@ -21,6 +21,9 @@ const SystemNotificationSection = () => {
     navigate('/consultant/messages');
   };
 
+  // 최대 5개만 표시
+  const displayNotifications = notifications.slice(0, 5);
+
   return (
     <div className="mg-card">
       <div className="mg-card-header">
@@ -32,12 +35,14 @@ const SystemNotificationSection = () => {
               <span className="mg-badge mg-badge-danger">{unreadCount}</span>
             )}
           </h3>
-          <button
-            className="mg-button mg-button-ghost mg-button-small"
-            onClick={handleViewAll}
-          >
-            전체 보기
-          </button>
+          {unreadCount > 0 && (
+            <button
+              className="mg-button mg-button-ghost mg-button-small"
+              onClick={handleViewAll}
+            >
+              {unreadCount > 5 ? `전체 보기 (+${unreadCount - 5})` : '전체 보기'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -47,14 +52,14 @@ const SystemNotificationSection = () => {
             <div className="mg-spinner"></div>
             <p>알림을 불러오는 중...</p>
           </div>
-        ) : notifications.length === 0 ? (
+        ) : displayNotifications.length === 0 ? (
           <div className="mg-empty-state">
             <div className="mg-empty-state__icon">📭</div>
             <p className="mg-empty-state__text">읽지 않은 메시지가 없습니다.</p>
           </div>
         ) : (
           <div className="mg-space-y-sm">
-            {notifications.map((notification) => (
+            {displayNotifications.map((notification) => (
               <MessageCard
                 key={notification.id}
                 message={notification}

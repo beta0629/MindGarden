@@ -23,14 +23,13 @@ export const NotificationProvider = ({ children }) => {
     if (!isLoggedIn || !user?.id) return;
 
     try {
-      const endpoint = user.role === 'ROLE_CONSULTANT' 
-        ? `/api/consultation-messages/consultant/${user.id}/unread-count`
-        : `/api/consultation-messages/client/${user.id}/unread-count`;
+      const userType = user.role === 'ROLE_CONSULTANT' ? 'CONSULTANT' : 'CLIENT';
+      const endpoint = `/api/consultation-messages/unread-count?userId=${user.id}&userType=${userType}`;
 
       const response = await apiGet(endpoint);
       
       if (response.success) {
-        setUnreadCount(response.data || 0);
+        setUnreadCount(response.unreadCount || 0);
       }
     } catch (error) {
       console.error('알림 개수 로드 오류:', error);

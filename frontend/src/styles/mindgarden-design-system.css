@@ -55,6 +55,7 @@
   
   /* Layout */
   --container-max-width: 1200px;
+  --dashboard-max-width: 1400px;
   --permission-category-min-width: 450px;
   --checkbox-size: 18px;
   --chart-height: 20;
@@ -1326,12 +1327,33 @@ body {
   }
 
   .mg-dashboard-header-content {
-    flex-wrap: wrap;
-    gap: var(--spacing-sm) !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md) !important;
   }
 
   .mg-dashboard-header-left {
     gap: var(--spacing-sm) !important;
+    width: 100%;
+  }
+
+  .mg-dashboard-header-right {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs) !important;
+    align-items: center;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .mg-dashboard-header-right .mg-select {
+    min-width: calc(var(--icon-size-md) * 2);
+    font-size: var(--font-size-sm);
+  }
+
+  .mg-dashboard-header-right .mg-dashboard-icon-btn {
+    flex-shrink: 0;
+    width: var(--icon-size-sm);
+    height: var(--icon-size-sm);
   }
 
   .mg-dashboard-stats {
@@ -1456,6 +1478,8 @@ body {
   box-shadow: var(--shadow-xl);
   animation: slideIn 0.3s ease-out;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .mg-modal-header {
@@ -1491,12 +1515,15 @@ body {
 
 .mg-modal-body {
   margin-bottom: var(--spacing-lg);
+  flex: 1;
+  overflow-y: auto;
 }
 
 .mg-modal-footer {
   display: flex;
   gap: var(--spacing-sm);
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 /* Large Modal */
@@ -1504,6 +1531,8 @@ body {
   max-width: 90vw;
   max-height: 90vh;
   width: 1000px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Modal Tabs */
@@ -1592,11 +1621,38 @@ body {
 
 /* Responsive Modal */
 @media (max-width: 768px) {
-  .mg-modal-large {
+  .mg-modal {
     max-width: 95vw;
-    max-height: 95vh;
+    max-height: 90vh;
     width: 100%;
     margin: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mg-modal-large {
+    max-width: 95vw;
+    max-height: 90vh;
+    width: 100%;
+    margin: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mg-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+  }
+  
+  .mg-modal-footer {
+    flex-shrink: 0;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--light-beige);
+    margin-top: var(--spacing-md);
   }
   
   .mg-tabs {
@@ -1610,11 +1666,6 @@ body {
   
   .mg-modal-content {
     padding: var(--spacing-md);
-  }
-  
-  .mg-modal-footer {
-    flex-direction: column;
-    gap: var(--spacing-sm);
   }
 }
 
@@ -4134,8 +4185,9 @@ body {
 .mg-dashboard-layout {
   background: rgba(255, 255, 255, 0.3);
   border-radius: var(--radius-xl);
-  padding: var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-lg);
   box-shadow: var(--shadow-lg);
+  width: 100%;
 }
 
 /* Dashboard Header */
@@ -4146,19 +4198,23 @@ body {
 .mg-dashboard-header-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--spacing-lg);
+  flex-wrap: wrap;
 }
 
 .mg-dashboard-header-left {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  flex-shrink: 0;
 }
 
 .mg-dashboard-header-right {
   display: flex;
   gap: var(--spacing-sm);
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .mg-dashboard-title {
@@ -4192,6 +4248,37 @@ body {
 .mg-dashboard-icon-btn:hover {
   background: rgba(255, 255, 255, 0.8);
   border-color: var(--olive-green);
+}
+
+/* 아이콘 버튼 색상 변형 */
+.mg-dashboard-icon-btn.mg-button-primary {
+  color: var(--mint-green);
+  border-color: var(--mint-green);
+}
+
+.mg-dashboard-icon-btn.mg-button-primary:hover {
+  background: var(--mint-green);
+  color: white;
+}
+
+.mg-dashboard-icon-btn.mg-button-success {
+  color: var(--olive-green);
+  border-color: var(--olive-green);
+}
+
+.mg-dashboard-icon-btn.mg-button-success:hover {
+  background: var(--olive-green);
+  color: white;
+}
+
+.mg-dashboard-icon-btn.mg-button-danger {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.mg-dashboard-icon-btn.mg-button-danger:hover {
+  background: var(--color-danger);
+  color: white;
 }
 
 /* Dashboard Stats */
@@ -4266,14 +4353,20 @@ body {
 
 /* Dashboard Content Grid */
 .mg-dashboard-content {
+  display: block;
+  width: 100%;
+}
+
+/* 사이드바가 있는 경우에만 그리드 레이아웃 적용 */
+.mg-dashboard-content:has(.mg-dashboard-sidebar) {
   display: grid;
   grid-template-columns: 1fr var(--sidebar-width, 300px);
   gap: var(--spacing-xl);
 }
 
-/* Desktop: Force 2-column layout */
+/* Desktop: Force 2-column layout for sidebar */
 @media (min-width: 769px) {
-  .mg-dashboard-content {
+  .mg-dashboard-content:has(.mg-dashboard-sidebar) {
     grid-template-columns: 1fr var(--sidebar-width, 300px);
     display: grid;
   }

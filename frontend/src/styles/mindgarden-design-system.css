@@ -1050,6 +1050,26 @@ body {
 }
 
 /* ============================================
+   Additional Utility Classes for Consultant Components
+   ============================================ */
+
+.mg-flex-col {
+    flex-direction: column;
+}
+
+.mg-w-full {
+    width: 100%;
+}
+
+.mg-block {
+    display: block;
+}
+
+.mg-color-primary {
+    color: var(--color-primary);
+}
+
+/* ============================================
    Responsive Design
    ============================================ */
 /* Tablet (769px - 1024px) */

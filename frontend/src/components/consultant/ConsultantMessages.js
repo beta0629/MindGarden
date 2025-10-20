@@ -331,66 +331,24 @@ const ConsultantMessages = () => {
         {/* 새 메시지 작성 모달 */}
         {showSendModal && (
           <div className="consultant-messages-send-modal-overlay">
-            <div style={{
-              background: '#fff',
-              borderRadius: '15px',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
-              maxWidth: '600px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '25px 30px 20px',
-                borderBottom: '1px solid #e9ecef',
-                background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                borderRadius: '15px 15px 0 0'
-              }}>
-                <h3 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: '600',
-                  color: '#2c3e50',
-                  margin: '0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  <i className="bi bi-chat-dots" style={{ color: '#3498db' }}></i>
+            <div className="mg-modal mg-modal-large">
+              <div className="mg-modal-header mg-flex mg-justify-between mg-align-center mg-p-lg mg-border-bottom">
+                <h3 className="mg-h3 mg-mb-0">
+                  <i className="bi bi-chat-dots mg-color-primary"></i>
                   새 메시지 작성
                 </h3>
                 <button
+                  className="mg-modal-close"
                   onClick={() => setShowSendModal(false)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '1.5rem',
-                    color: '#6c757d',
-                    cursor: 'pointer',
-                    padding: '5px',
-                    borderRadius: '50%',
-                    width: '35px',
-                    height: '35px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = '#e9ecef';
-                    e.target.style.color = '#2c3e50';
-                  }}
                 >
                   ×
                 </button>
               </div>
               
-              <div style={{ padding: '30px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div className="mg-modal-body mg-p-lg">
+                <div className="mg-flex mg-flex-col mg-gap-lg">
                   <div>
-                    <label style={{ fontWeight: '600', color: '#2c3e50', fontSize: '0.95rem', marginBottom: '8px', display: 'block' }}>
+                    <label className="mg-label mg-font-semibold mg-color-text-primary mg-text-sm mg-mb-sm mg-block">
                       받는 사람 *
                     </label>
                     <select

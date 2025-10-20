@@ -84,8 +84,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: calc(var(--spacing-xl) * 2.5);
-    height: calc(var(--spacing-xl) * 2.5);
+    width: var(--header-avatar-size, 36px);
+    height: var(--header-avatar-size, 36px);
     border: none;
     border-radius: var(--radius-full);
     background: var(--light-cream);
@@ -104,22 +104,22 @@
 
 .notification-badge {
     position: absolute;
-    top: -6px;
-    right: -6px;
-    min-width: var(--spacing-lg);
-    height: var(--spacing-lg);
-    padding: 0 var(--spacing-xs);
+    top: -3px;
+    right: -3px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 3px;
     background: var(--color-danger);
     color: white;
     border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
+    font-size: 10px;
     font-weight: var(--font-weight-bold);
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
-    border: 2px solid white;
-    box-shadow: var(--shadow-md);
+    border: 1.5px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     animation: pulse-badge 2s infinite;
     z-index: calc(var(--z-header) + 1); /* 헤더보다 위에 표시 */
     pointer-events: none; /* 클릭 방해하지 않도록 */
@@ -137,15 +137,16 @@
 /* 반응형: 모바일에서 알림 버튼 크기 조정 */
 @media (max-width: 767px) {
     .notification-button {
-        width: calc(var(--spacing-xl) * 2);
-        height: calc(var(--spacing-xl) * 2);
+        width: var(--header-avatar-size-mobile, 32px);
+        height: var(--header-avatar-size-mobile, 32px);
     }
     
     .notification-badge {
-        min-width: var(--spacing-md);
-        height: var(--spacing-md);
-        font-size: 10px;
-        top: -4px;
-        right: -4px;
+        min-width: 14px;
+        height: 14px;
+        font-size: 9px;
+        top: -2px;
+        right: -2px;
+        border-width: 1px;
     }
 }

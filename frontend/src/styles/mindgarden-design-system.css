@@ -1228,7 +1228,25 @@ body {
   .mg-stats-grid {
     grid-template-columns: var(--mobile-grid-columns, 1fr);
     gap: var(--spacing-md);
-    justify-items: center;
+  }
+  
+  .mg-stats-grid .mg-stat-card,
+  .mg-stat-card {
+    padding: var(--spacing-xl);
+  }
+  
+  .mg-stat-value,
+  .mg-stats-grid .mg-stat-value {
+    font-size: 2rem !important;
+  }
+  
+  .mg-stat-label,
+  .mg-stats-grid .mg-stat-label {
+    font-size: var(--font-size-base) !important;
+  }
+  
+  .mg-text-xxxl {
+    font-size: 2.5rem;
   }
 
   .mg-dashboard-stat-card {

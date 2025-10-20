@@ -23,7 +23,10 @@ export const NotificationProvider = ({ children }) => {
 
   // 읽지 않은 메시지 개수 로드
   const loadUnreadMessageCount = async () => {
-    if (!isLoggedIn || !user?.id) return;
+    if (!isLoggedIn || !user?.id) {
+      setUnreadMessageCount(0);
+      return;
+    }
 
     try {
       const userType = user.role === 'ROLE_CONSULTANT' ? 'CONSULTANT' : 'CLIENT';
@@ -33,18 +36,27 @@ export const NotificationProvider = ({ children }) => {
 
       const response = await apiGet(endpoint);
       
-      if (response.success) {
+      if (response && response.success) {
         console.log('📊 읽지 않은 메시지 개수 업데이트:', response.unreadCount);
         setUnreadMessageCount(response.unreadCount || 0);
+      } else {
+        setUnreadMessageCount(0);
       }
     } catch (error) {
-      console.error('메시지 개수 로드 오류:', error);
+      // 인증 오류는 조용히 처리
+      if (error.status !== 401 && error.status !== 403) {
+        console.error('메시지 개수 로드 오류:', error);
+      }
+      setUnreadMessageCount(0);
     }
   };
 
   // 읽지 않은 시스템 공지 개수 로드
   const loadUnreadSystemCount = async () => {
-    if (!isLoggedIn || !user?.id) return;
+    if (!isLoggedIn || !user?.id) {
+      setUnreadSystemCount(0);
+      return;
+    }
 
     try {
       const timestamp = new Date().getTime();
@@ -52,12 +64,19 @@ export const NotificationProvider = ({ children }) => {
 
       const response = await apiGet(endpoint);
       
-      if (response.success) {
+      if (response && response.success) {
         console.log('📢 읽지 않은 공지 개수 업데이트:', response.unreadCount);
         setUnreadSystemCount(response.unreadCount || 0);
+      } else {
+        // 401 등의 오류는 조용히 처리
+        setUnreadSystemCount(0);
       }
     } catch (error) {
-      console.error('공지 개수 로드 오류:', error);
+      // 인증 오류는 조용히 처리
+      if (error.status !== 401 && error.status !== 403) {
+        console.error('공지 개수 로드 오류:', error);
+      }
+      setUnreadSystemCount(0);
     }
   };
 
@@ -71,7 +90,10 @@ export const NotificationProvider = ({ children }) => {
 
   // 메시지 목록 로드
   const loadNotifications = async () => {
-    if (!isLoggedIn || !user?.id) return;
+    if (!isLoggedIn || !user?.id) {
+      setNotifications([]);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -81,15 +103,21 @@ export const NotificationProvider = ({ children }) => {
 
       const response = await apiGet(endpoint);
       
-      if (response.success) {
+      if (response && response.success) {
         const unreadMessages = (response.data || [])
           .filter(msg => !msg.isRead)
           .slice(0, 5); // 최근 5개만
         
         setNotifications(unreadMessages);
+      } else {
+        setNotifications([]);
       }
     } catch (error) {
-      console.error('메시지 목록 로드 오류:', error);
+      // 인증 오류는 조용히 처리
+      if (error.status !== 401 && error.status !== 403) {
+        console.error('메시지 목록 로드 오류:', error);
+      }
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -97,16 +125,26 @@ export const NotificationProvider = ({ children }) => {
 
   // 시스템 공지 목록 로드
   const loadSystemNotifications = async () => {
-    if (!isLoggedIn || !user?.id) return;
+    if (!isLoggedIn || !user?.id) {
+      setSystemNotifications([]);
+      return;
+    }
 
     try {
       const response = await apiGet('/api/system-notifications?page=0&size=5');
       
-      if (response.success) {
+      if (response && response.success) {
         setSystemNotifications(response.data || []);
+      } else {
+        // 401 등의 오류는 조용히 처리
+        setSystemNotifications([]);
       }
     } catch (error) {
-      console.error('공지 목록 로드 오류:', error);
+      // 인증 오류는 조용히 처리
+      if (error.status !== 401 && error.status !== 403) {
+        console.error('공지 목록 로드 오류:', error);
+      }
+      setSystemNotifications([]);
     }
   };
 

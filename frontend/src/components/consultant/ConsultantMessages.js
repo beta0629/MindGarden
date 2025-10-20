@@ -223,17 +223,8 @@ const ConsultantMessages = () => {
 
           <button
             onClick={() => setShowSendModal(true)}
-            className="consultant-messages-send-btn"
-            onMouseEnter={(e) => {
-              e.target.style.background = '#2980b9';
-              e.target.style.borderColor = '#2980b9';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = '#3498db';
-              e.target.style.borderColor = '#3498db';
-            }}
+            className="mg-button mg-button-primary"
           >
-            <i className="bi bi-plus"></i>
             새 메시지
           </button>
         </div>
@@ -268,7 +259,7 @@ const ConsultantMessages = () => {
                 )}
               </div>
             ) : (
-              <div className="consultant-messages-grid">
+              <div className="mg-grid mg-grid-cols-3 mg-gap-md">
                 {filteredMessages.map((message) => {
                   const typeInfo = getMessageTypeInfo(message.messageType);
                   
@@ -276,47 +267,38 @@ const ConsultantMessages = () => {
                     <div
                       key={message.id}
                       onClick={() => handleMessageClick(message)}
-                      className="consultant-messages-card"
-                      onMouseEnter={(e) => {
-                        e.target.style.transform = 'translateY(-2px)';
-                        e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.12)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.08)';
-                      }}
+                      className="mg-card mg-cursor-pointer"
                     >
-                      <div className="consultant-messages-card-header">
-                        <div className="consultant-messages-card-type">
-                          <span className="consultant-messages-card-type-icon">
-                            {typeInfo.icon} {typeInfo.label}
+                      <div className="mg-flex mg-justify-between mg-align-center mg-mb-md">
+                        <div className="mg-flex mg-align-center mg-gap-sm">
+                          <span className={`mg-badge mg-badge-${typeInfo.value === 'GENERAL' ? 'secondary' : typeInfo.value === 'FOLLOW_UP' ? 'primary' : typeInfo.value === 'HOMEWORK' ? 'success' : typeInfo.value === 'REMINDER' ? 'warning' : 'danger'}`}>
+                            {typeInfo.label}
                           </span>
                           {message.isImportant && (
-                            <span className="consultant-messages-important-icon">⭐</span>
+                            <span className="mg-badge mg-badge-warning mg-text-xs">중요</span>
                           )}
                           {message.isUrgent && (
-                            <span className="consultant-messages-urgent-icon">🚨</span>
+                            <span className="mg-badge mg-badge-danger mg-text-xs">긴급</span>
                           )}
                         </div>
-                        <span className="consultant-messages-date">
+                        <span className="mg-text-xs mg-color-text-secondary">
                           {formatDate(message.createdAt)}
                         </span>
                       </div>
                       
-                      <h4 className="consultant-messages-title">
+                      <h4 className="mg-h5 mg-mb-sm">
                         {message.title}
                       </h4>
                       
-                      <p className="consultant-messages-content">
-                        {message.content}
+                      <p className="mg-text-sm mg-color-text-secondary mg-mb-md">
+                        {message.content.substring(0, 100)}{message.content.length > 100 && '...'}
                       </p>
                       
-                      <div className="consultant-messages-footer">
-                        <span className="consultant-messages-client">
+                      <div className="mg-flex mg-justify-between mg-align-center mg-pt-md mg-border-top">
+                        <span className="mg-text-sm mg-color-text-secondary">
                           받는 사람: {message.clientName || '알 수 없음'}
                         </span>
-                        <span className={`consultant-messages-status ${message.isRead ? 'read' : 'unread'}`}>
-                          <i className={`bi bi-${message.isRead ? 'check-circle' : 'circle'}`}></i>
+                        <span className={`mg-badge ${message.isRead ? 'mg-badge-success' : 'mg-badge-secondary'} mg-text-xs`}>
                           {message.isRead ? '읽음' : '안읽음'}
                         </span>
                       </div>

@@ -45,13 +45,14 @@
   width: calc(var(--spacing-xl) * 3.75); /* 60px */
   height: calc(var(--spacing-xl) * 3.75);
   border-radius: 50%;
-  background: var(--cream);
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   border: 2px solid var(--olive-green);
   flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
 }
 
 .profile-image {

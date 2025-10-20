@@ -245,35 +245,37 @@
 }
 
 /* 최근 휴가 정보 기본 스타일 */
-.last-vacation {
+.consultant-card .last-vacation {
     margin-top: var(--spacing-md);
     padding: var(--spacing-sm);
     background: var(--color-background-secondary);
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border);
     width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-sm);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: var(--spacing-sm) !important;
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     min-height: calc(var(--spacing-md) * 2);
+    flex-direction: row !important;
 }
 
-.last-vacation .clock-icon {
-    flex-shrink: 0;
-    width: var(--icon-size-sm);
-    height: var(--icon-size-sm);
-    margin-right: var(--spacing-xs);
+.consultant-card .last-vacation .clock-icon {
+    flex-shrink: 0 !important;
+    width: var(--icon-size-sm) !important;
+    height: var(--icon-size-sm) !important;
+    margin-right: var(--spacing-xs) !important;
 }
 
-.last-vacation span {
-    flex: 1;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.consultant-card .last-vacation span {
+    flex: 1 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-left: var(--spacing-xs) !important;
 }
 
 /* ==================== 차트 영역 ==================== */
@@ -403,35 +405,36 @@
     }
     
     /* 최근 휴가 정보 겹침 방지 */
-    .last-vacation {
+    .consultant-card .last-vacation {
         margin-top: var(--spacing-md);
         padding: var(--spacing-sm);
         background: var(--color-background-secondary);
         border-radius: var(--radius-sm);
         border: 1px solid var(--color-border);
         width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: var(--spacing-sm);
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: var(--spacing-sm) !important;
         min-height: calc(var(--spacing-md) * 2);
-        flex-direction: row;
+        flex-direction: row !important;
     }
     
-    .last-vacation .clock-icon {
-        flex-shrink: 0;
-        width: var(--icon-size-sm);
-        height: var(--icon-size-sm);
-        margin-right: var(--spacing-xs);
+    .consultant-card .last-vacation .clock-icon {
+        flex-shrink: 0 !important;
+        width: var(--icon-size-sm) !important;
+        height: var(--icon-size-sm) !important;
+        margin-right: var(--spacing-xs) !important;
     }
     
-    .last-vacation span {
-        flex: 1;
-        text-align: center;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .consultant-card .last-vacation span {
+        flex: 1 !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
         font-size: var(--font-size-xs);
+        margin-left: var(--spacing-xs) !important;
     }
 }
 
@@ -499,29 +502,33 @@
         margin-bottom: var(--spacing-xs);
     }
     
-    .last-vacation {
+    .consultant-card .last-vacation {
         margin-top: var(--spacing-sm);
         padding: var(--spacing-xs);
         font-size: var(--font-size-xs);
         min-height: calc(var(--spacing-md) * 1.5);
-        gap: var(--spacing-xs);
-        flex-direction: row;
+        gap: var(--spacing-xs) !important;
+        flex-direction: row !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
-    .last-vacation .clock-icon {
-        width: var(--icon-size-xs);
-        height: var(--icon-size-xs);
-        margin-right: var(--spacing-xs);
-        flex-shrink: 0;
+    .consultant-card .last-vacation .clock-icon {
+        width: var(--icon-size-xs) !important;
+        height: var(--icon-size-xs) !important;
+        margin-right: var(--spacing-xs) !important;
+        flex-shrink: 0 !important;
     }
     
-    .last-vacation span {
-        flex: 1;
-        text-align: center;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .consultant-card .last-vacation span {
+        flex: 1 !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
         font-size: var(--font-size-xs);
+        margin-left: var(--spacing-xs) !important;
     }
     
     .consultant-avatar {

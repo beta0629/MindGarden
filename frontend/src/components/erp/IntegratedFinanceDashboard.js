@@ -290,7 +290,7 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                   onChange={(e) => setSelectedBranch(e.target.value)}
                   className="mg-select"
                 >
-                  <option value="">지점 선택</option>
+                  <option key="branch-default" value="">지점 선택</option>
                   {branches.map(branch => (
                     <option key={branch.codeValue} value={branch.codeValue}>
                       {branch.codeLabel}
@@ -303,30 +303,30 @@ const IntegratedFinanceDashboard = ({ user: propUser }) => {
                 onChange={(e) => setSelectedPeriod(e.target.value)}
                 className="mg-select"
               >
-                <option value="daily">일간</option>
-                <option value="monthly">월간</option>
-                <option value="yearly">년간</option>
+                <option key="daily" value="daily">일간</option>
+                <option key="monthly" value="monthly">월간</option>
+                <option key="yearly" value="yearly">년간</option>
               </select>
               <button
                 onClick={() => setShowQuickExpenseForm(true)}
-                className="mg-button mg-button-danger mg-button-sm"
+                className="mg-dashboard-icon-btn mg-button-danger"
+                title="빠른 지출"
               >
-                <TrendingDown size={16} />
-                빠른 지출
+                <TrendingDown size={18} />
               </button>
               <button
                 onClick={() => setShowTransactionForm(true)}
-                className="mg-button mg-button-success mg-button-sm"
+                className="mg-dashboard-icon-btn mg-button-success"
+                title="거래 등록"
               >
-                <DollarSign size={16} />
-                거래 등록
+                <DollarSign size={18} />
               </button>
               <button
                 onClick={() => window.location.href = '/erp/financial'}
-                className="mg-button mg-button-primary mg-button-sm"
+                className="mg-dashboard-icon-btn mg-button-primary"
+                title="상세 내역 보기"
               >
-                <FileText size={16} />
-                상세 내역 보기
+                <FileText size={18} />
               </button>
             </div>
           </div>
@@ -420,7 +420,7 @@ const OverviewTab = ({ data }) => {
   return (
     <div>
       <h2 className="finance-overview-title">
-        <BarChart3 size={28} style={{ display: 'inline-block', marginRight: '8px', verticalAlign: 'middle' }} />
+        <BarChart3 size={28} className="mg-icon-inline mg-mr-sm" />
         재무 개요
       </h2>
       

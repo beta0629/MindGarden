@@ -999,6 +999,57 @@ body {
 }
 
 /* ============================================
+   Additional Utility Classes
+   ============================================ */
+
+.mg-icon-inline {
+    display: inline-block;
+    margin-right: var(--spacing-sm);
+    vertical-align: middle;
+}
+
+/* Tax Management Styles */
+.tax-type-indicator[data-color="default"] {
+    background-color: var(--color-text-muted);
+}
+
+.tax-type-indicator[data-color="#007bff"] {
+    background-color: var(--color-primary);
+}
+
+.tax-type-indicator[data-color="#28a745"] {
+    background-color: var(--color-success);
+}
+
+.tax-type-indicator[data-color="#ffc107"] {
+    background-color: var(--color-warning);
+}
+
+.tax-type-indicator[data-color="#dc3545"] {
+    background-color: var(--color-danger);
+}
+
+.tax-type-badge[data-color="default"] {
+    background-color: var(--color-text-muted) !important;
+}
+
+.tax-type-badge[data-color="#007bff"] {
+    background-color: var(--color-primary) !important;
+}
+
+.tax-type-badge[data-color="#28a745"] {
+    background-color: var(--color-success) !important;
+}
+
+.tax-type-badge[data-color="#ffc107"] {
+    background-color: var(--color-warning) !important;
+}
+
+.tax-type-badge[data-color="#dc3545"] {
+    background-color: var(--color-danger) !important;
+}
+
+/* ============================================
    Responsive Design
    ============================================ */
 /* Tablet (769px - 1024px) */

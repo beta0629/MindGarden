@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
-import './ConsultationRecordSection.css';
 
 const ConsultationRecordSection = ({ consultantId }) => {
   const navigate = useNavigate();
@@ -61,93 +60,101 @@ const ConsultationRecordSection = ({ consultantId }) => {
 
   if (loading) {
     return (
-      <div className="consultation-record-section">
-        <div className="section-header">
-          <h3>📝 상담일지</h3>
+      <div className="mg-card">
+        <div className="mg-card-header">
+          <h3 className="mg-h4 mg-mb-0">📝 상담일지</h3>
         </div>
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <span>상담일지 정보를 불러오는 중...</span>
+        <div className="mg-loading-container">
+          <div className="mg-spinner"></div>
+          <p>상담일지 정보를 불러오는 중...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="consultation-record-section">
-      <div className="section-header">
-        <h3>📝 상담일지</h3>
-        <div className="header-actions">
-          <button 
-            className="btn btn-outline-primary btn-sm"
-            onClick={handleViewAllRecords}
-          >
-            전체보기
-          </button>
-          <button 
-            className="btn btn-primary btn-sm"
-            onClick={handleCreateRecord}
-          >
-            새 일지 작성
-          </button>
+    <div className="mg-card">
+      <div className="mg-card-header">
+        <div className="mg-flex mg-justify-between mg-align-center">
+          <h3 className="mg-h4 mg-mb-0">📝 상담일지</h3>
+          <div className="mg-flex mg-gap-sm">
+            <button 
+              className="mg-button mg-button-outline mg-button-small"
+              onClick={handleViewAllRecords}
+            >
+              전체보기
+            </button>
+            <button 
+              className="mg-button mg-button-primary mg-button-small"
+              onClick={handleCreateRecord}
+            >
+              새 일지 작성
+            </button>
+          </div>
         </div>
       </div>
 
-      {error ? (
-        <div className="error-message">
-          <i className="bi bi-exclamation-triangle"></i>
-          {error}
-        </div>
-      ) : (
-        <>
+      <div className="mg-card-body">
+        {error ? (
+          <div className="mg-error-state">
+            <p>{error}</p>
+          </div>
+        ) : (
+          <>
           {/* 통계 카드 */}
-          <div className="record-stats">
-            <div className="stat-card">
-              <div className="stat-icon">📊</div>
-              <div className="stat-content">
-                <div className="stat-number">{recordStats.totalRecords}</div>
-                <div className="stat-label">총 일지</div>
+          <div className="mg-stats-grid mg-mb-lg">
+            <div className="mg-stat-card">
+              <div className="mg-flex mg-align-center mg-gap-sm">
+                <div className="mg-text-xxxl">📊</div>
+                <div className="mg-flex-1">
+                  <div className="mg-stat-value">{recordStats.totalRecords}</div>
+                  <div className="mg-stat-label">총 일지</div>
+                </div>
               </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-icon">📅</div>
-              <div className="stat-content">
-                <div className="stat-number">{recordStats.todayRecords}</div>
-                <div className="stat-label">오늘 작성</div>
+            <div className="mg-stat-card">
+              <div className="mg-flex mg-align-center mg-gap-sm">
+                <div className="mg-text-xxxl">📅</div>
+                <div className="mg-flex-1">
+                  <div className="mg-stat-value">{recordStats.todayRecords}</div>
+                  <div className="mg-stat-label">오늘 작성</div>
+                </div>
               </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-icon">⏳</div>
-              <div className="stat-content">
-                <div className="stat-number">{recordStats.pendingRecords}</div>
-                <div className="stat-label">미완료</div>
+            <div className="mg-stat-card">
+              <div className="mg-flex mg-align-center mg-gap-sm">
+                <div className="mg-text-xxxl">⏳</div>
+                <div className="mg-flex-1">
+                  <div className="mg-stat-value">{recordStats.pendingRecords}</div>
+                  <div className="mg-stat-label">미완료</div>
+                </div>
               </div>
             </div>
           </div>
 
           {/* 최근 상담일지 목록 */}
           {recordStats.recentRecords.length > 0 ? (
-            <div className="recent-records">
-              <h4>최근 상담일지</h4>
-              <div className="record-list">
+            <>
+              <h4 className="mg-h5 mg-mb-md">최근 상담일지</h4>
+              <div className="mg-space-y-sm">
                 {recordStats.recentRecords.map((record, index) => (
-                  <div key={record.id || index} className="record-item">
-                    <div className="record-info">
-                      <div className="record-title">
-                        {record.clientName || '내담자'} - {record.sessionDate}
+                  <div key={record.id || index} className="mg-card mg-card-hover">
+                    <div className="mg-flex mg-justify-between mg-align-center">
+                      <div className="mg-flex-1">
+                        <div className="mg-text-base mg-font-semibold mg-color-text-primary mg-mb-xs">
+                          {record.clientName || '내담자'} - {record.sessionDate}
+                        </div>
+                        <div className="mg-flex mg-align-center mg-gap-sm">
+                          <span className={`mg-badge ${record.isCompleted ? 'mg-badge-success' : 'mg-badge-warning'}`}>
+                            {record.isCompleted ? '완료' : '미완료'}
+                          </span>
+                          <span className="mg-text-sm mg-color-text-secondary">
+                            {new Date(record.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
-                      <div className="record-meta">
-                        <span className={`status-badge ${record.isCompleted ? 'completed' : 'pending'}`}>
-                          {record.isCompleted ? '완료' : '미완료'}
-                        </span>
-                        <span className="record-date">
-                          {new Date(record.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="record-actions">
                       <button 
-                        className="mg-btn mg-btn--sm mg-btn--outline mg-btn--secondary"
+                        className="mg-button mg-button-outline mg-button-small"
                         onClick={() => navigate(`/consultant/consultation-record-view/${record.id}`)}
                       >
                         보기
@@ -156,49 +163,49 @@ const ConsultationRecordSection = ({ consultantId }) => {
                   </div>
                 ))}
               </div>
-            </div>
+            </>
           ) : (
-            <div className="no-records">
-              <div className="no-records-icon">📝</div>
-              <div className="no-records-text">
-                <h4>아직 작성된 상담일지가 없습니다</h4>
-                <p>첫 번째 상담일지를 작성해보세요</p>
-                <button 
-                  className="mg-btn mg-btn--primary"
-                  onClick={handleCreateRecord}
-                >
-                  상담일지 작성하기
-                </button>
+            <div className="mg-empty-state">
+              <div className="mg-empty-state__icon">📝</div>
+              <div className="mg-empty-state__text">
+                아직 작성된 상담일지가 없습니다
               </div>
+              <div className="mg-empty-state__hint mg-mb-md">
+                첫 번째 상담일지를 작성해보세요
+              </div>
+              <button 
+                className="mg-button mg-button-primary"
+                onClick={handleCreateRecord}
+              >
+                상담일지 작성하기
+              </button>
             </div>
           )}
 
           {/* 빠른 액션 */}
-          <div className="quick-actions">
+          <div className="mg-flex mg-gap-sm mg-mt-lg mg-pt-lg mg-border-top">
             <button 
-              className="quick-action-btn"
+              className="mg-button mg-button-primary mg-flex-1"
               onClick={handleCreateRecord}
             >
-              <i className="bi bi-plus-circle"></i>
               새 일지 작성
             </button>
             <button 
-              className="quick-action-btn"
+              className="mg-button mg-button-outline mg-flex-1"
               onClick={handleViewAllRecords}
             >
-              <i className="bi bi-list-ul"></i>
               전체 목록
             </button>
             <button 
-              className="quick-action-btn"
+              className="mg-button mg-button-outline mg-flex-1"
               onClick={() => navigate('/consultant/consultation-records/statistics')}
             >
-              <i className="bi bi-graph-up"></i>
               통계 보기
             </button>
           </div>
         </>
-      )}
+        )}
+      </div>
     </div>
   );
 };

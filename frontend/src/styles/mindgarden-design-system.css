@@ -4910,6 +4910,8 @@ body {
 .mg-p-lg { padding: var(--spacing-lg); }
 .mg-p-xl { padding: var(--spacing-xl); }
 
+.mg-pt-lg { padding-top: var(--spacing-lg); }
+
 .mg-color-success { color: var(--olive-green); }
 .mg-card-hover:hover { 
   box-shadow: var(--shadow-lg); 

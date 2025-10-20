@@ -7689,7 +7689,8 @@ body {
 }
 
 .schedule-quick-access-card {
-    background: var(--mint-green);
+    background: white;
+    border: 1px solid var(--light-beige);
     border-radius: var(--radius-lg);
     padding: var(--spacing-xl);
     cursor: pointer;
@@ -7700,6 +7701,17 @@ body {
 .schedule-quick-access-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
+    border-color: var(--olive-green);
+}
+
+.schedule-quick-access-card:hover .schedule-quick-access-card-title {
+    color: var(--olive-green);
+}
+
+.schedule-quick-access-card:hover .schedule-quick-access-card-arrow {
+    background: var(--olive-green);
+    color: white;
+    border-color: var(--olive-green);
 }
 
 .schedule-quick-access-card-content {
@@ -7711,7 +7723,7 @@ body {
 .schedule-quick-access-card-icon {
     width: 60px;
     height: 60px;
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--light-cream);
     border-radius: var(--radius-full);
     display: flex;
     align-items: center;
@@ -7721,7 +7733,7 @@ body {
 
 .schedule-quick-access-card-icon i {
     font-size: 2rem;
-    color: white;
+    color: var(--olive-green);
 }
 
 .schedule-quick-access-card-text {
@@ -7731,27 +7743,27 @@ body {
 .schedule-quick-access-card-title {
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-semibold);
-    color: white;
+    color: var(--cocoa);
     margin: 0 0 var(--spacing-xs) 0;
 }
 
 .schedule-quick-access-card-description {
     font-size: var(--font-size-sm);
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--dark-gray);
     margin: 0;
 }
 
 .schedule-quick-access-card-arrow {
-    opacity: 0.8;
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
     padding: var(--spacing-sm) var(--spacing-md);
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--light-cream);
     border-radius: var(--radius-full);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
+    border: 1px solid var(--light-beige);
+    color: var(--olive-green);
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
     flex-shrink: 0;
 }
 

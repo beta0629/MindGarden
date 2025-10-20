@@ -338,6 +338,7 @@ const UserManagement = ({ onUpdate }) => {
                                 <FaTimes />
                             </button>
                         </div>
+                        <div className="mg-modal-body">
                             {selectedUser && (
                                 <form onSubmit={handleRoleChange}>
                                     <div className="mg-form-group">

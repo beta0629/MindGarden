@@ -218,8 +218,9 @@ const MappingStats = ({ mappings = [], onStatCardClick }) => {
     if (loading) {
         return (
             <div className="mapping-stats-container">
-                <div style={{ color: 'var(--color-primary, #007AFF)', fontSize: 'var(--font-size-base)' }}>
-                    매칭 통계를 불러오는 중...
+                <div className="mg-loading-container">
+                    <div className="mg-spinner"></div>
+                    <p>매칭 통계를 불러오는 중...</p>
                 </div>
             </div>
         );

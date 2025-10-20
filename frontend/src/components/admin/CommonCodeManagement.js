@@ -594,41 +594,19 @@ const CommonCodeManagement = () => {
 
             {/* 필터 UI */}
             <div className="common-code-management-filter">
-                <div style={{
-                    display: 'flex',
-                    gap: '15px',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    marginBottom: '15px'
-                }}>
+                <div className="mg-flex mg-gap-md mg-align-center mg-mb-md" style={{ flexWrap: 'wrap' }}>
                     {/* 검색 입력 */}
-                    <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
+                    <div className="mg-form-group" style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
                         <input
                             type="text"
                             placeholder="코드그룹명, 한글명, 영문명으로 검색..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '10px 40px 10px 12px',
-                                border: '2px solid #e1e5e9',
-                                borderRadius: '8px',
-                                fontSize: 'var(--font-size-sm)',
-                                outline: 'none',
-                                transition: 'border-color 0.2s ease',
-                                backgroundColor: '#f8f9fa'
-                            }}
+                            className="mg-input"
                             onFocus={(e) => e.target.style.borderColor = '#007bff'}
                             onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
                         />
-                        <i className="bi bi-search" style={{
-                            position: 'absolute',
-                            right: '12px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            color: '#6c757d',
-                            fontSize: 'var(--font-size-base)'
-                        }}></i>
+                        <i className="bi bi-search mg-search-icon"></i>
                     </div>
                     
                     {/* 카테고리 필터 */}

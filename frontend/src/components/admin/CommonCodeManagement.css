@@ -1,38 +1,48 @@
 /* 공통코드 관리 메인 스타일 */
 .common-code-management {
-    padding: 24px;
-    max-width: 1400px;
+    padding: var(--spacing-xl);
+    max-width: var(--container-max-width);
     margin: 0 auto;
 }
 
 .page-header {
-    margin-bottom: 32px;
+    margin-bottom: var(--spacing-xxl);
 }
 
 .page-header h1 {
-    font-size: 28px;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0 0 8px 0;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--spacing-xs) 0;
 }
 
 .page-header p {
-    color: #6b7280;
-    font-size: 16px;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
     margin: 0;
+}
+
+/* 검색 아이콘 스타일 */
+.mg-search-icon {
+    position: absolute;
+    right: var(--spacing-sm);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-base);
 }
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
     .common-code-management {
-        padding: 16px;
+        padding: var(--spacing-md);
     }
     
     .page-header h1 {
-        font-size: 24px;
+        font-size: var(--font-size-xl);
     }
     
     .page-header p {
-        font-size: 14px;
+        font-size: var(--font-size-sm);
     }
 }

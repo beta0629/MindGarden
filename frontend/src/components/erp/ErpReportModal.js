@@ -203,11 +203,11 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     onChange={(e) => setPeriod(e.target.value)}
                                     disabled={loading}
                                 >
-                                    <option value="">분기를 선택하세요</option>
-                                    <option value="2025-Q1">2025년 1분기</option>
-                                    <option value="2025-Q2">2025년 2분기</option>
-                                    <option value="2025-Q3">2025년 3분기</option>
-                                    <option value="2025-Q4">2025년 4분기</option>
+                                    <option key="quarter-default" value="">분기를 선택하세요</option>
+                                    <option key="2025-Q1" value="2025-Q1">2025년 1분기</option>
+                                    <option key="2025-Q2" value="2025-Q2">2025년 2분기</option>
+                                    <option key="2025-Q3" value="2025-Q3">2025년 3분기</option>
+                                    <option key="2025-Q4" value="2025-Q4">2025년 4분기</option>
                                 </select>
                             )}
                             {reportType === 'yearly' && (
@@ -217,10 +217,10 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                     onChange={(e) => setPeriod(e.target.value)}
                                     disabled={loading}
                                 >
-                                    <option value="">연도를 선택하세요</option>
-                                    <option value="2025">2025년</option>
-                                    <option value="2024">2024년</option>
-                                    <option value="2023">2023년</option>
+                                    <option key="year-default" value="">연도를 선택하세요</option>
+                                    <option key="2025" value="2025">2025년</option>
+                                    <option key="2024" value="2024">2024년</option>
+                                    <option key="2023" value="2023">2023년</option>
                                 </select>
                             )}
                         </div>
@@ -233,7 +233,7 @@ const ErpReportModal = ({ isOpen, onClose }) => {
                                 onChange={(e) => setBranchCode(e.target.value)}
                                 disabled={loading}
                             >
-                                <option value="">전체 지점</option>
+                                <option key="branch-default" value="">전체 지점</option>
                                 {branches.map(branch => (
                                     <option key={branch.code} value={branch.code}>
                                         {branch.name}

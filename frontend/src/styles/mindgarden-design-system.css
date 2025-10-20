@@ -4899,6 +4899,7 @@ body {
 .mg-mt-lg { margin-top: var(--spacing-lg); }
 .mg-mt-xl { margin-top: var(--spacing-xl); }
 
+.mg-mb-xs { margin-bottom: var(--spacing-xs); }
 .mg-mb-sm { margin-bottom: var(--spacing-sm); }
 .mg-mb-md { margin-bottom: var(--spacing-md); }
 .mg-mb-lg { margin-bottom: var(--spacing-lg); }
@@ -4908,6 +4909,13 @@ body {
 .mg-p-md { padding: var(--spacing-md); }
 .mg-p-lg { padding: var(--spacing-lg); }
 .mg-p-xl { padding: var(--spacing-xl); }
+
+.mg-color-success { color: var(--olive-green); }
+.mg-card-hover:hover { 
+  box-shadow: var(--shadow-lg); 
+  transform: translateY(-2px);
+  border-color: var(--olive-green);
+}
 
 
 /* ============================================

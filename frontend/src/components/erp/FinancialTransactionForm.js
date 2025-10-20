@@ -156,7 +156,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               disabled={loadingCodes}
               className="financial-transaction-select"
             >
-              <option value="">카테고리를 선택하세요</option>
+              <option key="category-default" value="">카테고리를 선택하세요</option>
               {currentCategories.map(category => (
                 <option key={category.codeValue} value={category.codeValue}>
                   {category.codeLabel}
@@ -183,7 +183,7 @@ const FinancialTransactionForm = ({ onClose, onSuccess }) => {
               disabled={!formData.category || loadingCodes}
               className="financial-transaction-select"
             >
-              <option value="">세부 카테고리를 선택하세요</option>
+              <option key="subcategory-default" value="">세부 카테고리를 선택하세요</option>
               {filteredSubcategories.map(subcategory => (
                 <option key={subcategory.codeValue} value={subcategory.codeValue}>
                   {subcategory.codeLabel}

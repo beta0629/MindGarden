@@ -240,6 +240,76 @@
   font-style: italic;
 }
 
+/* ==================== 안내사항 디자인 ==================== */
+.consultant-profile-form-notice {
+  background: linear-gradient(135deg, var(--light-beige), var(--cream));
+  border: 2px solid var(--mint-green);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.consultant-profile-form-notice::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--mint-green);
+}
+
+.consultant-profile-form-notice-title {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--olive-green);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.consultant-profile-form-notice-list {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+  color: var(--dark-gray);
+  line-height: 1.6;
+}
+
+.consultant-profile-form-notice-list li {
+  margin-bottom: var(--spacing-xs);
+  position: relative;
+}
+
+.consultant-profile-form-notice-list li::marker {
+  color: var(--mint-green);
+  font-weight: bold;
+}
+
+.consultant-profile-form-notice-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .consultant-profile-form-notice {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .consultant-profile-form-notice-title {
+    font-size: var(--font-size-md);
+  }
+  
+  .consultant-profile-form-notice-list {
+    padding-left: var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+}
+
 /* ==================== 모달 푸터 ==================== */
 .consultant-profile-modal-footer {
   display: flex;

@@ -392,7 +392,7 @@ const ItemManagement = () => {
                   borderRadius: '4px'
                 }}
               >
-                <option value="">카테고리를 선택하세요</option>
+                <option key="item-category-default" value="">카테고리를 선택하세요</option>
                 {categoryOptions.map(option => (
                   <option key={option.value} value={option.value}>
                     {option.icon} {option.label} ({option.value})

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 import './ConsultantProfileModal.css';
@@ -232,8 +233,7 @@ const ConsultantProfileModal = ({
 
     if (!isOpen || !consultant) return null;
 
-
-    return (
+    return ReactDOM.createPortal(
         <div className="consultant-profile-modal-overlay" onClick={onClose}>
             <div className="consultant-profile-modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="consultant-profile-modal-header">
@@ -343,9 +343,9 @@ const ConsultantProfileModal = ({
                                             className="consultant-profile-form-select"
                                             required
                                         >
-                                            <option value="">급여 유형 선택</option>
-                                            {salaryTypes.map((type) => (
-                                                <option key={type.codeValue} value={type.codeValue}>
+                                            <option key="salary-type-default" value="">급여 유형 선택</option>
+                                            {salaryTypes.map((type, index) => (
+                                                <option key={`salary-type-${type.codeValue}-${index}`} value={type.codeValue}>
                                                     {type.codeLabel}
                                                 </option>
                                             ))}
@@ -385,11 +385,11 @@ const ConsultantProfileModal = ({
                                             className="consultant-profile-form-select"
                                             required
                                         >
-                                            <option value="">등급 선택</option>
-                                            {grades.map(grade => {
+                                            <option key="grade-default" value="">등급 선택</option>
+                                            {grades.map((grade, index) => {
                                                 console.log('등급 옵션:', grade.codeValue, grade.codeLabel);
                                                 return (
-                                                    <option key={grade.codeValue} value={grade.codeValue}>
+                                                    <option key={`grade-${grade.codeValue}-${index}`} value={grade.codeValue}>
                                                         {grade.codeLabel}
                                                     </option>
                                                 );
@@ -412,8 +412,8 @@ const ConsultantProfileModal = ({
                                             onChange={(e) => setSalaryFormData({...salaryFormData, isBusinessRegistered: e.target.value === 'true'})}
                                             className="consultant-profile-form-select"
                                         >
-                                            <option value="false">일반 프리랜서 (3.3% 원천징수만)</option>
-                                            <option value="true">사업자 등록 (부가세 10% + 원천징수 3.3%)</option>
+                                            <option key="false" value="false">일반 프리랜서 (3.3% 원천징수만)</option>
+                                            <option key="true" value="true">사업자 등록 (부가세 10% + 원천징수 3.3%)</option>
                                         </select>
                                         <small className="consultant-profile-form-help">
                                             사업자 등록 여부에 따라 세금 계산이 달라집니다
@@ -504,7 +504,8 @@ const ConsultantProfileModal = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

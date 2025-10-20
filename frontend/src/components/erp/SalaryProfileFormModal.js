@@ -348,7 +348,7 @@ const SalaryProfileFormModal = ({
                             value={formData.grade}
                             onChange={(e) => handleGradeChange(e.target.value)}
                         >
-                            <option value="">상담사 등급 선택</option>
+                            <option key="grade-default" value="">상담사 등급 선택</option>
                             {gradeTableData.map(grade => (
                                 <option key={grade.code} value={grade.code}>
                                     {grade.name} ({grade.baseSalary.toLocaleString()}원)
@@ -415,7 +415,7 @@ const SalaryProfileFormModal = ({
                             value={formData.salaryType}
                             onChange={(e) => handleInputChange('salaryType', e.target.value)}
                         >
-                            <option value="">급여 유형 선택</option>
+                            <option key="salary-type-default" value="">급여 유형 선택</option>
                             {salaryTypes.map(type => (
                                 <option key={type.codeValue} value={type.codeValue}>
                                     {type.codeLabel || type.codeValue}
@@ -445,8 +445,8 @@ const SalaryProfileFormModal = ({
                                 value={formData.isBusinessRegistered ? 'true' : 'false'}
                                 onChange={(e) => handleInputChange('isBusinessRegistered', e.target.value === 'true')}
                             >
-                                <option value="false">일반 프리랜서 (3.3% 원천징수만)</option>
-                                <option value="true">사업자 등록 프리랜서 (3.3% 원천징수 + 10% 부가세)</option>
+                                <option key="business-false" value="false">일반 프리랜서 (3.3% 원천징수만)</option>
+                                <option key="business-true" value="true">사업자 등록 프리랜서 (3.3% 원천징수 + 10% 부가세)</option>
                             </select>
                             <div className="tax-info-text">
                                 • 일반 프리랜서: 원천징수 3.3%만 적용<br/>
@@ -519,7 +519,7 @@ const SalaryProfileFormModal = ({
                                         value={option.type}
                                         onChange={(e) => handleOptionChange(index, 'type', e.target.value)}
                                     >
-                                        <option value="">옵션 유형 선택</option>
+                                        <option key="option-type-default" value="">옵션 유형 선택</option>
                                         {optionTypes.map(opt => (
                                             <option key={opt.codeValue} value={opt.codeValue}>
                                                 {opt.codeLabel || opt.codeValue}

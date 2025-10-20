@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
 import ConsultantRatingModal from './ConsultantRatingModal';
-import './RatableConsultationsSection.css';
 
 /**
  * 평가 가능한 상담 목록 섹션
@@ -84,78 +83,81 @@ const RatableConsultationsSection = () => {
 
     if (loading) {
         return (
-            <div className="ratable-consultations-section">
-                <div className="loading-message">
-                    평가 가능한 상담을 불러오는 중...
+            <div className="mg-card">
+                <div className="mg-loading-container">
+                    <div className="mg-spinner"></div>
+                    <p>평가 가능한 상담을 불러오는 중...</p>
                 </div>
             </div>
         );
     }
 
-    // 렌더링 체크 로그 제거 (성능 최적화)
-
     return (
         <>
-            <div className="ratable-consultations-section">
+            <div className="mg-card">
                 {/* 섹션 헤더 */}
-                <div className="section-header">
-                    <h3 className="section-title">
-                        💖 상담사님께 감사 인사를
-                        <span className="badge badge--primary">
+                <div className="mg-card-header">
+                    <div className="mg-flex mg-align-center mg-gap-sm">
+                        <h3 className="mg-h4 mg-mb-0">
+                            💖 상담사님께 감사 인사를
+                        </h3>
+                        <span className="mg-badge mg-badge-primary">
                             {ratableSchedules.length}개
                         </span>
-                    </h3>
-                    <p className="section-description">
+                    </div>
+                    <p className="mg-text-sm mg-color-text-secondary mg-mt-sm mg-mb-0">
                         완료된 상담에 대해 하트 점수로 평가해주세요
                     </p>
                 </div>
 
                 {/* 평가 가능한 상담 목록 */}
-                <div className="ratable-schedules-list">
+                <div className="mg-card-body">
                     {showTestData ? (
-                        <div className="ratable-empty-state ratable-empty-state--warning">
-                            <div className="empty-state-icon">🔧</div>
-                            <div className="empty-state-title">
+                        <div className="mg-empty-state">
+                            <div className="mg-empty-state__icon">🔧</div>
+                            <div className="mg-empty-state__text">
                                 평가 시스템 준비 중입니다
                             </div>
-                            <div className="empty-state-description">
+                            <div className="mg-empty-state__hint">
                                 데이터베이스 테이블 생성 중... 잠시 후 다시 시도해주세요
                             </div>
                         </div>
                     ) : ratableSchedules.length === 0 ? (
-                        <div className="ratable-empty-state ratable-empty-state--info">
-                            <div className="empty-state-icon">💭</div>
-                            <div className="empty-state-title">
+                        <div className="mg-empty-state">
+                            <div className="mg-empty-state__icon">💭</div>
+                            <div className="mg-empty-state__text">
                                 평가 가능한 상담이 없습니다
                             </div>
-                            <div className="empty-state-description">
+                            <div className="mg-empty-state__hint">
                                 상담을 완료하시면 평가할 수 있어요
                             </div>
                         </div>
                     ) : (
-                        ratableSchedules.map(schedule => (
-                        <div key={schedule.scheduleId} className="ratable-schedule-card">
-                            <div className="schedule-card-content">
-                                <div className="schedule-info">
-                                    <div className="schedule-consultant">
-                                        {schedule.consultantName}님과의 상담
-                                    </div>
-                                    <div className="schedule-datetime">
-                                        {schedule.consultationDate} {schedule.consultationTime}
-                                    </div>
-                                    <div className="schedule-status">
-                                        ✅ 상담 완료
+                        <div className="mg-space-y-sm">
+                            {ratableSchedules.map(schedule => (
+                                <div key={schedule.scheduleId} className="mg-card mg-card-hover">
+                                    <div className="mg-flex mg-justify-between mg-align-center">
+                                        <div className="mg-flex-1">
+                                            <div className="mg-text-base mg-font-semibold mg-color-text-primary mg-mb-xs">
+                                                {schedule.consultantName}님과의 상담
+                                            </div>
+                                            <div className="mg-text-sm mg-color-text-secondary mg-mb-xs">
+                                                {schedule.consultationDate} {schedule.consultationTime}
+                                            </div>
+                                            <div className="mg-text-xs mg-color-success mg-font-medium">
+                                                ✅ 상담 완료
+                                            </div>
+                                        </div>
+                                        <button
+                                            className="mg-button mg-button-primary mg-button-small"
+                                            onClick={() => handleRateConsultant(schedule)}
+                                        >
+                                            💖 평가하기
+                                        </button>
                                     </div>
                                 </div>
-                                <button
-                                    className="mg-btn mg-btn--primary mg-btn--sm rating-button"
-                                    onClick={() => handleRateConsultant(schedule)}
-                                >
-                                    💖 평가하기
-                                </button>
-                            </div>
+                            ))}
                         </div>
-                        ))
                     )}
                 </div>
             </div>

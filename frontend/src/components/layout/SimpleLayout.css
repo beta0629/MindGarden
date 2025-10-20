@@ -12,9 +12,19 @@
 }
 
 .simple-container {
-    max-width: 1200px;
     margin: 0 auto;
     width: 100%;
+    padding: 0;
+}
+
+/* 대시보드 레이아웃이 있는 경우 컨테이너 제한 해제 */
+.simple-container:has(.mg-dashboard-layout) {
+    max-width: var(--dashboard-max-width);
+}
+
+/* 일반 컨텐츠는 기본 컨테이너 너비 사용 */
+.simple-container:not(:has(.mg-dashboard-layout)) {
+    max-width: var(--container-max-width, 1200px);
 }
 
 .page-header {

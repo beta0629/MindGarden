@@ -14,7 +14,7 @@
   min-height: 400px;
   font-size: var(--font-size-lg);
   color: var(--color-danger);
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--light-cream);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   text-align: center;
@@ -157,7 +157,7 @@
 
 .balance-sheet-total {
   font-weight: bold;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--light-beige);
   padding-top: var(--spacing-sm);
   margin-top: var(--spacing-sm);
   font-size: var(--font-size-sm);
@@ -166,7 +166,7 @@
 .balance-sheet-grand-total {
   font-weight: bold;
   font-size: var(--font-size-lg);
-  border-top: 2px solid rgba(0, 0, 0, 0.15);
+  border-top: 2px solid var(--light-beige);
   padding-top: var(--spacing-md);
   margin-top: var(--spacing-md);
 }
@@ -183,10 +183,8 @@
 .income-statement-card {
   padding: var(--spacing-xl);
   border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-md);
+  background: white;
   color: var(--dark-gray);
 }
 
@@ -642,6 +640,54 @@
 .finance-transaction-label {
   font-size: var(--font-size-sm);
   color: var(--medium-gray);
+}
+
+/* 반응형 디자인 */
+
+/* 태블릿 (768px ~ 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .finance-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .balance-sheet-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .integrated-finance-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .integrated-finance-tab-btn {
+    min-width: 100px;
+  }
+}
+
+/* 모바일 (< 768px) */
+@media (max-width: 767px) {
+  .finance-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .balance-sheet-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .integrated-finance-tabs {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  
+  .integrated-finance-tab-btn {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .finance-transactions-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* 아주 작은 모바일 (< 360px) */

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DollarSign, Settings, FileText, Users, Calculator, Receipt } from 'lucide-react';
 import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedLoading from "../common/UnifiedLoading";
 import { apiGet, apiPost } from '../../utils/ajax';
@@ -336,63 +337,79 @@ const SalaryManagement = () => {
 
     return (
         <SimpleLayout>
-            <div className="salary-management">
-            <div className="salary-header">
-                <h2>급여 관리</h2>
-                <div className="header-actions">
-                    <button 
-                        className="config-button"
-                        onClick={() => setIsConfigModalOpen(true)}
-                        title="급여 기산일 설정"
-                    >
-                        ⚙️ 기산일 설정
-                    </button>
-                    <select 
-                        value={selectedPeriod} 
-                        onChange={(e) => {
-                            setSelectedPeriod(e.target.value);
-                            // 기간 선택 시 자동으로 세금 통계 로드
-                            if (e.target.value && activeTab === 'tax') {
-                                loadTaxStatistics(e.target.value);
-                            }
-                        }}
-                        className="period-select"
-                    >
-                        <option value="">기간 선택</option>
-                        <option value="2025-01">2025년 1월</option>
-                        <option value="2025-02">2025년 2월</option>
-                        <option value="2025-03">2025년 3월</option>
-                        <option value="2025-09">2025년 9월</option>
-                    </select>
+            <div className="mg-dashboard-layout">
+                {/* Dashboard Header */}
+                <div className="mg-dashboard-header">
+                    <div className="mg-dashboard-header-content">
+                        <div className="mg-dashboard-header-left">
+                            <DollarSign className="mg-dashboard-icon" size={32} />
+                            <div>
+                                <h1 className="mg-dashboard-title">급여 관리</h1>
+                                <p className="mg-dashboard-subtitle">상담사 급여 프로필 및 계산 관리</p>
+                            </div>
+                        </div>
+                        <div className="mg-dashboard-header-right">
+                            <button 
+                                className="mg-dashboard-icon-btn mg-button-primary"
+                                onClick={() => setIsConfigModalOpen(true)}
+                                title="급여 기산일 설정"
+                            >
+                                <Settings size={18} />
+                            </button>
+                            <select 
+                                value={selectedPeriod} 
+                                onChange={(e) => {
+                                    setSelectedPeriod(e.target.value);
+                                    // 기간 선택 시 자동으로 세금 통계 로드
+                                    if (e.target.value && activeTab === 'tax') {
+                                        loadTaxStatistics(e.target.value);
+                                    }
+                                }}
+                                className="mg-select"
+                            >
+                                <option key="period-default" value="">기간 선택</option>
+                                <option key="2025-01" value="2025-01">2025년 1월</option>
+                                <option key="2025-02" value="2025-02">2025년 2월</option>
+                                <option key="2025-03" value="2025-03">2025년 3월</option>
+                                <option key="2025-09" value="2025-09">2025년 9월</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div className="salary-tabs">
-                <button 
-                    className={`tab-button ${activeTab === 'profiles' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('profiles')}
-                >
-                    급여 프로필
-                </button>
-                <button 
-                    className={`tab-button ${activeTab === 'calculations' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('calculations')}
-                >
-                    급여 계산
-                </button>
-                <button 
-                    className={`tab-button ${activeTab === 'tax' ? 'active' : ''}`}
-                    onClick={() => {
-                        setActiveTab('tax');
-                        // 세금 관리 탭으로 전환 시 기간이 선택되어 있으면 자동으로 세금 통계 로드
-                        if (selectedPeriod) {
-                            loadTaxStatistics(selectedPeriod);
-                        }
-                    }}
-                >
-                    세금 관리
-                </button>
-            </div>
+                {/* Main Content */}
+                <div className="mg-dashboard-content">
+                    <div className="mg-card">
+                        {/* 탭 메뉴 */}
+                        <div className="mg-tabs">
+                            <button 
+                                className={`mg-tab ${activeTab === 'profiles' ? 'mg-tab-active' : ''}`}
+                                onClick={() => setActiveTab('profiles')}
+                            >
+                                <Users size={18} />
+                                급여 프로필
+                            </button>
+                            <button 
+                                className={`mg-tab ${activeTab === 'calculations' ? 'mg-tab-active' : ''}`}
+                                onClick={() => setActiveTab('calculations')}
+                            >
+                                <Calculator size={18} />
+                                급여 계산
+                            </button>
+                            <button 
+                                className={`mg-tab ${activeTab === 'tax' ? 'mg-tab-active' : ''}`}
+                                onClick={() => {
+                                    setActiveTab('tax');
+                                    // 세금 관리 탭으로 전환 시 기간이 선택되어 있으면 자동으로 세금 통계 로드
+                                    if (selectedPeriod) {
+                                        loadTaxStatistics(selectedPeriod);
+                                    }
+                                }}
+                            >
+                                <Receipt size={18} />
+                                세금 관리
+                            </button>
+                        </div>
 
             {activeTab === 'profiles' && (
                 <div className="profiles-section">
@@ -492,7 +509,7 @@ const SalaryManagement = () => {
                                     }}
                                     className="consultant-select"
                                 >
-                                    <option value="">상담사 선택</option>
+                                    <option key="consultant-default" value="">상담사 선택</option>
                                     {consultants.map(consultant => (
                                         <option key={consultant.id} value={consultant.id}>
                                             {consultant.name}
@@ -822,6 +839,8 @@ const SalaryManagement = () => {
                     // 설정 저장 후 필요한 경우 데이터 새로고침
                 }}
             />
+                    </div>
+                </div>
             </div>
         </SimpleLayout>
     );

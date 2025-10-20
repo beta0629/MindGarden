@@ -790,7 +790,7 @@ const BudgetManagement = () => {
                         value={newBudget.category}
                         onChange={(e) => setNewBudget({...newBudget, category: e.target.value})}
                       >
-                        <option value="">카테고리 선택</option>
+                        <option key="budget-category-default" value="">카테고리 선택</option>
                         {budgetCategories.map(category => (
                           <option key={category.id} value={category.codeValue}>
                             {category.codeLabel}

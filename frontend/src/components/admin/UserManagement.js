@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button, Modal, Form, Badge, Container, Row, Col, Card, InputGroup } from 'react-bootstrap';
-import { FaUsers, FaEdit, FaUser, FaUserTie, FaCrown, FaBuilding, FaSearch, FaFilter } from 'react-icons/fa';
+import { FaUsers, FaEdit, FaUser, FaUserTie, FaCrown, FaBuilding, FaSearch, FaFilter, FaSync, FaTimes } from 'react-icons/fa';
 import { apiGet } from '../../utils/ajax';
-import { showNotification } from '../../utils/notification';
+import notificationManager from '../../utils/notification';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SimpleLayout from '../layout/SimpleLayout';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import './UserManagement.css';
 
-const UserManagement = ({ onUpdate, showToast }) => {
-    // showToast가 없으면 기본 notification 사용
-    const toast = showToast || showNotification;
+const UserManagement = ({ onUpdate }) => {
+    // notificationManager 사용
+    const toast = (message, type) => {
+        if (type === 'success') notificationManager.success(message);
+        else if (type === 'danger' || type === 'error') notificationManager.error(message);
+        else if (type === 'warning') notificationManager.warning(message);
+        else notificationManager.info(message);
+    };
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [roles, setRoles] = useState([]);
@@ -180,258 +184,228 @@ const UserManagement = ({ onUpdate, showToast }) => {
 
     return (
         <SimpleLayout title="사용자 관리">
-            <Container fluid className="py-4">
-                <Row>
-                    <Col>
-                        <Card>
-                            <Card.Header className="d-flex justify-content-between align-items-center">
-                                <h5 className="mb-0">
-                                    <i className="bi bi-people-fill me-2"></i>
-                                    사용자 목록 ({filteredUsers.length}명)
-                                </h5>
-                                <Button variant="outline-primary" size="sm" onClick={loadData}>
-                                    <i className="bi bi-arrow-clockwise me-1"></i>
-                                    새로고침
-                                </Button>
-                            </Card.Header>
-                            <Card.Body>
-                                {/* 필터 및 검색 */}
-                                <Row className="mb-4">
-                                    <Col md={5}>
-                                        <InputGroup>
-                                            <InputGroup.Text>
-                                                <FaSearch />
-                                            </InputGroup.Text>
-                                            <Form.Control
-                                                type="text"
-                                                placeholder="이름 또는 이메일로 검색..."
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                            />
-                                        </InputGroup>
-                                    </Col>
-                                    <Col md={3}>
-                                        <Form.Select
-                                            value={selectedRole}
-                                            onChange={(e) => setSelectedRole(e.target.value)}
-                                        >
-                                            <option value="">모든 역할</option>
-                                            <option value="CLIENT">내담자</option>
-                                            <option value="CONSULTANT">상담사</option>
-                                            <option value="ADMIN">관리자</option>
-                                            <option value="BRANCH_SUPER_ADMIN">최고관리자</option>
-                                        </Form.Select>
-                                    </Col>
-                                    <Col md={3}>
-                                        <Form.Check
-                                            type="checkbox"
-                                            id="includeInactive"
-                                            label="비활성 사용자 포함"
-                                            checked={includeInactive}
-                                            onChange={(e) => setIncludeInactive(e.target.checked)}
-                                        />
-                                    </Col>
-                                    <Col md={1}>
-                                        <Button 
-                                            variant="outline-secondary" 
-                                            size="sm" 
-                                            onClick={() => {
-                                                setSearchTerm('');
-                                                setSelectedRole('');
-                                                setIncludeInactive(false);
-                                            }}
-                                        >
-                                            <FaFilter className="me-1" />
-                                            초기화
-                                        </Button>
-                                    </Col>
-                                </Row>
-                {loading ? (
-                    <UnifiedLoading text="사용자 목록을 불러오는 중..." size="medium" type="inline" />
-                ) : users.length === 0 ? (
-                    <div className="text-center py-4 text-muted">
-                        <FaUsers className="mb-3 empty-icon" />
-                        <p>등록된 사용자가 없습니다.</p>
+            <div className="user-mgmt-container">
+                <div className="mg-card">
+                    <div className="user-mgmt-header">
+                        <h5 className="user-mgmt-title">
+                            <FaUsers className="user-mgmt-title-icon" />
+                            사용자 목록 ({filteredUsers.length}명)
+                        </h5>
+                        <button className="mg-button mg-button-outline mg-button-sm" onClick={loadData}>
+                            <FaSync className="mg-button-icon" />
+                            새로고침
+                        </button>
                     </div>
-                ) : filteredUsers.length === 0 ? (
-                    <div className="text-center py-4 text-muted">
-                        <FaSearch className="mb-3 empty-icon" />
-                        <p>검색 결과가 없습니다.</p>
-                        <small>다른 검색어나 필터를 시도해보세요.</small>
-                    </div>
-                ) : (
-                    <Row>
-                        {filteredUsers.map((user) => (
-                            <Col key={user.id} md={6} lg={4} xl={3} className="mb-3">
-                                <Card className={`h-100 user-card ${user.isActive === false ? 'inactive-user' : ''}`}>
-                                    <Card.Body className="d-flex flex-column">
-                                        <div className="d-flex align-items-center mb-3">
-                                            <div className="user-avatar me-3">
+                    <div className="user-mgmt-body">
+                        {/* 필터 및 검색 */}
+                        <div className="user-mgmt-filters">
+                            <div className="user-mgmt-search-wrapper">
+                                <FaSearch className="user-mgmt-search-icon" />
+                                <input
+                                    type="text"
+                                    className="mg-input user-mgmt-search-input"
+                                    placeholder="이름 또는 이메일로 검색..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <select
+                                className="mg-select user-mgmt-role-select"
+                                value={selectedRole}
+                                onChange={(e) => setSelectedRole(e.target.value)}
+                            >
+                                <option value="">모든 역할</option>
+                                <option value="CLIENT">내담자</option>
+                                <option value="CONSULTANT">상담사</option>
+                                <option value="ADMIN">관리자</option>
+                                <option value="BRANCH_SUPER_ADMIN">최고관리자</option>
+                            </select>
+                            <label className="user-mgmt-checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    className="mg-checkbox"
+                                    id="includeInactive"
+                                    checked={includeInactive}
+                                    onChange={(e) => setIncludeInactive(e.target.checked)}
+                                />
+                                <span>비활성 사용자 포함</span>
+                            </label>
+                            <button 
+                                className="mg-button mg-button-ghost mg-button-sm"
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setSelectedRole('');
+                                    setIncludeInactive(false);
+                                }}
+                            >
+                                <FaFilter className="mg-button-icon" />
+                                초기화
+                            </button>
+                        </div>
+                        {loading ? (
+                            <UnifiedLoading text="사용자 목록을 불러오는 중..." size="medium" type="inline" />
+                        ) : users.length === 0 ? (
+                            <div className="mg-empty-state">
+                                <FaUsers className="mg-empty-state__icon" />
+                                <p className="mg-empty-state__text">등록된 사용자가 없습니다.</p>
+                            </div>
+                        ) : filteredUsers.length === 0 ? (
+                            <div className="mg-empty-state">
+                                <FaSearch className="mg-empty-state__icon" />
+                                <p className="mg-empty-state__text">검색 결과가 없습니다.</p>
+                                <p className="mg-empty-state__hint">다른 검색어나 필터를 시도해보세요.</p>
+                            </div>
+                        ) : (
+                            <div className="user-mgmt-grid">
+                                {filteredUsers.map((user) => (
+                                    <div key={user.id} className={`user-mgmt-card ${user.isActive === false ? 'user-mgmt-card--inactive' : ''}`}>
+                                        <div className="user-mgmt-card-header">
+                                            <div className="user-mgmt-avatar">
                                                 {getRoleIcon(user.role)}
                                             </div>
-                                            <div className="flex-grow-1">
-                                                <h6 className="mb-1 text-truncate" title={user.name}>
+                                            <div className="user-mgmt-info">
+                                                <h6 className="user-mgmt-name" title={user.name}>
                                                     {user.name}
                                                 </h6>
-                                                <small className="text-muted text-truncate d-block" title={user.email}>
+                                                <p className="user-mgmt-email" title={user.email}>
                                                     {user.email}
-                                                </small>
+                                                </p>
                                             </div>
                                         </div>
                                         
-                                        <div className="mb-3">
-                                            <div className="d-flex gap-2 mb-2">
-                                                <Badge bg={getRoleBadgeVariant(user.role)} className="flex-fill">
-                                                    {getRoleDisplayName(user.role)}
-                                                </Badge>
-                                                {user.isActive === false && (
-                                                    <Badge bg="secondary" className="flex-shrink-0">
-                                                        비활성
-                                                    </Badge>
-                                                )}
-                                            </div>
+                                        <div className="user-mgmt-badges">
+                                            <span className={`mg-badge mg-badge-${getRoleBadgeVariant(user.role)}`}>
+                                                {getRoleDisplayName(user.role)}
+                                            </span>
+                                            {user.isActive === false && (
+                                                <span className="mg-badge mg-badge-secondary">
+                                                    비활성
+                                                </span>
+                                            )}
                                         </div>
                                         
-                                        <div className="mt-auto">
-                                            <div className="d-flex gap-2">
-                                                {/* 내담자→상담사 빠른 변경 버튼 */}
-                                                {user.role === 'CLIENT' && (
-                                                    <Button 
-                                                        size="sm" 
-                                                        variant="success"
-                                                        className="flex-fill"
-                                                        onClick={() => {
-                                                            setSelectedUser(user);
-                                                            setForm({ newRole: 'CONSULTANT' });
-                                                            setShowRoleModal(true);
-                                                        }}
-                                                        title="내담자를 상담사로 변경"
-                                                    >
-                                                        <i className="bi bi-person-plus me-1"></i>
-                                                        상담사로
-                                                    </Button>
-                                                )}
-                                                
-                                                {/* 일반 역할 변경 버튼 */}
-                                                <Button 
-                                                    size="sm" 
-                                                    variant="outline-primary"
-                                                    className="flex-fill"
+                                        <div className="user-mgmt-actions">
+                                            {/* 내담자→상담사 빠른 변경 버튼 */}
+                                            {user.role === 'CLIENT' && (
+                                                <button 
+                                                    className="mg-button mg-button-success mg-button-sm"
                                                     onClick={() => {
                                                         setSelectedUser(user);
-                                                        setForm({ newRole: user.role });
+                                                        setForm({ newRole: 'CONSULTANT' });
                                                         setShowRoleModal(true);
                                                     }}
-                                                    title="역할 변경"
+                                                    title="내담자를 상담사로 변경"
                                                 >
-                                                    <FaEdit className="me-1" />
-                                                    변경
-                                                </Button>
-                                            </div>
+                                                    상담사로
+                                                </button>
+                                            )}
+                                            
+                                            {/* 일반 역할 변경 버튼 */}
+                                            <button 
+                                                className="mg-button mg-button-outline mg-button-sm"
+                                                onClick={() => {
+                                                    setSelectedUser(user);
+                                                    setForm({ newRole: user.role });
+                                                    setShowRoleModal(true);
+                                                }}
+                                                title="역할 변경"
+                                            >
+                                                <FaEdit className="mg-button-icon" />
+                                                변경
+                                            </button>
                                         </div>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                        ))}
-                    </Row>
-                )}
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                </Row>
-            </Container>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
 
             {/* 역할 변경 모달 */}
-            <Modal 
-                show={showRoleModal} 
-                onHide={() => setShowRoleModal(false)} 
-                size="lg"
-                className="user-management-modal"
-            >
-                <Modal.Header closeButton>
-                    <Modal.Title className="user-management-modal-title">
-                        <i className="bi bi-person-gear"></i>
-                        사용자 역할 변경
-                    </Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    {selectedUser && (
-                        <Form onSubmit={handleRoleChange}>
-                            <div className="mb-3">
-                                <strong>사용자:</strong> {selectedUser.name} ({selectedUser.email})
-                            </div>
-                            <div className="mb-3">
-                                <strong>현재 역할:</strong> 
-                                <Badge bg={getRoleBadgeVariant(selectedUser.role)} className="ms-2">
-                                    {getRoleDisplayName(selectedUser.role)}
-                                </Badge>
-                            </div>
-                            
-                            {/* 내담자→상담사 변경 시 특별 안내 */}
-                            {selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' && (
-                                <div className="alert alert-info mb-3">
-                                    <h6><i className="bi bi-info-circle me-2"></i>상담사 역할 변경 안내</h6>
-                                    <ul className="mb-0">
-                                        <li>사용자가 상담사 역할로 변경됩니다.</li>
-                                        <li>상담사 메뉴와 기능에 접근할 수 있게 됩니다.</li>
-                                        <li>내담자 관리, 스케줄 관리 등의 권한이 부여됩니다.</li>
-                                        <li>변경 후에는 다시 내담자로 되돌릴 수 있습니다.</li>
-                                    </ul>
-                                </div>
+            {showRoleModal && (
+                <div className="mg-modal-overlay" onClick={() => setShowRoleModal(false)}>
+                    <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
+                        <div className="mg-modal-header">
+                            <h3 className="mg-modal-title">
+                                <FaEdit className="mg-modal-title-icon" />
+                                사용자 역할 변경
+                            </h3>
+                            <button 
+                                className="mg-modal-close"
+                                onClick={() => setShowRoleModal(false)}
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+                            {selectedUser && (
+                                <form onSubmit={handleRoleChange}>
+                                    <div className="mg-form-group">
+                                        <strong>사용자:</strong> {selectedUser.name} ({selectedUser.email})
+                                    </div>
+                                    <div className="mg-form-group">
+                                        <strong>현재 역할:</strong> 
+                                        <span className={`mg-badge mg-badge-${getRoleBadgeVariant(selectedUser.role)} mg-ml-sm`}>
+                                            {getRoleDisplayName(selectedUser.role)}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* 내담자→상담사 변경 시 특별 안내 */}
+                                    {selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' && (
+                                        <div className="user-mgmt-info-box">
+                                            <h6 className="user-mgmt-info-title">상담사 역할 변경 안내</h6>
+                                            <ul className="user-mgmt-info-list">
+                                                <li>사용자가 상담사 역할로 변경됩니다.</li>
+                                                <li>상담사 메뉴와 기능에 접근할 수 있게 됩니다.</li>
+                                                <li>내담자 관리, 스케줄 관리 등의 권한이 부여됩니다.</li>
+                                                <li>변경 후에는 다시 내담자로 되돌릴 수 있습니다.</li>
+                                            </ul>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="mg-form-group">
+                                        <label className="mg-label">
+                                            새로운 역할
+                                        </label>
+                                        <select
+                                            className="mg-select"
+                                            value={form.newRole}
+                                            onChange={(e) => setForm({...form, newRole: e.target.value})}
+                                            required
+                                        >
+                                            <option value="">역할을 선택하세요</option>
+                                            {roleOptions.map(role => (
+                                                <option key={role.value} value={role.value}>
+                                                    {role.icon} {role.label} ({role.value})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    
+                                    <div className="mg-modal-footer">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowRoleModal(false)}
+                                            className="mg-button mg-button-secondary"
+                                        >
+                                            취소
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={form.newRole === selectedUser.role}
+                                            className="mg-button mg-button-primary"
+                                        >
+                                            {selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' 
+                                                ? '상담사로 변경' 
+                                                : '역할 변경'}
+                                        </button>
+                                    </div>
+                                </form>
                             )}
-                            
-                            <Form.Group className="mb-3">
-                                <Form.Label className="user-management-form-label">
-                                    새로운 역할
-                                </Form.Label>
-                                <select
-                                    className="role-select-dropdown"
-                                    value={form.newRole}
-                                    onChange={(e) => setForm({...form, newRole: e.target.value})}
-                                    required
-                                >
-                                    <option value="">역할을 선택하세요</option>
-                                    {roleOptions.map(role => (
-                                        <option key={role.value} value={role.value}>
-                                            {role.icon} {role.label} ({role.value})
-                                        </option>
-                                    ))}
-                                </select>
-                            </Form.Group>
-                            
-                            <div className="user-mgmt-modal-footer">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowRoleModal(false)}
-                                    className="mg-btn mg-btn--secondary mg-btn--sm"
-                                >
-                                    취소
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={form.newRole === selectedUser.role}
-                                    className="mg-btn mg-btn--primary mg-btn--sm"
-                                    onMouseOver={(e) => {
-                                        if (form.newRole !== selectedUser.role) {
-                                            e.target.style.backgroundColor = '#0056b3';
-                                        }
-                                    }}
-                                    onMouseOut={(e) => {
-                                        if (form.newRole !== selectedUser.role) {
-                                            e.target.style.backgroundColor = '#007bff';
-                                        }
-                                    }}
-                                >
-                                    <i className="bi bi-check-lg"></i>
-                                    {selectedUser.role === 'CLIENT' && form.newRole === 'CONSULTANT' 
-                                        ? '상담사로 변경' 
-                                        : '역할 변경'}
-                                </button>
-                            </div>
-                        </Form>
-                    )}
-                </Modal.Body>
-            </Modal>
+                        </div>
+                    </div>
+                </div>
+            )}
         </SimpleLayout>
     );
 };

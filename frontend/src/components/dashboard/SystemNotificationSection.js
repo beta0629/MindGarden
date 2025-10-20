@@ -10,14 +10,19 @@ import MessageCard from '../common/MessageCard';
  */
 const SystemNotificationSection = () => {
   const navigate = useNavigate();
-  const { notifications, loading, unreadCount } = useNotification();
+  const { notifications, loading, unreadCount, markMessageAsRead } = useNotification();
 
   // 메시지 페이지로 이동
   const handleViewAll = () => {
     navigate('/consultant/messages');
   };
 
-  const handleMessageClick = (message) => {
+  const handleMessageClick = async (message) => {
+    // 메시지 읽음 처리
+    if (!message.isRead) {
+      await markMessageAsRead(message.id);
+    }
+    // 메시지 페이지로 이동
     navigate('/consultant/messages');
   };
 

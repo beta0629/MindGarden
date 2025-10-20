@@ -67,6 +67,21 @@ export const NotificationProvider = ({ children }) => {
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
+  // 메시지 읽음 처리
+  const markMessageAsRead = async (messageId) => {
+    try {
+      const response = await apiGet(`/api/consultation-messages/${messageId}/read`);
+      
+      if (response.success) {
+        // 로컬 상태 업데이트
+        setNotifications(prev => prev.filter(n => n.id !== messageId));
+        decrementUnreadCount();
+      }
+    } catch (error) {
+      console.error('메시지 읽음 처리 오류:', error);
+    }
+  };
+
   // 알림 새로고침
   const refreshNotifications = () => {
     loadUnreadCount();
@@ -95,6 +110,7 @@ export const NotificationProvider = ({ children }) => {
     loadUnreadCount,
     loadNotifications,
     decrementUnreadCount,
+    markMessageAsRead,
     refreshNotifications
   };
 

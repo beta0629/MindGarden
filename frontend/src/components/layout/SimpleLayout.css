@@ -104,23 +104,25 @@
 
 .notification-badge {
     position: absolute;
-    top: -4px;
-    right: -4px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
+    top: -6px;
+    right: -6px;
+    min-width: var(--spacing-lg);
+    height: var(--spacing-lg);
+    padding: 0 var(--spacing-xs);
     background: var(--color-danger);
     color: white;
     border-radius: var(--radius-full);
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     font-weight: var(--font-weight-bold);
     display: flex;
     align-items: center;
     justify-content: center;
     line-height: 1;
     border: 2px solid white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-md);
     animation: pulse-badge 2s infinite;
+    z-index: calc(var(--z-header) + 1); /* 헤더보다 위에 표시 */
+    pointer-events: none; /* 클릭 방해하지 않도록 */
 }
 
 @keyframes pulse-badge {
@@ -140,10 +142,10 @@
     }
     
     .notification-badge {
-        min-width: 16px;
-        height: 16px;
+        min-width: var(--spacing-md);
+        height: var(--spacing-md);
         font-size: 10px;
-        top: -3px;
-        right: -3px;
+        top: -4px;
+        right: -4px;
     }
 }

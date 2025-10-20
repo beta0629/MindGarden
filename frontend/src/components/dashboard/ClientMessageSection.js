@@ -4,6 +4,7 @@ import { Mail } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import MessageCard from '../common/MessageCard';
+import { useNotification } from '../../contexts/NotificationContext';
 
 /**
  * 내담자 메시지 확인 섹션

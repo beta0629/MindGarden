@@ -127,48 +127,20 @@ const ConsultationCompletionStats = () => {
 
     if (loading) {
         return (
-            <div style={{ 
-                padding: '20px', 
-                textAlign: 'center',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '8px',
-                border: '1px solid #dee2e6'
-            }}>
-                <div style={{ 
-                    display: 'inline-block',
-                    width: '20px',
-                    height: '20px',
-                    border: '2px solid #007bff',
-                    borderTop: '2px solid transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                }}></div>
-                <p style={{ margin: '10px 0 0 0', color: '#6c757d' }}>상담 완료 건수 통계를 불러오는 중...</p>
+            <div className="mg-loading-container">
+                <div className="mg-spinner"></div>
+                <p>상담 완료 건수 통계를 불러오는 중...</p>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div style={{ 
-                padding: '20px', 
-                textAlign: 'center',
-                backgroundColor: '#f8d7da',
-                borderRadius: '8px',
-                border: '1px solid #f5c6cb',
-                color: '#721c24'
-            }}>
+            <div className="mg-error-state">
                 <p>{error}</p>
                 <button 
+                    className="mg-button mg-button-danger"
                     onClick={() => loadStatistics(selectedPeriod)}
-                    style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
                 >
                     다시 시도
                 </button>
@@ -177,50 +149,21 @@ const ConsultationCompletionStats = () => {
     }
 
     return (
-        <div style={{ 
-            backgroundColor: '#f8f9fa',
-            borderRadius: '8px',
-            border: '1px solid #dee2e6',
-            overflow: 'hidden'
-        }}>
+        <div className="mg-card">
             {/* 헤더 */}
-            <div style={{
-                padding: '20px',
-                backgroundColor: '#fff',
-                borderBottom: '1px solid #dee2e6'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '16px'
-                }}>
-                    <h3 style={{ 
-                        margin: 0, 
-                        color: '#495057',
-                        fontSize: '1.25rem',
-                        fontWeight: '600'
-                    }}>
+            <div className="mg-card-header">
+                <div className="mg-flex mg-justify-between mg-align-center mg-mb-md">
+                    <h3 className="mg-h3 mg-mb-0">
                         상담사별 상담 완료 건수
                     </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <label style={{ 
-                            fontSize: 'var(--font-size-sm)',
-                            color: '#6c757d',
-                            fontWeight: '500'
-                        }}>
+                    <div className="mg-flex mg-align-center mg-gap-sm">
+                        <label className="mg-label mg-text-sm mg-color-text-secondary mg-font-medium">
                             기간:
                         </label>
                         <select
+                            className="mg-select mg-select-sm"
                             value={selectedPeriod}
                             onChange={handlePeriodChange}
-                            style={{
-                                padding: '6px 12px',
-                                border: '1px solid #ced4da',
-                                borderRadius: '4px',
-                                fontSize: 'var(--font-size-sm)',
-                                backgroundColor: '#fff'
-                            }}
                         >
                             <option value="">전체</option>
                             {periodOptions.map(option => (

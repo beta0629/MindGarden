@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet, apiPost } from '../../utils/ajax';
 import UnifiedLoading from "../common/UnifiedLoading";
 import notificationManager from '../../utils/notification';
@@ -15,6 +16,7 @@ import './ConsultantMessages.css';
 const ConsultantMessages = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { markMessageAsRead } = useNotification();
   
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([]);
@@ -138,8 +140,19 @@ const ConsultantMessages = () => {
   };
 
   // 메시지 상세 보기
-  const handleMessageClick = (message) => {
+  const handleMessageClick = async (message) => {
     setSelectedMessage(message);
+    
+    // 읽지 않은 메시지인 경우 읽음 처리
+    if (!message.isRead) {
+      await markMessageAsRead(message.id);
+      // 로컬 메시지 목록 업데이트
+      setMessages(prevMessages =>
+        prevMessages.map(msg =>
+          msg.id === message.id ? { ...msg, isRead: true } : msg
+        )
+      );
+    }
   };
 
   // 메시지 유형 정보 가져오기

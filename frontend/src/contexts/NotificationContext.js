@@ -75,7 +75,8 @@ export const NotificationProvider = ({ children }) => {
       if (response.success) {
         // 로컬 상태 업데이트
         setNotifications(prev => prev.filter(n => n.id !== messageId));
-        decrementUnreadCount();
+        // 서버에서 최신 카운트 다시 로드
+        await loadUnreadCount();
       }
     } catch (error) {
       console.error('메시지 읽음 처리 오류:', error);

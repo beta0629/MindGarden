@@ -1,17 +1,17 @@
-/* RatableConsultationsSection 스타일 - 새로운 디자인 시스템 적용 */
+/* RatableConsultationsSection 스타일 - MindGarden 디자인 시스템 */
 
 .ratable-consultations-section {
-  background: var(--ios-bg-primary);
-  border-radius: var(--border-radius-lg);
+  background: white;
+  border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   box-shadow: var(--shadow-md);
-  border: 1px solid var(--ios-border-light);
+  border: 1px solid var(--light-beige);
   margin-bottom: var(--spacing-xxl);
 }
 
 .loading-message {
   text-align: center;
-  color: var(--ios-text-secondary);
+  color: var(--medium-gray);
   font-size: var(--font-size-base);
 }
 
@@ -21,8 +21,8 @@
 
 .section-title {
   font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--ios-text-primary);
+  font-weight: 600;
+  color: var(--cocoa);
   margin-bottom: var(--spacing-sm);
   display: flex;
   align-items: center;
@@ -31,20 +31,20 @@
 
 .badge {
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  font-weight: 500;
   padding: var(--spacing-xxs) var(--spacing-sm);
-  border-radius: var(--border-radius-full);
+  border-radius: var(--radius-full);
   display: inline-block;
 }
 
 .badge--primary {
-  background-color: var(--ios-blue-light);
-  color: var(--ios-blue-dark);
+  background-color: var(--mint-green);
+  color: var(--cocoa);
 }
 
 .section-description {
   font-size: var(--font-size-sm);
-  color: var(--ios-text-secondary);
+  color: var(--dark-gray);
   margin: 0;
 }
 
@@ -58,20 +58,20 @@
 .ratable-empty-state {
   text-align: center;
   padding: var(--spacing-xxl);
-  color: var(--ios-text-secondary);
-  border-radius: var(--border-radius-md);
+  color: var(--dark-gray);
+  border-radius: var(--radius-md);
   border: 1px solid;
 }
 
 .ratable-empty-state--warning {
-  background-color: var(--ios-yellow-light);
-  border-color: var(--ios-yellow);
-  color: var(--ios-yellow-dark);
+  background-color: var(--light-beige);
+  border-color: var(--cocoa);
+  color: var(--cocoa);
 }
 
 .ratable-empty-state--info {
-  background-color: var(--ios-gray-light);
-  border-color: var(--ios-gray);
+  background-color: var(--light-cream);
+  border-color: var(--light-beige);
 }
 
 .empty-state-icon {
@@ -82,7 +82,7 @@
 .empty-state-title {
   font-size: var(--font-size-base);
   margin-bottom: var(--spacing-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: 500;
 }
 
 .empty-state-description {
@@ -91,16 +91,16 @@
 
 /* 상담 카드 스타일 */
 .ratable-schedule-card {
-  border: 1px solid var(--ios-border-light);
-  border-radius: var(--border-radius-md);
+  border: 1px solid var(--light-beige);
+  border-radius: var(--radius-md);
   padding: var(--spacing-md);
-  background: var(--ios-bg-secondary);
+  background: var(--light-cream);
   transition: all var(--transition-normal);
 }
 
 .ratable-schedule-card:hover {
-  background: var(--ios-bg-tertiary);
-  border-color: var(--ios-blue);
+  background: var(--cream);
+  border-color: var(--olive-green);
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
@@ -117,28 +117,28 @@
 
 .schedule-consultant {
   font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--ios-text-primary);
+  font-weight: 500;
+  color: var(--cocoa);
   margin-bottom: var(--spacing-xxs);
 }
 
 .schedule-datetime {
   font-size: var(--font-size-sm);
-  color: var(--ios-text-secondary);
+  color: var(--dark-gray);
   margin-bottom: var(--spacing-xs);
 }
 
 .schedule-status {
   font-size: var(--font-size-xs);
-  color: var(--ios-green);
-  font-weight: var(--font-weight-medium);
+  color: var(--olive-green);
+  font-weight: 500;
 }
 
 .rating-button {
-  background: var(--ios-pink);
-  border: none;
-  color: white;
-  font-weight: var(--font-weight-medium);
+  background: var(--mint-green);
+  border: 1px solid var(--olive-green);
+  color: var(--cocoa);
+  font-weight: 500;
   transition: all var(--transition-normal);
   display: flex;
   align-items: center;
@@ -147,7 +147,8 @@
 }
 
 .rating-button:hover {
-  background: var(--ios-pink-dark);
+  background: var(--soft-mint);
+  border-color: var(--cocoa);
   transform: scale(1.05);
 }
 

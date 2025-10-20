@@ -7559,6 +7559,36 @@ body {
     }
 }
 
+.mg-ml-sm {
+    margin-left: var(--spacing-sm);
+}
+
+.rating-distribution-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: var(--spacing-sm);
+}
+
+@media (max-width: 768px) {
+    .rating-distribution-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.recent-ratings-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.rating-comment {
+    font-style: italic;
+}
+
+.rating-tags-wrapper {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+}
+
 @media (min-width: 769px) and (max-width: 1024px) {
     .mg-grid-cols-auto-fit {
         grid-template-columns: repeat(2, 1fr);

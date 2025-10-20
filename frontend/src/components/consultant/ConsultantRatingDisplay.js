@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../constants/api';
 import { useSession } from '../../contexts/SessionContext';
-import './ConsultantRatingDisplay.css';
 
 /**
  * 상담사용 평가 표시 컴포넌트
@@ -56,9 +55,12 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
 
     if (loading) {
         return (
-            <div className="consultant-rating-display">
-                <div className="loading-message">
-                    평가 통계를 불러오는 중...
+            <div className="mg-card">
+                <div className="mg-card-body">
+                    <div className="mg-loading-container">
+                        <div className="mg-spinner"></div>
+                        <p>평가 통계를 불러오는 중...</p>
+                    </div>
                 </div>
             </div>
         );
@@ -66,164 +68,139 @@ const ConsultantRatingDisplay = ({ consultantId }) => {
 
     if (!ratingStats || ratingStats.totalRatingCount === 0) {
         return (
-            <div className="consultant-rating-display">
-                <h3 className="section-title">
-                    💖 내담자 평가
-                </h3>
-                <div className="empty-state">
-                    아직 받은 평가가 없습니다.
-                    <br />
-                    상담을 완료하면 내담자님들이 평가를 남겨주실 거예요!
+            <div className="mg-card">
+                <div className="mg-card-header">
+                    <h3 className="mg-h4 mg-mb-0">
+                        💖 내담자 평가
+                    </h3>
+                </div>
+                <div className="mg-card-body">
+                    <div className="mg-empty-state">
+                        <div className="mg-empty-state__icon">💖</div>
+                        <div className="mg-empty-state__text">
+                            아직 받은 평가가 없습니다.
+                        </div>
+                        <div className="mg-empty-state__hint">
+                            상담을 완료하면 내담자님들이 평가를 남겨주실 거예요!
+                        </div>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="consultant-rating-display">
-            {/* 섹션 헤더 */}
-            <div className="section-header">
-                <h3 className="section-title">
+        <div className="mg-card">
+            {/* 카드 헤더 */}
+            <div className="mg-card-header mg-flex mg-justify-between mg-align-center">
+                <h3 className="mg-h4 mg-mb-0">
                     💖 내담자 평가
-                    <span className="badge badge--primary">
+                    <span className="mg-badge mg-badge-primary mg-ml-sm">
                         {ratingStats.totalRatingCount}개
                     </span>
                 </h3>
             </div>
 
-            {/* 평가 통계 */}
-            <div className="rating-stats-grid">
-                {/* 평균 점수 */}
-                <div className="rating-stat-card rating-stat-card--pink">
-                    <div className="stat-value">
-                        {ratingStats.averageHeartScore}
+            {/* 카드 바디 */}
+            <div className="mg-card-body">
+                {/* 평가 통계 그리드 */}
+                <div className="mg-stats-grid mg-mb-lg">
+                    {/* 평균 점수 */}
+                    <div className="mg-stat-card">
+                        <div className="mg-stat-value mg-text-primary-blue">
+                            {ratingStats.averageHeartScore}
+                        </div>
+                        <div className="mg-stat-label">
+                            평균 하트 점수
+                        </div>
+                        <div className="mg-text-center mg-mt-sm">
+                            {renderHeartScore(Math.round(ratingStats.averageHeartScore))}
+                        </div>
                     </div>
-                    <div className="stat-label">
-                        평균 하트 점수
-                    </div>
-                    <div className="heart-display">
-                        {renderHeartScore(Math.round(ratingStats.averageHeartScore))}
+
+                    {/* 총 평가 수 */}
+                    <div className="mg-stat-card">
+                        <div className="mg-stat-value">
+                            {ratingStats.totalRatingCount}
+                        </div>
+                        <div className="mg-stat-label">
+                            총 평가 수
+                        </div>
                     </div>
                 </div>
 
-                {/* 총 평가 수 */}
-                <div className="rating-stat-card rating-stat-card--blue">
-                    <div className="stat-value">
-                        {ratingStats.totalRatingCount}
-                    </div>
-                    <div className="stat-label">
-                        총 평가 수
-                    </div>
-                </div>
-            </div>
-
-            {/* 점수별 분포 */}
-            <div className="rating-distribution">
-                <h4 className="distribution-title">
-                    하트 점수 분포
-                </h4>
-                <div className="distribution-grid">
-                    {[5, 4, 3, 2, 1].map(score => {
-                        const count = ratingStats.heartScoreDistribution[score] || 0;
-                        const percentage = ratingStats.totalRatingCount > 0 
-                            ? Math.round((count / ratingStats.totalRatingCount) * 100) 
-                            : 0;
-
-                        return (
-                            <div key={score} className="distribution-card">
-                                <div className="distribution-hearts">
-                                    {'💖'.repeat(score)}
-                                </div>
-                                <div className="distribution-count">
-                                    {count}개
-                                </div>
-                                <div className="distribution-percentage">
-                                    ({percentage}%)
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* 최근 평가 */}
-            {ratingStats.recentRatings && ratingStats.recentRatings.length > 0 && (
-                <div>
-                    <h4 className="consultant-rating-display-title">
-                        최근 평가
+                {/* 점수별 분포 */}
+                <div className="mg-mb-lg">
+                    <h4 className="mg-h5 mg-mb-md">
+                        하트 점수 분포
                     </h4>
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                        maxHeight: '200px',
-                        overflowY: 'auto'
-                    }}>
-                        {ratingStats.recentRatings.slice(0, 5).map(rating => (
-                            <div
-                                key={rating.id}
-                                style={{
-                                    backgroundColor: '#f8f9fa',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #e9ecef'
-                                }}
-                            >
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'flex-start',
-                                    marginBottom: '8px'
-                                }}>
-                                    <div style={{
-                                        fontSize: 'var(--font-size-base)'
-                                    }}>
-                                        {renderHeartScore(rating.heartScore)}
+                    <div className="rating-distribution-grid">
+                        {[5, 4, 3, 2, 1].map(score => {
+                            const count = ratingStats.heartScoreDistribution[score] || 0;
+                            const percentage = ratingStats.totalRatingCount > 0 
+                                ? Math.round((count / ratingStats.totalRatingCount) * 100) 
+                                : 0;
+
+                            return (
+                                <div key={score} className="rating-schedule-item">
+                                    <div className="mg-text-center mg-mb-xs">
+                                        {'💖'.repeat(score)}
                                     </div>
-                                    <div style={{
-                                        fontSize: 'var(--font-size-xs)',
-                                        color: '#666'
-                                    }}>
-                                        {rating.clientName} • {new Date(rating.ratedAt).toLocaleDateString()}
+                                    <div className="mg-text-center mg-font-semibold">
+                                        {count}개
+                                    </div>
+                                    <div className="mg-text-center mg-text-sm mg-color-text-secondary">
+                                        ({percentage}%)
                                     </div>
                                 </div>
-                                {rating.comment && (
-                                    <div style={{
-                                        fontSize: 'var(--font-size-sm)',
-                                        color: '#555',
-                                        marginBottom: '8px',
-                                        fontStyle: 'italic'
-                                    }}>
-                                        "{rating.comment}"
-                                    </div>
-                                )}
-                                {rating.tags && rating.tags.length > 0 && (
-                                    <div style={{
-                                        display: 'flex',
-                                        flexWrap: 'wrap',
-                                        gap: '4px'
-                                    }}>
-                                        {rating.tags.map(tag => (
-                                            <span
-                                                key={tag}
-                                                style={{
-                                                    backgroundColor: '#e7f3ff',
-                                                    color: '#0066cc',
-                                                    fontSize: 'var(--font-size-xs)',
-                                                    padding: '2px 6px',
-                                                    borderRadius: '10px'
-                                                }}
-                                            >
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
-            )}
+
+                {/* 최근 평가 */}
+                {ratingStats.recentRatings && ratingStats.recentRatings.length > 0 && (
+                    <div className="mg-pt-lg mg-border-top">
+                        <h4 className="mg-h5 mg-mb-md">
+                            최근 평가
+                        </h4>
+                        <div className="mg-space-y-sm recent-ratings-container">
+                            {ratingStats.recentRatings.slice(0, 5).map(rating => (
+                                <div
+                                    key={rating.id}
+                                    className="rating-schedule-item"
+                                >
+                                    <div className="mg-flex mg-justify-between mg-align-start mg-mb-sm">
+                                        <div className="mg-text-base">
+                                            {renderHeartScore(rating.heartScore)}
+                                        </div>
+                                        <div className="mg-text-xs mg-color-text-secondary">
+                                            {rating.clientName} • {new Date(rating.ratedAt).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                    {rating.comment && (
+                                        <div className="mg-text-sm mg-color-text-primary mg-mb-sm rating-comment">
+                                            "{rating.comment}"
+                                        </div>
+                                    )}
+                                    {rating.tags && rating.tags.length > 0 && (
+                                        <div className="mg-flex rating-tags-wrapper">
+                                            {rating.tags.map(tag => (
+                                                <span
+                                                    key={tag}
+                                                    className="mg-badge mg-badge-primary"
+                                                >
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

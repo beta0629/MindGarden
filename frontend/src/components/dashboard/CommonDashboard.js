@@ -17,6 +17,7 @@ import QuickActions from './QuickActions';
 import RecentActivities from './RecentActivities';
 import ClientMessageSection from './ClientMessageSection';
 import ErpPurchaseRequestPanel from './ErpPurchaseRequestPanel';
+import SystemNotificationSection from './SystemNotificationSection';
 import UnifiedLoading from '../common/UnifiedLoading';
 import ClientPersonalizedMessages from './ClientPersonalizedMessages';
 import ClientPaymentSessionsSection from './ClientPaymentSessionsSection';
@@ -835,6 +836,11 @@ const CommonDashboard = ({ user: propUser }) => {
         {/* 최근 활동 섹션 */}
         <RecentActivities consultationData={consultationData} />
         
+        {/* 시스템 알림 섹션 (상담사 전용) */}
+        {user?.role === 'CONSULTANT' && (
+          <SystemNotificationSection />
+        )}
+
         {/* ERP 구매 요청 섹션 (상담사 전용) */}
         {user?.role === 'CONSULTANT' && (
           <ErpPurchaseRequestPanel user={user} />

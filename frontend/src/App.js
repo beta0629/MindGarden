@@ -82,6 +82,7 @@ import ClientSettings from './components/client/ClientSettings';
 import { SessionProvider } from './contexts/SessionContext';
 import { useSession } from './contexts/SessionContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { sessionManager } from './utils/sessionManager';
 import duplicateLoginManager from './utils/duplicateLoginManager';
 import notificationManager from './utils/notification';
@@ -577,12 +578,14 @@ function AppContent() {
   );
 }
 
-// 최상위 App 컴포넌트 (ThemeProvider + SessionProvider 제공)
+// 최상위 App 컴포넌트 (ThemeProvider + SessionProvider + NotificationProvider 제공)
 function App() {
   return (
     <ThemeProvider>
       <SessionProvider>
-        <AppContent />
+        <NotificationProvider>
+          <AppContent />
+        </NotificationProvider>
       </SessionProvider>
     </ThemeProvider>
   );

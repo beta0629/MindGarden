@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Mail, AlertCircle, Clock, CheckCircle } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import MessageCard from '../common/MessageCard';
 
 /**
  * 내담자 메시지 확인 섹션
@@ -15,17 +16,6 @@ const ClientMessageSection = ({ userId }) => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // 메시지 타입별 정보
-  const getMessageTypeInfo = (messageType) => {
-    const typeMap = {
-      'GENERAL': { icon: <Mail size={16} />, label: '일반', colorClass: 'secondary' },
-      'FOLLOW_UP': { icon: <CheckCircle size={16} />, label: '후속 조치', colorClass: 'primary' },
-      'HOMEWORK': { icon: <Clock size={16} />, label: '과제 안내', colorClass: 'success' },
-      'APPOINTMENT': { icon: <Clock size={16} />, label: '약속 안내', colorClass: 'warning' },
-      'EMERGENCY': { icon: <AlertCircle size={16} />, label: '긴급 안내', colorClass: 'danger' }
-    };
-    return typeMap[messageType] || typeMap['GENERAL'];
-  };
 
   // 메시지 목록 로드
   const loadMessages = async () => {
@@ -80,24 +70,6 @@ const ClientMessageSection = ({ userId }) => {
     }
   };
 
-  // 날짜 포맷팅
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = now - date;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-    } else if (diffDays === 1) {
-      return '어제';
-    } else if (diffDays < 7) {
-      return `${diffDays}일 전`;
-    } else {
-      return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-    }
-  };
 
   // 컴포넌트 마운트 시 메시지 로드
   useEffect(() => {
@@ -133,44 +105,13 @@ const ClientMessageSection = ({ userId }) => {
           </div>
         ) : (
           <div className="mg-space-y-sm">
-            {messages.map((message) => {
-              const typeInfo = getMessageTypeInfo(message.messageType);
-              return (
-                <div
-                  key={message.id}
-                  className={`mg-card mg-cursor-pointer ${!message.isRead ? 'message-item-unread' : ''}`}
-                  onClick={() => handleMessageClick(message)}
-                >
-                  <div className="mg-flex mg-align-start mg-gap-md">
-                    <div className={`message-type-icon message-type-icon-${typeInfo.colorClass}`}>
-                      {typeInfo.icon}
-                    </div>
-                    <div className="mg-flex-1">
-                      <div className="mg-flex mg-align-center mg-gap-sm mg-mb-xs mg-flex-wrap">
-                        <h5 className="mg-h5 mg-mb-0">{message.title}</h5>
-                        {message.isImportant && (
-                          <span className="mg-badge mg-badge-warning mg-text-xs">중요</span>
-                        )}
-                        {message.isUrgent && (
-                          <span className="mg-badge mg-badge-danger mg-text-xs">긴급</span>
-                        )}
-                      </div>
-                      <p className="mg-text-sm mg-color-text-secondary mg-mb-xs">
-                        {message.content?.substring(0, 50)}
-                        {message.content?.length > 50 && '...'}
-                      </p>
-                      <div className="mg-flex mg-align-center mg-gap-sm mg-text-xs mg-color-text-secondary mg-flex-wrap">
-                        <span className={`mg-badge mg-badge-${typeInfo.colorClass}`}>{typeInfo.label}</span>
-                        <span>{formatDate(message.sentAt || message.createdAt)}</span>
-                      </div>
-                    </div>
-                    {!message.isRead && (
-                      <div className="message-item-unread-dot"></div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {messages.map((message) => (
+              <MessageCard
+                key={message.id}
+                message={message}
+                onClick={handleMessageClick}
+              />
+            ))}
           </div>
         )}
       </div>

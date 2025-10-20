@@ -90,18 +90,17 @@
     background: white;
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
-    border: 2px solid var(--light-beige);
+    border: none;
     transition: all 0.3s ease;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
 }
 
 .user-mgmt-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--mint-green);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
 }
 
 .user-mgmt-card--inactive {

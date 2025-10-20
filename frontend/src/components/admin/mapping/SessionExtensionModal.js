@@ -250,18 +250,10 @@ const SessionExtensionModal = ({
                         <div className="mg-form-group">
                             <label className="mg-label">결제 방법</label>
                             <select
-                                className="mg-input"
+                                className="mg-select"
                                 value={paymentMethod}
                                 onChange={(e) => handlePaymentMethodChange(e.target.value)}
                                 disabled={isLoading}
-                                style={{
-                                    appearance: 'none',
-                                    backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3e%3c/svg%3e")',
-                                    backgroundPosition: 'right 8px center',
-                                    backgroundRepeat: 'no-repeat',
-                                    backgroundSize: '16px',
-                                    paddingRight: '40px'
-                                }}
                             >
                                 <option value="신용카드">신용카드</option>
                                 <option value="계좌이체">계좌이체</option>

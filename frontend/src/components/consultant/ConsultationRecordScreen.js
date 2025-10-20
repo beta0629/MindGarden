@@ -528,10 +528,10 @@ const ConsultationRecordScreen = () => {
   if (!consultation || !client) {
     return (
       <SimpleLayout title="상담일지 작성">
-        <div style={styles.container}>
-          <div style={styles.header}>
-            <h1 style={styles.headerTitle}>상담일지 작성</h1>
-            <p style={styles.headerSubtitle}>상담 정보를 불러올 수 없습니다.</p>
+        <div className="mg-dashboard-layout">
+          <div className="mg-dashboard-header">
+            <h1 className="mg-dashboard-title">상담일지 작성</h1>
+            <p className="mg-dashboard-subtitle">상담 정보를 불러올 수 없습니다.</p>
           </div>
         </div>
       </SimpleLayout>
@@ -540,17 +540,17 @@ const ConsultationRecordScreen = () => {
 
   return (
     <SimpleLayout title="상담일지 작성">
-      <div style={styles.container}>
+      <div className="mg-dashboard-layout">
 
       {/* 내담자 정보 카드 */}
-      <div style={styles.clientInfoCard}>
-        <h2 style={styles.clientInfoTitle}>
+      <div className="mg-card mg-mb-lg">
+        <h2 className="mg-h3 mg-mb-md mg-flex mg-align-center mg-gap-sm">
           👤 내담자 정보
         </h2>
-        <div style={styles.clientInfoGrid}>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>이름</span>
-            <span style={styles.clientInfoValue}>{client.name}</span>
+        <div className="mg-grid mg-grid-cols-2 mg-gap-md">
+          <div className="mg-flex mg-flex-col">
+            <span className="mg-label mg-text-sm mg-color-text-secondary">이름</span>
+            <span className="mg-text-base mg-font-medium">{client.name}</span>
           </div>
           <div style={styles.clientInfoItem}>
             <span style={styles.clientInfoLabel}>이메일</span>

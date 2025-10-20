@@ -322,42 +322,19 @@ const ConsultantClientList = () => {
       <div 
         className="consultant-client-list-controls"
       >
-        <div className="search-section" style={{ flex: '1', minWidth: '300px' }}>
+        <div className="search-section mg-flex-1 mg-min-w-300">
           <div 
-            className="search-input-group"
-            style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center'
-            }}
+            className="search-input-group mg-relative mg-flex mg-align-center"
           >
             <i 
-              className="bi bi-search search-icon"
-              style={{
-                position: 'absolute',
-                left: '12px',
-                color: '#7f8c8d',
-                zIndex: 2,
-                fontSize: '1rem'
-              }}
+              className="bi bi-search search-icon mg-search-icon"
             ></i>
             <input
               type="text"
-              className="search-input"
+              className="search-input mg-input"
               placeholder="이름, 이메일, 전화번호로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 15px 12px 40px',
-                border: '2px solid #e9ecef',
-                borderRadius: '12px',
-                fontSize: '0.9rem',
-                transition: 'all 0.3s ease',
-                background: '#f8f9fa',
-                color: '#2c3e50',
-                maxHeight: '45px'
-              }}
             />
           </div>
         </div>

@@ -5,6 +5,27 @@
   margin: 0 auto;
 }
 
+/* 추가 유틸리티 클래스들 */
+.mg-flex-1 {
+  flex: 1;
+}
+
+.mg-min-w-300 {
+  min-width: 300px;
+}
+
+.mg-relative {
+  position: relative;
+}
+
+.mg-search-icon {
+  position: absolute;
+  left: var(--spacing-sm);
+  color: var(--color-text-muted);
+  z-index: 2;
+  font-size: var(--font-size-base);
+}
+
 /* 헤더 */
 .client-list-header {
   margin-bottom: 30px;

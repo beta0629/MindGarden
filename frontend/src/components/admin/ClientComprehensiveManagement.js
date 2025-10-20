@@ -1282,74 +1282,32 @@ const ClientComprehensiveManagement = () => {
                         
                         
                         {/* 필터 UI */}
-                        <div style={{
-                            background: 'white',
-                            padding: '20px',
-                            borderRadius: '12px',
-                            marginBottom: '20px',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                        }}>
-                            <div style={{
-                                display: 'flex',
-                                gap: '15px',
-                                alignItems: 'center',
-                                flexWrap: 'wrap',
-                                marginBottom: '15px'
-                            }}>
+                        <div className="client-comp-filter-container">
+                            <div className="client-comp-filter-content">
                                 {/* 검색 입력 */}
-                                <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
+                                <div className="client-comp-search-container">
                                     <input
                                         type="text"
                                         placeholder="이름, 이메일, 전화번호로 검색..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px 40px 10px 12px',
-                                            border: '2px solid #e1e5e9',
-                                            borderRadius: '8px',
-                                            fontSize: 'var(--font-size-sm)',
-                                            outline: 'none',
-                                            transition: 'border-color 0.2s ease',
-                                            backgroundColor: '#f8f9fa'
-                                        }}
-                                        onFocus={(e) => e.target.style.borderColor = '#007bff'}
-                                        onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+                                        className="client-comp-search-input"
                                     />
-                                    <i className="bi bi-search" style={{
-                                        position: 'absolute',
-                                        right: '12px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        color: '#6c757d',
-                                        fontSize: 'var(--font-size-base)'
-                                    }}></i>
+                                    <i className="bi bi-search client-comp-search-icon"></i>
                                 </div>
                                 
                                 {/* 상태 필터 */}
                                 <select
                                     value={filterStatus}
                                     onChange={(e) => setFilterStatus(e.target.value)}
-                                    style={{
-                                        padding: '10px 12px',
-                                        border: '2px solid #e1e5e9',
-                                        borderRadius: '8px',
-                                        fontSize: 'var(--font-size-sm)',
-                                        backgroundColor: '#f8f9fa',
-                                        minWidth: '150px',
-                                        outline: 'none',
-                                        cursor: 'pointer',
-                                        transition: 'border-color 0.2s ease'
-                                    }}
-                                    onFocus={(e) => e.target.style.borderColor = '#007bff'}
-                                    onBlur={(e) => e.target.style.borderColor = '#e1e5e9'}
+                                    className="mg-select client-comp-filter-select"
                                 >
-                                    <option value="all">전체 상태</option>
-                                    <option value="ACTIVE">활성</option>
-                                    <option value="INACTIVE">비활성</option>
-                                    <option value="SUSPENDED">일시정지</option>
-                                    <option value="COMPLETED">완료</option>
-                                    <option value="PENDING">대기중</option>
+                                    <option key="filter-all" value="all">전체 상태</option>
+                                    <option key="filter-active" value="ACTIVE">활성</option>
+                                    <option key="filter-inactive" value="INACTIVE">비활성</option>
+                                    <option key="filter-suspended" value="SUSPENDED">일시정지</option>
+                                    <option key="filter-completed" value="COMPLETED">완료</option>
+                                    <option key="filter-pending" value="PENDING">대기중</option>
                                 </select>
                                 
                                 {/* 필터 초기화 */}
@@ -1359,21 +1317,7 @@ const ClientComprehensiveManagement = () => {
                                             setSearchTerm('');
                                             setFilterStatus('all');
                                         }}
-                                        style={{
-                                            padding: '10px 16px',
-                                            backgroundColor: '#6c757d',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            fontSize: 'var(--font-size-sm)',
-                                            cursor: 'pointer',
-                                            transition: 'background-color 0.2s ease',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px'
-                                        }}
-                                        onMouseEnter={(e) => e.target.style.backgroundColor = '#5a6268'}
-                                        onMouseLeave={(e) => e.target.style.backgroundColor = '#6c757d'}
+                                        className="mg-button mg-button-secondary"
                                     >
                                         <i className="bi bi-x-circle"></i>
                                         초기화
@@ -1382,13 +1326,7 @@ const ClientComprehensiveManagement = () => {
                             </div>
                             
                             {/* 필터 상태 표시 */}
-                            <div style={{
-                                fontSize: 'var(--font-size-sm)',
-                                color: '#6c757d',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px'
-                            }}>
+                            <div className="client-comp-filter-status">
                                 <i className="bi bi-info-circle"></i>
                                 {searchTerm || filterStatus !== 'all' ? (
                                     <span>
@@ -1405,13 +1343,9 @@ const ClientComprehensiveManagement = () => {
                         </div>
 
                         {/* 내담자 목록 카드 */}
-                        <div style={{ marginTop: '20px' }}>
+                        <div className="client-comp-cards-container">
                             {getFilteredClients().length > 0 ? (
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                                    gap: '20px'
-                                }}>
+                                <div className="client-comp-cards-grid">
                                     {getFilteredClients().map(client => {
                                         const mapping = mappings.find(m => m.clientId === client.id);
                                         return (
@@ -1671,8 +1605,9 @@ const ClientComprehensiveManagement = () => {
             )}
 
             {loading && (
-                <div className="loading-overlay">
-                    <div className="loading-spinner">로딩 중...</div>
+                <div className="mg-loading-container">
+                    <div className="mg-spinner"></div>
+                    <p>데이터를 불러오는 중...</p>
                 </div>
             )}
 
@@ -1952,20 +1887,7 @@ const ClientComprehensiveManagement = () => {
                             <button
                                 onClick={handleCloseRefundModal}
                                 disabled={loading}
-                                style={{
-                                    padding: '12px 24px',
-                                    backgroundColor: 'white',
-                                    border: '2px solid #6c757d',
-                                    borderRadius: '8px',
-                                    fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '600',
-                                    color: '#6c757d',
-                                    cursor: loading ? 'not-allowed' : 'pointer',
-                                    transition: 'all 0.2s',
-                                    opacity: loading ? 0.6 : 1
-                                }}
-                                onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = '#6c757d', e.target.style.color = 'white')}
-                                onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = 'white', e.target.style.color = '#6c757d')}
+                                className="mg-button mg-button-outline"
                             >
                                 취소
                             </button>
@@ -1982,29 +1904,8 @@ const ClientComprehensiveManagement = () => {
                                     }
                                     handleRefundProcess();
                                 }}
-                                disabled={loading}
-                                style={{
-                                    padding: '12px 24px',
-                                    backgroundColor: (selectedMappings.length === 0 || !refundReason.trim()) ? '#6c757d' : '#dc3545',
-                                    border: `2px solid ${(selectedMappings.length === 0 || !refundReason.trim()) ? '#6c757d' : '#dc3545'}`,
-                                    borderRadius: '8px',
-                                    fontSize: 'var(--font-size-sm)',
-                                    fontWeight: '600',
-                                    color: 'white',
-                                    cursor: loading ? 'not-allowed' : 'pointer',
-                                    transition: 'all 0.2s',
-                                    opacity: loading ? 0.6 : 1
-                                }}
-                                onMouseEnter={(e) => {
-                                    if (!loading && selectedMappings.length > 0 && refundReason.trim()) {
-                                        e.target.style.backgroundColor = '#c82333';
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (!loading && selectedMappings.length > 0 && refundReason.trim()) {
-                                        e.target.style.backgroundColor = '#dc3545';
-                                    }
-                                }}
+                                disabled={loading || selectedMappings.length === 0 || !refundReason.trim()}
+                                className="mg-button mg-button-danger"
                             >
                                 {loading ? '처리 중...' : `환불 처리 (${selectedMappings.length}개)`}
                             </button>

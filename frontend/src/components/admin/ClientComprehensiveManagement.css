@@ -1292,6 +1292,76 @@
     }
 }
 
+/* ==================== 필터 UI ==================== */
+.client-comp-filter-container {
+    background: white;
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.client-comp-filter-content {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.client-comp-search-container {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+}
+
+.client-comp-search-input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-sm) var(--spacing-md);
+    border: 2px solid var(--light-beige);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    outline: none;
+    transition: border-color 0.2s ease;
+    background-color: var(--light-cream);
+}
+
+.client-comp-search-input:focus {
+    border-color: var(--mint-green);
+}
+
+.client-comp-search-icon {
+    position: absolute;
+    right: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--medium-gray);
+    font-size: var(--font-size-base);
+}
+
+.client-comp-filter-select {
+    min-width: 150px;
+}
+
+.client-comp-filter-status {
+    font-size: var(--font-size-sm);
+    color: var(--medium-gray);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+/* ==================== 내담자 카드 ==================== */
+.client-comp-cards-container {
+    margin-top: var(--spacing-lg);
+}
+
+.client-comp-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--spacing-lg);
+}
+
 /* ==================== 다크모드 대비 (미래) ==================== */
 
 @media (prefers-color-scheme: dark) {

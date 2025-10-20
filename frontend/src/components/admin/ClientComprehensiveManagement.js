@@ -10,6 +10,7 @@ import {
 import notificationManager from '../../utils/notification';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import SimpleLayout from '../layout/SimpleLayout';
+import './ClientComprehensiveManagement.css';
 
 /**
  * 내담자 종합관리 컴포넌트

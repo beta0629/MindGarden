@@ -1,4 +1,5 @@
 import React from 'react';
+import SimpleLayout from '../layout/SimpleLayout';
 import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
 import { useSession } from '../../contexts/SessionContext';
 
@@ -15,11 +16,13 @@ const ConsultantSchedule = () => {
   const { user } = useSession();
 
   return (
-    <UnifiedScheduleComponent 
-      user={user}
-          userRole="CONSULTANT"
-      userId={user?.id}
-    />
+    <SimpleLayout>
+      <UnifiedScheduleComponent 
+        user={user}
+        userRole="CONSULTANT"
+        userId={user?.id}
+      />
+    </SimpleLayout>
   );
 };
 

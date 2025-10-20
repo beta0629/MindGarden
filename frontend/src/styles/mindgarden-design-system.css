@@ -7689,7 +7689,7 @@ body {
 }
 
 .schedule-quick-access-card {
-    background: linear-gradient(135deg, var(--olive-green) 0%, var(--mint-green) 100%);
+    background: var(--olive-green);
     border-radius: var(--radius-lg);
     padding: var(--spacing-xl);
     cursor: pointer;

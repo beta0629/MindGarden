@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SUMMARY_PANELS_CSS } from '../../constants/css';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { apiGet } from '../../utils/ajax';
 
 const ErpPurchaseRequestPanel = ({ user }) => {
@@ -9,6 +9,7 @@ const ErpPurchaseRequestPanel = ({ user }) => {
     totalRequests: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // ERP 구매 요청 데이터 로드
   useEffect(() => {
@@ -70,101 +71,87 @@ const ErpPurchaseRequestPanel = ({ user }) => {
     loadPurchaseData();
   }, [user?.id, user?.role]);
 
-  // 로딩 상태 처리
-  if (isLoading) {
-    return (
-      <div className={`${SUMMARY_PANELS_CSS.PANEL} erp-purchase-requests`}>
-        <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
-          <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
-            <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} bi bi-cart-plus`}></i>
-            비품 구매 요청
-          </h3>
-        </div>
-        <div className={SUMMARY_PANELS_CSS.PANEL_CONTENT}>
-          <div className="erp-purchase-loading">
-            <i className="bi bi-hourglass-split erp-purchase-loading-icon"></i>
-            <div className="erp-purchase-loading-text">데이터 로딩 중...</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={`${SUMMARY_PANELS_CSS.PANEL} erp-purchase-requests`}>
-      <div className={SUMMARY_PANELS_CSS.PANEL_HEADER}>
-        <h3 className={SUMMARY_PANELS_CSS.PANEL_TITLE}>
-          <i className={`${SUMMARY_PANELS_CSS.PANEL_ICON} bi bi-cart-plus`}></i>
-          비품 구매 요청
-        </h3>
-      </div>
-      <div className={SUMMARY_PANELS_CSS.PANEL_CONTENT}>
-        <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
-          <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-            <i className="bi bi-clock-history"></i>
-          </div>
-          <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
-            <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>대기 중인 요청</div>
-            <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
-              <div className="summary-value-number">
-                {purchaseData.pendingRequests}건
-              </div>
-              <div className="summary-value-badge summary-value-badge--warning">
-                관리자 승인 대기 중
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
-          <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-            <i className="bi bi-check-circle"></i>
-          </div>
-          <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
-            <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>승인된 요청</div>
-            <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
-              <div className="summary-value-number">
-                {purchaseData.approvedRequests}건
-              </div>
-              <div className="summary-value-badge summary-value-badge--info">
-                이번 달 승인된 요청
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className={SUMMARY_PANELS_CSS.SUMMARY_ITEM}>
-          <div className={SUMMARY_PANELS_CSS.SUMMARY_ICON}>
-            <i className="bi bi-list-ul"></i>
-          </div>
-          <div className={SUMMARY_PANELS_CSS.SUMMARY_INFO}>
-            <div className={SUMMARY_PANELS_CSS.SUMMARY_LABEL}>전체 요청</div>
-            <div className={SUMMARY_PANELS_CSS.SUMMARY_VALUE}>
-              <div className="summary-value-number">
-                {purchaseData.totalRequests}건
-              </div>
-              <div className="summary-value-badge summary-value-badge--secondary">
-                지금까지 요청한 총 건수
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="erp-action-buttons">
-          <button 
-            className="mg-btn mg-btn--primary mg-btn--sm"
-            onClick={() => window.location.href = '/erp/purchase-requests'}
-          >
-            <i className="bi bi-plus-circle"></i> 새 구매 요청
-          </button>
-          <button 
-            className="mg-btn mg-btn--outline mg-btn--primary mg-btn--sm"
-            onClick={() => window.location.href = '/erp/dashboard'}
-          >
-            <i className="bi bi-list-ul"></i> 요청 내역
-          </button>
+    <div className="mg-card">
+      {/* 아코디언 헤더 */}
+      <div 
+        className="mg-card-header mg-cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="mg-flex mg-justify-between mg-align-center">
+          <h3 className="mg-h4 mg-mb-0 mg-flex mg-align-center mg-gap-sm">
+            🛒 비품 구매 요청
+            {purchaseData.pendingRequests > 0 && (
+              <span className="mg-badge mg-badge-warning">
+                {purchaseData.pendingRequests}
+              </span>
+            )}
+          </h3>
+          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </div>
       </div>
+
+      {/* 아코디언 바디 */}
+      {isExpanded && (
+        <div className="mg-card-body">{isLoading ? (
+          <div className="mg-loading-container">
+            <div className="mg-spinner"></div>
+            <p>데이터 로딩 중...</p>
+          </div>
+        ) : (
+          <>
+            {/* 통계 카드 */}
+            <div className="mg-dashboard-stats mg-mb-lg">
+              <div className="mg-dashboard-stat-card">
+                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-warning)' }}>
+                  ⏳
+                </div>
+                <div className="mg-dashboard-stat-content">
+                  <div className="mg-dashboard-stat-value">{purchaseData.pendingRequests}</div>
+                  <div className="mg-dashboard-stat-label">대기 중</div>
+                </div>
+              </div>
+
+              <div className="mg-dashboard-stat-card">
+                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-success)' }}>
+                  ✅
+                </div>
+                <div className="mg-dashboard-stat-content">
+                  <div className="mg-dashboard-stat-value">{purchaseData.approvedRequests}</div>
+                  <div className="mg-dashboard-stat-label">승인됨</div>
+                </div>
+              </div>
+
+              <div className="mg-dashboard-stat-card">
+                <div className="mg-dashboard-stat-icon" style={{ background: 'var(--color-info)' }}>
+                  📋
+                </div>
+                <div className="mg-dashboard-stat-content">
+                  <div className="mg-dashboard-stat-value">{purchaseData.totalRequests}</div>
+                  <div className="mg-dashboard-stat-label">전체</div>
+                </div>
+              </div>
+            </div>
+
+            {/* 액션 버튼 */}
+            <div className="quick-actions-grid">
+              <button 
+                className="mg-button mg-button-primary"
+                onClick={() => window.location.href = '/erp/purchase-requests'}
+              >
+                새 구매 요청
+              </button>
+              <button 
+                className="mg-button mg-button-ghost"
+                onClick={() => window.location.href = '/erp/dashboard'}
+              >
+                요청 내역
+              </button>
+            </div>
+          </>
+        )}
+        </div>
+      )}
     </div>
   );
 };

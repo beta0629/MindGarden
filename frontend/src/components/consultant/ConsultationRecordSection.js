@@ -102,32 +102,32 @@ const ConsultationRecordSection = ({ consultantId }) => {
         ) : (
           <>
           {/* 통계 카드 */}
-          <div className="mg-stats-grid mg-mb-lg">
-            <div className="mg-stat-card">
-              <div className="mg-flex mg-align-center mg-gap-sm">
-                <div className="mg-text-xxxl">📊</div>
-                <div className="mg-flex-1">
-                  <div className="mg-stat-value">{recordStats.totalRecords}</div>
-                  <div className="mg-stat-label">총 일지</div>
-                </div>
+          <div className="mg-dashboard-stats mg-mb-lg">
+            <div className="mg-dashboard-stat-card">
+              <div className="mg-dashboard-stat-icon" style={{ background: 'var(--olive-green)' }}>
+                📊
+              </div>
+              <div className="mg-dashboard-stat-content">
+                <div className="mg-dashboard-stat-value">{recordStats.totalRecords}</div>
+                <div className="mg-dashboard-stat-label">총 일지</div>
               </div>
             </div>
-            <div className="mg-stat-card">
-              <div className="mg-flex mg-align-center mg-gap-sm">
-                <div className="mg-text-xxxl">📅</div>
-                <div className="mg-flex-1">
-                  <div className="mg-stat-value">{recordStats.todayRecords}</div>
-                  <div className="mg-stat-label">오늘 작성</div>
-                </div>
+            <div className="mg-dashboard-stat-card">
+              <div className="mg-dashboard-stat-icon" style={{ background: 'var(--mint-green)' }}>
+                📅
+              </div>
+              <div className="mg-dashboard-stat-content">
+                <div className="mg-dashboard-stat-value">{recordStats.todayRecords}</div>
+                <div className="mg-dashboard-stat-label">오늘 작성</div>
               </div>
             </div>
-            <div className="mg-stat-card">
-              <div className="mg-flex mg-align-center mg-gap-sm">
-                <div className="mg-text-xxxl">⏳</div>
-                <div className="mg-flex-1">
-                  <div className="mg-stat-value">{recordStats.pendingRecords}</div>
-                  <div className="mg-stat-label">미완료</div>
-                </div>
+            <div className="mg-dashboard-stat-card">
+              <div className="mg-dashboard-stat-icon" style={{ background: 'var(--cocoa)' }}>
+                ⏳
+              </div>
+              <div className="mg-dashboard-stat-content">
+                <div className="mg-dashboard-stat-value">{recordStats.pendingRecords}</div>
+                <div className="mg-dashboard-stat-label">미완료</div>
               </div>
             </div>
           </div>

@@ -588,13 +588,6 @@ const ScheduleModalNew = ({
                                     <div className="mg-info-label">시간:</div>
                                     <div className="mg-info-value">
                                         {selectedTimeSlot?.time} - {selectedTimeSlot?.endTime} ({getDurationFromCode(selectedDuration)}분)
-                                        {/* 디버깅용 로그 */}
-                                        {console.log('🔍 스케줄 세부사항 시간 표시:', {
-                                            selectedTimeSlot,
-                                            selectedDuration,
-                                            durationFromCode: getDurationFromCode(selectedDuration),
-                                            durationOptions
-                                        })}
                                     </div>
                                 </div>
                                 <div className="mg-info-row mg-info-row-highlight">

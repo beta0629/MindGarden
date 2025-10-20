@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import 'bootstrap-icons/font/bootstrap-icons.css';
-import { QUICK_ACTIONS_CSS } from '../../constants/css';
-import { DASHBOARD_ACTIONS } from '../../constants/dashboard';
+import { Zap, User, Calendar, MessageCircle, UserPlus, History, FileText, Link2, Code, BarChart3, HelpCircle, Settings } from 'lucide-react';
 import ConsultantApplicationModal from '../common/ConsultantApplicationModal';
-import './QuickActions.css';
 
 const QuickActions = ({ user }) => {
   const navigate = useNavigate();
@@ -61,80 +58,83 @@ const QuickActions = ({ user }) => {
   };
 
   return (
-    <div className={QUICK_ACTIONS_CSS.CONTAINER}>
-      <h3 className={QUICK_ACTIONS_CSS.SECTION_TITLE}>
-        <i className="bi bi-lightning"></i>
-        빠른 액션
-      </h3>
-      <div className={`${QUICK_ACTIONS_CSS.ACTION_GRID} ${(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') ? 'admin-layout' : ''}`}>
-        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToProfile}>
-          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.PROFILE.ICON}`}></i>
-          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.PROFILE.LABEL}</span>
-        </button>
-        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToSchedule}>
-          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.SCHEDULE.ICON}`}></i>
-          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.SCHEDULE.LABEL}</span>
-        </button>
-        
-        {/* 메시지 버튼 (내담자/상담사) */}
-        {(user?.role === 'CLIENT' || user?.role === 'CONSULTANT') && (
-          <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToMessages}>
-            <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} bi-chat-dots`}></i>
-            <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>
-              {user?.role === 'CLIENT' ? '상담사 메시지' : '메시지 관리'}
-            </span>
+    <div className="mg-card">
+      {/* 카드 헤더 */}
+      <div className="mg-card-header mg-flex mg-align-center mg-gap-sm">
+        <Zap size={20} style={{ color: 'var(--olive-green)' }} />
+        <h3 className="mg-h4 mg-mb-0">빠른 액션</h3>
+      </div>
+
+      {/* 카드 바디 */}
+      <div className="mg-card-body">
+        <div className="quick-actions-grid">
+          <button className="quick-action-btn" onClick={goToProfile}>
+            <User size={24} />
+            <span>프로필</span>
           </button>
-        )}
-        
-        {/* 상담사 신청 버튼 (내담자 전용) - 임시 비활성화 */}
-        {false && user?.role === 'CLIENT' && (
-          <button 
-            className={`${QUICK_ACTIONS_CSS.ACTION_BUTTON} consultant-application-btn quick-actions-gradient-btn`}
-            onClick={() => setShowConsultantApplicationModal(true)}
-          >
-            <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} bi-person-plus`}></i>
-            <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>상담사 신청</span>
+          <button className="quick-action-btn" onClick={goToSchedule}>
+            <Calendar size={24} />
+            <span>스케줄</span>
           </button>
-        )}
-        
-        {/* 상담 내역 버튼 (모든 사용자) */}
-        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToConsultationHistory}>
-          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.CONSULTATION_HISTORY.ICON}`}></i>
-          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.CONSULTATION_HISTORY.LABEL}</span>
-        </button>
-        
-        {/* 상담 리포트 버튼 (모든 사용자) */}
-        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToConsultationReport}>
-          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.CONSULTATION_REPORT.ICON}`}></i>
-          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.CONSULTATION_REPORT.LABEL}</span>
-        </button>
-        
-        {/* 관리자 전용 액션 */}
-        {(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
-          <>
-            <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToMappingManagement}>
-              <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.MAPPING_MANAGEMENT.ICON}`}></i>
-              <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.MAPPING_MANAGEMENT.LABEL}</span>
+          
+          {/* 메시지 버튼 (내담자/상담사) */}
+          {(user?.role === 'CLIENT' || user?.role === 'CONSULTANT') && (
+            <button className="quick-action-btn" onClick={goToMessages}>
+              <MessageCircle size={24} />
+              <span>{user?.role === 'CLIENT' ? '상담사 메시지' : '메시지 관리'}</span>
             </button>
-            <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToCommonCodeManagement}>
-              <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.COMMON_CODES.ICON}`}></i>
-              <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.COMMON_CODES.LABEL}</span>
+          )}
+          
+          {/* 상담사 신청 버튼 (내담자 전용) - 임시 비활성화 */}
+          {false && user?.role === 'CLIENT' && (
+            <button 
+              className="quick-action-btn"
+              onClick={() => setShowConsultantApplicationModal(true)}
+            >
+              <UserPlus size={24} />
+              <span>상담사 신청</span>
             </button>
-            <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={() => navigate('/admin/statistics')}>
-              <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.STATISTICS.ICON}`}></i>
-              <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.STATISTICS.LABEL}</span>
-            </button>
-          </>
-        )}
-        
-        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToHelp}>
-          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.HELP.ICON}`}></i>
-          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.HELP.LABEL}</span>
-        </button>
-        <button className={QUICK_ACTIONS_CSS.ACTION_BUTTON} onClick={goToSettings}>
-          <i className={`${QUICK_ACTIONS_CSS.ACTION_ICON} ${DASHBOARD_ACTIONS.SETTINGS.ICON}`}></i>
-          <span className={QUICK_ACTIONS_CSS.ACTION_LABEL}>{DASHBOARD_ACTIONS.SETTINGS.LABEL}</span>
-        </button>
+          )}
+          
+          {/* 상담 내역 버튼 (모든 사용자) */}
+          <button className="quick-action-btn" onClick={goToConsultationHistory}>
+            <History size={24} />
+            <span>상담 내역</span>
+          </button>
+          
+          {/* 상담 리포트 버튼 (모든 사용자) */}
+          <button className="quick-action-btn" onClick={goToConsultationReport}>
+            <FileText size={24} />
+            <span>상담 리포트</span>
+          </button>
+          
+          {/* 관리자 전용 액션 */}
+          {(user?.role === 'ADMIN' || user?.role === 'BRANCH_SUPER_ADMIN') && (
+            <>
+              <button className="quick-action-btn" onClick={goToMappingManagement}>
+                <Link2 size={24} />
+                <span>매칭 관리</span>
+              </button>
+              <button className="quick-action-btn" onClick={goToCommonCodeManagement}>
+                <Code size={24} />
+                <span>공통코드</span>
+              </button>
+              <button className="quick-action-btn" onClick={() => navigate('/admin/statistics')}>
+                <BarChart3 size={24} />
+                <span>통계</span>
+              </button>
+            </>
+          )}
+          
+          <button className="quick-action-btn" onClick={goToHelp}>
+            <HelpCircle size={24} />
+            <span>도움말</span>
+          </button>
+          <button className="quick-action-btn" onClick={goToSettings}>
+            <Settings size={24} />
+            <span>설정</span>
+          </button>
+        </div>
       </div>
       
       {/* 상담사 신청 모달 */}

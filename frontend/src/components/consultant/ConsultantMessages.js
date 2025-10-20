@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost } from '../../utils/ajax';
@@ -311,14 +312,11 @@ const ConsultantMessages = () => {
         )}
 
         {/* 새 메시지 작성 모달 */}
-        {showSendModal && (
-          <div className="consultant-messages-send-modal-overlay">
-            <div className="mg-modal mg-modal-large">
-              <div className="mg-modal-header mg-flex mg-justify-between mg-align-center mg-p-lg mg-border-bottom">
-                <h3 className="mg-h3 mg-mb-0">
-                  <i className="bi bi-chat-dots mg-color-primary"></i>
-                  새 메시지 작성
-                </h3>
+        {showSendModal && ReactDOM.createPortal(
+          <div className="mg-modal-overlay" onClick={() => setShowSendModal(false)}>
+            <div className="mg-modal mg-modal-large" onClick={(e) => e.stopPropagation()}>
+              <div className="mg-modal-header">
+                <h3 className="mg-h3 mg-mb-0">새 메시지 작성</h3>
                 <button
                   className="mg-modal-close"
                   onClick={() => setShowSendModal(false)}
@@ -327,172 +325,97 @@ const ConsultantMessages = () => {
                 </button>
               </div>
               
-              <div className="mg-modal-body mg-p-lg">
-                <div className="mg-flex mg-flex-col mg-gap-lg">
-                  <div>
-                    <label className="mg-label mg-font-semibold mg-color-text-primary mg-text-sm mg-mb-sm mg-block">
-                      받는 사람 *
-                    </label>
-                    <select
-                      value={newMessage.clientId}
-                      onChange={(e) => setNewMessage({ ...newMessage, clientId: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '12px 15px',
-                        border: '2px solid #e9ecef',
-                        borderRadius: '8px',
-                        fontSize: '1rem',
-                        transition: 'all 0.3s ease',
-                        background: '#fff'
-                      }}
-                    >
-                      <option value="">내담자를 선택하세요</option>
-                      {clients.map(client => (
-                        <option key={client.id} value={client.id}>
-                          {client.name} ({client.email})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label style={{ fontWeight: '600', color: '#2c3e50', fontSize: '0.95rem', marginBottom: '8px', display: 'block' }}>
-                      메시지 유형
-                    </label>
-                    <select
-                      value={newMessage.messageType}
-                      onChange={(e) => setNewMessage({ ...newMessage, messageType: e.target.value })}
-                      style={{
-                        width: '100%',
-                        padding: '12px 15px',
-                        border: '2px solid #e9ecef',
-                        borderRadius: '8px',
-                        fontSize: '1rem',
-                        transition: 'all 0.3s ease',
-                        background: '#fff'
-                      }}
-                    >
-                      {messageTypes.map(type => (
-                        <option key={type.value} value={type.value}>
-                          {type.icon} {type.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label style={{ fontWeight: '600', color: '#2c3e50', fontSize: '0.95rem', marginBottom: '8px', display: 'block' }}>
-                      제목 *
-                    </label>
+              <div className="mg-modal-body">
+                <div className="mg-form-group">
+                  <label className="mg-label">받는 사람 *</label>
+                  <select
+                    className="mg-select"
+                    value={newMessage.clientId}
+                    onChange={(e) => setNewMessage({ ...newMessage, clientId: e.target.value })}
+                  >
+                    <option value="">내담자를 선택하세요</option>
+                    {clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.name} ({client.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="mg-form-group">
+                  <label className="mg-label">메시지 유형</label>
+                  <select
+                    className="mg-select"
+                    value={newMessage.messageType}
+                    onChange={(e) => setNewMessage({ ...newMessage, messageType: e.target.value })}
+                  >
+                    {messageTypes.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.icon} {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="mg-form-group">
+                  <label className="mg-label">제목 *</label>
+                  <input
+                    type="text"
+                    className="mg-input"
+                    value={newMessage.title}
+                    onChange={(e) => setNewMessage({ ...newMessage, title: e.target.value })}
+                    placeholder="메시지 제목을 입력하세요"
+                  />
+                </div>
+                
+                <div className="mg-form-group">
+                  <label className="mg-label">내용 *</label>
+                  <textarea
+                    className="mg-textarea"
+                    value={newMessage.content}
+                    onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
+                    placeholder="메시지 내용을 입력하세요"
+                    rows={6}
+                  />
+                </div>
+                
+                <div className="mg-flex mg-gap-md">
+                  <label className="mg-checkbox">
                     <input
-                      type="text"
-                      value={newMessage.title}
-                      onChange={(e) => setNewMessage({ ...newMessage, title: e.target.value })}
-                      placeholder="메시지 제목을 입력하세요"
-                      style={{
-                        width: '100%',
-                        padding: '12px 15px',
-                        border: '2px solid #e9ecef',
-                        borderRadius: '8px',
-                        fontSize: '1rem',
-                        transition: 'all 0.3s ease',
-                        background: '#fff'
-                      }}
+                      type="checkbox"
+                      checked={newMessage.isImportant}
+                      onChange={(e) => setNewMessage({ ...newMessage, isImportant: e.target.checked })}
                     />
-                  </div>
-                  
-                  <div>
-                    <label style={{ fontWeight: '600', color: '#2c3e50', fontSize: '0.95rem', marginBottom: '8px', display: 'block' }}>
-                      내용 *
-                    </label>
-                    <textarea
-                      value={newMessage.content}
-                      onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
-                      placeholder="메시지 내용을 입력하세요"
-                      rows={6}
-                      style={{
-                        width: '100%',
-                        padding: '12px 15px',
-                        border: '2px solid #e9ecef',
-                        borderRadius: '8px',
-                        fontSize: '1rem',
-                        transition: 'all 0.3s ease',
-                        background: '#fff',
-                        resize: 'vertical'
-                      }}
+                    <span>중요</span>
+                  </label>
+                  <label className="mg-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={newMessage.isUrgent}
+                      onChange={(e) => setNewMessage({ ...newMessage, isUrgent: e.target.checked })}
                     />
-                  </div>
-                  
-                  <div style={{ display: 'flex', gap: '15px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                      <input
-                        type="checkbox"
-                        checked={newMessage.isImportant}
-                        onChange={(e) => setNewMessage({ ...newMessage, isImportant: e.target.checked })}
-                      />
-                      <span style={{ fontSize: '0.9rem', color: '#2c3e50', whiteSpace: 'nowrap' }}>중요</span>
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                      <input
-                        type="checkbox"
-                        checked={newMessage.isUrgent}
-                        onChange={(e) => setNewMessage({ ...newMessage, isUrgent: e.target.checked })}
-                      />
-                      <span style={{ fontSize: '0.9rem', color: '#2c3e50', whiteSpace: 'nowrap' }}>긴급</span>
-                    </label>
-                  </div>
+                    <span>긴급</span>
+                  </label>
                 </div>
               </div>
               
-              <div style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '15px',
-                padding: '20px 30px 30px',
-                borderTop: '1px solid #e9ecef',
-                background: '#f8f9fa',
-                borderRadius: '0 0 15px 15px'
-              }}>
+              <div className="mg-modal-footer">
                 <button
+                  className="mg-button mg-button-secondary"
                   onClick={() => setShowSendModal(false)}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    fontWeight: '500',
-                    transition: 'all 0.3s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: '#6c757d',
-                    color: '#fff'
-                  }}
                 >
                   취소
                 </button>
                 <button
+                  className="mg-button mg-button-primary"
                   onClick={handleSendMessage}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    fontWeight: '500',
-                    transition: 'all 0.3s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: '#3498db',
-                    color: '#fff'
-                  }}
                 >
-                  <i className="bi bi-send"></i>
                   전송
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </SimpleLayout>

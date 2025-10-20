@@ -135,18 +135,6 @@
   background: var(--color-primary-dark);
 }
 
-.consultant-messages-send-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {

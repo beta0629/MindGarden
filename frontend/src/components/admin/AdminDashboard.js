@@ -1252,37 +1252,18 @@ const AdminDashboard = ({ user: propUser }) => {
                 });
                 return canManagePermissions;
             })() && (
-                <div style={{ marginBottom: '24px' }}>
+                <div className="mg-mb-lg">
                     <div 
                         onClick={() => setIsPermissionSectionExpanded(!isPermissionSectionExpanded)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '16px 20px',
-                            backgroundColor: '#f8f9fa',
-                            border: '1px solid #e9ecef',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            marginBottom: isPermissionSectionExpanded ? '0' : '16px'
-                        }}
+                        className={`mg-card mg-flex mg-align-center mg-justify-between mg-cursor-pointer ${isPermissionSectionExpanded ? 'mg-mb-0' : 'mg-mb-md'}`}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div className="mg-flex mg-align-center mg-gap-sm">
                             <Shield />
                             <div>
-                                <h3 style={{ 
-                                    margin: 0, 
-                                    fontSize: '18px',
-                                    fontWeight: '600',
-                                    color: '#333'
-                                }}>
+                                <h3 className="mg-h4 mg-mb-0">
                                     권한 관리
                                 </h3>
-                                <p style={{ 
-                                    margin: 0, 
-                                    fontSize: '14px',
-                                    color: '#666'
-                                }}>
+                                <p className="mg-text-sm mg-color-text-secondary mg-mb-0">
                                     사용자 권한 설정 및 관리 (클릭하여 펼치기/접기)
                                 </p>
                             </div>

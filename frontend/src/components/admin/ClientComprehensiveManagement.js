@@ -1160,7 +1160,7 @@ const ClientComprehensiveManagement = () => {
                                                     <span className="label">매칭 상태:</span>
                                                     <span
                                                         className="value status-badge"
-                                                        style={{ backgroundColor: getStatusColorSync(getClientMapping().status) }}
+                                                        data-status={getClientMapping().status}
                                                     >
                                                         {getStatusTextSync(getClientMapping().status)}
                                                     </span>
@@ -1349,32 +1349,10 @@ const ClientComprehensiveManagement = () => {
                                     {getFilteredClients().map(client => {
                                         const mapping = mappings.find(m => m.clientId === client.id);
                                         return (
-                                            <div key={client.id} style={{
-                                                background: 'white',
-                                                borderRadius: '12px',
-                                                padding: '20px',
-                                                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
-                                                border: '1px solid #e9ecef',
-                                                transition: 'all 0.3s ease',
-                                                position: 'relative'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.target.style.transform = 'translateY(-2px)';
-                                                e.target.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.12)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.target.style.transform = 'translateY(0)';
-                                                e.target.style.boxShadow = '0 2px 12px rgba(0, 0, 0, 0.08)';
-                                            }}
+                                            <div key={client.id} className="mg-card mg-client-card-hover"
                                             >
                                                 {/* 카드 헤더 */}
-                                                <div style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    marginBottom: '16px',
-                                                    paddingBottom: '16px',
-                                                    borderBottom: '1px solid #f1f3f4'
-                                                }}>
+                                                <div className="mg-flex mg-align-center mg-mb-md mg-pb-md mg-border-bottom">
                                                     <div style={{
                                                         width: '48px',
                                                         height: '48px',

@@ -10,6 +10,35 @@
     margin: 0 auto;
 }
 
+/* ==================== 추가 클래스들 ==================== */
+
+.mg-client-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    transition: all 0.3s ease;
+}
+
+.mg-border-bottom {
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* 상태 배지 색상 */
+.status-badge[data-status="ACTIVE"] {
+    background-color: var(--color-success) !important;
+}
+
+.status-badge[data-status="PENDING"] {
+    background-color: var(--color-warning) !important;
+}
+
+.status-badge[data-status="COMPLETED"] {
+    background-color: var(--color-info) !important;
+}
+
+.status-badge[data-status="TERMINATED"] {
+    background-color: var(--color-danger) !important;
+}
+
 /* ==================== 헤더 ==================== */
 
 .client-comp-header {

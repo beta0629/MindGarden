@@ -7853,6 +7853,23 @@ body {
    CLIENT MESSAGE SECTION STYLES
    ============================================ */
 
+/* 메시지 카드 기본 스타일 */
+.rating-schedule-item {
+    padding: var(--spacing-md);
+    background: var(--light-cream);
+    border: 1px solid var(--light-beige);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+}
+
+.rating-schedule-item:hover {
+    background: var(--cream);
+    border-color: var(--olive-green);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
 /* 메시지 아이콘 */
 .message-icon {
     width: calc(var(--spacing-xl) * 2.5);
@@ -7862,6 +7879,7 @@ body {
     align-items: center;
     justify-content: center;
     color: white;
+    flex-shrink: 0;
 }
 
 .message-icon-primary {
@@ -7873,7 +7891,7 @@ body {
 }
 
 .message-icon-success {
-    background: var(--color-success);
+    background: var(--olive-green);
 }
 
 .message-icon-warning {
@@ -7886,8 +7904,13 @@ body {
 
 /* 읽지 않은 메시지 표시 */
 .message-unread {
-    border-left: calc(var(--spacing-xs) / 2) solid var(--color-primary);
+    border-left: calc(var(--spacing-xs) / 2) solid var(--color-primary) !important;
     background: var(--color-primary-light) !important;
+}
+
+.message-unread:hover {
+    background: var(--color-primary-light) !important;
+    border-color: var(--color-primary) !important;
 }
 
 .message-unread-indicator {
@@ -7910,6 +7933,10 @@ body {
 
 /* 반응형 메시지 카드 */
 @media (max-width: 768px) {
+    .rating-schedule-item {
+        padding: var(--spacing-sm);
+    }
+    
     .message-icon {
         width: calc(var(--spacing-xl) * 2);
         height: calc(var(--spacing-xl) * 2);

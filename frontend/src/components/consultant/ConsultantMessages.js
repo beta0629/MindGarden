@@ -335,7 +335,7 @@ const ConsultantMessages = () => {
                   >
                     <option key="default-client" value="">내담자를 선택하세요</option>
                     {clients.map((client, index) => (
-                      <option key={`client-${client.id || index}`} value={client.id}>
+                      <option key={`client-${client.id}-${index}`} value={client.id}>
                         {client.name} ({client.email})
                       </option>
                     ))}

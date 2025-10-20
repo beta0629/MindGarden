@@ -7751,6 +7751,37 @@ body {
         width: 100%;
         justify-content: center;
     }
+    
+    /* 상담일지 헤더 반응형 */
+    .consultation-record-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: var(--spacing-md);
+    }
+    
+    .consultation-record-header-buttons {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .consultation-record-header-buttons .mg-button {
+        width: 100%;
+    }
+    
+    /* 상담일지 카드 내부 버튼 반응형 */
+    .record-card-content {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: var(--spacing-sm);
+    }
+    
+    .record-view-btn {
+        width: 100%;
+    }
+    
+    .record-meta {
+        flex-wrap: wrap;
+    }
 }
 
 @media (max-width: 768px) {

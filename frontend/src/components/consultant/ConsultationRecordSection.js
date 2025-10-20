@@ -75,11 +75,11 @@ const ConsultationRecordSection = ({ consultantId }) => {
   return (
     <div className="mg-card">
       <div className="mg-card-header">
-        <div className="mg-flex mg-justify-between mg-align-center">
+        <div className="mg-flex mg-justify-between mg-align-center consultation-record-header">
           <h3 className="mg-h4 mg-mb-0">📝 상담일지</h3>
-          <div className="mg-flex mg-gap-sm">
+          <div className="mg-flex mg-gap-sm consultation-record-header-buttons">
             <button 
-              className="mg-button mg-button-outline mg-button-small"
+              className="mg-button mg-button-ghost mg-button-small"
               onClick={handleViewAllRecords}
             >
               전체보기
@@ -154,7 +154,7 @@ const ConsultationRecordSection = ({ consultantId }) => {
                         </div>
                       </div>
                       <button 
-                        className="mg-button mg-button-outline mg-button-small record-view-btn"
+                        className="mg-button mg-button-ghost mg-button-small record-view-btn"
                         onClick={() => navigate(`/consultant/consultation-record-view/${record.id}`)}
                       >
                         보기
@@ -191,13 +191,13 @@ const ConsultationRecordSection = ({ consultantId }) => {
               새 일지 작성
             </button>
             <button 
-              className="mg-button mg-button-outline"
+              className="mg-button mg-button-ghost"
               onClick={handleViewAllRecords}
             >
               전체 목록
             </button>
             <button 
-              className="mg-button mg-button-outline"
+              className="mg-button mg-button-ghost"
               onClick={() => navigate('/consultant/consultation-records/statistics')}
             >
               통계 보기

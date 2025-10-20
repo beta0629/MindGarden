@@ -7648,6 +7648,111 @@ body {
     border: 1px solid var(--color-border);
 }
 
+/* Schedule Quick Access */
+.schedule-quick-access {
+    margin-bottom: var(--spacing-lg);
+}
+
+.schedule-quick-access-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.schedule-quick-access-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--cocoa);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.schedule-quick-access-icon {
+    color: var(--olive-green);
+}
+
+.schedule-quick-access-card {
+    background: linear-gradient(135deg, var(--olive-green) 0%, var(--mint-green) 100%);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-md);
+}
+
+.schedule-quick-access-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.schedule-quick-access-card-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.schedule-quick-access-card-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.schedule-quick-access-card-icon i {
+    font-size: 2rem;
+    color: white;
+}
+
+.schedule-quick-access-card-text {
+    flex: 1;
+}
+
+.schedule-quick-access-card-title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: white;
+    margin: 0 0 var(--spacing-xs) 0;
+}
+
+.schedule-quick-access-card-description {
+    font-size: var(--font-size-sm);
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.schedule-quick-access-card-arrow {
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: var(--font-size-sm);
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .schedule-quick-access-card-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .schedule-quick-access-card-arrow {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 @media (max-width: 768px) {
     .quick-actions-grid {
         grid-template-columns: repeat(3, 1fr);

@@ -51,15 +51,6 @@ const ScheduleQuickAccess = ({ user }) => {
             </p>
           </div>
           <div className="schedule-quick-access-card-arrow">
-            opacity: 0.8,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 16px',
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '20px',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}>
             <i className="bi bi-arrow-right"></i>
             스케줄 페이지로 이동
           </div>

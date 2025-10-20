@@ -409,13 +409,7 @@ const ScheduleModalNew = ({
                 <div className="schedule-modal-content">
                     {/* 1단계: 상담사 선택 */}
                     {step === 1 && (
-                        <div style={{
-                            width: '100%',
-                            height: '100%',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '20px'
-                        }}>
+                        <div className="mg-flex mg-flex-col mg-w-full mg-h-full mg-gap-lg">
                             <ConsultantSelectionStep
                                 onConsultantSelect={handleConsultantDrop}
                                 selectedConsultant={selectedConsultant}
@@ -435,125 +429,38 @@ const ScheduleModalNew = ({
 
                     {/* 3단계: 시간 선택 */}
                     {step === 3 && (
-                        <div style={{
-                            width: '100%',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '20px'
-                        }}>
-                            <h4 style={{
-                                margin: '0 0 16px 0',
-                                fontSize: '1.25rem',
-                                fontWeight: '600',
-                                color: '#2c3e50',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px'
-                            }}>⏰ 시간을 선택하세요</h4>
+                        <div className="mg-flex mg-flex-col mg-w-full mg-gap-lg">
+                            <h4 className="mg-h4 mg-mb-md mg-flex mg-align-center mg-gap-sm">
+                                ⏰ 시간을 선택하세요
+                            </h4>
                             
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '12px',
-                                padding: '16px',
-                                backgroundColor: 'var(--color-bg-secondary, #F5F5F7)',
-                                borderRadius: '8px',
-                                border: '1px solid #e9ecef'
-                            }}>
-                                <div style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '8px'
-                                }}>
-                                    <label style={{
-                                        fontSize: 'var(--font-size-sm)',
-                                        fontWeight: '600',
-                                        color: '#495057',
-                                        margin: '0'
-                                    }}>상담 유형:</label>
+                            <div className="mg-p-md mg-bg-light-gray mg-radius-md mg-border mg-flex mg-flex-col mg-gap-sm">
+                                <div className="mg-form-group">
+                                    <label className="mg-label">상담 유형:</label>
                                     <select 
                                         value={consultationType} 
                                         onChange={(e) => setConsultationType(e.target.value)}
                                         disabled={loadingCodes}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px 16px',
-                                            border: '2px solid #e9ecef',
-                                            borderRadius: '8px',
-                                            fontSize: 'var(--font-size-sm)',
-                                            color: '#495057',
-                                            backgroundColor: 'var(--color-bg-primary, #FAFAFA)',
-                                            outline: 'none',
-                                            transition: 'all 0.2s ease',
-                                            fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                                        }}
-                                        onFocus={(e) => {
-                                            e.target.style.borderColor = '#667eea';
-                                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                        }}
-                                        onBlur={(e) => {
-                                            e.target.style.borderColor = '#e9ecef';
-                                            e.target.style.boxShadow = 'none';
-                                        }}
+                                        className="mg-select"
                                     >
                                         {consultationTypeOptions.map(option => (
-                                            <option key={option.value} value={option.value} style={{
-                                                padding: '8px',
-                                                fontSize: 'var(--font-size-sm)',
-                                                color: '#495057',
-                                                backgroundColor: 'var(--color-bg-primary, #FAFAFA)',
-                                                fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                                            }}>
+                                            <option key={option.value} value={option.value}>
                                                 {option.label} ({option.value})
                                             </option>
                                         ))}
                                     </select>
                                 </div>
 
-                                <div style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '8px'
-                                }}>
-                                    <label style={{
-                                        fontSize: 'var(--font-size-sm)',
-                                        fontWeight: '600',
-                                        color: '#495057',
-                                        margin: '0'
-                                    }}>상담 시간:</label>
+                                <div className="mg-form-group">
+                                    <label className="mg-label">상담 시간:</label>
                                     <select 
                                         value={selectedDuration} 
                                         onChange={(e) => setSelectedDuration(e.target.value)}
                                         disabled={loadingCodes}
-                                        style={{
-                                            width: '100%',
-                                            padding: '12px 16px',
-                                            border: '2px solid #e9ecef',
-                                            borderRadius: '8px',
-                                            fontSize: 'var(--font-size-sm)',
-                                            color: '#495057',
-                                            backgroundColor: 'var(--color-bg-primary, #FAFAFA)',
-                                            outline: 'none',
-                                            transition: 'all 0.2s ease',
-                                            fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                                        }}
-                                        onFocus={(e) => {
-                                            e.target.style.borderColor = '#667eea';
-                                            e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                        }}
-                                        onBlur={(e) => {
-                                            e.target.style.borderColor = '#e9ecef';
-                                            e.target.style.boxShadow = 'none';
-                                        }}
+                                        className="mg-select"
                                     >
                                         {durationOptions.map(option => (
-                                            <option key={option.value} value={option.value} style={{
-                                                padding: '8px',
-                                                fontSize: 'var(--font-size-sm)',
-                                                color: '#495057',
-                                                backgroundColor: 'var(--color-bg-primary, #FAFAFA)',
-                                                fontFamily: 'Noto Sans KR, Malgun Gothic, 맑은 고딕, sans-serif'
-                                            }}>
+                                            <option key={option.value} value={option.value}>
                                                 {option.label} ({option.durationMinutes}분) ({option.value})
                                             </option>
                                         ))}

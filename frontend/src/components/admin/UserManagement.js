@@ -183,20 +183,29 @@ const UserManagement = ({ onUpdate }) => {
     };
 
     return (
-        <SimpleLayout title="사용자 관리">
-            <div className="user-mgmt-container">
-                <div className="mg-card">
-                    <div className="user-mgmt-header">
-                        <h5 className="user-mgmt-title">
-                            <FaUsers className="user-mgmt-title-icon" />
-                            사용자 목록 ({filteredUsers.length}명)
-                        </h5>
-                        <button className="mg-button mg-button-outline mg-button-sm" onClick={loadData}>
-                            <FaSync className="mg-button-icon" />
-                            새로고침
-                        </button>
+        <SimpleLayout>
+            <div className="mg-dashboard-layout">
+                {/* Dashboard Header */}
+                <div className="mg-dashboard-header">
+                    <div className="mg-dashboard-header-content">
+                        <div className="mg-dashboard-header-left">
+                            <FaUsers className="mg-dashboard-icon" />
+                            <div>
+                                <h1 className="mg-dashboard-title">사용자 관리</h1>
+                                <p className="mg-dashboard-subtitle">전체 {filteredUsers.length}명의 사용자를 관리합니다</p>
+                            </div>
+                        </div>
+                        <div className="mg-dashboard-header-right">
+                            <button className="mg-dashboard-icon-btn" onClick={loadData} title="새로고침">
+                                <FaSync />
+                            </button>
+                        </div>
                     </div>
-                    <div className="user-mgmt-body">
+                </div>
+
+                {/* Main Content */}
+                <div className="mg-dashboard-content">
+                    <div className="mg-card">
                         {/* 필터 및 검색 */}
                         <div className="user-mgmt-filters">
                             <div className="user-mgmt-search-wrapper">

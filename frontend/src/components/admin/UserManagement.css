@@ -1,37 +1,7 @@
-/* ==================== 사용자 관리 컨테이너 ==================== */
-.user-mgmt-container {
-    padding: var(--spacing-lg);
-    max-width: var(--container-max-width);
-    margin: 0 auto;
-}
-
-/* ==================== 헤더 ==================== */
-.user-mgmt-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-xl);
-    border-bottom: 1px solid var(--light-beige);
-    margin-bottom: var(--spacing-xl);
-}
-
-.user-mgmt-title {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin: 0;
-}
-
-.user-mgmt-title-icon {
+/* ==================== 대시보드 아이콘 ==================== */
+.mg-dashboard-icon {
+    font-size: 2rem;
     color: var(--mint-green);
-}
-
-/* ==================== 바디 ==================== */
-.user-mgmt-body {
-    padding: var(--spacing-xl);
 }
 
 /* ==================== 필터 섹션 ==================== */
@@ -39,7 +9,10 @@
     display: grid;
     grid-template-columns: 2fr 1fr auto auto;
     gap: var(--spacing-md);
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    background: var(--light-cream);
+    border-radius: var(--radius-md);
     align-items: center;
 }
 
@@ -83,6 +56,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
 }
 
 /* ==================== 사용자 카드 ==================== */
@@ -236,23 +210,8 @@
 
 /* 모바일 (< 768px) */
 @media (max-width: 767px) {
-    .user-mgmt-container {
-        padding: var(--spacing-md);
-    }
-    
-    .user-mgmt-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-md);
-        padding: var(--spacing-lg);
-    }
-    
-    .user-mgmt-title {
-        font-size: var(--font-size-lg);
-    }
-    
-    .user-mgmt-body {
-        padding: var(--spacing-md);
+    .mg-dashboard-icon {
+        font-size: 1.5rem;
     }
     
     .user-mgmt-filters {
@@ -294,12 +253,12 @@
 
 /* 작은 모바일 (< 480px) */
 @media (max-width: 480px) {
-    .user-mgmt-header {
+    .user-mgmt-filters {
         padding: var(--spacing-md);
     }
     
-    .user-mgmt-body {
-        padding: var(--spacing-sm);
+    .user-mgmt-grid {
+        padding: var(--spacing-md);
     }
     
     .user-mgmt-card {

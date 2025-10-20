@@ -127,6 +127,7 @@ public class ConsultationMessageServiceImpl extends BaseServiceImpl<Consultation
     }
 
     @Override
+    @Transactional
     public ConsultationMessage markAsRead(Long messageId) {
         log.info("📨 메시지 읽음 처리 - 메시지 ID: {}", messageId);
         
@@ -137,7 +138,11 @@ public class ConsultationMessageServiceImpl extends BaseServiceImpl<Consultation
         
         ConsultationMessage message = messageOpt.get();
         message.markAsRead();
-        return consultationMessageRepository.save(message);
+        ConsultationMessage savedMessage = consultationMessageRepository.save(message);
+        
+        log.info("✅ 메시지 읽음 처리 완료 - 메시지 ID: {}, isRead: {}", messageId, savedMessage.getIsRead());
+        
+        return savedMessage;
     }
 
     @Override

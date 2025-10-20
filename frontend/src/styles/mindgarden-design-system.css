@@ -7853,25 +7853,70 @@ body {
    CLIENT MESSAGE SECTION STYLES
    ============================================ */
 
+/* 메시지 아이콘 */
+.message-icon {
+    width: calc(var(--spacing-xl) * 2.5);
+    height: calc(var(--spacing-xl) * 2.5);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.message-icon-primary {
+    background: var(--color-primary);
+}
+
+.message-icon-secondary {
+    background: var(--color-text-secondary);
+}
+
+.message-icon-success {
+    background: var(--color-success);
+}
+
+.message-icon-warning {
+    background: var(--color-warning);
+}
+
+.message-icon-danger {
+    background: var(--color-danger);
+}
+
 /* 읽지 않은 메시지 표시 */
 .message-unread {
-    border-left: 4px solid var(--color-primary);
+    border-left: calc(var(--spacing-xs) / 2) solid var(--color-primary);
     background: var(--color-primary-light) !important;
 }
 
 .message-unread-indicator {
-    width: 8px;
-    height: 8px;
+    width: var(--spacing-sm);
+    height: var(--spacing-sm);
     background: var(--color-primary);
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     flex-shrink: 0;
     margin-top: var(--spacing-xs);
 }
 
+/* 메시지 콘텐츠 */
+.message-content-full {
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    color: var(--color-text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 /* 반응형 메시지 카드 */
 @media (max-width: 768px) {
+    .message-icon {
+        width: calc(var(--spacing-xl) * 2);
+        height: calc(var(--spacing-xl) * 2);
+    }
+    
     .message-unread-indicator {
-        width: 6px;
-        height: 6px;
+        width: calc(var(--spacing-xs) * 1.5);
+        height: calc(var(--spacing-xs) * 1.5);
     }
 }

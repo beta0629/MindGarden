@@ -142,11 +142,11 @@ const ClientMessageSection = ({ userId }) => {
                   onClick={() => handleMessageClick(message)}
                 >
                   <div className="mg-flex mg-align-start mg-gap-md">
-                    <div className={`mg-dashboard-stat-icon mg-flex-shrink-0`} style={{ background: `var(--color-${typeInfo.colorClass})` }}>
+                    <div className={`message-icon message-icon-${typeInfo.colorClass} mg-flex-shrink-0`}>
                       {typeInfo.icon}
                     </div>
                     <div className="mg-flex-1">
-                      <div className="mg-flex mg-align-center mg-gap-sm mg-mb-xs">
+                      <div className="mg-flex mg-align-center mg-gap-sm mg-mb-xs mg-flex-wrap">
                         <h5 className="mg-h5 mg-mb-0">{message.title}</h5>
                         {message.isImportant && (
                           <span className="mg-badge mg-badge-warning mg-text-xs">중요</span>
@@ -155,11 +155,11 @@ const ClientMessageSection = ({ userId }) => {
                           <span className="mg-badge mg-badge-danger mg-text-xs">긴급</span>
                         )}
                       </div>
-                      <p className="mg-text-sm mg-color-text-secondary mg-mb-xs">
+                      <p className="mg-text-sm mg-color-text-secondary mg-mb-xs mg-line-clamp-2">
                         {message.content?.substring(0, 50)}
                         {message.content?.length > 50 && '...'}
                       </p>
-                      <div className="mg-flex mg-align-center mg-gap-sm mg-text-xs mg-color-text-secondary">
+                      <div className="mg-flex mg-align-center mg-gap-sm mg-text-xs mg-color-text-secondary mg-flex-wrap">
                         <span className={`mg-badge mg-badge-${typeInfo.colorClass}`}>{typeInfo.label}</span>
                         <span>{formatDate(message.sentAt || message.createdAt)}</span>
                       </div>
@@ -189,7 +189,7 @@ const ClientMessageSection = ({ userId }) => {
               </button>
             </div>
             <div className="mg-modal-body">
-              <div className="mg-flex mg-align-center mg-gap-md mg-mb-md mg-pb-md mg-border-bottom">
+              <div className="mg-flex mg-align-center mg-gap-md mg-mb-md mg-pb-md mg-border-bottom mg-flex-wrap">
                 <span className={`mg-badge mg-badge-${getMessageTypeInfo(selectedMessage.messageType).colorClass} mg-flex mg-align-center mg-gap-xs`}>
                   {getMessageTypeInfo(selectedMessage.messageType).icon}
                   {getMessageTypeInfo(selectedMessage.messageType).label}
@@ -198,7 +198,7 @@ const ClientMessageSection = ({ userId }) => {
                   {new Date(selectedMessage.sentAt || selectedMessage.createdAt).toLocaleString('ko-KR')}
                 </span>
               </div>
-              <div className="mg-text-base" style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+              <div className="message-content-full">
                 {selectedMessage.content}
               </div>
             </div>

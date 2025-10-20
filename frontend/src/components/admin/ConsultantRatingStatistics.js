@@ -127,7 +127,7 @@ const ConsultantRatingStatistics = () => {
                     </h4>
                     <div className="consultants-ranking">
                         {statistics.topConsultants.map((consultant, index) => (
-                            <div key={consultant.id} className="consultant-rank-card">
+                            <div key={consultant.id || `consultant-${index}`} className="consultant-rank-card">
                                 <div className="rank-number">
                                     {index + 1}
                                 </div>
@@ -160,7 +160,7 @@ const ConsultantRatingStatistics = () => {
                     </h4>
                     <div className="trends-list">
                         {statistics.recentTrends.map((trend, index) => (
-                            <div key={index} className="trend-item">
+                            <div key={trend.id || `trend-${index}`} className="trend-item">
                                 <div className="trend-date">{trend.date}</div>
                                 <div className="trend-content">
                                     <div className="trend-consultant">{trend.consultantName}</div>

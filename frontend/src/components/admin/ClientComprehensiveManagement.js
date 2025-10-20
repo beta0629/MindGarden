@@ -1105,127 +1105,39 @@ const ClientComprehensiveManagement = () => {
                         </div>
                     </div>
 
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                        gap: '16px'
-                    }}>
+                    <div className="client-comp-client-grid">
                         {getFilteredClients().map(client => {
                             const mapping = mappings.find(m => m.clientId === client.id);
                             return (
                                 <div
                                     key={client.id}
-                                    style={{
-                                        backgroundColor: selectedClient?.id === client.id ? '#e3f2fd' : 'white',
-                                        border: selectedClient?.id === client.id ? '2px solid #2196f3' : '1px solid #e9ecef',
-                                        borderRadius: '12px',
-                                        padding: '20px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                        display: 'flex',
-                                        gap: '16px',
-                                        alignItems: 'flex-start'
-                                    }}
+                                    className={`client-comp-client-card ${selectedClient?.id === client.id ? 'selected' : ''}`}
                                     onClick={() => handleClientSelect(client)}
                                 >
-                                    <div style={{
-                                        width: '48px',
-                                        height: '48px',
-                                        backgroundColor: '#f8f9fa',
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: 'var(--font-size-xl)',
-                                        color: '#6c757d',
-                                        flexShrink: 0
-                                    }}>
+                                    <div className="client-comp-client-avatar">
                                         <FaUser />
                                     </div>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            marginBottom: '4px'
-                                        }}>
-                                            <div style={{
-                                                fontSize: 'var(--font-size-base)',
-                                                fontWeight: '600',
-                                                color: '#2c3e50',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                                flex: 1,
-                                                marginRight: '8px'
-                                            }}>{client.name || 'Unknown Client'}</div>
-                                            <div>
-                                                {mapping ? (
-                                                    <span
-                                                        style={{
-                                                            display: 'inline-block',
-                                                            padding: '2px 8px',
-                                                            borderRadius: '12px',
-                                                            fontSize: 'var(--font-size-xs)',
-                                                            fontWeight: '500',
-                                                            color: 'white',
-                                                            backgroundColor: getStatusColorSync(mapping.status)
-                                                        }}
-                                                    >
-                                                        {getStatusTextSync(mapping.status)}
-                                                    </span>
-                                                ) : (
-                                                    <span style={{
-                                                        display: 'inline-block',
-                                                        padding: '2px 8px',
-                                                        borderRadius: '12px',
-                                                        fontSize: 'var(--font-size-xs)',
-                                                        fontWeight: '500',
-                                                        color: '#6c757d',
-                                                        backgroundColor: '#f8f9fa'
-                                                    }}>매칭 없음</span>
-                                                )}
-                                            </div>
+                                    <div className="client-comp-client-info">
+                                        <div className="client-comp-client-status">
+                                            <div className="client-comp-client-name">{client.name || 'Unknown Client'}</div>
+                                            {mapping ? (
+                                                <span className="status-badge">
+                                                    {getStatusTextSync(mapping.status)}
+                                                </span>
+                                            ) : (
+                                                <span className="status-badge no-mapping">매칭 없음</span>
+                                            )}
                                         </div>
-                                        <div style={{
-                                            fontSize: 'var(--font-size-sm)',
-                                            color: '#6c757d',
-                                            marginBottom: '2px',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
-                                        }}>{client.email}</div>
-                                        <div style={{
-                                            fontSize: 'var(--font-size-sm)',
-                                            color: '#6c757d',
-                                            marginBottom: '8px',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
-                                        }}>{client.phone || '전화번호 없음'}</div>
-                                        <div style={{
-                                            fontSize: 'var(--font-size-xs)',
-                                            color: '#6c757d',
-                                            marginBottom: '4px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '4px'
-                                        }}>
+                                        <div className="client-comp-client-email">{client.email}</div>
+                                        <div className="client-phone">{client.phone || '전화번호 없음'}</div>
+                                        <div className="client-grade">
                                             <span>{getGradeIconSync(client.grade)}</span>
                                             <span>등급: {getGradeTextSync(client.grade) || '브론즈'}</span>
                                         </div>
-                                        <div style={{
-                                            fontSize: 'var(--font-size-xs)',
-                                            color: '#6c757d',
-                                            marginBottom: '2px'
-                                        }}>
+                                        <div className="client-date">
                                             등록일: {client.createdAt ? new Date(client.createdAt).toLocaleDateString('ko-KR') : '-'}
                                         </div>
-                                        <div style={{
-                                            fontSize: 'var(--font-size-xs)',
-                                            color: '#6c757d'
-                                        }}>
+                                        <div className="client-sessions">
                                             총 상담: {getClientConsultations().filter(c => c.clientId === client.id).length}회
                                         </div>
                                     </div>
@@ -1237,92 +1149,30 @@ const ClientComprehensiveManagement = () => {
 
                 {/* 선택된 내담자 상세 정보 */}
                 {selectedClient && (
-                    <div style={{
-                        marginTop: '24px',
-                        backgroundColor: 'white',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: '20px',
-                            flexWrap: 'wrap',
-                            gap: '16px'
-                        }}>
-                            <h3 style={{
-                                margin: '0',
-                                fontSize: 'var(--font-size-xl)',
-                                fontWeight: '600',
-                                color: '#2c3e50'
-                            }}>{selectedClient.name} 상세 정보</h3>
-                            <div style={{
-                                display: 'flex',
-                                gap: '8px',
-                                flexWrap: 'wrap'
-                            }}>
+                    <div className="client-detail-section">
+                        <div className="detail-header">
+                            <h3>{selectedClient.name} 상세 정보</h3>
+                            <div className="tab-buttons">
                                 <button
-                                    style={{
-                                        padding: '8px 16px',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        backgroundColor: activeTab === 'overview' ? '#007bff' : '#f8f9fa',
-                                        color: activeTab === 'overview' ? 'white' : '#495057',
-                                        cursor: 'pointer',
-                                        fontSize: 'var(--font-size-sm)',
-                                        fontWeight: '500',
-                                        transition: 'all 0.2s ease'
-                                    }}
+                                    className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('overview')}
                                 >
                                     개요
                                 </button>
                                 <button
-                                    style={{
-                                        padding: '8px 16px',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        backgroundColor: activeTab === 'mapping' ? '#007bff' : '#f8f9fa',
-                                        color: activeTab === 'mapping' ? 'white' : '#495057',
-                                        cursor: 'pointer',
-                                        fontSize: 'var(--font-size-sm)',
-                                        fontWeight: '500',
-                                        transition: 'all 0.2s ease'
-                                    }}
+                                    className={`tab-btn ${activeTab === 'mapping' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('mapping')}
                                 >
                                     매칭 정보
                                 </button>
                                 <button
-                                    style={{
-                                        padding: '8px 16px',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        backgroundColor: activeTab === 'consultations' ? '#007bff' : '#f8f9fa',
-                                        color: activeTab === 'consultations' ? 'white' : '#495057',
-                                        cursor: 'pointer',
-                                        fontSize: 'var(--font-size-sm)',
-                                        fontWeight: '500',
-                                        transition: 'all 0.2s ease'
-                                    }}
+                                    className={`tab-btn ${activeTab === 'consultations' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('consultations')}
                                 >
                                     상담 이력
                                 </button>
                                 <button
-                                    style={{
-                                        padding: '8px 16px',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        backgroundColor: activeTab === 'sessions' ? '#007bff' : '#f8f9fa',
-                                        color: activeTab === 'sessions' ? 'white' : '#495057',
-                                        cursor: 'pointer',
-                                        fontSize: 'var(--font-size-sm)',
-                                        fontWeight: '500',
-                                        transition: 'all 0.2s ease'
-                                    }}
+                                    className={`tab-btn ${activeTab === 'sessions' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('sessions')}
                                 >
                                     회기 현황
